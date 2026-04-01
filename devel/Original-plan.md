@@ -69,14 +69,15 @@ Objective: Create a GitHub-ready project skeleton that is reproducible, modular,
 
 Planned work:
 
-1. Create a Cargo workspace root `Cargo.toml` and crate directories for `sim-core`, `sim-factory`, `sim-economy`, `sim-agents`, `sim-types`, `sim-cli`, and `sim-api`. Each crate gets a minimal `Cargo.toml` and `src/lib.rs` (or `src/main.rs` for binaries). Include `serde` (with `derive` feature) and `toml` as dependencies in `sim-core` and `sim-types` for scenario serialization. Include `rand` and `rand_chacha` in `sim-core` for deterministic RNG. Include `tracing` and `tracing-subscriber` in `sim-core` for structured application logging. Under `[dev-dependencies]` in `sim-core`, include `proptest` for property testing and `criterion` for benchmarks (with `[[bench]]` targets). No existing source files to modify. [F6, F7, F13, F17, F18, F19 applied]
+1. Create a Cargo workspace root `Cargo.toml` with `resolver = "2"` and crate directories for `sim-core`, `sim-factory`, `sim-economy`, `sim-agents`, `sim-types`, `sim-cli`, and `sim-api`. Each crate gets a minimal `Cargo.toml` (with `edition = "2021"`) and `src/lib.rs` (or `src/main.rs` for binaries). Add a `rust-toolchain.toml` at the workspace root pinning the Rust stable channel for reproducible builds. Include `serde` (with `derive` feature) and `toml` as dependencies in `sim-core` and `sim-types` for scenario serialization. Include `rand` and `rand_chacha` in `sim-core` for deterministic RNG. Include `tracing` and `tracing-subscriber` in `sim-core` for structured application logging. Under `[dev-dependencies]` in `sim-core`, include `proptest` for property testing and `criterion` for benchmarks (with `[[bench]]` targets). No existing source files to modify. [F6, F7, F13, F17, F18, F19, F31 applied]
 2. Add repository health files: `README.md` (expand from current 3-line stub at `README.md:1-3`, using `docs/vision.md` as the authoritative source for project identity and core loop), `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, and `.gitignore`. Augment the existing `docs/architecture-overview.md` with a "Determinism Contract" section documenting ChaCha8Rng, seed propagation, and replay guarantees (do not create a separate root-level `ARCHITECTURE.md`). Also update the Repository Structure diagram in `docs/architecture-overview.md` to reflect the actual crate layout, benchmark locations under `crates/sim-core/benches/`, and the `examples/` directory. `LICENSE` already exists and needs no changes. [F7, F10, F11, F12, F22 applied]
 3. Add baseline CI in `.github/workflows/ci.yml` for `cargo fmt --check`, `cargo clippy`, and `cargo test`.
 4. Add `examples/` directory with a placeholder file explaining intended contents. The `docs/` directory already exists (contains `vision.md`, `architecture-overview.md`, and `standards-alignment.md`); add a placeholder `docs/README.md` index if needed. [F10, F11, F25 applied]
 
 Files expected:
-- `Cargo.toml` (new — workspace root)
-- `crates/sim-core/Cargo.toml` (new — `[dependencies]`: `serde`, `toml`, `rand`, `rand_chacha`, `tracing`, `tracing-subscriber`; `[dev-dependencies]`: `proptest`, `criterion`), `crates/sim-core/src/lib.rs`
+- `Cargo.toml` (new — workspace root with `resolver = "2"`)
+- `rust-toolchain.toml` (new — pin Rust stable channel)
+- `crates/sim-core/Cargo.toml` (new — `edition = "2021"`, `[dependencies]`: `serde`, `toml`, `rand`, `rand_chacha`, `tracing`, `tracing-subscriber`; `[dev-dependencies]`: `proptest`, `criterion`), `crates/sim-core/src/lib.rs`
 - `crates/sim-factory/Cargo.toml`, `crates/sim-factory/src/lib.rs`
 - `crates/sim-economy/Cargo.toml`, `crates/sim-economy/src/lib.rs`
 - `crates/sim-agents/Cargo.toml`, `crates/sim-agents/src/lib.rs`
@@ -106,7 +107,7 @@ Planned work:
 3. Implement append-only event logging in `crates/sim-core/src/log.rs`. Define a `Kpi` trait in `crates/sim-core/src/kpi.rs` and implement at least one concrete KPI (e.g., `TotalSimulatedTime` or `EventCount`) sufficient to validate deterministic replay. [F2 applied]
 4. Define the scenario file schema (machine definitions, product routings, initial conditions, run parameters, RNG seed) in TOML and implement a scenario loader in `crates/sim-core/src/scenario.rs`. Use TOML section names that correspond to ISA-95 concepts where practical (e.g., `[[equipment]]`, `[[material]]`, `[[process_segment]]`) to ease future data interchange; see `docs/standards-alignment.md` for the mapping. [F1, F7, F25 applied]
 5. Define state stores for machines, products, jobs, and work queues using data-oriented structures in `crates/sim-factory/src/machines.rs`, `crates/sim-factory/src/jobs.rs`, and `crates/sim-factory/src/routing.rs`. **Design-for (Phase 7):** Machine definitions should include an optional `capacity` field (defaulting to concurrency=1 for discrete manufacturing) and an optional `setup_time` field (defaulting to zero), so that Phase 7 can add volume-based capacity and cleaning cycles without restructuring the machine model. Routing steps should accept a generic duration rather than assuming instantaneous completion, even if MVP steps use fixed processing times. [F28 applied]
-6. Write unit tests for event ordering, monotonic time progression, state transition safety, deterministic replay, and scenario loading in `crates/sim-core/tests/`. Write unit tests for machine state management, job lifecycle, and routing correctness in `crates/sim-factory/tests/machine_state.rs` and `crates/sim-factory/tests/job_routing.rs`. [F14 applied]
+6. Write unit tests for event ordering, monotonic time progression, state transition safety, deterministic replay, and scenario loading in `crates/sim-core/tests/`. Write unit tests for machine state management, job lifecycle, and routing correctness in `crates/sim-factory/tests/machine_state.rs` and `crates/sim-factory/tests/job_routing.rs`. Include error-path tests: invalid state transitions return appropriate `SimError` variants, unknown IDs are rejected, and out-of-order event insertion is handled correctly. [F14, F29 applied]
 7. Write property tests in `crates/sim-core/tests/properties.rs` using `proptest` to verify invariants: no negative inventory, no duplicate job completion, monotonic time progression, and event causality consistency. [F13 applied]
 
 Files expected:
@@ -161,14 +162,20 @@ Objective: Allow controlled external influence over the simulation through expli
 
 Planned work:
 
-1. Implement a command/query interface in `crates/sim-api/src/routes.rs` and `crates/sim-api/src/server.rs` using Axum + Tokio, supporting: load scenario, step/run sim, change price, change machine count, toggle agent, query KPIs, query event log. Add `axum`, `tokio` (feature: `full`), `tower-http` (feature: `trace`), `serde_json`, and `utoipa` (with `axum_extras` feature) to `sim-api/Cargo.toml`. Wire `tracing` middleware (via `tower-http`) into the Axum server for structured request logging and error reporting (distinguish application-level observability from simulation event logging). Generate an OpenAPI 3.x specification from route definitions using `utoipa` and serve it at `/api-docs/openapi.json`; see `docs/standards-alignment.md` for the OpenAPI alignment rationale. [F3, F17, F23, F26 applied]
+1. Implement a command/query interface in `crates/sim-api/src/routes.rs` and `crates/sim-api/src/server.rs` using Axum + Tokio, supporting: load scenario, step/run sim, change price, change machine count, toggle agent, query KPIs, query event log. Add `axum`, `tokio` (feature: `full`), `tower-http` (features: `trace`, `cors`), `serde_json`, and `utoipa` (with `axum_extras` feature) to `sim-api/Cargo.toml`. Wire `tracing` middleware (via `tower-http`) into the Axum server for structured request logging and error reporting (distinguish application-level observability from simulation event logging). Configure CORS via `tower-http::cors::CorsLayer` — permissive for development (allow all origins), with a note to restrict for production. Generate an OpenAPI 3.x specification from route definitions using `utoipa` and serve it at `/api-docs/openapi.json`; see `docs/standards-alignment.md` for the OpenAPI alignment rationale. In addition to the core command/query routes, implement the following endpoints required by the Phase 5 UI:
+   - `GET /api/events/stream` — Server-Sent Events (SSE) endpoint using `axum::response::sse::Sse` that pushes simulation events to the UI in real time during a running simulation. No new dependency required (SSE support is built into Axum). Implement in `crates/sim-api/src/sse.rs`.
+   - `GET /api/factory/topology` — returns the machine graph (nodes with state and queue depth, edges with routing connections and in-transit counts) as JSON for the factory flow visualization.
+   - `GET /api/jobs` — returns active and completed jobs/orders with fields: job ID, product, status, current step, time in system, revenue.
+   - `GET /api/export/events` — returns the full event log as a JSON array for client-side download/export.
+   [F3, F17, F23, F26, F30 applied]
 2. Wire `crates/sim-cli/src/main.rs` as the single binary entrypoint supporting both headless CLI mode and HTTP server mode (e.g., `arcogine run --headless` vs `arcogine serve`). `sim-api` remains a library crate providing route handlers and server setup; `sim-cli` depends on it and hosts the binary. [F16 applied]
 3. Implement a `SalesAgent` in `crates/sim-agents/src/sales_agent.rs` that observes backlog, lead time, and revenue, then adjusts price using approved commands. The agent architecture must support future agent types (Planning, Procurement, Maintenance) and future LLM-based strategy agents, so the interface should be trait-based and agent-type-agnostic.
 4. Ensure all commands are validated, logged in the event log, and replayable. Modify `crates/sim-core/src/log.rs` and `crates/sim-core/src/event.rs` as needed.
-5. Write integration tests in `crates/sim-api/tests/api_smoke.rs` and `crates/sim-core/tests/agent_integration.rs`. Write unit tests for the agent trait and `SalesAgent` decision logic in `crates/sim-agents/tests/sales_agent.rs`. [F24 applied]
+5. Write integration tests in `crates/sim-api/tests/api_smoke.rs` (using `tower::ServiceExt` to test routes without starting an HTTP server) and `crates/sim-core/tests/agent_integration.rs`. Write unit tests for the agent trait and `SalesAgent` decision logic in `crates/sim-agents/tests/sales_agent.rs`. API smoke tests must include error-path cases: malformed requests return appropriate HTTP error codes, commands on non-running simulations are rejected, and invalid scenario references produce typed errors. [F24, F29, F34 applied]
 
 Files expected:
 - `crates/sim-api/src/lib.rs` (modify), `crates/sim-api/src/server.rs`, `crates/sim-api/src/routes.rs` (new)
+- `crates/sim-api/src/sse.rs` (new — SSE event stream handler for `GET /api/events/stream`)
 - `crates/sim-cli/src/main.rs` (modify from Phase 1 stub)
 - `crates/sim-agents/src/lib.rs` (modify from Phase 1 stub), `crates/sim-agents/src/sales_agent.rs` (new)
 - `crates/sim-core/src/log.rs`, `crates/sim-core/src/event.rs` (modify from Phase 2)
@@ -180,27 +187,160 @@ Acceptance criteria:
 - The agent observes state and adjusts price without direct mutable access to simulation internals.
 - Under an overload scenario, the agent produces at least one logged intervention and measurably reduces backlog growth or improves a target KPI relative to a fixed-price baseline.
 - Invalid commands are rejected with typed errors and do not corrupt simulation state.
+- The SSE endpoint streams simulation events to connected clients during a running simulation; disconnection and reconnection are handled gracefully.
+- The topology, jobs, and export endpoints return well-typed JSON responses consistent with the OpenAPI spec.
 
 ---
 
-### Phase 5. Add the minimal single-user experimentation UI
+### Phase 5. Add the single-user experimentation UI
 
-Objective: Provide a lightweight local dashboard that makes experiments visible, comparable, and explainable.
+Objective: Provide a structured local dashboard that makes experiments visible, comparable, explainable, and accessible — acting as an experiment console, not a game client.
+
+#### 5.1 Technology stack
+
+| Concern | Choice | Rationale |
+|---------|--------|-----------|
+| Framework | React 18 + TypeScript | Lightweight, familiar, web-accessible (per `docs/architecture-overview.md`) |
+| Bundler | Vite | Fast HMR, native ESM, zero-config TypeScript |
+| Component library | Tailwind CSS + shadcn/ui | Composable, dark-mode ready, accessible primitives with WCAG 2.1 AA contrast by default |
+| Charting | Recharts | React-native SVG charts, good TypeScript support, built-in PNG export |
+| State management | Zustand | Minimal boilerplate, works well with polling and SSE-based state updates |
+| API client | Typed `fetch` wrapper | Consume typed responses aligned to the OpenAPI spec generated in Phase 4 (`utoipa`) |
+| Live updates | EventSource (SSE) | Subscribe to `GET /api/events/stream` (added in Phase 4) for real-time simulation event delivery; fall back to REST polling when paused |
+| E2E testing | Playwright | Browser automation for smoke tests; added to CI |
+
+#### 5.2 Screen layout and information hierarchy
+
+The UI follows a three-region layout with a clear reading order: status at the top, trends and operations in the center, raw data at the bottom.
+
+```text
++-----------------------------------------------------------------------+
+| TOOLBAR                                                               |
+| [Scenario: v] [> Run] [|| Pause] [Step] [Reset] [1x v] [Agent: ON]  |
++-----------------------------------------------------------------------+
+|                                            |                          |
+|  MAIN AREA (left, wider)                   |  SIDEBAR (right, narrow) |
+|                                            |                          |
+|  [Revenue]  [Backlog]  [Lead T]  [Thru]    |  CONTROLS                |
+|   $12,400    23 jobs    4.2 hrs   8/hr     |  Price: [====o===]       |
+|                                            |  Machines: [- 3 +]       |
+|  +--------------------------------------+  |                          |
+|  | Time-Series Chart                    |  |  BASELINE COMPARE        |
+|  |  --- Revenue  --- Throughput         |  |  Rev:  +12% ▲            |
+|  |  --- Lead Time                       |  |  Back: -8%  ▼            |
+|  |                                      |  |  Lead: -15% ▼            |
+|  +--------------------------------------+  |  Thru: +5%  ▲            |
+|                                            |                          |
+|  [Factory Flow] [Machines] [Jobs]          |  [Save Baseline]         |
+|  +--------------------------------------+  |  [Export ▾]              |
+|  | Mill --[5]--> Lathe --[2]--> QC      |  |                          |
+|  | (busy)        (busy)      (idle)     |  |                          |
+|  +--------------------------------------+  |                          |
++-----------------------------------------------------------------------+
+| BOTTOM DRAWER (collapsible)                                           |
+| ▾ Event Log  [Filter: All ▾] [Search...]                             |
+| 14:32  OrderCreated   Order #47, Product A, qty 10                   |
+| 14:33  TaskStarted    Job #47-1, Mill-1                              |
+| 14:38  PriceChange    Agent set price $12.50 → $13.00               |
++-----------------------------------------------------------------------+
+```
+
+**Toolbar** — Scenario selector dropdown, simulation controls (run/pause/step/reset), simulation speed multiplier, agent toggle. All actions dispatch REST commands to Phase 4's API.
+
+**Main area (left column, ~70% width):**
+- KPI summary cards (revenue, backlog, lead time, throughput) with trend micro-indicators (up/down/flat vs. previous snapshot).
+- Time-series chart: multi-line Recharts plot of KPI values over simulation time. Supports zoom and pan.
+- Tabbed lower section with three views:
+  - **Factory Flow** — directed-graph topology of the production flow. Nodes represent machines (colored by state: idle/busy/offline; sized or badged by queue depth). Edges represent routing connections with in-transit/waiting job counts. Implemented with SVG; no heavy graph library required for 2–3 machine types.
+  - **Machines** — table of per-machine state, current job, queue depth, and utilization percentage.
+  - **Jobs** — table of active and completed jobs/orders: Job ID, Product, Status, Current Step, Time in System, Revenue. Sortable and filterable. Clicking a job filters the event log to that job's events.
+
+**Sidebar (right column, ~30% width):**
+- Control levers: price slider, machine-count stepper. Changes fire REST commands and are reflected after the next simulation step.
+- Baseline comparison panel: shows current-vs-saved deltas for revenue, backlog, lead time, and throughput with green/red directional indicators. "Save as baseline" button captures the current run's final KPIs and scenario config (up to 3 baselines, in-memory, session-scoped).
+- Export menu: KPI summary as CSV, event log as JSON, current chart as PNG.
+
+**Bottom drawer (collapsible):**
+- Chronological event log with type filter (dropdown: All / Orders / Production / Pricing / Agent) and text search. New events stream in via SSE during a running simulation.
+
+#### 5.3 Data flow
+
+```text
+Phase 4 Axum API
+  │
+  ├── REST endpoints (query KPIs, load scenario, change levers, list jobs, get topology)
+  │     │
+  │     └──► ui/src/api/client.ts (typed fetch wrapper)
+  │               │
+  │               └──► Zustand stores (simulation.ts, baselines.ts)
+  │                         │
+  │                         └──► React components (read from store, dispatch via client)
+  │
+  └── SSE endpoint (GET /api/events/stream)
+        │
+        └──► ui/src/api/sse.ts (EventSource wrapper)
+                  │
+                  └──► Zustand simulation store (append events, update KPIs in real time)
+```
+
+- All mutations flow through the REST API. The UI never holds simulation state — it mirrors what the API reports.
+- During a running simulation, the SSE stream pushes events. The Zustand store appends them and recomputes derived state (KPI deltas, trend indicators). When the simulation is paused or stopped, the UI queries REST for the final snapshot.
+- Baseline data is held client-side in a separate Zustand store (session-scoped, not persisted).
+
+#### 5.4 First-run experience
+
+A `WelcomeOverlay` component appears when no scenario is loaded:
+- Displays the three built-in scenarios (basic, overload, capacity expansion) as cards with a one-sentence description each.
+- A "Quick start" button loads the basic scenario and auto-runs it for 100 ticks, immediately populating the dashboard.
+- Dismissable; not shown again after the first scenario load within the session.
+
+#### 5.5 Error handling and loading states
+
+- Skeleton loaders (shadcn/ui `Skeleton`) for KPI cards, charts, and tables during initial load and scenario transitions.
+- Toast notifications (shadcn/ui `Toast`) for API errors, with the HTTP status and a human-readable message.
+- Controls are disabled when no scenario is loaded. The price slider and machine-count stepper are disabled during an active run if the API rejects mid-run mutations (depends on Phase 4 design).
+- A connection-lost banner appears if the API becomes unreachable (detected by SSE `onerror` or a periodic health-check ping).
+
+#### 5.6 Accessibility baseline
+
+- All interactive elements are keyboard-navigable (shadcn/ui provides this by default).
+- Charts include `aria-label` attributes with current KPI values for screen readers.
+- Machine states use both color and icon/text labels (not color alone) to convey state.
+- Minimum contrast ratios per WCAG 2.1 AA (Tailwind + shadcn defaults satisfy this).
+
+#### 5.7 Export capability
+
+The export menu in the sidebar provides:
+- **KPI summary as CSV** — downloads a CSV file with columns: KPI name, value, unit, delta-vs-baseline.
+- **Event log as JSON** — calls `GET /api/export/events` (Phase 4) and triggers a browser download of the full event log.
+- **Chart as PNG** — uses Recharts' built-in `toDataURL` export to save the current chart view.
 
 Planned work:
 
-1. Scaffold a TypeScript/React project in `ui/` with `package.json`, `tsconfig.json`, and a bundler (Vite).
-2. Build controls for scenario selection, run/pause/reset/step, price slider, machine-count adjustment, and agent toggle in `ui/src/components/Controls.tsx`.
-3. Build KPI cards (`ui/src/components/KpiCards.tsx`), a time-series chart (`ui/src/components/Charts.tsx`), a machine-status table (`ui/src/components/MachineTable.tsx`), and an event-log panel (`ui/src/components/EventLog.tsx`).
-4. Build a baseline comparison view (`ui/src/components/BaselineCompare.tsx`) showing current-vs-saved deltas for revenue, backlog, lead time, and throughput.
-5. Wire all UI interactions to the REST API from Phase 4 — no direct state coupling.
-6. Add Playwright e2e smoke tests that verify the UI can load a scenario, display KPI data, and reflect a lever change. Add the Playwright test runner to CI. [F5 applied]
+1. Scaffold a TypeScript/React project in `ui/` with Vite. Install Tailwind CSS, shadcn/ui, Recharts, and Zustand. Configure `package.json`, `tsconfig.json`, `vite.config.ts`, `tailwind.config.ts`, `postcss.config.js`, and `index.html`.
+2. Implement the typed API client in `ui/src/api/client.ts` (wrapping `fetch` with typed request/response interfaces aligned to the OpenAPI spec) and the SSE client in `ui/src/api/sse.ts` (wrapping `EventSource` with typed event parsing and reconnection logic).
+3. Implement Zustand stores: `ui/src/stores/simulation.ts` (simulation state, KPIs, event log, connection status) and `ui/src/stores/baselines.ts` (saved baseline snapshots, comparison deltas).
+4. Build the layout shell in `ui/src/App.tsx`: toolbar, two-column main area, collapsible bottom drawer.
+5. Build layout components: `ui/src/components/layout/Toolbar.tsx` (scenario selector, sim controls, speed, agent toggle), `ui/src/components/layout/Sidebar.tsx` (levers panel, baseline comparison, export menu), `ui/src/components/layout/BottomDrawer.tsx` (collapsible event log container with filter and search).
+6. Build dashboard components: `ui/src/components/dashboard/KpiCards.tsx` (four summary cards with trend micro-indicators), `ui/src/components/dashboard/TimeSeriesChart.tsx` (multi-line Recharts KPI chart with zoom/pan), `ui/src/components/dashboard/FactoryFlow.tsx` (SVG directed-graph topology of machines and routing), `ui/src/components/dashboard/MachineTable.tsx` (per-machine state, queue depth, utilization), `ui/src/components/dashboard/JobTracker.tsx` (active/completed jobs table, sortable, filterable, click-to-filter event log).
+7. Build experiment components: `ui/src/components/experiment/BaselineCompare.tsx` (structured comparison with deltas and directional indicators, save/load up to 3 baselines), `ui/src/components/experiment/ExportMenu.tsx` (CSV, JSON, PNG export triggers).
+8. Build the onboarding overlay: `ui/src/components/onboarding/WelcomeOverlay.tsx` (scenario cards, quick-start button).
+9. Build shared components: `ui/src/components/shared/ErrorBoundary.tsx`, `ui/src/components/shared/SkeletonLoader.tsx`, `ui/src/components/shared/Toast.tsx`.
+10. Wire all UI interactions to the REST API and SSE stream from Phase 4 — no direct state coupling. [F5 applied]
+11. Add Playwright e2e smoke tests in `ui/e2e/smoke.spec.ts` that verify: scenario load and KPI display, lever change reflected in KPIs, event log populates during a run, factory flow diagram renders machine nodes, export button produces a downloadable file. Add `ui/playwright.config.ts` and the Playwright test runner to CI.
 
 Files expected:
-- `ui/package.json`, `ui/tsconfig.json`, `ui/vite.config.ts`, `ui/index.html` (new)
+- `ui/package.json`, `ui/tsconfig.json`, `ui/vite.config.ts`, `ui/tailwind.config.ts`, `ui/postcss.config.js`, `ui/index.html` (new)
 - `ui/src/main.tsx`, `ui/src/App.tsx` (new)
-- `ui/src/components/Controls.tsx`, `ui/src/components/KpiCards.tsx`, `ui/src/components/MachineTable.tsx`, `ui/src/components/EventLog.tsx`, `ui/src/components/Charts.tsx`, `ui/src/components/BaselineCompare.tsx` (new)
-- `ui/src/api/client.ts` (new — API client wrapper)
+- `ui/src/api/client.ts` (new — typed API client wrapper)
+- `ui/src/api/sse.ts` (new — EventSource wrapper for live updates)
+- `ui/src/stores/simulation.ts` (new — Zustand store for sim state, KPIs, events)
+- `ui/src/stores/baselines.ts` (new — Zustand store for saved baselines)
+- `ui/src/components/layout/Toolbar.tsx`, `ui/src/components/layout/Sidebar.tsx`, `ui/src/components/layout/BottomDrawer.tsx` (new)
+- `ui/src/components/dashboard/KpiCards.tsx`, `ui/src/components/dashboard/TimeSeriesChart.tsx`, `ui/src/components/dashboard/FactoryFlow.tsx`, `ui/src/components/dashboard/MachineTable.tsx`, `ui/src/components/dashboard/JobTracker.tsx` (new)
+- `ui/src/components/experiment/BaselineCompare.tsx`, `ui/src/components/experiment/ExportMenu.tsx` (new)
+- `ui/src/components/onboarding/WelcomeOverlay.tsx` (new)
+- `ui/src/components/shared/ErrorBoundary.tsx`, `ui/src/components/shared/SkeletonLoader.tsx`, `ui/src/components/shared/Toast.tsx` (new)
 - `ui/e2e/smoke.spec.ts` (new — Playwright tests)
 - `ui/playwright.config.ts` (new)
 
@@ -210,6 +350,11 @@ Acceptance criteria:
 - A user can inspect the event stream and trace why a KPI changed.
 - Baseline-versus-current comparison is visible for at least revenue, backlog, lead time, and throughput.
 - Playwright e2e smoke tests pass in CI, verifying scenario load and KPI display.
+- KPI cards and charts update live during a running simulation via SSE without requiring manual refresh.
+- The factory flow diagram visually distinguishes idle, busy, and offline machines and shows queue depth.
+- A first-time user can reach a populated dashboard within two clicks from the welcome screen.
+- All interactive controls are keyboard-accessible.
+- KPI data and event logs can be exported for external analysis (CSV, JSON, PNG).
 
 ---
 
@@ -304,17 +449,35 @@ Acceptance criteria:
 
 ## 6. Validation Plan
 
+### 6.1 Simulation engine and API (Phases 1–4)
+
 1. Clone the repository into a clean environment and follow `README.md` to run the native development path.
 2. Run `cargo fmt --check`, `cargo clippy`, `cargo test` and verify zero failures.
 3. Load the baseline scenario via CLI and confirm that repeated runs with the same seed produce byte-identical output.
 4. Run the overload scenario at low price and verify that backlog and lead time rise relative to the baseline scenario.
 5. Increase price through the REST API and verify that demand falls and backlog pressure eases.
 6. Enable the `SalesAgent`, rerun the overload scenario, and confirm that at least one agent intervention is logged and the target KPI improves relative to the fixed-price control.
-7. Open the UI, load a scenario, adjust a lever, and confirm the KPI dashboard reflects the change consistently with the event log.
-8. Compare a baseline run versus a modified run in the UI and confirm deltas are visible for revenue, backlog, lead time, and throughput.
-9. Run the containerized stack via `docker compose up --build` and confirm the same scenario produces consistent KPI behavior.
-10. Run benchmarks via `cargo bench` and record baseline throughput/latency numbers.
-11. Review the event log for a sample run and confirm pricing actions, order creation, job completion, and revenue events form a coherent causal chain.
+7. Verify the SSE endpoint (`GET /api/events/stream`) streams events to a connected client during a running simulation and stops cleanly when the simulation pauses or ends.
+8. Verify that `/api/factory/topology`, `/api/jobs`, and `/api/export/events` return well-typed JSON responses consistent with the OpenAPI spec at `/api-docs/openapi.json`.
+
+### 6.2 Experiment console UI (Phase 5)
+
+9. Open the UI and confirm the welcome overlay appears with scenario cards and a quick-start button.
+10. Load a scenario via the welcome overlay's quick-start button and confirm the dashboard populates within two clicks.
+11. Adjust the price slider and confirm the KPI cards and time-series chart reflect the change after the next simulation step.
+12. Run the simulation and confirm that KPI cards, the time-series chart, and the event log update live via SSE without manual refresh.
+13. Switch to the factory flow tab and confirm that machine nodes show state (idle/busy/offline) with both color and icon/text, and that queue depth is visible on edges or nodes.
+14. Switch to the jobs tab and confirm that active and completed jobs are listed with correct fields. Click a job and confirm the event log filters to that job's events.
+15. Save a baseline, modify a lever, rerun, and confirm the baseline comparison panel shows deltas with directional indicators for revenue, backlog, lead time, and throughput.
+16. Use the export menu to download KPI summary as CSV, event log as JSON, and chart as PNG. Verify each file is valid and contains expected data.
+17. Navigate the entire UI using only the keyboard (Tab, Enter, Space, Escape) and confirm all interactive controls are reachable and operable.
+18. Playwright e2e smoke tests pass in CI, covering: scenario load, KPI display, lever change, event log population, factory flow rendering, and export.
+
+### 6.3 Deployment and performance (Phase 6)
+
+19. Run the containerized stack via `docker compose up --build` and confirm the same scenario produces consistent KPI behavior.
+20. Run benchmarks via `cargo bench` and record baseline throughput/latency numbers.
+21. Review the event log for a sample run and confirm pricing actions, order creation, job completion, and revenue events form a coherent causal chain.
 
 ---
 
@@ -787,61 +950,6 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 
 ---
 
-### Re-sweep 2 (post-F10–F19 application)
-
-| Dimension | Result |
-|-----------|--------|
-| **testing** | F24 found — minor; `sim-agents` lacks unit tests. Applied above. |
-| **correctness** | F20 found — major; Dockerfile references wrong binary. F22 found — minor; arch doc repo structure stale. Applied above. |
-| **gaps** | F21 found — minor; no CLI framework specified. F23 found — major; Axum/Tokio deps undeclared. Applied above. |
-| **best-practices** | Pass — Rust workspace conventions, CI setup, doc structure all consistent with ecosystem norms. |
-| **plan-hygiene** | Pass — phases are self-contained after dependency declarations; acceptance criteria are testable. |
-
-### Re-sweep 3 (post-F20–F24 application)
-
-All five dimensions re-swept against the updated plan:
-
-| Dimension | Result |
-|-----------|--------|
-| **testing** | Pass — every crate with logic has unit tests (`sim-core`, `sim-factory`, `sim-economy`, `sim-agents`); integration tests cover API and agent flows; property tests use `proptest`; UI has Playwright e2e; benchmarks use Criterion. Dev-dependencies explicitly declared. |
-| **correctness** | Pass — §3.1 matches actual repo (5 files); `docs/vision.md` and `docs/architecture-overview.md` referenced as authoritative; no root `ARCHITECTURE.md`; Dockerfile builds `sim-cli`; `sim-api` is a library; benchmarks in `crates/sim-core/benches/`; repo structure diagram update planned. |
-| **gaps** | Pass — scenario format (TOML), error strategy (`SimError`), REST framework (Axum+Tokio with deps), CLI framework (`clap`), observability (`tracing`), KPI boundary, and dependency declarations are all specified. |
-| **best-practices** | Pass — Rust workspace conventions, CI (fmt/clippy/test), separated dev-dependencies, docs referencing existing authoritative files, Playwright for UI tests. |
-| **plan-hygiene** | Pass — phases are self-contained; dependencies declared before use; acceptance criteria testable within each phase; no ambiguous choices remain; all applied findings preserved with context. |
-
-**No critical or major findings remain. Iteration complete.**
-
-### Summary
-
-| # | Title | Severity | Dimension | Depends on |
-|---|-------|----------|-----------|------------|
-| F1 | No scenario fixture format specified | major | gaps | — |
-| F2 | KPI module split without clear boundary | major | plan-hygiene | — |
-| F3 | REST framework dependency not specified | minor | gaps | — |
-| F4 | No error handling strategy defined | major | gaps | — |
-| F5 | UI testing strategy absent | minor | testing | — |
-| F6 | Scenario format choice propagates to Phase 1 deps | minor | correctness | F1 |
-| F7 | No deterministic RNG strategy specified | major | correctness | — |
-| F8 | Postgres scope consistency | minor | plan-hygiene | — |
-| F9 | Phase 3 format reference inconsistency | minor | plan-hygiene | F1 |
-| F10 | Verified current state claims are stale — repo has 5 files, not 3 | critical | correctness | — |
-| F11 | Plan ignores existing `docs/vision.md` entirely | major | correctness | — |
-| F12 | `ARCHITECTURE.md` at root duplicates `docs/architecture-overview.md` | major | correctness | F10 |
-| F13 | Property test framework unspecified in dependencies | major | testing | — |
-| F14 | No `sim-factory` unit tests defined | major | testing | — |
-| F15 | No `sim-economy` unit tests defined | major | testing | — |
-| F16 | `sim-api` lib vs binary ambiguity | minor | correctness | — |
-| F17 | No observability / structured logging strategy | major | gaps | — |
-| F18 | Benchmark crate location is ambiguous | minor | plan-hygiene | — |
-| F19 | `proptest` dev-dependency ownership unclear | minor | plan-hygiene | F13 |
-| F20 | Dockerfile should build `sim-cli`, not `sim-api` | major | correctness | F16 |
-| F21 | No CLI argument parsing framework specified | minor | gaps | — |
-| F22 | `docs/architecture-overview.md` repo structure stale | minor | correctness | F18 |
-| F23 | Phase 4 Axum/Tokio dependencies undeclared | major | gaps | — |
-| F24 | No `sim-agents` unit tests defined | minor | testing | — |
-
----
-
 ### F25: No industry standards alignment strategy [Applied]
 <!-- severity: major -->
 <!-- dimension: gaps -->
@@ -877,53 +985,6 @@ All five dimensions re-swept against the updated plan:
 
 ---
 
-### Re-sweep 4 (post-F25–F26 application)
-
-All five dimensions re-swept against the updated plan:
-
-| Dimension | Result |
-|-----------|--------|
-| **testing** | Pass — no new test gaps from standards changes (OpenAPI spec is a served endpoint, testable via existing API smoke tests). |
-| **correctness** | Pass — §3.1 updated to 6 files including `docs/standards-alignment.md`. Phase 2 typed IDs and scenario schema reference ISA-95 mapping. Phase 4 includes `utoipa` dependency. `docs/architecture-overview.md` references standards. §8 Out of Scope and §9 Future Directions enriched with standards context. |
-| **gaps** | Pass — standards alignment strategy documented; ISA-95 naming, DES methodology, and OpenAPI covered in MVP; remaining standards explicitly deferred with rationale. |
-| **best-practices** | Pass — OpenAPI spec generation follows REST API best practices; ISA-95 doc-comments align with manufacturing domain conventions without overcomplicating code. |
-| **plan-hygiene** | Pass — standards changes are minimal and localized (naming guidance, one dependency, doc-comments); no new phases, no scope creep; Future Directions and Out of Scope are consistent with the tiered strategy. |
-
-**No critical or major findings remain. Iteration complete.**
-
-### Summary
-
-| # | Title | Severity | Dimension | Depends on |
-|---|-------|----------|-----------|------------|
-| F1 | No scenario fixture format specified | major | gaps | — |
-| F2 | KPI module split without clear boundary | major | plan-hygiene | — |
-| F3 | REST framework dependency not specified | minor | gaps | — |
-| F4 | No error handling strategy defined | major | gaps | — |
-| F5 | UI testing strategy absent | minor | testing | — |
-| F6 | Scenario format choice propagates to Phase 1 deps | minor | correctness | F1 |
-| F7 | No deterministic RNG strategy specified | major | correctness | — |
-| F8 | Postgres scope consistency | minor | plan-hygiene | — |
-| F9 | Phase 3 format reference inconsistency | minor | plan-hygiene | F1 |
-| F10 | Verified current state claims are stale — repo has 5 files, not 3 | critical | correctness | — |
-| F11 | Plan ignores existing `docs/vision.md` entirely | major | correctness | — |
-| F12 | `ARCHITECTURE.md` at root duplicates `docs/architecture-overview.md` | major | correctness | F10 |
-| F13 | Property test framework unspecified in dependencies | major | testing | — |
-| F14 | No `sim-factory` unit tests defined | major | testing | — |
-| F15 | No `sim-economy` unit tests defined | major | testing | — |
-| F16 | `sim-api` lib vs binary ambiguity | minor | correctness | — |
-| F17 | No observability / structured logging strategy | major | gaps | — |
-| F18 | Benchmark crate location is ambiguous | minor | plan-hygiene | — |
-| F19 | `proptest` dev-dependency ownership unclear | minor | plan-hygiene | F13 |
-| F20 | Dockerfile should build `sim-cli`, not `sim-api` | major | correctness | F16 |
-| F21 | No CLI argument parsing framework specified | minor | gaps | — |
-| F22 | `docs/architecture-overview.md` repo structure stale | minor | correctness | F18 |
-| F23 | Phase 4 Axum/Tokio dependencies undeclared | major | gaps | — |
-| F24 | No `sim-agents` unit tests defined | minor | testing | — |
-| F25 | No industry standards alignment strategy | major | gaps | — |
-| F26 | No OpenAPI specification for REST API | minor | best-practices | F25 |
-
----
-
 ### F27: KPIs not aligned with ISO 22400; no Romanian/EU adoption context [Applied]
 <!-- severity: major -->
 <!-- dimension: gaps -->
@@ -942,17 +1003,153 @@ All five dimensions re-swept against the updated plan:
 
 ---
 
-### Re-sweep 5 (post-F27 application)
+### F28: No batch/process manufacturing extensibility; gin distillery use case unaddressed [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
 
-All five dimensions re-swept against the updated plan and standards document:
+**Context:** The MVP plan models discrete manufacturing only (jobs with unit counts advancing through machine routing steps). A concrete use case — gin distillery production — requires batch/process manufacturing: material transformation, volume-based production, recipes with yield/loss, time-based reactions, specialized equipment (stills, tanks), multi-level inventory, and multi-component cost structures. None of these are addressed in Phases 1–6, and the MVP typed IDs, machine model, and routing model could block future extension if designed too narrowly.
+
+**Issue:** Without a documented extensibility path, the MVP risks designing typed IDs as unit-only, machines as concurrency-only (no volume capacity), and routing steps as instantaneous (no duration). These choices would require significant restructuring to support batch/process manufacturing. The gin distillery use case is the first concrete scenario that validates Arcogine's generality beyond discrete manufacturing.
+
+**Recommendation:** Add Phase 7 (post-MVP) documenting the full batch/process manufacturing extension with gin distillery as the reference scenario. Add design-for notes in Phase 2 typed IDs (quantity enum supporting units and volumes, reserved `BatchId`), machine definitions (optional volume capacity, setup/cleaning time), and routing steps (generic duration). Update Out of Scope and Future Directions. Update `docs/architecture-overview.md` with extensibility section.
+
+**Choices:**
+- [x] Add Phase 7 with design-for notes in Phase 2, keeping MVP scope unchanged
+- [ ] Merge batch/process manufacturing into the MVP (excessive scope growth)
+- [ ] Defer entirely without documenting design-for constraints (risks MVP design blocking extension)
+
+---
+
+### F29: No error-path or negative tests planned [Applied]
+<!-- severity: major -->
+<!-- dimension: testing -->
+
+**Context:** Phase 2 acceptance criteria (line 122) say "invalid state transitions are rejected with `SimError` variants." Phase 4 acceptance criteria (line 182) say "Invalid commands are rejected with typed errors and do not corrupt simulation state." No test file in any phase explicitly targets error paths — all planned tests (`determinism.rs`, `event_ordering.rs`, `scenario_loading.rs`, `machine_state.rs`, `job_routing.rs`, `scenario_baselines.rs`, `demand_model.rs`, `pricing.rs`, `api_smoke.rs`, `agent_integration.rs`, `sales_agent.rs`) are named for happy-path validation.
+
+**Issue:** Acceptance criteria that mention error handling are untestable if no tests exercise invalid inputs, unknown IDs, out-of-order events, or malformed commands. A coding agent may skip error-path logic entirely if no test demands it.
+
+**Recommendation:** Add explicit error-path test expectations to Phase 2 and Phase 4. Phase 2: `crates/sim-core/tests/event_ordering.rs` and `crates/sim-factory/tests/machine_state.rs` should include cases for invalid state transitions, unknown IDs, and out-of-order events. Phase 4: `crates/sim-api/tests/api_smoke.rs` should include cases for malformed requests, invalid scenario IDs, and commands on non-running simulations. No new test files needed — extend existing ones.
+
+**Choices:**
+- [x] Add error-path test expectations to Phase 2 and Phase 4 test descriptions
+- [ ] Create separate `error_paths.rs` test files
+- [ ] Defer error-path testing to post-MVP
+
+---
+
+### F30: No CORS configuration for API–UI communication [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** Phase 4 creates an Axum HTTP API, and Phase 5 creates a React/Vite UI that calls this API. In development, Vite serves the UI on a different port than the Axum API. No phase mentions CORS (Cross-Origin Resource Sharing) configuration.
+
+**Issue:** Without CORS headers, the browser will block all API requests from the UI. The React app will not function during development or in the containerized setup (where API and UI are separate services at different origins). This is a blocking issue for Phase 5.
+
+**Recommendation:** Add CORS middleware configuration to Phase 4 task 1 using `tower-http`'s `CorsLayer`. Specify permissive CORS for development (allow all origins) with a note to restrict in production. `tower-http` is already a dependency (F17/F23 applied).
+
+**Choices:**
+- [x] Add CORS via `tower-http::cors::CorsLayer` in Phase 4 task 1
+- [ ] Use Vite proxy to avoid CORS in development (still need CORS in production)
+- [ ] Defer to Phase 5 when the UI is built
+
+---
+
+### F31: Workspace `Cargo.toml` missing `resolver = "2"` specification [Applied]
+<!-- severity: major -->
+<!-- dimension: best-practices -->
+
+**Context:** Phase 1 task 1 (line 72) creates a workspace root `Cargo.toml`. The plan does not specify the Rust edition or the resolver version. Since Rust edition 2021 (the current default and the edition any new project in 2026 would use), virtual workspaces require `resolver = "2"` to be explicitly set in the workspace `Cargo.toml`. Without it, Cargo uses resolver 1, which has incorrect feature unification behavior in workspaces.
+
+**Issue:** A workspace `Cargo.toml` without `resolver = "2"` will produce Cargo warnings and may cause subtle dependency resolution bugs. This is a well-known Rust workspace gotcha that a coding agent may miss if not instructed.
+
+**Recommendation:** Phase 1 task 1 should specify that the workspace `Cargo.toml` includes `resolver = "2"` (or the workspace members have `edition = "2021"` which implies resolver 2). Also specify the Rust edition (`edition = "2021"` in each crate) and add a `rust-toolchain.toml` to pin the Rust version for reproducibility.
+
+**Choices:**
+- [x] Add `resolver = "2"`, `edition = "2021"`, and `rust-toolchain.toml` to Phase 1 task 1
+- [ ] Assume the coding agent knows Rust 2021 conventions
+- [ ] Skip `rust-toolchain.toml` and only specify resolver
+
+---
+
+### F32: Re-sweep artifacts and duplicate summary tables clutter the plan for coding agent execution [Applied]
+<!-- severity: major -->
+<!-- dimension: plan-hygiene -->
+
+**Context:** The Findings section contains five re-sweep reports (lines 790–812, 800–812, 880–892, 945–957, 1011–1023), two separate `### Summary` tables (lines 816–842 and 896–924), and `[Applied]` tags on every finding title (F1–F28). These are review-process artifacts from the iteration that produced the findings.
+
+**Issue:** A coding agent executing the plan will encounter ~230 lines of review-process narrative that provides no implementation guidance. The two summary tables are nearly identical (the second is a superset of the first). The `[Applied]` tags and `<!-- severity / dimension -->` HTML comments are useful for the reviewer but noise for the executor. The re-sweep reports say "pass" for everything — they confirm no issues but add no information.
+
+**Recommendation:** Consolidate the findings section: keep one summary table (the final, most complete one), remove the intermediate re-sweep reports, and keep the `[Applied]` tags since they signal which findings were already incorporated into the plan text. The severity/dimension HTML comments should stay — they're invisible in rendered markdown and useful metadata.
+
+**Choices:**
+- [x] Remove intermediate re-sweep reports and the first (subset) summary table; keep final summary and all finding details
+- [ ] Remove all findings except the summary table (loses context)
+- [ ] Leave as-is (acceptable but noisy)
+
+---
+
+### F33: `§7 Implementation Order` is redundant with `§5 Phased Plan`
+<!-- severity: minor -->
+<!-- dimension: plan-hygiene -->
+
+**Context:** `§7 Implementation Order` (lines 321–329) restates the phase sequence that is already implicit in `§5 Phased Plan` (phases are numbered 1–7 and each phase's introduction states its prerequisites). The only additional content is the "Phases 1–N acceptance criteria remain passing" note on each item.
+
+**Issue:** A coding agent reading both sections gets the same information twice. The "acceptance criteria remain passing" constraint is important but could be stated once as a general rule rather than repeated seven times.
+
+**Recommendation:** Replace the per-phase repetition in §7 with a single general rule: "Each phase must leave all prior phases' acceptance criteria passing. Phases are executed in order (1 through 7); no phase may begin until its predecessor's acceptance criteria are met." Then §7 becomes a brief statement rather than a duplicate list.
+
+**Choices:**
+- [x] Condense §7 to a general rule and a brief ordered list
+- [ ] Remove §7 entirely and add the "prior phases pass" rule to §5's introduction
+- [ ] Leave as-is
+
+---
+
+### F34: Phase 4 API smoke tests need `tokio` test runtime
+<!-- severity: minor -->
+<!-- dimension: testing -->
+
+**Context:** Phase 4 task 5 (line 168) plans `crates/sim-api/tests/api_smoke.rs` which will test Axum routes. Axum tests require `#[tokio::test]` to run async handlers. Phase 4 task 1 (line 164) adds `tokio` to `sim-api/Cargo.toml` under `[dependencies]`, but integration tests in the `tests/` directory also need `tokio` available — which it is, since it's a direct dependency. However, if the tests use `reqwest` or a test client for HTTP-level testing, that dependency is not listed.
+
+**Issue:** If API smoke tests use an HTTP client (e.g., `reqwest`, `hyper::Client`, or Axum's `TestClient` from `axum-test`) to make actual HTTP requests, those crates need to be in `[dev-dependencies]`. If tests use Axum's `Router` directly via `tower::ServiceExt`, no additional deps are needed. The plan doesn't specify the testing approach.
+
+**Recommendation:** Specify that Phase 4 API smoke tests use Axum's `tower::ServiceExt` (`oneshot` method) to test routes without starting an HTTP server. This avoids additional dependencies and port allocation in tests. If full HTTP-level tests are desired, add `reqwest` as a dev-dependency.
+
+**Choices:**
+- [x] Specify `tower::ServiceExt`-based route testing in Phase 4 (no extra deps)
+- [ ] Add `reqwest` as dev-dependency for HTTP-level testing
+- [ ] Leave unspecified
+
+---
+
+### F35: No Rust edition or MSRV specified
+<!-- severity: minor -->
+<!-- dimension: best-practices -->
+<!-- Depends on: F31 choice 1 -->
+
+**Context:** No phase specifies the Rust edition for crate `Cargo.toml` files or a minimum supported Rust version (MSRV). The plan uses features (async/await, edition 2021 paths) that require at least Rust 1.56 (edition 2021), and dependencies like `axum` may require newer versions.
+
+**Issue:** Without an edition and MSRV, different contributors may target different Rust versions, causing CI failures or incompatible code. Pinning the toolchain ensures reproducibility — a core plan value.
+
+**Recommendation:** Covered by F31 — `rust-toolchain.toml` and `edition = "2021"` in Phase 1.
+
+**Choices:**
+- [x] Covered by F31
+- [ ] Skip MSRV pinning
+
+---
+
+### Re-sweep 7 (post-F29–F35 application)
+
+All five dimensions re-swept against the updated plan:
 
 | Dimension | Result |
 |-----------|--------|
-| **testing** | Pass — ISO 22400 KPI alignment is naming/doc-comments only; no test changes needed. Existing Phase 3 scenario tests already validate the KPI quantities. |
-| **correctness** | Pass — §3.2 updated to reference ISO 22400. Phase 3 task 4 references ISO 22400 KPI identifiers. `docs/standards-alignment.md` includes Regional Adoption Context, ISO 22400 Tier 1 mapping, and all new Tier 2/3 entries. Summary table includes Romanian transposition column. |
-| **gaps** | Pass — ISO 22400 (manufacturing KPIs), ISO 9001 (quality management), ISO 10303 (product data), GDPR, and industrial protocols all placed in appropriate tiers with clear MVP/post-MVP boundaries. |
-| **best-practices** | Pass — KPI doc-comments referencing ISO 22400 identifiers follow manufacturing software conventions. Regional context section establishes market positioning. |
-| **plan-hygiene** | Pass — no new phases; one task updated (Phase 3.4); standards doc is self-contained and cross-referenced from plan. |
+| **testing** | Pass — error-path tests added to Phase 2 and Phase 4 descriptions (F29); API smoke test approach specified as `tower::ServiceExt` (F34); all crates with logic have unit tests; property tests, e2e tests, and benchmarks all planned. |
+| **correctness** | Pass — §3.1 matches actual repo (6 files); all doc references verified against `docs/vision.md`, `docs/architecture-overview.md`, `docs/standards-alignment.md`; ISA-95 mappings match standards doc; Phase 4 deps include `tower-http` with `cors` feature; workspace `Cargo.toml` specifies `resolver = "2"`; `rust-toolchain.toml` added to Phase 1. |
+| **gaps** | Pass — CORS configured for API–UI communication (F30); error handling strategy, scenario format, REST framework, CLI framework, observability, KPI boundary, and all dependency declarations specified. No new functionality gaps. |
+| **best-practices** | Pass — `resolver = "2"` and `edition = "2021"` specified (F31); `rust-toolchain.toml` pins Rust version; CI includes fmt/clippy/test; dev-dependencies separated; docs reference existing authoritative files. |
+| **plan-hygiene** | Pass — intermediate re-sweep reports and duplicate summary tables removed (F32); findings section consolidated; phases are self-contained; acceptance criteria testable; `[Applied]` tags preserved as status indicators. F33 (§7 redundancy) is minor and left as recommendation. |
 
 **No critical or major findings remain. Iteration complete.**
 
@@ -987,37 +1184,11 @@ All five dimensions re-swept against the updated plan and standards document:
 | F25 | No industry standards alignment strategy | major | gaps | — |
 | F26 | No OpenAPI specification for REST API | minor | best-practices | F25 |
 | F27 | KPIs not aligned with ISO 22400; no Romanian/EU context | major | gaps | F25 |
-| F28 | No batch/process manufacturing path; gin distillery use case unaddressed | major | gaps | — |
-
----
-
-### F28: No batch/process manufacturing extensibility; gin distillery use case unaddressed [Applied]
-<!-- severity: major -->
-<!-- dimension: gaps -->
-
-**Context:** The MVP plan models discrete manufacturing only (jobs with unit counts advancing through machine routing steps). A concrete use case — gin distillery production — requires batch/process manufacturing: material transformation, volume-based production, recipes with yield/loss, time-based reactions, specialized equipment (stills, tanks), multi-level inventory, and multi-component cost structures. None of these are addressed in Phases 1–6, and the MVP typed IDs, machine model, and routing model could block future extension if designed too narrowly.
-
-**Issue:** Without a documented extensibility path, the MVP risks designing typed IDs as unit-only, machines as concurrency-only (no volume capacity), and routing steps as instantaneous (no duration). These choices would require significant restructuring to support batch/process manufacturing. The gin distillery use case is the first concrete scenario that validates Arcogine's generality beyond discrete manufacturing.
-
-**Recommendation:** Add Phase 7 (post-MVP) documenting the full batch/process manufacturing extension with gin distillery as the reference scenario. Add design-for notes in Phase 2 typed IDs (quantity enum supporting units and volumes, reserved `BatchId`), machine definitions (optional volume capacity, setup/cleaning time), and routing steps (generic duration). Update Out of Scope and Future Directions. Update `docs/architecture-overview.md` with extensibility section.
-
-**Choices:**
-- [x] Add Phase 7 with design-for notes in Phase 2, keeping MVP scope unchanged
-- [ ] Merge batch/process manufacturing into the MVP (excessive scope growth)
-- [ ] Defer entirely without documenting design-for constraints (risks MVP design blocking extension)
-
----
-
-### Re-sweep 6 (post-F28 application)
-
-All five dimensions re-swept against the updated plan, architecture document, and standards document:
-
-| Dimension | Result |
-|-----------|--------|
-| **testing** | Pass — Phase 7 includes comprehensive test plan (unit tests for batch/material, scenario acceptance tests for gin distillery, property tests for material conservation). MVP test strategy unchanged. |
-| **correctness** | Pass — Phase 7 is explicitly post-MVP; Phases 1–6 unchanged except for two design-for notes in Phase 2 tasks 1 and 5. Implementation Order updated to include Phase 7. Out of Scope lists batch/process items as deferred to Phase 7. `docs/architecture-overview.md` updated with Separation of Concerns table (new Material Layer), Repository Structure (`sim-material` crate), and Extensibility section. |
-| **gaps** | Pass — Gin distillery use case fully addressed: batch entities, material transformation, recipes/BOM, inventory, equipment specialization, multi-stage cost, supply chain, scenario fixtures, and tests. Explicit deferrals for quality metrics, regulatory compliance, multi-site, and aging. |
-| **best-practices** | Pass — Design-for notes follow the tiered strategy (minimal MVP changes that preserve extension paths). Phase 7 ISA-95 correspondences maintained (Material Definition, Material Lot, Bill of Material). |
-| **plan-hygiene** | Pass — Phase 7 follows the same template as Phases 1–6 (objective, planned work, files expected, acceptance criteria, explicit exclusions). Future Directions expanded consistently. Summary table updated. |
-
-**No critical or major findings remain. Iteration complete.**
+| F28 | No batch/process manufacturing path; gin distillery unaddressed | major | gaps | — |
+| F29 | No error-path or negative tests planned | major | testing | — |
+| F30 | No CORS configuration for API–UI communication | major | gaps | — |
+| F31 | Workspace `Cargo.toml` missing `resolver = "2"` | major | best-practices | — |
+| F32 | Re-sweep artifacts and duplicate summary tables | major | plan-hygiene | — |
+| F33 | `§7 Implementation Order` redundant with `§5` | minor | plan-hygiene | — |
+| F34 | Phase 4 API smoke tests need `tokio` test runtime | minor | testing | — |
+| F35 | No Rust edition or MSRV specified | minor | best-practices | F31 |

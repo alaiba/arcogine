@@ -101,6 +101,64 @@ Key design-for decisions in the MVP:
 
 Phase 7 introduces a `sim-material` crate (recipes, inventory, material transformation) and extends `sim-factory` and `sim-economy` with batch entities, equipment specialization, and multi-component cost structures. The reference scenario is a gin distillery. See `devel/Original-plan.md` Phase 7 for the detailed plan.
 
+## UI Architecture
+
+The experiment console (`ui/`) is a React + TypeScript single-page application built with Vite. It acts as a read-mostly client: all simulation state lives in the Rust backend, and the UI mirrors it via the REST API and a Server-Sent Events (SSE) stream.
+
+### Layout
+
+The UI uses a three-region layout optimized for a single-monitor experiment workflow:
+
+| Region | Content | Width |
+|--------|---------|-------|
+| **Toolbar** (top) | Scenario selector, sim controls (run/pause/step/reset), speed multiplier, agent toggle | Full width |
+| **Main area** (center-left) | KPI summary cards, time-series chart, tabbed view (factory flow / machine table / job tracker) | ~70% |
+| **Sidebar** (center-right) | Control levers (price, machine count), baseline comparison, export menu | ~30% |
+| **Bottom drawer** (collapsible) | Chronological event log with type filter and search | Full width |
+
+A welcome overlay appears on first load, presenting the built-in scenarios as cards with a quick-start option.
+
+### State Management
+
+Client state is managed by two Zustand stores:
+
+- **`simulation`** — current scenario, simulation status, KPI snapshots, event log buffer, machine states, job list, connection health. Updated by REST responses and SSE events.
+- **`baselines`** — up to 3 saved baseline snapshots (KPI values + scenario config) for comparison. Session-scoped, not persisted.
+
+Components subscribe to store slices and re-render only on relevant changes.
+
+### Data Flow
+
+```text
+Axum API (Phase 4)
+  │
+  ├── REST (request/response)
+  │     └──► api/client.ts ──► Zustand stores ──► React components
+  │
+  └── SSE (GET /api/events/stream, server-push)
+        └──► api/sse.ts ──► Zustand simulation store ──► React components
+```
+
+- **REST** handles commands (load scenario, change price, toggle agent) and queries (get KPIs, get topology, list jobs). The typed API client generates request/response types aligned to the OpenAPI spec produced by Phase 4's `utoipa`.
+- **SSE** delivers simulation events in real time during a running simulation. The EventSource wrapper parses typed events and appends them to the store. On pause or stop, the UI falls back to a final REST snapshot.
+- **No direct state coupling** — the UI never holds or computes simulation state. It reflects what the API reports.
+
+### Technology Choices
+
+| Concern | Choice | Rationale |
+|---------|--------|-----------|
+| Component library | Tailwind CSS + shadcn/ui | Composable, dark-mode ready, WCAG 2.1 AA accessible by default |
+| Charting | Recharts | React-native SVG charts with TypeScript support and built-in PNG export |
+| State management | Zustand | Minimal boilerplate, works well with both polling and SSE patterns |
+| E2E testing | Playwright | Browser automation for smoke tests, integrated into CI |
+
+### Accessibility
+
+- All interactive elements are keyboard-navigable (provided by shadcn/ui primitives).
+- Charts carry `aria-label` attributes with current KPI values.
+- Machine states use both color and icon/text labels — color is never the sole indicator.
+- Contrast ratios meet WCAG 2.1 AA (Tailwind + shadcn defaults).
+
 ## Repository Structure
 
 ```text
@@ -109,17 +167,28 @@ arcogine/
 
   crates/
     sim-core/             # Event engine, scheduler, logging, KPIs, scenario loader
+      benches/            # Criterion benchmarks (scheduler, scenario runtime)
     sim-factory/          # Machines, jobs, routing, queues
     sim-material/         # Recipes, inventory, material transformation (Phase 7)
     sim-economy/          # Pricing, demand, revenue, cost, supply
     sim-agents/           # Agent trait and implementations
     sim-types/            # Typed IDs, shared structs, error types
-    sim-api/              # HTTP API (Axum)
-    sim-cli/              # CLI entrypoint
+    sim-api/              # HTTP API (Axum), SSE stream, OpenAPI spec
+    sim-cli/              # CLI entrypoint (headless + server modes)
 
   ui/                     # React/TypeScript experiment console
+    src/
+      api/                # Typed REST client, SSE EventSource wrapper
+      stores/             # Zustand stores (simulation, baselines)
+      components/
+        layout/           # Toolbar, Sidebar, BottomDrawer
+        dashboard/        # KpiCards, TimeSeriesChart, FactoryFlow, MachineTable, JobTracker
+        experiment/       # BaselineCompare, ExportMenu
+        onboarding/       # WelcomeOverlay
+        shared/           # ErrorBoundary, SkeletonLoader, Toast
+    e2e/                  # Playwright smoke tests
+
   examples/               # TOML scenario files
   docs/                   # Project documentation
-  benches/                # Criterion benchmarks
   .github/                # CI workflows
 ```

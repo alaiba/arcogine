@@ -1,2 +1,2 @@
 # arcogine
-Simulating the systems behind production, markets, and decisions.
+Arcogine is a deterministic simulation engine for factory systems, economic dynamics, and agent-driven decision making.

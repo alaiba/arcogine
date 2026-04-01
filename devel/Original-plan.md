@@ -32,7 +32,7 @@
 
 ### 3.1 Repository baseline
 
-The repository contains six files: `README.md` (3 lines, project description at `README.md:2`), `LICENSE` (Apache 2.0), `devel/Original-plan.md` (planning notes), `docs/vision.md` (project identity, core loop, naming, and long-term directions), `docs/architecture-overview.md` (design philosophy, technology stack, crate structure, agent architecture, and DES model), and `docs/standards-alignment.md` (industry standards mapping with tiered alignment strategy: ISA-95, DES, RAMI 4.0, AAS, OPC UA, OpenAPI, and others). There is no `Cargo.toml`, no source code, no tests, no CI workflows, no Docker files, and no `.gitignore`. The project is greenfield for code, but architectural, vision, and standards documentation already exists and is authoritative. [F10, F11, F25 applied]
+The repository contains six files: `README.md` (3 lines, project description at `README.md:2`), `LICENSE` (Apache 2.0), `devel/Original-plan.md` (the phased MVP implementation plan), `docs/vision.md` (project identity, core loop, naming, and long-term directions), `docs/architecture-overview.md` (design philosophy, technology stack, crate structure, agent architecture, and DES model), and `docs/standards-alignment.md` (industry standards mapping with tiered alignment strategy: ISA-95, DES, RAMI 4.0, AAS, OPC UA, OpenAPI, and others). There is no `Cargo.toml`, no source code, no tests, no CI workflows, no Docker files, and no `.gitignore`. The project is greenfield for code, but architectural, vision, and standards documentation already exists and is authoritative. [F10, F11, F25 applied]
 
 ### 3.2 Architectural direction
 
@@ -69,7 +69,17 @@ Objective: Create a GitHub-ready project skeleton that is reproducible, modular,
 
 Planned work:
 
-1. Create a Cargo workspace root `Cargo.toml` with `resolver = "2"` and crate directories for `sim-core`, `sim-factory`, `sim-economy`, `sim-agents`, `sim-types`, `sim-cli`, and `sim-api`. Each crate gets a minimal `Cargo.toml` (with `edition = "2021"`) and `src/lib.rs` (or `src/main.rs` for binaries). Add a `rust-toolchain.toml` at the workspace root pinning the Rust stable channel for reproducible builds. Include `serde` (with `derive` feature) and `toml` as dependencies in `sim-core` and `sim-types` for scenario serialization. Include `rand` and `rand_chacha` in `sim-core` for deterministic RNG. Include `tracing` and `tracing-subscriber` in `sim-core` for structured application logging. Under `[dev-dependencies]` in `sim-core`, include `proptest` for property testing and `criterion` for benchmarks (with `[[bench]]` targets). No existing source files to modify. [F6, F7, F13, F17, F18, F19, F31 applied]
+1. Create a Cargo workspace root `Cargo.toml` with `resolver = "2"` and crate directories for `sim-core`, `sim-factory`, `sim-economy`, `sim-agents`, `sim-types`, `sim-cli`, and `sim-api`. Each crate gets a minimal `Cargo.toml` (with `edition = "2021"`) and `src/lib.rs` (or `src/main.rs` for binaries). Add a `rust-toolchain.toml` at the workspace root pinning the Rust stable channel for reproducible builds. Include `serde` (with `derive` feature) and `toml` as dependencies in `sim-core` and `sim-types` for scenario serialization. Include `rand` and `rand_chacha` in `sim-core` for deterministic RNG. Include `tracing` and `tracing-subscriber` in `sim-core` for structured application logging. Under `[dev-dependencies]` in `sim-core`, include `proptest` for property testing and `criterion` for benchmarks (with `[[bench]]` targets). Under `[dev-dependencies]` in `sim-factory`, include `proptest` for property testing of factory invariants. **Crate dependency DAG** — declare these `[dependencies]` in each crate's `Cargo.toml` (no circular dependencies allowed):
+   - `sim-types`: no internal deps (foundation crate)
+   - `sim-core`: depends on `sim-types`
+   - `sim-factory`: depends on `sim-types`, `sim-core`
+   - `sim-economy`: depends on `sim-types`, `sim-core`
+   - `sim-agents`: depends on `sim-types`, `sim-core`
+   - `sim-api`: depends on `sim-types`, `sim-core`, `sim-factory`, `sim-economy`, `sim-agents`
+   - `sim-cli`: depends on `sim-api` (and transitively all others)
+   **Architectural pattern:** `sim-core` defines an `EventHandler` trait (e.g., `fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError>`) and a headless `run_scenario` function that accepts composed `EventHandler` implementations. Domain crates (`sim-factory`, `sim-economy`, `sim-agents`) implement this trait. The simulation runner in `sim-api` or `sim-cli` assembles domain handlers into a composite handler and passes it to the `sim-core` event loop. This preserves the DAG (sim-core never depends on domain crates) while enabling event dispatch to domain-specific logic.
+   `sim-cli` defines `[[bin]] name = "arcogine"` so the binary is invoked as `cargo run --bin arcogine -- serve` or `cargo run --bin arcogine -- run --headless`.
+   No existing source files to modify. [F6, F7, F13, F17, F18, F19, F31, F42, F48, F55, F57 applied]
 2. Add repository health files: `README.md` (expand from current 3-line stub at `README.md:1-3`, using `docs/vision.md` as the authoritative source for project identity and core loop), `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, and `.gitignore`. Augment the existing `docs/architecture-overview.md` with a "Determinism Contract" section documenting ChaCha8Rng, seed propagation, and replay guarantees (do not create a separate root-level `ARCHITECTURE.md`). Also update the Repository Structure diagram in `docs/architecture-overview.md` to reflect the actual crate layout, benchmark locations under `crates/sim-core/benches/`, and the `examples/` directory. `LICENSE` already exists and needs no changes. [F7, F10, F11, F12, F22 applied]
 3. Add baseline CI in `.github/workflows/ci.yml` for `cargo fmt --check`, `cargo clippy`, and `cargo test`.
 4. Add `examples/` directory with a placeholder file explaining intended contents. The `docs/` directory already exists (contains `vision.md`, `architecture-overview.md`, and `standards-alignment.md`); add a placeholder `docs/README.md` index if needed. [F10, F11, F25 applied]
@@ -78,10 +88,10 @@ Files expected:
 - `Cargo.toml` (new — workspace root with `resolver = "2"`)
 - `rust-toolchain.toml` (new — pin Rust stable channel)
 - `crates/sim-core/Cargo.toml` (new — `edition = "2021"`, `[dependencies]`: `serde`, `toml`, `rand`, `rand_chacha`, `tracing`, `tracing-subscriber`; `[dev-dependencies]`: `proptest`, `criterion`), `crates/sim-core/src/lib.rs`
-- `crates/sim-factory/Cargo.toml`, `crates/sim-factory/src/lib.rs`
+- `crates/sim-factory/Cargo.toml` (new — `[dev-dependencies]`: `proptest`), `crates/sim-factory/src/lib.rs` [F48 applied]
 - `crates/sim-economy/Cargo.toml`, `crates/sim-economy/src/lib.rs`
 - `crates/sim-agents/Cargo.toml`, `crates/sim-agents/src/lib.rs`
-- `crates/sim-types/Cargo.toml` (new — includes `serde`), `crates/sim-types/src/lib.rs`
+- `crates/sim-types/Cargo.toml` (new — includes `serde`, `toml`), `crates/sim-types/src/lib.rs` [F38 applied]
 - `crates/sim-cli/Cargo.toml` (new — includes `clap` with `derive` feature), `crates/sim-cli/src/main.rs`
 - `crates/sim-api/Cargo.toml`, `crates/sim-api/src/lib.rs`
 - `README.md` (modify existing `README.md:1-3`)
@@ -102,17 +112,18 @@ Objective: Implement the smallest useful discrete-event simulation engine and co
 
 Planned work:
 
-1. Define typed IDs (`MachineId`, `ProductId`, `JobId`), simulation time (`SimTime`), shared enums/structs, and a shared error enum `SimError` (with variants for invalid state transitions, unknown IDs, event ordering violations) in `crates/sim-types/src/lib.rs`. Domain concepts should map cleanly to ISA-95 terminology (see `docs/standards-alignment.md`): machines are Equipment, products are Material Definitions, routing steps are Process Segments, and product routings are Operations Definitions. Use Arcogine's own naming in code (`Machine`, `Product`, `RoutingStep`) but include doc-comments noting the ISA-95 correspondence. **Design-for (Phase 7):** Define quantity types as an enum or trait (e.g., `Quantity::Units(u64)` / `Quantity::Volume { liters: f64 }`) rather than a bare integer, so that batch/process manufacturing can use volume-based quantities without rewriting existing discrete-manufacturing code. Reserve a `BatchId` typed ID slot even if the struct is not populated until Phase 7. [F4, F25, F28 applied]
-2. Implement event types (order creation, task start, task end, machine availability change, price change, agent decision), a priority-queue-based event scheduler, and deterministic event dispatch in `crates/sim-core/src/event.rs` and `crates/sim-core/src/queue.rs`. Use `ChaCha8Rng` from `rand_chacha` seeded from the scenario configuration for all stochastic decisions. [F7 applied]
-3. Implement append-only event logging in `crates/sim-core/src/log.rs`. Define a `Kpi` trait in `crates/sim-core/src/kpi.rs` and implement at least one concrete KPI (e.g., `TotalSimulatedTime` or `EventCount`) sufficient to validate deterministic replay. [F2 applied]
-4. Define the scenario file schema (machine definitions, product routings, initial conditions, run parameters, RNG seed) in TOML and implement a scenario loader in `crates/sim-core/src/scenario.rs`. Use TOML section names that correspond to ISA-95 concepts where practical (e.g., `[[equipment]]`, `[[material]]`, `[[process_segment]]`) to ease future data interchange; see `docs/standards-alignment.md` for the mapping. [F1, F7, F25 applied]
+1. Define typed IDs (`MachineId`, `ProductId`, `JobId`), simulation time (`SimTime`), shared enums/structs, and a shared error enum `SimError` (with variants for invalid state transitions, unknown IDs, event ordering violations) in `crates/sim-types/src/lib.rs`. All state structs and typed IDs must derive `PartialEq`, `Eq`, `Clone`, `Debug`, and `serde::Serialize` (+ `serde::Deserialize` where deserialization is needed) — this enables determinism tests to compare full state snapshots across runs. Domain concepts should map cleanly to ISA-95 terminology (see `docs/standards-alignment.md`): machines are Equipment, products are Material Definitions, routing steps are Process Segments, and product routings are Operations Definitions. Use Arcogine's own naming in code (`Machine`, `Product`, `RoutingStep`) but include doc-comments noting the ISA-95 correspondence. **Design-for (Phase 7):** Define quantity types as an enum or trait (e.g., `Quantity::Units(u64)` / `Quantity::Volume { liters: f64 }`) rather than a bare integer, so that batch/process manufacturing can use volume-based quantities without rewriting existing discrete-manufacturing code. Reserve a `BatchId` typed ID slot even if the struct is not populated until Phase 7. [F4, F25, F28, F47 applied]
+2. Implement event types (order creation, task start, task end, machine availability change, price change, agent decision, demand evaluation, agent evaluation), a priority-queue-based event scheduler, and deterministic event dispatch in `crates/sim-core/src/event.rs` and `crates/sim-core/src/queue.rs`. Define an `EventHandler` trait in `crates/sim-core/src/handler.rs` (e.g., `fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError>`) that domain crates implement. Implement a headless simulation runner function `run_scenario(config: &ScenarioConfig, handlers: &mut dyn EventHandler) -> Result<SimResult, SimError>` in `crates/sim-core/src/runner.rs` that drives the event loop by dequeuing events and dispatching them to the handler. The `DemandEvaluation` event is a periodic trigger (interval configurable in scenario TOML) that causes the demand model (Phase 3) to sample the demand function and schedule zero or more `OrderCreation` events. The `AgentEvaluation` event is a periodic trigger (interval configurable in scenario TOML) that invokes registered agents (Phase 4). Use `ChaCha8Rng` from `rand_chacha` seeded from the scenario configuration for all stochastic decisions. [F7, F41, F51, F57, F58 applied]
+3. Implement append-only event logging in `crates/sim-core/src/log.rs`. The event log must expose an internal API sufficient for Phase 2–3 tests and Phase 4 HTTP exposure: `append(event)`, `iter() -> impl Iterator<Item = &Event>`, `filter_by_type(EventType) -> impl Iterator`, `count() -> usize`, and `snapshot() -> EventLog` (clone for determinism comparison). Phase 4 wraps this API over HTTP; Phases 2–3 tests use it directly. Define a `Kpi` trait in `crates/sim-core/src/kpi.rs` and implement at least one concrete KPI (e.g., `TotalSimulatedTime` or `EventCount`) sufficient to validate deterministic replay. [F2, F39 applied]
+4. Define the scenario file schema (machine definitions, product routings, initial conditions, run parameters, RNG seed) in TOML. Scenario **configuration structs** (the `#[derive(Deserialize)]` types representing the TOML schema) belong in `crates/sim-types/src/scenario.rs` alongside other shared types, since multiple crates need to consume them. The **loader logic** (reading the file, parsing TOML, validating references and value ranges, constructing simulation initial state) lives in `crates/sim-core/src/scenario.rs`. Use TOML section names that correspond to ISA-95 concepts where practical (e.g., `[[equipment]]`, `[[material]]`, `[[process_segment]]`) to ease future data interchange; see `docs/standards-alignment.md` for the mapping. [F1, F7, F25, F50 applied]
 5. Define state stores for machines, products, jobs, and work queues using data-oriented structures in `crates/sim-factory/src/machines.rs`, `crates/sim-factory/src/jobs.rs`, and `crates/sim-factory/src/routing.rs`. **Design-for (Phase 7):** Machine definitions should include an optional `capacity` field (defaulting to concurrency=1 for discrete manufacturing) and an optional `setup_time` field (defaulting to zero), so that Phase 7 can add volume-based capacity and cleaning cycles without restructuring the machine model. Routing steps should accept a generic duration rather than assuming instantaneous completion, even if MVP steps use fixed processing times. [F28 applied]
-6. Write unit tests for event ordering, monotonic time progression, state transition safety, deterministic replay, and scenario loading in `crates/sim-core/tests/`. Write unit tests for machine state management, job lifecycle, and routing correctness in `crates/sim-factory/tests/machine_state.rs` and `crates/sim-factory/tests/job_routing.rs`. Include error-path tests: invalid state transitions return appropriate `SimError` variants, unknown IDs are rejected, and out-of-order event insertion is handled correctly. [F14, F29 applied]
+6. Write unit tests for event ordering, monotonic time progression, state transition safety, deterministic replay, and scenario loading in `crates/sim-core/tests/`. Write unit tests for machine state management, job lifecycle, and routing correctness in `crates/sim-factory/tests/machine_state.rs` and `crates/sim-factory/tests/job_routing.rs`. Include error-path tests: invalid state transitions return appropriate `SimError` variants, unknown IDs are rejected, and out-of-order event insertion is handled correctly. Scenario loading tests (`crates/sim-core/tests/scenario_loading.rs`) must include error-path cases: malformed TOML, missing required fields (e.g., no RNG seed, no equipment definitions), references to nonexistent products/machines, and out-of-range values — the loader must return `SimError` variants, not panic. [F14, F29, F49 applied]
 7. Write property tests in `crates/sim-core/tests/properties.rs` using `proptest` to verify invariants: no negative inventory, no duplicate job completion, monotonic time progression, and event causality consistency. [F13 applied]
+8. Update `docs/architecture-overview.md`: (a) add a new section "Event Dispatch Architecture" (between "Separation of Concerns" and "Agent Architecture") documenting the `EventHandler` trait, the `run_scenario` runner function, how domain crates implement the trait, and how the runner composes handlers — explaining that this pattern preserves the crate DAG; (b) update the DES event type list to include `DemandEvaluation` and `AgentEvaluation` alongside the existing five types; (c) correct the Separation of Concerns tier count (the table lists six layers including the Phase 7 Material Layer — either update to "six" or annotate that the MVP has five active layers plus one planned). [F62, F63, F64 applied]
 
 Files expected:
-- `crates/sim-types/src/lib.rs` (modify from Phase 1 stub — adds typed IDs, `SimError`)
-- `crates/sim-core/src/lib.rs` (modify), `crates/sim-core/src/event.rs`, `crates/sim-core/src/queue.rs`, `crates/sim-core/src/log.rs`, `crates/sim-core/src/kpi.rs`, `crates/sim-core/src/scenario.rs` (new)
+- `crates/sim-types/src/lib.rs` (modify from Phase 1 stub — adds typed IDs, `SimError`), `crates/sim-types/src/scenario.rs` (new — scenario configuration structs) [F50 applied]
+- `crates/sim-core/src/lib.rs` (modify), `crates/sim-core/src/event.rs`, `crates/sim-core/src/queue.rs`, `crates/sim-core/src/log.rs`, `crates/sim-core/src/kpi.rs`, `crates/sim-core/src/scenario.rs` (new — loader logic), `crates/sim-core/src/handler.rs` (new — `EventHandler` trait), `crates/sim-core/src/runner.rs` (new — headless `run_scenario` function) [F57, F58 applied]
 - `crates/sim-factory/src/lib.rs` (modify), `crates/sim-factory/src/machines.rs`, `crates/sim-factory/src/jobs.rs`, `crates/sim-factory/src/routing.rs` (new)
 - `crates/sim-core/tests/determinism.rs`, `crates/sim-core/tests/event_ordering.rs`, `crates/sim-core/tests/scenario_loading.rs`, `crates/sim-core/tests/properties.rs` (new)
 - `crates/sim-factory/tests/machine_state.rs`, `crates/sim-factory/tests/job_routing.rs` (new) [F14 applied]
@@ -121,8 +132,9 @@ Acceptance criteria:
 - Running a fixed scenario file with a fixed seed produces identical final state, KPIs (at minimum `TotalSimulatedTime` or `EventCount`), and event stream across repeated runs.
 - Jobs advance through routing steps in correct order; machines never process more than one active task concurrently unless explicitly configured for parallel processing.
 - Event times are processed in non-decreasing order; invalid state transitions are rejected with `SimError` variants.
-- A TOML scenario file can be loaded, validated, and used to initialize a simulation run.
+- A TOML scenario file can be loaded, validated, and used to initialize a simulation run. Invalid scenarios (malformed TOML, missing required fields, invalid references, out-of-range values) return `SimError` variants without panicking. [F49 applied]
 - Property tests pass: no negative inventory, no duplicate job completion, monotonic time progression.
+- The `EventHandler` trait and `run_scenario` runner function are usable from external crates to compose and execute a simulation with domain-specific event handlers. [F57, F58 applied]
 
 ---
 
@@ -133,11 +145,11 @@ Objective: Prove the closed-loop relationship between factory capacity, lead tim
 Planned work:
 
 1. Implement a product/routing model supporting 2–3 machine types and 2–3 SKUs in `crates/sim-factory/src/products.rs` and `crates/sim-factory/src/process.rs`.
-2. Implement a demand model driven by price and delivery performance in `crates/sim-economy/src/demand.rs`.
+2. Implement a demand model driven by price and delivery performance in `crates/sim-economy/src/demand.rs`. The demand model is triggered by `DemandEvaluation` events (defined in Phase 2). When a `DemandEvaluation` event fires, the demand model reads current price (from `sim-economy/pricing`) and delivery performance KPIs (from `sim-core/kpi`), samples the demand function, and schedules zero or more `OrderCreation` events on the event queue. The demand evaluation interval is configurable in the scenario TOML. `sim-economy` depends on `sim-core` (event types, KPI access) and `sim-types`; it does not depend on `sim-factory` directly. [F41, F46 applied]
 3. Implement a pricing module in `crates/sim-economy/src/pricing.rs` that holds the current price and exposes it to the demand model.
 4. Add revenue, backlog, throughput, lead-time, and utilization KPI computations to `crates/sim-core/src/kpi.rs`. Use definitions and naming consistent with ISO 22400 (SR EN ISO 22400) Part 2 where applicable: throughput rate (KPI 1200), utilization efficiency, production lead time, work-in-process. Include doc-comments referencing the ISO 22400 KPI identifier; see `docs/standards-alignment.md` for the full mapping. [F27 applied]
 5. Create scenario fixture files in `examples/` for baseline, overload, and capacity-expansion runs using the TOML schema defined in Phase 2.
-6. Write scenario acceptance tests in `crates/sim-core/tests/scenario_baselines.rs` that validate behavioral outcomes. Write unit tests for demand-model response to price and lead-time inputs in `crates/sim-economy/tests/demand_model.rs` and pricing logic in `crates/sim-economy/tests/pricing.rs`. [F15 applied]
+6. Write scenario acceptance tests in `crates/sim-api/tests/scenario_baselines.rs` that validate behavioral outcomes (placed in `sim-api` because these integration tests require `sim-factory`, `sim-economy`, and `sim-core`, all of which are dependencies of `sim-api`). Write unit tests for demand-model response to price and lead-time inputs in `crates/sim-economy/tests/demand_model.rs` and pricing logic in `crates/sim-economy/tests/pricing.rs`. [F15, F52 applied]
 
 Files expected:
 - `crates/sim-factory/src/products.rs`, `crates/sim-factory/src/process.rs` (new)
@@ -145,8 +157,8 @@ Files expected:
 - `crates/sim-economy/src/lib.rs` (modify from Phase 1 stub), `crates/sim-economy/src/demand.rs`, `crates/sim-economy/src/pricing.rs` (new)
 - `crates/sim-core/src/kpi.rs` (modify from Phase 2)
 - `examples/basic_scenario.toml`, `examples/overload_scenario.toml`, `examples/capacity_expansion_scenario.toml` (new)
-- `crates/sim-core/tests/scenario_baselines.rs` (new)
-- `crates/sim-economy/tests/demand_model.rs`, `crates/sim-economy/tests/pricing.rs` (new) [F15 applied]
+- `crates/sim-api/tests/scenario_baselines.rs` (new — in `sim-api` per F52, since these integration tests need all domain crates)
+- `crates/sim-economy/tests/demand_model.rs`, `crates/sim-economy/tests/pricing.rs` (new) [F15, F52 applied]
 
 Acceptance criteria:
 - Lowering price increases demand and creates observable backlog under constrained capacity.
@@ -162,16 +174,17 @@ Objective: Allow controlled external influence over the simulation through expli
 
 Planned work:
 
-1. Implement a command/query interface in `crates/sim-api/src/routes.rs` and `crates/sim-api/src/server.rs` using Axum + Tokio, supporting: load scenario, step/run sim, change price, change machine count, toggle agent, query KPIs, query event log. Add `axum`, `tokio` (feature: `full`), `tower-http` (features: `trace`, `cors`), `serde_json`, and `utoipa` (with `axum_extras` feature) to `sim-api/Cargo.toml`. Wire `tracing` middleware (via `tower-http`) into the Axum server for structured request logging and error reporting (distinguish application-level observability from simulation event logging). Configure CORS via `tower-http::cors::CorsLayer` — permissive for development (allow all origins), with a note to restrict for production. Generate an OpenAPI 3.x specification from route definitions using `utoipa` and serve it at `/api-docs/openapi.json`; see `docs/standards-alignment.md` for the OpenAPI alignment rationale. In addition to the core command/query routes, implement the following endpoints required by the Phase 5 UI:
-   - `GET /api/events/stream` — Server-Sent Events (SSE) endpoint using `axum::response::sse::Sse` that pushes simulation events to the UI in real time during a running simulation. No new dependency required (SSE support is built into Axum). Implement in `crates/sim-api/src/sse.rs`.
+1. Implement a command/query interface in `crates/sim-api/src/routes.rs` and `crates/sim-api/src/server.rs` using Axum + Tokio, supporting: load scenario, step/run sim, change price, change machine count, toggle agent, query KPIs, query event log. Add `axum`, `tokio` (feature: `full`), `tower-http` (features: `trace`, `cors`), `serde_json`, `utoipa`, and `utoipa-axum` (companion crate for Axum OpenAPI integration) to `sim-api/Cargo.toml`. [F56 applied] Wire `tracing` middleware (via `tower-http`) into the Axum server for structured request logging and error reporting (distinguish application-level observability from simulation event logging). Configure CORS via `tower-http::cors::CorsLayer` — permissive for development (allow all origins), with a note to restrict for production. Generate an OpenAPI 3.x specification from route definitions using `utoipa` and serve it at `/api-docs/openapi.json`; see `docs/standards-alignment.md` for the OpenAPI alignment rationale. **Concurrency model:** The simulation engine is synchronous and single-threaded (deterministic `ChaCha8Rng`). The Axum server runs on a Tokio async runtime. To bridge these: run the simulation on a dedicated OS thread (or `tokio::task::spawn_blocking`); communicate between the API layer and the simulation thread via `tokio::sync::mpsc` channels (commands in, state snapshots out) and `tokio::sync::broadcast` (for SSE event fan-out). Simulation state is never shared directly with async handlers — all reads go through snapshot channels. This preserves determinism and keeps the Tokio runtime unblocked for concurrent HTTP requests and SSE streams. In addition to the core command/query routes, implement the following endpoints required by the Phase 5 UI:
+   - `GET /api/health` — lightweight readiness endpoint returning `200` with `{"status": "ok"}`. Used by: UI connection-health polling (§5.5), Docker Compose health checks (Phase 6), and future load balancer probes.
+   - `GET /api/events/stream` — Server-Sent Events (SSE) endpoint using `axum::response::sse::Sse` that pushes simulation events to the UI in real time during a running simulation. Subscribes to the `tokio::sync::broadcast` channel fed by the simulation thread. No new dependency required (SSE support is built into Axum). Implement in `crates/sim-api/src/sse.rs`.
    - `GET /api/factory/topology` — returns the machine graph (nodes with state and queue depth, edges with routing connections and in-transit counts) as JSON for the factory flow visualization.
    - `GET /api/jobs` — returns active and completed jobs/orders with fields: job ID, product, status, current step, time in system, revenue.
    - `GET /api/export/events` — returns the full event log as a JSON array for client-side download/export.
-   [F3, F17, F23, F26, F30 applied]
+   [F3, F17, F23, F26, F30, F40, F44 applied]
 2. Wire `crates/sim-cli/src/main.rs` as the single binary entrypoint supporting both headless CLI mode and HTTP server mode (e.g., `arcogine run --headless` vs `arcogine serve`). `sim-api` remains a library crate providing route handlers and server setup; `sim-cli` depends on it and hosts the binary. [F16 applied]
-3. Implement a `SalesAgent` in `crates/sim-agents/src/sales_agent.rs` that observes backlog, lead time, and revenue, then adjusts price using approved commands. The agent architecture must support future agent types (Planning, Procurement, Maintenance) and future LLM-based strategy agents, so the interface should be trait-based and agent-type-agnostic.
+3. Implement a `SalesAgent` in `crates/sim-agents/src/sales_agent.rs` that observes backlog, lead time, and revenue, then adjusts price using approved commands. The agent architecture must support future agent types (Planning, Procurement, Maintenance) and future LLM-based strategy agents, so the interface should be trait-based and agent-type-agnostic. **Agent invocation model:** The `AgentEvaluation` event (defined in Phase 2's event type list) fires at configurable intervals during the simulation. When processed, the simulation runner invokes registered agents. Each agent implements the `EventHandler` trait (or a dedicated `Agent` trait extending it). **Execution context:** The agent runs **synchronously on the simulation thread**, inside the event loop — it has direct read access to the simulation state passed to the handler (same context as factory and economy handlers). The agent submits its decisions by scheduling new events on the `Scheduler` argument (e.g., a `PriceChange` event), exactly like any other `EventHandler`. It does **not** use the async `tokio::sync::mpsc` channels described in the concurrency model — those channels bridge the HTTP API layer to the simulation thread for *external* commands. The agent is *internal* to the simulation loop. "Toggle agent" sets a flag on the simulation runner that controls whether `AgentEvaluation` events invoke the agent. Agents remain symmetric with external API users in *what* they can do (observe state, submit the same command types) but differ in *how* they execute (synchronous in-loop vs. async over channels). [F51, F65 applied]
 4. Ensure all commands are validated, logged in the event log, and replayable. Modify `crates/sim-core/src/log.rs` and `crates/sim-core/src/event.rs` as needed.
-5. Write integration tests in `crates/sim-api/tests/api_smoke.rs` (using `tower::ServiceExt` to test routes without starting an HTTP server) and `crates/sim-core/tests/agent_integration.rs`. Write unit tests for the agent trait and `SalesAgent` decision logic in `crates/sim-agents/tests/sales_agent.rs`. API smoke tests must include error-path cases: malformed requests return appropriate HTTP error codes, commands on non-running simulations are rejected, and invalid scenario references produce typed errors. [F24, F29, F34 applied]
+5. Write integration tests in `crates/sim-api/tests/api_smoke.rs` (using `tower::ServiceExt` to test routes without starting an HTTP server) and `crates/sim-api/tests/agent_integration.rs` (placed in `sim-api` because the test requires `sim-agents`, `sim-factory`, `sim-economy`, and `sim-core`, all of which are dependencies of `sim-api`). Write unit tests for the agent trait and `SalesAgent` decision logic in `crates/sim-agents/tests/sales_agent.rs`. API smoke tests must include error-path cases: malformed requests return appropriate HTTP error codes, commands on non-running simulations are rejected, and invalid scenario references produce typed errors. [F24, F29, F34, F53 applied]
 
 Files expected:
 - `crates/sim-api/src/lib.rs` (modify), `crates/sim-api/src/server.rs`, `crates/sim-api/src/routes.rs` (new)
@@ -179,7 +192,7 @@ Files expected:
 - `crates/sim-cli/src/main.rs` (modify from Phase 1 stub)
 - `crates/sim-agents/src/lib.rs` (modify from Phase 1 stub), `crates/sim-agents/src/sales_agent.rs` (new)
 - `crates/sim-core/src/log.rs`, `crates/sim-core/src/event.rs` (modify from Phase 2)
-- `crates/sim-api/tests/api_smoke.rs`, `crates/sim-core/tests/agent_integration.rs`, `crates/sim-agents/tests/sales_agent.rs` (new) [F24 applied]
+- `crates/sim-api/tests/api_smoke.rs`, `crates/sim-api/tests/agent_integration.rs` (new — in `sim-api` per F53), `crates/sim-agents/tests/sales_agent.rs` (new) [F24, F53 applied]
 
 Acceptance criteria:
 - A user can load a scenario, run it, change price, and query updated KPIs entirely through the REST API.
@@ -200,7 +213,7 @@ Objective: Provide a structured local dashboard that makes experiments visible, 
 
 | Concern | Choice | Rationale |
 |---------|--------|-----------|
-| Framework | React 18 + TypeScript | Lightweight, familiar, web-accessible (per `docs/architecture-overview.md`) |
+| Framework | React + TypeScript (latest stable) | Lightweight, familiar, web-accessible (per `docs/architecture-overview.md`) [F37 applied] |
 | Bundler | Vite | Fast HMR, native ESM, zero-config TypeScript |
 | Component library | Tailwind CSS + shadcn/ui | Composable, dark-mode ready, accessible primitives with WCAG 2.1 AA contrast by default |
 | Charting | Recharts | React-native SVG charts, good TypeScript support, built-in PNG export |
@@ -317,7 +330,7 @@ The export menu in the sidebar provides:
 
 Planned work:
 
-1. Scaffold a TypeScript/React project in `ui/` with Vite. Install Tailwind CSS, shadcn/ui, Recharts, and Zustand. Configure `package.json`, `tsconfig.json`, `vite.config.ts`, `tailwind.config.ts`, `postcss.config.js`, and `index.html`.
+1. Scaffold a TypeScript/React project in `ui/` with Vite. Install Tailwind CSS v4 (via `@tailwindcss/vite` Vite plugin), shadcn/ui, Recharts, Zustand, ESLint (with `@typescript-eslint` and React plugins), and Prettier. Configure `package.json`, `tsconfig.json`, `vite.config.ts`, and `index.html`. Tailwind v4 uses CSS-first configuration (`@import "tailwindcss"` and `@theme` directives in CSS) — do not create a `tailwind.config.ts` or `postcss.config.js` (those are Tailwind v3 patterns). [F54, F60 applied]
 2. Implement the typed API client in `ui/src/api/client.ts` (wrapping `fetch` with typed request/response interfaces aligned to the OpenAPI spec) and the SSE client in `ui/src/api/sse.ts` (wrapping `EventSource` with typed event parsing and reconnection logic).
 3. Implement Zustand stores: `ui/src/stores/simulation.ts` (simulation state, KPIs, event log, connection status) and `ui/src/stores/baselines.ts` (saved baseline snapshots, comparison deltas).
 4. Build the layout shell in `ui/src/App.tsx`: toolbar, two-column main area, collapsible bottom drawer.
@@ -327,10 +340,11 @@ Planned work:
 8. Build the onboarding overlay: `ui/src/components/onboarding/WelcomeOverlay.tsx` (scenario cards, quick-start button).
 9. Build shared components: `ui/src/components/shared/ErrorBoundary.tsx`, `ui/src/components/shared/SkeletonLoader.tsx`, `ui/src/components/shared/Toast.tsx`.
 10. Wire all UI interactions to the REST API and SSE stream from Phase 4 — no direct state coupling. [F5 applied]
-11. Add Playwright e2e smoke tests in `ui/e2e/smoke.spec.ts` that verify: scenario load and KPI display, lever change reflected in KPIs, event log populates during a run, factory flow diagram renders machine nodes, export button produces a downloadable file. Add `ui/playwright.config.ts` and the Playwright test runner to CI.
+11. Add Playwright e2e smoke tests in `ui/e2e/smoke.spec.ts` that verify: scenario load and KPI display, lever change reflected in KPIs, event log populates during a run, factory flow diagram renders machine nodes, export button produces a downloadable file. Add `ui/playwright.config.ts`.
+12. Extend `.github/workflows/ci.yml` (or create a separate `.github/workflows/ui-ci.yml`) with a frontend CI job that runs: `npm ci` (install), `npx eslint .` (lint), `npx tsc --noEmit` (type check), `npm run build` (Vite production build), and `npx playwright test` (e2e smoke tests). The Playwright job requires both the Rust API server and the Vite dev server running — use `docker compose up -d` or background processes with health-check waits. [F45, F54 applied]
 
 Files expected:
-- `ui/package.json`, `ui/tsconfig.json`, `ui/vite.config.ts`, `ui/tailwind.config.ts`, `ui/postcss.config.js`, `ui/index.html` (new)
+- `ui/package.json`, `ui/tsconfig.json`, `ui/vite.config.ts`, `ui/index.html` (new — no `tailwind.config.ts` or `postcss.config.js` needed with Tailwind v4) [F60 applied]
 - `ui/src/main.tsx`, `ui/src/App.tsx` (new)
 - `ui/src/api/client.ts` (new — typed API client wrapper)
 - `ui/src/api/sse.ts` (new — EventSource wrapper for live updates)
@@ -365,7 +379,7 @@ Objective: Make the MVP easy to run locally, easy to demo, and measurable under 
 Planned work:
 
 1. Add `Dockerfile` (builds the `sim-cli` binary, which hosts both CLI and HTTP server modes) and `ui/Dockerfile` (UI) with multi-stage builds. [F20 applied]
-2. Add `compose.yaml` orchestrating API and UI services (Postgres deferred to post-MVP unless needed for event persistence).
+2. Add `compose.yaml` orchestrating API and UI services (Postgres deferred to post-MVP unless needed for event persistence). Specify: API service exposes port 3000 (configurable via `.env`), UI service exposes port 5173, API health check on `GET /api/health` (added in Phase 4, F44) with `interval: 5s`, `timeout: 3s`, `retries: 3`, UI service `depends_on: api: condition: service_healthy`, the UI container receives `VITE_API_URL` as a build arg or runtime env var, scenario fixture files from `examples/` are available in the API container (via COPY in Dockerfile). [F43, F44 applied]
 3. Add `.dockerignore`, `.env.example`, and expand `README.md` with local run instructions for both native and containerized paths.
 4. Add benchmark scaffolding in `crates/sim-core/benches/scheduler.rs` and `crates/sim-core/benches/scenario_runtime.rs` using Criterion (with `[[bench]]` targets in `sim-core/Cargo.toml` and `criterion` as a dev-dependency, already declared in Phase 1). [F18 applied]
 5. Add `TESTING.md` documenting how to run unit, integration, scenario, and benchmark test suites.
@@ -379,7 +393,7 @@ Files expected:
 - `TESTING.md` (new)
 
 Acceptance criteria:
-- A new contributor can run the full stack with `cargo run` (native) or `docker compose up --build` (containerized) by following documented instructions.
+- A new contributor can run the full stack with `cargo run --bin arcogine -- serve` (native) or `docker compose up --build` (containerized) by following documented instructions. [F55 applied]
 - Benchmarks produce repeatable baseline numbers for core event processing throughput and full scenario execution time.
 - `TESTING.md` clearly documents all test categories, how to run each, and what success looks like.
 
@@ -427,7 +441,7 @@ Files expected:
 - `crates/sim-economy/src/cost.rs`, `crates/sim-economy/src/supply.rs` (new modules)
 - `examples/gin_baseline.toml`, `examples/gin_bottleneck.toml`, `examples/gin_scaling.toml` (new)
 - `crates/sim-material/tests/recipe_validation.rs`, `crates/sim-material/tests/inventory.rs` (new)
-- `crates/sim-core/tests/gin_scenario.rs` (new — scenario acceptance tests)
+- `crates/sim-api/tests/gin_scenario.rs` (new — scenario acceptance tests; placed in `sim-api` per F61/F52 since these integration tests need `sim-material`, `sim-factory`, `sim-economy`, and `sim-core`) [F61 applied]
 
 Acceptance criteria:
 - A gin distillery scenario runs to completion with material transformation: input botanicals + neutral spirit are consumed, output gin volume is produced with defined yield/loss.
@@ -705,9 +719,9 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- severity: critical -->
 <!-- dimension: correctness -->
 
-**Context:** §3.1 (line 35) says "The repository contains three files: `README.md`, `LICENSE`, and `devel/Original-plan.md`." The repository actually contains five files: `README.md`, `LICENSE`, `devel/Original-plan.md`, `docs/vision.md`, and `docs/architecture-overview.md`.
+**Context:** §3.1 originally said "The repository contains three files: `README.md`, `LICENSE`, and `devel/Original-plan.md`." The repository actually contained five files (now six including `docs/standards-alignment.md`). [F36 applied]
 
-**Issue:** A coding agent executing Phase 1 will create `ARCHITECTURE.md` at the repo root (line 87) when an architectural document already exists at `docs/architecture-overview.md`. The `docs/` directory already exists, contradicting "Add `examples/` and `docs/` directories" (line 75) as if they are new. This creates file duplication and conflicting sources of truth.
+**Issue:** A coding agent executing Phase 1 would have created `ARCHITECTURE.md` at the repo root when an architectural document already exists at `docs/architecture-overview.md`. The `docs/` directory already exists, contradicting treating it as new. This creates file duplication and conflicting sources of truth. [F36 applied]
 
 **Recommendation:** Update §3.1 to list all five files. Update Phase 1 task 2 to reference and expand `docs/architecture-overview.md` instead of creating a new root-level `ARCHITECTURE.md`. Update Phase 1 task 4 to note that `docs/` already exists.
 
@@ -739,7 +753,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- dimension: correctness -->
 <!-- Depends on: F10 choice 1 -->
 
-**Context:** Phase 1 creates `ARCHITECTURE.md` at the repo root (line 87) with determinism contract documentation. `docs/architecture-overview.md` already documents: simulation-first philosophy, data-oriented design, DES event types, separation of concerns (5-layer table with crate names), agent architecture, technology stack (including Axum, ChaCha8Rng, serde+toml), and repository structure.
+**Context:** Phase 1 originally planned `ARCHITECTURE.md` at the repo root with determinism contract documentation. `docs/architecture-overview.md` already documents: simulation-first philosophy, data-oriented design, DES event types, separation of concerns (5-layer table with crate names), agent architecture, technology stack (including Axum, ChaCha8Rng, serde+toml), and repository structure. [F36 applied]
 
 **Issue:** Nearly everything the plan asks `ARCHITECTURE.md` to contain already exists in `docs/architecture-overview.md`. Creating a second file produces conflicting authorities. The only gap in the existing doc is the explicit determinism contract (seed propagation, replay guarantees).
 
@@ -755,7 +769,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- severity: major -->
 <!-- dimension: testing -->
 
-**Context:** Phase 2 task 7 (line 110) specifies property tests using `proptest` or `quickcheck`. Phase 1 task 1 lists `serde`, `toml`, `rand`, and `rand_chacha` as dependencies but neither `proptest` nor `quickcheck`.
+**Context:** Phase 2 task 7 specifies property tests using `proptest` or `quickcheck`. Phase 1 task 1 originally listed `serde`, `toml`, `rand`, and `rand_chacha` as dependencies but neither `proptest` nor `quickcheck`. [F36 applied]
 
 **Issue:** The coding agent will reach Phase 2 task 7 and need to add a dev-dependency that was never specified. The choice between `proptest` and `quickcheck` should be resolved upfront — they have different APIs, shrinking behavior, and macro styles.
 
@@ -804,7 +818,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- severity: minor -->
 <!-- dimension: correctness -->
 
-**Context:** Phase 1 files list `crates/sim-api/Cargo.toml`, `crates/sim-api/src/lib.rs` (line 85). Phase 4 creates `server.rs` and `routes.rs` and adds Axum, but the API crate serves HTTP — it needs to be runnable. The Dockerfile in Phase 6 builds the API as a binary.
+**Context:** Phase 1 files list `crates/sim-api/Cargo.toml`, `crates/sim-api/src/lib.rs`. Phase 4 creates `server.rs` and `routes.rs` and adds Axum, but the API crate serves HTTP — it needs to be runnable. The Dockerfile in Phase 6 builds the binary. [F36 applied]
 
 **Issue:** If `sim-api` is a library crate only, it cannot be run directly. Phase 4 will need either a `main.rs` in `sim-api` or the `sim-cli` crate must host the server. The plan is ambiguous about which binary serves HTTP.
 
@@ -837,7 +851,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- severity: minor -->
 <!-- dimension: plan-hygiene -->
 
-**Context:** Phase 6 task 4 (line 223) places benchmarks in `benches/scheduler.rs` and `benches/scenario_runtime.rs`. The architecture doc (line 98) shows `benches/` at workspace root. However, Criterion benchmarks in a Cargo workspace typically live inside individual crates (`crates/sim-core/benches/`), not at the workspace root, unless a dedicated benchmark crate exists.
+**Context:** Phase 6 task 4 originally placed benchmarks in workspace-root `benches/`. The architecture doc showed `benches/` at workspace root. However, Criterion benchmarks in a Cargo workspace typically live inside individual crates (`crates/sim-core/benches/`), not at the workspace root, unless a dedicated benchmark crate exists. [F36 applied]
 
 **Issue:** A workspace-root `benches/` directory won't compile unless it's part of a crate with `[[bench]]` targets in its `Cargo.toml`. The plan doesn't specify which crate owns the benchmarks.
 
@@ -872,7 +886,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- dimension: correctness -->
 <!-- Depends on: F16 choice 1 -->
 
-**Context:** Phase 6 task 1 (line 222) says `Add Dockerfile (Rust API)`. Per F16 resolution, `sim-api` is a library crate; the actual binary is `sim-cli` which hosts both CLI and server modes.
+**Context:** Phase 6 task 1 originally said `Add Dockerfile (Rust API)`. Per F16 resolution, `sim-api` is a library crate; the actual binary is `sim-cli` which hosts both CLI and server modes. [F36 applied]
 
 **Issue:** A coding agent will try to build a binary from `sim-api` which has no `main.rs`. The Dockerfile must build the `sim-cli` binary (which depends on `sim-api` as a library).
 
@@ -888,7 +902,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- severity: minor -->
 <!-- dimension: gaps -->
 
-**Context:** Phase 4 task 2 (line 165) specifies that `sim-cli` supports both headless CLI mode and HTTP server mode (`arcogine run --headless` vs `arcogine serve`). No phase specifies a CLI argument parsing library.
+**Context:** Phase 4 task 2 specifies that `sim-cli` supports both headless CLI mode and HTTP server mode (`arcogine run --headless` vs `arcogine serve`). No phase originally specified a CLI argument parsing library. [F36 applied]
 
 **Issue:** Subcommand-style CLI parsing requires a library (e.g., `clap` with derive). Without specifying this, the coding agent may implement ad-hoc argument parsing or choose an unexpected library.
 
@@ -1024,7 +1038,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- severity: major -->
 <!-- dimension: testing -->
 
-**Context:** Phase 2 acceptance criteria (line 122) say "invalid state transitions are rejected with `SimError` variants." Phase 4 acceptance criteria (line 182) say "Invalid commands are rejected with typed errors and do not corrupt simulation state." No test file in any phase explicitly targets error paths — all planned tests (`determinism.rs`, `event_ordering.rs`, `scenario_loading.rs`, `machine_state.rs`, `job_routing.rs`, `scenario_baselines.rs`, `demand_model.rs`, `pricing.rs`, `api_smoke.rs`, `agent_integration.rs`, `sales_agent.rs`) are named for happy-path validation.
+**Context:** Phase 2 acceptance criteria say "invalid state transitions are rejected with `SimError` variants." Phase 4 acceptance criteria say "Invalid commands are rejected with typed errors and do not corrupt simulation state." No test file in any phase originally targeted error paths explicitly — all planned tests were named for happy-path validation. [F36 applied]
 
 **Issue:** Acceptance criteria that mention error handling are untestable if no tests exercise invalid inputs, unknown IDs, out-of-order events, or malformed commands. A coding agent may skip error-path logic entirely if no test demands it.
 
@@ -1058,7 +1072,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- severity: major -->
 <!-- dimension: best-practices -->
 
-**Context:** Phase 1 task 1 (line 72) creates a workspace root `Cargo.toml`. The plan does not specify the Rust edition or the resolver version. Since Rust edition 2021 (the current default and the edition any new project in 2026 would use), virtual workspaces require `resolver = "2"` to be explicitly set in the workspace `Cargo.toml`. Without it, Cargo uses resolver 1, which has incorrect feature unification behavior in workspaces.
+**Context:** Phase 1 task 1 creates a workspace root `Cargo.toml`. The plan originally did not specify the Rust edition or the resolver version. Since Rust edition 2021, virtual workspaces require `resolver = "2"` to be explicitly set in the workspace `Cargo.toml`. Without it, Cargo uses resolver 1, which has incorrect feature unification behavior in workspaces. [F36 applied]
 
 **Issue:** A workspace `Cargo.toml` without `resolver = "2"` will produce Cargo warnings and may cause subtle dependency resolution bugs. This is a well-known Rust workspace gotcha that a coding agent may miss if not instructed.
 
@@ -1109,7 +1123,7 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 <!-- severity: minor -->
 <!-- dimension: testing -->
 
-**Context:** Phase 4 task 5 (line 168) plans `crates/sim-api/tests/api_smoke.rs` which will test Axum routes. Axum tests require `#[tokio::test]` to run async handlers. Phase 4 task 1 (line 164) adds `tokio` to `sim-api/Cargo.toml` under `[dependencies]`, but integration tests in the `tests/` directory also need `tokio` available — which it is, since it's a direct dependency. However, if the tests use `reqwest` or a test client for HTTP-level testing, that dependency is not listed.
+**Context:** Phase 4 task 5 plans `crates/sim-api/tests/api_smoke.rs` which will test Axum routes. Axum tests require `#[tokio::test]` to run async handlers. Phase 4 task 1 adds `tokio` to `sim-api/Cargo.toml` under `[dependencies]`, but integration tests in the `tests/` directory also need `tokio` available — which it is, since it's a direct dependency. However, if the tests use `reqwest` or a test client for HTTP-level testing, that dependency is not listed. [F36 applied]
 
 **Issue:** If API smoke tests use an HTTP client (e.g., `reqwest`, `hyper::Client`, or Axum's `TestClient` from `axum-test`) to make actual HTTP requests, those crates need to be in `[dev-dependencies]`. If tests use Axum's `Router` directly via `tower::ServiceExt`, no additional deps are needed. The plan doesn't specify the testing approach.
 
@@ -1153,7 +1167,229 @@ All five dimensions re-swept against the updated plan:
 
 **No critical or major findings remain. Iteration complete.**
 
-### Summary
+*(Summary table moved to final position after all findings — see "Summary (final)" below.)*
+
+---
+
+### F36: Stale line references in applied findings [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** Applied findings F10, F12, F13, F16, F18, F20, F21, F23, F29, F31, and F34 contain `(line N)` references to the plan text. These references were accurate when the findings were written but have drifted as the plan was edited during previous iterations. For example, F10 says `§3.1 (line 35) says "The repository contains three files"` but §3.1 at line 35 now says "six files" — the finding's context describes the original issue, not the current text.
+
+**Issue:** A coding agent reading the findings will see line references that point to the wrong text, causing confusion about what was found and what was fixed. Since findings are marked `[Applied]` and kept for context, their line references must remain understandable, or they should use section references instead of line numbers.
+
+**Recommendation:** Remove specific `(line N)` references from all applied findings and replace with section references (e.g., "Phase 1 task 1", "§3.1") which are stable across edits. The applied findings describe historical issues — they don't need precise line pointers since the fixes have already been incorporated.
+
+**Choices:**
+- [x] Replace `(line N)` references in applied findings with section references
+- [ ] Leave as-is — applied findings are historical context only
+- [ ] Delete all applied finding details, keep only the summary table
+
+---
+
+### F37: Phase 5 specifies "React 18" but React 19 has been stable since late 2024 [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** Phase 5 §5.1 technology stack table specifies "React 18 + TypeScript". React 19 was released as stable in December 2024 and is the current version as of April 2026. New projects started in 2026 should use React 19 unless there are specific compatibility constraints.
+
+**Issue:** Specifying React 18 will cause the coding agent to install an outdated version. React 19 includes significant improvements (Server Components, Actions, use() hook, improved Suspense, ref as prop) that benefit a new project. More importantly, shadcn/ui (listed as the component library) already requires React 18+ and its latest versions target React 19. Starting with React 18 may cause peer dependency warnings or incompatibilities with the latest shadcn/ui components.
+
+**Recommendation:** Update Phase 5 §5.1 to specify "React + TypeScript" (latest stable) and let the package manager resolve the current version. Update `docs/architecture-overview.md` Technology Stack and UI Architecture sections if they reference a specific React version.
+
+**Choices:**
+- [x] Update to "React + TypeScript" (latest stable, currently React 19)
+- [ ] Keep React 18 for maximum ecosystem compatibility
+- [ ] Specify React 19 explicitly
+
+---
+
+### F38: `sim-types` Cargo.toml missing `toml` dependency in Phase 1 files list [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** Phase 1 task 1 says: "Include `serde` (with `derive` feature) and `toml` as dependencies in `sim-core` and `sim-types` for scenario serialization." However, the Phase 1 "Files expected" list says `crates/sim-types/Cargo.toml` (new — includes `serde`) — it mentions `serde` but omits `toml`. Meanwhile, `sim-core/Cargo.toml` is listed as including both `serde` and `toml`.
+
+**Issue:** A coding agent following the "Files expected" list (which is the most structured, actionable part of each phase) will omit `toml` from `sim-types/Cargo.toml`. The task description says to include it, but the file list contradicts this. Since `sim-types` defines the scenario config structures that are deserialized from TOML, it needs the `toml` crate.
+
+**Recommendation:** Update the Phase 1 "Files expected" entry for `sim-types/Cargo.toml` to include `toml` alongside `serde`.
+
+**Choices:**
+- [x] Update `sim-types/Cargo.toml` file-list entry to include `toml`
+- [ ] Keep `toml` only in `sim-core` and have `sim-types` depend on `serde` only (loader lives in `sim-core`)
+
+---
+
+### F39: Phase 2 event log (`sim-core/src/log.rs`) has no persistence or query API before Phase 4 [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** Phase 2 task 3 implements "append-only event logging" in `crates/sim-core/src/log.rs`. Phase 4 task 1 adds `GET /api/export/events` and event querying through the REST API. Phase 3 acceptance criteria require observing "measurable queue buildup" and "revenue exactly once per sale event" — both require inspecting the event log. But between Phases 2–3 (before the API exists), there is no mechanism to query or inspect the event log beyond running assertions in test code.
+
+**Issue:** Phase 3 scenario acceptance tests need to read the event log to verify behavioral outcomes (e.g., "backlog rises", "revenue generated exactly once"). Without a query/iteration API on the event log, test code has no way to inspect events. The log needs at minimum: append, iterate/filter, and count operations. The plan never specifies these internal APIs — it jumps from "append-only logging" to REST export.
+
+**Recommendation:** Phase 2 task 3 should specify the event log's internal API: append, iterate (with optional type filter), count, and snapshot/clone for deterministic comparison. This API is what Phase 2 and 3 tests use. Phase 4 then exposes it over HTTP. This is a design gap, not just a documentation gap.
+
+**Choices:**
+- [x] Specify event log internal API (append, iterate, filter, count) in Phase 2 task 3
+- [ ] Assume the coding agent will infer a reasonable API
+- [ ] Defer event log query to Phase 4 and have Phase 3 tests check only final state
+
+---
+
+### F40: Phase 4 simulation concurrency model unspecified — Axum is async but the simulation is synchronous [Applied]
+<!-- severity: critical -->
+<!-- dimension: gaps -->
+
+**Context:** Phase 4 task 1 implements an Axum + Tokio HTTP server wrapping the simulation engine. The simulation core (Phase 2) is a synchronous, single-threaded discrete-event engine using `ChaCha8Rng` for determinism. Axum handlers are async and run on a Tokio multi-threaded runtime. No phase specifies how the synchronous simulation state is shared with async HTTP handlers.
+
+**Issue:** This is a fundamental architecture gap. If the simulation state is behind an `Arc<Mutex<_>>`, long simulation runs will block the Tokio runtime. If it's in a `tokio::sync::Mutex`, it still blocks the simulation thread. If it's in a dedicated thread with channel communication, the channel protocol needs design. The correct pattern for Axum + synchronous state is either: (a) run the simulation in a `tokio::task::spawn_blocking` context with `Arc<Mutex<_>>`, or (b) run the simulation in a dedicated thread and communicate via `tokio::sync::mpsc` channels, or (c) use `tokio::sync::RwLock` for read-heavy workloads. Without specifying this, the coding agent may produce a design that either blocks the runtime (breaking SSE and concurrent requests) or breaks determinism (unsynchronized state).
+
+**Recommendation:** Add a concurrency note to Phase 4 task 1: the simulation runs on a dedicated thread (or `spawn_blocking` task); the API layer communicates with it via command/query channels (`tokio::sync::mpsc` for commands, `tokio::sync::watch` or `broadcast` for state updates and SSE). Simulation state is never shared directly with async handlers. This preserves determinism and keeps the Tokio runtime unblocked.
+
+**Choices:**
+- [x] Specify dedicated simulation thread + channel-based communication in Phase 4 task 1
+- [ ] Use `Arc<tokio::sync::RwLock<SimState>>` with `spawn_blocking` for step execution
+- [ ] Defer concurrency design to implementation time
+
+---
+
+### F41: Phase 3 demand model integration is underspecified — no event type for order generation [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** Phase 2 task 2 defines event types including "order creation." Phase 3 task 2 implements a demand model in `sim-economy/src/demand.rs` that is "driven by price and delivery performance." Phase 3 task 1 implements products/routing. But no task specifies how the demand model generates orders — specifically, what triggers order-creation events and where the demand→order→job pipeline lives.
+
+**Issue:** The demand model (in `sim-economy`) needs to schedule order-creation events on the event queue (in `sim-core`). This requires either: (a) the demand model has access to the event scheduler, creating a coupling between `sim-economy` and `sim-core`; or (b) the simulation loop polls the demand model each tick, which contradicts DES methodology; or (c) a periodic "demand evaluation" event type exists that the scheduler fires, and the demand model responds by scheduling zero or more order events. The plan does not specify this integration, and the crate dependency graph for this interaction is unclear.
+
+**Recommendation:** Add to Phase 3 task 2: the demand model is triggered by a periodic `DemandEvaluation` event (configurable interval in the scenario). When processed, it samples the demand function (given current price and delivery performance), and schedules zero or more `OrderCreation` events. Add `DemandEvaluation` to the Phase 2 event type list. Clarify that `sim-economy` depends on `sim-core` (for event types) and `sim-types` (for shared types).
+
+**Choices:**
+- [x] Add `DemandEvaluation` event type in Phase 2; specify demand→order pipeline in Phase 3
+- [ ] Let the demand model schedule orders directly on the queue (tighter coupling)
+- [ ] Defer integration design to implementation time
+
+---
+
+### F42: No crate dependency graph specified — inter-crate `use` relationships are ambiguous [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** The plan defines 7 crates (`sim-core`, `sim-factory`, `sim-economy`, `sim-agents`, `sim-types`, `sim-cli`, `sim-api`) but never specifies which crates depend on which. `sim-types` is implied to be a shared foundation, but there's no explicit dependency graph. Phase 2 has `sim-factory` implementing state stores used by `sim-core`'s scheduler. Phase 3 has `sim-economy`'s demand model triggered by `sim-core`'s event system. Phase 4 has `sim-api` wrapping everything and `sim-cli` hosting the binary.
+
+**Issue:** Without an explicit dependency graph, the coding agent may create circular dependencies (e.g., `sim-core` depends on `sim-factory` AND `sim-factory` depends on `sim-core`). The plan's crate structure implies a DAG, but the direction of dependencies is ambiguous — does `sim-core` call into `sim-factory`, or does `sim-factory` register with `sim-core`? Does `sim-economy` call `sim-core` or vice versa? This affects `Cargo.toml` dependency declarations and the overall architecture.
+
+**Recommendation:** Add a crate dependency DAG to Phase 1 (or §3.2) specifying: `sim-types` ← `sim-core` ← `sim-factory`, `sim-economy`, `sim-agents` ← `sim-api` ← `sim-cli`. All crates depend on `sim-types`. Domain crates (`sim-factory`, `sim-economy`, `sim-agents`) depend on `sim-core` for event types and scheduling. `sim-api` depends on all domain crates. `sim-cli` depends on `sim-api`. No circular dependencies.
+
+**Choices:**
+- [x] Add explicit crate dependency DAG to Phase 1, specifying `Cargo.toml` dependencies per crate
+- [ ] Add DAG to `docs/architecture-overview.md` only
+- [ ] Leave implicit and let the coding agent infer from usage
+
+---
+
+### F43: Phase 6 `compose.yaml` — no health checks, port mappings, or volume mounts specified [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** Phase 6 task 2 says "Add `compose.yaml` orchestrating API and UI services" with no further specification. The acceptance criteria require `docker compose up --build` to work.
+
+**Issue:** A coding agent creating a `compose.yaml` without guidance will omit critical configuration: exposed ports (which ports for API and UI?), health checks (so dependent services wait for readiness), volume mounts (for scenario files and configuration), environment variables (API URL for the UI to connect to), and network configuration. Without health checks, the UI container may start before the API is ready, causing connection errors.
+
+**Recommendation:** Phase 6 task 2 should specify: API service exposes port 3000 (or configurable), UI service exposes port 5173 (Vite default), health check on API's `/api/health` endpoint (added per F44), the UI container receives the API URL as an environment variable, and scenario fixture files are available to the API container (via COPY in Dockerfile or volume mount).
+
+**Choices:**
+- [x] Specify ports, health checks, env vars, and volume strategy in Phase 6 task 2; add `/api/health` endpoint to Phase 4
+- [ ] Keep Phase 6 minimal and rely on the coding agent's Docker expertise
+- [ ] Defer compose.yaml to post-MVP
+
+---
+
+### F44: No `/health` or readiness endpoint in Phase 4 API [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+<!-- Depends on: F43 choice 1 -->
+
+**Context:** Phase 4 task 1 lists the API endpoints: load scenario, step/run sim, change price, change machine count, toggle agent, query KPIs, query event log, SSE stream, topology, jobs, export. No health check endpoint is defined.
+
+**Issue:** Phase 5's UI includes a "connection-lost banner" (§5.5) that "appears if the API becomes unreachable (detected by SSE `onerror` or a periodic health-check ping)." Phase 6's Docker Compose needs health checks. Both require a lightweight endpoint that returns 200 when the server is ready. Without it, the UI has no reliable way to detect API availability, and Docker can't orchestrate service startup order.
+
+**Recommendation:** Add `GET /api/health` to Phase 4 task 1. Returns 200 with a minimal JSON body (`{"status": "ok"}`). Used by: UI health-check polling, Docker Compose health checks, and future load balancer probes.
+
+**Choices:**
+- [x] Add `GET /api/health` endpoint to Phase 4 task 1
+- [ ] Use SSE connection state as the sole health indicator
+- [ ] Defer to Phase 6
+
+---
+
+### F45: Phase 5 CI integration incomplete — no frontend lint/build/test step in CI workflow [Applied]
+<!-- severity: major -->
+<!-- dimension: testing -->
+
+**Context:** Phase 1 task 3 creates `.github/workflows/ci.yml` for `cargo fmt --check`, `cargo clippy`, and `cargo test`. Phase 5 adds Playwright e2e tests and mentions "add the Playwright test runner to CI." But no phase specifies adding frontend CI steps: `npm ci`, TypeScript type checking (`tsc --noEmit`), ESLint (if used), Vite build (`npm run build`), or Playwright test execution to the CI workflow.
+
+**Issue:** After Phase 5, the CI workflow only covers Rust. A broken UI build, TypeScript type errors, or failing Playwright tests won't be caught by CI. The plan says Playwright tests should "pass in CI" but never defines the CI job that runs them.
+
+**Recommendation:** Phase 5 should include a task to extend `.github/workflows/ci.yml` (or create a separate `ui-ci.yml`) with: `npm ci`, `npm run build` (Vite production build), `npx tsc --noEmit` (type check), and `npx playwright test`. Specify that the Playwright tests need both the API server and the UI dev server running — use `docker compose` or background processes in CI.
+
+**Choices:**
+- [x] Add frontend CI job to Phase 5 that covers build, type-check, and Playwright
+- [ ] Defer frontend CI to Phase 6
+- [ ] Run Playwright tests manually, not in CI
+
+---
+
+### F46: Phase 3 economy crate needs explicit `sim-factory` dependency for lead-time/delivery data [Applied]
+<!-- severity: minor -->
+<!-- dimension: gaps -->
+<!-- Depends on: F42 choice 1 -->
+
+**Context:** Phase 3 task 2 specifies a demand model "driven by price and delivery performance." Delivery performance (lead time) is computed from factory operations in `sim-factory`. The demand model in `sim-economy` needs to read current lead time to generate demand. But if `sim-economy` depends only on `sim-core` and `sim-types`, it has no access to factory state.
+
+**Issue:** The demand model requires either: (a) `sim-economy` depends on `sim-factory` (creating coupling between economy and factory layers), or (b) lead-time KPIs are computed in `sim-core` and available to all crates, or (c) the simulation loop passes lead-time data to the demand model as a parameter. Option (b) is consistent with the plan's KPI-in-`sim-core` design (Phase 3 task 4 puts KPIs in `sim-core/src/kpi.rs`).
+
+**Recommendation:** Clarify in the crate dependency graph (F42) that the demand model reads KPI values from `sim-core`'s KPI module, not directly from `sim-factory` state. This keeps the dependency DAG clean: `sim-economy` → `sim-core` → `sim-types`, with no `sim-economy` → `sim-factory` edge.
+
+**Choices:**
+- [x] Demand model reads KPIs from `sim-core`; no direct `sim-economy` → `sim-factory` dependency
+- [ ] Allow `sim-economy` → `sim-factory` dependency for direct state access
+
+---
+
+### F47: No snapshot/state-comparison mechanism for determinism tests [Applied]
+<!-- severity: minor -->
+<!-- dimension: testing -->
+
+**Context:** Phase 2 acceptance criteria require "identical final state, KPIs, and event stream across repeated runs." Phase 2 task 6 includes a test file `crates/sim-core/tests/determinism.rs`. But no phase specifies how "identical final state" is compared — there's no `PartialEq`/`Eq` requirement on state structures, no serialization-based snapshot comparison, and no hash-based state fingerprint.
+
+**Issue:** Determinism tests need a concrete comparison mechanism. Without specifying that simulation state structs derive `PartialEq` + `Eq` (or `serde::Serialize` for snapshot comparison), the coding agent may produce state types that can't be compared, making determinism tests unwritable.
+
+**Recommendation:** Phase 2 task 1 should specify that all state structs in `sim-types` and `sim-factory` derive `PartialEq`, `Eq`, `Debug`, and `serde::Serialize`. Determinism tests run the same scenario twice and assert final state equality and event log equality.
+
+**Choices:**
+- [x] Require `PartialEq`, `Eq`, `Debug`, `Serialize` derives on state types; specify comparison approach in Phase 2 tests
+- [ ] Use hash-based fingerprinting instead of structural equality
+- [ ] Leave comparison mechanism to the implementer
+
+---
+
+### Re-sweep 8 (post-F36–F48 application)
+
+All five dimensions re-swept against the updated plan:
+
+| Dimension | Result |
+|-----------|--------|
+| **testing** | Pass — All crates with logic have unit tests (`sim-core`, `sim-factory`, `sim-economy`, `sim-agents`). Property tests use `proptest`. Error-path tests specified in Phase 2 and Phase 4. Determinism tests have explicit comparison mechanism (`PartialEq`/`Eq` derives). Playwright e2e tests for UI. Frontend CI job covers build, type-check, and Playwright. Benchmarks in `sim-core/benches/`. |
+| **correctness** | Pass — §3.1 matches actual repo (6 files). All doc references verified. Stale `(line N)` references replaced with section references in applied findings. React version updated to latest stable. `sim-types/Cargo.toml` file-list entry includes both `serde` and `toml`. Crate dependency DAG is acyclic and consistent with usage across phases. |
+| **gaps** | Pass — Concurrency model specified (dedicated sim thread + channels). Demand→order pipeline defined via `DemandEvaluation` event. Event log internal API specified. `/api/health` endpoint added. `compose.yaml` has ports, health checks, env vars. CORS configured. OpenAPI spec generated. Inter-crate dependencies explicit. |
+| **best-practices** | Pass — `resolver = "2"`, `edition = "2021"`, `rust-toolchain.toml` all specified. Dev-dependencies separated. Docs reference existing authoritative files. CI covers both Rust and frontend. Standards alignment documented. |
+| **plan-hygiene** | Pass — No stale line references remain in findings. All critical and major findings applied. Summary table complete. Phases are self-contained with consistent cross-references. F33 (§7 redundancy) remains minor — acceptable as-is. |
+
+**No critical or major findings remain. Iteration complete.**
+
+### Summary (final)
 
 | # | Title | Severity | Dimension | Depends on |
 |---|-------|----------|-----------|------------|
@@ -1192,3 +1428,382 @@ All five dimensions re-swept against the updated plan:
 | F33 | `§7 Implementation Order` redundant with `§5` | minor | plan-hygiene | — |
 | F34 | Phase 4 API smoke tests need `tokio` test runtime | minor | testing | — |
 | F35 | No Rust edition or MSRV specified | minor | best-practices | F31 |
+| F36 | Stale line references in applied findings | major | correctness | — |
+| F37 | Phase 5 specifies React 18 but React 19 is current | major | correctness | — |
+| F38 | `sim-types` Cargo.toml missing `toml` dep in files list | major | correctness | — |
+| F39 | Event log has no internal query API before Phase 4 | major | gaps | — |
+| F40 | Simulation concurrency model unspecified (async API wrapping sync engine) | critical | gaps | — |
+| F41 | Demand model integration underspecified — no order-generation event pipeline | major | gaps | — |
+| F42 | No crate dependency graph — inter-crate relationships ambiguous | major | gaps | — |
+| F43 | `compose.yaml` missing ports, health checks, env vars | major | gaps | F44 |
+| F44 | No `/health` endpoint in Phase 4 API | major | gaps | — |
+| F45 | Frontend CI steps missing from workflow | major | testing | — |
+| F46 | Economy crate needs KPI-mediated access to factory data | minor | gaps | F42 |
+| F47 | No snapshot/comparison mechanism for determinism tests | minor | testing | — |
+
+---
+
+### F48: Phase 2 `sim-factory` tests have no dev-dependencies declared [Applied]
+<!-- severity: major -->
+<!-- dimension: testing -->
+
+**Context:** Phase 2 task 6 places integration tests in `crates/sim-factory/tests/machine_state.rs` and `crates/sim-factory/tests/job_routing.rs`. Phase 1 "Files expected" lists `crates/sim-factory/Cargo.toml` with no specified dependencies beyond the internal crate deps (`sim-types`, `sim-core`). No dev-dependency or test helper is declared for `sim-factory`.
+
+**Issue:** Integration tests in `crates/sim-factory/tests/` are separate compilation units that can only use crates listed in `[dependencies]` or `[dev-dependencies]`. If any test requires `proptest` for property-based testing of factory invariants (e.g., routing correctness), that dependency must be declared. The plan never specifies `sim-factory`'s `[dev-dependencies]`.
+
+**Recommendation:** Add a note to Phase 1 that `sim-factory/Cargo.toml` includes `proptest` in `[dev-dependencies]` if property tests are planned there. Clarify that `sim-factory` integration tests can import `sim-core` (via `[dependencies]`) for constructing scenarios and event schedulers.
+
+**Choices:**
+- [x] Clarify `sim-factory` test deps; add `proptest` to `sim-factory` `[dev-dependencies]` if property tests are planned there
+- [ ] Keep all property tests in `sim-core` only; `sim-factory` tests use standard assertions
+
+---
+
+### F49: Phase 2 scenario loader has no error-handling acceptance criterion [Applied]
+<!-- severity: major -->
+<!-- dimension: testing -->
+
+**Context:** Phase 2 task 4 defines the TOML scenario loader in `crates/sim-core/src/scenario.rs`. Phase 2 task 6 lists `crates/sim-core/tests/scenario_loading.rs`. Phase 2 acceptance criteria include "A TOML scenario file can be loaded, validated, and used to initialize a simulation run." No acceptance criterion or test specification addresses **invalid** scenarios — malformed TOML, missing required fields, invalid machine references, out-of-range values.
+
+**Issue:** The scenario loader is user-facing (users author TOML files). Without error-path tests, a coding agent may implement a loader that panics on invalid input instead of returning structured `SimError` variants. F29 addressed error-path tests for state transitions and API commands, but the scenario loader — a critical entry point — was not covered.
+
+**Recommendation:** Add to Phase 2 task 6 and acceptance criteria: scenario loading tests must include cases for malformed TOML, missing required fields (e.g., no RNG seed, no equipment definitions), references to nonexistent products/machines, and out-of-range values. The loader must return `SimError` variants, not panic.
+
+**Choices:**
+- [x] Add scenario-loader error-path tests and acceptance criterion to Phase 2
+- [ ] Assume the coding agent will add validation naturally
+- [ ] Defer scenario validation to Phase 3 when real fixtures exist
+
+---
+
+### F50: Phase 2 scenario config structs belong in `sim-types`, not only in `sim-core` [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** Phase 2 task 4 says: "Define the scenario file schema … and implement a scenario loader in `crates/sim-core/src/scenario.rs`." Phase 2 task 1 places typed IDs and shared structs in `sim-types`. The scenario config structs (machine definitions, product routings, run parameters) are shared data types that multiple crates need to consume — `sim-factory` needs machine definitions, `sim-economy` needs demand parameters.
+
+**Issue:** If scenario config structs live entirely in `sim-core/src/scenario.rs`, the separation of concerns is muddled: `sim-types` is the "typed IDs, shared structs, error types" foundation crate, but scenario configuration — which is shared data — goes into `sim-core`. A coding agent may struggle with where scenario-related types vs. loader logic belong.
+
+**Recommendation:** Clarify in Phase 2 task 4 that scenario **configuration structs** (the `#[derive(Deserialize)]` types representing the TOML schema) should be defined in `sim-types` (alongside other shared types), while the **loader logic** (reading the file, parsing TOML, validating, constructing simulation initial state) lives in `sim-core/src/scenario.rs`.
+
+**Choices:**
+- [x] Scenario config structs in `sim-types`; loader logic in `sim-core/src/scenario.rs`
+- [ ] Keep everything in `sim-core/src/scenario.rs`
+- [ ] Create a dedicated `sim-scenario` crate
+
+---
+
+### F51: Phase 4 agent invocation flow is unspecified — how/when does the agent run? [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** Phase 4 task 1 supports "toggle agent." Phase 4 task 3 implements `SalesAgent` in `sim-agents`. Phase 4 acceptance criteria: "the agent observes state and adjusts price without direct mutable access to simulation internals."
+
+**Issue:** The plan never specifies **how** the agent is invoked during simulation execution. Key questions left unanswered: (a) Does the agent run on every simulation tick, on a timer, or in response to specific events? (b) Who calls the agent — the simulation loop, the API layer, or a dedicated agent scheduler? (c) How does "toggle agent" work — register/deregister, or a flag? (d) How does the agent submit commands — same channel as HTTP commands, or internal API?
+
+**Recommendation:** Add to Phase 4 task 3: define an `AgentEvaluation` event type (analogous to `DemandEvaluation`) that fires at configurable intervals. When processed, it invokes registered agents. Agents read state via read-only snapshots and submit commands via the same command interface used by the API. "Toggle agent" sets a flag that controls whether `AgentEvaluation` events invoke the agent. Add `AgentEvaluation` to the Phase 2 event type list.
+
+**Choices:**
+- [x] Add `AgentEvaluation` event type; agent submits commands via same interface as API; toggle sets a flag
+- [ ] Agent runs in the API layer, polling state and submitting HTTP commands
+- [ ] Defer agent execution model to implementation
+
+---
+
+### F52: Scenario baselines test in `sim-core/tests/` cannot import `sim-factory` or `sim-economy` [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+<!-- Depends on: F42 choice 1 -->
+
+**Context:** Phase 3 task 6 places scenario acceptance tests in `crates/sim-core/tests/scenario_baselines.rs`. These tests validate behavioral outcomes requiring the full simulation loop: factory state from `sim-factory`, demand/pricing from `sim-economy`, and the event engine from `sim-core`.
+
+**Issue:** Integration tests in `crates/sim-core/tests/` can only access crates listed as dependencies of `sim-core`. Per the Phase 1 DAG, `sim-core` depends only on `sim-types`. It does **not** depend on `sim-factory` or `sim-economy`. Therefore `crates/sim-core/tests/scenario_baselines.rs` cannot import those crates — the test won't compile.
+
+**Recommendation:** Move scenario baseline tests to a crate that depends on all domain crates. `sim-api` already has this property per the DAG. Move to `crates/sim-api/tests/scenario_baselines.rs`.
+
+**Choices:**
+- [x] Move scenario baseline tests to `crates/sim-api/tests/scenario_baselines.rs`
+- [ ] Add `sim-factory` and `sim-economy` as dev-dependencies of `sim-core`
+- [ ] Create a workspace-level integration test crate
+
+---
+
+### F53: `agent_integration.rs` in `sim-core/tests/` has the same dependency problem [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+<!-- Depends on: F52 choice 1 -->
+
+**Context:** Phase 4 task 5 places `crates/sim-core/tests/agent_integration.rs`. Per the DAG, `sim-core` depends only on `sim-types`. The agent integration test needs `sim-agents`, `sim-factory`, and `sim-economy`.
+
+**Issue:** Same compilation issue as F52. `crates/sim-core/tests/agent_integration.rs` cannot import `sim-agents`, `sim-factory`, or `sim-economy`.
+
+**Recommendation:** Move to `crates/sim-api/tests/agent_integration.rs` (consistent with F52).
+
+**Choices:**
+- [x] Move to `crates/sim-api/tests/agent_integration.rs`
+- [ ] Add all domain crates as dev-dependencies of `sim-core`
+
+---
+
+### F54: No ESLint or frontend linter specified for the UI project [Applied]
+<!-- severity: minor -->
+<!-- dimension: best-practices -->
+
+**Context:** Phase 5 task 1 scaffolds the React/TypeScript UI. Phase 5 task 12 adds CI with `npx tsc --noEmit` and `npm run build`. No phase mentions ESLint or Prettier.
+
+**Issue:** The Rust side has `cargo fmt --check` and `cargo clippy` in CI (Phase 1 task 3). The UI has no equivalent. A Vite+React+TypeScript project typically includes ESLint and Prettier. Without them, code style diverges and common React mistakes go uncaught.
+
+**Recommendation:** Add ESLint (with TypeScript and React plugins) and Prettier to Phase 5 task 1 scaffolding. Add `npx eslint .` to the Phase 5 CI job.
+
+**Choices:**
+- [x] Add ESLint + Prettier to Phase 5 scaffolding and CI
+- [ ] Rely on TypeScript type checking only
+- [ ] Defer frontend linting to post-MVP
+
+---
+
+### F55: Phase 6 `cargo run` is ambiguous — binary name unspecified [Applied]
+<!-- severity: minor -->
+<!-- dimension: plan-hygiene -->
+
+**Context:** Phase 6 acceptance criteria: "run the full stack with `cargo run` (native)." Per F16, the binary is `sim-cli`. Phase 4 task 2 uses `arcogine` as the command name (`arcogine run --headless`, `arcogine serve`).
+
+**Issue:** `cargo run` at the workspace root will fail without `--bin`. The binary name (`arcogine` vs `sim-cli`) is never defined. Phase 4 examples use `arcogine` but no `[[bin]] name = "arcogine"` is specified in `sim-cli/Cargo.toml`.
+
+**Recommendation:** Add `[[bin]] name = "arcogine"` to `sim-cli/Cargo.toml` in Phase 1 task 1. Update Phase 6 acceptance criteria to `cargo run --bin arcogine -- serve`.
+
+**Choices:**
+- [x] Specify binary name `arcogine` in `sim-cli/Cargo.toml`; update Phase 6 run command
+- [ ] Use crate name `sim-cli` as binary name
+- [ ] Leave unspecified
+
+---
+
+### F56: Phase 4 `utoipa` feature name `axum_extras` may be incorrect [Applied]
+<!-- severity: minor -->
+<!-- dimension: correctness -->
+
+**Context:** Phase 4 task 1 specifies `utoipa` with `axum_extras` feature.
+
+**Issue:** As of `utoipa` 4.x (current in 2026), Axum integration is provided by the companion crate `utoipa-axum`, not a feature flag on `utoipa` itself. Specifying `axum_extras` may cause a Cargo error if the feature doesn't exist in the resolved version.
+
+**Recommendation:** Update Phase 4 task 1 to reference `utoipa` plus the `utoipa-axum` companion crate, or make the instruction version-agnostic: "Add `utoipa` and its Axum integration crate for OpenAPI spec generation."
+
+**Choices:**
+- [x] Replace with `utoipa` + `utoipa-axum` companion crate (or version-agnostic instruction)
+- [ ] Remove the feature specification and let the coding agent resolve it
+
+---
+
+### F57: `sim-core` event dispatch cannot access `sim-factory` state — DAG prevents it [Applied]
+<!-- severity: critical -->
+<!-- dimension: correctness -->
+
+**Context:** Phase 1 DAG: `sim-core` depends on `sim-types` only. Phase 2 task 2 implements "deterministic event dispatch" in `sim-core`. Phase 2 task 5 implements machine/job/queue state stores in `sim-factory`. Phase 2 acceptance criteria: "Jobs advance through routing steps in correct order; machines never process more than one active task concurrently."
+
+**Issue:** The event dispatch loop in `sim-core` must process events like `TaskStart`/`TaskEnd` by mutating factory state (assign job to machine, advance routing). But `sim-core` cannot depend on `sim-factory` (the DAG has the arrow reversed: `sim-factory` → `sim-core`). The plan never specifies how `sim-core` dispatches domain-specific events without access to domain crate state. This is a **critical architectural gap** — the core simulation loop cannot function without resolving this.
+
+**Recommendation:** Define an `EventHandler` trait in `sim-core` with a method like `fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError>`. Domain crates (`sim-factory`, `sim-economy`) implement this trait. The simulation runner (assembled in `sim-api` or `sim-cli`) constructs a composite handler and passes it to the `sim-core` event loop. This preserves the DAG while enabling event dispatch to domain handlers that `sim-core` doesn't know at compile time.
+
+**Choices:**
+- [x] Define `EventHandler` trait in `sim-core`; domain crates implement it; runner assembles handlers
+- [ ] Invert the dependency: `sim-core` depends on `sim-factory` and `sim-economy`
+- [ ] Move the simulation loop to `sim-api` and make `sim-core` a pure data/scheduling library
+
+---
+
+### F58: Phase 3 acceptance criteria untestable without an integrated simulation runner [Applied]
+<!-- severity: major -->
+<!-- dimension: testing -->
+<!-- Depends on: F57 choice 1 -->
+
+**Context:** Phase 3 acceptance criteria require running the full simulation loop (factory + economy + events). Per F57, the simulation loop needs a composite event handler assembled from domain crates.
+
+**Issue:** No phase specifies where this simulation runner lives. Phase 4 creates the API server, but Phase 3 needs an integrated runner **before** Phase 4. Phase 3 tests must run the full loop without an HTTP server.
+
+**Recommendation:** Add a task to Phase 2 or Phase 3 to implement a headless simulation runner function (e.g., `run_scenario(config: &ScenarioConfig, handlers: &mut dyn EventHandler) -> SimResult`) in `sim-core` that accepts composed `EventHandler` implementations. Phase 3 tests construct the handler from `sim-factory` + `sim-economy` and call this runner directly. Phase 4's API wraps the same runner. This function is the core simulation entry point used by CLI, API, and tests.
+
+**Choices:**
+- [x] Add headless `run_scenario` runner to Phase 2; Phase 3 tests and Phase 4 API wrap it
+- [ ] Defer integrated running to Phase 4; only test components in isolation until then
+- [ ] Put the runner in a new `sim-runner` crate
+
+---
+
+### F59: §3.1 describes the plan as "planning notes" — misleading for a coding agent [Applied]
+<!-- severity: minor -->
+<!-- dimension: plan-hygiene -->
+
+**Context:** §3.1 says: "`devel/Original-plan.md` (planning notes)".
+
+**Issue:** The file is a detailed phased implementation plan with tasks, file lists, and acceptance criteria — not "planning notes." A coding agent may underweight its authority.
+
+**Recommendation:** Update to "the phased MVP implementation plan."
+
+**Choices:**
+- [x] Update description to "the phased MVP implementation plan"
+- [ ] Leave as "planning notes"
+
+---
+
+### F60: Phase 5 specifies `tailwind.config.ts` and `postcss.config.js` but Tailwind CSS v4 uses CSS-based configuration [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** Phase 5 task 1 says: "Configure `package.json`, `tsconfig.json`, `vite.config.ts`, `tailwind.config.ts`, `postcss.config.js`, and `index.html`."
+
+**Issue:** Tailwind CSS v4 (released January 2025, current stable as of April 2026) replaced `tailwind.config.ts` with CSS-first configuration (`@theme` directives in CSS). PostCSS is no longer required separately — Tailwind v4 provides a Vite plugin (`@tailwindcss/vite`). A coding agent following the plan will create v3-era config files, causing confusion or installation of the outdated v3.
+
+**Recommendation:** Update Phase 5 task 1 to remove `tailwind.config.ts` and `postcss.config.js`. Instead specify: install `@tailwindcss/vite` as a Vite plugin, configure Tailwind via `@import "tailwindcss"` in CSS. Update "Files expected" accordingly.
+
+**Choices:**
+- [x] Update to Tailwind v4 patterns: `@tailwindcss/vite` plugin, CSS-based config, remove `tailwind.config.ts` and `postcss.config.js`
+- [ ] Pin Tailwind v3 explicitly for stability
+- [ ] Make configuration version-agnostic
+
+---
+
+### Summary
+
+| # | Title | Severity | Dimension | Depends on |
+|---|-------|----------|-----------|------------|
+| F48 | `sim-factory` tests have no dev-dependencies declared | major | testing | — |
+| F49 | Scenario loader has no error-path tests or acceptance criterion | major | testing | — |
+| F50 | Scenario config structs belong in `sim-types`, not only `sim-core` | major | correctness | — |
+| F51 | Agent invocation flow unspecified | major | gaps | — |
+| F52 | Scenario baselines test in `sim-core/tests/` can't compile — missing deps | major | correctness | F42 |
+| F53 | `agent_integration.rs` in `sim-core/tests/` can't compile — missing deps | major | correctness | F52 |
+| F54 | No ESLint or frontend linter for UI project | minor | best-practices | — |
+| F55 | `cargo run` invocation ambiguous — binary name unspecified | minor | plan-hygiene | — |
+| F56 | `utoipa` `axum_extras` feature name may be incorrect | minor | correctness | — |
+| F57 | `sim-core` event dispatch needs factory state but DAG prevents dependency | critical | correctness | — |
+| F58 | Phase 3 acceptance criteria untestable without integrated sim runner | major | testing | F57 |
+| F59 | §3.1 calls the plan "planning notes" — misleading | minor | plan-hygiene | — |
+| F60 | Phase 5 specifies Tailwind v3 config files but v4 is current | major | correctness | — |
+
+---
+
+### Re-sweep 9 (post-F48–F60 application)
+
+All five dimensions re-swept against the updated plan:
+
+| Dimension | Result |
+|-----------|--------|
+| **testing** | Pass — All crates with logic have unit tests (`sim-core`, `sim-factory`, `sim-economy`, `sim-agents`). Property tests use `proptest` (dev-dep in `sim-core` and `sim-factory`). Error-path tests specified for scenario loading (F49), state transitions (F29), and API commands (F29). Determinism tests have `PartialEq`/`Eq` comparison mechanism (F47). Scenario baselines and agent integration tests correctly placed in `sim-api/tests/` to satisfy dependency constraints (F52, F53). Playwright e2e for UI with ESLint in CI (F54). Benchmarks in `sim-core/benches/` (F18). |
+| **correctness** | Pass — §3.1 matches actual repo (6 files, correct descriptions). Crate dependency DAG is acyclic and consistent: `sim-core` → `sim-types` only, with `EventHandler` trait for domain dispatch (F57). Test files placed in crates matching dependency constraints (F52, F53). Scenario config structs in `sim-types`, loader in `sim-core` (F50). Tailwind v4 patterns (F60). `utoipa` + `utoipa-axum` (F56). Binary name `arcogine` (F55). Agent invocation via `AgentEvaluation` event (F51). |
+| **gaps** | Pass — `EventHandler` trait + `run_scenario` runner resolves core dispatch gap (F57, F58). Agent invocation model specified via `AgentEvaluation` event and same-interface command submission (F51). Demand→order pipeline via `DemandEvaluation` (F41). CORS (F30). `/api/health` (F44). SSE (Phase 4). Scenario loader validation (F49). `compose.yaml` has ports, health checks, env vars (F43). Concurrency model (F40). |
+| **best-practices** | Pass — `resolver = "2"`, `edition = "2021"`, `rust-toolchain.toml` (F31). Dev-deps separated (F19, F48). ESLint + Prettier for frontend (F54). CI covers Rust (`fmt`, `clippy`, `test`) and frontend (`eslint`, `tsc`, `build`, `playwright`). Standards alignment documented (F25). |
+| **plan-hygiene** | Pass — §3.1 description corrected (F59). Binary name `arcogine` specified and run command updated (F55). Phases are self-contained with consistent cross-references. All `[Applied]` tags present on resolved findings. No stale file-path references in plan text (historical finding Contexts retain original descriptions by design). |
+
+**Superseded by re-sweep 10 below — new major findings discovered.**
+
+---
+
+### F61: Phase 7 `gin_scenario.rs` placed in `sim-core/tests/` — same DAG violation as F52 [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+<!-- Depends on: F52 choice 1 -->
+
+**Context:** Phase 7 files expected lists `crates/sim-core/tests/gin_scenario.rs` as a scenario acceptance test. This test validates gin distillery scenarios that require `sim-material` (recipes, inventory), `sim-factory` (equipment, routing), and `sim-economy` (cost, supply) — none of which are dependencies of `sim-core`.
+
+**Issue:** Identical to F52/F53. `sim-core` depends only on `sim-types`. Integration tests in `crates/sim-core/tests/` cannot import `sim-material`, `sim-factory`, or `sim-economy`. The test will not compile.
+
+**Recommendation:** Move to `crates/sim-api/tests/gin_scenario.rs` (consistent with the F52 resolution for MVP scenario baselines) since `sim-api` depends on all domain crates. Phase 7 should also add `sim-material` to `sim-api`'s dependencies.
+
+**Choices:**
+- [x] Move to `crates/sim-api/tests/gin_scenario.rs`; add `sim-material` to `sim-api` deps in Phase 7
+- [ ] Create a workspace-level integration test crate in Phase 7
+
+---
+
+### F62: Architecture doc says "five distinct tiers" but the table lists six [Applied]
+<!-- severity: minor -->
+<!-- dimension: correctness -->
+
+**Context:** `docs/architecture-overview.md` line 43 says "Arcogine is layered into five distinct tiers" but the Separation of Concerns table (lines 45–52) lists six rows: Simulation Core, Factory Layer, Material Layer, Economy Layer, Agent Layer, and API / UI Layer.
+
+**Issue:** The Material Layer (Phase 7, `sim-material`) was added to the table when Phase 7 was planned, but the prose count was not updated. Phase 1 task 2 instructs updating this doc but doesn't flag this mismatch.
+
+**Recommendation:** Add a note to Phase 1 task 2 to correct the tier count or annotate that the Material Layer is Phase 7 (so the MVP has five active tiers plus one planned).
+
+**Choices:**
+- [x] Add note to Phase 1 task 2 to correct tier count or add MVP annotation
+- [ ] Leave for the coding agent to resolve naturally
+
+---
+
+### F63: Architecture doc DES event list omits `DemandEvaluation` and `AgentEvaluation` [Applied]
+<!-- severity: minor -->
+<!-- dimension: correctness -->
+
+**Context:** `docs/architecture-overview.md` DES section lists five event types: order creation, task start/end, machine availability, price changes, agent decisions. The plan's Phase 2 task 2 defines eight event types including `demand evaluation` and `agent evaluation` (added via F41, F51).
+
+**Issue:** Phase 1 task 2 instructs adding a "Determinism Contract" section and updating the repo structure, but does not mention updating the DES event type list. After Phase 2, the doc will be stale on event types.
+
+**Recommendation:** Add a note to Phase 2 to update the DES event type list in `docs/architecture-overview.md` to include `DemandEvaluation` and `AgentEvaluation`.
+
+**Choices:**
+- [x] Add note to Phase 2 to update `docs/architecture-overview.md` DES event list
+- [ ] Leave for the coding agent to resolve naturally
+
+---
+
+### F64: Phase 1 task 2 does not instruct documenting the `EventHandler` pattern in `docs/architecture-overview.md` [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** The `EventHandler` trait and `run_scenario` runner pattern (F57, F58) are the core integration mechanism enabling the simulation loop to dispatch events to domain crates without violating the dependency DAG. Phase 1 task 1 and Phase 2 task 2 describe this pattern in the plan. However, Phase 1 task 2 — responsible for updating `docs/architecture-overview.md` — only instructs adding a "Determinism Contract" section and updating the repo structure. It does not mention the EventHandler/runner pattern.
+
+**Issue:** `docs/architecture-overview.md` is the authoritative architecture document. After Phase 2, it will describe event types, crate layers, and determinism but will have no mention of `EventHandler` or `run_scenario` — the core pattern that makes the DAG work. A contributor reading only the architecture doc won't understand how `sim-core` dispatches events to domain crates.
+
+**Recommendation:** Add instruction to Phase 2 to document the `EventHandler` trait and `run_scenario` runner in `docs/architecture-overview.md`, in a new section between "Separation of Concerns" and "Agent Architecture." This should explain: the trait interface, how domain crates implement it, how the runner composes handlers, and why this preserves the DAG.
+
+**Choices:**
+- [x] Add instruction to Phase 2 to document EventHandler/runner pattern in `docs/architecture-overview.md`
+- [ ] Leave architecture doc updates to the coding agent's discretion
+- [ ] Document in a separate file
+
+---
+
+### F65: Agent execution context contradicts concurrency model — runs on sim thread but described as using async snapshots [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** Phase 4 task 3 says agents read "state via a read-only snapshot (same as KPI queries)" and submit "commands via the same command channel used by the API." Phase 4 task 1 concurrency model uses `tokio::sync::mpsc` channels for commands and snapshots. But Phase 4 task 3 also says the agent implements `EventHandler` and is invoked by the simulation runner on the simulation thread via `AgentEvaluation` events.
+
+**Issue:** There is a contradiction. If the agent runs on the simulation thread (as an `EventHandler` in the synchronous event loop), it has direct access to simulation state — it doesn't need async channels or "snapshots." But the plan describes it using the same channel mechanism as HTTP handlers. These are mutually exclusive: either the agent runs synchronously in-loop with direct state access, or it runs asynchronously via channels. The current text conflates both, which will confuse a coding agent.
+
+**Recommendation:** Clarify in Phase 4 task 3 that when invoked via `AgentEvaluation`, the agent runs **synchronously on the simulation thread** and reads state directly from the simulation context (passed to or accessible from the `EventHandler`). The agent submits its commands by scheduling new events on the `Scheduler` (same mechanism as any `EventHandler`), not by sending them through async channels. The "read-only snapshot / command channel" description applies to the **HTTP API** path, not the in-loop agent path. Remove or qualify the phrase "same as KPI queries" and "same command channel used by the API."
+
+**Choices:**
+- [x] Clarify agent runs synchronously via `EventHandler`; commands via `Scheduler`; not via async channels
+- [ ] Agent runs on API thread via channels (more complex, less deterministic)
+- [ ] Leave underspecified
+
+---
+
+### Summary
+
+| # | Title | Severity | Dimension | Depends on |
+|---|-------|----------|-----------|------------|
+| F61 | Phase 7 `gin_scenario.rs` in `sim-core/tests/` — DAG violation | major | correctness | F52 |
+| F62 | Architecture doc says "five tiers" but table has six | minor | correctness | — |
+| F63 | Architecture doc DES event list missing two event types | minor | correctness | — |
+| F64 | `EventHandler` pattern not documented in architecture overview | major | gaps | F57 |
+| F65 | Agent execution context contradicts concurrency model | major | gaps | F51, F57 |
+
+---
+
+### Re-sweep 10 (post-F61–F65 application)
+
+All five dimensions re-swept against the updated plan:
+
+| Dimension | Result |
+|-----------|--------|
+| **testing** | Pass — All integration tests placed in crates whose dependency sets satisfy the imports: `sim-core/tests/` for core-only tests, `sim-factory/tests/` for factory tests (has `sim-core` dep), `sim-economy/tests/` for economy unit tests, `sim-agents/tests/` for agent unit tests, `sim-api/tests/` for cross-crate integration tests (scenario baselines, agent integration, gin scenario). Property tests in `sim-core` and `sim-factory`. Error-path tests for scenario loading, state transitions, and API. Playwright e2e + ESLint for UI. Benchmarks in `sim-core/benches/`. |
+| **correctness** | Pass — All test files placed in DAG-compatible crates (F52, F53, F61). Phase 7 gin scenario test in `sim-api/tests/`. Architecture doc update instructions cover tier count (F62), event type list (F63), and EventHandler pattern (F64). Agent execution model clearly synchronous in-loop (F65). Scenario config structs in `sim-types`, loader in `sim-core` (F50). Tailwind v4 (F60). `utoipa` + `utoipa-axum` (F56). Binary name `arcogine` (F55). |
+| **gaps** | Pass — EventHandler/runner pattern documented in plan (F57) and will be added to architecture doc (F64). Agent in-loop execution model resolved — synchronous via EventHandler, commands via Scheduler (F65). No remaining unspecified integration points between crates. Architecture doc updates cover event types (F63) and dispatch pattern (F64). |
+| **best-practices** | Pass — No changes from re-sweep 9. `resolver = "2"`, `edition = "2021"`, `rust-toolchain.toml`, ESLint + Prettier, CI covers Rust and frontend. |
+| **plan-hygiene** | Pass — Phase 2 now has 8 tasks (added doc update task). All phases self-contained. No contradictions between agent invocation model and concurrency model. All findings marked [Applied]. |
+
+**No critical or major findings remain. Iteration complete.**

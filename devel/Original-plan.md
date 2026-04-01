@@ -101,11 +101,11 @@ Objective: Implement the smallest useful discrete-event simulation engine and co
 
 Planned work:
 
-1. Define typed IDs (`MachineId`, `ProductId`, `JobId`), simulation time (`SimTime`), shared enums/structs, and a shared error enum `SimError` (with variants for invalid state transitions, unknown IDs, event ordering violations) in `crates/sim-types/src/lib.rs`. Domain concepts should map cleanly to ISA-95 terminology (see `docs/standards-alignment.md`): machines are Equipment, products are Material Definitions, routing steps are Process Segments, and product routings are Operations Definitions. Use Arcogine's own naming in code (`Machine`, `Product`, `RoutingStep`) but include doc-comments noting the ISA-95 correspondence. [F4, F25 applied]
+1. Define typed IDs (`MachineId`, `ProductId`, `JobId`), simulation time (`SimTime`), shared enums/structs, and a shared error enum `SimError` (with variants for invalid state transitions, unknown IDs, event ordering violations) in `crates/sim-types/src/lib.rs`. Domain concepts should map cleanly to ISA-95 terminology (see `docs/standards-alignment.md`): machines are Equipment, products are Material Definitions, routing steps are Process Segments, and product routings are Operations Definitions. Use Arcogine's own naming in code (`Machine`, `Product`, `RoutingStep`) but include doc-comments noting the ISA-95 correspondence. **Design-for (Phase 7):** Define quantity types as an enum or trait (e.g., `Quantity::Units(u64)` / `Quantity::Volume { liters: f64 }`) rather than a bare integer, so that batch/process manufacturing can use volume-based quantities without rewriting existing discrete-manufacturing code. Reserve a `BatchId` typed ID slot even if the struct is not populated until Phase 7. [F4, F25, F28 applied]
 2. Implement event types (order creation, task start, task end, machine availability change, price change, agent decision), a priority-queue-based event scheduler, and deterministic event dispatch in `crates/sim-core/src/event.rs` and `crates/sim-core/src/queue.rs`. Use `ChaCha8Rng` from `rand_chacha` seeded from the scenario configuration for all stochastic decisions. [F7 applied]
 3. Implement append-only event logging in `crates/sim-core/src/log.rs`. Define a `Kpi` trait in `crates/sim-core/src/kpi.rs` and implement at least one concrete KPI (e.g., `TotalSimulatedTime` or `EventCount`) sufficient to validate deterministic replay. [F2 applied]
 4. Define the scenario file schema (machine definitions, product routings, initial conditions, run parameters, RNG seed) in TOML and implement a scenario loader in `crates/sim-core/src/scenario.rs`. Use TOML section names that correspond to ISA-95 concepts where practical (e.g., `[[equipment]]`, `[[material]]`, `[[process_segment]]`) to ease future data interchange; see `docs/standards-alignment.md` for the mapping. [F1, F7, F25 applied]
-5. Define state stores for machines, products, jobs, and work queues using data-oriented structures in `crates/sim-factory/src/machines.rs`, `crates/sim-factory/src/jobs.rs`, and `crates/sim-factory/src/routing.rs`.
+5. Define state stores for machines, products, jobs, and work queues using data-oriented structures in `crates/sim-factory/src/machines.rs`, `crates/sim-factory/src/jobs.rs`, and `crates/sim-factory/src/routing.rs`. **Design-for (Phase 7):** Machine definitions should include an optional `capacity` field (defaulting to concurrency=1 for discrete manufacturing) and an optional `setup_time` field (defaulting to zero), so that Phase 7 can add volume-based capacity and cleaning cycles without restructuring the machine model. Routing steps should accept a generic duration rather than assuming instantaneous completion, even if MVP steps use fixed processing times. [F28 applied]
 6. Write unit tests for event ordering, monotonic time progression, state transition safety, deterministic replay, and scenario loading in `crates/sim-core/tests/`. Write unit tests for machine state management, job lifecycle, and routing correctness in `crates/sim-factory/tests/machine_state.rs` and `crates/sim-factory/tests/job_routing.rs`. [F14 applied]
 7. Write property tests in `crates/sim-core/tests/properties.rs` using `proptest` to verify invariants: no negative inventory, no duplicate job completion, monotonic time progression, and event causality consistency. [F13 applied]
 
@@ -240,6 +240,68 @@ Acceptance criteria:
 
 ---
 
+### Phase 7. Extend to batch/process manufacturing (post-MVP)
+
+> **Status:** Post-MVP extension. Phases 1–6 must be complete and stable before this phase begins. This phase is included in the plan to ensure MVP design decisions preserve extensibility.
+
+Objective: Extend Arcogine from discrete manufacturing to batch and process manufacturing, using gin distillery production as the reference scenario. Prove that the simulation engine can model material transformation, volume-based production, recipe-driven processes, and multi-stage inventory — unlocking an entirely new class of industrial scenarios.
+
+**Why gin distillery:** Gin production exercises every gap between discrete and process manufacturing in a single, concrete, end-to-end flow: batch-based liquid processing, time-based transformations (infusion, distillation), material conversion with yield/loss, volume tracking (liters, not units), specialized equipment (stills, tanks, bottling lines), multi-level inventory (raw materials → intermediates → finished goods → packaging), and regulatory constraints (excise duty, batch traceability). If Arcogine can simulate a gin distillery, it can simulate most batch/process manufacturing scenarios.
+
+**Reference scenario flow:**
+
+```text
+Botanicals + Neutral Spirit (raw materials)
+        ↓
+Infusion Tank (8h, batch, volume-based)
+        ↓
+Still (6h, pot or column, capacity-constrained)
+        ↓
+Dilution Tank (2h, blending to target ABV)
+        ↓
+Bottling Line (fast, discrete unit output)
+        ↓
+Finished Goods Inventory
+```
+
+Planned work:
+
+1. **Batch entity and volume tracking.** Extend `sim-types` with `BatchId`, volume quantities (liters), and batch state lifecycle (created → processing → completed → consumed). Batches replace jobs as the primary work unit for process manufacturing. The job/batch distinction should be modeled via a trait or enum so both discrete jobs and process batches coexist in the same simulation. [F28 applied]
+2. **Material and recipe system (`sim-material` crate).** New crate for: material definitions (ingredients with quantity types — volume, mass, count), bill of materials (BOM) / recipe definitions (input materials → output material with ratios, yield, and waste), and inventory state stores (raw materials, intermediates, finished goods, packaging). Track inventory levels by material and location. ISA-95 correspondence: Material Definition, Material Lot, Bill of Material.
+3. **Process-step model with time-based transformation.** Extend the routing model in `sim-factory` to support process steps that: occupy equipment for a defined duration (not instantaneous), transform input materials into output materials with yield and loss, respect equipment capacity (liters, not just concurrency), and support cooldown/cleaning cycles between batches. Each step is a DES event pair (process-start, process-end) with the equipment locked for the duration.
+4. **Equipment specialization.** Extend `sim-factory` machine model with: capacity (volume, e.g., liters for tanks/stills), equipment type constraints (which process steps can run on which equipment), and setup/cleaning time between batches. Reference equipment types for gin: infusion tank, still (pot/column), dilution tank, bottling line.
+5. **Multi-stage lead time and cost modeling.** Extend `sim-economy` with: multi-component cost structures (raw material cost, energy, labor, packaging, excise duty), cost accumulation through production stages, and multi-stage lead time tracking (production delay + holding time + bottling delay). Lead time feeds back into demand as in the MVP.
+6. **Supply chain layer (minimal).** Add supplier entities to `sim-economy` or a new `sim-supply` module: supplier lead times for raw materials, purchase order events, and price variability for inputs. This closes the loop: supply constraints → production constraints → delivery performance → demand.
+7. **Gin distillery scenario fixtures.** Create TOML scenario files in `examples/` for: a baseline gin distillery (single still, balanced throughput), a bottleneck scenario (still is the constraint), and a scaling scenario (add a second still or larger tank). These use the extended schema from tasks 1–6.
+8. **Tests.** Unit tests for batch lifecycle, material/recipe validation, volume tracking, and inventory constraints in `crates/sim-material/tests/`. Scenario acceptance tests validating: still is the bottleneck (queue builds), batch sizing affects throughput, raw material depletion halts production, and cost model produces correct margin calculations. Property tests verifying: material conservation (inputs consumed = outputs produced + waste), no negative inventory, batch integrity (no partial consumption).
+
+Files expected:
+- `crates/sim-types/src/lib.rs` (modify — add `BatchId`, volume types, batch lifecycle states)
+- `crates/sim-material/Cargo.toml`, `crates/sim-material/src/lib.rs`, `crates/sim-material/src/recipe.rs`, `crates/sim-material/src/inventory.rs` (new crate)
+- `crates/sim-factory/src/machines.rs`, `crates/sim-factory/src/routing.rs` (modify — add capacity, equipment types, process durations, cleaning cycles)
+- `crates/sim-economy/src/cost.rs`, `crates/sim-economy/src/supply.rs` (new modules)
+- `examples/gin_baseline.toml`, `examples/gin_bottleneck.toml`, `examples/gin_scaling.toml` (new)
+- `crates/sim-material/tests/recipe_validation.rs`, `crates/sim-material/tests/inventory.rs` (new)
+- `crates/sim-core/tests/gin_scenario.rs` (new — scenario acceptance tests)
+
+Acceptance criteria:
+- A gin distillery scenario runs to completion with material transformation: input botanicals + neutral spirit are consumed, output gin volume is produced with defined yield/loss.
+- The still is the bottleneck: queue buildup is observable, and adding capacity (second still) measurably increases throughput.
+- Batch sizing decisions affect throughput and lead time: smaller batches reduce lead time but lower utilization; larger batches increase utilization but lengthen cycle time.
+- Raw material depletion halts production until resupply; supplier lead time affects production continuity.
+- Cost model produces per-batch and per-liter cost breakdowns; revenue minus cost yields correct margin.
+- Material conservation holds as a property-test invariant: total input volume = total output volume + total waste, within floating-point tolerance.
+- All MVP phases (1–6) acceptance criteria continue to pass — discrete manufacturing scenarios are unaffected by the batch/process extensions.
+
+**What is NOT in Phase 7:**
+- Quality metrics / batch variability / rejection-rework (deferred)
+- Regulatory compliance steps / excise duty calculation (deferred — noted as a Phase 7+ extension)
+- Multi-factor demand models (seasonality, brand, distribution) — deferred
+- Multi-site / multi-distillery scenarios — deferred
+- Aging/maturation time for spirits that require it (e.g., whisky) — deferred
+
+---
+
 ## 6. Validation Plan
 
 1. Clone the repository into a clean environment and follow `README.md` to run the native development path.
@@ -264,6 +326,7 @@ Acceptance criteria:
 4. **Phase 4 — Add the command/query surface and simple agent.** The API and agent layer on top of a proven closed-loop simulation. Phases 1–3 acceptance criteria remain passing.
 5. **Phase 5 — Add the minimal single-user experimentation UI.** The UI exposes already-working simulation behavior. Phases 1–4 acceptance criteria remain passing.
 6. **Phase 6 — Add reproducible local deployment and performance validation.** Containerization and benchmarks formalize what is already usable. All prior phase acceptance criteria remain passing.
+7. **Phase 7 — Extend to batch/process manufacturing (post-MVP).** Introduces material transformation, volume tracking, recipes, equipment specialization, and a multi-stage cost model using gin distillery as the reference scenario. All prior phase acceptance criteria remain passing; discrete manufacturing scenarios are unaffected.
 
 ---
 
@@ -291,6 +354,13 @@ Acceptance criteria:
 - FMI (Functional Mock-up Interface) adapter (deferred to co-simulation phase)
 - FIPA agent communication protocols (deferred to multi-agent phase)
 - BPMN process workflow modeling (deferred to serious-game phase)
+- Batch/process manufacturing, material transformation, and recipe systems (deferred to Phase 7; MVP models discrete manufacturing only)
+- Volume-based production and multi-level inventory management (deferred to Phase 7)
+- Equipment specialization beyond generic machine types (deferred to Phase 7)
+- Multi-component cost structures, excise duty, and regulatory compliance (deferred to Phase 7+)
+- Quality metrics, batch variability, and rejection/rework modeling (deferred to Phase 7+)
+- Multi-site / multi-distillery scenarios (deferred beyond Phase 7)
+- Aging/maturation time modeling for long-cycle products (deferred beyond Phase 7)
 
 ---
 
@@ -309,6 +379,11 @@ These capabilities build on the MVP foundation and are preserved as long-term di
 9. **Advanced scheduling and optimization** — Constraint-based or heuristic scheduling algorithms.
 10. **Scenario authoring tools** — UI or DSL for creating and sharing simulation scenarios.
 11. **Real-time analytics and dashboards** — Production-grade monitoring beyond the MVP experiment console, with Apache Arrow/Parquet for efficient analytical data storage.
+12. **Batch/process manufacturing (Phase 7)** — Material transformation, volume-based production, recipe/BOM systems, equipment specialization, and multi-level inventory. Gin distillery as the reference scenario; generalizable to food & beverage, chemical, and pharmaceutical batch manufacturing. See Phase 7 for the detailed plan.
+13. **Regulatory and compliance modeling** — Excise duty calculation, batch traceability, production limits, and audit trails for regulated industries (alcohol, pharma, food). Builds on Phase 7 material tracking.
+14. **Quality and variability modeling** — Batch-level quality metrics (ABV, flavor profile), acceptance/rejection criteria, rework flows, and statistical process control.
+15. **Multi-factor demand models** — Extend beyond price-driven demand to include seasonality, brand equity, distribution channels, and market trends.
+16. **Multi-site operations** — Multiple factories/distilleries sharing a common market, with inter-site transfer logistics and centralized planning agents.
 
 ---
 
@@ -912,3 +987,37 @@ All five dimensions re-swept against the updated plan and standards document:
 | F25 | No industry standards alignment strategy | major | gaps | — |
 | F26 | No OpenAPI specification for REST API | minor | best-practices | F25 |
 | F27 | KPIs not aligned with ISO 22400; no Romanian/EU context | major | gaps | F25 |
+| F28 | No batch/process manufacturing path; gin distillery use case unaddressed | major | gaps | — |
+
+---
+
+### F28: No batch/process manufacturing extensibility; gin distillery use case unaddressed [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** The MVP plan models discrete manufacturing only (jobs with unit counts advancing through machine routing steps). A concrete use case — gin distillery production — requires batch/process manufacturing: material transformation, volume-based production, recipes with yield/loss, time-based reactions, specialized equipment (stills, tanks), multi-level inventory, and multi-component cost structures. None of these are addressed in Phases 1–6, and the MVP typed IDs, machine model, and routing model could block future extension if designed too narrowly.
+
+**Issue:** Without a documented extensibility path, the MVP risks designing typed IDs as unit-only, machines as concurrency-only (no volume capacity), and routing steps as instantaneous (no duration). These choices would require significant restructuring to support batch/process manufacturing. The gin distillery use case is the first concrete scenario that validates Arcogine's generality beyond discrete manufacturing.
+
+**Recommendation:** Add Phase 7 (post-MVP) documenting the full batch/process manufacturing extension with gin distillery as the reference scenario. Add design-for notes in Phase 2 typed IDs (quantity enum supporting units and volumes, reserved `BatchId`), machine definitions (optional volume capacity, setup/cleaning time), and routing steps (generic duration). Update Out of Scope and Future Directions. Update `docs/architecture-overview.md` with extensibility section.
+
+**Choices:**
+- [x] Add Phase 7 with design-for notes in Phase 2, keeping MVP scope unchanged
+- [ ] Merge batch/process manufacturing into the MVP (excessive scope growth)
+- [ ] Defer entirely without documenting design-for constraints (risks MVP design blocking extension)
+
+---
+
+### Re-sweep 6 (post-F28 application)
+
+All five dimensions re-swept against the updated plan, architecture document, and standards document:
+
+| Dimension | Result |
+|-----------|--------|
+| **testing** | Pass — Phase 7 includes comprehensive test plan (unit tests for batch/material, scenario acceptance tests for gin distillery, property tests for material conservation). MVP test strategy unchanged. |
+| **correctness** | Pass — Phase 7 is explicitly post-MVP; Phases 1–6 unchanged except for two design-for notes in Phase 2 tasks 1 and 5. Implementation Order updated to include Phase 7. Out of Scope lists batch/process items as deferred to Phase 7. `docs/architecture-overview.md` updated with Separation of Concerns table (new Material Layer), Repository Structure (`sim-material` crate), and Extensibility section. |
+| **gaps** | Pass — Gin distillery use case fully addressed: batch entities, material transformation, recipes/BOM, inventory, equipment specialization, multi-stage cost, supply chain, scenario fixtures, and tests. Explicit deferrals for quality metrics, regulatory compliance, multi-site, and aging. |
+| **best-practices** | Pass — Design-for notes follow the tiered strategy (minimal MVP changes that preserve extension paths). Phase 7 ISA-95 correspondences maintained (Material Definition, Material Lot, Bill of Material). |
+| **plan-hygiene** | Pass — Phase 7 follows the same template as Phases 1–6 (objective, planned work, files expected, acceptance criteria, explicit exclusions). Future Directions expanded consistently. Summary table updated. |
+
+**No critical or major findings remain. Iteration complete.**

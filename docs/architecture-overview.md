@@ -46,7 +46,8 @@ Arcogine is layered into five distinct tiers:
 |-------|---------------|-----------|
 | **Simulation Core** | Event scheduling, time, logging, determinism | `sim-core`, `sim-types` |
 | **Factory Layer** | Machines, jobs, routing, queues | `sim-factory` |
-| **Economy Layer** | Pricing, demand, revenue | `sim-economy` |
+| **Material Layer** | Recipes, inventory, material transformation (Phase 7) | `sim-material` |
+| **Economy Layer** | Pricing, demand, revenue, cost, supply | `sim-economy` |
 | **Agent Layer** | Decision-making actors that observe and command | `sim-agents` |
 | **API / UI Layer** | HTTP surface, CLI, web dashboard | `sim-api`, `sim-cli`, `ui/` |
 
@@ -88,6 +89,18 @@ Arcogine's architecture is designed for compatibility with industry standards wi
 
 Future directions (AAS, OPC UA, FMI, MQTT, FIPA) are preserved by architectural choices documented in `docs/standards-alignment.md`.
 
+## Extensibility: Discrete → Batch/Process Manufacturing
+
+The MVP models **discrete manufacturing** (jobs with unit counts advancing through machine routing steps). The architecture is designed so that **batch and process manufacturing** — where material is transformed in volume-based batches with yield, loss, and time-dependent reactions — can be added without restructuring the core engine.
+
+Key design-for decisions in the MVP:
+- **Quantity types** in `sim-types` use an enum that accommodates both discrete units and volumes, so Phase 7 batch quantities integrate cleanly.
+- **Machine capacity** includes an optional field for volume-based capacity alongside concurrency, allowing tanks and stills to coexist with discrete machines.
+- **Routing steps** accept generic durations and optional setup/cleaning times, enabling time-based process steps.
+- **Event scheduler** is quantity-agnostic — it schedules events by time, not by production paradigm.
+
+Phase 7 introduces a `sim-material` crate (recipes, inventory, material transformation) and extends `sim-factory` and `sim-economy` with batch entities, equipment specialization, and multi-component cost structures. The reference scenario is a gin distillery. See `devel/Original-plan.md` Phase 7 for the detailed plan.
+
 ## Repository Structure
 
 ```text
@@ -97,7 +110,8 @@ arcogine/
   crates/
     sim-core/             # Event engine, scheduler, logging, KPIs, scenario loader
     sim-factory/          # Machines, jobs, routing, queues
-    sim-economy/          # Pricing, demand, revenue
+    sim-material/         # Recipes, inventory, material transformation (Phase 7)
+    sim-economy/          # Pricing, demand, revenue, cost, supply
     sim-agents/           # Agent trait and implementations
     sim-types/            # Typed IDs, shared structs, error types
     sim-api/              # HTTP API (Axum)

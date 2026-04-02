@@ -1,0 +1,28 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Node (UI)
+ui/node_modules/
+ui/dist/
+ui/playwright-report/
+ui/test-results/
+
+# Local cargo config (machine-specific build settings)
+.cargo/

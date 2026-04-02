@@ -31,6 +31,8 @@ The simulation advances via discrete events rather than fixed time steps:
 - **Machine availability** — machines go online, offline, or change state
 - **Price changes** — pricing adjustments affect future demand
 - **Agent decisions** — external actors submit commands that influence the system
+- **Demand evaluation** — periodic trigger that samples the demand model and generates orders
+- **Agent evaluation** — periodic trigger that invokes registered agents for decision-making
 
 Benefits of DES:
 
@@ -38,9 +40,52 @@ Benefits of DES:
 - Realistic modeling — events occur at their natural times
 - Clear causality — every state change traces back to a specific event
 
+## Determinism Contract
+
+Arcogine guarantees reproducible simulation results: given identical inputs (scenario file + RNG seed), the engine produces identical outputs (final state, KPIs, and event stream).
+
+### How it works
+
+- **RNG**: All stochastic behavior uses `ChaCha8Rng` from `rand_chacha`, which produces platform-independent deterministic sequences. The seed is specified in the scenario TOML file.
+- **Seed propagation**: The scenario's `rng_seed` initializes a single `ChaCha8Rng` instance owned by the simulation runner. Sub-RNGs for domain modules (demand sampling, agent noise) are derived from this root RNG using `ChaCha8Rng::seed_from_u64`.
+- **Replay guarantees**: Running the same scenario file twice with the same seed produces byte-identical event logs and final state. Determinism tests verify this by running a scenario twice and asserting `PartialEq` equality on the full state and event log.
+- **What breaks determinism**: Non-seeded randomness, floating-point non-associativity (avoided by using integer arithmetic or fixed evaluation order), time-of-day dependencies, and concurrent mutation of simulation state.
+
+### Testing
+
+Determinism is verified by property tests and scenario replay tests that run the same configuration twice and assert identical results.
+
+## Event Dispatch Architecture
+
+The simulation engine uses a trait-based event dispatch pattern that preserves the crate dependency DAG while enabling domain-specific event handling.
+
+### The `EventHandler` trait
+
+Defined in `sim-core`, the `EventHandler` trait provides a single method:
+
+```rust
+fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError>
+```
+
+Domain crates (`sim-factory`, `sim-economy`, `sim-agents`) implement this trait. Each handler processes the event types it cares about and ignores the rest.
+
+### The `run_scenario` runner
+
+The headless simulation runner in `sim-core` accepts a composed `EventHandler` implementation:
+
+```rust
+fn run_scenario(config: &ScenarioConfig, handler: &mut dyn EventHandler) -> Result<SimResult, SimError>
+```
+
+The runner dequeues events from the priority queue and dispatches each to the handler. Domain handlers schedule follow-up events by pushing to the `Scheduler`.
+
+### Why this pattern
+
+`sim-core` depends only on `sim-types` — it cannot import domain crates. The `EventHandler` trait inverts the dependency: domain crates depend on `sim-core` for the trait definition and implement it. The binary crate (`sim-cli`) or API crate (`sim-api`) assembles domain handlers into a composite handler and passes it to the runner. This preserves the acyclic dependency graph while allowing the core event loop to dispatch to domain-specific logic.
+
 ## Separation of Concerns
 
-Arcogine is layered into five distinct tiers:
+Arcogine is layered into six tiers (five active in the MVP, plus the Material Layer planned for Phase 7):
 
 | Layer | Responsibility | Crate(s) |
 |-------|---------------|-----------|

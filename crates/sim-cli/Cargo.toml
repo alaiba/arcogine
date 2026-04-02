@@ -1,0 +1,12 @@
+[package]
+name = "sim-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "arcogine"
+path = "src/main.rs"
+
+[dependencies]
+sim-api = { path = "../sim-api" }
+clap = { version = "4", features = ["derive"] }

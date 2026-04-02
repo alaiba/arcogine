@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/sim-types",
+    "crates/sim-core",
+    "crates/sim-factory",
+    "crates/sim-economy",
+    "crates/sim-agents",
+    "crates/sim-api",
+    "crates/sim-cli",
+]

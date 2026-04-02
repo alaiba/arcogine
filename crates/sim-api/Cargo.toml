@@ -1,0 +1,12 @@
+[package]
+name = "sim-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sim-types = { path = "../sim-types" }
+sim-core = { path = "../sim-core" }
+sim-factory = { path = "../sim-factory" }
+sim-economy = { path = "../sim-economy" }
+sim-agents = { path = "../sim-agents" }
+serde = { version = "1", features = ["derive"] }

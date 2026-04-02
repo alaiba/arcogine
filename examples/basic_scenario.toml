@@ -1,0 +1,70 @@
+# Basic scenario: balanced factory with moderate demand.
+# Baseline for comparison runs.
+
+[simulation]
+rng_seed = 42
+max_ticks = 500
+demand_eval_interval = 10
+agent_eval_interval = 50
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[equipment]]
+id = 2
+name = "Lathe"
+
+[[equipment]]
+id = 3
+name = "QC Station"
+
+[[material]]
+id = 1
+name = "Widget A"
+routing_id = 1
+
+[[material]]
+id = 2
+name = "Widget B"
+routing_id = 2
+
+[[process_segment]]
+id = 1
+name = "Rough milling"
+equipment_id = 1
+duration = 5
+
+[[process_segment]]
+id = 2
+name = "Turning"
+equipment_id = 2
+duration = 3
+
+[[process_segment]]
+id = 3
+name = "Quality check"
+equipment_id = 3
+duration = 2
+
+[[process_segment]]
+id = 4
+name = "Fine milling"
+equipment_id = 1
+duration = 4
+
+[[operations_definition]]
+id = 1
+name = "Widget A routing"
+steps = [1, 2, 3]
+
+[[operations_definition]]
+id = 2
+name = "Widget B routing"
+steps = [4, 3]
+
+[economy]
+initial_price = 5.0
+base_demand = 3.0
+price_elasticity = 0.3
+lead_time_sensitivity = 0.05

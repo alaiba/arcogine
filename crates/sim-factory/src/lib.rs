@@ -2,4 +2,5 @@
 
 pub mod jobs;
 pub mod machines;
+pub mod process;
 pub mod routing;

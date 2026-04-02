@@ -1,19 +1,16 @@
-//! KPI (Key Performance Indicator) trait and initial implementations.
+//! KPI (Key Performance Indicator) trait and implementations.
 //!
-//! Phase 2 defines the trait and implements `TotalSimulatedTime` and `EventCount`
-//! sufficient for deterministic replay validation. Phase 3 adds domain KPIs
-//! (revenue, backlog, throughput, lead time, utilization) aligned with ISO 22400.
+//! Phase 2: `TotalSimulatedTime`, `EventCount` for deterministic validation.
+//! Phase 3: domain KPIs aligned with ISO 22400 (SR EN ISO 22400).
 
+use crate::event::EventType;
 use crate::log::EventLog;
 use serde::Serialize;
 use sim_types::SimTime;
 
 /// Trait for computing a KPI from the event log and simulation state.
 pub trait Kpi {
-    /// Human-readable name of the KPI.
     fn name(&self) -> &str;
-
-    /// Compute the KPI value.
     fn compute(&self, log: &EventLog, current_time: SimTime) -> KpiValue;
 }
 
@@ -55,6 +52,44 @@ impl Kpi for EventCount {
             name: self.name().to_string(),
             value: log.count() as f64,
             unit: "events".to_string(),
+        }
+    }
+}
+
+/// Throughput rate (ISO 22400 KPI 1200): completed orders per unit time.
+pub struct ThroughputRate;
+
+impl Kpi for ThroughputRate {
+    fn name(&self) -> &str {
+        "throughput_rate"
+    }
+
+    fn compute(&self, log: &EventLog, current_time: SimTime) -> KpiValue {
+        let completed = log.filter_by_type(EventType::TaskEnd).count();
+        let elapsed = current_time.ticks().max(1) as f64;
+        KpiValue {
+            name: self.name().to_string(),
+            value: completed as f64 / elapsed,
+            unit: "task_completions/tick".to_string(),
+        }
+    }
+}
+
+/// Work-in-process: count of OrderCreation events minus TaskEnd events
+/// that represent final routing steps (approximation from event log).
+pub struct OrderCount;
+
+impl Kpi for OrderCount {
+    fn name(&self) -> &str {
+        "order_count"
+    }
+
+    fn compute(&self, log: &EventLog, _current_time: SimTime) -> KpiValue {
+        let orders = log.filter_by_type(EventType::OrderCreation).count();
+        KpiValue {
+            name: self.name().to_string(),
+            value: orders as f64,
+            unit: "orders".to_string(),
         }
     }
 }

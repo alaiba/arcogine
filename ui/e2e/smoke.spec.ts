@@ -33,7 +33,7 @@ test.describe('Arcogine UI Smoke Tests', () => {
     await loadScenario(page, 'Basic')
 
     await expect(page.getByText('Revenue', { exact: true })).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText('Backlog')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText('Backlog', { exact: true })).toBeVisible({ timeout: 10_000 })
   })
 
   test('scenario selector loads and run updates controls', async ({ page }) => {
@@ -52,7 +52,7 @@ test.describe('Arcogine UI Smoke Tests', () => {
   test('event log drawer can be expanded', async ({ page }) => {
     await page.goto('/')
     await loadScenario(page, 'Basic')
-    await expect(page.getByText('Revenue')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText('Revenue', { exact: true })).toBeVisible({ timeout: 10_000 })
 
     const toggle = page.getByRole('button', { name: /event log/i })
     await expect(toggle).toBeVisible({ timeout: 5_000 })

@@ -40,8 +40,8 @@ export function TimeSeriesChart() {
   }
 
   return (
-    <div className="h-[280px] w-full rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/80">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-[280px] w-full min-h-0 min-w-0 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/80">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <XAxis
             dataKey="time"

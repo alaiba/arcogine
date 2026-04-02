@@ -59,13 +59,25 @@ type SimulationState = {
 
 export const useSimulationStore = create<SimulationState>((set, get) => {
   const mergeSnapshot = (snapshot: SimSnapshot) =>
-    set((s) => ({
-      snapshot,
-      kpiHistory: [
-        ...s.kpiHistory,
-        { time: snapshot.current_time, values: kpiValuesRecord(snapshot.kpis) },
-      ],
-    }));
+    set((s) => {
+      const t = snapshot.current_time;
+      const values = kpiValuesRecord(snapshot.kpis);
+      const existing = s.kpiHistory;
+      const lastIdx = existing.findIndex((p) => p.time === t);
+      let next: KpiHistoryPoint[];
+      if (lastIdx !== -1) {
+        next = [...existing];
+        next[lastIdx] = { time: t, values };
+      } else {
+        const insertAt = existing.findIndex((p) => p.time > t);
+        if (insertAt === -1) {
+          next = [...existing, { time: t, values }];
+        } else {
+          next = [...existing.slice(0, insertAt), { time: t, values }, ...existing.slice(insertAt)];
+        }
+      }
+      return { snapshot, kpiHistory: next };
+    });
 
   const withLoading = async (fn: () => Promise<SimSnapshot>) => {
     set({ loading: true, error: null });
@@ -91,7 +103,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => {
     sseClient: null,
 
     loadScenario: async (toml) => {
-      set({ loading: true, error: null });
+      set({ loading: true, error: null, kpiHistory: [], events: [] });
       try {
         await postScenario(toml);
         const snapshot = await getSnapshot();
@@ -108,7 +120,24 @@ export const useSimulationStore = create<SimulationState>((set, get) => {
     runSim: () => withLoading(postSimRun),
     pauseSim: () => withLoading(postSimPause),
     stepSim: () => withLoading(postSimStep),
-    resetSim: () => withLoading(postSimReset),
+    resetSim: async () => {
+      set({ loading: true, error: null });
+      try {
+        const snapshot = await postSimReset();
+        set({
+          snapshot,
+          kpiHistory: [],
+          events: [],
+          loading: false,
+          error: null,
+        });
+      } catch (e) {
+        set({
+          loading: false,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    },
     changePrice: (price) => withLoading(() => postPrice(price)),
     changeMachine: (machine_id, online) => withLoading(() => postMachines(machine_id, online)),
     toggleAgent: (enabled) => withLoading(() => postAgent(enabled)),

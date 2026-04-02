@@ -22,23 +22,41 @@ git clone https://github.com/your-username/arcogine.git
 cd arcogine
 cargo build
 
-# Run tests
+# Run all tests
 cargo test
 
-# Start the API server
+# Start the API server (port 3000)
 cargo run --bin arcogine -- serve
 
-# Run a scenario headlessly
-cargo run --bin arcogine -- run --headless
+# In another terminal, start the UI dev server (port 5173)
+cd ui && npm install && npm run dev
+```
+
+Open `http://localhost:5173` — the UI proxies API requests to port 3000.
+
+**Headless mode** (no UI, no server):
+
+```bash
+cargo run --bin arcogine -- run --headless --scenario examples/basic_scenario.toml
 ```
 
 ### Containerized
 
 ```bash
+cp .env.example .env   # optional: customize ports
 docker compose up --build
 ```
 
 The API server will be available at `http://localhost:3000` and the experiment console at `http://localhost:5173`.
+
+### Running Tests
+
+See `TESTING.md` for the full testing guide. Quick summary:
+
+```bash
+cargo fmt --check && cargo clippy -- -D warnings && cargo test
+cd ui && npx tsc --noEmit && npm run build
+```
 
 ## Architecture
 

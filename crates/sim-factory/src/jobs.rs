@@ -153,6 +153,10 @@ impl JobStore {
     pub fn iter(&self) -> impl Iterator<Item = &Job> {
         self.jobs.iter()
     }
+
+    pub fn all_jobs(&self) -> impl Iterator<Item = &Job> {
+        self.jobs.iter()
+    }
 }
 
 impl Default for JobStore {

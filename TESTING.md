@@ -121,6 +121,8 @@ cargo bench -p sim-core
 ## CI
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs:
-1. **Rust job**: fmt check, clippy, test
-2. **Frontend job**: npm ci, tsc, build, and Playwright test
-3. **Compose job**: docker compose build + startup checks for API and UI
+
+1. **Rust job**: fmt check, clippy, `cargo test`
+2. **Frontend job**: npm ci, tsc, vitest unit tests, vite build
+3. **Playwright job**: builds the API binary, installs Chromium, runs `npx playwright test` with Playwright-managed servers
+4. **Docker compose job**: builds container images, starts the stack, verifies API health and UI reachability

@@ -55,7 +55,7 @@
 
 Objective: Ensure the documented native, container, and dev container flows all work as described.
 
-#### A1. Fix the compose healthcheck path
+#### A1. Fix the compose healthcheck path [Done]
 
 Files:
 - `compose.yaml`
@@ -73,7 +73,7 @@ Acceptance criteria:
 - The `api` service reaches healthy state.
 - The `ui` service starts without waiting indefinitely on a broken healthcheck.
 
-#### A2. Resolve API base URL configuration drift
+#### A2. Resolve API base URL configuration drift [Done]
 
 Files:
 - `compose.yaml`
@@ -93,7 +93,7 @@ Acceptance criteria:
 - No build args or env vars remain unused.
 - Frontend networking behavior is easy to explain from the code and docs.
 
-#### A3. Normalize the toolchain story
+#### A3. Normalize the toolchain story [Done]
 
 Files:
 - `rust-toolchain.toml`
@@ -120,7 +120,7 @@ Acceptance criteria:
 
 Objective: Document the existing dev container as the easiest supported way to start contributing.
 
-#### B1. Add a dev container quick start to the root docs
+#### B1. Add a dev container quick start to the root docs [Done]
 
 Files:
 - `README.md`
@@ -141,7 +141,7 @@ Acceptance criteria:
   - native development
   - docker compose runtime
 
-#### B2. Clarify host prerequisites versus in-container prerequisites
+#### B2. Clarify host prerequisites versus in-container prerequisites [Done]
 
 Files:
 - `README.md`
@@ -163,7 +163,7 @@ Acceptance criteria:
 
 Objective: Replace generic or outdated docs with project-specific guidance.
 
-#### C1. Rewrite `ui/README.md`
+#### C1. Rewrite `ui/README.md` [Done]
 
 Files:
 - `ui/README.md`
@@ -179,7 +179,7 @@ Actions:
 Acceptance criteria:
 - `ui/README.md` describes Arcogine, not Vite boilerplate.
 
-#### C2. Rewrite `examples/README.md`
+#### C2. Rewrite `examples/README.md` [Done]
 
 Files:
 - `examples/README.md`
@@ -196,7 +196,7 @@ Acceptance criteria:
 - The examples doc accurately reflects the files that exist today.
 - A new user can pick a scenario intentionally.
 
-#### C3. Repair root and contributing docs
+#### C3. Repair root and contributing docs [Done]
 
 Files:
 - `README.md`
@@ -214,7 +214,7 @@ Acceptance criteria:
 - Command examples are internally consistent.
 - Testing guidance aligns with CI and actual tooling.
 
-#### C4. Update the docs index
+#### C4. Update the docs index [Done]
 
 Files:
 - `docs/README.md`
@@ -235,7 +235,7 @@ Acceptance criteria:
 
 Objective: Ensure `docs/architecture-overview.md` describes current implementation truthfully.
 
-#### D1. Separate implemented behavior from roadmap behavior
+#### D1. Separate implemented behavior from roadmap behavior [Done]
 
 Files:
 - `docs/architecture-overview.md`
@@ -259,7 +259,7 @@ Acceptance criteria:
 - The architecture doc can be read as a trustworthy description of the current codebase.
 - Planned features are clearly marked as planned.
 
-#### D2. Align UI architecture claims with the actual mounted UI
+#### D2. Align UI architecture claims with the actual mounted UI [Done]
 
 Files:
 - `docs/architecture-overview.md`
@@ -283,7 +283,7 @@ Acceptance criteria:
 
 Objective: Make it easy to use Arcogine as a lightweight simulation game without diluting the serious simulation identity.
 
-#### E1. Add a "Play Arcogine" section to the root README
+#### E1. Add a "Play Arcogine" section to the root README [Done]
 
 Files:
 - `README.md`
@@ -299,7 +299,7 @@ Acceptance criteria:
 - New users immediately understand that Arcogine can be explored casually.
 - The copy does not undermine the simulation-first architecture.
 
-#### E2. Turn the built-in scenarios into explicit challenge modes
+#### E2. Turn the built-in scenarios into explicit challenge modes [Done]
 
 Files:
 - `README.md`
@@ -321,7 +321,7 @@ Acceptance criteria:
 - Someone opening the repo can understand how to "play" without reading source code.
 - Scenarios feel intentional rather than just technical fixtures.
 
-#### E3. Add a short controls-and-loop guide
+#### E3. Add a short controls-and-loop guide [Done]
 
 Files:
 - `README.md`
@@ -347,7 +347,7 @@ Acceptance criteria:
 
 Objective: Reduce drift between docs and reality by validating the actual supported startup paths.
 
-#### F1. Add Docker and compose validation to CI
+#### F1. Add Docker and compose validation to CI [Done]
 
 Files:
 - `.github/workflows/ci.yml`
@@ -359,7 +359,7 @@ Actions:
 Acceptance criteria:
 - Container breakage is caught before merge.
 
-#### F2. Align CI claims with actual coverage
+#### F2. Align CI claims with actual coverage [Done]
 
 Files:
 - `.github/workflows/ci.yml`
@@ -426,6 +426,48 @@ This plan is complete when:
   - `devel/security-improvement-plan.md`
   - `devel/testability-improvement-plan.md`
 - If implementation work starts, this plan should be updated with status markers per workstream so it remains useful as an execution document rather than a one-time review artifact.
+
+## Implementation Status
+
+> **Completed:** 2026-04-02
+> **Validated by:** TypeScript check, Vitest unit tests (8/8), Docker compose build/start/health, frontend build
+
+### Completed tasks
+
+| Task | Status | Validation |
+|------|--------|------------|
+| A1 — Compose healthcheck | [Done] | `docker compose up` healthy, `curl /api/health` returns `{"status":"ok"}` |
+| A2 — API base URL drift | [Done] | Same-origin `/api` model, no unused env vars, nginx proxy verified |
+| A3 — Toolchain story | [Done] | Floating stable documented in README, CONTRIBUTING, TESTING |
+| B1 — Dev container quick start | [Done] | README + CONTRIBUTING list dev container path with post-create explanation |
+| B2 — Host vs container prereqs | [Done] | CONTRIBUTING separates host/container requirements explicitly |
+| C1 — Rewrite ui/README.md | [Done] | Arcogine-specific content with API model, dev commands, source map |
+| C2 — Rewrite examples/README.md | [Done] | Shipped scenarios documented with goals and "what to look for" |
+| C3 — Root and contributing docs | [Done] | No placeholder URLs, `npm ci` consistent, commands environment-qualified |
+| C4 — Docs index | [Done] | All active docs listed with architecture/vision and operational sections |
+| D1 — Architecture doc separation | [Done] | OpenAPI marked planned, sim-material marked Phase 7, no overstated claims |
+| D2 — UI architecture alignment | [Done] | Mounted vs unmounted components explicitly annotated |
+| E1 — Play Arcogine section | [Done] | README has dual-use framing (serious + challenge) |
+| E2 — Challenge modes | [Done] | Scenarios documented as challenges in README and examples/README |
+| E3 — Controls-and-loop guide | [Done] | First interaction loop documented in README (6-step flow) |
+| F1 — Docker/compose CI | [Done] | CI workflow adds `docker` job: build, start, health check, UI verify |
+| F2 — CI claims alignment | [Done] | TESTING.md updated to match actual 4-job CI, Playwright job added |
+
+### Build/runtime fixes applied
+
+- Added `vitest` as devDependency with `test` and `test:unit` scripts (Finding F1)
+- Created `ui/src/stores/baselines.test.ts` with 8 unit tests for the baselines store
+- Added `ui/.dockerignore` to exclude `node_modules` and test artifacts from Docker context
+- Added Vitest to architecture doc technology choices table
+- CI workflow expanded from 2 jobs to 4 jobs (Rust, Frontend with unit tests, Playwright E2E, Docker compose)
+
+### Validations that require separate environments
+
+- **Rust CI tests**: Cannot be validated locally (no host Rust toolchain); CI handles `cargo fmt --check`, `cargo clippy`, `cargo test`
+- **Playwright E2E**: Requires running API + UI servers; CI Playwright job handles this using `playwright.config.ts` webServer entries
+- **CI workflow execution**: The new CI jobs (Playwright, Docker compose) need validation on first push to GitHub Actions
+
+---
 
 ## Findings
 

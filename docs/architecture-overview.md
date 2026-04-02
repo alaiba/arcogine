@@ -213,7 +213,8 @@ Axum API (Phase 4)
 | Component styling | Tailwind CSS + custom components | Lightweight, consistent utility styling with explicit ownership |
 | Charting | Recharts | SVG charting with TypeScript support |
 | State management | Zustand | Minimal boilerplate, works well with both polling and SSE patterns |
-| E2E testing | Playwright | Browser automation for smoke tests (including CI now) |
+| Unit testing | Vitest | Fast Vite-native test runner for store and utility logic |
+| E2E testing | Playwright | Browser automation for smoke tests (including CI) |
 
 ### Accessibility
 

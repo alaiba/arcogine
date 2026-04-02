@@ -1,6 +1,6 @@
 # Arcogine — Architectural Overview
 
-This document describes the design philosophy and architectural principles that guide Arcogine's implementation. For the phased build plan, see `devel/Original-plan.md`.
+This document describes the design philosophy and architectural principles that guide Arcogine's implementation. For the archived phased execution record, see `docs/implementation-roadmap.md`.
 
 ## Simulation-First
 
@@ -144,7 +144,7 @@ Key design-for decisions in the MVP:
 - **Routing steps** accept generic durations and optional setup/cleaning times, enabling time-based process steps.
 - **Event scheduler** is quantity-agnostic — it schedules events by time, not by production paradigm.
 
-Phase 7 introduces a `sim-material` crate (recipes, inventory, material transformation) and extends `sim-factory` and `sim-economy` with batch entities, equipment specialization, and multi-component cost structures. The reference scenario is a gin distillery. See `devel/Original-plan.md` Phase 7 for the detailed plan.
+Phase 7 introduces a `sim-material` crate (recipes, inventory, material transformation) and extends `sim-factory` and `sim-economy` with batch entities, equipment specialization, and multi-component cost structures. The reference scenario is a gin distillery. See `docs/implementation-roadmap.md` for the detailed Phase 7 plan.
 
 ## UI Architecture
 

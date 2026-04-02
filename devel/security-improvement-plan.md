@@ -3,7 +3,7 @@
 > **Date:** 2026-04-02
 > **Scope:** Identify security weaknesses in the Arcogine codebase and provide a prioritized, actionable improvement plan covering the Rust API, frontend, CI/CD, container deployment, and supply-chain hygiene.
 > **Primary sources:** All crates under `crates/`, `ui/`, `.github/workflows/ci.yml`, `compose.yaml`, `Dockerfile`, `ui/Dockerfile`, `SECURITY.md`, `docs/architecture-overview.md`, `docs/standards-alignment.md`
-> **Relationship to other plans:** This plan complements `devel/testability-improvement-plan.md` (testing focus) and `devel/Original-plan.md` (feature roadmap). Security-relevant testing items are referenced but not duplicated.
+> **Relationship to other plans:** This plan complements `devel/testability-improvement-plan.md` (testing focus) and `docs/implementation-roadmap.md` (completed feature roadmap). Security-relevant testing items are referenced but not duplicated.
 
 ---
 

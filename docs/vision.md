@@ -33,6 +33,14 @@ Agent / Manager Decisions
         ↺
 ```
 
+## Delivery Constraints (Executed)
+
+- The implemented MVP is a single-user, locally runnable experiment platform.
+- The simulation is deterministic and repeatable using explicit seeded inputs.
+- UI and API are intentionally thin: both are experiment controls, not game mechanics.
+- Repository and API surfaces were built for extensibility while keeping MVP behavior stable.
+- For the completed phased implementation record and validation matrix, see `implementation-roadmap.md`.
+
 ## Long-Term Vision
 
 The platform aims to grow into:

@@ -90,7 +90,7 @@ ISO 22400 defines standardized key performance indicators for manufacturing oper
 
 The standard way to define and document HTTP APIs.
 
-**MVP commitment:** Phase 4's REST API includes an OpenAPI 3.x specification generated from the Axum route definitions using `utoipa` or equivalent. This ensures the API is machine-discoverable, testable, and integration-ready.
+**MVP commitment:** **Planned.** API surface documentation currently uses typed client modules and route-level definitions in code, with OpenAPI generation on the roadmap.
 
 ---
 
@@ -218,7 +218,7 @@ These are not formal standards but are essential to Arcogine's credibility:
 | ISO 22400 | Align now | KPI definitions and naming in Phase 3 | SR EN ISO 22400 |
 | DES methodology | Align now | Core architecture (already aligned) | — |
 | Queueing theory / Little's Law | Align now | KPI validation, documentation | — |
-| OpenAPI | Align now | API specification in Phase 4 | — |
+| OpenAPI | Align now | Planned API contract generation; route contracts are manually maintained in code | — |
 | RAMI 4.0 | Design for | Documented layer mapping, no code change | EU framework |
 | AAS | Design for | Extensible asset model, no code change | EU framework |
 | ISO 9001 | Design for | Traceability, auditability (already aligned) | SR EN ISO 9001 |

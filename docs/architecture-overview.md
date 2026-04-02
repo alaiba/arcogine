@@ -1,6 +1,17 @@
 # Arcogine — Architectural Overview
 
-This document describes the design philosophy and architectural principles that guide Arcogine's implementation. For the archived phased execution record, see `docs/implementation-roadmap.md`.
+This document describes the design philosophy and architectural principles that guide Arcogine's implementation.
+
+## Non-Negotiable Constraints
+
+1. Core simulation is written in Rust.
+2. Headless simulation core is primary; UI/API are additive.
+3. MVP must tie factory flow to economy loop.
+4. Repository must be reproducible, modular, testable, and collaboration-ready.
+5. UI is a single-user experiment console, not a game client.
+6. Support native and containerized local execution.
+7. Deterministic acceptance tests and scenario-level validation are mandatory.
+8. Agents only use approved command interfaces and never mutate simulation state directly.
 
 ## Simulation-First
 
@@ -83,6 +94,36 @@ The runner dequeues events from the priority queue and dispatches each to the ha
 
 `sim-core` depends only on `sim-types` — it cannot import domain crates. The `EventHandler` trait inverts the dependency: domain crates depend on `sim-core` for the trait definition and implement it. The binary crate (`sim-cli`) or API crate (`sim-api`) assembles domain handlers into a composite handler and passes it to the runner. This preserves the acyclic dependency graph while allowing the core event loop to dispatch to domain-specific logic.
 
+### Crate dependency DAG
+
+```text
+sim-types          (no upstream dependencies)
+  └─► sim-core
+        ├─► sim-factory
+        ├─► sim-economy
+        └─► sim-agents
+              └─► sim-api
+                    └─► sim-cli
+```
+
+- `sim-types` has no upstream dependencies.
+- `sim-core` depends on `sim-types`.
+- `sim-factory`, `sim-economy`, `sim-agents` depend on `sim-core` + `sim-types`.
+- `sim-api` depends on all domain crates and shared modules.
+- `sim-cli` depends on `sim-api`.
+
+## IO Contracts and Runtime Boundaries
+
+- Scenario files are TOML. Schema structs live in `sim-types`; loader and validation logic live in `sim-core` and return structured `SimError`.
+- The simulation command and query path is synchronous and deterministic inside `sim-cli`/`sim-api` runners.
+- HTTP API and UI run in separate process layers and interact via commands/events, not direct state mutation.
+
+## Concurrency Model
+
+- The API layer runs on a Tokio async runtime.
+- The simulation engine runs on a deterministic synchronous execution path.
+- The API uses bounded command channels (`std::sync::mpsc`) and broadcast event channels to communicate without sharing mutable simulation state across threads. `std::sync::mpsc` is used because the simulation executes on a synchronous OS thread.
+
 ## Separation of Concerns
 
 Arcogine is organized in two explicit status bands:
@@ -147,7 +188,7 @@ Key design-for decisions in the MVP:
 - **Routing steps** accept generic durations and optional setup/cleaning times, enabling time-based process steps.
 - **Event scheduler** is quantity-agnostic — it schedules events by time, not by production paradigm.
 
-Phase 7 introduces a `sim-material` crate (recipes, inventory, material transformation) and extends `sim-factory` and `sim-economy` with batch entities, equipment specialization, and multi-component cost structures. The reference scenario is a gin distillery. See `docs/implementation-roadmap.md` for the detailed Phase 7 plan.
+Phase 7 introduces a `sim-material` crate (recipes, inventory, material transformation) and extends `sim-factory` and `sim-economy` with batch entities, equipment specialization, and multi-component cost structures. The reference scenario is a gin distillery.
 
 ## UI Architecture
 
@@ -226,6 +267,28 @@ Axum API (Phase 4)
 
 `BaselineCompare` and `ExportMenu` exist in `src/components/experiment/` and are validated as implemented utilities.
 They are intentionally not mounted as top-level sections in the default `App` composition yet.
+
+## Design Decisions
+
+These choices were made deliberately during the initial implementation and remain load-bearing:
+
+- **Event-based command model** over direct shared-state mutation: preserves reproducibility and testability.
+- **`EventHandler` + composite runner** instead of inverse dependencies from `sim-core` to domain crates.
+- **`arcogine` binary with mode split** (`run` / `serve`) in one CLI for headless and service workflows.
+- **Separate API command channel model** rather than shared mutable state between async API and deterministic runner.
+- **TOML scenario schema** with explicit naming alignment to ISA-95 vocabulary where useful.
+- **UI via API only** — the frontend communicates exclusively through REST and SSE, never accessing simulation internals.
+- **Same-origin `/api` routing** for lower operational complexity — Vite proxy in dev, Nginx proxy in containers.
+- **Floating Rust `stable` toolchain** — avoids false pinning expectations while keeping builds reproducible.
+- **`"Current"` / `"Planned"` / `"Phase 7"` labels** in architecture-facing docs to distinguish shipped from future capabilities.
+
+## Documented Trade-Offs
+
+- Postponed full OpenAPI endpoint annotation while keeping command and schema compatibility stable. `utoipa` is a dependency but the generated spec is not yet wired.
+- Used `std::sync::mpsc` in the runtime path because simulation executes on a synchronous OS thread; async channels are unnecessary overhead.
+- Kept Material Layer (`sim-material`) as a planned phase to avoid changing discrete-MVP scope.
+- Playwright CI execution depends on a browser-capable runner; smoke tests are bootstrapped but require a local or CI environment with browser support.
+- Unmounted UI components (`BaselineCompare`, `ExportMenu`) are tracked as implementation status rather than removed, preserving forward intent.
 
 ## Repository Structure
 

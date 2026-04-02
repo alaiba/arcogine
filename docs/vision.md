@@ -22,6 +22,19 @@ You can also use Arcogine as a lightweight simulation challenge:
 - Move to `Overload` to manage backlog and lead-time pressure.
 - Compare short-term tuning versus structural improvement in `Capacity Expansion`.
 
+### Suggested first session loop
+
+For a first run, the loop is:
+
+- load one of the scenarios,
+- run or step the simulation,
+- adjust product price and machine operating state,
+- toggle the agent off/on,
+- save at least one baseline snapshot,
+- compare outcomes with throughput, backlog, and revenue targets in view.
+
+This sequence keeps the first-session experience focused on control behavior before adding deeper tuning experiments.
+
 ## Core Loop
 
 Arcogine is fundamentally a deterministic, event-driven system where decisions affect operations, and operations feed back into decisions:
@@ -47,7 +60,15 @@ Agent / Manager Decisions
 - The simulation is deterministic and repeatable using explicit seeded inputs.
 - UI and API are intentionally thin: both are experiment controls, not game mechanics.
 - Repository and API surfaces were built for extensibility while keeping MVP behavior stable.
-- For the completed phased implementation record and validation matrix, see `implementation-roadmap.md`.
+
+## Out of Scope (MVP)
+
+These capabilities are intentionally excluded from the current MVP:
+
+- Multiplayer/MMO, distributed shards, advanced auth, full ERP/MES integration.
+- Advanced scheduling optimization and planning algorithms.
+- Full ISA-95/B2MML exchange and FMI/OPC-UA/FIPA production use.
+- LLM-native agent autonomy, complex protocol interop, and enterprise observability stacks.
 
 ## Long-Term Vision
 

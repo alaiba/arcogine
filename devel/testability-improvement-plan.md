@@ -41,7 +41,7 @@ No `test` script in `ui/package.json`. No Vitest, Jest, or Testing Library in de
 
 ### 1.4 Key Gaps Identified
 
-1. **No frontend unit tests** — 18 components, 2 stores, 2 API modules with zero unit-level tests
+1. **No frontend unit tests** — 14 component files, 2 stores, 2 API modules with zero unit-level tests
 2. **No inline unit tests** — all Rust crates lack `#[cfg(test)]` modules for per-function testing
 3. **`sim-types` untested** — the foundational crate has no direct tests
 4. **`sim-cli` untested** — the CLI binary has no test coverage
@@ -133,7 +133,7 @@ File: `crates/sim-factory/src/process.rs` (264 lines)
 
 Tests to add:
 - `FactoryHandler::new` initializes with correct machine/routing counts
-- `backlog()` correctly counts `Queued`-status jobs
+- `backlog()` correctly counts active (`Queued` + `InProgress`) jobs
 - `avg_lead_time()` returns `0.0` when no completed jobs exist
 - `avg_lead_time()` computes correct average over multiple completed jobs
 - `throughput(elapsed_ticks)` returns `completed_sales / elapsed_ticks` and returns `0.0` when `elapsed_ticks` is `0`
@@ -142,7 +142,7 @@ Tests to add:
 - `handle_event` for `TaskEnd` completes job and dequeues next from machine
 - `handle_event` for `TaskEnd` on multi-step routing advances to next step
 - `handle_event` for `MachineAvailabilityChange` dispatches queued jobs when going online
-- Revenue is tracked as `current_price * quantity` on job completion (note: `process.rs` uses `current_price: 0.0` — this is a known divergence from `IntegratedHandler` in `state.rs`)
+- Revenue is tracked as `current_price * quantity` on job completion after the §2.6 handler refactor
 
 File: `crates/sim-factory/src/routing.rs` (102 lines)
 
@@ -183,13 +183,13 @@ File: `crates/sim-api/src/state.rs` (770 lines)
 
 Tests to add:
 - `SimSnapshot::default()` has `run_state == Idle` and `scenario_loaded == false`
-- `IntegratedHandler` event dispatch order: pricing → demand → inline factory logic (does NOT delegate to `FactoryHandler.handle_event`)
+- After §2.6, `IntegratedHandler` dispatch order is pricing → demand → `FactoryHandler.handle_event()`
 - `build_snapshot` produces correct topology edges for multi-step routings
 - `build_snapshot` handles empty routings (no edges)
 - `spawn_sim_thread` + `LoadScenario` command: snapshot transitions to scenario_loaded
-- `spawn_sim_thread` + `Run` without loaded scenario: returns error state
+- `spawn_sim_thread` + `Run` after load transitions to `Completed` and advances `events_processed`
 - `spawn_sim_thread` + `Step` advances exactly one event
-- `ChangePrice` with negative value: handled correctly
+- `ChangePrice` command updates `current_price` in the snapshot (route-level negative-price rejection remains covered in `api_smoke.rs`)
 - `ChangeMachineCount`: machine goes offline → online triggers dispatch of queued jobs (currently broken — §2.6 divergence 3)
 - `handle_event` error during `Step` or `Run` is reported in snapshot (currently suppressed — §2.6 divergence 4)
 - Event log from `IntegratedHandler` includes `TaskStart` events (currently missing — §2.6 divergence 2)
@@ -197,17 +197,20 @@ Tests to add:
 File: `crates/sim-api/src/sse.rs` (32 lines)
 
 Tests to add:
-- `event_stream` serialization failure produces empty data (current behavior), not panic
+- `event_stream` emits the expected SSE event name and JSON payload for broadcast events
+- `event_stream` ignores broadcast receive errors without panicking
 
 #### 2.1.7 `sim-cli` — CLI Binary
 
 File: `crates/sim-cli/src/main.rs` (168 lines)
 
+Before adding tests, extract the function-local `HeadlessHandler` and headless execution path out of `main()` into module-scope helpers (for example `build_headless_handler(...)` / `run_headless(...) -> Result<...>`), so tests can instantiate them without process-level wrappers.
+
 Tests to add:
-- `HeadlessHandler` delegates to `pricing → demand → factory.handle_event()` (note: this differs from `IntegratedHandler` which reimplements factory logic inline — see §2.6 for divergences; the §2.6 refactor should unify them)
+- `HeadlessHandler` delegates to `pricing → demand → factory.handle_event()`
 - CLI arg parsing with `clap` test helpers
-- `Run` subcommand with invalid file path exits with error
-- Headless run produces correct `completed_sales` and `total_revenue` (currently `total_revenue` is zero because `FactoryHandler` uses `current_price: 0.0` — documents the §2.6 divergence 1 before refactoring)
+- Headless run helper returns an error for invalid file paths / invalid TOML instead of only exercising `expect(...)` panics in `main()`
+- Headless run produces correct `completed_sales` and `total_revenue` for a scenario with completed jobs
 
 ### 2.2 Add Property Tests to `sim-factory`
 
@@ -270,9 +273,11 @@ import '@testing-library/jest-dom'
 
 File: `ui/src/stores/simulation.test.ts` (new)
 
+Add a small store hardening change alongside these tests: define a named `MAX_KPI_HISTORY_POINTS` constant in `simulation.ts` and trim `kpiHistory` inside `mergeSnapshot` to prevent unbounded growth during long SSE sessions.
+
 Tests:
 - `mergeSnapshot` appends to `kpiHistory`
-- `mergeSnapshot` limits `kpiHistory` to max entries
+- `mergeSnapshot` trims `kpiHistory` to `MAX_KPI_HISTORY_POINTS`
 - `withLoading` sets `loading` to `true` then `false`
 - `withLoading` sets `error` on rejection
 - `clearError` clears the error state
@@ -287,6 +292,7 @@ Tests:
 - `removeBaseline` by id works correctly
 - `clearBaselines` empties the list
 - `getDeltas` computes correct percentage differences
+- `getDeltas` reads throughput from `throughput_rate` (with `throughput` fallback for compatibility)
 - `getDeltas` handles zero baseline values (no division by zero)
 
 #### 2.3.3 API Client Unit Tests
@@ -321,7 +327,7 @@ Tests:
 - Renders placeholder cards when snapshot is `null`
 - Renders four KPI cards with correct labels
 - `avgLeadTimeTicks` computes correct value from jobs
-- `findKpi` returns fallback values when KPI is missing
+- Component renders fallback values when lead-time or throughput KPIs are missing
 - Non-finite numbers in `formatNumber` are handled
 
 File: `ui/src/components/dashboard/JobTracker.test.tsx` (new)
@@ -350,7 +356,7 @@ File: `ui/src/components/experiment/BaselineCompare.test.tsx` (new)
 
 Tests:
 - `isImprovement` returns correct boolean for each metric
-- `formatDelta` formats positive/negative deltas correctly
+- `formatMetric` formats currency and numeric values correctly
 - Renders baseline list from store
 
 ### 2.4 Improve E2E Test Quality
@@ -507,7 +513,7 @@ Current tests use `tower::ServiceExt::oneshot` for in-process testing (good). Ho
 
 Tests to add to `api_smoke.rs`:
 - Load scenario → pause → resume → pause → step → verify single event
-- Load scenario → run → query snapshot mid-run
+- Load scenario → run → query snapshot after completion returns the final snapshot
 - Load scenario → query jobs returns job list
 - Load scenario → toggle agent on/off
 - SSE endpoint returns event stream
@@ -519,11 +525,9 @@ Tests to add to `api_smoke.rs`:
 **Priority:** Low
 **Effort:** Low
 
-1. **`TESTING.md`** — update to reflect new test categories (frontend unit tests, coverage commands)
-2. **`CONTRIBUTING.md` line 62** — claims `proptest` is used in `sim-factory`; this should be updated to either add property tests (§2.2) or remove the claim
-3. **`docs/architecture-overview.md` line 198** — states "integrated into CI" in the E2E testing rationale; Playwright is not in CI. Change `integrated into CI` to `planned for CI`, then update to `integrated into CI` when §2.5.3 is completed
-4. **`docs/architecture-overview.md` line 217** — the directory tree lists `sim-material/` without annotation; the layer table (line 94) and paragraph (line 147) already say "(Phase 7)". Add a `(Phase 7)` comment to the directory tree entry at line 217 to match
-5. **`ui/README.md`** — contains default Vite template text; replace with Arcogine-specific UI documentation
+1. **`TESTING.md`** — update the test categories and fix the CI section to match the current `.github/workflows/ci.yml` until new checks land (remove Playwright/Compose claims for now; add them back only after §2.5.3)
+2. **`CONTRIBUTING.md` lines 93 and 116–118** — remove the claims that all crates already have unit tests, clarify the inline `#[cfg(test)]` strategy versus `tests/` directories, and note that `proptest` is only active in `sim-core` until §2.2 is completed
+3. **`docs/architecture-overview.md` line 216** — the E2E testing rationale says Playwright is "including CI now", but CI does not run Playwright yet. Change this to `planned for CI`, then update it again when §2.5.3 is completed
 
 ---
 
@@ -533,7 +537,7 @@ Tests to add to `api_smoke.rs`:
 |---|------|----------|--------|--------|
 | 2.1 | Inline Rust unit tests | High | Medium | Catches regressions at the function level |
 | 2.2 | `sim-factory` property tests | Medium | Low | Validates structural invariants with random inputs |
-| 2.3 | Frontend unit testing infrastructure | High | Medium | Covers 18 untested components and 2 stores |
+| 2.3 | Frontend unit testing infrastructure | High | Medium | Covers 14 untested component files and 2 stores |
 | 2.4 | E2E test quality improvements | Medium | Low | Reduces flakiness and increases assertion coverage |
 | 2.5 | CI pipeline extensions | High | Low | Automates checks already configured but not run |
 | 2.6 | Handler duplication refactor + divergence fixes | High | Medium | Eliminates 4 behavioral divergences including a production bug |
@@ -762,6 +766,174 @@ Tests to add to `api_smoke.rs`:
 - [x] Reword §1.4 item 5 to accurately reflect the test coverage situation
 - [ ] Leave as-is with a footnote
 
+### F15: `backlog()` test scope contradicts the actual implementation [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** §2.1.3 said "`backlog()` correctly counts `Queued`-status jobs." The implementation in `crates/sim-factory/src/process.rs` lines 208–210 documents backlog as "active (queued + in-progress) jobs" and delegates to `self.jobs.active_jobs().count()`. `crates/sim-factory/src/jobs.rs` lines 129–134 define `active_jobs()` as both `JobStatus::InProgress` and `JobStatus::Queued`.
+
+**Issue:** A coding agent following the old bullet would write a test that excludes in-progress jobs and fails against the real semantics.
+
+**Recommendation:** Reword the `backlog()` test bullet to cover active jobs (`Queued` + `InProgress`) rather than only queued jobs.
+
+**Choices:**
+- [x] Update §2.1.3 to say `backlog()` counts active (`Queued` + `InProgress`) jobs
+- [ ] Keep the queued-only assertion and change production semantics later
+
+### F16: `sim-api` state tests were assigned route-level validation behavior [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** §2.1.6 listed "`spawn_sim_thread` + `Run` without loaded scenario: returns error state" and "`ChangePrice` with negative value: handled correctly." In reality, the validation lives in `crates/sim-api/src/routes.rs` lines 80–100 and 164–170. The simulation thread in `crates/sim-api/src/state.rs` lines 468–704 does not surface those route-level errors: it ignores `Run` when no handler/config is loaded and accepts any `ChangePrice` value sent to it.
+
+**Issue:** Those test bullets target the wrong layer and duplicate behaviors already covered by `api_smoke.rs`, making the state-layer worklist misleading.
+
+**Recommendation:** Replace those bullets with state-owned behaviors that are actually exercised through `spawn_sim_thread`, and keep 409/400 validation coverage in `api_smoke.rs`.
+
+**Choices:**
+- [x] Replace them with `Run`-after-load and snapshot price-update tests in §2.1.6, leaving route validation in `api_smoke.rs`
+- [ ] Move all command validation coverage into state-thread tests
+
+### F17: §2.8 assumes mid-run snapshots that the runtime never publishes [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** §2.8 proposed: "Load scenario → run → query snapshot mid-run." In `crates/sim-api/src/state.rs` lines 551–602, the `Run` branch only sends a snapshot after the simulation loop finishes. There are no intermediate `snapshot_tx.send(...)` calls during a run, so `query_snapshot` cannot observe in-flight progress.
+
+**Issue:** A mid-run snapshot assertion is not implementable with the current state-thread contract. The test description would push an agent into inventing new runtime behavior that the plan never scoped.
+
+**Recommendation:** Reword the API test to query snapshot after `Run` completes, unless the plan explicitly expands scope to add periodic snapshot publishing.
+
+**Choices:**
+- [x] Reword the §2.8 scenario to assert the final snapshot after `Run` completes
+- [ ] Expand scope to add incremental snapshot publishing during `Run`
+
+### F18: `event_stream` test targeted an unreachable serialization-failure branch [Applied]
+<!-- severity: major -->
+<!-- dimension: testing -->
+
+**Context:** §2.1.6 / `sse.rs` proposed a test that "`event_stream` serialization failure produces empty data." The code in `crates/sim-api/src/sse.rs` lines 21–27 serializes `Event` with `serde_json::to_string(&event).unwrap_or_default()`, but `crates/sim-core/src/event.rs` lines 6–48 derive `Serialize` across `Event`, `EventType`, and `EventPayload`; there is no failing serializer seam exposed here.
+
+**Issue:** The proposed test is effectively untestable without adding artificial test-only seams, and it misses real regressions the module can exhibit.
+
+**Recommendation:** Replace the impossible failure-path assertion with tests for emitted SSE event names / JSON payloads and for filtering broadcast receive errors.
+
+**Choices:**
+- [x] Replace the unreachable failure test with event-name/payload and broadcast-error tests
+- [ ] Drop unit tests for `sse.rs` and rely only on higher-level route coverage
+
+### F19: `sim-cli` tests were not implementation-ready because `HeadlessHandler` is function-local [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** §2.1.7 planned tests for `HeadlessHandler` delegation and invalid file path behavior in `crates/sim-cli/src/main.rs`. The actual `HeadlessHandler` is declared inside `main()` at lines 131–150, and invalid scenario-path / TOML failures are handled with `expect(...)` at lines 48–52.
+
+**Issue:** Inline tests in `main.rs` cannot instantiate a function-local type, and process-level `expect` panics are a poor unit-test target. The plan was missing the extraction step needed to make this code testable.
+
+**Recommendation:** Add a small refactor step before the tests: move the headless handler and headless execution path into module-scope helpers that return `Result`, then test those helpers directly.
+
+**Choices:**
+- [x] Extract module-scope headless helpers first, then test delegation and helper error returns
+- [ ] Add binary-level integration tests only, without refactoring `main.rs`
+
+### F20: KPI history trimming was specified as a test but not as implementation work [Applied]
+<!-- severity: major -->
+<!-- dimension: gaps -->
+
+**Context:** §2.3.2 said "`mergeSnapshot` limits `kpiHistory` to max entries," but `ui/src/stores/simulation.ts` lines 61–68 only append snapshots. There is no cap constant, no trim logic, and no documented maximum.
+
+**Issue:** A coding agent would have to invent an unspecified cap or silently drop the test. The plan mixed a desired hardening behavior into the test list without defining the actual code change.
+
+**Recommendation:** Explicitly add a store change to define a named `MAX_KPI_HISTORY_POINTS` constant and trim `kpiHistory` inside `mergeSnapshot`, then test against that cap.
+
+**Choices:**
+- [x] Add the history-cap implementation note and cap-based tests in §2.3.2
+- [ ] Remove the history-cap test and keep `mergeSnapshot` append-only
+
+### F21: Baseline throughput comparison omitted the real backend KPI name [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** §2.3.2 planned baseline delta tests but did not mention KPI-name compatibility. `ui/src/stores/baselines.ts` lines 29–30 read only `k.name === 'throughput'`, while the backend emits `throughput_rate` from `crates/sim-core/src/kpi.rs` lines 56–68. `ui/src/components/dashboard/KpiCards.tsx` lines 69–70 already handle `throughput_rate ?? throughput`.
+
+**Issue:** Baseline comparisons will show zero throughput deltas against real snapshots unless the store adds the same fallback. The old plan could have let tests pass with synthetic fixtures while missing the production bug.
+
+**Recommendation:** Update the baselines-store work to read `throughput_rate` with a legacy `throughput` fallback, and add tests for both names.
+
+**Choices:**
+- [x] Add `throughput_rate` compatibility coverage to §2.3.2
+- [ ] Rename the frontend metric everywhere to `throughput`
+
+### F22: Component test bullets pointed at helpers that do not own the described behavior [Applied]
+<!-- severity: major -->
+<!-- dimension: correctness -->
+
+**Context:** §2.3.4 said "`findKpi` returns fallback values when KPI is missing" and proposed `BaselineCompare.test.tsx` coverage for `formatDelta`. In `ui/src/components/dashboard/KpiCards.tsx` lines 5–7, `findKpi` only returns `KpiValue | undefined`; the fallback behavior lives in the component logic at lines 67–92. In `ui/src/components/experiment/BaselineCompare.tsx` lines 29–37, the helper is `formatMetric`, while `formatDelta` actually lives in `ui/src/components/layout/Sidebar.tsx` lines 17–20.
+
+**Issue:** The old bullets would direct an agent to write tests against helpers that either do not exist in the file or do not implement the fallback behavior being described.
+
+**Recommendation:** Reword the KpiCards tests to assert rendered fallback behavior, and align the BaselineCompare helper test with `formatMetric` / rendered delta output that actually exists in that file.
+
+**Choices:**
+- [x] Update the component test bullets to match the actual helpers and render paths
+- [ ] Keep only broad render tests and drop helper-focused assertions entirely
+
+### F23: Documentation-alignment work was stale and incomplete [Applied]
+<!-- severity: major -->
+<!-- dimension: plan-hygiene -->
+
+**Context:** §2.9 still included `ui/README.md` default-template cleanup and the `sim-material` tree annotation, but `ui/README.md` lines 1–55 are already Arcogine-specific and `docs/architecture-overview.md` line 244 already annotates `sim-material`. Meanwhile, the plan omitted current contradictions in `TESTING.md` lines 123–126 (frontend job includes Playwright; compose job exists) and `CONTRIBUTING.md` lines 93 and 116–118 (all crates already have unit tests; unit tests live in `tests/` directories; `sim-factory` already has `proptest` tests).
+
+**Issue:** Executing §2.9 as written would spend effort on already-resolved docs while leaving the most misleading current documentation unchanged.
+
+**Recommendation:** Rewrite §2.9 around the remaining inaccurate docs: current CI/testing guidance in `TESTING.md`, current testing guidance in `CONTRIBUTING.md`, and the Playwright CI wording in `docs/architecture-overview.md`.
+
+**Choices:**
+- [x] Rewrite §2.9 to only track the remaining documentation mismatches
+- [ ] Keep §2.9 as-is and handle doc drift later
+
+### F24: Frontend component count was stale [Applied]
+<!-- severity: minor -->
+<!-- dimension: correctness -->
+
+**Context:** §1.4 item 1 and the §3 priority-matrix row for §2.3 said 18 UI components were untested. The repository currently contains 14 component files under `ui/src/components/**`; `ui/src/App.tsx` is separate from that count.
+
+**Issue:** The scope estimate was inflated and could mislead effort sizing.
+
+**Recommendation:** Update the plan text to 14 component files and adjust the §3 impact note to match.
+
+**Choices:**
+- [x] Change the plan text to 14 component files
+- [ ] Replace the exact count with "all UI components"
+
+### F25: Handler-oriented test bullets still described pre-refactor behavior after §2.6 [Applied]
+<!-- severity: major -->
+<!-- dimension: plan-hygiene -->
+
+**Context:** The recommended execution order runs §2.6 before the `sim-api` / `sim-cli` test work. But §2.1.6 still said `IntegratedHandler` uses "inline factory logic (does NOT delegate to FactoryHandler.handle_event)", and §2.1.7 still framed the headless revenue test around the pre-refactor `current_price: 0.0` divergence.
+
+**Issue:** If a coding agent follows the plan in order, those bullets become stale before the tests are written. The plan would be asking for assertions about behavior that §2.6 is supposed to eliminate first.
+
+**Recommendation:** Rewrite the handler-oriented test bullets to assert the post-§2.6 delegated behavior and remove historical pre-refactor notes from the later test sections.
+
+**Choices:**
+- [x] Update §2.1.6 / §2.1.7 to describe the post-refactor handler behavior that step 11 should test
+- [ ] Reorder §2.1.6 + §2.1.7 ahead of §2.6 and keep the pre-refactor assertions
+
+### F26: `sim-factory` revenue test note still referenced the pre-refactor pricing divergence [Applied]
+<!-- severity: major -->
+<!-- dimension: plan-hygiene -->
+
+**Context:** §2.1.3 still described the revenue test with a note that `process.rs` uses `current_price: 0.0`, even though the recommended execution order performs the §2.6 handler refactor before the `sim-factory` test pass.
+
+**Issue:** That note preserved pre-refactor context inside a later-phase test section and could mislead an implementation agent about the expected post-refactor assertion.
+
+**Recommendation:** Reword the revenue test bullet to describe the post-§2.6 expectation only.
+
+**Choices:**
+- [x] Remove the stale `current_price: 0.0` note and point the test at post-refactor revenue behavior
+- [ ] Keep the historical note in §2.1.3 and rely on §2.6 to override it implicitly
+
 ### Summary
 
 | # | Title | Severity | Dimension | Depends on |
@@ -780,6 +952,18 @@ Tests to add to `api_smoke.rs`:
 | F12 | Execution order has dependency violation (§2.5.2 before §2.3.1) | major | plan-hygiene | — |
 | F13 | Test files duplicating IntegratedHandler not addressed in refactor scope | major | testing | F1 |
 | F14 | §1.4 item 5 misleadingly says FactoryHandler is covered by sim-api tests | minor | plan-hygiene | F1 |
+| F15 | `backlog()` test scope contradicts the actual implementation | major | correctness | — |
+| F16 | `sim-api` state tests were assigned route-level validation behavior | major | correctness | — |
+| F17 | §2.8 assumes mid-run snapshots that the runtime never publishes | major | gaps | — |
+| F18 | `event_stream` test targeted an unreachable serialization-failure branch | major | testing | — |
+| F19 | `sim-cli` tests were not implementation-ready because `HeadlessHandler` is function-local | major | gaps | — |
+| F20 | KPI history trimming was specified as a test but not as implementation work | major | gaps | — |
+| F21 | Baseline throughput comparison omitted the real backend KPI name | major | correctness | — |
+| F22 | Component test bullets pointed at helpers that do not own the described behavior | major | correctness | — |
+| F23 | Documentation-alignment work was stale and incomplete | major | plan-hygiene | — |
+| F24 | Frontend component count was stale | minor | correctness | — |
+| F25 | Handler-oriented test bullets still described pre-refactor behavior after §2.6 | major | plan-hygiene | — |
+| F26 | `sim-factory` revenue test note still referenced the pre-refactor pricing divergence | major | plan-hygiene | — |
 
 ### Iteration 2
 
@@ -790,5 +974,41 @@ Full re-sweep across all five dimensions after applying F1–F14. Verified:
 - **Gaps:** Error propagation is now covered in §2.1.6, §2.6 bullet 4, and §2.8. EventSource mocking addressed. No new gaps found.
 - **Best practices:** Vitest config pattern corrected. CI workflow snippets follow project conventions (Node 20, actions/checkout@v4, etc.).
 - **Plan hygiene:** Execution order dependencies resolved (§2.5.1 → §2.3.1 → §2.5.2). Priority matrix updated to reflect §2.6 scope. All section cross-references verified consistent.
+
+**Result: Zero critical or major findings. Iteration complete.**
+
+### Iteration 3
+
+Full re-sweep across all five dimensions after applying F15–F24. Verified:
+
+- **Testing:** All remaining proposed tests target reachable code paths or explicitly introduce the extraction/cap work needed to make them testable.
+- **Correctness:** Plan claims now match the current source for backlog semantics, route-vs-state responsibilities, KPI naming, and component helper ownership.
+- **Gaps:** The plan now scopes the missing KPI-history cap, CLI extraction step, and the current lack of mid-run snapshots instead of assuming them implicitly.
+- **Best practices:** No additional convention mismatches surfaced beyond the already-applied Vitest configuration fix.
+- **Plan hygiene:** §2.9 now only tracks outstanding documentation drift, and the UI scope counts are consistent across §1.4 and §3.
+
+**Result: Zero critical or major findings. Iteration complete.**
+
+### Iteration 4
+
+Final consistency sweep after applying F25. Verified:
+
+- **Testing:** Handler-related tests now describe the post-refactor behavior that the execution order will leave in place.
+- **Correctness:** No remaining test bullet contradicts the source or the plan's own sequencing.
+- **Gaps:** No additional missing implementation steps surfaced.
+- **Best practices:** No new convention issues emerged.
+- **Plan hygiene:** §2.1.6 / §2.1.7 and §4 are now aligned.
+
+**Result: Zero critical or major findings. Iteration complete.**
+
+### Iteration 5
+
+Final zero-major sweep after applying F26. Verified:
+
+- **Testing:** The Rust test sections now all describe the expected post-refactor behavior for the phase ordering in §4.
+- **Correctness:** No remaining test bullet embeds a superseded pre-refactor assumption.
+- **Gaps:** No new functionality, configuration, or observability omissions surfaced.
+- **Best practices:** No additional convention issues emerged.
+- **Plan hygiene:** The per-section expectations now match the execution order end-to-end.
 
 **Result: Zero critical or major findings. Iteration complete.**

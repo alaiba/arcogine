@@ -21,4 +21,5 @@ RUN apt-get update \
 USER vscode
 
 RUN rustup component add rustfmt clippy \
-    && cargo install cargo-watch cargo-nextest
+    && cargo install cargo-watch \
+    && cargo install --locked cargo-nextest

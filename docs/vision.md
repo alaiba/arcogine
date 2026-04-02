@@ -4,7 +4,7 @@
 
 Arcogine is a **simulation-first platform** designed to model and experiment with **factory systems, economic dynamics, and decision-making processes**.
 
-It is not just a game. It is:
+It is intentionally simulation-first, while still being enjoyable to use:
 
 > **A system for understanding how decisions shape complex industrial and economic behavior.**
 
@@ -13,6 +13,14 @@ At its core, Arcogine bridges three domains:
 - **Operations** — production, capacity, bottlenecks
 - **Economics** — pricing, demand, revenue
 - **Decision systems** — agents, policies, incentives
+
+## Playful onboarding path
+
+You can also use Arcogine as a lightweight simulation challenge:
+
+- Run `Basic` first to learn controls and pacing.
+- Move to `Overload` to manage backlog and lead-time pressure.
+- Compare short-term tuning versus structural improvement in `Capacity Expansion`.
 
 ## Core Loop
 

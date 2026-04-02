@@ -4,17 +4,69 @@ Thank you for considering a contribution to Arcogine. This guide covers the conv
 
 ## Prerequisites
 
-- **Rust** (stable channel, pinned via `rust-toolchain.toml`)
+- **Rust** (stable channel, floating policy in `rust-toolchain.toml`)
 - **Node.js** 20+ and npm (for the `ui/` experiment console)
 - **Docker** and Docker Compose (optional, for containerized runs)
 
-## Getting Started
+## Host vs container prerequisites
+
+Native development requires Rust and Node installed on the host.
+
+Container development requires Docker plus VS Code Dev Containers.
+
+If your host does not have Rust/Node installed, use the dev container path first.
+
+## Choose a start path
+
+### 1) Dev container
 
 ```bash
-git clone https://github.com/your-username/arcogine.git
+git clone https://github.com/alaiba/arcogine.git
+cd arcogine
+```
+
+Open the repository in VS Code and reopen in the dev container. The post-create script:
+
+- runs `cargo build`,
+- installs UI dependencies with `npm ci`,
+- copies `.env.example` to `.env` if missing.
+
+After startup:
+
+```bash
+cd ui
+npm run dev
+```
+
+In a second terminal:
+
+```bash
+cargo run --bin arcogine -- serve --addr 0.0.0.0:3000
+```
+
+### 2) Native (host Rust + host Node)
+
+```bash
+git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 cargo build
 cargo test
+```
+
+Then run:
+
+```bash
+cargo run --bin arcogine -- serve --addr 127.0.0.1:3000
+cd ui
+npm ci
+npm run dev
+```
+
+### 3) Docker Compose runtime
+
+```bash
+cp .env.example .env
+docker compose up --build
 ```
 
 ## Repository Layout
@@ -28,7 +80,7 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 | `crates/sim-factory/` | Machines, jobs, routing, queues |
 | `crates/sim-economy/` | Pricing, demand, revenue |
 | `crates/sim-agents/` | Agent trait and implementations |
-| `crates/sim-api/` | HTTP API (Axum), SSE, OpenAPI |
+| `crates/sim-api/` | HTTP API (Axum), SSE |
 | `crates/sim-cli/` | CLI entrypoint (`arcogine` binary) |
 | `ui/` | React/TypeScript experiment console |
 | `examples/` | TOML scenario fixture files |
@@ -44,6 +96,10 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
    cargo fmt --check
    cargo clippy -- -D warnings
    cargo test
+   cd ui
+   npm ci
+   npx tsc --noEmit
+   npm run build
    ```
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 

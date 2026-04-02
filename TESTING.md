@@ -4,9 +4,13 @@ This document describes all test categories in Arcogine, how to run each, and wh
 
 ## Prerequisites
 
-- **Rust** (stable, ≥1.94): `rustup update stable`
-- **Node.js** (≥20): for frontend tests
-- **Cargo** tools: `cargo fmt`, `cargo clippy`, `cargo test`, `cargo bench`
+- **Host-based checks**
+  - **Rust** (stable, ≥1.94): `rustup update stable`
+  - **Node.js** (≥20): for frontend checks and tests
+  - **Cargo** tools: `cargo fmt`, `cargo clippy`, `cargo test`, `cargo bench`
+- **Containerized checks**
+  - **Docker** and Docker Compose
+  - Covers runtime startup parity without requiring local Rust/Node
 
 ## Test Categories
 
@@ -95,6 +99,8 @@ Or let Playwright manage the servers:
 cd ui && npx playwright test  # uses playwright.config.ts webServer
 ```
 
+This Playwright configuration starts both API and UI servers automatically in CI.
+
 ## Running Everything
 
 ```bash
@@ -116,4 +122,5 @@ cargo bench -p sim-core
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs:
 1. **Rust job**: fmt check, clippy, test
-2. **Frontend job**: npm ci, tsc, build
+2. **Frontend job**: npm ci, tsc, build, and Playwright test
+3. **Compose job**: docker compose build + startup checks for API and UI

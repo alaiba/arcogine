@@ -85,16 +85,19 @@ The runner dequeues events from the priority queue and dispatches each to the ha
 
 ## Separation of Concerns
 
-Arcogine is layered into six tiers (five active in the MVP, plus the Material Layer planned for Phase 7):
+Arcogine is organized in two explicit status bands:
+
+- **Current (implemented)**: six active layers today.
+- **Planned (Phase 7)**: material simulation depth and richer workflow tooling are not yet in the active crate graph.
 
 | Layer | Responsibility | Crate(s) |
 |-------|---------------|-----------|
 | **Simulation Core** | Event scheduling, time, logging, determinism | `sim-core`, `sim-types` |
 | **Factory Layer** | Machines, jobs, routing, queues | `sim-factory` |
-| **Material Layer** | Recipes, inventory, material transformation (Phase 7) | `sim-material` |
 | **Economy Layer** | Pricing, demand, revenue, cost, supply | `sim-economy` |
 | **Agent Layer** | Decision-making actors that observe and command | `sim-agents` |
 | **API / UI Layer** | HTTP surface, CLI, web dashboard | `sim-api`, `sim-cli`, `ui/` |
+| **Material Layer** *(planned, Phase 7)* | Recipes, inventory, material transformation | `sim-material` |
 
 Agents and UI never directly mutate simulation state. All mutations flow through validated command interfaces.
 
@@ -130,7 +133,7 @@ Arcogine's architecture is designed for compatibility with industry standards wi
 - **ISA-95 / IEC 62264** — Domain concepts (machines, products, routings) map to ISA-95 terminology. MVP code uses Arcogine naming with ISA-95 correspondences documented.
 - **DES methodology** — Core simulation approach. Event scheduling, monotonic time, event causality follow standard DES patterns.
 - **RAMI 4.0** — Arcogine's layered crate architecture maps naturally to RAMI 4.0 layers (asset → factory, functional → core, business → agents/economy).
-- **OpenAPI** — REST API is specified via OpenAPI 3.x for machine discoverability and integration readiness.
+- **OpenAPI** — **Planned**. `utoipa` is present as dependency planning metadata, but the current routed surface is consumed by direct API clients and SSE wiring rather than a generated OpenAPI pipeline.
 
 Future directions (AAS, OPC UA, FMI, MQTT, FIPA) are preserved by architectural choices documented in `docs/standards-alignment.md`.
 
@@ -148,20 +151,35 @@ Phase 7 introduces a `sim-material` crate (recipes, inventory, material transfor
 
 ## UI Architecture
 
-The experiment console (`ui/`) is a React + TypeScript single-page application built with Vite. It acts as a read-mostly client: all simulation state lives in the Rust backend, and the UI mirrors it via the REST API and a Server-Sent Events (SSE) stream.
+The experiment console (`ui/`) is a React + TypeScript single-page application built with Vite.
+It acts as a read-mostly client: all simulation state lives in the Rust backend, and the UI mirrors it via REST plus SSE.
+
+### Current layout status (mounted components)
+
+The active runtime mounts:
+
+- `Toolbar`
+- `WelcomeOverlay`
+- `KpiCards`
+- `TimeSeriesChart`
+- `FactoryFlow` (within tabbed main area)
+- `MachineTable` (within tabbed main area)
+- `JobTracker` (within tabbed main area)
+- `Sidebar`
+- `BottomDrawer`
+
+Baseline and export controls are implemented in `Sidebar`, not as separate mounted pages.
 
 ### Layout
 
-The UI uses a three-region layout optimized for a single-monitor experiment workflow:
+The active layout is a single page with:
 
-| Region | Content | Width |
-|--------|---------|-------|
-| **Toolbar** (top) | Scenario selector, sim controls (run/pause/step/reset), speed multiplier, agent toggle | Full width |
-| **Main area** (center-left) | KPI summary cards, time-series chart, tabbed view (factory flow / machine table / job tracker) | ~70% |
-| **Sidebar** (center-right) | Control levers (price, machine count), baseline comparison, export menu | ~30% |
-| **Bottom drawer** (collapsible) | Chronological event log with type filter and search | Full width |
+- a top toolbar for run/pause/step/reset controls,
+- a main region for KPI, charts, and tabbed simulation views,
+- a sidebar for interactive controls and baselines,
+- a bottom drawer for event logs.
 
-A welcome overlay appears on first load, presenting the built-in scenarios as cards with a quick-start option.
+On first load, `WelcomeOverlay` presents the scenario entry points.
 
 ### State Management
 
@@ -184,7 +202,7 @@ Axum API (Phase 4)
         └──► api/sse.ts ──► Zustand simulation store ──► React components
 ```
 
-- **REST** handles commands (load scenario, change price, toggle agent) and queries (get KPIs, get topology, list jobs). The typed API client generates request/response types aligned to the OpenAPI spec produced by Phase 4's `utoipa`.
+- **REST** handles commands (load scenario, change price, toggle machine/agent) and queries (get KPIs, get topology, list jobs). The `api/client.ts` module currently owns typed request/response call contracts directly.
 - **SSE** delivers simulation events in real time during a running simulation. The EventSource wrapper parses typed events and appends them to the store. On pause or stop, the UI falls back to a final REST snapshot.
 - **No direct state coupling** — the UI never holds or computes simulation state. It reflects what the API reports.
 
@@ -192,17 +210,21 @@ Axum API (Phase 4)
 
 | Concern | Choice | Rationale |
 |---------|--------|-----------|
-| Component library | Tailwind CSS + shadcn/ui | Composable, dark-mode ready, WCAG 2.1 AA accessible by default |
-| Charting | Recharts | React-native SVG charts with TypeScript support and built-in PNG export |
+| Component styling | Tailwind CSS + custom components | Lightweight, consistent utility styling with explicit ownership |
+| Charting | Recharts | SVG charting with TypeScript support |
 | State management | Zustand | Minimal boilerplate, works well with both polling and SSE patterns |
-| E2E testing | Playwright | Browser automation for smoke tests, integrated into CI |
+| E2E testing | Playwright | Browser automation for smoke tests (including CI now) |
 
 ### Accessibility
 
-- All interactive elements are keyboard-navigable (provided by shadcn/ui primitives).
-- Charts carry `aria-label` attributes with current KPI values.
+- Interactive controls are implemented as native form controls where possible, with explicit labels and state feedback.
 - Machine states use both color and icon/text labels — color is never the sole indicator.
-- Contrast ratios meet WCAG 2.1 AA (Tailwind + shadcn defaults).
+- Contrast and interaction states are tuned through Tailwind utility styles.
+
+### Component status notes
+
+`BaselineCompare` and `ExportMenu` exist in `src/components/experiment/` and are validated as implemented utilities.
+They are intentionally not mounted as top-level sections in the default `App` composition yet.
 
 ## Repository Structure
 
@@ -214,12 +236,12 @@ arcogine/
     sim-core/             # Event engine, scheduler, logging, KPIs, scenario loader
       benches/            # Criterion benchmarks (scheduler, scenario runtime)
     sim-factory/          # Machines, jobs, routing, queues
-    sim-material/         # Recipes, inventory, material transformation (Phase 7)
     sim-economy/          # Pricing, demand, revenue, cost, supply
     sim-agents/           # Agent trait and implementations
     sim-types/            # Typed IDs, shared structs, error types
-    sim-api/              # HTTP API (Axum), SSE stream, OpenAPI spec
+    sim-api/              # HTTP API (Axum), SSE stream
     sim-cli/              # CLI entrypoint (headless + server modes)
+    # sim-material/         # Planned in Phase 7: recipes, inventory, material transformation
 
   ui/                     # React/TypeScript experiment console
     src/

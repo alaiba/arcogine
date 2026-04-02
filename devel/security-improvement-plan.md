@@ -650,6 +650,78 @@ Extend `SECURITY.md` with a "Hardening for Network Deployment" section that docu
 4. Run `cargo audit` and `npm audit` before deployment
 5. Set `RUST_LOG=warn` in production to reduce log verbosity
 
+### 3.14 CI Security Gates (No Deployment)
+
+**Priority:** High
+**Risk addressed:** R11, R12
+**Effort:** Medium
+
+This item is explicitly CI-only and does not implement any deployment or image publishing step.
+
+File: `.github/workflows/ci.yml`
+
+#### 3.14.1 Secret scanning
+
+Add a dedicated CI job that scans repository content for secrets:
+
+```yaml
+  security-secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --no-git -v --redact --source .
+```
+
+If the repo produces noisy findings, start with a checked-in `.gitleaks.toml` allowlist and keep the step enabled in alert mode before turning on hard failure.
+
+#### 3.14.2 Dependency audit evidence
+
+Keep dependency checks in CI and persist machine-readable outputs:
+
+```yaml
+  - name: Audit Rust dependencies
+    uses: rustsec/audit-check@v2
+    with:
+      token: ${{ secrets.GITHUB_TOKEN }}
+
+  - name: Audit npm dependencies
+    run: npm audit --audit-level=high --json > npm-audit.json
+```
+
+Upload reports when failures occur so review can be done from workflow artifacts:
+
+```yaml
+  - name: Upload audit reports
+    if: failure()
+    uses: actions/upload-artifact@v4
+    with:
+      name: security-audit-reports
+      path: |
+        npm-audit.json
+```
+
+#### 3.14.3 Scan both API and UI images
+
+Expand image scanning to `arcogine-api:ci` and `arcogine-ui:ci` in a matrix strategy:
+
+```yaml
+  - name: Scan image with Trivy
+    uses: aquasecurity/trivy-action@master
+    with:
+      image-ref: arcogine-${{ matrix.image }}:ci
+      severity: 'CRITICAL,HIGH'
+      format: 'table'
+      exit-code: '1'
+```
+
+Use `matrix.image` values of `api` and `ui` so each image is gated independently. Keep the matrix `fail-fast: false` so both scans run even if one fails.
+
+**Verification:** CI fails on any CRITICAL/HIGH issue from Rust/npm scans or either image scan, and artifacts include `npm-audit.json`.
+
 ---
 
 ## 4. Priority Matrix
@@ -669,6 +741,7 @@ Extend `SECURITY.md` with a "Hardening for Network Deployment" section that docu
 | 3.11 | Economy/price input validation | Low | Low | R14 | — |
 | 3.12 | Configurable CORS | Low | Low | R2 | — |
 | 3.13 | Update SECURITY.md | Low | Low | — | 3.4, 3.12 |
+| 3.14 | CI security gates (no deployment) | High | Medium | R11, R12 | — |
 
 ---
 
@@ -678,15 +751,16 @@ Extend `SECURITY.md` with a "Hardening for Network Deployment" section that docu
 2. **3.3** — Handler and scheduler error propagation (quick win, improves observability)
 3. **3.2** — Scenario load error propagation (medium effort, high value)
 4. **3.7** — Dependency scanning in CI (automated protection)
-5. **3.4** — Restrict default bind address
-6. **3.5** — Nginx security headers
-7. **3.1** — Tighten body-size limit (Axum already provides 2 MB default)
-8. **3.9** — Bound SSE connections
-9. **3.10** — Cap event log size
-10. **3.8** — Docker image scanning
-11. **3.11** — Economy/price input validation
-12. **3.12** — Configurable CORS
-13. **3.13** — Update SECURITY.md (after other items are implemented)
+5. **3.14** — CI security gates (no deployment)
+6. **3.4** — Restrict default bind address
+7. **3.5** — Nginx security headers
+8. **3.1** — Tighten body-size limit (Axum already provides 2 MB default)
+9. **3.9** — Bound SSE connections
+10. **3.10** — Cap event log size
+11. **3.8** — Docker image scanning
+12. **3.11** — Economy/price input validation
+13. **3.12** — Configurable CORS
+14. **3.13** — Update SECURITY.md (after other items are implemented)
 
 ---
 

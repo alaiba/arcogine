@@ -1,10 +1,13 @@
+ # syntax=docker/dockerfile:1.7
 FROM rust:1.94-slim AS builder
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY crates/ crates/
 
-RUN cargo build --release --bin arcogine
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    cargo build --release --bin arcogine
 
 FROM debian:bookworm-slim
 

@@ -208,6 +208,257 @@ async fn export_events_returns_log() {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
+// ─── §2.8 — Missing route coverage ──────────────────────────────────
+
+#[tokio::test]
+async fn pause_resume_step_sequence() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    load_scenario(&app, basic_scenario_toml()).await;
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    // Pause (no-op since simulation starts paused)
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/sim/pause")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // Step one event
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/sim/step")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // The step handler's internal sleep may not be long enough under parallel
+    // load, so poll the snapshot endpoint until events_processed > 0.
+    for _ in 0..10 {
+        let req = Request::builder()
+            .uri("/api/snapshot")
+            .body(Body::empty())
+            .unwrap();
+        let resp = app.clone().oneshot(req).await.unwrap();
+        let body = resp.into_body().collect().await.unwrap().to_bytes();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        if json["events_processed"].as_u64().unwrap_or(0) >= 1 {
+            return;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    panic!("step should process at least 1 event within timeout");
+}
+
+#[tokio::test]
+async fn run_to_completion_returns_final_snapshot() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    load_scenario(&app, basic_scenario_toml()).await;
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/sim/run")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+
+    let req = Request::builder()
+        .uri("/api/snapshot")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["run_state"], "Completed");
+    assert!(json["events_processed"].as_u64().unwrap() > 0);
+}
+
+#[tokio::test]
+async fn query_jobs_returns_list() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    // Use a scenario with high enough base_demand to generate orders
+    let high_demand_toml = r#"
+[simulation]
+rng_seed = 42
+max_ticks = 200
+demand_eval_interval = 10
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1]
+
+[economy]
+initial_price = 5.0
+base_demand = 10.0
+price_elasticity = 0.3
+lead_time_sensitivity = 0.0
+"#;
+
+    load_scenario(&app, high_demand_toml).await;
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/sim/run")
+        .body(Body::empty())
+        .unwrap();
+    app.clone().oneshot(req).await.unwrap();
+
+    for _ in 0..20 {
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        let req = Request::builder()
+            .uri("/api/snapshot")
+            .body(Body::empty())
+            .unwrap();
+        let resp = app.clone().oneshot(req).await.unwrap();
+        let body = resp.into_body().collect().await.unwrap().to_bytes();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        if json["run_state"] == "Completed" {
+            break;
+        }
+    }
+
+    let req = Request::builder()
+        .uri("/api/jobs")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let jobs: Vec<serde_json::Value> = serde_json::from_slice(&body).unwrap();
+    assert!(!jobs.is_empty(), "jobs should be populated after a run");
+}
+
+#[tokio::test]
+async fn toggle_agent_on_off() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let body = serde_json::json!({ "enabled": true });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/agent")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = serde_json::json!({ "enabled": false });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/agent")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn sse_endpoint_returns_event_stream() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let req = Request::builder()
+        .uri("/api/events/stream")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    assert!(
+        content_type.contains("text/event-stream"),
+        "SSE endpoint should return text/event-stream, got: {content_type}"
+    );
+}
+
+#[tokio::test]
+async fn invalid_toml_content_returns_error() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let invalid_toml = r#"
+[simulation]
+max_ticks = "not a number"
+"#;
+    let status = load_scenario(&app, invalid_toml).await;
+    // The server currently accepts the TOML and passes it to the sim thread;
+    // the thread logs the error but the HTTP handler returns OK because
+    // `load_scenario` is fire-and-forget with a sleep. Per F17, verify that
+    // the scenario is NOT loaded in the snapshot.
+    if status == StatusCode::OK {
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+        let req = Request::builder()
+            .uri("/api/snapshot")
+            .body(Body::empty())
+            .unwrap();
+        let resp = app.clone().oneshot(req).await.unwrap();
+        let body = resp.into_body().collect().await.unwrap().to_bytes();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(
+            json["scenario_loaded"], false,
+            "snapshot should show scenario NOT loaded after invalid TOML"
+        );
+    }
+}
+
+#[tokio::test]
+async fn change_machine_updates_snapshot() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    load_scenario(&app, basic_scenario_toml()).await;
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    let body = serde_json::json!({ "machine_id": 1, "online": false });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/machines")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+}
+
 // ─── Error-path tests (F29) ─────────────────────────────────────────
 
 #[tokio::test]

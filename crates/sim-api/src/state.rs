@@ -667,3 +667,215 @@ fn reschedule_periodic(
         _ => {}
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::thread;
+    use std::time::Duration;
+
+    fn basic_toml() -> String {
+        r#"
+[simulation]
+rng_seed = 42
+max_ticks = 100
+demand_eval_interval = 10
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1]
+
+[economy]
+initial_price = 10.0
+"#
+        .to_string()
+    }
+
+    fn wait_for_snapshot(rx: &mut watch::Receiver<SimSnapshot>, pred: impl Fn(&SimSnapshot) -> bool) -> SimSnapshot {
+        for _ in 0..100 {
+            let snap = rx.borrow().clone();
+            if pred(&snap) {
+                return snap;
+            }
+            thread::sleep(Duration::from_millis(20));
+            let _ = rx.changed();
+        }
+        rx.borrow().clone()
+    }
+
+    #[test]
+    fn default_snapshot_state() {
+        let snap = SimSnapshot::default();
+        assert_eq!(snap.run_state, SimRunState::Idle);
+        assert!(!snap.scenario_loaded);
+        assert_eq!(snap.events_processed, 0);
+    }
+
+    #[test]
+    fn integrated_handler_delegates_to_factory_handler() {
+        let toml = basic_toml();
+        let config = sim_core::scenario::load_scenario(&toml).unwrap();
+        let mut h = build_handler_from_config(&config);
+        let mut scheduler = Scheduler::new();
+
+        let seed_event = Event::new(SimTime(10), EventPayload::DemandEvaluation);
+        scheduler.schedule(seed_event).unwrap();
+        let event = scheduler.next_event().unwrap();
+
+        h.handle_event(&event, &mut scheduler).unwrap();
+
+        let order_event = Event::new(
+            SimTime(10),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
+        h.handle_event(&order_event, &mut scheduler).unwrap();
+        assert!(h.factory.jobs.iter().count() > 0, "factory handler should process OrderCreation");
+    }
+
+    #[test]
+    fn build_snapshot_produces_edges_for_multi_step_routing() {
+        let toml = r#"
+[simulation]
+rng_seed = 1
+max_ticks = 10
+
+[[equipment]]
+id = 1
+name = "Mill"
+[[equipment]]
+id = 2
+name = "Drill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+[[process_segment]]
+id = 2
+name = "Drilling"
+equipment_id = 2
+duration = 3
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1, 2]
+
+[economy]
+initial_price = 10.0
+"#;
+        let config = sim_core::scenario::load_scenario(toml).unwrap();
+        let h = build_handler_from_config(&config);
+        let log = EventLog::new();
+        let snap = build_snapshot(&h, &log, SimRunState::Paused, SimTime::ZERO, 0, Some(&config));
+        assert_eq!(snap.topology.edges.len(), 1);
+        assert_eq!(snap.topology.edges[0].from_machine_id, 1);
+        assert_eq!(snap.topology.edges[0].to_machine_id, 2);
+    }
+
+    #[test]
+    fn build_snapshot_handles_empty_routings() {
+        let toml = r#"
+[simulation]
+rng_seed = 1
+max_ticks = 10
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1]
+
+[economy]
+initial_price = 10.0
+"#;
+        let config = sim_core::scenario::load_scenario(toml).unwrap();
+        let h = build_handler_from_config(&config);
+        let log = EventLog::new();
+        let snap = build_snapshot(&h, &log, SimRunState::Paused, SimTime::ZERO, 0, Some(&config));
+        assert!(snap.topology.edges.is_empty());
+    }
+
+    #[test]
+    fn spawn_load_scenario_transitions_to_loaded() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        cmd_tx.send(SimCommand::LoadScenario(basic_toml())).unwrap();
+
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+        assert!(snap.scenario_loaded);
+        assert_eq!(snap.run_state, SimRunState::Paused);
+    }
+
+    #[test]
+    fn spawn_run_after_load_completes() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        cmd_tx.send(SimCommand::LoadScenario(basic_toml())).unwrap();
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        cmd_tx.send(SimCommand::Run).unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.run_state == SimRunState::Completed);
+        assert!(snap.events_processed > 0);
+        assert_eq!(snap.run_state, SimRunState::Completed);
+    }
+
+    #[test]
+    fn spawn_step_advances_one_event() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        cmd_tx.send(SimCommand::LoadScenario(basic_toml())).unwrap();
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        cmd_tx.send(SimCommand::Step).unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.events_processed > 0);
+        assert_eq!(snap.events_processed, 1);
+    }
+
+    #[test]
+    fn spawn_change_price_updates_snapshot() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        cmd_tx.send(SimCommand::LoadScenario(basic_toml())).unwrap();
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        cmd_tx.send(SimCommand::ChangePrice(25.0)).unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.current_price == 25.0);
+        assert_eq!(snap.current_price, 25.0);
+    }
+}

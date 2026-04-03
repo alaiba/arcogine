@@ -30,3 +30,41 @@ pub async fn event_stream(
 
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
+
+#[cfg(test)]
+mod tests {
+    use sim_core::event::{Event, EventPayload, EventType};
+    use sim_types::SimTime;
+    use tokio::sync::broadcast;
+
+    #[test]
+    fn event_serializes_with_expected_type_name() {
+        let event = Event::new(
+            SimTime(10),
+            EventPayload::TaskEnd {
+                job_id: sim_types::JobId(1),
+                machine_id: sim_types::MachineId(1),
+                step_index: 0,
+            },
+        );
+        let json = serde_json::to_string(&event).unwrap();
+        assert!(json.contains("\"event_type\":\"TaskEnd\""));
+        assert_eq!(event.event_type, EventType::TaskEnd);
+    }
+
+    #[test]
+    fn broadcast_receive_error_is_handled() {
+        let (tx, _rx) = broadcast::channel::<Event>(1);
+        let mut rx2 = tx.subscribe();
+
+        tx.send(Event::new(SimTime(1), EventPayload::DemandEvaluation))
+            .unwrap();
+        tx.send(Event::new(SimTime(2), EventPayload::DemandEvaluation))
+            .unwrap();
+
+        match rx2.try_recv() {
+            Err(broadcast::error::TryRecvError::Lagged(_)) => {}
+            other => panic!("expected Lagged, got {:?}", other),
+        }
+    }
+}

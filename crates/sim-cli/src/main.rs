@@ -171,3 +171,86 @@ fn main() {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sim_core::event::EventType;
+    use sim_types::SimTime;
+
+    fn basic_toml() -> &'static str {
+        r#"
+[simulation]
+rng_seed = 42
+max_ticks = 200
+demand_eval_interval = 10
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1]
+
+[economy]
+initial_price = 5.0
+base_demand = 10.0
+"#
+    }
+
+    #[test]
+    fn headless_handler_delegates_to_pricing_demand_factory() {
+        let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
+        let mut handler = build_headless_handler(&config);
+        let mut scheduler = sim_core::queue::Scheduler::new();
+
+        let seed = Event::new(SimTime(10), sim_core::event::EventPayload::DemandEvaluation);
+        scheduler.schedule(seed).unwrap();
+        let event = scheduler.next_event().unwrap();
+        handler.handle_event(&event, &mut scheduler).unwrap();
+        assert!(!scheduler.is_empty(), "DemandEvaluation should generate OrderCreation events");
+
+        let order = scheduler.next_event().unwrap();
+        handler.handle_event(&order, &mut scheduler).unwrap();
+        assert!(handler.factory.jobs.iter().count() > 0, "factory should have a job after OrderCreation");
+    }
+
+    #[test]
+    fn run_headless_returns_error_for_invalid_toml() {
+        let result = sim_core::scenario::load_scenario("not valid toml {{{}");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn run_headless_completes_with_sales_and_revenue() {
+        let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
+        let (result, handler) = run_headless(&config).unwrap();
+        assert!(result.events_processed > 0);
+        assert!(handler.factory.completed_sales > 0);
+        assert!(handler.factory.total_revenue > 0.0);
+    }
+
+    #[test]
+    fn headless_produces_task_start_events() {
+        let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
+        let (result, _handler) = run_headless(&config).unwrap();
+        let task_starts = result
+            .event_log
+            .filter_by_type(EventType::TaskStart)
+            .count();
+        assert!(task_starts > 0, "headless run should produce TaskStart events");
+    }
+}

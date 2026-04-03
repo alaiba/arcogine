@@ -240,11 +240,11 @@ impl FactoryHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::machines::{Machine, MachineStore};
+    use crate::routing::{Routing, RoutingStep, RoutingStore};
     use sim_core::event::{Event, EventPayload};
     use sim_core::handler::EventHandler;
     use sim_core::queue::Scheduler;
-    use crate::machines::{Machine, MachineStore};
-    use crate::routing::{Routing, RoutingStep, RoutingStore};
 
     fn one_machine_one_product() -> FactoryHandler {
         let mut machines = MachineStore::new();
@@ -276,8 +276,18 @@ mod tests {
             id: 1,
             name: "Widget Route".into(),
             steps: vec![
-                RoutingStep { step_id: 1, name: "Milling".into(), machine_id: MachineId(1), duration: 5 },
-                RoutingStep { step_id: 2, name: "Drilling".into(), machine_id: MachineId(2), duration: 3 },
+                RoutingStep {
+                    step_id: 1,
+                    name: "Milling".into(),
+                    machine_id: MachineId(1),
+                    duration: 5,
+                },
+                RoutingStep {
+                    step_id: 2,
+                    name: "Drilling".into(),
+                    machine_id: MachineId(2),
+                    duration: 3,
+                },
             ],
         });
         routings.add_product_routing(ProductId(1), 1);
@@ -299,10 +309,13 @@ mod tests {
         let mut h = one_machine_one_product();
         let mut sched = Scheduler::new();
 
-        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1),
-            quantity: 1,
-        });
+        let order = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
         sched.schedule(order.clone()).unwrap();
         sched.next_event();
         h.handle_event(&order, &mut sched).unwrap();
@@ -320,9 +333,13 @@ mod tests {
         let mut h = one_machine_one_product();
         let mut sched = Scheduler::new();
 
-        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 1,
-        });
+        let order = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
         sched.schedule(order.clone()).unwrap();
         sched.next_event();
         h.handle_event(&order, &mut sched).unwrap();
@@ -352,9 +369,13 @@ mod tests {
         let mut h = one_machine_one_product();
         let mut sched = Scheduler::new();
 
-        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 2,
-        });
+        let order = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 2,
+            },
+        );
         sched.schedule(order.clone()).unwrap();
         sched.next_event();
         h.handle_event(&order, &mut sched).unwrap();
@@ -368,16 +389,24 @@ mod tests {
         let mut h = one_machine_one_product();
         let mut sched = Scheduler::new();
 
-        let o1 = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 1,
-        });
+        let o1 = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
         sched.schedule(o1.clone()).unwrap();
         sched.next_event();
         h.handle_event(&o1, &mut sched).unwrap();
 
-        let o2 = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 1,
-        });
+        let o2 = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
         h.handle_event(&o2, &mut sched).unwrap();
 
         assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 1);
@@ -388,16 +417,24 @@ mod tests {
         let mut h = one_machine_one_product();
         let mut sched = Scheduler::new();
 
-        let o1 = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 1,
-        });
+        let o1 = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
         sched.schedule(o1.clone()).unwrap();
         sched.next_event();
         h.handle_event(&o1, &mut sched).unwrap();
 
-        let o2 = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 1,
-        });
+        let o2 = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
         h.handle_event(&o2, &mut sched).unwrap();
         assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 1);
 
@@ -412,9 +449,13 @@ mod tests {
         let mut h = two_step_handler();
         let mut sched = Scheduler::new();
 
-        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 1,
-        });
+        let order = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
         sched.schedule(order.clone()).unwrap();
         sched.next_event();
         h.handle_event(&order, &mut sched).unwrap();
@@ -433,23 +474,39 @@ mod tests {
         let mut h = one_machine_one_product();
         let mut sched = Scheduler::new();
 
-        h.machines.get_mut(MachineId(1)).unwrap().set_availability(false).unwrap();
+        h.machines
+            .get_mut(MachineId(1))
+            .unwrap()
+            .set_availability(false)
+            .unwrap();
 
-        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 1,
-        });
+        let order = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
         sched.schedule(order.clone()).unwrap();
         sched.next_event();
         h.handle_event(&order, &mut sched).unwrap();
         assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 1);
 
-        let online = Event::new(SimTime(2), EventPayload::MachineAvailabilityChange {
-            machine_id: MachineId(1), online: true,
-        });
+        let online = Event::new(
+            SimTime(2),
+            EventPayload::MachineAvailabilityChange {
+                machine_id: MachineId(1),
+                online: true,
+            },
+        );
         sched.schedule(online.clone()).unwrap();
         sched.next_event();
         h.handle_event(&online, &mut sched).unwrap();
-        assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 0, "queued job should be dispatched");
+        assert_eq!(
+            h.machines.get(MachineId(1)).unwrap().queue_depth(),
+            0,
+            "queued job should be dispatched"
+        );
     }
 
     #[test]
@@ -458,9 +515,13 @@ mod tests {
         let mut sched = Scheduler::new();
         h.set_current_price(10.0);
 
-        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
-            product_id: ProductId(1), quantity: 3,
-        });
+        let order = Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 3,
+            },
+        );
         sched.schedule(order.clone()).unwrap();
         sched.next_event();
         h.handle_event(&order, &mut sched).unwrap();

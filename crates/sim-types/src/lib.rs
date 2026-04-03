@@ -310,7 +310,11 @@ mod tests {
 
     #[test]
     fn machine_state_serde_roundtrip() {
-        for state in [MachineState::Idle, MachineState::Busy, MachineState::Offline] {
+        for state in [
+            MachineState::Idle,
+            MachineState::Busy,
+            MachineState::Offline,
+        ] {
             let json = serde_json::to_string(&state).unwrap();
             let back: MachineState = serde_json::from_str(&json).unwrap();
             assert_eq!(state, back);

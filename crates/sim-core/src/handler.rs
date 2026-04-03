@@ -106,6 +106,9 @@ mod tests {
         let mut scheduler = Scheduler::new();
         let result = composite.handle_event(&make_event(), &mut scheduler);
         assert!(result.is_err());
-        assert!(calls.lock().unwrap().is_empty(), "second handler should not be called");
+        assert!(
+            calls.lock().unwrap().is_empty(),
+            "second handler should not be called"
+        );
     }
 }

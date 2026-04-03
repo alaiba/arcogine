@@ -221,11 +221,17 @@ base_demand = 10.0
         scheduler.schedule(seed).unwrap();
         let event = scheduler.next_event().unwrap();
         handler.handle_event(&event, &mut scheduler).unwrap();
-        assert!(!scheduler.is_empty(), "DemandEvaluation should generate OrderCreation events");
+        assert!(
+            !scheduler.is_empty(),
+            "DemandEvaluation should generate OrderCreation events"
+        );
 
         let order = scheduler.next_event().unwrap();
         handler.handle_event(&order, &mut scheduler).unwrap();
-        assert!(handler.factory.jobs.iter().count() > 0, "factory should have a job after OrderCreation");
+        assert!(
+            handler.factory.jobs.iter().count() > 0,
+            "factory should have a job after OrderCreation"
+        );
     }
 
     #[test]
@@ -251,6 +257,9 @@ base_demand = 10.0
             .event_log
             .filter_by_type(EventType::TaskStart)
             .count();
-        assert!(task_starts > 0, "headless run should produce TaskStart events");
+        assert!(
+            task_starts > 0,
+            "headless run should produce TaskStart events"
+        );
     }
 }

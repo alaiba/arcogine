@@ -707,7 +707,10 @@ initial_price = 10.0
         .to_string()
     }
 
-    fn wait_for_snapshot(rx: &mut watch::Receiver<SimSnapshot>, pred: impl Fn(&SimSnapshot) -> bool) -> SimSnapshot {
+    fn wait_for_snapshot(
+        rx: &mut watch::Receiver<SimSnapshot>,
+        pred: impl Fn(&SimSnapshot) -> bool,
+    ) -> SimSnapshot {
         for _ in 0..100 {
             let snap = rx.borrow().clone();
             if pred(&snap) {
@@ -748,7 +751,10 @@ initial_price = 10.0
             },
         );
         h.handle_event(&order_event, &mut scheduler).unwrap();
-        assert!(h.factory.jobs.iter().count() > 0, "factory handler should process OrderCreation");
+        assert!(
+            h.factory.jobs.iter().count() > 0,
+            "factory handler should process OrderCreation"
+        );
     }
 
     #[test]
@@ -792,7 +798,14 @@ initial_price = 10.0
         let config = sim_core::scenario::load_scenario(toml).unwrap();
         let h = build_handler_from_config(&config);
         let log = EventLog::new();
-        let snap = build_snapshot(&h, &log, SimRunState::Paused, SimTime::ZERO, 0, Some(&config));
+        let snap = build_snapshot(
+            &h,
+            &log,
+            SimRunState::Paused,
+            SimTime::ZERO,
+            0,
+            Some(&config),
+        );
         assert_eq!(snap.topology.edges.len(), 1);
         assert_eq!(snap.topology.edges[0].from_machine_id, 1);
         assert_eq!(snap.topology.edges[0].to_machine_id, 2);
@@ -831,7 +844,14 @@ initial_price = 10.0
         let config = sim_core::scenario::load_scenario(toml).unwrap();
         let h = build_handler_from_config(&config);
         let log = EventLog::new();
-        let snap = build_snapshot(&h, &log, SimRunState::Paused, SimTime::ZERO, 0, Some(&config));
+        let snap = build_snapshot(
+            &h,
+            &log,
+            SimRunState::Paused,
+            SimTime::ZERO,
+            0,
+            Some(&config),
+        );
         assert!(snap.topology.edges.is_empty());
     }
 

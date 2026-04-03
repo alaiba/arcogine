@@ -110,8 +110,18 @@ mod tests {
             id: 1,
             name: "Widget Route".into(),
             steps: vec![
-                RoutingStep { step_id: 1, name: "Step A".into(), machine_id: MachineId(1), duration: 5 },
-                RoutingStep { step_id: 2, name: "Step B".into(), machine_id: MachineId(2), duration: 3 },
+                RoutingStep {
+                    step_id: 1,
+                    name: "Step A".into(),
+                    machine_id: MachineId(1),
+                    duration: 5,
+                },
+                RoutingStep {
+                    step_id: 2,
+                    name: "Step B".into(),
+                    machine_id: MachineId(2),
+                    duration: 3,
+                },
             ],
         }
     }

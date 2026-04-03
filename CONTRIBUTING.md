@@ -90,7 +90,7 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
 2. **Make your changes.** Follow the code style enforced by `cargo fmt` and `cargo clippy`.
-3. **Write tests** for new functionality. All crates with logic have unit tests; integration tests live in `crates/sim-api/tests/`.
+3. **Write tests** for new functionality. Each crate has inline `#[cfg(test)]` unit test modules; integration tests live in `crates/sim-api/tests/`. Frontend stores and components are tested with Vitest and Testing Library.
 4. **Run the checks:**
    ```bash
    cargo fmt --check
@@ -98,7 +98,9 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
    cargo test
    cd ui
    npm ci
+   npm run lint
    npx tsc --noEmit
+   npm test
    npm run build
    ```
 5. **Open a pull request** against `main` with a clear description of what changed and why.
@@ -113,11 +115,13 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 
 ## Testing
 
-- **Unit tests** live alongside the code they test (in `tests/` directories within each crate).
+- **Inline unit tests** live alongside the code they test in `#[cfg(test)] mod tests` blocks within each crate's source files.
 - **Integration tests** that require multiple domain crates live in `crates/sim-api/tests/`.
-- **Property tests** use `proptest` in `crates/sim-core/` and `crates/sim-factory/`.
+- **Property tests** use `proptest` in `crates/sim-core/tests/` and `crates/sim-factory/tests/`.
+- **Frontend unit tests** use Vitest and `@testing-library/react` in `ui/src/` (co-located `.test.ts`/`.test.tsx` files).
 - **Benchmarks** use Criterion in `crates/sim-core/benches/`.
 - **E2E tests** for the UI use Playwright in `ui/e2e/`.
+- **Coverage** — `cargo-tarpaulin` for Rust, `vitest --coverage` for frontend (see `TESTING.md`).
 
 ## Determinism Contract
 

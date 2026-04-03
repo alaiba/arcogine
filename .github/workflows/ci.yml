@@ -40,6 +40,10 @@ jobs:
       - name: Run tests
         run: cargo test
 
+      - name: Code coverage
+        run: cargo install cargo-tarpaulin && cargo tarpaulin --workspace --out xml --skip-clean
+        continue-on-error: true
+
   frontend:
     name: Frontend checks
     runs-on: ubuntu-latest

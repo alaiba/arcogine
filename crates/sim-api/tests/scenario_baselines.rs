@@ -3,7 +3,7 @@
 
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
-use sim_core::event::{Event, EventPayload, EventType};
+use sim_core::event::{Event, EventType};
 use sim_core::handler::EventHandler;
 use sim_core::queue::Scheduler;
 use sim_core::runner::run_scenario;
@@ -15,7 +15,6 @@ use sim_factory::process::FactoryHandler;
 use sim_factory::routing::{Routing, RoutingStep, RoutingStore};
 use sim_types::{MachineId, ProductId, SimError};
 
-/// Build factory and economy handlers from a loaded scenario config.
 fn build_handlers_from_scenario(
     toml: &str,
 ) -> (
@@ -26,7 +25,6 @@ fn build_handlers_from_scenario(
 ) {
     let config = load_scenario(toml).unwrap();
 
-    // Build machine store
     let mut machines = MachineStore::new();
     for eq in &config.equipment {
         machines.add(Machine::new(
@@ -38,7 +36,6 @@ fn build_handlers_from_scenario(
         ));
     }
 
-    // Build routing store
     let mut routings = RoutingStore::new();
     for od in &config.operations_definition {
         let steps: Vec<RoutingStep> = od
@@ -87,7 +84,6 @@ fn build_handlers_from_scenario(
     (config, factory, demand, pricing)
 }
 
-/// Wrapper handler that coordinates factory + demand + pricing.
 struct IntegratedHandler {
     factory: FactoryHandler,
     demand: DemandModel,
@@ -96,127 +92,12 @@ struct IntegratedHandler {
 
 impl EventHandler for IntegratedHandler {
     fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
-        // Update pricing first
         self.pricing.handle_event(event, scheduler)?;
-
-        // Sync price to demand model
         self.demand.current_price = self.pricing.current_price;
-
-        // Sync lead time from factory to demand model
         self.demand.avg_lead_time = self.factory.avg_lead_time();
-
-        // Handle demand evaluation (generates orders)
         self.demand.handle_event(event, scheduler)?;
-
-        // Handle factory events (processes orders, advances jobs)
-        // Pass current price for revenue calculation
-        match &event.payload {
-            EventPayload::TaskEnd {
-                job_id,
-                machine_id,
-                step_index: _,
-            } => {
-                let machine = self.factory.machines.get_mut(*machine_id)?;
-                machine.complete_job(*job_id)?;
-
-                let job = self.factory.jobs.get_mut(*job_id)?;
-                job.complete_step(event.time)?;
-
-                if job.is_complete() {
-                    self.factory.total_revenue += self.pricing.current_price * job.quantity as f64;
-                    self.factory.completed_sales += 1;
-                } else {
-                    // Advance to next step
-                    let next_step = job.current_step;
-                    let product_id = job.product_id;
-                    let routing = self.factory.routings.get_routing_for_product(product_id)?;
-                    if let Some(step) = routing.get_step(next_step) {
-                        let next_machine_id = step.machine_id;
-                        let duration = step.duration;
-                        let next_machine = self.factory.machines.get_mut(next_machine_id)?;
-                        if next_machine.can_accept_job() {
-                            next_machine.start_job(*job_id)?;
-                            let job = self.factory.jobs.get_mut(*job_id)?;
-                            job.start(next_machine_id)?;
-                            scheduler.schedule(Event::new(
-                                event.time + duration,
-                                EventPayload::TaskEnd {
-                                    job_id: *job_id,
-                                    machine_id: next_machine_id,
-                                    step_index: next_step,
-                                },
-                            ))?;
-                        } else {
-                            next_machine.enqueue_job(*job_id);
-                        }
-                    }
-                }
-
-                // Dispatch queued jobs on the freed machine
-                let machine = self.factory.machines.get_mut(*machine_id)?;
-                if let Some(queued_job_id) = machine.dequeue_job() {
-                    let qjob = self.factory.jobs.get(queued_job_id)?;
-                    let qstep = qjob.current_step;
-                    let qpid = qjob.product_id;
-                    let routing = self.factory.routings.get_routing_for_product(qpid)?;
-                    if let Some(step) = routing.get_step(qstep) {
-                        let duration = step.duration;
-                        let machine = self.factory.machines.get_mut(*machine_id)?;
-                        machine.start_job(queued_job_id)?;
-                        let qjob = self.factory.jobs.get_mut(queued_job_id)?;
-                        qjob.start(*machine_id)?;
-                        scheduler.schedule(Event::new(
-                            event.time + duration,
-                            EventPayload::TaskEnd {
-                                job_id: queued_job_id,
-                                machine_id: *machine_id,
-                                step_index: qstep,
-                            },
-                        ))?;
-                    }
-                }
-            }
-            EventPayload::OrderCreation {
-                product_id,
-                quantity,
-            } => {
-                let routing = self.factory.routings.get_routing_for_product(*product_id)?;
-                let total_steps = routing.step_count();
-                let job_id =
-                    self.factory
-                        .jobs
-                        .create_job(*product_id, *quantity, total_steps, event.time);
-
-                if let Some(first_step) = routing.get_step(0) {
-                    let machine_id = first_step.machine_id;
-                    let duration = first_step.duration;
-                    let machine = self.factory.machines.get_mut(machine_id)?;
-                    if machine.can_accept_job() {
-                        machine.start_job(job_id)?;
-                        let job = self.factory.jobs.get_mut(job_id)?;
-                        job.start(machine_id)?;
-                        scheduler.schedule(Event::new(
-                            event.time + duration,
-                            EventPayload::TaskEnd {
-                                job_id,
-                                machine_id,
-                                step_index: 0,
-                            },
-                        ))?;
-                    } else {
-                        machine.enqueue_job(job_id);
-                    }
-                }
-            }
-            EventPayload::MachineAvailabilityChange { machine_id, online } => {
-                self.factory
-                    .machines
-                    .get_mut(*machine_id)?
-                    .set_availability(*online)?;
-            }
-            _ => {}
-        }
-
+        self.factory.set_current_price(self.pricing.current_price);
+        self.factory.handle_event(event, scheduler)?;
         Ok(())
     }
 }
@@ -247,7 +128,6 @@ fn overload_scenario_builds_backlog() {
     };
     let _result = run_scenario(&config, &mut handler).unwrap();
 
-    // Overload: low price + high demand should create backlog
     let backlog = handler.factory.backlog();
     assert!(
         backlog > 0,
@@ -258,7 +138,6 @@ fn overload_scenario_builds_backlog() {
 
 #[test]
 fn lowering_price_increases_demand() {
-    // Run twice: once at high price, once at low price.
     let base_toml = r#"
 [simulation]
 rng_seed = 42
@@ -304,7 +183,6 @@ lead_time_sensitivity = 0.0
         .filter_by_type(EventType::OrderCreation)
         .count();
 
-    // Low price scenario
     let low_toml = base_toml.replace("initial_price = 10.0", "initial_price = 1.0");
     let (config_low, factory_l, demand_l, pricing_l) = build_handlers_from_scenario(&low_toml);
     let mut handler_low = IntegratedHandler {
@@ -370,7 +248,6 @@ lead_time_sensitivity = 0.0
     let _result_low = run_scenario(&config_low, &mut handler_low).unwrap();
     let backlog_low = handler_low.factory.backlog();
 
-    // High price scenario
     let high_toml = base_toml.replace("initial_price = 1.0", "initial_price = 9.0");
     let (config_high, factory_h, demand_h, pricing_h) = build_handlers_from_scenario(&high_toml);
     let mut handler_high = IntegratedHandler {
@@ -400,7 +277,6 @@ fn revenue_generated_from_completed_jobs() {
     };
     let _result = run_scenario(&config, &mut handler).unwrap();
 
-    // Each completed sale should contribute exactly price * quantity
     assert!(handler.factory.total_revenue > 0.0);
     assert!(handler.factory.completed_sales > 0);
 }

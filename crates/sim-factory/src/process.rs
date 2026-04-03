@@ -23,6 +23,8 @@ pub struct FactoryHandler {
     pub total_revenue: f64,
     /// Number of completed sales.
     pub completed_sales: u64,
+    /// Current price used for revenue calculations. Updated by the economy layer.
+    current_price: f64,
 }
 
 impl FactoryHandler {
@@ -38,6 +40,7 @@ impl FactoryHandler {
             product_ids,
             total_revenue: 0.0,
             completed_sales: 0,
+            current_price: 0.0,
         }
     }
 
@@ -205,6 +208,11 @@ impl FactoryHandler {
         Ok(())
     }
 
+    /// Set the current price used for revenue calculations on job completion.
+    pub fn set_current_price(&mut self, price: f64) {
+        self.current_price = price;
+    }
+
     /// Current backlog: number of active (queued + in-progress) jobs.
     pub fn backlog(&self) -> usize {
         self.jobs.active_jobs().count()
@@ -243,15 +251,13 @@ impl EventHandler for FactoryHandler {
                 machine_id,
                 step_index,
             } => {
-                // Price is read by the economy handler; factory uses 0.0 as placeholder.
-                // Actual revenue accounting is done via set_current_price.
                 self.handle_task_end(
                     *job_id,
                     *machine_id,
                     *step_index,
                     scheduler,
                     event.time,
-                    0.0,
+                    self.current_price,
                 )?;
             }
             EventPayload::MachineAvailabilityChange { machine_id, online } => {

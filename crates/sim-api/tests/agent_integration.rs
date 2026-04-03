@@ -125,7 +125,6 @@ fn build_handlers(
     (config, factory, demand, pricing)
 }
 
-/// Integrated handler with agent for testing.
 struct AgentIntegratedHandler {
     factory: FactoryHandler,
     demand: DemandModel,
@@ -141,125 +140,42 @@ impl EventHandler for AgentIntegratedHandler {
         self.demand.avg_lead_time = self.factory.avg_lead_time();
         self.demand.handle_event(event, scheduler)?;
 
-        match &event.payload {
-            EventPayload::TaskEnd {
-                job_id,
-                machine_id,
-                step_index: _,
-            } => {
-                let machine = self.factory.machines.get_mut(*machine_id)?;
-                machine.complete_job(*job_id)?;
+        self.factory.set_current_price(self.pricing.current_price);
+        self.factory.handle_event(event, scheduler)?;
 
-                let job = self.factory.jobs.get_mut(*job_id)?;
-                job.complete_step(event.time)?;
-
-                if job.is_complete() {
-                    self.factory.total_revenue += self.pricing.current_price * job.quantity as f64;
-                    self.factory.completed_sales += 1;
-                } else {
-                    let next_step = job.current_step;
-                    let product_id = job.product_id;
-                    let routing = self.factory.routings.get_routing_for_product(product_id)?;
-                    if let Some(step) = routing.get_step(next_step) {
-                        let next_machine_id = step.machine_id;
-                        let duration = step.duration;
-                        let next_machine = self.factory.machines.get_mut(next_machine_id)?;
-                        if next_machine.can_accept_job() {
-                            next_machine.start_job(*job_id)?;
-                            let job = self.factory.jobs.get_mut(*job_id)?;
-                            job.start(next_machine_id)?;
-                            scheduler.schedule(Event::new(
-                                event.time + duration,
-                                EventPayload::TaskEnd {
-                                    job_id: *job_id,
-                                    machine_id: next_machine_id,
-                                    step_index: next_step,
-                                },
-                            ))?;
-                        } else {
-                            next_machine.enqueue_job(*job_id);
-                        }
-                    }
-                }
-
-                let machine = self.factory.machines.get_mut(*machine_id)?;
-                if let Some(queued_job_id) = machine.dequeue_job() {
-                    let qjob = self.factory.jobs.get(queued_job_id)?;
-                    let qstep = qjob.current_step;
-                    let qpid = qjob.product_id;
-                    let routing = self.factory.routings.get_routing_for_product(qpid)?;
-                    if let Some(step) = routing.get_step(qstep) {
-                        let duration = step.duration;
-                        let machine = self.factory.machines.get_mut(*machine_id)?;
-                        machine.start_job(queued_job_id)?;
-                        let qjob = self.factory.jobs.get_mut(queued_job_id)?;
-                        qjob.start(*machine_id)?;
-                        scheduler.schedule(Event::new(
-                            event.time + duration,
-                            EventPayload::TaskEnd {
-                                job_id: queued_job_id,
-                                machine_id: *machine_id,
-                                step_index: qstep,
-                            },
-                        ))?;
-                    }
-                }
+        if let EventPayload::AgentEvaluation = &event.payload {
+            if self.agent_enabled {
+                let elapsed = scheduler.current_time().ticks().max(1);
+                self.agent.observe(AgentObservation {
+                    backlog: self.factory.backlog(),
+                    avg_lead_time: self.factory.avg_lead_time(),
+                    total_revenue: self.factory.total_revenue,
+                    completed_sales: self.factory.completed_sales,
+                    current_price: self.pricing.current_price,
+                    throughput: self.factory.throughput(elapsed),
+                });
+                self.agent.handle_event(event, scheduler)?;
             }
-            EventPayload::OrderCreation {
-                product_id,
-                quantity,
-            } => {
-                let routing = self.factory.routings.get_routing_for_product(*product_id)?;
-                let total_steps = routing.step_count();
-                let job_id =
-                    self.factory
-                        .jobs
-                        .create_job(*product_id, *quantity, total_steps, event.time);
-
-                if let Some(first_step) = routing.get_step(0) {
-                    let machine_id = first_step.machine_id;
-                    let duration = first_step.duration;
-                    let machine = self.factory.machines.get_mut(machine_id)?;
-                    if machine.can_accept_job() {
-                        machine.start_job(job_id)?;
-                        let job = self.factory.jobs.get_mut(job_id)?;
-                        job.start(machine_id)?;
-                        scheduler.schedule(Event::new(
-                            event.time + duration,
-                            EventPayload::TaskEnd {
-                                job_id,
-                                machine_id,
-                                step_index: 0,
-                            },
-                        ))?;
-                    } else {
-                        machine.enqueue_job(job_id);
-                    }
-                }
-            }
-            EventPayload::MachineAvailabilityChange { machine_id, online } => {
-                self.factory
-                    .machines
-                    .get_mut(*machine_id)?
-                    .set_availability(*online)?;
-            }
-            EventPayload::AgentEvaluation => {
-                if self.agent_enabled {
-                    let elapsed = scheduler.current_time().ticks().max(1);
-                    self.agent.observe(AgentObservation {
-                        backlog: self.factory.backlog(),
-                        avg_lead_time: self.factory.avg_lead_time(),
-                        total_revenue: self.factory.total_revenue,
-                        completed_sales: self.factory.completed_sales,
-                        current_price: self.pricing.current_price,
-                        throughput: self.factory.throughput(elapsed),
-                    });
-                    self.agent.handle_event(event, scheduler)?;
-                }
-            }
-            _ => {}
         }
 
+        Ok(())
+    }
+}
+
+struct NoAgentHandler {
+    factory: FactoryHandler,
+    demand: DemandModel,
+    pricing: PricingState,
+}
+
+impl EventHandler for NoAgentHandler {
+    fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
+        self.pricing.handle_event(event, scheduler)?;
+        self.demand.current_price = self.pricing.current_price;
+        self.demand.avg_lead_time = self.factory.avg_lead_time();
+        self.demand.handle_event(event, scheduler)?;
+        self.factory.set_current_price(self.pricing.current_price);
+        self.factory.handle_event(event, scheduler)?;
         Ok(())
     }
 }
@@ -306,131 +222,7 @@ fn agent_produces_at_least_one_intervention() {
 fn agent_reduces_backlog_vs_fixed_price_baseline() {
     let toml = overload_toml();
 
-    // Run without agent (fixed price)
     let (config_no_agent, factory_na, demand_na, pricing_na) = build_handlers(toml);
-    struct NoAgentHandler {
-        factory: FactoryHandler,
-        demand: DemandModel,
-        pricing: PricingState,
-    }
-    impl EventHandler for NoAgentHandler {
-        fn handle_event(
-            &mut self,
-            event: &Event,
-            scheduler: &mut Scheduler,
-        ) -> Result<(), SimError> {
-            self.pricing.handle_event(event, scheduler)?;
-            self.demand.current_price = self.pricing.current_price;
-            self.demand.avg_lead_time = self.factory.avg_lead_time();
-            self.demand.handle_event(event, scheduler)?;
-
-            match &event.payload {
-                EventPayload::TaskEnd {
-                    job_id,
-                    machine_id,
-                    step_index: _,
-                } => {
-                    let machine = self.factory.machines.get_mut(*machine_id)?;
-                    machine.complete_job(*job_id)?;
-                    let job = self.factory.jobs.get_mut(*job_id)?;
-                    job.complete_step(event.time)?;
-                    if job.is_complete() {
-                        self.factory.total_revenue +=
-                            self.pricing.current_price * job.quantity as f64;
-                        self.factory.completed_sales += 1;
-                    } else {
-                        let next_step = job.current_step;
-                        let product_id = job.product_id;
-                        let routing = self.factory.routings.get_routing_for_product(product_id)?;
-                        if let Some(step) = routing.get_step(next_step) {
-                            let next_machine_id = step.machine_id;
-                            let duration = step.duration;
-                            let next_machine = self.factory.machines.get_mut(next_machine_id)?;
-                            if next_machine.can_accept_job() {
-                                next_machine.start_job(*job_id)?;
-                                let job = self.factory.jobs.get_mut(*job_id)?;
-                                job.start(next_machine_id)?;
-                                scheduler.schedule(Event::new(
-                                    event.time + duration,
-                                    EventPayload::TaskEnd {
-                                        job_id: *job_id,
-                                        machine_id: next_machine_id,
-                                        step_index: next_step,
-                                    },
-                                ))?;
-                            } else {
-                                next_machine.enqueue_job(*job_id);
-                            }
-                        }
-                    }
-                    let machine = self.factory.machines.get_mut(*machine_id)?;
-                    if let Some(queued_job_id) = machine.dequeue_job() {
-                        let qjob = self.factory.jobs.get(queued_job_id)?;
-                        let qstep = qjob.current_step;
-                        let qpid = qjob.product_id;
-                        let routing = self.factory.routings.get_routing_for_product(qpid)?;
-                        if let Some(step) = routing.get_step(qstep) {
-                            let duration = step.duration;
-                            let machine = self.factory.machines.get_mut(*machine_id)?;
-                            machine.start_job(queued_job_id)?;
-                            let qjob = self.factory.jobs.get_mut(queued_job_id)?;
-                            qjob.start(*machine_id)?;
-                            scheduler.schedule(Event::new(
-                                event.time + duration,
-                                EventPayload::TaskEnd {
-                                    job_id: queued_job_id,
-                                    machine_id: *machine_id,
-                                    step_index: qstep,
-                                },
-                            ))?;
-                        }
-                    }
-                }
-                EventPayload::OrderCreation {
-                    product_id,
-                    quantity,
-                } => {
-                    let routing = self.factory.routings.get_routing_for_product(*product_id)?;
-                    let total_steps = routing.step_count();
-                    let job_id = self.factory.jobs.create_job(
-                        *product_id,
-                        *quantity,
-                        total_steps,
-                        event.time,
-                    );
-                    if let Some(first_step) = routing.get_step(0) {
-                        let machine_id = first_step.machine_id;
-                        let duration = first_step.duration;
-                        let machine = self.factory.machines.get_mut(machine_id)?;
-                        if machine.can_accept_job() {
-                            machine.start_job(job_id)?;
-                            let job = self.factory.jobs.get_mut(job_id)?;
-                            job.start(machine_id)?;
-                            scheduler.schedule(Event::new(
-                                event.time + duration,
-                                EventPayload::TaskEnd {
-                                    job_id,
-                                    machine_id,
-                                    step_index: 0,
-                                },
-                            ))?;
-                        } else {
-                            machine.enqueue_job(job_id);
-                        }
-                    }
-                }
-                EventPayload::MachineAvailabilityChange { machine_id, online } => {
-                    self.factory
-                        .machines
-                        .get_mut(*machine_id)?
-                        .set_availability(*online)?;
-                }
-                _ => {}
-            }
-            Ok(())
-        }
-    }
-
     let mut handler_no_agent = NoAgentHandler {
         factory: factory_na,
         demand: demand_na,
@@ -439,7 +231,6 @@ fn agent_reduces_backlog_vs_fixed_price_baseline() {
     let _ = run_scenario(&config_no_agent, &mut handler_no_agent).unwrap();
     let backlog_no_agent = handler_no_agent.factory.backlog();
 
-    // Run with agent
     let (config_agent, factory_a, demand_a, pricing_a) = build_handlers(toml);
     let agent = SalesAgent::new(SalesAgentConfig {
         backlog_high: 5,

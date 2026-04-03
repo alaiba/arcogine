@@ -1,4 +1,17 @@
 use clap::Parser;
+use rand::SeedableRng;
+use rand_chacha::ChaCha8Rng;
+use sim_core::event::Event;
+use sim_core::handler::EventHandler;
+use sim_core::queue::Scheduler;
+use sim_core::runner::{run_scenario, SimResult};
+use sim_economy::demand::DemandModel;
+use sim_economy::pricing::PricingState;
+use sim_factory::machines::{Machine, MachineStore};
+use sim_factory::process::FactoryHandler;
+use sim_factory::routing::{Routing, RoutingStep, RoutingStore};
+use sim_types::scenario::ScenarioConfig;
+use sim_types::{MachineId, ProductId, SimError};
 
 /// Arcogine — deterministic factory & economy simulation engine.
 #[derive(Parser)]
@@ -20,6 +33,103 @@ enum Cli {
         #[arg(long)]
         headless: bool,
     },
+}
+
+pub struct HeadlessHandler {
+    pub factory: FactoryHandler,
+    pub demand: DemandModel,
+    pub pricing: PricingState,
+}
+
+impl EventHandler for HeadlessHandler {
+    fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
+        self.pricing.handle_event(event, scheduler)?;
+        self.demand.current_price = self.pricing.current_price;
+        self.demand.avg_lead_time = self.factory.avg_lead_time();
+        self.demand.handle_event(event, scheduler)?;
+        self.factory.set_current_price(self.pricing.current_price);
+        self.factory.handle_event(event, scheduler)?;
+        Ok(())
+    }
+}
+
+pub fn build_headless_handler(config: &ScenarioConfig) -> HeadlessHandler {
+    let mut machines = MachineStore::new();
+    for eq in &config.equipment {
+        machines.add(Machine::new(
+            MachineId(eq.id),
+            eq.name.clone(),
+            eq.concurrency,
+            eq.capacity_liters,
+            eq.setup_time,
+        ));
+    }
+
+    let mut routings = RoutingStore::new();
+    for od in &config.operations_definition {
+        let steps: Vec<RoutingStep> = od
+            .steps
+            .iter()
+            .filter_map(|seg_id| {
+                config
+                    .process_segment
+                    .iter()
+                    .find(|s| s.id == *seg_id)
+                    .map(|s| RoutingStep {
+                        step_id: s.id,
+                        name: s.name.clone(),
+                        machine_id: MachineId(s.equipment_id),
+                        duration: s.duration,
+                    })
+            })
+            .collect();
+        routings.add_routing(Routing {
+            id: od.id,
+            name: od.name.clone(),
+            steps,
+        });
+    }
+
+    let product_ids: Vec<ProductId> = config.material.iter().map(|m| ProductId(m.id)).collect();
+    for mat in &config.material {
+        routings.add_product_routing(ProductId(mat.id), mat.routing_id);
+    }
+
+    let factory = FactoryHandler::new(machines, routings, product_ids.clone());
+
+    let econ = config.economy.as_ref();
+    let rng = ChaCha8Rng::seed_from_u64(config.simulation.rng_seed);
+    let (base_demand, price_elasticity, lt_sensitivity, initial_price) = match econ {
+        Some(e) => (
+            e.base_demand,
+            e.price_elasticity,
+            e.lead_time_sensitivity,
+            e.initial_price,
+        ),
+        None => (5.0, 0.5, 0.1, 10.0),
+    };
+
+    let demand = DemandModel::new(
+        base_demand,
+        price_elasticity,
+        lt_sensitivity,
+        initial_price,
+        product_ids,
+        rng,
+    );
+    let pricing = PricingState::new(initial_price);
+
+    HeadlessHandler {
+        factory,
+        demand,
+        pricing,
+    }
+}
+
+pub fn run_headless(config: &ScenarioConfig) -> Result<(SimResult, HeadlessHandler), SimError> {
+    let mut handler = build_headless_handler(config);
+    let result = run_scenario(config, &mut handler)?;
+    Ok((result, handler))
 }
 
 fn main() {
@@ -47,115 +157,10 @@ fn main() {
         } => {
             let toml_str =
                 std::fs::read_to_string(&scenario).expect("Failed to read scenario file");
-
             let config =
                 sim_core::scenario::load_scenario(&toml_str).expect("Failed to parse scenario");
 
-            use rand::SeedableRng;
-            use rand_chacha::ChaCha8Rng;
-            use sim_core::handler::EventHandler;
-            use sim_core::runner::run_scenario;
-            use sim_economy::demand::DemandModel;
-            use sim_economy::pricing::PricingState;
-            use sim_factory::machines::{Machine, MachineStore};
-            use sim_factory::process::FactoryHandler;
-            use sim_factory::routing::{Routing, RoutingStep, RoutingStore};
-            use sim_types::{MachineId, ProductId};
-
-            let mut machines = MachineStore::new();
-            for eq in &config.equipment {
-                machines.add(Machine::new(
-                    MachineId(eq.id),
-                    eq.name.clone(),
-                    eq.concurrency,
-                    eq.capacity_liters,
-                    eq.setup_time,
-                ));
-            }
-
-            let mut routings = RoutingStore::new();
-            for od in &config.operations_definition {
-                let steps: Vec<RoutingStep> = od
-                    .steps
-                    .iter()
-                    .filter_map(|seg_id| {
-                        config
-                            .process_segment
-                            .iter()
-                            .find(|s| s.id == *seg_id)
-                            .map(|s| RoutingStep {
-                                step_id: s.id,
-                                name: s.name.clone(),
-                                machine_id: MachineId(s.equipment_id),
-                                duration: s.duration,
-                            })
-                    })
-                    .collect();
-                routings.add_routing(Routing {
-                    id: od.id,
-                    name: od.name.clone(),
-                    steps,
-                });
-            }
-
-            let product_ids: Vec<ProductId> =
-                config.material.iter().map(|m| ProductId(m.id)).collect();
-            for mat in &config.material {
-                routings.add_product_routing(ProductId(mat.id), mat.routing_id);
-            }
-
-            let factory = FactoryHandler::new(machines, routings, product_ids.clone());
-
-            let econ = config.economy.as_ref();
-            let rng = ChaCha8Rng::seed_from_u64(config.simulation.rng_seed);
-            let (base_demand, price_elasticity, lt_sensitivity, initial_price) = match econ {
-                Some(e) => (
-                    e.base_demand,
-                    e.price_elasticity,
-                    e.lead_time_sensitivity,
-                    e.initial_price,
-                ),
-                None => (5.0, 0.5, 0.1, 10.0),
-            };
-
-            let demand = DemandModel::new(
-                base_demand,
-                price_elasticity,
-                lt_sensitivity,
-                initial_price,
-                product_ids,
-                rng,
-            );
-            let pricing = PricingState::new(initial_price);
-
-            struct HeadlessHandler {
-                factory: FactoryHandler,
-                demand: DemandModel,
-                pricing: PricingState,
-            }
-
-            impl EventHandler for HeadlessHandler {
-                fn handle_event(
-                    &mut self,
-                    event: &sim_core::event::Event,
-                    scheduler: &mut sim_core::queue::Scheduler,
-                ) -> Result<(), sim_types::SimError> {
-                    self.pricing.handle_event(event, scheduler)?;
-                    self.demand.current_price = self.pricing.current_price;
-                    self.demand.avg_lead_time = self.factory.avg_lead_time();
-                    self.demand.handle_event(event, scheduler)?;
-                    self.factory.handle_event(event, scheduler)?;
-                    Ok(())
-                }
-            }
-
-            let mut handler = HeadlessHandler {
-                factory,
-                demand,
-                pricing,
-            };
-
-            let result = run_scenario(&config, &mut handler).expect("Simulation failed");
+            let (result, handler) = run_headless(&config).expect("Simulation failed");
 
             println!("Simulation completed:");
             println!("  Final time:       t={}", result.final_time.ticks());

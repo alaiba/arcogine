@@ -106,6 +106,30 @@ impl SalesAgent {
     }
 }
 
+impl EventHandler for SalesAgent {
+    fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
+        if let EventPayload::AgentEvaluation = &event.payload {
+            if let Some(new_price) = self.decide() {
+                self.interventions += 1;
+                scheduler.schedule(Event::new(
+                    event.time,
+                    EventPayload::PriceChange { new_price },
+                ))?;
+                scheduler.schedule(Event::new(
+                    event.time,
+                    EventPayload::AgentDecision {
+                        description: format!(
+                            "SalesAgent: backlog={}, price {:.2} -> {:.2}",
+                            self.observation.backlog, self.observation.current_price, new_price
+                        ),
+                    },
+                ))?;
+            }
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -187,29 +211,5 @@ mod tests {
         assert_eq!(cfg.adjustment_pct, 0.10);
         assert_eq!(cfg.min_price, 0.5);
         assert_eq!(cfg.max_price, 100.0);
-    }
-}
-
-impl EventHandler for SalesAgent {
-    fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
-        if let EventPayload::AgentEvaluation = &event.payload {
-            if let Some(new_price) = self.decide() {
-                self.interventions += 1;
-                scheduler.schedule(Event::new(
-                    event.time,
-                    EventPayload::PriceChange { new_price },
-                ))?;
-                scheduler.schedule(Event::new(
-                    event.time,
-                    EventPayload::AgentDecision {
-                        description: format!(
-                            "SalesAgent: backlog={}, price {:.2} -> {:.2}",
-                            self.observation.backlog, self.observation.current_price, new_price
-                        ),
-                    },
-                ))?;
-            }
-        }
-        Ok(())
     }
 }

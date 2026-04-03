@@ -18,7 +18,7 @@ vi.mock('../api/sse', () => ({
   SseClient: class MockSseClient {
     connect = vi.fn();
     disconnect = vi.fn();
-    constructor(_onEvent: unknown) {}
+    constructor() {}
   },
 }));
 

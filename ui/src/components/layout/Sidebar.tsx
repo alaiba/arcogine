@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { MetricDelta } from '../../stores/baselines';
 import { useBaselinesStore } from '../../stores/baselines';
 import { useSimulationStore } from '../../stores/simulation';
@@ -33,13 +33,8 @@ export function Sidebar() {
   const saveBaseline = useBaselinesStore((s) => s.saveBaseline);
   const getDeltas = useBaselinesStore((s) => s.getDeltas);
 
-  const [localPrice, setLocalPrice] = useState(10);
-
-  useEffect(() => {
-    if (snapshot) setLocalPrice(snapshot.current_price);
-  }, [snapshot, snapshot?.current_price]);
-
   const machines = snapshot?.topology.machines ?? [];
+  const localPrice = snapshot?.current_price ?? 10;
 
   const baselinePanels = useMemo(() => {
     if (!snapshot) return [];
@@ -51,7 +46,6 @@ export function Sidebar() {
 
   const onPriceInput = useCallback(
     (v: number) => {
-      setLocalPrice(v);
       if (snapshot) void changePrice(v);
     },
     [changePrice, snapshot],

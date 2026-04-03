@@ -717,7 +717,6 @@ initial_price = 10.0
                 return snap;
             }
             thread::sleep(Duration::from_millis(20));
-            let _ = rx.changed();
         }
         rx.borrow().clone()
     }

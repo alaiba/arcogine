@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { SCENARIO_BASIC, SCENARIOS, type ScenarioKey } from '../../data/scenarios';
 import { useSimulationStore } from '../../stores/simulation';
 
@@ -33,10 +33,6 @@ export function WelcomeOverlay({ onDismiss }: WelcomeOverlayProps) {
   const runSim = useSimulationStore((s) => s.runSim);
   const loading = useSimulationStore((s) => s.loading);
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (snapshot?.scenario_loaded) setDismissed(false);
-  }, [snapshot?.scenario_loaded]);
 
   const needsScenario = snapshot == null || !snapshot.scenario_loaded;
   const visible = needsScenario && !dismissed;

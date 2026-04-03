@@ -47,9 +47,13 @@ test.describe('Arcogine UI Smoke Tests', () => {
 
     await page.getByRole('button', { name: /^Run$/ }).click()
 
-    // Wait for the simulation to complete — the Run button reappears or
-    // a KPI card shows a non-zero value, indicating events were processed.
-    await expect(page.getByText('Revenue', { exact: true })).toBeVisible({ timeout: 15_000 })
+    await expect(async () => {
+      const response = await page.request.get('/api/snapshot')
+      const snapshot = await response.json()
+      if (!snapshot.events_processed) {
+        throw new Error('events not yet processed')
+      }
+    }).toPass({ timeout: 15_000 })
   })
 
   test('event log drawer can be expanded', async ({ page }) => {

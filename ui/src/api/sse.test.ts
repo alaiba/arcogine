@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { SseClient } from './sse';
+import type { SimEvent } from './client';
 
 class MockEventSource {
   static readonly CONNECTING = 0;
@@ -58,12 +59,12 @@ class MockEventSource {
 vi.stubGlobal('EventSource', MockEventSource);
 
 describe('SseClient', () => {
-  let eventSpy: ReturnType<typeof vi.fn>;
+  let eventSpy: ReturnType<typeof vi.fn<(event: SimEvent) => void>>;
   let client: SseClient;
 
   beforeEach(() => {
     vi.useFakeTimers();
-    eventSpy = vi.fn();
+    eventSpy = vi.fn<(event: SimEvent) => void>();
     client = new SseClient(eventSpy, {
       initialReconnectDelayMs: 100,
       maxReconnectDelayMs: 800,

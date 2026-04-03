@@ -237,6 +237,38 @@ impl FactoryHandler {
     }
 }
 
+impl EventHandler for FactoryHandler {
+    fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
+        match &event.payload {
+            EventPayload::OrderCreation {
+                product_id,
+                quantity,
+            } => {
+                self.handle_order_creation(*product_id, *quantity, scheduler, event.time)?;
+            }
+            EventPayload::TaskEnd {
+                job_id,
+                machine_id,
+                step_index,
+            } => {
+                self.handle_task_end(
+                    *job_id,
+                    *machine_id,
+                    *step_index,
+                    scheduler,
+                    event.time,
+                    self.current_price,
+                )?;
+            }
+            EventPayload::MachineAvailabilityChange { machine_id, online } => {
+                self.handle_machine_availability(*machine_id, *online, scheduler, event.time)?;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -530,37 +562,5 @@ mod tests {
         h.handle_event(&task_end, &mut sched).unwrap();
 
         assert_eq!(h.total_revenue, 30.0);
-    }
-}
-
-impl EventHandler for FactoryHandler {
-    fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
-        match &event.payload {
-            EventPayload::OrderCreation {
-                product_id,
-                quantity,
-            } => {
-                self.handle_order_creation(*product_id, *quantity, scheduler, event.time)?;
-            }
-            EventPayload::TaskEnd {
-                job_id,
-                machine_id,
-                step_index,
-            } => {
-                self.handle_task_end(
-                    *job_id,
-                    *machine_id,
-                    *step_index,
-                    scheduler,
-                    event.time,
-                    self.current_price,
-                )?;
-            }
-            EventPayload::MachineAvailabilityChange { machine_id, online } => {
-                self.handle_machine_availability(*machine_id, *online, scheduler, event.time)?;
-            }
-            _ => {}
-        }
-        Ok(())
     }
 }

@@ -107,3 +107,75 @@ impl EventHandler for DemandModel {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::SeedableRng;
+    use sim_core::event::EventType;
+    use sim_types::SimTime;
+
+    fn make_model(base_demand: f64, price: f64) -> DemandModel {
+        DemandModel::new(
+            base_demand,
+            0.5,
+            0.0,
+            price,
+            vec![ProductId(1)],
+            ChaCha8Rng::seed_from_u64(42),
+        )
+    }
+
+    #[test]
+    fn generate_orders_with_zero_demand_produces_none() {
+        let mut model = make_model(0.0, 0.0);
+        let mut sched = Scheduler::new();
+        let count = model.generate_orders(&mut sched).unwrap();
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn generate_orders_schedules_order_creation_events() {
+        let mut model = make_model(5.0, 1.0);
+        let mut sched = Scheduler::new();
+        let count = model.generate_orders(&mut sched).unwrap();
+        assert!(count > 0);
+        for _ in 0..count {
+            let evt = sched.next_event().unwrap();
+            assert_eq!(evt.event_type, EventType::OrderCreation);
+        }
+    }
+
+    #[test]
+    fn handle_event_ignores_non_relevant_events() {
+        let mut model = make_model(5.0, 1.0);
+        let mut sched = Scheduler::new();
+        let event = Event::new(SimTime(1), EventPayload::AgentEvaluation);
+        sched.schedule(event.clone()).unwrap();
+        sched.next_event();
+        model.handle_event(&event, &mut sched).unwrap();
+        assert!(sched.is_empty());
+    }
+
+    #[test]
+    fn handle_event_for_demand_evaluation_generates_orders() {
+        let mut model = make_model(5.0, 1.0);
+        let mut sched = Scheduler::new();
+        let event = Event::new(SimTime(10), EventPayload::DemandEvaluation);
+        sched.schedule(event.clone()).unwrap();
+        sched.next_event();
+        model.handle_event(&event, &mut sched).unwrap();
+        assert!(!sched.is_empty());
+    }
+
+    #[test]
+    fn handle_event_for_price_change_updates_price() {
+        let mut model = make_model(5.0, 1.0);
+        let mut sched = Scheduler::new();
+        let event = Event::new(SimTime(1), EventPayload::PriceChange { new_price: 5.0 });
+        sched.schedule(event.clone()).unwrap();
+        sched.next_event();
+        model.handle_event(&event, &mut sched).unwrap();
+        assert_eq!(model.current_price, 5.0);
+    }
+}

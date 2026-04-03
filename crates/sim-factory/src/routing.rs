@@ -100,3 +100,53 @@ impl Default for RoutingStore {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_routing() -> Routing {
+        Routing {
+            id: 1,
+            name: "Widget Route".into(),
+            steps: vec![
+                RoutingStep { step_id: 1, name: "Step A".into(), machine_id: MachineId(1), duration: 5 },
+                RoutingStep { step_id: 2, name: "Step B".into(), machine_id: MachineId(2), duration: 3 },
+            ],
+        }
+    }
+
+    #[test]
+    fn step_count_correct() {
+        let r = sample_routing();
+        assert_eq!(r.step_count(), 2);
+    }
+
+    #[test]
+    fn get_step_out_of_bounds_is_none() {
+        let r = sample_routing();
+        assert!(r.get_step(5).is_none());
+    }
+
+    #[test]
+    fn get_step_valid_index() {
+        let r = sample_routing();
+        let step = r.get_step(0).unwrap();
+        assert_eq!(step.machine_id, MachineId(1));
+    }
+
+    #[test]
+    fn routing_store_product_roundtrip() {
+        let mut store = RoutingStore::new();
+        store.add_routing(sample_routing());
+        store.add_product_routing(ProductId(10), 1);
+        let r = store.get_routing_for_product(ProductId(10)).unwrap();
+        assert_eq!(r.name, "Widget Route");
+    }
+
+    #[test]
+    fn routing_store_unknown_product_errors() {
+        let store = RoutingStore::new();
+        assert!(store.get_routing_for_product(ProductId(99)).is_err());
+    }
+}

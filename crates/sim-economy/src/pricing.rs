@@ -35,3 +35,34 @@ impl EventHandler for PricingState {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sim_types::SimTime;
+
+    #[test]
+    fn price_change_updates_price_and_history() {
+        let mut ps = PricingState::new(10.0);
+        let mut sched = Scheduler::new();
+        let event = Event::new(SimTime(5), EventPayload::PriceChange { new_price: 15.0 });
+        sched.schedule(event.clone()).unwrap();
+        sched.next_event();
+        ps.handle_event(&event, &mut sched).unwrap();
+        assert_eq!(ps.current_price, 15.0);
+        assert_eq!(ps.price_history.len(), 2);
+        assert_eq!(ps.price_history[1], (5, 15.0));
+    }
+
+    #[test]
+    fn ignores_non_price_change_events() {
+        let mut ps = PricingState::new(10.0);
+        let mut sched = Scheduler::new();
+        let event = Event::new(SimTime(1), EventPayload::DemandEvaluation);
+        sched.schedule(event.clone()).unwrap();
+        sched.next_event();
+        ps.handle_event(&event, &mut sched).unwrap();
+        assert_eq!(ps.current_price, 10.0);
+        assert_eq!(ps.price_history.len(), 1);
+    }
+}

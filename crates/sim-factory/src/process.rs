@@ -237,6 +237,241 @@ impl FactoryHandler {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sim_core::event::{Event, EventPayload};
+    use sim_core::handler::EventHandler;
+    use sim_core::queue::Scheduler;
+    use crate::machines::{Machine, MachineStore};
+    use crate::routing::{Routing, RoutingStep, RoutingStore};
+
+    fn one_machine_one_product() -> FactoryHandler {
+        let mut machines = MachineStore::new();
+        machines.add(Machine::new(MachineId(1), "Mill".into(), 1, None, 0));
+
+        let mut routings = RoutingStore::new();
+        routings.add_routing(Routing {
+            id: 1,
+            name: "Widget Route".into(),
+            steps: vec![RoutingStep {
+                step_id: 1,
+                name: "Milling".into(),
+                machine_id: MachineId(1),
+                duration: 5,
+            }],
+        });
+        routings.add_product_routing(ProductId(1), 1);
+
+        FactoryHandler::new(machines, routings, vec![ProductId(1)])
+    }
+
+    fn two_step_handler() -> FactoryHandler {
+        let mut machines = MachineStore::new();
+        machines.add(Machine::new(MachineId(1), "Mill".into(), 1, None, 0));
+        machines.add(Machine::new(MachineId(2), "Drill".into(), 1, None, 0));
+
+        let mut routings = RoutingStore::new();
+        routings.add_routing(Routing {
+            id: 1,
+            name: "Widget Route".into(),
+            steps: vec![
+                RoutingStep { step_id: 1, name: "Milling".into(), machine_id: MachineId(1), duration: 5 },
+                RoutingStep { step_id: 2, name: "Drilling".into(), machine_id: MachineId(2), duration: 3 },
+            ],
+        });
+        routings.add_product_routing(ProductId(1), 1);
+
+        FactoryHandler::new(machines, routings, vec![ProductId(1)])
+    }
+
+    #[test]
+    fn new_initializes_correctly() {
+        let h = one_machine_one_product();
+        assert_eq!(h.machines.iter().count(), 1);
+        assert_eq!(h.product_ids.len(), 1);
+        assert_eq!(h.total_revenue, 0.0);
+        assert_eq!(h.completed_sales, 0);
+    }
+
+    #[test]
+    fn backlog_counts_active_jobs() {
+        let mut h = one_machine_one_product();
+        let mut sched = Scheduler::new();
+
+        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1),
+            quantity: 1,
+        });
+        sched.schedule(order.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&order, &mut sched).unwrap();
+        assert_eq!(h.backlog(), 1);
+    }
+
+    #[test]
+    fn avg_lead_time_zero_when_no_completed() {
+        let h = one_machine_one_product();
+        assert_eq!(h.avg_lead_time(), 0.0);
+    }
+
+    #[test]
+    fn avg_lead_time_correct_for_completed_jobs() {
+        let mut h = one_machine_one_product();
+        let mut sched = Scheduler::new();
+
+        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 1,
+        });
+        sched.schedule(order.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&order, &mut sched).unwrap();
+
+        let task_end = sched.next_event().unwrap();
+        h.handle_event(&task_end, &mut sched).unwrap();
+
+        assert_eq!(h.completed_sales, 1);
+        assert!(h.avg_lead_time() > 0.0);
+    }
+
+    #[test]
+    fn throughput_rate_division() {
+        let mut h = one_machine_one_product();
+        h.completed_sales = 10;
+        assert_eq!(h.throughput(100), 0.1);
+    }
+
+    #[test]
+    fn throughput_zero_when_zero_ticks() {
+        let h = one_machine_one_product();
+        assert_eq!(h.throughput(0), 0.0);
+    }
+
+    #[test]
+    fn order_creation_creates_and_dispatches_job() {
+        let mut h = one_machine_one_product();
+        let mut sched = Scheduler::new();
+
+        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 2,
+        });
+        sched.schedule(order.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&order, &mut sched).unwrap();
+
+        assert_eq!(h.jobs.iter().count(), 1);
+        assert!(!sched.is_empty(), "should have scheduled TaskEnd");
+    }
+
+    #[test]
+    fn order_creation_enqueues_when_machine_full() {
+        let mut h = one_machine_one_product();
+        let mut sched = Scheduler::new();
+
+        let o1 = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 1,
+        });
+        sched.schedule(o1.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&o1, &mut sched).unwrap();
+
+        let o2 = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 1,
+        });
+        h.handle_event(&o2, &mut sched).unwrap();
+
+        assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 1);
+    }
+
+    #[test]
+    fn task_end_completes_job_and_dequeues_next() {
+        let mut h = one_machine_one_product();
+        let mut sched = Scheduler::new();
+
+        let o1 = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 1,
+        });
+        sched.schedule(o1.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&o1, &mut sched).unwrap();
+
+        let o2 = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 1,
+        });
+        h.handle_event(&o2, &mut sched).unwrap();
+        assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 1);
+
+        let task_end = sched.next_event().unwrap();
+        h.handle_event(&task_end, &mut sched).unwrap();
+        assert_eq!(h.completed_sales, 1);
+        assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 0);
+    }
+
+    #[test]
+    fn multi_step_routing_advances_to_next_step() {
+        let mut h = two_step_handler();
+        let mut sched = Scheduler::new();
+
+        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 1,
+        });
+        sched.schedule(order.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&order, &mut sched).unwrap();
+
+        let te1 = sched.next_event().unwrap();
+        h.handle_event(&te1, &mut sched).unwrap();
+        assert_eq!(h.completed_sales, 0, "should not be complete after step 1");
+
+        let te2 = sched.next_event().unwrap();
+        h.handle_event(&te2, &mut sched).unwrap();
+        assert_eq!(h.completed_sales, 1, "should be complete after step 2");
+    }
+
+    #[test]
+    fn machine_availability_dispatches_queued_on_online() {
+        let mut h = one_machine_one_product();
+        let mut sched = Scheduler::new();
+
+        h.machines.get_mut(MachineId(1)).unwrap().set_availability(false).unwrap();
+
+        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 1,
+        });
+        sched.schedule(order.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&order, &mut sched).unwrap();
+        assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 1);
+
+        let online = Event::new(SimTime(2), EventPayload::MachineAvailabilityChange {
+            machine_id: MachineId(1), online: true,
+        });
+        sched.schedule(online.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&online, &mut sched).unwrap();
+        assert_eq!(h.machines.get(MachineId(1)).unwrap().queue_depth(), 0, "queued job should be dispatched");
+    }
+
+    #[test]
+    fn revenue_tracked_with_current_price() {
+        let mut h = one_machine_one_product();
+        let mut sched = Scheduler::new();
+        h.set_current_price(10.0);
+
+        let order = Event::new(SimTime(1), EventPayload::OrderCreation {
+            product_id: ProductId(1), quantity: 3,
+        });
+        sched.schedule(order.clone()).unwrap();
+        sched.next_event();
+        h.handle_event(&order, &mut sched).unwrap();
+
+        let task_end = sched.next_event().unwrap();
+        h.handle_event(&task_end, &mut sched).unwrap();
+
+        assert_eq!(h.total_revenue, 30.0);
+    }
+}
+
 impl EventHandler for FactoryHandler {
     fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
         match &event.payload {

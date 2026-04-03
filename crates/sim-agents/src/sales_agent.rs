@@ -106,6 +106,90 @@ impl SalesAgent {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn observe_updates_internal_state() {
+        let mut agent = SalesAgent::with_default_config();
+        let obs = AgentObservation {
+            backlog: 42,
+            avg_lead_time: 5.5,
+            total_revenue: 100.0,
+            completed_sales: 10,
+            current_price: 8.0,
+            throughput: 0.5,
+        };
+        agent.observe(obs);
+        assert_eq!(agent.observation.backlog, 42);
+        assert_eq!(agent.observation.current_price, 8.0);
+    }
+
+    #[test]
+    fn decide_returns_none_when_backlog_normal() {
+        let mut agent = SalesAgent::new(SalesAgentConfig {
+            backlog_high: 10,
+            backlog_low: 3,
+            adjustment_pct: 0.10,
+            min_price: 0.5,
+            max_price: 100.0,
+        });
+        agent.observe(AgentObservation {
+            backlog: 5,
+            current_price: 10.0,
+            ..Default::default()
+        });
+        assert!(agent.decide().is_none());
+    }
+
+    #[test]
+    fn decide_raises_price_when_backlog_high() {
+        let mut agent = SalesAgent::new(SalesAgentConfig {
+            backlog_high: 5,
+            backlog_low: 2,
+            adjustment_pct: 0.10,
+            min_price: 0.5,
+            max_price: 100.0,
+        });
+        agent.observe(AgentObservation {
+            backlog: 10,
+            current_price: 10.0,
+            ..Default::default()
+        });
+        let price = agent.decide().unwrap();
+        assert!(price > 10.0);
+    }
+
+    #[test]
+    fn decide_lowers_price_when_backlog_low() {
+        let mut agent = SalesAgent::new(SalesAgentConfig {
+            backlog_high: 10,
+            backlog_low: 5,
+            adjustment_pct: 0.10,
+            min_price: 0.5,
+            max_price: 100.0,
+        });
+        agent.observe(AgentObservation {
+            backlog: 1,
+            current_price: 10.0,
+            ..Default::default()
+        });
+        let price = agent.decide().unwrap();
+        assert!(price < 10.0);
+    }
+
+    #[test]
+    fn default_config_values() {
+        let cfg = SalesAgentConfig::default();
+        assert_eq!(cfg.backlog_high, 10);
+        assert_eq!(cfg.backlog_low, 3);
+        assert_eq!(cfg.adjustment_pct, 0.10);
+        assert_eq!(cfg.min_price, 0.5);
+        assert_eq!(cfg.max_price, 100.0);
+    }
+}
+
 impl EventHandler for SalesAgent {
     fn handle_event(&mut self, event: &Event, scheduler: &mut Scheduler) -> Result<(), SimError> {
         if let EventPayload::AgentEvaluation = &event.payload {

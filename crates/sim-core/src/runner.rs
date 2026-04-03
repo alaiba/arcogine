@@ -88,3 +88,122 @@ pub fn run_scenario(
         events_processed,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::{Event, EventType};
+    use crate::handler::EventHandler;
+    use crate::queue::Scheduler;
+    use sim_types::scenario::{AgentConfig, SimulationParams};
+
+    struct NoopHandler;
+
+    impl EventHandler for NoopHandler {
+        fn handle_event(
+            &mut self,
+            _event: &Event,
+            _scheduler: &mut Scheduler,
+        ) -> Result<(), SimError> {
+            Ok(())
+        }
+    }
+
+    struct FailingHandler;
+
+    impl EventHandler for FailingHandler {
+        fn handle_event(
+            &mut self,
+            _event: &Event,
+            _scheduler: &mut Scheduler,
+        ) -> Result<(), SimError> {
+            Err(SimError::Other {
+                message: "handler failure".into(),
+            })
+        }
+    }
+
+    fn minimal_config(max_ticks: u64) -> ScenarioConfig {
+        ScenarioConfig {
+            simulation: SimulationParams {
+                rng_seed: 1,
+                max_ticks,
+                demand_eval_interval: 10,
+                agent_eval_interval: 50,
+            },
+            equipment: vec![],
+            material: vec![],
+            process_segment: vec![],
+            operations_definition: vec![],
+            economy: None,
+            agent: None,
+        }
+    }
+
+    #[test]
+    fn zero_max_ticks_returns_immediately() {
+        let config = minimal_config(0);
+        let result = run_scenario(&config, &mut NoopHandler).unwrap();
+        assert_eq!(result.events_processed, 0);
+    }
+
+    #[test]
+    fn seeds_demand_evaluation_at_interval() {
+        let config = minimal_config(100);
+        let result = run_scenario(&config, &mut NoopHandler).unwrap();
+        let demand_count = result
+            .event_log
+            .filter_by_type(EventType::DemandEvaluation)
+            .count();
+        assert_eq!(demand_count, 10);
+    }
+
+    #[test]
+    fn seeds_agent_evaluation_when_enabled() {
+        let mut config = minimal_config(100);
+        config.agent = Some(AgentConfig {
+            enabled: true,
+            agent_type: "sales".into(),
+        });
+        let result = run_scenario(&config, &mut NoopHandler).unwrap();
+        let agent_count = result
+            .event_log
+            .filter_by_type(EventType::AgentEvaluation)
+            .count();
+        assert_eq!(agent_count, 2);
+    }
+
+    #[test]
+    fn no_agent_evaluation_without_agent_config() {
+        let config = minimal_config(100);
+        assert!(config.agent.is_none());
+        let result = run_scenario(&config, &mut NoopHandler).unwrap();
+        let agent_count = result
+            .event_log
+            .filter_by_type(EventType::AgentEvaluation)
+            .count();
+        assert_eq!(agent_count, 0);
+    }
+
+    #[test]
+    fn no_agent_evaluation_when_disabled() {
+        let mut config = minimal_config(100);
+        config.agent = Some(AgentConfig {
+            enabled: false,
+            agent_type: "sales".into(),
+        });
+        let result = run_scenario(&config, &mut NoopHandler).unwrap();
+        let agent_count = result
+            .event_log
+            .filter_by_type(EventType::AgentEvaluation)
+            .count();
+        assert_eq!(agent_count, 0);
+    }
+
+    #[test]
+    fn handler_error_propagates() {
+        let config = minimal_config(100);
+        let result = run_scenario(&config, &mut FailingHandler);
+        assert!(result.is_err());
+    }
+}

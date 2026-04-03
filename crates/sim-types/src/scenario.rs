@@ -135,3 +135,145 @@ pub struct AgentConfig {
 fn default_agent_type() -> String {
     "sales".to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_demand_interval_value() {
+        assert_eq!(default_demand_interval(), 10);
+    }
+
+    #[test]
+    fn default_agent_interval_value() {
+        assert_eq!(default_agent_interval(), 50);
+    }
+
+    #[test]
+    fn default_base_demand_value() {
+        assert_eq!(default_base_demand(), 5.0);
+    }
+
+    #[test]
+    fn default_price_elasticity_value() {
+        assert_eq!(default_price_elasticity(), 0.5);
+    }
+
+    #[test]
+    fn default_lead_time_sensitivity_value() {
+        assert_eq!(default_lead_time_sensitivity(), 0.1);
+    }
+
+    #[test]
+    fn default_concurrency_value() {
+        assert_eq!(default_concurrency(), 1);
+    }
+
+    #[test]
+    fn default_agent_type_value() {
+        assert_eq!(default_agent_type(), "sales");
+    }
+
+    #[test]
+    fn scenario_config_serde_roundtrip() {
+        let config = ScenarioConfig {
+            simulation: SimulationParams {
+                rng_seed: 42,
+                max_ticks: 1000,
+                demand_eval_interval: 10,
+                agent_eval_interval: 50,
+            },
+            equipment: vec![EquipmentConfig {
+                id: 1,
+                name: "Lathe".into(),
+                concurrency: 2,
+                capacity_liters: None,
+                setup_time: 0,
+            }],
+            material: vec![MaterialConfig {
+                id: 1,
+                name: "Widget".into(),
+                routing_id: 1,
+            }],
+            process_segment: vec![ProcessSegmentConfig {
+                id: 1,
+                name: "Turn".into(),
+                equipment_id: 1,
+                duration: 5,
+            }],
+            operations_definition: vec![OperationsDefinitionConfig {
+                id: 1,
+                name: "Widget Route".into(),
+                steps: vec![1],
+            }],
+            economy: Some(EconomyConfig {
+                initial_price: 10.0,
+                base_demand: 5.0,
+                price_elasticity: 0.5,
+                lead_time_sensitivity: 0.1,
+            }),
+            agent: Some(AgentConfig {
+                enabled: true,
+                agent_type: "sales".into(),
+            }),
+        };
+
+        let toml_str = toml::to_string(&config).unwrap();
+        let back: ScenarioConfig = toml::from_str(&toml_str).unwrap();
+        assert_eq!(config, back);
+    }
+
+    #[test]
+    fn partial_toml_fills_defaults() {
+        let toml_str = r#"
+[simulation]
+rng_seed = 1
+max_ticks = 100
+"#;
+        let config: ScenarioConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.simulation.demand_eval_interval, 10);
+        assert_eq!(config.simulation.agent_eval_interval, 50);
+        assert!(config.equipment.is_empty());
+        assert!(config.material.is_empty());
+        assert!(config.process_segment.is_empty());
+        assert!(config.operations_definition.is_empty());
+        assert!(config.economy.is_none());
+        assert!(config.agent.is_none());
+    }
+
+    #[test]
+    fn equipment_defaults() {
+        let toml_str = r#"
+[simulation]
+rng_seed = 1
+max_ticks = 100
+
+[[equipment]]
+id = 1
+name = "Mill"
+"#;
+        let config: ScenarioConfig = toml::from_str(toml_str).unwrap();
+        let eq = &config.equipment[0];
+        assert_eq!(eq.concurrency, 1);
+        assert_eq!(eq.capacity_liters, None);
+        assert_eq!(eq.setup_time, 0);
+    }
+
+    #[test]
+    fn economy_defaults() {
+        let toml_str = r#"
+[simulation]
+rng_seed = 1
+max_ticks = 100
+
+[economy]
+initial_price = 20.0
+"#;
+        let config: ScenarioConfig = toml::from_str(toml_str).unwrap();
+        let econ = config.economy.unwrap();
+        assert_eq!(econ.base_demand, 5.0);
+        assert_eq!(econ.price_elasticity, 0.5);
+        assert_eq!(econ.lead_time_sensitivity, 0.1);
+    }
+}

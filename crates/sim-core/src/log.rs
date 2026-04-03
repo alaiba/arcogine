@@ -49,3 +49,69 @@ impl EventLog {
         &self.events
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::{Event, EventPayload};
+    use sim_types::{ProductId, SimTime};
+
+    fn make_order(t: u64) -> Event {
+        Event::new(
+            SimTime(t),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        )
+    }
+
+    #[test]
+    fn new_log_is_empty() {
+        let log = EventLog::new();
+        assert_eq!(log.count(), 0);
+    }
+
+    #[test]
+    fn append_increases_count() {
+        let mut log = EventLog::new();
+        log.append(make_order(1));
+        assert_eq!(log.count(), 1);
+        log.append(make_order(2));
+        assert_eq!(log.count(), 2);
+    }
+
+    #[test]
+    fn filter_by_type_returns_matching() {
+        let mut log = EventLog::new();
+        log.append(make_order(1));
+        log.append(Event::new(SimTime(2), EventPayload::DemandEvaluation));
+        log.append(make_order(3));
+
+        let orders: Vec<_> = log.filter_by_type(EventType::OrderCreation).collect();
+        assert_eq!(orders.len(), 2);
+
+        let demands: Vec<_> = log.filter_by_type(EventType::DemandEvaluation).collect();
+        assert_eq!(demands.len(), 1);
+    }
+
+    #[test]
+    fn snapshot_returns_clone() {
+        let mut log = EventLog::new();
+        log.append(make_order(1));
+        let snap = log.snapshot();
+        assert_eq!(snap, log);
+        assert_eq!(snap.count(), 1);
+    }
+
+    #[test]
+    fn iter_yields_insertion_order() {
+        let mut log = EventLog::new();
+        log.append(make_order(10));
+        log.append(make_order(20));
+        log.append(make_order(5));
+
+        let times: Vec<u64> = log.iter().map(|e| e.time.ticks()).collect();
+        assert_eq!(times, vec![10, 20, 5]);
+    }
+}

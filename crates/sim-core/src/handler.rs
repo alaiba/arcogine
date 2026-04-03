@@ -33,3 +33,79 @@ impl EventHandler for CompositeHandler {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::{Event, EventPayload};
+    use sim_types::SimTime;
+    use std::sync::{Arc, Mutex};
+
+    struct TrackingHandler {
+        calls: Arc<Mutex<Vec<SimTime>>>,
+    }
+
+    impl EventHandler for TrackingHandler {
+        fn handle_event(
+            &mut self,
+            event: &Event,
+            _scheduler: &mut Scheduler,
+        ) -> Result<(), SimError> {
+            self.calls.lock().unwrap().push(event.time);
+            Ok(())
+        }
+    }
+
+    struct FailingHandler;
+
+    impl EventHandler for FailingHandler {
+        fn handle_event(
+            &mut self,
+            _event: &Event,
+            _scheduler: &mut Scheduler,
+        ) -> Result<(), SimError> {
+            Err(SimError::Other {
+                message: "fail".into(),
+            })
+        }
+    }
+
+    fn make_event() -> Event {
+        Event::new(SimTime(1), EventPayload::DemandEvaluation)
+    }
+
+    #[test]
+    fn composite_dispatches_to_all_handlers() {
+        let calls_a = Arc::new(Mutex::new(Vec::new()));
+        let calls_b = Arc::new(Mutex::new(Vec::new()));
+        let mut composite = CompositeHandler::new(vec![
+            Box::new(TrackingHandler {
+                calls: calls_a.clone(),
+            }),
+            Box::new(TrackingHandler {
+                calls: calls_b.clone(),
+            }),
+        ]);
+        let mut scheduler = Scheduler::new();
+        composite
+            .handle_event(&make_event(), &mut scheduler)
+            .unwrap();
+        assert_eq!(calls_a.lock().unwrap().len(), 1);
+        assert_eq!(calls_b.lock().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn composite_propagates_first_err_and_short_circuits() {
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let mut composite = CompositeHandler::new(vec![
+            Box::new(FailingHandler),
+            Box::new(TrackingHandler {
+                calls: calls.clone(),
+            }),
+        ]);
+        let mut scheduler = Scheduler::new();
+        let result = composite.handle_event(&make_event(), &mut scheduler);
+        assert!(result.is_err());
+        assert!(calls.lock().unwrap().is_empty(), "second handler should not be called");
+    }
+}

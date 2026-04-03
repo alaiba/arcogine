@@ -93,3 +93,100 @@ impl Kpi for OrderCount {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::{Event, EventPayload};
+    use sim_types::{JobId, MachineId, ProductId};
+
+    fn empty_log() -> EventLog {
+        EventLog::new()
+    }
+
+    fn populated_log() -> EventLog {
+        let mut log = EventLog::new();
+        log.append(Event::new(
+            SimTime(1),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 5,
+            },
+        ));
+        log.append(Event::new(
+            SimTime(2),
+            EventPayload::TaskStart {
+                job_id: JobId(1),
+                machine_id: MachineId(1),
+                step_index: 0,
+            },
+        ));
+        log.append(Event::new(
+            SimTime(5),
+            EventPayload::TaskEnd {
+                job_id: JobId(1),
+                machine_id: MachineId(1),
+                step_index: 0,
+            },
+        ));
+        log.append(Event::new(
+            SimTime(6),
+            EventPayload::OrderCreation {
+                product_id: ProductId(2),
+                quantity: 3,
+            },
+        ));
+        log
+    }
+
+    #[test]
+    fn total_simulated_time_on_empty_log() {
+        let v = TotalSimulatedTime.compute(&empty_log(), SimTime::ZERO);
+        assert_eq!(v.value, 0.0);
+    }
+
+    #[test]
+    fn total_simulated_time_equals_ticks() {
+        let v = TotalSimulatedTime.compute(&empty_log(), SimTime(100));
+        assert_eq!(v.value, 100.0);
+    }
+
+    #[test]
+    fn event_count_on_empty_log() {
+        let v = EventCount.compute(&empty_log(), SimTime::ZERO);
+        assert_eq!(v.value, 0.0);
+    }
+
+    #[test]
+    fn event_count_counts_all_events() {
+        let log = populated_log();
+        let v = EventCount.compute(&log, SimTime(10));
+        assert_eq!(v.value, 4.0);
+    }
+
+    #[test]
+    fn throughput_rate_on_empty_log() {
+        let v = ThroughputRate.compute(&empty_log(), SimTime::ZERO);
+        assert_eq!(v.value, 0.0);
+    }
+
+    #[test]
+    fn throughput_rate_computes_correctly() {
+        let log = populated_log();
+        let v = ThroughputRate.compute(&log, SimTime(10));
+        assert_eq!(v.value, 1.0 / 10.0);
+    }
+
+    #[test]
+    fn order_count_on_empty_log() {
+        let v = OrderCount.compute(&empty_log(), SimTime::ZERO);
+        assert_eq!(v.value, 0.0);
+    }
+
+    #[test]
+    fn order_count_counts_order_creation_events() {
+        let log = populated_log();
+        let v = OrderCount.compute(&log, SimTime(10));
+        assert_eq!(v.value, 2.0);
+    }
+}

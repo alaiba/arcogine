@@ -199,3 +199,135 @@ impl fmt::Display for SimError {
 }
 
 impl std::error::Error for SimError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn simtime_ticks_returns_inner() {
+        assert_eq!(SimTime(42).ticks(), 42);
+    }
+
+    #[test]
+    fn simtime_add_u64() {
+        assert_eq!(SimTime(10) + 5, SimTime(15));
+    }
+
+    #[test]
+    fn simtime_sub_produces_delta() {
+        assert_eq!(SimTime(30) - SimTime(10), 20);
+    }
+
+    #[test]
+    fn simtime_sub_saturates_at_zero() {
+        assert_eq!(SimTime(5) - SimTime(10), 0);
+    }
+
+    #[test]
+    fn simtime_zero_constant() {
+        assert_eq!(SimTime::ZERO, SimTime(0));
+    }
+
+    #[test]
+    fn quantity_units_roundtrip() {
+        let q = Quantity::units(7);
+        assert_eq!(q.as_units(), Some(7));
+    }
+
+    #[test]
+    fn quantity_volume_not_units() {
+        let q = Quantity::Volume { liters: 3.5 };
+        assert_eq!(q.as_units(), None);
+    }
+
+    #[test]
+    fn quantity_default_is_zero_units() {
+        assert_eq!(Quantity::default(), Quantity::Units(0));
+    }
+
+    #[test]
+    fn simerror_display_invalid_state_transition() {
+        let e = SimError::InvalidStateTransition {
+            context: "test".into(),
+        };
+        assert_eq!(e.to_string(), "invalid state transition: test");
+    }
+
+    #[test]
+    fn simerror_display_unknown_id() {
+        let e = SimError::UnknownId {
+            kind: "machine".into(),
+            id: 5,
+        };
+        assert_eq!(e.to_string(), "unknown machine id: 5");
+    }
+
+    #[test]
+    fn simerror_display_event_ordering() {
+        let e = SimError::EventOrderingViolation {
+            expected_min: SimTime(10),
+            actual: SimTime(5),
+        };
+        assert_eq!(
+            e.to_string(),
+            "event ordering violation: expected time >= t=10, got t=5"
+        );
+    }
+
+    #[test]
+    fn simerror_display_scenario_load() {
+        let e = SimError::ScenarioLoadError {
+            message: "bad toml".into(),
+        };
+        assert_eq!(e.to_string(), "scenario load error: bad toml");
+    }
+
+    #[test]
+    fn simerror_display_invalid_reference() {
+        let e = SimError::InvalidReference {
+            message: "no such machine".into(),
+        };
+        assert_eq!(e.to_string(), "invalid reference: no such machine");
+    }
+
+    #[test]
+    fn simerror_display_out_of_range() {
+        let e = SimError::OutOfRange {
+            field: "price".into(),
+            message: "must be positive".into(),
+        };
+        assert_eq!(e.to_string(), "out of range (price): must be positive");
+    }
+
+    #[test]
+    fn simerror_display_other() {
+        let e = SimError::Other {
+            message: "oops".into(),
+        };
+        assert_eq!(e.to_string(), "oops");
+    }
+
+    #[test]
+    fn machine_state_serde_roundtrip() {
+        for state in [MachineState::Idle, MachineState::Busy, MachineState::Offline] {
+            let json = serde_json::to_string(&state).unwrap();
+            let back: MachineState = serde_json::from_str(&json).unwrap();
+            assert_eq!(state, back);
+        }
+    }
+
+    #[test]
+    fn job_status_serde_roundtrip() {
+        for status in [
+            JobStatus::Queued,
+            JobStatus::InProgress,
+            JobStatus::Completed,
+            JobStatus::Cancelled,
+        ] {
+            let json = serde_json::to_string(&status).unwrap();
+            let back: JobStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(status, back);
+        }
+    }
+}

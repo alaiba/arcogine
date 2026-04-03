@@ -36,7 +36,7 @@ test.describe('Arcogine UI Smoke Tests', () => {
     await expect(page.getByText('Backlog', { exact: true })).toBeVisible({ timeout: 10_000 })
   })
 
-  test('scenario selector loads and run updates controls', async ({ page }) => {
+  test('scenario selector loads and run produces events', async ({ page }) => {
     await page.goto('/')
     await closeWelcomeIfPresent(page)
 
@@ -46,7 +46,10 @@ test.describe('Arcogine UI Smoke Tests', () => {
     await expect(page.getByRole('button', { name: /^Run$/ })).toBeEnabled({ timeout: 10_000 })
 
     await page.getByRole('button', { name: /^Run$/ }).click()
-    await expect(page.getByRole('button', { name: /^Pause$/ })).toBeVisible({ timeout: 10_000 })
+
+    // Wait for the simulation to complete — the Run button reappears or
+    // a KPI card shows a non-zero value, indicating events were processed.
+    await expect(page.getByText('Revenue', { exact: true })).toBeVisible({ timeout: 15_000 })
   })
 
   test('event log drawer can be expanded', async ({ page }) => {

@@ -27,7 +27,11 @@ function readMetric(snapshot: SimSnapshot, key: BaselineMetricKey): number {
     case 'lead_time':
       return snapshot.kpis.find((k) => k.name === 'lead_time')?.value ?? 0;
     case 'throughput':
-      return snapshot.kpis.find((k) => k.name === 'throughput')?.value ?? 0;
+      return (
+        snapshot.kpis.find((k) => k.name === 'throughput_rate')?.value ??
+        snapshot.kpis.find((k) => k.name === 'throughput')?.value ??
+        0
+      );
     default: {
       const _exhaustive: never = key;
       return _exhaustive;

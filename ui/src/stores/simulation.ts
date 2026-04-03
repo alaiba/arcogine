@@ -27,6 +27,8 @@ export type KpiHistoryPoint = {
   values: Record<string, number>;
 };
 
+export const MAX_KPI_HISTORY_POINTS = 500;
+
 function kpiValuesRecord(kpis: KpiValue[]): Record<string, number> {
   const values: Record<string, number> = {};
   for (const k of kpis) {
@@ -75,6 +77,9 @@ export const useSimulationStore = create<SimulationState>((set, get) => {
         } else {
           next = [...existing.slice(0, insertAt), { time: t, values }, ...existing.slice(insertAt)];
         }
+      }
+      if (next.length > MAX_KPI_HISTORY_POINTS) {
+        next = next.slice(next.length - MAX_KPI_HISTORY_POINTS);
       }
       return { snapshot, kpiHistory: next };
     });

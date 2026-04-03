@@ -95,6 +95,32 @@ describe('useBaselinesStore', () => {
     expect(deltas).toEqual({});
   });
 
+  it('reads throughput from throughput_rate KPI', () => {
+    const snap = makeSnapshot({
+      kpis: [
+        { name: 'throughput_rate', value: 42, unit: 'units/tick' },
+        { name: 'lead_time', value: 5, unit: 'ticks' },
+      ],
+    });
+    useBaselinesStore.getState().saveBaseline('tr', snap);
+    const id = useBaselinesStore.getState().baselines[0].id;
+    const deltas = useBaselinesStore.getState().getDeltas(snap, id);
+    expect(deltas.throughput.current).toBe(42);
+  });
+
+  it('falls back to throughput when throughput_rate is absent', () => {
+    const snap = makeSnapshot({
+      kpis: [
+        { name: 'throughput', value: 7, unit: 'units/tick' },
+        { name: 'lead_time', value: 5, unit: 'ticks' },
+      ],
+    });
+    useBaselinesStore.getState().saveBaseline('fallback', snap);
+    const id = useBaselinesStore.getState().baselines[0].id;
+    const deltas = useBaselinesStore.getState().getDeltas(snap, id);
+    expect(deltas.throughput.current).toBe(7);
+  });
+
   it('handles zero baseline value in pct calculation', () => {
     const baseSnap = makeSnapshot({ total_revenue: 0 });
     useBaselinesStore.getState().saveBaseline('zero', baseSnap);

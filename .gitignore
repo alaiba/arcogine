@@ -23,5 +23,7 @@ ui/dist/
 ui/playwright-report/
 ui/test-results/
 
+cobertura.xml
+
 # Local cargo config (machine-specific build settings)
 .cargo/

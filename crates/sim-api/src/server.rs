@@ -71,6 +71,7 @@ pub fn create_app_state() -> Arc<AppState> {
         snapshot_rx,
         event_tx,
         event_log_rx,
+        sse_semaphore: Arc::new(tokio::sync::Semaphore::new(64)),
     })
 }
 

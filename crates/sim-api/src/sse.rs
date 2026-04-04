@@ -5,6 +5,7 @@
 //! connection gets a fresh subscription from the broadcast channel.
 
 use axum::extract::State;
+use axum::http::StatusCode;
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use futures_core::Stream;
 use std::convert::Infallible;
@@ -16,19 +17,25 @@ use crate::state::AppState;
 
 pub async fn event_stream(
     State(state): State<Arc<AppState>>,
-) -> Sse<impl Stream<Item = Result<SseEvent, Infallible>>> {
+) -> Result<Sse<impl Stream<Item = Result<SseEvent, Infallible>>>, StatusCode> {
+    let permit = state.sse_semaphore.clone().try_acquire_owned()
+        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+
     let rx = state.event_tx.subscribe();
-    let stream = BroadcastStream::new(rx).filter_map(|result| match result {
-        Ok(event) => {
-            let json = serde_json::to_string(&event).unwrap_or_default();
-            Some(Ok(SseEvent::default()
-                .event(format!("{:?}", event.event_type))
-                .data(json)))
+    let stream = BroadcastStream::new(rx).filter_map(move |result| {
+        let _permit = &permit;
+        match result {
+            Ok(event) => {
+                let json = serde_json::to_string(&event).unwrap_or_default();
+                Some(Ok(SseEvent::default()
+                    .event(format!("{:?}", event.event_type))
+                    .data(json)))
+            }
+            Err(_) => None,
         }
-        Err(_) => None,
     });
 
-    Sse::new(stream).keep_alive(KeepAlive::default())
+    Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
 }
 
 #[cfg(test)]

@@ -449,6 +449,38 @@ async fn change_machine_updates_snapshot() {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
+// ─── §3.9 — SSE connection limit ────────────────────────────────────
+
+#[tokio::test]
+async fn sse_connection_limit_returns_503() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let mut responses = Vec::new();
+    for _ in 0..64 {
+        let req = Request::builder()
+            .uri("/api/events/stream")
+            .body(Body::empty())
+            .unwrap();
+        let resp = app.clone().oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        responses.push(resp);
+    }
+
+    let req = Request::builder()
+        .uri("/api/events/stream")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(
+        resp.status(),
+        StatusCode::SERVICE_UNAVAILABLE,
+        "65th SSE connection should be rejected"
+    );
+
+    drop(responses);
+}
+
 // ─── §3.12 — Configurable CORS ──────────────────────────────────────
 
 #[tokio::test]

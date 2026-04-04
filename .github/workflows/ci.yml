@@ -40,6 +40,11 @@ jobs:
       - name: Run tests
         run: cargo test
 
+      - name: Audit Rust dependencies
+        uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Code coverage
         run: cargo install cargo-tarpaulin && cargo tarpaulin --workspace --out xml --skip-clean
         continue-on-error: true
@@ -74,6 +79,17 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high --json > npm-audit.json
+
+      - name: Upload audit reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-reports
+          path: |
+            ui/npm-audit.json
 
   playwright:
     name: Playwright E2E
@@ -145,3 +161,37 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose down
+
+  docker-scan:
+    name: Docker image scan (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, ui]
+        include:
+          - image: api
+            context: .
+          - image: ui
+            context: ui
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t arcogine-${{ matrix.image }}:ci ${{ matrix.context }}
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: arcogine-${{ matrix.image }}:ci
+          severity: 'CRITICAL,HIGH'
+          format: 'table'
+          exit-code: '1'
+
+  security-secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --no-git -v --redact --source .

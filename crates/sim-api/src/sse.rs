@@ -18,7 +18,10 @@ use crate::state::AppState;
 pub async fn event_stream(
     State(state): State<Arc<AppState>>,
 ) -> Result<Sse<impl Stream<Item = Result<SseEvent, Infallible>>>, StatusCode> {
-    let permit = state.sse_semaphore.clone().try_acquire_owned()
+    let permit = state
+        .sse_semaphore
+        .clone()
+        .try_acquire_owned()
         .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
 
     let rx = state.event_tx.subscribe();

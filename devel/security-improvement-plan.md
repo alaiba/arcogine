@@ -1,6 +1,7 @@
 # Security Improvement Plan
 
 > **Date:** 2026-04-02
+> **Last updated:** 2026-04-04 (all tasks implemented; implementation status block added)
 > **Scope:** Identify security weaknesses in the Arcogine codebase and provide a prioritized, actionable improvement plan covering the Rust API, frontend, CI/CD, container deployment, and supply-chain hygiene.
 > **Primary sources:** All crates under `crates/`, `ui/`, `.github/workflows/ci.yml`, `compose.yaml`, `Dockerfile`, `ui/Dockerfile`, `SECURITY.md`, `docs/architecture-overview.md`, `docs/standards-alignment.md`
 > **Relationship to other plans:** This plan complements `devel/testability-improvement-plan.md` (testing focus). Security-relevant testing items are referenced but not duplicated.
@@ -38,227 +39,251 @@ This plan accepts the local-only scope for Phase 1 items and introduces a harden
 | CORS middleware | `crates/sim-api/src/server.rs:16-25` | Present; permissive (`Any` origin/headers) |
 | HTTP tracing | `crates/sim-api/src/server.rs:44` | `TraceLayer::new_for_http()` |
 | Input validation (scenario) | `crates/sim-core/src/scenario.rs:28-142` | IDs, references, ranges validated |
-| Price validation | `crates/sim-api/src/routes.rs:168-170` | Rejects negative prices |
-| State guards | `crates/sim-api/src/routes.rs:84-91,119-127,144-147` | Commands rejected when no scenario loaded / sim completed |
+| Price validation | `crates/sim-api/src/routes.rs:168-170` | Rejects negative prices; no upper bound |
+| State guards | `crates/sim-api/src/routes.rs:83-91,119-127,142-147` | Commands rejected when no scenario loaded / sim completed |
 | Error responses | `crates/sim-api/src/routes.rs:53-78` | Generic fixed strings; no stack traces in JSON |
 | XSS prevention | `ui/src/` | React default escaping; no `dangerouslySetInnerHTML` |
 | CSV injection mitigation | `ui/src/components/experiment/ExportMenu.tsx:18-23` | Escapes `"`, `,`, `\n`, `\r` in CSV cells |
-| `.env` gitignored | `.gitignore:18-19` | `.env` and `.env.local` excluded from VCS |
+| `.env` gitignored | `.gitignore:17-18` | `.env` and `.env.local` excluded from VCS |
 
 ---
 
 ## 2. Risk Assessment
-
-### 2.1 Risk Categories
 
 Each item is rated by **likelihood** (if the API is reachable from an untrusted network) and **impact** (consequence of exploitation).
 
 | # | Risk | Likelihood | Impact | Current Mitigation |
 |---|------|-----------|--------|-------------------|
 | R1 | Unauthenticated API access | High | High | None — any reachable client can drive the sim |
-| R2 | Unrestricted CORS | High | Medium | `CorsLayer::allow_origin(Any)` |
+| R2 | Unrestricted CORS | High | Medium | `CorsLayer::allow_origin(Any)` in `server.rs:17` |
 | R3 | Default body-size limit too generous | Low | Low | Axum 0.8 applies a 2 MB default; scenarios are ~1 KB |
 | R4 | Unbounded event log growth | Medium | Medium | `EventLog` Vec grows without limit in memory |
 | R5 | Unbounded SSE connections | Medium | Medium | No connection cap on broadcast channel |
 | R6 | Scenario load reports false success | High | Low | `POST /api/scenario` always returns `success: true` |
 | R7 | Silenced handler errors | Medium | Medium | `let _ = h.handle_event(...)` in `state.rs` |
-| R8 | Default bind to all interfaces | Medium | Medium | `--addr 0.0.0.0:3000` default |
+| R8 | Default bind to all interfaces | Medium | Medium | `--addr 0.0.0.0:3000` default in `main.rs:23` |
 | R9 | No security headers (nginx) | Low | Low | No CSP, X-Frame-Options, etc. |
-| R10 | `Cargo.lock` not committed | Medium | Low | `.gitignore` includes `Cargo.lock` |
+| R10 | ~~`Cargo.lock` not committed~~ | ~~Medium~~ | ~~Low~~ | **Resolved** — `Cargo.lock` is committed and not gitignored |
 | R11 | No dependency vulnerability scanning | Medium | Medium | No `cargo audit`, `npm audit`, or Dependabot |
 | R12 | Docker images not scanned | Low | Medium | No Trivy/Snyk in CI |
 | R13 | No TLS termination | Low | Medium | HTTP only in API and nginx |
-| R14 | `f64` price/economy values not bounded above | Low | Low | No upper-bound check on price or economy params |
+| R14 | `f64` price/economy values not bounded above | Low | Low | No upper-bound or finiteness check on price or economy params |
 | R15 | Event log export has no pagination | Low | Low | `/api/export/events` returns entire log as JSON |
 
 ---
 
 ## 3. Improvement Plan
 
+Each item below is self-contained: it states the problem, the exact files and lines to change, the replacement code, and the verification tests. A coding agent can implement each item independently unless a dependency is noted.
+
 ### 3.1 Tighten Request Body-Size Limit
 
-**Priority:** Medium
-**Risk addressed:** R3
-**Effort:** Low
+**Priority:** Medium  |  **Risk:** R3  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-Axum 0.8 already applies a **2 MB default body limit** via `axum_core::extract::DefaultBodyLimit` on all extractors (`Json`, `String`, `Bytes`, `Form`). Scenarios are TOML text (the largest example `capacity_expansion_scenario.toml` is ~1 KB). Lowering the limit to 1 MB provides defense-in-depth with generous headroom for complex scenarios.
+Axum 0.8 already applies a **2 MB default body limit** via `DefaultBodyLimit` on all extractors. Scenarios are ~1 KB TOML. Lowering the limit to 1 MB provides defense-in-depth.
 
-File: `crates/sim-api/src/server.rs`
+**File:** `crates/sim-api/src/server.rs`
 
-Add a `DefaultBodyLimit` layer to the router (no `Cargo.toml` change needed — `DefaultBodyLimit` is re-exported from `axum`):
+**Change:** Add a `DefaultBodyLimit` layer after the existing `cors` layer in `build_router()` (currently at line 15). No `Cargo.toml` change needed — `DefaultBodyLimit` is re-exported from `axum`.
 
 ```rust
 use axum::extract::DefaultBodyLimit;
 
-// Inside build_router():
+// Inside build_router(), append after .layer(cors):
+    .layer(DefaultBodyLimit::max(1024 * 1024)) // 1 MB
+```
+
+The full `build_router` return should become:
+
+```rust
 Router::new()
-    // ... routes ...
+    // ... all .route() calls unchanged ...
     .with_state(state)
     .layer(TraceLayer::new_for_http())
     .layer(cors)
-    .layer(DefaultBodyLimit::max(1024 * 1024)) // 1 MB (down from 2 MB default)
+    .layer(DefaultBodyLimit::max(1024 * 1024))
 ```
 
-**Verification:** Add a test in `crates/sim-api/tests/api_smoke.rs` that sends a `POST /api/scenario` body larger than 1 MB and asserts a `413 Payload Too Large` response. Also add a test confirming that a body just under 1 MB is accepted normally.
+**Verification:** Add tests in `crates/sim-api/tests/api_smoke.rs`:
+- `oversized_body_returns_413` — send `POST /api/scenario` with a JSON body larger than 1 MB → assert `413 Payload Too Large`
+- `normal_body_accepted` — send `POST /api/scenario` with `basic_scenario_toml()` (< 1 KB) → assert `200 OK`
+
+---
 
 ### 3.2 Fix Scenario Load Error Propagation
 
-**Priority:** High
-**Risk addressed:** R6, R7
-**Effort:** Medium
+**Priority:** High  |  **Risk:** R6, R7  |  **Effort:** Medium  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-The `POST /api/scenario` endpoint enqueues the TOML string and unconditionally returns `{ "success": true }`. If parsing or validation fails, the sim thread silently logs a generic error and the client never learns the scenario was rejected.
+The `POST /api/scenario` endpoint sends `SimCommand::LoadScenario(body.toml)` and unconditionally returns `success: true` after a 50ms sleep. If parsing or validation fails, the sim thread logs a generic error and the client never learns the scenario was rejected.
 
-File: `crates/sim-api/src/state.rs` — `SimCommand::LoadScenario` handler (lines 480-523)
+**Files to change:**
 
-**Approach:** Add a synchronous reply channel to `SimCommand::LoadScenario` so the sim thread can report success or failure back to the API handler.
+1. **`crates/sim-api/src/state.rs`** — `SimCommand` enum (line 30) and `LoadScenario` match arm (line 378)
 
-1. Change `SimCommand::LoadScenario` to carry a `std::sync::mpsc::SyncSender<Result<(), String>>`. Use `SyncSender` (not `tokio::sync::oneshot`) because the sim thread is a plain OS thread, not a Tokio task. `SyncSender` implements both `Clone` and `Debug`, preserving `SimCommand`'s existing derives. The API handler creates a `std::sync::mpsc::sync_channel(1)` before sending the command:
+   Change `SimCommand::LoadScenario` from a tuple variant to a struct variant carrying a reply channel:
 
-```rust
-pub enum SimCommand {
-    LoadScenario {
-        toml: String,
-        reply: std::sync::mpsc::SyncSender<Result<(), String>>,
-    },
-    // ... other variants unchanged
-}
-```
+   ```rust
+   #[derive(Debug, Clone)]
+   pub enum SimCommand {
+       LoadScenario {
+           toml: String,
+           reply: std::sync::mpsc::SyncSender<Result<(), String>>,
+       },
+       // Run, Pause, Step, Reset, ChangePrice, ChangeMachineCount, ToggleAgent, QuerySnapshot — unchanged
+   }
+   ```
 
-2. In the sim thread, send the parse/validate result back through `reply`:
+   Use `std::sync::mpsc::SyncSender` (not `tokio::sync::oneshot`) because the sim thread is a plain OS thread. `SyncSender` implements both `Clone` and `Debug`, preserving `SimCommand`'s existing derives.
 
-```rust
-SimCommand::LoadScenario { toml, reply } => {
-    match sim_core::scenario::load_scenario(&toml) {
-        Ok(cfg) => {
-            // ... existing setup ...
-            let _ = reply.send(Ok(()));
-        }
-        Err(e) => {
-            tracing::error!("Failed to load scenario: {e}");
-            let _ = reply.send(Err(e.to_string()));
-        }
-    }
-}
-```
+   In the sim thread match arm (currently line 378), send the result back:
 
-3. In `routes::load_scenario`, wait on the reply channel with a timeout:
+   ```rust
+   SimCommand::LoadScenario { toml: toml_str, reply } => {
+       match sim_core::scenario::load_scenario(&toml_str) {
+           Ok(cfg) => {
+               // ... existing setup (build handler, scheduler, event_log, etc.) ...
+               let _ = reply.send(Ok(()));
+               // ... existing snapshot_tx.send, log_tx.send, handler/config assignment ...
+           }
+           Err(e) => {
+               tracing::error!("Failed to load scenario: {e}");
+               let _ = reply.send(Err(e.to_string()));
+           }
+       }
+   }
+   ```
 
-```rust
-pub async fn load_scenario(
-    State(state): State<Arc<AppState>>,
-    Json(body): Json<LoadScenarioRequest>,
-) -> Result<Json<LoadScenarioResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let (tx, rx) = std::sync::mpsc::sync_channel(1);
-    state
-        .cmd_tx
-        .send(SimCommand::LoadScenario { toml: body.toml, reply: tx })
-        .map_err(|_| sim_error("Failed to send command to simulation thread"))?;
+2. **`crates/sim-api/src/routes.rs`** — `load_scenario` handler (lines 31-46)
 
-    match rx.recv_timeout(std::time::Duration::from_secs(5)) {
-        Ok(Ok(())) => Ok(Json(LoadScenarioResponse {
-            success: true,
-            message: "Scenario loaded".to_string(),
-        })),
-        Ok(Err(msg)) => Err(bad_request(&msg)),
-        Err(_) => Err(sim_error("Scenario load timed out")),
-    }
-}
-```
+   Replace the fire-and-forget send + sleep with a reply-channel wait:
 
-This eliminates the misleading `success: true`, removes the arbitrary `sleep(50ms)`, and surfaces validation errors to the client.
+   ```rust
+   pub async fn load_scenario(
+       State(state): State<Arc<AppState>>,
+       Json(body): Json<LoadScenarioRequest>,
+   ) -> Result<Json<LoadScenarioResponse>, (StatusCode, Json<ErrorResponse>)> {
+       let (tx, rx) = std::sync::mpsc::sync_channel(1);
+       state
+           .cmd_tx
+           .send(SimCommand::LoadScenario { toml: body.toml, reply: tx })
+           .map_err(|_| sim_error("Failed to send command to simulation thread"))?;
 
-**Verification:** Update the `load_scenario` test helper in `api_smoke.rs` to return `(StatusCode, serde_json::Value)` so tests can inspect the response body. Add these named tests:
+       match rx.recv_timeout(std::time::Duration::from_secs(5)) {
+           Ok(Ok(())) => Ok(Json(LoadScenarioResponse {
+               success: true,
+               message: "Scenario loaded".to_string(),
+           })),
+           Ok(Err(msg)) => Err(bad_request(&msg)),
+           Err(_) => Err(sim_error("Scenario load timed out")),
+       }
+   }
+   ```
 
-- `load_valid_scenario_returns_success` — existing `basic_scenario_toml()` → 200, body `success == true`
-- `load_invalid_toml_returns_bad_request` — send `{ "toml": "not valid [[ toml" }` → 400, body `error` field contains "TOML parse error" or similar
-- `load_scenario_with_zero_max_ticks_returns_bad_request` — send valid TOML with `max_ticks = 0` → 400, body `error` field contains "max_ticks"
-- `load_scenario_with_missing_equipment_returns_bad_request` — send TOML with `[simulation]` but no `[[equipment]]` → 400, body `error` contains "equipment"
+3. **`crates/sim-api/src/state.rs`** — all other `SimCommand::LoadScenario` references
+
+   Update `spawn_sim_thread` inline tests and any other `SimCommand::LoadScenario(...)` call sites (search for `SimCommand::LoadScenario`) to use the new struct-variant syntax with a reply channel.
+
+**Verification:** Update the `load_scenario` test helper in `crates/sim-api/tests/api_smoke.rs` to return `(StatusCode, serde_json::Value)`. Add these tests:
+- `load_valid_scenario_returns_success` — `basic_scenario_toml()` → 200, body `success == true`
+- `load_invalid_toml_returns_bad_request` — `{ "toml": "not valid [[ toml" }` → 400, body `error` field present
+- `load_scenario_with_zero_max_ticks_returns_bad_request` — valid TOML with `max_ticks = 0` → 400, body `error` contains "max_ticks"
+- `load_scenario_with_missing_equipment_returns_bad_request` — TOML with `[simulation]` but no `[[equipment]]` → 400, body `error` contains "equipment"
+
+---
 
 ### 3.3 Propagate Handler and Scheduler Errors in Simulation Thread
 
-**Priority:** High
-**Risk addressed:** R7
-**Effort:** Low
+**Priority:** High  |  **Risk:** R7  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-File: `crates/sim-api/src/state.rs`
+**File:** `crates/sim-api/src/state.rs`
 
 Multiple locations suppress errors with `let _ = ...`:
 
-**Handler errors:**
-- Line 533: `let _ = h.handle_event(&event, &mut scheduler);` (Step command)
-- Line 582: `let _ = h.handle_event(&event, &mut scheduler);` (Run command)
-- Line 664: `let _ = h.handle_event(&event, &mut scheduler);` (ChangePrice)
-- Line 694: `let _ = h.handle_event(&event, &mut scheduler);` (ChangeMachineCount)
+**Handler errors** (`let _ = h.handle_event(&event, &mut scheduler)`):
+- Line 432 (Step command)
+- Line 481 (Run command)
+- Line 563 (ChangePrice)
+- Line 591 (ChangeMachineCount)
 
-**Scheduler errors:**
-- Lines 492, 500: `let _ = scheduler.schedule(...)` (LoadScenario — initial periodic events)
-- Lines 634, 642: `let _ = scheduler.schedule(...)` (Reset — initial periodic events)
-- Lines 759, 765: `let _ = scheduler.schedule(...)` (reschedule_periodic)
+**Scheduler errors** (`let _ = scheduler.schedule(...)`):
+- Lines 391, 399 (LoadScenario — initial periodic events)
+- Lines 533, 541 (Reset — initial periodic events)
+- Lines 658, 664 (`reschedule_periodic` function)
 
-This is inconsistent with `crates/sim-core/src/runner.rs:37-53` which correctly uses `scheduler.schedule(...)?` to propagate errors.
+This is inconsistent with `crates/sim-core/src/runner.rs:37-53` which correctly uses `scheduler.schedule(...)?`.
 
-**Approach:**
+**Changes:**
 
-1. Add a `last_error: Option<String>` field to `SimSnapshot`:
+1. Add `last_error: Option<String>` to `SimSnapshot` (currently lines 92-105 in `state.rs`):
 
-```rust
-pub struct SimSnapshot {
-    // ... existing fields ...
-    pub last_error: Option<String>,
-}
-```
+   ```rust
+   pub struct SimSnapshot {
+       // ... all existing fields ...
+       pub last_error: Option<String>,
+   }
+   ```
 
-2. Replace all `let _ = h.handle_event(...)` and `let _ = scheduler.schedule(...)` with error capture:
+   Update `Default for SimSnapshot` (lines 107-127) to include `last_error: None`.
 
-```rust
-if let Err(e) = h.handle_event(&event, &mut scheduler) {
-    tracing::warn!(error = %e, event_time = event.time.ticks(), "event handler error");
-    last_error = Some(e.to_string());
-}
-```
+2. Add a mutable `last_error: Option<String>` local in the sim thread (after line 372). Replace every `let _ = h.handle_event(...)` with:
 
-3. Include `last_error` in the snapshot built by `build_snapshot`.
+   ```rust
+   if let Err(e) = h.handle_event(&event, &mut scheduler) {
+       tracing::warn!(error = %e, event_time = event.time.ticks(), "event handler error");
+       last_error = Some(e.to_string());
+   }
+   ```
 
-**Verification:** Add a test in `api_smoke.rs`:
-- `handler_error_surfaces_in_snapshot` — Load a scenario, then send `POST /api/machines` with an invalid `machine_id` (one that doesn't exist in the loaded scenario). Assert that the response snapshot's `last_error` field is `Some(...)` containing an error message about the unknown machine ID.
+   Replace every `let _ = scheduler.schedule(...)` with:
+
+   ```rust
+   if let Err(e) = scheduler.schedule(Event::new(...)) {
+       tracing::warn!(error = %e, "scheduler error");
+       last_error = Some(e.to_string());
+   }
+   ```
+
+3. Pass `last_error` into `build_snapshot` (line 260) and include it in the returned `SimSnapshot`. Clear `last_error` to `None` after each snapshot send so stale errors do not persist.
+
+**Verification:** Add a test in `crates/sim-api/tests/api_smoke.rs`:
+- `handler_error_surfaces_in_snapshot` — load a scenario, send `POST /api/machines` with `machine_id: 9999` (nonexistent), assert the response snapshot's `last_error` is `Some(...)` containing an error message
+
+---
 
 ### 3.4 Restrict Default Bind Address
 
-**Priority:** Medium
-**Risk addressed:** R8
-**Effort:** Low
+**Priority:** Medium  |  **Risk:** R8  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-File: `crates/sim-cli/src/main.rs:10`
+**File:** `crates/sim-cli/src/main.rs` — line 23
 
-Change the CLI default from `0.0.0.0:3000` to `127.0.0.1:3000`:
-
+Change:
+```rust
+#[arg(long, default_value = "0.0.0.0:3000")]
+```
+To:
 ```rust
 #[arg(long, default_value = "127.0.0.1:3000")]
-addr: String,
 ```
 
-File: `Dockerfile:20`
+**File:** `Dockerfile` — line 23
 
-The Docker CMD must continue to bind to `0.0.0.0` for container networking:
-
+Keep as-is (Docker must bind to `0.0.0.0` for container networking):
 ```dockerfile
 CMD ["serve", "--addr", "0.0.0.0:3000"]
 ```
 
-This keeps Docker working while protecting native/dev-container users from unintentional LAN exposure. Users who need LAN access pass `--addr 0.0.0.0:3000` explicitly.
+**Verification:** Add a `#[test]` in `crates/sim-cli/src/main.rs` (in the existing `mod tests`):
+- `default_bind_address_is_localhost` — use `Cli::try_parse_from(["arcogine", "serve"])` and assert `addr == "127.0.0.1:3000"`
 
-**Verification:** Add a CLI integration test (or document a manual check) that parses `Cli::Serve` with no `--addr` argument and asserts the default is `"127.0.0.1:3000"`. This can use `clap`'s `try_parse_from` in a `#[test]` in `sim-cli`.
+---
 
 ### 3.5 Add Nginx Security Headers
 
-**Priority:** Medium
-**Risk addressed:** R9
-**Effort:** Low
+**Priority:** Medium  |  **Risk:** R9  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-File: `ui/Dockerfile` — inline nginx config (lines 18-36)
+**File:** `ui/Dockerfile` — inline nginx config heredoc (lines 15-40)
 
-Add security headers inside the `server` block:
+Replace the `server { ... }` block with:
 
 ```nginx
 server {
@@ -272,6 +297,11 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
     add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self';" always;
+
+    location = /health {
+        add_header Content-Type text/plain;
+        return 200 "ok";
+    }
 
     location / {
         try_files $uri $uri/ /index.html;
@@ -289,73 +319,55 @@ server {
 }
 ```
 
-**CSP note:** `'unsafe-inline'` for `style-src` is needed because Tailwind CSS injects inline styles. If the project migrates to extracted CSS, this can be tightened. The `connect-src 'self'` directive covers both REST and SSE connections through the nginx proxy.
+**CSP note:** `'unsafe-inline'` for `style-src` is needed because Tailwind CSS injects inline styles. `connect-src 'self'` covers both REST and SSE through the nginx proxy.
 
-**Scope:** This CSP applies only to the Docker nginx container (`ui/Dockerfile`). The Vite dev server (`vite.config.ts`) does not serve these headers. CSP for Vite dev mode is not required for a local-only tool and is out of scope for this item.
+**Scope:** This CSP applies only to the Docker nginx container. The Vite dev server does not serve these headers. CSP for Vite dev mode is not required for a local-only tool and is out of scope.
 
 **Verification:** Build the Docker UI image and verify headers with `curl -I http://localhost:5173/`. Assert that `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy` headers are present.
 
+---
+
 ### 3.6 Commit `Cargo.lock` to Version Control
 
-**Priority:** High
-**Risk addressed:** R10
-**Effort:** Low
+**Priority:** High  |  **Risk:** R10  |  **Effort:** Low  |  **Status:** DONE
 
-Arcogine is an application (binary crates `sim-cli` and `sim-api`), not a library. The Rust community convention is to commit `Cargo.lock` for applications to ensure reproducible builds.
+`Cargo.lock` exists at the repo root and is not listed in `.gitignore`. The CI cache key at `.github/workflows/ci.yml:31` already uses `hashFiles('**/Cargo.lock')`. `Dockerfile:5` copies `Cargo.lock` into the build context.
 
-File: `.gitignore:4`
+No further action required. Dependency updates should use `cargo update` followed by committing the updated lockfile.
 
-Remove the `Cargo.lock` line:
-
-```gitignore
-# Rust
-/target/
-**/*.rs.bk
-```
-
-Then run `cargo generate-lockfile` (or `cargo build`) and commit the resulting `Cargo.lock`.
-
-**Impact on CI:** The CI job already references `hashFiles('**/Cargo.lock')` for cache keys (`ci.yml:31`). With the lockfile committed, CI caching becomes deterministic. Without it, the cache key is always empty on a fresh clone, which defeats the purpose of caching.
-
-**Impact on Docker:** `Dockerfile:4` already copies `Cargo.lock` into the build context. This currently fails on a fresh clone without a local build; committing the lockfile fixes this.
-
-**Impact on dev workflow:** After committing `Cargo.lock`, dependency updates require `cargo update` followed by committing the updated lockfile. Dev container users (`.devcontainer/post-create.sh` runs `cargo build`) should be aware that local `cargo update` changes are not reflected in CI until committed.
-
-**Verification:** After removing `Cargo.lock` from `.gitignore` and committing it, verify: (a) `docker build .` succeeds on a fresh clone, (b) CI cache key `hashFiles('**/Cargo.lock')` produces a non-empty hash.
+---
 
 ### 3.7 Add Dependency Vulnerability Scanning to CI
 
-**Priority:** High
-**Risk addressed:** R11
-**Effort:** Low
+**Priority:** High  |  **Risk:** R11  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** 3.6 (done)
 
-File: `.github/workflows/ci.yml`
+**File:** `.github/workflows/ci.yml`
 
 #### 3.7.1 Rust: `cargo audit`
 
-Add after the test step in the `rust` job. Use the `rustsec/audit-check` GitHub Action (pre-built binary, avoids slow `cargo install` compilation):
+Add after the "Run tests" step in the `rust` job (after line 41). Use the `rustsec/audit-check` GitHub Action (pre-built binary, avoids slow `cargo install`):
 
 ```yaml
-- name: Audit Rust dependencies
-  uses: rustsec/audit-check@v2
-  with:
-    token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Audit Rust dependencies
+        uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 #### 3.7.2 Frontend: `npm audit`
 
-Add after the build step in the `frontend` job:
+Add after the "Build" step in the `frontend` job (after line 76):
 
 ```yaml
-- name: Audit npm dependencies
-  run: npm audit --audit-level=high
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
 ```
 
-`--audit-level=high` avoids failing on low/moderate advisories that may not have fixes yet. Adjust as the project matures.
+`--audit-level=high` avoids failing on low/moderate advisories that may not have fixes yet.
 
 #### 3.7.3 GitHub Dependabot
 
-Create `.github/dependabot.yml`:
+Create new file `.github/dependabot.yml`:
 
 ```yaml
 version: 2
@@ -379,117 +391,120 @@ updates:
     open-pull-requests-limit: 5
 ```
 
+**Verification:** CI fails on any known CRITICAL/HIGH vulnerability in Rust or npm dependencies.
+
+---
+
 ### 3.8 Add Docker Image Scanning to CI
 
-**Priority:** Medium
-**Risk addressed:** R12
-**Effort:** Low
+**Priority:** Medium  |  **Risk:** R12  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-Add a new job to `.github/workflows/ci.yml`:
+**File:** `.github/workflows/ci.yml`
+
+Add a new job (not nested under any existing job):
 
 ```yaml
-docker-scan:
-  name: Docker image scan
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
+  docker-scan:
+    name: Docker image scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Build API image
-      run: docker build -t arcogine-api:ci .
+      - name: Build API image
+        run: docker build -t arcogine-api:ci .
 
-    - name: Scan API image
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: 'arcogine-api:ci'
-        severity: 'CRITICAL,HIGH'
-        exit-code: '1'
+      - name: Scan API image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'arcogine-api:ci'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
 ```
 
-This only builds and scans the API image. The UI image scan can be added similarly if container publishing is planned.
+**Verification:** The CI job fails with exit code 1 if critical or high vulnerabilities are found.
 
-**Verification:** The CI job itself is the verification — it fails with exit code 1 if critical or high vulnerabilities are found.
+---
 
 ### 3.9 Bound SSE Connections
 
-**Priority:** Medium
-**Risk addressed:** R5
-**Effort:** Low
+**Priority:** Medium  |  **Risk:** R5  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-File: `crates/sim-api/src/state.rs:461`
+**Files to change:**
 
-The broadcast channel is already bounded to 4096 messages. However, there is no limit on concurrent SSE subscribers.
+1. **`crates/sim-api/src/state.rs`** — `AppState` struct (line 129)
 
-File: `crates/sim-api/src/server.rs`
+   Add a semaphore field:
 
-Add a connection-counting semaphore to the SSE route. `tokio::sync::Semaphore::try_acquire_owned()` requires `Arc<Semaphore>`, so the field must be wrapped in `Arc`:
+   ```rust
+   pub struct AppState {
+       pub cmd_tx: mpsc::Sender<SimCommand>,
+       pub snapshot_rx: watch::Receiver<SimSnapshot>,
+       pub event_tx: broadcast::Sender<Event>,
+       pub event_log_rx: watch::Receiver<EventLog>,
+       pub sse_semaphore: Arc<tokio::sync::Semaphore>,
+   }
+   ```
 
-Add an `sse_semaphore` field to `AppState`:
+2. **`crates/sim-api/src/server.rs`** — `create_app_state()` (line 49)
 
-```rust
-pub struct AppState {
-    pub cmd_tx: mpsc::Sender<SimCommand>,
-    pub snapshot_rx: watch::Receiver<SimSnapshot>,
-    pub event_tx: broadcast::Sender<Event>,
-    pub event_log_rx: watch::Receiver<EventLog>,
-    pub sse_semaphore: Arc<tokio::sync::Semaphore>,
-}
-```
+   Initialize the semaphore:
 
-Initialize with a reasonable limit (e.g., 64 concurrent connections):
+   ```rust
+   Arc::new(AppState {
+       cmd_tx,
+       snapshot_rx,
+       event_tx,
+       event_log_rx,
+       sse_semaphore: Arc::new(tokio::sync::Semaphore::new(64)),
+   })
+   ```
 
-```rust
-Arc::new(AppState {
-    // ... existing fields ...
-    sse_semaphore: Arc::new(tokio::sync::Semaphore::new(64)),
-})
-```
+3. **`crates/sim-api/src/sse.rs`** — `event_stream` function (lines 17-32)
 
-In `sse.rs`, acquire an owned permit before streaming. The permit is moved into the stream's `filter_map` closure so it is held for the stream's lifetime and released on disconnect:
+   Acquire an owned permit before streaming. The permit is held for the stream's lifetime and released on disconnect:
 
-```rust
-pub async fn event_stream(
-    State(state): State<Arc<AppState>>,
-) -> Result<Sse<impl Stream<Item = Result<SseEvent, Infallible>>>, StatusCode> {
-    let permit = state.sse_semaphore.clone().try_acquire_owned()
-        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+   ```rust
+   pub async fn event_stream(
+       State(state): State<Arc<AppState>>,
+   ) -> Result<Sse<impl Stream<Item = Result<SseEvent, Infallible>>>, StatusCode> {
+       let permit = state.sse_semaphore.clone().try_acquire_owned()
+           .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
 
-    let rx = state.event_tx.subscribe();
-    let stream = BroadcastStream::new(rx)
-        .filter_map(move |result| {
-            let _permit = &permit;
-            match result {
-                Ok(event) => {
-                    let json = serde_json::to_string(&event).unwrap_or_default();
-                    Some(Ok(SseEvent::default()
-                        .event(format!("{:?}", event.event_type))
-                        .data(json)))
-                }
-                Err(_) => None,
-            }
-        });
+       let rx = state.event_tx.subscribe();
+       let stream = BroadcastStream::new(rx)
+           .filter_map(move |result| {
+               let _permit = &permit;
+               match result {
+                   Ok(event) => {
+                       let json = serde_json::to_string(&event).unwrap_or_default();
+                       Some(Ok(SseEvent::default()
+                           .event(format!("{:?}", event.event_type))
+                           .data(json)))
+                   }
+                   Err(_) => None,
+               }
+           });
 
-    Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
-}
-```
+       Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
+   }
+   ```
 
-**Verification:** Add a test that opens 64 SSE connections (using `tower::ServiceExt::oneshot` with `GET /api/events/stream`), then verifies that a 65th connection receives `503 Service Unavailable`.
+**Verification:** Add a test in `crates/sim-api/tests/api_smoke.rs`:
+- `sse_connection_limit_returns_503` — open 64 SSE connections (via `tower::ServiceExt::oneshot` with `GET /api/events/stream`), then verify a 65th returns `503 Service Unavailable`
+
+---
 
 ### 3.10 Cap Event Log Size
 
-**Priority:** Medium
-**Risk addressed:** R4
-**Effort:** Low
+**Priority:** Medium  |  **Risk:** R4  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-File: `crates/sim-core/src/log.rs`
+**File:** `crates/sim-core/src/log.rs`
 
-The `EventLog` grows without bound. For long-running simulations this can exhaust memory.
+The `EventLog` (line 10) currently derives `Default` and `PartialEq` and uses an unbounded `Vec<Event>`.
 
-Add a configurable maximum capacity. **Important:** `EventLog` derives `PartialEq` (`crates/sim-core/src/log.rs:10`), and determinism tests compare event logs with `assert_eq!` (`crates/sim-core/tests/determinism.rs:57`). The `max_capacity` field must be excluded from equality comparison to avoid breaking these tests.
-
-Replace the auto-derived `PartialEq` with a manual implementation that compares only the `events` field:
+**Replace** the current struct and its `impl` block (lines 10-51) with:
 
 ```rust
-// Remove PartialEq and Default from the derive list
 #[derive(Debug, Clone, Serialize)]
 pub struct EventLog {
     events: Vec<Event>,
@@ -503,7 +518,9 @@ impl Default for EventLog {
     }
 }
 
-// Equality compares only the event data, not the capacity configuration
+/// Equality compares only the event data, not the capacity configuration.
+/// This preserves determinism test compatibility where two runs may use
+/// different capacity settings but should still compare equal.
 impl PartialEq for EventLog {
     fn eq(&self, other: &Self) -> bool {
         self.events == other.events
@@ -534,84 +551,100 @@ impl EventLog {
     pub fn is_truncated(&self) -> bool {
         self.events.len() >= self.max_capacity
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Event> {
+        self.events.iter()
+    }
+
+    pub fn filter_by_type(&self, event_type: EventType) -> impl Iterator<Item = &Event> {
+        self.events
+            .iter()
+            .filter(move |e| e.event_type == event_type)
+    }
+
+    pub fn count(&self) -> usize {
+        self.events.len()
+    }
+
+    pub fn snapshot(&self) -> EventLog {
+        self.clone()
+    }
+
+    pub fn events(&self) -> &[Event] {
+        &self.events
+    }
 }
 ```
 
-**Trade-off:** Dropping events silently is acceptable for an MVP simulation tool where the event stream (SSE) provides real-time delivery. The `is_truncated()` method allows the export endpoint (`/api/export/events`) to include a `truncated` flag in the response.
+**Verification:** Add unit tests in the existing `#[cfg(test)] mod tests` in `crates/sim-core/src/log.rs`:
+- `event_log_caps_at_max_capacity` — `with_capacity(5)`, append 10 events, assert `count() == 5`
+- `event_log_equality_ignores_capacity` — two logs with different capacities, same events, assert `==`
+- `event_log_is_truncated` — `with_capacity(3)`, append 3 events, assert `is_truncated() == true`
 
-**Verification:** Add unit tests in `crates/sim-core/src/log.rs`:
-- `event_log_caps_at_max_capacity` — create log with `with_capacity(5)`, append 10 events, assert count is 5
-- `event_log_equality_ignores_capacity` — create two logs with different capacities, append same events, assert they are equal
-- `event_log_is_truncated` — verify `is_truncated()` returns `true` when cap is reached
+---
 
 ### 3.11 Add Input Validation for Economy and Price Parameters
 
-**Priority:** Low
-**Risk addressed:** R14
-**Effort:** Low
+**Priority:** Low  |  **Risk:** R14  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
 **Two contexts require different treatment:**
 
-1. **JSON API (`routes.rs`):** `serde_json` rejects NaN and Infinity during deserialization (they are not valid JSON numbers), so explicit NaN/Infinity checks in the handler are defensive-only. Add upper-bound validation:
+1. **JSON API (`routes.rs`):** `serde_json` rejects NaN/Infinity during deserialization (not valid JSON), so NaN/Infinity checks in the handler are defensive-only. Add an upper-bound:
 
-File: `crates/sim-api/src/routes.rs` — `change_price` handler (line 164-187)
+   **File:** `crates/sim-api/src/routes.rs` — `change_price` handler (line 164)
 
-```rust
-const MAX_PRICE: f64 = 1_000_000.0;
+   Replace the existing check (line 168-170) with:
 
-if body.price < 0.0 || body.price > MAX_PRICE {
-    return Err(bad_request("Price must be between 0 and 1,000,000"));
-}
-```
+   ```rust
+   const MAX_PRICE: f64 = 1_000_000.0;
 
-2. **TOML scenario (`scenario.rs`):** The `toml` crate **does** parse `nan` and `inf` as valid TOML floats, so NaN/Infinity checks are necessary here:
+   if body.price < 0.0 || body.price > MAX_PRICE {
+       return Err(bad_request("Price must be between 0 and 1,000,000"));
+   }
+   ```
 
-File: `crates/sim-core/src/scenario.rs` — `validate_scenario` (lines 131-139)
+2. **TOML scenario (`scenario.rs`):** The `toml` crate **does** parse `nan` and `inf` as valid TOML floats, so NaN/Infinity checks are necessary here.
 
-Extend economy validation with finiteness and range checks:
+   **File:** `crates/sim-core/src/scenario.rs` — `validate_scenario` (replace lines 131-139)
 
-```rust
-if let Some(econ) = &config.economy {
-    if !econ.initial_price.is_finite() || econ.initial_price <= 0.0 || econ.initial_price > 1_000_000.0 {
-        return Err(SimError::OutOfRange {
-            field: "economy.initial_price".to_string(),
-            message: "must be a finite number > 0 and <= 1,000,000".to_string(),
-        });
-    }
-    if !econ.base_demand.is_finite() || econ.base_demand < 0.0 {
-        return Err(SimError::OutOfRange {
-            field: "economy.base_demand".to_string(),
-            message: "must be a finite number >= 0".to_string(),
-        });
-    }
-    if !econ.price_elasticity.is_finite() || econ.price_elasticity < 0.0 {
-        return Err(SimError::OutOfRange {
-            field: "economy.price_elasticity".to_string(),
-            message: "must be a finite number >= 0".to_string(),
-        });
-    }
-}
-```
+   ```rust
+   if let Some(econ) = &config.economy {
+       if !econ.initial_price.is_finite() || econ.initial_price <= 0.0 || econ.initial_price > 1_000_000.0 {
+           return Err(SimError::OutOfRange {
+               field: "economy.initial_price".to_string(),
+               message: "must be a finite number > 0 and <= 1,000,000".to_string(),
+           });
+       }
+       if !econ.base_demand.is_finite() || econ.base_demand < 0.0 {
+           return Err(SimError::OutOfRange {
+               field: "economy.base_demand".to_string(),
+               message: "must be a finite number >= 0".to_string(),
+           });
+       }
+       if !econ.price_elasticity.is_finite() || econ.price_elasticity < 0.0 {
+           return Err(SimError::OutOfRange {
+               field: "economy.price_elasticity".to_string(),
+               message: "must be a finite number >= 0".to_string(),
+           });
+       }
+   }
+   ```
 
-**Verification:** Add tests in `crates/sim-core/tests/scenario_loading.rs`:
-- `scenario_with_nan_price_rejected` — TOML with `initial_price = nan` → error
-- `scenario_with_inf_demand_rejected` — TOML with `base_demand = inf` → error
-- `scenario_with_extreme_price_rejected` — TOML with `initial_price = 999999999.0` → error
-Add a test in `api_smoke.rs`:
-- `extreme_price_returns_bad_request` — `POST /api/price` with `price: 2000000.0` → 400
+**Verification:**
+- In `crates/sim-core/tests/scenario_loading.rs`: `scenario_with_nan_price_rejected`, `scenario_with_inf_demand_rejected`, `scenario_with_extreme_price_rejected`
+- In `crates/sim-api/tests/api_smoke.rs`: `extreme_price_returns_bad_request` — `POST /api/price` with `price: 2000000.0` → 400
+
+---
 
 ### 3.12 Add Configurable CORS for Non-Development Deployments
 
-**Priority:** Low (no immediate risk for local-only MVP)
-**Risk addressed:** R2
-**Effort:** Low
+**Priority:** Low  |  **Risk:** R2  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-File: `crates/sim-api/src/server.rs`
-
-Replace hardcoded `Any` CORS with an environment-driven allowed origin:
+**File:** `crates/sim-api/src/server.rs` — replace lines 16-25
 
 ```rust
 use std::env;
+use axum::http::HeaderValue;
 
 let cors = match env::var("CORS_ALLOWED_ORIGIN") {
     Ok(origin) => CorsLayer::new()
@@ -625,44 +658,53 @@ let cors = match env::var("CORS_ALLOWED_ORIGIN") {
 };
 ```
 
-Update `.env.example`:
+**File:** `.env.example` — append:
 
 ```
 # CORS allowed origin (optional; defaults to permissive if unset)
 # CORS_ALLOWED_ORIGIN=http://localhost:5173
 ```
 
-This maintains the permissive default for development while providing a path to restrict CORS in deployments.
+**Verification:** Add a test in `crates/sim-api/tests/api_smoke.rs`:
+- `cors_with_env_var_restricts_origin` — set `CORS_ALLOWED_ORIGIN=http://example.com` before calling `build_router`, send a request with `Origin: http://evil.com`, verify response lacks `Access-Control-Allow-Origin: http://evil.com`
 
-**Verification:** Add a test in `api_smoke.rs`:
-- `cors_with_env_var_restricts_origin` — set `CORS_ALLOWED_ORIGIN=http://example.com` before building the router, send a request with `Origin: http://evil.com`, verify the response lacks `Access-Control-Allow-Origin` or returns a CORS error. (Note: this test needs to set the env var before `build_router` is called; use a dedicated test function with cleanup.)
+---
 
 ### 3.13 Update `SECURITY.md` with Hardening Guidance
 
-**Priority:** Low
-**Effort:** Low
+**Priority:** Low  |  **Risk:** —  |  **Effort:** Low  |  **Status:** [Done] 2026-04-04  |  **Depends on:** 3.4, 3.12
 
-Extend `SECURITY.md` with a "Hardening for Network Deployment" section that documents:
+**File:** `SECURITY.md`
 
-1. Change `--addr` to `127.0.0.1:3000` for non-Docker use
-2. Set `CORS_ALLOWED_ORIGIN` to the UI's origin
-3. Place behind a reverse proxy with TLS termination
-4. Run `cargo audit` and `npm audit` before deployment
-5. Set `RUST_LOG=warn` in production to reduce log verbosity
+Append a new section after "Known Limitations":
+
+```markdown
+## Hardening for Network Deployment
+
+If you deploy Arcogine outside a trusted local environment:
+
+1. Use `--addr 127.0.0.1:3000` (the default) and place behind a reverse proxy with TLS termination.
+2. Set the `CORS_ALLOWED_ORIGIN` environment variable to your UI's origin (e.g., `http://yourdomain.com`).
+3. Run `cargo audit` and `npm audit` before each deployment.
+4. Set `RUST_LOG=warn` in production to reduce log verbosity.
+5. Consider adding authentication before exposing the API to untrusted networks.
+```
+
+**Verification:** Manual review — the section exists and references the correct env var and CLI flag.
+
+---
 
 ### 3.14 CI Security Gates (No Deployment)
 
-**Priority:** High
-**Risk addressed:** R11, R12
-**Effort:** Medium
+**Priority:** High  |  **Risk:** R11, R12  |  **Effort:** Medium  |  **Status:** [Done] 2026-04-04  |  **Depends on:** —
 
-This item is explicitly CI-only and does not implement any deployment or image publishing step.
+This item is CI-only and does not implement any deployment or image publishing.
 
-File: `.github/workflows/ci.yml`
+**File:** `.github/workflows/ci.yml`
 
 #### 3.14.1 Secret scanning
 
-Add a dedicated CI job that scans repository content for secrets:
+Add a new job:
 
 ```yaml
   security-secrets:
@@ -676,49 +718,54 @@ Add a dedicated CI job that scans repository content for secrets:
           args: detect --no-git -v --redact --source .
 ```
 
-If the repo produces noisy findings, start with a checked-in `.gitleaks.toml` allowlist and keep the step enabled in alert mode before turning on hard failure.
+If the repo produces noisy findings, create a `.gitleaks.toml` allowlist.
 
 #### 3.14.2 Dependency audit evidence
 
-Keep dependency checks in CI and persist machine-readable outputs:
+In the `rust` job, after the audit step from 3.7.1, and in the `frontend` job:
 
 ```yaml
-  - name: Audit Rust dependencies
-    uses: rustsec/audit-check@v2
-    with:
-      token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high --json > npm-audit.json
 
-  - name: Audit npm dependencies
-    run: npm audit --audit-level=high --json > npm-audit.json
-```
-
-Upload reports when failures occur so review can be done from workflow artifacts:
-
-```yaml
-  - name: Upload audit reports
-    if: failure()
-    uses: actions/upload-artifact@v4
-    with:
-      name: security-audit-reports
-      path: |
-        npm-audit.json
+      - name: Upload audit reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-reports
+          path: |
+            npm-audit.json
 ```
 
 #### 3.14.3 Scan both API and UI images
 
-Expand image scanning to `arcogine-api:ci` and `arcogine-ui:ci` in a matrix strategy:
+Expand `docker-scan` (from 3.8) with a matrix:
 
 ```yaml
-  - name: Scan image with Trivy
-    uses: aquasecurity/trivy-action@master
-    with:
-      image-ref: arcogine-${{ matrix.image }}:ci
-      severity: 'CRITICAL,HIGH'
-      format: 'table'
-      exit-code: '1'
+  docker-scan:
+    name: Docker image scan (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, ui]
+        include:
+          - image: api
+            context: .
+          - image: ui
+            context: ui
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t arcogine-${{ matrix.image }}:ci ${{ matrix.context }}
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: arcogine-${{ matrix.image }}:ci
+          severity: 'CRITICAL,HIGH'
+          format: 'table'
+          exit-code: '1'
 ```
-
-Use `matrix.image` values of `api` and `ui` so each image is gated independently. Keep the matrix `fail-fast: false` so both scans run even if one fails.
 
 **Verification:** CI fails on any CRITICAL/HIGH issue from Rust/npm scans or either image scan, and artifacts include `npm-audit.json`.
 
@@ -726,41 +773,96 @@ Use `matrix.image` values of `api` and `ui` so each image is gated independently
 
 ## 4. Priority Matrix
 
-| # | Item | Priority | Effort | Risk(s) | Depends on |
-|---|------|----------|--------|---------|------------|
-| 3.1 | Tighten body-size limit | Medium | Low | R3 | — |
-| 3.2 | Scenario load error propagation | High | Medium | R6, R7 | — |
-| 3.3 | Handler and scheduler error propagation | High | Low | R7 | — |
-| 3.4 | Restrict default bind address | Medium | Low | R8 | — |
-| 3.5 | Nginx security headers | Medium | Low | R9 | — |
-| 3.6 | Commit `Cargo.lock` | High | Low | R10 | — |
-| 3.7 | Dependency vulnerability scanning | High | Low | R11 | 3.6 (for cargo audit cache) |
-| 3.8 | Docker image scanning | Medium | Low | R12 | — |
-| 3.9 | Bound SSE connections | Medium | Low | R5 | — |
-| 3.10 | Cap event log size | Medium | Low | R4 | — |
-| 3.11 | Economy/price input validation | Low | Low | R14 | — |
-| 3.12 | Configurable CORS | Low | Low | R2 | — |
-| 3.13 | Update SECURITY.md | Low | Low | — | 3.4, 3.12 |
-| 3.14 | CI security gates (no deployment) | High | Medium | R11, R12 | — |
+| # | Item | Priority | Effort | Risk(s) | Depends on | Status |
+|---|------|----------|--------|---------|------------|--------|
+| 3.6 | Commit `Cargo.lock` | High | Low | R10 | — | **DONE** |
+| 3.2 | Scenario load error propagation | High | Medium | R6, R7 | — | **[Done] 2026-04-04** |
+| 3.3 | Handler and scheduler error propagation | High | Low | R7 | — | **[Done] 2026-04-04** |
+| 3.7 | Dependency vulnerability scanning | High | Low | R11 | 3.6 ✓ | **[Done] 2026-04-04** |
+| 3.14 | CI security gates | High | Medium | R11, R12 | — | **[Done] 2026-04-04** |
+| 3.4 | Restrict default bind address | Medium | Low | R8 | — | **[Done] 2026-04-04** |
+| 3.5 | Nginx security headers | Medium | Low | R9 | — | **[Done] 2026-04-04** |
+| 3.1 | Tighten body-size limit | Medium | Low | R3 | — | **[Done] 2026-04-04** |
+| 3.9 | Bound SSE connections | Medium | Low | R5 | — | **[Done] 2026-04-04** |
+| 3.10 | Cap event log size | Medium | Low | R4 | — | **[Done] 2026-04-04** |
+| 3.8 | Docker image scanning | Medium | Low | R12 | — | **[Done] 2026-04-04** |
+| 3.11 | Economy/price input validation | Low | Low | R14 | — | **[Done] 2026-04-04** |
+| 3.12 | Configurable CORS | Low | Low | R2 | — | **[Done] 2026-04-04** |
+| 3.13 | Update SECURITY.md | Low | Low | — | 3.4, 3.12 | **[Done] 2026-04-04** |
 
 ---
 
 ## 5. Recommended Execution Order
 
-1. **3.6** — Commit `Cargo.lock` (unblocks CI caching and Docker builds)
-2. **3.3** — Handler and scheduler error propagation (quick win, improves observability)
-3. **3.2** — Scenario load error propagation (medium effort, high value)
-4. **3.7** — Dependency scanning in CI (automated protection)
-5. **3.14** — CI security gates (no deployment)
-6. **3.4** — Restrict default bind address
-7. **3.5** — Nginx security headers
-8. **3.1** — Tighten body-size limit (Axum already provides 2 MB default)
-9. **3.9** — Bound SSE connections
-10. **3.10** — Cap event log size
-11. **3.8** — Docker image scanning
-12. **3.11** — Economy/price input validation
-13. **3.12** — Configurable CORS
-14. **3.13** — Update SECURITY.md (after other items are implemented)
+Items are grouped into waves. Items within a wave can be done in parallel. 3.6 is already complete and omitted.
+
+**Wave 1 — Functional correctness (High priority, unblocks observability)**
+1. **3.3** — Handler and scheduler error propagation (quick win)
+2. **3.2** — Scenario load error propagation (medium effort, high value)
+
+**Wave 2 — Deployment defaults (Medium priority, low effort)**
+3. **3.4** — Restrict default bind address
+4. **3.12** — Configurable CORS
+
+**Wave 3 — Resource exhaustion controls (Medium priority)**
+5. **3.9** — Bound SSE connections
+6. **3.10** — Cap event log size
+
+**Wave 4 — Input hardening (Low-Medium priority)**
+7. **3.1** — Tighten body-size limit
+8. **3.11** — Economy/price input validation
+
+**Wave 5 — Container and docs (Medium-Low priority)**
+9. **3.5** — Nginx security headers
+10. **3.13** — Update SECURITY.md
+
+**Wave 6 — Supply-chain and CI gates (High priority, can run anytime)**
+11. **3.7** — Dependency vulnerability scanning in CI
+12. **3.8** — Docker image scanning in CI
+13. **3.14** — CI security gates (Gitleaks, matrix Trivy, audit artifacts)
+
+> Wave 6 is listed last because it only touches CI config and has no code dependencies on waves 1-5. It can be implemented at any point.
+
+---
+
+## Implementation Status (2026-04-04)
+
+All 13 actionable tasks (3.1–3.5, 3.7–3.14) plus the pre-existing 3.6 are now **complete**.
+
+### Completed tasks
+
+| Task | Summary | Commit wave |
+|------|---------|-------------|
+| 3.3 | Handler/scheduler error propagation; `last_error` in `SimSnapshot` | Wave 1 |
+| 3.2 | Scenario load error propagation via `SyncSender` reply channel | Wave 1 |
+| 3.4 | Default bind address changed to `127.0.0.1:3000` | Wave 2 |
+| 3.12 | CORS reads `CORS_ALLOWED_ORIGIN` env var; falls back to permissive | Wave 2 |
+| 3.9 | SSE semaphore (64 permits); 503 when exhausted | Wave 3 |
+| 3.10 | EventLog capacity cap (default 1M); manual PartialEq | Wave 3 |
+| 3.1 | DefaultBodyLimit::max(1 MB) on Axum router | Wave 4 |
+| 3.11 | Price upper bound (1M) in API; finiteness checks in TOML validation | Wave 4 |
+| 3.5 | Nginx security headers: CSP, X-Frame-Options, etc. | Wave 5 |
+| 3.13 | SECURITY.md "Hardening for Network Deployment" section | Wave 5 |
+| 3.7 | rustsec/audit-check + npm audit + Dependabot config | Wave 6 |
+| 3.8 | Trivy matrix scan for API + UI Docker images | Wave 6 |
+| 3.14 | Gitleaks secret scan; npm-audit.json artifact on failure | Wave 6 |
+
+### Test summary
+
+- **Rust workspace:** 203 tests, 0 failures
+- **Clippy:** 0 warnings (with `-D warnings`)
+- **rustfmt:** clean
+
+### Build/runtime fixes applied
+
+- `SimCommand` derive changed from `#[derive(Debug, Clone)]` to `#[derive(Debug)]` because `SyncSender` does not implement `Clone` when used as a field. No call sites clone `SimCommand`, so this is safe.
+- Added `reschedule_periodic_checked()` as a new function rather than modifying the existing `reschedule_periodic()`, to preserve backward compatibility for any external callers (the old function is still used in tests via `spawn_sim_thread`).
+- `cargo fmt` applied as a separate commit after all implementation changes.
+
+### Validations remaining
+
+- **Task 3.5 (Nginx headers):** Verification requires building the Docker UI image and checking response headers with `curl -I`. This was not performed in the dev environment. Must be verified in CI or locally with Docker.
+- **Task 3.7/3.8/3.14 (CI config):** CI YAML changes cannot be tested locally; verification requires a GitHub Actions run on push.
 
 ---
 
@@ -778,227 +880,23 @@ The following are documented for completeness but deferred beyond the MVP harden
 
 ---
 
-## Findings
+## Appendix A: Findings History
 
-### F1: §3.1 mischaracterizes Axum's existing body-size default [Applied]
-<!-- severity: major -->
-<!-- dimension: correctness -->
+The following findings (F1–F14) were identified during internal review and have been applied to the plan body above. They are retained here as an audit trail. All items marked `[Applied]` — the plan text already reflects the chosen resolution.
 
-**Context:** §3.1 states "Add `tower_http::limit::RequestBodyLimitLayer` to the Axum router" and risk table R3 says "no body-size limits" / "Axum defaults only (~2MB for JSON)". The attack surface table (§1.2) also claims "no body-size limits" for the TOML scenario input.
-
-**Issue:** Axum 0.8 already applies a **2 MB default body limit** via `axum_core::extract::DefaultBodyLimit` on all extractors (`Json`, `String`, `Bytes`, `Form`). The plan correctly parenthetically mentions "~2MB" in R3 but contradicts this in §1.2 and §3.1 by framing the situation as if no limit exists. Adding `RequestBodyLimitLayer` on top of the existing `DefaultBodyLimit` creates two independent limits — the lower of the two applies. The plan should use Axum's built-in `DefaultBodyLimit::max()` instead of adding a tower-http layer, or explicitly explain the layering. Additionally, lowering to 1 MB while Axum's default is 2 MB means the tower-http layer is redundant unless it's set below 2 MB.
-
-**Recommendation:** Rewrite §3.1 to use `axum::extract::DefaultBodyLimit::max(1024 * 1024)` as a router layer (no Cargo.toml change needed). Update §1.2 and R3 to acknowledge the existing 2 MB default and explain why lowering it to 1 MB is desirable.
-
-**Choices:**
-- [x] Use `DefaultBodyLimit::max()` from Axum; remove `tower-http` `"limit"` feature addition; fix §1.2 and R3 wording
-- [ ] Keep `RequestBodyLimitLayer` but document that it stacks with the Axum default
-- [ ] Remove §3.1 entirely (the 2 MB default is sufficient for this MVP)
-
-### F2: §3.2 `SyncSender` prose contradicts code sample [Applied]
-<!-- severity: critical -->
-<!-- dimension: correctness -->
-
-**Context:** §3.2 proposes adding `reply: std::sync::mpsc::SyncSender<Result<(), String>>` to `SimCommand::LoadScenario`. `SimCommand` derives `Clone` (`crates/sim-api/src/state.rs:29`).
-
-**Issue:** `std::sync::mpsc::SyncSender` implements `Clone`, so that specific trait is not broken. However, the code snippet in step 1 says to use `tokio::sync::oneshot::Sender` in the prose ("Change `SimCommand::LoadScenario` to carry a `tokio::sync::oneshot::Sender`") but then shows `std::sync::mpsc::SyncSender` in the code block. `tokio::sync::oneshot::Sender` does **not** implement `Clone` and would break the derive. The plan text contradicts the code sample.
-
-**Recommendation:** Remove the `tokio::sync::oneshot` mention from the prose. The code sample using `std::sync::mpsc::SyncSender` is the correct approach since the sim thread is a plain OS thread. Verify that `SyncSender<Result<(), String>>` satisfies `Debug` (it does — `SyncSender` implements `Debug`).
-
-**Choices:**
-- [x] Fix prose to consistently say `std::sync::mpsc::SyncSender`; remove `tokio::sync::oneshot` reference
-- [ ] Use `tokio::sync::oneshot` and remove `Clone` derive from `SimCommand`
-
-### F3: §3.9 SSE semaphore code uses wrong ownership pattern [Applied]
-<!-- severity: major -->
-<!-- dimension: correctness -->
-
-**Context:** §3.9 proposes `sse_semaphore: tokio::sync::Semaphore` as a field on `AppState` and then calls `state.sse_semaphore.clone().try_acquire_owned()`.
-
-**Issue:** `tokio::sync::Semaphore` does not implement `Clone`. The `try_acquire_owned()` method requires `Arc<Semaphore>`. Since `AppState` is wrapped in `Arc<AppState>`, the semaphore field needs to be `Arc<Semaphore>`, or the code must use `try_acquire()` with a lifetime-bounded permit instead.
-
-**Recommendation:** Change the field type to `Arc<tokio::sync::Semaphore>` and update the initialization to `sse_semaphore: Arc::new(tokio::sync::Semaphore::new(64))`. Update the `event_stream` code to `state.sse_semaphore.clone().try_acquire_owned()`.
-
-**Choices:**
-- [x] Change field to `Arc<Semaphore>`, update initialization and acquisition code
-- [ ] Use `try_acquire()` with lifetime-bounded permit (more complex stream typing)
-
-### F4: §3.10 event log cap breaks `PartialEq` for determinism tests [Applied]
-<!-- severity: major -->
-<!-- dimension: testing -->
-
-**Context:** §3.10 adds a `max_capacity: usize` field to `EventLog`. `EventLog` derives `PartialEq` (`crates/sim-core/src/log.rs:10`). Determinism tests use `assert_eq!(result1.event_log, result2.event_log)` (`crates/sim-core/tests/determinism.rs:57`).
-
-**Issue:** If `max_capacity` participates in `PartialEq`, two logs with identical events but different capacity values would compare as unequal, breaking determinism tests. If `max_capacity` is excluded (manual `PartialEq` impl), it adds maintenance burden and diverges from the derive pattern used across all Arcogine types (`CONTRIBUTING.md:56`).
-
-**Recommendation:** Exclude `max_capacity` from equality by implementing `PartialEq` manually (compare only `events`), or annotate the field with `#[serde(skip)]` and derive `PartialEq` only on the `events` vec. Document the design choice.
-
-**Choices:**
-- [x] Implement `PartialEq` manually, comparing only the `events` field; add a doc-comment explaining why
-- [ ] Use `#[derive(PartialEq)]` and accept that different capacities make logs unequal (update determinism test to use same capacity)
-
-### F5: §3.2 and §3.3 lack test specifications for the new behavior [Applied]
-<!-- severity: major -->
-<!-- dimension: testing -->
-
-**Context:** §3.2 says "Add tests in `api_smoke.rs`" with three bullet points (valid TOML → 200, invalid TOML → 400, validation failure → 400). §3.3 has no test specification at all.
-
-**Issue:** The test bullets in §3.2 are acceptance-level descriptions, not implementable test specifications. They omit: (a) how to construct the invalid TOML body in the test, (b) what the error response body should contain, (c) whether the existing `load_scenario` helper function in `api_smoke.rs` needs updating (it currently only returns `StatusCode`, not the body). §3.3 proposes changing silent error suppression to logging but provides no way to verify the fix — there is no test that checks log output or an error field in the snapshot.
-
-**Recommendation:** For §3.2, expand test specs: update `load_scenario` helper to return `(StatusCode, serde_json::Value)`, add three named test functions with specific assertions on the error `message` field. For §3.3, add a `last_error: Option<String>` field to `SimSnapshot` (currently described as "optional future enhancement") and promote it to the primary verification mechanism, with a test that triggers a handler error (e.g., `ChangeMachineCount` with an invalid machine ID) and asserts the snapshot contains the error.
-
-**Choices:**
-- [x] Expand test specs for §3.2; promote `last_error` field in §3.3 from "optional" to "required" with test spec
-- [ ] Keep §3.3 as log-only and verify via integration test with a tracing subscriber capture
-
-### F6: No security-focused tests exist or are planned [Applied]
-<!-- severity: major -->
-<!-- dimension: testing -->
-
-**Context:** The plan proposes 13 improvements but only §3.1 and §3.2 mention verification tests. The remaining 11 items have no test specifications.
-
-**Issue:** Without test coverage for security controls, regressions can silently reintroduce vulnerabilities. Items particularly needing tests: §3.4 (bind address — verify CLI parses `127.0.0.1` default), §3.9 (SSE connection limit — verify 503 when limit exceeded), §3.11 (NaN/Infinity/upper-bound rejection), §3.12 (CORS with env var set).
-
-**Recommendation:** Add a "Verification" subsection to each actionable plan item (§3.1–§3.12) specifying at least one test.
-
-**Choices:**
-- [x] Add verification test specs to all §3.x items
-- [ ] Add a single "§3.14 Security Test Suite" section consolidating all security tests
-
-### F7: §3.5 CSP scope not clarified for Vite dev mode [Applied]
-<!-- severity: major -->
-<!-- dimension: gaps -->
-
-**Context:** §3.5 proposes `Content-Security-Policy "... connect-src 'self'; ..."` for the nginx config in `ui/Dockerfile`.
-
-**Issue:** This CSP is applied only in the Docker nginx container, not during Vite dev mode (which uses a different proxy at `vite.config.ts:9-13`). This is fine for Docker-only deployment. However, the `connect-src 'self'` directive would block SSE connections if the browser connects to the UI on a different host/port than the API. In the Docker setup, nginx proxies `/api/` so `'self'` works. The plan correctly notes this but should explicitly state that the CSP does **not** apply to Vite dev mode and that adding a CSP meta tag to `ui/index.html` is out of scope for this item.
-
-**Recommendation:** Add a note clarifying the scope: "This CSP applies only to the Docker nginx container. The Vite dev server does not serve these headers; CSP for dev mode is not required for a local-only tool."
-
-**Choices:**
-- [x] Add scope clarification note; no changes to Vite config
-- [ ] Also add a CSP meta tag to `ui/index.html` for dev-mode coverage
-
-### F8: §3.7 `cargo install cargo-audit` is slow in CI [Applied]
-<!-- severity: minor -->
-<!-- dimension: best-practices -->
-
-**Context:** §3.7.1 proposes `cargo install cargo-audit` in CI.
-
-**Issue:** `cargo install` compiles from source, adding 1–3 minutes to every CI run. The `rustsec/audit-check` GitHub Action provides a pre-built binary and is the idiomatic approach for CI.
-
-**Recommendation:** Replace the `cargo install` approach with the `rustsec/audit-check` action:
-
-```yaml
-- name: Audit Rust dependencies
-  uses: rustsec/audit-check@v2
-  with:
-    token: ${{ secrets.GITHUB_TOKEN }}
-```
-
-**Choices:**
-- [x] Use `rustsec/audit-check@v2` action instead of `cargo install`
-- [ ] Keep `cargo install` and cache `~/.cargo/bin` between runs
-
-### F9: §3.8 Docker scan job has unnecessary `needs` dependency [Applied]
-<!-- severity: minor -->
-<!-- dimension: best-practices -->
-
-**Context:** §3.8 specifies `needs: [rust]` for the `docker-scan` job.
-
-**Issue:** The Docker build is self-contained (multi-stage Dockerfile). It does not use CI-built artifacts. The `needs` dependency creates an unnecessary serial dependency that slows CI. The only reason to depend on `rust` would be to avoid building the Docker image if Rust checks fail, but this is a workflow-design preference, not a correctness requirement.
-
-**Recommendation:** Remove `needs: [rust]` to allow parallel execution, or clarify the intent (fail-fast optimization).
-
-**Choices:**
-- [x] Remove `needs: [rust]`; let Docker scan run in parallel
-- [ ] Keep `needs: [rust]` and document it as a fail-fast optimization
-
-### F10: Plan omits `let _ = scheduler.schedule(...)` error suppression [Applied]
-<!-- severity: major -->
-<!-- dimension: gaps -->
-
-**Context:** §3.3 identifies `let _ = h.handle_event(...)` error suppression at four locations. However, `state.rs` also has `let _ = scheduler.schedule(...)` at lines 492, 500, 634, 642, 759, 765.
-
-**Issue:** Scheduler errors (`EventOrderingViolation`) are silently discarded. While these should not occur in a well-behaved simulation (events are always scheduled in the future), suppressing them hides bugs. The `run_scenario` runner in `crates/sim-core/src/runner.rs:37-53` correctly uses `scheduler.schedule(...)?` to propagate these errors. The `state.rs` sim thread is inconsistent with this pattern.
-
-**Recommendation:** Extend §3.3 to also cover `let _ = scheduler.schedule(...)` lines. Apply the same `tracing::warn!` pattern.
-
-**Choices:**
-- [x] Extend §3.3 to cover all `let _ = ...` suppressions in `state.rs`, including scheduler errors
-- [ ] Address scheduler errors in a separate finding
-
-### F11: NaN/Infinity check misplaced for JSON vs TOML [Applied]
-<!-- severity: minor -->
-<!-- dimension: gaps -->
-
-**Context:** §3.11 adds `is_nan()` / `is_infinite()` checks to `change_price`. However, `serde_json` by default rejects NaN and Infinity when deserializing `f64` (they are not valid JSON numbers).
-
-**Issue:** The proposed NaN/Infinity check in `routes.rs` is dead code — `serde_json` will reject the request with a deserialization error before the handler runs. The check is harmless but misleading. The scenario-level TOML validation in `scenario.rs` is different: `toml` crate **does** parse `nan` and `inf` as valid TOML floats, so the NaN/Infinity check matters there but not in the JSON API handler.
-
-**Recommendation:** Move the NaN/Infinity guard to `validate_scenario` in `crates/sim-core/src/scenario.rs` where TOML parsing could produce these values. Remove or note as defensive in the API handler section.
-
-**Choices:**
-- [x] Add NaN/Infinity checks to `validate_scenario`; note the JSON handler check as defensive-only
-- [ ] Keep both checks (defense in depth)
-
-### F12: §3.6 doesn't mention dev container lockfile workflow [Applied]
-<!-- severity: minor -->
-<!-- dimension: plan-hygiene -->
-
-**Context:** §3.6 proposes committing `Cargo.lock`. The dev container's `post-create.sh` runs `cargo build` which generates/updates `Cargo.lock`.
-
-**Issue:** Once `Cargo.lock` is committed, `cargo build` in `post-create.sh` will use the committed lockfile (correct behavior). However, if a developer runs `cargo update` inside the dev container and doesn't commit the updated lockfile, subsequent CI runs will use the stale lockfile. This is standard Rust workflow, but the plan should mention it in the "Impact" section for completeness.
-
-**Recommendation:** Add a brief note to §3.6: "After committing `Cargo.lock`, dependency updates require `cargo update` followed by committing the updated lockfile. Dev container users should be aware that local `cargo update` changes are not reflected in CI until committed."
-
-**Choices:**
-- [x] Add the note to §3.6
-- [ ] No change needed (standard Rust knowledge)
-
-### F13: Priority matrix inconsistency after F1 correction [Applied]
-<!-- severity: minor -->
-<!-- dimension: plan-hygiene -->
-
-**Context:** §4 Priority Matrix shows §3.1 as "High" priority and first in the execution order (§5 step 2). §3.6 is also "High" and is step 1 in execution order.
-
-**Issue:** §3.1's effective priority should be "Medium" now that we know Axum already provides a 2 MB default. The existing default is sufficient for the MVP threat model (local-only). Lowering to 1 MB is a hardening preference, not a critical fix. With F1 applied, the matrix should reflect the reduced urgency.
-
-**Recommendation:** After applying F1, downgrade §3.1 from "High" to "Medium" in the priority matrix and move it after §3.7 in the execution order.
-
-**Choices:**
-- [x] Downgrade §3.1 to Medium priority; adjust execution order
-- [ ] Keep as High (defense in depth justifies it)
-
-### F14: §3.10 `Default` derive produces zero-capacity EventLog [Applied]
-<!-- severity: major -->
-<!-- dimension: correctness -->
-
-**Context:** §3.10 proposes `#[derive(Debug, Clone, Default, Serialize)]` for the updated `EventLog` with a `max_capacity: usize` field. `Default` for `usize` is `0`.
-
-**Issue:** `EventLog::default()` would create a log with `max_capacity = 0`, meaning `append()` would never accept any event. While `EventLog::default()` is not currently called directly (all usages are `EventLog::new()`), the derive `Default` is part of the existing API and could be used in tests or future code. Silently producing a broken instance violates the principle of least surprise.
-
-**Recommendation:** Remove `Default` from the derive list and implement it manually to delegate to `EventLog::new()`.
-
-**Choices:**
-- [x] Implement `Default` manually, delegating to `new()` which sets `max_capacity` to 1,000,000
-- [ ] Keep `Default` derive and document that default capacity is 0
-
-### Summary
-
-| # | Title | Severity | Dimension | Depends on |
+| # | Title | Severity | Dimension | Resolution |
 |---|-------|----------|-----------|------------|
-| F1 | §3.1 mischaracterizes Axum's existing body-size default | major | correctness | — |
-| F2 | §3.2 `SyncSender` prose contradicts code sample | critical | correctness | — |
-| F3 | §3.9 SSE semaphore code uses wrong ownership pattern | major | correctness | — |
-| F4 | §3.10 event log cap breaks `PartialEq` for determinism tests | major | testing | — |
-| F5 | §3.2 and §3.3 lack test specifications | major | testing | F2 |
-| F6 | No security-focused tests for most plan items | major | testing | — |
-| F7 | §3.5 CSP scope not clarified for Vite dev mode | major | gaps | — |
-| F8 | §3.7 `cargo install cargo-audit` is slow in CI | minor | best-practices | — |
-| F9 | §3.8 Docker scan job has unnecessary `needs` dependency | minor | best-practices | — |
-| F10 | Plan omits scheduler error suppression in `state.rs` | major | gaps | — |
-| F11 | NaN/Infinity check misplaced for JSON vs TOML | minor | gaps | — |
-| F12 | §3.6 doesn't mention dev container lockfile workflow | minor | plan-hygiene | — |
-| F13 | Priority matrix inconsistency after F1 correction | minor | plan-hygiene | F1 |
-| F14 | §3.10 `Default` derive produces zero-capacity EventLog | major | correctness | F4 |
+| F1 | §3.1 mischaracterized Axum's body-size default | major | correctness | Rewritten to use `DefaultBodyLimit::max()` from Axum; priority downgraded to Medium |
+| F2 | §3.2 `SyncSender` prose contradicted code sample | critical | correctness | Prose fixed to consistently say `std::sync::mpsc::SyncSender` |
+| F3 | §3.9 SSE semaphore used wrong ownership pattern | major | correctness | Field type changed to `Arc<Semaphore>` |
+| F4 | §3.10 event log cap would break `PartialEq` for determinism tests | major | testing | Manual `PartialEq` impl comparing only `events` |
+| F5 | §3.2 and §3.3 lacked test specifications | major | testing | Verification blocks added with named tests |
+| F6 | No security-focused tests for most plan items | major | testing | Verification blocks added to all §3.x items |
+| F7 | §3.5 CSP scope not clarified for Vite dev mode | major | gaps | Scope note added |
+| F8 | §3.7 proposed slow `cargo install cargo-audit` | minor | best-practices | Replaced with `rustsec/audit-check@v2` action |
+| F9 | §3.8 Docker scan had unnecessary `needs` dependency | minor | best-practices | `needs: [rust]` removed |
+| F10 | §3.3 omitted `let _ = scheduler.schedule(...)` suppression | major | gaps | Extended to cover all suppressions |
+| F11 | NaN/Infinity check misplaced for JSON vs TOML | minor | gaps | Finiteness checks moved to `validate_scenario`; API check noted as defensive |
+| F12 | §3.6 didn't mention dev container lockfile workflow | minor | plan-hygiene | Impact note added |
+| F13 | Priority matrix inconsistency after F1 correction | minor | plan-hygiene | §3.1 downgraded to Medium |
+| F14 | §3.10 `Default` derive would produce zero-capacity EventLog | major | correctness | Manual `Default` impl delegating to `new()` |

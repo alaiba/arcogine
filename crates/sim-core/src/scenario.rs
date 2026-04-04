@@ -128,12 +128,23 @@ fn validate_scenario(config: &ScenarioConfig) -> Result<(), SimError> {
         }
     }
 
-    // Validate economy config if present
     if let Some(econ) = &config.economy {
-        if econ.initial_price <= 0.0 {
+        if !econ.initial_price.is_finite() || econ.initial_price <= 0.0 || econ.initial_price > 1_000_000.0 {
             return Err(SimError::OutOfRange {
                 field: "economy.initial_price".to_string(),
-                message: "must be > 0".to_string(),
+                message: "must be a finite number > 0 and <= 1,000,000".to_string(),
+            });
+        }
+        if !econ.base_demand.is_finite() || econ.base_demand < 0.0 {
+            return Err(SimError::OutOfRange {
+                field: "economy.base_demand".to_string(),
+                message: "must be a finite number >= 0".to_string(),
+            });
+        }
+        if !econ.price_elasticity.is_finite() || econ.price_elasticity < 0.0 {
+            return Err(SimError::OutOfRange {
+                field: "economy.price_elasticity".to_string(),
+                message: "must be a finite number >= 0".to_string(),
             });
         }
     }

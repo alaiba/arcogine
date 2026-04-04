@@ -449,6 +449,39 @@ async fn change_machine_updates_snapshot() {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
+// ─── §3.12 — Configurable CORS ──────────────────────────────────────
+
+#[tokio::test]
+async fn cors_with_env_var_restricts_origin() {
+    use tower_http::cors::{Any, CorsLayer};
+    use axum::http::{HeaderValue, Method};
+
+    let allowed = "http://example.com";
+    let cors = CorsLayer::new()
+        .allow_origin(allowed.parse::<HeaderValue>().unwrap())
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_headers(Any);
+
+    let state = create_app_state();
+    let app = sim_api::server::build_router_with_cors(state, cors);
+
+    let req = Request::builder()
+        .uri("/api/health")
+        .header("Origin", "http://evil.com")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.oneshot(req).await.unwrap();
+    let acao = resp
+        .headers()
+        .get("access-control-allow-origin")
+        .map(|v| v.to_str().unwrap_or(""));
+    assert_ne!(
+        acao,
+        Some("http://evil.com"),
+        "evil origin should not be reflected"
+    );
+}
+
 // ─── §3.2 — Scenario load error propagation ─────────────────────────
 
 #[tokio::test]

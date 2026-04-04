@@ -1,5 +1,6 @@
 //! Axum HTTP server setup with routing, middleware, CORS, and OpenAPI spec.
 
+use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderValue, Method};
 use axum::routing::{get, post};
 use axum::Router;
@@ -61,6 +62,7 @@ pub fn build_router_with_cors(state: Arc<AppState>, cors: CorsLayer) -> Router {
         .with_state(state)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
+        .layer(DefaultBodyLimit::max(1024 * 1024))
 }
 
 /// Create shared application state by spawning the simulation thread.

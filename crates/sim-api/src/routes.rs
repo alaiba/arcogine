@@ -168,8 +168,9 @@ pub async fn change_price(
     State(state): State<Arc<AppState>>,
     Json(body): Json<ChangePriceRequest>,
 ) -> Result<Json<SimSnapshot>, (StatusCode, Json<ErrorResponse>)> {
-    if body.price < 0.0 {
-        return Err(bad_request("Price must be non-negative"));
+    const MAX_PRICE: f64 = 1_000_000.0;
+    if body.price < 0.0 || body.price > MAX_PRICE {
+        return Err(bad_request("Price must be between 0 and 1,000,000"));
     }
 
     {

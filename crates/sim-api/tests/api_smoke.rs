@@ -449,6 +449,55 @@ async fn change_machine_updates_snapshot() {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
+// ─── §3.11 — Price upper bound ──────────────────────────────────────
+
+#[tokio::test]
+async fn extreme_price_returns_bad_request() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    load_scenario(&app, basic_scenario_toml()).await;
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    let body = serde_json::json!({ "price": 2000000.0 });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/price")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+// ─── §3.1 — Body-size limit ─────────────────────────────────────────
+
+#[tokio::test]
+async fn oversized_body_returns_413() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let big_toml = "x".repeat(2 * 1024 * 1024);
+    let body = serde_json::json!({ "toml": big_toml });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/scenario")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[tokio::test]
+async fn normal_body_accepted() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let status = load_scenario(&app, basic_scenario_toml()).await;
+    assert_eq!(status, StatusCode::OK);
+}
+
 // ─── §3.9 — SSE connection limit ────────────────────────────────────
 
 #[tokio::test]

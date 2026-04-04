@@ -26,9 +26,12 @@ use sim_factory::process::FactoryHandler;
 use sim_factory::routing::{Routing, RoutingStep, RoutingStore};
 
 /// Commands sent from the API layer to the simulation thread.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum SimCommand {
-    LoadScenario(String),
+    LoadScenario {
+        toml: String,
+        reply: std::sync::mpsc::SyncSender<Result<(), String>>,
+    },
     Run,
     Pause,
     Step,
@@ -102,6 +105,7 @@ pub struct SimSnapshot {
     pub current_price: f64,
     pub agent_enabled: bool,
     pub scenario_loaded: bool,
+    pub last_error: Option<String>,
 }
 
 impl Default for SimSnapshot {
@@ -122,6 +126,7 @@ impl Default for SimSnapshot {
             current_price: 0.0,
             agent_enabled: false,
             scenario_loaded: false,
+            last_error: None,
         }
     }
 }
@@ -264,6 +269,7 @@ fn build_snapshot(
     current_time: SimTime,
     events_processed: u64,
     config: Option<&ScenarioConfig>,
+    last_error: Option<String>,
 ) -> SimSnapshot {
     let kpis = vec![
         TotalSimulatedTime.compute(event_log, current_time),
@@ -345,6 +351,7 @@ fn build_snapshot(
         current_price: handler.pricing.current_price,
         agent_enabled: handler.agent_enabled,
         scenario_loaded: config.is_some(),
+        last_error,
     }
 }
 
@@ -370,13 +377,14 @@ pub fn spawn_sim_thread() -> (
         let mut run_state = SimRunState::Idle;
         let mut events_processed: u64 = 0;
         let mut agent_enabled = false;
+        let mut last_error: Option<String> = None;
 
         loop {
             let cmd = cmd_rx.recv();
             let Ok(cmd) = cmd else { break };
 
             match cmd {
-                SimCommand::LoadScenario(toml_str) => {
+                SimCommand::LoadScenario { toml: toml_str, reply } => {
                     match sim_core::scenario::load_scenario(&toml_str) {
                         Ok(cfg) => {
                             let h = build_handler_from_config(&cfg);
@@ -385,21 +393,28 @@ pub fn spawn_sim_thread() -> (
                             scheduler = Scheduler::new();
                             event_log = EventLog::new();
                             events_processed = 0;
+                            last_error = None;
 
                             let demand_interval = cfg.simulation.demand_eval_interval;
                             if demand_interval > 0 {
-                                let _ = scheduler.schedule(Event::new(
+                                if let Err(e) = scheduler.schedule(Event::new(
                                     SimTime(demand_interval),
                                     EventPayload::DemandEvaluation,
-                                ));
+                                )) {
+                                    tracing::warn!(error = %e, "scheduler error");
+                                    last_error = Some(e.to_string());
+                                }
                             }
 
                             let agent_interval = cfg.simulation.agent_eval_interval;
                             if agent_interval > 0 && agent_enabled {
-                                let _ = scheduler.schedule(Event::new(
+                                if let Err(e) = scheduler.schedule(Event::new(
                                     SimTime(agent_interval),
                                     EventPayload::AgentEvaluation,
-                                ));
+                                )) {
+                                    tracing::warn!(error = %e, "scheduler error");
+                                    last_error = Some(e.to_string());
+                                }
                             }
 
                             run_state = SimRunState::Paused;
@@ -410,14 +425,17 @@ pub fn spawn_sim_thread() -> (
                                 SimTime::ZERO,
                                 0,
                                 Some(&cfg),
+                                last_error.take(),
                             );
                             let _ = snapshot_tx.send(snap);
                             let _ = log_tx.send(event_log.clone());
+                            let _ = reply.send(Ok(()));
                             handler = Some(h);
                             config = Some(cfg);
                         }
-                        Err(_e) => {
-                            tracing::error!("Failed to load scenario");
+                        Err(e) => {
+                            tracing::error!("Failed to load scenario: {e}");
+                            let _ = reply.send(Err(e.to_string()));
                         }
                     }
                 }
@@ -429,7 +447,10 @@ pub fn spawn_sim_thread() -> (
                             if event.time <= max_time {
                                 event_log.append(event.clone());
                                 let _ = event_tx_clone.send(event.clone());
-                                let _ = h.handle_event(&event, &mut scheduler);
+                                if let Err(e) = h.handle_event(&event, &mut scheduler) {
+                                    tracing::warn!(error = %e, event_time = event.time.ticks(), "event handler error");
+                                    last_error = Some(e.to_string());
+                                }
                                 events_processed += 1;
 
                                 reschedule_periodic(
@@ -460,6 +481,7 @@ pub fn spawn_sim_thread() -> (
                             scheduler.current_time(),
                             events_processed,
                             Some(cfg),
+                            last_error.take(),
                         );
                         let _ = snapshot_tx.send(snap);
                         let _ = log_tx.send(event_log.clone());
@@ -478,7 +500,10 @@ pub fn spawn_sim_thread() -> (
 
                             event_log.append(event.clone());
                             let _ = event_tx_clone.send(event.clone());
-                            let _ = h.handle_event(&event, &mut scheduler);
+                            if let Err(e) = h.handle_event(&event, &mut scheduler) {
+                                tracing::warn!(error = %e, event_time = event.time.ticks(), "event handler error");
+                                last_error = Some(e.to_string());
+                            }
                             events_processed += 1;
 
                             reschedule_periodic(
@@ -490,7 +515,6 @@ pub fn spawn_sim_thread() -> (
                                 agent_enabled,
                             );
 
-                            // Check for pause command (non-blocking)
                             if let Ok(SimCommand::Pause) = cmd_rx.try_recv() {
                                 run_state = SimRunState::Paused;
                                 break;
@@ -508,6 +532,7 @@ pub fn spawn_sim_thread() -> (
                             scheduler.current_time(),
                             events_processed,
                             Some(cfg),
+                            last_error.take(),
                         );
                         let _ = snapshot_tx.send(snap);
                         let _ = log_tx.send(event_log.clone());
@@ -527,26 +552,33 @@ pub fn spawn_sim_thread() -> (
                         scheduler = Scheduler::new();
                         event_log = EventLog::new();
                         events_processed = 0;
+                        last_error = None;
 
                         let demand_interval = cfg.simulation.demand_eval_interval;
                         if demand_interval > 0 {
-                            let _ = scheduler.schedule(Event::new(
+                            if let Err(e) = scheduler.schedule(Event::new(
                                 SimTime(demand_interval),
                                 EventPayload::DemandEvaluation,
-                            ));
+                            )) {
+                                tracing::warn!(error = %e, "scheduler error");
+                                last_error = Some(e.to_string());
+                            }
                         }
 
                         let agent_interval = cfg.simulation.agent_eval_interval;
                         if agent_interval > 0 && agent_enabled {
-                            let _ = scheduler.schedule(Event::new(
+                            if let Err(e) = scheduler.schedule(Event::new(
                                 SimTime(agent_interval),
                                 EventPayload::AgentEvaluation,
-                            ));
+                            )) {
+                                tracing::warn!(error = %e, "scheduler error");
+                                last_error = Some(e.to_string());
+                            }
                         }
 
                         run_state = SimRunState::Paused;
                         let snap =
-                            build_snapshot(&h, &event_log, run_state, SimTime::ZERO, 0, Some(cfg));
+                            build_snapshot(&h, &event_log, run_state, SimTime::ZERO, 0, Some(cfg), last_error.take());
                         let _ = snapshot_tx.send(snap);
                         let _ = log_tx.send(event_log.clone());
                         handler = Some(h);
@@ -560,7 +592,10 @@ pub fn spawn_sim_thread() -> (
                             Event::new(current_time, EventPayload::PriceChange { new_price });
                         event_log.append(event.clone());
                         let _ = event_tx_clone.send(event.clone());
-                        let _ = h.handle_event(&event, &mut scheduler);
+                        if let Err(e) = h.handle_event(&event, &mut scheduler) {
+                            tracing::warn!(error = %e, event_time = event.time.ticks(), "event handler error");
+                            last_error = Some(e.to_string());
+                        }
                         events_processed += 1;
 
                         let snap = build_snapshot(
@@ -570,6 +605,7 @@ pub fn spawn_sim_thread() -> (
                             scheduler.current_time(),
                             events_processed,
                             Some(cfg),
+                            last_error.take(),
                         );
                         let _ = snapshot_tx.send(snap);
                         let _ = log_tx.send(event_log.clone());
@@ -588,7 +624,10 @@ pub fn spawn_sim_thread() -> (
                         );
                         event_log.append(event.clone());
                         let _ = event_tx_clone.send(event.clone());
-                        let _ = h.handle_event(&event, &mut scheduler);
+                        if let Err(e) = h.handle_event(&event, &mut scheduler) {
+                            tracing::warn!(error = %e, event_time = event.time.ticks(), "event handler error");
+                            last_error = Some(e.to_string());
+                        }
                         events_processed += 1;
 
                         let snap = build_snapshot(
@@ -598,6 +637,7 @@ pub fn spawn_sim_thread() -> (
                             scheduler.current_time(),
                             events_processed,
                             Some(cfg),
+                            last_error.take(),
                         );
                         let _ = snapshot_tx.send(snap);
                         let _ = log_tx.send(event_log.clone());
@@ -617,6 +657,7 @@ pub fn spawn_sim_thread() -> (
                             scheduler.current_time(),
                             events_processed,
                             Some(cfg),
+                            last_error.clone(),
                         );
                         let _ = snapshot_tx.send(snap);
                     }
@@ -631,6 +672,7 @@ pub fn spawn_sim_thread() -> (
                             scheduler.current_time(),
                             events_processed,
                             Some(cfg),
+                            last_error.clone(),
                         );
                         let _ = snapshot_tx.send(snap);
                         let _ = log_tx.send(event_log.clone());
@@ -662,6 +704,38 @@ fn reschedule_periodic(
             let next_time = event.time + agent_interval;
             if next_time <= max_time {
                 let _ = scheduler.schedule(Event::new(next_time, EventPayload::AgentEvaluation));
+            }
+        }
+        _ => {}
+    }
+}
+
+fn reschedule_periodic_checked(
+    event: &Event,
+    scheduler: &mut Scheduler,
+    max_time: SimTime,
+    demand_interval: u64,
+    agent_interval: u64,
+    agent_enabled: bool,
+    last_error: &mut Option<String>,
+) {
+    match &event.payload {
+        EventPayload::DemandEvaluation => {
+            let next_time = event.time + demand_interval;
+            if next_time <= max_time {
+                if let Err(e) = scheduler.schedule(Event::new(next_time, EventPayload::DemandEvaluation)) {
+                    tracing::warn!(error = %e, "scheduler error");
+                    *last_error = Some(e.to_string());
+                }
+            }
+        }
+        EventPayload::AgentEvaluation if agent_enabled => {
+            let next_time = event.time + agent_interval;
+            if next_time <= max_time {
+                if let Err(e) = scheduler.schedule(Event::new(next_time, EventPayload::AgentEvaluation)) {
+                    tracing::warn!(error = %e, "scheduler error");
+                    *last_error = Some(e.to_string());
+                }
             }
         }
         _ => {}
@@ -705,6 +779,11 @@ steps = [1]
 initial_price = 10.0
 "#
         .to_string()
+    }
+
+    fn send_load_scenario(cmd_tx: &mpsc::Sender<SimCommand>, toml: String) {
+        let (tx, _rx) = std::sync::mpsc::sync_channel(1);
+        cmd_tx.send(SimCommand::LoadScenario { toml, reply: tx }).unwrap();
     }
 
     fn wait_for_snapshot(
@@ -804,6 +883,7 @@ initial_price = 10.0
             SimTime::ZERO,
             0,
             Some(&config),
+            None,
         );
         assert_eq!(snap.topology.edges.len(), 1);
         assert_eq!(snap.topology.edges[0].from_machine_id, 1);
@@ -850,6 +930,7 @@ initial_price = 10.0
             SimTime::ZERO,
             0,
             Some(&config),
+            None,
         );
         assert!(snap.topology.edges.is_empty());
     }
@@ -857,7 +938,7 @@ initial_price = 10.0
     #[test]
     fn spawn_load_scenario_transitions_to_loaded() {
         let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
-        cmd_tx.send(SimCommand::LoadScenario(basic_toml())).unwrap();
+        send_load_scenario(&cmd_tx, basic_toml());
 
         let snap = wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
         assert!(snap.scenario_loaded);
@@ -867,7 +948,7 @@ initial_price = 10.0
     #[test]
     fn spawn_run_after_load_completes() {
         let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
-        cmd_tx.send(SimCommand::LoadScenario(basic_toml())).unwrap();
+        send_load_scenario(&cmd_tx, basic_toml());
         wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
 
         cmd_tx.send(SimCommand::Run).unwrap();
@@ -879,7 +960,7 @@ initial_price = 10.0
     #[test]
     fn spawn_step_advances_one_event() {
         let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
-        cmd_tx.send(SimCommand::LoadScenario(basic_toml())).unwrap();
+        send_load_scenario(&cmd_tx, basic_toml());
         wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
 
         cmd_tx.send(SimCommand::Step).unwrap();
@@ -890,7 +971,7 @@ initial_price = 10.0
     #[test]
     fn spawn_change_price_updates_snapshot() {
         let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
-        cmd_tx.send(SimCommand::LoadScenario(basic_toml())).unwrap();
+        send_load_scenario(&cmd_tx, basic_toml());
         wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
 
         cmd_tx.send(SimCommand::ChangePrice(25.0)).unwrap();

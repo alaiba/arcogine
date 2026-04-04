@@ -15,7 +15,7 @@ use sim_core::log::EventLog;
 use sim_core::queue::Scheduler;
 use sim_types::scenario::ScenarioConfig;
 use sim_types::{JobStatus, MachineId, MachineState, ProductId, SimError, SimTime};
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc};
 use tokio::sync::{broadcast, watch};
 
 use sim_agents::sales_agent::{AgentObservation, SalesAgent, SalesAgentConfig};
@@ -137,6 +137,7 @@ pub struct AppState {
     pub snapshot_rx: watch::Receiver<SimSnapshot>,
     pub event_tx: broadcast::Sender<Event>,
     pub event_log_rx: watch::Receiver<EventLog>,
+    pub sse_semaphore: Arc<tokio::sync::Semaphore>,
 }
 
 impl std::fmt::Debug for AppState {

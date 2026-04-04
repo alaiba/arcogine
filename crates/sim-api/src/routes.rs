@@ -32,17 +32,20 @@ pub async fn load_scenario(
     State(state): State<Arc<AppState>>,
     Json(body): Json<LoadScenarioRequest>,
 ) -> Result<Json<LoadScenarioResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let (tx, rx) = std::sync::mpsc::sync_channel(1);
     state
         .cmd_tx
-        .send(SimCommand::LoadScenario(body.toml))
+        .send(SimCommand::LoadScenario { toml: body.toml, reply: tx })
         .map_err(|_| sim_error("Failed to send command to simulation thread"))?;
 
-    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-
-    Ok(Json(LoadScenarioResponse {
-        success: true,
-        message: "Scenario loaded".to_string(),
-    }))
+    match rx.recv_timeout(std::time::Duration::from_secs(5)) {
+        Ok(Ok(())) => Ok(Json(LoadScenarioResponse {
+            success: true,
+            message: "Scenario loaded".to_string(),
+        })),
+        Ok(Err(msg)) => Err(bad_request(&msg)),
+        Err(_) => Err(sim_error("Scenario load timed out")),
+    }
 }
 
 #[derive(Serialize)]

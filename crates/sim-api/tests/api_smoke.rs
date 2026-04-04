@@ -43,6 +43,11 @@ lead_time_sensitivity = 0.0
 }
 
 async fn load_scenario(app: &axum::Router, toml: &str) -> StatusCode {
+    let (status, _body) = load_scenario_with_body(app, toml).await;
+    status
+}
+
+async fn load_scenario_with_body(app: &axum::Router, toml: &str) -> (StatusCode, serde_json::Value) {
     let body = serde_json::json!({ "toml": toml });
     let req = Request::builder()
         .method(http::Method::POST)
@@ -51,7 +56,10 @@ async fn load_scenario(app: &axum::Router, toml: &str) -> StatusCode {
         .body(Body::from(serde_json::to_string(&body).unwrap()))
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
-    resp.status()
+    let status = resp.status();
+    let bytes = resp.into_body().collect().await.unwrap().to_bytes();
+    let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null);
+    (status, json)
 }
 
 // ─── Happy-path tests ───────────────────────────────────────────────
@@ -419,25 +427,7 @@ async fn invalid_toml_content_returns_error() {
 max_ticks = "not a number"
 "#;
     let status = load_scenario(&app, invalid_toml).await;
-    // The server currently accepts the TOML and passes it to the sim thread;
-    // the thread logs the error but the HTTP handler returns OK because
-    // `load_scenario` is fire-and-forget with a sleep. Per F17, verify that
-    // the scenario is NOT loaded in the snapshot.
-    if status == StatusCode::OK {
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-
-        let req = Request::builder()
-            .uri("/api/snapshot")
-            .body(Body::empty())
-            .unwrap();
-        let resp = app.clone().oneshot(req).await.unwrap();
-        let body = resp.into_body().collect().await.unwrap().to_bytes();
-        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert_eq!(
-            json["scenario_loaded"], false,
-            "snapshot should show scenario NOT loaded after invalid TOML"
-        );
-    }
+    assert_eq!(status, StatusCode::BAD_REQUEST, "invalid TOML should return 400");
 }
 
 #[tokio::test]
@@ -457,6 +447,121 @@ async fn change_machine_updates_snapshot() {
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
+}
+
+// ─── §3.2 — Scenario load error propagation ─────────────────────────
+
+#[tokio::test]
+async fn load_valid_scenario_returns_success() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let (status, body) = load_scenario_with_body(&app, basic_scenario_toml()).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["success"], true);
+}
+
+#[tokio::test]
+async fn load_invalid_toml_returns_bad_request() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let (status, body) = load_scenario_with_body(&app, "not valid [[ toml").await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(body["error"].is_string(), "error field should be present");
+}
+
+#[tokio::test]
+async fn load_scenario_with_zero_max_ticks_returns_bad_request() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let toml = r#"
+[simulation]
+rng_seed = 42
+max_ticks = 0
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1]
+"#;
+
+    let (status, body) = load_scenario_with_body(&app, toml).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    let error_msg = body["error"].as_str().unwrap_or("");
+    assert!(error_msg.contains("max_ticks"), "error should mention max_ticks, got: {error_msg}");
+}
+
+#[tokio::test]
+async fn load_scenario_with_missing_equipment_returns_bad_request() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let toml = r#"
+[simulation]
+rng_seed = 42
+max_ticks = 100
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+"#;
+
+    let (status, body) = load_scenario_with_body(&app, toml).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    let error_msg = body["error"].as_str().unwrap_or("");
+    assert!(error_msg.contains("equipment"), "error should mention equipment, got: {error_msg}");
+}
+
+// ─── §3.3 — Handler error surfaces in snapshot ──────────────────────
+
+#[tokio::test]
+async fn handler_error_surfaces_in_snapshot() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    load_scenario(&app, basic_scenario_toml()).await;
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    let body = serde_json::json!({ "machine_id": 9999, "online": false });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/machines")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+    app.clone().oneshot(req).await.unwrap();
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    let req = Request::builder()
+        .uri("/api/snapshot")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert!(
+        json["last_error"].is_string(),
+        "last_error should be present after handler error, got: {:?}",
+        json["last_error"]
+    );
 }
 
 // ─── Error-path tests (F29) ─────────────────────────────────────────

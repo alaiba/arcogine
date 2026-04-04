@@ -42,7 +42,6 @@ pub fn build_cors_layer() -> CorsLayer {
 
 /// Build the router with a specific CORS layer (useful for testing).
 pub fn build_router_with_cors(state: Arc<AppState>, cors: CorsLayer) -> Router {
-
     Router::new()
         .route("/api/health", get(routes::health))
         .route("/api/scenario", post(routes::load_scenario))

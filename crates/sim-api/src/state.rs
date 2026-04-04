@@ -37,7 +37,10 @@ pub enum SimCommand {
     Step,
     Reset,
     ChangePrice(f64),
-    ChangeMachineCount { machine_id: u64, online: bool },
+    ChangeMachineCount {
+        machine_id: u64,
+        online: bool,
+    },
     ToggleAgent(bool),
     QuerySnapshot,
 }
@@ -385,61 +388,62 @@ pub fn spawn_sim_thread() -> (
             let Ok(cmd) = cmd else { break };
 
             match cmd {
-                SimCommand::LoadScenario { toml: toml_str, reply } => {
-                    match sim_core::scenario::load_scenario(&toml_str) {
-                        Ok(cfg) => {
-                            let h = build_handler_from_config(&cfg);
-                            agent_enabled = h.agent_enabled;
+                SimCommand::LoadScenario {
+                    toml: toml_str,
+                    reply,
+                } => match sim_core::scenario::load_scenario(&toml_str) {
+                    Ok(cfg) => {
+                        let h = build_handler_from_config(&cfg);
+                        agent_enabled = h.agent_enabled;
 
-                            scheduler = Scheduler::new();
-                            event_log = EventLog::new();
-                            events_processed = 0;
-                            last_error = None;
+                        scheduler = Scheduler::new();
+                        event_log = EventLog::new();
+                        events_processed = 0;
+                        last_error = None;
 
-                            let demand_interval = cfg.simulation.demand_eval_interval;
-                            if demand_interval > 0 {
-                                if let Err(e) = scheduler.schedule(Event::new(
-                                    SimTime(demand_interval),
-                                    EventPayload::DemandEvaluation,
-                                )) {
-                                    tracing::warn!(error = %e, "scheduler error");
-                                    last_error = Some(e.to_string());
-                                }
+                        let demand_interval = cfg.simulation.demand_eval_interval;
+                        if demand_interval > 0 {
+                            if let Err(e) = scheduler.schedule(Event::new(
+                                SimTime(demand_interval),
+                                EventPayload::DemandEvaluation,
+                            )) {
+                                tracing::warn!(error = %e, "scheduler error");
+                                last_error = Some(e.to_string());
                             }
+                        }
 
-                            let agent_interval = cfg.simulation.agent_eval_interval;
-                            if agent_interval > 0 && agent_enabled {
-                                if let Err(e) = scheduler.schedule(Event::new(
-                                    SimTime(agent_interval),
-                                    EventPayload::AgentEvaluation,
-                                )) {
-                                    tracing::warn!(error = %e, "scheduler error");
-                                    last_error = Some(e.to_string());
-                                }
+                        let agent_interval = cfg.simulation.agent_eval_interval;
+                        if agent_interval > 0 && agent_enabled {
+                            if let Err(e) = scheduler.schedule(Event::new(
+                                SimTime(agent_interval),
+                                EventPayload::AgentEvaluation,
+                            )) {
+                                tracing::warn!(error = %e, "scheduler error");
+                                last_error = Some(e.to_string());
                             }
+                        }
 
-                            run_state = SimRunState::Paused;
-                            let snap = build_snapshot(
-                                &h,
-                                &event_log,
-                                run_state,
-                                SimTime::ZERO,
-                                0,
-                                Some(&cfg),
-                                last_error.take(),
-                            );
-                            let _ = snapshot_tx.send(snap);
-                            let _ = log_tx.send(event_log.clone());
-                            let _ = reply.send(Ok(()));
-                            handler = Some(h);
-                            config = Some(cfg);
-                        }
-                        Err(e) => {
-                            tracing::error!("Failed to load scenario: {e}");
-                            let _ = reply.send(Err(e.to_string()));
-                        }
+                        run_state = SimRunState::Paused;
+                        let snap = build_snapshot(
+                            &h,
+                            &event_log,
+                            run_state,
+                            SimTime::ZERO,
+                            0,
+                            Some(&cfg),
+                            last_error.take(),
+                        );
+                        let _ = snapshot_tx.send(snap);
+                        let _ = log_tx.send(event_log.clone());
+                        let _ = reply.send(Ok(()));
+                        handler = Some(h);
+                        config = Some(cfg);
                     }
-                }
+                    Err(e) => {
+                        tracing::error!("Failed to load scenario: {e}");
+                        let _ = reply.send(Err(e.to_string()));
+                    }
+                },
 
                 SimCommand::Step => {
                     if let (Some(h), Some(cfg)) = (&mut handler, &config) {
@@ -578,8 +582,15 @@ pub fn spawn_sim_thread() -> (
                         }
 
                         run_state = SimRunState::Paused;
-                        let snap =
-                            build_snapshot(&h, &event_log, run_state, SimTime::ZERO, 0, Some(cfg), last_error.take());
+                        let snap = build_snapshot(
+                            &h,
+                            &event_log,
+                            run_state,
+                            SimTime::ZERO,
+                            0,
+                            Some(cfg),
+                            last_error.take(),
+                        );
                         let _ = snapshot_tx.send(snap);
                         let _ = log_tx.send(event_log.clone());
                         handler = Some(h);
@@ -711,38 +722,6 @@ fn reschedule_periodic(
     }
 }
 
-fn reschedule_periodic_checked(
-    event: &Event,
-    scheduler: &mut Scheduler,
-    max_time: SimTime,
-    demand_interval: u64,
-    agent_interval: u64,
-    agent_enabled: bool,
-    last_error: &mut Option<String>,
-) {
-    match &event.payload {
-        EventPayload::DemandEvaluation => {
-            let next_time = event.time + demand_interval;
-            if next_time <= max_time {
-                if let Err(e) = scheduler.schedule(Event::new(next_time, EventPayload::DemandEvaluation)) {
-                    tracing::warn!(error = %e, "scheduler error");
-                    *last_error = Some(e.to_string());
-                }
-            }
-        }
-        EventPayload::AgentEvaluation if agent_enabled => {
-            let next_time = event.time + agent_interval;
-            if next_time <= max_time {
-                if let Err(e) = scheduler.schedule(Event::new(next_time, EventPayload::AgentEvaluation)) {
-                    tracing::warn!(error = %e, "scheduler error");
-                    *last_error = Some(e.to_string());
-                }
-            }
-        }
-        _ => {}
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -784,7 +763,9 @@ initial_price = 10.0
 
     fn send_load_scenario(cmd_tx: &mpsc::Sender<SimCommand>, toml: String) {
         let (tx, _rx) = std::sync::mpsc::sync_channel(1);
-        cmd_tx.send(SimCommand::LoadScenario { toml, reply: tx }).unwrap();
+        cmd_tx
+            .send(SimCommand::LoadScenario { toml, reply: tx })
+            .unwrap();
     }
 
     fn wait_for_snapshot(

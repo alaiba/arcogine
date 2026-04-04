@@ -47,7 +47,10 @@ async fn load_scenario(app: &axum::Router, toml: &str) -> StatusCode {
     status
 }
 
-async fn load_scenario_with_body(app: &axum::Router, toml: &str) -> (StatusCode, serde_json::Value) {
+async fn load_scenario_with_body(
+    app: &axum::Router,
+    toml: &str,
+) -> (StatusCode, serde_json::Value) {
     let body = serde_json::json!({ "toml": toml });
     let req = Request::builder()
         .method(http::Method::POST)
@@ -427,7 +430,11 @@ async fn invalid_toml_content_returns_error() {
 max_ticks = "not a number"
 "#;
     let status = load_scenario(&app, invalid_toml).await;
-    assert_eq!(status, StatusCode::BAD_REQUEST, "invalid TOML should return 400");
+    assert_eq!(
+        status,
+        StatusCode::BAD_REQUEST,
+        "invalid TOML should return 400"
+    );
 }
 
 #[tokio::test]
@@ -534,13 +541,19 @@ async fn sse_connection_limit_returns_503() {
 
 #[tokio::test]
 async fn cors_with_env_var_restricts_origin() {
-    use tower_http::cors::{Any, CorsLayer};
     use axum::http::{HeaderValue, Method};
+    use tower_http::cors::{Any, CorsLayer};
 
     let allowed = "http://example.com";
     let cors = CorsLayer::new()
         .allow_origin(allowed.parse::<HeaderValue>().unwrap())
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
         .allow_headers(Any);
 
     let state = create_app_state();
@@ -619,7 +632,10 @@ steps = [1]
     let (status, body) = load_scenario_with_body(&app, toml).await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     let error_msg = body["error"].as_str().unwrap_or("");
-    assert!(error_msg.contains("max_ticks"), "error should mention max_ticks, got: {error_msg}");
+    assert!(
+        error_msg.contains("max_ticks"),
+        "error should mention max_ticks, got: {error_msg}"
+    );
 }
 
 #[tokio::test]
@@ -641,7 +657,10 @@ routing_id = 1
     let (status, body) = load_scenario_with_body(&app, toml).await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     let error_msg = body["error"].as_str().unwrap_or("");
-    assert!(error_msg.contains("equipment"), "error should mention equipment, got: {error_msg}");
+    assert!(
+        error_msg.contains("equipment"),
+        "error should mention equipment, got: {error_msg}"
+    );
 }
 
 // ─── §3.3 — Handler error surfaces in snapshot ──────────────────────

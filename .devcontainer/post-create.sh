@@ -7,6 +7,9 @@ cargo build
 echo "==> Installing UI dependencies..."
 cd ui && npm ci && cd ..
 
+echo "==> Installing Playwright Chromium browser for E2E tests..."
+cd ui && npx playwright install chromium && cd ..
+
 echo "==> Copying .env.example → .env (if not present)..."
 [ -f .env ] || cp .env.example .env
 

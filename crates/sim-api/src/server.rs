@@ -1,6 +1,6 @@
 //! Axum HTTP server setup with routing, middleware, CORS, and OpenAPI spec.
 
-use axum::http::Method;
+use axum::http::{HeaderValue, Method};
 use axum::routing::{get, post};
 use axum::Router;
 use std::sync::Arc;
@@ -13,16 +13,34 @@ use crate::state::{spawn_sim_thread, AppState};
 
 /// Build the application router with all middleware configured.
 pub fn build_router(state: Arc<AppState>) -> Router {
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::DELETE,
-            Method::OPTIONS,
-        ])
-        .allow_headers(Any);
+    let cors = build_cors_layer();
+    build_router_with_cors(state, cors)
+}
+
+/// Build CORS layer from `CORS_ALLOWED_ORIGIN` env var; falls back to permissive.
+pub fn build_cors_layer() -> CorsLayer {
+    let methods = [
+        Method::GET,
+        Method::POST,
+        Method::PUT,
+        Method::DELETE,
+        Method::OPTIONS,
+    ];
+
+    match std::env::var("CORS_ALLOWED_ORIGIN") {
+        Ok(origin) => CorsLayer::new()
+            .allow_origin(origin.parse::<HeaderValue>().expect("invalid CORS origin"))
+            .allow_methods(methods)
+            .allow_headers(Any),
+        Err(_) => CorsLayer::new()
+            .allow_origin(Any)
+            .allow_methods(methods)
+            .allow_headers(Any),
+    }
+}
+
+/// Build the router with a specific CORS layer (useful for testing).
+pub fn build_router_with_cors(state: Arc<AppState>, cors: CorsLayer) -> Router {
 
     Router::new()
         .route("/api/health", get(routes::health))

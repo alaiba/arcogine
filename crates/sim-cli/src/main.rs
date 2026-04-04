@@ -20,7 +20,7 @@ enum Cli {
     /// Start the HTTP API server.
     Serve {
         /// Address to bind the server to.
-        #[arg(long, default_value = "0.0.0.0:3000")]
+        #[arg(long, default_value = "127.0.0.1:3000")]
         addr: String,
     },
     /// Run a scenario headlessly and exit.
@@ -209,6 +209,15 @@ steps = [1]
 initial_price = 5.0
 base_demand = 10.0
 "#
+    }
+
+    #[test]
+    fn default_bind_address_is_localhost() {
+        let cli = Cli::try_parse_from(["arcogine", "serve"]).unwrap();
+        match cli {
+            Cli::Serve { addr } => assert_eq!(addr, "127.0.0.1:3000"),
+            _ => panic!("expected Serve variant"),
+        }
     }
 
     #[test]

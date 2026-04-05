@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Ignore generated coverage artifacts"
+paths = [
+  '''^ui/coverage/''',
+  '''^cobertura\.xml$''',
+]

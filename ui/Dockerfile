@@ -9,7 +9,7 @@ COPY . .
 
 RUN npm run build
 
-FROM nginx:stable-slim
+FROM nginx:stable-alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY <<'EOF' /etc/nginx/conf.d/default.conf
@@ -46,9 +46,6 @@ server {
 }
 EOF
 
-RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ca-certificates
 
 EXPOSE 5173

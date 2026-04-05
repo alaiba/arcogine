@@ -1,5 +1,8 @@
 # Arcogine
 
+[![CI](https://github.com/alaiba/arcogine/actions/workflows/ci.yml/badge.svg)](https://github.com/alaiba/arcogine/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/alaiba/arcogine/graph/badge.svg)](https://codecov.io/gh/alaiba/arcogine)
+
 Arcogine is a deterministic simulation engine for factory systems, economic dynamics, and agent-driven decision making.
 
 ## What is Arcogine?

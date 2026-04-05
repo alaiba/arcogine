@@ -159,4 +159,31 @@ mod tests {
         let store = RoutingStore::new();
         assert!(store.get_routing_for_product(ProductId(99)).is_err());
     }
+
+    #[test]
+    fn get_routing_by_id() {
+        let mut store = RoutingStore::new();
+        store.add_routing(sample_routing());
+        let r = store.get_routing(1).unwrap();
+        assert_eq!(r.name, "Widget Route");
+    }
+
+    #[test]
+    fn get_routing_unknown_id_errors() {
+        let store = RoutingStore::new();
+        assert!(store.get_routing(42).is_err());
+    }
+
+    #[test]
+    fn routing_store_default_is_empty() {
+        let store = RoutingStore::default();
+        assert!(store.get_routing(1).is_err());
+    }
+
+    #[test]
+    fn product_routing_with_missing_routing_id_errors() {
+        let mut store = RoutingStore::new();
+        store.add_product_routing(ProductId(1), 999);
+        assert!(store.get_routing_for_product(ProductId(1)).is_err());
+    }
 }

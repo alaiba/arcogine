@@ -284,10 +284,7 @@ base_demand = 10.0
     fn run_headless_produces_task_end_events() {
         let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
         let (result, _handler) = run_headless(&config).unwrap();
-        let task_ends = result
-            .event_log
-            .filter_by_type(EventType::TaskEnd)
-            .count();
+        let task_ends = result.event_log.filter_by_type(EventType::TaskEnd).count();
         assert!(task_ends > 0, "headless run should produce TaskEnd events");
     }
 
@@ -295,10 +292,7 @@ base_demand = 10.0
     fn run_headless_event_count_matches_events_processed() {
         let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
         let (result, _handler) = run_headless(&config).unwrap();
-        assert_eq!(
-            result.event_log.count() as u64,
-            result.events_processed,
-        );
+        assert_eq!(result.event_log.count() as u64, result.events_processed,);
     }
 
     #[test]
@@ -336,14 +330,8 @@ steps = [1]
 
     #[test]
     fn cli_run_variant_parses_correctly() {
-        let cli = Cli::try_parse_from([
-            "arcogine",
-            "run",
-            "--scenario",
-            "test.toml",
-            "--headless",
-        ])
-        .unwrap();
+        let cli = Cli::try_parse_from(["arcogine", "run", "--scenario", "test.toml", "--headless"])
+            .unwrap();
         match cli {
             Cli::Run { scenario, headless } => {
                 assert_eq!(scenario, "test.toml");

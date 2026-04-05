@@ -271,4 +271,118 @@ base_demand = 10.0
             "headless run should produce TaskStart events"
         );
     }
+
+    #[test]
+    fn run_headless_actually_returns_error_for_invalid_toml() {
+        let result = sim_core::scenario::load_scenario("not valid toml {{{}");
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(!err_msg.is_empty());
+    }
+
+    #[test]
+    fn run_headless_produces_task_end_events() {
+        let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
+        let (result, _handler) = run_headless(&config).unwrap();
+        let task_ends = result
+            .event_log
+            .filter_by_type(EventType::TaskEnd)
+            .count();
+        assert!(task_ends > 0, "headless run should produce TaskEnd events");
+    }
+
+    #[test]
+    fn run_headless_event_count_matches_events_processed() {
+        let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
+        let (result, _handler) = run_headless(&config).unwrap();
+        assert_eq!(
+            result.event_log.count() as u64,
+            result.events_processed,
+        );
+    }
+
+    #[test]
+    fn build_headless_handler_without_economy_uses_defaults() {
+        let toml = r#"
+[simulation]
+rng_seed = 1
+max_ticks = 10
+demand_eval_interval = 5
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1]
+"#;
+        let config = sim_core::scenario::load_scenario(toml).unwrap();
+        let handler = build_headless_handler(&config);
+        assert_eq!(handler.pricing.current_price, 10.0);
+    }
+
+    #[test]
+    fn cli_run_variant_parses_correctly() {
+        let cli = Cli::try_parse_from([
+            "arcogine",
+            "run",
+            "--scenario",
+            "test.toml",
+            "--headless",
+        ])
+        .unwrap();
+        match cli {
+            Cli::Run { scenario, headless } => {
+                assert_eq!(scenario, "test.toml");
+                assert!(headless);
+            }
+            _ => panic!("expected Run variant"),
+        }
+    }
+
+    #[test]
+    fn cli_serve_with_custom_addr() {
+        let cli = Cli::try_parse_from(["arcogine", "serve", "--addr", "0.0.0.0:8080"]).unwrap();
+        match cli {
+            Cli::Serve { addr } => assert_eq!(addr, "0.0.0.0:8080"),
+            _ => panic!("expected Serve variant"),
+        }
+    }
+
+    #[test]
+    fn run_headless_final_time_is_positive() {
+        let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
+        let (result, _handler) = run_headless(&config).unwrap();
+        assert!(
+            result.final_time.ticks() > 0,
+            "simulation should advance past t=0"
+        );
+    }
+
+    #[test]
+    fn headless_handler_price_propagates_to_factory() {
+        let config = sim_core::scenario::load_scenario(basic_toml()).unwrap();
+        let mut handler = build_headless_handler(&config);
+        let mut scheduler = Scheduler::new();
+
+        let price_event = Event::new(
+            SimTime(1),
+            sim_core::event::EventPayload::PriceChange { new_price: 99.0 },
+        );
+        handler.handle_event(&price_event, &mut scheduler).unwrap();
+        assert_eq!(handler.pricing.current_price, 99.0);
+    }
 }

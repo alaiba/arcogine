@@ -960,4 +960,247 @@ initial_price = 10.0
         let snap = wait_for_snapshot(&mut snap_rx, |s| s.current_price == 25.0);
         assert_eq!(snap.current_price, 25.0);
     }
+
+    #[test]
+    fn spawn_change_machine_count_updates_snapshot() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        send_load_scenario(&cmd_tx, basic_toml());
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        cmd_tx
+            .send(SimCommand::ChangeMachineCount {
+                machine_id: 1,
+                online: false,
+            })
+            .unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.events_processed > 0);
+        assert!(snap.events_processed >= 1);
+    }
+
+    #[test]
+    fn spawn_toggle_agent_updates_snapshot() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        send_load_scenario(&cmd_tx, basic_toml());
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        cmd_tx.send(SimCommand::ToggleAgent(true)).unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.agent_enabled);
+        assert!(snap.agent_enabled);
+
+        cmd_tx.send(SimCommand::ToggleAgent(false)).unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| !s.agent_enabled);
+        assert!(!snap.agent_enabled);
+    }
+
+    #[test]
+    fn spawn_reset_restores_initial_state() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        send_load_scenario(&cmd_tx, basic_toml());
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        cmd_tx.send(SimCommand::Run).unwrap();
+        wait_for_snapshot(&mut snap_rx, |s| s.run_state == SimRunState::Completed);
+
+        cmd_tx.send(SimCommand::Reset).unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.events_processed == 0);
+        assert_eq!(snap.events_processed, 0);
+        assert_eq!(snap.run_state, SimRunState::Paused);
+        assert!(snap.scenario_loaded);
+    }
+
+    #[test]
+    fn spawn_query_snapshot_returns_current_state() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        send_load_scenario(&cmd_tx, basic_toml());
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        cmd_tx.send(SimCommand::QuerySnapshot).unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+        assert_eq!(snap.run_state, SimRunState::Paused);
+    }
+
+    #[test]
+    fn spawn_pause_during_idle_is_no_op() {
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        send_load_scenario(&cmd_tx, basic_toml());
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        cmd_tx.send(SimCommand::Pause).unwrap();
+        cmd_tx.send(SimCommand::QuerySnapshot).unwrap();
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+        assert_eq!(snap.run_state, SimRunState::Paused);
+    }
+
+    #[test]
+    fn step_past_max_ticks_completes() {
+        let toml = r#"
+[simulation]
+rng_seed = 42
+max_ticks = 5
+demand_eval_interval = 2
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1]
+
+[economy]
+initial_price = 10.0
+"#
+        .to_string();
+
+        let (cmd_tx, mut snap_rx, _event_tx, _log_rx) = spawn_sim_thread();
+        send_load_scenario(&cmd_tx, toml);
+        wait_for_snapshot(&mut snap_rx, |s| s.scenario_loaded);
+
+        for _ in 0..50 {
+            cmd_tx.send(SimCommand::Step).unwrap();
+        }
+        let snap = wait_for_snapshot(&mut snap_rx, |s| s.run_state == SimRunState::Completed);
+        assert_eq!(snap.run_state, SimRunState::Completed);
+    }
+
+    #[test]
+    fn build_snapshot_without_config_has_no_edges() {
+        let toml = basic_toml();
+        let config = sim_core::scenario::load_scenario(&toml).unwrap();
+        let h = build_handler_from_config(&config);
+        let log = EventLog::new();
+        let snap = build_snapshot(
+            &h,
+            &log,
+            SimRunState::Idle,
+            SimTime::ZERO,
+            0,
+            None,
+            None,
+        );
+        assert!(snap.topology.edges.is_empty());
+        assert!(!snap.scenario_loaded);
+    }
+
+    #[test]
+    fn build_snapshot_includes_last_error() {
+        let toml = basic_toml();
+        let config = sim_core::scenario::load_scenario(&toml).unwrap();
+        let h = build_handler_from_config(&config);
+        let log = EventLog::new();
+        let snap = build_snapshot(
+            &h,
+            &log,
+            SimRunState::Paused,
+            SimTime::ZERO,
+            0,
+            Some(&config),
+            Some("test error".to_string()),
+        );
+        assert_eq!(snap.last_error.as_deref(), Some("test error"));
+    }
+
+    #[test]
+    fn build_handler_from_config_uses_economy_defaults_when_absent() {
+        let toml = r#"
+[simulation]
+rng_seed = 1
+max_ticks = 10
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget routing"
+steps = [1]
+"#;
+        let config = sim_core::scenario::load_scenario(toml).unwrap();
+        let h = build_handler_from_config(&config);
+        assert_eq!(h.pricing.current_price, 10.0);
+        assert!(!h.agent_enabled);
+    }
+
+    #[test]
+    fn reschedule_periodic_demand_within_max() {
+        let event = Event::new(SimTime(10), EventPayload::DemandEvaluation);
+        let mut scheduler = Scheduler::new();
+        scheduler.schedule(Event::new(SimTime(10), EventPayload::DemandEvaluation)).unwrap();
+        scheduler.next_event().unwrap();
+
+        reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 0, false);
+        assert!(!scheduler.is_empty());
+        assert_eq!(scheduler.peek_time(), Some(SimTime(20)));
+    }
+
+    #[test]
+    fn reschedule_periodic_demand_past_max_does_not_schedule() {
+        let event = Event::new(SimTime(95), EventPayload::DemandEvaluation);
+        let mut scheduler = Scheduler::new();
+        scheduler.schedule(Event::new(SimTime(95), EventPayload::DemandEvaluation)).unwrap();
+        scheduler.next_event().unwrap();
+
+        reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 0, false);
+        assert!(scheduler.is_empty());
+    }
+
+    #[test]
+    fn reschedule_periodic_agent_when_enabled() {
+        let event = Event::new(SimTime(10), EventPayload::AgentEvaluation);
+        let mut scheduler = Scheduler::new();
+        scheduler.schedule(Event::new(SimTime(10), EventPayload::AgentEvaluation)).unwrap();
+        scheduler.next_event().unwrap();
+
+        reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 20, true);
+        assert_eq!(scheduler.peek_time(), Some(SimTime(30)));
+    }
+
+    #[test]
+    fn reschedule_periodic_agent_when_disabled_does_not_schedule() {
+        let event = Event::new(SimTime(10), EventPayload::AgentEvaluation);
+        let mut scheduler = Scheduler::new();
+        scheduler.schedule(Event::new(SimTime(10), EventPayload::AgentEvaluation)).unwrap();
+        scheduler.next_event().unwrap();
+
+        reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 20, false);
+        assert!(scheduler.is_empty());
+    }
+
+    #[test]
+    fn reschedule_periodic_ignores_other_events() {
+        let event = Event::new(
+            SimTime(10),
+            EventPayload::OrderCreation {
+                product_id: ProductId(1),
+                quantity: 1,
+            },
+        );
+        let mut scheduler = Scheduler::new();
+        reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 20, true);
+        assert!(scheduler.is_empty());
+    }
 }

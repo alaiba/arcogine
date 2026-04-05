@@ -20,6 +20,7 @@ Thumbs.db
 # Node (UI)
 ui/node_modules/
 ui/dist/
+ui/coverage/
 ui/playwright-report/
 ui/test-results/
 

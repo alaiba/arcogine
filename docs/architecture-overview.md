@@ -118,6 +118,16 @@ sim-types          (no upstream dependencies)
 - The simulation command and query path is synchronous and deterministic inside `sim-cli`/`sim-api` runners.
 - HTTP API and UI run in separate process layers and interact via commands/events, not direct state mutation.
 
+## Network Model for Frontend API Calls
+
+Arcogine uses one explicit networking model:
+
+- Same-origin browser paths with a `/api` base (`/api/health`, `/api/scenario`, ...).
+- Native/dev mode: Vite proxy sends `/api` to `http://localhost:3000`.
+- Container mode: Nginx proxies `/api` to the `api:3000` service.
+
+There are no additional API URL environment variables used by the shipped container build.
+
 ## Concurrency Model
 
 - The API layer runs on a Tokio async runtime.

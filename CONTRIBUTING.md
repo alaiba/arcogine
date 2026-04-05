@@ -4,7 +4,7 @@ Thank you for considering a contribution to Arcogine. This guide covers the conv
 
 ## Prerequisites
 
-- **Rust** (stable channel, floating policy in `rust-toolchain.toml`)
+- **Rust** (stable channel). `rust-toolchain.toml` sets `channel = "stable"` (floating); the dev container image and native workflow both rely on stable channels.
 - **Node.js** 20+ and npm (for the `ui/` experiment console)
 - **Docker** and Docker Compose (optional, for containerized runs)
 

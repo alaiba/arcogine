@@ -88,8 +88,7 @@ mod tests {
     fn make_test_app() -> (Router, broadcast::Sender<Event>) {
         let (cmd_tx, _cmd_rx) = std::sync::mpsc::channel();
         let (event_tx, _) = broadcast::channel::<Event>(128);
-        let (snapshot_tx, snapshot_rx) =
-            watch::channel(crate::state::SimSnapshot::default());
+        let (snapshot_tx, snapshot_rx) = watch::channel(crate::state::SimSnapshot::default());
         let _ = snapshot_tx;
         let (log_tx, log_rx) = watch::channel(EventLog::new());
         let _ = log_tx;
@@ -122,7 +121,12 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(resp.status(), 200);
-        let ct = resp.headers().get("content-type").unwrap().to_str().unwrap();
+        let ct = resp
+            .headers()
+            .get("content-type")
+            .unwrap()
+            .to_str()
+            .unwrap();
         assert!(ct.contains("text/event-stream"), "got: {ct}");
     }
 
@@ -130,8 +134,7 @@ mod tests {
     async fn event_stream_semaphore_exhaustion_returns_503() {
         let (cmd_tx, _cmd_rx) = std::sync::mpsc::channel();
         let (event_tx, _) = broadcast::channel::<Event>(128);
-        let (snapshot_tx, snapshot_rx) =
-            watch::channel(crate::state::SimSnapshot::default());
+        let (snapshot_tx, snapshot_rx) = watch::channel(crate::state::SimSnapshot::default());
         let _ = snapshot_tx;
         let (log_tx, log_rx) = watch::channel(EventLog::new());
         let _ = log_tx;

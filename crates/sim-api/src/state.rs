@@ -1081,15 +1081,7 @@ initial_price = 10.0
         let config = sim_core::scenario::load_scenario(&toml).unwrap();
         let h = build_handler_from_config(&config);
         let log = EventLog::new();
-        let snap = build_snapshot(
-            &h,
-            &log,
-            SimRunState::Idle,
-            SimTime::ZERO,
-            0,
-            None,
-            None,
-        );
+        let snap = build_snapshot(&h, &log, SimRunState::Idle, SimTime::ZERO, 0, None, None);
         assert!(snap.topology.edges.is_empty());
         assert!(!snap.scenario_loaded);
     }
@@ -1149,7 +1141,9 @@ steps = [1]
     fn reschedule_periodic_demand_within_max() {
         let event = Event::new(SimTime(10), EventPayload::DemandEvaluation);
         let mut scheduler = Scheduler::new();
-        scheduler.schedule(Event::new(SimTime(10), EventPayload::DemandEvaluation)).unwrap();
+        scheduler
+            .schedule(Event::new(SimTime(10), EventPayload::DemandEvaluation))
+            .unwrap();
         scheduler.next_event().unwrap();
 
         reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 0, false);
@@ -1161,7 +1155,9 @@ steps = [1]
     fn reschedule_periodic_demand_past_max_does_not_schedule() {
         let event = Event::new(SimTime(95), EventPayload::DemandEvaluation);
         let mut scheduler = Scheduler::new();
-        scheduler.schedule(Event::new(SimTime(95), EventPayload::DemandEvaluation)).unwrap();
+        scheduler
+            .schedule(Event::new(SimTime(95), EventPayload::DemandEvaluation))
+            .unwrap();
         scheduler.next_event().unwrap();
 
         reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 0, false);
@@ -1172,7 +1168,9 @@ steps = [1]
     fn reschedule_periodic_agent_when_enabled() {
         let event = Event::new(SimTime(10), EventPayload::AgentEvaluation);
         let mut scheduler = Scheduler::new();
-        scheduler.schedule(Event::new(SimTime(10), EventPayload::AgentEvaluation)).unwrap();
+        scheduler
+            .schedule(Event::new(SimTime(10), EventPayload::AgentEvaluation))
+            .unwrap();
         scheduler.next_event().unwrap();
 
         reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 20, true);
@@ -1183,7 +1181,9 @@ steps = [1]
     fn reschedule_periodic_agent_when_disabled_does_not_schedule() {
         let event = Event::new(SimTime(10), EventPayload::AgentEvaluation);
         let mut scheduler = Scheduler::new();
-        scheduler.schedule(Event::new(SimTime(10), EventPayload::AgentEvaluation)).unwrap();
+        scheduler
+            .schedule(Event::new(SimTime(10), EventPayload::AgentEvaluation))
+            .unwrap();
         scheduler.next_event().unwrap();
 
         reschedule_periodic(&event, &mut scheduler, SimTime(100), 10, 20, false);

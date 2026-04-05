@@ -9,7 +9,7 @@ COPY . .
 
 RUN npm run build
 
-FROM nginx:stable-alpine
+FROM nginx:1.28-alpine3.23
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY <<'EOF' /etc/nginx/conf.d/default.conf
@@ -46,6 +46,6 @@ server {
 }
 EOF
 
-RUN apk add --no-cache ca-certificates
+RUN apk upgrade --no-cache && apk add --no-cache ca-certificates
 
 EXPOSE 5173

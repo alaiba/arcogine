@@ -123,6 +123,8 @@ cargo tarpaulin --workspace --out html --output-dir target/coverage
 cd ui && npm run test:coverage
 ```
 
+Both Rust and frontend coverage reports are uploaded to [Codecov](https://codecov.io/gh/alaiba/arcogine) from CI. Codecov comments on pull requests with diff coverage and will flag new code that falls below 70% patch coverage. See `codecov.yml` at the repo root for thresholds.
+
 ## Running Everything
 
 ```bash
@@ -146,7 +148,9 @@ cargo bench -p sim-core
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs:
 
-1. **Rust job**: fmt check, clippy, `cargo test`, coverage via `cargo-tarpaulin`
-2. **Frontend job**: npm ci, ESLint, tsc, vitest unit tests, vite build
+1. **Rust job**: fmt check, clippy, `cargo test`, dependency audit, coverage via `cargo-tarpaulin` + Codecov upload
+2. **Frontend job**: npm ci, ESLint, tsc, vitest unit tests with coverage + Codecov upload, vite build, dependency audit
 3. **Playwright job**: builds the API binary, installs Chromium, runs `npx playwright test` with Playwright-managed servers
 4. **Docker compose job**: builds container images, starts the stack, verifies API health and UI reachability
+5. **Docker image scan**: builds API and UI images, scans each with Trivy for critical/high vulnerabilities
+6. **Secret scan**: runs Gitleaks to detect accidentally committed secrets

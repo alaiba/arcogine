@@ -49,6 +49,14 @@ jobs:
         run: cargo install cargo-tarpaulin && cargo tarpaulin --workspace --out xml --skip-clean
         continue-on-error: true
 
+      - name: Upload Rust coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: cobertura.xml
+          flags: rust
+          fail_ci_if_error: false
+
   frontend:
     name: Frontend checks
     runs-on: ubuntu-latest
@@ -74,8 +82,16 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      - name: Unit tests
-        run: npm test
+      - name: Unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: ui/coverage/coverage-final.json
+          flags: frontend
+          fail_ci_if_error: false
 
       - name: Build
         run: npm run build

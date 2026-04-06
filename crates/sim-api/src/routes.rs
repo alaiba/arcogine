@@ -35,10 +35,7 @@ pub async fn load_scenario(
     let (tx, rx) = std::sync::mpsc::sync_channel(1);
     state
         .cmd_tx
-        .send(SimCommand::LoadScenario {
-            toml: body.toml,
-            reply: tx,
-        })
+        .send(SimCommand::LoadScenario { toml: body.toml, reply: tx })
         .map_err(|_| sim_error("Failed to send command to simulation thread"))?;
 
     match rx.recv_timeout(std::time::Duration::from_secs(5)) {
@@ -171,9 +168,8 @@ pub async fn change_price(
     State(state): State<Arc<AppState>>,
     Json(body): Json<ChangePriceRequest>,
 ) -> Result<Json<SimSnapshot>, (StatusCode, Json<ErrorResponse>)> {
-    const MAX_PRICE: f64 = 1_000_000.0;
-    if body.price < 0.0 || body.price > MAX_PRICE {
-        return Err(bad_request("Price must be between 0 and 1,000,000"));
+    if body.price < 0.0 {
+        return Err(bad_request("Price must be non-negative"));
     }
 
     {

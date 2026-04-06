@@ -303,15 +303,11 @@ server {
 
 Arcogine is an application (binary crates `sim-cli` and `sim-api`), not a library. The Rust community convention is to commit `Cargo.lock` for applications to ensure reproducible builds.
 
-File: `.gitignore:4`
+File: `.gitignore`
 
-Remove the `Cargo.lock` line:
+Current state:
 
-```gitignore
-# Rust
-/target/
-**/*.rs.bk
-```
+`Cargo.lock` is already tracked in this repository, and `.gitignore` currently does **not** ignore it.
 
 Then run `cargo generate-lockfile` (or `cargo build`) and commit the resulting `Cargo.lock`.
 
@@ -572,22 +568,30 @@ Extend economy validation with finiteness and range checks:
 
 ```rust
 if let Some(econ) = &config.economy {
-    if !econ.initial_price.is_finite() || econ.initial_price <= 0.0 || econ.initial_price > 1_000_000.0 {
+    const MAX_ECON_VALUE: f64 = 1_000_000.0;
+
+    if !econ.initial_price.is_finite() || econ.initial_price <= 0.0 || econ.initial_price > MAX_ECON_VALUE {
         return Err(SimError::OutOfRange {
             field: "economy.initial_price".to_string(),
             message: "must be a finite number > 0 and <= 1,000,000".to_string(),
         });
     }
-    if !econ.base_demand.is_finite() || econ.base_demand < 0.0 {
+    if !econ.base_demand.is_finite() || econ.base_demand < 0.0 || econ.base_demand > MAX_ECON_VALUE {
         return Err(SimError::OutOfRange {
             field: "economy.base_demand".to_string(),
-            message: "must be a finite number >= 0".to_string(),
+            message: "must be a finite number >= 0 and <= 1,000,000".to_string(),
         });
     }
-    if !econ.price_elasticity.is_finite() || econ.price_elasticity < 0.0 {
+    if !econ.price_elasticity.is_finite() || econ.price_elasticity < 0.0 || econ.price_elasticity > MAX_ECON_VALUE {
         return Err(SimError::OutOfRange {
             field: "economy.price_elasticity".to_string(),
-            message: "must be a finite number >= 0".to_string(),
+            message: "must be a finite number >= 0 and <= 1,000,000".to_string(),
+        });
+    }
+    if !econ.lead_time_sensitivity.is_finite() || econ.lead_time_sensitivity < 0.0 || econ.lead_time_sensitivity > MAX_ECON_VALUE {
+        return Err(SimError::OutOfRange {
+            field: "economy.lead_time_sensitivity".to_string(),
+            message: "must be a finite number >= 0 and <= 1,000,000".to_string(),
         });
     }
 }
@@ -597,6 +601,7 @@ if let Some(econ) = &config.economy {
 - `scenario_with_nan_price_rejected` — TOML with `initial_price = nan` → error
 - `scenario_with_inf_demand_rejected` — TOML with `base_demand = inf` → error
 - `scenario_with_extreme_price_rejected` — TOML with `initial_price = 999999999.0` → error
+- `scenario_with_extreme_base_demand_rejected` — TOML with `base_demand = 1_500_000.0` → error
 Add a test in `api_smoke.rs`:
 - `extreme_price_returns_bad_request` — `POST /api/price` with `price: 2000000.0` → 400
 
@@ -680,17 +685,7 @@ If the repo produces noisy findings, start with a checked-in `.gitleaks.toml` al
 
 #### 3.14.2 Dependency audit evidence
 
-Keep dependency checks in CI and persist machine-readable outputs:
-
-```yaml
-  - name: Audit Rust dependencies
-    uses: rustsec/audit-check@v2
-    with:
-      token: ${{ secrets.GITHUB_TOKEN }}
-
-  - name: Audit npm dependencies
-    run: npm audit --audit-level=high --json > npm-audit.json
-```
+Move dependency scanning execution to §3.7 and keep this subsection for evidence persistence only. This avoids duplicate audit logic while still archiving the report artifacts produced earlier in CI.
 
 Upload reports when failures occur so review can be done from workflow artifacts:
 
@@ -984,6 +979,48 @@ The following are documented for completeness but deferred beyond the MVP harden
 - [x] Implement `Default` manually, delegating to `new()` which sets `max_capacity` to 1,000,000
 - [ ] Keep `Default` derive and document that default capacity is 0
 
+### F15: `3.6` assumes `Cargo.lock` is currently ignored [Applied]
+<!-- severity: minor -->
+<!-- dimension: correctness -->
+
+**Context:** §3.6 and the risk baseline currently describe lockfile handling as if `Cargo.lock` can be removed from `.gitignore`.
+
+**Issue:** In this repository, `Cargo.lock` is already tracked and `.gitignore` does not ignore it, so an edit removing it from `.gitignore` is factually inaccurate and unnecessary.
+
+**Recommendation:** Keep §3.6 scoped to lockfile lifecycle and verification steps, and explicitly note the current tracked-state so avoid redundant `.gitignore` edits.
+
+**Choices:**
+- [x] Update §3.6 wording only (remove `.gitignore` edit requirement)
+- [ ] Add `.gitignore` entry changes for explicit lockfile policy
+
+### F16: `3.11` economy validation still misses upper bounds on multiple fields [Applied]
+<!-- severity: minor -->
+<!-- dimension: gaps -->
+
+**Context:** §3.11 added upper-bound validation for `economy.initial_price`, but left upper bounds absent for `economy.base_demand`, `economy.price_elasticity`, and `economy.lead_time_sensitivity`.
+
+**Issue:** Unbounded upper values in these scenario fields can induce extreme dynamics in simulations, creating instability and potentially harming predictability.
+
+**Recommendation:** Add upper bounds (for example `<= 1,000,000`) and finite checks to all remaining economy fields in `validate_scenario`; add scenario loading tests for these bounds.
+
+**Choices:**
+- [x] Add upper-bound checks for all three economy fields and matching tests
+- [ ] Keep only `initial_price` bounded and allow other fields to remain open-ended
+
+### F17: Dependency audits are duplicated in both §§3.7 and 3.14 [Applied]
+<!-- severity: minor -->
+<!-- dimension: best-practices -->
+
+**Context:** §3.7 and §3.14.2 both describe adding Rust/npm audit checks in CI.
+
+**Issue:** Duplicate audit instructions can drift over time and increase maintenance risk, especially around output/reporting format and failure thresholds.
+
+**Recommendation:** Consolidate dependency-audit execution under §3.7 and make §3.14 refer to it for reporting, or explicitly define non-overlapping responsibilities for the two sections.
+
+**Choices:**
+- [x] Consolidate execution in §3.7 and scope §3.14 to evidence/reporting
+- [ ] Keep duplicate checks but centralize commands in a shared reusable step
+
 ### Summary
 
 | # | Title | Severity | Dimension | Depends on |
@@ -1002,3 +1039,61 @@ The following are documented for completeness but deferred beyond the MVP harden
 | F12 | §3.6 doesn't mention dev container lockfile workflow | minor | plan-hygiene | — |
 | F13 | Priority matrix inconsistency after F1 correction | minor | plan-hygiene | F1 |
 | F14 | §3.10 `Default` derive produces zero-capacity EventLog | major | correctness | F4 |
+| F15 | `3.6` assumes `Cargo.lock` is currently ignored | minor | correctness | — |
+| F16 | `3.11` economy validation still misses upper bounds on multiple fields | minor | gaps | — |
+| F17 | Dependency audits are duplicated in both §§3.7 and 3.14 | minor | best-practices | — |
+
+---
+
+## Implementation Status
+
+> **Date:** 2026-04-06
+> **Implemented by:** Automated agent session
+
+### Completed Tasks
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 3.1 | Tighten body-size limit | [Done] | `DefaultBodyLimit::max(1MB)` added to router. Tests: `oversized_body_returns_payload_too_large`, `body_under_limit_is_accepted`. |
+| 3.2 | Scenario load error propagation | [Done] | `SyncSender<Result<(), String>>` reply channel on `LoadScenario`. `recv_timeout(5s)`. Tests: `load_valid_scenario_returns_success`, `load_invalid_toml_returns_bad_request`, `load_scenario_with_zero_max_ticks_returns_bad_request`, `load_scenario_with_missing_equipment_returns_bad_request`. Existing `invalid_toml_content_returns_error` updated to assert 400. |
+| 3.3 | Handler and scheduler error propagation | [Done] | All `let _ = h.handle_event(...)` and `let _ = scheduler.schedule(...)` replaced with `if let Err(e)` + `tracing::warn!` + `last_error` capture. `last_error: Option<String>` added to `SimSnapshot`. Test: `handler_error_surfaces_in_snapshot`. |
+| 3.4 | Restrict default bind address | [Done] | CLI default changed from `0.0.0.0:3000` to `127.0.0.1:3000`. Dockerfile retains `0.0.0.0`. Test: `serve_default_addr_is_localhost`. |
+| 3.5 | Nginx security headers | [Done] | Added CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy to `ui/Dockerfile` nginx config. |
+| 3.6 | Commit `Cargo.lock` | [Done] | Verified already tracked and not in `.gitignore`. No changes needed (F15 applied). |
+| 3.7 | Dependency vulnerability scanning | [Done] | `rustsec/audit-check@v2` added to `rust` CI job. `npm audit --audit-level=high` added to `frontend` job with artifact upload on failure. `.github/dependabot.yml` created for cargo, npm, and github-actions ecosystems. |
+| 3.8 | Docker image scanning | [Done] | Consolidated into §3.14 per F17. |
+| 3.9 | Bound SSE connections | [Done] | `sse_semaphore: Arc<Semaphore>` on `AppState` (64 max). `try_acquire_owned()` returns 503 when exhausted. Permit held via closure capture for stream lifetime. Test: `sse_connection_limit_returns_503`. |
+| 3.10 | Cap event log size | [Done] | `max_capacity: usize` field (default 1M, `#[serde(skip)]`). Manual `PartialEq` (events-only) and `Default`. Tests: `event_log_caps_at_max_capacity`, `event_log_equality_ignores_capacity`, `event_log_is_truncated`, `default_log_has_large_capacity`. |
+| 3.11 | Economy/price input validation | [Done] | Upper bound (1M) and `is_finite()` checks on all 4 economy fields in `validate_scenario`. `MAX_PRICE` upper bound on `change_price` handler. Tests: `scenario_with_nan_price_rejected`, `scenario_with_inf_demand_rejected`, `scenario_with_extreme_price_rejected`, `scenario_with_extreme_base_demand_rejected`, `extreme_price_returns_bad_request`. |
+| 3.12 | Configurable CORS | [Done] | `CORS_ALLOWED_ORIGIN` env var drives `CorsLayer`; permissive default when unset. `.env.example` updated. Test: `cors_with_env_var_restricts_origin`. |
+| 3.13 | Update SECURITY.md | [Done] | "Hardening for Network Deployment" section added covering bind address, CORS, TLS, auditing, log verbosity. |
+| 3.14 | CI security gates | [Done] | Gitleaks secret scanning job. Docker image scanning via Trivy matrix (api + ui) with `fail-fast: false`. npm audit artifact upload on failure. |
+
+### Build/Runtime Fixes Applied
+
+- Fixed 4 unit tests in `state.rs` that used old `SimCommand::LoadScenario(toml)` tuple-variant syntax — updated to named-field syntax with a `send_load_scenario` helper.
+- Applied `cargo fmt` to all touched files.
+- No clippy warnings introduced.
+
+### Deviations from Plan
+
+None. All findings (F1–F17) were already incorporated into the plan sections before implementation began.
+
+### Remaining Validations
+
+| Item | Validation | Reason |
+|------|-----------|--------|
+| §3.5 | Build Docker UI image and verify headers with `curl -I http://localhost:5173/` | Requires running Docker compose; verified structurally (nginx config is correct) but not end-to-end in this session. CI's `docker` job will validate on next push. |
+| §3.7 | `rustsec/audit-check` runs successfully in CI | GitHub Action; cannot be validated locally. Will run on next push to main or PR. |
+| §3.14 | Gitleaks and Trivy jobs pass | GitHub Actions; cannot be validated locally. Will run on next push. |
+
+### Test Summary
+
+| Suite | Tests Before | Tests After | New Tests |
+|-------|-------------|------------|-----------|
+| sim-api unit | 10 | 10 | 0 |
+| api_smoke integration | 20 | 30 | 10 |
+| sim-cli unit | 4 | 5 | 1 |
+| sim-core unit | 23 | 27 | 4 |
+| scenario_loading | 12 | 16 | 4 |
+| **Total new tests** | | | **19** |

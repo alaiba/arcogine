@@ -101,7 +101,7 @@ jobs:
         run: npm run build
 
       - name: Audit npm dependencies
-        run: npm audit --audit-level=high --json > npm-audit.json
+        run: npm audit --audit-level=high --json > npm-audit.json || npm audit --audit-level=high
 
       - name: Upload audit reports
         if: failure()

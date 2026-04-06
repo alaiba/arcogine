@@ -373,4 +373,3 @@ steps = [1]
         handler.handle_event(&price_event, &mut scheduler).unwrap();
         assert_eq!(handler.pricing.current_price, 99.0);
     }
-}

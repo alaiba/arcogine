@@ -35,7 +35,10 @@ pub async fn load_scenario(
     let (tx, rx) = std::sync::mpsc::sync_channel(1);
     state
         .cmd_tx
-        .send(SimCommand::LoadScenario { toml: body.toml, reply: tx })
+        .send(SimCommand::LoadScenario {
+            toml: body.toml,
+            reply: tx,
+        })
         .map_err(|_| sim_error("Failed to send command to simulation thread"))?;
 
     match rx.recv_timeout(std::time::Duration::from_secs(5)) {

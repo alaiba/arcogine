@@ -508,7 +508,10 @@ fn scenario_with_nan_price_rejected() {
     assert!(result.is_err());
     match result.unwrap_err() {
         SimError::OutOfRange { field, .. } => {
-            assert!(field.contains("initial_price"), "expected initial_price, got: {field}");
+            assert!(
+                field.contains("initial_price"),
+                "expected initial_price, got: {field}"
+            );
         }
         other => panic!("expected OutOfRange, got: {:?}", other),
     }
@@ -521,7 +524,10 @@ fn scenario_with_inf_demand_rejected() {
     assert!(result.is_err());
     match result.unwrap_err() {
         SimError::OutOfRange { field, .. } => {
-            assert!(field.contains("base_demand"), "expected base_demand, got: {field}");
+            assert!(
+                field.contains("base_demand"),
+                "expected base_demand, got: {field}"
+            );
         }
         other => panic!("expected OutOfRange, got: {:?}", other),
     }
@@ -534,7 +540,10 @@ fn scenario_with_extreme_price_rejected() {
     assert!(result.is_err());
     match result.unwrap_err() {
         SimError::OutOfRange { field, .. } => {
-            assert!(field.contains("initial_price"), "expected initial_price, got: {field}");
+            assert!(
+                field.contains("initial_price"),
+                "expected initial_price, got: {field}"
+            );
         }
         other => panic!("expected OutOfRange, got: {:?}", other),
     }
@@ -547,7 +556,10 @@ fn scenario_with_extreme_base_demand_rejected() {
     assert!(result.is_err());
     match result.unwrap_err() {
         SimError::OutOfRange { field, .. } => {
-            assert!(field.contains("base_demand"), "expected base_demand, got: {field}");
+            assert!(
+                field.contains("base_demand"),
+                "expected base_demand, got: {field}"
+            );
         }
         other => panic!("expected OutOfRange, got: {:?}", other),
     }

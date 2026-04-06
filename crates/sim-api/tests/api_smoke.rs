@@ -424,7 +424,10 @@ max_ticks = "not a number"
     let (status, body) = load_scenario(&app, invalid_toml).await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert!(
-        body["error"].as_str().unwrap_or("").contains("TOML parse error"),
+        body["error"]
+            .as_str()
+            .unwrap_or("")
+            .contains("TOML parse error"),
         "error should mention TOML parse error, got: {:?}",
         body["error"]
     );
@@ -609,7 +612,10 @@ async fn load_invalid_toml_returns_bad_request() {
     let (status, body) = load_scenario(&app, "not valid [[ toml").await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert!(
-        body["error"].as_str().unwrap_or("").contains("TOML parse error"),
+        body["error"]
+            .as_str()
+            .unwrap_or("")
+            .contains("TOML parse error"),
         "error should mention TOML parse error, got: {:?}",
         body["error"]
     );
@@ -771,4 +777,31 @@ async fn extreme_price_returns_bad_request() {
 
     let resp = app.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+// ─── §3.12 — Configurable CORS ──────────────────────────────────────
+
+#[tokio::test]
+async fn cors_with_env_var_restricts_origin() {
+    unsafe { std::env::set_var("CORS_ALLOWED_ORIGIN", "http://example.com") };
+
+    let state = create_app_state();
+    let app = build_router(state);
+
+    unsafe { std::env::remove_var("CORS_ALLOWED_ORIGIN") };
+
+    let req = Request::builder()
+        .method(http::Method::OPTIONS)
+        .uri("/api/health")
+        .header("origin", "http://evil.com")
+        .header("access-control-request-method", "GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let resp = app.clone().oneshot(req).await.unwrap();
+    let acao = resp.headers().get("access-control-allow-origin");
+    assert!(
+        acao.is_none() || acao.unwrap() != "http://evil.com",
+        "CORS should not allow http://evil.com when origin is restricted to http://example.com"
+    );
 }

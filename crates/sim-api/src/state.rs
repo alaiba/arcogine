@@ -137,6 +137,7 @@ pub struct AppState {
     pub snapshot_rx: watch::Receiver<SimSnapshot>,
     pub event_tx: broadcast::Sender<Event>,
     pub event_log_rx: watch::Receiver<EventLog>,
+    pub sse_semaphore: std::sync::Arc<tokio::sync::Semaphore>,
 }
 
 impl std::fmt::Debug for AppState {

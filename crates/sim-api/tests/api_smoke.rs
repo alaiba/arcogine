@@ -720,3 +720,55 @@ async fn body_under_limit_is_accepted() {
         "body under 1MB should not be rejected for size"
     );
 }
+
+// ─── §3.9 — SSE connection limit ────────────────────────────────────
+
+#[tokio::test]
+async fn sse_connection_limit_returns_503() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let mut responses = Vec::new();
+    for _ in 0..64 {
+        let req = Request::builder()
+            .uri("/api/events/stream")
+            .body(Body::empty())
+            .unwrap();
+        let resp = app.clone().oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        responses.push(resp);
+    }
+
+    let req = Request::builder()
+        .uri("/api/events/stream")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(
+        resp.status(),
+        StatusCode::SERVICE_UNAVAILABLE,
+        "65th SSE connection should be rejected"
+    );
+}
+
+// ─── §3.11 — Economy/price input validation ─────────────────────────
+
+#[tokio::test]
+async fn extreme_price_returns_bad_request() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    load_scenario(&app, basic_scenario_toml()).await;
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    let body = serde_json::json!({ "price": 2_000_000.0 });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/price")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}

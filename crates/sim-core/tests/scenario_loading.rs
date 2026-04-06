@@ -468,3 +468,87 @@ fn default_values_applied_correctly() {
     assert_eq!(config.equipment[0].setup_time, 0);
     assert!(config.equipment[0].capacity_liters.is_none());
 }
+
+fn scenario_with_economy(economy_block: &str) -> String {
+    format!(
+        r#"
+[simulation]
+rng_seed = 42
+max_ticks = 100
+
+[[equipment]]
+id = 1
+name = "Mill"
+
+[[material]]
+id = 1
+name = "Widget"
+routing_id = 1
+
+[[process_segment]]
+id = 1
+name = "Milling"
+equipment_id = 1
+duration = 5
+
+[[operations_definition]]
+id = 1
+name = "Widget Routing"
+steps = [1]
+
+{economy_block}
+"#
+    )
+}
+
+#[test]
+fn scenario_with_nan_price_rejected() {
+    let toml = scenario_with_economy("[economy]\ninitial_price = nan\n");
+    let result = load_scenario(&toml);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        SimError::OutOfRange { field, .. } => {
+            assert!(field.contains("initial_price"), "expected initial_price, got: {field}");
+        }
+        other => panic!("expected OutOfRange, got: {:?}", other),
+    }
+}
+
+#[test]
+fn scenario_with_inf_demand_rejected() {
+    let toml = scenario_with_economy("[economy]\ninitial_price = 10.0\nbase_demand = inf\n");
+    let result = load_scenario(&toml);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        SimError::OutOfRange { field, .. } => {
+            assert!(field.contains("base_demand"), "expected base_demand, got: {field}");
+        }
+        other => panic!("expected OutOfRange, got: {:?}", other),
+    }
+}
+
+#[test]
+fn scenario_with_extreme_price_rejected() {
+    let toml = scenario_with_economy("[economy]\ninitial_price = 999999999.0\n");
+    let result = load_scenario(&toml);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        SimError::OutOfRange { field, .. } => {
+            assert!(field.contains("initial_price"), "expected initial_price, got: {field}");
+        }
+        other => panic!("expected OutOfRange, got: {:?}", other),
+    }
+}
+
+#[test]
+fn scenario_with_extreme_base_demand_rejected() {
+    let toml = scenario_with_economy("[economy]\ninitial_price = 10.0\nbase_demand = 1500000.0\n");
+    let result = load_scenario(&toml);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        SimError::OutOfRange { field, .. } => {
+            assert!(field.contains("base_demand"), "expected base_demand, got: {field}");
+        }
+        other => panic!("expected OutOfRange, got: {:?}", other),
+    }
+}

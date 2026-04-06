@@ -6,7 +6,12 @@
 use crate::event::{Event, EventType};
 use serde::Serialize;
 
-/// Append-only log of simulation events with a configurable capacity cap.
+/// Append-only log of simulation events with a configurable size cap.
+///
+/// `PartialEq` is implemented manually so that two logs with different
+/// `max_capacity` values but identical events compare as equal. This
+/// preserves determinism-test assertions (`assert_eq!` on event logs)
+/// when capacity configuration differs.
 #[derive(Debug, Clone, Serialize)]
 pub struct EventLog {
     events: Vec<Event>,
@@ -20,9 +25,6 @@ impl Default for EventLog {
     }
 }
 
-/// Equality compares only the event data, not the capacity configuration.
-/// This preserves determinism test compatibility where two runs may use
-/// different capacity settings but should still compare equal.
 impl PartialEq for EventLog {
     fn eq(&self, other: &Self) -> bool {
         self.events == other.events
@@ -44,34 +46,41 @@ impl EventLog {
         }
     }
 
+    /// Append an event to the log. Events beyond `max_capacity` are dropped.
     pub fn append(&mut self, event: Event) {
         if self.events.len() < self.max_capacity {
             self.events.push(event);
         }
     }
 
+    /// Returns `true` if the log reached its capacity and is dropping events.
     pub fn is_truncated(&self) -> bool {
         self.events.len() >= self.max_capacity
     }
 
+    /// Iterate over all logged events.
     pub fn iter(&self) -> impl Iterator<Item = &Event> {
         self.events.iter()
     }
 
+    /// Filter events by type.
     pub fn filter_by_type(&self, event_type: EventType) -> impl Iterator<Item = &Event> {
         self.events
             .iter()
             .filter(move |e| e.event_type == event_type)
     }
 
+    /// Total number of logged events.
     pub fn count(&self) -> usize {
         self.events.len()
     }
 
+    /// Clone the log for determinism comparison.
     pub fn snapshot(&self) -> EventLog {
         self.clone()
     }
 
+    /// Get events as a slice.
     pub fn events(&self) -> &[Event] {
         &self.events
     }
@@ -153,8 +162,8 @@ mod tests {
 
     #[test]
     fn event_log_equality_ignores_capacity() {
-        let mut log_a = EventLog::with_capacity(10);
-        let mut log_b = EventLog::with_capacity(100);
+        let mut log_a = EventLog::with_capacity(100);
+        let mut log_b = EventLog::with_capacity(200);
         for i in 0..5 {
             log_a.append(make_order(i));
             log_b.append(make_order(i));
@@ -165,12 +174,19 @@ mod tests {
     #[test]
     fn event_log_is_truncated() {
         let mut log = EventLog::with_capacity(3);
+        assert!(!log.is_truncated());
         for i in 0..3 {
             log.append(make_order(i));
         }
         assert!(log.is_truncated());
+        log.append(make_order(99));
+        assert_eq!(log.count(), 3);
+    }
 
-        let log2 = EventLog::with_capacity(3);
-        assert!(!log2.is_truncated());
+    #[test]
+    fn default_log_has_large_capacity() {
+        let log = EventLog::default();
+        assert_eq!(log.count(), 0);
+        assert!(!log.is_truncated());
     }
 }

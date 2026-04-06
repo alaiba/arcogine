@@ -4,7 +4,7 @@ Thank you for considering a contribution to Arcogine. This guide covers the conv
 
 ## Prerequisites
 
-- **Rust** (stable channel). `rust-toolchain.toml` sets `channel = "stable"` (floating); the dev container image and native workflow both rely on stable channels.
+- **Rust** (stable channel, floating policy in `rust-toolchain.toml`)
 - **Node.js** 20+ and npm (for the `ui/` experiment console)
 - **Docker** and Docker Compose (optional, for containerized runs)
 
@@ -122,6 +122,8 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 - **Benchmarks** use Criterion in `crates/sim-core/benches/`.
 - **E2E tests** for the UI use Playwright in `ui/e2e/`.
 - **Coverage** — `cargo-tarpaulin` for Rust, `vitest --coverage` for frontend (see `TESTING.md`).
+
+See `docs/testing-strategy.md` for the rationale behind the testing layers, handler parity requirements, and CI quality gates.
 
 ## Determinism Contract
 

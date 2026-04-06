@@ -94,6 +94,14 @@ The runner dequeues events from the priority queue and dispatches each to the ha
 
 `sim-core` depends only on `sim-types` — it cannot import domain crates. The `EventHandler` trait inverts the dependency: domain crates depend on `sim-core` for the trait definition and implement it. The binary crate (`sim-cli`) or API crate (`sim-api`) assembles domain handlers into a composite handler and passes it to the runner. This preserves the acyclic dependency graph while allowing the core event loop to dispatch to domain-specific logic.
 
+### Shared runtime delegation
+
+Arcogine treats handler delegation order as part of the architecture, not just test scaffolding.
+
+- `sim-cli` and `sim-api` both dispatch events in the same order: pricing, demand, factory, then agent evaluation when configured.
+- Factory event semantics are centralized in `FactoryHandler` so queue dispatch, `TaskStart`/`TaskEnd` emission, revenue accounting, and machine-availability behavior stay identical across runtime entrypoints.
+- Tests protect parity between the headless and API paths because duplicated handler logic previously caused behavioral drift.
+
 ### Crate dependency DAG
 
 ```text
@@ -117,16 +125,6 @@ sim-types          (no upstream dependencies)
 - Scenario files are TOML. Schema structs live in `sim-types`; loader and validation logic live in `sim-core` and return structured `SimError`.
 - The simulation command and query path is synchronous and deterministic inside `sim-cli`/`sim-api` runners.
 - HTTP API and UI run in separate process layers and interact via commands/events, not direct state mutation.
-
-## Network Model for Frontend API Calls
-
-Arcogine uses one explicit networking model:
-
-- Same-origin browser paths with a `/api` base (`/api/health`, `/api/scenario`, ...).
-- Native/dev mode: Vite proxy sends `/api` to `http://localhost:3000`.
-- Container mode: Nginx proxies `/api` to the `api:3000` service.
-
-There are no additional API URL environment variables used by the shipped container build.
 
 ## Concurrency Model
 
@@ -265,7 +263,7 @@ Axum API (Phase 4)
 | Charting | Recharts | SVG charting with TypeScript support |
 | State management | Zustand | Minimal boilerplate, works well with both polling and SSE patterns |
 | Unit testing | Vitest | Fast Vite-native test runner for store and utility logic |
-| E2E testing | Playwright | Browser automation for smoke tests (including CI) |
+| E2E testing | Playwright | Browser automation for representative user flows in CI |
 
 ### Accessibility
 

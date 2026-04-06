@@ -677,3 +677,46 @@ demand_eval_interval = 10
         body["error"]
     );
 }
+
+// ─── §3.1 — Body-size limit ─────────────────────────────────────────
+
+#[tokio::test]
+async fn oversized_body_returns_payload_too_large() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let oversized = "x".repeat(1024 * 1024 + 1);
+    let body = serde_json::json!({ "toml": oversized });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/scenario")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[tokio::test]
+async fn body_under_limit_is_accepted() {
+    let state = create_app_state();
+    let app = build_router(state);
+
+    let padding = "a".repeat(500_000);
+    let toml_content = format!("# {padding}\n{}", basic_scenario_toml());
+    let body = serde_json::json!({ "toml": toml_content });
+    let req = Request::builder()
+        .method(http::Method::POST)
+        .uri("/api/scenario")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+
+    let resp = app.oneshot(req).await.unwrap();
+    assert_ne!(
+        resp.status(),
+        StatusCode::PAYLOAD_TOO_LARGE,
+        "body under 1MB should not be rejected for size"
+    );
+}

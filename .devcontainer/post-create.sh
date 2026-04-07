@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "==> Configuring git..."
+gh auth setup-git 2>/dev/null || true
+REMOTE_URL=$(git remote get-url origin 2>/dev/null || true)
+if [[ "$REMOTE_URL" == git@github.com:* ]]; then
+  HTTPS_URL=$(echo "$REMOTE_URL" | sed 's|git@github.com:|https://github.com/|')
+  git remote set-url origin "$HTTPS_URL"
+  echo "    Switched remote to HTTPS for credential forwarding"
+fi
+
 echo "==> Building Rust workspace..."
 cargo build
 

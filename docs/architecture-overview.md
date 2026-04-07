@@ -12,6 +12,7 @@ This document describes the design philosophy and architectural principles that 
 6. Support native and containerized local execution.
 7. Deterministic acceptance tests and scenario-level validation are mandatory.
 8. Agents only use approved command interfaces and never mutate simulation state directly.
+9. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls.
 
 ## Simulation-First
 
@@ -125,12 +126,25 @@ sim-types          (no upstream dependencies)
 - Scenario files are TOML. Schema structs live in `sim-types`; loader and validation logic live in `sim-core` and return structured `SimError`.
 - The simulation command and query path is synchronous and deterministic inside `sim-cli`/`sim-api` runners.
 - HTTP API and UI run in separate process layers and interact via commands/events, not direct state mutation.
+- Scenario loading now follows an acknowledged command path: `SimCommand::LoadScenario` carries a reply channel so `POST /api/scenario` reports validation errors instead of always returning success.
+- Handler and scheduler failures in the simulation loop are now captured and exposed in the simulation snapshot as `last_error`.
+- Runtime output is bounded by explicit caps in the event log and SSE subscription controls.
 
 ## Concurrency Model
 
 - The API layer runs on a Tokio async runtime.
 - The simulation engine runs on a deterministic synchronous execution path.
 - The API uses bounded command channels (`std::sync::mpsc`) and broadcast event channels to communicate without sharing mutable simulation state across threads. `std::sync::mpsc` is used because the simulation executes on a synchronous OS thread.
+- SSE subscription streams are bounded by a shared `Arc<tokio::sync::Semaphore>` so bursts of long-lived connections cannot exceed the configured cap.
+
+## Security-oriented runtime constraints
+
+- Scenario loading uses an explicit acknowledgement path (`SimCommand::LoadScenario`) so `/api/scenario` does not mask parser/validation failures behind `success: true`.
+- Simulation runtime handler and scheduler errors now flow into snapshots through `last_error`, turning silent runtime failures into observable state.
+- Event log output is bounded to a configurable capacity with `is_truncated()` reporting, and SSE consumers are capped to a finite connection count to prevent unbounded resource growth.
+- The architecture intentionally stays local-first by default (`127.0.0.1` CLI binding) and expects explicit hardening controls for non-local deployment.
+
+These constraints prefer bounded resource usage and deterministic feedback over unlimited retention or open network exposure in the default MVP posture.
 
 ## Separation of Concerns
 
@@ -297,6 +311,7 @@ These choices were made deliberately during the initial implementation and remai
 - Kept Material Layer (`sim-material`) as a planned phase to avoid changing discrete-MVP scope.
 - Playwright CI execution depends on a browser-capable runner; smoke tests are bootstrapped but require a local or CI environment with browser support.
 - Unmounted UI components (`BaselineCompare`, `ExportMenu`) are tracked as implementation status rather than removed, preserving forward intent.
+- Event log growth is capped at runtime. Surplus events are suppressed after capacity is reached to protect memory, trading perfect historical retention for bounded memory and deterministic recovery behavior.
 
 ## Repository Structure
 

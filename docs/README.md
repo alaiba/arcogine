@@ -14,5 +14,5 @@
 | Document | Description |
 |----------|-------------|
 | [../devel/deployment-options.md](../devel/deployment-options.md) | Deployment and runtime path analysis |
-| [../devel/security-improvement-plan.md](../devel/security-improvement-plan.md) | Security hardening action plan |
+| [../SECURITY.md](../SECURITY.md) | Security policy, hardening posture, and remaining deployment constraints |
 

@@ -22,16 +22,32 @@ If you discover a security issue, please report it by opening a GitHub issue wit
 
 These limitations are acceptable for a local-only, single-user experimentation tool. Production deployments should add appropriate security controls.
 
+## Security Posture
+
+Arcogine is local-first by default. Before exposing the service, you should apply network deployment controls.
+
+### Key defaults
+
+- Native CLI/API default bind: `127.0.0.1:3000`
+- Container images keep bind behavior explicit for container networking
+- No built-in production authentication/authorization
+- No built-in application TLS termination
+- No runtime encryption for scenario state
+
+If you need deeper context:
+- architecture and runtime constraints: `docs/architecture-overview.md`
+- security verification coverage: `docs/testing-strategy.md`
+
 ## Hardening for Network Deployment
 
-If you intend to expose Arcogine beyond localhost (e.g., on a LAN or the internet), apply the following measures:
+If you expose Arcogine beyond localhost, apply at least:
 
-1. **Bind address** — The CLI defaults to `127.0.0.1:3000`. For container deployments the Dockerfile binds to `0.0.0.0`. For non-Docker use, keep the `127.0.0.1` default or use `--addr` explicitly.
+1. **Bind address** — Use `--addr 127.0.0.1:3000` for native/local runs. For containerized networked runs, configure host binding intentionally and avoid broad accidental exposure.
 
 2. **CORS** — Set `CORS_ALLOWED_ORIGIN=http://your-ui-host:port` to restrict cross-origin access. When unset, CORS is permissive (`*`).
 
 3. **TLS** — Arcogine does not terminate TLS. Place it behind a reverse proxy (nginx, Caddy, or a cloud load balancer) with TLS termination.
 
-4. **Dependency auditing** — Run `cargo audit` and `npm audit` (in the `ui/` directory) before deployment. CI runs these checks automatically on every push.
+4. **Dependency auditing** — Run `cargo audit` and `npm audit` (in `ui/`) before deployment. CI also runs these checks automatically.
 
-5. **Log verbosity** — Set `RUST_LOG=warn` in production to reduce log volume and avoid leaking internal details.
+5. **Log verbosity** — Set `RUST_LOG=warn` in production-like environments to reduce log noise.

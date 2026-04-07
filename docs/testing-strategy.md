@@ -104,6 +104,55 @@ The CI workflow is intentionally split by concern:
 
 Coverage is collected in CI as an informational signal. Functional correctness, linting, formatting, and build/test success remain the blocking quality gates.
 
+## Security hardening verification coverage
+
+The completed hardening work added explicit verification for API, CLI, simulator, and CI control-plane changes.
+Deployment posture is documented in `../SECURITY.md`; architecture and runtime constraints are in
+`architecture-overview.md`; the primary test evidence is this section.
+
+- `api_smoke.rs`: body-size limits, scenario load success/error propagation, invalid command state transitions, and CORS restriction checks.
+- `sim-cli` unit tests: default CLI bind address remains `127.0.0.1` for non-container execution.
+- `sim-core` unit tests: event log capacity behavior, equality semantics, and economy value bounds.
+- CI workflow jobs: Rust dependency audit (`rustsec/audit-check`), npm audit, Trivy image scans, and Gitleaks secret scan.
+- Existing `PLAYWRIGHT` and `cargo-tarpaulin` coverage jobs continue to validate runtime behavior and regression resistance.
+
+Residual risk evidence:
+
+- R1 (unauthenticated API): mitigated by local-first default binding; external exposure requires deployment controls.
+- R2 (CORS): validated with env-driven origin tests.
+- R3 (body size): validated at router layer.
+- R4 (event log growth): validated with truncation-cap tests.
+- R5 (SSE fan-out): validated with concurrency limit test.
+- R6/R7 (scenario and runtime errors): validated through explicit error propagation tests.
+- R8 (bind address): validated in CLI default-address test.
+- R9 (headers): verified in container verification path and CI container job.
+- R10 (reproducibility): lockfile/caching posture remains controlled by committed workspace lockfile.
+- R11/R12 (supply-chain and image risk): validated by audit/scan CI jobs.
+- R14 (economy/price bounds): validated with TOML + API tests.
+
+Named verification tests now included for the hardening set:
+
+- `oversized_body_returns_payload_too_large`
+- `body_under_limit_is_accepted`
+- `load_valid_scenario_returns_success`
+- `load_invalid_toml_returns_bad_request`
+- `load_scenario_with_zero_max_ticks_returns_bad_request`
+- `load_scenario_with_missing_equipment_returns_bad_request`
+- `handler_error_surfaces_in_snapshot`
+- `serve_default_addr_is_localhost`
+- `sse_connection_limit_returns_503`
+- `event_log_caps_at_max_capacity`
+- `event_log_equality_ignores_capacity`
+- `event_log_is_truncated`
+- `scenario_with_nan_price_rejected`
+- `scenario_with_inf_demand_rejected`
+- `scenario_with_extreme_price_rejected`
+- `scenario_with_extreme_base_demand_rejected`
+- `extreme_price_returns_bad_request`
+- `cors_with_env_var_restricts_origin`
+
+This hardening layer added 19 new tests and keeps security controls part of the same long-lived quality gate strategy instead of maintaining a separate security-only pipeline.
+
 ## Documentation Boundaries
 
 - Use [`../TESTING.md`](../TESTING.md) for run commands, prerequisites, and "what success looks like".

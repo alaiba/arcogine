@@ -98,7 +98,10 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
    ```
 
    Run `make help` to see all available targets.
-5. **Open a pull request** against `main` with a clear description of what changed and why.
+5. **Quality-gate contract hygiene (when touching command targets):** update
+   `Makefile`, `.github/workflows/ci.yml`, `docs/TESTING.md`,
+   `docs/testing-strategy.md`, `docs/SECURITY.md`, and any contributor-facing docs.
+6. **Open a pull request** against `main` with a clear description of what changed and why.
 
 ## Code Style
 

@@ -115,6 +115,25 @@ describe('SseClient', () => {
     expect(es.readyState).toBe(MockEventSource.CLOSED);
   });
 
+  it('registers listeners for additional event names', async () => {
+    client.connect();
+    await vi.advanceTimersByTimeAsync(0);
+
+    const es = (client as unknown as { es: MockEventSource }).es;
+    expect(es.listeners['DemandEvaluation']).toHaveLength(1);
+    expect(es.listeners['AgentEvaluation']).toHaveLength(1);
+  });
+
+  it('handles demand evaluation payloads', async () => {
+    client.connect();
+    await vi.advanceTimersByTimeAsync(0);
+
+    const es = (client as unknown as { es: MockEventSource }).es;
+    const payload = { time: { '0': 30 }, event_type: 'DemandEvaluation', payload: { amount: 7 } };
+    es.emit('DemandEvaluation', JSON.stringify(payload));
+    expect(eventSpy).toHaveBeenCalledWith(payload);
+  });
+
   it('reconnect delay doubles on each failure up to cap', async () => {
     client.connect();
     await vi.advanceTimersByTimeAsync(0);
@@ -144,5 +163,41 @@ describe('SseClient', () => {
 
     await vi.advanceTimersByTimeAsync(800);
     expect((client as unknown as { es: MockEventSource | null }).es).not.toBeNull();
+  });
+
+  it('does not reconnect after disconnect during retry window', async () => {
+    client.connect();
+    await vi.advanceTimersByTimeAsync(0);
+
+    const es = (client as unknown as { es: MockEventSource }).es;
+    es.simulateError();
+    await vi.advanceTimersByTimeAsync(50);
+
+    client.disconnect();
+    await vi.advanceTimersByTimeAsync(1000);
+    const finalEs = (client as unknown as { es: MockEventSource | null }).es;
+    expect(finalEs).toBeNull();
+  });
+
+  it('uses the provided initial reconnect delay', async () => {
+    const delayedClient = new SseClient(eventSpy, {
+      initialReconnectDelayMs: 200,
+      maxReconnectDelayMs: 500,
+    });
+    delayedClient.connect();
+    await vi.advanceTimersByTimeAsync(0);
+
+    const es1 = (delayedClient as unknown as { es: MockEventSource }).es;
+    es1.simulateError();
+
+    await vi.advanceTimersByTimeAsync(199);
+    const stillSame = (delayedClient as unknown as { es: MockEventSource }).es;
+    expect(stillSame).toBe(es1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    const es2 = (delayedClient as unknown as { es: MockEventSource }).es;
+    expect(es2).not.toBe(es1);
+
+    delayedClient.disconnect();
   });
 });

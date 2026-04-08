@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BaselineCompare } from './BaselineCompare';
 import { useSimulationStore } from '../../stores/simulation';
 import { useBaselinesStore } from '../../stores/baselines';
@@ -36,12 +36,54 @@ describe('BaselineCompare', () => {
     expect(screen.getByText(/no saved baselines/i)).toBeInTheDocument();
   });
 
+  it('disables save when no scenario is loaded', () => {
+    render(<BaselineCompare />);
+    expect(screen.getByRole('button', { name: /save baseline/i })).toBeDisabled();
+  });
+
   it('renders baseline list from store', () => {
     const snap = makeSnapshot();
     useSimulationStore.setState({ snapshot: snap });
     useBaselinesStore.getState().saveBaseline('Baseline A', snap);
     render(<BaselineCompare />);
     expect(screen.getByText('Baseline A')).toBeInTheDocument();
+  });
+
+  it('saves baseline from prompt when scenario is loaded', () => {
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Saved Baseline');
+    const snap = makeSnapshot();
+    useSimulationStore.setState({ snapshot: snap });
+    render(<BaselineCompare />);
+    fireEvent.click(screen.getByRole('button', { name: /save baseline/i }));
+    expect(screen.getByText('Saved Baseline')).toBeInTheDocument();
+    promptSpy.mockRestore();
+  });
+
+  it('does not save baseline when prompt is cancelled', () => {
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue(null);
+    const snap = makeSnapshot();
+    useSimulationStore.setState({ snapshot: snap });
+    render(<BaselineCompare />);
+    fireEvent.click(screen.getByRole('button', { name: /save baseline/i }));
+    expect(screen.queryByText('Saved Baseline')).not.toBeInTheDocument();
+    promptSpy.mockRestore();
+  });
+
+  it('removes a baseline when remove is clicked', () => {
+    const snap = makeSnapshot();
+    useSimulationStore.setState({ snapshot: snap });
+    useBaselinesStore.getState().saveBaseline('Removable', snap);
+    render(<BaselineCompare />);
+    fireEvent.click(screen.getByRole('button', { name: /remove/i }));
+    expect(screen.queryByText('Removable')).not.toBeInTheDocument();
+  });
+
+  it('shows snapshot comparison note when snapshot is missing', () => {
+    const snap = makeSnapshot();
+    useBaselinesStore.getState().saveBaseline('Compare me', snap);
+    useSimulationStore.setState({ snapshot: null });
+    render(<BaselineCompare />);
+    expect(screen.getByText(/load a snapshot to compare/i)).toBeInTheDocument();
   });
 
   it('isImprovement: revenue increase is improvement', () => {

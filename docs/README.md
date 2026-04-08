@@ -14,5 +14,6 @@
 | Document | Description |
 |----------|-------------|
 | [../devel/deployment-options.md](../devel/deployment-options.md) | Deployment and runtime path analysis |
+| [quality-gates.md](quality-gates.md) | Archived quality-gate contract, design rationale, findings, and governance |
 | [SECURITY.md](SECURITY.md) | Security policy, hardening posture, and remaining deployment constraints |
 

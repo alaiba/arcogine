@@ -101,7 +101,22 @@ CI consumes Make targets as the single source of truth for quality gate commands
 - **Frontend job** (`make ci-frontend`): ESLint, type-checking, Vitest unit tests with coverage, production build, and npm audit.
 - **Playwright job** (`make playwright`): browser E2E validation with CI-managed servers and browsers.
 - **Docker job** (`make ci-docker`): container build/startup parity plus API/UI reachability checks.
-- **Security jobs**: `make trivy-scan-api`, `make trivy-scan-ui`, `make gitleaks`, and `make rust-audit`.
+- **Security jobs**: `make trivy-scan-api`, `make trivy-scan-ui`, and `make gitleaks`.
+- **Local-only via `make quality-full`**: `make rust-audit` (Rust dependency audit) is included in the `ci-security` composite but is not executed in a dedicated CI job; run it locally through `make quality-full` or `make rust-audit` directly.
+
+## Quality-gate command contract
+
+This project follows a Make-first model:
+
+- `Makefile` is the authoritative place for all quality-gate command bodies.
+- CI jobs delegate to Make composites and do not embed the same command chains.
+- Frontend CI runs `make` from repository root; Make targets own `cd ui && ...` steps.
+- `playwright` runs only `cd ui && npx playwright test`; CI remains responsible for API
+  binary build, node/browser setup, and dependency installation.
+- Security installation and policy handling remain in workflow where appropriate, while scan
+  command bodies are exposed through Make targets for consistency.
+
+For governance, scope, and the archived trade-off rationale, see [`quality-gates.md`](quality-gates.md).
 
 Coverage is collected in CI as an informational signal. Functional correctness, linting, formatting, and build/test success remain the blocking quality gates.
 
@@ -152,7 +167,7 @@ Named verification tests now included for the hardening set:
 - `extreme_price_returns_bad_request`
 - `cors_with_env_var_restricts_origin`
 
-This hardening layer added 19 new tests and keeps security controls part of the same long-lived quality gate strategy instead of maintaining a separate security-only pipeline.
+This hardening layer added 18 new tests and keeps security controls part of the same long-lived quality gate strategy instead of maintaining a separate security-only pipeline.
 
 ## Documentation Boundaries
 

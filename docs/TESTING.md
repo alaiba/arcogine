@@ -10,6 +10,15 @@ This document describes all test categories in Arcogine, how to run each, and wh
 | `make quality-full` | Everything: runs `make quality`, then Playwright, Docker build and smoke, and the full security composite (`ci-security`: Rust audit, frontend audit, Trivy API/UI images, Gitleaks). |
 
 Leaf targets follow a **`<domain>-<action>`** naming convention (for example `rust-test`, `frontend-lint`). Run `make help` for a grouped list.
+For a full contract archive of how this command surface was designed and governed, see [`quality-gates.md`](quality-gates.md).
+
+### Command surface guarantees
+
+- `make` defaults to `help` and prints the grouped target catalog.
+- `make list` is intentionally kept as a discoverability alias to `help`.
+- Legacy target names (`test`, `lint`, `coverage`, `test-rust`, `test-frontend`,
+  `coverage-rust`, `coverage-frontend`, `coverage-summary`) are intentionally removed.
+- `clean` remains the only non-quality-gate utility target.
 
 ## Prerequisites
 

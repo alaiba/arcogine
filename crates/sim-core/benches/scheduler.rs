@@ -1,8 +1,9 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
 use sim_core::event::{Event, EventPayload};
 use sim_core::queue::Scheduler;
 use sim_types::{ProductId, SimTime};
+
+use std::hint::black_box;
 
 fn bench_schedule_and_dequeue(c: &mut Criterion) {
     c.bench_function("schedule_1000_events", |b| {

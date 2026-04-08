@@ -51,3 +51,17 @@ If you expose Arcogine beyond localhost, apply at least:
 4. **Dependency auditing** — Run `make rust-audit` and `make frontend-audit` before deployment. CI runs npm audit as part of `make ci-frontend` and scans container images via `make trivy-scan-api` / `make trivy-scan-ui`. Run `make quality-full` locally for the complete security suite including Rust audit.
 
 5. **Log verbosity** — Set `RUST_LOG=warn` in production-like environments to reduce log noise.
+
+### Security scan ownership
+
+Security execution follows the quality-gate contract:
+
+- Scan command bodies are wrapped in Make targets (`rust-audit`, `frontend-audit`,
+  `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`) so all checks are discoverable from
+  the same command surface.
+- CI remains responsible for installing scanner binaries/tools and enforcing policy
+  controls (`--exit-code`, report handling, fail-fast behavior) around those targets.
+- This split keeps scan execution consistent without coupling scanner bootstrap to every
+  runtime or developer environment.
+
+See [`quality-gates.md`](quality-gates.md) for the archived rationale and governance.

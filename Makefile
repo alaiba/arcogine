@@ -62,7 +62,6 @@ frontend-audit: ## Audit npm dependencies
 
 ##@ E2E
 playwright: ## Run Playwright E2E tests (requires running API + UI)
-	cd ui && npx playwright install --with-deps chromium
 	cd ui && npx playwright test
 
 ##@ Docker

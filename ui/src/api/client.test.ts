@@ -171,6 +171,8 @@ describe('client', () => {
       fetchMock.mockResolvedValue(jsonResponse({ events: [] }));
       await getExportEvents();
       expect(fetchMock).toHaveBeenCalledWith('/api/export/events', expect.anything());
+
+      fetchMock.mockResolvedValue(jsonResponse({ events: [] }));
       expect(await getExportEvents()).toEqual({ events: [] });
     });
 

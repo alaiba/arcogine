@@ -187,15 +187,17 @@ describe('SseClient', () => {
     delayedClient.connect();
     await vi.advanceTimersByTimeAsync(0);
 
-    const es1 = (delayedClient as unknown as { es: MockEventSource }).es;
-    es1.simulateError();
+    const es1 = (delayedClient as unknown as { es: MockEventSource | null }).es;
+    expect(es1).not.toBeNull();
+    es1!.simulateError();
 
     await vi.advanceTimersByTimeAsync(199);
-    const stillSame = (delayedClient as unknown as { es: MockEventSource }).es;
-    expect(stillSame).toBe(es1);
+    const midWait = (delayedClient as unknown as { es: MockEventSource | null }).es;
+    expect(midWait).toBeNull();
 
     await vi.advanceTimersByTimeAsync(1);
-    const es2 = (delayedClient as unknown as { es: MockEventSource }).es;
+    const es2 = (delayedClient as unknown as { es: MockEventSource | null }).es;
+    expect(es2).not.toBeNull();
     expect(es2).not.toBe(es1);
 
     delayedClient.disconnect();

@@ -1,6 +1,8 @@
 FROM mcr.microsoft.com/devcontainers/rust:1-bookworm
 
-ARG NODE_MAJOR=20
+ARG NODE_MAJOR=24
+ARG TRIVY_VERSION=0.69.3
+ARG GITLEAKS_VERSION=8.24.3
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -48,6 +50,13 @@ RUN apt-get update \
         > /etc/apt/sources.list.d/nodesource.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends nodejs \
+    && curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+        -o /tmp/trivy.tar.gz \
+    && tar -xzf /tmp/trivy.tar.gz -C /tmp trivy \
+    && install -m 0755 /tmp/trivy /usr/local/bin/trivy \
+    && curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+        | tar xz -C /tmp gitleaks \
+    && install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER vscode
@@ -55,4 +64,6 @@ USER vscode
 RUN rustup component add rustfmt clippy llvm-tools \
     && cargo install cargo-watch \
     && cargo install --locked cargo-nextest \
-    && cargo install cargo-llvm-cov
+    && cargo install --locked cargo-llvm-cov \
+    && cargo install --locked cargo-audit \
+    && rm -f /tmp/trivy.tar.gz /tmp/gitleaks

@@ -1,6 +1,6 @@
 # Contributing to Arcogine
 
-Thank you for considering a contribution to Arcogine. This guide covers the conventions and workflow for getting involved.
+Thank you for considering a contribution to Arcogine. This guide covers everything you need to get started.
 
 ## Prerequisites
 
@@ -8,17 +8,11 @@ Thank you for considering a contribution to Arcogine. This guide covers the conv
 - **Node.js** 20+ and npm (for the `ui/` experiment console)
 - **Docker** and Docker Compose (optional, for containerized runs)
 
-## Host vs container prerequisites
-
-Native development requires Rust and Node installed on the host.
-
-Container development requires Docker plus VS Code Dev Containers.
-
-If your host does not have Rust/Node installed, use the dev container path first.
+Native development requires Rust and Node installed on the host. If your host does not have Rust/Node installed, use the dev container path.
 
 ## Choose a start path
 
-### 1) Dev container
+### 1) Dev container (recommended)
 
 ```bash
 git clone https://github.com/alaiba/arcogine.git
@@ -62,16 +56,14 @@ npm ci
 npm run dev
 ```
 
-### 3) Docker Compose runtime
+### 3) Docker Compose
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-## Repository Layout
-
-See `docs/architecture-overview.md` for the full crate structure and design rationale.
+## Repository layout
 
 | Directory | Purpose |
 |-----------|---------|
@@ -86,24 +78,25 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 | `examples/` | TOML scenario fixture files |
 | `docs/` | Project documentation |
 
-## Development Workflow
+See `docs/architecture.md` for the full crate dependency graph and design rationale.
+
+## Development workflow
 
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
 2. **Make your changes.** Follow the code style enforced by `cargo fmt` and `cargo clippy`.
 3. **Write tests** for new functionality. Each crate has inline `#[cfg(test)]` unit test modules; integration tests live in `crates/sim-api/tests/`. Frontend stores and components are tested with Vitest and Testing Library.
 4. **Run the checks:**
-   ```bash
-   make quality        # fast gates: fmt, clippy, tests, coverage, lint, typecheck, build
-   make quality-full   # everything: quality + playwright + docker + security
-   ```
 
-   Run `make help` to see all available targets.
-5. **Quality-gate contract hygiene (when touching command targets):** update
-   `Makefile`, `.github/workflows/ci.yml`, `docs/TESTING.md`,
-   `docs/testing-strategy.md`, `docs/SECURITY.md`, and any contributor-facing docs.
-6. **Open a pull request** against `main` with a clear description of what changed and why.
+```bash
+make quality        # fast gates: fmt, clippy, tests, coverage, lint, typecheck, build
+make quality-full   # everything: quality + playwright + docker + security
+```
 
-## Code Style
+Run `make help` to see all available targets.
+
+5. **Open a pull request** against `main` with a clear description of what changed and why.
+
+## Code style
 
 - Run `make fmt` before committing (`cargo fmt --check` under the hood).
 - All Clippy warnings are treated as errors — `make clippy` runs `cargo clippy -- -D warnings`.
@@ -113,21 +106,31 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 
 ## Testing
 
-- **Inline unit tests** live alongside the code they test in `#[cfg(test)] mod tests` blocks within each crate's source files.
-- **Integration tests** that require multiple domain crates live in `crates/sim-api/tests/`.
-- **Property tests** use `proptest` in `crates/sim-core/tests/` and `crates/sim-factory/tests/`.
-- **Frontend unit tests** use Vitest and `@testing-library/react` in `ui/src/` (co-located `.test.ts`/`.test.tsx` files).
-- **Benchmarks** use Criterion in `crates/sim-core/benches/`.
-- **E2E tests** for the UI use Playwright in `ui/e2e/`.
-- **Coverage** — `cargo-llvm-cov` for Rust, `vitest --coverage` for frontend (see `TESTING.md`).
+Run `make quality` before pushing. That covers:
 
-See `docs/testing-strategy.md` for the rationale behind the testing layers, handler parity requirements, and CI quality gates.
+- Rust formatting, linting, workspace tests, and coverage
+- Frontend linting, type-checking, unit tests, coverage, and production build
 
-## Determinism Contract
+For the full test surface including Playwright E2E, Docker, and security scans, run `make quality-full`.
 
-Arcogine's simulation must produce identical results given identical inputs. All stochastic behavior uses `ChaCha8Rng` seeded from the scenario configuration. See the Determinism Contract section in `docs/architecture-overview.md` for details.
+See `docs/TESTING.md` for the complete test category reference.
 
-## Commit Messages
+### Test layers at a glance
+
+| Layer | Location | Tool |
+|-------|----------|------|
+| Rust unit tests | `#[cfg(test)]` in each crate | `cargo test` |
+| Rust integration tests | `crates/sim-api/tests/` | `cargo test` |
+| Property tests | `crates/sim-core/tests/`, `crates/sim-factory/tests/` | `proptest` |
+| Frontend unit tests | `ui/src/**/*.test.{ts,tsx}` | Vitest |
+| E2E tests | `ui/e2e/` | Playwright |
+| Benchmarks | `crates/sim-core/benches/` | Criterion |
+
+## Determinism contract
+
+Arcogine's simulation must produce identical results given identical inputs. All stochastic behavior uses `ChaCha8Rng` seeded from the scenario configuration. See the determinism contract section in `docs/architecture.md` for details.
+
+## Commit messages
 
 Use concise, descriptive commit messages. Reference the phase and task number when applicable (e.g., "Phase 2: implement event scheduler").
 

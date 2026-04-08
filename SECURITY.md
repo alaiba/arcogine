@@ -34,10 +34,6 @@ Arcogine is local-first by default. Before exposing the service, you should appl
 - No built-in application TLS termination
 - No runtime encryption for scenario state
 
-If you need deeper context:
-- architecture and runtime constraints: `docs/architecture-overview.md`
-- security verification coverage: `docs/testing-strategy.md`
-
 ## Hardening for Network Deployment
 
 If you expose Arcogine beyond localhost, apply at least:
@@ -61,8 +57,5 @@ Security execution follows the quality-gate contract:
   the same command surface.
 - CI remains responsible for installing scanner binaries/tools and enforcing policy
   controls (`--exit-code`, report handling, fail-fast behavior) around those targets.
-- This split keeps scan execution consistent without coupling scanner bootstrap to every
-  runtime or developer environment.
 
-For command-contract and governance rationale, see the "Make-based quality-gate contract"
-in [`testing-strategy.md`](testing-strategy.md).
+For the full security verification test list, see `docs/TESTING.md`.

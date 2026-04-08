@@ -43,7 +43,7 @@ jobs:
         if: always()
         uses: codecov/codecov-action@v6
         with:
-          files: cobertura.xml
+          files: target/coverage/cobertura.xml
           flags: rust
           fail_ci_if_error: false
 

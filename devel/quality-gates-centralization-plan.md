@@ -112,7 +112,7 @@ Objective: Remove duplicated shell command chains from workflow jobs and make CI
 Planned work:
 1. Replace Rust job check commands with Make-based steps:
    - Replace Rust checks in CI with a single `make ci-rust` step after toolchain setup (`.github/workflows/ci.yml:39-63`) so coverage is included in the blocking Rust quality gate.
-   - The `rust-coverage` leaf target must produce coverage output at the path CI's Codecov upload expects (`cobertura.xml` at repo root). Use `cargo tarpaulin --workspace --out xml --skip-clean`. For local convenience, `rust-coverage` may additionally produce HTML via `--out html --output-dir target/coverage`.
+   - The `rust-coverage` leaf target writes all outputs to `target/coverage/` (`cobertura.xml` + HTML). CI's Codecov upload reads `target/coverage/cobertura.xml`.
 2. Replace frontend job commands with `make ci-frontend` after `npm ci` (`.github/workflows/ci.yml:65-114`).
    - Remove the `defaults: run: working-directory: ui` block from the frontend job so that `make ci-frontend` executes from the repo root where `Makefile` lives. The Make target handles `cd ui &&` internally.
 3. Replace Playwright commands with `make ci-playwright` while keeping server setup/build steps in workflow (`.github/workflows/ci.yml:115-154`).
@@ -312,11 +312,11 @@ Acceptance criteria:
 
 **Issue:** If `ci-rust` reuses the local `coverage-rust` target as-is, the XML output lands in `target/coverage/` and the Codecov upload step finds nothing at `cobertura.xml`. Coverage upload silently fails.
 
-**Recommendation:** Define `rust-coverage` with CI-compatible flags (`--out xml --skip-clean`) producing `cobertura.xml` at root. It may additionally produce HTML locally via `--out html --output-dir target/coverage`. There is no separate `coverage-rust` alias. Document this in Phase 3.
+**Recommendation:** ~~Define `rust-coverage` with CI-compatible flags producing `cobertura.xml` at root.~~ (2026-04-08) Resolved by pointing CI's Codecov upload at `target/coverage/cobertura.xml` instead of copying to root. Simpler: one canonical output directory, no post-processing.
 
 **Choices:**
-- [x] Single `rust-coverage` target producing XML at root (plus optional local HTML).
-- [ ] Change the CI Codecov upload to read from `target/coverage/cobertura.xml` instead.
+- [ ] Single `rust-coverage` target producing XML at root (plus optional local HTML).
+- [x] Change the CI Codecov upload to read from `target/coverage/cobertura.xml` instead.
 
 ### F8 [Applied]: Frontend CI job `defaults: working-directory` must be removed
 <!-- severity: major -->
@@ -424,7 +424,7 @@ Acceptance criteria:
 ### Deviations from plan
 
 - **Phase 3, docker-scan job (2026-04-08):** The CI docker-scan job now calls `make trivy-scan-${{ matrix.image }}` directly instead of the `aquasecurity/trivy-action` GitHub Action. The Make target uses `trivy` CLI directly, requiring `trivy` to be installed on the runner. This is intentional to keep scan invocation in Make per F2.
-- **rust-coverage output path fix (2026-04-08):** `rust-coverage` target updated to run tarpaulin with `--output-dir target/coverage` then copy `cobertura.xml` to repo root. This ensures CI Codecov upload finds `cobertura.xml` at root (per F7) while also producing the HTML report locally.
+- **rust-coverage output path (2026-04-08):** Resolved F7 by pointing CI's Codecov upload at `target/coverage/cobertura.xml` instead of copying the file to repo root. The `rust-coverage` target writes all outputs to `target/coverage/` with no post-processing step.
 
 ### Build/runtime fixes applied
 

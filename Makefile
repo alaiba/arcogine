@@ -36,10 +36,9 @@ rust-audit: ## Audit Rust dependencies (installs cargo-audit if needed)
 	@command -v cargo-audit >/dev/null 2>&1 || cargo install cargo-audit
 	cargo audit
 
-rust-coverage: ## Generate Rust coverage (XML at repo root + HTML in target/coverage)
+rust-coverage: ## Generate Rust coverage (XML + HTML in target/coverage)
 	mkdir -p target/coverage
 	cargo tarpaulin --workspace --out xml --out html --output-dir target/coverage --skip-clean
-	cp target/coverage/cobertura.xml cobertura.xml
 
 ##@ Frontend
 frontend-lint: ## Lint frontend code (ESLint)
@@ -109,4 +108,4 @@ quality-full: quality playwright docker-build docker-smoke ci-security ## Full q
 ##@ Utility
 clean: ## Remove build artifacts and coverage reports
 	cargo clean
-	rm -rf ui/coverage target/coverage cobertura.xml
+	rm -rf ui/coverage target/coverage

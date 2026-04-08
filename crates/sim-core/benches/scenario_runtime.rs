@@ -1,10 +1,11 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use sim_core::event::Event;
 use sim_core::handler::EventHandler;
 use sim_core::queue::Scheduler;
 use sim_core::runner::run_scenario;
 use sim_core::scenario::load_scenario;
 use sim_types::SimError;
+use std::hint::black_box;
 
 struct NullHandler;
 

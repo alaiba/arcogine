@@ -1,4 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
 use sim_core::event::{Event, EventPayload};
 use sim_core::queue::Scheduler;
 use sim_types::{ProductId, SimTime};

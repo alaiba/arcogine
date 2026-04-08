@@ -95,12 +95,13 @@ E2E tests should:
 
 ## CI Quality Gates
 
-The CI workflow is intentionally split by concern:
+CI consumes Make targets as the single source of truth for quality gate commands:
 
-- **Rust job**: formatting, clippy, workspace tests, and Rust coverage generation.
-- **Frontend job**: dependency install, ESLint, type-checking, Vitest unit tests, and production build.
-- **Playwright job**: browser E2E validation with CI-managed servers and browsers.
-- **Docker job**: container build/startup parity plus API/UI reachability checks.
+- **Rust job** (`make ci-rust`): formatting, clippy, workspace tests, and coverage.
+- **Frontend job** (`make ci-frontend`): ESLint, type-checking, Vitest unit tests with coverage, production build, and npm audit.
+- **Playwright job** (`make playwright`): browser E2E validation with CI-managed servers and browsers.
+- **Docker job** (`make ci-docker`): container build/startup parity plus API/UI reachability checks.
+- **Security jobs**: `make trivy-scan-api`, `make trivy-scan-ui`, `make gitleaks`, and `make rust-audit`.
 
 Coverage is collected in CI as an informational signal. Functional correctness, linting, formatting, and build/test success remain the blocking quality gates.
 

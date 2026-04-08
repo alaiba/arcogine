@@ -74,6 +74,16 @@ Headless mode (no UI, no server) is also available:
 cargo run --bin arcogine -- run --headless --scenario examples/basic_scenario.toml
 ```
 
+## Quality gates
+
+```bash
+make             # show all available targets
+make quality     # fast gates: formatting, linting, tests, coverage, build
+make quality-full  # everything: quality + Playwright E2E + Docker smoke + security scans
+```
+
+See `TESTING.md` for the full target matrix and `CONTRIBUTING.md` for the development workflow.
+
 ## Contributing
 
 See `CONTRIBUTING.md` for development workflow, alternative setup paths (native, Docker Compose), toolchain policy, and testing conventions. For architecture and design details see `docs/architecture-overview.md`; for project identity and long-term directions see `docs/vision.md`.

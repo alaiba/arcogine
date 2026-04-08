@@ -1175,7 +1175,7 @@ dependencies = [
  "futures-core",
  "http-body-util",
  "rand 0.8.5",
- "rand_chacha 0.3.1",
+ "rand_chacha 0.9.0",
  "serde",
  "serde_json",
  "sim-agents",
@@ -1199,7 +1199,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "rand 0.8.5",
- "rand_chacha 0.3.1",
+ "rand_chacha 0.9.0",
  "sim-api",
  "sim-core",
  "sim-economy",
@@ -1217,7 +1217,7 @@ dependencies = [
  "criterion",
  "proptest",
  "rand 0.8.5",
- "rand_chacha 0.3.1",
+ "rand_chacha 0.9.0",
  "serde",
  "sim-types",
  "toml",
@@ -1230,7 +1230,7 @@ name = "sim-economy"
 version = "0.1.0"
 dependencies = [
  "rand 0.8.5",
- "rand_chacha 0.3.1",
+ "rand_chacha 0.9.0",
  "serde",
  "sim-core",
  "sim-types",

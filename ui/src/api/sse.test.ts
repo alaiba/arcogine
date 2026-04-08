@@ -16,7 +16,7 @@ class MockEventSource {
   onmessage: ((ev: MessageEvent) => void) | null = null;
   url: string;
 
-  private listeners: Record<string, EventListener[]> = {};
+  listeners: Record<string, EventListener[]> = {};
 
   constructor(url: string) {
     this.url = url;

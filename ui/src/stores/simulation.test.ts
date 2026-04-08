@@ -14,26 +14,29 @@ vi.mock('../api/client', () => ({
   postAgent: vi.fn(),
 }));
 
-const mockSseClients: MockSseClient[] = [];
+const mockSseClients: Array<{
+  connect: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+  emit: (event: SimEvent) => void;
+}> = [];
 
-class MockSseClient {
-  connect = vi.fn();
-  disconnect = vi.fn();
-  private onEvent: (event: SimEvent) => void;
+vi.mock('../api/sse', () => {
+  class MockSseClient {
+    connect = vi.fn();
+    disconnect = vi.fn();
+    private onEvent: (event: SimEvent) => void;
 
-  constructor(onEvent: (event: SimEvent) => void) {
-    this.onEvent = onEvent;
-    mockSseClients.push(this);
+    constructor(onEvent: (event: SimEvent) => void) {
+      this.onEvent = onEvent;
+      mockSseClients.push(this);
+    }
+
+    emit(event: SimEvent) {
+      this.onEvent(event);
+    }
   }
-
-  emit(event: SimEvent) {
-    this.onEvent(event);
-  }
-}
-
-vi.mock('../api/sse', () => ({
-  SseClient: MockSseClient,
-}));
+  return { SseClient: MockSseClient };
+});
 
 function makeSnapshot(time: number, overrides: Partial<SimSnapshot> = {}): SimSnapshot {
   return {

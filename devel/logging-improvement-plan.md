@@ -2,7 +2,7 @@
 
 > **Date:** 2026-04-04
 > **Scope:** Audit existing logging practices across the Arcogine codebase and provide a prioritized, actionable plan to improve observability, diagnostic quality, and logging hygiene across Rust crates, the TypeScript UI, CI/CD, and container deployment.
-> **Primary sources:** All crates under `crates/`, `ui/src/`, `.github/workflows/ci.yml`, `compose.yaml`, `Dockerfile`, `ui/Dockerfile`, `.env.example`, `docs/architecture-overview.md`, `CONTRIBUTING.md`, `TESTING.md`
+> **Primary sources:** All crates under `crates/`, `ui/src/`, `.github/workflows/ci.yml`, `compose.yaml`, `Dockerfile`, `ui/Dockerfile`, `.env.example`, `docs/architecture-overview.md`, `docs/CONTRIBUTING.md`, `docs/TESTING.md`
 > **Relationship to other plans:** Complements `devel/security-improvement-plan.md` (which references `RUST_LOG=warn` for production) and `devel/testability-improvement-plan.md` (which covers test infrastructure). Logging-related testing items are defined here; cross-references are noted.
 
 ---
@@ -38,7 +38,7 @@ No logging library (e.g. `pino`, `winston`, `loglevel`) is installed. The API cl
 
 | Aspect | Status |
 |--------|--------|
-| `RUST_LOG` env var | Honored by `EnvFilter::try_from_default_env()` in `sim-cli/main.rs`; **not documented** in `.env.example`, `README.md`, `CONTRIBUTING.md`, or `compose.yaml` |
+| `RUST_LOG` env var | Honored by `EnvFilter::try_from_default_env()` in `sim-cli/main.rs`; **not documented** in `.env.example`, `README.md`, `docs/CONTRIBUTING.md`, or `compose.yaml` |
 | Default log level | `info` (hardcoded fallback in `sim-cli/main.rs:139`) |
 | Log output format | `tracing_subscriber::fmt()` — human-readable text to stderr |
 | Structured (JSON) logging | Not available; no `fmt::format::Json` layer configured |
@@ -121,7 +121,7 @@ If `sim-core` needs `tracing` instrumentation in Phase 2, re-add `tracing` (not 
 
 #### 2.2 Document `RUST_LOG` in `.env.example` and `README.md`
 
-**Problem:** The `RUST_LOG` environment variable controls log verbosity but is undocumented in `.env.example`, `README.md`, `CONTRIBUTING.md`, and `compose.yaml`.
+**Problem:** The `RUST_LOG` environment variable controls log verbosity but is undocumented in `.env.example`, `README.md`, `docs/CONTRIBUTING.md`, and `compose.yaml`.
 
 **Files to change:**
 
@@ -637,7 +637,7 @@ Add a CI step or clippy configuration to flag `println!` usage in library crates
 
 ### Conventions to Adopt
 
-Based on the existing codebase patterns in `CONTRIBUTING.md` and `docs/architecture-overview.md`:
+Based on the existing codebase patterns in `docs/CONTRIBUTING.md` and `docs/architecture-overview.md`:
 
 1. **Use `tracing` macros, not `log` macros** — The project already standardizes on `tracing`. Do not introduce the `log` crate.
 2. **Use structured fields** — Prefer `tracing::info!(key = value, "message")` over `tracing::info!("message: {}", value)` for machine-parseable output.

@@ -14,5 +14,5 @@
 | Document | Description |
 |----------|-------------|
 | [../devel/deployment-options.md](../devel/deployment-options.md) | Deployment and runtime path analysis |
-| [../SECURITY.md](../SECURITY.md) | Security policy, hardening posture, and remaining deployment constraints |
+| [SECURITY.md](SECURITY.md) | Security policy, hardening posture, and remaining deployment constraints |
 

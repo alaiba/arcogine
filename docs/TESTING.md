@@ -10,7 +10,7 @@ This document describes all test categories in Arcogine, how to run each, and wh
 | `make quality-full` | Everything: runs `make quality`, then Playwright, Docker build and smoke, and the full security composite (`ci-security`: Rust audit, frontend audit, Trivy API/UI images, Gitleaks). |
 
 Leaf targets follow a **`<domain>-<action>`** naming convention (for example `rust-test`, `frontend-lint`). Run `make help` for a grouped list.
-For a full contract archive of how this command surface was designed and governed, see [`quality-gates.md`](quality-gates.md).
+For command-contract rationale and conventions, see [`testing-strategy.md`](testing-strategy.md).
 
 ### Command surface guarantees
 
@@ -18,7 +18,19 @@ For a full contract archive of how this command surface was designed and governe
 - `make list` is intentionally kept as a discoverability alias to `help`.
 - Legacy target names (`test`, `lint`, `coverage`, `test-rust`, `test-frontend`,
   `coverage-rust`, `coverage-frontend`, `coverage-summary`) are intentionally removed.
-- `clean` remains the only non-quality-gate utility target.
+- `help` and `list` are discoverability targets outside the quality-gate namespace.
+- `clean` remains the only utility target outside discovery/gates.
+
+### Contract model
+
+- **Discovery targets:** `help` (default), `list` (alias to `help`)
+- **Leaf targets:** `fmt`, `clippy`, `rust-test`, `rust-audit`, `rust-coverage`,
+  `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-coverage`,
+  `frontend-build`, `frontend-audit`, `playwright`, `docker-build`, `docker-smoke`,
+  `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`
+- **Composite targets:**  
+  `ci-rust`, `ci-frontend`, `ci-playwright`, `ci-docker`, `ci-security`
+- **Developer entrypoints:** `quality`, `quality-full`
 
 ## Prerequisites
 
@@ -220,3 +232,11 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) invokes Make targets:
 5. **Docker image scan job** — `make trivy-scan-api` or `make trivy-scan-ui` (matrix)
 6. **Secret scan job** — `make gitleaks`
 7. **Makefile contract job** — verifies `make help`, `make list`, and dry-runs for composite targets (`make -n ci-rust ci-frontend ci-playwright ci-docker ci-security rust-audit`)
+
+## Contract validation notes
+
+- Contract enforcement is currently dry-run based. The `make-contract` CI job checks
+  target discoverability and executable dependency resolution via `make -n` but does
+  not execute target bodies end-to-end.
+- For a lightweight runtime smoke check of command bodies, see the recommended
+  enhancement in [testing-strategy.md](testing-strategy.md).

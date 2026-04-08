@@ -116,7 +116,85 @@ This project follows a Make-first model:
 - Security installation and policy handling remain in workflow where appropriate, while scan
   command bodies are exposed through Make targets for consistency.
 
-For governance, scope, and the archived trade-off rationale, see [`quality-gates.md`](quality-gates.md).
+For governance, scope, and trade-offs, see the **Make-based quality-gate contract**
+subsection below.
+
+## Make-based quality-gate contract
+
+### Scope and constraints
+
+- `Makefile` is the command surface of record for all quality gates.
+- `make` without a target prints the grouped help catalog (`help`).
+- `make list` remains a discoverability alias to `help`.
+- `help` and `list` are discovery targets outside the quality-gate namespace.
+- `clean` remains the only non-quality-gate utility target.
+- `quality` is the fast local profile (`fmt`, `clippy`, `rust-test`, `rust-coverage`,
+  frontend lint/typecheck/tests/coverage/build).
+- `quality-full` is the full profile and appends `playwright`, `docker-build`,
+  `docker-smoke`, and all `ci-security` checks.
+
+### Target model
+
+- **Discovery targets:** `help`, `list`
+- **Leaf targets:** `fmt`, `clippy`, `rust-test`, `rust-audit`, `rust-coverage`,
+  `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-coverage`,
+  `frontend-build`, `frontend-audit`, `playwright`, `docker-build`, `docker-smoke`,
+  `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`
+- **Composite targets:** `ci-rust`, `ci-frontend`, `ci-playwright`, `ci-docker`,
+  `ci-security`
+- **Developer entrypoints:** `quality`, `quality-full`, `clean`
+- `ci-security` includes `rust-audit`; dependency auditing is available through
+  `make quality-full` and `make rust-audit` locally, while CI enforces the security
+  scans through `make trivy-scan-*`, `make gitleaks`, and the `make-contract` dry-run guard.
+
+### Trade-offs and rationale
+
+- Target naming follows `<domain>-<action>` and uses hyphenated names to avoid Make
+  parser edge cases.
+- Legacy ad-hoc targets (`test`, `lint`, `coverage`, `test-rust`, `test-frontend`,
+  `coverage-rust`, `coverage-frontend`, `coverage-summary`) were retired to keep the
+  command surface deterministic and discoverable.
+- Coverage artifacts are canonicalized to `target/coverage/cobertura.xml` (with HTML in
+  `target/coverage`) so CI coverage uploads read the same path regardless of target.
+- Coverage is blocking in `ci-rust` (`rust-coverage` is included in the composite)
+  rather than as a separate soft-fail branch.
+- Security installs/policies remain in CI workflows while scan command bodies are owned
+  by Make targets, which keeps command invocation stable while keeping runtime bootstrap
+  policy local to CI.
+- Docker build and Docker smoke remain in `quality-full` to keep the fast profile focused
+  on edit-check cycles and API/frontend quality signals.
+
+### Governance and change protocol
+
+- Any quality-gate change should update:
+  - `Makefile`
+  - `.github/workflows/ci.yml`
+  - `docs/TESTING.md`
+  - `docs/testing-strategy.md`
+  - `docs/SECURITY.md`
+  - contributor-facing docs where the command surface changes
+- Enforce sequencing: establish contract surface changes before altering workflow invocation behavior.
+- CI contract checks are enforced through a dedicated dry-run guard:
+  `make help && make list && make -n ci-rust ci-frontend ci-playwright ci-docker ci-security rust-audit`.
+- After contract changes, run a manual parity review so command surface documentation
+  (`docs/TESTING.md`) matches current CI target usage.
+
+### Validation notes
+
+- CI currently consumes Make composites directly for each quality layer.
+- Contract validation is currently dry-run only, not a runtime command-body smoke test.
+- A future enhancement is to add a lightweight runtime contract job that executes fast
+  targets (for example `make fmt`, `make clippy`, `make frontend-lint`) to catch
+  broken command bodies not detectable by `make -n`.
+
+### Out-of-scope and deviations
+
+- Threshold tuning, parser/runner replacement, and CI runner/base image changes are
+  explicitly outside the scope of quality-gate contract governance.
+- Command execution flow still uses separate CI jobs for scans and build coverage checks;
+  coverage upload and scan bootstrap details are implementation specifics:
+  - Coverage uploads use `target/coverage/cobertura.xml`.
+  - The Docker image scan job installs Trivy in workflow and runs `make trivy-scan-${{ matrix.image }}`.
 
 Coverage is collected in CI as an informational signal. Functional correctness, linting, formatting, and build/test success remain the blocking quality gates.
 

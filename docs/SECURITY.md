@@ -64,4 +64,5 @@ Security execution follows the quality-gate contract:
 - This split keeps scan execution consistent without coupling scanner bootstrap to every
   runtime or developer environment.
 
-See [`quality-gates.md`](quality-gates.md) for the archived rationale and governance.
+For command-contract and governance rationale, see the "Make-based quality-gate contract"
+in [`testing-strategy.md`](testing-strategy.md).

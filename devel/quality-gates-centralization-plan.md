@@ -62,7 +62,7 @@ Rationale:
 
 ## 5. Phased Plan
 
-### Phase 1. Establish Make discoverability and command contract
+### Phase 1. Establish Make discoverability and command contract [Done]
 
 Objective: Replace the existing Makefile with a clean `<domain>-<action>` target surface and make `make` the entrypoint for understanding and running quality gates.
 
@@ -81,7 +81,7 @@ Acceptance criteria:
 - Running `make list` prints identical output to `make help`.
 - No legacy target names (`test`, `lint`, `coverage`, `test-rust`, `test-frontend`, `coverage-rust`, `coverage-frontend`, `coverage-summary`) exist in the new Makefile.
 
-### Phase 2. Consolidate gate primitives and composites in Make
+### Phase 2. Consolidate gate primitives and composites in Make [Done]
 
 Objective: Define explicit leaf and composite targets for each Rust/frontend gate so CI and developers can call the same command units.
 
@@ -105,7 +105,7 @@ Acceptance criteria:
 - `.PHONY` declaration covers all targets.
 - No legacy names (`test`, `lint`, `coverage`, `test-rust`, `test-frontend`, `coverage-rust`, `coverage-frontend`, `coverage-summary`) exist.
 
-### Phase 3. Refactor CI to consume Make targets
+### Phase 3. Refactor CI to consume Make targets [Done]
 
 Objective: Remove duplicated shell command chains from workflow jobs and make CI orchestration explicit.
 
@@ -131,7 +131,7 @@ Acceptance criteria:
 - Existing uploads remain intact and continue to write/consume the same report locations where already consumed by CI.
 - The frontend CI job no longer sets `defaults: run: working-directory: ui`; all path handling is internal to Make targets.
 
-### Phase 4. Update docs and contributor surfaces
+### Phase 4. Update docs and contributor surfaces [Done]
 
 Objective: Make Make the canonical quality interface in docs and remove ambiguity between docs and command execution.
 
@@ -154,7 +154,7 @@ Acceptance criteria:
 - All referenced docs explicitly state Make as the primary quality-gate entrypoint.
 - At least one doc command matrix maps every check to its canonical Make target.
 
-### Phase 5. Stabilize rollout and governance
+### Phase 5. Stabilize rollout and governance [Done]
 
 Objective: Ensure no command drift over time and reduce regression risk for future quality-gate changes.
 
@@ -169,6 +169,19 @@ Files expected:
 Acceptance criteria:
 - Command execution and documentation remain synchronized in periodic review.
 - New checks are added to both `Makefile` and workflow/docs in the same change set.
+
+#### Governance note
+
+> **Quality-gate change protocol (2026-04-08)**
+>
+> Any change to a quality gate command (adding, renaming, removing a Make target or altering its body) must update **all three** of:
+> 1. `Makefile` — the target definition.
+> 2. `.github/workflows/ci.yml` — the CI step that invokes it.
+> 3. Docs (`TESTING.md`, `CONTRIBUTING.md`, `README.md`, `ui/README.md`, `docs/testing-strategy.md`, `SECURITY.md`) — whichever reference the affected target.
+>
+> The `make-contract` CI job (`make help && make list && make -n ci-rust ci-frontend ci-playwright ci-docker ci-security rust-audit`) catches target regressions automatically.
+>
+> During release prep, run `make help` and diff its output against the CI workflow to verify parity.
 
 ---
 
@@ -391,3 +404,31 @@ Acceptance criteria:
 | F10 | Plan lacks precise scope for `docker-build` and `docker-smoke` leaf targets | major | gaps | — |
 | F11 | `make playwright` scope vs CI Playwright job bootstrap | minor | plan-hygiene | — |
 | F12 | Stale line references in Section 3 (Verified Current State) | minor | plan-hygiene | — |
+
+---
+
+## Implementation Status
+
+> **Date:** 2026-04-08
+
+### Completed tasks
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 1 — Establish Make discoverability and command contract | [Done] | All acceptance criteria verified: `make` prints help, `make list` = `make help`, no legacy targets. |
+| Phase 2 — Consolidate gate primitives and composites | [Done] | 17 leaf targets, 5 composites, `quality`/`quality-full` entrypoints, full `.PHONY` coverage, no legacy names. |
+| Phase 3 — Refactor CI to consume Make targets | [Done] | Removed `defaults: working-directory: ui`, replaced `rustsec/audit-check@v2` with `make rust-audit`, removed `continue-on-error` from coverage, added `make-contract` CI job. |
+| Phase 4 — Update docs and contributor surfaces | [Done] | All 6 docs updated: TESTING.md (quality gates matrix), CONTRIBUTING.md, README.md, ui/README.md, docs/testing-strategy.md, SECURITY.md. |
+| Phase 5 — Stabilize rollout and governance | [Done] | Governance note added to plan. |
+
+### Deviations from plan
+
+- **Phase 3, docker-scan job (2026-04-08):** The CI docker-scan job now calls `make trivy-scan-${{ matrix.image }}` directly instead of the `aquasecurity/trivy-action` GitHub Action. The Make target uses `trivy` CLI directly, requiring `trivy` to be installed on the runner. This is intentional to keep scan invocation in Make per F2.
+
+### Validations not yet executed
+
+The following validations from Section 6 require a live CI run or full environment and could not be verified locally:
+
+1. **Validation 2 (local target matrix):** `make quality` was dry-run verified (`make -n quality`) but not executed end-to-end due to pre-existing compilation errors in the Rust codebase unrelated to this plan.
+2. **Validation 3 (CI parity):** Requires an actual CI run to confirm Make targets are invoked and produce expected outputs.
+3. **Validation 6 (CI/CD guard):** The `make-contract` job is defined but has not been triggered yet. Dry-run was verified locally via `make help && make list && make -n ci-rust ci-frontend ci-playwright ci-docker ci-security rust-audit`.

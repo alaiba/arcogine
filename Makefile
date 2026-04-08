@@ -38,7 +38,8 @@ rust-audit: ## Audit Rust dependencies (installs cargo-audit if needed)
 
 rust-coverage: ## Generate Rust coverage (XML + HTML in target/coverage)
 	mkdir -p target/coverage
-	cargo tarpaulin --workspace --out xml --out html --output-dir target/coverage --skip-clean
+	cargo llvm-cov --workspace --cobertura --output-path target/coverage/cobertura.xml
+	cargo llvm-cov --workspace --html --output-dir target/coverage
 
 ##@ Frontend
 frontend-lint: ## Lint frontend code (ESLint)

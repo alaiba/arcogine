@@ -116,7 +116,7 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 - **Frontend unit tests** use Vitest and `@testing-library/react` in `ui/src/` (co-located `.test.ts`/`.test.tsx` files).
 - **Benchmarks** use Criterion in `crates/sim-core/benches/`.
 - **E2E tests** for the UI use Playwright in `ui/e2e/`.
-- **Coverage** — `cargo-tarpaulin` for Rust, `vitest --coverage` for frontend (see `TESTING.md`).
+- **Coverage** — `cargo-llvm-cov` for Rust, `vitest --coverage` for frontend (see `TESTING.md`).
 
 See `docs/testing-strategy.md` for the rationale behind the testing layers, handler parity requirements, and CI quality gates.
 

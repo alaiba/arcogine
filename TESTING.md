@@ -111,7 +111,7 @@ Benchmarks:
 
 **Canonical:** `make rust-coverage`
 
-**Direct command:** `cargo tarpaulin --workspace --out xml --out html --output-dir target/coverage --skip-clean` (requires `cargo-tarpaulin`)
+**Direct command:** `cargo llvm-cov --workspace --cobertura --output-path target/coverage/cobertura.xml` (requires `cargo-llvm-cov`)
 
 ### 11. Frontend lint (`frontend-lint`)
 

@@ -115,7 +115,7 @@ Deployment posture is documented in `../SECURITY.md`; architecture and runtime c
 - `sim-cli` unit tests: default CLI bind address remains `127.0.0.1` for non-container execution.
 - `sim-core` unit tests: event log capacity behavior, equality semantics, and economy value bounds.
 - CI workflow jobs: Rust dependency audit (`rustsec/audit-check`), npm audit, Trivy image scans, and Gitleaks secret scan.
-- Existing `PLAYWRIGHT` and `cargo-tarpaulin` coverage jobs continue to validate runtime behavior and regression resistance.
+- Existing `PLAYWRIGHT` and `cargo-llvm-cov` coverage jobs continue to validate runtime behavior and regression resistance.
 
 Residual risk evidence:
 

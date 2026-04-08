@@ -33,18 +33,20 @@ cargo run --bin arcogine -- serve --addr 127.0.0.1:3000
 
 ## Validation commands
 
+Run from the **repository root** (where the `Makefile` lives), not from `ui/`:
+
 ```bash
-cd ui
-npm ci
-npx tsc --noEmit
-npm run build
+make frontend-lint        # ESLint
+make frontend-typecheck   # tsc --noEmit
+make frontend-build       # production build
+make frontend-test        # unit tests (Vitest)
+make frontend-coverage    # unit tests with coverage
 ```
 
 ### E2E smoke tests
 
 ```bash
-cd ui
-npx playwright test
+make playwright           # runs npx playwright test in ui/
 ```
 
 ## Source map

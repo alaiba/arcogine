@@ -52,7 +52,7 @@ RUN apt-get update \
 
 USER vscode
 
-RUN rustup component add rustfmt clippy \
+RUN rustup component add rustfmt clippy llvm-tools \
     && cargo install cargo-watch \
     && cargo install --locked cargo-nextest \
-    && cargo install cargo-tarpaulin
+    && cargo install cargo-llvm-cov

@@ -2,7 +2,7 @@
 
 > **Date:** 2026-04-08
 > **Scope:** Centralize all quality-gate commands in Make as the single developer and CI source-of-truth using a clean `<domain>-<action>` naming convention, add discoverable defaults (`help`/`list`), and align documentation.
-> **Primary sources:** Makefile:1-45, .github/workflows/ci.yml:17-225, TESTING.md:126-154, CONTRIBUTING.md:90-126, README.md:18-75, ui/README.md:34-49, SECURITY.md:49-51, docs/testing-strategy.md:96-124
+> **Primary sources:** Makefile:1-45, .github/workflows/ci.yml:17-225, docs/TESTING.md:126-154, docs/CONTRIBUTING.md:90-126, README.md:18-75, ui/README.md:34-49, docs/SECURITY.md:49-51, docs/testing-strategy.md:96-124
 
 ---
 
@@ -42,10 +42,10 @@ The current Makefile already groups Rust and frontend checks under `test`, `lint
 The Rust and frontend workflow jobs each install dependencies, then run shell command sequences for checks directly in YAML (`.github/workflows/ci.yml:39-63`, `.github/workflows/ci.yml:65-114`). Playwright, docker, docker image scan, and secret scan jobs similarly encode command specifics inline (`.github/workflows/ci.yml:115-225`).
 
 ### 3.3 Project docs currently describe checks as direct shell snippets
-`TESTING.md` lists inline commands for rust checks, frontend checks, Playwright, and coverage (`TESTING.md:21-154`), and `CONTRIBUTING.md` mirrors this with manual check commands (`CONTRIBUTING.md:94-105`). `README.md` and `ui/README.md` describe start/dev/test commands independently from Make (`README.md:18-75`, `ui/README.md:20-49`).
+`docs/TESTING.md` lists inline commands for rust checks, frontend checks, Playwright, and coverage (`docs/TESTING.md:21-154`), and `docs/CONTRIBUTING.md` mirrors this with manual check commands (`docs/CONTRIBUTING.md:94-105`). `README.md` and `ui/README.md` describe start/dev/test commands independently from Make (`README.md:18-75`, `ui/README.md:20-49`).
 
 ### 3.4 Security and hardening checks are currently workflow-owned
-Dependency and security scans are present in CI jobs with dedicated steps and uploads, but they are not grouped under a Make-based command API (`.github/workflows/ci.yml:48-63`, `.github/workflows/ci.yml:104-114`, `.github/workflows/ci.yml:186-224`, `.github/workflows/ci.yml:211-224`, `SECURITY.md:49-51`).
+Dependency and security scans are present in CI jobs with dedicated steps and uploads, but they are not grouped under a Make-based command API (`.github/workflows/ci.yml:48-63`, `.github/workflows/ci.yml:104-114`, `.github/workflows/ci.yml:186-224`, `.github/workflows/ci.yml:211-224`, `docs/SECURITY.md:49-51`).
 
 ---
 
@@ -87,7 +87,7 @@ Objective: Define explicit leaf and composite targets for each Rust/frontend gat
 
 Planned work:
 1. Add explicit leaf targets for existing operations using the single naming convention `<domain>-<action>`:
-   (`fmt`, `clippy`, `rust-test`, `rust-audit`, `rust-coverage`, `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-coverage`, `frontend-build`, `frontend-audit`, `playwright`, `docker-build`, `docker-smoke`, `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`) and map each to the command body currently in CI/docs (`Makefile:3-45`, `.github/workflows/ci.yml:39-224`, `TESTING.md:21-154`, `SECURITY.md:49-51`, `CONTRIBUTING.md:94-105`).
+   (`fmt`, `clippy`, `rust-test`, `rust-audit`, `rust-coverage`, `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-coverage`, `frontend-build`, `frontend-audit`, `playwright`, `docker-build`, `docker-smoke`, `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`) and map each to the command body currently in CI/docs (`Makefile:3-45`, `.github/workflows/ci.yml:39-224`, `docs/TESTING.md:21-154`, `docs/SECURITY.md:49-51`, `docs/CONTRIBUTING.md:94-105`).
 2. Define composite targets (`ci-rust`, `ci-frontend`, `ci-playwright`, `ci-docker`, `ci-security`) that orchestrate the leaf targets without encoding command bodies.
    - Keep `ci-security` scoped to Make-owned scan targets (`rust-audit`, `frontend-audit`, `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`).
 3. Add `quality` and `quality-full` as the developer-facing entrypoints:
@@ -120,7 +120,7 @@ Planned work:
 4. Replace docker build/start commands with `make ci-docker` and keep environment bootstrap lines in workflow (`.github/workflows/ci.yml:156-184`).
    - `make docker-build` wraps `docker compose build`. `make docker-smoke` wraps `cp .env.example .env && docker compose up -d --wait --wait-timeout 120`, health-check curls, and `docker compose down`. Failure-log printing remains a CI-only conditional step.
 5. Keep artifact upload/reporting steps in CI and point report paths to existing outputs to avoid report-break drift (`.github/workflows/ci.yml:57-63`, `.github/workflows/ci.yml:93-113`, `.github/workflows/ci.yml:172-184`).
-6. Refactor security-orchestration jobs to call Make wrappers for scan execution (`make rust-audit`, `make trivy-scan-api`, `make trivy-scan-ui`, and `make gitleaks`) while workflow-owned bootstrap and policy handling (install steps, fail-fast/exit policy) remain in CI (`.github/workflows/ci.yml:39-225`, `SECURITY.md:39-51`).
+6. Refactor security-orchestration jobs to call Make wrappers for scan execution (`make rust-audit`, `make trivy-scan-api`, `make trivy-scan-ui`, and `make gitleaks`) while workflow-owned bootstrap and policy handling (install steps, fail-fast/exit policy) remain in CI (`.github/workflows/ci.yml:39-225`, `docs/SECURITY.md:39-51`).
    - Replace `rustsec/audit-check@v2` with `make rust-audit`, ensuring `rust-audit` handles `cargo install cargo-audit` and `cargo audit` execution inside the Make target.
 
 Files expected:
@@ -136,19 +136,19 @@ Acceptance criteria:
 Objective: Make Make the canonical quality interface in docs and remove ambiguity between docs and command execution.
 
 Planned work:
-1. Replace long command lists in `TESTING.md` with explicit "canonical target" mappings, while retaining examples as convenience (`TESTING.md:21-154`).
-2. Update `CONTRIBUTING.md` checklist to use `make help`, `make quality`, `make quality-full`, and gate-specific leaf targets (`CONTRIBUTING.md:90-105`).
+1. Replace long command lists in `docs/TESTING.md` with explicit "canonical target" mappings, while retaining examples as convenience (`docs/TESTING.md:21-154`).
+2. Update `docs/CONTRIBUTING.md` checklist to use `make help`, `make quality`, `make quality-full`, and gate-specific leaf targets (`docs/CONTRIBUTING.md:90-105`).
 3. Add a short quality-gates section in `README.md` for discoverability (`README.md:18-45`).
 4. Update `ui/README.md` with Make-oriented frontend validation commands (`ui/README.md:34-49`).
-5. Align `docs/testing-strategy.md` and `SECURITY.md` with Make-first gate ownership (`docs/testing-strategy.md:96-124`, `SECURITY.md:39-51`).
+5. Align `docs/testing-strategy.md` and `docs/SECURITY.md` with Make-first gate ownership (`docs/testing-strategy.md:96-124`, `docs/SECURITY.md:39-51`).
 
 Files expected:
-- `TESTING.md:1-154`
-- `CONTRIBUTING.md:90-126`
+- `docs/TESTING.md:1-154`
+- `docs/CONTRIBUTING.md:90-126`
 - `README.md:18-75`
 - `ui/README.md:34-49`
 - `docs/testing-strategy.md:96-124`
-- `SECURITY.md:39-51`
+- `docs/SECURITY.md:39-51`
 
 Acceptance criteria:
 - All referenced docs explicitly state Make as the primary quality-gate entrypoint.
@@ -177,7 +177,7 @@ Acceptance criteria:
 > Any change to a quality gate command (adding, renaming, removing a Make target or altering its body) must update **all three** of:
 > 1. `Makefile` — the target definition.
 > 2. `.github/workflows/ci.yml` — the CI step that invokes it.
-> 3. Docs (`TESTING.md`, `CONTRIBUTING.md`, `README.md`, `ui/README.md`, `docs/testing-strategy.md`, `SECURITY.md`) — whichever reference the affected target.
+> 3. Docs (`docs/TESTING.md`, `docs/CONTRIBUTING.md`, `README.md`, `ui/README.md`, `docs/testing-strategy.md`, `docs/SECURITY.md`) — whichever reference the affected target.
 >
 > The `make-contract` CI job (`make help && make list && make -n ci-rust ci-frontend ci-playwright ci-docker ci-security rust-audit`) catches target regressions automatically.
 >
@@ -194,7 +194,7 @@ Acceptance criteria:
 3. Validate CI parity:
    - Confirm each CI job log begins from corresponding Make targets (`ci-rust`, `ci-frontend`, `ci-playwright`, `ci-docker`, `ci-security`, `rust-audit`) and that outputs are generated at expected paths.
 4. Validate docs:
-   - Verify docs in `README.md`, `TESTING.md`, `CONTRIBUTING.md`, `ui/README.md`, and `SECURITY.md` describe identical target names for identical checks.
+   - Verify docs in `README.md`, `docs/TESTING.md`, `docs/CONTRIBUTING.md`, `ui/README.md`, and `docs/SECURITY.md` describe identical target names for identical checks.
 5. Governance check:
    - Verify every gate command introduced in this plan appears in `devel/quality-gates-centralization-plan.md` and Makefile target definitions.
 6. CI/CD guard:
@@ -238,7 +238,7 @@ Acceptance criteria:
 <!-- severity: minor -->
 <!-- dimension: plan-hygiene -->
 
-**Context:** Security scans are currently explicit workflow steps with custom install/exit handling (`.github/workflows/ci.yml:186-224`, `SECURITY.md:49-51`).
+**Context:** Security scans are currently explicit workflow steps with custom install/exit handling (`.github/workflows/ci.yml:186-224`, `docs/SECURITY.md:49-51`).
 
 **Issue:** If Make takes full control of scan installation behavior, workflow portability can become harder; if CI owns too much, duplication remains.
 
@@ -418,7 +418,7 @@ Acceptance criteria:
 | Phase 1 — Establish Make discoverability and command contract | [Done] | All acceptance criteria verified: `make` prints help, `make list` = `make help`, no legacy targets. |
 | Phase 2 — Consolidate gate primitives and composites | [Done] | 17 leaf targets, 5 composites, `quality`/`quality-full` entrypoints, full `.PHONY` coverage, no legacy names. |
 | Phase 3 — Refactor CI to consume Make targets | [Done] | Removed `defaults: working-directory: ui`, replaced `rustsec/audit-check@v2` with `make rust-audit`, removed `continue-on-error` from coverage, added `make-contract` CI job. |
-| Phase 4 — Update docs and contributor surfaces | [Done] | All 6 docs updated: TESTING.md (quality gates matrix), CONTRIBUTING.md, README.md, ui/README.md, docs/testing-strategy.md, SECURITY.md. |
+| Phase 4 — Update docs and contributor surfaces | [Done] | All 6 docs updated: docs/TESTING.md (quality gates matrix), docs/CONTRIBUTING.md, README.md, ui/README.md, docs/testing-strategy.md, docs/SECURITY.md. |
 | Phase 5 — Stabilize rollout and governance | [Done] | Governance note added to plan. |
 
 ### Deviations from plan
@@ -437,7 +437,7 @@ Acceptance criteria:
 2. **Validation 2 (local target matrix):** `make quality` executed end-to-end — PASS. All 9 leaf targets green: fmt, clippy, rust-test (234 tests), rust-coverage (91.81%), frontend-lint, frontend-typecheck, frontend-test (51 tests), frontend-coverage, frontend-build.
 3. **Validation 5 (governance):** Governance note present in plan — PASS.
 4. **Validation 6 (CI/CD guard):** Dry-run verified locally via `make help && make list && make -n ci-rust ci-frontend ci-playwright ci-docker ci-security rust-audit` — PASS.
-5. **Validation 4 (docs parity):** Full cross-reference audit completed. Fixed: stale `rustsec/audit-check` ref in testing-strategy.md, overstated `make ci-security` CI claim in SECURITY.md, raw `cargo fmt`/`cargo clippy` refs in CONTRIBUTING.md Code Style section, missing repo-root note in ui/README.md — PASS.
+5. **Validation 4 (docs parity):** Full cross-reference audit completed. Fixed: stale `rustsec/audit-check` ref in testing-strategy.md, overstated `make ci-security` CI claim in docs/SECURITY.md, raw `cargo fmt`/`cargo clippy` refs in docs/CONTRIBUTING.md Code Style section, missing repo-root note in ui/README.md — PASS.
 
 ### Validations not yet executed
 

@@ -27,6 +27,7 @@ Open the folder in VS Code with the Dev Containers extension. The container post
 - builds the workspace,
 - installs UI dependencies with `npm ci`,
 - copies `.env.example` to `.env` when missing.
+- ships with Node.js 24 as the default runtime for the container.
 
 After the container is ready:
 
@@ -82,11 +83,11 @@ make quality     # fast gates: formatting, linting, tests, coverage, build
 make quality-full  # everything: quality + Playwright E2E + Docker smoke + security scans
 ```
 
-See `TESTING.md` for the full target matrix and `CONTRIBUTING.md` for the development workflow.
+See `docs/TESTING.md` for the full target matrix and `docs/CONTRIBUTING.md` for the development workflow.
 
 ## Contributing
 
-See `CONTRIBUTING.md` for development workflow, alternative setup paths (native, Docker Compose), toolchain policy, and testing conventions. For architecture and design details see `docs/architecture-overview.md`; for project identity and long-term directions see `docs/vision.md`.
+See `docs/CONTRIBUTING.md` for development workflow, alternative setup paths (native, Docker Compose), toolchain policy, and testing conventions. For architecture and design details see `docs/architecture-overview.md`; for project identity and long-term directions see `docs/vision.md`.
 
 ## License
 

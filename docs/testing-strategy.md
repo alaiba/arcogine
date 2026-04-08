@@ -1,6 +1,6 @@
 # Arcogine — Testing Strategy
 
-This document captures the long-lived testing decisions behind Arcogine's quality strategy. Use [`../TESTING.md`](../TESTING.md) for day-to-day commands and pass criteria.
+This document captures the long-lived testing decisions behind Arcogine's quality strategy. Use [`TESTING.md`](TESTING.md) for day-to-day commands and pass criteria.
 
 ## Goals
 
@@ -108,7 +108,7 @@ Coverage is collected in CI as an informational signal. Functional correctness, 
 ## Security hardening verification coverage
 
 The completed hardening work added explicit verification for API, CLI, simulator, and CI control-plane changes.
-Deployment posture is documented in `../SECURITY.md`; architecture and runtime constraints are in
+Deployment posture is documented in `SECURITY.md`; architecture and runtime constraints are in
 `architecture-overview.md`; the primary test evidence is this section.
 
 - `api_smoke.rs`: body-size limits, scenario load success/error propagation, invalid command state transitions, and CORS restriction checks.
@@ -156,6 +156,6 @@ This hardening layer added 19 new tests and keeps security controls part of the 
 
 ## Documentation Boundaries
 
-- Use [`../TESTING.md`](../TESTING.md) for run commands, prerequisites, and "what success looks like".
+- Use [`TESTING.md`](TESTING.md) for run commands, prerequisites, and "what success looks like".
 - Use this document for testing architecture, conventions, and rationale.
 - Use [`architecture-overview.md`](architecture-overview.md) when a testing decision is really an architectural constraint, such as shared handler delegation or determinism guarantees.

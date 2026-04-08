@@ -60,7 +60,7 @@ impl DemandModel {
         // Round to integer with stochastic rounding
         let base_orders = expected.floor() as u64;
         let fractional = expected - expected.floor();
-        let extra = if self.rng.gen::<f64>() < fractional {
+        let extra = if self.rng.random::<f64>() < fractional {
             1
         } else {
             0
@@ -71,9 +71,9 @@ impl DemandModel {
             if self.product_ids.is_empty() {
                 break;
             }
-            let product_idx = self.rng.gen_range(0..self.product_ids.len());
+            let product_idx = self.rng.random_range(0..self.product_ids.len());
             let product_id = self.product_ids[product_idx];
-            let quantity = self.rng.gen_range(1..=10);
+            let quantity = self.rng.random_range(1..=10);
 
             scheduler.schedule(Event::new(
                 current_time,

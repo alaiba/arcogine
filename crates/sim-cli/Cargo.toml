@@ -15,7 +15,7 @@ sim-factory = { path = "../sim-factory" }
 sim-economy = { path = "../sim-economy" }
 clap = { version = "4", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
-rand = "0.8"
+rand = "0.9"
 rand_chacha = "0.9"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

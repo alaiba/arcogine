@@ -1,0 +1,153 @@
+---
+description: Turns an ad-hoc analysis conversation into a structured, phased implementation plan with findings review
+alwaysApply: false
+---
+
+# Analysis → Structured Plan
+
+When the user asks you to produce a plan from the current conversation, follow this protocol.
+
+## Step 1 — Extract raw material from the conversation
+
+Re-read the full conversation. Collect:
+
+1. **Goal statement** — the one-sentence "why are we doing this?"
+2. **Non-negotiable constraints** — things the user said must not change.
+3. **Verified current state** — facts confirmed by reading code/docs/tests (with `<repo/path:line>` citations).
+4. **Candidate approaches** — options discussed, with the user's preference (if stated).
+5. **Open questions** — anything unresolved, ambiguous, or where the user deferred a decision.
+
+## Step 2 — Write the plan skeleton
+
+Use this exact structure. Every heading is mandatory; write "None identified." if a section is empty.
+
+```markdown
+# <Plan Title>
+
+> **Date:** YYYY-MM-DD
+> **Scope:** <one-line scope statement>
+> **Primary sources:** <comma-separated `<repo/path:line>` citations>
+
+---
+
+## 1. Goal
+
+<2–4 bullet points: what question the plan answers or what property it establishes>
+
+---
+
+## 2. Non-Negotiable Constraints
+
+<numbered list; each item cites a source file/line>
+
+---
+
+## 3. Verified Current State
+
+### 3.N <topic>
+<paragraph with file:line citations establishing the factual baseline>
+
+---
+
+## 4. Recommended Approach
+
+(Recommended) <one-sentence summary>
+
+Rationale:
+- <bullet points grounding the choice in constraints + current state>
+
+---
+
+## 5. Phased Plan
+
+### Phase N. <Verb-phrase title>
+
+Objective: <one sentence>
+
+Planned work:
+
+1. <task — specific, testable, cites files expected to change>
+2. …
+
+Files expected:
+- `<repo/path:line>`
+
+Acceptance criteria:
+- <observable outcome, not implementation detail>
+
+---
+
+## 6. Validation Plan
+
+<numbered steps to prove the plan worked end-to-end on the live system>
+
+---
+
+## 7. Implementation Order
+
+<numbered phases with a one-line rationale for the ordering>
+
+---
+
+## 8. Out of Scope
+
+<bulleted list of things explicitly excluded>
+```
+
+### Rules for plan content
+
+- **Phases must be ordered so each phase's tests can run without later phases.**
+- **Every task must name the files it will touch** and cite the current source line where the change lands.
+- **Every phase must have acceptance criteria** phrased as observable outcomes, not as "implement X."
+- **Validation plan must be executable on the live stack**, not just unit tests.
+- **Open questions from Step 1 become Findings** (see Step 3); do not leave them inline.
+
+## Step 3 — Review the plan and produce Findings
+
+After writing the plan, review it systematically. Sweep every section across five dimensions:
+
+| Dimension | What to check |
+|-----------|--------------|
+| **testing** | Is every acceptance criterion testable? Are test files named? Are edge cases covered? |
+| **correctness** | Do file:line citations match current code? Are assumptions verified? Could a task silently break an existing contract? |
+| **gaps** | Is any required work missing? Are there implicit dependencies between phases? |
+| **best-practices** | Does the plan follow the project's existing conventions (commit style, doc locations, schema versioning)? |
+| **plan-hygiene** | Are phases ordered correctly? Are constraints respected? Is scope creep present? |
+
+For each issue found, append a finding to the `## Findings` section using this template:
+
+```markdown
+### F<n>: <short title>
+<!-- severity: critical | major | minor -->
+<!-- dimension: testing | correctness | gaps | best-practices | plan-hygiene -->
+
+**Context:** <what the plan says or omits, with file/line references>
+
+**Issue:** <why this is a problem>
+
+**Recommendation:** <what to do, grounded in existing code/docs/tests>
+
+**Choices:**
+- [x] <recommended option>
+- [ ] <alternative option>
+<!-- max 3 choices; mark exactly one as [x] -->
+<!-- if this finding depends on another, add: Depends on: F<m> choice <option> -->
+```
+
+After all findings, add a summary table:
+
+```markdown
+### Summary
+
+| # | Title | Severity | Dimension | Depends on |
+|---|-------|----------|-----------|------------|
+| F1 | … | critical | correctness | — |
+| F2 | … | major | gaps | F1 |
+```
+
+### Iteration rule
+
+**Do not stop until a full pass across all five dimensions produces zero critical or major findings.** Each iteration:
+1. Apply accepted findings (edit the plan section, check for consistency accross the entire plan, then mark the finding [Applied]; do not delete the finding details - context, issue, recommendation and choices).
+2. Re-sweep the entire plan, not only the affected sections.
+3. Append any new findings discovered during the re-sweep.

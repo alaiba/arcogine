@@ -95,12 +95,13 @@ E2E tests should:
 
 ## CI Quality Gates
 
-The CI workflow is intentionally split by concern:
+CI consumes Make targets as the single source of truth for quality gate commands:
 
-- **Rust job**: formatting, clippy, workspace tests, and Rust coverage generation.
-- **Frontend job**: dependency install, ESLint, type-checking, Vitest unit tests, and production build.
-- **Playwright job**: browser E2E validation with CI-managed servers and browsers.
-- **Docker job**: container build/startup parity plus API/UI reachability checks.
+- **Rust job** (`make ci-rust`): formatting, clippy, workspace tests, and coverage.
+- **Frontend job** (`make ci-frontend`): ESLint, type-checking, Vitest unit tests with coverage, production build, and npm audit.
+- **Playwright job** (`make playwright`): browser E2E validation with CI-managed servers and browsers.
+- **Docker job** (`make ci-docker`): container build/startup parity plus API/UI reachability checks.
+- **Security jobs**: `make trivy-scan-api`, `make trivy-scan-ui`, `make gitleaks`, and `make rust-audit`.
 
 Coverage is collected in CI as an informational signal. Functional correctness, linting, formatting, and build/test success remain the blocking quality gates.
 
@@ -113,8 +114,8 @@ Deployment posture is documented in `../SECURITY.md`; architecture and runtime c
 - `api_smoke.rs`: body-size limits, scenario load success/error propagation, invalid command state transitions, and CORS restriction checks.
 - `sim-cli` unit tests: default CLI bind address remains `127.0.0.1` for non-container execution.
 - `sim-core` unit tests: event log capacity behavior, equality semantics, and economy value bounds.
-- CI workflow jobs: Rust dependency audit (`rustsec/audit-check`), npm audit, Trivy image scans, and Gitleaks secret scan.
-- Existing `PLAYWRIGHT` and `cargo-tarpaulin` coverage jobs continue to validate runtime behavior and regression resistance.
+- CI workflow jobs: npm audit (via `make ci-frontend`), Trivy image scans (`make trivy-scan-api`, `make trivy-scan-ui`), and Gitleaks secret scan (`make gitleaks`). Rust dependency audit (`make rust-audit`) is available locally and in `make quality-full`.
+- Existing `PLAYWRIGHT` and `cargo-llvm-cov` coverage jobs continue to validate runtime behavior and regression resistance.
 
 Residual risk evidence:
 

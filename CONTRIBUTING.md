@@ -93,22 +93,17 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 3. **Write tests** for new functionality. Each crate has inline `#[cfg(test)]` unit test modules; integration tests live in `crates/sim-api/tests/`. Frontend stores and components are tested with Vitest and Testing Library.
 4. **Run the checks:**
    ```bash
-   cargo fmt --check
-   cargo clippy -- -D warnings
-   cargo test
-   cd ui
-   npm ci
-   npm run lint
-   npx tsc --noEmit
-   npm test
-   npm run build
+   make quality        # fast gates: fmt, clippy, tests, coverage, lint, typecheck, build
+   make quality-full   # everything: quality + playwright + docker + security
    ```
+
+   Run `make help` to see all available targets.
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
 ## Code Style
 
-- Run `cargo fmt` before committing.
-- All `cargo clippy` warnings are treated as errors in CI.
+- Run `make fmt` before committing (`cargo fmt --check` under the hood).
+- All Clippy warnings are treated as errors — `make clippy` runs `cargo clippy -- -D warnings`.
 - Prefer explicit types over inference in public APIs.
 - All public types and functions must have doc-comments.
 - State structs derive `PartialEq`, `Eq`, `Clone`, `Debug`, and `serde::Serialize`.
@@ -121,7 +116,7 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 - **Frontend unit tests** use Vitest and `@testing-library/react` in `ui/src/` (co-located `.test.ts`/`.test.tsx` files).
 - **Benchmarks** use Criterion in `crates/sim-core/benches/`.
 - **E2E tests** for the UI use Playwright in `ui/e2e/`.
-- **Coverage** — `cargo-tarpaulin` for Rust, `vitest --coverage` for frontend (see `TESTING.md`).
+- **Coverage** — `cargo-llvm-cov` for Rust, `vitest --coverage` for frontend (see `TESTING.md`).
 
 See `docs/testing-strategy.md` for the rationale behind the testing layers, handler parity requirements, and CI quality gates.
 

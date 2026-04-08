@@ -7,73 +7,98 @@ Arcogine is a deterministic simulation engine for factory systems, economic dyna
 
 ## What is Arcogine?
 
-Arcogine is a **simulation-first platform** for experimentation with industrial operations and decision policies. It bridges three domains:
+Arcogine is a **simulation-first platform** where you experiment with how pricing, capacity, and automated agents interact in a factory environment. Three systems feed back into each other:
 
-- **Operations** — production, capacity, bottlenecks
-- **Economics** — pricing, demand, revenue
-- **Decision systems** — agents, policies, incentives
+```text
+     You set a price
+           │
+           ▼
+    Demand responds        (lower price → more orders)
+           │
+           ▼
+    Factory produces        (machines process jobs through routing steps)
+           │
+           ▼
+    KPIs update             (throughput, lead time, backlog, revenue)
+           │
+           ▼
+    You (or the agent)      (observe KPIs, decide what to change)
+    make decisions
+           │
+           └───────────────► loop repeats
+```
 
-The core simulation loop is deterministic and event-driven: decisions affect operations, and operations feed back into decisions.
+The simulation is fully deterministic: same inputs produce identical outputs every time. This makes it useful for comparing strategies, testing hypotheses, and understanding cause-and-effect in complex operational systems.
+
+**New to Arcogine?** Read [Concepts](docs/concepts.md) to understand what you're looking at before running your first session.
 
 ## Quick start
+
+### Dev container (recommended)
 
 ```bash
 git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the folder in VS Code with the Dev Containers extension. The container post-create command:
+Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension. The container automatically:
 
-- builds the workspace,
+- builds the Rust workspace,
 - installs UI dependencies with `npm ci`,
 - copies `.env.example` to `.env` when missing.
-- ships with Node.js 24 as the default runtime for the container.
 
-After the container is ready:
-
-```bash
-cd ui
-npm run dev
-```
-
-In another terminal:
+After the container is ready, start the UI and API in two terminals:
 
 ```bash
-cd arcogine
+# Terminal 1: UI dev server
+cd ui && npm run dev
+
+# Terminal 2: API server
 cargo run --bin arcogine -- serve --addr 0.0.0.0:3000
 ```
 
-Then open `http://127.0.0.1:5173`.
+Then open **http://127.0.0.1:5173**.
 
-## Play Arcogine
+### Other setup paths
 
-Arcogine supports both:
+- **Native (host Rust + Node):** See [CONTRIBUTING.md](CONTRIBUTING.md#2-native-host-rust--host-node)
+- **Docker Compose:** `cp .env.example .env && docker compose up --build`
 
-- **serious simulation** for deterministic experimentation,
-- **lightweight challenge play** for quick scenario-oriented sessions.
+## Your first session
 
-The built-in scenarios are intentionally shaped as challenge modes:
+You can go from clone to meaningful results in under five minutes:
 
-- **Basic** — learn controls and baseline behavior.
-- **Overload** — stabilize backlog, lead times, and throughput when demand is excessive.
-- **Capacity Expansion** — compare infrastructure upgrades versus reactive controls.
+1. **Load a scenario** — the welcome overlay offers three built-in options.
+2. **Run the simulation** — click Run and watch KPIs update in real time.
+3. **Try an intervention** — change the price or toggle a machine offline.
+4. **Save a baseline** — snapshot the current state before a big change.
+5. **Compare** — make the change, then compare against your baseline.
+6. **Toggle the agent** — enable the Sales Agent and see how it manages pricing.
 
-## First interaction loop
+### Built-in scenarios
 
-You can launch and operate a meaningful session in under five minutes:
+| Scenario | Challenge | What you'll learn |
+|----------|-----------|-------------------|
+| **Basic** | None — balanced factory | How the controls work and what the KPIs mean |
+| **Overload** | Demand exceeds capacity | How to stabilize backlog and lead times with pricing |
+| **Capacity Expansion** | Same pressure, more machines | Whether structural upgrades beat tactical tuning |
 
-1. Start the UI and load a scenario.
-2. Run or step through a few ticks.
-3. Adjust price and machine availability to influence flow.
-4. Toggle the agent for assistance.
-5. Save a baseline before major changes.
-6. Compare current results with your saved baseline.
+### Headless mode
 
-Headless mode (no UI, no server) is also available:
+Run a scenario without the UI:
 
 ```bash
 cargo run --bin arcogine -- run --headless --scenario examples/basic_scenario.toml
 ```
+
+## Documentation
+
+| Document | What it covers |
+|----------|----------------|
+| [Concepts](docs/concepts.md) | How the simulation works, KPIs, agents, scenarios |
+| [API Reference](docs/api.md) | Every HTTP endpoint with curl examples |
+| [Architecture](docs/architecture.md) | Design philosophy, crate structure, determinism contract |
+| [Full docs index](docs/README.md) | Everything else: testing, standards, vision, security |
 
 ## Quality gates
 
@@ -83,12 +108,12 @@ make quality     # fast gates: formatting, linting, tests, coverage, build
 make quality-full  # everything: quality + Playwright E2E + Docker smoke + security scans
 ```
 
-See `docs/TESTING.md` for the full target matrix and `docs/CONTRIBUTING.md` for the development workflow.
+See [TESTING.md](docs/TESTING.md) for the full test category reference.
 
 ## Contributing
 
-See `docs/CONTRIBUTING.md` for development workflow, alternative setup paths (native, Docker Compose), toolchain policy, and testing conventions. For architecture and design details see `docs/architecture-overview.md`; for project identity and long-term directions see `docs/vision.md`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup paths, development workflow, code style, and testing conventions.
 
 ## License
 
-Apache-2.0 — see `LICENSE`.
+Apache-2.0 — see [LICENSE](LICENSE).

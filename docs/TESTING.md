@@ -1,242 +1,212 @@
 # Testing Guide
 
-This document describes all test categories in Arcogine, how to run each, and what success looks like. **Make targets are the canonical quality-gate interface**; use `make <target>` from the repository root unless you need a scoped direct command. For the architectural rationale behind the test stack and CI split, see [`docs/testing-strategy.md`](docs/testing-strategy.md).
+This document covers all test categories in Arcogine, how to run them, and the rationale behind the testing architecture. **Make targets are the canonical quality-gate interface** — use `make <target>` from the repository root.
 
-## Quality Gates
+## Quick reference
+
+```bash
+make quality        # fast gates (before pushing): fmt, clippy, tests, coverage, lint, typecheck, build
+make quality-full   # everything: quality + Playwright E2E + Docker smoke + security scans
+make help           # list all available targets
+```
+
+## Quality gates
 
 | Command | Scope |
-|--------|--------|
-| `make quality` | Fast gates: Rust format, Clippy, workspace tests, Rust coverage, frontend lint, typecheck, unit tests, frontend coverage, production build. No Docker, Playwright, or security scans. |
-| `make quality-full` | Everything: runs `make quality`, then Playwright, Docker build and smoke, and the full security composite (`ci-security`: Rust audit, frontend audit, Trivy API/UI images, Gitleaks). |
+|---------|-------|
+| `make quality` | Rust format, Clippy, workspace tests, Rust coverage, frontend lint, typecheck, unit tests, frontend coverage, production build |
+| `make quality-full` | Everything above, plus Playwright, Docker build/smoke, and security scans (Rust audit, frontend audit, Trivy, Gitleaks) |
 
-Leaf targets follow a **`<domain>-<action>`** naming convention (for example `rust-test`, `frontend-lint`). Run `make help` for a grouped list.
-For command-contract rationale and conventions, see [`testing-strategy.md`](testing-strategy.md).
+Leaf targets follow a `<domain>-<action>` naming convention (e.g., `rust-test`, `frontend-lint`).
 
-### Command surface guarantees
+### Target model
 
-- `make` defaults to `help` and prints the grouped target catalog.
-- `make list` is intentionally kept as a discoverability alias to `help`.
-- Legacy target names (`test`, `lint`, `coverage`, `test-rust`, `test-frontend`,
-  `coverage-rust`, `coverage-frontend`, `coverage-summary`) are intentionally removed.
-- `help` and `list` are discoverability targets outside the quality-gate namespace.
-- `clean` remains the only utility target outside discovery/gates.
-
-### Contract model
-
-- **Discovery targets:** `help` (default), `list` (alias to `help`)
-- **Leaf targets:** `fmt`, `clippy`, `rust-test`, `rust-audit`, `rust-coverage`,
-  `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-coverage`,
-  `frontend-build`, `frontend-audit`, `playwright`, `docker-build`, `docker-smoke`,
-  `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`
-- **Composite targets:**  
-  `ci-rust`, `ci-frontend`, `ci-playwright`, `ci-docker`, `ci-security`
-- **Developer entrypoints:** `quality`, `quality-full`
+- **Discovery:** `help` (default), `list`
+- **Rust:** `fmt`, `clippy`, `rust-test`, `rust-audit`, `rust-coverage`
+- **Frontend:** `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-coverage`, `frontend-build`, `frontend-audit`
+- **E2E:** `playwright`
+- **Docker:** `docker-build`, `docker-smoke`
+- **Security:** `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`
+- **CI composites:** `ci-rust`, `ci-frontend`, `ci-playwright`, `ci-docker`, `ci-security`
+- **Developer entrypoints:** `quality`, `quality-full`, `clean`
 
 ## Prerequisites
 
-- **Host-based checks**
-  - **Rust** (stable, ≥1.94): `rustup update stable`
-  - **Node.js** (≥20): for frontend checks and tests
-  - **Cargo** tools: `cargo fmt`, `cargo clippy`, `cargo test`, `cargo bench`
-- **Containerized checks**
-  - **Docker** and Docker Compose
-  - Covers runtime startup parity without requiring local Rust/Node
+- **Rust** (stable, as specified in `rust-toolchain.toml`): `rustup update stable`
+- **Node.js** (20+): for frontend checks and tests
+- **Docker** and Docker Compose: for container checks (optional for local dev)
 
-## Test Categories
+## Test categories
 
-### 1. Rust formatting (`fmt`)
+### 1. Rust formatting
 
-**Canonical:** `make fmt`
+`make fmt` — runs `cargo fmt --check`.
 
-**Direct command:** `cargo fmt --check`
+### 2. Rust lints
 
-### 2. Rust lints (`clippy`)
+`make clippy` — runs `cargo clippy -- -D warnings`.
 
-**Canonical:** `make clippy`
-
-**Direct command:** `cargo clippy -- -D warnings`
-
-### 3. Unit Tests (Rust) (`rust-test`)
+### 3. Rust unit tests
 
 Inline `#[cfg(test)]` modules in every crate cover typed IDs, machine state, job routing, demand model, pricing, agent logic, handler delegation, snapshot building, SSE serialization, and headless CLI execution.
 
-**Canonical:** `make rust-test`
+`make rust-test` — runs `cargo test`.
 
-**Direct command:** `cargo test`
+**Success:** 180+ tests pass, zero warnings.
 
-**What success looks like:** All tests pass (180+), zero warnings.
+### 4. Property tests
 
-### 4. Property Tests
-
-Uses `proptest` in `sim-core` and `sim-factory` to verify invariants like monotonic time progression, no event loss, machine concurrency limits, and queue FIFO ordering.
-
-**Canonical:** `make rust-test` (runs the full workspace, including property tests)
-
-**Direct command:**
+Uses `proptest` to verify invariants like monotonic time progression, no event loss, machine concurrency limits, and queue FIFO ordering.
 
 ```bash
 cargo test -p sim-core --test properties
 cargo test -p sim-factory --test properties
 ```
 
-### 5. Integration Tests
+These run as part of `make rust-test`.
 
-Cross-crate tests validating behavioral outcomes:
-- **Scenario baselines** — validates factory flow, demand response, revenue generation
-- **Agent integration** — verifies agent interventions and backlog reduction
-- **API smoke tests** — tests REST endpoints via `tower::ServiceExt`
+### 5. Integration tests
 
-**Canonical:** `make rust-test`
+Cross-crate tests in `crates/sim-api/tests/` validate scenario baselines, agent integration, API route behavior, and simulation-thread interactions.
 
-**Direct command:** `cargo test -p sim-api`
+`make rust-test` or directly: `cargo test -p sim-api`
 
-**What success looks like:** Scenario baselines confirm demand-price relationship, agent reduces backlog, all API endpoints return correct status codes.
-
-### 6. Error Path Tests
-
-Included in the API smoke tests and factory/core tests:
-- Malformed JSON returns 4xx
-- Commands on non-running simulations return 409
-- Negative price returns 400
-- Invalid state transitions return typed errors
-
-**Canonical:** `make rust-test`
-
-**Direct command:** `cargo test` (or `cargo test -p sim-api` for API-focused runs)
-
-### 7. Determinism Tests
+### 6. Determinism tests
 
 Verify that identical seeds produce identical event logs and KPIs.
 
-**Canonical:** `make rust-test`
+```bash
+cargo test -p sim-core --test determinism
+```
 
-**Direct command:** `cargo test -p sim-core --test determinism`
+### 7. Rust coverage
 
-### 8. Benchmarks
+`make rust-coverage` — runs `cargo llvm-cov` and outputs to `target/coverage/cobertura.xml`.
 
-Uses Criterion for repeatable performance measurement. There is no dedicated Make target for benchmarks; run them directly.
+### 8. Rust dependency audit
 
-**Direct command:** `cargo bench -p sim-core`
+`make rust-audit` — runs `cargo audit`. Also part of `make quality-full`.
 
-Benchmarks:
-- **scheduler** — event scheduling and dequeuing throughput (1000 events)
-- **scenario_runtime** — full scenario execution time, scenario load/validate time
+### 9. Benchmarks
 
-### 9. Rust dependency audit (`rust-audit`)
+Criterion benchmarks for scheduler throughput and scenario runtime. No dedicated Make target.
 
-**Canonical:** `make rust-audit` (also part of `make quality-full` via `make ci-security`)
+```bash
+cargo bench -p sim-core
+```
 
-**Direct command:** `cargo audit` (install with `cargo install cargo-audit` if needed; the Make target installs it when missing)
+### 10. Frontend lint
 
-### 10. Rust code coverage (`rust-coverage`)
+`make frontend-lint` — runs `cd ui && npm run lint`.
 
-**Canonical:** `make rust-coverage`
+### 11. Frontend type check
 
-**Direct command:** `cargo llvm-cov --workspace --cobertura --output-path target/coverage/cobertura.xml` (requires `cargo-llvm-cov`)
+`make frontend-typecheck` — runs `cd ui && npx tsc --noEmit`.
 
-### 11. Frontend lint (`frontend-lint`)
-
-**Canonical:** `make frontend-lint`
-
-**Direct command:** `cd ui && npm run lint`
-
-### 12. Frontend unit tests (`frontend-test`)
+### 12. Frontend unit tests
 
 Store, API client, SSE client, and component tests using Vitest and Testing Library.
 
-**Canonical:** `make frontend-test`
+`make frontend-test` — runs `cd ui && npm test`.
 
-**Direct command:** `cd ui && npm test`
+**Success:** 51+ tests pass, zero warnings.
 
-**What success looks like:** All tests pass (51+), zero warnings.
+### 13. Frontend coverage
 
-### 13. Frontend type check (`frontend-typecheck`)
+`make frontend-coverage` — runs `cd ui && npm run test:coverage`.
 
-**Canonical:** `make frontend-typecheck`
+### 14. Frontend build
 
-**Direct command:** `cd ui && npx tsc --noEmit`
+`make frontend-build` — runs `cd ui && npm run build`.
 
-### 14. Frontend build (`frontend-build`)
+### 15. Frontend dependency audit
 
-**Canonical:** `make frontend-build`
+`make frontend-audit` — runs `cd ui && npm audit --audit-level=high`.
 
-**Direct command:** `cd ui && npm run build`
+### 16. Playwright E2E
 
-### 15. Frontend coverage (`frontend-coverage`)
+Browser-level user journey tests. Requires both the API server and UI dev server.
 
-**Canonical:** `make frontend-coverage`
+`make playwright` — runs `cd ui && npx playwright test`.
 
-**Direct command:** `cd ui && npm run test:coverage`
+### 17. Docker build and smoke
 
-### 16. Frontend dependency audit (`frontend-audit`)
+`make docker-build` — runs `docker compose build`.
 
-**Canonical:** `make frontend-audit` (also part of `make ci-frontend` and `make ci-security`)
+`make docker-smoke` — builds, starts containers, verifies API/UI health endpoints, then tears down.
 
-**Direct command:** `cd ui && npm audit --audit-level=high`
+### 18. Container image scans
 
-### 17. Frontend E2E tests (`playwright`)
+`make trivy-scan-api` and `make trivy-scan-ui` — scan built images for CRITICAL/HIGH vulnerabilities.
 
-Requires both the API server and UI dev server running (or use Playwright’s `webServer` in `playwright.config.ts`, as in CI).
+### 19. Secret scan
 
-**Canonical:** `make playwright`
+`make gitleaks` — scans git history for leaked secrets.
 
-**Direct command:** `cd ui && npx playwright test`
+## CI pipeline
 
-### 18. Docker image build (`docker-build`)
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs:
 
-**Canonical:** `make docker-build`
+| Job | Make target | What it checks |
+|-----|------------|----------------|
+| Rust | `make ci-rust` | `fmt`, `clippy`, `rust-test`, `rust-coverage` |
+| Frontend | `make ci-frontend` | `frontend-lint`, `frontend-typecheck`, `frontend-coverage`, `frontend-build`, `frontend-audit` |
+| Playwright | `make playwright` | Browser E2E tests (CI handles binary build and browser install) |
+| Docker | `make ci-docker` | `docker-build`, `docker-smoke` |
+| Image scans | `make trivy-scan-{api,ui}` | Container vulnerability scanning |
+| Secret scan | `make gitleaks` | Repository secret detection |
+| Contract check | `make help && make -n ci-*` | Verifies all Make targets resolve |
 
-**Direct command:** `docker compose build`
+## Testing architecture
 
-### 19. Docker compose smoke (`docker-smoke`)
+### Why this structure
 
-**Canonical:** `make docker-smoke` (also part of `make ci-docker`)
+The test layers are designed to preserve four properties:
 
-**Direct command:** Copies `.env.example` to `.env`, runs `docker compose up -d --wait`, curls API and UI health URLs, then `docker compose down` (see the `Makefile` for exact steps and `UI_PORT`).
+1. **Deterministic behavior** across identical seeds and scenarios.
+2. **Behavioral parity** between the headless CLI path and the API-driven runtime.
+3. **Fast feedback** for crate-local logic and frontend state changes.
+4. **Layered confidence** from unit, property, integration, browser, and container checks.
 
-### 20. Container image scan — API (`trivy-scan-api`)
+Route matrices and runtime error handling are cheaper to validate in API smoke tests. Playwright focuses on user-visible flows, not exhaustively rechecking backend routes.
 
-**Canonical:** `make trivy-scan-api`
+### Handler delegation contract
 
-**Direct command:** `docker build -t arcogine-api:ci .` then `trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-api:ci`
+Factory event semantics have a single implementation authority: `FactoryHandler`. Both `sim-cli` (headless) and `sim-api` (server) use the same dispatch order:
 
-### 21. Container image scan — UI (`trivy-scan-ui`)
+1. Pricing
+2. Demand
+3. Factory
+4. Agent evaluation (when applicable)
 
-**Canonical:** `make trivy-scan-ui`
+Tests protect parity between the headless and API paths. If you change event-handling behavior, ensure both runtime paths stay aligned.
 
-**Direct command:** `docker build -t arcogine-ui:ci ui` then `trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-ui:ci`
+### Frontend testing conventions
 
-### 22. Secret scan (`gitleaks`)
+- **Vitest** matches the Vite toolchain. **Testing Library** asserts behavior, not implementation details.
+- **jsdom** provides the browser-like unit-test environment. Since jsdom has no native `EventSource`, SSE tests must mock or polyfill it.
+- KPI history is capped by `MAX_KPI_HISTORY_POINTS` — tests assert the cap rather than treating history as unbounded.
 
-**Canonical:** `make gitleaks`
+### Security verification tests
 
-**Direct command:** `gitleaks detect --source . --config .gitleaks.toml --verbose`
+The hardening layer added 18 tests covering body-size limits, scenario validation, error propagation, CORS restrictions, SSE connection limits, event log capacity, economy value bounds, and CLI bind-address defaults. These are part of the regular test suite, not a separate pipeline:
 
-## Running Everything
+- `oversized_body_returns_payload_too_large`, `body_under_limit_is_accepted`
+- `load_valid_scenario_returns_success`, `load_invalid_toml_returns_bad_request`
+- `load_scenario_with_zero_max_ticks_returns_bad_request`, `load_scenario_with_missing_equipment_returns_bad_request`
+- `handler_error_surfaces_in_snapshot`, `serve_default_addr_is_localhost`
+- `sse_connection_limit_returns_503`
+- `event_log_caps_at_max_capacity`, `event_log_equality_ignores_capacity`, `event_log_is_truncated`
+- `scenario_with_nan_price_rejected`, `scenario_with_inf_demand_rejected`
+- `scenario_with_extreme_price_rejected`, `scenario_with_extreme_base_demand_rejected`
+- `extreme_price_returns_bad_request`, `cors_with_env_var_restricts_origin`
 
-From the repository root:
+## Governance
 
-- **Fast local gate (recommended before push):** `make quality`
-- **Full gate (matches extended CI surface, including E2E, Docker, security):** `make quality-full`
+When changing quality gates, update all of these together:
 
-**Optional (slow, no Make target):** `cargo bench -p sim-core`
-
-## CI
-
-The GitHub Actions workflow (`.github/workflows/ci.yml`) invokes Make targets:
-
-1. **Rust job** — `make ci-rust` (`fmt`, `clippy`, `rust-test`, `rust-coverage`)
-2. **Frontend job** — `make ci-frontend` (`frontend-lint`, `frontend-typecheck`, `frontend-coverage`, `frontend-build`, `frontend-audit`). Note: CI uses `frontend-coverage` rather than `frontend-test` alone.
-3. **Playwright job** — builds the API binary and installs Chromium in the workflow, then `make playwright`
-4. **Docker job** — `make ci-docker` (`docker-build`, `docker-smoke`)
-5. **Docker image scan job** — `make trivy-scan-api` or `make trivy-scan-ui` (matrix)
-6. **Secret scan job** — `make gitleaks`
-7. **Makefile contract job** — verifies `make help`, `make list`, and dry-runs for composite targets (`make -n ci-rust ci-frontend ci-playwright ci-docker ci-security rust-audit`)
-
-## Contract validation notes
-
-- Contract enforcement is currently dry-run based. The `make-contract` CI job checks
-  target discoverability and executable dependency resolution via `make -n` but does
-  not execute target bodies end-to-end.
-- For a lightweight runtime smoke check of command bodies, see the recommended
-  enhancement in [testing-strategy.md](testing-strategy.md).
+- `Makefile`
+- `.github/workflows/ci.yml`
+- This document (`docs/TESTING.md`)
+- `SECURITY.md` (if security scan commands change)
+- `CONTRIBUTING.md` (if the developer workflow changes)

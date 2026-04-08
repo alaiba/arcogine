@@ -191,14 +191,14 @@ Future agent types: Planning, Procurement, Maintenance, and LLM-based strategy a
 
 ## Standards Alignment
 
-Arcogine's architecture is designed for compatibility with industry standards without implementing them prematurely. See `docs/standards-alignment.md` for the full mapping. Key points:
+Arcogine's architecture is designed for compatibility with industry standards without implementing them prematurely. See [standards-alignment.md](standards-alignment.md) for the full mapping. Key points:
 
 - **ISA-95 / IEC 62264** — Domain concepts (machines, products, routings) map to ISA-95 terminology. MVP code uses Arcogine naming with ISA-95 correspondences documented.
 - **DES methodology** — Core simulation approach. Event scheduling, monotonic time, event causality follow standard DES patterns.
 - **RAMI 4.0** — Arcogine's layered crate architecture maps naturally to RAMI 4.0 layers (asset → factory, functional → core, business → agents/economy).
 - **OpenAPI** — **Planned**. `utoipa` is present as dependency planning metadata, but the current routed surface is consumed by direct API clients and SSE wiring rather than a generated OpenAPI pipeline.
 
-Future directions (AAS, OPC UA, FMI, MQTT, FIPA) are preserved by architectural choices documented in `docs/standards-alignment.md`.
+Future directions (AAS, OPC UA, FMI, MQTT, FIPA) are preserved by architectural choices documented in [standards-alignment.md](standards-alignment.md).
 
 ## Extensibility: Discrete → Batch/Process Manufacturing
 

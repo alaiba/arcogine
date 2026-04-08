@@ -1,18 +1,35 @@
-# Documentation Index
+# Documentation
 
-## Architecture and vision
+## Start here
 
-| Document | Description |
-|----------|-------------|
-| [vision.md](vision.md) | Project identity, core loop, naming, and long-term directions |
-| [architecture-overview.md](architecture-overview.md) | Design philosophy, technology stack, crate structure, determinism contract, and event dispatch architecture |
-| [testing-strategy.md](testing-strategy.md) | Long-lived testing architecture, conventions, CI quality gates, and rationale |
-| [standards-alignment.md](standards-alignment.md) | Industry standards mapping (ISA-95, ISO 22400, DES, RAMI 4.0, OpenAPI, and others) |
+| Document | Who it's for | What it covers |
+|----------|-------------|----------------|
+| [Root README](../README.md) | Everyone | What Arcogine is, quick start, first session |
+| [Concepts](concepts.md) | New users | How the simulation works, KPIs, agents, scenarios |
+| [API Reference](api.md) | Developers | Every HTTP endpoint with curl examples |
 
-## Operational and planning docs
+## Contributing
 
-| Document | Description |
-|----------|-------------|
-| [../devel/deployment-options.md](../devel/deployment-options.md) | Deployment and runtime path analysis |
-| [SECURITY.md](SECURITY.md) | Security policy, hardening posture, and remaining deployment constraints |
+| Document | What it covers |
+|----------|----------------|
+| [CONTRIBUTING.md](../CONTRIBUTING.md) | Setup paths, workflow, code style, testing quick reference |
+| [TESTING.md](TESTING.md) | Full test category reference, CI pipeline, quality gates |
+| [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | Community standards |
 
+## Architecture and design
+
+| Document | What it covers |
+|----------|----------------|
+| [Architecture](architecture.md) | Design philosophy, crate structure, determinism contract, event dispatch, technology stack |
+| [Standards alignment](standards-alignment.md) | ISA-95, ISO 22400, DES, RAMI 4.0 mapping |
+| [Vision](vision.md) | Project identity, long-term directions, naming |
+| [SECURITY.md](../SECURITY.md) | Security policy, hardening posture, deployment constraints |
+
+## Internal planning (maintainers)
+
+These documents are internal planning artifacts, not user-facing guides:
+
+| Document | What it covers |
+|----------|----------------|
+| [Deployment options](../devel/deployment-options.md) | Runtime path analysis |
+| [Logging improvement plan](../devel/logging-improvement-plan.md) | Observability audit and improvement plan |

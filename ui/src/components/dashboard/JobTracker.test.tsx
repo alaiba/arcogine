@@ -84,6 +84,27 @@ describe('JobTracker', () => {
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 
+  it('falls back to default status styling for unknown statuses', () => {
+    useSimulationStore.setState({
+      snapshot: makeSnapshot([
+        {
+          job_id: 1,
+          product_id: 1,
+          quantity: 1,
+          status: 'Unknown' as unknown as JobInfo['status'],
+          current_step: 0,
+          total_steps: 1,
+          created_at: 5,
+          completed_at: null,
+          revenue: 10,
+        },
+      ]),
+    });
+    render(<JobTracker />);
+    const status = screen.getByText('Unknown');
+    expect(status.className).toContain('bg-zinc-500/20');
+  });
+
   it('sort toggle changes direction', () => {
     useSimulationStore.setState({
       snapshot: makeSnapshot([
@@ -115,5 +136,71 @@ describe('JobTracker', () => {
     const header = screen.getByText(/Job ID/);
     fireEvent.click(header);
     expect(header.textContent).toContain('↓');
+  });
+
+  it('switches sort key when another column is clicked', () => {
+    useSimulationStore.setState({
+      snapshot: makeSnapshot([
+        {
+          job_id: 2,
+          product_id: 10,
+          quantity: 1,
+          status: 'Completed',
+          current_step: 1,
+          total_steps: 1,
+          created_at: 5,
+          completed_at: 15,
+          revenue: 10,
+        },
+        {
+          job_id: 1,
+          product_id: 2,
+          quantity: 1,
+          status: 'Queued',
+          current_step: 0,
+          total_steps: 1,
+          created_at: 10,
+          completed_at: null,
+          revenue: null,
+        },
+      ]),
+    });
+    render(<JobTracker />);
+    const header = screen.getByText(/Product ID/);
+    fireEvent.click(header);
+    expect(header.textContent).toContain('↑');
+  });
+
+  it('sorts by status with string comparison', () => {
+    useSimulationStore.setState({
+      snapshot: makeSnapshot([
+        {
+          job_id: 1,
+          product_id: 1,
+          quantity: 1,
+          status: 'Queued',
+          current_step: 0,
+          total_steps: 1,
+          created_at: 5,
+          completed_at: null,
+          revenue: null,
+        },
+        {
+          job_id: 2,
+          product_id: 1,
+          quantity: 1,
+          status: 'Completed',
+          current_step: 1,
+          total_steps: 1,
+          created_at: 10,
+          completed_at: 15,
+          revenue: 10,
+        },
+      ]),
+    });
+    render(<JobTracker />);
+    const header = screen.getByText(/Status/);
+    fireEvent.click(header);
+    expect(header.textContent).toContain('↑');
   });
 });

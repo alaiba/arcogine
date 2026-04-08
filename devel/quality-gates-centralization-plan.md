@@ -437,8 +437,8 @@ Acceptance criteria:
 2. **Validation 2 (local target matrix):** `make quality` executed end-to-end — PASS. All 9 leaf targets green: fmt, clippy, rust-test (234 tests), rust-coverage (91.81%), frontend-lint, frontend-typecheck, frontend-test (51 tests), frontend-coverage, frontend-build.
 3. **Validation 5 (governance):** Governance note present in plan — PASS.
 4. **Validation 6 (CI/CD guard):** Dry-run verified locally via `make help && make list && make -n ci-rust ci-frontend ci-playwright ci-docker ci-security rust-audit` — PASS.
+5. **Validation 4 (docs parity):** Full cross-reference audit completed. Fixed: stale `rustsec/audit-check` ref in testing-strategy.md, overstated `make ci-security` CI claim in SECURITY.md, raw `cargo fmt`/`cargo clippy` refs in CONTRIBUTING.md Code Style section, missing repo-root note in ui/README.md — PASS.
 
 ### Validations not yet executed
 
 1. **Validation 3 (CI parity):** Requires an actual CI run to confirm Make targets are invoked and produce expected outputs.
-2. **Validation 4 (docs parity):** Spot-checked locally; full review deferred to PR review.

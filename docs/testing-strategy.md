@@ -114,7 +114,7 @@ Deployment posture is documented in `../SECURITY.md`; architecture and runtime c
 - `api_smoke.rs`: body-size limits, scenario load success/error propagation, invalid command state transitions, and CORS restriction checks.
 - `sim-cli` unit tests: default CLI bind address remains `127.0.0.1` for non-container execution.
 - `sim-core` unit tests: event log capacity behavior, equality semantics, and economy value bounds.
-- CI workflow jobs: Rust dependency audit (`rustsec/audit-check`), npm audit, Trivy image scans, and Gitleaks secret scan.
+- CI workflow jobs: npm audit (via `make ci-frontend`), Trivy image scans (`make trivy-scan-api`, `make trivy-scan-ui`), and Gitleaks secret scan (`make gitleaks`). Rust dependency audit (`make rust-audit`) is available locally and in `make quality-full`.
 - Existing `PLAYWRIGHT` and `cargo-llvm-cov` coverage jobs continue to validate runtime behavior and regression resistance.
 
 Residual risk evidence:

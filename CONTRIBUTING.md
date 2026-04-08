@@ -102,8 +102,8 @@ See `docs/architecture-overview.md` for the full crate structure and design rati
 
 ## Code Style
 
-- Run `cargo fmt` before committing.
-- All `cargo clippy` warnings are treated as errors in CI.
+- Run `make fmt` before committing (`cargo fmt --check` under the hood).
+- All Clippy warnings are treated as errors — `make clippy` runs `cargo clippy -- -D warnings`.
 - Prefer explicit types over inference in public APIs.
 - All public types and functions must have doc-comments.
 - State structs derive `PartialEq`, `Eq`, `Clone`, `Debug`, and `serde::Serialize`.

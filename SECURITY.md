@@ -48,6 +48,6 @@ If you expose Arcogine beyond localhost, apply at least:
 
 3. **TLS** — Arcogine does not terminate TLS. Place it behind a reverse proxy (nginx, Caddy, or a cloud load balancer) with TLS termination.
 
-4. **Dependency auditing** — Run `make rust-audit` and `make frontend-audit` before deployment. CI runs these checks automatically via `make ci-security`.
+4. **Dependency auditing** — Run `make rust-audit` and `make frontend-audit` before deployment. CI runs npm audit as part of `make ci-frontend` and scans container images via `make trivy-scan-api` / `make trivy-scan-ui`. Run `make quality-full` locally for the complete security suite including Rust audit.
 
 5. **Log verbosity** — Set `RUST_LOG=warn` in production-like environments to reduce log noise.

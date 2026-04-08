@@ -33,6 +33,8 @@ cargo run --bin arcogine -- serve --addr 127.0.0.1:3000
 
 ## Validation commands
 
+Run from the **repository root** (where the `Makefile` lives), not from `ui/`:
+
 ```bash
 make frontend-lint        # ESLint
 make frontend-typecheck   # tsc --noEmit

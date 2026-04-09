@@ -57,7 +57,8 @@ RUN apt-get update \
     && curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
         | tar xz -C /tmp gitleaks \
     && install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && rm -f /tmp/trivy.tar.gz /tmp/gitleaks
 
 USER vscode
 
@@ -65,5 +66,4 @@ RUN rustup component add rustfmt clippy llvm-tools \
     && cargo install cargo-watch \
     && cargo install --locked cargo-nextest \
     && cargo install --locked cargo-llvm-cov \
-    && cargo install --locked cargo-audit \
-    && rm -f /tmp/trivy.tar.gz /tmp/gitleaks
+    && cargo install --locked cargo-audit

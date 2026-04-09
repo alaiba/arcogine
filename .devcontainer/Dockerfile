@@ -60,10 +60,10 @@ RUN apt-get update \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && rm -f /tmp/trivy.tar.gz /tmp/gitleaks
 
-USER vscode
-
 RUN rustup component add rustfmt clippy llvm-tools \
     && cargo install cargo-watch \
     && cargo install --locked cargo-nextest \
     && cargo install --locked cargo-llvm-cov \
     && cargo install --locked cargo-audit
+
+USER vscode

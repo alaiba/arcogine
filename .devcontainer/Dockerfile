@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/devcontainers/rust:1-bookworm
 
 ARG NODE_MAJOR=24
 ARG TRIVY_VERSION=0.69.3
-ARG GITLEAKS_VERSION=8.24.3
+ARG GITLEAKS_VERSION=8.30.1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -43,6 +43,7 @@ RUN apt-get update \
         libxshmfence1 \
         libxcb1 \
         xvfb \
+    && mkdir -p /usr/local/bin \
     && mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
         | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
@@ -50,15 +51,22 @@ RUN apt-get update \
         > /etc/apt/sources.list.d/nodesource.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends nodejs \
-    && curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+    && TRIVY_ARCH="$(dpkg --print-architecture | sed 's/amd64/x86_64/;s/arm64/aarch64/')" \
+    && case "$TRIVY_ARCH" in \
+      x86_64) TRIVY_ASSET="Linux-64bit"; GITLEAKS_ASSET="linux_x64" ;; \
+      aarch64) TRIVY_ASSET="Linux-ARM64"; GITLEAKS_ASSET="linux_arm64" ;; \
+      *) echo "Unsupported architecture: $TRIVY_ARCH"; exit 1 ;; \
+      esac \
+    && curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${TRIVY_ASSET}.tar.gz" \
         -o /tmp/trivy.tar.gz \
     && tar -xzf /tmp/trivy.tar.gz -C /tmp trivy \
     && install -m 0755 /tmp/trivy /usr/local/bin/trivy \
-    && curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-        | tar xz -C /tmp gitleaks \
+    && curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_${GITLEAKS_ASSET}.tar.gz" \
+        -o /tmp/gitleaks.tar.gz \
+    && tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks \
     && install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && rm -f /tmp/trivy.tar.gz /tmp/gitleaks
+    && rm -f /tmp/trivy.tar.gz /tmp/gitleaks.tar.gz
 
 RUN rustup component add rustfmt clippy llvm-tools \
     && cargo install cargo-watch \

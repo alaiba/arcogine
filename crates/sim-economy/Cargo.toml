@@ -7,5 +7,4 @@ edition = "2021"
 sim-types = { path = "../sim-types" }
 sim-core = { path = "../sim-core" }
 serde = { version = "1", features = ["derive"] }
-rand = "0.9"
-rand_chacha = "0.9"
+rand = { version = "0.10", features = ["chacha"] }

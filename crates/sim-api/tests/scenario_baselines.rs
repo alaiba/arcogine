@@ -1,8 +1,8 @@
 //! Scenario acceptance tests validating behavioral outcomes.
 //! Placed in sim-api because these integration tests require all domain crates.
 
+use rand::rngs::ChaCha8Rng;
 use rand::SeedableRng;
-use rand_chacha::ChaCha8Rng;
 use sim_core::event::{Event, EventType};
 use sim_core::handler::EventHandler;
 use sim_core::queue::Scheduler;

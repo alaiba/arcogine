@@ -1,8 +1,8 @@
 //! Unit tests for the demand model: verifying demand responds to price
 //! and lead-time inputs.
 
+use rand::rngs::ChaCha8Rng;
 use rand::SeedableRng;
-use rand_chacha::ChaCha8Rng;
 use sim_economy::demand::DemandModel;
 use sim_types::ProductId;
 

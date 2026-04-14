@@ -4,15 +4,15 @@
 //! current price and average lead time, samples the demand function, and
 //! schedules OrderCreation events.
 
-use rand::Rng;
-use rand_chacha::ChaCha8Rng;
+use rand::rngs::ChaCha8Rng;
+use rand::RngExt;
 use sim_core::event::{Event, EventPayload};
 use sim_core::handler::EventHandler;
 use sim_core::queue::Scheduler;
 use sim_types::{ProductId, SimError};
 
 /// Demand model parameters.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct DemandModel {
     pub base_demand: f64,
     pub price_elasticity: f64,

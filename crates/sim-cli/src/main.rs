@@ -1,6 +1,6 @@
 use clap::Parser;
+use rand::rngs::ChaCha8Rng;
 use rand::SeedableRng;
-use rand_chacha::ChaCha8Rng;
 use sim_core::event::Event;
 use sim_core::handler::EventHandler;
 use sim_core::queue::Scheduler;

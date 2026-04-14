@@ -5,8 +5,8 @@
 //! and `tokio::sync::watch` (state snapshots out). SSE clients
 //! receive events via `tokio::sync::broadcast`.
 
+use rand::rngs::ChaCha8Rng;
 use rand::SeedableRng;
-use rand_chacha::ChaCha8Rng;
 use serde::Serialize;
 use sim_core::event::{Event, EventPayload};
 use sim_core::handler::EventHandler;

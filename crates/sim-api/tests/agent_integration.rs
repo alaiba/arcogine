@@ -2,8 +2,8 @@
 //! intervention and measurably reduces backlog growth under an overload scenario.
 //! Placed in sim-api because the test requires all domain crates (F53).
 
+use rand::rngs::ChaCha8Rng;
 use rand::SeedableRng;
-use rand_chacha::ChaCha8Rng;
 use sim_agents::sales_agent::{AgentObservation, SalesAgent, SalesAgentConfig};
 use sim_core::event::{Event, EventPayload, EventType};
 use sim_core::handler::EventHandler;

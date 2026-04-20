@@ -67,16 +67,16 @@ Rationale:
 
 ## 5. Phased Plan
 
-### Phase 1. Extract A Tiny Reusable Runtime Core [Done 2026-04-20]
+### Phase 1. Extract A Tiny Reusable Runtime Core
 
 Objective: Move the runtime behavior into one tiny plugin-owned helper so the skill stays short and the executable logic stays versioned and testable.
 
 Planned work:
 
-1. [Done] Create `plugins/codex-rate-limits/skills/check-codex-rate-limits/scripts/read_rate_limits.py` by extracting only the reusable JSON-RPC fetch, normalization, and output logic from `<devel/codex-rate-limits.py:60-113>` and `<devel/codex-rate-limits.py:116-280>`, while keeping the new helper stdlib-only and independent from repo-local paths.
-2. [Done] Create `plugins/codex-rate-limits/skills/check-codex-rate-limits/SKILL.md` as the canonical authoring source, instructing Codex to call the bundled helper script instead of reproducing the full JSON-RPC sequence inline.
-3. [Done] Add `plugins/codex-rate-limits/skills/check-codex-rate-limits/references/app-server-contract.md` to hold the JSON-RPC request/response examples, window mapping rules, and failure semantics, so protocol detail stays out of `SKILL.md`.
-4. [Done] Document explicit failure behavior when `codex`, `python3`, ChatGPT account auth, or `account/rateLimits/read` are unavailable. `<devel/codex-rate-limits.py:117-131>` `<devel/codex-rate-limits.py:203-215>`
+1. Create `plugins/codex-rate-limits/skills/check-codex-rate-limits/scripts/read_rate_limits.py` by extracting only the reusable JSON-RPC fetch, normalization, and output logic from `<devel/codex-rate-limits.py:60-113>` and `<devel/codex-rate-limits.py:116-280>`, while keeping the new helper stdlib-only and independent from repo-local paths.
+2. Create `plugins/codex-rate-limits/skills/check-codex-rate-limits/SKILL.md` as the canonical authoring source, instructing Codex to call the bundled helper script instead of reproducing the full JSON-RPC sequence inline.
+3. Add `plugins/codex-rate-limits/skills/check-codex-rate-limits/references/app-server-contract.md` to hold the JSON-RPC request/response examples, window mapping rules, and failure semantics, so protocol detail stays out of `SKILL.md`.
+4. Document explicit failure behavior when `codex`, `python3`, ChatGPT account auth, or `account/rateLimits/read` are unavailable. `<devel/codex-rate-limits.py:117-131>` `<devel/codex-rate-limits.py:203-215>`
 
 Files expected:
 - `plugins/codex-rate-limits/skills/check-codex-rate-limits/scripts/read_rate_limits.py` (new; runtime core anchored to `<devel/codex-rate-limits.py:116-280>`)
@@ -88,31 +88,18 @@ Acceptance criteria:
 - The skill definition stays concise because it delegates execution to the packaged helper rather than embedding the entire JSON-RPC flow inline.
 - The skill and helper explicitly document what happens when the local Codex runtime does not expose `account/rateLimits/read` or the user is not signed in with ChatGPT.
 
-Implementation Status (2026-04-20):
-- Completed tasks:
-  - Added the bundled helper at `plugins/codex-rate-limits/skills/check-codex-rate-limits/scripts/read_rate_limits.py`.
-  - Added the canonical packaged skill at `plugins/codex-rate-limits/skills/check-codex-rate-limits/SKILL.md`.
-  - Added the protocol and normalization reference at `plugins/codex-rate-limits/skills/check-codex-rate-limits/references/app-server-contract.md`.
-- Build/runtime fixes applied:
-  - Hardened JSON-RPC failures with explicit next-step messaging for missing login, unsupported `account/rateLimits/read`, and app-server timeout cases.
-  - Preserved the standalone developer utility as a validation oracle only; the packaged helper remains self-contained.
-- Validation completed:
-  - `python3 -m py_compile plugins/codex-rate-limits/skills/check-codex-rate-limits/scripts/read_rate_limits.py`
-  - `python3 plugins/codex-rate-limits/skills/check-codex-rate-limits/scripts/read_rate_limits.py --json --utc`
-  - `python3 devel/codex-rate-limits.py --json --utc`
-
 ---
 
-### Phase 2. Package The Skill As A Repo-Local Plugin [Implemented 2026-04-20; final install validation pending Phase 3]
+### Phase 2. Package The Skill As A Repo-Local Plugin
 
 Objective: Turn the skill into an installable, repo-scoped plugin with the smallest possible manifest surface.
 
 Planned work:
 
-1. [Done] Create `plugins/codex-rate-limits/.codex-plugin/plugin.json` with only the fields needed to publish the skill path and minimal interface metadata, and intentionally omit hooks, MCP servers, apps, assets, and packaged executables unless a later phase proves they are required. `<CONTRIBUTING.md:83-97>` `<devel/codex-rate-limits.py:116-169>`
-2. [Done] Create `.agents/plugins/marketplace.json` with a local plugin entry pointing to `./plugins/codex-rate-limits`, so the plugin can be discovered and installed from the repo without assuming a user-specific home-directory layout. `<README.md:94-115>`
-3. [Done] Keep the canonical skill only inside the plugin package rather than maintaining a second copy under `.agents/skills/`; any repo-local documentation should point to the plugin-owned skill path instead of duplicating it. `<.cursor/rules/analysis-to-plan.mdc:99-103>` `<README.md:94-115>`
-4. [Done] Keep the packaged runtime surface limited to the one skill-local helper from Phase 1; do not add hooks, MCP config, auxiliary wrappers, or duplicate shell entrypoints in the plugin MVP. `<devel/codex-rate-limits.py:116-226>`
+1. Create `plugins/codex-rate-limits/.codex-plugin/plugin.json` with only the fields needed to publish the skill path and minimal interface metadata, and intentionally omit hooks, MCP servers, apps, assets, and packaged executables unless a later phase proves they are required. `<CONTRIBUTING.md:83-97>` `<devel/codex-rate-limits.py:116-169>`
+2. Create `.agents/plugins/marketplace.json` with a local plugin entry pointing to `./plugins/codex-rate-limits`, so the plugin can be discovered and installed from the repo without assuming a user-specific home-directory layout. `<README.md:94-115>`
+3. Keep the canonical skill only inside the plugin package rather than maintaining a second copy under `.agents/skills/`; any repo-local documentation should point to the plugin-owned skill path instead of duplicating it. `<.cursor/rules/analysis-to-plan.mdc:99-103>` `<README.md:94-115>`
+4. Keep the packaged runtime surface limited to the one skill-local helper from Phase 1; do not add hooks, MCP config, auxiliary wrappers, or duplicate shell entrypoints in the plugin MVP. `<devel/codex-rate-limits.py:116-226>`
 
 Files expected:
 - `plugins/codex-rate-limits/.codex-plugin/plugin.json` (new; runtime surface anchored to `<devel/codex-rate-limits.py:116-169>`)
@@ -123,21 +110,6 @@ Acceptance criteria:
 - The plugin manifest is intentionally minimal and does not add optional integration surfaces that are unrelated to checking rate limits.
 - The packaged plugin ships exactly one helper script in the skill directory and no extra runtime surfaces.
 - The plugin can be installed from the repo-local marketplace path without requiring users to copy files into their home directory first.
-
-Implementation Status (2026-04-20):
-- Completed tasks:
-  - Added `plugins/codex-rate-limits/.codex-plugin/plugin.json` with only the skill path and minimal interface metadata.
-  - Added `.agents/plugins/marketplace.json` with a repo-local plugin entry for `./plugins/codex-rate-limits`.
-  - Kept the canonical skill only inside the plugin package; no `.agents/skills/` duplicate was introduced.
-  - Kept the packaged runtime surface to the single helper from Phase 1.
-- Build/runtime fixes applied:
-  - Created the repo-local marketplace root expected by the Codex plugin workflow without adding extra plugin runtime surfaces.
-- Validation completed:
-  - `python3 -m json.tool plugins/codex-rate-limits/.codex-plugin/plugin.json`
-  - `python3 -m json.tool .agents/plugins/marketplace.json`
-  - `find plugins/codex-rate-limits -maxdepth 4 -type f | sort`
-- Validation remaining before this phase can be marked fully done:
-  - Install the plugin from the repo-local marketplace path in a live Codex session and confirm the marketplace entry resolves to `./plugins/codex-rate-limits` as planned.
 
 ---
 

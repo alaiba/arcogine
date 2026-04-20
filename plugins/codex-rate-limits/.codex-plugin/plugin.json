@@ -1,0 +1,16 @@
+{
+  "name": "codex-rate-limits",
+  "version": "0.1.0",
+  "description": "Report the current Codex ChatGPT 5h and Weekly subscription rate limits.",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Rate Limits",
+    "shortDescription": "Checks the current 5h and Weekly Codex subscription windows.",
+    "longDescription": "Reports the current Codex ChatGPT subscription rate-limit windows by calling the local Codex app-server.",
+    "developerName": "Arcogine",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive"
+    ]
+  }
+}

@@ -103,16 +103,16 @@ Implementation Status (2026-04-20):
 
 ---
 
-### Phase 2. Package The Skill As A Repo-Local Plugin
+### Phase 2. Package The Skill As A Repo-Local Plugin [Implemented 2026-04-20; final install validation pending Phase 3]
 
 Objective: Turn the skill into an installable, repo-scoped plugin with the smallest possible manifest surface.
 
 Planned work:
 
-1. Create `plugins/codex-rate-limits/.codex-plugin/plugin.json` with only the fields needed to publish the skill path and minimal interface metadata, and intentionally omit hooks, MCP servers, apps, assets, and packaged executables unless a later phase proves they are required. `<CONTRIBUTING.md:83-97>` `<devel/codex-rate-limits.py:116-169>`
-2. Create `.agents/plugins/marketplace.json` with a local plugin entry pointing to `./plugins/codex-rate-limits`, so the plugin can be discovered and installed from the repo without assuming a user-specific home-directory layout. `<README.md:94-115>`
-3. Keep the canonical skill only inside the plugin package rather than maintaining a second copy under `.agents/skills/`; any repo-local documentation should point to the plugin-owned skill path instead of duplicating it. `<.cursor/rules/analysis-to-plan.mdc:99-103>` `<README.md:94-115>`
-4. Keep the packaged runtime surface limited to the one skill-local helper from Phase 1; do not add hooks, MCP config, auxiliary wrappers, or duplicate shell entrypoints in the plugin MVP. `<devel/codex-rate-limits.py:116-226>`
+1. [Done] Create `plugins/codex-rate-limits/.codex-plugin/plugin.json` with only the fields needed to publish the skill path and minimal interface metadata, and intentionally omit hooks, MCP servers, apps, assets, and packaged executables unless a later phase proves they are required. `<CONTRIBUTING.md:83-97>` `<devel/codex-rate-limits.py:116-169>`
+2. [Done] Create `.agents/plugins/marketplace.json` with a local plugin entry pointing to `./plugins/codex-rate-limits`, so the plugin can be discovered and installed from the repo without assuming a user-specific home-directory layout. `<README.md:94-115>`
+3. [Done] Keep the canonical skill only inside the plugin package rather than maintaining a second copy under `.agents/skills/`; any repo-local documentation should point to the plugin-owned skill path instead of duplicating it. `<.cursor/rules/analysis-to-plan.mdc:99-103>` `<README.md:94-115>`
+4. [Done] Keep the packaged runtime surface limited to the one skill-local helper from Phase 1; do not add hooks, MCP config, auxiliary wrappers, or duplicate shell entrypoints in the plugin MVP. `<devel/codex-rate-limits.py:116-226>`
 
 Files expected:
 - `plugins/codex-rate-limits/.codex-plugin/plugin.json` (new; runtime surface anchored to `<devel/codex-rate-limits.py:116-169>`)
@@ -123,6 +123,21 @@ Acceptance criteria:
 - The plugin manifest is intentionally minimal and does not add optional integration surfaces that are unrelated to checking rate limits.
 - The packaged plugin ships exactly one helper script in the skill directory and no extra runtime surfaces.
 - The plugin can be installed from the repo-local marketplace path without requiring users to copy files into their home directory first.
+
+Implementation Status (2026-04-20):
+- Completed tasks:
+  - Added `plugins/codex-rate-limits/.codex-plugin/plugin.json` with only the skill path and minimal interface metadata.
+  - Added `.agents/plugins/marketplace.json` with a repo-local plugin entry for `./plugins/codex-rate-limits`.
+  - Kept the canonical skill only inside the plugin package; no `.agents/skills/` duplicate was introduced.
+  - Kept the packaged runtime surface to the single helper from Phase 1.
+- Build/runtime fixes applied:
+  - Created the repo-local marketplace root expected by the Codex plugin workflow without adding extra plugin runtime surfaces.
+- Validation completed:
+  - `python3 -m json.tool plugins/codex-rate-limits/.codex-plugin/plugin.json`
+  - `python3 -m json.tool .agents/plugins/marketplace.json`
+  - `find plugins/codex-rate-limits -maxdepth 4 -type f | sort`
+- Validation remaining before this phase can be marked fully done:
+  - Install the plugin from the repo-local marketplace path in a live Codex session and confirm the marketplace entry resolves to `./plugins/codex-rate-limits` as planned.
 
 ---
 

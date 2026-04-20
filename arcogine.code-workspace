@@ -1,12 +1,11 @@
 {
-    "folders": [
-        {
-            "path": "."
-        }
-    ],
-    "extensions": {
-        "recommendations": [
-            "fill-labs.dependi"
-        ]
-    }
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../core-rate-limits-plugin"
+		}
+	],
+	"settings": {}
 }

@@ -1,0 +1,20 @@
+{
+  "name": "arcogine-local",
+  "interface": {
+    "displayName": "Arcogine Local Plugins"
+  },
+  "plugins": [
+    {
+      "name": "codex-rate-limits",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-rate-limits"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

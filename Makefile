@@ -31,8 +31,8 @@ java-compile: ## Compile all Java modules
 java-test: ## Run all Java tests
 	$(GRADLE) test
 
-java-coverage: ## Run Java tests with Jacoco coverage
-	$(GRADLE) test jacocoTestReport
+java-coverage: ## Run Java tests with Jacoco coverage (enforces per-module coverage gates)
+	$(GRADLE) test jacocoTestReport jacocoTestCoverageVerification
 
 java-lint: ## Check Java compilation with all warnings
 	$(GRADLE) compileJava

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/rust:1-bookworm
+FROM mcr.microsoft.com/devcontainers/base:bookworm
 
 ARG NODE_MAJOR=24
 ARG TRIVY_VERSION=0.69.3
@@ -9,8 +9,6 @@ RUN apt-get update \
         curl \
         ca-certificates \
         gnupg \
-        pkg-config \
-        libssl-dev \
         fonts-freefont-ttf \
         fonts-ipafont-gothic \
         fonts-liberation \
@@ -68,10 +66,7 @@ RUN apt-get update \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && rm -f /tmp/trivy.tar.gz /tmp/gitleaks.tar.gz
 
-RUN rustup component add rustfmt clippy llvm-tools \
-    && cargo install cargo-watch \
-    && cargo install --locked cargo-nextest \
-    && cargo install --locked cargo-llvm-cov \
-    && cargo install --locked cargo-audit
+# JDK 25 (Temurin) and Gradle are provided by the `java` devcontainer feature
+# declared in devcontainer.json, so no toolchain install is needed here.
 
 USER vscode

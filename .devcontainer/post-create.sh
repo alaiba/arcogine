@@ -10,8 +10,8 @@ if [[ "$REMOTE_URL" == git@github.com:* ]]; then
   echo "    Switched remote to HTTPS for credential forwarding"
 fi
 
-echo "==> Building Rust workspace..."
-cargo build
+echo "==> Building Java workspace..."
+(cd java && ./gradlew assemble --no-daemon)
 
 echo "==> Installing UI dependencies..."
 cd ui && npm ci && cd ..
@@ -51,7 +51,6 @@ trivy --version >/dev/null 2>&1 && echo "    - trivy: $(trivy --version | head -
 gitleaks version >/dev/null 2>&1 && echo "    - gitleaks: $(gitleaks version)" || true
 
 echo "==> Dev container ready. Quick commands:"
-echo "    cargo test              — run all Rust tests"
-echo "    cargo watch -x test     — watch mode"
-echo "    cargo run --bin arcogine -- serve  — start API on :3000"
-echo "    cd ui && npm run dev    — start Vite on :5173"
+echo "    cd java && ./gradlew test                            — run all Java tests"
+echo "    cd java && ./gradlew :sim-cli:bootRun --args=serve   — start API on :3000"
+echo "    cd ui && npm run dev                                 — start Vite on :5173"

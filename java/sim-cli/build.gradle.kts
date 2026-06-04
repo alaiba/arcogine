@@ -1,3 +1,5 @@
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+
 plugins {
     id("org.springframework.boot") version "4.0.6"
     id("io.spring.dependency-management") version "1.1.7"
@@ -25,4 +27,23 @@ application {
 tasks.bootJar {
     archiveFileName = "arcogine.jar"
     mainClass = "com.arcogine.cli.ArcogineCommand"
+}
+
+// Coverage gate: fails the build if sim-cli line coverage drops below the
+// floor (e.g. if its ported tests are deleted). Mirrors the gate in
+// sim-types. See docs/java-rewrite-plan.md.
+tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn(tasks.named("test"))
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                minimum = "0.60".toBigDecimal()
+            }
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn(tasks.named("jacocoTestCoverageVerification"))
 }

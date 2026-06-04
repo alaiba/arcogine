@@ -6,12 +6,9 @@ COPY java/ ./
 RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew :sim-cli:bootJar --no-daemon
 
-FROM eclipse-temurin:25-jre
+FROM eclipse-temurin:25-jre-alpine
 
-RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk upgrade --no-cache && apk add --no-cache curl
 
 COPY --from=build /app/sim-cli/build/libs/arcogine.jar /app/arcogine.jar
 COPY examples/ /app/examples/

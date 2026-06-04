@@ -50,6 +50,16 @@ public class SseController {
         emitter.onTimeout(cleanup);
         emitter.onError(ex -> cleanup.run());
 
+        // Send a priming comment so the response headers flush immediately on
+        // connect. Without this, a servlet SseEmitter does not commit the
+        // response until the first event, so clients (and SSE tests) block
+        // waiting for headers while the simulation is idle.
+        try {
+            emitter.send(SseEmitter.event().comment("connected"));
+        } catch (IOException e) {
+            emitter.completeWithError(e);
+        }
+
         return emitter;
     }
 }

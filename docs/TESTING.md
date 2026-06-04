@@ -5,7 +5,7 @@ This document covers all test categories in Arcogine, how to run them, and the r
 ## Quick reference
 
 ```bash
-make quality        # fast gates (before pushing): fmt, clippy, tests, coverage, lint, typecheck, build
+make quality        # fast gates (before pushing): compile, Checkstyle, tests, coverage, frontend lint/typecheck/test/build
 make quality-full   # everything: quality + Playwright E2E + Docker smoke + security scans
 make help           # list all available targets
 ```
@@ -14,134 +14,89 @@ make help           # list all available targets
 
 | Command | Scope |
 |---------|-------|
-| `make quality` | Rust format, Clippy, workspace tests, Rust coverage, frontend lint, typecheck, unit tests, frontend coverage, production build |
-| `make quality-full` | Everything above, plus Playwright, Docker build/smoke, and security scans (Rust audit, frontend audit, Trivy, Gitleaks) |
+| `make quality` | Java compile (`-Xlint:all -Werror`), Checkstyle, JUnit tests, Jacoco coverage gates, frontend lint, typecheck, unit tests, frontend coverage, production build |
+| `make quality-full` | Everything above, plus Playwright, Docker build/smoke, and security scans (frontend audit, Trivy image scans, Gitleaks) |
 
-Leaf targets follow a `<domain>-<action>` naming convention (e.g., `rust-test`, `frontend-lint`).
+Leaf targets follow a `<domain>-<action>` naming convention (e.g. `java-test`, `frontend-lint`).
 
 ### Target model
 
 - **Discovery:** `help` (default), `list`
-- **Rust:** `fmt`, `clippy`, `rust-test`, `rust-audit`, `rust-coverage`
+- **Java:** `java-compile`, `java-lint` (Checkstyle), `java-test`, `java-coverage`, `java-bootjar`
 - **Frontend:** `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-coverage`, `frontend-build`, `frontend-audit`
 - **E2E:** `playwright`
 - **Docker:** `docker-build`, `docker-smoke`
 - **Security:** `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`
-- **CI composites:** `ci-rust`, `ci-frontend`, `ci-playwright`, `ci-docker`, `ci-security`
+- **CI composites:** `ci-java`, `ci-frontend`, `ci-playwright`, `ci-docker`, `ci-security`
 - **Developer entrypoints:** `quality`, `quality-full`, `clean`
 
 ## Prerequisites
 
-- **Rust** (stable, as specified in `rust-toolchain.toml`): `rustup update stable`
-- **Node.js** (20+): for frontend checks and tests
-- **Docker** and Docker Compose: for container checks (optional for local dev)
+- **Java 25 (LTS)** — Temurin, provided by the devcontainer (SDKMAN). The build uses the Gradle wrapper (`java/gradlew`, Gradle 9.1.0); no system Gradle needed.
+- **Node.js** (24+): for frontend checks and tests.
+- **Docker** and Docker Compose: for container checks (optional for local dev).
+
+All Java commands run through the Gradle wrapper under `java/`; the Make targets wrap them.
 
 ## Test categories
 
-### 1. Rust formatting
+### 1. Java static analysis (Checkstyle)
 
-`make fmt` — runs `cargo fmt --check`.
+`make java-lint` — runs `checkstyleMain checkstyleTest` (Checkstyle 13.5.0) against a deliberately minimal, high-signal ruleset (`java/config/checkstyle/checkstyle.xml`): unused/redundant/star imports plus a few bug-oriented checks. The compiler does **not** flag unused imports, so this is genuinely additive. Expand the ruleset deliberately rather than adopting a large style guide wholesale.
 
-### 2. Rust lints
+### 2. Java compilation
 
-`make clippy` — runs `cargo clippy -- -D warnings`.
+`make java-compile` — compiles all modules' main and test sources with `-Xlint:all -Werror`, so every compiler warning (including deprecations from newer Spring/Jackson) is a hard error.
 
-### 3. Rust unit tests
+### 3. Java unit tests (JUnit 5)
 
-Inline `#[cfg(test)]` modules in every crate cover typed IDs, machine state, job routing, demand model, pricing, agent logic, handler delegation, snapshot building, SSE serialization, and headless CLI execution.
+~178 tests across the seven modules cover typed IDs and `SimTime`, scenario schema and TOML loading, the scheduler/runner/KPI/event-log core, machine state and job routing, demand and pricing, the sales agent, the HTTP API contract, and the headless CLI.
 
-`make rust-test` — runs `cargo test`.
-
-**Success:** 180+ tests pass, zero warnings.
+`make java-test` — runs `./gradlew test`.
 
 ### 4. Property tests
 
-Uses `proptest` to verify invariants like monotonic time progression, no event loss, machine concurrency limits, and queue FIFO ordering.
-
-```bash
-cargo test -p sim-core --test properties
-cargo test -p sim-factory --test properties
-```
-
-These run as part of `make rust-test`.
+Invariants (monotonic time, no event loss, machine concurrency limits, queue FIFO ordering) are expressed as JUnit 5 parameterized/randomized-seed tests in `sim-core` and `sim-factory`. They run as part of `make java-test`.
 
 ### 5. Integration tests
 
-Cross-crate tests in `crates/sim-api/tests/` validate scenario baselines, agent integration, API route behavior, and simulation-thread interactions.
-
-`make rust-test` or directly: `cargo test -p sim-api`
+`sim-api` tests use `@SpringBootTest(webEnvironment = RANDOM_PORT)` and a `WebTestClient` built via `WebTestClient.bindToServer()` against the live server. They exercise the full HTTP contract (scenario load, run/pause/step, price/machine/agent commands, KPIs, topology, SSE), so they double as the API integration layer. Part of `make java-test`.
 
 ### 6. Determinism tests
 
-Verify that identical seeds produce identical event logs and KPIs.
+`sim-core` verifies that identical seeds produce identical event logs and KPIs. The rewrite uses `java.util.Random`/`SplittableRandom` (not Rust's ChaCha8), so determinism is asserted as **reproducibility** — two Java runs with the same seed are byte-identical — and any golden values are captured from Java runs, never copied from the Rust implementation.
 
-```bash
-cargo test -p sim-core --test determinism
-```
+### 7. Java coverage (Jacoco) + per-module gates
 
-### 7. Rust coverage
+`make java-coverage` — runs `test jacocoTestReport jacocoTestCoverageVerification`. Each module declares a `jacocoTestCoverageVerification` gate (a `LINE` minimum, set a few points below measured actual) wired into `check`, so removing a module's tests fails the build instead of passing vacuously. CI uploads the per-module `jacocoTestReport.xml` to Codecov.
 
-`make rust-coverage` — runs `cargo llvm-cov` and outputs to `target/coverage/cobertura.xml`.
+### 8. Benchmarks (follow-up)
 
-### 8. Rust dependency audit
+The Rust Criterion suites (scheduler throughput, scenario runtime) are **not yet ported**. The intended target is JMH (`me.champeau.jmh` plugin + `src/jmh/java` in `sim-core`); tracked as a follow-up.
 
-`make rust-audit` — runs `cargo audit`. Also part of `make quality-full`.
+### 9. Java dependency audit (follow-up)
 
-### 9. Benchmarks
+Image-level scanning of the bundled jar is covered by `make trivy-scan-api` (the API image embeds `arcogine.jar`). A dedicated source-level dependency CVE gate is a **follow-up**: Trivy's `fs` scanner does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without its Java DB, so the recommended approach is a CycloneDX SBOM (`cyclonedx-gradle-plugin`) scanned with `trivy sbom`, or OWASP dependency-check with an NVD API key.
 
-Criterion benchmarks for scheduler throughput and scenario runtime. No dedicated Make target.
+### 10–15. Frontend (lint, typecheck, unit tests, coverage, build, audit)
 
-```bash
-cargo bench -p sim-core
-```
-
-### 10. Frontend lint
-
-`make frontend-lint` — runs `cd ui && npm run lint`.
-
-### 11. Frontend type check
-
-`make frontend-typecheck` — runs `cd ui && npx tsc --noEmit`.
-
-### 12. Frontend unit tests
-
-Store, API client, SSE client, and component tests using Vitest and Testing Library.
-
-`make frontend-test` — runs `cd ui && npm test`.
-
-**Success:** 51+ tests pass, zero warnings.
-
-### 13. Frontend coverage
-
-`make frontend-coverage` — runs `cd ui && npm run test:coverage`.
-
-### 14. Frontend build
-
-`make frontend-build` — runs `cd ui && npm run build`.
-
-### 15. Frontend dependency audit
-
-`make frontend-audit` — runs `cd ui && npm audit --audit-level=high`.
+The React/TypeScript UI is unchanged by the Rust→Java rewrite. `make frontend-lint` (ESLint), `frontend-typecheck` (`tsc --noEmit`), `frontend-test` (Vitest), `frontend-coverage`, `frontend-build`, `frontend-audit` (`npm audit --audit-level=high`).
 
 ### 16. Playwright E2E
 
-Browser-level user journey tests. Requires both the API server and UI dev server.
-
-`make playwright` — runs `cd ui && npx playwright test`.
+Browser-level user-journey tests. Requires the API server and UI dev server. `make playwright` — runs the Playwright suite against the **Java** API unchanged. (`cd ui && npx playwright test`.)
 
 ### 17. Docker build and smoke
 
-`make docker-build` — runs `docker compose build`.
-
-`make docker-smoke` — builds, starts containers, verifies API/UI health endpoints, then tears down.
+`make docker-build` (`docker compose build`) and `make docker-smoke` (build, start, health-check `:3000/api/health` and the UI, tear down).
 
 ### 18. Container image scans
 
-`make trivy-scan-api` and `make trivy-scan-ui` — scan built images for CRITICAL/HIGH vulnerabilities.
+`make trivy-scan-api` and `make trivy-scan-ui` — scan built images for CRITICAL/HIGH vulnerabilities (this is where bundled Java dependencies are scanned today).
 
 ### 19. Secret scan
 
-`make gitleaks` — scans git history for leaked secrets.
+`make gitleaks` — scans the repo for leaked secrets.
 
 ## CI pipeline
 
@@ -149,26 +104,26 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs:
 
 | Job | Make target | What it checks |
 |-----|------------|----------------|
-| Rust | `make ci-rust` | `fmt`, `clippy`, `rust-test`, `rust-coverage` |
+| Java | `make ci-java` | `java-compile`, `java-lint` (Checkstyle), `java-test`, `java-coverage` (Jacoco gates) |
 | Frontend | `make ci-frontend` | `frontend-lint`, `frontend-typecheck`, `frontend-coverage`, `frontend-build`, `frontend-audit` |
-| Playwright | `make playwright` | Browser E2E tests (CI handles binary build and browser install) |
+| Playwright | `make playwright` | Browser E2E against the Java API |
 | Docker | `make ci-docker` | `docker-build`, `docker-smoke` |
-| Image scans | `make trivy-scan-{api,ui}` | Container vulnerability scanning |
-| Secret scan | `make gitleaks` | Repository secret detection |
-| Contract check | `make help && make -n ci-*` | Verifies all Make targets resolve |
+| Security | `make ci-security` | frontend audit, Trivy image scans, Gitleaks |
+
+The Java job uses Temurin 25 + the Gradle wrapper and uploads coverage to Codecov.
 
 ## Testing architecture
 
 ### Why this structure
 
-The test layers are designed to preserve four properties:
+The test layers preserve four properties:
 
 1. **Deterministic behavior** across identical seeds and scenarios.
 2. **Behavioral parity** between the headless CLI path and the API-driven runtime.
-3. **Fast feedback** for crate-local logic and frontend state changes.
+3. **Fast feedback** for module-local logic and frontend state changes.
 4. **Layered confidence** from unit, property, integration, browser, and container checks.
 
-Route matrices and runtime error handling are cheaper to validate in API smoke tests. Playwright focuses on user-visible flows, not exhaustively rechecking backend routes.
+Route matrices and runtime error handling are validated in the `sim-api` smoke tests; Playwright focuses on user-visible flows rather than re-checking backend routes.
 
 ### Handler delegation contract
 
@@ -181,6 +136,10 @@ Factory event semantics have a single implementation authority: `FactoryHandler`
 
 Tests protect parity between the headless and API paths. If you change event-handling behavior, ensure both runtime paths stay aligned.
 
+### Testing SSE
+
+The `/api/events/stream` endpoint is a servlet `SseEmitter`. The controller sends a priming SSE comment on connect so the response headers flush immediately (otherwise a client blocks waiting for headers while the simulation is idle). Tests assert status/content-type directly, and the connection-limit test holds streams open via Reactor subscriptions (disposed in a `finally`) so the semaphore limit is reached.
+
 ### Frontend testing conventions
 
 - **Vitest** matches the Vite toolchain. **Testing Library** asserts behavior, not implementation details.
@@ -189,17 +148,7 @@ Tests protect parity between the headless and API paths. If you change event-han
 
 ### Security verification tests
 
-The hardening layer added 18 tests covering body-size limits, scenario validation, error propagation, CORS restrictions, SSE connection limits, event log capacity, economy value bounds, and CLI bind-address defaults. These are part of the regular test suite, not a separate pipeline:
-
-- `oversized_body_returns_payload_too_large`, `body_under_limit_is_accepted`
-- `load_valid_scenario_returns_success`, `load_invalid_toml_returns_bad_request`
-- `load_scenario_with_zero_max_ticks_returns_bad_request`, `load_scenario_with_missing_equipment_returns_bad_request`
-- `handler_error_surfaces_in_snapshot`, `serve_default_addr_is_localhost`
-- `sse_connection_limit_returns_503`
-- `event_log_caps_at_max_capacity`, `event_log_equality_ignores_capacity`, `event_log_is_truncated`
-- `scenario_with_nan_price_rejected`, `scenario_with_inf_demand_rejected`
-- `scenario_with_extreme_price_rejected`, `scenario_with_extreme_base_demand_rejected`
-- `extreme_price_returns_bad_request`, `cors_with_env_var_restricts_origin`
+The hardening checks live in the regular `sim-api` suite (`ApiSmokeTest`), not a separate pipeline: body-size limits, scenario validation, error propagation, CORS restrictions, SSE connection limits, economy value bounds, and CLI bind-address defaults — e.g. `oversizedBodyReturnsContentTooLarge`, `loadInvalidTomlReturnsBadRequest`, `loadScenarioWithZeroMaxTicksReturnsBadRequest`, `negativePriceReturnsBadRequest`, `extremePriceReturnsBadRequest`, `sseConnectionLimitReturns503`, `defaultBindAddressIsLocalhost`.
 
 ## Governance
 

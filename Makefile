@@ -3,7 +3,7 @@
 GRADLE = cd java && ./gradlew --no-daemon
 
 .PHONY: help list clean \
-	java-compile java-test java-coverage java-lint java-bootjar \
+	java-compile java-test java-coverage java-lint java-bootjar java-bench \
 	frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build frontend-audit \
 	playwright docker-build docker-smoke trivy-scan-api trivy-scan-ui gitleaks \
 	ci-java ci-frontend ci-playwright ci-docker ci-security \
@@ -39,6 +39,9 @@ java-lint: ## Static analysis of Java sources (Checkstyle)
 
 java-bootjar: ## Build the fat JAR (arcogine.jar)
 	$(GRADLE) :sim-cli:bootJar
+
+java-bench: ## Run JMH microbenchmarks (sim-core; on-demand, not a CI gate)
+	$(GRADLE) :sim-core:jmh
 
 ##@ Frontend
 frontend-lint: ## Lint frontend code (ESLint)

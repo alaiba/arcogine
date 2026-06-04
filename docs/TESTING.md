@@ -74,9 +74,19 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 `make java-bench` — runs the JMH microbenchmarks in `sim-core` (`./gradlew :sim-core:jmh`), ported from the Rust Criterion suites: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario runtime (run a 1000-tick scenario, and load+validate). Sources live in `java/sim-core/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). Note: ASM is pinned to a Java 25-aware version so the JMH bytecode generator can read the toolchain's class files, and JMH's machine-generated classes are exempt from `-Werror`.
 
-### 9. Java dependency audit (follow-up)
+### 9. Java dependency audit (CycloneDX SBOM + Trivy)
 
-Image-level scanning of the bundled jar is covered by `make trivy-scan-api` (the API image embeds `arcogine.jar`). A dedicated source-level dependency CVE gate is a **follow-up**: Trivy's `fs` scanner does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without its Java DB, so the recommended approach is a CycloneDX SBOM (`cyclonedx-gradle-plugin`) scanned with `trivy sbom`, or OWASP dependency-check with an NVD API key.
+`make java-audit` — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `java/build/reports/cyclonedx/bom.json`, ~179 components) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. This catches transitive dependencies at the source level, complementing `trivy-scan-api`, which scans the built image. (`trivy fs` is not used: it does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without Trivy's separate Java DB.)
+
+**Currently report-only** (does not fail the build) and run as part of `ci-security`. The scan surfaces real, fixable findings in three scopes:
+
+- **Shipped runtime** — `tomcat-embed-core` (3 CRITICAL + 3 HIGH at time of writing). These affect the deployed app; fix by overriding the Spring-managed version, e.g. `extra["tomcat.version"] = "11.0.22"` in `sim-api`/`sim-cli`.
+- **Test-only** — `netty-codec-*` (7 HIGH), pulled by `spring-boot-starter-webflux` (the `WebTestClient` reactive client); not in `arcogine.jar`.
+- **Build tooling** — `plexus-utils` (1 HIGH); not shipped.
+
+**Promotion to a blocking gate:** remediate the shipped Tomcat CVEs (version override), scope the SBOM to `runtimeClasspath` (drops the test/build-scope noise) or add justified `.trivyignore` entries, then switch the target to `trivy sbom ... --exit-code 1`.
+
+(OWASP dependency-check was considered but requires an NVD API key and a large database download; Trivy reuses the vulnerability DB already present from the image scans.)
 
 ### 10–15. Frontend (lint, typecheck, unit tests, coverage, build, audit)
 

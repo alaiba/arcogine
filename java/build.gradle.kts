@@ -15,11 +15,17 @@ allprojects {
 subprojects {
     apply(plugin = "java")
     apply(plugin = "jacoco")
+    apply(plugin = "checkstyle")
 
     java {
         toolchain {
             languageVersion = JavaLanguageVersion.of(25)
         }
+    }
+
+    configure<org.gradle.api.plugins.quality.CheckstyleExtension> {
+        toolVersion = "13.5.0"
+        configDirectory.set(rootProject.layout.projectDirectory.dir("config/checkstyle"))
     }
 
     tasks.withType<JavaCompile> {

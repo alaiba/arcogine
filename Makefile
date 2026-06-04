@@ -34,8 +34,8 @@ java-test: ## Run all Java tests
 java-coverage: ## Run Java tests with Jacoco coverage (enforces per-module coverage gates)
 	$(GRADLE) test jacocoTestReport jacocoTestCoverageVerification
 
-java-lint: ## Check Java compilation with all warnings
-	$(GRADLE) compileJava
+java-lint: ## Static analysis of Java sources (Checkstyle)
+	$(GRADLE) checkstyleMain checkstyleTest
 
 java-bootjar: ## Build the fat JAR (arcogine.jar)
 	$(GRADLE) :sim-cli:bootJar
@@ -91,7 +91,7 @@ gitleaks: ## Scan repo for secrets with Gitleaks
 # ---------------------------------------------------------------------------
 
 ##@ CI composites
-ci-java: java-compile java-test java-coverage ## All Java quality gates
+ci-java: java-compile java-lint java-test java-coverage ## All Java quality gates
 ci-frontend: frontend-lint frontend-typecheck frontend-coverage frontend-build frontend-audit ## All frontend quality gates
 ci-playwright: playwright ## Playwright E2E (bootstrap handled by CI workflow)
 ci-docker: docker-build docker-smoke ## Docker build + smoke test
@@ -102,7 +102,7 @@ ci-security: frontend-audit trivy-scan-api trivy-scan-ui gitleaks ## All securit
 # ---------------------------------------------------------------------------
 
 ##@ Quality gates
-quality: java-compile java-test java-coverage frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build ## Fast quality gates (no Docker/Playwright/security)
+quality: java-compile java-lint java-test java-coverage frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build ## Fast quality gates (no Docker/Playwright/security)
 quality-full: quality playwright docker-build docker-smoke ci-security ## Full quality gates (everything)
 
 ##@ Utility

@@ -15,6 +15,9 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.18.2")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    // Reactive client on the test classpath so @SpringBootTest(RANDOM_PORT) can
+    // auto-configure WebTestClient against the live servlet server.
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
 }
 
 tasks.bootJar {

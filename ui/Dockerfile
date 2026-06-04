@@ -9,10 +9,21 @@ COPY . .
 
 RUN npm run build
 
-FROM nginx:1.28-alpine3.23
+# Runtime: Alpine + nginx installed from the Alpine repo. The official
+# `nginx:*-alpine` image pins nginx from nginx.org's repo, so `apk upgrade`
+# cannot pull Alpine's security-patched nginx build (e.g. CVE-2026-9256).
+# Installing nginx via apk keeps it upgradeable with the rest of the OS.
+FROM alpine:3.23
+
+RUN apk add --no-cache nginx ca-certificates \
+    && apk upgrade --no-cache \
+    && mkdir -p /run/nginx /usr/share/nginx/html
 
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY <<'EOF' /etc/nginx/conf.d/default.conf
+
+# Alpine's nginx.conf includes /etc/nginx/http.d/*.conf; this replaces the
+# packaged default server block.
+COPY <<'EOF' /etc/nginx/http.d/default.conf
 server {
     listen 5173;
     root /usr/share/nginx/html;
@@ -46,6 +57,6 @@ server {
 }
 EOF
 
-RUN apk upgrade --no-cache && apk add --no-cache ca-certificates
-
 EXPOSE 5173
+
+CMD ["nginx", "-g", "daemon off;"]

@@ -7,8 +7,9 @@ import com.arcogine.types.scenario.MaterialConfig;
 import com.arcogine.types.scenario.OperationsDefinitionConfig;
 import com.arcogine.types.scenario.ProcessSegmentConfig;
 import com.arcogine.types.scenario.ScenarioConfig;
-import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.dataformat.toml.TomlMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -18,7 +19,7 @@ import java.util.Set;
 public final class ScenarioLoader {
 
     private static final double MAX_ECON_VALUE = 1_000_000.0;
-    private static final TomlMapper TOML_MAPPER = new TomlMapper();
+    private static final TomlMapper TOML_MAPPER = TomlMapper.builder().build();
 
     private ScenarioLoader() {}
 
@@ -26,7 +27,7 @@ public final class ScenarioLoader {
         ScenarioConfig config;
         try {
             config = TOML_MAPPER.readValue(toml, ScenarioConfig.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new SimError.ScenarioLoadError("TOML parse error: " + e.getMessage());
         }
         validateScenario(config);

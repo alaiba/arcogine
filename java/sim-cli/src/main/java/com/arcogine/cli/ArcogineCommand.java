@@ -27,6 +27,18 @@ public class ArcogineCommand implements Callable<Integer>, CommandLineRunner {
     @CommandLine.Option(names = "--addr", defaultValue = "127.0.0.1:3000", description = "Bind address for serve mode")
     private String addr;
 
+    String mode() {
+        return mode;
+    }
+
+    String scenarioPath() {
+        return scenarioPath;
+    }
+
+    String addr() {
+        return addr;
+    }
+
     public static void main(String[] args) {
         if (args.length > 0 && "run".equals(args[0])) {
             int exitCode = new CommandLine(new ArcogineCommand()).execute(args);

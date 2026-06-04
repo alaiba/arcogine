@@ -36,6 +36,10 @@ public class HeadlessHandler implements EventHandler {
         this.demand = demand;
     }
 
+    public double currentPrice() {
+        return pricing.currentPrice();
+    }
+
     public static HeadlessHandler fromConfig(ScenarioConfig config) {
         MachineStore machines = new MachineStore();
         for (EquipmentConfig eq : config.equipment()) {

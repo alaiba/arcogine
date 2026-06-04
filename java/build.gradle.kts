@@ -30,7 +30,11 @@ subprojects {
 
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
-        options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror"))
+        // Apply strict linting to our own sources (main/test/jmh), but not to
+        // JMH's machine-generated benchmark classes, whose warnings we can't fix.
+        if (name != "jmhCompileGeneratedClasses") {
+            options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror"))
+        }
     }
 
     tasks.test {

@@ -70,9 +70,9 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 `make java-coverage` — runs `test jacocoTestReport jacocoTestCoverageVerification`. Each module declares a `jacocoTestCoverageVerification` gate (a `LINE` minimum, set a few points below measured actual) wired into `check`, so removing a module's tests fails the build instead of passing vacuously. CI uploads the per-module `jacocoTestReport.xml` to Codecov.
 
-### 8. Benchmarks (follow-up)
+### 8. Benchmarks (JMH)
 
-The Rust Criterion suites (scheduler throughput, scenario runtime) are **not yet ported**. The intended target is JMH (`me.champeau.jmh` plugin + `src/jmh/java` in `sim-core`); tracked as a follow-up.
+`make java-bench` — runs the JMH microbenchmarks in `sim-core` (`./gradlew :sim-core:jmh`), ported from the Rust Criterion suites: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario runtime (run a 1000-tick scenario, and load+validate). Sources live in `java/sim-core/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). Note: ASM is pinned to a Java 25-aware version so the JMH bytecode generator can read the toolchain's class files, and JMH's machine-generated classes are exempt from `-Werror`.
 
 ### 9. Java dependency audit (follow-up)
 

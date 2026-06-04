@@ -76,15 +76,11 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 ### 9. Java dependency audit (CycloneDX SBOM + Trivy)
 
-`make java-audit` — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `java/build/reports/cyclonedx/bom.json`, ~179 components) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. This catches transitive dependencies at the source level, complementing `trivy-scan-api`, which scans the built image. (`trivy fs` is not used: it does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without Trivy's separate Java DB.)
+`make java-audit` — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `java/build/reports/cyclonedx/bom.json`, ~179 components) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`), run as part of `ci-security`, and complements `trivy-scan-api` (which scans the built image). (`trivy fs` is not used: it does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without Trivy's separate Java DB.)
 
-**Currently report-only** (does not fail the build) and run as part of `ci-security`. The scan surfaces real, fixable findings in three scopes:
+Shipped-runtime CVEs in `tomcat-embed-core` (3 CRITICAL + 3 HIGH) were remediated by overriding the Spring-managed version — `extra["tomcat.version"] = "11.0.22"` in `sim-api`/`sim-cli`.
 
-- **Shipped runtime** — `tomcat-embed-core` (3 CRITICAL + 3 HIGH at time of writing). These affect the deployed app; fix by overriding the Spring-managed version, e.g. `extra["tomcat.version"] = "11.0.22"` in `sim-api`/`sim-cli`.
-- **Test-only** — `netty-codec-*` (7 HIGH), pulled by `spring-boot-starter-webflux` (the `WebTestClient` reactive client); not in `arcogine.jar`.
-- **Build tooling** — `plexus-utils` (1 HIGH); not shipped.
-
-**Promotion to a blocking gate:** remediate the shipped Tomcat CVEs (version override), scope the SBOM to `runtimeClasspath` (drops the test/build-scope noise) or add justified `.trivyignore` entries, then switch the target to `trivy sbom ... --exit-code 1`.
+A `.trivyignore` at the repo root suppresses **only non-shipped** findings, each justified inline: `netty-codec-*` (test-only — pulled by `spring-boot-starter-webflux`, the `WebTestClient` reactive client) and `plexus-utils` (build tooling). Shipped-runtime CVEs are never suppressed and will fail the gate.
 
 (OWASP dependency-check was considered but requires an NVD API key and a large database download; Trivy reuses the vulnerability DB already present from the image scans.)
 

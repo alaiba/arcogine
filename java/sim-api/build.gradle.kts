@@ -5,6 +5,10 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
+// Override the Spring Boot-managed Tomcat version to patch shipped CVEs
+// (CVE-2026-41293/43512/43515 CRITICAL + 41284/42498/43513 HIGH).
+extra["tomcat.version"] = "11.0.22"
+
 dependencies {
     implementation(project(":sim-types"))
     implementation(project(":sim-core"))

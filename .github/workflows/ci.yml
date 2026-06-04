@@ -128,7 +128,10 @@ jobs:
           restore-keys: ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        # ubuntu-latest runners have Chromium system dependencies pre-installed;
+        # --with-deps triggers a large apt install on every run (not cached)
+        # and was causing multi-minute hangs even after the browser cache hit.
+        run: npx playwright install chromium
         working-directory: ui
 
       - name: Run Playwright tests

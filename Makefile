@@ -5,7 +5,7 @@ GRADLE = cd java && ./gradlew --no-daemon
 .PHONY: help list clean \
 	java-compile java-test java-coverage java-lint java-bootjar java-bench \
 	frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build frontend-audit \
-	playwright docker-build docker-smoke trivy-scan-api trivy-scan-ui gitleaks \
+	playwright docker-build docker-smoke trivy-scan-api trivy-scan-ui gitleaks java-audit \
 	ci-java ci-frontend ci-playwright ci-docker ci-security \
 	quality quality-full
 
@@ -89,6 +89,10 @@ trivy-scan-ui: ## Scan UI Docker image with Trivy
 gitleaks: ## Scan repo for secrets with Gitleaks
 	gitleaks detect --source . --config .gitleaks.toml --verbose
 
+java-audit: ## Scan Java dependencies for CVEs (CycloneDX SBOM + Trivy; report-only — see docs/TESTING.md)
+	$(GRADLE) cyclonedxBom
+	trivy sbom --severity CRITICAL,HIGH --ignore-unfixed java/build/reports/cyclonedx/bom.json
+
 # ---------------------------------------------------------------------------
 # Composite targets — CI-oriented groupings
 # ---------------------------------------------------------------------------
@@ -98,7 +102,7 @@ ci-java: java-compile java-lint java-test java-coverage ## All Java quality gate
 ci-frontend: frontend-lint frontend-typecheck frontend-coverage frontend-build frontend-audit ## All frontend quality gates
 ci-playwright: playwright ## Playwright E2E (bootstrap handled by CI workflow)
 ci-docker: docker-build docker-smoke ## Docker build + smoke test
-ci-security: frontend-audit trivy-scan-api trivy-scan-ui gitleaks ## All security scans
+ci-security: java-audit frontend-audit trivy-scan-api trivy-scan-ui gitleaks ## All security scans
 
 # ---------------------------------------------------------------------------
 # Developer entrypoints

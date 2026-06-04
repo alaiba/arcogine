@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import tools.jackson.databind.JsonNode;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +19,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Ported from crates/sim-api/tests/api_smoke.rs and the inline SSE tests in
@@ -359,8 +362,6 @@ class ApiSmokeTest {
     }
 
     @Test
-    @Disabled("SSE: WebTestClient.exchange() blocks on the open stream and times out; "
-            + "needs bounded event consumption. Tracked as a sim-api SSE-test follow-up.")
     void sseEndpointReturnsEventStream() {
         longClient().get()
                 .uri("/api/events/stream")
@@ -568,23 +569,32 @@ class ApiSmokeTest {
     // --- §3.9 SSE connection limit ---
 
     @Test
-    @Disabled("SSE: WebTestClient.exchange() blocks on the open stream and times out; "
-            + "needs bounded event consumption. Tracked as a sim-api SSE-test follow-up.")
     void sseConnectionLimitReturns503() {
         WebTestClient sseClient = longClient();
-        for (int i = 0; i < 64; i++) {
+        // Hold 64 connections open by subscribing to each event stream and not
+        // disposing until the assertion is done — each open connection holds a
+        // semaphore permit, so the 65th must be rejected with 503.
+        List<Disposable> open = new ArrayList<>();
+        try {
+            for (int i = 0; i < 64; i++) {
+                Flux<String> body = sseClient.get()
+                        .uri("/api/events/stream")
+                        .exchange()
+                        .expectStatus()
+                        .isOk()
+                        .returnResult(String.class)
+                        .getResponseBody();
+                open.add(body.subscribe());
+            }
+
             sseClient.get()
                     .uri("/api/events/stream")
                     .exchange()
                     .expectStatus()
-                    .isOk();
+                    .isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        } finally {
+            open.forEach(Disposable::dispose);
         }
-
-        sseClient.get()
-                .uri("/api/events/stream")
-                .exchange()
-                .expectStatus()
-                .isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     // --- §3.11 Economy/price input validation ---
@@ -606,8 +616,6 @@ class ApiSmokeTest {
     // --- Inline sse.rs: SSE content-type ---
 
     @Test
-    @Disabled("SSE: WebTestClient.exchange() blocks on the open stream and times out; "
-            + "needs bounded event consumption. Tracked as a sim-api SSE-test follow-up.")
     void eventStreamReturnsSseContentType() {
         longClient().get()
                 .uri("/api/events/stream")

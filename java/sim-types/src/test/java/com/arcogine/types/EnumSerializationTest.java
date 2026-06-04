@@ -2,13 +2,14 @@ package com.arcogine.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Ported from crates/sim-types/src/lib.rs machine_state/job_status serde roundtrip tests. */
 class EnumSerializationTest {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = JsonMapper.builder().build();
 
     @Test
     void machineStateRoundtrip() throws Exception {

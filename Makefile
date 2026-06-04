@@ -89,9 +89,9 @@ trivy-scan-ui: ## Scan UI Docker image with Trivy
 gitleaks: ## Scan repo for secrets with Gitleaks
 	gitleaks detect --source . --config .gitleaks.toml --verbose
 
-java-audit: ## Scan Java dependencies for CVEs (CycloneDX SBOM + Trivy; report-only — see docs/TESTING.md)
+java-audit: ## Scan Java dependencies for CVEs (CycloneDX SBOM + Trivy; blocking)
 	$(GRADLE) cyclonedxBom
-	trivy sbom --severity CRITICAL,HIGH --ignore-unfixed java/build/reports/cyclonedx/bom.json
+	trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 java/build/reports/cyclonedx/bom.json
 
 # ---------------------------------------------------------------------------
 # Composite targets — CI-oriented groupings

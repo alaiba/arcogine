@@ -79,6 +79,7 @@ jobs:
   playwright:
     name: Playwright E2E
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
 
@@ -100,6 +101,12 @@ jobs:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('ui/package-lock.json') }}
 
       - name: Install UI dependencies
         run: npm ci

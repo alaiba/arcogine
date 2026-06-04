@@ -112,14 +112,12 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
           restore-keys: ${{ runner.os }}-playwright-
-          save-always: true
 
       - name: Install Playwright browsers
-        # ubuntu-latest runners have Chromium system dependencies pre-installed.
-        # The CDN download occasionally stalls; retry once on failure so the cache
-        # can be populated without burning the full 20-minute job budget.
-        run: |
-          npx playwright install chromium || npx playwright install chromium
+        # ubuntu-latest runners have Chromium system dependencies pre-installed;
+        # --with-deps triggers a large apt install on every run (not cached)
+        # and was causing multi-minute hangs even after the browser cache hit.
+        run: npx playwright install chromium
         working-directory: ui
 
       - name: Run Playwright tests

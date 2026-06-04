@@ -1,0 +1,30 @@
+# Normalize all text files to LF in the repository, regardless of the
+# contributor's platform or core.autocrlf setting. This eliminates the
+# "LF will be replaced by CRLF" churn and keeps shell scripts runnable
+# on Linux/CI when checked out on Windows.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Scripts and wrappers that must be LF to execute on Linux/CI
+*.sh    text eol=lf
+gradlew text eol=lf
+
+# Binary files: never normalize
+*.jar   binary
+*.class binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.gz    binary
+*.tar   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary

@@ -1,6 +1,7 @@
 plugins {
     java
     jacoco
+    id("org.cyclonedx.bom") version "3.2.4"
 }
 
 allprojects {

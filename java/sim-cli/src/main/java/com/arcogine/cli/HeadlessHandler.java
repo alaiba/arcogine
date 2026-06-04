@@ -18,7 +18,6 @@ import com.arcogine.types.scenario.EconomyConfig;
 import com.arcogine.types.scenario.EquipmentConfig;
 import com.arcogine.types.scenario.MaterialConfig;
 import com.arcogine.types.scenario.OperationsDefinitionConfig;
-import com.arcogine.types.scenario.ProcessSegmentConfig;
 import com.arcogine.types.scenario.ScenarioConfig;
 import java.util.ArrayList;
 import java.util.List;

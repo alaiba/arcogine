@@ -102,6 +102,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
 
+      - name: Install UI dependencies
+        run: npm ci
+        working-directory: ui
+
       - name: Cache Playwright browsers
         uses: actions/cache@v5
         with:
@@ -109,13 +113,10 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
           restore-keys: ${{ runner.os }}-playwright-
 
-      - name: Install UI dependencies
-        run: npm ci
-        working-directory: ui
-
       - name: Install Playwright browsers
         # ubuntu-latest runners have Chromium system dependencies pre-installed;
-        # --with-deps triggers a large apt install on every run and causes hangs.
+        # --with-deps triggers a large apt install on every run (not cached)
+        # and was causing multi-minute hangs even after the browser cache hit.
         run: npx playwright install chromium
         working-directory: ui
 

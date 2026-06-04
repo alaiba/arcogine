@@ -12,7 +12,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'cd .. && cargo run -p sim-cli -- serve --addr 0.0.0.0:3000',
+      command: 'java -jar ../java/sim-cli/build/libs/arcogine.jar serve --addr 0.0.0.0:3000',
       port: 3000,
       timeout: 120_000,
       reuseExistingServer: true,

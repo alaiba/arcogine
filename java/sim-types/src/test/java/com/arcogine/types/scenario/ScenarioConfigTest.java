@@ -6,17 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import tools.jackson.dataformat.toml.TomlMapper;
 
 /** Ported from crates/sim-types/src/scenario.rs default_* and toml tests. */
 class ScenarioConfigTest {
 
     private static TomlMapper tomlMapper() {
-        TomlMapper mapper = TomlMapper.builder().build();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        return mapper;
+        return TomlMapper.builder()
+                .changeDefaultPropertyInclusion(
+                        incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .build();
     }
 
     // --- default value tests (Rust default_*_value) ---

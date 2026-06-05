@@ -41,11 +41,7 @@ git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension. The container automatically:
-
-- builds the Rust workspace,
-- installs UI dependencies with `npm ci`,
-- copies `.env.example` to `.env` when missing.
+Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension. The container automatically installs Java 25, Gradle, and UI dependencies.
 
 After the container is ready, start the UI and API in two terminals:
 
@@ -53,15 +49,15 @@ After the container is ready, start the UI and API in two terminals:
 # Terminal 1: UI dev server
 cd ui && npm run dev
 
-# Terminal 2: API server
-cargo run --bin arcogine -- serve --addr 0.0.0.0:3000
+# Terminal 2: Build and run API server
+cd java && ./gradlew :sim-cli:bootJar --no-daemon
+java -jar sim-cli/build/libs/arcogine.jar serve --addr 0.0.0.0:3000
 ```
 
 Then open **http://127.0.0.1:5173**.
 
 ### Other setup paths
 
-- **Native (host Rust + Node):** See [CONTRIBUTING.md](CONTRIBUTING.md#2-native-host-rust--host-node)
 - **Docker Compose:** `cp .env.example .env && docker compose up --build`
 
 ## Your first session
@@ -88,8 +84,19 @@ You can go from clone to meaningful results in under five minutes:
 Run a scenario without the UI:
 
 ```bash
-cargo run --bin arcogine -- run --headless --scenario examples/basic_scenario.toml
+java -jar java/sim-cli/build/libs/arcogine.jar run examples/basic_scenario.toml
 ```
+
+## Technology stack
+
+| Layer | Technology |
+|-------|-----------|
+| Simulation engine | Java 25 (records, sealed interfaces, pattern matching) |
+| HTTP API | Spring Boot 3.4 + Spring MVC |
+| CLI | Picocli |
+| Build | Gradle 8 (Kotlin DSL) |
+| Frontend | React 19 + TypeScript + Vite |
+| Container | Eclipse Temurin 25 JRE |
 
 ## Documentation
 
@@ -97,14 +104,14 @@ cargo run --bin arcogine -- run --headless --scenario examples/basic_scenario.to
 |----------|----------------|
 | [Concepts](docs/concepts.md) | How the simulation works, KPIs, agents, scenarios |
 | [API Reference](docs/api.md) | Every HTTP endpoint with curl examples |
-| [Architecture](docs/architecture.md) | Design philosophy, crate structure, determinism contract |
+| [Architecture](docs/architecture.md) | Design philosophy, module structure, determinism contract |
 | [Full docs index](docs/README.md) | Everything else: testing, standards, vision, security |
 
 ## Quality gates
 
 ```bash
 make             # show all available targets
-make quality     # fast gates: formatting, linting, tests, coverage, build
+make quality     # fast gates: compile, tests, coverage, lint, build
 make quality-full  # everything: quality + Playwright E2E + Docker smoke + security scans
 ```
 

@@ -1,10 +1,12 @@
 .DEFAULT_GOAL := help
 
+GRADLE = cd java && ./gradlew --no-daemon
+
 .PHONY: help list clean \
-	fmt clippy rust-test rust-audit rust-coverage \
+	java-compile java-test java-coverage java-lint java-bootjar java-bench \
 	frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build frontend-audit \
-	playwright docker-build docker-smoke trivy-scan-api trivy-scan-ui gitleaks \
-	ci-rust ci-frontend ci-playwright ci-docker ci-security \
+	playwright docker-build docker-smoke trivy-scan-api trivy-scan-ui gitleaks java-audit \
+	ci-java ci-frontend ci-playwright ci-docker ci-security \
 	quality quality-full
 
 ##@ Discovery
@@ -19,27 +21,27 @@ help: ## Show available targets grouped by category
 list: help ## Alias for help
 
 # ---------------------------------------------------------------------------
-# Leaf targets — <domain>-<action>
+# Leaf targets
 # ---------------------------------------------------------------------------
 
-##@ Rust
-fmt: ## Check Rust formatting
-	cargo fmt --check
+##@ Java
+java-compile: ## Compile all Java modules
+	$(GRADLE) compileJava compileTestJava
 
-clippy: ## Run Clippy lints (warnings are errors)
-	cargo clippy -- -D warnings
+java-test: ## Run all Java tests
+	$(GRADLE) test
 
-rust-test: ## Run Rust workspace tests
-	cargo test
+java-coverage: ## Run Java tests with Jacoco coverage (enforces per-module coverage gates)
+	$(GRADLE) test jacocoTestReport jacocoTestCoverageVerification
 
-rust-audit: ## Audit Rust dependencies (installs cargo-audit if needed)
-	@command -v cargo-audit >/dev/null 2>&1 || cargo install cargo-audit
-	cargo audit
+java-lint: ## Static analysis of Java sources (Checkstyle)
+	$(GRADLE) checkstyleMain checkstyleTest
 
-rust-coverage: ## Generate Rust coverage (XML + HTML in target/coverage)
-	mkdir -p target/coverage
-	cargo llvm-cov --workspace --cobertura --output-path target/coverage/cobertura.xml
-	cargo llvm-cov --workspace --html --output-dir target/coverage
+java-bootjar: ## Build the fat JAR (arcogine.jar)
+	$(GRADLE) :sim-cli:bootJar
+
+java-bench: ## Run JMH microbenchmarks (sim-core; on-demand, not a CI gate)
+	$(GRADLE) :sim-core:jmh
 
 ##@ Frontend
 frontend-lint: ## Lint frontend code (ESLint)
@@ -87,26 +89,30 @@ trivy-scan-ui: ## Scan UI Docker image with Trivy
 gitleaks: ## Scan repo for secrets with Gitleaks
 	gitleaks detect --source . --config .gitleaks.toml --verbose
 
+java-audit: ## Scan Java dependencies for CVEs (CycloneDX SBOM + Trivy; blocking)
+	$(GRADLE) cyclonedxBom
+	trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 java/build/reports/cyclonedx/bom.json
+
 # ---------------------------------------------------------------------------
 # Composite targets — CI-oriented groupings
 # ---------------------------------------------------------------------------
 
 ##@ CI composites
-ci-rust: fmt clippy rust-test rust-coverage ## All Rust quality gates
+ci-java: java-compile java-lint java-test java-coverage ## All Java quality gates
 ci-frontend: frontend-lint frontend-typecheck frontend-coverage frontend-build frontend-audit ## All frontend quality gates
 ci-playwright: playwright ## Playwright E2E (bootstrap handled by CI workflow)
 ci-docker: docker-build docker-smoke ## Docker build + smoke test
-ci-security: rust-audit frontend-audit trivy-scan-api trivy-scan-ui gitleaks ## All security scans
+ci-security: java-audit frontend-audit trivy-scan-api trivy-scan-ui gitleaks ## All security scans
 
 # ---------------------------------------------------------------------------
 # Developer entrypoints
 # ---------------------------------------------------------------------------
 
 ##@ Quality gates
-quality: fmt clippy rust-test rust-coverage frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build ## Fast quality gates (no Docker/Playwright/security)
+quality: java-compile java-lint java-test java-coverage frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build ## Fast quality gates (no Docker/Playwright/security)
 quality-full: quality playwright docker-build docker-smoke ci-security ## Full quality gates (everything)
 
 ##@ Utility
 clean: ## Remove build artifacts and coverage reports
-	cargo clean
-	rm -rf ui/coverage target/coverage
+	$(GRADLE) clean
+	rm -rf ui/coverage

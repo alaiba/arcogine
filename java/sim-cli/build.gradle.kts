@@ -1,0 +1,53 @@
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+
+plugins {
+    id("org.springframework.boot") version "4.0.6"
+    id("io.spring.dependency-management") version "1.1.7"
+    application
+}
+
+// Override the Spring Boot-managed Tomcat version to patch shipped CVEs
+// (CVE-2026-41293/43512/43515 CRITICAL + 41284/42498/43513 HIGH).
+extra["tomcat.version"] = "11.0.22"
+
+dependencies {
+    implementation(project(":sim-types"))
+    implementation(project(":sim-core"))
+    implementation(project(":sim-factory"))
+    implementation(project(":sim-economy"))
+    implementation(project(":sim-agents"))
+    implementation(project(":sim-api"))
+
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("info.picocli:picocli:4.7.6")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+application {
+    mainClass = "com.arcogine.cli.ArcogineCommand"
+}
+
+tasks.bootJar {
+    archiveFileName = "arcogine.jar"
+    mainClass = "com.arcogine.cli.ArcogineCommand"
+}
+
+// Coverage gate: fails the build if sim-cli line coverage drops below the
+// floor (e.g. if its ported tests are deleted). Mirrors the gate in
+// sim-types. See docs/java-rewrite-plan.md.
+tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn(tasks.named("test"))
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                minimum = "0.60".toBigDecimal()
+            }
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn(tasks.named("jacocoTestCoverageVerification"))
+}

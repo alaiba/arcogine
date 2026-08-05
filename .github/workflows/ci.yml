@@ -34,7 +34,7 @@ jobs:
 
       - name: Upload Java coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: java/sim-*/build/reports/jacoco/test/jacocoTestReport.xml
           flags: java
@@ -62,7 +62,7 @@ jobs:
 
       - name: Upload frontend coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ui/coverage/coverage-final.json
           flags: frontend

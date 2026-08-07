@@ -20,6 +20,11 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("info.picocli:picocli:4.7.6")
+    // io.spring.dependency-management only lets an explicit version win over
+    // its BOM when declared in this project; a version pinned in sim-core
+    // (a transitive project dependency) is silently overridden by the BOM's
+    // managed version otherwise, so it must be repeated here.
+    implementation("tools.jackson.core:jackson-databind:3.1.4")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

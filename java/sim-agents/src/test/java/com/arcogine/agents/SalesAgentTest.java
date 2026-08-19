@@ -86,7 +86,7 @@ class SalesAgentTest {
 
         agent.handleEvent(event, scheduler);
 
-        assertEquals(1L, agent.interventions);
+        assertEquals(1L, agent.interventions());
         assertFalse(scheduler.isEmpty(), "should have scheduled PriceChange + AgentDecision");
 
         Event ev1 = scheduler.nextEvent().orElseThrow();
@@ -109,7 +109,7 @@ class SalesAgentTest {
         Event event = scheduler.nextEvent().orElseThrow();
 
         agent.handleEvent(event, scheduler);
-        assertEquals(0L, agent.interventions);
+        assertEquals(0L, agent.interventions());
         assertTrue(scheduler.isEmpty());
     }
 
@@ -129,7 +129,7 @@ class SalesAgentTest {
             }
         }
 
-        assertEquals(3L, agent.interventions);
+        assertEquals(3L, agent.interventions());
     }
 
     @Test

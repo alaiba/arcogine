@@ -71,8 +71,8 @@ class FactoryHandlerTest {
         FactoryHandler h = oneMachineOneProduct();
         assertEquals(1, h.machines.iter().count());
         assertEquals(1, h.productIds.size());
-        assertEquals(0.0, h.completedSalesValue);
-        assertEquals(0, h.completedSales);
+        assertEquals(0.0, h.completedSalesValue());
+        assertEquals(0, h.completedSales());
     }
 
     @Test
@@ -106,14 +106,25 @@ class FactoryHandlerTest {
         Event taskEnd = sched.nextEvent().orElseThrow();
         h.handleEvent(taskEnd, sched);
 
-        assertEquals(1, h.completedSales);
+        assertEquals(1, h.completedSales());
         assertTrue(h.avgLeadTime() > 0.0);
     }
 
     @Test
     void throughputRateDivision() {
         FactoryHandler h = oneMachineOneProduct();
-        h.completedSales = 10;
+        Scheduler sched = new Scheduler();
+
+        for (int i = 0; i < 10; i++) {
+            Event order = orderEvent(sched.currentTime().ticks(), 1);
+            sched.schedule(order);
+            sched.nextEvent();
+            h.handleEvent(order, sched);
+            h.handleEvent(sched.nextEvent().orElseThrow(), sched); // TaskEnd
+            sched.nextEvent(); // drain OrderCompleted
+        }
+
+        assertEquals(10, h.completedSales());
         assertEquals(0.1, h.throughput(100));
     }
 
@@ -169,7 +180,7 @@ class FactoryHandlerTest {
 
         Event taskEnd = sched.nextEvent().orElseThrow();
         h.handleEvent(taskEnd, sched);
-        assertEquals(1, h.completedSales);
+        assertEquals(1, h.completedSales());
         assertEquals(0, h.machines.get(new MachineId(1)).queueDepth());
     }
 
@@ -185,11 +196,11 @@ class FactoryHandlerTest {
 
         Event te1 = sched.nextEvent().orElseThrow();
         h.handleEvent(te1, sched);
-        assertEquals(0, h.completedSales, "should not be complete after step 1");
+        assertEquals(0, h.completedSales(), "should not be complete after step 1");
 
         Event te2 = sched.nextEvent().orElseThrow();
         h.handleEvent(te2, sched);
-        assertEquals(1, h.completedSales, "should be complete after step 2");
+        assertEquals(1, h.completedSales(), "should be complete after step 2");
 
         Event next = sched.nextEvent().orElseThrow();
         assertTrue(
@@ -279,7 +290,7 @@ class FactoryHandlerTest {
         Event taskEnd = sched.nextEvent().orElseThrow();
         h.handleEvent(taskEnd, sched);
 
-        assertEquals(30.0, h.completedSalesValue);
+        assertEquals(30.0, h.completedSalesValue());
     }
 
     @Test
@@ -304,7 +315,7 @@ class FactoryHandlerTest {
         assertEquals(10.0, jobA.unitPrice());
         assertEquals(
                 30.0, jobA.orderValue(), "completed order's value must not track later offer price changes");
-        assertEquals(30.0, h.completedSalesValue);
+        assertEquals(30.0, h.completedSalesValue());
     }
 
     @Test
@@ -318,7 +329,7 @@ class FactoryHandlerTest {
         sched.nextEvent();
         h.handleEvent(orderA, sched);
         h.handleEvent(sched.nextEvent().orElseThrow(), sched);
-        assertEquals(20.0, h.completedSalesValue);
+        assertEquals(20.0, h.completedSalesValue());
         Event completedA = sched.nextEvent().orElseThrow();
         assertTrue(
                 completedA.payload() instanceof EventPayload.OrderCompleted,
@@ -331,6 +342,6 @@ class FactoryHandlerTest {
         h.handleEvent(orderB, sched);
         h.handleEvent(sched.nextEvent().orElseThrow(), sched);
 
-        assertEquals(20.0 + 100.0, h.completedSalesValue, "each order contributes its own creation-time price");
+        assertEquals(20.0 + 100.0, h.completedSalesValue(), "each order contributes its own creation-time price");
     }
 }

@@ -144,8 +144,8 @@ class AgentIntegrationTest {
         IntegratedHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), true);
         SimResult result = SimRunner.runScenario(configOf(OVERLOAD_TOML), handler);
 
-        assertTrue(handler.agent().interventions > 0,
-                "agent should have intervened at least once, got " + handler.agent().interventions);
+        assertTrue(handler.agent().interventions() > 0,
+                "agent should have intervened at least once, got " + handler.agent().interventions());
 
         long agentDecisions = result.eventLog().filterByType(EventType.AgentDecision).count();
         assertTrue(agentDecisions > 0, "should have at least one AgentDecision event logged");
@@ -175,7 +175,7 @@ class AgentIntegrationTest {
                 .toList();
 
         assertTrue(orders.size() > 1, "need multiple orders to meaningfully exercise this invariant");
-        assertTrue(handler.agent().interventions > 0,
+        assertTrue(handler.agent().interventions() > 0,
                 "agent must actually change price during the run for this test to be meaningful");
 
         // JobStore assigns ids 1..N in the same order OrderCreation events are dispatched (now
@@ -197,7 +197,7 @@ class AgentIntegrationTest {
         IntegratedHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), false);
         SimResult result = SimRunner.runScenario(configOf(OVERLOAD_TOML), handler);
 
-        assertEquals(0, handler.agent().interventions, "disabled agent should not intervene");
+        assertEquals(0, handler.agent().interventions(), "disabled agent should not intervene");
 
         long agentDecisions = result.eventLog().filterByType(EventType.AgentDecision).count();
         assertEquals(0, agentDecisions, "no AgentDecision events when disabled");

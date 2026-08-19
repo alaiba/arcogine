@@ -10,8 +10,8 @@ import java.util.Optional;
 public class SalesAgent implements EventHandler {
 
     public final SalesAgentConfig config;
-    public AgentObservation observation;
-    public long interventions;
+    private AgentObservation observation;
+    private long interventions;
 
     public SalesAgent(SalesAgentConfig config) {
         this.config = config;
@@ -25,6 +25,14 @@ public class SalesAgent implements EventHandler {
 
     public void observe(AgentObservation obs) {
         this.observation = obs;
+    }
+
+    public AgentObservation observation() {
+        return observation;
+    }
+
+    public long interventions() {
+        return interventions;
     }
 
     public Optional<Double> decide() {

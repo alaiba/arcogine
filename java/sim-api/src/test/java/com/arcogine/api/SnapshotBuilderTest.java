@@ -98,7 +98,7 @@ class SnapshotBuilderTest {
         assertNotEquals(
                 999.0 * 3, job.revenue(), "snapshot must not use the offer price in effect after order creation");
         assertEquals(
-                handler.factory().completedSalesValue,
+                handler.factory().completedSalesValue(),
                 job.revenue(),
                 "snapshot revenue must agree with the accumulated completedSalesValue for the single completed job");
     }

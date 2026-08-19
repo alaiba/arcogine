@@ -14,8 +14,8 @@ class SalesAgentUnitTest {
         SalesAgent agent = SalesAgent.withDefaultConfig();
         AgentObservation obs = new AgentObservation(42, 5.5, 100.0, 10L, 8.0, 0.5);
         agent.observe(obs);
-        assertEquals(42, agent.observation.backlog());
-        assertEquals(8.0, agent.observation.currentPrice());
+        assertEquals(42, agent.observation().backlog());
+        assertEquals(8.0, agent.observation().currentPrice());
     }
 
     @Test

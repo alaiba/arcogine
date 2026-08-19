@@ -25,8 +25,8 @@ public class FactoryHandler implements EventHandler {
     public final JobStore jobs;
     public final RoutingStore routings;
     public final List<ProductId> productIds;
-    public double completedSalesValue;
-    public long completedSales;
+    private double completedSalesValue;
+    private long completedSales;
 
     public FactoryHandler(MachineStore machines, RoutingStore routings, List<ProductId> productIds) {
         this.machines = machines;
@@ -49,6 +49,14 @@ public class FactoryHandler implements EventHandler {
                     handleMachineAvailability(mac.machineId(), mac.online(), scheduler, event.time());
             default -> {}
         }
+    }
+
+    public double completedSalesValue() {
+        return completedSalesValue;
+    }
+
+    public long completedSales() {
+        return completedSales;
     }
 
     public long backlog() {

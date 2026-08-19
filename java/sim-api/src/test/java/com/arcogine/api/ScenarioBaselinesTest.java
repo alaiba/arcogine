@@ -177,8 +177,8 @@ class ScenarioBaselinesTest {
     void basicScenarioRunsToCompletion() throws SimError {
         RunOutcome run = run(BASIC_SCENARIO);
         assertTrue(run.result().eventsProcessed() > 0, "no events processed");
-        assertTrue(run.handler().factory().completedSales > 0, "no sales completed");
-        assertTrue(run.handler().factory().completedSalesValue > 0.0, "no revenue generated");
+        assertTrue(run.handler().factory().completedSales() > 0, "no sales completed");
+        assertTrue(run.handler().factory().completedSalesValue() > 0.0, "no revenue generated");
     }
 
     @Test
@@ -215,8 +215,8 @@ class ScenarioBaselinesTest {
     @Test
     void revenueGeneratedFromCompletedJobs() throws SimError {
         RunOutcome run = run(BASIC_SCENARIO);
-        assertTrue(run.handler().factory().completedSalesValue > 0.0);
-        assertTrue(run.handler().factory().completedSales > 0);
+        assertTrue(run.handler().factory().completedSalesValue() > 0.0);
+        assertTrue(run.handler().factory().completedSales() > 0);
     }
 
     @Test
@@ -225,10 +225,10 @@ class ScenarioBaselinesTest {
         RunOutcome second = run(BASIC_SCENARIO);
 
         assertEquals(
-                first.handler().factory().completedSalesValue,
-                second.handler().factory().completedSalesValue,
+                first.handler().factory().completedSalesValue(),
+                second.handler().factory().completedSalesValue(),
                 "same scenario + seed must produce identical completedSalesValue");
-        assertEquals(first.handler().factory().completedSales, second.handler().factory().completedSales);
+        assertEquals(first.handler().factory().completedSales(), second.handler().factory().completedSales());
         assertEquals(first.result().eventsProcessed(), second.result().eventsProcessed());
 
         long ordersA = first.result().eventLog().filterByType(EventType.OrderCreation).count();

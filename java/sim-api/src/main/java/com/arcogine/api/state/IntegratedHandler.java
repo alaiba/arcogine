@@ -1,6 +1,5 @@
 package com.arcogine.api.state;
 
-import com.arcogine.agents.AgentObservation;
 import com.arcogine.agents.SalesAgent;
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
@@ -41,14 +40,8 @@ public class IntegratedHandler implements EventHandler {
 
         if (event.payload() instanceof EventPayload.AgentEvaluation) {
             if (agentEnabled) {
-                long elapsed = Math.max(1, scheduler.currentTime().ticks());
-                agent.observe(new AgentObservation(
-                        (int) factory.backlog(),
-                        factory.avgLeadTime(),
-                        factory.completedSalesValue,
-                        factory.completedSales,
-                        pricing.currentPrice(),
-                        factory.throughput(elapsed)));
+                agent.observe(AgentObservationProjector.project(
+                        factory, pricing, scheduler.currentTime().ticks()));
                 agent.handleEvent(event, scheduler);
             }
         }

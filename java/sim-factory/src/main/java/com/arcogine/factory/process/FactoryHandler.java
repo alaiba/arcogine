@@ -146,7 +146,9 @@ public class FactoryHandler implements EventHandler {
         job.completeStep(currentTime);
 
         if (job.isComplete()) {
-            totalRevenue += currentPrice * job.quantity();
+            double jobRevenue = currentPrice * job.quantity();
+            job.recordRevenue(jobRevenue);
+            totalRevenue += jobRevenue;
             completedSales += 1;
         } else {
             int nextStepIndex = job.currentStep();

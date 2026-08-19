@@ -227,4 +227,25 @@ class FactoryHandlerTest {
 
         assertEquals(30.0, h.totalRevenue);
     }
+
+    @Test
+    void jobRevenueIsFixedAtCompletionPriceAndUnaffectedByLaterPriceChanges() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+        h.setCurrentPrice(10.0);
+
+        Event order = orderEvent(1, 3);
+        sched.schedule(order);
+        sched.nextEvent();
+        h.handleEvent(order, sched);
+
+        Event taskEnd = sched.nextEvent().orElseThrow();
+        h.handleEvent(taskEnd, sched);
+
+        var job = h.jobs.allJobs().findFirst().orElseThrow();
+        assertEquals(30.0, job.revenue());
+
+        h.setCurrentPrice(999.0);
+        assertEquals(30.0, job.revenue(), "completed job's revenue must not track later price changes");
+    }
 }

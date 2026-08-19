@@ -11,7 +11,6 @@ import com.arcogine.core.kpi.OrderCount;
 import com.arcogine.core.kpi.ThroughputRate;
 import com.arcogine.core.kpi.TotalSimulatedTime;
 import com.arcogine.core.log.EventLog;
-import com.arcogine.types.JobStatus;
 import com.arcogine.types.SimTime;
 import com.arcogine.types.scenario.OperationsDefinitionConfig;
 import com.arcogine.types.scenario.ProcessSegmentConfig;
@@ -70,9 +69,7 @@ public final class SnapshotBuilder {
 
         List<JobInfo> jobs = handler.factory().jobs.allJobs()
                 .map(j -> {
-                    Double revenue = j.status() == JobStatus.Completed
-                            ? handler.pricing().currentPrice() * j.quantity()
-                            : null;
+                    Double revenue = j.revenue();
                     Long completedAt = j.completedAt() != null ? j.completedAt().ticks() : null;
                     return new JobInfo(
                             j.id().value(),

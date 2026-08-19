@@ -19,6 +19,7 @@ public class Job {
     private MachineId currentMachine;
     private final SimTime createdAt;
     private SimTime completedAt;
+    private Double revenue;
 
     public Job(JobId id, ProductId productId, long quantity, int totalSteps, SimTime createdAt) {
         this.id = id;
@@ -30,6 +31,7 @@ public class Job {
         this.currentMachine = null;
         this.createdAt = createdAt;
         this.completedAt = null;
+        this.revenue = null;
     }
 
     public void start(MachineId machineId) {
@@ -55,6 +57,14 @@ public class Job {
         } else {
             status = JobStatus.Queued;
         }
+    }
+
+    public void recordRevenue(double revenue) {
+        if (status != JobStatus.Completed) {
+            throw new SimError.InvalidStateTransition(
+                    "cannot record revenue for job " + id + " in state " + status);
+        }
+        this.revenue = revenue;
     }
 
     public Optional<Long> leadTime() {
@@ -102,5 +112,10 @@ public class Job {
 
     public SimTime completedAt() {
         return completedAt;
+    }
+
+    /** Revenue recognized for this job, fixed at the price in effect when it completed. */
+    public Double revenue() {
+        return revenue;
     }
 }

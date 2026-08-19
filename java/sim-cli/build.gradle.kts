@@ -9,6 +9,9 @@ plugins {
 // Override the Spring Boot-managed Tomcat version to patch shipped CVEs
 // (CVE-2026-41293/43512/43515 CRITICAL + 41284/42498/43513 HIGH).
 extra["tomcat.version"] = "11.0.22"
+// Override the Spring Boot-managed Spring Framework version to patch
+// CVE-2026-41842/41845/41850 (HIGH).
+extra["spring-framework.version"] = "7.0.8"
 
 dependencies {
     implementation(project(":sim-types"))
@@ -20,6 +23,12 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("info.picocli:picocli:4.7.6")
+    // io.spring.dependency-management only lets an explicit version win over
+    // its BOM when declared in this project; a version pinned in sim-core
+    // (a transitive project dependency) is silently overridden by the BOM's
+    // managed version otherwise, so it must be repeated here.
+    implementation("tools.jackson.core:jackson-databind:3.1.4")
+    implementation("tools.jackson.core:jackson-core:3.1.4")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

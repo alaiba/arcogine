@@ -62,23 +62,23 @@ When an order arrives, it creates a **job**. The job moves through the routing s
 
 ### Price and demand
 
-The price you set is the **market price** — the offer currently on the table for new customers. The economy model connects it to order volume:
+The price you set is your **offer price** — the ask currently on the table for new customers, not an external market signal (Arcogine doesn't model the broader market, just the firm's own pricing decisions). The economy model connects it to order volume:
 
 - **Base demand** — how many orders per evaluation period at the reference price
 - **Price elasticity** — how strongly demand responds to price changes (higher elasticity = more sensitive)
 - **Lead time sensitivity** — demand also drops when lead times grow (customers don't want to wait)
 
-Lowering the market price increases demand. But more orders means more factory load, which increases lead times, which suppresses demand. Finding the equilibrium is the challenge.
+Lowering the offer price increases demand. But more orders means more factory load, which increases lead times, which suppresses demand. Finding the equilibrium is the challenge.
 
-Changing the market price only affects **future** orders — evaluated the next time demand is sampled. It never changes the terms of an order that already exists (see below).
+Changing the offer price only affects **future** orders — evaluated the next time demand is sampled. It never changes the terms of an order that already exists (see below).
 
 ### Completed sales value
 
-Each order locks in its unit price **at the moment it's created**, using whatever the market price was at that instant. That price travels with the order for its entire lifecycle and never changes, even if the market price moves while the order is still in production. An order created at $10 is still worth `quantity x $10` when it finishes, no matter what the market price is by then.
+Each order locks in its unit price **at the moment it's created**, using whatever the offer price was at that instant. That price travels with the order for its entire lifecycle and never changes, even if the offer price moves while the order is still in production. An order created at $10 is still worth `quantity x $10` when it finishes, no matter what the offer price is by then.
 
-The KPI dashboard's completed-sales figure (`completedSalesValue` in the API) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the market price happens to be right now.
+The KPI dashboard's completed-sales figure (`completedSalesValue` in the API) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the offer price happens to be right now.
 
-This is a deliberate product decision, not sophistication in accounting: "Completed sales value" is an operational number (how much value has this factory shipped), not a claim about recognized revenue. Arcogine is establishing a small, separate Finance domain (a minimal double-entry ledger) as the eventual owner of financial concepts like cash and a formally-recorded sales balance — under its initial, deliberately simple settlement policy those numbers happen to match the operational figure above, but they answer a different question ("what has been financially recorded" vs. "what value has completed production") and aren't guaranteed to stay equal as Finance's policy evolves. See [`docs/architecture.md`](architecture.md#pricing-orders-and-money-marketprice-vs-orderprice) for the full MarketPrice/OrderPrice model, the "Commercial, Operational, and Financial Truth" section for the Finance domain, and [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for the source-level backlog.
+This is a deliberate product decision, not sophistication in accounting: "Completed sales value" is an operational number (how much value has this factory shipped), not a claim about recognized revenue. Arcogine is establishing a small, separate Finance domain (a minimal double-entry ledger) as the eventual owner of financial concepts like cash and a formally-recorded sales balance — under its initial, deliberately simple settlement policy those numbers happen to match the operational figure above, but they answer a different question ("what has been financially recorded" vs. "what value has completed production") and aren't guaranteed to stay equal as Finance's policy evolves. See [`docs/architecture.md`](architecture.md#pricing-orders-and-money-offerprice-vs-orderprice) for the full OfferPrice/OrderPrice model, the "Commercial, Operational, and Financial Truth" section for the Finance domain, and [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for the source-level backlog.
 
 ## KPIs (Key Performance Indicators)
 

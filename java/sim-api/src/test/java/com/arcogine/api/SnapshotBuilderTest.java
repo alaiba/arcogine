@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Regression coverage for the pricing/order semantics resolved in
  * devel/architecture-assessment-events-state-observations.md: an order's price is
- * captured once, at OrderCreation, and is immutable for the life of the order. A
- * market price change while an order is in production must not affect that order's
+ * captured once, at OrderCreation, and is immutable for the life of the order. An
+ * offer price change while an order is in production must not affect that order's
  * value -- including as reported in an API snapshot.
  */
 class SnapshotBuilderTest {
@@ -65,19 +65,19 @@ class SnapshotBuilderTest {
             """;
 
     @Test
-    void completedJobRevenueInSnapshotMatchesOrderCreationPriceNotLaterMarketPrice() {
+    void completedJobRevenueInSnapshotMatchesOrderCreationPriceNotLaterOfferPrice() {
         ScenarioConfig config = ScenarioLoader.loadScenario(SCENARIO);
         IntegratedHandler handler = HandlerFactory.buildFromConfig(config);
         Scheduler scheduler = new Scheduler();
 
-        // Order created while the market price is 10; this locks in the order's own price.
+        // Order created while the offer price is 10; this locks in the order's own price.
         Event order = Event.of(
                 new SimTime(0), new EventPayload.OrderCreation(new ProductId(1), 3, 10.0));
         scheduler.schedule(order);
         scheduler.nextEvent();
         handler.handleEvent(order, scheduler);
 
-        // Market price changes while the order is still in production (TaskEnd not yet due).
+        // Offer price changes while the order is still in production (TaskEnd not yet due).
         Event priceChange = Event.of(new SimTime(0), new EventPayload.PriceChange(999.0));
         scheduler.schedule(priceChange);
         scheduler.nextEvent();
@@ -96,7 +96,7 @@ class SnapshotBuilderTest {
 
         assertEquals(30.0, job.revenue(), "snapshot must report the price agreed at order creation");
         assertNotEquals(
-                999.0 * 3, job.revenue(), "snapshot must not use the market price in effect after order creation");
+                999.0 * 3, job.revenue(), "snapshot must not use the offer price in effect after order creation");
         assertEquals(
                 handler.factory().completedSalesValue,
                 job.revenue(),

@@ -239,7 +239,7 @@ class FactoryHandlerTest {
         FactoryHandler h = oneMachineOneProduct();
         Scheduler sched = new Scheduler();
 
-        // Order A is created while the market price is $10.
+        // Order A is created while the offer price is $10.
         Event orderA = orderEvent(1, 3, 10.0);
         sched.schedule(orderA);
         sched.nextEvent();
@@ -249,13 +249,13 @@ class FactoryHandlerTest {
         assertEquals(10.0, jobA.unitPrice());
         assertEquals(30.0, jobA.orderValue());
 
-        // The market price changes to $999 before job A completes. Job A's own price must not move.
+        // The offer price changes to $999 before job A completes. Job A's own price must not move.
         Event taskEndA = sched.nextEvent().orElseThrow();
         h.handleEvent(taskEndA, sched);
 
         assertEquals(10.0, jobA.unitPrice());
         assertEquals(
-                30.0, jobA.orderValue(), "completed order's value must not track later market price changes");
+                30.0, jobA.orderValue(), "completed order's value must not track later offer price changes");
         assertEquals(30.0, h.completedSalesValue);
     }
 
@@ -272,7 +272,7 @@ class FactoryHandlerTest {
         h.handleEvent(sched.nextEvent().orElseThrow(), sched);
         assertEquals(20.0, h.completedSalesValue);
 
-        // Market price rises to $50 before order B is created.
+        // Offer price rises to $50 before order B is created.
         Event orderB = orderEvent(sched.currentTime().ticks(), 2, 50.0);
         sched.schedule(orderB);
         sched.nextEvent();

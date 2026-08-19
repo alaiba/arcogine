@@ -54,9 +54,16 @@ class FactoryHandlerTest {
         return new FactoryHandler(machines, routings, List.of(new ProductId(1)));
     }
 
+    private static final double DEFAULT_UNIT_PRICE = 10.0;
+
     private static Event orderEvent(long time, long quantity) {
+        return orderEvent(time, quantity, DEFAULT_UNIT_PRICE);
+    }
+
+    private static Event orderEvent(long time, long quantity, double unitPrice) {
         return Event.of(
-                new SimTime(time), new EventPayload.OrderCreation(new ProductId(1), quantity));
+                new SimTime(time),
+                new EventPayload.OrderCreation(new ProductId(1), quantity, unitPrice));
     }
 
     @Test
@@ -64,7 +71,7 @@ class FactoryHandlerTest {
         FactoryHandler h = oneMachineOneProduct();
         assertEquals(1, h.machines.iter().count());
         assertEquals(1, h.productIds.size());
-        assertEquals(0.0, h.totalRevenue);
+        assertEquals(0.0, h.completedSalesValue);
         assertEquals(0, h.completedSales);
     }
 
@@ -212,12 +219,11 @@ class FactoryHandlerTest {
     }
 
     @Test
-    void revenueTrackedWithCurrentPrice() {
+    void completedSalesValueUsesOrderCreationPrice() {
         FactoryHandler h = oneMachineOneProduct();
         Scheduler sched = new Scheduler();
-        h.setCurrentPrice(10.0);
 
-        Event order = orderEvent(1, 3);
+        Event order = orderEvent(1, 3, 10.0);
         sched.schedule(order);
         sched.nextEvent();
         h.handleEvent(order, sched);
@@ -225,27 +231,54 @@ class FactoryHandlerTest {
         Event taskEnd = sched.nextEvent().orElseThrow();
         h.handleEvent(taskEnd, sched);
 
-        assertEquals(30.0, h.totalRevenue);
+        assertEquals(30.0, h.completedSalesValue);
     }
 
     @Test
-    void jobRevenueIsFixedAtCompletionPriceAndUnaffectedByLaterPriceChanges() {
+    void jobOrderValueIsFixedAtOrderCreationPriceRegardlessOfLaterOrders() {
         FactoryHandler h = oneMachineOneProduct();
         Scheduler sched = new Scheduler();
-        h.setCurrentPrice(10.0);
 
-        Event order = orderEvent(1, 3);
-        sched.schedule(order);
+        // Order A is created while the market price is $10.
+        Event orderA = orderEvent(1, 3, 10.0);
+        sched.schedule(orderA);
         sched.nextEvent();
-        h.handleEvent(order, sched);
+        h.handleEvent(orderA, sched);
 
-        Event taskEnd = sched.nextEvent().orElseThrow();
-        h.handleEvent(taskEnd, sched);
+        var jobA = h.jobs.allJobs().findFirst().orElseThrow();
+        assertEquals(10.0, jobA.unitPrice());
+        assertEquals(30.0, jobA.orderValue());
 
-        var job = h.jobs.allJobs().findFirst().orElseThrow();
-        assertEquals(30.0, job.revenue());
+        // The market price changes to $999 before job A completes. Job A's own price must not move.
+        Event taskEndA = sched.nextEvent().orElseThrow();
+        h.handleEvent(taskEndA, sched);
 
-        h.setCurrentPrice(999.0);
-        assertEquals(30.0, job.revenue(), "completed job's revenue must not track later price changes");
+        assertEquals(10.0, jobA.unitPrice());
+        assertEquals(
+                30.0, jobA.orderValue(), "completed order's value must not track later market price changes");
+        assertEquals(30.0, h.completedSalesValue);
+    }
+
+    @Test
+    void completedSalesValueSumsEachOrdersOwnCreationTimePrice() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+
+        // Order A created at $10, completes before order B is even created.
+        Event orderA = orderEvent(1, 2, 10.0);
+        sched.schedule(orderA);
+        sched.nextEvent();
+        h.handleEvent(orderA, sched);
+        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+        assertEquals(20.0, h.completedSalesValue);
+
+        // Market price rises to $50 before order B is created.
+        Event orderB = orderEvent(sched.currentTime().ticks(), 2, 50.0);
+        sched.schedule(orderB);
+        sched.nextEvent();
+        h.handleEvent(orderB, sched);
+        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+
+        assertEquals(20.0 + 100.0, h.completedSalesValue, "each order contributes its own creation-time price");
     }
 }

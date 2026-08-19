@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 class EventLogTest {
 
     private static Event makeOrder(long t) {
-        return Event.of(new SimTime(t), new EventPayload.OrderCreation(new ProductId(1), 1));
+        return Event.of(new SimTime(t), new EventPayload.OrderCreation(new ProductId(1), 1, 10.0));
     }
 
     @Test

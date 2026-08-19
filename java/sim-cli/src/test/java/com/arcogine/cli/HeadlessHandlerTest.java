@@ -94,7 +94,7 @@ class HeadlessHandlerTest {
         SimResult result = runHeadless(config, handler);
         assertTrue(result.eventsProcessed() > 0);
         assertTrue(handler.factory.completedSales > 0);
-        assertTrue(handler.factory.totalRevenue > 0.0);
+        assertTrue(handler.factory.completedSalesValue > 0.0);
     }
 
     @Test

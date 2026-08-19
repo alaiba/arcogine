@@ -22,7 +22,7 @@ import org.openjdk.jmh.infra.Blackhole;
 public class SchedulerBenchmark {
 
     static Event orderEvent(long tick) {
-        return Event.of(SimTime.of(tick), new EventPayload.OrderCreation(new ProductId(1), 1));
+        return Event.of(SimTime.of(tick), new EventPayload.OrderCreation(new ProductId(1), 1, 10.0));
     }
 
     /** A scheduler freshly populated with 1000 events before each invocation. */

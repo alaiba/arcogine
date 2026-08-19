@@ -39,7 +39,6 @@ public class IntegratedHandler implements EventHandler {
         demand.setAvgLeadTime(factory.avgLeadTime());
         demand.handleEvent(event, scheduler);
 
-        factory.setCurrentPrice(pricing.currentPrice());
         factory.handleEvent(event, scheduler);
 
         if (event.payload() instanceof EventPayload.AgentEvaluation) {
@@ -48,7 +47,7 @@ public class IntegratedHandler implements EventHandler {
                 agent.observe(new AgentObservation(
                         (int) factory.backlog(),
                         factory.avgLeadTime(),
-                        factory.totalRevenue,
+                        factory.completedSalesValue,
                         factory.completedSales,
                         pricing.currentPrice(),
                         factory.throughput(elapsed)));

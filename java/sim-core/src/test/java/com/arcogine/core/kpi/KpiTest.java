@@ -20,10 +20,10 @@ class KpiTest {
 
     private static EventLog populatedLog() {
         EventLog log = new EventLog();
-        log.append(Event.of(new SimTime(1), new EventPayload.OrderCreation(new ProductId(1), 5)));
+        log.append(Event.of(new SimTime(1), new EventPayload.OrderCreation(new ProductId(1), 5, 10.0)));
         log.append(Event.of(new SimTime(2), new EventPayload.TaskStart(new JobId(1), new MachineId(1), 0)));
         log.append(Event.of(new SimTime(5), new EventPayload.TaskEnd(new JobId(1), new MachineId(1), 0)));
-        log.append(Event.of(new SimTime(6), new EventPayload.OrderCreation(new ProductId(2), 3)));
+        log.append(Event.of(new SimTime(6), new EventPayload.OrderCreation(new ProductId(2), 3, 10.0)));
         return log;
     }
 

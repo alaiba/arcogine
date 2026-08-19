@@ -106,7 +106,6 @@ public class HeadlessHandler implements EventHandler {
         demand.setPrice(pricing.currentPrice());
         demand.setAvgLeadTime(factory.avgLeadTime());
         demand.handleEvent(event, scheduler);
-        factory.setCurrentPrice(pricing.currentPrice());
         factory.handleEvent(event, scheduler);
     }
 }

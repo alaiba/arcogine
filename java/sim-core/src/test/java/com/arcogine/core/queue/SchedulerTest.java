@@ -34,7 +34,7 @@ class SchedulerTest {
 
         scheduler.schedule(Event.of(
                 new SimTime(5),
-                new EventPayload.OrderCreation(new ProductId(1), 1)));
+                new EventPayload.OrderCreation(new ProductId(1), 1, 10.0)));
         scheduler.schedule(Event.of(new SimTime(10), EventPayload.DemandEvaluation.INSTANCE));
 
         Event e1 = scheduler.nextEvent().orElseThrow();

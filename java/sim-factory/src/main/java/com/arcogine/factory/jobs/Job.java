@@ -19,9 +19,15 @@ public class Job {
     private MachineId currentMachine;
     private final SimTime createdAt;
     private SimTime completedAt;
-    private Double revenue;
+    private final double unitPrice;
 
-    public Job(JobId id, ProductId productId, long quantity, int totalSteps, SimTime createdAt) {
+    public Job(
+            JobId id,
+            ProductId productId,
+            long quantity,
+            int totalSteps,
+            SimTime createdAt,
+            double unitPrice) {
         this.id = id;
         this.productId = productId;
         this.quantity = quantity;
@@ -31,7 +37,7 @@ public class Job {
         this.currentMachine = null;
         this.createdAt = createdAt;
         this.completedAt = null;
-        this.revenue = null;
+        this.unitPrice = unitPrice;
     }
 
     public void start(MachineId machineId) {
@@ -57,14 +63,6 @@ public class Job {
         } else {
             status = JobStatus.Queued;
         }
-    }
-
-    public void recordRevenue(double revenue) {
-        if (status != JobStatus.Completed) {
-            throw new SimError.InvalidStateTransition(
-                    "cannot record revenue for job " + id + " in state " + status);
-        }
-        this.revenue = revenue;
     }
 
     public Optional<Long> leadTime() {
@@ -114,8 +112,13 @@ public class Job {
         return completedAt;
     }
 
-    /** Revenue recognized for this job, fixed at the price in effect when it completed. */
-    public Double revenue() {
-        return revenue;
+    /** The price agreed when this order was created. Immutable for the life of the order. */
+    public double unitPrice() {
+        return unitPrice;
+    }
+
+    /** OrderValue: quantity x the order's own agreed unit price. */
+    public double orderValue() {
+        return quantity * unitPrice;
     }
 }

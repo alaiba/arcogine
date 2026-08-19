@@ -110,7 +110,6 @@ class AgentIntegrationTest {
             demand.setAvgLeadTime(factory.avgLeadTime());
             demand.handleEvent(event, scheduler);
 
-            factory.setCurrentPrice(pricing.currentPrice());
             factory.handleEvent(event, scheduler);
 
             if (event.payload() instanceof EventPayload.AgentEvaluation && agentEnabled) {
@@ -118,7 +117,7 @@ class AgentIntegrationTest {
                 agent.observe(new AgentObservation(
                         (int) factory.backlog(),
                         factory.avgLeadTime(),
-                        factory.totalRevenue,
+                        factory.completedSalesValue,
                         factory.completedSales,
                         pricing.currentPrice(),
                         factory.throughput(elapsed)));

@@ -81,7 +81,7 @@ public class ArcogineCommand implements Callable<Integer>, CommandLineRunner {
             System.out.println("  Final time: " + result.finalTime().ticks() + " ticks");
             System.out.println("  Events processed: " + result.eventsProcessed());
             System.out.println("  Completed sales: " + handler.factory.completedSales);
-            System.out.println("  Total revenue: " + handler.factory.totalRevenue);
+            System.out.println("  Completed sales value: " + handler.factory.completedSalesValue);
             return 0;
         } catch (SimError e) {
             System.err.println("Error: " + e.getMessage());

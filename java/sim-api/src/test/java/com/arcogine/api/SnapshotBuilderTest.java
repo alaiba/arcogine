@@ -21,10 +21,11 @@ import com.arcogine.types.scenario.ScenarioConfig;
 import org.junit.jupiter.api.Test;
 
 /**
- * Regression coverage for the revenue-consistency bug identified in
- * devel/architecture-assessment-events-state-observations.md: a completed job's
- * revenue must be fixed at the price in effect when it completed, not recomputed
- * from whatever price is live when a snapshot happens to be built.
+ * Regression coverage for the pricing/order semantics resolved in
+ * devel/architecture-assessment-events-state-observations.md: an order's price is
+ * captured once, at OrderCreation, and is immutable for the life of the order. A
+ * market price change while an order is in production must not affect that order's
+ * value -- including as reported in an API snapshot.
  */
 class SnapshotBuilderTest {
 
@@ -64,24 +65,26 @@ class SnapshotBuilderTest {
             """;
 
     @Test
-    void completedJobRevenueInSnapshotMatchesPriceAtCompletionNotLivePrice() {
+    void completedJobRevenueInSnapshotMatchesOrderCreationPriceNotLaterMarketPrice() {
         ScenarioConfig config = ScenarioLoader.loadScenario(SCENARIO);
         IntegratedHandler handler = HandlerFactory.buildFromConfig(config);
         Scheduler scheduler = new Scheduler();
 
-        Event order = Event.of(new SimTime(0), new EventPayload.OrderCreation(new ProductId(1), 3));
+        // Order created while the market price is 10; this locks in the order's own price.
+        Event order = Event.of(
+                new SimTime(0), new EventPayload.OrderCreation(new ProductId(1), 3, 10.0));
         scheduler.schedule(order);
         scheduler.nextEvent();
         handler.handleEvent(order, scheduler);
 
-        Event taskEnd = scheduler.nextEvent().orElseThrow();
-        handler.handleEvent(taskEnd, scheduler);
-
-        // Price changes after the job has already completed.
-        Event priceChange = Event.of(taskEnd.time(), new EventPayload.PriceChange(999.0));
+        // Market price changes while the order is still in production (TaskEnd not yet due).
+        Event priceChange = Event.of(new SimTime(0), new EventPayload.PriceChange(999.0));
         scheduler.schedule(priceChange);
         scheduler.nextEvent();
         handler.handleEvent(priceChange, scheduler);
+
+        Event taskEnd = scheduler.nextEvent().orElseThrow();
+        handler.handleEvent(taskEnd, scheduler);
 
         SimSnapshot snapshot = SnapshotBuilder.buildSnapshot(
                 handler, new EventLog(), SimRunState.Running, scheduler.currentTime(), 3, config, null);
@@ -91,11 +94,12 @@ class SnapshotBuilderTest {
                 .findFirst()
                 .orElseThrow();
 
-        assertEquals(30.0, job.revenue(), "snapshot must report the price actually applied at completion");
-        assertNotEquals(999.0 * 3, job.revenue(), "snapshot must not recompute revenue from the live price");
+        assertEquals(30.0, job.revenue(), "snapshot must report the price agreed at order creation");
+        assertNotEquals(
+                999.0 * 3, job.revenue(), "snapshot must not use the market price in effect after order creation");
         assertEquals(
-                handler.factory().totalRevenue,
+                handler.factory().completedSalesValue,
                 job.revenue(),
-                "snapshot revenue must agree with the accumulated totalRevenue for the single completed job");
+                "snapshot revenue must agree with the accumulated completedSalesValue for the single completed job");
     }
 }

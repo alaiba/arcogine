@@ -17,12 +17,13 @@ class EventTest {
     void eventNewSetsTimeAndPayload() {
         Event e = Event.of(
                 new SimTime(42),
-                new EventPayload.OrderCreation(new ProductId(1), 5));
+                new EventPayload.OrderCreation(new ProductId(1), 5, 10.0));
         assertEquals(new SimTime(42), e.time());
         EventPayload.OrderCreation payload =
                 assertInstanceOf(EventPayload.OrderCreation.class, e.payload());
         assertEquals(new ProductId(1), payload.productId());
         assertEquals(5L, payload.quantity());
+        assertEquals(10.0, payload.unitPrice());
     }
 
     @Test
@@ -30,7 +31,7 @@ class EventTest {
         record Case(EventPayload payload, EventType expectedType) {}
 
         List<Case> cases = List.of(
-                new Case(new EventPayload.OrderCreation(new ProductId(1), 1), EventType.OrderCreation),
+                new Case(new EventPayload.OrderCreation(new ProductId(1), 1, 10.0), EventType.OrderCreation),
                 new Case(new EventPayload.TaskStart(new JobId(1), new MachineId(1), 0), EventType.TaskStart),
                 new Case(new EventPayload.TaskEnd(new JobId(1), new MachineId(1), 0), EventType.TaskEnd),
                 new Case(new EventPayload.MachineAvailabilityChange(new MachineId(1), true),

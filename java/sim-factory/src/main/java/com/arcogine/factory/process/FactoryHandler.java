@@ -25,35 +25,30 @@ public class FactoryHandler implements EventHandler {
     public final JobStore jobs;
     public final RoutingStore routings;
     public final List<ProductId> productIds;
-    public double totalRevenue;
+    public double completedSalesValue;
     public long completedSales;
-    private double currentPrice;
 
     public FactoryHandler(MachineStore machines, RoutingStore routings, List<ProductId> productIds) {
         this.machines = machines;
         this.jobs = new JobStore();
         this.routings = routings;
         this.productIds = List.copyOf(productIds);
-        this.totalRevenue = 0.0;
+        this.completedSalesValue = 0.0;
         this.completedSales = 0;
-        this.currentPrice = 0.0;
     }
 
     @Override
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
         switch (event.payload()) {
             case EventPayload.OrderCreation oc ->
-                    handleOrderCreation(oc.productId(), oc.quantity(), scheduler, event.time());
+                    handleOrderCreation(
+                            oc.productId(), oc.quantity(), oc.unitPrice(), scheduler, event.time());
             case EventPayload.TaskEnd te ->
                     handleTaskEnd(te.jobId(), te.machineId(), te.stepIndex(), scheduler, event.time());
             case EventPayload.MachineAvailabilityChange mac ->
                     handleMachineAvailability(mac.machineId(), mac.online(), scheduler, event.time());
             default -> {}
         }
-    }
-
-    public void setCurrentPrice(double price) {
-        this.currentPrice = price;
     }
 
     public long backlog() {
@@ -107,11 +102,15 @@ public class FactoryHandler implements EventHandler {
     }
 
     private void handleOrderCreation(
-            ProductId productId, long quantity, Scheduler scheduler, SimTime currentTime) {
+            ProductId productId,
+            long quantity,
+            double unitPrice,
+            Scheduler scheduler,
+            SimTime currentTime) {
         Routing routing = routings.getRoutingForProduct(productId);
         int totalSteps = routing.stepCount();
 
-        JobId jobId = jobs.createJob(productId, quantity, totalSteps, currentTime);
+        JobId jobId = jobs.createJob(productId, quantity, totalSteps, currentTime, unitPrice);
 
         routing.getStep(0).ifPresent(firstStep -> {
             MachineId machineId = firstStep.machineId();
@@ -146,9 +145,7 @@ public class FactoryHandler implements EventHandler {
         job.completeStep(currentTime);
 
         if (job.isComplete()) {
-            double jobRevenue = currentPrice * job.quantity();
-            job.recordRevenue(jobRevenue);
-            totalRevenue += jobRevenue;
+            completedSalesValue += job.orderValue();
             completedSales += 1;
         } else {
             int nextStepIndex = job.currentStep();

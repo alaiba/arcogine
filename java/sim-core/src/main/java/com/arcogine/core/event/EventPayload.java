@@ -14,7 +14,12 @@ public sealed interface EventPayload permits
         EventPayload.DemandEvaluation,
         EventPayload.AgentEvaluation {
 
-    record OrderCreation(ProductId productId, long quantity) implements EventPayload {}
+    /**
+     * unitPrice is the MarketPrice in effect at the instant the order was created. It is a
+     * historical transaction fact: once the order exists, this price is immutable for the life
+     * of the order and must not be re-derived from current pricing state later.
+     */
+    record OrderCreation(ProductId productId, long quantity, double unitPrice) implements EventPayload {}
 
     record TaskStart(JobId jobId, MachineId machineId, int stepIndex) implements EventPayload {}
 

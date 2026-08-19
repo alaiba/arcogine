@@ -58,7 +58,8 @@ public class DemandModel implements EventHandler {
             }
             ProductId productId = productIds.get(rng.nextInt(productIds.size()));
             long quantity = rng.nextInt(10) + 1L;
-            scheduler.schedule(Event.of(currentTime, new EventPayload.OrderCreation(productId, quantity)));
+            scheduler.schedule(Event.of(
+                    currentTime, new EventPayload.OrderCreation(productId, quantity, currentPrice)));
         }
 
         return orderCount;

@@ -11,6 +11,7 @@ import com.arcogine.core.kpi.OrderCount;
 import com.arcogine.core.kpi.ThroughputRate;
 import com.arcogine.core.kpi.TotalSimulatedTime;
 import com.arcogine.core.log.EventLog;
+import com.arcogine.types.JobStatus;
 import com.arcogine.types.SimTime;
 import com.arcogine.types.scenario.OperationsDefinitionConfig;
 import com.arcogine.types.scenario.ProcessSegmentConfig;
@@ -69,7 +70,7 @@ public final class SnapshotBuilder {
 
         List<JobInfo> jobs = handler.factory().jobs.allJobs()
                 .map(j -> {
-                    Double revenue = j.revenue();
+                    Double revenue = j.status() == JobStatus.Completed ? j.orderValue() : null;
                     Long completedAt = j.completedAt() != null ? j.completedAt().ticks() : null;
                     return new JobInfo(
                             j.id().value(),
@@ -91,7 +92,7 @@ public final class SnapshotBuilder {
                 kpis,
                 new TopologySnapshot(machines, edges),
                 jobs,
-                handler.factory().totalRevenue,
+                handler.factory().completedSalesValue,
                 handler.factory().completedSales,
                 handler.factory().backlog(),
                 handler.pricing().currentPrice(),

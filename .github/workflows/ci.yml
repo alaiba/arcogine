@@ -18,7 +18,7 @@ jobs:
     name: Java checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Java 25
         uses: actions/setup-java@v5
@@ -44,7 +44,7 @@ jobs:
     name: Frontend checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Java 25
         uses: actions/setup-java@v5
@@ -127,7 +127,7 @@ jobs:
     name: Docker compose build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -146,7 +146,7 @@ jobs:
       matrix:
         image: [api, ui]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install Trivy
         run: |
           TRIVY_VERSION=0.69.3
@@ -161,7 +161,7 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Install Gitleaks
@@ -176,6 +176,6 @@ jobs:
     name: Makefile contract check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Verify Make targets resolve
         run: make help && make list && make -n ci-java ci-frontend ci-playwright ci-docker ci-security

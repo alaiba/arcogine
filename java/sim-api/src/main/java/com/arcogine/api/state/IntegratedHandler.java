@@ -35,8 +35,6 @@ public class IntegratedHandler implements EventHandler {
     @Override
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
         pricing.handleEvent(event, scheduler);
-        demand.setPrice(pricing.currentPrice());
-        demand.setAvgLeadTime(factory.avgLeadTime());
         demand.handleEvent(event, scheduler);
 
         factory.handleEvent(event, scheduler);

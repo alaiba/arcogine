@@ -57,6 +57,24 @@ State should:
 - be mutated only by its owning subsystem, in response to an event it handles;
 - never be mutated directly by agents or by unrelated domains.
 
+#### State ownership table
+
+Concrete, source-level version of the rule above — checkable in review, not just implicit:
+
+| Fact | Owning class | Mutated by |
+|---|---|---|
+| `OfferPrice`, price history | `PricingState` | `PriceChange` |
+| Demand state (`avgLeadTime` cache — see caveat below) | `DemandModel` | `PriceChange`, plus an unconditional per-event push from `IntegratedHandler` (transitional, tracked in the backlog) |
+| Machines, machine availability | `MachineStore` (owned by `FactoryHandler`) | `MachineAvailabilityChange` |
+| Jobs, job status, each job's own `OrderPrice`/`OrderValue` | `JobStore` (owned by `FactoryHandler`) | `OrderCreation` (creates), `TaskEnd` (advances/completes) |
+| `CompletedSalesValue`, `completedSales` | `FactoryHandler` | `TaskEnd` (on completion) |
+| `SalesAgent`'s last observation, intervention count | `SalesAgent` | `observe(...)` (called by `IntegratedHandler`), `AgentEvaluation` |
+| `IntegratedHandler.agentEnabled` | `IntegratedHandler` | `SimCommand.ToggleAgent` — **note:** this is the one mutation that bypasses the event system entirely; see the "Model `ToggleAgent` consistently" backlog item |
+| `EventLog` | `EventLog` (owned by `SimThread`) | every dispatched event, appended after `handleEvent` |
+| Published API snapshot | `AtomicReference<SimSnapshot>` (owned by `SimThread`) | `SnapshotBuilder.buildSnapshot(...)`, called after each processed event/batch |
+
+**Caveat, not yet resolved**: `DemandModel.currentPrice` and `avgLeadTime` are still pushed copies from `PricingState`/`FactoryHandler` rather than read on demand — `DemandModel` legitimately needs `OfferPrice` and lead time to compute demand (unlike `FactoryHandler`, which needed neither and had its copy deleted outright), but the *mechanism* (an unconditional push on every event from `IntegratedHandler`) is transitional, not the target design. See [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for the backlog item removing this in favor of an on-demand read.
+
 ### Observations
 
 Observations are immutable, read-only projections of current simulation state, purpose-built for consumers that need information but must not own or mutate it — agents, decision policies, demand models, experiments, reporting/evaluation components. `AgentObservation` is the canonical example.

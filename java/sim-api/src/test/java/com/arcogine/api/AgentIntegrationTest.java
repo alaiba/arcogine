@@ -3,14 +3,11 @@ package com.arcogine.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.arcogine.agents.AgentObservation;
 import com.arcogine.agents.SalesAgent;
 import com.arcogine.agents.SalesAgentConfig;
-import com.arcogine.core.event.Event;
+import com.arcogine.api.state.IntegratedHandler;
 import com.arcogine.core.event.EventPayload;
 import com.arcogine.core.event.EventType;
-import com.arcogine.core.handler.EventHandler;
-import com.arcogine.core.queue.Scheduler;
 import com.arcogine.core.runner.SimResult;
 import com.arcogine.core.runner.SimRunner;
 import com.arcogine.core.scenario.ScenarioLoader;
@@ -39,8 +36,11 @@ import org.junit.jupiter.api.Test;
  * Ported from crates/sim-api/tests/agent_integration.rs. Verifies that the
  * SalesAgent intervenes under an overload scenario and reduces backlog growth
  * versus a fixed-price baseline. Builds the factory/demand/pricing pipeline the
- * same way {@code HandlerFactory} does, but composes a handler with a
- * test-configured agent so the intervention thresholds match the Rust suite.
+ * same way {@code HandlerFactory} does, but with a test-configured agent (whose
+ * intervention thresholds match the Rust suite) instead of the default one
+ * {@code HandlerFactory.buildFromConfig} hardcodes -- so this test constructs the
+ * real {@link IntegratedHandler} directly rather than duplicating its wiring
+ * logic in a local test handler.
  */
 class AgentIntegrationTest {
 
@@ -83,51 +83,7 @@ class AgentIntegrationTest {
             agent_type = "sales"
             """;
 
-    /** Mirrors Rust AgentIntegratedHandler / NoAgentHandler. */
-    private static final class TestHandler implements EventHandler {
-        final FactoryHandler factory;
-        final DemandModel demand;
-        final PricingState pricing;
-        final SalesAgent agent;
-        final boolean agentEnabled;
-
-        TestHandler(
-                FactoryHandler factory,
-                DemandModel demand,
-                PricingState pricing,
-                SalesAgent agent,
-                boolean agentEnabled) {
-            this.factory = factory;
-            this.demand = demand;
-            this.pricing = pricing;
-            this.agent = agent;
-            this.agentEnabled = agentEnabled;
-        }
-
-        @Override
-        public void handleEvent(Event event, Scheduler scheduler) throws SimError {
-            pricing.handleEvent(event, scheduler);
-            demand.setPrice(pricing.currentPrice());
-            demand.setAvgLeadTime(factory.avgLeadTime());
-            demand.handleEvent(event, scheduler);
-
-            factory.handleEvent(event, scheduler);
-
-            if (event.payload() instanceof EventPayload.AgentEvaluation && agentEnabled) {
-                long elapsed = Math.max(1, scheduler.currentTime().ticks());
-                agent.observe(new AgentObservation(
-                        (int) factory.backlog(),
-                        factory.avgLeadTime(),
-                        factory.completedSalesValue,
-                        factory.completedSales,
-                        pricing.currentPrice(),
-                        factory.throughput(elapsed)));
-                agent.handleEvent(event, scheduler);
-            }
-        }
-    }
-
-    private static TestHandler buildHandler(String toml, SalesAgent agent, boolean agentEnabled) {
+    private static IntegratedHandler buildHandler(String toml, SalesAgent agent, boolean agentEnabled) {
         ScenarioConfig config = ScenarioLoader.loadScenario(toml);
 
         MachineStore machines = new MachineStore();
@@ -162,16 +118,17 @@ class AgentIntegrationTest {
         FactoryHandler factory = new FactoryHandler(machines, routings, productIds);
 
         double initialPrice = config.economy().initialPrice();
+        PricingState pricing = new PricingState(initialPrice);
         DemandModel demand = new DemandModel(
                 config.economy().effectiveBaseDemand(),
                 config.economy().effectivePriceElasticity(),
                 config.economy().effectiveLeadTimeSensitivity(),
-                initialPrice,
+                pricing::currentPrice,
+                factory::avgLeadTime,
                 productIds,
                 new Random(config.simulation().rngSeed()));
-        PricingState pricing = new PricingState(initialPrice);
 
-        return new TestHandler(factory, demand, pricing, agent, agentEnabled);
+        return new IntegratedHandler(factory, demand, pricing, agent, agentEnabled);
     }
 
     private static SalesAgent overloadAgent() {
@@ -184,11 +141,11 @@ class AgentIntegrationTest {
 
     @Test
     void agentProducesAtLeastOneIntervention() throws SimError {
-        TestHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), true);
+        IntegratedHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), true);
         SimResult result = SimRunner.runScenario(configOf(OVERLOAD_TOML), handler);
 
-        assertTrue(handler.agent.interventions > 0,
-                "agent should have intervened at least once, got " + handler.agent.interventions);
+        assertTrue(handler.agent().interventions > 0,
+                "agent should have intervened at least once, got " + handler.agent().interventions);
 
         long agentDecisions = result.eventLog().filterByType(EventType.AgentDecision).count();
         assertTrue(agentDecisions > 0, "should have at least one AgentDecision event logged");
@@ -196,13 +153,13 @@ class AgentIntegrationTest {
 
     @Test
     void agentReducesBacklogVsFixedPriceBaseline() throws SimError {
-        TestHandler noAgent = buildHandler(OVERLOAD_TOML, overloadAgent(), false);
+        IntegratedHandler noAgent = buildHandler(OVERLOAD_TOML, overloadAgent(), false);
         SimRunner.runScenario(configOf(OVERLOAD_TOML), noAgent);
-        long backlogNoAgent = noAgent.factory.backlog();
+        long backlogNoAgent = noAgent.factory().backlog();
 
-        TestHandler withAgent = buildHandler(OVERLOAD_TOML, overloadAgent(), true);
+        IntegratedHandler withAgent = buildHandler(OVERLOAD_TOML, overloadAgent(), true);
         SimRunner.runScenario(configOf(OVERLOAD_TOML), withAgent);
-        long backlogAgent = withAgent.factory.backlog();
+        long backlogAgent = withAgent.factory().backlog();
 
         assertTrue(backlogAgent <= backlogNoAgent,
                 "agent should reduce backlog: agent=" + backlogAgent + ", no_agent=" + backlogNoAgent);
@@ -210,7 +167,7 @@ class AgentIntegrationTest {
 
     @Test
     void agentPriceInterventionsNeverAlterAlreadyCreatedOrders() throws SimError {
-        TestHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), true);
+        IntegratedHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), true);
         SimResult result = SimRunner.runScenario(configOf(OVERLOAD_TOML), handler);
 
         List<EventPayload.OrderCreation> orders = result.eventLog().filterByType(EventType.OrderCreation)
@@ -218,7 +175,7 @@ class AgentIntegrationTest {
                 .toList();
 
         assertTrue(orders.size() > 1, "need multiple orders to meaningfully exercise this invariant");
-        assertTrue(handler.agent.interventions > 0,
+        assertTrue(handler.agent().interventions > 0,
                 "agent must actually change price during the run for this test to be meaningful");
 
         // JobStore assigns ids 1..N in the same order OrderCreation events are dispatched (now
@@ -226,7 +183,7 @@ class AgentIntegrationTest {
         // event corresponds to the job with id n.
         for (int i = 0; i < orders.size(); i++) {
             JobId jobId = new JobId(i + 1L);
-            var job = handler.factory.jobs.get(jobId);
+            var job = handler.factory().jobs.get(jobId);
             assertEquals(
                     orders.get(i).unitPrice(),
                     job.unitPrice(),
@@ -237,10 +194,10 @@ class AgentIntegrationTest {
 
     @Test
     void agentDoesNotInterveneWhenDisabled() throws SimError {
-        TestHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), false);
+        IntegratedHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), false);
         SimResult result = SimRunner.runScenario(configOf(OVERLOAD_TOML), handler);
 
-        assertEquals(0, handler.agent.interventions, "disabled agent should not intervene");
+        assertEquals(0, handler.agent().interventions, "disabled agent should not intervene");
 
         long agentDecisions = result.eventLog().filterByType(EventType.AgentDecision).count();
         assertEquals(0, agentDecisions, "no AgentDecision events when disabled");

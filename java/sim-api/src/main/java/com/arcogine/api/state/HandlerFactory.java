@@ -70,14 +70,15 @@ public final class HandlerFactory {
         }
 
         Random rng = new Random(config.simulation().rngSeed());
+        PricingState pricing = new PricingState(initialPrice);
         DemandModel demand = new DemandModel(
                 baseDemand,
                 priceElasticity,
                 leadTimeSensitivity,
-                initialPrice,
+                pricing::currentPrice,
+                factory::avgLeadTime,
                 productIds,
                 rng);
-        PricingState pricing = new PricingState(initialPrice);
 
         boolean agentEnabled = config.agent() != null && config.agent().enabled();
         SalesAgent agent = SalesAgent.withDefaultConfig();

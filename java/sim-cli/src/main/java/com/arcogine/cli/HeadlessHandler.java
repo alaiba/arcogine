@@ -88,14 +88,15 @@ public class HeadlessHandler implements EventHandler {
                 : EconomyConfig.DEFAULT_LEAD_TIME_SENSITIVITY;
 
         Random rng = new Random(config.simulation().rngSeed());
+        PricingState pricing = new PricingState(initialPrice);
         DemandModel demand = new DemandModel(
                 baseDemand,
                 priceElasticity,
                 leadTimeSensitivity,
-                initialPrice,
+                pricing::currentPrice,
+                factory::avgLeadTime,
                 productIds,
                 rng);
-        PricingState pricing = new PricingState(initialPrice);
 
         return new HeadlessHandler(factory, pricing, demand);
     }
@@ -103,8 +104,6 @@ public class HeadlessHandler implements EventHandler {
     @Override
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
         pricing.handleEvent(event, scheduler);
-        demand.setPrice(pricing.currentPrice());
-        demand.setAvgLeadTime(factory.avgLeadTime());
         demand.handleEvent(event, scheduler);
         factory.handleEvent(event, scheduler);
     }

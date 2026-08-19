@@ -128,7 +128,7 @@ future demand                      orderValue = $50
 
 Changing the left side must never mutate the right side. Concretely: a `SalesAgent` observes `MarketPrice`, decides a new `MarketPrice`, and emits `PriceChange` — this affects only future demand evaluations and future orders. It must never reprice an order that already exists, including one still in production. This also closes off an invalid strategy where an agent could lower the market price to generate backlog cheaply, then raise it before those orders complete to inflate their apparent value; existing orders are economically invariant under later market-price changes.
 
-This is a deliberate **product decision, not an accounting model**: `CompletedSalesValue` is an operational KPI (how much value has this factory shipped), not formal revenue recognition. Concepts such as revenue recognition policy, accounts receivable, payment terms, cash receipts, accrued/deferred revenue belong to a future finance domain, if and when one is needed, and should not be implied by current naming.
+This is a deliberate **product decision, not sophistication in accounting**: `CompletedSalesValue` is an operational/commercial KPI (how much value has this factory shipped), computed from completed orders' own agreed prices. It answers "what commercial value has completed production?" — a different question from "what has Finance recorded as sales under the active financial policy?", covered next. Concepts such as configurable revenue-recognition policy, tax, depreciation, or multi-currency remain future scope — but the domain that would own them, Finance, is established now, deliberately minimal. See the next section.
 
 ### What should trigger architectural review
 
@@ -140,16 +140,136 @@ Treat any of the following as a signal to stop and reconsider the design, not ju
 - synchronization setters proliferating between domains (`setX`/`syncX`-style cross-domain pushes);
 - agents or policies reaching directly into mutable subsystem internals instead of going through an observation;
 - adding a subsystem requiring pairwise wiring changes to every existing subsystem;
-- event ordering becoming implicit, or dependent on registration/construction order rather than an explicit, documented contract.
+- event ordering becoming implicit, or dependent on registration/construction order rather than an explicit, documented contract;
+- a monetary accumulator (cash, profit, receivables, or similar) appearing outside Finance;
+- Finance inspecting another domain's mutable state to infer what happened, instead of reacting to an event that domain emitted;
+- an unbalanced journal entry able to enter financial state.
 
 Arcogine's current implementation already exhibits some of these signals — see [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for a source-level review against this philosophy and a staged backlog for closing the gaps.
+
+## Commercial, Operational, and Financial Truth: the Finance Domain
+
+Arcogine distinguishes three kinds of truth that are related by events but are never interchangeable:
+
+```text
+COMMERCIAL TRUTH
+"Order 42 was agreed at $12/unit for 10 units."
+             |
+             v
+OPERATIONAL TRUTH
+"Order 42 completed at t=500."
+             |
+             v
+FINANCIAL TRUTH
+"That completion caused these ledger postings."
+```
+
+- **Commercial truth** — the terms a transaction was agreed under (`OrderPrice`, `OrderValue`, from the "Pricing, orders, and money" section above). Owned by the order itself, immutable once created.
+- **Operational truth** — what physically/operationally happened (a job moved through routing steps, a machine went offline, an order finished production). Owned by `FactoryHandler` and peers. Operational domains **emit facts**; they do not interpret them financially.
+- **Financial truth** — the financial consequence of an operational fact, under the active financial policy. Owned by Finance. Finance **owns the financial interpretation** of facts operational domains emit; it does not infer them by inspecting operational state.
+
+Commercial terms must never be reconstructed from current market state (that's the `MarketPrice`/`OrderPrice` distinction above). Operational completion is not itself revenue — it's a fact that Finance interprets. Financial interpretation must not happen inside Factory.
+
+### Why a Finance domain now, not later
+
+The previous position — "revenue recognition and a finance domain are future concerns" — is refined: **Arcogine establishes a minimal Finance domain now, with a deliberately minimal double-entry ledger**, specifically to give monetary concepts (revenue, cost, cash, receivables) a clear owner *before* they leak into Factory or Economy the way `currentPrice` once leaked into `FactoryHandler`. This is not a decision to build sophisticated accounting — the ledger's initial policy is intentionally the smallest thing that's still correct:
+
+1. Single currency.
+2. Customer settlement is immediate when an order completes (no Accounts Receivable yet).
+3. No Accounts Payable, payment terms, tax, depreciation, or financing.
+4. No inventory accounting.
+5. No GAAP/IFRS revenue-recognition policy.
+
+Under these assumptions, an `OrderCompleted` event with value $120 produces exactly:
+
+```text
+DR Cash     120
+CR Sales    120
+```
+
+The point of establishing Finance now, even this minimally, is that *later* financial sophistication (payment terms, receivables, tax) should change Finance's internal policy, not force Factory or Economy to grow accounting concepts. For example, adding payment terms later changes only the postings Finance makes — `OrderCompleted` still fires the same way, but Finance posts to `AccountsReceivable` instead of `Cash`, and a later `PaymentReceived` event moves it to `Cash`. Factory never needs to change.
+
+### Finance follows the same Events–State–Observations model
+
+Finance is not a special side system — it's another state-owning domain, governed by the same invariant as everything else:
+
+```text
+Events mutate State.
+State produces Observations.
+Observations inform Decisions.
+Decisions produce Events.
+```
+
+```text
+                  EVENTS
+                     |
+       +-------------+-------------+
+       |             |             |
+       v             v             v
+    Economy        Factory       Finance
+     State          State         State
+                                   |
+                                   v
+                                 Ledger
+```
+
+Financial state changes only in response to explicit events — Finance must never periodically inspect `FactoryHandler` and infer what happened. Prefer:
+
+```text
+OrderCompleted -> FinanceHandler -> Ledger
+```
+
+over `FinanceHandler` reaching into `Factory.jobs.completedJobs()` to guess at transactions. This is the same "events carry the facts a downstream domain needs" principle already established for `OrderCreation` carrying `unitPrice` — applied one hop further downstream.
+
+### A first-class `OrderCompleted` event
+
+Today, order completion is inferred from `TaskEnd` — `FactoryHandler.handleTaskEnd` checks `job.isComplete()` internally, but nothing else in the system observes "this order is done" as a named fact; `TaskEnd` means "a production step finished," which is not the same claim as "the order fulfilled its operational lifecycle." A Finance domain needs the latter, not the former. The recommended shape: when `FactoryHandler` detects `job.isComplete()`, it schedules a new `OrderCompleted` event (in addition to updating its own state) carrying the minimal immutable facts a downstream consumer needs to interpret the transaction — an order identifier, product, quantity, and unit price. `OrderValue` is deliberately **not** duplicated onto the event since it's a trivial, guaranteed derivation (`quantity x unitPrice`); carrying it too would just be another consistency invariant to maintain for no benefit. Both operational KPI/projection consumers and `FinanceHandler` react to `OrderCompleted`, keeping `FactoryHandler` itself ignorant of what either of them does with the fact.
+
+### A minimal double-entry ledger, not an accounting framework
+
+Prefer a minimal double-entry representation over ad-hoc accumulators (`totalRevenue`, `cash`, `profit` fields scattered across handlers). The core invariant: **for every journal entry, `sum(debit postings) == sum(credit postings)`**, enforced so that an unbalanced entry cannot enter financial state at all. The mechanism should stay small enough to read in one sitting — an `Account`/`Posting`/`JournalEntry` shape with a handful of accounts (`Cash`, `Sales`), not a chart-of-accounts system, plugin architecture, or GAAP/IFRS policy engine.
+
+**Money representation**: because Finance is a real domain now, `double` is not an appropriate representation for ledger amounts — a balance invariant (`debits == credits`) should not rely on floating-point epsilon comparisons. The recommended boundary:
+
+- Economic model calculations (`PricingState`, `DemandModel`) keep using `double` — no reason to destabilize already-tested code for values that were never meant to be exact currency.
+- Commercial transaction creation (`OrderPrice`/`OrderValue`, the `OrderCompleted` event) also keeps `double` for now — changing this would ripple through `Job`, `FactoryHandler`, and their tests for a value that isn't yet entering a balance-checked ledger.
+- The Finance ledger itself (`Posting`/`JournalEntry` amounts) uses `BigDecimal` from the start, converting at the `FinanceHandler` boundary (where an event's `double` orderValue becomes a precise, explicitly-scaled `BigDecimal` posting amount) — this is the one place the balance invariant is actually checked, so it's the one place that needs exactness.
+
+This keeps the conversion boundary in exactly one place instead of threading `BigDecimal` through code that doesn't need it yet.
+
+### Ownership table
+
+| Concept | Owner |
+|---|---|
+| `MarketPrice` | Economy / Pricing (`PricingState`) |
+| Demand state | Economy (`DemandModel`) |
+| `OrderPrice` | Immutable commercial order data (`Job`) |
+| `OrderValue` | Derived commercial fact (`Job.orderValue()`) |
+| Production state (machines, jobs, queues) | Factory (`FactoryHandler`) |
+| Order completion (operational fact) | Factory-owned, expressed as `OrderCompleted` |
+| Backlog / throughput / lead time | Factory, or a KPI/projection layer over it |
+| Ledger | Finance |
+| Cash | Finance |
+| Sales (financial balance) | Finance |
+| Future receivables/payables | Finance |
+
+The critical rule: **operational domains emit facts; Finance owns the financial interpretation of those facts.**
+
+### Agent and observation boundaries stay purpose-specific
+
+Adding Finance must not become an excuse to introduce a universal `WorldState` or `EverythingObservation` exposing all mutable state to every agent. A `SalesAgent` observes `MarketPrice`, backlog, lead time, `CompletedSalesValue` — commercial/operational concerns. A future `FinanceAgent` would observe Finance's own purpose-specific projection (cash, sales balance, receivables) — it would not receive `SalesAgent`'s observation type, and `SalesAgent` would not receive Finance's. Each domain's observation stays scoped to what its own consumers need, per the [Observations](#observations) rules above.
+
+### What this section changes about non-goals
+
+The earlier non-goal "no finance/accounting domain" is refined to: **no sophisticated accounting model** (no GAAP/IFRS compliance, configurable revenue-recognition frameworks, accounts receivable/payable unless a scenario needs them, tax, depreciation, multi-currency, debt/equity financing, inventory accounting, budgeting, forecasting, or fiscal periods). A minimal double-entry ledger with an immediate-settlement policy is not that — it's the intentional current architecture, sized to establish ownership rather than sophistication. See [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for the concrete backlog.
 
 ## Discrete-Event Simulation (DES)
 
 The simulation advances via discrete events rather than fixed time steps:
 
-- **Order creation** — new demand enters the system
+- **Order creation** — new demand enters the system, its unit price locked in at this instant
 - **Task start / end** — production work begins and completes
+- **Order completed** *(planned)* — the operational fact that an order fulfilled its full routing, distinct from a single `TaskEnd`; see "Commercial, Operational, and Financial Truth" above
 - **Machine availability** — machines go online, offline, or change state
 - **Price changes** — pricing adjustments affect future demand
 - **Agent decisions** — external actors submit commands that influence the system
@@ -175,6 +295,10 @@ java/
 ├── sim-factory/    Factory domain: Machine, Job, Routing, FactoryHandler
 ├── sim-economy/    Economic layer: PricingState, DemandModel
 ├── sim-agents/     Agent framework: SalesAgent, AgentObservation
+├── sim-finance/    (planned) Finance domain: FinanceHandler, Ledger, Account,
+│                   Posting, JournalEntry — see "Commercial, Operational, and
+│                   Financial Truth" above. Not yet implemented; see the backlog
+│                   in devel/architecture-assessment-events-state-observations.md.
 ├── sim-api/        Spring Boot HTTP + SSE server: controllers, SimThread,
 │                   IntegratedHandler, SnapshotBuilder, DTOs
 └── sim-cli/        Picocli CLI entry point: serve + headless run modes
@@ -186,6 +310,7 @@ java/
 sim-types ← sim-core ← sim-factory
                       ← sim-economy
                       ← sim-agents
+                      ← sim-finance (planned)
                            ↑
             sim-api ←──────┘ (all of the above)
                 ↑

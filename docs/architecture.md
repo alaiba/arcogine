@@ -23,6 +23,75 @@ The system is built around a **headless simulation core**, not a game engine.
 - Reproducible outcomes for testing, comparison, and analysis
 - Designed for experimentation: the engine runs independently of any UI or network layer
 
+## Core Architecture Philosophy: Events, State, Observations
+
+This is the first-class architectural principle for Arcogine. It is a design heuristic *and* an architectural invariant: new features and refactors should be evaluated against it, and deviations should be a deliberate, documented decision rather than an accident of implementation order.
+
+```text
+Events mutate State.
+State produces Observations.
+Observations inform Decisions.
+Decisions produce Events.
+```
+
+### Events
+
+Events are immutable facts, or scheduled facts, in simulated time — order creation, task completion, machine availability changes, price changes, demand evaluation, agent evaluation, agent decisions.
+
+Events:
+
+- are immutable (Arcogine implements them as Java records, e.g. `Event`, `EventPayload`);
+- carry only the domain-relevant facts needed to apply the transition;
+- participate in deterministic ordering via the `Scheduler`;
+- are the primary — ideally the *only* — mechanism for causing a simulation state transition;
+- remain suitable for inspection, testing, replay, and experiment analysis (`EventLog`, `/api/export/events`).
+
+### State
+
+Each subsystem exclusively owns its mutable domain state. Pricing owns current price and price history (`PricingState`). Factory owns machines, jobs, queues, completion state, and production metrics (`FactoryHandler`). A future inventory subsystem would own stock; finance would own financial state; workforce would own labor state.
+
+State should:
+
+- have exactly one authoritative owner;
+- avoid synchronized duplicate representations of the same fact across subsystems;
+- be mutated only by its owning subsystem, in response to an event it handles;
+- never be mutated directly by agents or by unrelated domains.
+
+### Observations
+
+Observations are immutable, read-only projections of current simulation state, purpose-built for consumers that need information but must not own or mutate it — agents, decision policies, demand models, experiments, reporting/evaluation components. `AgentObservation` is the canonical example.
+
+Observations should:
+
+- be derived from authoritative state, computed on demand rather than cached as a second source of truth;
+- be purpose-specific — expose what the consumer needs, not the internals of the owning subsystem;
+- be immutable;
+- define the capability and visibility boundary for whoever consumes them (an agent can only act on what its observation exposes).
+
+### Decisions
+
+Decisions are an important consequence of this model, even though they are not one of the three top-level concepts:
+
+```text
+Observation -> Decision -> Event
+```
+
+Agents and policies observe, decide, and emit events — they never directly mutate simulation state. `SalesAgent.decide()` is a pure function over an `AgentObservation`; when it decides to act, it schedules `PriceChange`/`AgentDecision` events rather than calling a setter on `PricingState`. This is the pattern all future decision-making code should follow.
+
+### What should trigger architectural review
+
+Treat any of the following as a signal to stop and reconsider the design, not just implement around it:
+
+- one subsystem mutating another subsystem's state;
+- a mutable "observation" (anything handed to an agent/consumer that they could write through);
+- duplicated authoritative state (the same fact represented as separate mutable fields in two subsystems);
+- synchronization setters proliferating between domains (`setX`/`syncX`-style cross-domain pushes);
+- agents or policies reaching directly into mutable subsystem internals instead of going through an observation;
+- adding a subsystem requiring pairwise wiring changes to every existing subsystem;
+- event ordering becoming implicit, or dependent on registration/construction order rather than an explicit, documented contract.
+
+Arcogine's current implementation already exhibits some of these signals — see [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for a source-level review against this philosophy and a staged backlog for closing the gaps.
+
 ## Discrete-Event Simulation (DES)
 
 The simulation advances via discrete events rather than fixed time steps:
@@ -96,7 +165,9 @@ public interface EventHandler {
 }
 ```
 
-Handlers may schedule new events via the `Scheduler` but never reach into other handlers directly. Cross-handler data flows through explicit field synchronization in `IntegratedHandler`.
+Handlers may schedule new events via the `Scheduler` but never reach into other handlers directly. Today, cross-handler data (current price, average lead time) flows through explicit field synchronization in `IntegratedHandler` (`demand.setPrice(...)`, `demand.setAvgLeadTime(...)`, `factory.setCurrentPrice(...)`), and `IntegratedHandler` also assembles `AgentObservation` by reading raw fields off `FactoryHandler` and `PricingState` directly.
+
+This is a **transitional** pattern under the [Events–State–Observations philosophy](#core-architecture-philosophy-events-state-observations): it duplicates "current price" as a mutable copy in three places (`PricingState`, `DemandModel`, `FactoryHandler`) instead of `PricingState` being the sole owner that others read on demand, and it embeds observation-construction logic in the orchestration handler instead of a dedicated projector. It is called out explicitly, rather than presented as the target design, in [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md), which also lays out the staged backlog for closing this gap without introducing a generic event bus or otherwise weakening deterministic, explicit handler ordering.
 
 ## Type System
 

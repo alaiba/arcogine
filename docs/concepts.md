@@ -72,7 +72,9 @@ Lowering the price increases demand. But more orders means more factory load, wh
 
 ### Revenue
 
-Revenue accumulates as completed jobs are sold at the current price. Total revenue = completed sales x price at completion. The KPI dashboard tracks this in real time.
+Revenue accumulates as completed jobs are sold at the price in effect **when the job completes** (price-at-completion), not the price at the time the order was created. Total revenue = completed sales x price at completion. The KPI dashboard tracks this in real time.
+
+If price changes while a job is in progress, that job's contribution to revenue reflects the new price at completion rather than the price the customer originally saw when the order was placed. This is current, tested behavior (`FactoryHandlerTest.revenueTrackedWithCurrentPrice`), not yet a deliberately documented business rule — see the "domain decisions required" section of [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md).
 
 ## KPIs (Key Performance Indicators)
 

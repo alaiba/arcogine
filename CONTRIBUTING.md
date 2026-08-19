@@ -104,6 +104,32 @@ Run `make help` to see all available targets.
 - All public types and functions must have doc-comments.
 - State structs derive `PartialEq`, `Eq`, `Clone`, `Debug`, and `serde::Serialize`.
 
+## Architecture guardrails (Events, State, Observations)
+
+Arcogine follows an Events–State–Observations philosophy (see `docs/architecture.md`):
+
+```text
+Events mutate State.
+State produces Observations.
+Observations inform Decisions.
+Decisions produce Events.
+```
+
+Use these rules during code review, especially when adding a new domain (inventory, procurement, finance, workforce, maintenance, another agent) or touching `IntegratedHandler`:
+
+1. Every mutable piece of domain state must have exactly one authoritative owner.
+2. Cross-domain consumers receive read-only observations or explicit, purpose-specific context — never a reference to another subsystem's mutable state.
+3. Agents observe and emit decisions/events; they never mutate simulation domains directly.
+4. Decisions that affect simulation state become deterministic simulation events, not direct method calls into another handler.
+5. Observation objects are immutable and purpose-specific — don't widen one into a general-purpose state dump.
+6. Avoid synchronized copies of authoritative state (no new `setX`/`syncX` cross-domain pushes without a documented reason).
+7. Handler execution order must stay explicit wherever order affects semantics — don't let it fall out of construction or registration order.
+8. New domains should not require pairwise setter wiring to every existing domain.
+9. Don't introduce an event bus or async dispatch to solve coupling — it must not weaken Arcogine's deterministic, explicitly-ordered execution.
+10. API DTOs and UI snapshots are not automatically valid domain observations; treat `SnapshotBuilder`'s projections and `AgentObservation` as separate concerns with separate capability boundaries.
+
+See `devel/architecture-assessment-events-state-observations.md` for the current-state review and backlog.
+
 ## Testing
 
 Run `make quality` before pushing. That covers:

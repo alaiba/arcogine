@@ -22,6 +22,7 @@ import com.arcogine.factory.process.FactoryHandler;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
+import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
@@ -205,6 +206,33 @@ class AgentIntegrationTest {
 
         assertTrue(backlogAgent <= backlogNoAgent,
                 "agent should reduce backlog: agent=" + backlogAgent + ", no_agent=" + backlogNoAgent);
+    }
+
+    @Test
+    void agentPriceInterventionsNeverAlterAlreadyCreatedOrders() throws SimError {
+        TestHandler handler = buildHandler(OVERLOAD_TOML, overloadAgent(), true);
+        SimResult result = SimRunner.runScenario(configOf(OVERLOAD_TOML), handler);
+
+        List<EventPayload.OrderCreation> orders = result.eventLog().filterByType(EventType.OrderCreation)
+                .map(e -> (EventPayload.OrderCreation) e.payload())
+                .toList();
+
+        assertTrue(orders.size() > 1, "need multiple orders to meaningfully exercise this invariant");
+        assertTrue(handler.agent.interventions > 0,
+                "agent must actually change price during the run for this test to be meaningful");
+
+        // JobStore assigns ids 1..N in the same order OrderCreation events are dispatched (now
+        // deterministic thanks to Scheduler's same-tick FIFO ordering), so the nth OrderCreation
+        // event corresponds to the job with id n.
+        for (int i = 0; i < orders.size(); i++) {
+            JobId jobId = new JobId(i + 1L);
+            var job = handler.factory.jobs.get(jobId);
+            assertEquals(
+                    orders.get(i).unitPrice(),
+                    job.unitPrice(),
+                    "job " + jobId + "'s price must match the OfferPrice at its own OrderCreation -- "
+                            + "an agent PriceChange issued after this order existed must never have altered it");
+        }
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.arcogine.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.api.state.HandlerFactory;
@@ -8,6 +9,7 @@ import com.arcogine.core.event.EventType;
 import com.arcogine.core.runner.SimResult;
 import com.arcogine.core.runner.SimRunner;
 import com.arcogine.core.scenario.ScenarioLoader;
+import com.arcogine.types.JobId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.scenario.ScenarioConfig;
 import org.junit.jupiter.api.Test;
@@ -215,5 +217,32 @@ class ScenarioBaselinesTest {
         RunOutcome run = run(BASIC_SCENARIO);
         assertTrue(run.handler().factory().completedSalesValue > 0.0);
         assertTrue(run.handler().factory().completedSales > 0);
+    }
+
+    @Test
+    void sameScenarioAndSeedProducesIdenticalOrdersAndCompletedSalesValue() throws SimError {
+        RunOutcome first = run(BASIC_SCENARIO);
+        RunOutcome second = run(BASIC_SCENARIO);
+
+        assertEquals(
+                first.handler().factory().completedSalesValue,
+                second.handler().factory().completedSalesValue,
+                "same scenario + seed must produce identical completedSalesValue");
+        assertEquals(first.handler().factory().completedSales, second.handler().factory().completedSales);
+        assertEquals(first.result().eventsProcessed(), second.result().eventsProcessed());
+
+        long ordersA = first.result().eventLog().filterByType(EventType.OrderCreation).count();
+        long ordersB = second.result().eventLog().filterByType(EventType.OrderCreation).count();
+        assertEquals(ordersA, ordersB, "identical number of orders must be generated");
+
+        long jobCount = first.handler().factory().jobs.allJobs().count();
+        assertEquals(jobCount, second.handler().factory().jobs.allJobs().count());
+        for (long id = 1; id <= jobCount; id++) {
+            var jobA = first.handler().factory().jobs.get(new JobId(id));
+            var jobB = second.handler().factory().jobs.get(new JobId(id));
+            assertEquals(jobA.unitPrice(), jobB.unitPrice(), "job " + id + " unitPrice must be reproducible");
+            assertEquals(jobA.orderValue(), jobB.orderValue(), "job " + id + " orderValue must be reproducible");
+            assertEquals(jobA.status(), jobB.status(), "job " + id + " status must be reproducible");
+        }
     }
 }

@@ -54,27 +54,31 @@ Example: Widget A's routing might be Mill (5 ticks) → Lathe (3 ticks) → QC S
 
 When an order arrives, it creates a **job**. The job moves through the routing steps, waiting in machine queues when the machine is busy. A job's lifecycle is:
 
-1. **Created** — an order event generates it
+1. **Created** — an order event generates it, locking in its unit price at that instant
 2. **In progress** — being processed on a machine, or waiting in a queue
-3. **Completed** — all routing steps finished; revenue is recorded
+3. **Completed** — all routing steps finished; its sales value (quantity x its own locked-in price) is added to completed sales value
 
 ## The economy
 
 ### Price and demand
 
-The economy model connects your pricing decisions to order volume:
+The price you set is the **market price** — the offer currently on the table for new customers. The economy model connects it to order volume:
 
 - **Base demand** — how many orders per evaluation period at the reference price
 - **Price elasticity** — how strongly demand responds to price changes (higher elasticity = more sensitive)
 - **Lead time sensitivity** — demand also drops when lead times grow (customers don't want to wait)
 
-Lowering the price increases demand. But more orders means more factory load, which increases lead times, which suppresses demand. Finding the equilibrium is the challenge.
+Lowering the market price increases demand. But more orders means more factory load, which increases lead times, which suppresses demand. Finding the equilibrium is the challenge.
 
-### Revenue
+Changing the market price only affects **future** orders — evaluated the next time demand is sampled. It never changes the terms of an order that already exists (see below).
 
-Revenue accumulates as completed jobs are sold at the price in effect **when the job completes** (price-at-completion), not the price at the time the order was created. Total revenue = completed sales x price at completion. The KPI dashboard tracks this in real time.
+### Completed sales value
 
-If price changes while a job is in progress, that job's contribution to revenue reflects the new price at completion rather than the price the customer originally saw when the order was placed. This is current, tested behavior (`FactoryHandlerTest.revenueTrackedWithCurrentPrice`), not yet a deliberately documented business rule — see the "domain decisions required" section of [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md).
+Each order locks in its unit price **at the moment it's created**, using whatever the market price was at that instant. That price travels with the order for its entire lifecycle and never changes, even if the market price moves while the order is still in production. An order created at $10 is still worth `quantity x $10` when it finishes, no matter what the market price is by then.
+
+The KPI dashboard's completed-sales figure (`completedSalesValue` in the API) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the market price happens to be right now.
+
+This is a deliberate product decision, not an accounting model: Arcogine does not (yet) implement formal revenue recognition, accounts receivable, or payment terms — those would belong to a future finance domain if one is ever added. "Completed sales value" is an operational number (how much value has this factory shipped), not a claim about recognized revenue. See [`docs/architecture.md`](architecture.md#pricing-orders-and-money-marketprice-vs-orderprice) for the full MarketPrice/OrderPrice model and [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for the source-level backlog to bring the implementation in line with this.
 
 ## KPIs (Key Performance Indicators)
 

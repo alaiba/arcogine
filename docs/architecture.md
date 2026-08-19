@@ -48,7 +48,7 @@ Events:
 
 ### State
 
-Each subsystem exclusively owns its mutable domain state. Pricing owns current price and price history (`PricingState`). Factory owns machines, jobs, queues, completion state, and production metrics (`FactoryHandler`). A future inventory subsystem would own stock; finance would own financial state; workforce would own labor state.
+Each subsystem exclusively owns its mutable domain state. Pricing owns `MarketPrice` and its history (`PricingState`) — the current market offer, not any individual order's terms. Factory owns machines, jobs, queues, completion state, and production metrics, including each order's immutable `OrderPrice`/`OrderValue` and the derived `CompletedSalesValue` (`FactoryHandler`). A future inventory subsystem would own stock; finance would own financial state; workforce would own labor state.
 
 State should:
 
@@ -77,6 +77,58 @@ Observation -> Decision -> Event
 ```
 
 Agents and policies observe, decide, and emit events — they never directly mutate simulation state. `SalesAgent.decide()` is a pure function over an `AgentObservation`; when it decides to act, it schedules `PriceChange`/`AgentDecision` events rather than calling a setter on `PricingState`. This is the pattern all future decision-making code should follow.
+
+### Pricing, orders, and money: MarketPrice vs. OrderPrice
+
+`price` is not one universal simulation value — collapsing it into a single field is what caused the coupling and bugs described in [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md). Arcogine distinguishes:
+
+| Concept | Meaning | Owner / location | Mutability |
+|---|---|---|---|
+| **MarketPrice** | The price currently being offered to the market; an input to the demand model. | Pricing/economy state (`PricingState`) | Mutable — changes on `PriceChange` events |
+| **OrderPrice** (unit price) | The price agreed when a specific order was created. | Immutable order/transaction data, captured on the `OrderCreation` event and carried by the order/job for its lifetime | Immutable once the order exists |
+| **OrderValue** | `quantity × OrderPrice` for one order. | Derived from the order, from the moment it's created | Derived (not separately mutated) |
+| **CompletedSalesValue** | The sum of `OrderValue` for orders that have completed production/fulfillment. | Factory/operational KPI | Accumulates as orders complete, using each order's own `OrderPrice` |
+| Revenue | Reserved terminology for a future finance/accounting domain (recognition policy, receivables, deferred revenue, etc.) | Not currently modeled | — |
+
+The lifecycle:
+
+```text
+MarketPrice
+    |
+    v
+Demand Evaluation
+    |
+    v
+Order Creation
+    |
+    +--> capture OrderPrice (= MarketPrice at that instant)
+    |
+    +--> derive OrderValue = quantity x OrderPrice
+    |
+    v
+Production / Fulfillment
+    |
+    v
+Order Completion
+    |
+    v
+CompletedSalesValue += OrderValue
+```
+
+The temporal boundary is **order creation**: before it, price is market state (mutable, forward-looking, drives future demand); after it, the agreed unit price is a historical transaction fact that belongs to the order and must not change when `MarketPrice` later changes.
+
+```text
+CURRENT MARKET STATE              HISTORICAL TRANSACTION
+MarketPrice = $15                 Order A
+       |                            unitPrice = $10
+       |                            quantity = 5
+       v
+future demand                      orderValue = $50
+```
+
+Changing the left side must never mutate the right side. Concretely: a `SalesAgent` observes `MarketPrice`, decides a new `MarketPrice`, and emits `PriceChange` — this affects only future demand evaluations and future orders. It must never reprice an order that already exists, including one still in production. This also closes off an invalid strategy where an agent could lower the market price to generate backlog cheaply, then raise it before those orders complete to inflate their apparent value; existing orders are economically invariant under later market-price changes.
+
+This is a deliberate **product decision, not an accounting model**: `CompletedSalesValue` is an operational KPI (how much value has this factory shipped), not formal revenue recognition. Concepts such as revenue recognition policy, accounts receivable, payment terms, cash receipts, accrued/deferred revenue belong to a future finance domain, if and when one is needed, and should not be implied by current naming.
 
 ### What should trigger architectural review
 
@@ -167,7 +219,7 @@ public interface EventHandler {
 
 Handlers may schedule new events via the `Scheduler` but never reach into other handlers directly. Today, cross-handler data (current price, average lead time) flows through explicit field synchronization in `IntegratedHandler` (`demand.setPrice(...)`, `demand.setAvgLeadTime(...)`, `factory.setCurrentPrice(...)`), and `IntegratedHandler` also assembles `AgentObservation` by reading raw fields off `FactoryHandler` and `PricingState` directly.
 
-This is a **transitional** pattern under the [Events–State–Observations philosophy](#core-architecture-philosophy-events-state-observations): it duplicates "current price" as a mutable copy in three places (`PricingState`, `DemandModel`, `FactoryHandler`) instead of `PricingState` being the sole owner that others read on demand, and it embeds observation-construction logic in the orchestration handler instead of a dedicated projector. It is called out explicitly, rather than presented as the target design, in [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md), which also lays out the staged backlog for closing this gap without introducing a generic event bus or otherwise weakening deterministic, explicit handler ordering.
+This is a **transitional** pattern under the [Events–State–Observations philosophy](#core-architecture-philosophy-events-state-observations): it duplicates `MarketPrice` as a mutable copy in three places (`PricingState`, `DemandModel`, `FactoryHandler`) instead of `PricingState` being the sole owner that others read on demand, and it embeds observation-construction logic in the orchestration handler instead of a dedicated projector. `FactoryHandler.setCurrentPrice(...)` in particular is now understood to be unnecessary under the [resolved pricing/order semantics](#pricing-orders-and-money-marketprice-vs-orderprice): the factory should compute `CompletedSalesValue` from each order's own captured `OrderPrice`, not by reading current `MarketPrice` at completion time — so the `PricingState -> FactoryHandler` sync should be removed outright rather than kept as a "read on demand" seam. It is called out explicitly, rather than presented as the target design, in [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md), which also lays out the staged backlog for closing this gap without introducing a generic event bus or otherwise weakening deterministic, explicit handler ordering.
 
 ## Type System
 

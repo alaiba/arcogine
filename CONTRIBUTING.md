@@ -127,6 +127,7 @@ Use these rules during code review, especially when adding a new domain (invento
 8. New domains should not require pairwise setter wiring to every existing domain.
 9. Don't introduce an event bus or async dispatch to solve coupling — it must not weaken Arcogine's deterministic, explicitly-ordered execution.
 10. API DTOs and UI snapshots are not automatically valid domain observations; treat `SnapshotBuilder`'s projections and `AgentObservation` as separate concerns with separate capability boundaries.
+11. Don't collapse distinct concepts into one field because they're both prices/money — e.g. current market state (`MarketPrice`) and an already-created order's agreed terms (`OrderPrice`/`OrderValue`) are different things with different mutability, and a historical transaction fact should be captured on the event that created it rather than re-derived later from current mutable state. See `docs/architecture.md`'s "Pricing, orders, and money" section for the worked example. Also: "revenue"-flavored terminology implies accounting semantics (recognition, receivables, deferred revenue) that Arcogine does not model — prefer precise operational terms like `CompletedSalesValue`.
 
 See `devel/architecture-assessment-events-state-observations.md` for the current-state review and backlog.
 

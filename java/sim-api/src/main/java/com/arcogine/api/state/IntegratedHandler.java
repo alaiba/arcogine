@@ -33,6 +33,10 @@ public class IntegratedHandler implements EventHandler {
 
     @Override
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
+        if (event.payload() instanceof EventPayload.AgentEnabledChanged aec) {
+            this.agentEnabled = aec.enabled();
+        }
+
         pricing.handleEvent(event, scheduler);
         demand.handleEvent(event, scheduler);
 
@@ -65,9 +69,5 @@ public class IntegratedHandler implements EventHandler {
 
     public boolean agentEnabled() {
         return agentEnabled;
-    }
-
-    public void setAgentEnabled(boolean agentEnabled) {
-        this.agentEnabled = agentEnabled;
     }
 }

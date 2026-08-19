@@ -246,10 +246,18 @@ public class SimThread {
                 }
                 case SimCommand.ToggleAgent toggle -> {
                     agentEnabled = toggle.enabled();
-                    if (handler != null) {
-                        handler.setAgentEnabled(agentEnabled);
-                    }
                     if (handler != null && config != null) {
+                        SimTime currentTime = scheduler.currentTime();
+                        Event event = Event.of(
+                                currentTime, new EventPayload.AgentEnabledChanged(toggle.enabled()));
+                        log.append(event);
+                        notifyListeners(event);
+                        try {
+                            handler.handleEvent(event, scheduler);
+                        } catch (SimError e) {
+                            lastError = e.getMessage();
+                        }
+                        eventsProcessed++;
                         publishSnapshot(handler, log, runState, scheduler, eventsProcessed, config, lastError);
                     }
                 }

@@ -40,6 +40,7 @@ class EventTest {
                 new Case(new EventPayload.MachineAvailabilityChange(new MachineId(1), true),
                         EventType.MachineAvailabilityChange),
                 new Case(new EventPayload.PriceChange(1.0), EventType.PriceChange),
+                new Case(new EventPayload.AgentEnabledChanged(true), EventType.AgentEnabledChanged),
                 new Case(new EventPayload.AgentDecision("test"), EventType.AgentDecision),
                 new Case(EventPayload.DemandEvaluation.INSTANCE, EventType.DemandEvaluation),
                 new Case(EventPayload.AgentEvaluation.INSTANCE, EventType.AgentEvaluation));

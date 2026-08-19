@@ -11,6 +11,7 @@ public sealed interface EventPayload permits
         EventPayload.OrderCompleted,
         EventPayload.MachineAvailabilityChange,
         EventPayload.PriceChange,
+        EventPayload.AgentEnabledChanged,
         EventPayload.AgentDecision,
         EventPayload.DemandEvaluation,
         EventPayload.AgentEvaluation {
@@ -39,6 +40,15 @@ public sealed interface EventPayload permits
     record MachineAvailabilityChange(MachineId machineId, boolean online) implements EventPayload {}
 
     record PriceChange(double newPrice) implements EventPayload {}
+
+    /**
+     * Whether the SalesAgent is enabled. This is orchestration config, not a domain state
+     * transition owned by any single domain handler -- it is modeled as an event (rather than a
+     * direct setter call, as it once was) purely for consistency with every other simulation
+     * command (PriceChange, MachineAvailabilityChange): it becomes part of the deterministic,
+     * replayable event stream instead of being an out-of-band mutation.
+     */
+    record AgentEnabledChanged(boolean enabled) implements EventPayload {}
 
     record AgentDecision(String description) implements EventPayload {}
 

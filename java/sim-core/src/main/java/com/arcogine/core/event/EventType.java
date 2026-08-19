@@ -7,6 +7,7 @@ public enum EventType {
     OrderCompleted,
     MachineAvailabilityChange,
     PriceChange,
+    AgentEnabledChanged,
     AgentDecision,
     DemandEvaluation,
     AgentEvaluation

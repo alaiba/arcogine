@@ -34,6 +34,9 @@ class EventTest {
                 new Case(new EventPayload.OrderCreation(new ProductId(1), 1, 10.0), EventType.OrderCreation),
                 new Case(new EventPayload.TaskStart(new JobId(1), new MachineId(1), 0), EventType.TaskStart),
                 new Case(new EventPayload.TaskEnd(new JobId(1), new MachineId(1), 0), EventType.TaskEnd),
+                new Case(
+                        new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 5, 10.0),
+                        EventType.OrderCompleted),
                 new Case(new EventPayload.MachineAvailabilityChange(new MachineId(1), true),
                         EventType.MachineAvailabilityChange),
                 new Case(new EventPayload.PriceChange(1.0), EventType.PriceChange),

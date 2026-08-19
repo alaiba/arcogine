@@ -147,6 +147,10 @@ public class FactoryHandler implements EventHandler {
         if (job.isComplete()) {
             completedSalesValue += job.orderValue();
             completedSales += 1;
+            scheduler.schedule(Event.of(
+                    currentTime,
+                    new EventPayload.OrderCompleted(
+                            job.id(), job.productId(), job.quantity(), job.unitPrice())));
         } else {
             int nextStepIndex = job.currentStep();
             ProductId productId = job.productId();

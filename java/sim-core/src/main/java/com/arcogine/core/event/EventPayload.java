@@ -8,6 +8,7 @@ public sealed interface EventPayload permits
         EventPayload.OrderCreation,
         EventPayload.TaskStart,
         EventPayload.TaskEnd,
+        EventPayload.OrderCompleted,
         EventPayload.MachineAvailabilityChange,
         EventPayload.PriceChange,
         EventPayload.AgentDecision,
@@ -24,6 +25,16 @@ public sealed interface EventPayload permits
     record TaskStart(JobId jobId, MachineId machineId, int stepIndex) implements EventPayload {}
 
     record TaskEnd(JobId jobId, MachineId machineId, int stepIndex) implements EventPayload {}
+
+    /**
+     * The operational fact that an order fulfilled its full routing -- distinct from a single
+     * {@link TaskEnd}, which only means one production step finished. Carries the immutable
+     * commercial facts a downstream consumer (e.g. a future Finance domain) needs to interpret
+     * the transaction; deliberately does not carry the derived orderValue (quantity x unitPrice)
+     * to avoid a second consistency invariant for a value that's trivially recomputed.
+     */
+    record OrderCompleted(JobId orderId, ProductId productId, long quantity, double unitPrice)
+            implements EventPayload {}
 
     record MachineAvailabilityChange(MachineId machineId, boolean online) implements EventPayload {}
 

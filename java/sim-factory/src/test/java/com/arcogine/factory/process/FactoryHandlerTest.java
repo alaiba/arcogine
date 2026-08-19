@@ -190,6 +190,54 @@ class FactoryHandlerTest {
         Event te2 = sched.nextEvent().orElseThrow();
         h.handleEvent(te2, sched);
         assertEquals(1, h.completedSales, "should be complete after step 2");
+
+        Event next = sched.nextEvent().orElseThrow();
+        assertTrue(
+                next.payload() instanceof EventPayload.OrderCompleted,
+                "order completion should schedule OrderCompleted only after the final step");
+    }
+
+    @Test
+    void intermediateStepDoesNotScheduleOrderCompleted() {
+        FactoryHandler h = twoStepHandler();
+        Scheduler sched = new Scheduler();
+
+        Event order = orderEvent(1, 1);
+        sched.schedule(order);
+        sched.nextEvent();
+        h.handleEvent(order, sched);
+
+        Event te1 = sched.nextEvent().orElseThrow();
+        h.handleEvent(te1, sched);
+
+        Event next = sched.nextEvent().orElseThrow();
+        assertTrue(
+                next.payload() instanceof EventPayload.TaskEnd,
+                "completing step 1 of 2 should schedule the next TaskEnd, not OrderCompleted");
+        assertTrue(sched.isEmpty(), "no OrderCompleted should be queued before the order is fully complete");
+    }
+
+    @Test
+    void orderCompletedEventCarriesTheOrdersCommercialFacts() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+
+        Event order = orderEvent(1, 3, 12.0);
+        sched.schedule(order);
+        sched.nextEvent();
+        h.handleEvent(order, sched);
+
+        var job = h.jobs.allJobs().findFirst().orElseThrow();
+
+        Event taskEnd = sched.nextEvent().orElseThrow();
+        h.handleEvent(taskEnd, sched);
+
+        Event completed = sched.nextEvent().orElseThrow();
+        var payload = (EventPayload.OrderCompleted) completed.payload();
+        assertEquals(job.id(), payload.orderId());
+        assertEquals(new ProductId(1), payload.productId());
+        assertEquals(3L, payload.quantity());
+        assertEquals(12.0, payload.unitPrice());
     }
 
     @Test
@@ -271,6 +319,10 @@ class FactoryHandlerTest {
         h.handleEvent(orderA, sched);
         h.handleEvent(sched.nextEvent().orElseThrow(), sched);
         assertEquals(20.0, h.completedSalesValue);
+        Event completedA = sched.nextEvent().orElseThrow();
+        assertTrue(
+                completedA.payload() instanceof EventPayload.OrderCompleted,
+                "order A's completion schedules OrderCompleted, which must be drained before continuing");
 
         // Offer price rises to $50 before order B is created.
         Event orderB = orderEvent(sched.currentTime().ticks(), 2, 50.0);

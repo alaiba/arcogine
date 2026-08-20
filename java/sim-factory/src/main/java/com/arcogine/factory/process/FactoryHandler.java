@@ -6,8 +6,10 @@ import com.arcogine.core.handler.EventHandler;
 import com.arcogine.core.queue.Scheduler;
 import com.arcogine.factory.jobs.Job;
 import com.arcogine.factory.jobs.JobStore;
+import com.arcogine.factory.jobs.JobView;
 import com.arcogine.factory.machines.Machine;
 import com.arcogine.factory.machines.MachineStore;
+import com.arcogine.factory.machines.MachineView;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
@@ -18,11 +20,12 @@ import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class FactoryHandler implements EventHandler {
 
-    public final MachineStore machines;
-    public final JobStore jobs;
+    final MachineStore machines;
+    final JobStore jobs;
     public final RoutingStore routings;
     public final List<ProductId> productIds;
     private double completedSalesValue;
@@ -57,6 +60,25 @@ public class FactoryHandler implements EventHandler {
 
     public long completedSales() {
         return completedSales;
+    }
+
+    /**
+     * Read-only lookup for a single job -- deliberately returns {@link JobView}, not {@link Job},
+     * so external callers can't reach {@code start}/{@code completeStep} and bypass event-driven
+     * mutation.
+     */
+    public JobView job(JobId id) {
+        return jobs.get(id);
+    }
+
+    /** Read-only view of every job -- see {@link #job(JobId)}. */
+    public Stream<JobView> jobsView() {
+        return jobs.allJobs().map(JobView.class::cast);
+    }
+
+    /** Read-only view of every machine -- excludes machine mutators for the same reason as {@link #job(JobId)}. */
+    public List<MachineView> machinesView() {
+        return machines.machines().stream().map(MachineView.class::cast).toList();
     }
 
     public long backlog() {

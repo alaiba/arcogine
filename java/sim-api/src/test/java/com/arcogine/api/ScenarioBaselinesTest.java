@@ -238,11 +238,11 @@ class ScenarioBaselinesTest {
         long ordersB = second.result().eventLog().filterByType(EventType.OrderCreation).count();
         assertEquals(ordersA, ordersB, "identical number of orders must be generated");
 
-        long jobCount = first.handler().factory().jobs.allJobs().count();
-        assertEquals(jobCount, second.handler().factory().jobs.allJobs().count());
+        long jobCount = first.handler().factory().jobsView().count();
+        assertEquals(jobCount, second.handler().factory().jobsView().count());
         for (long id = 1; id <= jobCount; id++) {
-            var jobA = first.handler().factory().jobs.get(new JobId(id));
-            var jobB = second.handler().factory().jobs.get(new JobId(id));
+            var jobA = first.handler().factory().job(new JobId(id));
+            var jobB = second.handler().factory().job(new JobId(id));
             assertEquals(jobA.unitPrice(), jobB.unitPrice(), "job " + id + " unitPrice must be reproducible");
             assertEquals(jobA.orderValue(), jobB.orderValue(), "job " + id + " orderValue must be reproducible");
             assertEquals(jobA.status(), jobB.status(), "job " + id + " status must be reproducible");

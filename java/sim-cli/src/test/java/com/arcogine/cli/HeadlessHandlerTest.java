@@ -78,7 +78,7 @@ class HeadlessHandlerTest {
         Event order = scheduler.nextEvent().orElseThrow();
         handler.handleEvent(order, scheduler);
         assertTrue(
-                handler.factory.jobs.allJobs().count() > 0,
+                handler.factory.jobsView().count() > 0,
                 "factory should have a job after OrderCreation");
     }
 

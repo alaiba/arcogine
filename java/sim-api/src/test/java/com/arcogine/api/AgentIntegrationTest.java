@@ -184,7 +184,7 @@ class AgentIntegrationTest {
         // event corresponds to the job with id n.
         for (int i = 0; i < orders.size(); i++) {
             JobId jobId = new JobId(i + 1L);
-            var job = handler.factory().jobs.get(jobId);
+            var job = handler.factory().job(jobId);
             assertEquals(
                     orders.get(i).unitPrice(),
                     job.unitPrice(),

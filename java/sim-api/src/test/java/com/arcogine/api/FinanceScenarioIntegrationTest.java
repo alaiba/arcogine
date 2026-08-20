@@ -249,7 +249,7 @@ class FinanceScenarioIntegrationTest {
         FactoryHandler factory = new FactoryHandler(machines, routings, productIds);
         PricingState pricing = new PricingState(2.0);
         DemandModel demand = new DemandModel(
-                8.0, 0.5, 0.0, pricing::currentPrice, factory::avgLeadTime, productIds, new Random(42));
+                8.0, 0.5, 0.0, pricing::offerPrice, factory::avgLeadTime, productIds, new Random(42));
         SalesAgent agent = new SalesAgent(new SalesAgentConfig(5, 2, 0.15, 0.5, 50.0));
         IntegratedHandler handler = new IntegratedHandler(factory, demand, pricing, new FinanceHandler(), agent, true);
 

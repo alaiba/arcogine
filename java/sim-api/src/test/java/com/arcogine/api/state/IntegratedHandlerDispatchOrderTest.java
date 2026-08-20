@@ -137,7 +137,7 @@ class IntegratedHandlerDispatchOrderTest {
         RecordingFactoryHandler factory = new RecordingFactoryHandler(machines, routings, productIds, order);
         RecordingPricingState pricing = new RecordingPricingState(10.0, order);
         RecordingDemandModel demand = new RecordingDemandModel(
-                5.0, 0.5, 0.0, pricing::currentPrice, factory::avgLeadTime, productIds, new Random(1), order);
+                5.0, 0.5, 0.0, pricing::offerPrice, factory::avgLeadTime, productIds, new Random(1), order);
         RecordingFinanceHandler finance = new RecordingFinanceHandler(order);
         RecordingSalesAgent agent = new RecordingSalesAgent(order);
 

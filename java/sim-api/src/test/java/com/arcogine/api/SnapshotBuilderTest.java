@@ -65,7 +65,7 @@ class SnapshotBuilderTest {
             """;
 
     @Test
-    void completedJobRevenueInSnapshotMatchesOrderCreationPriceNotLaterOfferPrice() {
+    void completedJobValueInSnapshotMatchesOrderCreationPriceNotLaterOfferPrice() {
         ScenarioConfig config = ScenarioLoader.loadScenario(SCENARIO);
         IntegratedHandler handler = HandlerFactory.buildFromConfig(config);
         Scheduler scheduler = new Scheduler();
@@ -100,6 +100,6 @@ class SnapshotBuilderTest {
         assertEquals(
                 handler.factory().completedSalesValue(),
                 job.revenue(),
-                "snapshot revenue must agree with the accumulated completedSalesValue for the single completed job");
+                "snapshot value must agree with the accumulated completedSalesValue for the single completed job");
     }
 }

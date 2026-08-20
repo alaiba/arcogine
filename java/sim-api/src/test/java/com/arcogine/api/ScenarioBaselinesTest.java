@@ -181,7 +181,7 @@ class ScenarioBaselinesTest {
         RunOutcome run = run(BASIC_SCENARIO);
         assertTrue(run.result().eventsProcessed() > 0, "no events processed");
         assertTrue(run.handler().factory().completedSales() > 0, "no sales completed");
-        assertTrue(run.handler().factory().completedSalesValue() > 0.0, "no revenue generated");
+        assertTrue(run.handler().factory().completedSalesValue() > 0.0, "no sales value generated");
     }
 
     @Test
@@ -216,7 +216,7 @@ class ScenarioBaselinesTest {
     }
 
     @Test
-    void revenueGeneratedFromCompletedJobs() throws SimError {
+    void completedSalesValueGeneratedFromCompletedJobs() throws SimError {
         RunOutcome run = run(BASIC_SCENARIO);
         assertTrue(run.handler().factory().completedSalesValue() > 0.0);
         assertTrue(run.handler().factory().completedSales() > 0);

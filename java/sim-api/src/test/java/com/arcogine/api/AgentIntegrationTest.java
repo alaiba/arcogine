@@ -124,7 +124,7 @@ class AgentIntegrationTest {
                 config.economy().effectiveBaseDemand(),
                 config.economy().effectivePriceElasticity(),
                 config.economy().effectiveLeadTimeSensitivity(),
-                pricing::currentPrice,
+                pricing::offerPrice,
                 factory::avgLeadTime,
                 productIds,
                 new Random(config.simulation().rngSeed()));

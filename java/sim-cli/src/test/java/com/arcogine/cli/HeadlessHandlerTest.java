@@ -88,7 +88,7 @@ class HeadlessHandlerTest {
     }
 
     @Test
-    void runHeadlessCompletesWithSalesAndRevenue() {
+    void runHeadlessCompletesWithSalesAndValue() {
         ScenarioConfig config = basicConfig();
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
         SimResult result = runHeadless(config, handler);
@@ -162,7 +162,7 @@ class HeadlessHandlerTest {
                 """;
         ScenarioConfig config = ScenarioLoader.loadScenario(toml);
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
-        assertEquals(10.0, handler.currentPrice());
+        assertEquals(10.0, handler.offerPrice());
     }
 
     @Test
@@ -183,6 +183,6 @@ class HeadlessHandlerTest {
 
         Event priceEvent = Event.of(SimTime.of(1), new EventPayload.PriceChange(99.0));
         handler.handleEvent(priceEvent, scheduler);
-        assertEquals(99.0, handler.currentPrice());
+        assertEquals(99.0, handler.offerPrice());
     }
 }

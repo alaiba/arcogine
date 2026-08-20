@@ -44,7 +44,7 @@ class IntegratedHandlerTest {
         FactoryHandler factory = new FactoryHandler(machines, routings, List.of(new ProductId(1)));
         PricingState pricing = new PricingState(10.0);
         DemandModel demand = new DemandModel(
-                5.0, 0.5, 0.0, pricing::currentPrice, factory::avgLeadTime, List.of(new ProductId(1)), new Random(1));
+                5.0, 0.5, 0.0, pricing::offerPrice, factory::avgLeadTime, List.of(new ProductId(1)), new Random(1));
         SalesAgent agent = SalesAgent.withDefaultConfig();
 
         return new IntegratedHandler(factory, demand, pricing, new FinanceHandler(), agent, agentEnabled);

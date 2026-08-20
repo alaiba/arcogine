@@ -95,7 +95,7 @@ public final class SnapshotBuilder {
                 handler.factory().completedSalesValue(),
                 handler.factory().completedSales(),
                 handler.factory().backlog(),
-                handler.pricing().currentPrice(),
+                handler.pricing().offerPrice(),
                 handler.agentEnabled(),
                 config != null,
                 lastError);

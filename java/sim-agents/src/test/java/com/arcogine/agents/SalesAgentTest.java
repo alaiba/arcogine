@@ -22,9 +22,8 @@ class SalesAgentTest {
         return new SalesAgent(new SalesAgentConfig(backlogHigh, backlogLow, 0.10, 1.0, 50.0));
     }
 
-    /** Mirrors the Rust `AgentObservation { backlog, current_price, ..Default::default() }`. */
-    private static AgentObservation observation(int backlog, double currentPrice) {
-        return new AgentObservation(backlog, 0.0, 0.0, 0L, currentPrice, 0.0);
+    private static AgentObservation observation(int backlog, double offerPrice) {
+        return new AgentObservation(backlog, 0.0, 0.0, 0L, offerPrice, 0.0);
     }
 
     @Test

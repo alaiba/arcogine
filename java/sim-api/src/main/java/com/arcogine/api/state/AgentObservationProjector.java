@@ -22,7 +22,7 @@ final class AgentObservationProjector {
                 factory.avgLeadTime(),
                 factory.completedSalesValue(),
                 factory.completedSales(),
-                pricing.currentPrice(),
+                pricing.offerPrice(),
                 factory.throughput(safeElapsed));
     }
 }

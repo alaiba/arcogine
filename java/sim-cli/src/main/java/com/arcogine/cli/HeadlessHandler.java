@@ -43,8 +43,8 @@ public class HeadlessHandler implements EventHandler {
         return finance;
     }
 
-    public double currentPrice() {
-        return pricing.currentPrice();
+    public double offerPrice() {
+        return pricing.offerPrice();
     }
 
     public static HeadlessHandler fromConfig(ScenarioConfig config) {
@@ -101,7 +101,7 @@ public class HeadlessHandler implements EventHandler {
                 baseDemand,
                 priceElasticity,
                 leadTimeSensitivity,
-                pricing::currentPrice,
+                pricing::offerPrice,
                 factory::avgLeadTime,
                 productIds,
                 rng);

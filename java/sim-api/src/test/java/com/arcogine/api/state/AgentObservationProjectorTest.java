@@ -54,7 +54,7 @@ class AgentObservationProjectorTest {
         assertEquals(factory.avgLeadTime(), observation.avgLeadTime());
         assertEquals(factory.completedSalesValue(), observation.completedSalesValue());
         assertEquals(factory.completedSales(), observation.completedSales());
-        assertEquals(pricing.currentPrice(), observation.offerPrice());
+        assertEquals(pricing.offerPrice(), observation.offerPrice());
         assertEquals(factory.throughput(10L), observation.throughput());
 
         // Concrete values, not just self-consistency with the source objects.

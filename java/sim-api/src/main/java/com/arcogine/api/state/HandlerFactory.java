@@ -76,7 +76,7 @@ public final class HandlerFactory {
                 baseDemand,
                 priceElasticity,
                 leadTimeSensitivity,
-                pricing::currentPrice,
+                pricing::offerPrice,
                 factory::avgLeadTime,
                 productIds,
                 rng);

@@ -112,4 +112,24 @@ class FinanceHandlerTest {
         assertEquals(2, handler.ledger().entries().size());
         assertEquals(0, handler.ledger().balance(Account.CASH).compareTo(new BigDecimal("35.00")));
     }
+
+    @Test
+    void deliveringTheSameOrderCompletedEventTwicePostsTwice() {
+        // Documents the event-uniqueness assumption in FinanceHandler's class Javadoc:
+        // FinanceHandler trusts each OrderCompleted it receives is a distinct completion and does
+        // not de-duplicate, matching every other handler in the codebase. This is intentional,
+        // not an oversight -- nothing today can actually redeliver an event (see the Javadoc for
+        // why), so no guard exists. If that ever changes (e.g. a future event-replay feature),
+        // this test is expected to be deliberately updated alongside adding a guard.
+        FinanceHandler handler = new FinanceHandler();
+        Scheduler sched = new Scheduler();
+        Event orderCompleted = Event.of(
+                SimTime.of(1), new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 2, 10.0));
+
+        handler.handleEvent(orderCompleted, sched);
+        handler.handleEvent(orderCompleted, sched);
+
+        assertEquals(2, handler.ledger().entries().size(), "no de-duplication: two deliveries, two postings");
+        assertEquals(0, handler.ledger().balance(Account.CASH).compareTo(new BigDecimal("40.00")));
+    }
 }

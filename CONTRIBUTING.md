@@ -104,6 +104,34 @@ Run `make help` to see all available targets.
 - All public types and functions must have doc-comments.
 - State structs derive `PartialEq`, `Eq`, `Clone`, `Debug`, and `serde::Serialize`.
 
+## Architecture guardrails (Events, State, Observations)
+
+Arcogine follows an Events–State–Observations philosophy (see `docs/architecture.md`):
+
+```text
+Events mutate State.
+State produces Observations.
+Observations inform Decisions.
+Decisions produce Events.
+```
+
+Use these rules during code review, especially when adding a new domain (inventory, procurement, finance, workforce, maintenance, another agent) or touching `IntegratedHandler`. A subset is CI-enforced, not just review discipline — `sim-api`'s `ArchitectureTest` (ArchUnit) checks: `sim-agents`/`sim-finance` never depend on `sim-factory`/`sim-economy`; `Ledger.post` and `Job`/`Machine`'s lifecycle mutators are never called from outside their owning module. Everything else below is still enforced by review.
+
+1. Every mutable piece of domain state must have exactly one authoritative owner.
+2. Cross-domain consumers receive read-only observations or explicit, purpose-specific context — never a reference to another subsystem's mutable state.
+3. Agents observe and emit decisions/events; they never mutate simulation domains directly.
+4. Decisions that affect simulation state become deterministic simulation events, not direct method calls into another handler.
+5. Observation objects are immutable and purpose-specific — don't widen one into a general-purpose state dump.
+6. Avoid synchronized copies of authoritative state (no new `setX`/`syncX` cross-domain pushes without a documented reason).
+7. Handler execution order must stay explicit wherever order affects semantics — don't let it fall out of construction or registration order.
+8. New domains should not require pairwise setter wiring to every existing domain.
+9. Don't introduce an event bus or async dispatch to solve coupling — it must not weaken Arcogine's deterministic, explicitly-ordered execution.
+10. API DTOs and UI snapshots are not automatically valid domain observations; treat `SnapshotBuilder`'s projections and `AgentObservation` as separate concerns with separate capability boundaries.
+11. Don't collapse distinct concepts into one field because they're both prices/money — e.g. the firm's own current asking price (`OfferPrice`) and an already-created order's agreed terms (`OrderPrice`/`OrderValue`) are different things with different mutability, and a historical transaction fact should be captured on the event that created it rather than re-derived later from current mutable state. Don't call `OfferPrice` a "market price" either — that name is reserved for a future external-market signal (`ObservedMarketPrice`) that Arcogine doesn't model yet; `OfferPrice` is what the firm sets, not what an outside market observes. See `docs/architecture.md`'s "Pricing, orders, and money" section for the worked example. Also: prefer precise operational terms like `CompletedSalesValue` over "revenue" outside Finance — a formally-recorded financial figure belongs in the Finance domain (see next rule), not scattered across operational handlers.
+12. Financial concepts (cash, a recorded sales/revenue balance, receivables, payables) belong in the Finance domain, not in Factory, Economy, or any other operational domain — see `docs/architecture.md`'s "Commercial, Operational, and Financial Truth" section. Operational domains emit facts (e.g. `OrderCompleted`); Finance owns the financial interpretation of those facts, reacting to events rather than inspecting another domain's mutable state to infer what happened. A journal entry that doesn't balance (`sum(debits) != sum(credits)`) must never be able to enter financial state.
+
+See `devel/architecture-assessment-events-state-observations.md` for the current-state review and backlog.
+
 ## Testing
 
 Run `make quality` before pushing. That covers:

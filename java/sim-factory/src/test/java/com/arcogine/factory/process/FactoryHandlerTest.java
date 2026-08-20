@@ -54,9 +54,16 @@ class FactoryHandlerTest {
         return new FactoryHandler(machines, routings, List.of(new ProductId(1)));
     }
 
+    private static final double DEFAULT_UNIT_PRICE = 10.0;
+
     private static Event orderEvent(long time, long quantity) {
+        return orderEvent(time, quantity, DEFAULT_UNIT_PRICE);
+    }
+
+    private static Event orderEvent(long time, long quantity, double unitPrice) {
         return Event.of(
-                new SimTime(time), new EventPayload.OrderCreation(new ProductId(1), quantity));
+                new SimTime(time),
+                new EventPayload.OrderCreation(new ProductId(1), quantity, unitPrice));
     }
 
     @Test
@@ -64,8 +71,8 @@ class FactoryHandlerTest {
         FactoryHandler h = oneMachineOneProduct();
         assertEquals(1, h.machines.iter().count());
         assertEquals(1, h.productIds.size());
-        assertEquals(0.0, h.totalRevenue);
-        assertEquals(0, h.completedSales);
+        assertEquals(0.0, h.completedSalesValue());
+        assertEquals(0, h.completedSales());
     }
 
     @Test
@@ -99,14 +106,25 @@ class FactoryHandlerTest {
         Event taskEnd = sched.nextEvent().orElseThrow();
         h.handleEvent(taskEnd, sched);
 
-        assertEquals(1, h.completedSales);
+        assertEquals(1, h.completedSales());
         assertTrue(h.avgLeadTime() > 0.0);
     }
 
     @Test
     void throughputRateDivision() {
         FactoryHandler h = oneMachineOneProduct();
-        h.completedSales = 10;
+        Scheduler sched = new Scheduler();
+
+        for (int i = 0; i < 10; i++) {
+            Event order = orderEvent(sched.currentTime().ticks(), 1);
+            sched.schedule(order);
+            sched.nextEvent();
+            h.handleEvent(order, sched);
+            h.handleEvent(sched.nextEvent().orElseThrow(), sched); // TaskEnd
+            sched.nextEvent(); // drain OrderCompleted
+        }
+
+        assertEquals(10, h.completedSales());
         assertEquals(0.1, h.throughput(100));
     }
 
@@ -162,7 +180,7 @@ class FactoryHandlerTest {
 
         Event taskEnd = sched.nextEvent().orElseThrow();
         h.handleEvent(taskEnd, sched);
-        assertEquals(1, h.completedSales);
+        assertEquals(1, h.completedSales());
         assertEquals(0, h.machines.get(new MachineId(1)).queueDepth());
     }
 
@@ -178,11 +196,91 @@ class FactoryHandlerTest {
 
         Event te1 = sched.nextEvent().orElseThrow();
         h.handleEvent(te1, sched);
-        assertEquals(0, h.completedSales, "should not be complete after step 1");
+        assertEquals(0, h.completedSales(), "should not be complete after step 1");
 
         Event te2 = sched.nextEvent().orElseThrow();
         h.handleEvent(te2, sched);
-        assertEquals(1, h.completedSales, "should be complete after step 2");
+        assertEquals(1, h.completedSales(), "should be complete after step 2");
+
+        Event next = sched.nextEvent().orElseThrow();
+        assertTrue(
+                next.payload() instanceof EventPayload.OrderCompleted,
+                "order completion should schedule OrderCompleted only after the final step");
+    }
+
+    @Test
+    void intermediateStepDoesNotScheduleOrderCompleted() {
+        FactoryHandler h = twoStepHandler();
+        Scheduler sched = new Scheduler();
+
+        Event order = orderEvent(1, 1);
+        sched.schedule(order);
+        sched.nextEvent();
+        h.handleEvent(order, sched);
+
+        Event te1 = sched.nextEvent().orElseThrow();
+        h.handleEvent(te1, sched);
+
+        Event next = sched.nextEvent().orElseThrow();
+        assertTrue(
+                next.payload() instanceof EventPayload.TaskEnd,
+                "completing step 1 of 2 should schedule the next TaskEnd, not OrderCompleted");
+        assertTrue(sched.isEmpty(), "no OrderCompleted should be queued before the order is fully complete");
+    }
+
+    @Test
+    void orderCompletedEventCarriesTheOrdersCommercialFacts() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+
+        Event order = orderEvent(1, 3, 12.0);
+        sched.schedule(order);
+        sched.nextEvent();
+        h.handleEvent(order, sched);
+
+        var job = h.jobs.allJobs().findFirst().orElseThrow();
+
+        Event taskEnd = sched.nextEvent().orElseThrow();
+        h.handleEvent(taskEnd, sched);
+
+        Event completed = sched.nextEvent().orElseThrow();
+        var payload = (EventPayload.OrderCompleted) completed.payload();
+        assertEquals(job.id(), payload.jobId());
+        assertEquals(new ProductId(1), payload.productId());
+        assertEquals(3L, payload.quantity());
+        assertEquals(12.0, payload.unitPrice());
+    }
+
+    @Test
+    void completedSalesValueAndCountEqualTheSumAndCountOfCompletedJobs() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+
+        Event order1 = orderEvent(1, 2, 10.0);
+        sched.schedule(order1);
+        sched.nextEvent();
+        h.handleEvent(order1, sched);
+        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+
+        Event order2 = orderEvent(6, 3, 20.0);
+        sched.schedule(order2);
+        sched.nextEvent();
+        h.handleEvent(order2, sched);
+        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+
+        double expectedValue = h.jobsView()
+                .filter(j -> j.status() == com.arcogine.types.JobStatus.Completed)
+                .mapToDouble(com.arcogine.factory.jobs.JobView::orderValue)
+                .sum();
+        long expectedCount = h.jobsView()
+                .filter(j -> j.status() == com.arcogine.types.JobStatus.Completed)
+                .count();
+
+        assertEquals(
+                expectedValue,
+                h.completedSalesValue(),
+                "completedSalesValue is a cached aggregate; it must equal Sum(orderValue) over completed jobs");
+        assertEquals(expectedCount, h.completedSales());
     }
 
     @Test
@@ -212,12 +310,11 @@ class FactoryHandlerTest {
     }
 
     @Test
-    void revenueTrackedWithCurrentPrice() {
+    void completedSalesValueUsesOrderCreationPrice() {
         FactoryHandler h = oneMachineOneProduct();
         Scheduler sched = new Scheduler();
-        h.setCurrentPrice(10.0);
 
-        Event order = orderEvent(1, 3);
+        Event order = orderEvent(1, 3, 10.0);
         sched.schedule(order);
         sched.nextEvent();
         h.handleEvent(order, sched);
@@ -225,6 +322,58 @@ class FactoryHandlerTest {
         Event taskEnd = sched.nextEvent().orElseThrow();
         h.handleEvent(taskEnd, sched);
 
-        assertEquals(30.0, h.totalRevenue);
+        assertEquals(30.0, h.completedSalesValue());
+    }
+
+    @Test
+    void jobOrderValueIsFixedAtOrderCreationPriceRegardlessOfLaterOrders() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+
+        // Order A is created while the offer price is $10.
+        Event orderA = orderEvent(1, 3, 10.0);
+        sched.schedule(orderA);
+        sched.nextEvent();
+        h.handleEvent(orderA, sched);
+
+        var jobA = h.jobs.allJobs().findFirst().orElseThrow();
+        assertEquals(10.0, jobA.unitPrice());
+        assertEquals(30.0, jobA.orderValue());
+
+        // The offer price changes to $999 before job A completes. Job A's own price must not move.
+        Event taskEndA = sched.nextEvent().orElseThrow();
+        h.handleEvent(taskEndA, sched);
+
+        assertEquals(10.0, jobA.unitPrice());
+        assertEquals(
+                30.0, jobA.orderValue(), "completed order's value must not track later offer price changes");
+        assertEquals(30.0, h.completedSalesValue());
+    }
+
+    @Test
+    void completedSalesValueSumsEachOrdersOwnCreationTimePrice() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+
+        // Order A created at $10, completes before order B is even created.
+        Event orderA = orderEvent(1, 2, 10.0);
+        sched.schedule(orderA);
+        sched.nextEvent();
+        h.handleEvent(orderA, sched);
+        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+        assertEquals(20.0, h.completedSalesValue());
+        Event completedA = sched.nextEvent().orElseThrow();
+        assertTrue(
+                completedA.payload() instanceof EventPayload.OrderCompleted,
+                "order A's completion schedules OrderCompleted, which must be drained before continuing");
+
+        // Offer price rises to $50 before order B is created.
+        Event orderB = orderEvent(sched.currentTime().ticks(), 2, 50.0);
+        sched.schedule(orderB);
+        sched.nextEvent();
+        h.handleEvent(orderB, sched);
+        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+
+        assertEquals(20.0 + 100.0, h.completedSalesValue(), "each order contributes its own creation-time price");
     }
 }

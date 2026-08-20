@@ -49,7 +49,7 @@ class PropertiesTest {
     @ParameterizedTest
     @MethodSource("jobStepInputs")
     void jobCurrentStepNeverExceedsTotal(int totalSteps, int completions) {
-        Job job = new Job(new JobId(1), new ProductId(1), 1, totalSteps, SimTime.ZERO);
+        Job job = new Job(new JobId(1), new ProductId(1), 1, totalSteps, SimTime.ZERO, 10.0);
         for (int i = 0; i < completions; i++) {
             if (job.isComplete()) {
                 break;
@@ -136,7 +136,7 @@ class PropertiesTest {
     void noLostJobs(int created) {
         JobStore store = new JobStore();
         for (int i = 0; i < created; i++) {
-            store.createJob(new ProductId(1), 1, 2, SimTime.ZERO);
+            store.createJob(new ProductId(1), 1, 2, SimTime.ZERO, 10.0);
         }
 
         long active = store.activeJobs().count();
@@ -152,7 +152,7 @@ class PropertiesTest {
         Random rng = new Random();
         int totalSteps = rng.nextInt(10) + 1;
         int completions = rng.nextInt(16);
-        Job job = new Job(new JobId(1), new ProductId(1), 1, totalSteps, SimTime.ZERO);
+        Job job = new Job(new JobId(1), new ProductId(1), 1, totalSteps, SimTime.ZERO, 10.0);
         for (int i = 0; i < completions; i++) {
             if (job.isComplete()) {
                 break;

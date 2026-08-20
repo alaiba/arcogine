@@ -22,9 +22,8 @@ class SalesAgentTest {
         return new SalesAgent(new SalesAgentConfig(backlogHigh, backlogLow, 0.10, 1.0, 50.0));
     }
 
-    /** Mirrors the Rust `AgentObservation { backlog, current_price, ..Default::default() }`. */
-    private static AgentObservation observation(int backlog, double currentPrice) {
-        return new AgentObservation(backlog, 0.0, 0.0, 0L, currentPrice, 0.0);
+    private static AgentObservation observation(int backlog, double offerPrice) {
+        return new AgentObservation(backlog, 0.0, 0.0, 0L, offerPrice, 0.0);
     }
 
     @Test
@@ -86,7 +85,7 @@ class SalesAgentTest {
 
         agent.handleEvent(event, scheduler);
 
-        assertEquals(1L, agent.interventions);
+        assertEquals(1L, agent.interventions());
         assertFalse(scheduler.isEmpty(), "should have scheduled PriceChange + AgentDecision");
 
         Event ev1 = scheduler.nextEvent().orElseThrow();
@@ -109,7 +108,7 @@ class SalesAgentTest {
         Event event = scheduler.nextEvent().orElseThrow();
 
         agent.handleEvent(event, scheduler);
-        assertEquals(0L, agent.interventions);
+        assertEquals(0L, agent.interventions());
         assertTrue(scheduler.isEmpty());
     }
 
@@ -129,7 +128,7 @@ class SalesAgentTest {
             }
         }
 
-        assertEquals(3L, agent.interventions);
+        assertEquals(3L, agent.interventions());
     }
 
     @Test

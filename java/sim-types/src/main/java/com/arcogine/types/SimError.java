@@ -74,4 +74,24 @@ public sealed class SimError extends RuntimeException {
             super(message);
         }
     }
+
+    /**
+     * A journal entry whose debit postings do not sum to its credit postings. The core financial
+     * invariant -- sum(debits) == sum(credits) -- must hold before an entry can ever enter
+     * financial state, so this is thrown from JournalEntry's own constructor, not caught and
+     * recovered from downstream.
+     */
+    public static final class UnbalancedJournalEntry extends SimError {
+        private final String debits;
+        private final String credits;
+
+        public UnbalancedJournalEntry(String debits, String credits, String description) {
+            super("unbalanced journal entry \"" + description + "\": debits=" + debits + ", credits=" + credits);
+            this.debits = debits;
+            this.credits = credits;
+        }
+
+        public String debits() { return debits; }
+        public String credits() { return credits; }
+    }
 }

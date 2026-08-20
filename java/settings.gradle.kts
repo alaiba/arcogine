@@ -6,6 +6,7 @@ include(
     "sim-factory",
     "sim-economy",
     "sim-agents",
+    "sim-finance",
     "sim-api",
     "sim-cli",
 )

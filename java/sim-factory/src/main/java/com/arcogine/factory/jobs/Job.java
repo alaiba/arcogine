@@ -8,7 +8,7 @@ import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.Optional;
 
-public class Job {
+public class Job implements JobView {
 
     private final JobId id;
     private final ProductId productId;
@@ -19,8 +19,15 @@ public class Job {
     private MachineId currentMachine;
     private final SimTime createdAt;
     private SimTime completedAt;
+    private final double unitPrice;
 
-    public Job(JobId id, ProductId productId, long quantity, int totalSteps, SimTime createdAt) {
+    public Job(
+            JobId id,
+            ProductId productId,
+            long quantity,
+            int totalSteps,
+            SimTime createdAt,
+            double unitPrice) {
         this.id = id;
         this.productId = productId;
         this.quantity = quantity;
@@ -30,6 +37,7 @@ public class Job {
         this.currentMachine = null;
         this.createdAt = createdAt;
         this.completedAt = null;
+        this.unitPrice = unitPrice;
     }
 
     public void start(MachineId machineId) {
@@ -57,6 +65,7 @@ public class Job {
         }
     }
 
+    @Override
     public Optional<Long> leadTime() {
         if (completedAt == null) {
             return Optional.empty();
@@ -64,43 +73,65 @@ public class Job {
         return Optional.of(completedAt.minus(createdAt));
     }
 
+    @Override
     public boolean isComplete() {
         return status == JobStatus.Completed;
     }
 
+    @Override
     public JobId id() {
         return id;
     }
 
+    @Override
     public ProductId productId() {
         return productId;
     }
 
+    @Override
     public long quantity() {
         return quantity;
     }
 
+    @Override
     public JobStatus status() {
         return status;
     }
 
+    @Override
     public int currentStep() {
         return currentStep;
     }
 
+    @Override
     public int totalSteps() {
         return totalSteps;
     }
 
+    @Override
     public MachineId currentMachine() {
         return currentMachine;
     }
 
+    @Override
     public SimTime createdAt() {
         return createdAt;
     }
 
+    @Override
     public SimTime completedAt() {
         return completedAt;
+    }
+
+    /** The price agreed when this order was created. Immutable for the life of the order. */
+    @Override
+    public double unitPrice() {
+        return unitPrice;
+    }
+
+    /** OrderValue: quantity x the order's own agreed unit price. */
+    @Override
+    public double orderValue() {
+        return quantity * unitPrice;
     }
 }

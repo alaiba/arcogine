@@ -23,19 +23,22 @@ import org.junit.jupiter.api.Test;
  * the same seed. compute_demand() is deterministic and independent of the RNG,
  * so the demand-response tests are exact; the generate_orders tests only assert
  * on counts/event types, which hold regardless of RNG implementation.
+ *
+ * offerPrice and avgLeadTime are read on demand via {@code DoubleSupplier}s rather
+ * than pushed into the model, so tests that need to change them mid-test hold a
+ * mutable {@code double[1]} box and supply {@code () -> box[0]}.
  */
 class DemandModelTest {
 
-    private static DemandModel makeDemandModel(double price, double leadTime) {
-        DemandModel dm = new DemandModel(
+    private static DemandModel makeDemandModel(double[] price, double[] leadTime) {
+        return new DemandModel(
                 5.0, // baseDemand
                 0.5, // priceElasticity
                 0.1, // leadTimeSensitivity
-                price,
+                () -> price[0],
+                () -> leadTime[0],
                 List.of(new ProductId(1)),
                 new Random(42));
-        dm.setAvgLeadTime(leadTime);
-        return dm;
     }
 
     private static DemandModel makeModel(double baseDemand, double price) {
@@ -43,15 +46,16 @@ class DemandModelTest {
                 baseDemand,
                 0.5,
                 0.0,
-                price,
+                () -> price,
+                () -> 0.0,
                 List.of(new ProductId(1)),
                 new Random(42));
     }
 
     @Test
     void demandDecreasesWithHigherPrice() {
-        DemandModel dmLow = makeDemandModel(1.0, 0.0);
-        DemandModel dmHigh = makeDemandModel(8.0, 0.0);
+        DemandModel dmLow = makeDemandModel(new double[] {1.0}, new double[] {0.0});
+        DemandModel dmHigh = makeDemandModel(new double[] {8.0}, new double[] {0.0});
 
         assertTrue(
                 dmLow.computeDemand() > dmHigh.computeDemand(),
@@ -60,8 +64,8 @@ class DemandModelTest {
 
     @Test
     void demandDecreasesWithHigherLeadTime() {
-        DemandModel dmFast = makeDemandModel(3.0, 0.0);
-        DemandModel dmSlow = makeDemandModel(3.0, 50.0);
+        DemandModel dmFast = makeDemandModel(new double[] {3.0}, new double[] {0.0});
+        DemandModel dmSlow = makeDemandModel(new double[] {3.0}, new double[] {50.0});
 
         assertTrue(
                 dmFast.computeDemand() > dmSlow.computeDemand(),
@@ -70,13 +74,13 @@ class DemandModelTest {
 
     @Test
     void demandFloorsAtZero() {
-        DemandModel dm = makeDemandModel(100.0, 1000.0);
+        DemandModel dm = makeDemandModel(new double[] {100.0}, new double[] {1000.0});
         assertEquals(0.0, dm.computeDemand(), "demand should floor at 0");
     }
 
     @Test
     void demandAtBaseConditions() {
-        DemandModel dm = makeDemandModel(0.0, 0.0);
+        DemandModel dm = makeDemandModel(new double[] {0.0}, new double[] {0.0});
         assertEquals(
                 5.0,
                 dm.computeDemand(),
@@ -85,10 +89,11 @@ class DemandModelTest {
 
     @Test
     void priceChangeUpdatesDemand() {
-        DemandModel dm = makeDemandModel(1.0, 0.0);
+        double[] price = {1.0};
+        DemandModel dm = makeDemandModel(price, new double[] {0.0});
         double demandBefore = dm.computeDemand();
 
-        dm.setPrice(8.0);
+        price[0] = 8.0;
         double demandAfter = dm.computeDemand();
 
         assertTrue(demandAfter < demandBefore);
@@ -116,6 +121,19 @@ class DemandModelTest {
     }
 
     @Test
+    void generateOrdersCarriesTheCurrentOfferPriceAsOrderPrice() {
+        DemandModel model = makeModel(5.0, 7.0);
+        Scheduler sched = new Scheduler();
+        long count = model.generateOrders(sched);
+        assertTrue(count > 0);
+        for (long i = 0; i < count; i++) {
+            Event evt = sched.nextEvent().orElseThrow();
+            var payload = (EventPayload.OrderCreation) evt.payload();
+            assertEquals(7.0, payload.unitPrice());
+        }
+    }
+
+    @Test
     void handleEventIgnoresNonRelevantEvents() {
         DemandModel model = makeModel(5.0, 1.0);
         Scheduler sched = new Scheduler();
@@ -138,16 +156,15 @@ class DemandModelTest {
     }
 
     @Test
-    void handleEventForPriceChangeUpdatesPrice() {
+    void handleEventIgnoresPriceChangeSinceOfferPriceIsReadOnDemand() {
+        // DemandModel no longer has its own price field to update on PriceChange: it reads
+        // offerPrice live from its supplier every time computeDemand()/generateOrders() runs.
         DemandModel model = makeModel(5.0, 1.0);
         Scheduler sched = new Scheduler();
         Event event = Event.of(SimTime.of(1), new EventPayload.PriceChange(5.0));
         sched.schedule(event);
         sched.nextEvent();
         model.handleEvent(event, sched);
-        // currentPrice is private; verify it became 5.0 indirectly via
-        // computeDemand: baseDemand=5.0, elasticity=0.5, leadTime=0
-        // -> demand = 5 - 0.5 * 5 = 2.5.
-        assertEquals(2.5, model.computeDemand());
+        assertTrue(sched.isEmpty(), "PriceChange is not relevant to DemandModel directly -- it's a no-op");
     }
 }

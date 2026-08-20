@@ -1,6 +1,5 @@
 package com.arcogine.api.state;
 
-import com.arcogine.agents.AgentObservation;
 import com.arcogine.agents.SalesAgent;
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
@@ -9,6 +8,7 @@ import com.arcogine.core.queue.Scheduler;
 import com.arcogine.economy.demand.DemandModel;
 import com.arcogine.economy.pricing.PricingState;
 import com.arcogine.factory.process.FactoryHandler;
+import com.arcogine.finance.process.FinanceHandler;
 import com.arcogine.types.SimError;
 
 public class IntegratedHandler implements EventHandler {
@@ -16,6 +16,7 @@ public class IntegratedHandler implements EventHandler {
     private final FactoryHandler factory;
     private final DemandModel demand;
     private final PricingState pricing;
+    private final FinanceHandler finance;
     private final SalesAgent agent;
     private boolean agentEnabled;
 
@@ -23,35 +24,33 @@ public class IntegratedHandler implements EventHandler {
             FactoryHandler factory,
             DemandModel demand,
             PricingState pricing,
+            FinanceHandler finance,
             SalesAgent agent,
             boolean agentEnabled) {
         this.factory = factory;
         this.demand = demand;
         this.pricing = pricing;
+        this.finance = finance;
         this.agent = agent;
         this.agentEnabled = agentEnabled;
     }
 
     @Override
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
+        if (event.payload() instanceof EventPayload.AgentEnabledChanged aec) {
+            this.agentEnabled = aec.enabled();
+        }
+
         pricing.handleEvent(event, scheduler);
-        demand.setPrice(pricing.currentPrice());
-        demand.setAvgLeadTime(factory.avgLeadTime());
         demand.handleEvent(event, scheduler);
 
-        factory.setCurrentPrice(pricing.currentPrice());
         factory.handleEvent(event, scheduler);
+        finance.handleEvent(event, scheduler);
 
         if (event.payload() instanceof EventPayload.AgentEvaluation) {
             if (agentEnabled) {
-                long elapsed = Math.max(1, scheduler.currentTime().ticks());
-                agent.observe(new AgentObservation(
-                        (int) factory.backlog(),
-                        factory.avgLeadTime(),
-                        factory.totalRevenue,
-                        factory.completedSales,
-                        pricing.currentPrice(),
-                        factory.throughput(elapsed)));
+                agent.observe(AgentObservationProjector.project(
+                        factory, pricing, scheduler.currentTime().ticks()));
                 agent.handleEvent(event, scheduler);
             }
         }
@@ -69,15 +68,15 @@ public class IntegratedHandler implements EventHandler {
         return pricing;
     }
 
+    public FinanceHandler finance() {
+        return finance;
+    }
+
     public SalesAgent agent() {
         return agent;
     }
 
     public boolean agentEnabled() {
         return agentEnabled;
-    }
-
-    public void setAgentEnabled(boolean agentEnabled) {
-        this.agentEnabled = agentEnabled;
     }
 }

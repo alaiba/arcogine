@@ -19,6 +19,7 @@ import com.arcogine.factory.process.FactoryHandler;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
+import com.arcogine.finance.process.FinanceHandler;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
@@ -128,7 +129,7 @@ class AgentIntegrationTest {
                 productIds,
                 new Random(config.simulation().rngSeed()));
 
-        return new IntegratedHandler(factory, demand, pricing, agent, agentEnabled);
+        return new IntegratedHandler(factory, demand, pricing, new FinanceHandler(), agent, agentEnabled);
     }
 
     private static SalesAgent overloadAgent() {

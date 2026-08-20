@@ -8,6 +8,7 @@ import com.arcogine.core.queue.Scheduler;
 import com.arcogine.economy.demand.DemandModel;
 import com.arcogine.economy.pricing.PricingState;
 import com.arcogine.factory.process.FactoryHandler;
+import com.arcogine.finance.process.FinanceHandler;
 import com.arcogine.types.SimError;
 
 public class IntegratedHandler implements EventHandler {
@@ -15,6 +16,7 @@ public class IntegratedHandler implements EventHandler {
     private final FactoryHandler factory;
     private final DemandModel demand;
     private final PricingState pricing;
+    private final FinanceHandler finance;
     private final SalesAgent agent;
     private boolean agentEnabled;
 
@@ -22,11 +24,13 @@ public class IntegratedHandler implements EventHandler {
             FactoryHandler factory,
             DemandModel demand,
             PricingState pricing,
+            FinanceHandler finance,
             SalesAgent agent,
             boolean agentEnabled) {
         this.factory = factory;
         this.demand = demand;
         this.pricing = pricing;
+        this.finance = finance;
         this.agent = agent;
         this.agentEnabled = agentEnabled;
     }
@@ -41,6 +45,7 @@ public class IntegratedHandler implements EventHandler {
         demand.handleEvent(event, scheduler);
 
         factory.handleEvent(event, scheduler);
+        finance.handleEvent(event, scheduler);
 
         if (event.payload() instanceof EventPayload.AgentEvaluation) {
             if (agentEnabled) {
@@ -61,6 +66,10 @@ public class IntegratedHandler implements EventHandler {
 
     public PricingState pricing() {
         return pricing;
+    }
+
+    public FinanceHandler finance() {
+        return finance;
     }
 
     public SalesAgent agent() {

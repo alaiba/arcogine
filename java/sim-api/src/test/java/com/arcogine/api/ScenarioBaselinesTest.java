@@ -9,9 +9,12 @@ import com.arcogine.core.event.EventType;
 import com.arcogine.core.runner.SimResult;
 import com.arcogine.core.runner.SimRunner;
 import com.arcogine.core.scenario.ScenarioLoader;
+import com.arcogine.finance.ledger.Account;
 import com.arcogine.types.JobId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.scenario.ScenarioConfig;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -244,5 +247,32 @@ class ScenarioBaselinesTest {
             assertEquals(jobA.orderValue(), jobB.orderValue(), "job " + id + " orderValue must be reproducible");
             assertEquals(jobA.status(), jobB.status(), "job " + id + " status must be reproducible");
         }
+    }
+
+    @Test
+    void financeLedgerAgreesWithFactoryCompletedSalesValue() throws SimError {
+        RunOutcome run = run(BASIC_SCENARIO);
+
+        assertEquals(run.handler().factory().completedSales(), run.handler().finance().ledger().entries().size(),
+                "one journal entry per completed order under the immediate-settlement policy");
+
+        BigDecimal cash = run.handler().finance().ledger().balance(Account.CASH);
+        assertEquals(
+                0,
+                cash.compareTo(BigDecimal.valueOf(run.handler().factory().completedSalesValue())
+                        .setScale(2, RoundingMode.HALF_UP)),
+                "Finance's Cash balance must agree with Factory's completedSalesValue "
+                        + "under the current immediate-settlement policy");
+    }
+
+    @Test
+    void financeLedgerIsReproducibleForSameScenarioAndSeed() throws SimError {
+        RunOutcome first = run(BASIC_SCENARIO);
+        RunOutcome second = run(BASIC_SCENARIO);
+
+        assertEquals(
+                first.handler().finance().ledger().entries(),
+                second.handler().finance().ledger().entries(),
+                "same scenario + seed must produce an identical sequence of journal entries");
     }
 }

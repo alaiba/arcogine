@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":sim-factory"))
     implementation(project(":sim-economy"))
     implementation(project(":sim-agents"))
+    implementation(project(":sim-finance"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     // io.spring.dependency-management only lets an explicit version win over

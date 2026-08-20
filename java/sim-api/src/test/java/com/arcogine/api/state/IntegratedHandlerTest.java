@@ -16,6 +16,7 @@ import com.arcogine.factory.process.FactoryHandler;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
+import com.arcogine.finance.process.FinanceHandler;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
@@ -46,7 +47,7 @@ class IntegratedHandlerTest {
                 5.0, 0.5, 0.0, pricing::currentPrice, factory::avgLeadTime, List.of(new ProductId(1)), new Random(1));
         SalesAgent agent = SalesAgent.withDefaultConfig();
 
-        return new IntegratedHandler(factory, demand, pricing, agent, agentEnabled);
+        return new IntegratedHandler(factory, demand, pricing, new FinanceHandler(), agent, agentEnabled);
     }
 
     @Test

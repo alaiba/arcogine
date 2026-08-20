@@ -9,6 +9,7 @@ import com.arcogine.factory.process.FactoryHandler;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
+import com.arcogine.finance.process.FinanceHandler;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.scenario.EquipmentConfig;
@@ -82,7 +83,8 @@ public final class HandlerFactory {
 
         boolean agentEnabled = config.agent() != null && config.agent().enabled();
         SalesAgent agent = SalesAgent.withDefaultConfig();
+        FinanceHandler finance = new FinanceHandler();
 
-        return new IntegratedHandler(factory, demand, pricing, agent, agentEnabled);
+        return new IntegratedHandler(factory, demand, pricing, finance, agent, agentEnabled);
     }
 }

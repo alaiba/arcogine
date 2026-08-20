@@ -299,7 +299,7 @@ The simulation advances via discrete events rather than fixed time steps:
 
 - **Order creation** — new demand enters the system, its unit price locked in at this instant
 - **Task start / end** — production work begins and completes
-- **Order completed** *(planned)* — the operational fact that an order fulfilled its full routing, distinct from a single `TaskEnd`; see "Commercial, Operational, and Financial Truth" above
+- **Order completed** — the operational fact that an order fulfilled its full routing, distinct from a single `TaskEnd`; see "Commercial, Operational, and Financial Truth" above
 - **Machine availability** — machines go online, offline, or change state
 - **Price changes** — pricing adjustments affect future demand
 - **Agent decisions** — external actors submit commands that influence the system
@@ -325,10 +325,9 @@ java/
 ├── sim-factory/    Factory domain: Machine, Job, Routing, FactoryHandler
 ├── sim-economy/    Economic layer: PricingState, DemandModel
 ├── sim-agents/     Agent framework: SalesAgent, AgentObservation
-├── sim-finance/    (planned) Finance domain: FinanceHandler, Ledger, Account,
-│                   Posting, JournalEntry — see "Commercial, Operational, and
-│                   Financial Truth" above. Not yet implemented; see the backlog
-│                   in devel/architecture-assessment-events-state-observations.md.
+├── sim-finance/    Finance domain: FinanceHandler, Ledger, Account, Posting,
+│                   JournalEntry, FinanceObservation — see "Commercial,
+│                   Operational, and Financial Truth" above
 ├── sim-api/        Spring Boot HTTP + SSE server: controllers, SimThread,
 │                   IntegratedHandler, SnapshotBuilder, DTOs
 └── sim-cli/        Picocli CLI entry point: serve + headless run modes
@@ -340,7 +339,7 @@ java/
 sim-types ← sim-core ← sim-factory
                       ← sim-economy
                       ← sim-agents
-                      ← sim-finance (planned)
+                      ← sim-finance
                            ↑
             sim-api ←──────┘ (all of the above)
                 ↑

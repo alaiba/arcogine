@@ -34,6 +34,10 @@ dependencies {
     // @SpringBootTest(RANDOM_PORT) servlet server (SB4 no longer
     // auto-configures a live-server WebTestClient bean).
     testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+    // Enforces the module-boundary/capability guardrails in CONTRIBUTING.md as CI-checked
+    // rules (see ArchitectureTest) rather than review discipline alone. sim-api is where all
+    // domain modules are already visible, so it's the natural place for this scan to run from.
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
 }
 
 tasks.bootJar {

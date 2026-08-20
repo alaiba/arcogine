@@ -115,7 +115,7 @@ Observations inform Decisions.
 Decisions produce Events.
 ```
 
-Use these rules during code review, especially when adding a new domain (inventory, procurement, finance, workforce, maintenance, another agent) or touching `IntegratedHandler`:
+Use these rules during code review, especially when adding a new domain (inventory, procurement, finance, workforce, maintenance, another agent) or touching `IntegratedHandler`. A subset is CI-enforced, not just review discipline — `sim-api`'s `ArchitectureTest` (ArchUnit) checks: `sim-agents`/`sim-finance` never depend on `sim-factory`/`sim-economy`; `Ledger.post` and `Job`/`Machine`'s lifecycle mutators are never called from outside their owning module. Everything else below is still enforced by review.
 
 1. Every mutable piece of domain state must have exactly one authoritative owner.
 2. Cross-domain consumers receive read-only observations or explicit, purpose-specific context — never a reference to another subsystem's mutable state.

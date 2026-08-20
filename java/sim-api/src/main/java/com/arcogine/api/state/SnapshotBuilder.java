@@ -42,7 +42,7 @@ public final class SnapshotBuilder {
                 THROUGHPUT_RATE.compute(eventLog, currentTime),
                 ORDER_COUNT.compute(eventLog, currentTime));
 
-        List<MachineInfo> machines = handler.factory().machines.machines().stream()
+        List<MachineInfo> machines = handler.factory().machinesView().stream()
                 .map(m -> new MachineInfo(
                         m.id().value(),
                         m.name(),
@@ -68,11 +68,9 @@ public final class SnapshotBuilder {
             }
         }
 
-        List<JobInfo> jobs = handler.factory().jobs.allJobs()
+        List<JobInfo> jobs = handler.factory().jobsView()
                 .map(j -> {
-                    Double revenue = j.status() == JobStatus.Completed
-                            ? handler.pricing().currentPrice() * j.quantity()
-                            : null;
+                    Double revenue = j.status() == JobStatus.Completed ? j.orderValue() : null;
                     Long completedAt = j.completedAt() != null ? j.completedAt().ticks() : null;
                     return new JobInfo(
                             j.id().value(),
@@ -94,10 +92,10 @@ public final class SnapshotBuilder {
                 kpis,
                 new TopologySnapshot(machines, edges),
                 jobs,
-                handler.factory().totalRevenue,
-                handler.factory().completedSales,
+                handler.factory().completedSalesValue(),
+                handler.factory().completedSales(),
                 handler.factory().backlog(),
-                handler.pricing().currentPrice(),
+                handler.pricing().offerPrice(),
                 handler.agentEnabled(),
                 config != null,
                 lastError);

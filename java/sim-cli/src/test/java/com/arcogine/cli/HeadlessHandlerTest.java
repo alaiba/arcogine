@@ -78,7 +78,7 @@ class HeadlessHandlerTest {
         Event order = scheduler.nextEvent().orElseThrow();
         handler.handleEvent(order, scheduler);
         assertTrue(
-                handler.factory.jobs.allJobs().count() > 0,
+                handler.factory.jobsView().count() > 0,
                 "factory should have a job after OrderCreation");
     }
 
@@ -88,13 +88,13 @@ class HeadlessHandlerTest {
     }
 
     @Test
-    void runHeadlessCompletesWithSalesAndRevenue() {
+    void runHeadlessCompletesWithSalesAndValue() {
         ScenarioConfig config = basicConfig();
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
         SimResult result = runHeadless(config, handler);
         assertTrue(result.eventsProcessed() > 0);
-        assertTrue(handler.factory.completedSales > 0);
-        assertTrue(handler.factory.totalRevenue > 0.0);
+        assertTrue(handler.factory.completedSales() > 0);
+        assertTrue(handler.factory.completedSalesValue() > 0.0);
     }
 
     @Test
@@ -162,7 +162,7 @@ class HeadlessHandlerTest {
                 """;
         ScenarioConfig config = ScenarioLoader.loadScenario(toml);
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
-        assertEquals(10.0, handler.currentPrice());
+        assertEquals(10.0, handler.offerPrice());
     }
 
     @Test
@@ -183,6 +183,6 @@ class HeadlessHandlerTest {
 
         Event priceEvent = Event.of(SimTime.of(1), new EventPayload.PriceChange(99.0));
         handler.handleEvent(priceEvent, scheduler);
-        assertEquals(99.0, handler.currentPrice());
+        assertEquals(99.0, handler.offerPrice());
     }
 }

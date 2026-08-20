@@ -19,9 +19,10 @@ public class JobStore {
         this.nextId = 1;
     }
 
-    public JobId createJob(ProductId productId, long quantity, int totalSteps, SimTime createdAt) {
+    public JobId createJob(
+            ProductId productId, long quantity, int totalSteps, SimTime createdAt, double unitPrice) {
         JobId id = new JobId(nextId++);
-        jobs.add(new Job(id, productId, quantity, totalSteps, createdAt));
+        jobs.add(new Job(id, productId, quantity, totalSteps, createdAt, unitPrice));
         return id;
     }
 

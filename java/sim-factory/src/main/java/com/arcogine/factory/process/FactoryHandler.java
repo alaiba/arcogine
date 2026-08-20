@@ -6,8 +6,10 @@ import com.arcogine.core.handler.EventHandler;
 import com.arcogine.core.queue.Scheduler;
 import com.arcogine.factory.jobs.Job;
 import com.arcogine.factory.jobs.JobStore;
+import com.arcogine.factory.jobs.JobView;
 import com.arcogine.factory.machines.Machine;
 import com.arcogine.factory.machines.MachineStore;
+import com.arcogine.factory.machines.MachineView;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
@@ -18,32 +20,32 @@ import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class FactoryHandler implements EventHandler {
 
-    public final MachineStore machines;
-    public final JobStore jobs;
+    final MachineStore machines;
+    final JobStore jobs;
     public final RoutingStore routings;
     public final List<ProductId> productIds;
-    public double totalRevenue;
-    public long completedSales;
-    private double currentPrice;
+    private double completedSalesValue;
+    private long completedSales;
 
     public FactoryHandler(MachineStore machines, RoutingStore routings, List<ProductId> productIds) {
         this.machines = machines;
         this.jobs = new JobStore();
         this.routings = routings;
         this.productIds = List.copyOf(productIds);
-        this.totalRevenue = 0.0;
+        this.completedSalesValue = 0.0;
         this.completedSales = 0;
-        this.currentPrice = 0.0;
     }
 
     @Override
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
         switch (event.payload()) {
             case EventPayload.OrderCreation oc ->
-                    handleOrderCreation(oc.productId(), oc.quantity(), scheduler, event.time());
+                    handleOrderCreation(
+                            oc.productId(), oc.quantity(), oc.unitPrice(), scheduler, event.time());
             case EventPayload.TaskEnd te ->
                     handleTaskEnd(te.jobId(), te.machineId(), te.stepIndex(), scheduler, event.time());
             case EventPayload.MachineAvailabilityChange mac ->
@@ -52,8 +54,31 @@ public class FactoryHandler implements EventHandler {
         }
     }
 
-    public void setCurrentPrice(double price) {
-        this.currentPrice = price;
+    public double completedSalesValue() {
+        return completedSalesValue;
+    }
+
+    public long completedSales() {
+        return completedSales;
+    }
+
+    /**
+     * Read-only lookup for a single job -- deliberately returns {@link JobView}, not {@link Job},
+     * so external callers can't reach {@code start}/{@code completeStep} and bypass event-driven
+     * mutation.
+     */
+    public JobView job(JobId id) {
+        return jobs.get(id);
+    }
+
+    /** Read-only view of every job -- see {@link #job(JobId)}. */
+    public Stream<JobView> jobsView() {
+        return jobs.allJobs().map(JobView.class::cast);
+    }
+
+    /** Read-only view of every machine -- excludes machine mutators for the same reason as {@link #job(JobId)}. */
+    public List<MachineView> machinesView() {
+        return machines.machines().stream().map(MachineView.class::cast).toList();
     }
 
     public long backlog() {
@@ -107,11 +132,15 @@ public class FactoryHandler implements EventHandler {
     }
 
     private void handleOrderCreation(
-            ProductId productId, long quantity, Scheduler scheduler, SimTime currentTime) {
+            ProductId productId,
+            long quantity,
+            double unitPrice,
+            Scheduler scheduler,
+            SimTime currentTime) {
         Routing routing = routings.getRoutingForProduct(productId);
         int totalSteps = routing.stepCount();
 
-        JobId jobId = jobs.createJob(productId, quantity, totalSteps, currentTime);
+        JobId jobId = jobs.createJob(productId, quantity, totalSteps, currentTime, unitPrice);
 
         routing.getStep(0).ifPresent(firstStep -> {
             MachineId machineId = firstStep.machineId();
@@ -146,8 +175,12 @@ public class FactoryHandler implements EventHandler {
         job.completeStep(currentTime);
 
         if (job.isComplete()) {
-            totalRevenue += currentPrice * job.quantity();
+            completedSalesValue += job.orderValue();
             completedSales += 1;
+            scheduler.schedule(Event.of(
+                    currentTime,
+                    new EventPayload.OrderCompleted(
+                            job.id(), job.productId(), job.quantity(), job.unitPrice())));
         } else {
             int nextStepIndex = job.currentStep();
             ProductId productId = job.productId();

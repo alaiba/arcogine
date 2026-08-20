@@ -19,6 +19,7 @@ dependencies {
     implementation(project(":sim-factory"))
     implementation(project(":sim-economy"))
     implementation(project(":sim-agents"))
+    implementation(project(":sim-finance"))
     implementation(project(":sim-api"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")

@@ -11,6 +11,7 @@ import com.arcogine.factory.process.FactoryHandler;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
+import com.arcogine.finance.process.FinanceHandler;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
@@ -28,15 +29,22 @@ public class HeadlessHandler implements EventHandler {
     public final FactoryHandler factory;
     private final PricingState pricing;
     private final DemandModel demand;
+    private final FinanceHandler finance;
 
-    private HeadlessHandler(FactoryHandler factory, PricingState pricing, DemandModel demand) {
+    private HeadlessHandler(
+            FactoryHandler factory, PricingState pricing, DemandModel demand, FinanceHandler finance) {
         this.factory = factory;
         this.pricing = pricing;
         this.demand = demand;
+        this.finance = finance;
     }
 
-    public double currentPrice() {
-        return pricing.currentPrice();
+    public FinanceHandler finance() {
+        return finance;
+    }
+
+    public double offerPrice() {
+        return pricing.offerPrice();
     }
 
     public static HeadlessHandler fromConfig(ScenarioConfig config) {
@@ -88,25 +96,24 @@ public class HeadlessHandler implements EventHandler {
                 : EconomyConfig.DEFAULT_LEAD_TIME_SENSITIVITY;
 
         Random rng = new Random(config.simulation().rngSeed());
+        PricingState pricing = new PricingState(initialPrice);
         DemandModel demand = new DemandModel(
                 baseDemand,
                 priceElasticity,
                 leadTimeSensitivity,
-                initialPrice,
+                pricing::offerPrice,
+                factory::avgLeadTime,
                 productIds,
                 rng);
-        PricingState pricing = new PricingState(initialPrice);
 
-        return new HeadlessHandler(factory, pricing, demand);
+        return new HeadlessHandler(factory, pricing, demand, new FinanceHandler());
     }
 
     @Override
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
         pricing.handleEvent(event, scheduler);
-        demand.setPrice(pricing.currentPrice());
-        demand.setAvgLeadTime(factory.avgLeadTime());
         demand.handleEvent(event, scheduler);
-        factory.setCurrentPrice(pricing.currentPrice());
         factory.handleEvent(event, scheduler);
+        finance.handleEvent(event, scheduler);
     }
 }

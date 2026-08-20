@@ -38,6 +38,37 @@ Leaf targets follow a `<domain>-<action>` naming convention (e.g. `java-test`, `
 
 All Java commands run through the Gradle wrapper under `java/`; the Make targets wrap them.
 
+### Running Java tests without a local JDK 25
+
+If your machine doesn't have JDK 25 installed and Gradle's toolchain auto-provisioning isn't configured (no `settings.gradle.kts` foojay resolver), run the build inside the same image the project's own `Dockerfile` uses (`gradle:9-jdk25`), rather than skipping verification:
+
+```bash
+# One-off run (simplest; pays container/JVM startup cost each time):
+docker run --rm -v "$(pwd)/java:/app" -v arcogine_gradle_cache:/root/.gradle -w /app \
+  gradle:9-jdk25 sh -c "./gradlew test --no-daemon"
+```
+
+For repeated runs during active development, start a long-lived container once and `exec` into it — this lets the Gradle daemon (and JIT-warmed JVM) stay resident across invocations instead of restarting from cold every time:
+
+```bash
+# Start once (per machine/session):
+docker run -d --name arcogine-build -v "$(pwd)/java:/app" -v arcogine_gradle_cache:/root/.gradle \
+  -w /app gradle:9-jdk25 tail -f /dev/null
+
+# Then, repeatedly:
+docker exec arcogine-build ./gradlew test
+docker exec arcogine-build ./gradlew :sim-factory:test --tests "com.arcogine.factory.process.FactoryHandlerTest"
+
+# When done:
+docker stop arcogine-build && docker rm arcogine-build
+```
+
+Notes:
+
+- The `arcogine_gradle_cache` named volume caches the downloaded Gradle distribution and dependencies across runs — without it, each fresh container re-downloads `gradle-9.1.0-bin.zip`. Neither the volume nor the `arcogine-build` container survive a move to a different machine; recreate them there with the commands above.
+- If `java/*/build/` directories already exist on the host from an earlier run with a *different* JDK (e.g. a stray local JDK 21 run), Gradle may report tasks `UP-TO-DATE` from stale, filesystem-timestamp-based caching without actually re-executing them in the container — confirm real execution by checking for `PASSED`/`FAILED` lines per test, not just `BUILD SUCCESSFUL`. Delete those stale `build/` dirs once (`rm -rf java/*/build java/build`) rather than passing `--rerun-tasks` on every invocation.
+- `java/gradle.properties` enables `org.gradle.parallel=true` and `org.gradle.caching=true` — these are committed to the repo and apply automatically regardless of how you invoke Gradle.
+
 ## Test categories
 
 ### 1. Java static analysis (Checkstyle)

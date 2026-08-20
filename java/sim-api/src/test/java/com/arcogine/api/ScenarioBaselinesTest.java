@@ -1,5 +1,6 @@
 package com.arcogine.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.api.state.HandlerFactory;
@@ -8,8 +9,12 @@ import com.arcogine.core.event.EventType;
 import com.arcogine.core.runner.SimResult;
 import com.arcogine.core.runner.SimRunner;
 import com.arcogine.core.scenario.ScenarioLoader;
+import com.arcogine.finance.ledger.Account;
+import com.arcogine.types.JobId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.scenario.ScenarioConfig;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -175,8 +180,8 @@ class ScenarioBaselinesTest {
     void basicScenarioRunsToCompletion() throws SimError {
         RunOutcome run = run(BASIC_SCENARIO);
         assertTrue(run.result().eventsProcessed() > 0, "no events processed");
-        assertTrue(run.handler().factory().completedSales > 0, "no sales completed");
-        assertTrue(run.handler().factory().totalRevenue > 0.0, "no revenue generated");
+        assertTrue(run.handler().factory().completedSales() > 0, "no sales completed");
+        assertTrue(run.handler().factory().completedSalesValue() > 0.0, "no sales value generated");
     }
 
     @Test
@@ -211,9 +216,63 @@ class ScenarioBaselinesTest {
     }
 
     @Test
-    void revenueGeneratedFromCompletedJobs() throws SimError {
+    void completedSalesValueGeneratedFromCompletedJobs() throws SimError {
         RunOutcome run = run(BASIC_SCENARIO);
-        assertTrue(run.handler().factory().totalRevenue > 0.0);
-        assertTrue(run.handler().factory().completedSales > 0);
+        assertTrue(run.handler().factory().completedSalesValue() > 0.0);
+        assertTrue(run.handler().factory().completedSales() > 0);
+    }
+
+    @Test
+    void sameScenarioAndSeedProducesIdenticalOrdersAndCompletedSalesValue() throws SimError {
+        RunOutcome first = run(BASIC_SCENARIO);
+        RunOutcome second = run(BASIC_SCENARIO);
+
+        assertEquals(
+                first.handler().factory().completedSalesValue(),
+                second.handler().factory().completedSalesValue(),
+                "same scenario + seed must produce identical completedSalesValue");
+        assertEquals(first.handler().factory().completedSales(), second.handler().factory().completedSales());
+        assertEquals(first.result().eventsProcessed(), second.result().eventsProcessed());
+
+        long ordersA = first.result().eventLog().filterByType(EventType.OrderCreation).count();
+        long ordersB = second.result().eventLog().filterByType(EventType.OrderCreation).count();
+        assertEquals(ordersA, ordersB, "identical number of orders must be generated");
+
+        long jobCount = first.handler().factory().jobsView().count();
+        assertEquals(jobCount, second.handler().factory().jobsView().count());
+        for (long id = 1; id <= jobCount; id++) {
+            var jobA = first.handler().factory().job(new JobId(id));
+            var jobB = second.handler().factory().job(new JobId(id));
+            assertEquals(jobA.unitPrice(), jobB.unitPrice(), "job " + id + " unitPrice must be reproducible");
+            assertEquals(jobA.orderValue(), jobB.orderValue(), "job " + id + " orderValue must be reproducible");
+            assertEquals(jobA.status(), jobB.status(), "job " + id + " status must be reproducible");
+        }
+    }
+
+    @Test
+    void financeLedgerAgreesWithFactoryCompletedSalesValue() throws SimError {
+        RunOutcome run = run(BASIC_SCENARIO);
+
+        assertEquals(run.handler().factory().completedSales(), run.handler().finance().ledger().entries().size(),
+                "one journal entry per completed order under the immediate-settlement policy");
+
+        BigDecimal cash = run.handler().finance().ledger().balance(Account.CASH);
+        assertEquals(
+                0,
+                cash.compareTo(BigDecimal.valueOf(run.handler().factory().completedSalesValue())
+                        .setScale(2, RoundingMode.HALF_UP)),
+                "Finance's Cash balance must agree with Factory's completedSalesValue "
+                        + "under the current immediate-settlement policy");
+    }
+
+    @Test
+    void financeLedgerIsReproducibleForSameScenarioAndSeed() throws SimError {
+        RunOutcome first = run(BASIC_SCENARIO);
+        RunOutcome second = run(BASIC_SCENARIO);
+
+        assertEquals(
+                first.handler().finance().ledger().entries(),
+                second.handler().finance().ledger().entries(),
+                "same scenario + seed must produce an identical sequence of journal entries");
     }
 }

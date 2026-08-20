@@ -33,7 +33,7 @@ class JobRoutingTest {
 
     @Test
     void newJobIsQueued() {
-        Job job = new Job(new JobId(1), new ProductId(1), 10, 2, new SimTime(0));
+        Job job = new Job(new JobId(1), new ProductId(1), 10, 2, new SimTime(0), 12.0);
         assertEquals(JobStatus.Queued, job.status());
         assertEquals(0, job.currentStep());
         assertNull(job.currentMachine());
@@ -41,8 +41,22 @@ class JobRoutingTest {
     }
 
     @Test
+    void orderPriceIsCapturedAtCreationAndOrderValueIsQuantityTimesOrderPrice() {
+        Job job = new Job(new JobId(1), new ProductId(1), 5, 1, new SimTime(0), 12.0);
+        assertEquals(12.0, job.unitPrice());
+        assertEquals(60.0, job.orderValue());
+
+        job.start(new MachineId(1));
+        job.completeStep(new SimTime(5));
+
+        // Completion does not change the order's price or value: it was fixed at creation.
+        assertEquals(12.0, job.unitPrice());
+        assertEquals(60.0, job.orderValue());
+    }
+
+    @Test
     void jobAdvancesThroughSteps() {
-        Job job = new Job(new JobId(1), new ProductId(1), 10, 2, new SimTime(0));
+        Job job = new Job(new JobId(1), new ProductId(1), 10, 2, new SimTime(0), 12.0);
 
         // Start first step
         job.start(new MachineId(1));
@@ -68,7 +82,7 @@ class JobRoutingTest {
 
     @Test
     void completedJobHasLeadTime() {
-        Job job = new Job(new JobId(1), new ProductId(1), 10, 1, new SimTime(10));
+        Job job = new Job(new JobId(1), new ProductId(1), 10, 1, new SimTime(10), 12.0);
         job.start(new MachineId(1));
         job.completeStep(new SimTime(25));
 
@@ -77,7 +91,7 @@ class JobRoutingTest {
 
     @Test
     void cannotStartCompletedJob() {
-        Job job = new Job(new JobId(1), new ProductId(1), 10, 1, new SimTime(0));
+        Job job = new Job(new JobId(1), new ProductId(1), 10, 1, new SimTime(0), 12.0);
         job.start(new MachineId(1));
         job.completeStep(new SimTime(5));
         assertEquals(JobStatus.Completed, job.status());
@@ -87,7 +101,7 @@ class JobRoutingTest {
 
     @Test
     void cannotCompleteStepWhenQueued() {
-        Job job = new Job(new JobId(1), new ProductId(1), 10, 2, new SimTime(0));
+        Job job = new Job(new JobId(1), new ProductId(1), 10, 2, new SimTime(0), 12.0);
         assertEquals(JobStatus.Queued, job.status());
 
         // Completing a step without starting should fail
@@ -98,8 +112,8 @@ class JobRoutingTest {
     @Test
     void jobStoreCreatesUniqueIds() {
         JobStore store = new JobStore();
-        JobId id1 = store.createJob(new ProductId(1), 10, 2, new SimTime(0));
-        JobId id2 = store.createJob(new ProductId(1), 5, 2, new SimTime(1));
+        JobId id1 = store.createJob(new ProductId(1), 10, 2, new SimTime(0), 12.0);
+        JobId id2 = store.createJob(new ProductId(1), 5, 2, new SimTime(1), 20.0);
         assertNotEquals(id1, id2);
     }
 

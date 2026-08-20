@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class Machine {
+public class Machine implements MachineView {
 
     private final MachineId id;
     private final String name;
@@ -76,6 +76,7 @@ public class Machine {
         return Optional.ofNullable(queue.pollFirst());
     }
 
+    @Override
     public int queueDepth() {
         return queue.size();
     }
@@ -95,38 +96,46 @@ public class Machine {
         }
     }
 
+    @Override
     public MachineId id() {
         return id;
     }
 
+    @Override
     public String name() {
         return name;
     }
 
+    @Override
     public MachineState state() {
         return state;
     }
 
+    @Override
     public int concurrency() {
         return concurrency;
     }
 
+    @Override
     public List<JobId> activeJobs() {
-        return activeJobs;
+        return List.copyOf(activeJobs);
     }
 
     public ArrayDeque<JobId> queue() {
         return queue;
     }
 
+    @Override
     public Double capacityLiters() {
         return capacityLiters;
     }
 
+    @Override
     public long setupTime() {
         return setupTime;
     }
 
+    @Override
     public long busyTicks() {
         return busyTicks;
     }

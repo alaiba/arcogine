@@ -9,28 +9,40 @@ import java.util.PriorityQueue;
 
 public class Scheduler {
 
-    private final PriorityQueue<Event> queue = new PriorityQueue<>(Comparator.comparing(Event::time));
+    /**
+     * Events at the same SimTime are ordered by insertion sequence (FIFO) so that same-tick
+     * ordering is deterministic rather than left to PriorityQueue's unspecified tie-breaking.
+     * This preserves the existing implicit expectation that, e.g., a TaskStart scheduled before
+     * a TaskEnd at the same tick is processed first.
+     */
+    private record Entry(Event event, long sequence) {}
+
+    private static final Comparator<Entry> ORDER =
+            Comparator.<Entry, SimTime>comparing(e -> e.event().time()).thenComparingLong(Entry::sequence);
+
+    private final PriorityQueue<Entry> queue = new PriorityQueue<>(ORDER);
     private SimTime currentTime = SimTime.ZERO;
+    private long nextSequence = 0;
 
     public void schedule(Event event) {
         if (event.time().compareTo(currentTime) < 0) {
             throw new SimError.EventOrderingViolation(currentTime, event.time());
         }
-        queue.add(event);
+        queue.add(new Entry(event, nextSequence++));
     }
 
     public Optional<Event> nextEvent() {
-        Event event = queue.poll();
-        if (event == null) {
+        Entry entry = queue.poll();
+        if (entry == null) {
             return Optional.empty();
         }
-        currentTime = event.time();
-        return Optional.of(event);
+        currentTime = entry.event().time();
+        return Optional.of(entry.event());
     }
 
     public Optional<SimTime> peekTime() {
-        Event head = queue.peek();
-        return head == null ? Optional.empty() : Optional.of(head.time());
+        Entry head = queue.peek();
+        return head == null ? Optional.empty() : Optional.of(head.event().time());
     }
 
     public SimTime currentTime() {

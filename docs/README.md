@@ -20,7 +20,7 @@
 
 | Document | What it covers |
 |----------|----------------|
-| [Architecture](architecture.md) | Design philosophy, crate structure, determinism contract, event dispatch, technology stack |
+| [Architecture](architecture.md) | Design philosophy (including the Events–State–Observations model), module structure, determinism contract, event dispatch, technology stack |
 | [Standards alignment](standards-alignment.md) | ISA-95, ISO 22400, DES, RAMI 4.0 mapping |
 | [Vision](vision.md) | Project identity, long-term directions, naming |
 | [SECURITY.md](../SECURITY.md) | Security policy, hardening posture, deployment constraints |
@@ -33,3 +33,4 @@ These documents are internal planning artifacts, not user-facing guides:
 |----------|----------------|
 | [Deployment options](../devel/deployment-options.md) | Runtime path analysis |
 | [Logging improvement plan](../devel/logging-improvement-plan.md) | Observability audit and improvement plan |
+| [Events–State–Observations architecture assessment](../devel/architecture-assessment-events-state-observations.md) | Source-level review against the Events–State–Observations philosophy and staged refactoring backlog |

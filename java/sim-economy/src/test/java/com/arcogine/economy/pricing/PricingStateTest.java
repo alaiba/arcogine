@@ -18,7 +18,7 @@ class PricingStateTest {
     @Test
     void initialPriceSetCorrectly() {
         PricingState ps = new PricingState(10.0);
-        assertEquals(10.0, ps.currentPrice());
+        assertEquals(10.0, ps.offerPrice());
         assertEquals(1, ps.priceHistory().size());
     }
 
@@ -27,7 +27,7 @@ class PricingStateTest {
         PricingState ps = new PricingState(10.0);
         ps.setPrice(15.0, 50);
 
-        assertEquals(15.0, ps.currentPrice());
+        assertEquals(15.0, ps.offerPrice());
         assertEquals(2, ps.priceHistory().size());
         assertEquals(new PricePoint(50, 15.0), ps.priceHistory().get(1));
     }
@@ -39,7 +39,7 @@ class PricingStateTest {
         ps.setPrice(8.0, 20);
         ps.setPrice(15.0, 30);
 
-        assertEquals(15.0, ps.currentPrice());
+        assertEquals(15.0, ps.offerPrice());
         assertEquals(4, ps.priceHistory().size());
     }
 
@@ -51,7 +51,7 @@ class PricingStateTest {
         sched.schedule(event);
         sched.nextEvent();
         ps.handleEvent(event, sched);
-        assertEquals(15.0, ps.currentPrice());
+        assertEquals(15.0, ps.offerPrice());
         assertEquals(2, ps.priceHistory().size());
         assertEquals(new PricePoint(5, 15.0), ps.priceHistory().get(1));
     }
@@ -64,7 +64,7 @@ class PricingStateTest {
         sched.schedule(event);
         sched.nextEvent();
         ps.handleEvent(event, sched);
-        assertEquals(10.0, ps.currentPrice());
+        assertEquals(10.0, ps.offerPrice());
         assertEquals(1, ps.priceHistory().size());
     }
 }

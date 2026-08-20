@@ -12,22 +12,22 @@ public class PricingState implements EventHandler {
 
     public record PricePoint(long tick, double price) {}
 
-    private double currentPrice;
+    private double offerPrice;
     private final List<PricePoint> priceHistory;
 
     public PricingState(double initialPrice) {
-        this.currentPrice = initialPrice;
+        this.offerPrice = initialPrice;
         this.priceHistory = new ArrayList<>();
         this.priceHistory.add(new PricePoint(0, initialPrice));
     }
 
     public void setPrice(double price, long tick) {
-        this.currentPrice = price;
+        this.offerPrice = price;
         this.priceHistory.add(new PricePoint(tick, price));
     }
 
-    public double currentPrice() {
-        return currentPrice;
+    public double offerPrice() {
+        return offerPrice;
     }
 
     public List<PricePoint> priceHistory() {

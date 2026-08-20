@@ -34,6 +34,6 @@ public class MachineStore {
     }
 
     public List<Machine> machines() {
-        return machines;
+        return List.copyOf(machines);
     }
 }

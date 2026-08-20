@@ -252,6 +252,38 @@ class FactoryHandlerTest {
     }
 
     @Test
+    void completedSalesValueAndCountEqualTheSumAndCountOfCompletedJobs() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+
+        Event order1 = orderEvent(1, 2, 10.0);
+        sched.schedule(order1);
+        sched.nextEvent();
+        h.handleEvent(order1, sched);
+        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+
+        Event order2 = orderEvent(6, 3, 20.0);
+        sched.schedule(order2);
+        sched.nextEvent();
+        h.handleEvent(order2, sched);
+        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+
+        double expectedValue = h.jobsView()
+                .filter(j -> j.status() == com.arcogine.types.JobStatus.Completed)
+                .mapToDouble(com.arcogine.factory.jobs.JobView::orderValue)
+                .sum();
+        long expectedCount = h.jobsView()
+                .filter(j -> j.status() == com.arcogine.types.JobStatus.Completed)
+                .count();
+
+        assertEquals(
+                expectedValue,
+                h.completedSalesValue(),
+                "completedSalesValue is a cached aggregate; it must equal Sum(orderValue) over completed jobs");
+        assertEquals(expectedCount, h.completedSales());
+    }
+
+    @Test
     void machineAvailabilityDispatchesQueuedOnOnline() {
         FactoryHandler h = oneMachineOneProduct();
         Scheduler sched = new Scheduler();

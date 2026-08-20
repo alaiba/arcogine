@@ -89,6 +89,26 @@ Observations should:
 - be immutable;
 - define the capability and visibility boundary for whoever consumes them (an agent can only act on what its observation exposes).
 
+### Domain observations vs. API/UI snapshots
+
+Two different things are easy to conflate because they can look similar in shape: a domain observation (e.g. `AgentObservation`, `FinanceObservation`) and an API/UI snapshot (e.g. `SnapshotBuilder`'s DTOs, `SimSnapshot`). The distinction is about audience and lifecycle, not just structure:
+
+- A **domain observation** exists to support a decision made *inside* the simulation, this tick, by a consumer that is itself part of the deterministic event loop (an agent, a policy, a future evaluation component). It is scoped to exactly what that decision needs, is constructed fresh from authoritative state, and is never serialized or versioned — its contract is Java-internal.
+- An **API/UI snapshot** exists to serialize simulation state *outward*, to an external, non-deterministic consumer (an HTTP client, the UI) that is not part of the simulation loop and does not make simulation decisions. It has a wire contract (JSON field names, versioning concerns) that a domain observation must never be shaped by.
+
+Concretely: `FinanceObservation` (cash, sales balance, as `BigDecimal`) is what a future `FinanceAgent` would read to decide something *inside* the tick. `SimSnapshot`'s finance-facing fields, if ever added, would be what the UI reads to *display* the same underlying ledger state, independently shaped by JSON/display concerns (e.g. rounding for presentation, field names following the `snake_case` DTO convention rather than domain vocabulary). The two are allowed to report the same numbers; they must never be the same type, and a domain handler must never accept a DTO as an argument or return one.
+
+The practical rule: if you find yourself passing a `SimSnapshot`/`JobInfo`/other DTO into a handler or agent to make a simulation decision, that's the DTO being used as an ad hoc internal read model — introduce or extend a domain observation instead. `SnapshotBuilder` is the one place allowed to read domain state broadly, precisely because its output never re-enters the simulation.
+
+### Query dependencies between domains
+
+`DemandModel` reads `OfferPrice` and lead time via `DoubleSupplier`s bound to `PricingState`/`FactoryHandler` at construction, rather than an interface type — deliberately, because the dependency is a single scalar per call. That is the general rule, not a special case:
+
+- **A single scalar (or a handful of independently-meaningful scalars), read without any relationship between them** → a bound `Supplier`/`DoubleSupplier`/similar functional read is enough. It costs nothing to add, doesn't require a new named type, and makes the dependency's narrowness obvious at the call site (a `DoubleSupplier` cannot accidentally expose more than one `double`).
+- **A read contract that is multi-field, or where the fields are semantically related and should be read together as one consistent snapshot** → introduce a purpose-specific interface or a small observation record instead (the way `AgentObservation`/`FinanceObservation` already do for their consumers). The signal that a supplier has outgrown itself is needing *two or more* suppliers from the same domain in the same consumer to represent what is really one coherent fact.
+
+This avoids both extremes: raw concrete dependencies on another domain's mutable class (which would violate the state-ownership rule above), and a proliferation of tiny single-method interfaces for every scalar read. When in doubt, prefer the supplier until a second correlated field is actually needed — don't pre-build the interface for a dependency that doesn't exist yet.
+
 ### Decisions
 
 Decisions are an important consequence of this model, even though they are not one of the three top-level concepts:
@@ -162,6 +182,15 @@ No settlement pricing, indexed contracts, rebates, or discounts are introduced b
 
 This is a deliberate **product decision, not sophistication in accounting**: `CompletedSalesValue` is an operational/commercial KPI (how much value has this factory shipped), computed from completed orders' own agreed prices. It answers "what commercial value has completed production?" — a different question from "what has Finance recorded as sales under the active financial policy?", covered next. Concepts such as configurable revenue-recognition policy, tax, depreciation, or multi-currency remain future scope — but the domain that would own them, Finance, is established now, deliberately minimal. See the next section.
 
+`CompletedSalesValue` and `completedSales` (the count) are **stored incrementally, not derived on read** — `FactoryHandler` increments both fields when a job completes, rather than summing `jobs.orderValue()` over completed jobs each time they're queried. That makes them a cached aggregate with an invariant that must hold at every point in the simulation:
+
+```text
+CompletedSalesValue = Sum(orderValue(j) for j in jobs where j.status == Completed)
+completedSales      = Count(j in jobs where j.status == Completed)
+```
+
+This is a deliberate performance choice (O(1) reads instead of an O(jobs) scan on every snapshot/KPI query), not a second source of truth by accident — but caching invites exactly that risk if the increment site and the completion condition it mirrors ever drift apart. `FactoryHandlerTest.completedSalesValueAndCountEqualTheSumAndCountOfCompletedJobs` locks the invariant down as an executable fact by independently recomputing both sides via `jobsView()` and asserting equality, so a future change that increments in the wrong place (or under the wrong condition) fails a test rather than silently producing two disagreeing truths.
+
 ### What should trigger architectural review
 
 Treat any of the following as a signal to stop and reconsider the design, not just implement around it:
@@ -219,6 +248,8 @@ DR Cash     120
 CR Sales    120
 ```
 
+**`Sales` is a model-specific account, not a claim of standards-compliant revenue recognition.** Under GAAP/IFRS, when revenue may be recognized (and under what conditions) is its own body of policy — performance obligations, variable consideration, contract modifications, and so on. Arcogine's `Sales` account is the credit side of the immediate-settlement posting this simplified model makes on `OrderCompleted`; it is intentionally named after what it structurally is (a credit-normal financial balance) rather than implying it satisfies any accounting standard. If a future scenario needs actual revenue-recognition policy, that's new Finance-domain logic layered on top of (or replacing) this posting rule — not a reinterpretation of what `Sales` already means today.
+
 The point of keeping Finance this minimal is that future financial sophistication (payment terms, receivables, tax) should change Finance's internal policy, not force Factory or Economy to grow accounting concepts. For example, adding payment terms would change only the postings Finance makes — `OrderCompleted` still fires the same way, but Finance would post to `AccountsReceivable` instead of `Cash`, and a later `PaymentReceived` event would move it to `Cash`. Factory never needs to change.
 
 ### Finance follows the same Events–State–Observations model
@@ -271,6 +302,8 @@ This keeps the conversion boundary in exactly one place instead of threading `Bi
 
 **Canonical rounding policy**: converting `double` to `BigDecimal` without a stated scale/rounding rule would just move floating-point artifacts across the boundary instead of resolving them — two independent conversions of the same economic quantity could round differently and appear to disagree. `com.arcogine.finance.ledger.CurrencyPolicy` is the single, explicit answer: amounts entering Finance are quantized to 2 decimal places using `RoundingMode.HALF_UP`, applied once, at the `FinanceHandler` boundary. This is a quantization rule for Arcogine's one simulation currency, not a multi-currency policy.
 
+**The ledger amount is authoritative.** Once `CurrencyPolicy` has quantized an `OrderValue` into a posted `Posting`/`JournalEntry` amount, that `BigDecimal` — not the originating `double` `OrderValue` — is the financially authoritative figure for that transaction. The two are expected to agree to the cent for realistic scenario values, but nothing guarantees bit-for-bit equality between a raw `double` product and its quantized `BigDecimal` counterpart, and no code should assert exact equality between them. If a future scenario ever needs commercial and financial amounts to reconcile exactly, that reconciliation belongs in Finance (comparing quantized amounts to quantized amounts), not as an assumption that `OrderValue` and the posted amount are the same value under two representations.
+
 ### Ownership table
 
 | Concept | Meaning | Owner |
@@ -282,6 +315,7 @@ This keeps the conversion boundary in exactly one place instead of threading `Bi
 | `OrderValue` | Quantity × `OrderPrice` | Derived from `OrderPrice` (currently `Job.orderValue()`) |
 | Production state (machines, jobs, queues, job status) | — | Factory (`FactoryHandler`) |
 | Order completion | Operational fact | Factory-owned, expressed as `OrderCompleted` |
+| `CompletedSalesValue`, `completedSales` | Cached aggregates, not derived-on-read — see note below | Factory (`FactoryHandler`), incremented on completion |
 | Backlog / throughput / lead time | — | Factory, or a KPI/projection layer over it |
 | Financial postings | Financial consequence of relevant events | Finance |
 | Cash | — | Finance |
@@ -316,6 +350,26 @@ Benefits of DES:
 - Only meaningful moments consume compute
 - Time can skip between events of interest
 - Simulation runtime scales with event density, not wall-clock time
+
+### Event taxonomy
+
+Not every `EventPayload` plays the same role, even though all of them flow through the same `Scheduler`/`IntegratedHandler` mechanism uniformly. Distinguishing the roles helps reason about a given event without changing how any of them are dispatched:
+
+- **Domain events** — facts about simulation state changing, owned by exactly one domain: `OrderCreation`, `TaskEnd`, `OrderCompleted`, `MachineAvailabilityChange`, `PriceChange`. These are what the Events–State–Observations invariant is fundamentally about.
+- **Evaluation/timer events** — periodic triggers with no state-owning payload of their own, whose purpose is to cause a domain to re-evaluate: `DemandEvaluation`, `AgentEvaluation`. They don't carry a fact so much as invoke a domain's own decision logic on schedule.
+- **Orchestration/control events** — signals about how the simulation is being run or which decision sources are active, rather than facts about the simulated world: `AgentEnabledChanged`. This is why `AgentEnabledChanged` is handled by `IntegratedHandler` itself (toggling whether `SalesAgent` participates in dispatch) rather than by a domain handler that owns simulation state — it controls the orchestrator's behavior, not a domain's.
+
+All three kinds remain scheduled `Event`s through the same `Scheduler`, deliberately — this taxonomy is a reading aid, not a proposal to split them into different mechanisms (that would reintroduce exactly the kind of special-casing the event system exists to avoid). It exists so a contributor adding a new event can ask "which of these three is this?" and get a clear answer, rather than defaulting every new signal into "domain event" whether or not it actually represents domain state changing.
+
+### When a new domain deserves its own module
+
+Not every new metric or piece of derived behavior warrants a new `XHandler`/module — `sim-finance` was justified by more than "it computes a number Factory doesn't." The admission rule: **a new domain deserves its own handler/module when it owns mutable state with its own invariants and lifecycle, not merely because it has a new metric or helper function.** Concretely, ask:
+
+- Does it own state that nothing else should be able to mutate directly (the way `Ledger` owns postings, or `FactoryHandler` owns job/machine lifecycle)?
+- Does that state have its own invariants worth protecting at construction/mutation time (the way `JournalEntry` rejects unbalanced entries)?
+- Does it react to events from other domains and produce its own facts, rather than just recomputing a view over another domain's existing state?
+
+If the answer is genuinely yes to state-with-invariants, it's a domain — a new `XHandler implements EventHandler`, its own `XObservation`, one line in `IntegratedHandler`'s explicit dispatch sequence (see "Adding a new domain" in the Target Architecture section of [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md)). If the answer is no — it's a computed value over state another domain already owns — it belongs as a method/projection on the existing owner (like `FactoryHandler.completedSalesValue()`) or in a KPI/projection layer, not a new module. This keeps the module count matched to genuine ownership boundaries instead of granularity of features.
 
 ## Module Structure
 

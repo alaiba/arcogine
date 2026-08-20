@@ -19,11 +19,13 @@ See `docs/architecture.md`'s "Core Architecture Philosophy" section for the full
 |---|---|---|---|
 | `ObservedMarketPrice` | External/environmental market signal | Future environment/market domain — **not implemented** | — |
 | `OfferPrice` | The firm's current asking price; input to the demand model | `PricingState` | Mutable — changes on `PriceChange` |
-| `OrderPrice` | Price agreed when a specific order was created (`OfferPrice` at that instant, frozen) | `Job` | Immutable once the order exists |
-| `OrderValue` | `quantity × OrderPrice` | `Job.orderValue()` | Derived |
+| `OrderPrice` | Price agreed when a specific order was created (`OfferPrice` at that instant, frozen) | Commercial fact, carried on `Job` | Immutable once the order exists |
+| `OrderValue` | `quantity × OrderPrice` | Derived, on `Job.orderValue()` | Derived |
 | `CompletedSalesValue` | Sum of `OrderValue` for completed orders — an operational/commercial KPI | `FactoryHandler` | Accumulates as orders complete |
 | Ledger, Cash, Sales (financial balance) | Financial interpretation of operational facts | `FinanceHandler` / `Ledger` (sim-finance) | Mutates only by appending balanced `JournalEntry` records |
 | Revenue (recognition policy, receivables, payables) | Accounting sophistication | Not modeled — explicit non-goal | — |
+
+`OrderPrice`/`OrderValue` are worth a precision note: `Job` is where they're *carried* today, not what conceptually *owns* them. They are commercial/transaction facts — fixed at `OrderCreation`, consumed by Factory for production — not production state. `Job` holds them only because there is currently no separate commercial/order concept distinct from the production-lifecycle object. See `docs/architecture.md`'s "State" section for the full reasoning, including the (currently unwarranted) `Order`/`Job` split this would motivate if a second reason for it ever appears.
 
 Three kinds of truth, related only by events:
 
@@ -42,7 +44,7 @@ COMMERCIAL TRUTH                  OPERATIONAL TRUTH                 FINANCIAL TR
 | `Scheduler` ordering (sim-core) | **Aligned** | Events are ordered by `(time, insertion sequence)`, so same-tick events dequeue deterministically (FIFO) rather than in `PriorityQueue`'s unspecified order. |
 | `PricingState` (sim-economy) | **Aligned** | Sole owner of `OfferPrice` and its history; mutated only via `PriceChange`. |
 | `DemandModel` (sim-economy) | **Aligned** | Reads `OfferPrice`/lead time on demand via `DoubleSupplier`s bound to `PricingState`/`FactoryHandler` at construction — no state of its own to keep in sync. |
-| `FactoryHandler` / `Job` (sim-factory) | **Aligned** | Owns machines/jobs/queues; each `Job` captures its own `OrderPrice` immutably at `OrderCreation` and derives `orderValue()`; `CompletedSalesValue`/`completedSales` are private with accessors. No reference to `PricingState` — the factory never needs `OfferPrice`. |
+| `FactoryHandler` / `Job` (sim-factory) | **Aligned** | Owns machines/jobs/queues/status (production state). Each `Job` also *carries* its own `OrderPrice`, captured immutably at `OrderCreation`, and derives `orderValue()` — a commercial fact riding along with the production object, not something Factory conceptually owns. `CompletedSalesValue`/`completedSales` are private with accessors. No reference to `PricingState` — the factory never needs `OfferPrice`. |
 | `FinanceHandler` / `Ledger` (sim-finance) | **Aligned** | Reacts only to `OrderCompleted`; posts balanced `JournalEntry` records under an immediate-settlement policy; `Posting`/`JournalEntry` construction rejects non-positive amounts and unbalanced entries, so an invalid entry cannot enter state. Module depends only on `sim-types`/`sim-core` — structurally cannot reach into `FactoryHandler`. |
 | `IntegratedHandler` (sim-api) | **Mostly aligned** | Explicit, fixed dispatch order (Pricing → Demand → Factory → Finance → Agent); observation construction is extracted to `AgentObservationProjector` rather than inlined. Gap: the order is implicit in method-call sequence, not a declared, separately-tested contract. |
 | `HandlerFactory` (sim-api) | **Aligned** | Pure wiring; no domain logic. |

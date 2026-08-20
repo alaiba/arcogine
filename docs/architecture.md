@@ -48,7 +48,9 @@ Events:
 
 ### State
 
-Each subsystem exclusively owns its mutable domain state. Pricing owns `OfferPrice` and its history (`PricingState`) — the firm's own current asking price, not any individual order's terms and not an external market signal. Factory owns machines, jobs, queues, completion state, and production metrics, including each order's immutable `OrderPrice`/`OrderValue` and the derived `CompletedSalesValue` (`FactoryHandler`). A future inventory subsystem would own stock; finance would own financial state; workforce would own labor state.
+Each subsystem exclusively owns its mutable domain state. Pricing owns `OfferPrice` and its history (`PricingState`) — the firm's own current asking price, not any individual order's terms and not an external market signal. Factory owns machines, jobs, queues, completion state, production metrics, and the derived `CompletedSalesValue` (`FactoryHandler`). A future inventory subsystem would own stock; finance would own financial state; workforce would own labor state.
+
+Commercial terms (`OrderPrice`/`OrderValue`) are a separate case worth being precise about: they are immutable transaction facts, fixed at `OrderCreation`, that travel *into* Factory with the order rather than being something Factory conceptually owns. `Job` is where they're carried today because there is currently no separate commercial/order concept distinct from the production-lifecycle object — but that's an implementation convenience, not a claim that production and commercial terms are the same kind of state. If a second reason ever emerges to split them (e.g. an order existing before production starts, or one order spanning multiple jobs), the natural refactor is an `Order` (commercial: `orderId`, product, quantity, `unitPrice`) referenced by `Job` (operational: `jobId`, `orderId`, routing, status) — not introduced speculatively now, but the conceptual ownership should already reflect this distinction so the code doesn't imply Factory owns a fact it merely carries.
 
 State should:
 
@@ -65,7 +67,8 @@ Concrete, source-level version of the rule above — checkable in review, not ju
 |---|---|---|
 | `OfferPrice`, price history | `PricingState` | `PriceChange` |
 | Machines, machine availability | `MachineStore` (owned by `FactoryHandler`) | `MachineAvailabilityChange` |
-| Jobs, job status, each job's own `OrderPrice`/`OrderValue` | `JobStore` (owned by `FactoryHandler`) | `OrderCreation` (creates), `TaskEnd` (advances/completes) |
+| Jobs, job status (production lifecycle) | `JobStore` (owned by `FactoryHandler`) | `OrderCreation` (creates), `TaskEnd` (advances/completes) |
+| `OrderPrice`/`OrderValue` (commercial terms — carried into Factory with the order, not owned by it; see the "State" section above) | `Job` (implementation convenience — there is no separate commercial/order concept yet) | Fixed at `OrderCreation`, immutable thereafter |
 | `CompletedSalesValue`, `completedSales` | `FactoryHandler` | `TaskEnd` (on completion) |
 | Ledger, `Cash`/`Sales` balances | `Ledger` (owned by `FinanceHandler`) | `OrderCompleted` |
 | `SalesAgent`'s last observation, intervention count | `SalesAgent` | `observe(...)` (called by `IntegratedHandler`), `AgentEvaluation` |
@@ -273,9 +276,9 @@ This keeps the conversion boundary in exactly one place instead of threading `Bi
 | `ObservedMarketPrice` | External market signal | Future environment/market domain; not currently required |
 | `OfferPrice` | Firm's current asking price | Economy/Pricing (`PricingState`) |
 | Demand state | — | Economy (`DemandModel`) |
-| `OrderPrice` | Price agreed for an accepted order | Immutable commercial order data (`Job`) |
-| `OrderValue` | Quantity × `OrderPrice` | Derived commercial fact (`Job.orderValue()`) |
-| Production state (machines, jobs, queues) | — | Factory (`FactoryHandler`) |
+| `OrderPrice` | Price agreed for an accepted order | Commercial/transaction fact — carried into Factory with the order (currently on `Job`), not conceptually owned by Factory |
+| `OrderValue` | Quantity × `OrderPrice` | Derived from `OrderPrice` (currently `Job.orderValue()`) |
+| Production state (machines, jobs, queues, job status) | — | Factory (`FactoryHandler`) |
 | Order completion | Operational fact | Factory-owned, expressed as `OrderCompleted` |
 | Backlog / throughput / lead time | — | Factory, or a KPI/projection layer over it |
 | Financial postings | Financial consequence of relevant events | Finance |

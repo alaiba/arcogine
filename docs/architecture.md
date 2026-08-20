@@ -64,16 +64,16 @@ Concrete, source-level version of the rule above — checkable in review, not ju
 | Fact | Owning class | Mutated by |
 |---|---|---|
 | `OfferPrice`, price history | `PricingState` | `PriceChange` |
-| Demand state (`avgLeadTime` cache — see caveat below) | `DemandModel` | `PriceChange`, plus an unconditional per-event push from `IntegratedHandler` (transitional, tracked in the backlog) |
 | Machines, machine availability | `MachineStore` (owned by `FactoryHandler`) | `MachineAvailabilityChange` |
 | Jobs, job status, each job's own `OrderPrice`/`OrderValue` | `JobStore` (owned by `FactoryHandler`) | `OrderCreation` (creates), `TaskEnd` (advances/completes) |
 | `CompletedSalesValue`, `completedSales` | `FactoryHandler` | `TaskEnd` (on completion) |
+| Ledger, `Cash`/`Sales` balances | `Ledger` (owned by `FinanceHandler`) | `OrderCompleted` |
 | `SalesAgent`'s last observation, intervention count | `SalesAgent` | `observe(...)` (called by `IntegratedHandler`), `AgentEvaluation` |
-| `IntegratedHandler.agentEnabled` | `IntegratedHandler` | `SimCommand.ToggleAgent` — **note:** this is the one mutation that bypasses the event system entirely; see the "Model `ToggleAgent` consistently" backlog item |
+| `IntegratedHandler.agentEnabled` | `IntegratedHandler` | `AgentEnabledChanged` |
 | `EventLog` | `EventLog` (owned by `SimThread`) | every dispatched event, appended after `handleEvent` |
 | Published API snapshot | `AtomicReference<SimSnapshot>` (owned by `SimThread`) | `SnapshotBuilder.buildSnapshot(...)`, called after each processed event/batch |
 
-**Caveat, not yet resolved**: `DemandModel.currentPrice` and `avgLeadTime` are still pushed copies from `PricingState`/`FactoryHandler` rather than read on demand — `DemandModel` legitimately needs `OfferPrice` and lead time to compute demand (unlike `FactoryHandler`, which needed neither and had its copy deleted outright), but the *mechanism* (an unconditional push on every event from `IntegratedHandler`) is transitional, not the target design. See [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for the backlog item removing this in favor of an on-demand read.
+`DemandModel` reads `OfferPrice` and lead time on demand, via `DoubleSupplier`s bound to `PricingState`/`FactoryHandler` at construction — it has no state of its own to keep in sync, so it isn't listed as an owner above.
 
 ### Observations
 
@@ -199,9 +199,9 @@ FINANCIAL TRUTH
 
 Commercial terms must never be reconstructed from current offer state (that's the `OfferPrice`/`OrderPrice` distinction above). Operational completion is not itself revenue — it's a fact that Finance interprets. Financial interpretation must not happen inside Factory.
 
-### Why a Finance domain now, not later
+### Why a Finance domain, deliberately minimal
 
-The previous position — "revenue recognition and a finance domain are future concerns" — is refined: **Arcogine establishes a minimal Finance domain now, with a deliberately minimal double-entry ledger**, specifically to give monetary concepts (revenue, cost, cash, receivables) a clear owner *before* they leak into Factory or Economy the way `currentPrice` once leaked into `FactoryHandler`. This is not a decision to build sophisticated accounting — the ledger's initial policy is intentionally the smallest thing that's still correct:
+Arcogine has a minimal Finance domain — a deliberately minimal double-entry ledger — so monetary concepts (revenue, cost, cash, receivables) have a clear owner instead of leaking into Factory or Economy. This is not a decision to build sophisticated accounting — the ledger's policy is intentionally the smallest thing that's still correct:
 
 1. Single currency.
 2. Customer settlement is immediate when an order completes (no Accounts Receivable yet).
@@ -216,7 +216,7 @@ DR Cash     120
 CR Sales    120
 ```
 
-The point of establishing Finance now, even this minimally, is that *later* financial sophistication (payment terms, receivables, tax) should change Finance's internal policy, not force Factory or Economy to grow accounting concepts. For example, adding payment terms later changes only the postings Finance makes — `OrderCompleted` still fires the same way, but Finance posts to `AccountsReceivable` instead of `Cash`, and a later `PaymentReceived` event moves it to `Cash`. Factory never needs to change.
+The point of keeping Finance this minimal is that future financial sophistication (payment terms, receivables, tax) should change Finance's internal policy, not force Factory or Economy to grow accounting concepts. For example, adding payment terms would change only the postings Finance makes — `OrderCompleted` still fires the same way, but Finance would post to `AccountsReceivable` instead of `Cash`, and a later `PaymentReceived` event would move it to `Cash`. Factory never needs to change.
 
 ### Finance follows the same Events–State–Observations model
 
@@ -252,13 +252,13 @@ over `FinanceHandler` reaching into `Factory.jobs.completedJobs()` to guess at t
 
 ### A first-class `OrderCompleted` event
 
-Today, order completion is inferred from `TaskEnd` — `FactoryHandler.handleTaskEnd` checks `job.isComplete()` internally, but nothing else in the system observes "this order is done" as a named fact; `TaskEnd` means "a production step finished," which is not the same claim as "the order fulfilled its operational lifecycle." A Finance domain needs the latter, not the former. The recommended shape: when `FactoryHandler` detects `job.isComplete()`, it schedules a new `OrderCompleted` event (in addition to updating its own state) carrying the minimal immutable facts a downstream consumer needs to interpret the transaction — an order identifier, product, quantity, and unit price. `OrderValue` is deliberately **not** duplicated onto the event since it's a trivial, guaranteed derivation (`quantity x unitPrice`); carrying it too would just be another consistency invariant to maintain for no benefit. Both operational KPI/projection consumers and `FinanceHandler` react to `OrderCompleted`, keeping `FactoryHandler` itself ignorant of what either of them does with the fact.
+`TaskEnd` means "a production step finished" — a different claim from "the order fulfilled its operational lifecycle," which is what Finance (and any operational KPI/projection) actually needs. When `FactoryHandler` detects `job.isComplete()`, it schedules a new `OrderCompleted` event (in addition to updating its own state) carrying the minimal immutable facts a downstream consumer needs to interpret the transaction — an order identifier, product, quantity, and unit price. `OrderValue` is deliberately **not** duplicated onto the event since it's a trivial, guaranteed derivation (`quantity x unitPrice`); carrying it too would just be another consistency invariant to maintain for no benefit. `FinanceHandler` reacts to `OrderCompleted`; `FactoryHandler` itself stays ignorant of what Finance does with the fact.
 
 ### A minimal double-entry ledger, not an accounting framework
 
-Prefer a minimal double-entry representation over ad-hoc accumulators (`totalRevenue`, `cash`, `profit` fields scattered across handlers). The core invariant: **for every journal entry, `sum(debit postings) == sum(credit postings)`**, enforced so that an unbalanced entry cannot enter financial state at all. The mechanism should stay small enough to read in one sitting — an `Account`/`Posting`/`JournalEntry` shape with a handful of accounts (`Cash`, `Sales`), not a chart-of-accounts system, plugin architecture, or GAAP/IFRS policy engine.
+Finance uses a minimal double-entry representation rather than ad-hoc accumulators (`totalRevenue`, `cash`, `profit` fields scattered across handlers). The core invariant: **for every journal entry, `sum(debit postings) == sum(credit postings)`**, enforced so that an unbalanced entry cannot enter financial state at all — `JournalEntry`'s constructor rejects one outright. The mechanism stays small enough to read in one sitting: `Account`/`Posting`/`JournalEntry` with a two-account chart of accounts (`Cash`, `Sales`), not a chart-of-accounts system, plugin architecture, or GAAP/IFRS policy engine.
 
-**Money representation**: because Finance is a real domain now, `double` is not an appropriate representation for ledger amounts — a balance invariant (`debits == credits`) should not rely on floating-point epsilon comparisons. The recommended boundary:
+**Money representation**: `double` is not an appropriate representation for ledger amounts — a balance invariant (`debits == credits`) should not rely on floating-point epsilon comparisons. The boundary:
 
 - Economic model calculations (`PricingState`, `DemandModel`) keep using `double` — no reason to destabilize already-tested code for values that were never meant to be exact currency.
 - Commercial transaction creation (`OrderPrice`/`OrderValue`, the `OrderCompleted` event) also keeps `double` for now — changing this would ripple through `Job`, `FactoryHandler`, and their tests for a value that isn't yet entering a balance-checked ledger.
@@ -289,9 +289,9 @@ The key invariant: **the environment may inform the `OfferPrice`; the firm contr
 
 Adding Finance must not become an excuse to introduce a universal `WorldState` or `EverythingObservation` exposing all mutable state to every agent. A `SalesAgent` observes `OfferPrice`, backlog, lead time, `CompletedSalesValue` — commercial/operational concerns. A future `FinanceAgent` would observe Finance's own purpose-specific projection (cash, sales balance, receivables) — it would not receive `SalesAgent`'s observation type, and `SalesAgent` would not receive Finance's. Each domain's observation stays scoped to what its own consumers need, per the [Observations](#observations) rules above.
 
-### What this section changes about non-goals
+### Non-goal: sophisticated accounting
 
-The earlier non-goal "no finance/accounting domain" is refined to: **no sophisticated accounting model** (no GAAP/IFRS compliance, configurable revenue-recognition frameworks, accounts receivable/payable unless a scenario needs them, tax, depreciation, multi-currency, debt/equity financing, inventory accounting, budgeting, forecasting, or fiscal periods). A minimal double-entry ledger with an immediate-settlement policy is not that — it's the intentional current architecture, sized to establish ownership rather than sophistication. See [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for the concrete backlog.
+Out of scope: GAAP/IFRS compliance, configurable revenue-recognition frameworks, accounts receivable/payable unless a scenario needs them, tax, depreciation, multi-currency, debt/equity financing, inventory accounting, budgeting, forecasting, or fiscal periods. A minimal double-entry ledger with an immediate-settlement policy is not that — it's the intentional current architecture, sized to establish ownership rather than sophistication. See [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md) for the remaining migration plan.
 
 ## Discrete-Event Simulation (DES)
 
@@ -353,13 +353,14 @@ Each module exposes a clean public API and hides implementation details. Domain 
 Events flow through a chain of handlers in deterministic order:
 
 ```text
-Scheduler (priority queue by SimTime)
+Scheduler (priority queue by SimTime, FIFO among same-tick events)
     │
     ▼
 IntegratedHandler
     ├── PricingState.handleEvent()
-    ├── DemandModel.handleEvent()      ← price/lead-time synced from pricing/factory
-    ├── FactoryHandler.handleEvent()
+    ├── DemandModel.handleEvent()      ← reads OfferPrice/leadTime on demand, via suppliers
+    ├── FactoryHandler.handleEvent()   ← may schedule OrderCompleted
+    ├── FinanceHandler.handleEvent()   ← reacts to OrderCompleted
     └── SalesAgent.handleEvent()       ← only on AgentEvaluation, if enabled
 ```
 
@@ -371,9 +372,7 @@ public interface EventHandler {
 }
 ```
 
-Handlers may schedule new events via the `Scheduler` but never reach into other handlers directly. Today, cross-handler data (offer price, average lead time) flows through explicit field synchronization in `IntegratedHandler` (`demand.setPrice(...)`, `demand.setAvgLeadTime(...)`), and `IntegratedHandler` also assembles `AgentObservation` by reading raw fields off `FactoryHandler` and `PricingState` directly.
-
-This is a **transitional** pattern under the [Events–State–Observations philosophy](#core-architecture-philosophy-events-state-observations): it duplicates `OfferPrice` as a mutable copy in two places (`PricingState`, `DemandModel`) instead of `PricingState` being the sole owner that `DemandModel` reads on demand, and it embeds observation-construction logic in the orchestration handler instead of a dedicated projector. `FactoryHandler`'s own former `currentPrice`/`setCurrentPrice` (a third copy) has already been deleted outright — resolved by the [pricing/order semantics](#pricing-orders-and-money-offerprice-vs-orderprice): the factory computes `CompletedSalesValue` from each order's own captured `OrderPrice`, and has no reason to know `OfferPrice` at all. The remaining `DemandModel` duplication and the observation-construction coupling are called out, rather than presented as the target design, in [`devel/architecture-assessment-events-state-observations.md`](../devel/architecture-assessment-events-state-observations.md), which also lays out the staged backlog for closing this gap without introducing a generic event bus or otherwise weakening deterministic, explicit handler ordering.
+Handlers may schedule new events via the `Scheduler` but never reach into other handlers directly, and never receive a mutable reference to another handler's internals. `DemandModel` reads `OfferPrice`/lead time on demand via `DoubleSupplier`s bound at construction (not pushed copies); `FactoryHandler` never references `PricingState` at all — it only needs each order's own `OrderPrice`, captured once at `OrderCreation`. `AgentObservation` construction lives in a dedicated `AgentObservationProjector`, not inlined into `IntegratedHandler`. Every command (`ChangePrice`, `ChangeMachine`, `ToggleAgent`) becomes a domain event dispatched the same way — none of them bypass the event system.
 
 ## Type System
 

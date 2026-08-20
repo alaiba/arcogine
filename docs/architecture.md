@@ -263,11 +263,13 @@ Finance uses a minimal double-entry representation rather than ad-hoc accumulato
 
 **Money representation**: `double` is not an appropriate representation for ledger amounts — a balance invariant (`debits == credits`) should not rely on floating-point epsilon comparisons. The boundary:
 
-- Economic model calculations (`PricingState`, `DemandModel`) keep using `double` — no reason to destabilize already-tested code for values that were never meant to be exact currency.
-- Commercial transaction creation (`OrderPrice`/`OrderValue`, the `OrderCompleted` event) also keeps `double` for now — changing this would ripple through `Job`, `FactoryHandler`, and their tests for a value that isn't yet entering a balance-checked ledger.
-- The Finance ledger itself (`Posting`/`JournalEntry` amounts) uses `BigDecimal` from the start, converting at the `FinanceHandler` boundary (where an event's `double` orderValue becomes a precise, explicitly-scaled `BigDecimal` posting amount) — this is the one place the balance invariant is actually checked, so it's the one place that needs exactness.
+- Economic model calculations (`PricingState`, `DemandModel`) keep using `double` — no reason to destabilize already-tested code for values that were never meant to be exact currency. This is safe for Arcogine's determinism contract specifically because `double` arithmetic is IEEE-754 deterministic given a fixed operation order — same seed, same sequence of operations, same bits, every run. What `double` doesn't give you is *exact decimal equality*, which only matters where something actually checks it as an invariant — nothing does in the economic model.
+- Commercial transaction creation (`OrderPrice`/`OrderValue`, the `OrderCompleted` event) also keeps `double` for the same reason — changing this would ripple through `Job`, `FactoryHandler`, and their tests for a value that isn't yet entering a balance-checked ledger.
+- The Finance ledger itself (`Posting`/`JournalEntry` amounts) uses `BigDecimal` from the start, converting at the `FinanceHandler` boundary (where an event's `double` orderValue becomes a precise `BigDecimal` posting amount) — this is the one place the balance invariant is actually checked, so it's the one place that needs exactness.
 
 This keeps the conversion boundary in exactly one place instead of threading `BigDecimal` through code that doesn't need it yet.
+
+**Canonical rounding policy**: converting `double` to `BigDecimal` without a stated scale/rounding rule would just move floating-point artifacts across the boundary instead of resolving them — two independent conversions of the same economic quantity could round differently and appear to disagree. `com.arcogine.finance.ledger.CurrencyPolicy` is the single, explicit answer: amounts entering Finance are quantized to 2 decimal places using `RoundingMode.HALF_UP`, applied once, at the `FinanceHandler` boundary. This is a quantization rule for Arcogine's one simulation currency, not a multi-currency policy.
 
 ### Ownership table
 

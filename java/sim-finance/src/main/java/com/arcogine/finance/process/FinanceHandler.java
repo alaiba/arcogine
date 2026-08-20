@@ -5,6 +5,7 @@ import com.arcogine.core.event.EventPayload;
 import com.arcogine.core.handler.EventHandler;
 import com.arcogine.core.queue.Scheduler;
 import com.arcogine.finance.ledger.Account;
+import com.arcogine.finance.ledger.CurrencyPolicy;
 import com.arcogine.finance.ledger.JournalEntry;
 import com.arcogine.finance.ledger.Ledger;
 import com.arcogine.finance.ledger.Posting;
@@ -12,7 +13,6 @@ import com.arcogine.finance.ledger.Side;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 
 /**
@@ -50,11 +50,12 @@ public class FinanceHandler implements EventHandler {
     /**
      * Converts the event's double orderValue to a precise BigDecimal at this one boundary --
      * economic/commercial calculations upstream stay double; only the ledger, where the
-     * debits==credits invariant is actually checked, needs exactness.
+     * debits==credits invariant is actually checked, needs exactness. quantity and unitPrice are
+     * each converted individually and multiplied exactly in BigDecimal before the canonical
+     * {@link CurrencyPolicy} scale/rounding is applied, rather than rounding a double product.
      */
     private static BigDecimal orderValue(long quantity, double unitPrice) {
-        return BigDecimal.valueOf(unitPrice)
-                .multiply(BigDecimal.valueOf(quantity))
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal exact = BigDecimal.valueOf(unitPrice).multiply(BigDecimal.valueOf(quantity));
+        return CurrencyPolicy.quantize(exact);
     }
 }

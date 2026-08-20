@@ -85,6 +85,19 @@ class FinanceHandlerTest {
     }
 
     @Test
+    void orderValueIsQuantizedToTheCanonicalCurrencyScaleAtTheBoundary() {
+        FinanceHandler handler = new FinanceHandler();
+        Scheduler sched = new Scheduler();
+
+        // quantity=3, unitPrice=3.333 -> exact product 9.999, quantized (HALF_UP, scale 2) to 10.00.
+        Event orderCompleted = Event.of(
+                SimTime.of(1), new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 3, 3.333));
+        handler.handleEvent(orderCompleted, sched);
+
+        assertEquals(0, handler.ledger().balance(Account.CASH).compareTo(new BigDecimal("10.00")));
+    }
+
+    @Test
     void eachCompletedOrderPostsItsOwnEntry() {
         FinanceHandler handler = new FinanceHandler();
         Scheduler sched = new Scheduler();

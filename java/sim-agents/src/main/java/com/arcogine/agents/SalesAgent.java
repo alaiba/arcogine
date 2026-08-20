@@ -36,7 +36,7 @@ public class SalesAgent implements EventHandler {
     }
 
     public Optional<Double> decide() {
-        double current = observation.currentPrice();
+        double current = observation.offerPrice();
 
         if (observation.backlog() > config.backlogHigh()) {
             double newPrice = Math.min(current * (1.0 + config.adjustmentPct()), config.maxPrice());
@@ -63,7 +63,7 @@ public class SalesAgent implements EventHandler {
                         new EventPayload.AgentDecision(String.format(
                                 "SalesAgent: backlog=%d, price %.2f -> %.2f",
                                 observation.backlog(),
-                                observation.currentPrice(),
+                                observation.offerPrice(),
                                 newPrice))));
             });
             default -> {}

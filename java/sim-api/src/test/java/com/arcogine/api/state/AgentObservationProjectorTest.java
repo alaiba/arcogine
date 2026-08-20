@@ -52,16 +52,16 @@ class AgentObservationProjectorTest {
 
         assertEquals((int) factory.backlog(), observation.backlog());
         assertEquals(factory.avgLeadTime(), observation.avgLeadTime());
-        assertEquals(factory.completedSalesValue(), observation.totalRevenue());
+        assertEquals(factory.completedSalesValue(), observation.completedSalesValue());
         assertEquals(factory.completedSales(), observation.completedSales());
-        assertEquals(pricing.currentPrice(), observation.currentPrice());
+        assertEquals(pricing.currentPrice(), observation.offerPrice());
         assertEquals(factory.throughput(10L), observation.throughput());
 
         // Concrete values, not just self-consistency with the source objects.
         assertEquals(0, observation.backlog(), "job completed, so backlog should be empty");
         assertEquals(1, observation.completedSales());
-        assertEquals(36.0, observation.totalRevenue(), "completedSalesValue: 3 units at $12");
-        assertEquals(12.0, observation.currentPrice());
+        assertEquals(36.0, observation.completedSalesValue(), "completedSalesValue: 3 units at $12");
+        assertEquals(12.0, observation.offerPrice());
     }
 
     @Test

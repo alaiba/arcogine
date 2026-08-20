@@ -8,6 +8,7 @@ import com.arcogine.finance.ledger.Account;
 import com.arcogine.finance.ledger.CurrencyPolicy;
 import com.arcogine.finance.ledger.JournalEntry;
 import com.arcogine.finance.ledger.Ledger;
+import com.arcogine.finance.ledger.LedgerView;
 import com.arcogine.finance.ledger.Posting;
 import com.arcogine.finance.ledger.Side;
 import com.arcogine.types.SimError;
@@ -25,7 +26,8 @@ public class FinanceHandler implements EventHandler {
 
     private final Ledger ledger = new Ledger();
 
-    public Ledger ledger() {
+    /** Read-only -- only this class ever calls {@link Ledger#post}. */
+    public LedgerView ledger() {
         return ledger;
     }
 
@@ -41,7 +43,7 @@ public class FinanceHandler implements EventHandler {
         BigDecimal amount = orderValue(oc.quantity(), oc.unitPrice());
         ledger.post(new JournalEntry(
                 time,
-                "Order " + oc.orderId().value() + " completed",
+                "Order " + oc.jobId().value() + " completed",
                 List.of(
                         new Posting(Account.CASH, Side.DEBIT, amount),
                         new Posting(Account.SALES, Side.CREDIT, amount))));

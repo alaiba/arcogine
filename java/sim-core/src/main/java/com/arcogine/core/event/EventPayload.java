@@ -30,11 +30,17 @@ public sealed interface EventPayload permits
     /**
      * The operational fact that an order fulfilled its full routing -- distinct from a single
      * {@link TaskEnd}, which only means one production step finished. Carries the immutable
-     * commercial facts a downstream consumer (e.g. a future Finance domain) needs to interpret
-     * the transaction; deliberately does not carry the derived orderValue (quantity x unitPrice)
-     * to avoid a second consistency invariant for a value that's trivially recomputed.
+     * commercial facts a downstream consumer (e.g. Finance) needs to interpret the transaction;
+     * deliberately does not carry the derived orderValue (quantity x unitPrice) to avoid a second
+     * consistency invariant for a value that's trivially recomputed.
+     *
+     * <p>jobId, not orderId: there is currently no separate {@code Order} concept -- a {@code Job}
+     * is the one-to-one representation of an accepted order. If a distinct {@code Order}/{@code
+     * OrderId} is introduced later (see the "commercial vs. operational" note in
+     * docs/architecture.md's "State" section), this field should migrate to that type explicitly,
+     * rather than this record pretending the distinction already exists today.
      */
-    record OrderCompleted(JobId orderId, ProductId productId, long quantity, double unitPrice)
+    record OrderCompleted(JobId jobId, ProductId productId, long quantity, double unitPrice)
             implements EventPayload {}
 
     record MachineAvailabilityChange(MachineId machineId, boolean online) implements EventPayload {}

@@ -245,7 +245,7 @@ class FactoryHandlerTest {
 
         Event completed = sched.nextEvent().orElseThrow();
         var payload = (EventPayload.OrderCompleted) completed.payload();
-        assertEquals(job.id(), payload.orderId());
+        assertEquals(job.id(), payload.jobId());
         assertEquals(new ProductId(1), payload.productId());
         assertEquals(3L, payload.quantity());
         assertEquals(12.0, payload.unitPrice());

@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  */
 public record FinanceObservation(BigDecimal cash, BigDecimal sales) {
 
-    public static FinanceObservation from(Ledger ledger) {
+    public static FinanceObservation from(LedgerView ledger) {
         return new FinanceObservation(ledger.balance(Account.CASH), ledger.balance(Account.SALES));
     }
 }

@@ -9,7 +9,7 @@ import java.util.List;
  * -- there is no other way to change a balance, so debits==credits holds for every entry ever
  * posted, not just checked once.
  */
-public class Ledger {
+public class Ledger implements LedgerView {
 
     private final List<JournalEntry> entries = new ArrayList<>();
 
@@ -17,11 +17,12 @@ public class Ledger {
         entries.add(entry);
     }
 
+    @Override
     public List<JournalEntry> entries() {
         return List.copyOf(entries);
     }
 
-    /** Balance in the account's own normal direction (positive = more of what that account tracks). */
+    @Override
     public BigDecimal balance(Account account) {
         BigDecimal debits = sumFor(account, Side.DEBIT);
         BigDecimal credits = sumFor(account, Side.CREDIT);

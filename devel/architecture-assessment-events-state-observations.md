@@ -65,10 +65,28 @@ Priorities: **P2** scalability preparation · **P3** future guardrail. (All P0 s
 | P3 | Revisit the P2 state-query-interface pattern's adequacy now that Finance is a real second domain beyond Factory/Economy — validate the design against an actual case rather than a hypothetical one. | Keeps `IntegratedHandler` from becoming a god orchestrator as domains multiply. | Design review once the P2 interface pattern lands. |
 | P3 | Consider whether `IntegratedHandler`'s dispatch order (Pricing → Demand → Factory → Finance → Agent) should become a declared, testable ordering contract (an ordered list + a test enumerating it) rather than implicit in method-call order. | "Event ordering becoming implicit... dependent on registration accident" is a named architectural-review trigger; today's order is simple enough to read at a glance, but that won't stay true indefinitely. | `IntegratedHandler` + one test. |
 
+## Open question: commands vs. facts
+
+`EventPayload` names are inconsistent about what they represent. `TaskEnd`, `OrderCompleted`, and `AgentEnabledChanged` are fact-shaped (past tense — something that happened). `PriceChange`, `OrderCreation`, and `MachineAvailabilityChange` are noun-phrases that read closer to requests — `SetOfferPrice`/`OfferPriceChanged`, `CreateOrder`/`OrderCreated` — even though they behave identically to the fact-shaped ones: every `EventPayload`, once scheduled, is applied unconditionally by its owning handler. There is no accept/reject step anywhere in the pipeline; where validation exists (e.g. `SalesAgent.decide()` clamping to `minPrice`/`maxPrice`), it happens before the event is emitted, inside the decision logic, not at application time.
+
+This works today because there is exactly one trusted decision source per concern. It stops working cleanly once that assumption breaks — multiple or richer decision sources (e.g. a future `FinanceAgent` and `SalesAgent` both able to affect price; a UI command racing an agent decision; a domain rule that can legitimately reject a request rather than relying on the requester to have pre-validated it, like "can't take a machine offline mid-job"). At that point, collapsing "requested" and "happened" into one concept stops being safe, and the two-step shape below becomes worth the extra ceremony:
+
+```text
+COMMAND
+CreateOrder(...)
+        |
+        v   domain validates/accepts/rejects
+EVENT
+OrderCreated(...)
+```
+
+This is not scheduled work — no rename, no new abstraction. It's recorded here because renaming `EventPayload`s to be consistently fact-shaped, on its own, would be misleading: it would look like this distinction exists without actually adding the accept/reject step that makes it meaningful. Revisit when a second untrusted or conflicting decision source is actually being added — that is the concrete trigger, not "agents get more sophisticated" in the abstract.
+
 ## Explicit non-goals
 
 - **No generic event bus / pub-sub.** Explicit, deterministic, easy-to-read execution order is the point; a bus trades that for indirection.
 - **No CQRS or event-sourcing framework.** `Event`/`EventLog`/`Scheduler` already give replayability where needed.
+- **No command/event split (see "Open question: commands vs. facts" above) until there's a concrete second decision source that needs it.** Renaming `EventPayload`s to be fact-shaped without adding a real accept/reject step would be cosmetic, not architectural.
 - **No global mutable `SimulationState` object.** That would recreate the duplicated-state problem this assessment resolved, at a larger scale.
 - **No premature plugin framework** for future domains (inventory, procurement, workforce, maintenance). The P2 state-query-interface pattern should be validated against one real new domain before generalizing further.
 - **No sophisticated accounting model.** A minimal double-entry ledger with an immediate-settlement policy is the intentional current architecture. Out of scope: GAAP/IFRS compliance, configurable revenue-recognition frameworks, `AccountsReceivable`/`AccountsPayable` unless an actual scenario needs them, payment terms, tax, depreciation, multi-currency, debt/equity financing, inventory accounting, budgeting, forecasting, fiscal periods/closing, a generalized accounting rules engine, or ERP abstractions.

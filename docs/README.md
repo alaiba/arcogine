@@ -23,6 +23,7 @@
 | [Architecture](architecture.md) | Design philosophy (including the Events–State–Observations model), module structure, determinism contract, event dispatch, technology stack |
 | [Standards alignment](standards-alignment.md) | ISA-95, ISO 22400, DES, RAMI 4.0 mapping |
 | [Vision](vision.md) | Project identity, long-term directions, naming |
+| [Decision records](decisions/README.md) | Architecture/design decision history — why significant choices were made |
 | [SECURITY.md](../SECURITY.md) | Security policy, hardening posture, deployment constraints |
 
 ## Internal planning (maintainers)

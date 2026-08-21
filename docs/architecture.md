@@ -1,6 +1,6 @@
 # Arcogine — Architectural Overview
 
-This document describes the design philosophy and architectural principles that guide Arcogine's implementation.
+This document describes the design philosophy and architectural principles that guide Arcogine's implementation. For the rationale behind specific significant decisions and their history, see [Architecture Decision Records](decisions/README.md).
 
 ## Non-Negotiable Constraints
 

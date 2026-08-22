@@ -91,6 +91,7 @@ export function Sidebar() {
           <ul className="flex flex-col gap-2">
             {machines.map((m) => {
               const online = m.state !== 'Offline';
+              const cannotGoOffline = online && m.active_jobs > 0;
               return (
                 <li
                   key={m.id}
@@ -101,7 +102,8 @@ export function Sidebar() {
                     type="button"
                     role="switch"
                     aria-checked={online}
-                    disabled={loading}
+                    disabled={loading || cannotGoOffline}
+                    title={cannotGoOffline ? 'Machine has active jobs; wait until it is idle to take it offline' : undefined}
                     onClick={() => void changeMachine(m.id, !online)}
                     className={`inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border px-0.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                       online

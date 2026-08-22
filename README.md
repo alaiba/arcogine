@@ -115,10 +115,10 @@ java -jar java/sim-cli/build/libs/arcogine.jar run examples/basic_scenario.toml
 ## Quality gates
 
 ```bash
-./arcogine setup   # install/bootstrap dependencies
-./arcogine test    # Java + frontend unit tests
-./arcogine check   # fast gates: compile, tests, coverage, lint, build
-make quality-full  # everything: quality + Playwright E2E + Docker smoke + security scans
+./arcogine setup         # install/bootstrap dependencies
+./arcogine test          # Java + frontend unit tests
+./arcogine check         # fast gates: compile, tests, coverage, lint, build
+./arcogine check --full  # everything: check + Playwright E2E + Docker smoke + security scans
 ```
 
 See [TESTING.md](docs/TESTING.md) for the full test category reference.

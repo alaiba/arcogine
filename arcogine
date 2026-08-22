@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Canonical task interface for Arcogine. Thin wrapper around `make` and the
+# project's own tools (java/gradlew, ui/npm) — see `make help` for the full
+# target list this delegates to.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+usage() {
+  cat <<'EOF'
+Usage: ./arcogine <command> [args]
+
+Commands:
+  setup          Install/bootstrap all dependencies (safe to re-run)
+  test           Run Java + frontend unit test suites
+  check          Run full quality gates (lint, typecheck, tests, build)
+  run api        Start the Spring Boot API on :3000
+  run ui         Start the Vite dev server on :5173
+
+Anything more specific (coverage, security scans, Docker, Playwright)
+lives in the Makefile — run `make help` to see every target.
+EOF
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  setup)
+    make setup
+    ;;
+  test)
+    make test
+    ;;
+  check)
+    make quality
+    ;;
+  run)
+    case "${2:-}" in
+      api) cd java && exec ./gradlew --no-daemon :sim-cli:bootRun --args=serve ;;
+      ui) cd ui && exec npm run dev ;;
+      *)
+        echo "Usage: ./arcogine run {api|ui}" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  ""|-h|--help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    usage >&2
+    exit 1
+    ;;
+esac

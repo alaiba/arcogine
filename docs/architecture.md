@@ -1,22 +1,38 @@
 # Arcogine — Architectural Overview
 
-This document describes the design philosophy and architectural principles that guide Arcogine's implementation. For the rationale behind specific significant decisions and their history, see [Architecture Decision Records](decisions/README.md).
+This document sits under the [Product Charter](../PRODUCT_CHARTER.md), which defines Arcogine's enduring product direction and principles. This document describes the design philosophy and architectural principles that guide Arcogine's implementation *today*, and distinguishes principles expected to persist regardless of implementation from constraints specific to the current MVP. For the rationale behind specific significant decisions and their history, see [Architecture Decision Records](decisions/README.md).
 
-## Non-Negotiable Constraints
+## Enduring architectural principles
+
+These are expected to hold regardless of how the implementation evolves, because they follow directly from the Product Charter:
+
+1. Repository must be reproducible, modular, testable, and collaboration-ready.
+2. Deterministic acceptance tests and scenario-level validation are mandatory for simulation, replay, and verification contexts (see the [Determinism Contract](#determinism-contract) below for scope).
+3. Agents only use approved command interfaces and never mutate simulation state directly — this is the same governance boundary the Charter asks of human and autonomous decision-makers alike.
+
+## Current implementation constraints (MVP)
+
+These describe today's implementation choices. They are not claims about Arcogine's permanent identity — see the Product Charter's [product boundaries](../PRODUCT_CHARTER.md#9-what-arcogine-is-not) for why Java, the current UI, and the current deployment model are implementation choices rather than product identity, subject to change as the product grows toward the full lifecycle described there.
 
 1. Core simulation is written in Java 25.
-2. Headless simulation core is primary; UI/API are additive.
-3. MVP must tie factory flow to economy loop.
-4. Repository must be reproducible, modular, testable, and collaboration-ready.
-5. UI is a single-user experiment console, not a game client.
-6. Support native and containerized local execution.
-7. Deterministic acceptance tests and scenario-level validation are mandatory.
-8. Agents only use approved command interfaces and never mutate simulation state directly.
-9. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls.
+2. The headless simulation core is the current implementation's primary layer; the UI and API are additive consumers of it. This describes today's layering, not a permanent claim that Arcogine's mature product surface is UI-secondary.
+3. MVP ties factory flow to the economy loop.
+4. Support native and containerized local execution.
+5. The current UI is a single-user experiment console — one current mode of engaging with Arcogine (see the Charter's [modes of engagement](../PRODUCT_CHARTER.md#5-modes-of-engagement-not-personas)), not "the Arcogine UX" in the mature-product sense, and not a game client.
+6. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls (see [SECURITY.md](../SECURITY.md)).
 
-## Simulation-First
+## Architectural implications of the Product Charter
 
-The system is built around a **headless simulation core**, not a game engine.
+Consequences of the Charter's thesis, stated at the conceptual level only — none of this is a module design, schema, or implementation commitment; see the Charter's [Architectural implications](../PRODUCT_CHARTER.md#7-architectural-implications) section for the full list:
+
+- Arcogine should not evolve separate simulation-only and production-only domain semantics.
+- Model, version, and provenance concepts become fundamental once changes can move from design to reality — today's `EventLog` and deterministic replay are an early, simulation-scoped instance of this, not the final answer.
+- Purpose-specific observations and capabilities (already the pattern for `AgentObservation`/`FinanceObservation`, see [Observations](#observations) below) are preferable to exposing unrestricted mutable state, and are expected to remain so as new consumers (human roles, external systems, execution surfaces) are added.
+- Real execution, when it exists, introduces safety, authorization, auditability, failure, and operational consequence as architectural concerns — the current implementation does not yet need to solve these because it does not yet execute anything real (see [SECURITY.md](../SECURITY.md)).
+
+## Simulation-First (current implementation)
+
+Today's system is built around a **headless simulation core**, not a game engine. This describes the current implementation's architecture — simulation is a major Arcogine capability (per the Product Charter), not the entirety of its identity.
 
 - No rendering dependency in the core
 - Deterministic execution — same inputs always produce the same outputs
@@ -458,6 +474,8 @@ The simulation guarantees deterministic execution:
 - No concurrent mutation of simulation state
 
 Given identical scenario TOML and the same seed, the simulation produces identical event logs, KPIs, and final state.
+
+This determinism contract is scoped to simulation, replay, and verification contexts, where it is a critical property. It is not a claim that real-world execution itself must be, or will be made, deterministic — production operates in a non-deterministic world of real machines, people, and failures. See the Product Charter's [continuity with current architecture](../PRODUCT_CHARTER.md#8-continuity-with-current-architecture) section for this distinction.
 
 ## API Layer
 

@@ -3,11 +3,13 @@
 [![CI](https://github.com/alaiba/arcogine/actions/workflows/ci.yml/badge.svg)](https://github.com/alaiba/arcogine/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/alaiba/arcogine/graph/badge.svg)](https://codecov.io/gh/alaiba/arcogine)
 
-Arcogine is a deterministic simulation engine for factory systems, economic dynamics, and agent-driven decision making.
+Arcogine is building toward purpose-built ways to design, understand, simulate, verify, operate, and improve a production system — all grounded in one executable model of the business. See [`PRODUCT_CHARTER.md`](PRODUCT_CHARTER.md) for the full product vision and enduring principles.
 
-## What is Arcogine?
+**The current implementation is an early, deterministic, simulation-focused slice of that vision.** It does not yet include digital-twin connectivity, live operational execution, or multi-user/production deployment — see [Security](SECURITY.md) and [Architecture](docs/architecture.md) for exactly what exists today.
 
-Arcogine is a **simulation-first platform** where you experiment with how pricing, capacity, and automated agents interact in a factory environment. Three systems feed back into each other:
+## What is Arcogine today?
+
+Today, Arcogine is a simulation platform where you experiment with how pricing, capacity, and automated agents interact in a factory environment. Three systems feed back into each other:
 
 ```text
      You set a price
@@ -104,7 +106,8 @@ java -jar java/sim-cli/build/libs/arcogine.jar run examples/basic_scenario.toml
 
 | Document | What it covers |
 |----------|----------------|
-| [Concepts](docs/concepts.md) | How the simulation works, KPIs, agents, scenarios |
+| [Product Charter](PRODUCT_CHARTER.md) | Enduring product vision and principles — start here to understand what Arcogine is ultimately becoming |
+| [Concepts](docs/concepts.md) | How the current simulation works, KPIs, agents, scenarios |
 | [API Reference](docs/api.md) | Every HTTP endpoint with curl examples |
 | [Architecture](docs/architecture.md) | Design philosophy, module structure, determinism contract |
 | [Full docs index](docs/README.md) | Everything else: testing, standards, vision, security |

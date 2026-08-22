@@ -69,4 +69,9 @@ RUN apt-get update \
 # JDK 25 (Temurin) and Gradle are provided by the `java` devcontainer feature
 # declared in devcontainer.json, so no toolchain install is needed here.
 
+# Pre-create the Gradle cache dir owned by vscode: Docker populates a fresh
+# named volume from the image's content at the mount path (including
+# ownership) on first mount, so this avoids a runtime chown of the cache.
+RUN mkdir -p /home/vscode/.gradle && chown -R vscode:vscode /home/vscode/.gradle
+
 USER vscode

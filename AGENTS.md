@@ -23,6 +23,8 @@ Run everything from the repo root via `./arcogine` (wraps the root `Makefile`):
 
 For anything more specific (coverage, security scans, Docker, Playwright), run `make help` — the Makefile is the full target list.
 
+`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. If you're an agent running inside a plain Windows shell without Bash, call `make <target>` directly instead.
+
 **Always use `./gradlew` from `java/`, never a globally installed `gradle`.** The wrapper pins the exact build version in `java/gradle/wrapper/gradle-wrapper.properties`; a system Gradle install can silently diverge from it.
 
 ## Validating changes
@@ -37,6 +39,7 @@ Before considering a change complete, run `./arcogine check`. For anything touch
 
 ## Conventions worth knowing
 
-- Tool versions (JDK, Gradle, Node, Trivy, Gitleaks) are pinned once in `.devcontainer/Dockerfile` and `java/gradle/wrapper/gradle-wrapper.properties`. Don't reintroduce a second version declaration for the same tool elsewhere (e.g. in CI or devcontainer features) — update the one source and let everything else reference it.
+- **Gradle** has one true source: `java/gradle/wrapper/gradle-wrapper.properties`. Both `gradlew` and `gradlew.bat` read it, and no Gradle is installed via the devcontainer feature — don't add one back.
+- **JDK, Node, Trivy, and Gitleaks** are each pinned in `.devcontainer/Dockerfile` (build args / `devcontainer.json` feature version) for the container image, and pinned *again*, independently, in `.github/workflows/ci.yml` for jobs that run on a bare `ubuntu-latest` runner rather than the devcontainer image. This duplication is intentional, not a bug — CI doesn't build the devcontainer image — but the pins must be bumped together. When you change one of these versions, grep for the old value across `.devcontainer/Dockerfile`, `.devcontainer/devcontainer.json`, and `.github/workflows/ci.yml` and update every occurrence.
 - Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [CONTRIBUTING.md](CONTRIBUTING.md#architecture-guardrails-events-state-observations) and partly enforced by `sim-api`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain or touching `IntegratedHandler`.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture.md`.

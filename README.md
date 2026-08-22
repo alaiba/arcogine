@@ -58,6 +58,9 @@ Then open **http://127.0.0.1:5173**.
 ### Other setup paths
 
 - **Docker Compose:** `cp .env.example .env && docker compose up --build`
+- **Native (Linux/macOS, or Windows via WSL/Git Bash):** `./arcogine setup`, then `./arcogine run api` / `./arcogine run ui` as above.
+
+`./arcogine` is a Bash script. On Windows it runs in the Dev Container, WSL, or Git Bash — not directly in PowerShell/cmd. The Dev Container is the recommended path on Windows.
 
 ## Your first session
 

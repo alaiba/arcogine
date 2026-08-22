@@ -9,6 +9,8 @@ Thank you for considering a contribution to Arcogine. This guide covers everythi
 
 If your host doesn't have JDK 25 / Node 24 installed, use the dev container path — it provides both.
 
+`./arcogine` is a Bash script: it runs in the dev container, on Linux/macOS natively, and on Windows via WSL or Git Bash — not directly in PowerShell/cmd. **Windows contributors should use the dev container**; it's the only path that doesn't require a separate Bash environment.
+
 ## Choose a start path
 
 ### 1) Dev container (recommended)
@@ -27,7 +29,7 @@ After startup, in two terminals:
 ./arcogine run api
 ```
 
-### 2) Native (host JDK + host Node)
+### 2) Native (Linux/macOS, or Windows via WSL/Git Bash)
 
 ```bash
 git clone https://github.com/alaiba/arcogine.git

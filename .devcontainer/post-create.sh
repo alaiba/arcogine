@@ -16,8 +16,14 @@ fi
 echo "==> Copying .env.example -> .env (if not present)..."
 [ -f .env ] || cp .env.example .env
 
-echo "==> Fixing ownership of cached volumes..."
-sudo chown -R vscode:vscode "$HOME/.gradle" ui/node_modules 2>/dev/null || true
+echo "==> Ensuring node_modules volume is writable..."
+# Non-recursive: the mount point itself is what a fresh named volume
+# creates root-owned; everything under it is written by vscode-run
+# tooling from here on, so there's nothing to chown recursively.
+# (The Gradle cache volume doesn't need this: the Dockerfile pre-creates
+# its mount point owned by vscode, which Docker copies into the volume
+# on first mount.)
+sudo chown vscode:vscode ui/node_modules 2>/dev/null || true
 
 echo "==> Installing UI dependencies..."
 cd ui && npm ci && cd ..

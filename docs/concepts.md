@@ -42,7 +42,7 @@ Your goal is to keep this loop healthy: enough demand to generate revenue, enoug
 
 Machines (also called equipment in ISA-95 terminology) are the physical resources that do work. Each machine can process one job at a time. You can toggle machines online/offline during a run.
 
-A machine that is **offline** stops accepting new jobs. Jobs already in progress on that machine will still complete, but no new work starts until you bring it back online.
+A machine that is **offline** stops accepting new jobs. A machine can only be taken offline while it is **idle**: if it has active jobs, the request is rejected and the machine keeps running until its current work completes. Wait for the machine to become idle, then take it offline. Once offline, the machine can be brought back online at any time.
 
 ### Products and routings
 

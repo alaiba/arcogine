@@ -8,7 +8,7 @@ dependencies {
     implementation(project(":sim-types"))
     implementation("tools.jackson.core:jackson-databind:3.1.4")
     implementation("tools.jackson.core:jackson-core:3.1.4")
-    implementation("tools.jackson.dataformat:jackson-dataformat-toml:3.1.4")
+    implementation("tools.jackson.dataformat:jackson-dataformat-toml:3.2.2")
 }
 
 // JMH microbenchmarks (ported from crates/sim-core/benches). Run with

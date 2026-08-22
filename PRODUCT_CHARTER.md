@@ -4,7 +4,7 @@
 
 ## What this document is
 
-This is the single normative source for Arcogine's enduring product direction. It sits above UX decisions, domain design, architecture, ADRs, API and UI design, implementation plans, and current-state documentation — those all operate under it, and a proposal that contradicts this charter should be treated as the thing that needs to change, not the charter.
+This is the highest-level normative source for Arcogine's product direction. It sits above UX decisions, domain design, architecture, ADRs, API and UI design, implementation plans, and current-state documentation. Product, architecture, domain, and UX decisions should align with it unless the charter itself is deliberately amended through an explicit product-level decision (see [Changing this charter](#12-changing-this-charter)) — an ordinary feature, implementation convenience, or architecture proposal must not silently override it. The charter is durable, not immutable: when the conflict is real, it is the charter that should be revisited on purpose, not quietly worked around.
 
 This document is **not**:
 
@@ -127,7 +127,9 @@ Observations inform Decisions.
 Decisions produce Events.
 ```
 
-— is broadly compatible with this charter and is expected to remain a durable pattern as the system grows: explicit events, single-owner state, purpose-specific observations, and accountable decisions are exactly the shape a system needs to keep design, simulation, verification, and execution semantically continuous. Existing ideas the current implementation already applies — authoritative state ownership per subsystem, immutable observations, explicit decisions, deterministic simulation, provenance via an event log, the commercial/operational/financial truth distinction, and controlled agent capabilities — remain valuable and are not discarded by this charter. See [`docs/architecture.md`](docs/architecture.md) for how they work today; this charter does not freeze their current implementation as permanent, only affirms the direction they point in.
+— is strongly compatible with this charter and provides a useful current realization of several of its principles: explicit events, single-owner state, purpose-specific observations, and accountable decisions are one good way to keep design, simulation, verification, and execution semantically continuous. Existing ideas the current implementation already applies — authoritative state ownership per subsystem, immutable observations, explicit decisions, deterministic simulation, provenance via an event log, the commercial/operational/financial truth distinction, and controlled agent capabilities — remain valuable and are not discarded by this charter.
+
+Whether Events–State–Observations remains an architectural invariant, and how it evolves, is a question for [`docs/architecture.md`](docs/architecture.md), not for this charter. This charter is satisfied by any architecture that upholds its principles — explicit state ownership, purpose-specific observations, causality, and provenance among them — and does not itself mandate this specific pattern as permanent.
 
 One distinction matters enough to state explicitly: **determinism is a critical property of simulation, replay, and verification contexts — it is not a requirement that real-world execution itself somehow become deterministic.** Production operates in a non-deterministic world with real machines, real people, and real failures. What must stay continuous across contexts is the semantic model, not a claim that reality is repeatable the way a seeded simulation is. Language that treats simulation semantics as synonymous with Arcogine's entire future runtime model should be corrected wherever it appears.
 
@@ -182,3 +184,7 @@ A significant initiative — a feature proposal, an architecture change, an ADR 
 8. Is it solving a real product need, or merely expanding Arcogine into an adjacent category?
 
 An initiative does not need a "yes" on every question to proceed — some are in tension by nature (e.g. exposing more capability vs. minimizing authority surface). The test is meant to surface the tradeoff explicitly, not to produce an automatic verdict.
+
+## 12. Changing this charter
+
+This charter is intended to be durable, not immutable. Changes should be deliberate and infrequent, and should reflect a real change in Arcogine's product thesis or enduring principles. A local feature, implementation constraint, or architecture convenience is not by itself sufficient reason to redefine the charter; such conflicts should be surfaced explicitly and resolved at the product level, rather than allowed to accumulate as quiet exceptions.

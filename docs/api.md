@@ -106,7 +106,7 @@ curl -X POST http://localhost:3000/api/machines \
 
 **Request body:** `{ "machine_id": number, "online": boolean }`
 
-**Errors:** `409` if no scenario is loaded.
+**Errors:** `409` if no scenario is loaded. A machine can only be taken offline while idle; if it has active jobs, the domain rejects the transition and the rejection reason is reported via `last_error` in the response snapshot (the same mechanism used for other simulation-thread command errors), not an HTTP error status.
 
 ### `POST /api/agent`
 

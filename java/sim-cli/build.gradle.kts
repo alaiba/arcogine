@@ -1,7 +1,7 @@
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 
 plugins {
-    id("org.springframework.boot") version "4.0.6"
+    id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     application
 }
@@ -28,8 +28,9 @@ dependencies {
     // its BOM when declared in this project; a version pinned in sim-core
     // (a transitive project dependency) is silently overridden by the BOM's
     // managed version otherwise, so it must be repeated here.
-    implementation("tools.jackson.core:jackson-databind:3.1.4")
-    implementation("tools.jackson.core:jackson-core:3.1.4")
+    implementation("tools.jackson.core:jackson-databind:3.2.2")
+    implementation("tools.jackson.core:jackson-core:3.2.2")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.22")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

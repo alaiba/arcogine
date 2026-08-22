@@ -1,8 +1,8 @@
 # Arcogine scenarios
 
-This directory contains shipped TOML scenarios for quick onboarding and challenge play.
+This directory contains shipped TOML scenarios for quick onboarding — a guided learning path through the simulation's controls and dynamics, not Arcogine's product identity (see [`PRODUCT_CHARTER.md`](../PRODUCT_CHARTER.md)).
 
-All listed scenarios exist today and are intentionally designed as challenge modes.
+All listed scenarios exist today and are intentionally designed as a learning progression, each building on the last.
 
 ## `basic_scenario.toml` — Balanced baseline
 
@@ -27,10 +27,10 @@ All listed scenarios exist today and are intentionally designed as challenge mod
 Scenarios are defined in TOML using ISA-95-aligned section names.
 See:
 
-- `crates/sim-types/src/scenario.rs` for schema
-- `crates/sim-core/src/scenario.rs` for loader details
+- `java/sim-types/src/main/java/com/arcogine/types/scenario/ScenarioConfig.java` for schema
+- `java/sim-core/src/main/java/com/arcogine/core/scenario/ScenarioLoader.java` for loader details
 
-## Starter loop for first-time players
+## Starter loop for first-time users
 
 1. Open the UI and load one of the built-in scenarios from the welcome overlay.
 2. Run or Step to establish baseline dynamics.

@@ -2,6 +2,8 @@
 
 Arcogine sits at the intersection of manufacturing systems, digital twins, simulation, industrial data integration, and agent-based decision making. This document maps relevant industry standards to Arcogine's architecture and defines the alignment strategy at each project phase.
 
+Per the [Product Charter](../PRODUCT_CHARTER.md), Arcogine's mature product identity spans the full design-simulate-verify-execute-monitor lifecycle, not simulation alone. That makes standards areas such as digital twins, enterprise/manufacturing integration (ISA-95), live operational data (OPC UA), asset identity, provenance, interoperability, and model verification more central to long-term architecture than a simulation-only framing would suggest — even though most of them remain "design for" or "note for later" tiers today, not current implementation commitments.
+
 ## Alignment Strategy
 
 Standards are categorized by when they influence design:
@@ -43,7 +45,7 @@ ISA-95 defines how ERP, MES, and shop-floor systems interact. It standardizes eq
 
 **Mapping to Arcogine MVP:**
 
-| ISA-95 Concept | Arcogine Equivalent | Crate |
+| ISA-95 Concept | Arcogine Equivalent | Module |
 |----------------|---------------------|-------|
 | Equipment (Work Unit) | Machine | `sim-factory` |
 | Material Definition | Product / SKU | `sim-factory` |

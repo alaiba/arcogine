@@ -2,6 +2,8 @@
 
 This page explains what Arcogine simulates and how to interpret what you see in the UI. Read this before diving into scenarios.
 
+This document describes the **current factory-simulation experience** — one current mode of engaging with Arcogine, not the complete Arcogine product ontology. See [`PRODUCT_CHARTER.md`](../PRODUCT_CHARTER.md) for the enduring product vision.
+
 ## The big picture
 
 Arcogine models a simplified factory that makes products and sells them. Three systems interact in a feedback loop:
@@ -147,7 +149,7 @@ Same demand pressure as Overload, but with additional machines. Compare whether 
 You can run scenarios without the UI:
 
 ```bash
-cargo run --bin arcogine -- run --headless --scenario examples/basic_scenario.toml
+java -jar java/sim-cli/build/libs/arcogine.jar run examples/basic_scenario.toml
 ```
 
 This executes the full simulation and prints a summary to stdout. Useful for batch comparisons or scripted experiments.

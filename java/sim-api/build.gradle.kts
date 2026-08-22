@@ -27,6 +27,7 @@ dependencies {
     // managed version otherwise, so it must be repeated here.
     implementation("tools.jackson.core:jackson-databind:3.2.2")
     implementation("tools.jackson.core:jackson-core:3.2.2")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.22")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     // Reactive client on the test classpath so the tests can build a

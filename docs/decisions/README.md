@@ -6,6 +6,13 @@ documentation (`architecture.md`, `concepts.md`, etc.) explains how Arcogine
 works today; ADRs explain *why* it ended up that way and preserve the history
 of that reasoning as the system evolves.
 
+ADRs operate under [`PRODUCT_CHARTER.md`](../../PRODUCT_CHARTER.md) and the
+current architecture — an ADR is not itself product vision, and it must not
+be written or read as though it sets Arcogine's product direction. Where a
+decision is consequential enough to interact with the Charter's principles,
+say so explicitly in the ADR (see the template's optional Charter-alignment
+note).
+
 See [ADR-0001](0001-use-architecture-decision-records.md) for the decision to
 use this mechanism.
 

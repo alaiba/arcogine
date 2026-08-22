@@ -7,6 +7,8 @@ alwaysApply: false
 
 When the user asks you to produce a plan from the current conversation, follow this protocol.
 
+If the plan touches product direction, domain design, or architecture (as opposed to a routine local implementation task), read `PRODUCT_CHARTER.md` at the repository root before writing the Goal or Recommended Approach sections. It is the normative source for what Arcogine is meant to become; a plan that conflicts with it should say so explicitly rather than silently drifting from it. This is strategic grounding, not a gate — don't block routine implementation plans on it.
+
 ## Step 1 — Extract raw material from the conversation
 
 Re-read the full conversation. Collect:

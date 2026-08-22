@@ -2,6 +2,8 @@
 
 This document covers all test categories in Arcogine, how to run them, and the rationale behind the testing architecture. **Make targets are the canonical quality-gate interface** — use `make <target>` from the repository root.
 
+This is about testing and quality-verifying Arcogine's own software — a different concept from the [Product Charter](../PRODUCT_CHARTER.md)'s "Verify" mode, which describes a future capability for verifying a *user's* production model or configuration against their own objectives and constraints. Don't conflate the two terminologically: this document is entirely about the former.
+
 ## Quick reference
 
 ```bash

@@ -26,3 +26,9 @@ What credible alternatives were considered?
 ## Consequences
 
 What becomes easier, harder, constrained, or required as a result?
+
+## Charter alignment (optional)
+
+For consequential decisions, note which [Product Charter](../../PRODUCT_CHARTER.md)
+principles this decision supports, constrains, or intentionally departs from.
+Omit this section if the decision has no meaningful bearing on product direction.

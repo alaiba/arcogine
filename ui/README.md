@@ -1,11 +1,11 @@
 # Arcogine UI
 
-The `ui/` package is the web-based experiment console for interacting with the Arcogine simulation.
+The `ui/` package is the web-based experiment console for interacting with the Arcogine simulation. It is a simulation/experiment-oriented interface — one current mode of engaging with Arcogine (see [`PRODUCT_CHARTER.md`](../PRODUCT_CHARTER.md#5-modes-of-engagement-not-personas)), not "the Arcogine UX" in the mature-product sense.
 
 ## What this UI does
 
 - Loads built-in scenarios and scenario files from `examples/`.
-- Sends simulation commands to the Rust API using relative `/api` routes.
+- Sends simulation commands to the Java/Spring Boot API using relative `/api` routes.
 - Streams events through SSE and displays KPIs, queues, jobs, and topology.
 - Provides controls for price, machine availability, agent toggles, and baseline comparison.
 
@@ -28,7 +28,7 @@ npm run dev
 In another terminal, run the API:
 
 ```bash
-cargo run --bin arcogine -- serve --addr 127.0.0.1:3000
+./arcogine run api
 ```
 
 ## Validation commands

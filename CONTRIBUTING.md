@@ -2,6 +2,8 @@
 
 Thank you for considering a contribution to Arcogine. This guide covers everything you need to get started.
 
+Before proposing a significant product, domain, or architecture change, read [`PRODUCT_CHARTER.md`](PRODUCT_CHARTER.md). It's the normative source for Arcogine's product direction — significant proposals should be evaluated against it as well as the current architecture constraints in `docs/architecture.md`. It's strategic context for judgment calls, not a rulebook for blocking routine local implementation work.
+
 ## Prerequisites
 
 - **JDK 25** and **Node.js 24+** (for native, non-container development)

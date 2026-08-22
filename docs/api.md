@@ -1,5 +1,7 @@
 # Arcogine — API Reference
 
+This document is strictly current-state: every endpoint below exists in the codebase today. It is not a preview of Arcogine's eventual platform API — see [`PRODUCT_CHARTER.md`](../PRODUCT_CHARTER.md) for the product direction this simulation API is one early step toward.
+
 The Arcogine API is an HTTP + SSE interface served by the `arcogine serve` command (default `127.0.0.1:3000`). The UI communicates exclusively through this API; you can also use it directly with curl or any HTTP client.
 
 All JSON request bodies are limited to 1 MiB. Error responses use the shape `{ "error": "description" }`.
@@ -229,5 +231,5 @@ The `SimSnapshot` returned by control and query endpoints:
 CORS is permissive by default (allows all origins). Set the `CORS_ALLOWED_ORIGIN` environment variable to restrict it:
 
 ```bash
-CORS_ALLOWED_ORIGIN=http://localhost:5173 cargo run --bin arcogine -- serve
+CORS_ALLOWED_ORIGIN=http://localhost:5173 java -jar java/sim-cli/build/libs/arcogine.jar serve
 ```

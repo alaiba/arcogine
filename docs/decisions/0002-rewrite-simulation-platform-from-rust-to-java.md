@@ -1,7 +1,16 @@
 # ADR-0002: Rewrite the simulation platform from Rust to Java
 
 Status: Accepted
-Date: 2026-08-22
+Date: 2026-05-30
+Recorded: 2026-08-22
+
+<!--
+This is a retrospective ADR. The decision itself was already established
+by the time `docs/java-rewrite-plan.md` was written (dated 2026-05-30);
+this record was added later, once the rewrite was complete, to preserve
+the rationale in a durable form. Date reflects the decision as documented
+in that plan; Recorded reflects when this ADR was written.
+-->
 
 ## Context
 
@@ -11,40 +20,45 @@ implemented in Rust as a set of crates (`sim-types`, `sim-core`,
 `sim-factory`, `sim-economy`, `sim-agents`, `sim-api`, `sim-cli`). The
 React/TypeScript UI was, and remains, a separate concern from this decision.
 
-Continuing to maintain and extend the simulation platform in Rust was
-weighed against rewriting it on a different stack, primarily to widen the
-pool of contributors (including coding agents) who could work on it
-confidently, and to align the platform with the JVM ecosystem used
-elsewhere. This was treated as a full rewrite rather than an incremental
-migration: no backwards compatibility with the Rust codebase was required,
-and the Rust crates were removed once the rewrite was complete.
+By 2026-05-30, the decision to replace this Rust implementation with Java 25
+had already been made and was documented as the scope of a rewrite plan
+(`docs/java-rewrite-plan.md`, since removed once the rewrite completed). That
+plan recorded the target stack and a set of non-negotiable constraints, but
+the underlying motivation for choosing Java over continuing to invest in the
+Rust implementation is not preserved in any source available at the time of
+writing this ADR. This ADR does not reconstruct that motivation; it records
+what was actually decided and what was documented as required to hold
+constant across the rewrite.
 
 ## Decision
 
-The simulation platform is rewritten in Java 25 (LTS), organized as a
+The simulation platform was rewritten in Java 25 (LTS), organized as a
 multi-module Gradle build under `java/`, using Spring Boot for the API layer
-and Picocli for the CLI. The Rust crates and `Cargo.toml`/`Cargo.lock` have
-been removed; Java is now the sole implementation language for the
-simulation platform. The React/TypeScript UI is unchanged by this decision.
+and Picocli for the CLI. This was a full rewrite, not an incremental
+migration: no backwards compatibility with the Rust codebase was required,
+and the Rust crates and `Cargo.toml`/`Cargo.lock` were removed once the
+rewrite was complete. The React/TypeScript UI was unchanged by this decision.
 
-Java 25 was chosen specifically for its LTS status (giving the platform a
-long support horizon without forced upgrades) and because its default
-strict floating-point semantics (JEP 306) were sufficient to meet the
-platform's determinism requirements without additional configuration.
+The rewrite plan required Java's default strict floating-point semantics
+(JEP 306) to be verified sufficient for the platform's determinism
+requirements before proceeding on Java 25; that verification succeeded and
+no additional floating-point configuration was needed.
 
 The Java module boundaries mirror the original Rust crate DAG
 (`sim-types → sim-core → sim-factory / sim-economy / sim-agents → sim-api →
-sim-cli`), preserving the same dependency direction and separation of
-concerns that the Rust crate structure had already validated. This mirroring
-was a deliberate starting point for the rewrite, not a claim that the
-module boundaries must remain fixed forever — module structure is
-current-architecture detail, described authoritatively in
-[`architecture.md`](../architecture.md), and may evolve independently of
-this decision (for example, `sim-finance` was added as a module after the
-initial rewrite).
+sim-cli`): the rewrite plan's recommended approach was a bottom-up rewrite
+in crate-DAG order, and the resulting Gradle modules preserve that same
+dependency direction and separation of concerns. This mirroring was the
+documented starting point for the rewrite, not a claim that the module
+boundaries must remain fixed forever — module structure is current-
+architecture detail, described authoritatively in
+[`architecture.md`](../architecture.md), and has already evolved since
+(for example, `sim-finance` was added as a module after the initial
+rewrite).
 
-The rewrite deliberately preserved, rather than renegotiated, several
-properties of the Rust implementation:
+The rewrite plan's non-negotiable constraints required the rewrite to
+preserve, rather than renegotiate, several properties of the Rust
+implementation:
 
 - **Determinism**: a fixed seed still yields reproducible simulation runs.
   The specific mechanism changed — from Rust's ChaCha8 RNG to Java's
@@ -62,16 +76,18 @@ properties of the Rust implementation:
 
 ## Alternatives considered
 
-- **Continue investing in the Rust implementation.** Kept the existing,
-  already-validated implementation and avoided rewrite risk entirely, but
-  did not address the motivations above.
-- **Incremental migration (interop layer, module-by-module cutover with both
-  languages live).** Would have reduced point-in-time risk but added
-  sustained cross-language interop complexity for a codebase of this size,
-  for longer than a clean rewrite justified.
-- **Rewrite in a different JVM language (e.g. Kotlin).** Considered and
-  rejected in favor of plain Java to keep the toolchain and hiring/agent
-  familiarity as broad as possible; not pursued further.
+The rewrite plan documents alternatives it evaluated for specific technical
+choices within the rewrite, not for the decision to rewrite in Java itself
+(no record of that broader alternatives analysis is available):
+
+- **RNG compatibility approach**: using a Java RNG bit-identical to Rust's
+  ChaCha8 was considered and rejected in favor of `java.util.Random`, with
+  Java-derived golden values and reproducibility (not cross-language
+  equivalence) as the determinism guarantee.
+- **SSE implementation**: Spring WebFlux `Flux`-based streaming was
+  considered and rejected in favor of Spring MVC's `SseEmitter`.
+- **TOML parsing library**: the plan evaluated TOML libraries and selected
+  `jackson-dataformat-toml`.
 
 ## Consequences
 

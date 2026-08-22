@@ -23,7 +23,7 @@ Run everything from the repo root via `./arcogine` (wraps the root `Makefile`):
 
 For anything more specific (coverage, security scans, Docker, Playwright), run `make help` — the Makefile is the full target list.
 
-`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. If you're an agent running inside a plain Windows shell without Bash, call `make <target>` directly instead.
+`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. Use the dev container on Windows; it's the supported path.
 
 **Always use `./gradlew` from `java/`, never a globally installed `gradle`.** The wrapper pins the exact build version in `java/gradle/wrapper/gradle-wrapper.properties`; a system Gradle install can silently diverge from it.
 

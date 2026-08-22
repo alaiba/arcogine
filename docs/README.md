@@ -17,7 +17,7 @@ Arcogine's documentation is layered, and each layer answers a different question
 - **[`architecture.md`](architecture.md)** — current architecture plus the enduring architectural principles that follow from the Charter. Explains how the system is built today and which parts of that are expected to persist regardless of implementation.
 - **[`decisions/`](decisions/README.md)** (ADRs) — historical rationale for significant, hard-to-reverse decisions: *why* the system ended up the way it did, operating under the Charter and current architecture rather than setting product direction themselves.
 - **[`concepts.md`](concepts.md)**, **[`api.md`](api.md)**, [`../ui/README.md`](../ui/README.md) — current capability/reference documentation. Describe what exists now, honestly, without projecting future capability.
-- **[`../devel/`](../devel/)** and historical plans (e.g. [`java-rewrite-plan.md`](java-rewrite-plan.md)) — temporary analysis, proposals, assessments, and past plans. Useful for context; not authoritative for current or future direction.
+- **[`../devel/`](../devel/)** — temporary analysis, proposals, and assessments. Useful for context; not authoritative for current or future direction.
 
 When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail.
 

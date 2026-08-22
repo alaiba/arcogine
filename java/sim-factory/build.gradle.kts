@@ -6,7 +6,7 @@ dependencies {
 }
 
 // Coverage gate: fails the build if sim-factory line coverage drops below the
-// floor (e.g. if its ported tests are deleted). See docs/java-rewrite-plan.md.
+// floor (e.g. if its tests are deleted).
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {

@@ -23,7 +23,7 @@ dependencies {
     implementation(project(":sim-api"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("info.picocli:picocli:4.7.6")
+    implementation("info.picocli:picocli:4.7.7")
     // io.spring.dependency-management only lets an explicit version win over
     // its BOM when declared in this project; a version pinned in sim-core
     // (a transitive project dependency) is silently overridden by the BOM's

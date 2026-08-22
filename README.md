@@ -41,17 +41,16 @@ git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension. The container automatically installs Java 25, Gradle, and UI dependencies.
+Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension. The container provides Java 25 and Node; dependency caches (`~/.gradle`, `ui/node_modules`) live in named Docker volumes for speed.
 
 After the container is ready, start the UI and API in two terminals:
 
 ```bash
 # Terminal 1: UI dev server
-cd ui && npm run dev
+./arcogine run ui
 
-# Terminal 2: Build and run API server
-cd java && ./gradlew :sim-cli:bootJar --no-daemon
-java -jar sim-cli/build/libs/arcogine.jar serve --addr 0.0.0.0:3000
+# Terminal 2: API server
+./arcogine run api
 ```
 
 Then open **http://127.0.0.1:5173**.
@@ -94,7 +93,7 @@ java -jar java/sim-cli/build/libs/arcogine.jar run examples/basic_scenario.toml
 | Simulation engine | Java 25 (records, sealed interfaces, pattern matching) |
 | HTTP API | Spring Boot 3.4 + Spring MVC |
 | CLI | Picocli |
-| Build | Gradle 8 (Kotlin DSL) |
+| Build | Gradle (Kotlin DSL), via the `java/gradlew` wrapper |
 | Frontend | React 19 + TypeScript + Vite |
 | Container | Eclipse Temurin 25 JRE |
 
@@ -110,8 +109,9 @@ java -jar java/sim-cli/build/libs/arcogine.jar run examples/basic_scenario.toml
 ## Quality gates
 
 ```bash
-make             # show all available targets
-make quality     # fast gates: compile, tests, coverage, lint, build
+./arcogine setup   # install/bootstrap dependencies
+./arcogine test    # Java + frontend unit tests
+./arcogine check   # fast gates: compile, tests, coverage, lint, build
 make quality-full  # everything: quality + Playwright E2E + Docker smoke + security scans
 ```
 

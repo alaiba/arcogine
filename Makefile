@@ -2,7 +2,7 @@
 
 GRADLE = cd java && ./gradlew --no-daemon
 
-.PHONY: help list clean \
+.PHONY: help list clean setup test \
 	java-compile java-test java-coverage java-lint java-bootjar java-bench \
 	frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build frontend-audit \
 	playwright docker-build docker-smoke trivy-scan-api trivy-scan-ui gitleaks java-audit \
@@ -19,6 +19,11 @@ help: ## Show available targets grouped by category
 	@echo ""
 
 list: help ## Alias for help
+
+##@ Bootstrap
+setup: ## Install/bootstrap all dependencies (safe to re-run)
+	cd ui && npm ci
+	$(GRADLE) help
 
 # ---------------------------------------------------------------------------
 # Leaf targets
@@ -109,6 +114,7 @@ ci-security: java-audit frontend-audit trivy-scan-api trivy-scan-ui gitleaks ## 
 # ---------------------------------------------------------------------------
 
 ##@ Quality gates
+test: java-test frontend-test ## Run Java + frontend unit test suites
 quality: java-compile java-lint java-test java-coverage frontend-lint frontend-typecheck frontend-test frontend-coverage frontend-build ## Fast quality gates (no Docker/Playwright/security)
 quality-full: quality playwright docker-build docker-smoke ci-security ## Full quality gates (everything)
 

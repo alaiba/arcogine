@@ -4,11 +4,10 @@ Thank you for considering a contribution to Arcogine. This guide covers everythi
 
 ## Prerequisites
 
-- **Rust** (stable channel, floating policy in `rust-toolchain.toml`)
-- **Node.js** 20+ and npm (for the `ui/` experiment console)
+- **JDK 25** and **Node.js 24+** (for native, non-container development)
 - **Docker** and Docker Compose (optional, for containerized runs)
 
-Native development requires Rust and Node installed on the host. If your host does not have Rust/Node installed, use the dev container path.
+If your host doesn't have JDK 25 / Node 24 installed, use the dev container path — it provides both.
 
 ## Choose a start path
 
@@ -19,41 +18,29 @@ git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the repository in VS Code and reopen in the dev container. The post-create script:
+Open the repository in VS Code and reopen in the dev container. `postCreateCommand` installs UI dependencies (`npm ci`), installs the Playwright browser, and copies `.env.example` to `.env` if missing. Gradle and npm caches live in named Docker volumes, so subsequent rebuilds are fast.
 
-- runs `cargo build`,
-- installs UI dependencies with `npm ci`,
-- copies `.env.example` to `.env` if missing.
-
-After startup:
+After startup, in two terminals:
 
 ```bash
-cd ui
-npm run dev
+./arcogine run ui
+./arcogine run api
 ```
 
-In a second terminal:
-
-```bash
-cargo run --bin arcogine -- serve --addr 0.0.0.0:3000
-```
-
-### 2) Native (host Rust + host Node)
+### 2) Native (host JDK + host Node)
 
 ```bash
 git clone https://github.com/alaiba/arcogine.git
 cd arcogine
-cargo build
-cargo test
+./arcogine setup
+./arcogine test
 ```
 
 Then run:
 
 ```bash
-cargo run --bin arcogine -- serve --addr 127.0.0.1:3000
-cd ui
-npm ci
-npm run dev
+./arcogine run api
+./arcogine run ui
 ```
 
 ### 3) Docker Compose
@@ -67,42 +54,41 @@ docker compose up --build
 
 | Directory | Purpose |
 |-----------|---------|
-| `crates/sim-types/` | Shared types, typed IDs, error definitions |
-| `crates/sim-core/` | Event engine, scheduler, logging, KPIs, scenario loader |
-| `crates/sim-factory/` | Machines, jobs, routing, queues |
-| `crates/sim-economy/` | Pricing, demand, revenue |
-| `crates/sim-agents/` | Agent trait and implementations |
-| `crates/sim-api/` | HTTP API (Axum), SSE |
-| `crates/sim-cli/` | CLI entrypoint (`arcogine` binary) |
+| `java/sim-types/` | Shared types, typed IDs, error definitions |
+| `java/sim-core/` | Event engine, scheduler, logging, KPIs, scenario loader |
+| `java/sim-factory/` | Machines, jobs, routing, queues |
+| `java/sim-economy/` | Pricing, demand, revenue |
+| `java/sim-finance/` | Ledger, financial interpretation of operational events |
+| `java/sim-agents/` | Agent interface and implementations |
+| `java/sim-api/` | HTTP API (Spring Boot MVC), SSE |
+| `java/sim-cli/` | CLI entrypoint (Picocli, produces `arcogine.jar`) |
 | `ui/` | React/TypeScript experiment console |
 | `examples/` | TOML scenario fixture files |
 | `docs/` | Project documentation |
 
-See `docs/architecture.md` for the full crate dependency graph and design rationale.
+See `docs/architecture.md` for the full module dependency graph and design rationale.
 
 ## Development workflow
 
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
-2. **Make your changes.** Follow the code style enforced by `cargo fmt` and `cargo clippy`.
-3. **Write tests** for new functionality. Each crate has inline `#[cfg(test)]` unit test modules; integration tests live in `crates/sim-api/tests/`. Frontend stores and components are tested with Vitest and Testing Library.
+2. **Make your changes.** Follow the code style enforced by Checkstyle.
+3. **Write tests** for new functionality. Each module has JUnit 5 unit tests; frontend stores and components are tested with Vitest and Testing Library.
 4. **Run the checks:**
 
 ```bash
-make quality        # fast gates: fmt, clippy, tests, coverage, lint, typecheck, build
-make quality-full   # everything: quality + playwright + docker + security
+./arcogine check     # fast gates: compile, lint, tests, coverage, typecheck, build
+make quality-full    # everything: check + playwright + docker + security
 ```
 
-Run `make help` to see all available targets.
+Run `make help` to see every available target.
 
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
 ## Code style
 
-- Run `make fmt` before committing (`cargo fmt --check` under the hood).
-- All Clippy warnings are treated as errors — `make clippy` runs `cargo clippy -- -D warnings`.
+- Checkstyle enforces Java style; `./arcogine check` (or `make java-lint`) runs it, and warnings are treated as errors at compile time (`-Werror`).
+- ESLint + Prettier enforce frontend style; `make frontend-lint` runs it.
 - Prefer explicit types over inference in public APIs.
-- All public types and functions must have doc-comments.
-- State structs derive `PartialEq`, `Eq`, `Clone`, `Debug`, and `serde::Serialize`.
 
 ## Architecture guardrails (Events, State, Observations)
 
@@ -134,9 +120,9 @@ See `devel/architecture-assessment-events-state-observations.md` for the current
 
 ## Testing
 
-Run `make quality` before pushing. That covers:
+Run `./arcogine check` before pushing. That covers:
 
-- Rust formatting, linting, workspace tests, and coverage
+- Java compilation, Checkstyle, unit tests, and Jacoco coverage gates
 - Frontend linting, type-checking, unit tests, coverage, and production build
 
 For the full test surface including Playwright E2E, Docker, and security scans, run `make quality-full`.
@@ -147,16 +133,15 @@ See `docs/TESTING.md` for the complete test category reference.
 
 | Layer | Location | Tool |
 |-------|----------|------|
-| Rust unit tests | `#[cfg(test)]` in each crate | `cargo test` |
-| Rust integration tests | `crates/sim-api/tests/` | `cargo test` |
-| Property tests | `crates/sim-core/tests/`, `crates/sim-factory/tests/` | `proptest` |
+| Java unit/integration tests | `java/*/src/test/` | JUnit 5 |
+| Architecture tests | `java/sim-api/src/test/` | ArchUnit |
 | Frontend unit tests | `ui/src/**/*.test.{ts,tsx}` | Vitest |
 | E2E tests | `ui/e2e/` | Playwright |
-| Benchmarks | `crates/sim-core/benches/` | Criterion |
+| Benchmarks | `java/sim-core` (`jmh` source set) | JMH |
 
 ## Determinism contract
 
-Arcogine's simulation must produce identical results given identical inputs. All stochastic behavior uses `ChaCha8Rng` seeded from the scenario configuration. See the determinism contract section in `docs/architecture.md` for details.
+Arcogine's simulation must produce identical results given identical inputs. All stochastic behavior uses a `Random` seeded from the scenario configuration. See the determinism contract section in `docs/architecture.md` for details.
 
 ## Commit messages
 

@@ -9,12 +9,16 @@
     "ghcr.io/devcontainers/features/java:1": {
       "version": "25",
       "jdkDistro": "tem",
-      "installGradle": true,
-      "gradleVersion": "9.1.0"
+      "installGradle": false
     },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+
+  "mounts": [
+    "source=arcogine-gradle-cache,target=/home/vscode/.gradle,type=volume",
+    "source=arcogine-ui-node-modules,target=${containerWorkspaceFolder}/ui/node_modules,type=volume"
+  ],
 
   "forwardPorts": [3000, 5173],
   "portsAttributes": {

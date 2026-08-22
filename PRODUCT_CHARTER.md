@@ -166,7 +166,7 @@ Repository documentation carries one of four statuses, applied where it material
 - **Normative** — enduring direction and principles. This charter, and the enduring-principle portions of `docs/architecture.md`.
 - **Current state** — what Arcogine implements now. `docs/concepts.md`, `docs/api.md`, `ui/README.md`, the current-implementation portions of `docs/architecture.md`.
 - **Proposed** — under consideration; not established. Proposed ADRs, `devel/` analyses.
-- **Historical** — retained for context but no longer authoritative. Superseded ADRs, past plans such as `docs/java-rewrite-plan.md`.
+- **Historical** — retained for context but no longer authoritative. Superseded ADRs.
 
 A reader should never be left guessing whether a statement is mature product ambition, current implementation, an open proposal, or a historical artifact.
 

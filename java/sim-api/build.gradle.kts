@@ -50,7 +50,7 @@ tasks.jar {
 }
 
 // Coverage gate: fails the build if sim-api line coverage drops below the
-// floor. Set a few points below measured actual. See docs/java-rewrite-plan.md.
+// floor. Set a few points below measured actual.
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {

@@ -29,8 +29,8 @@ configurations.named("jmh") {
 }
 
 // Coverage gate: fails the build if sim-core line coverage drops below the
-// floor (e.g. if its ported Rust test suite is deleted). The minimum is set a
-// few points below measured actual coverage. See docs/java-rewrite-plan.md.
+// floor (e.g. if its test suite is deleted). The minimum is set a few points
+// below measured actual coverage.
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {

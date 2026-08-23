@@ -64,6 +64,16 @@ cmd_check() {
   (cd ui && npm run test:coverage)
   (cd ui && npm run build)
 
+  case "${1:-}" in
+    "") ;;
+    --full) ;;
+    *)
+      echo "Unknown option for 'check': $1" >&2
+      echo "Usage: ./arcogine check [--full]" >&2
+      exit 1
+      ;;
+  esac
+
   if [[ "${1:-}" == "--full" ]]; then
     echo "==> Playwright E2E..."
     (cd ui && npx playwright test)
@@ -72,9 +82,11 @@ cmd_check() {
     docker compose build
     cp .env.example .env
     docker compose up -d --wait --wait-timeout 120
+    trap 'docker compose down' EXIT
     curl -sf http://localhost:3000/api/health > /dev/null
     curl -sf "http://localhost:${UI_PORT:-5173}/health" > /dev/null
     docker compose down
+    trap - EXIT
 
     echo "==> Security: dependency audit, image scans, secret scan..."
     gradle cyclonedxBom

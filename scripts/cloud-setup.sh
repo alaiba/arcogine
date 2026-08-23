@@ -66,7 +66,11 @@ current_java_major() {
     return
   fi
   local ver
-  ver="$(java -version 2>&1 | head -1 | sed -E 's/.*"([^"]+)".*/\1/')"
+  # Don't assume the version string is on the first line: a JDK that
+  # picks up JAVA_TOOL_OPTIONS (or similar env-driven JVM flags) prints a
+  # "Picked up JAVA_TOOL_OPTIONS: ..." notice to stderr before the actual
+  # `openjdk version "..."` line, which `head -1` would otherwise grab.
+  ver="$(java -version 2>&1 | grep -m1 'version "' | sed -E 's/.*version "([^"]+)".*/\1/')"
   java_major_from_version_string "$ver"
 }
 
@@ -80,18 +84,34 @@ if [ "$(current_java_major)" != "$REQUIRED_JAVA_MAJOR" ]; then
   echo "    Java ${REQUIRED_JAVA_MAJOR} not currently selected; installing Temurin ${REQUIRED_JAVA_MAJOR}."
 
   if command -v apt-get >/dev/null 2>&1; then
-    if [ ! -f /etc/apt/keyrings/adoptium.asc ]; then
-      echo "    Adding Eclipse Adoptium apt repository..."
-      sudo install -m 0755 -d /etc/apt/keyrings
-      curl -fsSL https://packages.adoptium.net/artifactory/api/gpg/key/public \
-        | sudo tee /etc/apt/keyrings/adoptium.asc >/dev/null
-      # No architecture is hardcoded here: apt itself resolves the correct
-      # binary-arch package for the host at install time.
-      echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo "$VERSION_CODENAME") main" \
-        | sudo tee /etc/apt/sources.list.d/adoptium.list >/dev/null
+    # Always (re-)write the keyring and source list rather than skipping
+    # when the keyring file merely exists: a prior interrupted run (e.g.
+    # curl failing mid-pipeline) can leave a 0-byte/invalid keyring file
+    # behind, which would otherwise cause this block to be silently
+    # skipped without ever adding a valid Adoptium source. Both writes are
+    # cheap and idempotent, so there's no downside to always doing them.
+    echo "    Adding Eclipse Adoptium apt repository..."
+    sudo install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://packages.adoptium.net/artifactory/api/gpg/key/public \
+      | sudo tee /etc/apt/keyrings/adoptium.asc >/dev/null
+    if [ ! -s /etc/apt/keyrings/adoptium.asc ]; then
+      echo "FATAL: failed to download Adoptium GPG key (empty file written)." >&2
+      exit 1
     fi
-    sudo apt-get update -y
-    sudo apt-get install -y "temurin-${REQUIRED_JAVA_MAJOR}-jdk"
+    # No architecture is hardcoded here: apt itself resolves the correct
+    # binary-arch package for the host at install time.
+    echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo "$VERSION_CODENAME") main" \
+      | sudo tee /etc/apt/sources.list.d/adoptium.list >/dev/null
+    # Refresh only the Adoptium list we just added, not every apt source
+    # configured on the base image. A plain `apt-get update` is all-or-
+    # nothing: an unrelated, unreachable third-party PPA already present
+    # on the image would abort the whole refresh, even though the
+    # Adoptium source itself is fine.
+    sudo -E apt-get update -y \
+      -o Dir::Etc::sourcelist="sources.list.d/adoptium.list" \
+      -o Dir::Etc::sourceparts="-" \
+      -o APT::Get::List-Cleanup="0"
+    sudo -E apt-get install -y "temurin-${REQUIRED_JAVA_MAJOR}-jdk"
   else
     echo "FATAL: apt-get not available; cannot install Temurin ${REQUIRED_JAVA_MAJOR} JDK." >&2
     exit 1
@@ -148,10 +168,46 @@ if [ "$(current_node_major)" != "$REQUIRED_NODE_MAJOR" ]; then
   echo "    Node ${REQUIRED_NODE_MAJOR} not currently selected; installing via NodeSource."
 
   if command -v apt-get >/dev/null 2>&1; then
-    # The NodeSource setup script detects host architecture itself; no
-    # architecture-specific path is hardcoded here.
-    curl -fsSL "https://deb.nodesource.com/setup_${REQUIRED_NODE_MAJOR}.x" | sudo -E bash -
-    sudo apt-get install -y nodejs
+    # We add the NodeSource repo ourselves (mirroring what their official
+    # setup_<major>.x script does) rather than piping that script into
+    # `sudo bash -`: it internally runs unscoped `apt update -y` calls,
+    # which would abort on any unrelated, unreachable apt source already
+    # configured on the base image. Doing it ourselves lets us scope the
+    # refresh to just the NodeSource list, same as we do for Adoptium.
+    sudo mkdir -p /usr/share/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+      | sudo gpg --dearmor --yes -o /usr/share/keyrings/nodesource.gpg
+    if [ ! -s /usr/share/keyrings/nodesource.gpg ]; then
+      echo "FATAL: failed to download NodeSource GPG key (empty file written)." >&2
+      exit 1
+    fi
+    sudo chmod 644 /usr/share/keyrings/nodesource.gpg
+
+    # dpkg reports the actual host architecture; nothing is hardcoded.
+    NODE_ARCH="$(dpkg --print-architecture)"
+    cat <<EOF | sudo tee /etc/apt/sources.list.d/nodesource.sources >/dev/null
+Types: deb
+URIs: https://deb.nodesource.com/node_${REQUIRED_NODE_MAJOR}.x
+Suites: nodistro
+Components: main
+Architectures: ${NODE_ARCH}
+Signed-By: /usr/share/keyrings/nodesource.gpg
+EOF
+
+    sudo -E apt-get update -y \
+      -o Dir::Etc::sourcelist="sources.list.d/nodesource.sources" \
+      -o Dir::Etc::sourceparts="-" \
+      -o APT::Get::List-Cleanup="0"
+    sudo -E apt-get install -y nodejs
+
+    # Base images can carry other Node installs earlier on PATH (extra
+    # runtime managers, stale symlinks, etc.) that would otherwise shadow
+    # the one apt just installed. Discover where dpkg actually put it and
+    # make sure that directory wins, rather than assuming a fixed path.
+    NODE_BIN="$(dpkg -L nodejs 2>/dev/null | grep -E '/bin/node$' | head -1)"
+    if [ -n "$NODE_BIN" ] && [ -x "$NODE_BIN" ]; then
+      export PATH="$(dirname "$NODE_BIN"):${PATH}"
+    fi
   else
     echo "FATAL: apt-get not available; cannot install Node.js ${REQUIRED_NODE_MAJOR}." >&2
     exit 1
@@ -159,6 +215,7 @@ if [ "$(current_node_major)" != "$REQUIRED_NODE_MAJOR" ]; then
 else
   echo "    Node ${REQUIRED_NODE_MAJOR} already selected."
 fi
+echo "    node resolves to: $(command -v node)"
 
 # ---------------------------------------------------------------------------
 # 3. Verify and log toolchain versions.

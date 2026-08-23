@@ -11,17 +11,18 @@ Operational notes for coding agents working in this repository. See [README.md](
 
 ## Canonical commands
 
-Run everything from the repo root via `./arcogine` (wraps the root `Makefile`):
+Run everything from the repo root via `./arcogine`, a thin wrapper that composes the project's own tools (Gradle wrapper, npm/npx, Docker Compose):
 
 ```bash
-./arcogine setup      # install/bootstrap dependencies, safe to re-run
-./arcogine test       # Java + frontend unit tests
-./arcogine check      # full quality gates: lint, typecheck, tests, build
-./arcogine run api    # start the Spring Boot API on :3000
-./arcogine run ui     # start the Vite dev server on :5173
+./arcogine setup       # install/bootstrap dependencies, safe to re-run
+./arcogine test        # Java + frontend unit tests
+./arcogine check       # fast quality gates: lint, typecheck, tests, coverage, build
+./arcogine check --full # + Playwright E2E, Docker smoke test, security scans
+./arcogine run api     # start the Spring Boot API on :3000
+./arcogine run ui      # start the Vite dev server on :5173
 ```
 
-For anything more specific (coverage, security scans, Docker, Playwright), run `make help` — the Makefile is the full target list.
+For anything more specific, use the subsystem's native tool directly: `cd java && ./gradlew <task>` (coverage, Checkstyle, `bootJar`, JMH, dependency audit), `cd ui && npm ...`/`npx ...` (lint, typecheck, build, Playwright), `docker compose ...` (containers), `trivy`/`gitleaks` (security scans). See `docs/TESTING.md` for the full command reference.
 
 `./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. Use the dev container on Windows; it's the supported path.
 
@@ -29,7 +30,7 @@ For anything more specific (coverage, security scans, Docker, Playwright), run `
 
 ## Validating changes
 
-Before considering a change complete, run `./arcogine check`. For anything touching the API-UI contract or E2E flows, also run `make playwright` (requires the API and UI running or built per `make ci-playwright`).
+Before considering a change complete, run `./arcogine check`. For anything touching the API-UI contract or E2E flows, also run `cd ui && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and UI dev server via `webServer`, but the jar must already be built once (`cd java && ./gradlew :sim-cli:bootJar`) for a clean checkout.
 
 ## Do not edit
 

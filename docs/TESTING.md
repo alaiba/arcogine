@@ -1,36 +1,33 @@
 # Testing Guide
 
-This document covers all test categories in Arcogine, how to run them, and the rationale behind the testing architecture. **Make targets are the canonical quality-gate interface** — use `make <target>` from the repository root.
+This document covers all test categories in Arcogine, how to run them, and the rationale behind the testing architecture. **`./arcogine`** is the canonical entry point for cross-project quality gates from the repository root; anything more specific runs through its own native tool (`./gradlew`, `npm`/`npx`, `docker compose`, `trivy`, `gitleaks`) as noted per category below.
 
 This is about testing and quality-verifying Arcogine's own software — a different concept from the [Product Charter](../PRODUCT_CHARTER.md)'s "Verify" mode, which describes a future capability for verifying a *user's* production model or configuration against their own objectives and constraints. Don't conflate the two terminologically: this document is entirely about the former.
 
 ## Quick reference
 
 ```bash
-make quality        # fast gates (before pushing): compile, Checkstyle, tests, coverage, frontend lint/typecheck/test/build
-make quality-full   # everything: quality + Playwright E2E + Docker smoke + security scans
-make help           # list all available targets
+./arcogine check         # fast gates (before pushing): compile, Checkstyle, tests, coverage, frontend lint/typecheck/test/build
+./arcogine check --full  # everything: check + Playwright E2E + Docker smoke + security scans
+./arcogine --help        # list all ./arcogine commands
 ```
 
 ## Quality gates
 
 | Command | Scope |
 |---------|-------|
-| `make quality` | Java compile (`-Xlint:all -Werror`), Checkstyle, JUnit tests, Jacoco coverage gates, frontend lint, typecheck, unit tests, frontend coverage, production build |
-| `make quality-full` | Everything above, plus Playwright, Docker build/smoke, and security scans (frontend audit, Trivy image scans, Gitleaks) |
+| `./arcogine check` | Java compile (`-Xlint:all -Werror`), Checkstyle, JUnit tests, Jacoco coverage gates, frontend lint, typecheck, unit tests, frontend coverage, production build |
+| `./arcogine check --full` | Everything above, plus Playwright, Docker build/smoke, and security scans (dependency audit, frontend audit, Trivy image scans, Gitleaks) |
 
-Leaf targets follow a `<domain>-<action>` naming convention (e.g. `java-test`, `frontend-lint`).
+### Command model
 
-### Target model
+`./arcogine` stays deliberately small (`setup`, `test`, `check`/`check --full`, `run api`/`run ui`) and composes each subsystem's native tool rather than wrapping every operation:
 
-- **Discovery:** `help` (default), `list`
-- **Java:** `java-compile`, `java-lint` (Checkstyle), `java-test`, `java-coverage`, `java-bootjar`
-- **Frontend:** `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-coverage`, `frontend-build`, `frontend-audit`
-- **E2E:** `playwright`
-- **Docker:** `docker-build`, `docker-smoke`
-- **Security:** `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`
-- **CI composites:** `ci-java`, `ci-frontend`, `ci-playwright`, `ci-docker`, `ci-security`
-- **Developer entrypoints:** `quality`, `quality-full`, `clean`
+- **Java** (`cd java && ./gradlew <task>`): `compileJava`/`compileTestJava`, `checkstyleMain`/`checkstyleTest`, `test`, `jacocoTestReport`/`jacocoTestCoverageVerification`, `:sim-cli:bootJar`, `:sim-core:jmh`, `cyclonedxBom`
+- **Frontend** (`cd ui && npm ...`/`npx ...`): `npm run lint`, `npx tsc --noEmit`, `npm test`/`npm run test:coverage`, `npm run build`, `npm audit --audit-level=high`
+- **E2E** (`cd ui && npx playwright test`)
+- **Containers** (`docker compose build`/`up`/`down`)
+- **Security** (`trivy image`/`trivy sbom`, `gitleaks detect`)
 
 ## Prerequisites
 
@@ -38,7 +35,7 @@ Leaf targets follow a `<domain>-<action>` naming convention (e.g. `java-test`, `
 - **Node.js** (24+): for frontend checks and tests.
 - **Docker** and Docker Compose: for container checks (optional for local dev).
 
-All Java commands run through the Gradle wrapper under `java/`; the Make targets wrap them.
+All Java commands run through the Gradle wrapper under `java/`.
 
 ### Running Java tests without a local JDK 25
 
@@ -75,25 +72,25 @@ Notes:
 
 ### 1. Java static analysis (Checkstyle)
 
-`make java-lint` — runs `checkstyleMain checkstyleTest` (Checkstyle 13.5.0) against a deliberately minimal, high-signal ruleset (`java/config/checkstyle/checkstyle.xml`): unused/redundant/star imports plus a few bug-oriented checks. The compiler does **not** flag unused imports, so this is genuinely additive. Expand the ruleset deliberately rather than adopting a large style guide wholesale.
+`cd java && ./gradlew checkstyleMain checkstyleTest` (part of `./arcogine check`) — runs Checkstyle 13.5.0 against a deliberately minimal, high-signal ruleset (`java/config/checkstyle/checkstyle.xml`): unused/redundant/star imports plus a few bug-oriented checks. The compiler does **not** flag unused imports, so this is genuinely additive. Expand the ruleset deliberately rather than adopting a large style guide wholesale.
 
 ### 2. Java compilation
 
-`make java-compile` — compiles all modules' main and test sources with `-Xlint:all -Werror`, so every compiler warning (including deprecations from newer Spring/Jackson) is a hard error.
+`cd java && ./gradlew compileJava compileTestJava` — compiles all modules' main and test sources with `-Xlint:all -Werror`, so every compiler warning (including deprecations from newer Spring/Jackson) is a hard error.
 
 ### 3. Java unit tests (JUnit 5)
 
 ~178 tests across the seven modules cover typed IDs and `SimTime`, scenario schema and TOML loading, the scheduler/runner/KPI/event-log core, machine state and job routing, demand and pricing, the sales agent, the HTTP API contract, and the headless CLI.
 
-`make java-test` — runs `./gradlew test`.
+`cd java && ./gradlew test`.
 
 ### 4. Property tests
 
-Invariants (monotonic time, no event loss, machine concurrency limits, queue FIFO ordering) are expressed as JUnit 5 parameterized/randomized-seed tests in `sim-core` and `sim-factory`. They run as part of `make java-test`.
+Invariants (monotonic time, no event loss, machine concurrency limits, queue FIFO ordering) are expressed as JUnit 5 parameterized/randomized-seed tests in `sim-core` and `sim-factory`. They run as part of `./gradlew test`.
 
 ### 5. Integration tests
 
-`sim-api` tests use `@SpringBootTest(webEnvironment = RANDOM_PORT)` and a `WebTestClient` built via `WebTestClient.bindToServer()` against the live server. They exercise the full HTTP contract (scenario load, run/pause/step, price/machine/agent commands, KPIs, topology, SSE), so they double as the API integration layer. Part of `make java-test`.
+`sim-api` tests use `@SpringBootTest(webEnvironment = RANDOM_PORT)` and a `WebTestClient` built via `WebTestClient.bindToServer()` against the live server. They exercise the full HTTP contract (scenario load, run/pause/step, price/machine/agent commands, KPIs, topology, SSE), so they double as the API integration layer. Part of `./gradlew test`.
 
 ### 6. Determinism tests
 
@@ -101,53 +98,55 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 ### 7. Java coverage (Jacoco) + per-module gates
 
-`make java-coverage` — runs `test jacocoTestReport jacocoTestCoverageVerification`. Each module declares a `jacocoTestCoverageVerification` gate (a `LINE` minimum, set a few points below measured actual) wired into `check`, so removing a module's tests fails the build instead of passing vacuously. CI uploads the per-module `jacocoTestReport.xml` to Codecov.
+`cd java && ./gradlew test jacocoTestReport jacocoTestCoverageVerification` (part of `./arcogine check`). Each module declares a `jacocoTestCoverageVerification` gate (a `LINE` minimum, set a few points below measured actual) wired into `check`, so removing a module's tests fails the build instead of passing vacuously. CI uploads the per-module `jacocoTestReport.xml` to Codecov.
 
 ### 8. Benchmarks (JMH)
 
-`make java-bench` — runs the JMH microbenchmarks in `sim-core` (`./gradlew :sim-core:jmh`), ported from the Rust Criterion suites: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario runtime (run a 1000-tick scenario, and load+validate). Sources live in `java/sim-core/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). Note: ASM is pinned to a Java 25-aware version so the JMH bytecode generator can read the toolchain's class files, and JMH's machine-generated classes are exempt from `-Werror`.
+`cd java && ./gradlew :sim-core:jmh` — runs the JMH microbenchmarks in `sim-core`, ported from the Rust Criterion suites: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario runtime (run a 1000-tick scenario, and load+validate). Sources live in `java/sim-core/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). Note: ASM is pinned to a Java 25-aware version so the JMH bytecode generator can read the toolchain's class files, and JMH's machine-generated classes are exempt from `-Werror`.
 
 ### 9. Java dependency audit (CycloneDX SBOM + Trivy)
 
-`make java-audit` — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `java/build/reports/cyclonedx/bom.json`, ~179 components) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`), run as part of `ci-security`, and complements `trivy-scan-api` (which scans the built image). (`trivy fs` is not used: it does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without Trivy's separate Java DB.)
+`cd java && ./gradlew cyclonedxBom && trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 java/build/reports/cyclonedx/bom.json` (part of `./arcogine check --full`) — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `java/build/reports/cyclonedx/bom.json`, ~179 components) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`) and complements the Trivy image scan of the built API image (see below). (`trivy fs` is not used: it does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without Trivy's separate Java DB.)
 
-Shipped-runtime CVEs in `tomcat-embed-core` (3 CRITICAL + 3 HIGH) were remediated by overriding the Spring-managed version — `extra["tomcat.version"] = "11.0.22"` in `sim-api`/`sim-cli`.
+Shipped-runtime CVEs in `tomcat-embed-core` (3 CRITICAL + 3 HIGH) were remediated by overriding the Spring-managed version — `extra["tomcat.version"] = "11.0.22"` in `sim-api`/`sim-cli`. Non-shipped Netty CVEs (test-only, pulled by `spring-boot-starter-webflux`'s `WebTestClient`) are remediated the same way where practical — `extra["netty.version"] = "4.2.16.Final"` in `sim-api` — rather than suppressed, so the whole-build SBOM audit stays clean without relying on `.trivyignore`.
 
-A `.trivyignore` at the repo root suppresses **only non-shipped** findings, each justified inline: `netty-codec-*` (test-only — pulled by `spring-boot-starter-webflux`, the `WebTestClient` reactive client) and `plexus-utils` (build tooling). Shipped-runtime CVEs are never suppressed and will fail the gate.
+A `.trivyignore` at the repo root suppresses **only non-shipped** findings that aren't otherwise remediated by a version override, each justified inline: `netty-codec-*` (test-only — pulled by `spring-boot-starter-webflux`, the `WebTestClient` reactive client) and `plexus-utils` (build tooling). Shipped-runtime CVEs are never suppressed and will fail the gate.
 
 (OWASP dependency-check was considered but requires an NVD API key and a large database download; Trivy reuses the vulnerability DB already present from the image scans.)
 
 ### 10–15. Frontend (lint, typecheck, unit tests, coverage, build, audit)
 
-The React/TypeScript UI is unchanged by the Rust→Java rewrite. `make frontend-lint` (ESLint), `frontend-typecheck` (`tsc --noEmit`), `frontend-test` (Vitest), `frontend-coverage`, `frontend-build`, `frontend-audit` (`npm audit --audit-level=high`).
+The React/TypeScript UI is unchanged by the Rust→Java rewrite. From `ui/`: `npm run lint` (ESLint), `npx tsc --noEmit` (typecheck), `npm test` (Vitest), `npm run test:coverage`, `npm run build`, `npm audit --audit-level=high` (dependency audit). Lint/typecheck/coverage/build run as part of `./arcogine check`; the audit runs as part of `./arcogine check --full`.
 
 ### 16. Playwright E2E
 
-Browser-level user-journey tests. Requires the API server and UI dev server. `make playwright` — runs the Playwright suite against the **Java** API unchanged. (`cd ui && npx playwright test`.)
+Browser-level user-journey tests. Requires the API server and UI dev server. `cd ui && npx playwright test` (part of `./arcogine check --full`) — runs the Playwright suite against the **Java** API unchanged. Playwright's own config (`ui/playwright.config.ts`) starts both servers via `webServer`, but the API jar (`cd java && ./gradlew :sim-cli:bootJar`) must already be built once for a clean checkout.
 
 ### 17. Docker build and smoke
 
-`make docker-build` (`docker compose build`) and `make docker-smoke` (build, start, health-check `:3000/api/health` and the UI, tear down).
+`docker compose build`, then the smoke sequence (start, health-check `:3000/api/health` and the UI, tear down) — both part of `./arcogine check --full`.
 
 ### 18. Container image scans
 
-`make trivy-scan-api` and `make trivy-scan-ui` — scan built images for CRITICAL/HIGH vulnerabilities (this is where bundled Java dependencies are scanned today).
+`docker build -t arcogine-api:ci . && trivy image ... arcogine-api:ci` and the same for `arcogine-ui:ci` built from `ui/` — scan built images for CRITICAL/HIGH vulnerabilities (this is where bundled Java dependencies are scanned today). Both run as part of `./arcogine check --full`.
 
 ### 19. Secret scan
 
-`make gitleaks` — scans the repo for leaked secrets.
+`gitleaks detect --source . --config .gitleaks.toml --verbose` (part of `./arcogine check --full`) — scans the repo for leaked secrets.
 
 ## CI pipeline
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs:
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each invoking its native tool directly:
 
-| Job | Make target | What it checks |
-|-----|------------|----------------|
-| Java | `make ci-java` | `java-compile`, `java-lint` (Checkstyle), `java-test`, `java-coverage` (Jacoco gates) |
-| Frontend | `make ci-frontend` | `frontend-lint`, `frontend-typecheck`, `frontend-coverage`, `frontend-build`, `frontend-audit` |
-| Playwright | `make playwright` | Browser E2E against the Java API |
-| Docker | `make ci-docker` | `docker-build`, `docker-smoke` |
-| Security | `make ci-security` | frontend audit, Trivy image scans, Gitleaks |
+| Job | Command | What it checks |
+|-----|---------|----------------|
+| Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Compile, Checkstyle, unit tests, Jacoco coverage gates |
+| Frontend | `npm run lint`, `npx tsc --noEmit`, `npm run test:coverage`, `npm run build`, `npm audit --audit-level=high` | Lint, typecheck, coverage, build, dependency audit |
+| Playwright | `npx playwright test` (after `./gradlew :sim-cli:bootJar`) | Browser E2E against the Java API |
+| Docker | `docker compose build`, then the smoke sequence | Container build + startup health-check |
+| Docker image scan | `docker build` + `trivy image` (matrix: api, ui) | CRITICAL/HIGH vulnerabilities in built images |
+| Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
+| Secret scan | `gitleaks detect` | Leaked secrets |
 
 The Java job uses Temurin 25 + the Gradle wrapper and uploads coverage to Codecov.
 
@@ -193,7 +192,7 @@ The hardening checks live in the regular `sim-api` suite (`ApiSmokeTest`), not a
 
 When changing quality gates, update all of these together:
 
-- `Makefile`
+- `arcogine` (the `cmd_check` function)
 - `.github/workflows/ci.yml`
 - This document (`docs/TESTING.md`)
 - `SECURITY.md` (if security scan commands change)

@@ -80,18 +80,18 @@ See `docs/architecture.md` for the full module dependency graph and design ratio
 4. **Run the checks:**
 
 ```bash
-./arcogine check     # fast gates: compile, lint, tests, coverage, typecheck, build
-make quality-full    # everything: check + playwright + docker + security
+./arcogine check         # fast gates: compile, lint, tests, coverage, typecheck, build
+./arcogine check --full  # everything: check + playwright + docker + security
 ```
 
-Run `make help` to see every available target.
+For anything more specific, use the subsystem's native tool directly — see `docs/TESTING.md` for the full command reference.
 
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
 ## Code style
 
-- Checkstyle enforces Java style; `./arcogine check` (or `make java-lint`) runs it, and warnings are treated as errors at compile time (`-Werror`).
-- ESLint + Prettier enforce frontend style; `make frontend-lint` runs it.
+- Checkstyle enforces Java style; `./arcogine check` (or `cd java && ./gradlew checkstyleMain checkstyleTest`) runs it, and warnings are treated as errors at compile time (`-Werror`).
+- ESLint + Prettier enforce frontend style; `cd ui && npm run lint` runs it.
 - Prefer explicit types over inference in public APIs.
 
 ## Architecture guardrails (Events, State, Observations)
@@ -129,7 +129,7 @@ Run `./arcogine check` before pushing. That covers:
 - Java compilation, Checkstyle, unit tests, and Jacoco coverage gates
 - Frontend linting, type-checking, unit tests, coverage, and production build
 
-For the full test surface including Playwright E2E, Docker, and security scans, run `make quality-full`.
+For the full test surface including Playwright E2E, Docker, and security scans, run `./arcogine check --full`.
 
 See `docs/TESTING.md` for the complete test category reference.
 

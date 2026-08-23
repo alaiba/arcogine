@@ -1,4 +1,5 @@
-# CVE allowlist for `make java-audit` (trivy sbom over the CycloneDX SBOM).
+# CVE allowlist for the Java dependency audit (trivy sbom over the CycloneDX SBOM,
+# run via `./arcogine check --full` or `cd java && ./gradlew cyclonedxBom`).
 #
 # Only CVEs in dependencies that are NOT shipped in the deployable
 # (sim-cli's arcogine.jar) are listed here — they come from test-only or

@@ -108,9 +108,9 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 `cd java && ./gradlew cyclonedxBom && trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 java/build/reports/cyclonedx/bom.json` (part of `./arcogine check --full`) — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `java/build/reports/cyclonedx/bom.json`, ~179 components) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`) and complements the Trivy image scan of the built API image (see below). (`trivy fs` is not used: it does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without Trivy's separate Java DB.)
 
-Shipped-runtime CVEs in `tomcat-embed-core` (3 CRITICAL + 3 HIGH) were remediated by overriding the Spring-managed version — `extra["tomcat.version"] = "11.0.22"` in `sim-api`/`sim-cli`.
+Shipped-runtime CVEs in `tomcat-embed-core` (3 CRITICAL + 3 HIGH) were remediated by overriding the Spring-managed version — `extra["tomcat.version"] = "11.0.22"` in `sim-api`/`sim-cli`. Non-shipped Netty CVEs (test-only, pulled by `spring-boot-starter-webflux`'s `WebTestClient`) are remediated the same way where practical — `extra["netty.version"] = "4.2.16.Final"` in `sim-api` — rather than suppressed, so the whole-build SBOM audit stays clean without relying on `.trivyignore`.
 
-A `.trivyignore` at the repo root suppresses **only non-shipped** findings, each justified inline: `netty-codec-*` (test-only — pulled by `spring-boot-starter-webflux`, the `WebTestClient` reactive client) and `plexus-utils` (build tooling). Shipped-runtime CVEs are never suppressed and will fail the gate.
+A `.trivyignore` at the repo root suppresses **only non-shipped** findings that aren't otherwise remediated by a version override, each justified inline: `netty-codec-*` (test-only — pulled by `spring-boot-starter-webflux`, the `WebTestClient` reactive client) and `plexus-utils` (build tooling). Shipped-runtime CVEs are never suppressed and will fail the gate.
 
 (OWASP dependency-check was considered but requires an NVD API key and a large database download; Trivy reuses the vulnerability DB already present from the image scans.)
 

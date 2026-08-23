@@ -64,16 +64,6 @@ cmd_check() {
   (cd ui && npm run test:coverage)
   (cd ui && npm run build)
 
-  case "${1:-}" in
-    "") ;;
-    --full) ;;
-    *)
-      echo "Unknown option for 'check': $1" >&2
-      echo "Usage: ./arcogine check [--full]" >&2
-      exit 1
-      ;;
-  esac
-
   if [[ "${1:-}" == "--full" ]]; then
     echo "==> Playwright E2E..."
     (cd ui && npx playwright test)
@@ -102,31 +92,36 @@ cmd_check() {
 }
 
 cmd_run() {
-  case "${1:-}" in
+  case "$1" in
     api) cd java && exec ./gradlew --no-daemon :sim-cli:bootRun --args=serve ;;
     ui) cd ui && exec npm run dev ;;
-    *)
-      echo "Usage: ./arcogine run {api|ui}" >&2
-      exit 1
-      ;;
   esac
 }
 
 cmd="${1:-}"
 case "$cmd" in
-  setup)
-    cmd_setup
-    ;;
-  test)
-    cmd_test
+  setup|test)
+    if [[ $# -ne 1 ]]; then
+      echo "Usage: ./arcogine $cmd" >&2
+      exit 1
+    fi
+    cmd_"$cmd"
     ;;
   check)
+    if [[ $# -gt 2 || ( $# -eq 2 && "$2" != "--full" ) ]]; then
+      echo "Usage: ./arcogine check [--full]" >&2
+      exit 1
+    fi
     shift
     cmd_check "${1:-}"
     ;;
   run)
+    if [[ $# -ne 2 || ( "$2" != "api" && "$2" != "ui" ) ]]; then
+      echo "Usage: ./arcogine run {api|ui}" >&2
+      exit 1
+    fi
     shift
-    cmd_run "${1:-}"
+    cmd_run "$1"
     ;;
   ""|-h|--help)
     usage

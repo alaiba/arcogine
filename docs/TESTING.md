@@ -145,11 +145,10 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 | Playwright | `npx playwright test` (after `./gradlew :sim-cli:bootJar`) | Browser E2E against the Java API |
 | Docker | `docker compose build`, then the smoke sequence | Container build + startup health-check |
 | Docker image scan | `docker build` + `trivy image` (matrix: api, ui) | CRITICAL/HIGH vulnerabilities in built images |
+| Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets |
 
 The Java job uses Temurin 25 + the Gradle wrapper and uploads coverage to Codecov.
-
-The Java dependency audit (CycloneDX SBOM + `trivy sbom`, see above) is not currently wired into a CI job — it's only run locally via `./arcogine check --full`.
 
 ## Testing architecture
 

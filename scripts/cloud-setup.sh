@@ -20,11 +20,13 @@ INVOKED_FROM="$(pwd -P)"
 LOG_DIR="${HOME}/logs"
 mkdir -p "$LOG_DIR"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
-LOG_FILE="${LOG_DIR}/arcogine-cloud-setup-${TIMESTAMP}.log"
+# Append $$ so two invocations within the same second (the timestamp's
+# resolution) still get distinct log files.
+LOG_FILE="${LOG_DIR}/arcogine-cloud-setup-${TIMESTAMP}-$$.log"
 
 # Redirect all subsequent stdout/stderr through tee so output is both
 # visible live (Claude's provisioning UI) and captured to the log file.
-# Plain (non-append) tee is fine: the timestamped filename is unique per run.
+# Plain (non-append) tee is fine: the timestamped+pid filename is unique per run.
 exec > >(tee "$LOG_FILE") 2>&1
 
 echo "===================================================================="
@@ -141,6 +143,14 @@ if [ "$(current_java_major)" != "$REQUIRED_JAVA_MAJOR" ]; then
   sudo update-alternatives --install /usr/bin/javac javac "${JAVA_HOME_CANDIDATE}/bin/javac" 2100
   sudo update-alternatives --set java "${JAVA_HOME_CANDIDATE}/bin/java"
   sudo update-alternatives --set javac "${JAVA_HOME_CANDIDATE}/bin/javac"
+
+  # update-alternatives only governs /usr/bin/java; it has no effect on
+  # some other Java earlier on PATH (a version-manager shim, a JDK under
+  # /usr/local/bin, etc). Prepend the JDK we just selected so it actually
+  # wins PATH resolution, mirroring what the Node section already does
+  # for the same class of problem.
+  export JAVA_HOME="$JAVA_HOME_CANDIDATE"
+  export PATH="${JAVA_HOME}/bin:${PATH}"
 else
   echo "    Java ${REQUIRED_JAVA_MAJOR} already selected."
 fi

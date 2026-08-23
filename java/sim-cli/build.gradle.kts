@@ -45,8 +45,7 @@ tasks.bootJar {
 }
 
 // Coverage gate: fails the build if sim-cli line coverage drops below the
-// floor (e.g. if its ported tests are deleted). Mirrors the gate in
-// sim-types. See docs/java-rewrite-plan.md.
+// floor (e.g. if its tests are deleted). Mirrors the gate in sim-types.
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {

@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
-# Canonical task interface for Arcogine. Thin wrapper around `make` and the
-# project's own tools (java/gradlew, ui/npm) — see `make help` for the full
-# target list this delegates to.
+# Canonical developer entry point for common Arcogine workflows. Thin
+# orchestrator over the project's own tools — it does not replace them.
+#
+# For anything more specific than the commands below, use the subsystem's
+# native tool directly:
+#   cd java && ./gradlew <task>   # Java: coverage, Checkstyle, bootJar, jmh, audit
+#   cd ui && npm ... / npx ...    # frontend: lint, typecheck, build, Playwright
+#   docker compose ...            # containers
+#   trivy / gitleaks              # security scans
+# See docs/TESTING.md for the full native-command reference.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
+
+gradle() {
+  (cd java && ./gradlew --no-daemon "$@")
+}
 
 usage() {
   cat <<'EOF'
@@ -12,35 +23,105 @@ Usage: ./arcogine <command> [args]
 Commands:
   setup          Install/bootstrap all dependencies (safe to re-run)
   test           Run Java + frontend unit test suites
-  check          Run full quality gates (lint, typecheck, tests, build)
+  check          Fast quality gates: compile, lint, typecheck, tests, coverage, build
+  check --full   Everything in check, plus Playwright E2E, a Docker build +
+                 smoke test, and security scans (dependency audit, image
+                 scans, secret scan)
   run api        Start the Spring Boot API on :3000
   run ui         Start the Vite dev server on :5173
 
-Anything more specific (coverage, security scans, Docker, Playwright)
-lives in the Makefile — run `make help` to see every target.
+For anything more specific, use the subsystem's native tool directly:
+  cd java && ./gradlew <task>   # Java: coverage, Checkstyle, bootJar, jmh, audit
+  cd ui && npm ... / npx ...    # frontend: lint, typecheck, build, Playwright
+  docker compose ...            # containers
+  trivy / gitleaks              # security scans
+See docs/TESTING.md for the full native-command reference.
 EOF
+}
+
+cmd_setup() {
+  echo "==> Installing frontend dependencies..."
+  (cd ui && npm ci)
+  echo "==> Resolving Java toolchain and dependencies..."
+  gradle help
+}
+
+cmd_test() {
+  echo "==> Running Java tests..."
+  gradle test
+  echo "==> Running frontend tests..."
+  (cd ui && npm test)
+}
+
+cmd_check() {
+  echo "==> Java: compile, Checkstyle, tests, coverage gates..."
+  gradle compileJava compileTestJava checkstyleMain checkstyleTest \
+    test jacocoTestReport jacocoTestCoverageVerification
+
+  echo "==> Frontend: lint, typecheck, tests + coverage, build..."
+  (cd ui && npm run lint)
+  (cd ui && npx tsc --noEmit)
+  (cd ui && npm run test:coverage)
+  (cd ui && npm run build)
+
+  if [[ "${1:-}" == "--full" ]]; then
+    echo "==> Playwright E2E..."
+    (cd ui && npx playwright test)
+
+    echo "==> Docker build + smoke test..."
+    docker compose build
+    cp .env.example .env
+    docker compose up -d --wait --wait-timeout 120
+    trap 'docker compose down' EXIT
+    curl -sf http://localhost:3000/api/health > /dev/null
+    curl -sf "http://localhost:${UI_PORT:-5173}/health" > /dev/null
+    docker compose down
+    trap - EXIT
+
+    echo "==> Security: dependency audit, image scans, secret scan..."
+    gradle cyclonedxBom
+    trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 \
+      java/build/reports/cyclonedx/bom.json
+    (cd ui && npm audit --audit-level=high)
+    docker build -t arcogine-api:ci .
+    trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-api:ci
+    docker build -t arcogine-ui:ci ui
+    trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-ui:ci
+    gitleaks detect --source . --config .gitleaks.toml --verbose
+  fi
+}
+
+cmd_run() {
+  case "$1" in
+    api) cd java && exec ./gradlew --no-daemon :sim-cli:bootRun --args=serve ;;
+    ui) cd ui && exec npm run dev ;;
+  esac
 }
 
 cmd="${1:-}"
 case "$cmd" in
-  setup)
-    make setup
-    ;;
-  test)
-    make test
+  setup|test)
+    if [[ $# -ne 1 ]]; then
+      echo "Usage: ./arcogine $cmd" >&2
+      exit 1
+    fi
+    cmd_"$cmd"
     ;;
   check)
-    make quality
+    if [[ $# -gt 2 || ( $# -eq 2 && "$2" != "--full" ) ]]; then
+      echo "Usage: ./arcogine check [--full]" >&2
+      exit 1
+    fi
+    shift
+    cmd_check "${1:-}"
     ;;
   run)
-    case "${2:-}" in
-      api) cd java && exec ./gradlew --no-daemon :sim-cli:bootRun --args=serve ;;
-      ui) cd ui && exec npm run dev ;;
-      *)
-        echo "Usage: ./arcogine run {api|ui}" >&2
-        exit 1
-        ;;
-    esac
+    if [[ $# -ne 2 || ( "$2" != "api" && "$2" != "ui" ) ]]; then
+      echo "Usage: ./arcogine run {api|ui}" >&2
+      exit 1
+    fi
+    shift
+    cmd_run "$1"
     ;;
   ""|-h|--help)
     usage

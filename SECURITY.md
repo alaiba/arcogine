@@ -46,7 +46,7 @@ If you expose Arcogine beyond localhost, apply at least:
 
 3. **TLS** — Arcogine does not terminate TLS. Place it behind a reverse proxy (nginx, Caddy, or a cloud load balancer) with TLS termination.
 
-4. **Dependency auditing** — Run `make java-audit` and `make frontend-audit` before deployment. CI runs npm audit as part of `make ci-frontend` and scans container images via `make trivy-scan-api` / `make trivy-scan-ui`. Run `make quality-full` locally for the complete security suite including the Java dependency scan.
+4. **Dependency auditing** — Before deployment, run the Java dependency scan (`cd java && ./gradlew cyclonedxBom && trivy sbom ... java/build/reports/cyclonedx/bom.json`) and the frontend audit (`cd ui && npm audit --audit-level=high`). CI runs npm audit as part of the frontend job and scans built container images via Trivy in the Docker image scan job. Run `./arcogine check --full` locally for the complete security suite including the Java dependency scan.
 
 5. **Log verbosity** — Set `LOGGING_LEVEL_ROOT=WARN` in production-like environments to reduce log noise.
 
@@ -54,11 +54,12 @@ If you expose Arcogine beyond localhost, apply at least:
 
 Security execution follows the quality-gate contract:
 
-- Scan command bodies are wrapped in Make targets (`rust-audit`, `frontend-audit`,
-  `trivy-scan-api`, `trivy-scan-ui`, `gitleaks`) so all checks are discoverable from
-  the same command surface.
+- Scan commands invoke each scanner's native tool directly (`trivy sbom`, `trivy image`,
+  `npm audit`, `gitleaks detect`) — locally via `./arcogine check --full`, in CI via the
+  jobs in `.github/workflows/ci.yml` — so all checks are discoverable from the same
+  command surface documented in `docs/TESTING.md`.
 - CI remains responsible for installing scanner binaries/tools and enforcing policy
-  controls (`--exit-code`, report handling, fail-fast behavior) around those targets.
+  controls (`--exit-code`, report handling, fail-fast behavior) around those commands.
 
 For the full security verification test list, see `docs/TESTING.md`.
 

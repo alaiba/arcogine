@@ -11,6 +11,14 @@ extra["tomcat.version"] = "11.0.22"
 // Override the Spring Boot-managed Spring Framework version to patch
 // CVE-2026-41842/41845/41850 (HIGH).
 extra["spring-framework.version"] = "7.0.8"
+// Override the Spring Boot-managed Netty version to patch CVEs
+// (CVE-2026-59901/55831/55833/56745/56819/56816 HIGH). Not shipped —
+// Netty only reaches testRuntimeClasspath via spring-boot-starter-webflux
+// (testImplementation, for WebTestClient); sim-api/sim-cli's own
+// runtimeClasspath never resolves it. Pinned here (rather than added to
+// .trivyignore) so the whole-build CycloneDX SBOM audit stays clean
+// without suppressing findings.
+extra["netty.version"] = "4.2.16.Final"
 
 dependencies {
     implementation(project(":sim-types"))

@@ -33,21 +33,25 @@ In another terminal, run the API:
 
 ## Validation commands
 
-Run from the **repository root** (where the `Makefile` lives), not from `ui/`:
+Run from `ui/`:
 
 ```bash
-make frontend-lint        # ESLint
-make frontend-typecheck   # tsc --noEmit
-make frontend-build       # production build
-make frontend-test        # unit tests (Vitest)
-make frontend-coverage    # unit tests with coverage
+npm run lint              # ESLint
+npx tsc --noEmit          # typecheck
+npm run build             # production build
+npm test                  # unit tests (Vitest)
+npm run test:coverage     # unit tests with coverage
 ```
+
+Lint, typecheck, tests, and build also run as part of `./arcogine check` from the repository root.
 
 ### E2E smoke tests
 
 ```bash
-make playwright           # runs npx playwright test in ui/
+npx playwright test       # from ui/
 ```
+
+Also runs as part of `./arcogine check --full` from the repository root.
 
 ## Source map
 

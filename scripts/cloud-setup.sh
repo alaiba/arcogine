@@ -24,7 +24,8 @@ LOG_FILE="${LOG_DIR}/arcogine-cloud-setup-${TIMESTAMP}.log"
 
 # Redirect all subsequent stdout/stderr through tee so output is both
 # visible live (Claude's provisioning UI) and captured to the log file.
-exec > >(tee -a "$LOG_FILE") 2>&1
+# Plain (non-append) tee is fine: the timestamped filename is unique per run.
+exec > >(tee "$LOG_FILE") 2>&1
 
 echo "===================================================================="
 echo "Arcogine Claude Cloud setup"
@@ -263,6 +264,10 @@ echo "    Node major version OK: ${ACTUAL_NODE_MAJOR}"
 echo "==> Preparing repository..."
 
 if [ ! -f .env ]; then
+  if [ ! -f .env.example ]; then
+    echo "FATAL: .env.example not found in $REPO_DIR." >&2
+    exit 1
+  fi
   echo "    Copying .env.example -> .env"
   cp .env.example .env
 else

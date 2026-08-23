@@ -2,7 +2,10 @@
 # Repository-owned Claude Cloud provisioning script for Arcogine.
 #
 # Keeps the Claude environment "setup script" field minimal:
-#   cd /home/user/arcogine && ./scripts/cloud-setup.sh
+#   exec /home/user/arcogine/scripts/cloud-setup.sh
+# Do NOT `cd` before invoking this script: it captures its own invocation
+# directory (see INVOKED_FROM below) and does its own `cd` into the repo,
+# so a preceding `cd` would defeat that diagnostic.
 # All Arcogine-specific provisioning logic lives here, version-controlled.
 set -euo pipefail
 
@@ -94,27 +97,38 @@ if [ "$(current_java_major)" != "$REQUIRED_JAVA_MAJOR" ]; then
     exit 1
   fi
 
-  # Discover the installed binaries dynamically rather than assuming a path
-  # (Temurin apt packages lay out under /usr/lib/jvm/temurin-<major>-jdk-*,
-  # where the trailing segment is architecture-specific).
-  JAVA_HOME_CANDIDATE="$(dirname "$(dirname "$(readlink -f "$(find /usr/lib/jvm -maxdepth 1 -iname "temurin-${REQUIRED_JAVA_MAJOR}-jdk*" -print -quit)/bin/java")")")"
+  # Discover the installed JDK directory dynamically rather than assuming a
+  # path (Temurin apt packages lay out under /usr/lib/jvm/temurin-<major>-jdk-*,
+  # where the trailing segment is architecture-specific). Discovery and
+  # validation are kept separate so a missing/empty find result fails with
+  # a clear diagnostic instead of collapsing into a bogus path.
+  JDK_DIR="$(find /usr/lib/jvm -maxdepth 1 -type d \
+    -iname "temurin-${REQUIRED_JAVA_MAJOR}-jdk*" -print -quit)"
 
-  if [ -z "$JAVA_HOME_CANDIDATE" ] || [ ! -x "${JAVA_HOME_CANDIDATE}/bin/java" ]; then
+  if [ -z "$JDK_DIR" ] || [ ! -x "$JDK_DIR/bin/java" ]; then
     echo "FATAL: could not locate installed Temurin ${REQUIRED_JAVA_MAJOR} JDK under /usr/lib/jvm." >&2
     exit 1
   fi
+
+  JAVA_HOME_CANDIDATE="$(readlink -f "$JDK_DIR")"
 
   echo "    Selecting $JAVA_HOME_CANDIDATE via update-alternatives..."
   sudo update-alternatives --install /usr/bin/java java "${JAVA_HOME_CANDIDATE}/bin/java" 2100
   sudo update-alternatives --install /usr/bin/javac javac "${JAVA_HOME_CANDIDATE}/bin/javac" 2100
   sudo update-alternatives --set java "${JAVA_HOME_CANDIDATE}/bin/java"
   sudo update-alternatives --set javac "${JAVA_HOME_CANDIDATE}/bin/javac"
-
-  export JAVA_HOME="$JAVA_HOME_CANDIDATE"
-  export PATH="${JAVA_HOME}/bin:${PATH}"
 else
   echo "    Java ${REQUIRED_JAVA_MAJOR} already selected."
 fi
+
+# Always (re-)derive JAVA_HOME from the actually-selected `java` binary,
+# not just when we just installed one: an inherited JAVA_HOME could still
+# point at an old JDK even though `java` on PATH now resolves to the
+# right one. Some JVM tooling (Gradle included) prefers JAVA_HOME over PATH.
+JAVA_BIN="$(readlink -f "$(command -v java)")"
+export JAVA_HOME="$(dirname "$(dirname "$JAVA_BIN")")"
+export PATH="${JAVA_HOME}/bin:${PATH}"
+echo "    JAVA_HOME set to: $JAVA_HOME"
 
 # ---------------------------------------------------------------------------
 # 2. Ensure Node.js 24 is installed and selected.
@@ -161,26 +175,9 @@ echo "--- npm --version ---"
 npm --version
 
 # ---------------------------------------------------------------------------
-# 4. Prepare the repository.
-# ---------------------------------------------------------------------------
-
-echo "==> Preparing repository..."
-
-if [ ! -f .env ]; then
-  echo "    Copying .env.example -> .env"
-  cp .env.example .env
-else
-  echo "    .env already exists; leaving as-is"
-fi
-
-echo "    Running npm ci in ui/..."
-(cd ui && npm ci)
-
-echo "    Warming Gradle wrapper (./gradlew --no-daemon help) in java/..."
-(cd java && ./gradlew --no-daemon help)
-
-# ---------------------------------------------------------------------------
-# 5. Explicitly verify Java/Node major versions.
+# 4. Explicitly verify Java/Node major versions before touching the repo.
+# Failing here, before npm ci / gradlew, gives a clear diagnostic instead
+# of a confusing downstream failure under the wrong toolchain.
 # ---------------------------------------------------------------------------
 
 echo "==> Verifying selected toolchain versions..."
@@ -198,6 +195,25 @@ if [ "$ACTUAL_NODE_MAJOR" != "$REQUIRED_NODE_MAJOR" ]; then
   exit 1
 fi
 echo "    Node major version OK: ${ACTUAL_NODE_MAJOR}"
+
+# ---------------------------------------------------------------------------
+# 5. Prepare the repository.
+# ---------------------------------------------------------------------------
+
+echo "==> Preparing repository..."
+
+if [ ! -f .env ]; then
+  echo "    Copying .env.example -> .env"
+  cp .env.example .env
+else
+  echo "    .env already exists; leaving as-is"
+fi
+
+echo "    Running npm ci in ui/..."
+(cd ui && npm ci)
+
+echo "    Warming Gradle wrapper (./gradlew --no-daemon help) in java/..."
+(cd java && ./gradlew --no-daemon help)
 
 # ---------------------------------------------------------------------------
 # 6. Done.

@@ -1,6 +1,6 @@
 # ADR-0003: Canonical factory model and runtime boundary
 
-Status: Proposed
+Status: Accepted
 Date: 2026-08-25
 
 ## Context
@@ -24,7 +24,7 @@ Related analysis and plans:
 
 ## Decision
 
-Arcogine proposes to establish a canonical factory-model boundary with the following invariants.
+Arcogine establishes a canonical factory-model boundary with the following invariants.
 
 ### Scenario input is not the canonical factory model
 
@@ -81,19 +81,19 @@ Arcogine remains authoritative for shared executability validation and publicati
 
 This would minimize the number of model types initially and preserve the current TOML-centric shape.
 
-It is not the proposed direction because `ScenarioConfig` mixes the designed production system with simulation parameters, economy configuration, agents, and other run concerns. Promoting it to canonical status would preserve model/run coupling and make non-scenario design consumers inherit concepts they do not own.
+It was not selected because `ScenarioConfig` mixes the designed production system with simulation parameters, economy configuration, agents, and other run concerns. Promoting it to canonical status would preserve model/run coupling and make non-scenario design consumers inherit concepts they do not own.
 
 ### Let each consumer translate directly into runtime classes
 
 This would avoid a new canonical model layer and could be expedient for one client.
 
-It is rejected as the architectural direction because it creates multiple independently maintained interpretations of products, operations, resources, and layout. It also exposes mutable runtime structure as a de facto public design contract and weakens provenance.
+It was rejected because it creates multiple independently maintained interpretations of products, operations, resources, and layout. It also exposes mutable runtime structure as a de facto public design contract and weakens provenance.
 
 ### Make mutable runtime state the canonical factory representation
 
 This would treat the current in-memory machine/job/routing structures as both design and execution state.
 
-It is rejected because design revision and simulated time have different lifecycles and validity rules. Drafts may be incomplete; runtime state may not. Published designs must remain immutable while queues, work, assignments, and transfers change continuously.
+It was rejected because design revision and simulated time have different lifecycles and validity rules. Drafts may be incomplete; runtime state may not. Published designs must remain immutable while queues, work, assignments, and transfers change continuously.
 
 ### Build a complete shared design workspace before introducing the model boundary
 
@@ -103,7 +103,7 @@ It is deferred because the current requirement is semantic continuity, validatio
 
 ## Consequences
 
-If accepted:
+As a result of this decision:
 
 - the first factory-design implementation work becomes a behavior-preserving model seam rather than a broad runtime rewrite;
 - existing scenarios require an adapter/extraction path into the canonical factory model;
@@ -113,12 +113,12 @@ If accepted:
 - capability-based dispatch and spatial consequences can consume canonical model semantics without making the runtime an editor model;
 - consumers may keep local draft UX and persistence while sharing the same published semantic model;
 - `FactoryModel`, `FactoryModelVersion`, and `ExecutableFactoryModel` remain conceptual names until implementation proves the appropriate concrete types;
-- current-state architecture and product-reference documentation must not describe this proposal as implemented until the code exists and this decision is accepted.
+- current-state architecture and product-reference documentation must not describe this boundary as implemented until the code exists.
 
 The main cost is an additional model boundary and adapter path between current scenario input and runtime construction. That cost is intentional: it prevents a run configuration or mutable runtime object graph from becoming the long-term cross-consumer production-system contract by accident.
 
 ## Charter alignment
 
-This proposal directly supports the Product Charter's **one model, many views**, **lifecycle continuity**, **semantics survive deployment**, and **causality and provenance** principles.
+This decision directly supports the Product Charter's **one model, many views**, **lifecycle continuity**, **semantics survive deployment**, and **causality and provenance** principles.
 
 It keeps authoring experience, simulation runtime, and future execution contexts operationally distinct while preserving one semantic production-system model across them. It also keeps hypothetical runtime state explicit: a simulation is an instantiation of a particular published model version, not a mutation of the design itself.

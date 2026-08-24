@@ -178,6 +178,7 @@ cmd_up() {
 }
 
 cmd_down() {
+  cp -n .env.example .env 2>/dev/null || true
   compose down
 }
 

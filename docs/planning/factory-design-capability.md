@@ -462,7 +462,7 @@ This milestone deliberately excludes semantic diff, collaboration, generalized d
 
 ## 16. ADR triggers
 
-[ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md) captures the proposed model/run/runtime boundary.
+[ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md) establishes the accepted model/run/runtime boundary.
 
 Additional ADRs are warranted when implementation commits to hard-to-reverse choices about:
 

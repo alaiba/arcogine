@@ -1,237 +1,250 @@
 # Arcogine — Standards Alignment
 
-Arcogine sits at the intersection of manufacturing systems, digital twins, simulation, industrial data integration, and agent-based decision making. This document maps relevant industry standards to Arcogine's architecture and defines the alignment strategy at each project phase.
+Arcogine sits at the intersection of manufacturing systems, digital twins, simulation, industrial data integration, and agent-based decision-making. This document summarizes which standards and reference models influence Arcogine now, which should constrain future design, and which are only relevant to later integrations.
 
-Per the [Product Charter](/docs/product/charter.md), Arcogine's mature product identity spans the full design-simulate-verify-execute-monitor lifecycle, not simulation alone. That makes standards areas such as digital twins, enterprise/manufacturing integration (ISA-95), live operational data (OPC UA), asset identity, provenance, interoperability, and model verification more central to long-term architecture than a simulation-only framing would suggest — even though most of them remain "design for" or "note for later" tiers today, not current implementation commitments.
+Per the [Product Charter](../product/charter.md), Arcogine's mature product direction spans design, understanding, simulation, verification, operation, monitoring, and improvement over one executable business model. Standards matter where they improve semantic continuity, interoperability, verification, or operational trust. They do not define Arcogine's product identity or require speculative implementation.
 
-## Alignment Strategy
+## How to read alignment claims
 
-Standards are categorized by when they influence design:
+These claims are distinct:
+
+```text
+Reference
+    a standard informs design or terminology
+
+Semantic mapping
+    Arcogine concepts have documented corresponding meanings
+
+Interchange compatibility
+    a defined adapter or exchange profile can translate data
+
+Conformance
+    implementation satisfies a stated normative profile and validation process
+```
+
+Unless a section explicitly says otherwise, Arcogine claims only **reference** or **semantic mapping**. It currently makes no standards-conformance claim.
+
+## Alignment strategy
 
 | Tier | Meaning | Action |
-|------|---------|--------|
-| **Align now** | Affects MVP data model, naming, or API surface | Use standard-compatible naming and structure from the start |
-| **Design for** | Does not change MVP code, but the architecture must not preclude it | Document the mapping; avoid design choices that block future adoption |
-| **Note for later** | Relevant only in post-MVP expansions | Record in Future Directions |
+|---|---|---|
+| **Align now** | Affects current architecture, semantics, naming, validation, or public contracts | Preserve compatible concepts and document exact boundaries |
+| **Design for** | Does not require current implementation, but avoid choices that would make later integration unnecessarily destructive | Maintain an explicit mapping and extension path |
+| **Note for later** | Relevant only when a concrete future domain or external integration appears | Record the trigger; do not build ahead of need |
 
-## Regional Adoption Context (Romania / EU)
+## Regional adoption context
 
-Romania's national standards body is **ASRO (Asociația de Standardizare din România)**. Romanian standards are published as **SR** (Standard Român) and are predominantly transpositions of European (EN) and international (ISO/IEC) standards:
+Romania's national standards body is ASRO. Relevant IEC and ISO standards may be adopted as Romanian standards using designations such as SR EN IEC or SR EN ISO. This makes international standards directly relevant to Romanian industrial interoperability and procurement contexts, but semantic or technical alignment by itself does **not** establish legal, regulatory, contractual, or certification compliance.
 
-- **SR EN** = European standard adopted in Romania
-- **SR ISO** = ISO standard adopted in Romania
-- **SR EN ISO** = ISO standard adopted via EU harmonization (e.g., SR EN ISO 9001 = ISO 9001)
-
-**Practical consequence:** Arcogine does not need Romania-specific implementations. Alignment with ISO, EN, and IEC standards automatically satisfies Romanian requirements. The standards referenced in this document are applicable in Romania via their SR EN / SR ISO transpositions.
-
-Romania follows **EU Industry 4.0 frameworks**, **RAMI 4.0**, and EU-wide regulations (including GDPR). Romanian industrial and academic practice uses DES simulation, operations research, and queueing theory — all of which are Arcogine's core methodology.
-
-| Standard referenced below | Romanian transposition |
-|---------------------------|----------------------|
-| IEC 62264 (ISA-95) | SR EN IEC 62264 |
-| ISO 22400 | SR EN ISO 22400 |
+| International standard or framework | Common Romanian / EU context |
+|---|---|
+| IEC 62264 / ISA-95 | SR EN IEC 62264 family |
+| ISO 22400 | SR EN ISO 22400 family |
 | ISO 9001 | SR EN ISO 9001 |
-| ISO 10303 (STEP) | SR EN ISO 10303 |
-| OPC UA (IEC 62541) | SR EN IEC 62541 |
-| GDPR (EU 2016/679) | Directly applicable EU regulation |
+| ISO 10303 / STEP | SR EN ISO 10303 family |
+| OPC UA / IEC 62541 | SR EN IEC 62541 family |
+| GDPR / EU 2016/679 | Directly applicable EU regulation when personal data is processed |
 
 ---
 
-## Tier 1 — Align Now
+## Tier 1 — Align now
 
-### ISA-95 / IEC 62264 (Enterprise–Manufacturing Integration)
+### ISA-95 / IEC 62264 — Enterprise-control system integration
 
-ISA-95 defines how ERP, MES, and shop-floor systems interact. It standardizes equipment models, production schedules, material flows, and operations definitions.
+ISA-95 provides models, terminology, activities, object attributes, and information-exchange concepts for integrating manufacturing operations with enterprise functions. Arcogine uses it as a **semantic reference**, not as an implemented information model or conformance profile.
 
-**Mapping to Arcogine MVP:**
+**Current status:**
 
-| ISA-95 Concept | Arcogine Equivalent | Module |
-|----------------|---------------------|-------|
-| Equipment (Work Unit) | Machine | `sim-factory` |
-| Material Definition | Product / SKU | `sim-factory` |
-| Process Segment | Routing Step | `sim-factory` |
-| Operations Definition | Product Routing | `sim-factory` |
-| Operations Schedule | Job Queue / Scenario | `sim-core` |
-| Production Performance | KPIs (throughput, lead time, utilization) | `sim-core` |
+- The scenario schema already uses selected ISA-95-oriented terms: `equipment`, `material`, `process_segment`, and `operations_definition`.
+- Runtime concepts such as `Machine`, `Routing`, `RoutingStep`, and `Job` are mappable to a narrow production-execution subset, but the mappings are approximate.
+- The current runtime model does not consistently separate resource definitions, production requests, execution state, and performance records.
+- Arcogine does not implement the ISA-95 equipment hierarchy, generalized personnel/material/equipment capability models, B2MML, transactions, exchange profiles, or conformance validation.
 
-**MVP commitment:** Arcogine's `sim-types` and `sim-factory` use domain concepts that map cleanly to ISA-95. Typed IDs, routing definitions, and equipment models are designed so that ISA-95-conformant data import/export can be added without restructuring the core model. The TOML scenario schema uses field names that correspond to ISA-95 terminology where practical (e.g., `equipment`, `material`, `process_segment`).
+| Arcogine area | ISA-95 relationship | Current assessment |
+|---|---|---|
+| Scenario `equipment` | Equipment | Good vocabulary mapping |
+| Runtime `Machine` | Equipment instance at approximately work-unit granularity | Useful alias; no capability or hierarchy model |
+| Scenario `material` / runtime `ProductId` | Material Definition | Partial; product-oriented and minimal |
+| `operations_definition` / `Routing` | Operations or Work Definition | Partial; simplified ordered steps |
+| `process_segment` / `RoutingStep` | Process Segment or work-step analogue | Partial; currently bound to one concrete machine |
+| `Job` | Job Order plus execution and result concerns | Collapsed; a refactoring trigger for richer workloads |
+| Factory events and observations | Work execution and performance facts | Narrow but useful semantic mapping |
 
-**Not in MVP:** Full ISA-95 XML/B2MML serialization, hierarchical equipment modeling (enterprise > site > area > work center > work unit), personnel models.
+**Current commitment:**
 
-### DES Methodology (Discrete-Event Simulation)
+- Keep an explicit concept mapping rather than relying on similar-sounding names.
+- Preserve definition/request/execution/performance distinctions when concrete features require them.
+- Retain approachable Arcogine terminology where it is clearer, with documented aliases.
+- Keep equipment/resource hierarchy distinct from spatial factory layout.
+- Do not claim ISA-95 compatibility or conformance without a defined and tested interchange profile.
 
-DES is the foundational simulation methodology — not a formal ISO standard, but the industry-standard approach for manufacturing simulation, logistics, and operations research.
+See [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md) for the maintained concept register, current structural gaps, naming policy, review checklist, and future adapter path.
 
-**MVP commitment:** Arcogine is fundamentally DES-based. The architecture documents this explicitly. Event types, priority-queue scheduling, monotonic time progression, and event causality are all standard DES patterns. This alignment ensures comparability with established tools (AnyLogic, Simio, Arena).
+### Discrete-event simulation methodology
 
-### Queueing Theory / Little's Law
+Discrete-event simulation is Arcogine's core execution methodology.
 
-Core mathematical foundations for manufacturing performance analysis.
+**Current alignment:**
 
-**MVP commitment:** The KPI system (Phase 3) computes throughput, WIP, lead time, and utilization — the quantities related by Little's Law (L = λW). Scenario acceptance tests validate these relationships empirically. The architecture doc should reference Little's Law as a validation invariant.
+- events occur at explicit simulation times;
+- the scheduler advances by processing ordered events;
+- same-time ordering is deterministic;
+- state transitions remain event-driven;
+- seeded randomness and deterministic acceptance tests protect repeatability;
+- the simulation layer remains independent of rendering and wall-clock pacing.
 
-### ISO 22400 (Manufacturing Operations Management KPIs)
+Primary implementation area: `product/simulation/`, with domain handlers under `product/domains/` and orchestration in `product/interfaces/api/` and `product/interfaces/cli/`.
 
-ISO 22400 defines standardized key performance indicators for manufacturing operations, including formulas, units, and timing semantics. Adopted in Romania as SR EN ISO 22400.
+### Queueing theory and Little's Law
 
-**Mapping to Arcogine MVP KPIs:**
+Queueing concepts provide the mathematical foundation for bottleneck analysis, work in process, waiting time, utilization, throughput, and lead time.
 
-| ISO 22400 KPI | Definition | Arcogine KPI (Phase 3) |
-|---------------|------------|----------------------|
-| Throughput rate | Good units produced per unit time | Throughput |
-| Utilization efficiency | Actual production time / planned busy time | Utilization |
-| Production lead time | Time from order release to completion | Lead time |
-| Work-in-process inventory | Units started but not yet completed | Backlog / WIP |
-| Allocation ratio | Time equipment is allocated / planned busy time | (Derivable from utilization) |
+**Current commitment:**
 
-**MVP commitment:** Phase 3 KPI computations (throughput, utilization, lead time, backlog) use definitions and naming consistent with ISO 22400 Part 2. KPI doc-comments reference the ISO 22400 KPI identifier where applicable (e.g., throughput rate is ISO 22400 KPI 1200). This costs nothing and ensures that KPI output is directly comparable with industry-standard reporting.
+- keep queue, backlog/WIP, throughput, and lead-time semantics explicit;
+- use Little's Law as a reasonableness and scenario-validation relationship where its assumptions apply;
+- do not present approximate or transient simulation measurements as exact identity checks without documenting sampling windows and assumptions.
 
-**Not in MVP:** Full ISO 22400 KPI set (~35 KPIs including OEE, quality ratio, mean time between failure, setup ratio). OEE (Overall Equipment Effectiveness) is a natural post-MVP addition.
+### ISO 22400 — Manufacturing operations management KPIs
 
-### OpenAPI (REST API Specification)
+ISO 22400 is a useful semantic and formula reference for manufacturing KPIs.
 
-The standard way to define and document HTTP APIs.
+**Current status:** Arcogine exposes operational measurements and observations such as throughput, lead time, backlog/work in process, machine activity, order counts, event counts, and simulated time. The exact public KPI set and formulas continue to evolve.
 
-**MVP commitment:** **Planned.** API surface documentation currently uses typed client modules and route-level definitions in code, with OpenAPI generation on the roadmap.
+**Current commitment:**
 
----
+- use precise names and units;
+- document each KPI's population, time window, and formula;
+- map an Arcogine KPI to an ISO 22400 KPI only after verifying that the semantics and calculation match;
+- avoid implying support for the complete ISO 22400 KPI catalogue.
 
-## Tier 2 — Design For
+Potential later additions include availability, quality, setup, failure, and OEE-related measures once the underlying domains exist.
 
-### RAMI 4.0 (Reference Architecture Model Industry 4.0)
+### OpenAPI
 
-RAMI 4.0 defines six layers for industrial digital systems: asset, integration, communication, information, functional, and business.
+OpenAPI is the intended standard description format for stable HTTP contracts.
 
-**Mapping:**
+**Current status:** The HTTP API is documented manually in [`docs/reference/api.md`](../reference/api.md) and consumed through typed frontend code. OpenAPI generation and contract validation are not yet established as the authoritative source.
 
-| RAMI 4.0 Layer | Arcogine Layer |
-|----------------|----------------|
-| Asset | Physical machine/product models in `sim-factory` |
-| Integration | Scenario loader, event log, data stores |
-| Communication | REST API (`sim-api`), future OPC UA / MQTT |
-| Information | `sim-types` (typed IDs, shared data structures) |
-| Functional | Simulation core (`sim-core`), KPIs, event engine |
-| Business | Agents (`sim-agents`), economy (`sim-economy`) |
-
-**MVP commitment:** No RAMI 4.0-specific code. The layered crate architecture naturally maps to RAMI 4.0 layers. This mapping is documented here for positioning purposes.
-
-### Asset Administration Shell (AAS)
-
-The standard digital twin representation for industrial assets — describes machines, products, capabilities, and properties in a structured format.
-
-**MVP commitment:** No AAS-specific code. Arcogine's typed machine and product models (`MachineId`, `ProductId`, capabilities, processing times) are designed to be exportable as AAS submodels in a future integration phase. Avoid design choices that would prevent machines from having extensible property sets.
-
-### ISO 9001 (Quality Management Systems)
-
-ISO 9001 defines requirements for quality management: process management, performance tracking, auditability, and continuous improvement. Adopted in Romania as SR EN ISO 9001.
-
-**MVP commitment:** No ISO 9001-specific code. Arcogine's architecture naturally supports ISO 9001 thinking: the append-only event log provides process traceability, KPIs enable performance tracking, deterministic replay supports auditability, and the agent feedback loop models continuous improvement. These alignment points are documented here for positioning — no additional MVP work required.
-
-### FMI (Functional Mock-up Interface)
-
-Standard for co-simulation and model exchange between simulation tools.
-
-**MVP commitment:** No FMI-specific code. Arcogine's headless simulation core (no UI dependency, deterministic execution, scenario-driven) is architecturally compatible with FMI wrapping. The clean separation between the simulation engine and its API surface means an FMU adapter could be built as an additional crate without modifying `sim-core`.
+**Design direction:** A future versioned external-consumer contract should have a machine-readable schema and compatibility tests. OpenAPI is the natural choice for HTTP surfaces, but the schema must follow accepted domain semantics rather than drive them.
 
 ---
 
-## Tier 3 — Note for Later
+## Tier 2 — Design for
 
-### OPC UA (Industrial Communication)
+### RAMI 4.0
 
-Standard protocol for machine data, telemetry, and real-time signals. Critical for connecting a digital twin to real factory equipment.
+RAMI 4.0 is a useful classification and positioning framework, not a code structure Arcogine must reproduce.
 
-**Post-MVP relevance:** When Arcogine becomes a digital twin, OPC UA is the primary protocol for ingesting real machine data and mapping simulation state to live systems.
+| RAMI concern | Arcogine analogue |
+|---|---|
+| Asset | Factory resources, products/materials, and future physical-asset models |
+| Integration | Scenario loading, model adapters, event history, external observations |
+| Communication | HTTP/SSE today; possible OPC UA or MQTT adapters later |
+| Information | Shared types, domain models, observations, and public schemas |
+| Functional | Simulation, domain handlers, policies, verification, KPIs |
+| Business | Product objectives, economy, finance, agents, and future planning domains |
 
-### MQTT (Lightweight Messaging)
+Primary paths now use the repository's current layout: `product/types/`, `product/simulation/`, `product/domains/`, `product/agents/`, and `product/interfaces/`.
 
-Common in IoT and industrial event streaming.
+### Asset Administration Shell
 
-**Post-MVP relevance:** Useful for distributed simulation, real-time event streaming to external consumers, and agent communication in multi-node deployments.
+AAS may become relevant when Arcogine represents or exchanges industrial asset identity, properties, capabilities, and digital-twin metadata.
 
-### BPMN (Business Process Model and Notation)
+**Design-for rule:** Do not assume every machine property belongs in one fixed Java record forever. Preserve stable identity and a path to extensible, typed asset metadata when a real integration requires it.
 
-Standard for describing workflows and process flows.
+**Not current:** Arcogine does not have an AAS adapter, AAS submodels, or a generalized equipment-capability model.
 
-**Post-MVP relevance:** Could model production processes, decision workflows, and agent policies in a standardized, visual notation. Relevant for serious-game and training scenarios.
+### ISO 9001
 
-### SCOR (Supply Chain Operations Reference)
+ISO 9001 is relevant as a quality-management context rather than a direct software-conformance target.
 
-Defines plan, source, make, deliver, and return as supply chain process categories.
+Arcogine's explicit events, deterministic replay, model versioning direction, observations, and verification goals are compatible with process traceability and continuous-improvement practices. No ISO 9001 certification or quality-management-system claim follows from those architectural properties.
 
-**Post-MVP relevance:** Relevant if Arcogine expands into logistics, supply chain simulation, or multi-factory systems.
+### Functional Mock-up Interface
 
-### FIPA (Foundation for Intelligent Physical Agents)
+FMI may be useful for model exchange or co-simulation with other engineering tools.
 
-Defines agent interaction protocols and communication languages.
-
-**Post-MVP relevance:** Relevant for multi-agent negotiation systems where agents from different vendors or frameworks need to interoperate.
-
-### ISO 8000 (Data Quality)
-
-Standard for data correctness and governance.
-
-**Post-MVP relevance:** Critical for digital twin credibility when real operational data enters the system.
-
-### ISO 10303 / STEP (Product Data Representation)
-
-Standard for product data exchange across CAD, PLM, and engineering systems. Adopted in Romania as SR EN ISO 10303.
-
-**Post-MVP relevance:** Relevant if Arcogine simulates product configurations, engineering change workflows, or integrates with PLM systems. Not applicable to the MVP's simplified product/SKU model.
-
-### Industrial Fieldbus Protocols (Modbus, PROFINET, EtherCAT)
-
-Common industrial communication protocols used in Romanian and EU factory environments alongside OPC UA.
-
-**Post-MVP relevance:** Relevant only when connecting to real shop-floor equipment. OPC UA is the primary integration path; fieldbus protocols may be needed for legacy equipment connectivity.
-
-### GDPR (EU General Data Protection Regulation)
-
-EU-wide regulation (directly applicable in Romania, not transposed via SR) governing personal data processing.
-
-**Post-MVP relevance:** Relevant when Arcogine handles real operational data tied to identifiable individuals (employee performance, user behavior logs, operator actions). The MVP operates on synthetic simulation data with no personal data — GDPR does not apply. When real data integration begins: anonymize or pseudonymize personal identifiers, implement access controls, and provide audit trails. Arcogine's append-only event log and command-based mutation model support GDPR-compatible auditability by design.
-
-### Apache Arrow / Parquet
-
-De facto standards for analytical data formats.
-
-**Post-MVP relevance:** Efficient storage and interchange format for simulation results, KPI time series, and scenario comparison data at scale.
+Arcogine's headless simulation and explicit interfaces make an adapter plausible, but no FMU packaging, FMI lifecycle implementation, or co-simulation timing contract exists today. A future adapter should live under an interface/integration boundary rather than modify the core domain model around FMI types.
 
 ---
 
-## Conceptual Foundations
+## Tier 3 — Note for later
 
-These are not formal standards but are essential to Arcogine's credibility:
+### OPC UA / IEC 62541
+
+Relevant when Arcogine ingests live equipment observations or exposes digital-twin information. A future integration must distinguish modeled state, observed external state, and any reconciled twin state.
+
+### MQTT
+
+Potential transport for distributed observations and commands. Transport choice must not weaken authority, ordering, replay, or command/fact boundaries.
+
+### BPMN
+
+Potential notation for business or approval workflows. It should not replace production-operation semantics merely because both can be drawn as flows.
+
+### SCOR
+
+Relevant if Arcogine expands from production into supply-chain planning, sourcing, delivery, and returns.
+
+### FIPA
+
+Relevant only if independently developed autonomous agents need standardized inter-agent communication. Current agents act through Arcogine's controlled observation and event boundaries.
+
+### ISO 8000
+
+Relevant when external master or operational data becomes authoritative input. Data provenance, quality rules, identity, and reconciliation will then require explicit models.
+
+### ISO 10303 / STEP
+
+Relevant for CAD/PLM and detailed product-engineering integration. The current material/product model is intentionally much simpler.
+
+### Industrial fieldbus protocols
+
+Modbus, PROFINET, EtherCAT, and similar protocols are relevant only through later shop-floor gateways or adapters. OPC UA is the more likely first semantic integration boundary; low-level protocol support should not enter the simulation core.
+
+### GDPR
+
+Relevant when Arcogine processes personal data, such as identifiable operator actions or workforce information. Synthetic scenarios alone do not create a GDPR implementation requirement. Real deployments would need purpose limitation, data minimization, access control, retention, and data-subject handling appropriate to the processing context.
+
+### Apache Arrow and Parquet
+
+Potential analytical formats for large event histories, KPI series, experiment results, and comparison datasets. They are storage/interchange choices, not domain models.
+
+---
+
+## Conceptual foundations
+
+These are not standards conformance targets but remain central to Arcogine's credibility:
 
 | Foundation | Relevance |
-|------------|-----------|
-| **Queueing Theory** | Bottleneck analysis, waiting time, utilization |
-| **Little's Law** | WIP = Throughput × Lead Time — core validation invariant |
-| **System Dynamics** | Higher-level feedback modeling (pricing → demand → capacity) |
-| **Operations Research** | Scheduling, optimization, resource allocation |
+|---|---|
+| Queueing theory | Bottlenecks, waiting, utilization, and capacity analysis |
+| Little's Law | Relationship among WIP, throughput, and lead time under stated assumptions |
+| System dynamics | Feedback among demand, capacity, policy, and operational outcomes |
+| Operations research | Scheduling, optimization, resource allocation, and decision evaluation |
+| Discrete-event simulation | Deterministic event ordering and state transitions |
 
----
+## Summary
 
-## Summary Table
-
-| Standard | Tier | MVP Impact | RO Transposition |
-|----------|------|------------|-----------------|
-| ISA-95 / IEC 62264 | Align now | Data model naming, scenario schema field names | SR EN IEC 62264 |
-| ISO 22400 | Align now | KPI definitions and naming in Phase 3 | SR EN ISO 22400 |
-| DES methodology | Align now | Core architecture (already aligned) | — |
-| Queueing theory / Little's Law | Align now | KPI validation, documentation | — |
-| OpenAPI | Align now | Planned API contract generation; route contracts are manually maintained in code | — |
-| RAMI 4.0 | Design for | Documented layer mapping, no code change | EU framework |
-| AAS | Design for | Extensible asset model, no code change | EU framework |
-| ISO 9001 | Design for | Traceability, auditability (already aligned) | SR EN ISO 9001 |
-| FMI | Design for | Headless core architecture, no code change | — |
-| OPC UA / IEC 62541 | Note for later | Digital twin data integration | SR EN IEC 62541 |
-| MQTT | Note for later | Distributed event streaming | — |
-| BPMN | Note for later | Process workflow modeling | — |
-| SCOR | Note for later | Supply chain expansion | — |
-| FIPA | Note for later | Multi-agent interoperability | — |
-| ISO 8000 | Note for later | Data quality for real data | SR EN ISO 8000 |
-| ISO 10303 / STEP | Note for later | Product data for PLM integration | SR EN ISO 10303 |
-| Modbus / PROFINET / EtherCAT | Note for later | Legacy equipment connectivity | — |
-| GDPR (EU 2016/679) | Note for later | Personal data when using real operational data | Directly applicable |
-| Arrow / Parquet | Note for later | Analytical data storage | — |
+| Standard or framework | Tier | Arcogine position |
+|---|---|---|
+| ISA-95 / IEC 62264 | Align now | Maintained semantic mapping; no interchange or conformance claim |
+| ISO 22400 | Align now | KPI terminology/formula reference; map only verified equivalents |
+| DES methodology | Align now | Core simulation architecture |
+| Queueing theory / Little's Law | Align now | Operational analysis and validation foundation |
+| OpenAPI | Align now | Intended machine-readable HTTP contract format; not authoritative yet |
+| RAMI 4.0 | Design for | Classification and positioning reference |
+| Asset Administration Shell | Design for | Future asset/digital-twin integration path |
+| ISO 9001 | Design for | Quality-management context, not certification claim |
+| FMI | Design for | Potential interface adapter for model exchange/co-simulation |
+| OPC UA / IEC 62541 | Note for later | Live industrial observation and twin integration |
+| MQTT | Note for later | Distributed messaging transport |
+| BPMN | Note for later | Business/approval workflow notation |
+| SCOR | Note for later | Supply-chain expansion |
+| FIPA | Note for later | External multi-agent interoperability |
+| ISO 8000 | Note for later | External data quality and governance |
+| ISO 10303 / STEP | Note for later | CAD/PLM product-data exchange |
+| Industrial fieldbus protocols | Note for later | Gateway-level shop-floor connectivity |
+| GDPR | Note for later | Personal-data obligations in real deployments |
+| Arrow / Parquet | Note for later | Analytical storage and interchange |

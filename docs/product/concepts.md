@@ -2,7 +2,7 @@
 
 This page explains what Arcogine simulates and how to interpret what you see in the UI. Read this before diving into scenarios.
 
-This document describes the **current factory-simulation experience** — one current mode of engaging with Arcogine, not the complete Arcogine product ontology. See [`PRODUCT_CHARTER.md`](/docs/product/charter.md) for the enduring product vision.
+This document describes the **current factory-simulation experience** — one current mode of engaging with Arcogine, not the complete Arcogine product ontology. See the [Product Charter](charter.md) for the enduring product vision.
 
 ## The big picture
 
@@ -156,7 +156,7 @@ This executes the full simulation and prints a summary to stdout. Useful for bat
 
 ## What's next
 
-- To set up the project, see the [Quick start](../README.md#quick-start) in the root README.
+- To set up the project, see the [Quick start](../../README.md#quick-start) in the root README.
 - To understand the architecture, see [architecture/overview.md](../architecture/overview.md).
 - To interact with the API directly, see [reference/api.md](../reference/api.md).
-- To contribute, see [CONTRIBUTING.md](/.github/CONTRIBUTING.md).
+- To contribute, see [CONTRIBUTING.md](../../.github/CONTRIBUTING.md).

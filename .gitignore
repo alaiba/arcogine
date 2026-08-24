@@ -4,7 +4,6 @@
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
 *~
@@ -18,21 +17,24 @@ Thumbs.db
 .env.local
 
 # Java / Gradle
-java/.gradle/
-java/**/build/
+product/.gradle/
+product/**/build/
 
 # Python
 __pycache__/
 *.py[cod]
 
-# Node (UI)
-ui/node_modules/
-ui/dist/
-ui/coverage/
-ui/playwright-report/
-ui/test-results/
+# Node (web)
+product/interfaces/web/node_modules/
+product/interfaces/web/dist/
+product/interfaces/web/coverage/
+product/interfaces/web/playwright-report/
+product/interfaces/web/test-results/
 
 cobertura.xml
+
+# Canonical distribution output (built by ./arcogine build)
+/dist/
 
 # Local cargo config (machine-specific build settings)
 .cargo/

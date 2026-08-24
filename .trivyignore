@@ -1,14 +1,14 @@
 # CVE allowlist for the Java dependency audit (trivy sbom over the CycloneDX SBOM,
-# run via `./arcogine check --full` or `cd java && ./gradlew cyclonedxBom`).
+# run via `./arcogine check --full` or `cd product && ./gradlew cyclonedxBom`).
 #
 # Only CVEs in dependencies that are NOT shipped in the deployable
-# (sim-cli's arcogine.jar) are listed here — they come from test-only or
+# (cli's arcogine.jar) are listed here — they come from test-only or
 # build-only configurations and do not affect the running application.
 # Shipped-runtime CVEs are deliberately NOT suppressed and will fail the gate.
 
 # Netty codecs — pulled only by spring-boot-starter-webflux, which is a
 # testImplementation dependency (the WebTestClient reactive client used by the
-# sim-api integration tests). Not on any module's runtimeClasspath / in the jar.
+# interfaces/api integration tests). Not on any module's runtimeClasspath / in the jar.
 CVE-2026-42583
 CVE-2026-42579
 CVE-2026-42584

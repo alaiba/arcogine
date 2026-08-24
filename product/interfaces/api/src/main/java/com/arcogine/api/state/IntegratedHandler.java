@@ -19,6 +19,7 @@ public class IntegratedHandler implements EventHandler {
     private final FinanceHandler finance;
     private final SalesAgent agent;
     private boolean agentEnabled;
+    private final String factoryModelContentHash;
 
     public IntegratedHandler(
             FactoryHandler factory,
@@ -27,12 +28,30 @@ public class IntegratedHandler implements EventHandler {
             FinanceHandler finance,
             SalesAgent agent,
             boolean agentEnabled) {
+        this(factory, demand, pricing, finance, agent, agentEnabled, null);
+    }
+
+    /**
+     * @param factoryModelContentHash provenance identifying the {@code FactoryModelVersion} this
+     *     handler's factory runtime was instantiated from, or {@code null} when the factory
+     *     runtime was not constructed through the canonical model boundary (e.g. hand-built in a
+     *     test).
+     */
+    public IntegratedHandler(
+            FactoryHandler factory,
+            DemandModel demand,
+            PricingState pricing,
+            FinanceHandler finance,
+            SalesAgent agent,
+            boolean agentEnabled,
+            String factoryModelContentHash) {
         this.factory = factory;
         this.demand = demand;
         this.pricing = pricing;
         this.finance = finance;
         this.agent = agent;
         this.agentEnabled = agentEnabled;
+        this.factoryModelContentHash = factoryModelContentHash;
     }
 
     @Override
@@ -78,5 +97,13 @@ public class IntegratedHandler implements EventHandler {
 
     public boolean agentEnabled() {
         return agentEnabled;
+    }
+
+    /**
+     * Content hash of the {@code FactoryModelVersion} this handler's factory runtime was
+     * instantiated from, or {@code null} if unknown.
+     */
+    public String factoryModelContentHash() {
+        return factoryModelContentHash;
     }
 }

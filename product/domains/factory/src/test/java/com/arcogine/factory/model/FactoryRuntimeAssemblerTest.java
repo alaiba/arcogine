@@ -47,8 +47,6 @@ class FactoryRuntimeAssemblerTest {
                 List.of(new OperationDefinition(100, "Empty", List.of())),
                 List.of());
 
-        assertThrows(
-                FactoryModelValidationException.class,
-                () -> new FactoryModelVersion(invalid, "not-a-real-hash"));
+        assertThrows(FactoryModelValidationException.class, () -> new FactoryModelVersion(invalid));
     }
 }

@@ -36,6 +36,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | Document | What it covers |
 |----------|-----------------|
 | [Architecture](architecture/overview.md) | Design philosophy (including the Events–State–Observations model), module structure, determinism contract, event dispatch, technology stack |
+| [Factory design architecture](architecture/factory-design.md) | Cross-consumer factory-design semantics, published model boundary, runtime separation, spatial/layout ownership, and design-lifecycle principles |
 | [Standards alignment](architecture/standards-alignment.md) | Standards influence and claim boundaries across ISA-95, ISO 22400, DES, RAMI 4.0, and future integrations |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained Arcogine-to-ISA-95 concept mapping, deliberate divergences, structural gaps, and design-review policy |
 | [Vision (superseded)](product/vision.md) | Pointer to the Product Charter; retains naming/etymology history only |
@@ -54,5 +55,6 @@ These documents are internal planning artifacts, not user-facing guides:
 
 | Document | What it covers |
 |----------|-----------------|
+| [Factory design capability plan](planning/factory-design-capability.md) | Cross-consumer design substrate: canonical model, validation, publication/versioning, provenance, and runtime instantiation |
 | [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Upstream gates for a consumer-ready factory engine: domain model, resource dispatch, session control, observations, and spatial semantics |
 | [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Dependent external game vertical slice, consumer-engine boundary, client requirements, and game acceptance criteria |

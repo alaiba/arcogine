@@ -1,13 +1,14 @@
 # Factory-Design Game Consumer Initiative
 
 > **Status:** Proposed  
-> **Scope:** Arcogine support for a separate factory-design game consumer  
+> **Scope:** A separate, single-player factory-design game consuming Arcogine as its production engine  
 > **Authority:** Planning only; this document does not describe current capability or accepted architecture  
-> **Related:** [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Dependency:** Game implementation begins only after Gates 1–5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied  
+> **Related:** [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Initiative summary
 
-This initiative explores a separate, single-player factory-design game that uses Arcogine as its authoritative production-simulation engine. The game owns rendering, interaction, progression, scoring, and game content. Arcogine owns the executable production model, deterministic simulation, operational state, events, and observations.
+This initiative explores a separate factory-design game that uses Arcogine as its authoritative deterministic production engine. The game owns rendering, interaction, progression, scoring, content, and player experience. Arcogine owns the executable production model, simulation clock, operational state, scheduling, events, observations, and deterministic consequences of factory design.
 
 The product hypothesis is deliberately narrow:
 
@@ -25,40 +26,63 @@ Revise the design and compare the result
 
 The first outcome is a vertical slice proving that machine capacity and physical arrangement create understandable, reproducible trade-offs. It is not a commitment to a campaign, a general-purpose game framework, or a complete factory-management game.
 
-## 2. Charter alignment
+## 2. Upstream engine dependency
+
+This consumer must not define Arcogine's missing factory semantics under UI pressure.
+
+The upstream [engine-readiness plan](factory-simulation-engine-readiness.md) owns:
+
+- product, production-order, work-item, and performance boundaries;
+- resource definitions, installed instances, capabilities, and deterministic dispatch;
+- consumer-neutral session and bounded advancement semantics;
+- supported observations and externally visible event envelopes;
+- spatial floor, footprint, and transfer-time semantics;
+- headless capacity and layout acceptance scenarios;
+- later versioning, recovery, checkpoint, and sidecar hardening.
+
+This game document owns only the downstream consumer hypothesis, user-facing vertical slice, responsibility boundary, client-specific requirements, and game acceptance criteria.
+
+A CLI command, JUnit harness, or thin reference client used to prove engine gates is not game implementation. The game should not begin until the engine can prove the relevant behavior headlessly.
+
+### 2.1 Entry gates
+
+Before game implementation starts, Arcogine must have satisfied:
+
+1. a canonical factory domain model with explicit workload and proportional quantity semantics;
+2. resource definitions, installed instances, capability-based eligibility, and deterministic dispatch;
+3. a consumer-neutral simulation session with atomic validation and bounded advancement;
+4. stable observations and ordered external events sufficient to explain bottlenecks;
+5. deterministic spatial and transfer semantics.
+
+The capacity and layout benchmark scenarios in the readiness plan must pass before a game UI is used as evidence for those capabilities.
+
+## 3. Charter and semantic alignment
 
 The initiative operates under the [Product Charter](../product/charter.md):
 
-- It exercises the **Design**, **Understand**, **Simulate**, and **Improve** modes over one executable production model.
-- The model submitted by the game is the model Arcogine validates and simulates; the game must not maintain a second operational truth.
-- The session is explicitly hypothetical simulation state, never live production state.
-- The game is a consumer of Arcogine, not a redefinition of Arcogine as a game.
-- Game-specific concepts must not leak into Arcogine merely because this consumer needs them.
+- it exercises the **Design**, **Understand**, **Simulate**, and **Improve** modes over one executable production model;
+- the model submitted by the game is the model Arcogine validates and simulates;
+- the game does not maintain a competing operational truth;
+- the session is explicitly hypothetical simulation state, never live production state;
+- the game is a consumer of Arcogine, not a redefinition of Arcogine as a game;
+- game-specific concepts do not enter Arcogine merely because this consumer needs them.
 
-This is consistent with the current [architecture](../architecture/overview.md): the simulation core remains headless and deterministic, while purpose-specific interfaces consume observations and submit controlled actions.
+The initiative also follows the repository's [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md) where it improves domain separation. It does not become an ISA-95 implementation project.
 
-### 2.1 ISA-95 semantic guidance
+In particular:
 
-The initiative uses the repository's [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md) as a domain-design reference where it improves semantic separation. It does not turn the vertical slice into an ISA-95 implementation project.
+- product or material definitions remain distinct from production orders and mutable work execution;
+- resource definitions remain distinct from installed instances;
+- requested, assigned, started, completed, and reported state remain distinguishable;
+- equipment/resource hierarchy remains distinct from spatial floor geometry;
+- approachable Arcogine aliases may be retained where they are clearer;
+- the game makes no ISA-95 interchange or conformance claim.
 
-For this initiative:
+## 4. Minimal vertical slice
 
-- distinguish product or material **definitions** from production **orders** and mutable work **execution**;
-- distinguish machine/resource **definitions** from installed machine **instances**;
-- express operation requirements through capabilities or eligible resource pools rather than permanently binding every operation to one concrete machine;
-- distinguish requested, assigned, started, completed, and reported production state;
-- retain approachable Arcogine aliases where they are clearer than standards terminology;
-- keep equipment/resource hierarchy separate from spatial floor geometry, position, footprint, and transfer distance;
-- defer Enterprise, Site, and complete ISA-95 hierarchy concepts until a multi-site, organizational-scope, reporting, authorization, or integration use case requires them;
-- make no ISA-95 interchange or conformance claim for the vertical slice.
+The demonstrator is a factory-layout challenge in which the player receives a fixed production contract, places machines on a bounded floor, runs the factory, observes operational behavior, and redesigns the layout until the contract is completed within its constraints.
 
-The mapping is a semantic control and review aid. Accepted, hard-to-reverse model decisions still belong in ADRs, and game-specific concepts remain in the consumer.
-
-## 3. Minimal vertical slice
-
-The minimum demonstrator is a factory-layout challenge in which the player receives a fixed production contract, places machines on a bounded floor, runs the factory, observes operational behavior, and redesigns the layout until the contract is completed within its constraints.
-
-### 3.1 Game requirements
+### 4.1 Game requirements
 
 | ID | Requirement | Acceptance criterion |
 |---|---|---|
@@ -71,9 +95,9 @@ The minimum demonstrator is a factory-layout challenge in which the player recei
 | G-07 | Legible operation | The player can see machine state, queue depth, active work, transfer progress, contract progress, and core operational KPIs. |
 | G-08 | Diagnostic feedback | The most congested machine or process can be identified without reading the raw event log. |
 | G-09 | Deterministic retry | The same submitted model, seed, and command sequence produces the same result. |
-| G-10 | Actionable validation | Invalid models identify the affected entity or field and provide a stable error code and understandable explanation. |
+| G-10 | Actionable validation | Invalid drafts identify the affected entity or field and present the engine's stable diagnostic clearly. |
 
-### 3.2 Minimum content envelope
+### 4.2 Minimum content envelope
 
 The first playable slice needs only:
 
@@ -88,13 +112,13 @@ The first playable slice needs only:
 
 The level should support at least two credible designs, such as spending limited budget on parallel bottleneck capacity versus reducing transfer distance.
 
-### 3.3 Initial editing rule
+### 4.3 Initial editing rule
 
-The game owns an editable `FactoryDraft`. Pressing Run submits a complete, validated model and starts a new Arcogine simulation context. Changing the draft invalidates the previous run and requires a reset or new run.
+The game owns an editable `FactoryDraft`. Pressing Run converts or submits that draft through Arcogine's supported model contract and starts a fresh simulation context.
 
-Live placement, movement, or removal of machines during an active run is not required for the vertical slice. This keeps model revision, in-flight work migration, and concurrent command semantics out of P0.
+Changing the draft invalidates the previous run and requires a reset or new run. Live placement, movement, or removal of machines during active work is not required for the vertical slice.
 
-## 4. Consumer-engine responsibility boundary
+## 5. Consumer-engine responsibility boundary
 
 | Concern | Owner |
 |---|---|
@@ -102,93 +126,90 @@ Live placement, movement, or removal of machines during an active run is not req
 | Editable pre-run draft and editor undo history | Game |
 | Machine purchase prices, construction budget, score, rewards, and progression | Game |
 | Contract presentation, tutorials, narrative, and unlocks | Game |
+| Visual interpolation between authoritative event times | Game |
 | Executable factory geometry and production configuration | Arcogine |
-| Products, operations, work items, queues, dispatch, and processing time | Arcogine |
-| Operational consequences of transfer distance | Arcogine |
+| Products, orders, work items, queues, dispatch, processing, and transfer time | Arcogine |
 | Simulation clock, event ordering, deterministic random behavior, and replay inputs | Arcogine |
 | Operational observations, validation results, and KPIs | Arcogine |
-| Public consumer contract and compatibility rules | Shared boundary, owned by Arcogine |
+| Model, command, event, observation, and compatibility contracts | Arcogine |
+| Combined save file | Game wrapper around an Arcogine checkpoint plus game-owned state |
 
-Arcogine should not acquire concepts such as `Level`, `StarRating`, `Unlock`, `PlayerCurrency`, decorative furniture, or campaign progression. Conversely, the game should not infer authoritative production state by reproducing Arcogine's scheduling or queueing rules.
+Arcogine should not acquire concepts such as `Level`, `StarRating`, `Unlock`, `PlayerCurrency`, decorative furniture, campaign progress, or tutorial steps. Conversely, the game should not reproduce Arcogine's scheduling, queueing, transfer, or KPI rules.
 
-## 5. Required Arcogine capabilities
+## 6. Client-specific requirements after engine readiness
 
-### 5.1 P0: required for the demonstrator
+### 6.1 Draft authoring
 
-| Capability | Current gap | Expected area |
-|---|---|---|
-| Structured consumer model and validation | The current public interface loads complete TOML scenario text and reports coarse load errors. A game needs typed model input and structured diagnostics. | `product/types`, `product/interfaces/api` |
-| Explicit production workload | Work currently originates through the economy demand loop. The demonstrator needs a fixed, externally supplied contract or order schedule. | factory domain and consumer interface |
-| Quantity consumes capacity | One order currently creates one production job while quantity primarily affects commercial value. The demonstrator needs quantity to create proportional production work. | `product/domains/factory` |
-| Equivalent-machine dispatch | A process segment currently names one concrete equipment ID. Adding another machine of the same type therefore does not naturally create parallel capacity. | `product/domains/factory`, scenario/model types |
-| Minimal spatial semantics | Machines have no engine-semantic position or footprint, and transitions between routing steps have no transfer duration. | factory model and domain |
-| Deterministic transfer events | The game needs observable transfer start/completion facts so it can animate movement without owning movement semantics. | simulation events and factory domain |
-| Bounded advancement | The current run surface is oriented toward autonomous run-to-completion behavior. An interactive client needs deterministic advancement bounded by tick, event count, or both. | `product/simulation`, `product/interfaces/api` |
-| Consumer-oriented observations | Current snapshots expose useful jobs, topology, and KPIs but not positions, transfers, operation timing, order progress, or a resumable event sequence. | `product/interfaces/api` |
-| Scenario-level determinism tests | The new dispatch, quantity, and transfer rules need golden acceptance coverage. | domain and integration tests |
+The game may maintain a user-friendly draft with temporary IDs, editor selection, invalid intermediate states, undo/redo history, and presentation metadata.
 
-A sufficient P0 domain model distinguishes:
+At validation or run time it must translate the draft into Arcogine's supported executable-model contract. The translation must be explicit and testable; the game must not silently invent production semantics that the engine does not represent.
 
-```text
-Machine definition
-    capability, footprint, processing parameters
+### 6.2 Simulation control and pacing
 
-Machine instance
-    stable ID, definition, position, orientation, operational state
+The game consumes Arcogine's bounded advancement contract to provide:
 
-Product operation
-    required capability, duration
+- pause;
+- single-event step;
+- normal presentation speed;
+- accelerated presentation speed;
+- reset and deterministic retry.
 
-Production order
-    stable external ID, product, quantity, release tick
+Presentation speed controls how frequently and how far the client asks the engine to advance. It does not alter processing durations or make the simulation depend on wall-clock timing.
 
-Work item
-    order membership, current operation, location, status
-```
+### 6.3 Visualization
 
-#### Product, order, and workflow separation
+The game renders supported observations and events rather than internal engine classes.
 
-The game makes an existing domain-model ambiguity actionable. Today `Job` carries both order-side facts (`productId`, quantity, agreed unit price, creation time) and execution-side facts (status, current step, assigned machine, completion time), while `ProductId` has no first-class runtime `Product` definition behind it. That is sufficient while an order and its production lifecycle are effectively one object, but it becomes a poor fit once the consumer must present a product definition, submit a fixed production contract, expand quantity into work, and observe multiple execution items independently.
+It may interpolate:
 
-For this initiative, the model should therefore separate three concerns conceptually:
+- resource operation progress;
+- work-item transfers;
+- queue movement;
+- contract completion feedback.
 
-```text
-Product
-    what is being made and which operations define it
+Interpolation is visual only. Arcogine remains authoritative for operation start, completion, assignment, transfer, and simulated time.
 
-Production order
-    demand-side intent: external ID, product, quantity, release tick
+### 6.4 Diagnostics
 
-Work item
-    execution-side state: order membership, operation, location, status
-```
+The client must make supported engine evidence understandable:
 
-The final Java type names are not fixed by this planning document; `SalesOrder`/`WorkOrder` are reasonable candidates but should only be adopted if they fit the implemented semantics. The important requirement is the ownership boundary: immutable order intent must not be conflated with mutable shop-floor execution state, and a product must be addressable as a runtime definition rather than only as a bare identifier. The detailed [ISA-95 mapping](../architecture/isa-95-semantic-mapping.md) records this distinction as a cross-cutting architectural concern without requiring a speculative full ISA-95 object model.
+- queue depth by resource;
+- utilization;
+- current and projected completion;
+- work in process;
+- average lead time;
+- transfer contribution;
+- active bottleneck.
 
-Dispatch must be deterministic. The precise policy remains an open decision, but every tie must end in a stable ordering such as machine ID.
+The game may summarize or highlight these observations, but it must not calculate a competing authoritative result from hidden assumptions.
 
-A deliberately simple initial transfer model is acceptable:
+### 6.5 Game economy
 
-```text
-transfer time = fixed handling time
-              + Manhattan distance × ticks per cell
-```
+The initial game economy consists only of:
 
-P0 does not require workers, vehicles, pathfinding, or congestion-aware routing.
+- starting cash;
+- machine purchase prices;
+- machine resale values;
+- contract payout;
+- deadline bonus or penalty;
+- scenario score.
 
-### 5.2 P1: required before external distribution
+These are game rules. They do not extend Arcogine's Finance domain unless a separate product-level use case establishes a genuine engine requirement.
 
-| Capability | Purpose |
-|---|---|
-| Versioned public consumer contract | Allows the game to detect supported engine, model-schema, command, event, and observation versions. |
-| Reliable event recovery | Adds monotonic event sequence IDs and snapshot/reconnect rules so a client can recover without guessing state. |
-| Exact checkpoint and restore | Allows a game save to wrap an Arcogine checkpoint and reproduce the same subsequent simulation. |
-| Sidecar lifecycle and packaging | Allows the game to start, health-check, communicate with, and stop a bundled local Arcogine runtime without requiring a separate Java installation. |
-| Compatibility and contract tests | Prevents changes in Arcogine from silently breaking the external consumer. |
+### 6.6 Persistence and local runtime
 
-These capabilities are important for a distributable game but need not block the earliest engine/game integration experiment.
+For a prototype, the game may save its editable draft and rerun from the beginning.
 
-## 6. Explicit non-goals
+Before external distribution, it should:
+
+- wrap an exact Arcogine checkpoint with game-owned progress and settings;
+- verify engine/model/protocol compatibility;
+- start and stop a bundled local Arcogine runtime if the chosen integration uses a sidecar;
+- recover from event-stream interruption through the engine's supported resynchronization contract.
+
+These engine capabilities are defined upstream; the game only orchestrates them.
+
+## 7. Explicit non-goals
 
 The vertical slice does not require:
 
@@ -200,96 +221,63 @@ The vertical slice does not require:
 - research trees, campaign maps, procedural progression, or multiplayer;
 - live structural reconfiguration while work is in flight;
 - live-production connectivity or operational execution;
-- a generic plugin framework for hypothetical future consumers;
-- a renderer, game loop, or game-specific economy inside Arcogine;
-- a complete ISA-95 hierarchy, transaction model, or interchange profile.
+- a generic plugin framework;
+- a complete ISA-95 hierarchy, transaction model, interchange profile, or conformance claim;
+- engine-domain design justified only by game presentation convenience.
 
 These may become later game or platform initiatives, but they are not prerequisites for proving the consumer boundary.
 
-## 7. Open architectural decisions
+## 8. Client-specific open decisions
 
-The planning document intentionally does not settle the following decisions:
+These decisions belong to the game initiative after the engine contracts are established:
 
-| Decision | Question to resolve | Evidence needed |
-|---|---|---|
-| Consumer surface | Is HTTP/SSE sufficient, or should Arcogine also expose an in-process session facade? | Target game technology, packaging constraints, latency measurements, testability. |
-| Model contract | Should the consumer submit an evolved scenario model or a distinct versioned factory-model contract? | Compatibility requirements and overlap with existing scenario use cases. |
-| Quantity semantics | Should an order expand into unit work items or remain a capacity-consuming batch? | Required visualization, processing rules, and expected scale. |
-| Resource selection | Should operations reference capability pools, explicit eligible-instance sets, or both? | Desired player control and dispatch complexity. |
-| Transfer metric | Is Manhattan distance adequate for the first spatial model? | Prototype usability and whether layout choices remain understandable. |
-| Advancement contract | Should clients advance by target tick, maximum events, or a combined bound? | Responsiveness and deterministic batching behavior. |
-| Command/fact boundary | Which consumer actions require explicit accept/reject commands before facts are emitted? | Domain rules that can fail, conflict, or involve multiple authorities. |
-| Compatibility promise | What constitutes a breaking change for model, command, event, and observation schemas? | Expected release cadence and external-consumer ownership. |
+| Decision | Evidence needed |
+|---|---|
+| Rendering and input technology | Target platforms, team capability, packaging, and performance prototype |
+| Sidecar versus in-process use of an available engine adapter | Supported Arcogine consumer surfaces and target game runtime |
+| Draft-to-model translation boundary | Final executable model contract and editor usability prototype |
+| Visual interpolation policy | Event/observation timing and desired presentation style |
+| Game-save wrapper format | Final checkpoint contract and game progression needs |
+| Contract scoring formula | Playtest evidence that it rewards meaningful factory trade-offs |
+| Tutorial sequence | Observation of first-time users completing the vertical slice |
 
-Once a decision becomes consequential and hard to reverse, record it as a Proposed or Accepted ADR under [`docs/architecture/decisions/`](../architecture/decisions/README.md). Do not use this planning document as a substitute for durable architectural rationale.
+Engine-domain choices such as quantity semantics, resource capabilities, dispatch policy, session semantics, event envelopes, and transfer rules do not belong here; they are upstream decisions governed by the readiness plan and ADRs.
 
-## 8. Delivery slices
+## 9. Game implementation entry criteria
 
-These are dependency-oriented slices, not dates or release commitments.
+Game implementation may begin when all of the following are true:
 
-### Slice 1: controlled workload
+1. Gates 1–5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied.
+2. The headless capacity benchmark proves equivalent-resource dispatch and exposes the resulting bottleneck.
+3. The headless layout benchmark proves deterministic transfer consequences.
+4. A reference consumer can validate, load, advance, observe, and reset a session without using Arcogine internals.
+5. The executable-model and observation contracts are stable enough for a prototype consumer, even if their external compatibility policy is not yet final.
+6. No unresolved game requirement requires the client to reproduce authoritative engine logic.
 
-- Accept an explicit fixed workload without relying on stochastic demand.
-- Make requested quantity produce proportional work.
-- Expose order and work-item progress.
+## 10. Vertical-slice acceptance criteria
 
-**Exit:** A headless scenario completes a known contract deterministically.
+The game vertical slice is successful when:
 
-### Slice 2: flexible capacity
-
-- Separate machine definitions from instances.
-- Route operations to compatible installed capacity.
-- Apply a deterministic dispatch policy.
-
-**Exit:** Adding a second compatible machine can measurably change queueing and completion time.
-
-### Slice 3: layout consequence
-
-- Add bounded floor geometry, machine footprints, and positions.
-- Add deterministic transfer duration and transfer events.
-
-**Exit:** Two layouts containing the same machines produce different, reproducible completion times.
-
-### Slice 4: interactive consumer contract
-
-- Add structured validation, bounded advancement, and the game-oriented observation projection.
-- Build a thin external client that can run the complete design-inspect-redesign loop.
-
-**Exit:** The game client can explain the active bottleneck and compare two submitted designs without reading Arcogine internals.
-
-### Slice 5: distribution hardening
-
-- Version the public contract.
-- Add resumable events, checkpoint/restore, and local sidecar lifecycle support.
-
-**Exit:** A packaged client can save, restore, and resume a session reproducibly.
-
-## 9. Acceptance criteria
-
-The vertical slice is successful when:
-
-1. A separate client submits a valid factory design without depending on Arcogine's internal Java classes.
-2. The same machines arranged differently produce different deterministic completion times.
-3. Adding compatible capacity at the actual bottleneck changes throughput, queueing, or completion time.
-4. The client can identify the bottleneck from supported observations.
-5. Invalid designs return structured, entity-specific diagnostics and do not partially mutate engine state.
+1. The player can create and submit a valid factory design without using Arcogine tooling directly.
+2. The same resources arranged differently produce different deterministic completion times.
+3. Adding compatible capacity at the actual bottleneck changes throughput, queueing, utilization, or completion time.
+4. The player can identify the bottleneck from supported observations presented by the game.
+5. Invalid drafts display structured, entity-specific diagnostics and do not partially mutate engine state.
 6. Resetting the same model with the same seed reproduces the same ordered behavior and final result.
 7. The game owns presentation, scoring, progression, and player economy; no game-specific concept enters Arcogine's domain model.
-8. The implementation preserves the Events-State-Observations boundaries and authoritative state ownership described in the architecture documentation.
-9. The model follows the ISA-95 mapping policy where relevant without claiming or requiring full ISA-95 conformance.
+8. The client depends only on supported model, command, event, observation, checkpoint, and lifecycle contracts.
+9. The implementation follows the ISA-95 mapping policy where relevant without claiming or requiring conformance.
 
-## 10. Documentation and retirement path
+## 11. Documentation lifecycle
 
-While the initiative is exploratory, this file remains under `docs/planning/` and must be read as a proposal rather than current capability.
+While the initiative is exploratory, this file remains under `docs/planning/`.
 
 As work becomes established:
 
-- record durable, hard-to-reverse decisions as ADRs;
-- update [`docs/architecture/overview.md`](../architecture/overview.md) for implemented architecture;
-- update the maintained [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md) when manufacturing-domain concepts change;
-- update [`docs/reference/api.md`](../reference/api.md) for implemented public behavior;
-- update user-facing concept documentation only for capabilities that actually ship;
-- track implementation tasks as issues rather than expanding this file into a detailed backlog;
-- keep detailed game UX, content, scoring, and progression specifications in the game consumer's repository.
+- keep engine work and readiness evidence in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) until it becomes current architecture;
+- record hard-to-reverse engine decisions as ADRs;
+- update [`docs/architecture/overview.md`](../architecture/overview.md), the [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md), and [`docs/reference/api.md`](../reference/api.md) only for implemented behavior;
+- track client implementation as issues or in the game consumer's repository;
+- keep detailed game UX, content, scoring, art, and progression specifications outside Arcogine.
 
-Once the vertical slice is complete or abandoned, reduce this document to a concise historical outcome or remove it after its durable decisions and implemented behavior have been documented in their authoritative locations.
+Once the vertical slice is complete or abandoned, reduce this document to a concise historical outcome or retire it after its durable decisions and implemented behavior are represented in authoritative documentation.

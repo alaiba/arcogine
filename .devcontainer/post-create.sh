@@ -23,17 +23,14 @@ echo "==> Ensuring node_modules volume is writable..."
 # (The Gradle cache volume doesn't need this: the Dockerfile pre-creates
 # its mount point owned by vscode, which Docker copies into the volume
 # on first mount.)
-sudo chown vscode:vscode ui/node_modules 2>/dev/null || true
+sudo chown vscode:vscode product/interfaces/web/node_modules 2>/dev/null || true
 
-echo "==> Installing UI dependencies..."
-cd ui && npm ci && cd ..
-
-echo "==> Installing Playwright Chromium browser for E2E tests..."
-cd ui && npx playwright install chromium && cd ..
+echo "==> Installing repository dependencies (./arcogine setup)..."
+./arcogine setup
 
 echo "==> Dev container ready. Canonical commands:"
 echo "    ./arcogine setup   — (re-)install dependencies"
 echo "    ./arcogine test    — run Java + frontend unit tests"
 echo "    ./arcogine check   — run full quality gates"
 echo "    ./arcogine run api — start the API on :3000"
-echo "    ./arcogine run ui  — start the UI on :5173"
+echo "    ./arcogine run web — start the web app on :5173"

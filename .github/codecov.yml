@@ -12,13 +12,13 @@ coverage:
         target: 70%
 
 flags:
-  rust:
+  java:
     paths:
-      - crates/
+      - product/
     carryforward: true
   frontend:
     paths:
-      - ui/src/
+      - product/interfaces/web/src/
     carryforward: true
 
 comment:

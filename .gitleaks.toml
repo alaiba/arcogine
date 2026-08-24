@@ -4,6 +4,6 @@ useDefault = true
 [[allowlists]]
 description = "Ignore generated coverage artifacts"
 paths = [
-  '''^ui/coverage/''',
+  '''^product/interfaces/web/coverage/''',
   '''^cobertura\.xml$''',
 ]

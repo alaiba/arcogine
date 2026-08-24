@@ -54,4 +54,5 @@ These documents are internal planning artifacts, not user-facing guides:
 
 | Document | What it covers |
 |----------|-----------------|
-| [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Proposed external game consumer, vertical-slice boundary, Arcogine capability gaps, and acceptance criteria |
+| [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Upstream gates for a consumer-ready factory engine: domain model, resource dispatch, session control, observations, and spatial semantics |
+| [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Dependent external game vertical slice, consumer-engine boundary, client requirements, and game acceptance criteria |

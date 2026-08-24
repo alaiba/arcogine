@@ -19,7 +19,7 @@ Arcogine's documentation is layered, and each layer answers a different question
 - **[`product/concepts.md`](product/concepts.md)**, **[`reference/api.md`](reference/api.md)**, [`../product/interfaces/web/README.md`](../product/interfaces/web/README.md) — current capability/reference documentation. Describe what exists now, honestly, without projecting future capability.
 - **[`planning/`](planning/)** — temporary analysis, proposals, and assessments. Useful for context; not authoritative for current or future direction.
 
-When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail. Proposed architecture references and Proposed ADRs describe a target or decision under consideration; they do not override current-state documentation until accepted and implemented.
+When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail. Proposed architecture references and Proposed ADRs describe a target or decision under consideration; they do not override current-state documentation. Accepted ADRs constrain intended architecture, but they likewise do not make unimplemented behavior current capability.
 
 ## Development and contributing
 
@@ -37,7 +37,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 |----------|-----------------|
 | [Architecture](architecture/overview.md) | Current design philosophy (including Events–State–Observations), module structure, determinism contract, event dispatch, technology stack |
 | [Factory design architecture](architecture/factory-design.md) | Proposed cross-consumer factory-design semantics, scenario/model/runtime separation, publication boundary, spatial ownership, and design-lifecycle principles |
-| [ADR-0003: Canonical factory model boundary](architecture/decisions/0003-canonical-factory-model-boundary.md) | Proposed decision that ScenarioConfig remains a run envelope while immutable published factory-model versions bridge design and runtime |
+| [ADR-0003: Canonical factory model boundary](architecture/decisions/0003-canonical-factory-model-boundary.md) | Accepted decision that `ScenarioConfig` remains a run envelope while immutable published factory-model versions bridge design and runtime |
 | [Standards alignment](architecture/standards-alignment.md) | Standards influence and claim boundaries across ISA-95, ISO 22400, DES, RAMI 4.0, and future integrations |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained Arcogine-to-ISA-95 concept mapping, deliberate divergences, structural gaps, and design-review policy |
 | [Vision (superseded)](product/vision.md) | Pointer to the Product Charter; retains naming/etymology history only |

@@ -1,44 +1,42 @@
 # Factory Design Architecture
 
-> **Status:** Maintained architectural reference  
-> **Scope:** Cross-consumer factory-design semantics and their boundary with simulation/runtime behavior  
-> **Authority:** Describes the intended architectural separation between design artifacts, published executable models, runtime state, and consumer-specific authoring experiences  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md)
+> **Status:** Proposed architectural reference  
+> **Scope:** Cross-consumer factory-design semantics and their boundary with scenario configuration and runtime behavior  
+> **Authority:** Proposed architecture; current implementation remains documented by the architecture overview and product/reference docs until this direction is accepted and implemented  
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md)
 
 ## 1. Architectural position
 
-Factory design is a cross-consumer Arcogine concern, but the phrase "factory design" covers three different responsibilities that must remain separate:
+Factory design is a cross-consumer Arcogine concern, but "factory design" covers three responsibilities that must remain separate:
 
-1. **The designed production system** — the semantic model of products, operations, resources, policies, constraints, and behaviorally relevant geometry.
-2. **The design lifecycle** — drafting, validation, versioning, publication, comparison, provenance, and eventual deployment of model changes.
-3. **The design experience** — the UI, interaction model, visualization, undo gestures, camera, palettes, game tutorials, forms, import tools, or agent workflows through which a consumer authors a design.
+1. **Designed production system** — products, operations, resources, policies, constraints, and behaviorally relevant geometry.
+2. **Design lifecycle** — drafting, validation, publication, versioning, comparison, provenance, and eventual deployment of changes.
+3. **Design experience** — UI, interaction model, visualization, undo gestures, camera, palettes, game tutorials, forms, import tools, or agent workflows.
 
-The architectural rule is:
+The proposed architectural rule is:
 
-> **Arcogine owns the semantics and publication of production-system designs. Consumers may own how drafts are authored. The simulation runtime instantiates immutable published model versions and never doubles as the design workspace.**
+> **Arcogine owns the semantics and publication of production-system designs. Consumers may own how drafts are authored. Runtime contexts instantiate immutable published model versions and never double as the design workspace.**
 
-This follows the Product Charter's central thesis: the system that is designed should remain semantically continuous with the system that is simulated, verified, deployed, executed, and monitored. It does not imply one UI, one runtime, or one mutable state store for every lifecycle stage.
+This follows the Product Charter's lifecycle-continuity thesis without implying one UI, one runtime, or one mutable state store for every mode.
 
 ## 2. Orthogonal lifecycle, shared ontology
 
-Factory design is **operationally orthogonal** to the simulation runtime but **semantically inseparable** from it.
+Factory design is **operationally orthogonal** to simulation/runtime behavior but **semantically inseparable** from it.
 
 It is orthogonal because:
 
-- a design can be authored without running a simulation;
-- a simulation can instantiate a published model without a design editor being present;
-- design changes are ordered by model revision and provenance, not by simulated time;
+- design can occur without running a simulation;
+- runtime can instantiate a published model without an editor;
+- design changes are ordered by model revision and provenance, not simulated time;
 - drafts may be incomplete or temporarily invalid while executable runtime models may not;
-- design collaboration, review, approval, and publication have different authority and lifecycle rules from simulated production events.
+- design review/publication and runtime event processing have different authority and lifecycle rules.
 
 It is semantically inseparable because:
 
-- design and runtime must share the same product, operation, resource, capability, policy, constraint, and behaviorally relevant layout semantics;
-- simulation validation must reflect what the runtime can actually execute;
-- consumers must not translate an editor-specific schema manually into an unrelated runtime representation;
-- every simulation, verification, or future execution context must identify the exact model version it instantiated.
-
-The intended shape is:
+- design and runtime must share product, operation, resource, capability, policy, constraint, and behaviorally relevant layout semantics;
+- validation must reflect what runtime can actually execute;
+- consumers must not manually translate an editor-specific ontology into unrelated runtime semantics;
+- every runtime or verification context must identify the exact model version it instantiated.
 
 ```text
 Consumer-specific design experience
@@ -58,61 +56,132 @@ Consumer-specific design experience
         mutable in its context
 ```
 
-## 3. Canonical model boundary
+## 3. Scenario, model, and runtime are different things
 
-The semantic output of design is a canonical production-system model. The exact Java types are not fixed by this document, but the lifecycle distinctions are.
+The proposed model boundary distinguishes an experiment from the production system being experimented on and from mutable execution state.
+
+```text
+Scenario
+    describes an experiment or execution context
+
+FactoryModel
+    describes the production system
+
+FactoryModelVersion
+    immutable published identity of that production system
+
+ExecutableFactoryModel
+    validated/resolved representation derived from one model version
+
+FactoryRuntime
+    mutable state instantiated from that executable model
+```
+
+The current `ScenarioConfig` combines simulation parameters, equipment/material/process definitions, economy configuration, and agent configuration. That remains useful as an input envelope, but it should not become the canonical factory model merely because those concerns are serialized together today.
 
 Conceptually:
 
 ```text
+Scenario / TOML -------+
+Game design -----------|
+Industrial design UI --|
+Optimizer -------------+--> FactoryModel --> publish --> FactoryModelVersion
+Importer / adapter ----|
+CLI / test builder ----+
+```
+
+A scenario may contain or reference a published model together with runtime inputs such as workload and simulation settings.
+
+### 3.1 Concern classification
+
+| Concern | Proposed ownership |
+|---|---|
+| Product definitions | `FactoryModel` |
+| Operation definitions | `FactoryModel` |
+| Resource definitions and capabilities | `FactoryModel` |
+| Installed resource instances | `FactoryModel` |
+| Capability/eligibility requirements | `FactoryModel` |
+| Semantic layout | `FactoryModel` |
+| Simulation seed/limits | Scenario/runtime context |
+| Production workload | Scenario/runtime input |
+| Economy configuration | Scenario/context |
+| Agent configuration | Scenario/context |
+| Production orders | Runtime |
+| Work items | Runtime |
+| Queues and assignments | Runtime |
+| Transfers in progress | Runtime |
+| Simulated time/events | Runtime |
+| KPIs/performance observations | Runtime observation |
+
+## 4. Canonical model boundary
+
+The exact Java types are intentionally not fixed yet, but the lifecycle responsibilities are.
+
+```text
 FactoryDraft
-    mutable authoring state
+    mutable consumer authoring state
     may be incomplete or invalid
 
 FactoryModel
-    complete semantic definition
+    complete semantic production-system definition
 
 FactoryModelVersion
     immutable published model
-    model identity, version, provenance, content hash
+    identity, version, provenance, content hash
 
 ExecutableFactoryModel
-    validated/resolved runtime-ready representation
+    validated/resolved runtime-ready derivative
 
 FactoryRuntime
-    mutable state instantiated from one published model version
+    mutable state instantiated from one model version
 ```
 
-These need not all be separate classes or persistence entities initially. They represent different responsibilities and invariants that implementation must not collapse accidentally.
+These need not all become separate persistence entities or modules initially.
 
-### 3.1 What belongs in the canonical model
+### 4.1 What belongs in the canonical model
 
-A fact belongs in the canonical design model when it changes the executable meaning of the production system across consumers or lifecycle modes. Examples include:
+A fact belongs in the canonical model when changing it changes the executable meaning of the production system across consumers or lifecycle modes. Examples include:
 
 - product/material definitions;
-- operations or work definitions;
+- operations/work definitions;
 - resource definitions and capabilities;
 - installed resource instances;
-- resource-pool or work-center membership when it affects scheduling, capacity, responsibility, or reporting;
-- processing, setup, transfer, or dispatch policies;
-- production constraints;
-- objectives intended for shared verification;
+- resource-pool/work-center membership when it has real scheduling, capacity, responsibility, or reporting semantics;
+- processing/setup/transfer/dispatch policies when part of the designed system;
+- executable constraints;
+- shared verification objectives when modeled explicitly;
 - behaviorally relevant floor geometry, position, orientation, footprint, connection points, zones, or transfer relationships.
 
-### 3.2 What does not belong in the canonical model
+### 4.2 What does not belong in the canonical model
 
-Consumer presentation and transient authoring state remain consumer-owned unless a concrete cross-consumer need justifies promotion. Examples include:
+Consumer presentation and transient authoring state remain consumer-owned unless a concrete cross-consumer requirement justifies promotion. Examples include:
 
-- selection and hover state;
-- editor camera position;
-- drag preview state;
-- UI snapping guides;
-- sprites, 3D meshes, animation offsets, sound, colors, visual themes;
-- game tutorial state, unlocks, scores, stars, and player currency;
+- selection/hover state;
+- editor camera;
+- drag preview and snapping guides;
+- sprites, meshes, animation offsets, sound, colors, themes;
+- game tutorial state, unlocks, score, stars, and player currency;
 - local undo/redo stacks;
 - decorative objects with no production semantics.
 
-## 4. Design revision is not simulated time
+## 5. Derived executable representation is not a second model
+
+A runtime may compile or resolve immutable structures for efficiency:
+
+- resolved definition references;
+- capability/eligible-resource indexes;
+- operation/routing indexes;
+- geometry/spatial indexes;
+- validated transfer relationships;
+- derived scheduling metadata.
+
+These structures are derived from exactly one published semantic model. They are not independently authored sources of truth.
+
+The invariant is:
+
+> **There is no independently authored runtime factory model. Runtime indexes and compiled structures are derivations of one published `FactoryModelVersion`, not another representation that consumers must maintain manually.**
+
+## 6. Design revision is not simulated time
 
 Design changes and simulation events must not share one event stream merely because both are changes.
 
@@ -132,18 +201,16 @@ OperationRequirementChanged in revision 13
 FactoryModelPublished as version 4
 ```
 
-The metadata differs:
-
-| Design lifecycle | Simulation runtime |
+| Design lifecycle | Runtime lifecycle |
 |---|---|
 | model/draft revision | event sequence |
 | author or decision source | event source |
 | wall-clock provenance | simulated time |
 | validation/publication state | runtime fact |
 | branch/review context | run/session context |
-| published model version | instantiated model version |
+| published model version | instantiated source model version |
 
-A future deployment workflow may connect the two lifecycles explicitly:
+A future deployment workflow may connect them explicitly:
 
 ```text
 Design change set
@@ -157,11 +224,9 @@ Deployment request
 Accepted operational change
 ```
 
-That bridge must preserve provenance and authority; it does not make editor operations into simulation events.
+That bridge preserves provenance and authority; it does not turn editor operations into simulation events.
 
-## 5. Cross-consumer ownership
-
-The following ownership rules apply across consumer types such as a game, industrial design UI, optimizer, CLI, import adapter, or autonomous design agent.
+## 7. Cross-consumer ownership
 
 | Concern | Ownership |
 |---|---|
@@ -169,23 +234,21 @@ The following ownership rules apply across consumer types such as a game, indust
 | Resource definitions and capabilities | Arcogine canonical model |
 | Installed resource instances | Arcogine canonical model |
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
-| Transfer and dispatch policies | Arcogine canonical model/runtime policy |
 | Structured executability validation | Shared Arcogine model/design capability |
 | Model identity, version, hash, and lineage | Shared Arcogine model infrastructure |
 | Model publication and runtime instantiation | Shared Arcogine boundary |
-| Semantic model comparison/diff | Cross-consumer candidate; shared when justified |
-| Draft persistence, branching, merge, collaboration | Cross-consumer candidate; defer until justified |
-| Editor selection, hover, camera, drag/drop, palette | Consumer |
+| Runtime dispatch/queues/work/transfers | Arcogine runtime |
+| Semantic model comparison/diff | Cross-consumer candidate; share when justified |
+| Draft persistence/branching/merge/collaboration | Cross-consumer candidate; defer until justified |
+| Editor selection/camera/drag/drop/palette | Consumer |
 | Visual assets and presentation | Consumer |
-| Game construction budget, unlocks, score, progression | Game consumer |
-| Industrial safety/engineering constraints | Arcogine model or verification capability when semantically supported |
-| Throughput/lead-time verification objectives | Shared verification capability when supported |
+| Game budget/unlocks/score/progression | Game consumer |
+| Industrial engineering constraints | Arcogine model or verification capability when semantically supported |
+| Throughput/lead-time objectives | Shared verification capability when supported |
 
-## 6. Spatial layout and resource hierarchy are independent dimensions
+## 8. Spatial layout and resource hierarchy are independent
 
-Factory design introduces spatial semantics, but spatial layout must not be confused with ISA-95-style equipment/resource hierarchy.
-
-Resource and organizational scope may eventually resemble:
+Resource/organizational scope may eventually resemble:
 
 ```text
 Factory
@@ -194,7 +257,7 @@ Factory
       Resource Instance
 ```
 
-Spatial layout is a different dimension:
+Spatial layout is a separate dimension:
 
 ```text
 Factory Floor
@@ -205,54 +268,27 @@ Factory Floor
   Transfer relationships
 ```
 
-Hierarchy supports concepts such as containment, responsibility, capacity aggregation, scheduling scope, reporting, or authorization. Spatial layout supports physical placement and transport consequences.
+Hierarchy supports containment, responsibility, capacity aggregation, scheduling scope, reporting, or authorization. Spatial layout supports physical placement and transport consequences.
 
-A resource may move without changing identity or hierarchy membership. A resource may change pool/work-center membership without moving physically.
+A resource may move without changing identity or hierarchy membership. A resource may change resource-pool membership without moving physically.
 
-The [ISA-95 semantic mapping](isa-95-semantic-mapping.md) remains the reference for whether a hierarchy concept should be adopted, aliased, extended, or deferred.
+The [ISA-95 semantic mapping](isa-95-semantic-mapping.md) remains the reference for whether hierarchy concepts should be adopted, aliased, extended, or deferred.
 
-## 7. Semantic geometry versus presentation geometry
+## 9. Semantic geometry versus presentation geometry
 
-Geometry is Arcogine-owned only when it changes executable behavior or shared validation.
+Arcogine owns geometry only when it changes executable behavior or shared validation.
 
-### Semantic geometry
+Semantic geometry may include floor dimensions, resource position/orientation/footprint, connection points, zones/restrictions, adjacency/reachability constraints, and transfer-distance inputs.
 
-Potential model facts include:
+Consumers own meshes/sprites, animation anchors, camera framing, selection outlines, label placement, decorative composition, and visual interpolation between authoritative engine states.
 
-- floor dimensions;
-- resource position and orientation;
-- resource footprint;
-- semantic connection/hand-off points;
-- zones or restrictions;
-- adjacency or reachability constraints;
-- transfer distance or routing inputs.
+## 10. Constraint ownership
 
-The runtime may derive consequences such as:
+Every design rule should be classified before implementation.
 
-- transfer duration;
-- material-flow feasibility;
-- capacity restrictions;
-- adjacency-dependent behavior.
+### 10.1 Executability constraints — Arcogine
 
-### Presentation geometry
-
-Consumers own:
-
-- meshes/sprites;
-- animation anchors and offsets;
-- camera framing;
-- selection outlines;
-- label placement;
-- decorative composition;
-- visual interpolation between authoritative engine states.
-
-## 8. Constraint ownership
-
-Not every design rule has the same architectural status.
-
-### 8.1 Executability constraints — Arcogine model/runtime boundary
-
-These answer whether the production system can be instantiated and executed:
+These answer whether the production system can be published/instantiated coherently:
 
 ```text
 Referenced definitions exist
@@ -260,13 +296,13 @@ Identifiers are unique
 Operation graph is valid
 Each operation can resolve eligible capacity
 Semantic footprint lies inside the floor
-Semantic footprints do not overlap where overlap is forbidden
+Forbidden semantic footprints do not overlap
 Required transfers are representable
 ```
 
-### 8.2 Verification/business objectives — shared verification concern
+### 10.2 Verification objectives — shared verification concern
 
-These answer whether an executable design satisfies a target:
+These test whether an executable design meets a target:
 
 ```text
 Throughput >= target
@@ -275,11 +311,11 @@ Maximum utilization <= threshold
 Safety separation >= required distance
 ```
 
-An objective is not necessarily an executability invariant.
+An objective is not automatically an executability invariant.
 
-### 8.3 Consumer rules — consumer concern
+### 10.3 Consumer rules — consumer
 
-These answer whether a design is acceptable within one experience:
+These apply only to one experience:
 
 ```text
 Player construction budget
@@ -289,137 +325,101 @@ Tutorial restriction
 Aesthetic preference
 ```
 
-Consumers may pre-check these rules, but they must not be promoted into Arcogine's executable semantics unless they represent a cross-consumer business constraint.
-
-## 9. Publication and provenance
+## 11. Publication, identity, and provenance
 
 A published model version is the bridge between design and downstream contexts.
 
-At minimum, a published version should be attributable by:
+At minimum it must support unambiguous attribution through concepts equivalent to:
 
 ```text
 model ID
-model version or revision
+model revision/version
+model/schema version
 content hash
-schema/model version
-creation/publication provenance
+publication provenance
 ```
 
-Every simulation or verification run must retain the identity of the model version it instantiated.
+Every runtime or verification result must retain the identity of the model version it instantiated.
 
 The desired invariant is:
 
 > Given a published model version, execution context, seed, and ordered commands, Arcogine can identify exactly which semantic design produced the resulting events and observations.
 
-The design lifecycle may later add authorship, approvals, change sets, parent revisions, and branch lineage. Those should be added when collaboration or deployment creates a concrete need rather than speculatively.
+Persistent lineage, authorship, approvals, branches, and change sets should be added only when concrete collaboration or deployment workflows require them.
 
-## 10. Model validation and compilation
+## 12. Shared validation and publication boundary
 
 Validation belongs at the shared model/design boundary, not independently in each consumer.
 
-A consumer may perform optimistic local checks for responsiveness, but Arcogine remains authoritative for executable semantics.
+A consumer may perform optimistic local checks for responsiveness, but Arcogine remains authoritative for shared executability semantics.
 
-Validation should be:
-
-- deterministic;
-- structured rather than prose-only;
-- attributable to a field, path, or entity when possible;
-- explicit about severity (error/warning/advisory when supported);
-- atomic with respect to publication/instantiation.
-
-A compilation or resolution step may derive runtime-ready structures such as:
-
-- resolved definition references;
-- capability/resource indexes;
-- routing/operation indexes;
-- precomputed immutable geometry structures;
-- validated transfer relationships;
-- derived scheduling metadata.
-
-These derived structures are runtime preparation, not a second independently maintained business model.
-
-## 11. Initial implementation boundary
-
-Arcogine should provide a deliberately small shared design substrate before building a general-purpose editor service.
+Validation should be deterministic, structured, attributable to fields/entities when possible, explicit about severity, and atomic with respect to publication/instantiation.
 
 The initial shared substrate should include:
 
-1. a canonical factory model schema;
-2. structured model validation;
+1. a canonical factory model contract;
+2. structured validation;
 3. an explicit publication boundary producing an immutable model version;
 4. deterministic runtime instantiation from that version;
 5. runtime provenance linking runs to model versions.
 
-The first consumer may still own its mutable draft, undo history, and editor persistence:
+The first consumer may still own mutable drafts, undo history, and editor persistence.
+
+## 13. Architectural dependency direction
 
 ```text
-Consumer-owned FactoryDraft
-          |
-          | project/submit
-          v
-Arcogine validation + publication
+Consumer authoring sources
           |
           v
-FactoryModelVersion
+Canonical factory model
+ definitions + validation
           |
-          v
-Simulation / verification
+     publish version
+          |
+     +----+----+
+     |         |
+     v         v
+Simulation   Verification
+runtime      contexts
+     |
+     v
+Interfaces / observations
 ```
 
-Shared draft branching, merge, collaborative editing, generalized undo/redo, and long-lived design workspaces are deferred until a second concrete consumer or workflow requires them.
+The canonical model must not depend on a specific UI or simulation transport. Runtime must not mutate the published model. Consumers must not depend on mutable runtime internals to author a design.
 
-## 12. Architectural dependency direction
+This may initially be implemented inside existing modules/packages. A new Gradle module is warranted only when dependency direction or ownership invariants justify one.
 
-Conceptually, the dependency direction is:
+## 14. Review checklist
 
-```text
-                   Canonical factory model
-                 definitions + validation
-                          |
-             +------------+------------+
-             |                         |
-             v                         v
-      Design capability          Factory runtime
-    drafts/publication          work/events/state
-             |                         |
-             +------------+------------+
-                          v
-                 Interfaces/adapters
-```
+When factory-design semantics change, ask:
 
-The canonical model must not depend on a specific UI or simulation transport. The runtime must not mutate the published design model in place. Consumers must not depend on mutable runtime internals to author a design.
-
-This separation may initially be implemented inside existing modules/packages. A new Gradle module is warranted only when dependency direction, independent lifecycle, or ownership invariants justify one; package proliferation is not the goal.
-
-## 13. Review checklist
-
-When a change introduces or modifies factory-design semantics, ask:
-
-1. Is this fact part of the production-system definition, the design lifecycle, runtime state, verification state, or one consumer's experience?
+1. Is this production-system definition, design lifecycle, runtime state, verification state, or one consumer's experience?
 2. Does changing it alter executable behavior across consumers?
-3. Can a draft be temporarily invalid while the published model must reject the same state?
-4. Is the fact ordered by model revision or by simulated time?
-5. Does the runtime need it, or only the editor presentation?
+3. Is it part of the scenario/run context rather than the factory itself?
+4. Is the fact ordered by model revision or simulated time?
+5. Can a draft be invalid while a published model must reject that state?
 6. Is this resource hierarchy or spatial layout?
-7. Is a constraint about executability, verification, or a consumer rule?
-8. Can a simulation result identify the exact published model version that produced it?
-9. Are we creating a second representation that must be manually translated into runtime semantics?
-10. Is a new shared design abstraction justified by more than one concrete consumer/workflow?
+7. Is the rule executability, verification, or consumer-specific?
+8. Can a runtime result identify the exact published model version that produced it?
+9. Are runtime structures derived from that model, or are we creating a second authored representation?
+10. Is a new shared design abstraction justified by a concrete cross-consumer workflow?
 
-## 14. Triggers for revisiting this architecture
+## 15. Triggers for revisiting this proposal
 
 Revisit this document when Arcogine introduces or materially changes:
 
-- a canonical `FactoryModel` or equivalent published model;
-- model versioning, hashes, or lineage;
-- a shared draft/design service;
-- semantic model diff or compare;
+- a canonical `FactoryModel` or equivalent;
+- the scenario-to-model adapter boundary;
+- model versioning/hashes/lineage;
+- shared draft/design services;
+- semantic model diff/compare;
 - design branching/merge/collaboration;
 - deployment of model changes to real operations;
-- spatial geometry that affects execution;
+- behaviorally relevant spatial geometry;
 - work-center/resource-pool hierarchy;
 - cross-consumer validation rules;
-- a second independent design consumer;
-- ISA-95/AAS/other model import or export.
+- another independent design consumer;
+- ISA-95/AAS/other model import/export.
 
-Durable, hard-to-reverse decisions that emerge from these triggers should be recorded as ADRs. This document should remain a current architectural reference rather than a chronological change log.
+Hard-to-reverse decisions should be recorded as ADRs. Once this architecture is implemented and accepted, authoritative current-state portions should move into or be reconciled with [`overview.md`](overview.md) rather than leaving proposed behavior presented as current fact.

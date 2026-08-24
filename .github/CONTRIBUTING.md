@@ -1,58 +1,10 @@
 # Contributing to Arcogine
 
-Thank you for considering a contribution to Arcogine. This guide covers everything you need to get started.
+Thank you for considering a contribution to Arcogine. This guide covers the contribution workflow, code standards, architecture constraints, and required validation.
 
-Before proposing a significant product, domain, or architecture change, read [`docs/product/charter.md`](../docs/product/charter.md). It's the normative source for Arcogine's product direction — significant proposals should be evaluated against it as well as the current architecture constraints in `docs/architecture/overview.md`. It's strategic context for judgment calls, not a rulebook for blocking routine local implementation work.
+For environment setup and running Arcogine locally, use the canonical [Quick start](../README.md#quick-start) in the root README. `./arcogine` is the canonical developer entry point for common cross-project workflows.
 
-## Prerequisites
-
-- **JDK 25** and **Node.js 24+** (for native, non-container development)
-- **Docker** and Docker Compose (optional, for containerized runs)
-
-If your host doesn't have JDK 25 / Node 24 installed, use the dev container path — it provides both.
-
-`./arcogine` is a Bash script: it runs in the dev container, on Linux/macOS natively, and on Windows via WSL or Git Bash — not directly in PowerShell/cmd. **Windows contributors should use the dev container**; it's the only path that doesn't require a separate Bash environment.
-
-## Choose a start path
-
-### 1) Dev container (recommended)
-
-```bash
-git clone https://github.com/alaiba/arcogine.git
-cd arcogine
-```
-
-Open the repository in VS Code and reopen in the dev container. `postCreateCommand` installs UI dependencies (`npm ci`), installs the Playwright browser, and copies `.env.example` to `.env` if missing. Gradle and npm caches live in named Docker volumes, so subsequent rebuilds are fast.
-
-After startup, in two terminals:
-
-```bash
-./arcogine run web
-./arcogine run api
-```
-
-### 2) Native (Linux/macOS, or Windows via WSL/Git Bash)
-
-```bash
-git clone https://github.com/alaiba/arcogine.git
-cd arcogine
-./arcogine setup
-./arcogine test
-```
-
-Then run:
-
-```bash
-./arcogine run api
-./arcogine run web
-```
-
-### 3) Docker Compose
-
-```bash
-./arcogine build
-./arcogine up
-```
+Before proposing a significant product, domain, or architecture change, read [`docs/product/charter.md`](../docs/product/charter.md). It's the normative source for Arcogine's product direction — significant proposals should be evaluated against it as well as the current architecture constraints in [`docs/architecture/overview.md`](../docs/architecture/overview.md). It's strategic context for judgment calls, not a rulebook for blocking routine local implementation work.
 
 ## Repository layout
 
@@ -71,21 +23,21 @@ Then run:
 | `docs/` | Project documentation |
 | `infra/` | Container and dev-environment infrastructure |
 
-See `docs/architecture/overview.md` for the full module dependency graph and design rationale.
+See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the full module dependency graph and design rationale.
 
 ## Development workflow
 
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
-2. **Make your changes.** Follow the code style enforced by Checkstyle.
-3. **Write tests** for new functionality. Each module has JUnit 5 unit tests; frontend stores and components are tested with Vitest and Testing Library.
+2. **Make your changes.** Follow the code style enforced by Checkstyle and the frontend lint/format tooling.
+3. **Write tests** for new functionality. Java modules use JUnit 5; frontend stores and components use Vitest and Testing Library.
 4. **Run the checks:**
 
 ```bash
 ./arcogine check         # fast gates: compile, lint, tests, coverage, typecheck, build
-./arcogine check --full  # everything: check + playwright + docker + security
+./arcogine check --full  # everything: check + Playwright + Docker + security
 ```
 
-For anything more specific, use the subsystem's native tool directly — see `docs/development/testing.md` for the full command reference.
+Use `./arcogine check` before pushing. Use `./arcogine check --full` when the change warrants the complete local validation surface. For individual test categories and native subsystem commands, see [`docs/development/testing.md`](../docs/development/testing.md).
 
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
@@ -95,9 +47,9 @@ For anything more specific, use the subsystem's native tool directly — see `do
 - ESLint + Prettier enforce frontend style; `cd product/interfaces/web && npm run lint` runs it.
 - Prefer explicit types over inference in public APIs.
 
-## Architecture guardrails (Events, State, Observations)
+## Architecture guardrails
 
-Arcogine follows an Events–State–Observations philosophy (see `docs/architecture/overview.md`):
+Arcogine follows an Events–State–Observations model:
 
 ```text
 Events mutate State.
@@ -106,47 +58,27 @@ Observations inform Decisions.
 Decisions produce Events.
 ```
 
-Use these rules during code review, especially when adding a new domain (inventory, procurement, finance, workforce, maintenance, another agent) or touching `IntegratedHandler`. A subset is CI-enforced, not just review discipline — `interfaces/api`'s `ArchitectureTest` (ArchUnit) checks: `agents`/`finance` never depend on `factory`/`economy`; `Ledger.post` and `Job`/`Machine`'s lifecycle mutators are never called from outside their owning module. Everything else below is still enforced by review.
+The authoritative architecture description and detailed domain semantics live in [`docs/architecture/overview.md`](../docs/architecture/overview.md). Read it before adding a domain, changing cross-module boundaries, changing event dispatch, or touching `IntegratedHandler`.
 
-1. Every mutable piece of domain state must have exactly one authoritative owner.
-2. Cross-domain consumers receive read-only observations or explicit, purpose-specific context — never a reference to another subsystem's mutable state.
-3. Agents observe and emit decisions/events; they never mutate simulation domains directly.
-4. Decisions that affect simulation state become deterministic simulation events, not direct method calls into another handler.
-5. Observation objects are immutable and purpose-specific — don't widen one into a general-purpose state dump.
-6. Avoid synchronized copies of authoritative state (no new `setX`/`syncX` cross-domain pushes without a documented reason).
-7. Handler execution order must stay explicit wherever order affects semantics — don't let it fall out of construction or registration order.
-8. New domains should not require pairwise setter wiring to every existing domain.
-9. Don't introduce an event bus or async dispatch to solve coupling — it must not weaken Arcogine's deterministic, explicitly-ordered execution.
-10. API DTOs and UI snapshots are not automatically valid domain observations; treat `SnapshotBuilder`'s projections and `AgentObservation` as separate concerns with separate capability boundaries.
-11. Don't collapse distinct concepts into one field because they're both prices/money — e.g. the firm's own current asking price (`OfferPrice`) and an already-created order's agreed terms (`OrderPrice`/`OrderValue`) are different things with different mutability, and a historical transaction fact should be captured on the event that created it rather than re-derived later from current mutable state. Don't call `OfferPrice` a "market price" either — that name is reserved for a future external-market signal (`ObservedMarketPrice`) that Arcogine doesn't model yet; `OfferPrice` is what the firm sets, not what an outside market observes. See `docs/architecture/overview.md`'s "Pricing, orders, and money" section for the worked example. Also: prefer precise operational terms like `CompletedSalesValue` over "revenue" outside Finance — a formally-recorded financial figure belongs in the Finance domain (see next rule), not scattered across operational handlers.
-12. Financial concepts (cash, a recorded sales/revenue balance, receivables, payables) belong in the Finance domain, not in Factory, Economy, or any other operational domain — see `docs/architecture/overview.md`'s "Commercial, Operational, and Financial Truth" section. Operational domains emit facts (e.g. `OrderCompleted`); Finance owns the financial interpretation of those facts, reacting to events rather than inspecting another domain's mutable state to infer what happened. A journal entry that doesn't balance (`sum(debits) != sum(credits)`) must never be able to enter financial state.
+During implementation and review, preserve these non-negotiable constraints:
 
-See `docs/planning/architecture-assessment-events-state-observations.md` for the current-state review and backlog.
+1. Every mutable piece of domain state has exactly one authoritative owner; cross-domain consumers receive read-only observations or explicit purpose-specific context, never another subsystem's mutable state.
+2. Agents observe and emit decisions/events; they do not mutate simulation domains directly. Decisions that change simulation state become deterministic simulation events.
+3. Observation objects remain immutable and purpose-specific. API DTOs and UI snapshots are not automatically valid domain observations.
+4. Handler execution order stays explicit wherever order affects semantics. Do not introduce asynchronous/event-bus dispatch that weakens deterministic, explicitly ordered execution.
+5. Do not introduce synchronized copies of authoritative state or pairwise setter wiring between domains as a coupling mechanism.
+6. Keep domain concepts distinct and owned by the appropriate domain; in particular, operational facts and Finance's financial interpretation of those facts must remain separate.
+7. The simulation must remain deterministic: identical inputs and seeds produce identical results.
+
+A subset of these constraints is CI-enforced by `interfaces/api`'s ArchUnit `ArchitectureTest`; the remainder are review constraints. Detailed examples — including pricing/order terminology and Commercial, Operational, and Financial Truth — belong in the architecture documentation rather than this contributor guide.
 
 ## Testing
 
-Run `./arcogine check` before pushing. That covers:
+The contribution gate is `./arcogine check`. It covers Java compilation, Checkstyle, tests and Jacoco coverage gates, plus frontend linting, type-checking, tests, coverage, and production build.
 
-- Java compilation, Checkstyle, unit tests, and Jacoco coverage gates
-- Frontend linting, type-checking, unit tests, coverage, and production build
+For Playwright E2E, the canonical distribution build, Docker image/smoke validation, and security scans, run `./arcogine check --full`.
 
-For the full test surface including Playwright E2E, Docker, and security scans, run `./arcogine check --full`.
-
-See `docs/development/testing.md` for the complete test category reference.
-
-### Test layers at a glance
-
-| Layer | Location | Tool |
-|-------|----------|------|
-| Java unit/integration tests | `product/**/src/test/` | JUnit 5 |
-| Architecture tests | `product/interfaces/api/src/test/` | ArchUnit |
-| Frontend unit tests | `product/interfaces/web/src/**/*.test.{ts,tsx}` | Vitest |
-| E2E tests | `product/interfaces/web/e2e/` | Playwright |
-| Benchmarks | `product/simulation` (`jmh` source set) | JMH |
-
-## Determinism contract
-
-Arcogine's simulation must produce identical results given identical inputs. All stochastic behavior uses a `Random` seeded from the scenario configuration. See the determinism contract section in `docs/architecture/overview.md` for details.
+See [`docs/development/testing.md`](../docs/development/testing.md) for the test taxonomy, CI pipeline, native subsystem commands, and testing rationale.
 
 ## Commit messages
 
@@ -154,4 +86,4 @@ Use concise, descriptive commit messages. Reference the phase and task number wh
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the Apache-2.0 license (see `LICENSE`).
+By contributing, you agree that your contributions will be licensed under the Apache-2.0 license (see [`LICENSE`](../LICENSE)).

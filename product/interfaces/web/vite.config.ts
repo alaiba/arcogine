@@ -7,7 +7,13 @@ import { resolve } from 'node:path'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: resolve(import.meta.dirname, '../../../dist/web'),
+    // Plain `npm run build` (used by CI's frontend job and `./arcogine check`)
+    // writes to the local, gitignored default outDir. Only `./arcogine build`
+    // sets ARCOGINE_DIST_WEB to stage output into the canonical dist/web/, so
+    // that top-level dist/ is only ever mutated atomically by `./arcogine build`.
+    outDir: process.env.ARCOGINE_DIST_WEB
+      ? resolve(import.meta.dirname, process.env.ARCOGINE_DIST_WEB)
+      : 'dist',
     emptyOutDir: true,
   },
   server: {

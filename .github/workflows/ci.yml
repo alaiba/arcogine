@@ -204,7 +204,8 @@ jobs:
         run: |
           cp .env.example .env
           ./arcogine up --no-rebuild
-          curl -sf http://localhost:3000/api/health > /dev/null
+          set -a; source .env; set +a
+          curl -sf "http://localhost:${API_PORT:-3000}/api/health" > /dev/null
           curl -sf "http://localhost:${UI_PORT:-5173}/health" > /dev/null
 
       - name: Print startup logs on failure

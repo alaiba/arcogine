@@ -46,7 +46,7 @@ If you expose Arcogine beyond localhost, apply at least:
 
 3. **TLS** — Arcogine does not terminate TLS. Place it behind a reverse proxy (nginx, Caddy, or a cloud load balancer) with TLS termination.
 
-4. **Dependency auditing** — Before deployment, run the Java dependency scan (`cd product && ./gradlew cyclonedxBom && trivy sbom ... product/build/reports/cyclonedx/bom.json`) and the frontend audit (`cd product/interfaces/web && npm audit --audit-level=high`). CI runs npm audit as part of the frontend job and scans built container images via Trivy in the Docker image scan job. Run `./arcogine check --full` locally for the complete security suite including the Java dependency scan.
+4. **Dependency auditing** — Before deployment, run the Java dependency scan (`cd product && ./gradlew cyclonedxBom && trivy sbom ... product/build/reports/cyclonedx/bom.json`) and the frontend audit (`cd product/interfaces/web && npm audit --audit-level=high`). CI runs npm audit as part of the frontend job and scans built container images via Trivy in the docker job. Run `./arcogine check --full` locally for the complete security suite including the Java dependency scan.
 
 5. **Log verbosity** — Set `LOGGING_LEVEL_ROOT=WARN` in production-like environments to reduce log noise.
 
@@ -57,11 +57,11 @@ Security execution follows the quality-gate contract:
 - Scan commands invoke each scanner's native tool directly (`trivy sbom`, `trivy image`,
   `npm audit`, `gitleaks detect`) — locally via `./arcogine check --full`, in CI via the
   jobs in `.github/workflows/ci.yml` — so all checks are discoverable from the same
-  command surface documented in `docs/TESTING.md`.
+  command surface documented in `docs/development/testing.md`.
 - CI remains responsible for installing scanner binaries/tools and enforcing policy
   controls (`--exit-code`, report handling, fail-fast behavior) around those commands.
 
-For the full security verification test list, see `docs/TESTING.md`.
+For the full security verification test list, see `docs/development/testing.md`.
 
 ## Mature-product security principles
 

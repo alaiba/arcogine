@@ -128,6 +128,25 @@ Work item
     order membership, current operation, location, status
 ```
 
+#### Product, order, and workflow separation
+
+The game makes an existing domain-model ambiguity actionable. Today `Job` carries both order-side facts (`productId`, quantity, agreed unit price, creation time) and execution-side facts (status, current step, assigned machine, completion time), while `ProductId` has no first-class runtime `Product` definition behind it. That is sufficient while an order and its production lifecycle are effectively one object, but it becomes a poor fit once the consumer must present a product definition, submit a fixed production contract, expand quantity into work, and observe multiple execution items independently.
+
+For this initiative, the model should therefore separate three concerns conceptually:
+
+```text
+Product
+    what is being made and which operations define it
+
+Production order
+    demand-side intent: external ID, product, quantity, release tick
+
+Work item
+    execution-side state: order membership, operation, location, status
+```
+
+The final Java type names are not fixed by this planning document; `SalesOrder`/`WorkOrder` are reasonable candidates but should only be adopted if they fit the implemented semantics. The important requirement is the ownership boundary: immutable order intent must not be conflated with mutable shop-floor execution state, and a product must be addressable as a runtime definition rather than only as a bare identifier. This is also compatible with the ISA-95-oriented vocabulary already used by Arcogine without requiring a speculative full ISA-95 object model.
+
 Dispatch must be deterministic. The precise policy remains an open decision, but every tie must end in a stable ordering such as machine ID.
 
 A deliberately simple initial transfer model is acceptable:

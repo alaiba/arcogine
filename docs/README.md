@@ -54,4 +54,3 @@ These documents are internal planning artifacts, not user-facing guides:
 | Document | What it covers |
 |----------|-----------------|
 | [Product/workflow entity separation plan](planning/product-and-workflow-entity-separation-plan.md) | Domain-model planning notes |
-| [Events–State–Observations architecture assessment](planning/architecture-assessment-events-state-observations.md) | Source-level review against the Events–State–Observations philosophy and staged refactoring backlog |

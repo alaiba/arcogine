@@ -1,6 +1,6 @@
 # Arcogine scenarios
 
-This directory contains shipped TOML scenarios for quick onboarding — a guided learning path through the simulation's controls and dynamics, not Arcogine's product identity (see [`PRODUCT_CHARTER.md`](/docs/product/charter.md)).
+This directory contains shipped TOML scenarios for quick onboarding — a guided learning path through the simulation's controls and dynamics, not Arcogine's product identity (see the [Product Charter](../product/charter.md)).
 
 All listed scenarios exist today and are intentionally designed as a learning progression, each building on the last.
 

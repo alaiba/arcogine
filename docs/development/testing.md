@@ -1,6 +1,6 @@
 # Testing Guide
 
-This document covers all test categories in Arcogine, how to run them, and the rationale behind the testing architecture. **`./arcogine`** is the canonical entry point for cross-project quality gates from the repository root; anything more specific runs through its own native tool (`./gradlew`, `npm`/`npx`, `docker compose`, `trivy`, `gitleaks`) as noted per category below.
+This document covers all test categories in Arcogine, how to run them, and the rationale behind the testing architecture. **`./arcogine`** is the canonical entry point for cross-project quality gates and common build/run workflows from the repository root; anything more specific runs through its own native tool (`./gradlew`, `npm`/`npx`, `docker compose`, `trivy`, `gitleaks`) as noted per category below. For environment setup and the normal local-run procedure, see the root [README](../../README.md#quick-start).
 
 This is about testing and quality-verifying Arcogine's own software — a different concept from the [Product Charter](/docs/product/charter.md)'s "Verify" mode, which describes a future capability for verifying a *user's* production model or configuration against their own objectives and constraints. Don't conflate the two terminologically: this document is entirely about the former.
 
@@ -17,11 +17,18 @@ This is about testing and quality-verifying Arcogine's own software — a differ
 | Command | Scope |
 |---------|-------|
 | `./arcogine check` | Java compile (`-Xlint:all -Werror`), Checkstyle, JUnit tests, Jacoco coverage gates, frontend lint, typecheck, unit tests, frontend coverage, production build |
-| `./arcogine check --full` | Everything above, plus Playwright, Docker build/smoke, and security scans (dependency audit, frontend audit, Trivy image scans, Gitleaks) |
+| `./arcogine check --full` | Everything above, plus Playwright, canonical `dist/` build, Docker image build/smoke, and security scans (dependency audit, frontend audit, Trivy image scans, Gitleaks) |
 
 ### Command model
 
-`./arcogine` stays deliberately small (`setup`, `test`, `check`/`check --full`, `run api`/`run web`) and composes each subsystem's native tool rather than wrapping every operation:
+`./arcogine` is the small cross-project developer interface. It covers setup, tests and quality gates, canonical distribution/image construction, local stack lifecycle, development servers, and headless scenario execution:
+
+```text
+setup | test | check [--full] | build | image | up | down
+run api | run web | run scenario PATH
+```
+
+It deliberately does not wrap every subsystem operation. Use the native tool for more specific work:
 
 - **Java** (`cd product && ./gradlew <task>`): `compileJava`/`compileTestJava`, `checkstyleMain`/`checkstyleTest`, `test`, `jacocoTestReport`/`jacocoTestCoverageVerification`, `:cli:bootJar`, `:simulation:jmh`, `cyclonedxBom`
 - **Frontend** (`cd product/interfaces/web && npm ...`/`npx ...`): `npm run lint`, `npx tsc --noEmit`, `npm test`/`npm run test:coverage`, `npm run build`, `npm audit --audit-level=high`
@@ -102,7 +109,7 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 ### 8. Benchmarks (JMH)
 
-`cd product && ./gradlew :simulation:jmh` — runs the JMH microbenchmarks in `simulation`, ported from the Rust Criterion suites: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario runtime (run a 1000-tick scenario, and load+validate). Sources live in `product/simulation/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). Note: ASM is pinned to a Java 25-aware version so the JMH bytecode generator can read the toolchain's class files, and JMH's machine-generated classes are exempt from `-Werror`.
+`cd product && ./gradlew :simulation:jmh` — runs the JMH microbenchmarks in `simulation`, ported from the Rust Criterion suites: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario runtime (run a 1000-tick scenario, and load+validate). Sources live in `product/simulation/src/jmh/java/com.arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). Note: ASM is pinned to a Java 25-aware version so the JMH bytecode generator can read the toolchain's class files, and JMH's machine-generated classes are exempt from `-Werror`.
 
 ### 9. Java dependency audit (CycloneDX SBOM + Trivy)
 
@@ -186,14 +193,4 @@ The `/api/events/stream` endpoint is a servlet `SseEmitter`. The controller send
 
 ### Security verification tests
 
-The hardening checks live in the regular `interfaces/api` suite (`ApiSmokeTest`), not a separate pipeline: body-size limits, scenario validation, error propagation, CORS restrictions, SSE connection limits, economy value bounds, and CLI bind-address defaults — e.g. `oversizedBodyReturnsContentTooLarge`, `loadInvalidTomlReturnsBadRequest`, `loadScenarioWithZeroMaxTicksReturnsBadRequest`, `negativePriceReturnsBadRequest`, `extremePriceReturnsBadRequest`, `sseConnectionLimitReturns503`, `defaultBindAddressIsLocalhost`.
-
-## Governance
-
-When changing quality gates, update all of these together:
-
-- `arcogine` (the `cmd_check` function)
-- `.github/workflows/ci.yml`
-- This document (`docs/development/testing.md`)
-- `.github/SECURITY.md` (if security scan commands change)
-- `.github/CONTRIBUTING.md` (if the developer workflow changes)
+The hardening checks live in the regular `interfaces/api` suite (`ApiSmokeTest`), not a separate pipeline: body-size limits, scenario validation, error propagation, CORS restrictions, SSE connection limits, economy value bounds, and CLI bind-address behavior are all exercised there.

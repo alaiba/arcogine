@@ -1,6 +1,6 @@
 # Arcogine — Vision (superseded)
 
-This document previously held Arcogine's product vision. It has been superseded by [`PRODUCT_CHARTER.md`](/docs/product/charter.md) at the repository root, which is now the single canonical source for Arcogine's product direction, system thesis, and enduring principles. Read that document instead.
+This document previously held Arcogine's product vision. It has been superseded by the [Product Charter](charter.md), which is now the single canonical source for Arcogine's product direction, system thesis, and enduring principles. Read that document instead.
 
 ## Naming
 

@@ -2,11 +2,12 @@
 
 This directory records significant architectural and domain-design decisions
 for Arcogine, along with the reasoning behind them. Current-state
-documentation (`architecture.md`, `concepts.md`, etc.) explains how Arcogine
-works today; ADRs explain *why* it ended up that way and preserve the history
-of that reasoning as the system evolves.
+documentation such as [`architecture/overview.md`](../overview.md) and
+[`product/concepts.md`](../../product/concepts.md) explains how Arcogine works
+today; ADRs explain *why* it ended up that way and preserve the history of
+that reasoning as the system evolves.
 
-ADRs operate under [`PRODUCT_CHARTER.md`](..//docs/product/charter.md) and the
+ADRs operate under the [Product Charter](../../product/charter.md) and the
 current architecture — an ADR is not itself product vision, and it must not
 be written or read as though it sets Arcogine's product direction. Where a
 decision is consequential enough to interact with the Charter's principles,

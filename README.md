@@ -36,6 +36,8 @@ The simulation is fully deterministic: same inputs produce identical outputs eve
 
 ## Quick start
 
+This section is the canonical setup and local-run guide for Arcogine. `./arcogine` is the canonical developer entry point for common cross-project workflows.
+
 ### Dev container (recommended)
 
 ```bash
@@ -127,7 +129,7 @@ See [testing.md](docs/development/testing.md) for the full test category referen
 
 ## Contributing
 
-See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for setup paths, development workflow, code style, and testing conventions.
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contribution workflow, code style, architecture constraints, and required validation. Setup and local-run instructions live here in the README.
 
 ## License
 

@@ -5,7 +5,7 @@
 | Document | Who it's for | What it covers |
 |----------|-------------|----------------|
 | [Product Charter](product/charter.md) | Everyone | Arcogine's enduring product vision, system thesis, and principles — read this first |
-| [Root README](../README.md) | Everyone | What Arcogine is today, quick start, first session |
+| [Root README](../README.md) | Everyone | What Arcogine is today, canonical setup/local-run guide, first session |
 | [Concepts](product/concepts.md) | New users | How the current simulation works, KPIs, agents, scenarios |
 | [API Reference](reference/api.md) | Developers | Every HTTP endpoint with curl examples |
 
@@ -21,12 +21,14 @@ Arcogine's documentation is layered, and each layer answers a different question
 
 When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail.
 
-## Contributing
+## Development and contributing
+
+The root [README](../README.md#quick-start) owns environment setup and local-run instructions. Contributor and testing documents reference that setup rather than maintaining parallel startup procedures.
 
 | Document | What it covers |
 |----------|-----------------|
-| [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Setup paths, workflow, code style, testing quick reference |
-| [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates |
+| [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, code style, architecture constraints, required validation |
+| [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates, native test commands |
 | [CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) | Community standards |
 
 ## Architecture and design

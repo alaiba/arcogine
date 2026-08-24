@@ -54,6 +54,25 @@ class ScenarioFactoryModelAdapterTest {
     }
 
     @Test
+    void skipsOperationStepsWhoseProcessSegmentIdDoesNotResolve() {
+        ScenarioConfig config = new ScenarioConfig(
+                new SimulationParams(42L, 100L, 10L, 50L),
+                List.of(new EquipmentConfig(1, "Mill", null, null, null)),
+                List.of(new MaterialConfig(10, "Widget", 100)),
+                List.of(new ProcessSegmentConfig(1, "Rough milling", 1, 5)),
+                List.of(new OperationsDefinitionConfig(100, "Widget routing", List.of(1L, 999L))),
+                null,
+                null);
+
+        FactoryModel model = ScenarioFactoryModelAdapter.adapt(config);
+
+        assertEquals(
+                1,
+                model.operations().get(0).steps().size(),
+                "a step id with no matching process_segment must be skipped, not fabricated");
+    }
+
+    @Test
     void excludesSimulationEconomyAndAgentConcernsFromTheModel() {
         FactoryModel model = ScenarioFactoryModelAdapter.adapt(scenario());
 

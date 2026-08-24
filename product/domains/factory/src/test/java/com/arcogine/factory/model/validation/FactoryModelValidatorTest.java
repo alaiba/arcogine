@@ -92,6 +92,59 @@ class FactoryModelValidatorTest {
     }
 
     @Test
+    void rejectsResourceWithNonPositiveConcurrency() {
+        ResourceDefinition idleMill = new ResourceDefinition(new MachineId(1), "Mill", 0, null, 0);
+        FactoryModel model = new FactoryModel(List.of(idleMill), List.of(), List.of());
+
+        ModelValidationResult result = FactoryModelValidator.validate(model);
+
+        assertFalse(result.isValid());
+    }
+
+    @Test
+    void rejectsDuplicateOperationIds() {
+        FactoryModel model = new FactoryModel(List.of(mill()), List.of(routing(), routing()), List.of());
+
+        ModelValidationResult result = FactoryModelValidator.validate(model);
+
+        assertFalse(result.isValid());
+    }
+
+    @Test
+    void rejectsStepWithNonPositiveDuration() {
+        OperationDefinition zeroDuration = new OperationDefinition(
+                100,
+                "Widget routing",
+                List.of(new OperationStepDefinition(1, "Rough milling", Set.of(new MachineId(1)), 0)));
+        FactoryModel model = new FactoryModel(List.of(mill()), List.of(zeroDuration), List.of());
+
+        ModelValidationResult result = FactoryModelValidator.validate(model);
+
+        assertFalse(result.isValid());
+    }
+
+    @Test
+    void rejectsStepWithNoEligibleResources() {
+        OperationDefinition noEligible = new OperationDefinition(
+                100, "Widget routing", List.of(new OperationStepDefinition(1, "Rough milling", Set.of(), 5)));
+        FactoryModel model = new FactoryModel(List.of(mill()), List.of(noEligible), List.of());
+
+        ModelValidationResult result = FactoryModelValidator.validate(model);
+
+        assertFalse(result.isValid());
+    }
+
+    @Test
+    void rejectsDuplicateProductIds() {
+        ProductDefinition widget = new ProductDefinition(new ProductId(10), "Widget", 100);
+        FactoryModel model = new FactoryModel(List.of(mill()), List.of(routing()), List.of(widget, widget));
+
+        ModelValidationResult result = FactoryModelValidator.validate(model);
+
+        assertFalse(result.isValid());
+    }
+
+    @Test
     void rejectsOperationWithNoSteps() {
         OperationDefinition empty = new OperationDefinition(100, "Empty", List.of());
         FactoryModel model = new FactoryModel(List.of(mill()), List.of(empty), List.of());

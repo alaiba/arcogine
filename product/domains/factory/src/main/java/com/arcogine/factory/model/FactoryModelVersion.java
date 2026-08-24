@@ -1,5 +1,7 @@
 package com.arcogine.factory.model;
 
+import com.arcogine.factory.model.validation.FactoryModelValidator;
+
 /**
  * An immutable, published identity of a {@link FactoryModel}.
  *
@@ -9,6 +11,14 @@ package com.arcogine.factory.model;
  * instantiated from -- it is not a persisted, public, or cross-process compatibility guarantee.
  * A durable model repository/lineage/versioning scheme is out of scope for this milestone; see
  * ADR-0003.
+ *
+ * <p>{@link FactoryModelPublisher#publish(FactoryModel)} is the intended way to obtain an
+ * instance, but the D2/D4 invariant that an invalid model can never be published or instantiated
+ * is enforced here, in the canonical constructor itself, rather than relied upon merely by
+ * convention: constructing a {@code FactoryModelVersion} directly from an invalid model throws
+ * {@link com.arcogine.factory.model.validation.FactoryModelValidationException} exactly as
+ * {@code publish} does, so there is no construction path -- public API misuse included -- that
+ * produces a version wrapping an unvalidated model.
  */
 public record FactoryModelVersion(FactoryModel model, String contentHash) {
 
@@ -19,5 +29,6 @@ public record FactoryModelVersion(FactoryModel model, String contentHash) {
         if (contentHash == null) {
             throw new NullPointerException("contentHash");
         }
+        FactoryModelValidator.requireValid(model);
     }
 }

@@ -1,7 +1,9 @@
 package com.arcogine.factory.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.factory.process.FactoryHandler;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
@@ -33,5 +35,20 @@ class FactoryRuntimeAssemblerTest {
                         .findFirst()
                         .orElseThrow()
                         .concurrency());
+    }
+
+    @Test
+    void cannotConstructAFactoryModelVersionWrappingAnInvalidModelEvenBypassingThePublisher() {
+        // FactoryModelVersion's own canonical constructor validates, not just
+        // FactoryModelPublisher.publish -- so there is no construction path, direct or otherwise,
+        // that lets assemble() ever see an invalid model.
+        FactoryModel invalid = new FactoryModel(
+                List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)),
+                List.of(new OperationDefinition(100, "Empty", List.of())),
+                List.of());
+
+        assertThrows(
+                FactoryModelValidationException.class,
+                () -> new FactoryModelVersion(invalid, "not-a-real-hash"));
     }
 }

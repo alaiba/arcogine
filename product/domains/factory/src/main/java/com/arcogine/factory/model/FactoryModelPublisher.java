@@ -1,10 +1,12 @@
 package com.arcogine.factory.model;
 
 import com.arcogine.factory.model.validation.FactoryModelValidator;
+import com.arcogine.types.MachineId;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.List;
 
 /**
  * Publishes a validated {@link FactoryModel} as an immutable {@link FactoryModelVersion}.
@@ -51,11 +53,18 @@ public final class FactoryModelPublisher {
         for (OperationDefinition op : model.operations()) {
             sb.append(op.id()).append(':').append(op.name()).append(":[");
             for (OperationStepDefinition step : op.steps()) {
+                // eligibleResources is a Set: its iteration order isn't a defined canonical
+                // ordering, so two semantically-equal steps could otherwise hash differently.
+                // Sort by MachineId value explicitly rather than depending on Set/toString order.
+                List<Long> sortedEligible = step.eligibleResources().stream()
+                        .map(MachineId::value)
+                        .sorted()
+                        .toList();
                 sb.append(step.stepId())
                         .append(':')
                         .append(step.name())
                         .append(':')
-                        .append(step.eligibleResources())
+                        .append(sortedEligible)
                         .append(':')
                         .append(step.duration())
                         .append(';');

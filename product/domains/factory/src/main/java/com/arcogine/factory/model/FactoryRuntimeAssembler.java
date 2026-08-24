@@ -17,7 +17,10 @@ import java.util.List;
  *
  * <p>This is the runtime-construction half of the model boundary: runtime state is instantiated
  * from the canonical model, never assembled directly from scenario/consumer input. The model
- * itself is never mutated by this process.
+ * itself is never mutated by this process. No re-validation happens here: {@link
+ * FactoryModelVersion}'s own canonical constructor already guarantees {@code version.model()} is
+ * valid, since there is no way to construct a {@code FactoryModelVersion} wrapping an invalid
+ * model in the first place.
  */
 public final class FactoryRuntimeAssembler {
 

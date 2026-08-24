@@ -204,9 +204,11 @@ jobs:
         run: |
           cp .env.example .env
           ./arcogine up --no-rebuild
-          set -a; source .env; set +a
-          curl -sf "http://localhost:${API_PORT:-3000}/api/health" > /dev/null
-          curl -sf "http://localhost:${UI_PORT:-5173}/health" > /dev/null
+          COMPOSE="docker compose --project-directory . --env-file .env -f infra/docker/compose.yaml"
+          api_port="$($COMPOSE port api 3000 | sed -E 's/^.*://')"
+          ui_port="$($COMPOSE port ui 5173 | sed -E 's/^.*://')"
+          curl -sf "http://localhost:${api_port}/api/health" > /dev/null
+          curl -sf "http://localhost:${ui_port}/health" > /dev/null
 
       - name: Print startup logs on failure
         if: failure()

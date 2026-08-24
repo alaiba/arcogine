@@ -2,7 +2,8 @@
 
 > **Status:** Proposed  
 > **Scope:** Arcogine support for a separate factory-design game consumer  
-> **Authority:** Planning only; this document does not describe current capability or accepted architecture
+> **Authority:** Planning only; this document does not describe current capability or accepted architecture  
+> **Related:** [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Initiative summary
 
@@ -35,6 +36,23 @@ The initiative operates under the [Product Charter](../product/charter.md):
 - Game-specific concepts must not leak into Arcogine merely because this consumer needs them.
 
 This is consistent with the current [architecture](../architecture/overview.md): the simulation core remains headless and deterministic, while purpose-specific interfaces consume observations and submit controlled actions.
+
+### 2.1 ISA-95 semantic guidance
+
+The initiative uses the repository's [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md) as a domain-design reference where it improves semantic separation. It does not turn the vertical slice into an ISA-95 implementation project.
+
+For this initiative:
+
+- distinguish product or material **definitions** from production **orders** and mutable work **execution**;
+- distinguish machine/resource **definitions** from installed machine **instances**;
+- express operation requirements through capabilities or eligible resource pools rather than permanently binding every operation to one concrete machine;
+- distinguish requested, assigned, started, completed, and reported production state;
+- retain approachable Arcogine aliases where they are clearer than standards terminology;
+- keep equipment/resource hierarchy separate from spatial floor geometry, position, footprint, and transfer distance;
+- defer Enterprise, Site, and complete ISA-95 hierarchy concepts until a multi-site, organizational-scope, reporting, authorization, or integration use case requires them;
+- make no ISA-95 interchange or conformance claim for the vertical slice.
+
+The mapping is a semantic control and review aid. Accepted, hard-to-reverse model decisions still belong in ADRs, and game-specific concepts remain in the consumer.
 
 ## 3. Minimal vertical slice
 
@@ -145,7 +163,7 @@ Work item
     execution-side state: order membership, operation, location, status
 ```
 
-The final Java type names are not fixed by this planning document; `SalesOrder`/`WorkOrder` are reasonable candidates but should only be adopted if they fit the implemented semantics. The important requirement is the ownership boundary: immutable order intent must not be conflated with mutable shop-floor execution state, and a product must be addressable as a runtime definition rather than only as a bare identifier. This is also compatible with the ISA-95-oriented vocabulary already used by Arcogine without requiring a speculative full ISA-95 object model.
+The final Java type names are not fixed by this planning document; `SalesOrder`/`WorkOrder` are reasonable candidates but should only be adopted if they fit the implemented semantics. The important requirement is the ownership boundary: immutable order intent must not be conflated with mutable shop-floor execution state, and a product must be addressable as a runtime definition rather than only as a bare identifier. The detailed [ISA-95 mapping](../architecture/isa-95-semantic-mapping.md) records this distinction as a cross-cutting architectural concern without requiring a speculative full ISA-95 object model.
 
 Dispatch must be deterministic. The precise policy remains an open decision, but every tie must end in a stable ordering such as machine ID.
 
@@ -183,7 +201,8 @@ The vertical slice does not require:
 - live structural reconfiguration while work is in flight;
 - live-production connectivity or operational execution;
 - a generic plugin framework for hypothetical future consumers;
-- a renderer, game loop, or game-specific economy inside Arcogine.
+- a renderer, game loop, or game-specific economy inside Arcogine;
+- a complete ISA-95 hierarchy, transaction model, or interchange profile.
 
 These may become later game or platform initiatives, but they are not prerequisites for proving the consumer boundary.
 
@@ -257,6 +276,7 @@ The vertical slice is successful when:
 6. Resetting the same model with the same seed reproduces the same ordered behavior and final result.
 7. The game owns presentation, scoring, progression, and player economy; no game-specific concept enters Arcogine's domain model.
 8. The implementation preserves the Events-State-Observations boundaries and authoritative state ownership described in the architecture documentation.
+9. The model follows the ISA-95 mapping policy where relevant without claiming or requiring full ISA-95 conformance.
 
 ## 10. Documentation and retirement path
 
@@ -266,6 +286,7 @@ As work becomes established:
 
 - record durable, hard-to-reverse decisions as ADRs;
 - update [`docs/architecture/overview.md`](../architecture/overview.md) for implemented architecture;
+- update the maintained [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md) when manufacturing-domain concepts change;
 - update [`docs/reference/api.md`](../reference/api.md) for implemented public behavior;
 - update user-facing concept documentation only for capabilities that actually ship;
 - track implementation tasks as issues rather than expanding this file into a detailed backlog;

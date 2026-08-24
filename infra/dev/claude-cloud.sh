@@ -50,25 +50,6 @@ echo "==> Changing to repository directory: $REPO_DIR"
 cd "$REPO_DIR"
 
 # ---------------------------------------------------------------------------
-# 0. Clean up stale pre-reorg directories.
-# Repository structure was reorganized (java/ -> product/, ui/ ->
-# product/interfaces/web/) in PR #142. Environment snapshots captured
-# before that reorg ran can still carry a top-level java/ and/or ui/
-# directory left behind by an earlier provisioning run (npm ci /
-# gradlew executed against those old paths populated ui/node_modules and
-# java/.gradle). Those directories are untracked and no longer meaningful
-# under the current layout, so remove them before provisioning proceeds
-# to avoid confusing leftover build/dependency caches.
-# ---------------------------------------------------------------------------
-
-for stale_dir in java ui; do
-  if [ -d "$REPO_DIR/$stale_dir" ]; then
-    echo "==> Removing stale pre-reorg directory: $REPO_DIR/$stale_dir"
-    rm -rf "${REPO_DIR:?}/$stale_dir"
-  fi
-done
-
-# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 

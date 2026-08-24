@@ -144,8 +144,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 | Frontend | `npm run lint`, `npx tsc --noEmit`, `npm run test:coverage`, `npm run build`, `npm audit --audit-level=high` | Lint, typecheck, coverage, build, dependency audit |
 | Playwright | `npx playwright test` (after `./gradlew :cli:bootJar`) | Browser E2E against the Java API |
 | Build dist/ | `./arcogine build` | Canonical `dist/api/arcogine.jar` + `dist/web/`, uploaded as a CI artifact |
-| Docker | `./arcogine image`, then the smoke sequence | Runtime image build from `dist/` + startup health-check |
-| Docker image scan | `docker build` (from `dist/`) + `trivy image` (matrix: api, ui) | CRITICAL/HIGH vulnerabilities in built images |
+| Docker | `./arcogine image`, then `trivy image` on both images, then the smoke sequence | Runtime image build from `dist/`, CRITICAL/HIGH vulnerability scan, startup health-check |
 | Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets |
 

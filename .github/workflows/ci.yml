@@ -169,7 +169,7 @@ jobs:
           retention-days: 1
 
   docker:
-    name: Docker image build + smoke test
+    name: Docker image build, scan, and smoke test
     needs: build-dist
     runs-on: ubuntu-latest
     steps:
@@ -186,6 +186,19 @@ jobs:
 
       - name: Build images from dist/
         run: ./arcogine image
+
+      - name: Install Trivy
+        run: |
+          TRIVY_VERSION=0.69.3
+          curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+          tar -xzf /tmp/trivy.tar.gz -C /tmp
+          install /tmp/trivy /usr/local/bin/trivy
+          trivy --version
+
+      - name: Scan images with Trivy
+        run: |
+          trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-api:ci
+          trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-ui:ci
 
       - name: Docker smoke test
         run: |
@@ -231,39 +244,6 @@ jobs:
 
       - name: Scan SBOM with Trivy
         run: trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/build/reports/cyclonedx/bom.json
-
-  docker-scan:
-    name: Docker image scan (${{ matrix.image }})
-    needs: build-dist
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - image: api
-            dockerfile: infra/docker/api.Dockerfile
-            context: dist/api
-          - image: ui
-            dockerfile: infra/docker/web.Dockerfile
-            context: dist/web
-    steps:
-      - uses: actions/checkout@v7
-      - name: Download dist/ artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: dist
-          path: dist
-      - name: Install Trivy
-        run: |
-          TRIVY_VERSION=0.69.3
-          curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
-          tar -xzf /tmp/trivy.tar.gz -C /tmp
-          install /tmp/trivy /usr/local/bin/trivy
-          trivy --version
-      - name: Build image
-        run: docker build -f ${{ matrix.dockerfile }} -t arcogine-${{ matrix.image }}:ci ${{ matrix.context }}
-      - name: Scan image with Trivy
-        run: trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-${{ matrix.image }}:ci
 
   security-secrets:
     name: Secret scan

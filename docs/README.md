@@ -36,7 +36,8 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | Document | What it covers |
 |----------|-----------------|
 | [Architecture](architecture/overview.md) | Design philosophy (including the Events–State–Observations model), module structure, determinism contract, event dispatch, technology stack |
-| [Standards alignment](architecture/standards-alignment.md) | ISA-95, ISO 22400, DES, RAMI 4.0 mapping |
+| [Standards alignment](architecture/standards-alignment.md) | Standards influence and claim boundaries across ISA-95, ISO 22400, DES, RAMI 4.0, and future integrations |
+| [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained Arcogine-to-ISA-95 concept mapping, deliberate divergences, structural gaps, and design-review policy |
 | [Vision (superseded)](product/vision.md) | Pointer to the Product Charter; retains naming/etymology history only |
 | [Decision records](architecture/decisions/README.md) | Architecture/design decision history — why significant choices were made |
 | [SECURITY.md](../.github/SECURITY.md) | Security policy, hardening posture, deployment constraints |
@@ -54,4 +55,3 @@ These documents are internal planning artifacts, not user-facing guides:
 | Document | What it covers |
 |----------|-----------------|
 | [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Proposed external game consumer, vertical-slice boundary, Arcogine capability gaps, and acceptance criteria |
-| [Events–State–Observations architecture assessment](planning/architecture-assessment-events-state-observations.md) | Source-level review against the Events–State–Observations philosophy and staged refactoring backlog |

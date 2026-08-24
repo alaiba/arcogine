@@ -19,7 +19,7 @@ Arcogine's documentation is layered, and each layer answers a different question
 - **[`product/concepts.md`](product/concepts.md)**, **[`reference/api.md`](reference/api.md)**, [`../product/interfaces/web/README.md`](../product/interfaces/web/README.md) — current capability/reference documentation. Describe what exists now, honestly, without projecting future capability.
 - **[`planning/`](planning/)** — temporary analysis, proposals, and assessments. Useful for context; not authoritative for current or future direction.
 
-When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail.
+When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail. Proposed architecture references and Proposed ADRs describe a target or decision under consideration; they do not override current-state documentation until accepted and implemented.
 
 ## Development and contributing
 
@@ -35,8 +35,9 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 
 | Document | What it covers |
 |----------|-----------------|
-| [Architecture](architecture/overview.md) | Design philosophy (including the Events–State–Observations model), module structure, determinism contract, event dispatch, technology stack |
-| [Factory design architecture](architecture/factory-design.md) | Cross-consumer factory-design semantics, published model boundary, runtime separation, spatial/layout ownership, and design-lifecycle principles |
+| [Architecture](architecture/overview.md) | Current design philosophy (including Events–State–Observations), module structure, determinism contract, event dispatch, technology stack |
+| [Factory design architecture](architecture/factory-design.md) | Proposed cross-consumer factory-design semantics, scenario/model/runtime separation, publication boundary, spatial ownership, and design-lifecycle principles |
+| [ADR-0003: Canonical factory model boundary](architecture/decisions/0003-canonical-factory-model-boundary.md) | Proposed decision that ScenarioConfig remains a run envelope while immutable published factory-model versions bridge design and runtime |
 | [Standards alignment](architecture/standards-alignment.md) | Standards influence and claim boundaries across ISA-95, ISO 22400, DES, RAMI 4.0, and future integrations |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained Arcogine-to-ISA-95 concept mapping, deliberate divergences, structural gaps, and design-review policy |
 | [Vision (superseded)](product/vision.md) | Pointer to the Product Charter; retains naming/etymology history only |
@@ -55,6 +56,6 @@ These documents are internal planning artifacts, not user-facing guides:
 
 | Document | What it covers |
 |----------|-----------------|
-| [Factory design capability plan](planning/factory-design-capability.md) | Cross-consumer design substrate: canonical model, validation, publication/versioning, provenance, and runtime instantiation |
-| [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Upstream gates for a consumer-ready factory engine: domain model, resource dispatch, session control, observations, and spatial semantics |
-| [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Dependent external game vertical slice, consumer-engine boundary, client requirements, and game acceptance criteria |
+| [Factory design capability plan](planning/factory-design-capability.md) | Immediate upstream work: canonical model seam, validation, publication/provenance, and behavior-preserving runtime instantiation |
+| [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Runtime gates after the model seam: explicit workload/work execution, deterministic dispatch, session control, observations/events, and spatial consequences |
+| [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Downstream game vertical slice that depends on both factory-design D1–D4 and engine-readiness Gates 1–5 |

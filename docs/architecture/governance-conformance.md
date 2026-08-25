@@ -194,6 +194,7 @@ The core verification capability should answer whether a defined scope satisfies
 ```text
 Requirement
     stable identity
+    version
     description
     source authority
     source designation
@@ -202,12 +203,15 @@ Requirement
     adoption/profile, when applicable
 
 Assertion
+    stable identity
+    version
     scope
     expression/evaluator
     evidence requirements
 
 Evaluation
-    requirement/assertion version
+    requirement identity/version
+    assertion identity/version
     model fingerprint
     controlled revision ID, when available
     observed-at / applicable period
@@ -222,6 +226,8 @@ Finding
 ```
 
 A requirement's provenance must identify the exact normative or governing source when its meaning depends on an external standard, regulation, contract, or policy. Family-level labels such as `ISA-95 / IEC 62264` are insufficient for an auditable requirement because closely aligned standards, editions, and national adoptions can differ. The requirement must retain enough source identity to determine what text and obligations governed a historical evaluation.
+
+External source identity is separate from Arcogine's own requirement and assertion identities and versions. The same external clause or policy source may support multiple Arcogine requirement versions as scope, interpretation, or executable semantics evolve; source provenance therefore augments rather than replaces Arcogine versioning.
 
 A structural requirement can be evaluated solely from authoritative model state; an operational requirement may need external observation. `UNKNOWN` is important: absence of evidence must not silently become success or failure when the underlying fact is genuinely unobserved.
 
@@ -337,7 +343,9 @@ An audit view should be reconstructible from versioned inputs rather than stored
 AuditSnapshot
     model fingerprint
     controlled revision ID
-    requirement source identity and version
+    requirement identity / version
+    assertion identity / version
+    requirement source identity / version
     framework / mapping version, when applicable
     control mappings
     evaluation results
@@ -348,7 +356,7 @@ AuditSnapshot
 
 The desired invariant is:
 
-> Given the relevant semantic fingerprint, controlled revision, exact requirement source/version, control/framework versions, observations, evidence, and governance decisions, Arcogine can explain how a historical conformance result was derived.
+> Given the relevant semantic fingerprint, controlled revision, Arcogine requirement and assertion identities/versions, exact external requirement source identity/version when applicable, framework/mapping versions, observations, evidence, and governance decisions, Arcogine can explain how a historical conformance result was derived.
 
 ## 13. Relationship to current factory-model work
 

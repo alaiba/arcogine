@@ -1,21 +1,21 @@
 # Governance and Conformance Capability Plan
 
 > **Status:** Proposed  
-> **Scope:** Establish the cross-domain substrate for durable model history, semantic change, requirements, conformance, evidence, and governed change  
+> **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
 > **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, not current product capability  
-> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Standards Alignment](../architecture/standards-alignment.md)
+> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Standards Alignment](../architecture/standards-alignment.md)
 
 ## 1. Purpose
 
-Arcogine should not respond to the opportunity for compliance automation by building framework checklists first. The immediate product and architecture opportunity is to make governance a derived property of Arcogine's authoritative semantic models and their history.
+Arcogine should not respond to the opportunity for compliance automation by building framework checklists first. Governance should be derived from authoritative semantic models, their controlled revision history, observed facts, and explicit governance decisions.
 
-This plan therefore establishes a generic sequence:
+The generic sequence is:
 
 ```text
 Canonical domain models
         |
         v
-Durable identity and lineage
+Durable semantic fingerprint + controlled revision lineage
         |
         v
 Semantic ChangeSets
@@ -36,55 +36,50 @@ Governed change / exceptions / risk
 Framework mappings and compliance projections
 ```
 
-The work remains valuable even if Arcogine never competes directly with a compliance-automation vendor. The same primitives support design review, architecture governance, deployment approval, internal policy, safety constraints, customer commitments, auditability, digital-twin reconciliation, and agent governance.
+The same primitives support design review, architecture governance, deployment approval, internal policy, safety constraints, customer commitments, auditability, digital-twin reconciliation, and agent governance.
 
 ## 2. Relationship to current factory-model work
 
 The canonical factory-model work is the first implementation proving ground.
 
-D1-D4 of the [Factory Design Capability Plan](factory-design-capability.md) establish the initial seam:
+The implemented seam currently provides:
 
 ```text
 FactoryModel
     -> structural validation
     -> immutable publication
-    -> content-derived identity
+    -> provisional content-derived identity
     -> runtime instantiation
-    -> provenance
+    -> handler-level provenance
 ```
 
-That seam should complete without being blocked by a generic governance framework.
+That seam must not be blocked by the generic governance initiative. In particular, the current `FactoryModelVersion.contentHash()` is not yet a durable cross-process fingerprint contract, and the current factory model has no controlled revision repository.
 
-However, the governance/compliance use case now provides a concrete cross-consumer reason to revisit work previously deferred in the factory plan:
+The governance use case now provides a concrete cross-consumer reason to pursue work previously deferred in the factory plan:
 
-- durable model identity and lineage;
+- a durable semantic fingerprint contract;
+- controlled revision identity and lineage;
 - semantic comparison/diff;
 - shared change semantics;
-- review and approval integration;
-- requirement-based verification.
+- review/approval integration with external workflow systems;
+- requirement-based verification and evidence.
 
-The key refinement is:
+> **D5 semantic comparison is no longer only an editor convenience. It is an enabling primitive for governed change and impact analysis once the model seam is stable.**
 
-> **D5 semantic comparison is no longer only an editor convenience. It is an enabling primitive for governed change and impact analysis once the initial D1-D4 seam is stable.**
-
-This does not mean implementing arbitrary patch/merge infrastructure. The need is semantic change attribution, not generic collaborative text editing.
+This does not imply generic patch/merge infrastructure. The need is semantic change attribution.
 
 ## 3. Delivery principles
 
-The delivery sequence should preserve several constraints.
-
-First, framework-specific content must remain downstream of generic conformance. Do not add SOC 2, ISO 27001, GDPR, or other framework fields to core business objects.
-
-Second, do not create a monolithic `BusinessModel` merely to support cross-domain governance. Each domain keeps authoritative ownership of its facts. Cross-domain lineage, identity references, changes, requirements, and evidence provide the governance layer.
-
-Third, distinguish modeled intent from observed reality. Arcogine model state can prove structural facts it owns, but operational assertions may require external observations.
-
-Fourth, reuse external workflow systems where they already own process state. Jira can remain authoritative for ticket workflow while Arcogine owns the semantic meaning, affected entities, conformance impact, and resulting model lineage.
+1. Framework-specific content remains downstream of generic conformance. Do not add SOC 2, ISO 27001, GDPR, or similar fields to core business objects.
+2. Do not create a monolithic `BusinessModel`. Each domain retains authoritative ownership of its facts.
+3. Distinguish modeled intent from observed reality. Structural facts may be provable from Arcogine state; operational assertions may require external evidence.
+4. Reuse external workflow systems where they already own organizational process state. Jira may remain authoritative for issue workflow while Arcogine owns semantic impact, evidence, and controlled revision lineage.
+5. Keep semantic identity and controlled revision identity separate as required by [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md).
 
 ## 4. Delivery sequence
 
 ```text
-G1  Durable model identity and lineage
+G1  Durable fingerprint and controlled revision lineage
     ↓
 G2  Semantic ChangeSet and impact model
     ↓
@@ -94,7 +89,7 @@ G4  Conformance evaluation and findings
     ↓
 G5  Evidence and observation provenance
     ↓
-G6  Governed change and Jira integration
+G6  Governed change and external workflow integration
     ↓
 G7  Exceptions and risk acceptance
     ↓
@@ -103,68 +98,76 @@ G8  Framework/control mappings
 G9  Audit snapshots and compliance projections
 ```
 
-G1-G5 are architectural substrate. G6-G7 establish governance workflow. G8-G9 make conventional compliance automation possible without turning compliance into Arcogine's core ontology.
+G1-G5 are architectural substrate. G6-G7 establish governance workflow integration. G8-G9 make conventional compliance automation possible without turning compliance into Arcogine's core ontology.
 
-## 5. G1 — Durable model identity and lineage
+## 5. G1 — Durable fingerprint and controlled revision lineage
 
 ### Goal
 
-Extend the initial in-memory publication identity into a durable lifecycle that can answer how one authoritative model version relates to another.
+Promote the current provisional content-derived identity into an explicit durable semantic fingerprint contract, and introduce a separate controlled revision lifecycle for historical lineage.
 
-The design should support concepts equivalent to:
+The conceptual split is:
 
 ```text
-ModelIdentity
-ModelVersion
-ParentVersion / lineage relationship
-ContentHash
-SchemaVersion
-Publication provenance
-Created/published timestamp
-Author or decision source
+ModelFingerprint
+    deterministic identity of canonical semantic content
+
+ControlledRevisionId
+    identity of one persisted historical configuration artifact
+
+ControlledRevision
+    revision ID
+    model fingerprint
+    parent revision(s)
+    schema/model version where applicable
+    publication/creation provenance
+    author or decision source
+    external change reference, when applicable
 ```
 
-The exact persistence technology and public identifiers are implementation decisions.
+Approval and deployment are separate records referencing a controlled revision. They are not components of semantic identity and are not prerequisites for a revision to exist.
 
 ### Required properties
 
-A content hash and a durable version identity must not be conflated. Equivalent semantic content may intentionally have the same content hash while appearing in different provenance contexts; conversely a durable version identifier represents a historical artifact and its lineage.
-
-The system should eventually support reconstructing the authoritative model state used by an evaluation, simulation, deployment, or audit.
+- Equal semantic content can have the same model fingerprint across distinct controlled revisions.
+- A later rollback may therefore have the same fingerprint as an earlier revision while remaining historically distinct.
+- The durable fingerprint policy must specify canonicalization, ordering semantics, algorithm/format versioning, and compatibility guarantees.
+- Controlled revision identity must not be inferred from the fingerprint or a human label such as `v7`.
+- Human version/revision labels may exist for presentation but are not fundamental identity.
 
 ### Acceptance criteria
 
 G1 is ready when:
 
-1. Published versions have durable identities independent of process memory.
-2. Version lineage can identify predecessor/parent relationships under the chosen policy.
-3. Semantic content remains immutable after publication.
-4. Content equality/hash semantics are explicitly documented separately from version identity.
-5. Provenance records who or what caused publication and when.
-6. A downstream result can refer to a durable model version rather than only a transient runtime object/hash.
+1. A durable semantic fingerprint contract is explicitly specified and testable across supported process/version boundaries.
+2. Controlled revisions have durable identities independent of process memory and semantic fingerprint equality.
+3. Revision lineage identifies predecessor/parent relationships under the chosen policy.
+4. Semantic content remains immutable for a published/referenced revision.
+5. Provenance records who or what created/published the revision and when.
+6. Approval and deployment records can independently reference a revision.
+7. A downstream result can retain the semantic fingerprint and, when applicable, the controlled revision ID.
 
 ### ADR trigger
 
-The identity/version/lineage scheme is hard to reverse and should be recorded in an ADR before it becomes a public persistence contract.
+[ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) already fixes the semantic separation. A follow-up ADR is warranted before implementation commits to the concrete durable fingerprint format, revision identifier scheme, persistence model, or lineage rules.
 
 ## 6. G2 — Semantic ChangeSet and impact model
 
 ### Goal
 
-Represent the meaningful transition between authoritative model versions in domain terms sufficient for review, impact analysis, and governance.
+Represent a meaningful transition between controlled revisions or between a base revision and a candidate semantic snapshot in domain terms sufficient for review, impact analysis, and governance.
 
-A `ChangeSet` or equivalent should be able to identify:
+A `ChangeSet` or equivalent should identify:
 
 ```text
-base model version
-proposed/resulting model version or draft
+base controlled revision / fingerprint
+candidate fingerprint
+resulting controlled revision, when persisted
 semantic changes
 changed entities
 change source/reason
 external change-request reference
 ```
-
-Changes should be typed or otherwise semantically classified where the domain has enough meaning to do so.
 
 ### Non-goal
 
@@ -172,7 +175,7 @@ Do not build generic JSON patching, arbitrary text merge, collaborative cursors,
 
 ### Impact analysis
 
-The first useful impact queries are:
+Useful first questions include:
 
 ```text
 Which business objects are affected?
@@ -186,19 +189,17 @@ Which runtime/deployment contexts would consume the changed model?
 
 G2 is ready when:
 
-1. Two relevant model versions can be compared semantically rather than only byte-for-byte.
-2. Changed entities can be identified with stable identity.
+1. Two relevant semantic states can be compared in domain terms rather than only byte-for-byte.
+2. Changed entities can be identified with stable domain identity.
 3. At least one domain change has a meaningful typed/classified representation.
 4. Impact analysis can determine which registered requirements are potentially affected.
-5. ChangeSet provenance can retain an external ticket/change-request identifier.
+5. ChangeSet provenance can retain an external change-request identifier.
 
 ## 7. G3 — Generic requirement and assertion contract
 
 ### Goal
 
 Define explicit requirements independently of any particular compliance framework.
-
-A minimal contract should distinguish:
 
 ```text
 Requirement
@@ -214,15 +215,7 @@ Assertion
     required evidence class
 ```
 
-The first requirement should be Arcogine-native and structurally evaluable from authoritative model state.
-
-Example:
-
-```text
-Production resources require accountable ownership.
-```
-
-This is preferable to beginning with a SOC 2 control because it tests the architecture without importing an external framework ontology prematurely.
+The first requirement should be Arcogine-native and structurally evaluable from authoritative model state rather than imported from an external framework.
 
 ### Acceptance criteria
 
@@ -238,9 +231,9 @@ G3 is ready when:
 
 ### Goal
 
-Evaluate requirements against a specific authoritative model version and produce explainable results.
+Evaluate requirements against an exact semantic state and produce explainable results.
 
-A useful result model should support at least:
+A useful result model supports at least:
 
 ```text
 PASS
@@ -249,12 +242,11 @@ UNKNOWN
 NOT_APPLICABLE
 ```
 
-where `UNKNOWN` represents insufficient authoritative evidence rather than silently passing or failing.
-
-An evaluation should retain:
+An evaluation retains:
 
 ```text
-model version
+model fingerprint
+controlled revision ID, when available
 requirement/assertion version
 scope
 result
@@ -269,11 +261,11 @@ A failed result produces a finding rather than mutating the underlying business 
 
 G4 is ready when:
 
-1. The same model/version and requirement/assertion versions produce deterministic structural results.
+1. The same semantic fingerprint/revision and requirement/assertion versions produce deterministic structural results.
 2. Findings identify affected entities and the failed assertion.
 3. Results distinguish missing evidence from proven non-conformance.
 4. Evaluation output is immutable or historically attributable.
-5. A proposed ChangeSet can be evaluated before publication for at least one requirement.
+5. A proposed `ChangeSet` can be evaluated before approval/deployment for at least one requirement.
 
 The last criterion is the first major strategic milestone: pre-change conformance rather than only post-change monitoring.
 
@@ -292,15 +284,12 @@ observedAt
 applicable period
 external identity/reference
 related assertion/control
-related model version
+model fingerprint
+controlled revision ID, when applicable
 integrity metadata where required
 ```
 
 Initial adapters should be driven by a concrete requirement, not a desire to match a vendor's integration count.
-
-### First adapter selection
-
-Choose an external source only after one assertion requires it. Good candidates will be systems where the authority boundary is clear, such as source control, identity, cloud configuration, or Jira change records.
 
 ### Acceptance criteria
 
@@ -309,60 +298,59 @@ G5 is ready when:
 1. External evidence is distinguishable from Arcogine-derived structural evidence.
 2. Evidence is attributable to source and observation time.
 3. An assertion can combine intended model state with observed external state.
-4. Evidence can become stale/invalid when its scope, applicable period, or affected model semantics change.
+4. Evidence can become stale/invalid when its scope, applicable period, or affected semantics change.
 5. A historical evaluation can identify the evidence set it used.
 
-## 10. G6 — Governed change and Jira integration
+## 10. G6 — Governed change and external workflow integration
 
 ### Goal
 
-Connect semantic ChangeSets and conformance results to enterprise change-management workflows without recreating Jira inside Arcogine.
+Connect semantic `ChangeSet`s, candidate controlled revisions, and technical evidence to enterprise change-management workflows without recreating Jira inside Arcogine.
 
 Target relationship:
 
 ```text
-Jira issue / change request
+External issue / change request
         |
         v
 Arcogine ChangeSet
         |
+        v
+Candidate controlled revision
+        |
         +--> semantic impact
-        +--> pre-change conformance
+        +--> validation/simulation/conformance evidence
         +--> required approvals/owners
         |
         v
-external workflow decision
+External or Arcogine approval record
         |
         v
-authorized publication/deployment
-        |
-        v
-model lineage + evidence
+Deployment record, when deployed
 ```
 
 ### Authority boundary
 
-Jira may remain authoritative for issue workflow, assignments, discussions, and workflow transitions. Arcogine should retain only the ticket identity and governance facts required to explain why a semantic model transition was authorized.
+Jira or another workflow system may remain authoritative for issue workflow, assignments, discussions, and transitions. Arcogine retains the stable external reference and the technical/governance facts required to explain the semantic change and its resulting revision.
 
-If Arcogine later owns an approval decision itself, that decision must be modeled explicitly with actor/authority/provenance rather than inferred from mutable UI state.
+If Arcogine later owns an approval decision itself, that decision must be modeled explicitly with actor, authority, and provenance rather than inferred from mutable UI state.
 
 ### Acceptance criteria
 
 G6 is ready when:
 
-1. A ChangeSet can reference a Jira change request.
+1. A `ChangeSet`/revision can reference an external change request.
 2. Impact and conformance information can be surfaced into the change workflow.
-3. Publication/authorization provenance records the relevant external workflow identity/status or explicit Arcogine decision.
-4. Jira project-management metadata is not duplicated without semantic need.
-5. A reviewer can trace an authorized model transition back to the governing change request.
+3. Approval/authorization records reference the relevant controlled revision rather than defining revision identity.
+4. Deployment, when it occurs, is separately attributable to the deployed revision.
+5. External project-management metadata is not duplicated without semantic need.
+6. A reviewer can trace a governed model transition back to the external record that tracked/governed the change.
 
 ## 11. G7 — Exceptions and risk acceptance
 
 ### Goal
 
 Represent explicit governance decisions when a known non-conformance is tolerated temporarily or conditionally.
-
-The model should distinguish:
 
 ```text
 Finding
@@ -373,7 +361,7 @@ CompensatingControl
 Expiration
 ```
 
-An approved exception does not change a failed assertion into `PASS`. It changes the governance disposition of the finding.
+An approved exception does not change a failed assertion into `PASS`; it changes the governance disposition of the finding.
 
 ### Acceptance criteria
 
@@ -390,8 +378,6 @@ G7 is ready when:
 
 Introduce conventional compliance abstractions only after generic conformance and evidence are working.
 
-Conceptually:
-
 ```text
 Framework
   -> Requirement
@@ -405,13 +391,13 @@ One control may map to multiple frameworks. Framework versions and mappings must
 
 ### First framework policy
 
-Do not attempt broad framework coverage. Select one small, legally permissible set of requirements sufficient to prove cross-framework mapping and evidence reuse. Framework content licensing and authoritative source terms must be reviewed before importing copyrighted or proprietary control text.
+Do not attempt broad framework coverage. Select one small, legally permissible set of requirements sufficient to prove cross-framework mapping and evidence reuse. Review licensing and source terms before importing copyrighted or proprietary control text.
 
 ### Acceptance criteria
 
 G8 is ready when:
 
-1. Requirements and controls are versioned independently of business model versions.
+1. Requirements and controls are versioned independently of business model revisions/fingerprints.
 2. One control can map to more than one requirement/framework.
 3. Business objects do not acquire framework-specific compliance booleans.
 4. Framework/mapping changes do not mutate historical evaluations.
@@ -421,12 +407,13 @@ G8 is ready when:
 
 ### Goal
 
-Produce a reproducible audit/compliance view over versioned model state, requirements, controls, evidence, findings, and exceptions.
+Produce a reproducible audit/compliance view over exact semantic state, controlled revision history, requirements, controls, evidence, findings, and exceptions.
 
 An audit snapshot should identify:
 
 ```text
-model version
+model fingerprint
+controlled revision ID
 framework/requirement versions
 control mappings
 assertion results
@@ -436,7 +423,7 @@ exceptions/risk acceptances
 generation time
 ```
 
-The first useful UX can be headless/export-oriented. Do not build a large GRC dashboard before the underlying historical semantics work.
+The first useful UX can be headless/export-oriented. Do not build a large GRC dashboard before the historical semantics work.
 
 ### Acceptance criteria
 
@@ -444,34 +431,34 @@ G9 is ready when:
 
 1. A historical compliance result can be reconstructed from explicit versioned inputs.
 2. The system can explain why a control passed, failed, or was unknown.
-3. Evidence and exceptions are traceable to their sources and applicable periods.
+3. Evidence and exceptions are traceable to sources and applicable periods.
 4. A change in today's framework mapping does not silently alter a previous audit snapshot.
-5. An auditor/reviewer can traverse from a requirement to control, assertion, affected business objects, evidence, and change history.
+5. A reviewer can traverse from a requirement to control, assertion, affected business objects, semantic fingerprint, controlled revision, evidence, and change history.
 
 ## 14. First end-to-end milestone
 
 The first milestone should deliberately avoid a full external compliance framework:
 
-> **Take a proposed semantic change to a versioned Arcogine model, determine which explicit Arcogine-native requirement it affects, evaluate the requirement before publication, link the change to a Jira change request or equivalent provenance, record the authorized transition to the next model version, and reconstruct why the resulting state was considered conformant.**
+> **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked to an external change request, evaluate one Arcogine-native requirement before approval/deployment, record the approval decision separately, and reconstruct why the resulting semantic state was considered conformant.**
 
 A concrete example could be an ownership requirement once the relevant owner/authority semantics exist.
 
 Definition of done:
 
 ```text
-Durable model version identity exists
-Base -> proposed ChangeSet is attributable
+Durable semantic fingerprint contract exists
+Controlled revision identity exists
+Base revision -> ChangeSet -> candidate revision is attributable
 Affected entity is identified
 One versioned requirement applies
 Pre-change assertion evaluates deterministically
 Finding is produced if violated
 External change-request provenance can be linked
-Authorized publication creates a new immutable version
+Approval is a separate record referencing the revision
+Deployment is not required to prove the milestone
 Historical evaluation remains attributable after later changes
 No framework-specific field exists on the business object
 ```
-
-This milestone proves the architecture that later compliance automation depends on.
 
 ## 15. What not to build yet
 
@@ -485,8 +472,8 @@ Do not prioritize:
 - trust-center marketing surfaces;
 - broad vendor-risk management;
 - a monolithic cross-domain business object graph;
-- generic model Git semantics (branch/merge/rebase) without a concrete workflow;
-- a replacement for Jira.
+- generic Git branch/merge/rebase semantics for models without a concrete workflow;
+- a replacement for Jira or another organizational change-management system.
 
 Those may become valid product capabilities later, but they should not distract from the semantic substrate that differentiates Arcogine.
 
@@ -495,10 +482,11 @@ Those may become valid product capabilities later, but they should not distract 
 As implementation progresses:
 
 - update [`../architecture/overview.md`](../architecture/overview.md) only with established current-state behavior;
-- update [`../architecture/governance-conformance.md`](../architecture/governance-conformance.md) when the proposed architectural direction changes materially;
-- update factory/domain architecture docs when semantic identity/change requirements alter those models;
+- update [`../architecture/governance-conformance.md`](../architecture/governance-conformance.md) when this proposed direction changes materially;
+- keep [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) as the authority for semantic identity vs. revision identity and the external change-control boundary;
+- update factory/domain architecture docs when identity/change requirements alter those models;
 - update [`../architecture/standards-alignment.md`](../architecture/standards-alignment.md) when Arcogine moves from reference/mapping toward an actual tested conformance profile;
-- create ADRs for durable identity/lineage, semantic ChangeSet contracts, temporal evidence semantics, and external authority boundaries when implementation commits to them;
+- create ADRs for the concrete durable fingerprint contract, controlled revision persistence/lineage scheme, semantic `ChangeSet` contracts, temporal evidence semantics, and hard-to-reverse external protocols when implementation commits to them;
 - update product/reference docs only for capabilities that actually ship.
 
 Once this initiative is complete or superseded, retain durable decisions in ADR/current architecture and retire or reduce this planning artifact.

@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-Arcogine uses ISA-95 as a semantic reference for manufacturing-domain modeling and enterprise/manufacturing integration. This document records:
+Arcogine uses ISA-95 / IEC 62264 as a semantic reference for manufacturing-domain modeling and enterprise/manufacturing integration. This document records:
 
 - how current Arcogine concepts correspond to ISA-95 concepts;
 - where the correspondence is exact, approximate, absent, or deliberately different;
@@ -28,7 +28,9 @@ This document is **not**:
 
 ## 2. Reference boundary
 
-ISA-95, also published internationally as IEC 62264, defines models, terminology, activities, object attributes, and information exchanges for integrating manufacturing operations with enterprise functions. Arcogine uses the series as a reference rather than claiming to implement it.
+ISA-95 and IEC 62264 are closely harmonized standards families with shared lineage, concepts, and terminology for enterprise-control system integration. They should not, however, be treated as automatically identical documents: individual parts, editions, modified adoptions, and national adoptions can differ and can move on different publication cycles. Arcogine uses the family as a semantic reference rather than claiming to implement any specific edition or conformance profile.
+
+For architectural discussion, this document uses `ISA-95 / IEC 62264` as a family-level label. Any future normative requirement, interoperability profile, conformance claim, contractual dependency, or audit record must identify the exact source authority, designation, part, edition/year, source locator, and applicable adoption/profile rather than relying on the family label alone.
 
 The parts most relevant to this mapping are:
 
@@ -40,7 +42,7 @@ The parts most relevant to this mapping are:
 | Part 4 — Objects and Attributes for Manufacturing Operations Management Integration | MOM object models and attributes, including definition, schedule, execution, and performance concerns |
 | Part 5 — Business-to-Manufacturing Transactions | Transactions and information exchanges between applications |
 
-The latest ISA Part 1 publication is ANSI/ISA-95.00.01-2025. Other parts have independent publication dates. A newer Part 1 does not imply that Arcogine automatically conforms to the series or that every term below has a one-to-one mapping.
+At the time of this document's review, ISA Part 1 is published as ANSI/ISA-95.00.01-2025, while IEC 62264-1 remains a separately versioned IEC publication. The ISA designation identifies a modified IEC adoption rather than proving textual identity with the IEC edition. Other parts have independent publication dates. A newer publication in one standards family does not automatically update the corresponding document in another, establish Arcogine conformance, or make every term below a one-to-one mapping.
 
 ## 3. Alignment vocabulary
 
@@ -468,7 +470,7 @@ Any adapter or exchange profile must state:
 - Arcogine extensions;
 - lossy conversions;
 - version and compatibility rules;
-- which ISA-95 parts and profiles it actually supports.
+- the exact source authority, designation, part, edition/version, and adoption/profile it supports.
 
 Only such a defined and tested profile could justify an interoperability or conformance claim.
 
@@ -501,5 +503,6 @@ Keep this document current rather than chronological:
 - [ISA-95 Series of Standards](https://www.isa.org/standards-and-publications/isa-standards/isa-95-standard)
 - [ISA95 Standards Committee scope and purpose](https://www.isa.org/standards-and-publications/isa-standards/isa-standards-committees/isa95)
 - [ISA announcement for ANSI/ISA-95.00.01-2025](https://www.isa.org/news-press-releases/2025/april/update-to-isa-95-standard-addresses-integration-of)
+- [IEC 62264-1 publication page](https://webstore.iec.ch/en/publication/6675)
 
-These links provide public summaries. The normative standards themselves remain the authoritative source for formal definitions and conformance requirements.
+These links provide public summaries and publication metadata. The normative standards themselves remain the authoritative source for formal definitions and conformance requirements.

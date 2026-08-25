@@ -103,7 +103,8 @@ D3 Publication / semantic identity  PARTIAL
 D4 Runtime instantiation            PARTIAL
     runtime from published model    implemented
     handler provenance              implemented (IntegratedHandler)
-    result/run provenance           outstanding (SimResult has none)
+    result model provenance         implemented (SimResult.modelContentHash)
+    broader run provenance          outstanding (run ID, scenario/input fingerprint, engine build)
 ```
 
 D1's acceptance criteria call for resource definitions and installed instances to be distinguishable and for a model/schema-version concept; today's `FactoryModel` holds only `resources`/`operations`/`products`, and `ResourceDefinition`'s own Javadoc says it deliberately represents both a resource type and its installed instance, deferring the split. D2's acceptance criteria call for a stable finding shape (code, severity, message, entity/field identifiers); today's `ModelValidationError` is deliberately minimal — just `(field, message)`. Neither gap blocks D3/D4; both are called out here so the richer D1/D2 goals aren't silently redefined down to match what happened to ship first.
@@ -111,7 +112,7 @@ D1's acceptance criteria call for resource definitions and installed instances t
 Two callouts worth being explicit about:
 
 - `FactoryModelVersion.contentHash()` exists and is deterministic, but its own Javadoc describes it as an internal, in-memory identity policy, not a persisted/public/cross-process compatibility guarantee. See [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) for what remains to be specified (canonicalization, ordering semantics, algorithm/format versioning, compatibility guarantee) before it can be promoted to a durable fingerprint contract.
-- Model provenance currently reaches `IntegratedHandler` but not `SimResult`. "Runtime observations/results identify the source model version" (the D3/D4 acceptance criteria below, and the equivalent criterion in the [engine-readiness plan](factory-simulation-engine-readiness.md)) is true at the handler layer today and still outstanding at the result layer.
+- Model provenance now reaches both `IntegratedHandler` and `SimResult` (the latter via the simulation-module `ModelProvenanceSource` capability, so `SimRunner` stays free of any dependency on `IntegratedHandler` or the API layer). "Runtime observations/results identify the source model version" (the D3/D4 acceptance criteria below, and the equivalent criterion in the [engine-readiness plan](factory-simulation-engine-readiness.md)) is true at both the handler and result layers today; broader run-level provenance (run ID, scenario/input fingerprint, engine build) remains outstanding.
 
 ## 4. Current-model migration strategy
 

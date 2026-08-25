@@ -51,7 +51,7 @@ Required before engine Gate 1:
 - representative baseline behavior is preserved
 ```
 
-This gate is satisfied by what has already landed. It does not require the D1 definition/instance split, the D2 stable finding taxonomy (codes/severity/entity metadata), or the D3 durable cross-process fingerprint contract — those remain open design-capability work, tracked independently, and are not prerequisites for Gate 1 or any later gate in this plan. Result-level model provenance (`SimResult` carrying the provenance `IntegratedHandler` already has) remains a small, separately tracked follow-up rather than a gate blocker.
+This gate is satisfied by what has already landed. It does not require the D1 definition/instance split, the D2 stable finding taxonomy (codes/severity/entity metadata), or the D3 durable cross-process fingerprint contract — those remain open design-capability work, tracked independently, and are not prerequisites for Gate 1 or any later gate in this plan. Result-level model provenance (`SimResult` carrying the provenance `IntegratedHandler` already has) is implemented; broader run-level provenance (run ID, scenario/input fingerprint, engine build) remains a small, separately tracked follow-up rather than a gate blocker.
 
 ## 2. Boundary with factory design
 

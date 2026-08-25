@@ -24,7 +24,7 @@ Conformance
 
 Unless a section explicitly says otherwise, Arcogine claims only **reference** or **semantic mapping**. It currently makes no standards-conformance claim.
 
-When this repository refers to a standards family or shared conceptual model, a family-level label such as `ISA-95 / IEC 62264` is appropriate. When a requirement, conformance claim, interoperability profile, audit record, contractual obligation, or other normative dependency relies on a standard, identify the exact source authority, designation, part, edition or year, and applicable adoption/profile. Closely aligned standards families and national adoptions must not be assumed to be textually or normatively identical across editions.
+When this repository refers to a standards family or shared conceptual model, a family-level label such as `ISA-95 / IEC 62264` is appropriate. When a requirement, conformance claim, interoperability profile, audit record, contractual obligation, or other normative dependency relies on a standard, identify the exact source authority, designation, part, edition or year, source locator when applicable, and applicable adoption/profile. Closely aligned standards families and national adoptions must not be assumed to be textually or normatively identical across editions.
 
 ## Alignment strategy
 

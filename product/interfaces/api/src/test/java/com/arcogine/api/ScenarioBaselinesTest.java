@@ -201,6 +201,15 @@ class ScenarioBaselinesTest {
     }
 
     @Test
+    void simResultCarriesTheSameModelProvenanceAsTheHandlerItWasProducedFrom() throws SimError {
+        RunOutcome run = run(BASIC_SCENARIO);
+        assertEquals(run.handler().factoryModelContentHash(), run.result().modelContentHash());
+        assertTrue(
+                run.result().modelContentHash() != null && !run.result().modelContentHash().isEmpty(),
+                "canonical result must identify its originating published FactoryModelVersion");
+    }
+
+    @Test
     void overloadScenarioBuildsBacklog() throws SimError {
         RunOutcome run = run(OVERLOAD_SCENARIO);
         long backlog = run.handler().factory().backlog();

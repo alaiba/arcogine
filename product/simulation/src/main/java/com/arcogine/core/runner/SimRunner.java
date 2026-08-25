@@ -3,6 +3,7 @@ package com.arcogine.core.runner;
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
 import com.arcogine.core.handler.EventHandler;
+import com.arcogine.core.handler.ModelProvenanceSource;
 import com.arcogine.core.log.EventLog;
 import com.arcogine.core.queue.Scheduler;
 import com.arcogine.types.SimError;
@@ -62,6 +63,8 @@ public final class SimRunner {
             }
         }
 
-        return new SimResult(scheduler.currentTime(), eventLog, eventsProcessed);
+        String modelContentHash =
+                handler instanceof ModelProvenanceSource source ? source.modelContentHash() : null;
+        return new SimResult(scheduler.currentTime(), eventLog, eventsProcessed, modelContentHash);
     }
 }

@@ -56,7 +56,7 @@ ISA-95 provides models, terminology, activities, object attributes, and informat
 **Current status:**
 
 - The scenario schema already uses selected ISA-95-oriented terms: `equipment`, `material`, `process_segment`, and `operations_definition`.
-- Runtime concepts such as `Machine`, `Routing`, `RoutingStep`, and `Job` are mappable to a narrow production-execution subset, but the mappings are approximate.
+- Runtime concepts such as `Machine`, `Routing`, `RoutingStep`, `Order`, and `Job` are mappable to a narrow production-execution subset, but the mappings are approximate.
 - The current runtime model does not consistently separate resource definitions, production requests, execution state, and performance records.
 - Arcogine does not implement the ISA-95 equipment hierarchy, generalized personnel/material/equipment capability models, B2MML, transactions, exchange profiles, or conformance validation.
 
@@ -67,7 +67,7 @@ ISA-95 provides models, terminology, activities, object attributes, and informat
 | Scenario `material` / runtime `ProductId` | Material Definition | Partial; product-oriented and minimal |
 | `operations_definition` / `Routing` | Operations or Work Definition | Partial; simplified ordered steps |
 | `process_segment` / `RoutingStep` | Process Segment or work-step analogue | Partial; currently bound to one concrete machine |
-| `Job` | Job Order plus execution and result concerns | Collapsed; a refactoring trigger for richer workloads |
+| `Order` / `Job` | Job Order/production request (`Order`) plus execution and result concerns (`Job`) | Separated; still one `Job` per `Order`, a refactoring trigger for richer workloads |
 | Factory events and observations | Work execution and performance facts | Narrow but useful semantic mapping |
 
 **Current commitment:**

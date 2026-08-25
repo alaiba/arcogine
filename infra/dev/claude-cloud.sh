@@ -14,7 +14,7 @@ set -euo pipefail
 
 REPO_DIR="/home/user/arcogine"
 MIN_JAVA_MAJOR="21"
-MIN_NODE_MAJOR="22"
+SUPPORTED_NODE_RANGE="^22.22.2 || ^24.15.0 || >=26.0.0"
 
 # Capture where we were invoked from before doing anything else, including
 # before setting up logging (log path itself must not depend on the cwd).
@@ -42,8 +42,8 @@ echo "Machine architecture:  $(uname -m)"
 echo "CPU:                   $(nproc) vCPU(s) - $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')"
 echo "Memory:                $(free -h | awk '/^Mem:/ {print $2 " total, " $7 " available"}')"
 echo "Disk (/):              $(df -h / | awk 'NR==2 {print $2 " total, " $4 " available (" $5 " used)"}')"
-echo "Minimum Java:          ${MIN_JAVA_MAJOR}"
-echo "Minimum Node.js:       ${MIN_NODE_MAJOR}"
+echo "Java compatibility:    ${MIN_JAVA_MAJOR}+"
+echo "Supported Node.js:     ${SUPPORTED_NODE_RANGE}"
 echo "Log file:              $LOG_FILE"
 echo "===================================================================="
 
@@ -85,12 +85,37 @@ current_java_major() {
   java_major_from_version_string "$ver"
 }
 
-current_node_major() {
+current_node_version() {
   if ! command -v node >/dev/null 2>&1; then
     echo ""
     return
   fi
-  node --version | sed -E 's/^v([0-9]+).*/\1/'
+  node --version | sed -E 's/^v//'
+}
+
+# Keep this deliberately small and explicit rather than installing a semver
+# utility during provisioning. It implements exactly the range declared in
+# product/interfaces/web/package.json:
+#   ^22.22.2 || ^24.15.0 || >=26.0.0
+node_version_supported() {
+  local version="$1"
+  local major minor patch
+
+  if [[ ! "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    return 1
+  fi
+
+  major="${BASH_REMATCH[1]}"
+  minor="${BASH_REMATCH[2]}"
+  patch="${BASH_REMATCH[3]}"
+
+  if (( major == 22 )); then
+    (( minor > 22 || (minor == 22 && patch >= 2) ))
+  elif (( major == 24 )); then
+    (( minor >= 15 ))
+  else
+    (( major >= 26 ))
+  fi
 }
 
 # Log a version command without making optional tooling a provisioning
@@ -139,12 +164,13 @@ for tool in java javac node npm npx git docker trivy gitleaks; do
 done
 
 # ---------------------------------------------------------------------------
-# 2. Verify the platform-provided Java/Node versions meet Arcogine's minimums.
-#    Do not upgrade them here: cloud-image migrations are observed in the log
-#    above and adopted deliberately by changing the repository baseline.
+# 2. Verify the platform-provided Java/Node versions satisfy Arcogine's
+#    supported development contract. Do not upgrade them here: base-image
+#    migrations are observed in the log above and adopted deliberately in the
+#    repository when the supported contract changes.
 # ---------------------------------------------------------------------------
 
-echo "==> Verifying platform toolchain minimums..."
+echo "==> Verifying platform toolchain compatibility..."
 
 ACTUAL_JAVA_MAJOR="$(current_java_major)"
 if [ -z "$ACTUAL_JAVA_MAJOR" ]; then
@@ -159,22 +185,31 @@ if ! command -v javac >/dev/null 2>&1; then
   echo "FATAL: javac is not available; Arcogine requires a JDK, not only a JRE." >&2
   exit 1
 fi
-echo "    Java major version OK: ${ACTUAL_JAVA_MAJOR} (minimum ${MIN_JAVA_MAJOR})"
+echo "    Java major version OK: ${ACTUAL_JAVA_MAJOR} (compatibility floor ${MIN_JAVA_MAJOR})"
 
-ACTUAL_NODE_MAJOR="$(current_node_major)"
-if [ -z "$ACTUAL_NODE_MAJOR" ]; then
-  echo "FATAL: Node.js is not available on PATH; Arcogine requires Node.js ${MIN_NODE_MAJOR} or newer." >&2
-  exit 1
-fi
-if [ "$ACTUAL_NODE_MAJOR" -lt "$MIN_NODE_MAJOR" ]; then
-  echo "FATAL: Arcogine requires Node.js ${MIN_NODE_MAJOR} or newer, but 'node --version' reports major version ${ACTUAL_NODE_MAJOR}." >&2
+ACTUAL_NODE_VERSION="$(current_node_version)"
+if [ -z "$ACTUAL_NODE_VERSION" ]; then
+  echo "FATAL: Node.js is not available on PATH; Arcogine supports ${SUPPORTED_NODE_RANGE}." >&2
   exit 1
 fi
 if ! command -v npm >/dev/null 2>&1; then
   echo "FATAL: npm is not available on PATH; Arcogine's frontend setup requires npm." >&2
   exit 1
 fi
-echo "    Node.js major version OK: ${ACTUAL_NODE_MAJOR} (minimum ${MIN_NODE_MAJOR})"
+
+# The package manifest is the frontend's public support contract. Fail clearly
+# if this lightweight provisioning guard ever drifts from that source of truth.
+PACKAGE_NODE_RANGE="$(node -p "require('./product/interfaces/web/package.json').engines.node || ''" 2>/dev/null || true)"
+if [ "$PACKAGE_NODE_RANGE" != "$SUPPORTED_NODE_RANGE" ]; then
+  echo "FATAL: Node support contract drift: claude-cloud.sh expects '${SUPPORTED_NODE_RANGE}', but package.json declares '${PACKAGE_NODE_RANGE:-none}'." >&2
+  exit 1
+fi
+
+if ! node_version_supported "$ACTUAL_NODE_VERSION"; then
+  echo "FATAL: Node.js ${ACTUAL_NODE_VERSION} is outside Arcogine's supported range: ${SUPPORTED_NODE_RANGE}." >&2
+  exit 1
+fi
+echo "    Node.js version OK: ${ACTUAL_NODE_VERSION} (supported ${SUPPORTED_NODE_RANGE})"
 
 echo "    No project dependencies were installed during provisioning."
 echo "    Run './arcogine setup' explicitly when a task requires them."

@@ -6,7 +6,10 @@
 # Do NOT `cd` before invoking this script: it captures its own invocation
 # directory (see INVOKED_FROM below) and does its own `cd` into the repo,
 # so a preceding `cd` would defeat that diagnostic.
-# All Arcogine-specific provisioning logic lives here, version-controlled.
+#
+# Provisioning is intentionally lightweight: inspect and validate the base
+# image, but do not install project dependencies. Run `./arcogine setup`
+# explicitly later when a task actually needs the development dependencies.
 set -euo pipefail
 
 REPO_DIR="/home/user/arcogine"
@@ -30,7 +33,7 @@ LOG_FILE="${LOG_DIR}/arcogine-cloud-setup-${TIMESTAMP}-$$.log"
 exec > >(tee "$LOG_FILE") 2>&1
 
 echo "===================================================================="
-echo "Arcogine Claude Cloud setup"
+echo "Arcogine Claude Cloud provisioning"
 echo "Start time:            $(date -Is)"
 echo "Invoked from:          $INVOKED_FROM"
 echo "OS release:            $(. /etc/os-release 2>/dev/null && echo "${PRETTY_NAME:-unknown}" || echo unknown)"
@@ -107,26 +110,12 @@ log_optional_version() {
   fi
 }
 
-log_local_node_tool_version() {
-  local label="$1"
-  local binary="$2"
-  local binary_path="$REPO_DIR/product/interfaces/web/node_modules/.bin/$binary"
-
-  echo "--- ${label} ---"
-  if [ -x "$binary_path" ]; then
-    if ! "$binary_path" --version 2>&1; then
-      echo "(version command failed; continuing because this inventory entry is informational)"
-    fi
-  else
-    echo "not installed in node_modules"
-  fi
-}
-
 # ---------------------------------------------------------------------------
-# 1. Record the host/base-image toolchain before provisioning changes anything.
+# 1. Record the host/base-image toolchain. Nothing below installs or upgrades
+#    packages, so this is the environment Claude supplied to the container.
 # ---------------------------------------------------------------------------
 
-echo "==> Base-image toolchain inventory (before repository setup):"
+echo "==> Base-image toolchain inventory:"
 log_optional_version "bash --version" bash bash --version
 log_optional_version "git --version" git git --version
 log_optional_version "curl --version" curl curl --version
@@ -139,6 +128,15 @@ log_optional_version "docker --version" docker docker --version
 log_optional_version "docker compose version" docker docker compose version
 log_optional_version "trivy --version" trivy trivy --version
 log_optional_version "gitleaks version" gitleaks gitleaks version
+
+echo "--- resolved executable paths ---"
+for tool in java javac node npm npx git docker trivy gitleaks; do
+  if command -v "$tool" >/dev/null 2>&1; then
+    printf '%-10s %s\n' "$tool" "$(command -v "$tool")"
+  else
+    printf '%-10s %s\n' "$tool" "not installed"
+  fi
+done
 
 # ---------------------------------------------------------------------------
 # 2. Verify the platform-provided Java/Node versions meet Arcogine's minimums.
@@ -178,62 +176,15 @@ if ! command -v npm >/dev/null 2>&1; then
 fi
 echo "    Node.js major version OK: ${ACTUAL_NODE_MAJOR} (minimum ${MIN_NODE_MAJOR})"
 
-# Derive JAVA_HOME from the platform-selected Java binary so Gradle and other
-# JVM tooling agree with PATH without replacing or reconfiguring the JDK.
-JAVA_BIN="$(readlink -f "$(command -v java)")"
-export JAVA_HOME="$(dirname "$(dirname "$JAVA_BIN")")"
-export PATH="${JAVA_HOME}/bin:${PATH}"
-echo "    java resolves to: $(command -v java)"
-echo "    JAVA_HOME set to: $JAVA_HOME"
-echo "    node resolves to: $(command -v node)"
+echo "    No project dependencies were installed during provisioning."
+echo "    Run './arcogine setup' explicitly when a task requires them."
 
 # ---------------------------------------------------------------------------
-# 3. Prepare the repository. Actual dependency setup (frontend deps, Gradle
-# warming, Playwright, etc.) is owned by ./arcogine setup so it isn't
-# duplicated between this script and the devcontainer.
-# ---------------------------------------------------------------------------
-
-echo "==> Preparing repository..."
-
-if [ ! -f .env ]; then
-  if [ ! -f .env.example ]; then
-    echo "FATAL: .env.example not found in $REPO_DIR." >&2
-    exit 1
-  fi
-  echo "    Copying .env.example -> .env"
-  cp .env.example .env
-else
-  echo "    .env already exists; leaving as-is"
-fi
-
-echo "    Running ./arcogine setup..."
-./arcogine setup
-
-# ---------------------------------------------------------------------------
-# 4. Record project-managed tool versions after dependencies are installed.
-# ---------------------------------------------------------------------------
-
-echo "==> Project toolchain inventory (after repository setup):"
-echo "--- product/gradlew --version ---"
-if [ -x "$REPO_DIR/product/gradlew" ]; then
-  if ! "$REPO_DIR/product/gradlew" --no-daemon --version 2>&1; then
-    echo "(Gradle wrapper version command failed; continuing because setup already completed)"
-  fi
-else
-  echo "not installed"
-fi
-log_local_node_tool_version "playwright --version" playwright
-log_local_node_tool_version "tsc --version" tsc
-log_local_node_tool_version "vite --version" vite
-log_local_node_tool_version "eslint --version" eslint
-log_local_node_tool_version "vitest --version" vitest
-
-# ---------------------------------------------------------------------------
-# 5. Done.
+# 3. Done.
 # ---------------------------------------------------------------------------
 
 echo "===================================================================="
-echo "Arcogine Claude Cloud setup complete."
+echo "Arcogine Claude Cloud provisioning complete."
 echo "Completion time: $(date -Is)"
 echo "Log file:        $LOG_FILE"
 echo "===================================================================="

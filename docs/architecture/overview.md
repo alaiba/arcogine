@@ -64,9 +64,9 @@ Events:
 
 ### State
 
-Each subsystem exclusively owns its mutable domain state. Pricing owns `OfferPrice` and its history (`PricingState`) — the firm's own current asking price, not any individual order's terms and not an external market signal. Factory owns machines, jobs, queues, completion state, and production metrics (`FactoryHandler`), including the cached `CompletedSalesValue` KPI state — but completed jobs themselves, not the cache, remain the authoritative operational facts it's derived from (see the "stored incrementally" note below). A future inventory subsystem would own stock; finance would own financial state; workforce would own labor state.
+Each subsystem exclusively owns its mutable domain state. Pricing owns `OfferPrice` and its history (`PricingState`) — the firm's own current asking price, not any individual order's terms and not an external market signal. Factory owns accepted orders, machines, jobs, queues, completion state, and production metrics (`FactoryHandler`), including the cached `CompletedSalesValue` KPI state — but the immutable accepted order and completed execution facts, not the cache, remain the authoritative facts it's derived from (see the "stored incrementally" note below). A future inventory subsystem would own stock; finance would own financial state; workforce would own labor state.
 
-Commercial terms (`OrderPrice`/`OrderValue`) are a separate case worth being precise about: they are immutable transaction facts, fixed at `OrderCreation`, that travel *into* Factory with the order rather than being something Factory conceptually owns. `Job` is where they're carried today because there is currently no separate commercial/order concept distinct from the production-lifecycle object — but that's an implementation convenience, not a claim that production and commercial terms are the same kind of state. If a second reason ever emerges to split them (e.g. an order existing before production starts, or one order spanning multiple jobs), the natural refactor is an `Order` (commercial: `orderId`, product, quantity, `unitPrice`) referenced by `Job` (operational: `jobId`, `orderId`, routing, status) — not introduced speculatively now, but the conceptual ownership should already reflect this distinction so the code doesn't imply Factory owns a fact it merely carries.
+Commercial/order intent and mutable production execution are now represented separately. `Order` is an immutable accepted-order record containing `OrderId`, product, quantity, creation time, and agreed unit price; `Job` owns mutable routing/execution state and references that order. The current migration remains deliberately behavior-preserving: one accepted order creates one job, and `JobView` still exposes product/quantity/price/value as compatibility projections delegated to the referenced order so the existing API/UI contract does not have to change in the same refactor. Gate 1 may later allow one order to span multiple work items/jobs and introduce an explicit workload source independently of the economy loop.
 
 State should:
 
@@ -83,8 +83,9 @@ Concrete, source-level version of the rule above — checkable in review, not ju
 |---|---|---|
 | `OfferPrice`, price history | `PricingState` | `PriceChange` |
 | Machines, machine availability | `MachineStore` (owned by `FactoryHandler`) | `MachineAvailabilityChange` |
+| Accepted order intent (`OrderId`, product, quantity, creation time, `OrderPrice`) | immutable `Order` in `OrderStore` (owned by `FactoryHandler`) | Created at `OrderCreation`; immutable thereafter |
 | Jobs, job status (production lifecycle) | `JobStore` (owned by `FactoryHandler`) | `OrderCreation` (creates), `TaskEnd` (advances/completes) |
-| `OrderPrice`/`OrderValue` (commercial terms — carried into Factory with the order, not owned by it; see the "State" section above) | `Job` (implementation convenience — there is no separate commercial/order concept yet) | Fixed at `OrderCreation`, immutable thereafter |
+| `OrderValue` | Derived by immutable `Order` from quantity × `OrderPrice` | Derived, not separately mutated |
 | `CompletedSalesValue`, `completedSales` | `FactoryHandler` | `TaskEnd` (on completion) |
 | Ledger, `Cash`/`Sales` balances | `Ledger` (owned by `FinanceHandler`) | `OrderCompleted` |
 | `SalesAgent`'s last observation, intervention count | `SalesAgent` | `observe(...)` (called by `IntegratedHandler`), `AgentEvaluation` |
@@ -145,8 +146,8 @@ Agents and policies observe, decide, and emit events — they never directly mut
 |---|---|---|---|
 | `ObservedMarketPrice` | External/environmental market signal — what the broader market says the product is worth, or what comparable products are being offered for. **Not implemented**: reserved for a future external-market/environment domain. Do not use this name for the firm's own price. | Future environment/market domain | — |
 | **OfferPrice** | The simulated firm's current asking price — mutable commercial state controlled by pricing policy/agents; what the demand model actually responds to today. | Economy/Pricing (`PricingState`) | Mutable — changes on `PriceChange` events |
-| **OrderPrice** (unit price) | The price agreed when a specific order was created — `OfferPrice` at that instant, frozen. | Immutable order/transaction data, captured on the `OrderCreation` event and carried by the order/job for its lifetime | Immutable once the order exists |
-| **OrderValue** | `quantity × OrderPrice` for one order. | Derived from the order, from the moment it's created | Derived (not separately mutated) |
+| **OrderPrice** (unit price) | The price agreed when a specific order was created — `OfferPrice` at that instant, frozen. | Immutable `Order`, captured at `OrderCreation`; `JobView` may project it for compatibility | Immutable once the order exists |
+| **OrderValue** | `quantity × OrderPrice` for one order. | Derived by immutable `Order` | Derived (not separately mutated) |
 | **CompletedSalesValue** | The sum of `OrderValue` for orders that have completed production/fulfillment. | Factory/operational KPI | Accumulates as orders complete, using each order's own `OrderPrice` |
 | Revenue | Reserved terminology for a future finance/accounting domain (recognition policy, receivables, deferred revenue, etc.) | Not currently modeled | — |
 
@@ -200,14 +201,14 @@ No settlement pricing, indexed contracts, rebates, or discounts are introduced b
 
 This is a deliberate **product decision, not sophistication in accounting**: `CompletedSalesValue` is an operational/commercial KPI (how much value has this factory shipped), computed from completed orders' own agreed prices. It answers "what commercial value has completed production?" — a different question from "what has Finance recorded as sales under the active financial policy?", covered next. Concepts such as configurable revenue-recognition policy, tax, depreciation, or multi-currency remain future scope — but the domain that would own them, Finance, is established now, deliberately minimal. See the next section.
 
-`CompletedSalesValue` and `completedSales` (the count) are **stored incrementally, not derived on read** — `FactoryHandler` increments both fields when a job completes, rather than summing `jobs.orderValue()` over completed jobs each time they're queried. That makes them a cached aggregate with an invariant that must hold at every point in the simulation:
+`CompletedSalesValue` and `completedSales` (the count) are **stored incrementally, not derived on read** — `FactoryHandler` increments both fields when a job completes, rather than scanning every completed job/order pair each time they're queried. That makes them a cached aggregate with an invariant that must hold at every point in the simulation:
 
 ```text
-CompletedSalesValue = Sum(orderValue(j) for j in jobs where j.status == Completed)
+CompletedSalesValue = Sum(orderValue(order(j)) for j in jobs where j.status == Completed)
 completedSales      = Count(j in jobs where j.status == Completed)
 ```
 
-This is a deliberate performance choice (O(1) reads instead of an O(jobs) scan on every snapshot/KPI query), not a second source of truth by accident — but caching invites exactly that risk if the increment site and the completion condition it mirrors ever drift apart. `FactoryHandlerTest.completedSalesValueAndCountEqualTheSumAndCountOfCompletedJobs` locks the invariant down as an executable fact by independently recomputing both sides via `jobsView()` and asserting equality, so a future change that increments in the wrong place (or under the wrong condition) fails a test rather than silently producing two disagreeing truths.
+`JobView.orderValue()` remains a compatibility projection of the referenced immutable order, so existing snapshot/KPI code can still recompute the same invariant without duplicating commercial state inside `Job`. `FactoryHandlerTest.completedSalesValueAndCountEqualTheSumAndCountOfCompletedJobs` locks the invariant down as an executable fact, so a future change that increments in the wrong place (or under the wrong condition) fails a test rather than silently producing two disagreeing truths.
 
 ### What should trigger architectural review
 
@@ -243,7 +244,7 @@ FINANCIAL TRUTH
 "That completion caused these ledger postings."
 ```
 
-- **Commercial truth** — the terms a transaction was agreed under (`OrderPrice`, `OrderValue`, from the "Pricing, orders, and money" section above). Owned by the order itself, immutable once created.
+- **Commercial truth** — the terms a transaction was agreed under (`OrderPrice`, `OrderValue`, from the "Pricing, orders, and money" section above). Owned by the immutable accepted order itself.
 - **Operational truth** — what physically/operationally happened (a job moved through routing steps, a machine went offline, an order finished production). Owned by `FactoryHandler` and peers. Operational domains **emit facts**; they do not interpret them financially.
 - **Financial truth** — the financial consequence of an operational fact, under the active financial policy. Owned by Finance. Finance **owns the financial interpretation** of facts operational domains emit; it does not infer them by inspecting operational state.
 
@@ -304,7 +305,7 @@ over `FinanceHandler` reaching into `Factory.jobs.completedJobs()` to guess at t
 
 ### A first-class `OrderCompleted` event
 
-`TaskEnd` means "a production step finished" — a different claim from "the order fulfilled its operational lifecycle," which is what Finance (and any operational KPI/projection) actually needs. When `FactoryHandler` detects `job.isComplete()`, it schedules a new `OrderCompleted` event (in addition to updating its own state) carrying the minimal immutable facts a downstream consumer needs to interpret the transaction — an order identifier, product, quantity, and unit price. `OrderValue` is deliberately **not** duplicated onto the event since it's a trivial, guaranteed derivation (`quantity x unitPrice`); carrying it too would just be another consistency invariant to maintain for no benefit. `FinanceHandler` reacts to `OrderCompleted`; `FactoryHandler` itself stays ignorant of what Finance does with the fact.
+`TaskEnd` means "a production step finished" — a different claim from "the order fulfilled its operational lifecycle," which is what Finance (and any operational KPI/projection) actually needs. When `FactoryHandler` detects `job.isComplete()`, it schedules an `OrderCompleted` event (in addition to updating its own state) carrying the current event-contract correlation `jobId` plus the minimal immutable order facts a downstream consumer needs to interpret the transaction: product, quantity, and unit price. `OrderValue` is deliberately **not** duplicated onto the event since it's a trivial, guaranteed derivation (`quantity x unitPrice`); carrying it too would just be another consistency invariant to maintain for no benefit. Factory now has a distinct `OrderId`, but migrating externally visible completion events from the established `jobId` correlation field to explicit order identity is deferred to the later workload/event-contract slice rather than being slipped into this behavior-preserving refactor. `FinanceHandler` reacts to `OrderCompleted`; `FactoryHandler` itself stays ignorant of what Finance does with the fact.
 
 ### A minimal double-entry ledger, not an accounting framework
 
@@ -313,7 +314,7 @@ Finance uses a minimal double-entry representation rather than ad-hoc accumulato
 **Money representation**: `double` is not an appropriate representation for ledger amounts — a balance invariant (`debits == credits`) should not rely on floating-point epsilon comparisons. The boundary:
 
 - Economic model calculations (`PricingState`, `DemandModel`) keep using `double` — no reason to destabilize already-tested code for values that were never meant to be exact currency. This is safe for Arcogine's determinism contract specifically because `double` arithmetic is IEEE-754 deterministic given a fixed operation order — same seed, same sequence of operations, same bits, every run. What `double` doesn't give you is *exact decimal equality*, which only matters where something actually checks it as an invariant — nothing does in the economic model.
-- Commercial transaction creation (`OrderPrice`/`OrderValue`, the `OrderCompleted` event) also keeps `double` for the same reason — changing this would ripple through `Job`, `FactoryHandler`, and their tests for a value that isn't yet entering a balance-checked ledger.
+- Commercial transaction creation (`OrderPrice`/`OrderValue`, the immutable `Order`, and the `OrderCompleted` event) also keeps `double` for the same reason — changing this would ripple through accepted-order construction, `FactoryHandler`, Finance's event boundary, and their tests for a value that isn't yet entering a balance-checked ledger.
 - The Finance ledger itself (`Posting`/`JournalEntry` amounts) uses `BigDecimal` from the start, converting at the `FinanceHandler` boundary (where an event's `double` orderValue becomes a precise `BigDecimal` posting amount) — this is the one place the balance invariant is actually checked, so it's the one place that needs exactness.
 
 This keeps the conversion boundary in exactly one place instead of threading `BigDecimal` through code that doesn't need it yet.
@@ -329,8 +330,8 @@ This keeps the conversion boundary in exactly one place instead of threading `Bi
 | `ObservedMarketPrice` | External market signal | Future environment/market domain; not currently required |
 | `OfferPrice` | Firm's current asking price | Economy/Pricing (`PricingState`) |
 | Demand state | — | Economy (`DemandModel`) |
-| `OrderPrice` | Price agreed for an accepted order | Commercial/transaction fact — carried into Factory with the order (currently on `Job`), not conceptually owned by Factory |
-| `OrderValue` | Quantity × `OrderPrice` | Derived from `OrderPrice` (currently `Job.orderValue()`) |
+| `OrderPrice` | Price agreed for an accepted order | Immutable Factory `Order` created from the commercial `OrderCreation` fact |
+| `OrderValue` | Quantity × `OrderPrice` | Derived by `Order.orderValue()` |
 | Production state (machines, jobs, queues, job status) | — | Factory (`FactoryHandler`) |
 | Order completion | Operational fact | Factory-owned, expressed as `OrderCompleted` |
 | `CompletedSalesValue`, `completedSales` | Cached aggregates, not derived-on-read — see note below | Factory (`FactoryHandler`), incremented on completion |
@@ -395,12 +396,13 @@ The Java codebase follows a **modular monolith** pattern with Gradle multi-modul
 
 ```text
 product/
-├── types/                DES primitives: SimTime, MachineId, ProductId, JobId,
+├── types/                DES primitives: SimTime, MachineId, ProductId, OrderId, JobId,
 │                         Quantity, SimError, scenario config records
 ├── simulation/           DES engine: Scheduler, Event, EventHandler interface,
 │                         CompositeHandler, EventLog, KPIs, SimRunner, ScenarioLoader
 ├── domains/
-│   ├── factory/          Factory domain: Machine, Job, Routing, FactoryHandler
+│   ├── factory/          Factory domain: Machine, immutable Order, mutable Job, Routing,
+│   │                     FactoryHandler
 │   ├── economy/          Economic layer: PricingState, DemandModel
 │   └── finance/          Finance domain: FinanceHandler, Ledger, Account, Posting,
 │                         JournalEntry, FinanceObservation — see "Commercial,

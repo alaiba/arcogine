@@ -1,43 +1,36 @@
 package com.arcogine.factory.jobs;
 
+import com.arcogine.factory.orders.Order;
 import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.Optional;
 
+/** Mutable production execution state for one accepted {@link Order}. */
 public class Job implements JobView {
 
     private final JobId id;
-    private final ProductId productId;
-    private final long quantity;
+    private final Order order;
     private JobStatus status;
     private int currentStep;
     private final int totalSteps;
     private MachineId currentMachine;
     private final SimTime createdAt;
     private SimTime completedAt;
-    private final double unitPrice;
 
-    public Job(
-            JobId id,
-            ProductId productId,
-            long quantity,
-            int totalSteps,
-            SimTime createdAt,
-            double unitPrice) {
+    public Job(JobId id, Order order, int totalSteps, SimTime createdAt) {
         this.id = id;
-        this.productId = productId;
-        this.quantity = quantity;
+        this.order = order;
         this.status = JobStatus.Queued;
         this.currentStep = 0;
         this.totalSteps = totalSteps;
         this.currentMachine = null;
         this.createdAt = createdAt;
         this.completedAt = null;
-        this.unitPrice = unitPrice;
     }
 
     public void start(MachineId machineId) {
@@ -84,13 +77,20 @@ public class Job implements JobView {
     }
 
     @Override
-    public ProductId productId() {
-        return productId;
+    public OrderId orderId() {
+        return order.id();
     }
 
+    /** Compatibility projection from immutable order intent; Job does not own this fact. */
+    @Override
+    public ProductId productId() {
+        return order.productId();
+    }
+
+    /** Compatibility projection from immutable order intent; Job does not own this fact. */
     @Override
     public long quantity() {
-        return quantity;
+        return order.quantity();
     }
 
     @Override
@@ -123,15 +123,15 @@ public class Job implements JobView {
         return completedAt;
     }
 
-    /** The price agreed when this order was created. Immutable for the life of the order. */
+    /** Compatibility projection from immutable order intent; Job does not own this fact. */
     @Override
     public double unitPrice() {
-        return unitPrice;
+        return order.unitPrice();
     }
 
-    /** OrderValue: quantity x the order's own agreed unit price. */
+    /** Compatibility projection from immutable order intent; Job does not own this fact. */
     @Override
     public double orderValue() {
-        return quantity * unitPrice;
+        return order.orderValue();
     }
 }

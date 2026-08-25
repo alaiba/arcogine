@@ -1,8 +1,8 @@
 package com.arcogine.factory.jobs;
 
+import com.arcogine.factory.orders.Order;
 import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
-import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
@@ -19,10 +19,9 @@ public class JobStore {
         this.nextId = 1;
     }
 
-    public JobId createJob(
-            ProductId productId, long quantity, int totalSteps, SimTime createdAt, double unitPrice) {
+    public JobId createJob(Order order, int totalSteps, SimTime createdAt) {
         JobId id = new JobId(nextId++);
-        jobs.add(new Job(id, productId, quantity, totalSteps, createdAt, unitPrice));
+        jobs.add(new Job(id, order, totalSteps, createdAt));
         return id;
     }
 

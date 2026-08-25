@@ -153,16 +153,37 @@ Performance observation
 
 These are conceptual responsibilities, not accepted Java type names.
 
-### 5.2 Current problem
+### 5.2 Current state and remaining problem
 
-The current runtime compresses several concerns into `Job`:
+The first behavior-preserving Gate 1 slice now separates accepted order intent from mutable execution:
 
-- immutable order-side facts and mutable execution state live in one object;
-- one order effectively corresponds to one execution object;
+```text
+Order (immutable)
+    OrderId
+    product
+    quantity
+    createdAt
+    unitPrice
+        |
+        v
+Job (mutable execution)
+    JobId
+    referenced OrderId
+    current step
+    assignment
+    timing/status
+```
+
+`FactoryHandler` persists an immutable `Order` before creating its execution `Job`; `Job` no longer owns product, quantity, or price fields. Existing `JobView` product/quantity/price/value getters remain compatibility projections delegated to the referenced order so the current API/UI wire contract stays unchanged.
+
+Gate 1 is still incomplete because:
+
+- one accepted order still corresponds to exactly one execution job;
 - quantity primarily affects commercial value rather than proportional production work;
-- work originates through the economy demand loop rather than an explicit factory workload contract.
+- work still originates through the economy demand loop rather than an explicit factory workload contract;
+- the existing `OrderCompleted` event retains `jobId` as its correlation field for compatibility; explicit order identity in external event contracts remains deferred to the later workload/event-contract slice.
 
-The canonical-model spike should be completed before this refactor so definition-model changes and execution-model changes do not happen at the same time.
+The canonical-model seam is already complete enough for this runtime work, so definition-model changes do not need to be mixed into the remaining Gate 1 refactor.
 
 ### 5.3 Required behavior
 
@@ -184,6 +205,8 @@ Gate 1 is satisfied when:
 6. Order completion is derived from executed work and exposed through a supported observation.
 7. The same model version, seed, and workload produce the same ordered result.
 8. Existing economy-driven scenario behavior remains covered or is migrated deliberately.
+
+Criterion 4 is now established by the behavior-preserving `Order`/`Job` split. The gate remains open until the remaining criteria, especially explicit workload and proportional quantity execution, are proven headlessly.
 
 ## 6. Gate 2 — Capability-based deterministic dispatch
 
@@ -556,13 +579,14 @@ Scenario factory semantics
 
 ### 13.2 Runtime delivery order
 
-1. Production-order/work-item separation and explicit workload.
-2. Quantity consumes proportional production work.
-3. Capability/eligibility-driven deterministic dispatch.
-4. Consumer-neutral session and bounded advancement.
-5. Stable runtime observations and event envelopes.
-6. Spatial transfer consequences from published layout.
-7. Public-contract, recovery, persistence, and packaging hardening.
+1. Separate accepted immutable order intent from mutable job execution. **Implemented as the first behavior-preserving Gate 1 slice.**
+2. Add explicit workload submission independent of the economy/pricing loop.
+3. Make quantity consume proportional production work and allow multiple work items/jobs per order where required.
+4. Capability/eligibility-driven deterministic dispatch.
+5. Consumer-neutral session and bounded advancement.
+6. Stable runtime observations and event envelopes.
+7. Spatial transfer consequences from published layout.
+8. Public-contract, recovery, persistence, and packaging hardening.
 
 ### 13.3 First runtime milestone
 

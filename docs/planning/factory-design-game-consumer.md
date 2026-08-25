@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** A separate, single-player factory-design game consuming Arcogine as its production engine  
 > **Authority:** Planning only; this document does not describe current capability or accepted architecture  
-> **Dependency:** Game implementation begins only after D1-D4 in [Factory Design Capability](factory-design-capability.md) and Gates 1-5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied  
+> **Dependency:** Game implementation begins only after the model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) and Gates 1-5 in that same document are satisfied  
 > **Related:** [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Initiative summary
@@ -61,7 +61,7 @@ A CLI command, JUnit harness, or thin reference consumer used to prove either up
 
 Before game implementation starts, Arcogine must have satisfied:
 
-1. D1-D4 of Factory Design Capability: canonical model, validation, publication/provenance, and deterministic instantiation.
+1. The model-seam entry gate (§1.1 of Factory Simulation Engine Readiness): the behavior-preserving canonical-model seam, narrower than the full D1-D4 acceptance criteria.
 2. Gate 1: explicit production workload and separate execution semantics.
 3. Gate 2: capability/eligibility-based deterministic resource dispatch.
 4. Gate 3: consumer-neutral simulation session with bounded advancement.
@@ -241,7 +241,7 @@ Canonical model, order/work semantics, dispatch, session behavior, event envelop
 
 Game implementation may begin when all of the following are true:
 
-1. D1-D4 in [Factory Design Capability](factory-design-capability.md) are satisfied.
+1. The model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) is satisfied.
 2. Gates 1-5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied.
 3. A game-like draft can project into the canonical model and publish a `FactoryModelVersion` without using mutable runtime classes.
 4. The headless capacity benchmark proves equivalent-resource dispatch and exposes the resulting bottleneck.

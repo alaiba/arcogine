@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Cross-consumer factory-design semantics and their boundary with scenario configuration and runtime behavior  
 > **Authority:** Proposed architecture; current implementation remains documented by the architecture overview and product/reference docs until this direction is accepted and implemented  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revisions-and-change-management.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md)
 
 ## 1. Architectural position
 
@@ -138,7 +138,7 @@ FactoryRuntime
 
 These need not all become separate persistence entities or modules initially.
 
-Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it a stable, content-derived fingerprint. It is not yet a **controlled revision** entity — there is no persistent revision repository, lineage, approval state, or external change reference. [ADR-0004](decisions/0004-model-identity-revisions-and-change-management.md) draws that distinction; see section 11 below for what the fingerprint does and does not carry.
+Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it a stable, content-derived fingerprint. It is not yet a **controlled revision** entity — there is no persistent revision repository, lineage, approval state, or external change reference. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) draws that distinction; see section 11 below for what the fingerprint does and does not carry.
 
 ### 4.1 What belongs in the canonical model
 
@@ -228,7 +228,7 @@ Deployment
 
 That bridge preserves provenance and authority; it does not turn editor operations into simulation events.
 
-Approval may be owned externally: Arcogine can produce the technical assessment evidence a candidate needs (validation results, semantic diff, simulation/verification outcomes) without itself hosting the request/review/approval workflow. See [ADR-0004](decisions/0004-model-identity-revisions-and-change-management.md) and section 11.1 below.
+Approval may be owned externally: Arcogine can produce the technical assessment evidence a candidate needs (validation results, semantic diff, simulation/verification outcomes) without itself hosting the request/review/approval workflow. See [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) and section 11.1 below.
 
 ## 7. Cross-consumer ownership
 
@@ -241,7 +241,7 @@ Approval may be owned externally: Arcogine can produce the technical assessment 
 | Structured executability validation | Shared Arcogine model/design capability |
 | Semantic model identity (fingerprint) | Shared Arcogine model infrastructure |
 | Controlled revision lifecycle and lineage (deferred) | Arcogine, once a concrete requirement justifies it |
-| Change request/review/approval/scheduling workflow | Arcogine or an external change-management system (e.g. Jira), referenced not depended on — see [ADR-0004](decisions/0004-model-identity-revisions-and-change-management.md) |
+| Change request/review/approval/scheduling workflow | Arcogine or an external change-management system (e.g. Jira), referenced not depended on — see [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) |
 | Model publication and runtime instantiation | Shared Arcogine boundary |
 | Runtime dispatch/queues/work/transfers | Arcogine runtime |
 | Semantic model comparison/diff | Cross-consumer candidate; share when justified |
@@ -335,7 +335,7 @@ Aesthetic preference
 
 A published model version is the bridge between design and downstream contexts.
 
-[ADR-0004](decisions/0004-model-identity-revisions-and-change-management.md) separates two concepts that publication identity must not bundle together:
+[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) separates two concepts that publication identity must not bundle together:
 
 - **Semantic fingerprint** — a deterministic identity derived from canonical model content. Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the minimum publication identity required today.
 - **Controlled revision** — a change that has been requested, reviewed, approved, and deployed through an accountable process, with lineage back to a prior revision, and optionally a stable external change reference (for example, a Jira issue key). This is deferred capability, not part of today's publication boundary.

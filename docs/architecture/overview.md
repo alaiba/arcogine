@@ -482,7 +482,11 @@ This determinism contract is scoped to simulation, replay, and verification cont
 
 ## Factory Model Identity (current state)
 
-Today's `FactoryModelVersion` (see [ADR-0003](decisions/0003-canonical-factory-model-boundary.md)) carries content-derived semantic identity: publishing it validates the design and derives a stable fingerprint from its canonical content. There is no persistent revision repository, controlled-revision lineage, approval workflow, or external change-management integration implemented yet. [ADR-0004](decisions/0004-model-identity-revisions-and-change-management.md) records the intended future distinction between that fingerprint and a separate, deferred controlled-revision concept, but nothing beyond the fingerprint exists in the current codebase.
+Scenario factory semantics are instantiated through an implemented canonical-model seam: `FactoryModel` (validated) → `FactoryModelVersion` (immutable, published) → `FactoryRuntimeAssembler` (deterministic runtime instantiation). See [ADR-0003](decisions/0003-canonical-factory-model-boundary.md) for the accepted boundary this implements.
+
+`FactoryModelVersion.contentHash()` derives a deterministic, content-based identity from the model's canonical facts, and publication validates the design before it can be instantiated. This hash is presently an internal, in-memory identity policy — sufficient to attribute a runtime to the model it came from within one process — not yet a persisted, public, or cross-process fingerprint contract; canonicalization, ordering semantics (today's encoding hashes `resources`/`operations`/`products` in list order), algorithm/format versioning, and a compatibility guarantee are unresolved. `IntegratedHandler` already carries this hash as runtime provenance; `SimResult` does not yet.
+
+There is no persistent revision repository, controlled-revision lineage, approval workflow, or external change-management integration implemented. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) records the intended future distinction between the semantic fingerprint and a separate, deferred controlled-revision concept, but nothing beyond the current-content hash exists in the codebase today.
 
 ## API Layer
 

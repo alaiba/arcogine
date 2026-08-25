@@ -1,4 +1,4 @@
-# ADR-0004: Model identity, controlled revisions, and change management
+# ADR-0004: Model identity, revision lineage, and external change control
 
 Status: Accepted
 Date: 2026-08-25
@@ -14,9 +14,11 @@ That deferral is no longer safe to leave unstated, because two different ideas k
 
 Requirements documents ([`factory-design.md`](../factory-design.md) section 11, [`factory-design-capability.md`](../../planning/factory-design-capability.md) D3) currently bundle "model ID, revision/version, schema version, content hash, publication provenance" into one minimum-identity list. That bundling implies persistent revision lineage, approval state, and an external ticketing key are needed before Arcogine can publish a model at all. They are not: the current implementation need only prove content-derived semantic identity.
 
-Separately, Arcogine is very likely to need an integration with an external organizational change-management system — Jira is the expected first case — once controlled revisions, approvals, and deployment of design changes into real operations become real requirements. That integration is a reference relationship, not a domain dependency: Arcogine must not require a ticketing system's workflow, schema, or terminology to determine what a model *is*.
+This distinction is not hypothetical: [`FactoryModelVersion.contentHash()`](../../../product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelVersion.java) already exists (introduced alongside the canonical `FactoryModel` in the model-boundary implementation), and its own Javadoc is explicit that it is "an internal, in-memory identity policy... not a persisted, public, or cross-process compatibility guarantee." Meanwhile `IntegratedHandler` already carries that content hash as runtime provenance, but `SimResult` does not — so "runtime results identify their source model" is true at the handler layer today and not yet true at the result layer. Any document claiming D3/D4 are simply "done" or that the content hash is already a durable fingerprint contract would overstate what has actually shipped.
 
-This ADR draws that boundary explicitly so that fingerprint work, a future revision repository, and any future Jira (or equivalent) integration can be implemented without conflating semantic equality with change accountability.
+Separately, Arcogine is very likely to need an integration with an external organizational change-management system once controlled revisions, approvals, and deployment of design changes into real operations become real requirements. That integration is a reference relationship, not a domain dependency: Arcogine must not require any particular ticketing system's workflow, schema, or terminology to determine what a model *is*. Several such systems exist (issue trackers, PLM/QMS tools, ITSM platforms); this ADR does not pick one, and no example used below should be read as narrowing the field.
+
+This ADR draws that boundary explicitly so that fingerprint work, a future revision repository, and any future external change-management integration can be implemented without conflating semantic equality with change accountability.
 
 Related analysis and plans:
 
@@ -33,6 +35,17 @@ Arcogine treats model identity and change management as related but distinct con
 A `FactoryModelVersion`'s identity is derived from its canonical semantic content: given equivalent canonical facts, Arcogine derives equivalent identity — a **model fingerprint** — deterministically and without reference to consumer presentation metadata, authorship, timing, or external systems.
 
 Two models with the same fingerprint are the same semantic design. Fingerprint equality is a content-derived fact Arcogine can compute unilaterally; it never requires an external system to establish.
+
+Semantic identity and controlled revision identity are distinct. Arcogine may determine semantic identity from canonical model content. A controlled revision represents a historical configuration-management event and may reference an external change-management record. Equal semantic content may therefore occur in distinct controlled revisions.
+
+**The current `FactoryModelVersion.contentHash()` demonstrates content-derived identity but does not yet constitute Arcogine's durable cross-process fingerprint contract.** It is an in-memory, per-process identity policy sufficient to attribute a runtime or result to the model it was instantiated from. Before any document or consumer may rely on it as a durable, persisted, or cross-process-stable fingerprint, the following must be decided and specified:
+
+- **canonicalization rules** — which representation of the model content is hashed, and why that representation is unambiguous;
+- **ordering semantics** — today's canonical encoding hashes `resources`, `operations`, and `products` in list order (only `eligibleResources`, a `Set`, is explicitly sorted before hashing); whether `[A, B]` and `[B, A]` are the same factory design or different ones is a semantic decision that has not yet been made, and the hash must not be treated as a stable identity contract until it has;
+- **algorithm/format versioning** — whether the fingerprint format is itself versioned, so a future change to the hashing scheme doesn't silently redefine identity for previously published models;
+- **compatibility guarantee** — what, if anything, is promised about a fingerprint computed by one process/version remaining comparable to one computed by another.
+
+Until those are specified, `contentHash()` remains a provisional, internal policy — useful for the invariants it already satisfies (attributing one process's runtime/result to the model it came from), not yet a promise of durable semantic identity.
 
 ### Controlled revision identity is a separate, future concept
 
@@ -56,13 +69,9 @@ Arcogine is authoritative for the model itself, the semantic fingerprint, semant
 
 The organizational workflow around a change — who requested it, why, who reviewed it, who approved it, and when it is scheduled — may be owned by a system external to Arcogine. Arcogine does not require this workflow to be modeled inside the factory domain, and does not become responsible for request intake, review routing, approval gating, or scheduling merely because a controlled-revision concept exists.
 
-### Jira is the expected first integration, not a domain dependency
+### External change references link revisions and evidence to an external system
 
-Jira (or an equivalent issue tracker) is the anticipated first external change-management system Arcogine integrates with. That expectation must not leak into domain modeling: no domain type, event, or observation may assume Jira's presence, schema, or terminology. The relationship is expressed only as a reference.
-
-### External change references link revisions and evidence to Jira
-
-A controlled model revision, once that concept exists, may carry a stable external reference (for example, a Jira issue key) pointing at the change-management record that authorized it. That reference is metadata attached to the revision; it is not consulted to determine model content, fingerprint, or semantic behavior, and Arcogine's runtime/simulation surfaces do not need to resolve or understand it.
+A controlled model revision, once that concept exists, may carry a stable external reference (for example, an issue-tracker key) pointing at the change-management record that authorized it. That reference is metadata attached to the revision; it is not consulted to determine model content, fingerprint, or semantic behavior, and Arcogine's runtime/simulation surfaces do not need to resolve or understand it. Arcogine does not adopt any particular external system's schema, workflow states, or terminology into its own domain model to support this reference — an issue tracker, a PLM/QMS system, or an ITSM platform are all equally valid on the other side of it.
 
 ### Conformance, approvals, runs, and deployments remain separate artifacts
 
@@ -81,8 +90,8 @@ Arcogine
 
                  ↕ stable references
 
-External change-management system
-    e.g. Jira
+External change-management authority
+    e.g. an issue tracker, PLM/QMS system, or ITSM platform
 
     request
     rationale
@@ -100,30 +109,30 @@ This mirrors what the current planning documents literally say and would be simp
 
 It was rejected because it forces persistent lineage, approval state, and an implied external-system key onto the very first publication of a model, long before any concrete revision-lifecycle or change-management requirement exists — repeating the mixing ADR-0003 already warned against, one level down.
 
-### Model Jira concepts (issue, transition, approval) directly inside the factory domain
+### Model an external change-management system's concepts (issue, transition, approval) directly inside the factory domain
 
 This would make change-management state queryable alongside the model.
 
-It was rejected because it would make Arcogine's domain depend on a specific ticketing product's schema and workflow semantics, contradicting the Product Charter's domain-boundary discipline and locking future integrations (a different tracker, an internal approval tool) out without a domain rewrite.
+It was rejected because it would make Arcogine's domain depend on one specific external product's schema and workflow semantics, contradicting the Product Charter's domain-boundary discipline and locking future integrations (a different tracker, an internal approval tool) out without a domain rewrite.
 
 ### Defer this distinction until a revision repository is actually implemented
 
 This would avoid writing an ADR before there is code to constrain.
 
-It was rejected because the ambiguity is already visible in current planning prose (D3's identity list) and in `factory-design.md` section 11, and leaving it unresolved risks the fingerprint implementation and a future revision/Jira integration being designed against conflated requirements.
+It was rejected because the ambiguity is already visible in current planning prose (D3's identity list) and in `factory-design.md` section 11, and leaving it unresolved risks the fingerprint implementation and a future revision/change-management integration being designed against conflated requirements.
 
 ## Consequences
 
 As a result of this decision:
 
-- fingerprint work can proceed against a precise, minimal target: content-derived semantic identity, nothing else;
+- fingerprint work can proceed against a precise, minimal target: content-derived semantic identity, nothing else — with canonicalization, ordering, versioning, and compatibility guarantees specified before `contentHash()` (or a successor) is promoted to a durable fingerprint contract;
 - a future controlled-revision capability (persistent repository, lineage, approval, deployment tracking) can be designed and justified independently, triggered by concrete need rather than assumed upfront;
-- a future Jira (or equivalent) integration attaches as a stable external reference on a revision, never as a domain dependency;
-- planning and architecture documents must stop presenting "model ID/revision/hash/provenance" as one bundled minimum requirement;
+- a future external change-management integration attaches as a stable external reference on a revision, never as a domain dependency, and is not tied to any one vendor or product;
+- planning and architecture documents must stop presenting "model ID/revision/hash/provenance" as one bundled minimum requirement, and must not describe D3/D4 as uniformly complete when result-level provenance (e.g. `SimResult`) does not yet carry it;
 - conformance assessments, approvals, simulation runs, and deployments remain distinct, separately referenceable artifacts;
-- current-state documentation (`overview.md`) should describe only what exists today: content-derived semantic identity, with no revision repository or change-management integration yet implemented.
+- current-state documentation (`overview.md`) should describe only what exists today: content-derived semantic identity with an explicitly provisional durability policy, and no revision repository or change-management integration yet implemented.
 
-The cost is an additional distinction to keep straight when writing about model identity. That cost is intentional: it prevents a ticketing product's workflow from becoming an accidental dependency of what a model *is*.
+The cost is an additional distinction to keep straight when writing about model identity. That cost is intentional: it prevents an external change-management product from becoming an accidental dependency of what a model *is*, and prevents an in-memory identity policy from being read as a stronger guarantee than it currently makes.
 
 ## Charter alignment
 

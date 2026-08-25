@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Establish a cross-consumer factory-design capability over Arcogine's canonical production-system model  
 > **Authority:** Planning only; this document defines delivery slices and readiness criteria, not current capability or accepted architecture  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Purpose
 
@@ -73,11 +73,36 @@ D4  Deterministic runtime instantiation
 D5  Semantic comparison (after concrete need)
     ↓
 D6  Shared draft lifecycle (deferred until justified)
+    ↓
+D7  External change-control integration (deferred until justified)
 ```
 
-D1-D4 form the immediate implementation sequence. D5 and D6 are explicitly deferred and are not prerequisites for engine runtime work or a first game consumer.
+D1-D4 form the immediate implementation sequence. D5, D6, and D7 are explicitly deferred and are not prerequisites for engine runtime work or a first game consumer.
 
 The initial spike should establish the model seam without simultaneously redesigning order execution, dispatch policy, spatial behavior, or the public HTTP contract.
+
+### 3.1 Implementation status
+
+The canonical `FactoryModel`/`FactoryModelVersion` seam has landed (see `product/domains/factory/src/main/java/com/arcogine/factory/model/`), so D1-D4 are no longer wholly proposed, but they are not uniformly complete either. This table reflects actual status rather than treating the sequence as either all-done or all-future:
+
+```text
+D1 Canonical model                  IMPLEMENTED
+D2 Executability validation         IMPLEMENTED, internal contract
+D3 Publication / semantic identity  PARTIAL
+    immutable publication           implemented
+    content hash                    implemented, provisional policy
+    durable fingerprint contract    not yet — see ADR-0004
+    controlled revision identity    deferred
+D4 Runtime instantiation            PARTIAL
+    runtime from published model    implemented
+    handler provenance              implemented (IntegratedHandler)
+    result/run provenance           outstanding (SimResult has none)
+```
+
+Two callouts worth being explicit about:
+
+- `FactoryModelVersion.contentHash()` exists and is deterministic, but its own Javadoc describes it as an internal, in-memory identity policy, not a persisted/public/cross-process compatibility guarantee. See [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) for what remains to be specified (canonicalization, ordering semantics, algorithm/format versioning, compatibility guarantee) before it can be promoted to a durable fingerprint contract.
+- Model provenance currently reaches `IntegratedHandler` but not `SimResult`. "Runtime observations/results identify the source model version" (the D3/D4 acceptance criteria below, and the equivalent criterion in the [engine-readiness plan](factory-simulation-engine-readiness.md)) is true at the handler layer today and still outstanding at the result layer.
 
 ## 4. Current-model migration strategy
 
@@ -244,7 +269,7 @@ Arcogine does not need to own the first consumer's draft persistence to provide 
 
 ### 7.2 Minimum identity
 
-Per [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md), the initial publication boundary requires only a deterministic content-derived **fingerprint** and enough provenance to attribute a downstream run to the model:
+Per [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), the initial publication boundary requires only a deterministic content-derived **fingerprint** and enough provenance to attribute a downstream run to the model:
 
 ```text
 fingerprint (deterministic, content-derived)
@@ -355,11 +380,32 @@ Promote drafts into an Arcogine-owned shared lifecycle only when a second concre
 
 Possible triggers include industrial design plus optimizer/game authoring, human/agent co-design, branching real production changes, or multi-user design sessions.
 
-Arcogine is not required to own approval or organizational change-management workflow as part of this capability. Shared drafts/collaboration and organizational change management (per [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md)) are separate concerns; the latter may remain owned by an external system such as Jira.
+D6 is scoped to shared *authoring* mechanics:
+
+- shared draft persistence;
+- branching/merge;
+- multi-user/human-agent co-authoring;
+- comments/editor collaboration.
+
+D6 does not include approval or organizational change-management workflow — that is D7. Shared drafts/collaboration and organizational change management (per [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md)) are separate concerns that historically got bundled together; they no longer are.
 
 Until a trigger applies, Arcogine does not need generic undo/redo, draft branching, merge, collaboration cursors, edit locks, comments, workspace permissions, or autosave semantics.
 
-## 11. Constraint classification
+## 11. D7 — External change-control integration
+
+Build a controlled-revision/change-control integration only when a concrete trigger applies: a persistent model repository is needed, an external change-management integration is needed, an approval/deployment workflow is needed, audit requirements demand recorded change history, or branching/lineage across concurrent design efforts is needed.
+
+D7 covers:
+
+- controlled revision lineage (which revision followed which, and why);
+- a stable external change reference attached to a revision (for example, an issue-tracker key) — the external system is not fixed by this plan; an issue tracker is one plausible example, not a requirement;
+- the technical evidence package (validation results, semantic diff, simulation/verification outcomes) that a candidate change needs for review;
+- the approval/authorization hand-off — Arcogine supplies the evidence; the external system may own the approval decision itself;
+- deployment linkage back to the revision that was deployed.
+
+D7 does not mean building a concrete external integration now. It means the plan has a defined slot for that work so it isn't designed ad hoc when a real external change-management need shows up, and so it isn't accidentally folded into D6's shared-authoring scope or D3's publication identity.
+
+## 12. Constraint classification
 
 Every design rule must be classified before implementation.
 
@@ -379,7 +425,7 @@ Player construction budget           -> game consumer
 Machine unlock level                 -> game consumer
 ```
 
-## 12. Interaction with engine readiness
+## 13. Interaction with engine readiness
 
 The engine-readiness plan consumes published model versions rather than treating runtime state as the design model.
 
@@ -407,7 +453,7 @@ Performance
 
 Where a concern crosses the boundary, the model owns the input semantics and runtime owns their changing consequences. For example, model-side position/footprint belong to factory design; transfer-in-progress state and transfer events belong to runtime.
 
-## 13. Factory-design game integration
+## 14. Factory-design game integration
 
 The game may own an editor-specific `FactoryDraft`, undo history, camera, palettes, previews, and game rules.
 
@@ -427,7 +473,7 @@ Arcogine runtime
 
 The game must not implement a parallel scheduler or treat its draft as the authoritative executable model.
 
-## 14. Headless acceptance path
+## 15. Headless acceptance path
 
 ### 14.1 Behavior-preserving publication test
 
@@ -450,7 +496,7 @@ The game must not implement a parallel scheduler or treat its draft as the autho
 
 Examples later include adding a capable resource, moving one resource, changing an operation requirement, or changing an engine-owned processing/transfer policy.
 
-## 15. First implementation milestone
+## 16. First implementation milestone
 
 > **Take an existing Arcogine scenario, derive a validated immutable canonical factory model from it, instantiate the existing simulation from that model, and prove the simulation result has not changed.**
 
@@ -473,9 +519,9 @@ No shared editor service is required
 
 This milestone deliberately excludes semantic diff, collaboration, generalized design workspaces, quantity/work-item redesign, capability-based dispatch behavior changes, spatial transfer behavior, public HTTP versioning, and a game UI.
 
-## 16. ADR triggers
+## 17. ADR triggers
 
-[ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md) establishes the accepted model/run/runtime boundary. [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md) establishes the accepted separation between semantic fingerprint and controlled-revision/change-management identity.
+[ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md) establishes the accepted model/run/runtime boundary. [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) establishes the accepted separation between semantic fingerprint and controlled-revision/change-management identity.
 
 Additional ADRs are warranted when implementation commits to hard-to-reverse choices about:
 
@@ -490,7 +536,7 @@ Additional ADRs are warranted when implementation commits to hard-to-reverse cho
 
 Do not create ADRs for consumer-local editor gestures or temporary UI structure.
 
-## 17. Documentation lifecycle
+## 18. Documentation lifecycle
 
 While this work is proposed, this file remains under `docs/planning/`.
 

@@ -18,12 +18,6 @@ subprojects {
     apply(plugin = "jacoco")
     apply(plugin = "checkstyle")
 
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-        }
-    }
-
     configure<org.gradle.api.plugins.quality.CheckstyleExtension> {
         toolVersion = "13.5.0"
         configDirectory.set(rootProject.layout.projectDirectory.dir("config/checkstyle"))
@@ -31,6 +25,11 @@ subprojects {
 
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
+        // Java 21 is the compatibility floor, not an exact compiler/JDK
+        // requirement. Newer JDKs (for example the JDK 25 devcontainer) may
+        // compile the project, while --release 21 prevents newer language,
+        // API, or bytecode features from leaking into the build.
+        options.release.set(21)
         // Apply strict linting to our own sources (main/test/jmh), but not to
         // JMH's machine-generated benchmark classes, whose warnings we can't fix.
         if (name != "jmhCompileGeneratedClasses") {

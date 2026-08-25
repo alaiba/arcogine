@@ -168,7 +168,7 @@ Order (immutable)
         v
 Job (mutable execution)
     JobId
-    referenced OrderId
+    referenced immutable Order
     current step
     assignment
     timing/status

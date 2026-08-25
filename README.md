@@ -71,7 +71,7 @@ Then open **http://127.0.0.1:5173**.
 Arcogine deliberately separates **supported compatibility** from the versions used by its preferred development and runtime environments:
 
 - **Java compatibility baseline:** Java 21. Java compilation uses `--release 21`, so a supported newer JDK may compile the project without allowing post-21 language features, APIs, or bytecode. CI runs on an actual JDK 21; the preferred devcontainer currently uses JDK 25.
-- **Node.js support:** `^22.22.2 || ^24.15.0 || >=26.0.0`, declared in `product/interfaces/web/package.json`. CI exercises the lowest supported Node 22 release, 22.22.2; the preferred devcontainer currently uses Node 24.
+- **Node.js support:** `^22.22.2 || ^24.15.0 || ^26.0.0`, declared in `product/interfaces/web/package.json`. CI exercises the lowest supported Node 22 release, 22.22.2; the preferred devcontainer currently uses Node 24.
 - **Runtime Java:** the API runtime image currently uses Eclipse Temurin 25 JRE. The runtime-image JDK is independent of the Java 21 build-compatibility floor.
 
 Raising a supported minimum is a deliberate repository change: update the compatibility declaration, CI floor, provisioning validation, and current documentation together. Preferred devcontainer/runtime versions may move independently as long as they remain compatible.

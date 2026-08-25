@@ -14,7 +14,7 @@ set -euo pipefail
 
 REPO_DIR="/home/user/arcogine"
 MIN_JAVA_MAJOR="21"
-SUPPORTED_NODE_RANGE="^22.22.2 || ^24.15.0 || >=26.0.0"
+SUPPORTED_NODE_RANGE="^22.22.2 || ^24.15.0 || ^26.0.0"
 
 # Capture where we were invoked from before doing anything else, including
 # before setting up logging (log path itself must not depend on the cwd).
@@ -96,7 +96,7 @@ current_node_version() {
 # Keep this deliberately small and explicit rather than installing a semver
 # utility during provisioning. It implements exactly the range declared in
 # product/interfaces/web/package.json:
-#   ^22.22.2 || ^24.15.0 || >=26.0.0
+#   ^22.22.2 || ^24.15.0 || ^26.0.0
 node_version_supported() {
   local version="$1"
   local major minor patch
@@ -114,7 +114,7 @@ node_version_supported() {
   elif (( major == 24 )); then
     (( minor >= 15 ))
   else
-    (( major >= 26 ))
+    (( major == 26 ))
   fi
 }
 

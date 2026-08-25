@@ -14,7 +14,7 @@ These are expected to hold regardless of how the implementation evolves, because
 
 These describe today's implementation choices. They are not claims about Arcogine's permanent identity — see the Product Charter's [product boundaries](/docs/product/charter.md#9-what-arcogine-is-not) for why Java, the current UI, and the current deployment model are implementation choices rather than product identity, subject to change as the product grows toward the full lifecycle described there.
 
-1. Core simulation is written in Java 25.
+1. Core simulation is written in Java with a **Java 21 language/API/bytecode compatibility baseline**. The preferred devcontainer currently uses JDK 25, and CI runs on JDK 21 to prove the supported floor; the compiler JDK and compatibility baseline are deliberately separate concerns.
 2. The headless simulation core is the current implementation's primary layer; the UI and API are additive consumers of it. This describes today's layering, not a permanent claim that Arcogine's mature product surface is UI-secondary.
 3. MVP ties factory flow to the economy loop.
 4. Support native and containerized local execution.
@@ -456,7 +456,7 @@ Handlers may schedule new events via the `Scheduler` but never reach into other 
 
 ## Type System
 
-Java 25 features map cleanly to the domain:
+Java features available within the **Java 21 compatibility baseline** map cleanly to the domain:
 
 | Concept | Java feature |
 |---------|-------------|
@@ -473,7 +473,7 @@ The simulation guarantees deterministic execution:
 
 - `java.util.Random` seeded with `rng_seed` from scenario config
 - Priority queue orders events by time, with FIFO tie-breaking
-- No floating-point non-determinism (Java 25 uses strict FP by default)
+- Java strict floating-point semantics; compilation targets the Java 21 compatibility baseline
 - No concurrent mutation of simulation state
 
 Given identical scenario TOML and the same seed, the simulation produces identical event logs, KPIs, and final state.
@@ -501,10 +501,10 @@ The HTTP API uses Spring Boot 3 with Spring MVC:
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| Language | Java 25 LTS | Records, sealed types, pattern matching |
+| Language | Java (release 21 compatibility baseline) | Records, sealed types, pattern matching |
 | Framework | Spring Boot 3.4 | HTTP server, DI, config |
 | CLI | Picocli | Command-line parsing |
-| Build | Gradle 8 (Kotlin DSL) | Multi-module build |
+| Build | Gradle 9.7 (Kotlin DSL, wrapper) | Multi-module build |
 | Config format | TOML | Scenario files (via Jackson TOML) |
 | Serialization | Jackson | JSON API responses, TOML parsing |
 | Testing | JUnit 5 | Unit and integration tests |

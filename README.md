@@ -45,7 +45,7 @@ git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension. The container provides Java 25 and Node; dependency caches (`~/.gradle`, `product/interfaces/web/node_modules`) live in named Docker volumes for speed.
+Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote-containers) extension. The preferred development container currently provides **JDK 25 and Node 24**; dependency caches (`~/.gradle`, `product/interfaces/web/node_modules`) live in named Docker volumes for speed.
 
 After the container is ready, start the web app and API in two terminals:
 
@@ -65,6 +65,16 @@ Then open **http://127.0.0.1:5173**.
 - **Native (Linux/macOS, or Windows via WSL/Git Bash):** `./arcogine setup`, then `./arcogine run api` / `./arcogine run web` as above.
 
 `./arcogine` is a Bash script. On Windows it runs in the Dev Container, WSL, or Git Bash — not directly in PowerShell/cmd. The Dev Container is the recommended path on Windows.
+
+### Development toolchain policy
+
+Arcogine deliberately separates **supported compatibility** from the versions used by its preferred development and runtime environments:
+
+- **Java compatibility baseline:** Java 21. Java compilation uses `--release 21`, so a supported newer JDK may compile the project without allowing post-21 language features, APIs, or bytecode. CI runs on an actual JDK 21; the preferred devcontainer currently uses JDK 25.
+- **Node.js support:** `^22.22.2 || ^24.15.0 || ^26.0.0`, declared in `product/interfaces/web/package.json`. CI exercises the lowest supported Node 22 release, 22.22.2; the preferred devcontainer currently uses Node 24.
+- **Runtime Java:** the API runtime image currently uses Eclipse Temurin 25 JRE. The runtime-image JDK is independent of the Java 21 build-compatibility floor.
+
+Raising a supported minimum is a deliberate repository change: update the compatibility declaration, CI floor, provisioning validation, and current documentation together. Preferred devcontainer/runtime versions may move independently as long as they remain compatible.
 
 ## Your first session
 
@@ -99,7 +109,7 @@ java -jar dist/api/arcogine.jar run docs/examples/basic.toml
 
 | Layer | Technology |
 |-------|-----------|
-| Simulation engine | Java 25 (records, sealed interfaces, pattern matching) |
+| Simulation engine | Java (Java 21 compatibility baseline; preferred devcontainer JDK 25) |
 | HTTP API | Spring Boot 3.4 + Spring MVC |
 | CLI | Picocli |
 | Build | Gradle (Kotlin DSL), via the `product/gradlew` wrapper |

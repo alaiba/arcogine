@@ -13,8 +13,9 @@ dependencies {
 }
 
 // JMH microbenchmarks (ported from crates/sim-core/benches). Run with
-// `./gradlew :simulation:jmh`. ASM is forced to a Java 25-aware version so the
-// JMH bytecode generator can read the toolchain's class files.
+// `./gradlew :simulation:jmh`. ASM is pinned explicitly for JMH bytecode
+// generation; benchmark sources use the same Java 21 release compatibility
+// as the rest of the build.
 jmh {
     jmhVersion = "1.37"
     fork = 1

@@ -14,7 +14,7 @@ instead of silently switching.
 ## Layout
 
 - `product/` — all executable product source.
-  - Gradle multi-module Java backend (Java 25) rooted here: `types`, `simulation`, `domains/{factory,economy,finance}`, `agents`, `interfaces/api` (Spring Boot HTTP API), `interfaces/cli` (Picocli entrypoint, produces `arcogine.jar`).
+  - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `simulation`, `domains/{factory,economy,finance}`, `agents`, `interfaces/api` (Spring Boot HTTP API), `interfaces/cli` (Picocli entrypoint, produces `arcogine.jar`).
   - `product/interfaces/web/` — React + TypeScript + Vite frontend, tested with Vitest (unit) and Playwright (`product/interfaces/web/e2e/`).
 - `docs/` — architecture, product, development, reference, planning docs, and executable example scenarios (`docs/examples/`). Read `docs/architecture/overview.md` before touching cross-module boundaries.
 - `infra/` — container and dev-environment infrastructure: `infra/docker/` (runtime-only Dockerfiles + Compose) and `infra/dev/claude-cloud.sh` (Claude Cloud environment provisioning).
@@ -31,8 +31,8 @@ Run everything from the repo root via `./arcogine`, a thin wrapper that composes
 ./arcogine check --full # + Playwright E2E, dist/ build, Docker image build + smoke test, security scans
 ./arcogine build        # produce dist/ (dist/api/arcogine.jar, dist/web/) — no Docker
 ./arcogine image        # package existing dist/ into runtime Docker images — no source compilation
-./arcogine up            # build + image + docker compose up
-./arcogine down          # docker compose down
+./arcogine up           # build + image + docker compose up
+./arcogine down         # docker compose down
 ./arcogine run api      # start the Spring Boot API on :3000
 ./arcogine run web      # start the Vite dev server on :5173 (`run ui` is a compatibility alias)
 ./arcogine run scenario docs/examples/basic.toml  # run a headless scenario via the native CLI
@@ -45,6 +45,8 @@ For anything more specific, use the subsystem's native tool directly: `cd produc
 **Always use `./gradlew` from `product/`, never a globally installed `gradle`.** The wrapper pins the exact build version in `product/gradle/wrapper/gradle-wrapper.properties`; a system Gradle install can silently diverge from it.
 
 Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dockerfile`, `infra/docker/web.Dockerfile`) — it never compiles Java or frontend source. `./arcogine build` must run before `./arcogine image`.
+
+Claude Cloud provisioning is deliberately lightweight: `infra/dev/claude-cloud.sh` inventories and validates the supplied environment but does **not** run `./arcogine setup`. Run setup explicitly when the current task needs project dependencies.
 
 ## Validating changes
 
@@ -60,7 +62,8 @@ Before considering a change complete, run `./arcogine check`. For anything touch
 ## Conventions worth knowing
 
 - **Gradle** has one true source: `product/gradle/wrapper/gradle-wrapper.properties`. Both `gradlew` and `gradlew.bat` read it, and no Gradle is installed via the devcontainer feature — don't add one back.
-- **JDK, Node, Trivy, and Gitleaks** are each pinned in `.devcontainer/Dockerfile` (build args / `devcontainer.json` feature version) for the container image, and pinned *again*, independently, in `.github/workflows/ci.yml` for jobs that run on a bare `ubuntu-latest` runner rather than the devcontainer image. This duplication is intentional, not a bug — CI doesn't build the devcontainer image — but the pins must be bumped together. When you change one of these versions, grep for the old value across `.devcontainer/Dockerfile`, `.devcontainer/devcontainer.json`, and `.github/workflows/ci.yml` and update every occurrence.
+- **Java and Node distinguish compatibility floors from preferred environments.** Java sources compile with `--release 21`; CI runs on JDK 21 to prove the minimum, while the preferred devcontainer currently uses JDK 25 and the API runtime image uses Temurin 25. The frontend's Node support contract lives in `product/interfaces/web/package.json` (`^22.22.2 || ^24.15.0 || ^26.0.0`); CI pins Node 22.22.2 to exercise the floor, while the preferred devcontainer currently uses Node 24. Do **not** mechanically bump CI and devcontainer versions together. Raising a supported minimum requires updating the Java release or Node engine contract, Claude provisioning validation, CI floor, and current documentation together. Preferred devcontainer/runtime versions may move independently as long as they remain compatible.
+- **Trivy and Gitleaks** are environment/security tools pinned independently in the devcontainer and CI. When intentionally changing either tool version, grep the repository for the old version and keep the relevant devcontainer/CI install sites aligned.
 - Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and partly enforced by `interfaces/api`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain or touching `IntegratedHandler`.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture/overview.md`.
 - Example scenarios under `docs/examples/` are educational/executable documentation, not runtime assets — they must never be bundled into the JAR, `dist/`, or Docker images.

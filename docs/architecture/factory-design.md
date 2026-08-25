@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Cross-consumer factory-design semantics and their boundary with scenario configuration and runtime behavior  
 > **Authority:** Proposed architecture; current implementation remains documented by the architecture overview and product/reference docs until this direction is accepted and implemented  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Governance and Conformance Architecture](governance-conformance.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md)
 
 ## 1. Architectural position
 
@@ -242,8 +242,8 @@ Approval may be owned externally: Arcogine can produce the technical assessment 
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
 | Structured executability validation | Shared Arcogine model/design capability |
 | Semantic model identity (fingerprint) | Shared Arcogine model infrastructure |
-| Controlled revision lifecycle and lineage (deferred) | Arcogine, once a concrete requirement justifies it |
-| Change request/review/approval/scheduling workflow | Arcogine or an external change-management system (e.g. Jira), referenced not depended on — see [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) |
+| Controlled revision lifecycle and lineage (deferred) | Cross-domain Governance and Conformance capability (G1), once a concrete requirement justifies it — see [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
+| Change request/review/approval/scheduling workflow | Cross-domain Governance and Conformance capability (G6), or an external change-management system referenced not depended on |
 | Model publication and runtime instantiation | Shared Arcogine boundary |
 | Runtime dispatch/queues/work/transfers | Arcogine runtime |
 | Semantic model comparison/diff | Cross-consumer candidate; share when justified |

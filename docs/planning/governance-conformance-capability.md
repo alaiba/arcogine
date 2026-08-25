@@ -55,13 +55,19 @@ FactoryModel
 
 That seam should complete without being blocked by a generic governance framework.
 
-However, the governance/compliance use case now provides a concrete cross-consumer reason to revisit work previously deferred in the factory plan:
+However, the governance/compliance use case now provides a concrete cross-consumer reason to revisit work previously deferred in the factory plan. The dependency order matters here, and matches the G1-G9 sequence in §4 below, not the order these concerns happen to be listed elsewhere:
 
-- durable model identity and lineage;
-- semantic comparison/diff;
-- shared change semantics;
-- review and approval integration;
-- requirement-based verification.
+```text
+durable model identity and lineage (G1)
+          ↓
+semantic ChangeSet (G2)
+          ↓
+requirement-based conformance/evidence (G3-G5)
+          ↓
+review/approval/governed-change integration (G6)
+```
+
+Evaluating a proposed change's conformance before it is authorized is the strategic point (see [architecture §11](../architecture/governance-conformance.md#11-pre-change-conformance-is-strategically-important)); an approval/deployment integration that isn't preceded by conformance evaluation would authorize changes Arcogine hasn't yet assessed.
 
 The key refinement is:
 
@@ -283,20 +289,24 @@ The last criterion is the first major strategic milestone: pre-change conformanc
 
 Support assertions whose truth depends on observations outside Arcogine's authoritative semantic model.
 
-Evidence should capture concepts equivalent to:
+Per [Evidence must be attributable and temporal](../architecture/governance-conformance.md#9-evidence-must-be-attributable-and-temporal), the evidence source record and its use in one evaluation are distinct:
 
 ```text
-source
-provenance
-observedAt
-applicable period
-external identity/reference
-related assertion/control
-related model version
-integrity metadata where required
+Evidence (source-level, no model version)
+    source
+    provenance
+    observedAt
+    applicable period
+    external identity/reference
+    integrity metadata where required
+
+EvidenceUse (binds evidence to one evaluation)
+    related assertion/control
+    related model version (or controlled revision, once G1 exists)
+    scope/applicability at time of use
 ```
 
-Initial adapters should be driven by a concrete requirement, not a desire to match a vendor's integration count.
+External evidence is generally reusable across model versions as long as each `EvidenceUse` independently re-establishes scope and applicability; only structural evidence derived directly from Arcogine's own model state naturally collapses the two into one record. Initial adapters should be driven by a concrete requirement, not a desire to match a vendor's integration count.
 
 ### First adapter selection
 
@@ -307,10 +317,10 @@ Choose an external source only after one assertion requires it. Good candidates 
 G5 is ready when:
 
 1. External evidence is distinguishable from Arcogine-derived structural evidence.
-2. Evidence is attributable to source and observation time.
+2. Evidence is attributable to source and observation time, independent of any model version.
 3. An assertion can combine intended model state with observed external state.
-4. Evidence can become stale/invalid when its scope, applicable period, or affected model semantics change.
-5. A historical evaluation can identify the evidence set it used.
+4. An `EvidenceUse` can become stale/invalid when its scope, applicable period, or the affected model semantics change, without invalidating the underlying `Evidence` record for other uses.
+5. A historical evaluation can identify the evidence set (and the `EvidenceUse` bindings) it relied on.
 
 ## 10. G6 — Governed change and Jira integration
 

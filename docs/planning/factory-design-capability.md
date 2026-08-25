@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Establish a cross-consumer factory-design capability over Arcogine's canonical production-system model  
 > **Authority:** Planning only; this document defines delivery slices and readiness criteria, not current capability or accepted architecture  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Governance and Conformance Capability Plan](governance-conformance-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Purpose
 
@@ -74,7 +74,7 @@ D5  Semantic comparison (after concrete need)
     ↓
 D6  Shared draft lifecycle (deferred until justified)
     ↓
-D7  External change-control integration (deferred until justified)
+D7  Factory adoption of governed change (deferred until justified; owned cross-domain by Governance and Conformance G1/G2/G6)
 ```
 
 D1-D4 form the immediate implementation sequence. D5, D6, and D7 are explicitly deferred and are not prerequisites for engine runtime work or a first game consumer.
@@ -379,6 +379,8 @@ Implement shared semantic comparison only when more than one concrete consumer/w
 
 Potential changes include resource added/removed/moved, resource definition changed, operation requirement changed, product definition changed, policy changed, or constraint changed.
 
+D5 is the factory-domain implementation feeding [G2 — Semantic ChangeSet and impact model](governance-conformance-capability.md#6-g2--semantic-changeset-and-impact-model) in the [Governance and Conformance Capability Plan](governance-conformance-capability.md), not a competing generic ChangeSet abstraction. Factory-domain semantic diff types (resource added/removed/moved, etc.) are the domain-specific content a cross-domain `ChangeSet` needs; the `ChangeSet`/impact-analysis contract itself belongs to G2, not to this plan.
+
 A change-management workflow (for example, a Jira-backed review process) is one concrete future consumer of this capability: reviewers need a domain-level semantic diff between a candidate revision and its predecessor, not a generic text/JSON diff, to assess a proposed change.
 
 Do not implement arbitrary text/JSON diff, generic patch/merge, or collaborative editing merely to satisfy this stage.
@@ -400,19 +402,17 @@ D6 does not include approval or organizational change-management workflow — th
 
 Until a trigger applies, Arcogine does not need generic undo/redo, draft branching, merge, collaboration cursors, edit locks, comments, workspace permissions, or autosave semantics.
 
-## 11. D7 — External change-control integration
+## 11. D7 — Factory adoption of governed change
 
-Build a controlled-revision/change-control integration only when a concrete trigger applies: a persistent model repository is needed, an external change-management integration is needed, an approval/deployment workflow is needed, audit requirements demand recorded change history, or branching/lineage across concurrent design efforts is needed.
+Controlled revision lineage, external change references, technical evidence packages for review, approval hand-off, and deployment linkage are cross-domain concerns, not factory-specific ones. They are owned by the [Governance and Conformance Capability Plan](governance-conformance-capability.md), not by this plan:
 
-D7 covers:
+- **G1** owns controlled revision identity and lineage;
+- **G2** owns the semantic `ChangeSet` (built from factory-domain diffs supplied by D5) and impact analysis;
+- **G6** owns external workflow/change-control integration (an issue tracker or equivalent), including the approval hand-off and deployment linkage.
 
-- controlled revision lineage (which revision followed which, and why);
-- a stable external change reference attached to a revision (for example, an issue-tracker key) — the external system is not fixed by this plan; an issue tracker is one plausible example, not a requirement;
-- the technical evidence package (validation results, semantic diff, simulation/verification outcomes) that a candidate change needs for review;
-- the approval/authorization hand-off — Arcogine supplies the evidence; the external system may own the approval decision itself;
-- deployment linkage back to the revision that was deployed.
+D7 is scoped to what remains factory-specific once those cross-domain concerns are owned elsewhere: supplying `FactoryModel`-specific semantics and evidence into that governance capability — factory-domain change classification for G2, factory-specific technical assessment evidence (validation results, simulation/verification outcomes) for the evidence a G2 `ChangeSet` or G6 governed change needs, and factory-model participation in whatever durable identity/lineage scheme G1 establishes.
 
-D7 does not mean building a concrete external integration now. It means the plan has a defined slot for that work so it isn't designed ad hoc when a real external change-management need shows up, and so it isn't accidentally folded into D6's shared-authoring scope or D3's publication identity.
+This plan does not independently build a revision repository, an external change-reference mechanism, or an approval/deployment workflow. Building one of those as a factory-only concept would duplicate G1/G2/G6 and fragment revision identity across domains.
 
 ## 12. Constraint classification
 
@@ -537,11 +537,10 @@ Additional ADRs are warranted when implementation commits to hard-to-reverse cho
 - concrete canonical-model aggregate/type boundaries;
 - fingerprint computation/versioning semantics;
 - compilation representation and caching rules;
-- a concrete controlled-revision repository, persistent model storage, or lineage scheme;
-- an external change-management integration (e.g. Jira) whose protocol becomes hard to reverse once adopted;
 - work-center/resource-pool semantics;
-- shared draft lifecycle/collaboration;
-- deployment of a design into real operations.
+- shared draft lifecycle/collaboration.
+
+A concrete controlled-revision repository, external change-management integration, or deployment-of-a-design-into-real-operations workflow (D7) is a G1/G2/G6 concern owned by the [Governance and Conformance Capability Plan](governance-conformance-capability.md); its ADR triggers are tracked there, not duplicated here.
 
 Do not create ADRs for consumer-local editor gestures or temporary UI structure.
 

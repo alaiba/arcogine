@@ -282,19 +282,29 @@ One control can map to multiple requirements across multiple frameworks. Framewo
 
 Evidence should be modeled with enough provenance to support historical reconstruction and audit review.
 
-Conceptually:
+An external observation does not intrinsically belong to one Arcogine model fingerprint or revision. An AWS configuration snapshot, an IdP login log, or a Jira approval artifact has its own authority, its own observation time, and often its own applicable period, independent of which Arcogine model version happens to exist when it is captured or used. Binding the observation itself to one model version either forces duplicating identical evidence across every subsequent version or misrepresents the observation's actual provenance. Arcogine should therefore separate the evidence itself from any particular evaluation's use of it:
 
 ```text
 Evidence
+    evidenceId
     source
     provenance
     observedAt
     applicableFrom / applicableUntil
-    modelVersion
-    assertion / control relationship
     external identity or artifact reference
     integrity metadata where required
+
+EvidenceUse (a.k.a. EvaluationEvidence)
+    evidenceId
+    evaluation / assertion reference
+    modelVersion (or controlled revision, once G1 exists)
+    scope at time of use
+    applicability determination
 ```
+
+`Evidence` is the source-level fact: what was observed, by what authority, when, and over what period it applies. It does not carry a model version. `EvidenceUse` is the binding: which evaluation consumed that evidence, against which model version/revision, and why it was judged applicable to that scope at that time. One `Evidence` record may be referenced by many `EvidenceUse` records across multiple model versions, as long as each use's scope/applicability determination independently holds.
+
+Structural evidence derived directly from Arcogine's own authoritative model state is the one case where binding to a model version at the source is natural — the model version *is* the evidence's provenance, so `Evidence` and `EvidenceUse` may collapse into one record for that case. External evidence should generally be bound to model/revision identity at evaluation/use time (`EvidenceUse`), not at source-observation time (`Evidence`).
 
 Arcogine should distinguish evidence generated from its own authoritative state from evidence observed externally. Evidence reuse across requirements is valid only when scope, applicable period, provenance, and semantic meaning remain compatible.
 

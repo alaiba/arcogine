@@ -124,6 +124,7 @@ log_optional_version() {
   local label="$1"
   shift
   local executable="$1"
+  shift
 
   echo "--- ${label} ---"
   if command -v "$executable" >/dev/null 2>&1; then

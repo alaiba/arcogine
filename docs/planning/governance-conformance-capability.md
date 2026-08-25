@@ -271,7 +271,7 @@ G4 is ready when:
 2. Findings identify affected entities and the failed assertion.
 3. Results distinguish missing evidence from proven non-conformance.
 4. Evaluation output is immutable or historically attributable.
-5. A proposed `ChangeSet` can be evaluated before approval/deployment for at least one requirement.
+5. A proposed `ChangeSet` can be evaluated before authorization/deployment for at least one requirement.
 
 The last criterion is the first major strategic milestone: pre-change conformance rather than only post-change monitoring.
 
@@ -453,7 +453,7 @@ G9 is ready when:
 
 The first milestone should deliberately avoid a full external compliance framework:
 
-> **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked to an external change request, evaluate one Arcogine-native requirement before approval/deployment, record the approval decision separately, and reconstruct why the resulting semantic state was considered conformant.**
+> **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked to an external change request, evaluate one Arcogine-native requirement before authorization/deployment, record the approval decision separately, and reconstruct why the resulting semantic state was considered conformant.**
 
 A concrete example could be an ownership requirement once the relevant owner/authority semantics exist.
 

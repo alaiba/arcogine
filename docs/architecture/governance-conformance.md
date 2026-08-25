@@ -313,12 +313,12 @@ Impact analysis
         +--> affected entities
         +--> affected requirements
         +--> evidence invalidation
-        +--> required approvals
+        +--> required authorization/review
         |
         v
 Pre-change conformance evaluation
         |
-   approve / reject / revise
+   authorize / reject / revise
 ```
 
 This connects design, verification, change management, and compliance through one semantic representation without requiring Arcogine to own the organizational workflow.

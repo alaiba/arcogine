@@ -4,6 +4,7 @@ import com.arcogine.agents.SalesAgent;
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
 import com.arcogine.core.handler.EventHandler;
+import com.arcogine.core.handler.ModelProvenanceSource;
 import com.arcogine.core.queue.Scheduler;
 import com.arcogine.economy.demand.DemandModel;
 import com.arcogine.economy.pricing.PricingState;
@@ -11,7 +12,7 @@ import com.arcogine.factory.process.FactoryHandler;
 import com.arcogine.finance.process.FinanceHandler;
 import com.arcogine.types.SimError;
 
-public class IntegratedHandler implements EventHandler {
+public class IntegratedHandler implements EventHandler, ModelProvenanceSource {
 
     private final FactoryHandler factory;
     private final DemandModel demand;
@@ -103,7 +104,8 @@ public class IntegratedHandler implements EventHandler {
      * Content hash of the {@code FactoryModelVersion} this handler's factory runtime was
      * instantiated from, or {@code null} if unknown.
      */
-    public String factoryModelContentHash() {
+    @Override
+    public String modelContentHash() {
         return factoryModelContentHash;
     }
 }

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventType;
 import com.arcogine.core.handler.EventHandler;
+import com.arcogine.core.handler.ModelProvenanceSource;
 import com.arcogine.core.queue.Scheduler;
 import com.arcogine.types.SimError;
 import com.arcogine.types.scenario.AgentConfig;
@@ -31,6 +32,19 @@ class SimRunnerTest {
         @Override
         public void handleEvent(Event event, Scheduler scheduler) throws SimError {
             throw new SimError.Other("handler failure");
+        }
+    }
+
+    /** Reports known model provenance. */
+    private static final class ProvenancedHandler implements EventHandler, ModelProvenanceSource {
+        @Override
+        public void handleEvent(Event event, Scheduler scheduler) {
+            // no-op
+        }
+
+        @Override
+        public String modelContentHash() {
+            return "model-content-hash-abc123";
         }
     }
 
@@ -89,6 +103,18 @@ class SimRunnerTest {
         SimResult result = SimRunner.runScenario(config, new NoopHandler());
         long agentCount = result.eventLog().filterByType(EventType.AgentEvaluation).count();
         assertEquals(0L, agentCount);
+    }
+
+    @Test
+    void handlerWithoutModelProvenanceYieldsUnknownProvenanceOnResult() throws SimError {
+        SimResult result = SimRunner.runScenario(minimalConfig(0), new NoopHandler());
+        assertNull(result.modelContentHash());
+    }
+
+    @Test
+    void handlerModelProvenancePropagatesToResult() throws SimError {
+        SimResult result = SimRunner.runScenario(minimalConfig(0), new ProvenancedHandler());
+        assertEquals("model-content-hash-abc123", result.modelContentHash());
     }
 
     @Test

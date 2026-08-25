@@ -188,8 +188,7 @@ class ScenarioBaselinesTest {
     void handlerReportsTheModelVersionItWasInstantiatedFrom() throws SimError {
         RunOutcome run = run(BASIC_SCENARIO);
         assertTrue(
-                run.handler().factoryModelContentHash() != null
-                        && !run.handler().factoryModelContentHash().isEmpty(),
+                run.handler().modelContentHash() != null && !run.handler().modelContentHash().isEmpty(),
                 "handler must carry provenance for the published FactoryModelVersion it came from");
     }
 
@@ -197,7 +196,16 @@ class ScenarioBaselinesTest {
     void sameScenarioProducesTheSameFactoryModelIdentityAcrossRuns() throws SimError {
         RunOutcome first = run(BASIC_SCENARIO);
         RunOutcome second = run(BASIC_SCENARIO);
-        assertEquals(first.handler().factoryModelContentHash(), second.handler().factoryModelContentHash());
+        assertEquals(first.handler().modelContentHash(), second.handler().modelContentHash());
+    }
+
+    @Test
+    void simResultCarriesTheSameModelProvenanceAsTheHandlerItWasProducedFrom() throws SimError {
+        RunOutcome run = run(BASIC_SCENARIO);
+        assertEquals(run.handler().modelContentHash(), run.result().modelContentHash());
+        assertTrue(
+                run.result().modelContentHash() != null && !run.result().modelContentHash().isEmpty(),
+                "canonical result must identify its originating published FactoryModelVersion");
     }
 
     @Test

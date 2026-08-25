@@ -398,7 +398,7 @@ D6 is scoped to shared *authoring* mechanics:
 - multi-user/human-agent co-authoring;
 - comments/editor collaboration.
 
-D6 does not include approval or organizational change-management workflow — that is D7. Shared drafts/collaboration and organizational change management (per [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md)) are separate concerns that historically got bundled together; they no longer are.
+D6 does not include approval or organizational change-management workflow — that belongs to the cross-domain governance capability (G1/G2/G6); factory adoption is covered by D7. Shared drafts/collaboration and organizational change management (per [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md)) are separate concerns that historically got bundled together; they no longer are.
 
 Until a trigger applies, Arcogine does not need generic undo/redo, draft branching, merge, collaboration cursors, edit locks, comments, workspace permissions, or autosave semantics.
 

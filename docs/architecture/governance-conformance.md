@@ -175,7 +175,11 @@ Candidate controlled revision
         +--> validation / simulation / conformance evidence
         |
         v
-External or Arcogine approval record
+Authorization decision/evidence
+required by applicable change-control policy
+(e.g. ApprovalRecord, standing authorization,
+pre-approved standard change, emergency
+justification, automated policy)
         |
         v
 Deployment record, when deployed
@@ -354,7 +358,17 @@ runtime instantiation from a published model
 handler-level runtime provenance
 ```
 
-It does **not** yet provide a durable fingerprint contract, controlled revision repository, approval/deployment lifecycle, or generic conformance engine. Those capabilities should be added independently and in that order when concrete requirements justify them.
+It does **not** yet provide a durable fingerprint contract, controlled revision repository, approval/deployment lifecycle, or generic conformance engine. Those capabilities should be added when concrete requirements justify them, following their actual dependency order:
+
+```text
+G1 fingerprint/revision
+    ↓
+G2 ChangeSet
+    ↓
+G3-G5 conformance/evidence
+    ↓
+G6 governed-change/authorization integration
+```
 
 Other authoritative domain models should participate without being forced into one monolithic `BusinessModel` aggregate. Each domain retains ownership of its facts while cross-domain identity references, lineage, semantic changes, requirements, and evidence form the governance graph over them.
 

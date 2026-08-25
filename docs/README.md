@@ -59,6 +59,6 @@ These documents are internal planning artifacts, not user-facing guides:
 | Document | What it covers |
 |----------|-----------------|
 | [Factory design capability plan](planning/factory-design-capability.md) | Immediate upstream work: canonical model seam, validation, publication/provenance, and behavior-preserving runtime instantiation |
-| [Governance and conformance capability plan](planning/governance-conformance-capability.md) | Cross-cutting sequence after the model seam: durable lineage, semantic ChangeSets, generic conformance, evidence, Jira-backed governed change, framework mappings, and audit projections |
+| [Governance and conformance capability plan](planning/governance-conformance-capability.md) | Cross-cutting sequence after the model seam: durable lineage, semantic ChangeSets, generic conformance, evidence, external-workflow governed change (Jira anticipated), framework mappings, and audit projections |
 | [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Runtime gates after the model seam: explicit workload/work execution, deterministic dispatch, session control, observations/events, and spatial consequences |
 | [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Downstream game vertical slice that depends on both factory-design D1–D4 and engine-readiness Gates 1–5 |

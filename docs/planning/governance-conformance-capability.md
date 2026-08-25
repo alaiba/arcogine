@@ -137,6 +137,7 @@ Approval and deployment are separate records referencing a controlled revision. 
 - Equal semantic content can have the same model fingerprint across distinct controlled revisions.
 - A later rollback may therefore have the same fingerprint as an earlier revision while remaining historically distinct.
 - The durable fingerprint policy must specify canonicalization, ordering semantics, algorithm/format versioning, and compatibility guarantees.
+- The durable fingerprint policy must specify which fields are semantic (included in the fingerprint) versus non-semantic (e.g. names, allocated IDs) and how semantic fields are normalized, and must define the relationship between Java equality and fingerprint equality.
 - Controlled revision identity must not be inferred from the fingerprint or a human label such as `v7`.
 - Human version/revision labels may exist for presentation but are not fundamental identity.
 
@@ -332,7 +333,11 @@ Candidate controlled revision
         +--> required approvals/owners
         |
         v
-External or Arcogine approval record
+Authorization decision/evidence
+required by applicable change-control policy
+(e.g. ApprovalRecord, standing authorization,
+pre-approved standard change, emergency
+justification, automated policy)
         |
         v
 Deployment record, when deployed

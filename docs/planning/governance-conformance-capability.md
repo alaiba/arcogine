@@ -80,6 +80,7 @@ This does not imply generic patch/merge infrastructure. The need is semantic cha
 3. Distinguish modeled intent from observed reality. Structural facts may be provable from Arcogine state; operational assertions may require external evidence.
 4. Reuse external workflow systems where they already own organizational process state. Jira may remain authoritative for issue workflow while Arcogine owns semantic impact, evidence, and controlled revision lineage.
 5. Keep semantic identity and controlled revision identity separate as required by [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md).
+6. Treat external requirement provenance as versioned input in addition to Arcogine's own requirement and assertion versioning. A standards-family label is not sufficient when an evaluation depends on a specific issuing authority, designation, edition/version, clause/locator, or adoption/profile.
 
 ## 4. Delivery sequence
 
@@ -205,21 +206,32 @@ G2 is ready when:
 
 ### Goal
 
-Define explicit requirements independently of any particular compliance framework.
+Define explicit requirements independently of any particular compliance framework while preserving both Arcogine's own requirement/assertion versions and enough external source identity to reproduce the requirement that actually governed an evaluation.
 
 ```text
 Requirement
     stable identity
-    version/source
+    version
+    source authority, when external
+    source designation, when external
+    source edition/version
+    source locator
+    adoption/profile, when applicable
     human meaning
 
 Scope
     business objects to which it applies
 
 Assertion
+    stable identity
+    version
     deterministic evaluation rule or evaluator
     required evidence class
 ```
+
+For an Arcogine-native requirement, the source may be an internal policy or architecture authority rather than an external standard. For an external requirement, a family-level reference such as `ISA-95 / IEC 62264` is insufficient if the obligation depends on a specific publication. The contract must be able to distinguish, for example, an IEC publication from a modified ANSI/ISA adoption or a national adoption without assuming that aligned editions are textually or normatively identical.
+
+External source identity does not replace Arcogine's requirement or assertion version. The same external clause may support multiple Arcogine requirement versions as scope, interpretation, or executable semantics evolve.
 
 The first requirement should be Arcogine-native and structurally evaluable from authoritative model state rather than imported from an external framework.
 
@@ -227,11 +239,13 @@ The first requirement should be Arcogine-native and structurally evaluable from 
 
 G3 is ready when:
 
-1. A requirement can be versioned separately from the model it evaluates.
-2. Scope selection is explicit and deterministic.
-3. An assertion can declare whether model state alone is sufficient or external evidence is required.
-4. Requirement wording/source and executable assertion semantics are distinguishable.
-5. The contract is generic enough to represent internal policy and architecture rules.
+1. A requirement has stable identity and can be versioned separately from both the model it evaluates and the edition/version of any external source it cites.
+2. An assertion has stable identity and version independently of the requirement and model revision it evaluates.
+3. Scope selection is explicit and deterministic.
+4. An assertion can declare whether model state alone is sufficient or external evidence is required.
+5. Requirement wording/source and executable assertion semantics are distinguishable.
+6. An external requirement can identify its exact source authority, designation, edition/version, locator, and applicable adoption/profile where those facts affect meaning.
+7. The contract is generic enough to represent internal policy and architecture rules.
 
 ## 8. G4 — Conformance evaluation and findings
 
@@ -253,7 +267,8 @@ An evaluation retains:
 ```text
 model fingerprint
 controlled revision ID, when available
-requirement/assertion version
+requirement identity/version
+assertion identity/version
 scope
 result
 explanation
@@ -267,7 +282,7 @@ A failed result produces a finding rather than mutating the underlying business 
 
 G4 is ready when:
 
-1. The same semantic fingerprint/revision and requirement/assertion versions produce deterministic structural results.
+1. The same semantic fingerprint/revision and requirement/assertion identities and versions produce deterministic structural results.
 2. Findings identify affected entities and the failed assertion.
 3. Results distinguish missing evidence from proven non-conformance.
 4. Evaluation output is immutable or historically attributable.
@@ -428,7 +443,10 @@ An audit snapshot should identify:
 ```text
 model fingerprint
 controlled revision ID
-framework/requirement versions
+requirement identity/version
+assertion identity/version
+requirement source identity/version
+framework/mapping version, when applicable
 control mappings
 assertion results
 supporting evidence
@@ -443,11 +461,11 @@ The first useful UX can be headless/export-oriented. Do not build a large GRC da
 
 G9 is ready when:
 
-1. A historical compliance result can be reconstructed from explicit versioned inputs.
+1. A historical compliance result can be reconstructed from explicit versioned inputs, including the Arcogine requirement/assertion identities and versions and the exact external requirement source identity that governed the evaluation, when applicable.
 2. The system can explain why a control passed, failed, or was unknown.
 3. Evidence and exceptions are traceable to sources and applicable periods.
-4. A change in today's framework mapping does not silently alter a previous audit snapshot.
-5. A reviewer can traverse from a requirement to control, assertion, affected business objects, semantic fingerprint, controlled revision, evidence, and change history.
+4. A change in today's Arcogine requirement/assertion versions, framework mapping, or source standard edition does not silently alter a previous audit snapshot.
+5. A reviewer can traverse from a versioned requirement and assertion to the governing source, control, affected business objects, semantic fingerprint, controlled revision, evidence, and change history.
 
 ## 14. First end-to-end milestone
 

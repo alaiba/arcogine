@@ -193,17 +193,25 @@ The core verification capability should answer whether a defined scope satisfies
 
 ```text
 Requirement
-    id
+    stable identity
+    version
     description
-    source/version
+    source authority
+    source designation
+    source edition/version
+    source locator
+    adoption/profile, when applicable
 
 Assertion
+    stable identity
+    version
     scope
     expression/evaluator
     evidence requirements
 
 Evaluation
-    requirement/assertion version
+    requirement identity/version
+    assertion identity/version
     model fingerprint
     controlled revision ID, when available
     observed-at / applicable period
@@ -216,6 +224,10 @@ Finding
     explanation
     remediation state
 ```
+
+A requirement's provenance must identify the exact normative or governing source when its meaning depends on an external standard, regulation, contract, or policy. Family-level labels such as `ISA-95 / IEC 62264` are insufficient for an auditable requirement because closely aligned standards, editions, and national adoptions can differ. The requirement must retain enough source identity to determine what text and obligations governed a historical evaluation.
+
+External source identity is separate from Arcogine's own requirement and assertion identities and versions. The same external clause or policy source may support multiple Arcogine requirement versions as scope, interpretation, or executable semantics evolve; source provenance therefore augments rather than replaces Arcogine versioning.
 
 A structural requirement can be evaluated solely from authoritative model state; an operational requirement may need external observation. `UNKNOWN` is important: absence of evidence must not silently become success or failure when the underlying fact is genuinely unobserved.
 
@@ -331,7 +343,10 @@ An audit view should be reconstructible from versioned inputs rather than stored
 AuditSnapshot
     model fingerprint
     controlled revision ID
-    framework / requirement version
+    requirement identity / version
+    assertion identity / version
+    requirement source identity / version
+    framework / mapping version, when applicable
     control mappings
     evaluation results
     evidence set
@@ -341,7 +356,7 @@ AuditSnapshot
 
 The desired invariant is:
 
-> Given the relevant semantic fingerprint, controlled revision, requirement/control versions, observations, evidence, and governance decisions, Arcogine can explain how a historical conformance result was derived.
+> Given the relevant semantic fingerprint, controlled revision, Arcogine requirement and assertion identities/versions, exact external requirement source identity/version when applicable, framework/mapping versions, observations, evidence, and governance decisions, Arcogine can explain how a historical conformance result was derived.
 
 ## 13. Relationship to current factory-model work
 
@@ -394,13 +409,14 @@ When governance or compliance work is proposed, ask:
 1. Is the underlying fact authoritative Arcogine model state, external observed state, or a governance decision?
 2. Are framework-specific fields being added to business objects instead of deriving compliance through requirements and controls?
 3. Can the result identify the exact semantic fingerprint, controlled revision, requirement/assertion versions, and evidence that produced it?
-4. Is semantic identity being confused with historical revision identity?
-5. Is the change represented semantically enough to perform impact analysis?
-6. Does an external workflow system already own the ticket/change-management lifecycle?
-7. Are approval and deployment modeled as records referencing a revision rather than as revision identity itself?
-8. Are failures, exceptions, and risk acceptances distinguishable rather than collapsed into one status?
-9. Are modeled intent and observed reality explicit and independently attributable?
-10. Are historical results reproducible rather than dependent on today's mutable mappings?
+4. If a requirement comes from an external source, can it identify the exact authority, designation, edition/version, locator, and applicable adoption/profile rather than only a standards-family name?
+5. Is semantic identity being confused with historical revision identity?
+6. Is the change represented semantically enough to perform impact analysis?
+7. Does an external workflow system already own the ticket/change-management lifecycle?
+8. Are approval and deployment modeled as records referencing a revision rather than as revision identity itself?
+9. Are failures, exceptions, and risk acceptances distinguishable rather than collapsed into one status?
+10. Are modeled intent and observed reality explicit and independently attributable?
+11. Are historical results reproducible rather than dependent on today's mutable mappings?
 
 ## 16. ADR triggers
 
@@ -414,6 +430,7 @@ Create or revise ADRs when implementation commits to hard-to-reverse choices abo
 - canonical semantic `ChangeSet` representation;
 - temporal semantics for modeled facts and observations;
 - requirement/assertion evaluation contracts;
+- requirement source-identity and versioning semantics;
 - control and framework versioning;
 - evidence integrity/retention semantics;
 - exception and risk-acceptance lifecycle;

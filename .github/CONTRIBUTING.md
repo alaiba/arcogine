@@ -41,6 +41,26 @@ Use `./arcogine check` before pushing. Use `./arcogine check --full` when the ch
 
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
+## Change slicing and branch hygiene
+
+Arcogine's larger initiatives are intentionally delivered as small, dependency-ordered pull requests rather than as one broad implementation branch. This keeps architectural decisions reviewable and makes behavior changes attributable.
+
+When a roadmap item spans several capabilities:
+
+- prefer the smallest coherent slice that establishes one required concept, boundary, or behavior;
+- state the PR's **non-goals** explicitly, especially when later roadmap work is adjacent and tempting to pull forward;
+- keep a behavior-preserving refactor behavior-preserving: do not combine a representation/boundary change with new scheduling, workload, persistence, or external-contract semantics unless the change genuinely requires them together;
+- preserve deterministic behavior and existing API/wire compatibility by default; intentional compatibility breaks must be explicit in the PR and supported by migration/contract tests as appropriate;
+- do not introduce abstractions only because a later roadmap step might need them; add the abstraction when the current slice gives it a concrete responsibility;
+- update authoritative current-state documentation when implementation changes established behavior or ownership, and update planning documents when the remaining sequence changes; do not make planning prose claim that deferred capability already exists;
+- record hard-to-reverse architectural decisions in an ADR rather than relying on a PR discussion, branch name, issue comment, or chat transcript;
+- reconcile the feature branch with the latest `main` before final review when `main` has moved materially, then review the **net diff against current `main`**, not merely the original branch commit;
+- after a PR is merged, delete feature/review branches once they contain no unique work that still needs to be preserved.
+
+A useful review question is: **if this PR were merged by itself, would the repository tell the truth about what exists now, while leaving later roadmap decisions genuinely open?**
+
+Near-term sequencing may live in issues, PRs, or planning documents; durable product and architecture knowledge must live in the repository's charter, architecture, ADRs, tests, and maintained documentation rather than depending on conversational history.
+
 ## Code style
 
 - Checkstyle enforces Java style; `./arcogine check` (or `cd product && ./gradlew checkstyleMain checkstyleTest`) runs it, and warnings are treated as errors at compile time (`-Werror`).

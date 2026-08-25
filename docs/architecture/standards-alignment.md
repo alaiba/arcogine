@@ -24,6 +24,8 @@ Conformance
 
 Unless a section explicitly says otherwise, Arcogine claims only **reference** or **semantic mapping**. It currently makes no standards-conformance claim.
 
+When this repository refers to a standards family or shared conceptual model, a family-level label such as `ISA-95 / IEC 62264` is appropriate. When a requirement, conformance claim, interoperability profile, audit record, contractual obligation, or other normative dependency relies on a standard, identify the exact source authority, designation, part, edition or year, and applicable adoption/profile. Closely aligned standards families and national adoptions must not be assumed to be textually or normatively identical across editions.
+
 ## Alignment strategy
 
 | Tier | Meaning | Action |
@@ -38,7 +40,7 @@ Romania's national standards body is ASRO. Relevant IEC and ISO standards may be
 
 | International standard or framework | Common Romanian / EU context |
 |---|---|
-| IEC 62264 / ISA-95 | SR EN IEC 62264 family |
+| IEC 62264 (closely aligned with ISA-95) | SR EN IEC 62264 family |
 | ISO 22400 | SR EN ISO 22400 family |
 | ISO 9001 | SR EN ISO 9001 |
 | ISO 10303 / STEP | SR EN ISO 10303 family |
@@ -51,7 +53,7 @@ Romania's national standards body is ASRO. Relevant IEC and ISO standards may be
 
 ### ISA-95 / IEC 62264 — Enterprise-control system integration
 
-ISA-95 provides models, terminology, activities, object attributes, and information-exchange concepts for integrating manufacturing operations with enterprise functions. Arcogine uses it as a **semantic reference**, not as an implemented information model or conformance profile.
+ISA-95 and IEC 62264 are closely harmonized standards families with shared lineage and semantics for enterprise-control system integration, but individual parts and editions are not automatically identical. Arcogine uses the family as a **semantic reference**, not as an implemented information model or conformance profile.
 
 **Current status:**
 
@@ -76,6 +78,7 @@ ISA-95 provides models, terminology, activities, object attributes, and informat
 - Preserve definition/request/execution/performance distinctions when concrete features require them.
 - Retain approachable Arcogine terminology where it is clearer, with documented aliases.
 - Keep equipment/resource hierarchy distinct from spatial factory layout.
+- Use `ISA-95 / IEC 62264` for family-level architectural discussion, but identify the exact normative source and edition when a requirement, profile, or conformance claim depends on one.
 - Do not claim ISA-95 compatibility or conformance without a defined and tested interchange profile.
 
 See [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md) for the maintained concept register, current structural gaps, naming policy, review checklist, and future adapter path.
@@ -229,7 +232,7 @@ These are not standards conformance targets but remain central to Arcogine's cre
 
 | Standard or framework | Tier | Arcogine position |
 |---|---|---|
-| ISA-95 / IEC 62264 | Align now | Maintained semantic mapping; no interchange or conformance claim |
+| ISA-95 / IEC 62264 | Align now | Maintained semantic mapping; exact normative source required for profiles or conformance claims |
 | ISO 22400 | Align now | KPI terminology/formula reference; map only verified equivalents |
 | DES methodology | Align now | Core simulation architecture |
 | Queueing theory / Little's Law | Align now | Operational analysis and validation foundation |

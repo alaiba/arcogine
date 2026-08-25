@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Establish a cross-consumer factory-design capability over Arcogine's canonical production-system model  
 > **Authority:** Planning only; this document defines delivery slices and readiness criteria, not current capability or accepted architecture  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Purpose
 
@@ -230,49 +230,58 @@ D2 is satisfied when:
 
 ### 7.1 Goal
 
-Create an explicit boundary between mutable authoring state and an immutable model version that downstream contexts can instantiate.
+Create an explicit boundary between mutable authoring state and an immutable semantic snapshot that downstream contexts can instantiate.
 
 ```text
-FactoryDraft
-     |
- validate
-     |
- publish
-     v
-FactoryModelVersion
+FactoryModel
+    ↓ validate/publish
+immutable semantic snapshot
+    ↓
+FactoryModelFingerprint
 ```
 
 Arcogine does not need to own the first consumer's draft persistence to provide this boundary.
 
 ### 7.2 Minimum identity
 
-A published version should expose enough information to identify it unambiguously:
+Per [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md), the initial publication boundary requires only a deterministic content-derived **fingerprint** and enough provenance to attribute a downstream run to the model:
 
 ```text
-model ID
-model revision/version
-model/schema version
-content hash
+fingerprint (deterministic, content-derived)
 publication provenance
 ```
 
-The exact scheme remains an implementation decision. The content hash must derive from semantic model content rather than consumer presentation metadata.
+No model UUID, revision counter, Jira key, or approval state is required at this stage — those belong to the deferred controlled-revision capability below.
+
+The exact fingerprint scheme remains an implementation decision. It must derive from semantic model content rather than consumer presentation metadata.
 
 Persistent model repositories, branch lineage, and collaborative authoring are not required for the initial implementation; an in-memory publication boundary is sufficient to prove semantics.
 
 ### 7.3 Immutability
 
-Once published, the model version is immutable. A semantic change creates another version rather than editing the model underneath an existing runtime or verification context.
+Once published, the model snapshot is immutable. A semantic change creates another snapshot rather than editing the model underneath an existing runtime or verification context.
 
 ### 7.4 Acceptance criteria
 
 D3 is satisfied when:
 
-1. A validated factory can be published as an immutable model version.
-2. Different semantic content cannot mutate an existing version.
-3. Equivalent canonical content produces stable deterministic identity/hash behavior under the selected policy.
-4. Consumer draft/editor metadata does not affect semantic model identity.
+1. A validated factory can be published as an immutable semantic snapshot.
+2. Different semantic content cannot mutate an existing snapshot.
+3. Equivalent canonical content produces a stable deterministic fingerprint under the selected policy.
+4. Consumer draft/editor metadata does not affect the fingerprint.
 5. Publication records enough provenance to attribute a downstream run to the model.
+
+### 7.5 Deferred: controlled-revision capability
+
+A controlled-revision lifecycle — persistent repository, lineage, approval state, deployment tracking, and an external change reference (e.g. a Jira issue key) — is explicitly out of scope for D3. Build it only when a concrete trigger makes it necessary:
+
+- a persistent model repository is needed;
+- a Jira (or equivalent) change-management integration is needed;
+- an approval/deployment workflow is needed;
+- audit requirements demand recorded change history;
+- branching/lineage across concurrent design efforts is needed.
+
+Until one of these triggers a concrete implementation, Arcogine does not need a revision entity, only the fingerprint.
 
 ## 8. D4 — Deterministic runtime instantiation
 
@@ -315,7 +324,7 @@ At minimum, supported observations/results should make the following attributabl
 
 ```text
 session/run ID
-model ID/version/hash
+model fingerprint
 simulation seed/context
 ```
 
@@ -336,15 +345,19 @@ Implement shared semantic comparison only when more than one concrete consumer/w
 
 Potential changes include resource added/removed/moved, resource definition changed, operation requirement changed, product definition changed, policy changed, or constraint changed.
 
+A change-management workflow (for example, a Jira-backed review process) is one concrete future consumer of this capability: reviewers need a domain-level semantic diff between a candidate revision and its predecessor, not a generic text/JSON diff, to assess a proposed change.
+
 Do not implement arbitrary text/JSON diff, generic patch/merge, or collaborative editing merely to satisfy this stage.
 
 ## 10. D6 — Shared draft lifecycle and collaboration
 
 Promote drafts into an Arcogine-owned shared lifecycle only when a second concrete workflow requires common persistence, branching, collaboration, review, or approval.
 
-Possible triggers include industrial design plus optimizer/game authoring, human/agent co-design, approval before deployment, branching real production changes, or multi-user design sessions.
+Possible triggers include industrial design plus optimizer/game authoring, human/agent co-design, branching real production changes, or multi-user design sessions.
 
-Until then Arcogine does not need generic undo/redo, draft branching, merge, collaboration cursors, edit locks, comments, workspace permissions, or autosave semantics.
+Arcogine is not required to own approval or organizational change-management workflow as part of this capability. Shared drafts/collaboration and organizational change management (per [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md)) are separate concerns; the latter may remain owned by an external system such as Jira.
+
+Until a trigger applies, Arcogine does not need generic undo/redo, draft branching, merge, collaboration cursors, edit locks, comments, workspace permissions, or autosave semantics.
 
 ## 11. Constraint classification
 
@@ -462,14 +475,15 @@ This milestone deliberately excludes semantic diff, collaboration, generalized d
 
 ## 16. ADR triggers
 
-[ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md) establishes the accepted model/run/runtime boundary.
+[ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md) establishes the accepted model/run/runtime boundary. [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md) establishes the accepted separation between semantic fingerprint and controlled-revision/change-management identity.
 
 Additional ADRs are warranted when implementation commits to hard-to-reverse choices about:
 
 - concrete canonical-model aggregate/type boundaries;
-- model ID/version/hash semantics;
+- fingerprint computation/versioning semantics;
 - compilation representation and caching rules;
-- persistent model storage or lineage;
+- a concrete controlled-revision repository, persistent model storage, or lineage scheme;
+- an external change-management integration (e.g. Jira) whose protocol becomes hard to reverse once adopted;
 - work-center/resource-pool semantics;
 - shared draft lifecycle/collaboration;
 - deployment of a design into real operations.

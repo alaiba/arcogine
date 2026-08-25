@@ -4,7 +4,7 @@
 > **Scope:** Prepare Arcogine's factory runtime for external consumers after the canonical factory-model boundary is established  
 > **Authority:** Planning only; this document defines runtime-readiness gates, not current capability or accepted architecture  
 > **Prerequisite:** D1-D4 in [Factory Design Capability](factory-design-capability.md)  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revisions-and-change-management.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
 
 ## 1. Purpose
 
@@ -298,7 +298,8 @@ The consumer-neutral observation should contain, directly or through purpose-spe
 ```text
 Session
     session/run ID
-    model ID/version/hash
+    model fingerprint
+    model revision ID [optional/future]
     current simulated time
     run state
     latest event sequence
@@ -343,7 +344,8 @@ sequence
 simulation time
 event type
 session ID
-model ID/version/hash
+model fingerprint
+model revision ID [optional/future]
 affected entity IDs
 payload
 ```

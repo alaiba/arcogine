@@ -480,6 +480,10 @@ Given identical scenario TOML and the same seed, the simulation produces identic
 
 This determinism contract is scoped to simulation, replay, and verification contexts, where it is a critical property. It is not a claim that real-world execution itself must be, or will be made, deterministic — production operates in a non-deterministic world of real machines, people, and failures. See the Product Charter's [continuity with current architecture](/docs/product/charter.md#8-continuity-with-current-architecture) section for this distinction.
 
+## Factory Model Identity (current state)
+
+Today's `FactoryModelVersion` (see [ADR-0003](decisions/0003-canonical-factory-model-boundary.md)) carries content-derived semantic identity: publishing it validates the design and derives a stable fingerprint from its canonical content. There is no persistent revision repository, controlled-revision lineage, approval workflow, or external change-management integration implemented yet. [ADR-0004](decisions/0004-model-identity-revisions-and-change-management.md) records the intended future distinction between that fingerprint and a separate, deferred controlled-revision concept, but nothing beyond the fingerprint exists in the current codebase.
+
 ## API Layer
 
 The HTTP API uses Spring Boot 3 with Spring MVC:

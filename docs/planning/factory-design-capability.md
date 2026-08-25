@@ -86,8 +86,15 @@ The initial spike should establish the model seam without simultaneously redesig
 The canonical `FactoryModel`/`FactoryModelVersion` seam has landed (see `product/domains/factory/src/main/java/com/arcogine/factory/model/`), so D1-D4 are no longer wholly proposed, but they are not uniformly complete either. This table reflects actual status rather than treating the sequence as either all-done or all-future:
 
 ```text
-D1 Canonical model                  IMPLEMENTED
-D2 Executability validation         IMPLEMENTED, internal contract
+D1 Canonical model                  PARTIAL
+    canonical semantic seam         implemented
+    product/operation/resources     implemented
+    definition-instance split       deferred
+    schema/version semantics        deferred
+D2 Executability validation         PARTIAL
+    deterministic structural errors implemented
+    stable finding taxonomy         deferred
+    warnings/severity/codes         deferred
 D3 Publication / semantic identity  PARTIAL
     immutable publication           implemented
     content hash                    implemented, provisional policy
@@ -98,6 +105,8 @@ D4 Runtime instantiation            PARTIAL
     handler provenance              implemented (IntegratedHandler)
     result/run provenance           outstanding (SimResult has none)
 ```
+
+D1's acceptance criteria call for resource definitions and installed instances to be distinguishable and for a model/schema-version concept; today's `FactoryModel` holds only `resources`/`operations`/`products`, and `ResourceDefinition`'s own Javadoc says it deliberately represents both a resource type and its installed instance, deferring the split. D2's acceptance criteria call for a stable finding shape (code, severity, message, entity/field identifiers); today's `ModelValidationError` is deliberately minimal — just `(field, message)`. Neither gap blocks D3/D4; both are called out here so the richer D1/D2 goals aren't silently redefined down to match what happened to ship first.
 
 Two callouts worth being explicit about:
 
@@ -135,10 +144,10 @@ Before broad runtime refactoring begins:
 1. An existing scenario can produce a canonical `FactoryModel` or equivalent.
 2. Simulation, economy, and agent configuration do not enter that model.
 3. The model validates independently of mutable runtime construction.
-4. A valid model can be published with stable identity/provenance under a defined initial policy.
+4. A valid model can be published with a semantic fingerprint and provenance under a defined initial policy.
 5. The existing runtime can be instantiated from the published model or its derived executable representation.
 6. Existing deterministic scenario results remain unchanged for representative regression fixtures.
-7. Runtime observations/results can identify the source model version.
+7. Runtime observations/results can identify the source model's semantic fingerprint.
 8. No `ProductionOrder`/`WorkItem` redesign, capability-dispatch redesign, spatial-transfer behavior, or game UI is required to prove this spike.
 
 ## 5. D1 — Canonical factory model contract
@@ -343,7 +352,7 @@ These structures are derived from one published semantic model and are not indep
 
 ### 8.3 Runtime provenance
 
-Every run/session must identify the model version it instantiated.
+Every run/session must identify the semantic fingerprint of the model version it instantiated.
 
 At minimum, supported observations/results should make the following attributable:
 
@@ -360,7 +369,7 @@ D4 is satisfied when:
 1. A published model version can instantiate a fresh deterministic runtime.
 2. Runtime cannot mutate the published model.
 3. Two fresh runtimes instantiated from the same model version and same simulation inputs preserve deterministic behavior.
-4. Runtime observations/results identify the source model version.
+4. Runtime observations/results identify the source model's semantic fingerprint.
 5. No consumer-specific draft representation is required by runtime.
 6. Representative existing scenarios still produce the same results through the new model seam.
 
@@ -376,7 +385,7 @@ Do not implement arbitrary text/JSON diff, generic patch/merge, or collaborative
 
 ## 10. D6 — Shared draft lifecycle and collaboration
 
-Promote drafts into an Arcogine-owned shared lifecycle only when a second concrete workflow requires common persistence, branching, collaboration, review, or approval.
+Promote drafts into an Arcogine-owned shared lifecycle only when a second concrete workflow requires common persistence, branching, collaboration, or collaborative draft review/comments.
 
 Possible triggers include industrial design plus optimizer/game authoring, human/agent co-design, branching real production changes, or multi-user design sessions.
 
@@ -475,7 +484,7 @@ The game must not implement a parallel scheduler or treat its draft as the autho
 
 ## 15. Headless acceptance path
 
-### 14.1 Behavior-preserving publication test
+### 15.1 Behavior-preserving publication test
 
 1. Load an existing representative scenario.
 2. Adapt only its factory semantics into a canonical model.
@@ -484,9 +493,9 @@ The game must not implement a parallel scheduler or treat its draft as the autho
 5. Instantiate runtime through the new boundary.
 6. Run the same inputs/seed as the existing path.
 7. Assert deterministic behavior/results are unchanged.
-8. Assert results identify the source model version.
+8. Assert results identify the source model's semantic fingerprint.
 
-### 14.2 Variant test after richer semantics exist
+### 15.2 Variant test after richer semantics exist
 
 1. Publish model A.
 2. Publish model B with one semantic design change.
@@ -508,9 +517,9 @@ ScenarioConfig adapts into it
 Simulation/economy/agent concerns remain outside it
 Structured validation exists
 Invalid model cannot publish/instantiate
-Published version has stable identity/provenance
+Published version has a semantic fingerprint and provenance
 Existing runtime instantiates from that version
-Runtime reports its model version
+Runtime reports the semantic fingerprint of its model version
 Representative deterministic behavior is unchanged
 Published model remains immutable
 No ProductionOrder/WorkItem rewrite is required yet

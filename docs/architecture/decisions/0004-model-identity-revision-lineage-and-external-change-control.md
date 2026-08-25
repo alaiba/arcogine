@@ -10,7 +10,7 @@ Date: 2026-08-25
 That deferral is no longer safe to leave unstated, because two different ideas keep getting written as if they were one:
 
 1. **Semantic identity** — whether two published models mean the same production system. This is a content question: given the same canonical facts, Arcogine should be able to derive the same identity deterministically.
-2. **Controlled revision identity** — whether a change to the production system was requested, reviewed, approved, and deployed through an accountable process, and how that change relates to prior revisions. This is a governance question, not a content question.
+2. **Controlled revision identity** — whether a persisted historical configuration state carries change-control provenance and lineage back to a prior state, independent of whether that state has since been approved or deployed. This is a governance question, not a content question.
 
 Requirements documents ([`factory-design.md`](../factory-design.md) section 11, [`factory-design-capability.md`](../../planning/factory-design-capability.md) D3) currently bundle "model ID, revision/version, schema version, content hash, publication provenance" into one minimum-identity list. That bundling implies persistent revision lineage, approval state, and an external ticketing key are needed before Arcogine can publish a model at all. They are not: the current implementation need only prove content-derived semantic identity.
 
@@ -34,7 +34,7 @@ Arcogine treats model identity and change management as related but distinct con
 
 A `FactoryModelVersion`'s identity is derived from its canonical semantic content: given equivalent canonical facts, Arcogine derives equivalent identity — a **model fingerprint** — deterministically and without reference to consumer presentation metadata, authorship, timing, or external systems.
 
-Two models with the same fingerprint are the same semantic design. Fingerprint equality is a content-derived fact Arcogine can compute unilaterally; it never requires an external system to establish.
+Under the defined fingerprint policy, equal fingerprints denote the same semantic design. Fingerprint equality is a content-derived fact Arcogine can compute unilaterally; it never requires an external system to establish.
 
 Semantic identity and controlled revision identity are distinct. Arcogine may determine semantic identity from canonical model content. A controlled revision represents a historical configuration-management event and may reference an external change-management record. Equal semantic content may therefore occur in distinct controlled revisions.
 
@@ -49,7 +49,7 @@ Until those are specified, `contentHash()` remains a provisional, internal polic
 
 ### Controlled revision identity is a separate, future concept
 
-A **controlled revision** — a change that has been requested, reviewed, approved, and deployed through an accountable process, with lineage back to a prior revision — is a distinct concept from a fingerprint. A controlled-revision lifecycle (persistent repository, lineage, approval state, deployment tracking) is deferred capability, to be built only when a concrete requirement (a persistent repository, an external change-management integration, an approval/deployment workflow, an audit requirement, or branching/lineage needs) makes it necessary.
+A **controlled revision** is a persisted, controlled historical configuration state: it carries change-control provenance and lineage back to a prior revision. A controlled revision must exist before it can be approved, and must be approved before it can be deployed — approval and deployment are separate lifecycle/evidence records referencing the revision, not properties required for the revision to exist. This must represent both `candidate → approved revision → scheduled → deployed` and `approved revision → never deployed` without contradiction; a revision that is never approved, or approved but never deployed, is still a controlled revision. A controlled-revision lifecycle (persistent repository, lineage, approval state, deployment tracking) is deferred capability, to be built only when a concrete requirement (a persistent repository, an external change-management integration, an approval/deployment workflow, an audit requirement, or branching/lineage needs) makes it necessary.
 
 Until that lifecycle exists, Arcogine does not require a model UUID, a revision counter, an approval state, or an external change key to publish a semantically valid model.
 

@@ -138,7 +138,7 @@ FactoryRuntime
 
 These need not all become separate persistence entities or modules initially.
 
-Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it a stable, content-derived fingerprint. It is not yet a **controlled revision** entity — there is no persistent revision repository, lineage, approval state, or external change reference. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) draws that distinction; see section 11 below for what the fingerprint does and does not carry.
+Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it a deterministic content hash under the current provisional identity policy. It is not yet a **controlled revision** entity — there is no persistent revision repository, lineage, approval state, or external change reference. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) draws that distinction; see section 11 below for what the fingerprint does and does not carry.
 
 ### 4.1 What belongs in the canonical model
 
@@ -338,7 +338,7 @@ A published model version is the bridge between design and downstream contexts.
 [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) separates two concepts that publication identity must not bundle together:
 
 - **Semantic fingerprint** — a deterministic identity derived from canonical model content. Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the minimum publication identity required today.
-- **Controlled revision** — a change that has been requested, reviewed, approved, and deployed through an accountable process, with lineage back to a prior revision, and optionally a stable external change reference (for example, a Jira issue key). This is deferred capability, not part of today's publication boundary.
+- **Controlled revision** — a persisted, controlled historical configuration state carrying change-control provenance and lineage back to a prior revision, and optionally a stable external change reference (for example, an issue-tracker key). Approval and deployment are separate lifecycle/evidence records that may reference a revision; a revision need not be approved or deployed to exist. This is deferred capability, not part of today's publication boundary.
 
 Every runtime or verification result must retain the identity of the model version it instantiated, expressed as the fingerprint.
 

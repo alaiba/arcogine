@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Prepare Arcogine's factory runtime for external consumers after the canonical factory-model boundary is established  
 > **Authority:** Planning only; this document defines runtime-readiness gates, not current capability or accepted architecture  
-> **Prerequisite:** D1-D4 in [Factory Design Capability](factory-design-capability.md)  
+> **Prerequisite:** the model-seam entry gate (§1.1) — narrower than full D1-D4 in [Factory Design Capability](factory-design-capability.md)  
 > **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
 
 ## 1. Purpose
@@ -15,7 +15,7 @@ This plan begins **after** Arcogine can validate, publish, and instantiate an im
 The intended dependency is:
 
 ```text
-Factory Design Capability D1-D4
+Model-seam entry gate (below)
         |
         v
 Published FactoryModelVersion
@@ -36,6 +36,22 @@ Factory-design game implementation
 The game is a downstream proof that Arcogine is usable as an engine. It must not be the place where missing workload, execution, scheduling, session, observation, or transfer semantics are invented under UI pressure.
 
 A CLI command, JUnit harness, or thin reference consumer may prove a readiness gate. That is engine verification, not game implementation.
+
+### 1.1 Model-seam entry gate
+
+Runtime readiness does not wait on the full [Factory Design Capability](factory-design-capability.md) plan — several of D1-D4's own acceptance criteria are deliberately deferred capability (see that plan's §3.1 implementation-status table), not blockers for engine work. The entry requirement for Gate 1 is narrower:
+
+```text
+Required before engine Gate 1:
+- canonical FactoryModel seam exists
+- deterministic structural validation exists
+- immutable publication exists
+- current provenance identity policy exists (today's provisional content hash; see ADR-0004)
+- runtime instantiates only from the published model
+- representative baseline behavior is preserved
+```
+
+This gate is satisfied by what has already landed. It does not require the D1 definition/instance split, the D2 stable finding taxonomy (codes/severity/entity metadata), or the D3 durable cross-process fingerprint contract — those remain open design-capability work, tracked independently, and are not prerequisites for Gate 1 or any later gate in this plan. Result-level model provenance (`SimResult` carrying the provenance `IntegratedHandler` already has) remains a small, separately tracked follow-up rather than a gate blocker.
 
 ## 2. Boundary with factory design
 
@@ -94,7 +110,7 @@ It follows these constraints:
 Game implementation begins only after the design prerequisite and Gates 1-5 below are satisfied by headless evidence.
 
 ```text
-Prerequisite  Published canonical factory model (Design D1-D4)
+Prerequisite  Model-seam entry gate satisfied (§1.1) — not full Design D1-D4
         ↓
 Gate 1        Explicit workload and execution model
         ↓
@@ -528,7 +544,7 @@ The objective is a consumer-ready deterministic production runtime over a publis
 
 ### 13.1 Prerequisite
 
-Complete the behavior-preserving canonical-model seam from [Factory Design Capability](factory-design-capability.md):
+Complete the behavior-preserving canonical-model seam from [Factory Design Capability](factory-design-capability.md) — this is the model-seam entry gate defined in §1.1, not the full D1-D4 acceptance criteria:
 
 ```text
 Scenario factory semantics

@@ -36,7 +36,7 @@ A `FactoryModelVersion`'s identity is derived from its canonical semantic conten
 
 Under the defined fingerprint policy, equal fingerprints denote the same semantic design. Fingerprint equality is a content-derived fact Arcogine can compute unilaterally; it never requires an external system to establish.
 
-Semantic identity and controlled revision identity are distinct. Arcogine may determine semantic identity from canonical model content. A controlled revision represents a historical configuration-management event and may reference an external change-management record. Equal semantic content may therefore occur in distinct controlled revisions.
+Semantic identity and controlled revision identity are distinct. Arcogine may determine semantic identity from canonical model content. A controlled revision is a historical configuration-management state/artifact and may reference an external change-management record. Equal semantic content may therefore occur in distinct controlled revisions.
 
 **The current `FactoryModelVersion.contentHash()` demonstrates content-derived identity but does not yet constitute Arcogine's durable cross-process fingerprint contract.** It is an in-memory, per-process identity policy sufficient to attribute a runtime or result to the model it was instantiated from. Before any document or consumer may rely on it as a durable, persisted, or cross-process-stable fingerprint, the following must be decided and specified:
 
@@ -71,7 +71,7 @@ The organizational workflow around a change — who requested it, why, who revie
 
 ### External change references link revisions and evidence to an external system
 
-A controlled model revision, once that concept exists, may carry a stable external reference (for example, an issue-tracker key) pointing at the change-management record that authorized it. That reference is metadata attached to the revision; it is not consulted to determine model content, fingerprint, or semantic behavior, and Arcogine's runtime/simulation surfaces do not need to resolve or understand it. Arcogine does not adopt any particular external system's schema, workflow states, or terminology into its own domain model to support this reference — an issue tracker, a PLM/QMS system, or an ITSM platform are all equally valid on the other side of it.
+A controlled model revision, once that concept exists, may carry a stable external reference (for example, an issue-tracker key) pointing at the change-management record that tracks/governs the change — whether that record is still proposed, under review, approved, or closed. That reference is metadata attached to the revision; it is not consulted to determine model content, fingerprint, or semantic behavior, and Arcogine's runtime/simulation surfaces do not need to resolve or understand it. Arcogine does not adopt any particular external system's schema, workflow states, or terminology into its own domain model to support this reference — an issue tracker, a PLM/QMS system, or an ITSM platform are all equally valid on the other side of it.
 
 ### Conformance, approvals, runs, and deployments remain separate artifacts
 

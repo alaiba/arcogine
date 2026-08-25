@@ -215,16 +215,18 @@ FactoryModelPublished as version 4
 A future deployment workflow may connect them explicitly:
 
 ```text
-Design change set (candidate)
+Candidate change
+        ↓
+Controlled revision (persisted, with lineage)
         ↓
 Technical assessment (validation / simulation / verification)
         ↓
 Approval
         ↓
-Controlled revision
-        ↓
-Deployment
+Scheduling / deployment
 ```
+
+The revision is persisted before approval, not after: an unapproved revision, or one approved but never deployed, must remain representable. Approval and deployment are separate records that reference the revision, not steps a revision passes through to come into existence.
 
 That bridge preserves provenance and authority; it does not turn editor operations into simulation events.
 

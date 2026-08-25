@@ -45,7 +45,7 @@ git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension. The preferred development container currently provides **JDK 25 and Node 24**; dependency caches (`~/.gradle`, `product/interfaces/web/node_modules`) live in named Docker volumes for speed.
+Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote-containers) extension. The preferred development container currently provides **JDK 25 and Node 24**; dependency caches (`~/.gradle`, `product/interfaces/web/node_modules`) live in named Docker volumes for speed.
 
 After the container is ready, start the web app and API in two terminals:
 
@@ -119,7 +119,7 @@ java -jar dist/api/arcogine.jar run docs/examples/basic.toml
 ## Documentation
 
 | Document | What it covers |
-|----------|-----------|
+|----------|----------------|
 | [Product Charter](docs/product/charter.md) | Enduring product vision and principles — start here to understand what Arcogine is ultimately becoming |
 | [Concepts](docs/product/concepts.md) | How the current simulation works, KPIs, agents, scenarios |
 | [API Reference](docs/reference/api.md) | Every HTTP endpoint with curl examples |

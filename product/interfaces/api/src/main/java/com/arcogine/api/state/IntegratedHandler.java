@@ -104,6 +104,10 @@ public class IntegratedHandler implements EventHandler, ModelProvenanceSource {
      * Content hash of the {@code FactoryModelVersion} this handler's factory runtime was
      * instantiated from, or {@code null} if unknown.
      */
+    public String factoryModelContentHash() {
+        return factoryModelContentHash;
+    }
+
     @Override
     public String modelContentHash() {
         return factoryModelContentHash;

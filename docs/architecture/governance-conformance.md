@@ -241,20 +241,30 @@ One control may map to multiple requirements across multiple frameworks. Framewo
 
 ## 9. Evidence must be attributable and temporal
 
-Evidence must retain enough provenance for historical reconstruction:
+An external observation does not intrinsically belong to one Arcogine model fingerprint or controlled revision. An AWS configuration snapshot, an IdP login log, or a Jira approval artifact has its own authority, its own observation time, and often its own applicable period, independent of which Arcogine model version or revision happens to exist when it is captured or used. Binding the observation itself to one fingerprint/revision either forces duplicating identical evidence across every subsequent version or misrepresents the observation's actual provenance. Arcogine must therefore separate the evidence itself from any particular evaluation's use of it:
 
 ```text
 Evidence
+    evidenceId
     source
     provenance
     observedAt
     applicableFrom / applicableUntil
-    model fingerprint
-    controlled revision ID, when applicable
-    assertion / control relationship
     external identity or artifact reference
     integrity metadata where required
+
+EvidenceUse (a.k.a. EvaluationEvidence)
+    evidenceId
+    evaluation / assertion / control relationship
+    model fingerprint
+    controlled revision ID, when applicable
+    scope at time of use
+    applicability determination
 ```
+
+`Evidence` is the source-level fact: what was observed, by what authority, when, and over what period it applies. It does not carry a model fingerprint or revision. `EvidenceUse` is the binding: which evaluation consumed that evidence, against which fingerprint/revision, and why it was judged applicable to that scope at that time. One `Evidence` record may be referenced by many `EvidenceUse` records across multiple model versions, as long as each use's scope/applicability determination independently holds.
+
+Structural evidence derived directly from Arcogine's own authoritative model state is the one case where binding to a fingerprint/revision at the source is natural — the model version *is* the evidence's provenance, so `Evidence` and `EvidenceUse` may collapse into one record for that case. External evidence should generally be bound to fingerprint/revision identity at evaluation/use time (`EvidenceUse`), not at source-observation time (`Evidence`).
 
 Evidence generated from Arcogine's authoritative state must remain distinguishable from evidence observed externally. Reuse is valid only when scope, applicable period, provenance, and semantic meaning remain compatible.
 

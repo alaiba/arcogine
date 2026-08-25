@@ -55,14 +55,19 @@ FactoryModel
 
 That seam must not be blocked by the generic governance initiative. In particular, the current `FactoryModelVersion.contentHash()` is not yet a durable cross-process fingerprint contract, and the current factory model has no controlled revision repository.
 
-The governance use case now provides a concrete cross-consumer reason to pursue work previously deferred in the factory plan:
+The governance use case now provides a concrete cross-consumer reason to pursue work previously deferred in the factory plan. The dependency order matters here, and matches the G1-G9 sequence in §4 below, not the order these concerns happen to be listed elsewhere:
 
-- a durable semantic fingerprint contract;
-- controlled revision identity and lineage;
-- semantic comparison/diff;
-- shared change semantics;
-- review/approval integration with external workflow systems;
-- requirement-based verification and evidence.
+```text
+durable semantic fingerprint + controlled revision lineage (G1)
+          ↓
+semantic ChangeSet (G2)
+          ↓
+requirement-based conformance/evidence (G3-G5)
+          ↓
+review/approval/governed-change integration (G6)
+```
+
+Evaluating a proposed change's conformance before it is authorized is the strategic point (see [architecture §11](../architecture/governance-conformance.md#11-pre-change-conformance-is-strategically-important)); an approval/deployment integration that isn't preceded by conformance evaluation would authorize changes Arcogine hasn't yet assessed.
 
 > **D5 semantic comparison is no longer only an editor convenience. It is an enabling primitive for governed change and impact analysis once the model seam is stable.**
 
@@ -275,31 +280,35 @@ The last criterion is the first major strategic milestone: pre-change conformanc
 
 Support assertions whose truth depends on observations outside Arcogine's authoritative semantic model.
 
-Evidence should capture concepts equivalent to:
+Per [Evidence must be attributable and temporal](../architecture/governance-conformance.md#9-evidence-must-be-attributable-and-temporal), the evidence source record and its use in one evaluation are distinct:
 
 ```text
-source
-provenance
-observedAt
-applicable period
-external identity/reference
-related assertion/control
-model fingerprint
-controlled revision ID, when applicable
-integrity metadata where required
+Evidence (source-level, no model fingerprint/revision)
+    source
+    provenance
+    observedAt
+    applicable period
+    external identity/reference
+    integrity metadata where required
+
+EvidenceUse (binds evidence to one evaluation)
+    related assertion/control
+    model fingerprint
+    controlled revision ID, when applicable
+    scope/applicability at time of use
 ```
 
-Initial adapters should be driven by a concrete requirement, not a desire to match a vendor's integration count.
+External evidence is generally reusable across model versions as long as each `EvidenceUse` independently re-establishes scope and applicability; only structural evidence derived directly from Arcogine's own model state naturally collapses the two into one record. Initial adapters should be driven by a concrete requirement, not a desire to match a vendor's integration count.
 
 ### Acceptance criteria
 
 G5 is ready when:
 
 1. External evidence is distinguishable from Arcogine-derived structural evidence.
-2. Evidence is attributable to source and observation time.
+2. Evidence is attributable to source and observation time, independent of any model fingerprint or revision.
 3. An assertion can combine intended model state with observed external state.
-4. Evidence can become stale/invalid when its scope, applicable period, or affected semantics change.
-5. A historical evaluation can identify the evidence set it used.
+4. An `EvidenceUse` can become stale/invalid when its scope, applicable period, or affected semantics change, without invalidating the underlying `Evidence` record for other uses.
+5. A historical evaluation can identify the evidence set (and the `EvidenceUse` bindings) it relied on.
 
 ## 10. G6 — Governed change and external workflow integration
 

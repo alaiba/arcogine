@@ -124,7 +124,6 @@ log_optional_version() {
   local label="$1"
   shift
   local executable="$1"
-  shift
 
   echo "--- ${label} ---"
   if command -v "$executable" >/dev/null 2>&1; then
@@ -142,18 +141,18 @@ log_optional_version() {
 # ---------------------------------------------------------------------------
 
 echo "==> Base-image toolchain inventory:"
-log_optional_version "bash --version" bash bash --version
-log_optional_version "git --version" git git --version
-log_optional_version "curl --version" curl curl --version
-log_optional_version "java -version" java java -version
-log_optional_version "javac -version" javac javac -version
-log_optional_version "node --version" node node --version
-log_optional_version "npm --version" npm npm --version
-log_optional_version "npx --version" npx npx --version
-log_optional_version "docker --version" docker docker --version
-log_optional_version "docker compose version" docker docker compose version
-log_optional_version "trivy --version" trivy trivy --version
-log_optional_version "gitleaks version" gitleaks gitleaks version
+log_optional_version "bash --version" bash --version
+log_optional_version "git --version" git --version
+log_optional_version "curl --version" curl --version
+log_optional_version "java -version" java -version
+log_optional_version "javac -version" javac -version
+log_optional_version "node --version" node --version
+log_optional_version "npm --version" npm --version
+log_optional_version "npx --version" npx --version
+log_optional_version "docker --version" docker --version
+log_optional_version "docker compose version" docker compose version
+log_optional_version "trivy --version" trivy --version
+log_optional_version "gitleaks version" gitleaks version
 
 echo "--- resolved executable paths ---"
 for tool in java javac node npm npx git docker trivy gitleaks; do

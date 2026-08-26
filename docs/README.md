@@ -51,7 +51,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 
 | Document | What it covers |
 |----------|-----------------|
-| [Examples README](examples/README.md) | Executable TOML scenario fixture files (educational, not runtime assets — never shipped in `dist/` or Docker images) |
+| [Examples README](examples/README.md) | Executable TOML scenario fixtures (educational, not runtime assets — never shipped in `dist/` or Docker images) |
 
 ## Internal planning (maintainers)
 

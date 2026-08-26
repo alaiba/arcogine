@@ -58,12 +58,14 @@ When an order arrives, Arcogine stores an immutable **order** containing the acc
 
 The current implementation remains one order → one job. This separation exists so accepted intent does not have to mutate as execution progresses; later engine-readiness work can allow one order to produce multiple work items/jobs without copying the commercial/order facts into each execution object.
 
+Order quantity now consumes proportional production work: a job's routing repeats once per unit of quantity, so an order for 10 units keeps a machine occupied roughly ten times as long as an otherwise identical order for 1 unit. The job's step counter (`current_step` of `total_steps`) advances once per routing step *executed*, not once per unit -- for a multi-step route it advances once per step, so it reaches `total_steps` only after every step has run for every unit. Completed-unit progress can be derived from it (`current_step / steps per unit`), but the counter itself is an executed-step count, not a unit count. This is represented as one job with a larger step count -- not as ten separate jobs -- so a large-quantity order still only creates one order and one job.
+
 The current lifecycle is:
 
 1. **Order accepted** — the order event freezes the unit price and quantity in immutable order intent
-2. **Job created** — one execution job references that order
-3. **In progress** — the job is processed on a machine or waits in a queue
-4. **Completed** — all routing steps finish; the referenced order's sales value (quantity x its locked-in price) is added to completed sales value
+2. **Job created** — one execution job references that order, with its routing sized to repeat once per unit of quantity
+3. **In progress** — the job is processed on a machine or waits in a queue, one routing pass per unit
+4. **Completed** — all routing steps for every unit finish; the referenced order's sales value (quantity x its locked-in price) is added to completed sales value exactly once
 
 The existing API/UI job projection still shows product, quantity, and completed value on each job for compatibility. Those values are now read from the immutable referenced order rather than stored as mutable job-owned state.
 

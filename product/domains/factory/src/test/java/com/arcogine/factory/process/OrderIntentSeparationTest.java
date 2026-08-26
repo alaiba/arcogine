@@ -68,8 +68,12 @@ class OrderIntentSeparationTest {
 
         var job = handler.jobsView().findFirst().orElseThrow();
         var order = handler.order(job.orderId());
-        Event taskEnd = scheduler.nextEvent().orElseThrow();
-        handler.handleEvent(taskEnd, scheduler);
+        // The job's routing repeats once per unit of quantity (3), so completing the order
+        // requires three TaskEnd events, not one.
+        for (int i = 0; i < 3; i++) {
+            Event taskEnd = scheduler.nextEvent().orElseThrow();
+            handler.handleEvent(taskEnd, scheduler);
+        }
 
         assertEquals(order.orderValue(), handler.completedSalesValue());
         Event completed = scheduler.nextEvent().orElseThrow();

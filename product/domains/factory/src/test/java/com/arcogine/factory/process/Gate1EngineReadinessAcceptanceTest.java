@@ -83,21 +83,26 @@ class Gate1EngineReadinessAcceptanceTest {
         runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
 
         // Two routing steps repeated QUANTITY times means QUANTITY * 2 TaskEnd events are
-        // required before the job can be complete -- not one, and not just QUANTITY.
+        // required before the job can be complete -- not one, and not just QUANTITY. Other event
+        // types may legitimately appear in the stream alongside them (e.g. TaskStart), so this
+        // counts TaskEnd events specifically rather than asserting every advanced event is one.
         long requiredTaskEnds = QUANTITY * 2;
-        for (long i = 0; i < requiredTaskEnds - 1; i++) {
-            Event event = runtime.advance().orElseThrow();
-            assertEquals(EventType.TaskEnd, event.eventType());
-            assertFalse(
+        long taskEndsSeen = 0;
+        Event event;
+        while (taskEndsSeen < requiredTaskEnds && (event = runtime.advance().orElse(null)) != null) {
+            if (event.eventType() == EventType.TaskEnd) {
+                taskEndsSeen++;
+            }
+            boolean isFinalTaskEnd = taskEndsSeen == requiredTaskEnds;
+            assertEquals(
+                    isFinalTaskEnd,
                     runtime.jobsView().findFirst().orElseThrow().isComplete(),
-                    "job must not be complete before all quantity-scaled routing work has executed");
+                    isFinalTaskEnd
+                            ? "job must be complete only after the full quantity-scaled routing has executed"
+                            : "job must not be complete before all quantity-scaled routing work has executed");
         }
 
-        Event finalStep = runtime.advance().orElseThrow();
-        assertEquals(EventType.TaskEnd, finalStep.eventType());
-        assertTrue(
-                runtime.jobsView().findFirst().orElseThrow().isComplete(),
-                "job must be complete only after the full quantity-scaled routing has executed");
+        assertEquals(requiredTaskEnds, taskEndsSeen, "all quantity-scaled routing steps must complete");
     }
 
     @Test
@@ -105,19 +110,16 @@ class Gate1EngineReadinessAcceptanceTest {
         FactoryRuntime runtime = freshRuntime();
         OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
 
-        long requiredTaskEnds = QUANTITY * 2;
-        Event lastEvent = null;
-        int orderCompletedCount = 0;
+        List<EventPayload.OrderCompleted> completions = new ArrayList<>();
         Event event;
         while ((event = runtime.advance().orElse(null)) != null) {
-            lastEvent = event;
-            if (event.payload() instanceof EventPayload.OrderCompleted) {
-                orderCompletedCount++;
+            if (event.payload() instanceof EventPayload.OrderCompleted orderCompleted) {
+                completions.add(orderCompleted);
             }
         }
 
-        assertEquals(1, orderCompletedCount, "exactly one OrderCompleted event must be observed");
-        var completed = (EventPayload.OrderCompleted) lastEvent.payload();
+        assertEquals(1, completions.size(), "exactly one OrderCompleted event must be observed");
+        var completed = completions.get(0);
 
         // OrderCompleted correlates back to the submitted order via jobId -> FactoryRuntime.job ->
         // JobView.orderId, under the 1 Order <-> 1 Job invariant this model deliberately keeps.

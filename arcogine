@@ -107,6 +107,9 @@ cmd_check() {
   npm_web run build
 
   if [[ "${1:-}" == "--full" ]]; then
+    echo "==> Building API JAR for Playwright's webServer..."
+    gradle :cli:bootJar
+
     echo "==> Playwright E2E..."
     npx_web playwright test
 

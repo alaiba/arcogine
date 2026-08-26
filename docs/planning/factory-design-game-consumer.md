@@ -3,8 +3,8 @@
 > **Status:** Proposed  
 > **Scope:** A separate, single-player factory-design game consuming Arcogine as its production engine  
 > **Authority:** Planning only; this document does not describe current capability or accepted architecture  
-> **Dependency:** Game implementation begins only after the model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) and Gates 1-5 in that same document are satisfied  
-> **Related:** [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md), [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Dependency:** Headless [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md) may progress independently; playable/runtime-integrated game implementation begins only after the model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) and Gates 1-5 in that same document are satisfied  
+> **Related:** [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md), [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md), [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Initiative summary
 
@@ -57,9 +57,25 @@ The game may own an editor-specific draft, but that draft is not the authoritati
 
 A CLI command, JUnit harness, or thin reference consumer used to prove either upstream plan is not game implementation.
 
-### 2.3 Entry gates
+### 2.3 Challenge readiness may progress in parallel
 
-Before game implementation starts, Arcogine must have satisfied:
+[Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md) owns game-side challenge semantics that can be proven headlessly without a playable or runtime-integrated game consumer:
+
+- challenge identity and content/rules versioning;
+- game-owned equipment catalogue, prices, availability, and construction-budget rules;
+- candidate admissibility under challenge rules;
+- evaluation-policy identity/version and deterministic challenge evaluation;
+- evaluation provenance;
+- attempt history and game-facing comparison;
+- data-driven challenge fixtures and synthetic outcome fixtures.
+
+C1-C5 in that plan may progress before Engine Readiness Gates 1-5 because they consume game-owned drafts and synthetic outcome facts rather than standing in for missing Arcogine production semantics. Headless challenge work must not simulate production, reconstruct queues or dispatch, infer missing runtime observations, or be used as evidence that an Engine Readiness gate is satisfied.
+
+This exception applies only to the independent challenge/evaluation track. The playable/runtime-integrated game consumer still waits for the entry gates below.
+
+### 2.4 Playable/runtime-integrated game entry gates
+
+Before playable or runtime-integrated game implementation starts, Arcogine must have satisfied:
 
 1. The model-seam entry gate (§1.1 of Factory Simulation Engine Readiness): the behavior-preserving canonical-model seam, narrower than the full D1-D4 acceptance criteria.
 2. Gate 1: explicit production workload and separate execution semantics.
@@ -135,6 +151,8 @@ Pressing Run follows this semantic boundary:
 ```text
 Game-owned draft
       |
+ challenge admissibility
+      |
  project canonical semantics
       v
 Arcogine validate + publish
@@ -147,6 +165,8 @@ FactoryModelVersion
 Arcogine runtime
 ```
 
+Challenge admissibility and Arcogine executability answer different questions. A draft may be canonically executable yet inadmissible under the selected challenge's catalogue, budget, fixed workload, or other game-owned constraints. Conversely, passing challenge admissibility does not prove Arcogine executability after projection.
+
 Changing the draft creates another candidate design and therefore another published model version when accepted. It does not mutate the model underneath an active run.
 
 Live placement/movement/removal during active work is not required for the vertical slice.
@@ -157,7 +177,11 @@ Live placement/movement/removal during active work is not required for the verti
 |---|---|
 | Rendering, animation, camera, input, audio, assets | Game |
 | Editable draft, local undo history, editor persistence | Game |
-| Machine purchase prices, construction budget, score, rewards, progression | Game |
+| Challenge identity and content/rules version | Game challenge layer |
+| Equipment catalogue identity, availability, purchase/resale rules, construction budget | Game challenge layer |
+| Candidate admissibility under challenge-owned rules | Game challenge layer |
+| Evaluation-policy identity/version, success/failure, score/rating semantics | Game challenge layer |
+| Evaluation provenance, attempt history, game-facing attempt comparison | Game challenge layer |
 | Contract presentation, tutorials, narrative, unlocks | Game |
 | Visual interpolation between authoritative event times | Game |
 | Canonical production-system semantics | Arcogine design/model boundary |
@@ -170,7 +194,7 @@ Live placement/movement/removal during active work is not required for the verti
 | Model/command/event/observation compatibility contracts | Arcogine |
 | Combined save file | Game wrapper around Arcogine checkpoint plus game-owned state |
 
-Arcogine should not acquire `Level`, `StarRating`, `Unlock`, `PlayerCurrency`, decorative furniture, campaign progress, or tutorial steps. The game should not reproduce validation, scheduling, queueing, dispatch, transfer, or KPI semantics that Arcogine owns.
+Arcogine should not acquire `Level`, `StarRating`, `Unlock`, `PlayerCurrency`, challenge-evaluation policy, game-attempt history, decorative furniture, campaign progress, or tutorial steps. The game should not reproduce validation, scheduling, queueing, dispatch, transfer, or KPI semantics that Arcogine owns.
 
 ## 6. Client-specific requirements after upstream readiness
 
@@ -196,11 +220,13 @@ The client should make supported evidence understandable, including queue depth,
 
 It may summarize/highlight observations but must not calculate a competing authoritative result from hidden assumptions.
 
-### 6.5 Game economy
+### 6.5 Game economy and challenge evaluation
 
 The initial game economy may include starting cash, purchase/resale prices, contract payout, deadline bonus/penalty, and scenario score.
 
 These are game rules. They do not extend Arcogine Finance unless a separate product-level use case creates a genuine engine requirement.
+
+Challenge identity/version, admissibility, evaluation-policy identity/version, score/success semantics, and attempt provenance/history are specified in [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md). Challenge evaluation may interpret authoritative Arcogine outcome facts but must not recreate production semantics to derive facts Arcogine did not report.
 
 ### 6.6 Persistence and local runtime
 
@@ -240,9 +266,9 @@ The vertical slice does not require:
 
 Canonical model, order/work semantics, dispatch, session behavior, event envelopes, and transfer rules are upstream decisions and do not belong here.
 
-## 9. Game implementation entry criteria
+## 9. Playable/runtime-integrated game implementation entry criteria
 
-Game implementation may begin when all of the following are true:
+Headless Challenge Readiness C1-C5 is explicitly outside this entry gate and may proceed earlier under the constraints in §2.3. Playable or runtime-integrated game implementation may begin when all of the following are true:
 
 1. The model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) is satisfied.
 2. Gates 1-5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied.
@@ -278,6 +304,7 @@ As work becomes established:
 
 - keep canonical-model work in [Factory Design Capability](factory-design-capability.md) until it becomes accepted/current architecture;
 - keep runtime work/evidence in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md);
+- keep headless challenge/evaluation work in [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md);
 - keep the concrete first-playable product hypothesis in [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md);
 - record hard-to-reverse decisions as ADRs;
 - update [`../architecture/overview.md`](../architecture/overview.md), [Factory Design Architecture](../architecture/factory-design.md), the [ISA-95 mapping](../architecture/isa-95-semantic-mapping.md), and [`../reference/api.md`](../reference/api.md) only as behavior becomes accepted/implemented;

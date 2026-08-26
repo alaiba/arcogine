@@ -119,6 +119,60 @@ class ProportionalQuantityWorkTest {
         assertEquals(2 * 4, job.totalSteps(), "totalSteps must be routing stepCount * quantity");
     }
 
+    /**
+     * Proves the modulo wrap-around (stepIndex % routing.stepCount()) that lets a job-global step
+     * counter repeat a multi-step routing per unit, and that the externally visible {@link
+     * EventPayload.TaskEnd#stepIndex()} continues to carry the routing-local index (0, 1, 0, 1,
+     * ...), not the job-global one -- driving a quantity-3 order fully through a two-step route
+     * rather than only asserting {@code totalSteps}.
+     */
+    @Test
+    void multiStepRoutingRepeatsCorrectlyAcrossMultipleUnitsOfQuantity() {
+        MachineStore machines = new MachineStore();
+        machines.add(new Machine(new MachineId(1), "Mill", 1, null, 0));
+        machines.add(new Machine(new MachineId(2), "Drill", 1, null, 0));
+
+        RoutingStore routings = new RoutingStore();
+        routings.addRouting(new Routing(
+                1,
+                "Widget Route",
+                List.of(
+                        new RoutingStep(1, "Milling", new MachineId(1), 5),
+                        new RoutingStep(2, "Drilling", new MachineId(2), 3))));
+        routings.addProductRouting(new ProductId(1), 1);
+        FactoryHandler h = new FactoryHandler(machines, routings, List.of(new ProductId(1)));
+
+        Scheduler sched = new Scheduler();
+        Event order = Event.of(new SimTime(0), new EventPayload.OrderCreation(new ProductId(1), 3, 10.0));
+        sched.schedule(order);
+        sched.nextEvent();
+        h.handleEvent(order, sched);
+
+        java.util.List<Integer> stepIndices = new java.util.ArrayList<>();
+        java.util.List<MachineId> machineIds = new java.util.ArrayList<>();
+        long orderCompletedCount = 0;
+        Optional<Event> next;
+        while ((next = sched.nextEvent()).isPresent()) {
+            h.handleEvent(next.get(), sched);
+            if (next.get().payload() instanceof EventPayload.TaskEnd te) {
+                stepIndices.add(te.stepIndex());
+                machineIds.add(te.machineId());
+            } else if (next.get().payload() instanceof EventPayload.OrderCompleted) {
+                orderCompletedCount++;
+            }
+        }
+
+        assertEquals(
+                List.of(0, 1, 0, 1, 0, 1),
+                stepIndices,
+                "TaskEnd.stepIndex must repeat the routing-local index (0, 1) per unit, not a"
+                        + " job-global counter (0..5)");
+        assertEquals(List.of(new MachineId(1), new MachineId(2), new MachineId(1), new MachineId(2),
+                new MachineId(1), new MachineId(2)), machineIds);
+        assertEquals(1, orderCompletedCount, "OrderCompleted must fire exactly once for the whole order");
+        assertEquals(1, h.completedSales());
+    }
+
     @Test
     void identicalWorkloadProducesIdenticalOrderedResults() {
         FactoryHandler h1 = oneMachineOneProduct();
@@ -256,5 +310,22 @@ class ProportionalQuantityWorkTest {
         assertThrows(
                 SimError.OutOfRange.class,
                 () -> h.submitOrder(new ProductId(1), 0, 10.0, new SimTime(0), sched));
+    }
+
+    /**
+     * A quantity whose {@code routing.stepCount() * quantity} exceeds the {@code int} execution
+     * step counter must be rejected as a domain {@link SimError.OutOfRange}, not escape as a raw
+     * {@code ArithmeticException} from overflowing arithmetic.
+     */
+    @Test
+    void quantityThatWouldOverflowTheExecutionStepCounterIsRejectedAsADomainError() {
+        FactoryHandler h = oneMachineOneProduct();
+        Scheduler sched = new Scheduler();
+        long unrepresentableQuantity = Integer.MAX_VALUE + 1L;
+
+        SimError.OutOfRange error = assertThrows(
+                SimError.OutOfRange.class,
+                () -> h.submitOrder(new ProductId(1), unrepresentableQuantity, 10.0, new SimTime(0), sched));
+        assertEquals("quantity", error.field());
     }
 }

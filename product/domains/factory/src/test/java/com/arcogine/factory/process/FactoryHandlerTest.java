@@ -68,8 +68,10 @@ class FactoryHandlerTest {
 
     /**
      * A job's routing repeats once per unit of quantity, so completing an order requires driving
-     * one TaskEnd per unit (for a single-step routing). Drains {@code quantity} TaskEnd events,
-     * returning the final one -- the one that completes the order and schedules OrderCompleted.
+     * one TaskEnd per unit (for a single-step routing). Drains exactly {@code quantity} TaskEnd
+     * events, returning the final one -- the one that completes the order and schedules (but does
+     * not drain) OrderCompleted. Callers driving a second order afterward must drain that trailing
+     * OrderCompleted first, or it can race the next order's own scheduled events at the same tick.
      */
     private static Event driveToCompletion(FactoryHandler h, Scheduler sched, long quantity) {
         Event taskEnd = null;
@@ -274,6 +276,10 @@ class FactoryHandlerTest {
         sched.nextEvent();
         h.handleEvent(order1, sched);
         driveToCompletion(h, sched, 2);
+        // Drain order1's OrderCompleted before scheduling order2, so it isn't left in the queue
+        // racing order2's OrderCreation at the same tick.
+        Event completed1 = sched.nextEvent().orElseThrow();
+        assertTrue(completed1.payload() instanceof EventPayload.OrderCompleted);
 
         Event order2 = orderEvent(sched.currentTime().ticks(), 3, 20.0);
         sched.schedule(order2);

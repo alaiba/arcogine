@@ -141,8 +141,8 @@ public class FactoryHandler implements EventHandler {
             j.start(machineId);
 
             SimTime endTime = currentTime.plus(step.duration());
-            scheduler.schedule(Event.of(endTime, new EventPayload.TaskStart(jobId, machineId, stepIndex)));
-            scheduler.schedule(Event.of(endTime, new EventPayload.TaskEnd(jobId, machineId, stepIndex)));
+            scheduler.schedule(Event.of(endTime, new EventPayload.TaskStart(jobId, machineId, routingIndex)));
+            scheduler.schedule(Event.of(endTime, new EventPayload.TaskEnd(jobId, machineId, routingIndex)));
         });
     }
 
@@ -154,10 +154,13 @@ public class FactoryHandler implements EventHandler {
      *
      * <p>The job's routing repeats once per unit of {@code quantity}: {@code totalSteps =
      * routing.stepCount() * quantity}, so a quantity-10 order consumes ten times the routing/
-     * machine work of an otherwise identical quantity-1 order, and progress ({@link
-     * Job#currentStep()}) is countable per unit rather than only per order. Dispatch and
-     * completion resolve each job-level step back to its underlying {@link RoutingStep} by {@code
-     * stepIndex % routing.stepCount()}.
+     * machine work of an otherwise identical quantity-1 order, and {@link Job#currentStep()} is a
+     * job-global counter across every repeated pass. Dispatch and completion resolve that
+     * job-global step back to its underlying {@link RoutingStep} by {@code stepIndex %
+     * routing.stepCount()}; the externally visible {@link EventPayload.TaskStart}/{@link
+     * EventPayload.TaskEnd#stepIndex()} continues to carry that routing-local index (as it did
+     * before quantity repeated the routing), not the job-global counter, so the event contract's
+     * existing meaning is unchanged.
      *
      * <p>Package-private: this method's {@link SimTime}/{@link Scheduler} parameters are
      * event-engine plumbing that a consumer-neutral workload boundary should not have to own or
@@ -174,7 +177,14 @@ public class FactoryHandler implements EventHandler {
             throw new SimError.OutOfRange("quantity", "must be at least 1, got " + quantity);
         }
         Routing routing = routings.getRoutingForProduct(productId);
-        int totalSteps = Math.multiplyExact(routing.stepCount(), Math.toIntExact(quantity));
+        long totalStepsExact = (long) routing.stepCount() * quantity;
+        if (totalStepsExact > Integer.MAX_VALUE) {
+            throw new SimError.OutOfRange(
+                    "quantity",
+                    "quantity " + quantity + " with routing step count " + routing.stepCount()
+                            + " exceeds the maximum representable execution step count");
+        }
+        int totalSteps = (int) totalStepsExact;
 
         OrderId orderId = orders.createOrder(productId, quantity, currentTime, unitPrice);
         Order order = orders.get(orderId);
@@ -241,7 +251,7 @@ public class FactoryHandler implements EventHandler {
 
                     scheduler.schedule(Event.of(
                             currentTime.plus(duration),
-                            new EventPayload.TaskEnd(jobId, nextMachineId, nextStepIndex)));
+                            new EventPayload.TaskEnd(jobId, nextMachineId, routingIndex)));
                 } else {
                     nextMachine.enqueueJob(jobId);
                 }

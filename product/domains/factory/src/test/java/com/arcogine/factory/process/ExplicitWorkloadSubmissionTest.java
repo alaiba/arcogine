@@ -67,6 +67,25 @@ class ExplicitWorkloadSubmissionTest {
     }
 
     @Test
+    void exposesReadOnlyProjectionsWithoutAFactoryHandlerAccessor() {
+        FactoryRuntime runtime = runtime();
+        runtime.submitWorkload(new ProductId(1), 3, 12.0);
+        var queuedJob = runtime.jobsView().findFirst().orElseThrow();
+
+        assertEquals(queuedJob.id(), runtime.job(queuedJob.id()).id());
+        assertEquals(1, runtime.machinesView().size());
+        assertEquals(1L, runtime.backlog());
+
+        runtime.advance();
+        runtime.advance();
+
+        assertEquals(0L, runtime.backlog());
+        assertTrue(runtime.avgLeadTime() > 0.0);
+        assertTrue(runtime.throughput(1) > 0.0);
+        assertEquals(36.0, runtime.completedSalesValue());
+    }
+
+    @Test
     void repeatedIdenticalSubmissionsAreDeterministic() {
         Event firstCompleted = runToCompletion();
         Event secondCompleted = runToCompletion();

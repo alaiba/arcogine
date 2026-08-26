@@ -5,29 +5,92 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: '0 5 * * *' # daily security re-scan (findings can change without repo changes)
+  workflow_dispatch: {}
+
+# Cancel a superseded PR run when a newer commit is pushed to the same PR/branch.
+# Non-PR events (push to main, schedule, workflow_dispatch) each get a group unique
+# to their own run_id, so they never share a group and GitHub's default
+# only-one-pending-run-per-group behavior can never drop or cancel one of them.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.ref, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
-  checks: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TRIVY_VERSION: 0.69.3
+  TRIVY_SHA256: 1816b632dfe529869c740c0913e36bd1629cb7688bd5634f4a858c1d57c88b75
+  GITLEAKS_VERSION: 8.30.1
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
 
 jobs:
+  # Classifies the diff into broad surfaces so unaffected work can be skipped.
+  # Conservative by design: CI/tooling changes and shared manifests default every
+  # downstream flag to true rather than risk a false skip.
+  classify:
+    name: Classify changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      docker: ${{ steps.filter.outputs.docker }}
+      docs_only: ${{ steps.filter.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Executable coverage for the pure classification function below (docs-only,
+      # known backend/frontend/docker paths, and the unknown-path fail-safe) — a
+      # regex regression here fails this step instead of silently under-running.
+      - name: Validate classifier logic
+        run: bash .github/scripts/classify-changes.test.sh
+
+      - name: Determine changed-file surfaces
+        id: filter
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="origin/${{ github.event.pull_request.base.ref }}"
+            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
+            files=$(git diff --name-only "$base"...HEAD)
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            files=$(git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}" 2>/dev/null || git ls-files)
+          else
+            # schedule / workflow_dispatch: treat as "everything relevant" for a full security sweep.
+            files=$(git ls-files)
+          fi
+
+          echo "Changed files:"
+          echo "$files"
+
+          printf '%s\n' "$files" | bash .github/scripts/classify-changes.sh | tee -a "$GITHUB_OUTPUT"
+
   java:
     name: Java checks
+    needs: classify
+    if: needs.classify.outputs.backend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Java 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
 
       - name: Run Java quality gates
         run: ./gradlew --no-daemon compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification
@@ -35,7 +98,7 @@ jobs:
 
       - name: Upload Java coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: product/*/build/reports/jacoco/test/jacocoTestReport.xml,product/domains/*/build/reports/jacoco/test/jacocoTestReport.xml,product/interfaces/*/build/reports/jacoco/test/jacocoTestReport.xml
           flags: java
@@ -43,12 +106,16 @@ jobs:
 
   frontend:
     name: Frontend checks
+    needs: classify
+    if: needs.classify.outputs.frontend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js 22.22.2
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.22.2'
           cache: 'npm'
@@ -58,53 +125,72 @@ jobs:
         run: npm ci
         working-directory: product/interfaces/web
 
-      - name: Run frontend quality gates
-        run: |
-          npm run lint
-          npx tsc --noEmit
-          npm run test:coverage
-          npm run build
-          npm audit --audit-level=high
+      - name: Lint
+        run: npm run lint
         working-directory: product/interfaces/web
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+        working-directory: product/interfaces/web
+
+      - name: Test + coverage
+        run: npm run test:coverage
+        working-directory: product/interfaces/web
+
+      - name: Build
+        run: npm run build
+        working-directory: product/interfaces/web
+
+      - name: npm audit
+        working-directory: product/interfaces/web
+        run: |
+          set +e
+          npm audit --audit-level=high
+          audit_status=$?
+          npm audit --json > npm-audit.json
+          exit "$audit_status"
 
       - name: Upload frontend coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: product/interfaces/web/coverage/coverage-final.json
           flags: frontend
           fail_ci_if_error: false
 
-      - name: Upload audit reports
+      - name: Upload audit report
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: security-audit-reports
-          path: |
-            product/interfaces/web/npm-audit.json
+          path: product/interfaces/web/npm-audit.json
 
   playwright:
     name: Playwright E2E
+    needs: classify
+    if: needs.classify.outputs.backend == 'true' || needs.classify.outputs.frontend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Java 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
 
       - name: Build API JAR
         run: ./gradlew --no-daemon :cli:bootJar
         working-directory: product
 
       - name: Setup Node.js 22.22.2
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.22.2'
           cache: 'npm'
@@ -115,7 +201,7 @@ jobs:
         working-directory: product/interfaces/web
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('product/interfaces/web/package-lock.json') }}
@@ -134,21 +220,25 @@ jobs:
 
   build-dist:
     name: Build canonical dist/
+    needs: classify
+    if: needs.classify.outputs.backend == 'true' || needs.classify.outputs.frontend == 'true' || needs.classify.outputs.docker == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Java 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
 
       - name: Setup Node.js 22.22.2
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.22.2'
           cache: 'npm'
@@ -162,7 +252,7 @@ jobs:
         run: ./arcogine build
 
       - name: Upload dist/ artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dist
           path: dist/
@@ -170,27 +260,31 @@ jobs:
 
   docker:
     name: Docker image build, scan, and smoke test
-    needs: build-dist
+    needs: [classify, build-dist]
+    if: needs.classify.outputs.docker == 'true' || needs.classify.outputs.backend == 'true' || needs.classify.outputs.frontend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Download dist/ artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: dist
           path: dist
 
       - name: Setup Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
       - name: Build images from dist/
         run: ./arcogine image
 
       - name: Install Trivy
         run: |
-          TRIVY_VERSION=0.69.3
+          set -euo pipefail
           curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+          echo "${TRIVY_SHA256}  /tmp/trivy.tar.gz" | sha256sum -c -
           tar -xzf /tmp/trivy.tar.gz -C /tmp
           install /tmp/trivy /usr/local/bin/trivy
           trivy --version
@@ -220,18 +314,22 @@ jobs:
 
   java-audit:
     name: Java dependency audit
+    needs: classify
+    if: needs.classify.outputs.backend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Java 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
 
       - name: Generate CycloneDX SBOM
         run: ./gradlew --no-daemon cyclonedxBom
@@ -239,8 +337,9 @@ jobs:
 
       - name: Install Trivy
         run: |
-          TRIVY_VERSION=0.69.3
+          set -euo pipefail
           curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+          echo "${TRIVY_SHA256}  /tmp/trivy.tar.gz" | sha256sum -c -
           tar -xzf /tmp/trivy.tar.gz -C /tmp
           install /tmp/trivy /usr/local/bin/trivy
           trivy --version
@@ -250,15 +349,108 @@ jobs:
 
   security-secrets:
     name: Secret scan
+    # Always runs, even for docs-only changes and non-classification event types.
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Install Gitleaks
         run: |
-          GITLEAKS_VERSION=8.30.1
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-            | tar xz -C /usr/local/bin gitleaks
+          set -euo pipefail
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o /tmp/gitleaks.tar.gz
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum -c -
+          tar xz -C /usr/local/bin -f /tmp/gitleaks.tar.gz gitleaks
       - name: Run Gitleaks
         run: gitleaks detect --source . --config .gitleaks.toml --verbose
+
+  # Single stable required status check. Branch protection only ever needs to
+  # require this one job. Its needs: list and the expected_to_run map in the
+  # step below (mirroring each conditional job's own if:) must be kept in sync
+  # by hand when jobs are added/removed/reconditioned; the step fails closed
+  # if they drift, rather than silently accepting an unexamined job.
+  gate:
+    name: gate
+    if: always()
+    needs:
+      - classify
+      - java
+      - frontend
+      - playwright
+      - build-dist
+      - docker
+      - java-audit
+      - security-secrets
+    runs-on: ubuntu-latest
+    permissions: {}
+    env:
+      BACKEND: ${{ needs.classify.outputs.backend }}
+      FRONTEND: ${{ needs.classify.outputs.frontend }}
+      DOCKER: ${{ needs.classify.outputs.docker }}
+      EVENT_NAME: ${{ github.event_name }}
+    steps:
+      - name: Check required job results
+        run: |
+          echo '${{ toJSON(needs) }}' > /tmp/needs.json
+          python3 - <<'EOF'
+          import json
+          import os
+
+          with open("/tmp/needs.json") as f:
+              needs = json.load(f)
+
+          backend = os.environ["BACKEND"] == "true"
+          frontend = os.environ["FRONTEND"] == "true"
+          docker = os.environ["DOCKER"] == "true"
+          full_sweep = os.environ["EVENT_NAME"] in ("schedule", "workflow_dispatch")
+
+          # Mirrors each conditional job's own `if:` in this workflow. A job whose
+          # surface was selected must not come back skipped — that would mean its
+          # condition and this expectation drifted apart, which is exactly the
+          # silent-skip failure mode this gate exists to catch.
+          expected_to_run = {
+              "classify": True,
+              "java": backend or full_sweep,
+              "frontend": frontend or full_sweep,
+              "playwright": backend or frontend or full_sweep,
+              "build-dist": backend or frontend or docker or full_sweep,
+              "docker": docker or backend or frontend or full_sweep,
+              "java-audit": backend or full_sweep,
+              "security-secrets": True,
+          }
+
+          # Fail closed if this job's needs: list and the expectation map above
+          # have drifted apart (e.g. a future job added to needs: but forgotten
+          # here). An unlisted job would otherwise return None from .get(), which
+          # is falsy, silently letting it skip unexamined — exactly the
+          # false-green class this gate exists to eliminate.
+          needs_keys = set(needs.keys())
+          expected_keys = set(expected_to_run.keys())
+          if needs_keys != expected_keys:
+              print("Failing gate: needs: and expected_to_run have drifted apart.")
+              print("  in needs: but missing from expected_to_run:", sorted(needs_keys - expected_keys))
+              print("  in expected_to_run but missing from needs:", sorted(expected_keys - needs_keys))
+              raise SystemExit(1)
+
+          failed = []
+          unexpected_skips = []
+          for job, info in needs.items():
+              result = info.get("result")
+              print(f"{job}: {result} (expected to run: {expected_to_run[job]})")
+              if result in ("failure", "cancelled"):
+                  failed.append((job, result))
+              elif result == "skipped" and expected_to_run[job]:
+                  unexpected_skips.append(job)
+
+          if failed:
+              print("Failing gate: required job(s) failed or were cancelled:", failed)
+              raise SystemExit(1)
+
+          if unexpected_skips:
+              print("Failing gate: job(s) skipped despite their surface being selected:", unexpected_skips)
+              raise SystemExit(1)
+
+          print("All required jobs succeeded or were intentionally skipped.")
+          EOF

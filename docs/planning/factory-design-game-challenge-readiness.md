@@ -162,6 +162,30 @@ C1 is ready when:
 4. Challenge-definition validation does not duplicate Arcogine factory-model validation.
 5. Game-only fields do not enter the canonical factory model merely to support challenge loading.
 
+### Implementation status (C1)
+
+C1 is implemented as a new headless Gradle module, `:challenge` (`product/consumer/challenge`,
+package `com.arcogine.challenge`), with no `project(...)` dependency on `:types`, `:simulation`,
+`:factory`, `:economy`, `:finance`, `:api`, or `:cli`.
+
+Implemented:
+
+- Immutable value records: `ChallengeIdentity`, `EvaluationPolicyIdentity`,
+  `EquipmentCatalogueItemId`, `ChallengeWorkload`, `FactoryFloorConstraint`, and the aggregate
+  `ChallengeDefinition`. Construction defensively copies the available-equipment collection so
+  caller mutation cannot affect an already-constructed definition.
+- `com.arcogine.challenge.validation.ChallengeDefinitionValidator`, a deterministic, side-effect-free
+  static validator producing a `ChallengeDefinitionValidationResult` of `ChallengeDefinitionIssue`
+  (stable code, field path, message), covering the scalar/structural rules listed under
+  "Validation boundary" above (presence/positivity of identity, floor, budget, workload, deadline,
+  evaluation-policy fields, plus duplicate/blank available-equipment-id rejection). It does not
+  call, extend, or share a result type with `FactoryModelValidator`.
+
+Deliberately deferred to C2+ (not implemented here): catalogue-item resolution against real
+equipment offers, purchase pricing, construction-cost calculation, candidate placement/overlap/
+admissibility, affordability, evaluation-policy implementation lookup, deadline achievability, and
+any persistence/content-loading format. See the C2–C5 sections below.
+
 ## 6. C2 — Catalogue, construction budget, draft economics, and candidate admissibility
 
 ### Goal

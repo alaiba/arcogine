@@ -146,14 +146,17 @@ public class FactoryHandler implements EventHandler {
     }
 
     /**
-     * Submits explicit production workload: accepts an immutable {@link Order} and creates the one
-     * execution {@link Job} for it under the same routing/dispatch semantics as any other accepted
-     * order, independent of how the caller decided to produce it. This is the supported,
-     * consumer-neutral entry point for production workload -- it depends on nothing outside the
-     * factory runtime (no economy, pricing, demand, or agent involvement), and is the same code
-     * path the economy-driven {@link EventPayload.OrderCreation} event uses.
+     * Accepts an immutable {@link Order} and creates the one execution {@link Job} for it under
+     * the same routing/dispatch semantics regardless of how the caller decided to produce it --
+     * the economy-driven {@link EventPayload.OrderCreation} event and {@link FactoryRuntime}'s
+     * explicit workload submission both resolve to this one acceptance operation.
+     *
+     * <p>Package-private: this method's {@link SimTime}/{@link Scheduler} parameters are
+     * event-engine plumbing that a consumer-neutral workload boundary should not have to own or
+     * supply. {@link FactoryRuntime} is the supported external entry point for explicit workload;
+     * it owns the scheduler/time context and derives {@code currentTime} itself.
      */
-    public OrderId submitOrder(
+    OrderId submitOrder(
             ProductId productId,
             long quantity,
             double unitPrice,

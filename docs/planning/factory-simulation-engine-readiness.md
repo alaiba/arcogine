@@ -176,7 +176,7 @@ Job (mutable execution)
 
 `FactoryHandler` persists an immutable `Order` before creating its execution `Job`; `Job` no longer owns product, quantity, or price fields. Existing `JobView` product/quantity/price/value getters remain compatibility projections delegated to the referenced order so the current API/UI wire contract stays unchanged.
 
-The second Gate 1 slice added an explicit, consumer-neutral workload-submission entry point: `FactoryHandler.submitOrder(productId, quantity, unitPrice, currentTime, scheduler)` accepts the immutable `Order` and creates its execution `Job` through the exact same code path the economy-driven `OrderCreation` event uses -- `FactoryHandler.handleEvent` now delegates to `submitOrder` for that event rather than duplicating the logic. `FactoryHandler` already had no compile-time dependency on economy/pricing/demand/agents; this slice makes that boundary a supported, named entry point instead of something only reachable by hand-constructing an internal event payload. A headless test (`ExplicitWorkloadSubmissionTest`) instantiates a runtime from a published `FactoryModelVersion` via `FactoryRuntimeAssembler` and submits workload directly, with no `DemandModel`, `PricingState`, or agent in the loop, and proves repeated identical submissions are deterministic. Economy-driven scenarios continue to work unchanged: `DemandModel.generateOrders` still schedules `OrderCreation` events, which route through the same `submitOrder` logic.
+The second Gate 1 slice added an explicit, consumer-neutral workload-submission entry point: `FactoryRuntime.submitWorkload(productId, quantity, unitPrice)`. `FactoryRuntime` wraps a `FactoryHandler` together with a `Scheduler` it owns internally, so a caller supplies only product/quantity/commercial intent -- never a mutable `Scheduler` or an authoritative simulation time, which stayed internal event-engine plumbing rather than becoming part of the workload boundary. Both `FactoryRuntime.submitWorkload` and the economy-driven `OrderCreation` event resolve to the same package-private `FactoryHandler.submitOrder(productId, quantity, unitPrice, currentTime, scheduler)` acceptance operation -- `FactoryHandler.handleEvent` delegates to it for that event rather than duplicating the logic, and it is not exposed outside the `factory.process` package. `FactoryHandler` already had no compile-time dependency on economy/pricing/demand/agents; this slice makes explicit submission a supported, named entry point instead of something only reachable by hand-constructing an internal event payload and owning a `Scheduler`. A headless test (`ExplicitWorkloadSubmissionTest`) instantiates a runtime from a published `FactoryModelVersion` via `FactoryRuntimeAssembler`, wraps it in a `FactoryRuntime`, and submits workload directly, with no `DemandModel`, `PricingState`, or agent in the loop, and proves repeated identical submissions are deterministic. `FactoryRuntime.advance()` pumps exactly one pending event at a time so a headless caller can drive submitted workload to completion without reaching into scheduler internals; this is deliberately not a general session/advancement API -- that remains Gate 3 work. Economy-driven scenarios continue to work unchanged: `DemandModel.generateOrders` still schedules `OrderCreation` events, which route through the same `submitOrder` logic.
 
 Gate 1 is still incomplete because:
 
@@ -207,7 +207,7 @@ Gate 1 is satisfied when:
 7. The same model version, seed, and workload produce the same ordered result.
 8. Existing economy-driven scenario behavior remains covered or is migrated deliberately.
 
-Criterion 4 is now established by the behavior-preserving `Order`/`Job` split. Criterion 2 is now established by `FactoryHandler.submitOrder` and its headless economy-independent test. The gate remains open until the remaining criteria, especially proportional quantity execution (criteria 3 and 5), are proven headlessly.
+Criterion 4 is now established by the behavior-preserving `Order`/`Job` split. Criterion 2 is now established by `FactoryRuntime.submitWorkload` and its headless economy-independent test. The gate remains open until the remaining criteria, especially proportional quantity execution (criteria 3 and 5), are proven headlessly.
 
 ## 6. Gate 2 — Capability-based deterministic dispatch
 
@@ -581,7 +581,7 @@ Scenario factory semantics
 ### 13.2 Runtime delivery order
 
 1. Separate accepted immutable order intent from mutable job execution. **Implemented as the first behavior-preserving Gate 1 slice.**
-2. Add explicit workload submission independent of the economy/pricing loop. **Implemented as the second Gate 1 slice** (`FactoryHandler.submitOrder`).
+2. Add explicit workload submission independent of the economy/pricing loop. **Implemented as the second Gate 1 slice** (`FactoryRuntime.submitWorkload`, backed by package-private `FactoryHandler.submitOrder`).
 3. Make quantity consume proportional production work and allow multiple work items/jobs per order where required.
 4. Capability/eligibility-driven deterministic dispatch.
 5. Consumer-neutral session and bounded advancement.

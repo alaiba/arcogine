@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
-import com.arcogine.core.queue.Scheduler;
+import com.arcogine.core.event.EventType;
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
@@ -17,16 +17,16 @@ import com.arcogine.factory.model.ResourceDefinition;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
-import com.arcogine.types.SimTime;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
  * Proves Gate 1's explicit-workload-submission slice: a headless caller can instantiate a
- * published factory model's runtime and submit production workload directly through {@link
- * FactoryHandler#submitOrder}, with no economy, pricing, demand, or agent handler anywhere in the
- * loop.
+ * published factory model's runtime and submit production workload through {@link
+ * FactoryRuntime#submitWorkload}, supplying only product/quantity/commercial intent -- no
+ * economy, pricing, demand, or agent handler in the loop, and no caller-owned {@code Scheduler} or
+ * caller-chosen simulation time.
  */
 class ExplicitWorkloadSubmissionTest {
 
@@ -42,25 +42,29 @@ class ExplicitWorkloadSubmissionTest {
         return FactoryModelPublisher.publish(model);
     }
 
+    private static FactoryRuntime runtime() {
+        FactoryRuntimeAssembler.Assembled assembled = FactoryRuntimeAssembler.assemble(publishedModel());
+        return new FactoryRuntime(assembled.factory());
+    }
+
     @Test
     void submitsExplicitWorkloadWithoutEconomyDemandOrAgents() {
-        FactoryRuntimeAssembler.Assembled assembled = FactoryRuntimeAssembler.assemble(publishedModel());
-        FactoryHandler factory = assembled.factory();
-        Scheduler scheduler = new Scheduler();
+        FactoryRuntime runtime = runtime();
+        FactoryHandler factory = runtime.factory();
 
-        OrderId orderId = factory.submitOrder(new ProductId(1), 3, 12.0, new SimTime(0), scheduler);
+        OrderId orderId = runtime.submitWorkload(new ProductId(1), 3, 12.0);
 
         assertEquals(1L, factory.ordersView().count());
         assertEquals(1L, factory.jobsView().count());
         var job = factory.jobsView().findFirst().orElseThrow();
         assertEquals(orderId, job.orderId());
 
-        Event taskEnd = scheduler.nextEvent().orElseThrow();
-        factory.handleEvent(taskEnd, scheduler);
+        Event taskEnd = runtime.advance().orElseThrow();
+        assertEquals(EventType.TaskEnd, taskEnd.eventType());
 
         assertTrue(factory.jobsView().findFirst().orElseThrow().isComplete());
         assertEquals(1L, factory.completedSales());
-        Event completed = scheduler.nextEvent().orElseThrow();
+        Event completed = runtime.advance().orElseThrow();
         var payload = (EventPayload.OrderCompleted) completed.payload();
         assertEquals(job.id(), payload.jobId());
     }
@@ -74,14 +78,9 @@ class ExplicitWorkloadSubmissionTest {
     }
 
     private static Event runToCompletion() {
-        FactoryRuntimeAssembler.Assembled assembled = FactoryRuntimeAssembler.assemble(publishedModel());
-        FactoryHandler factory = assembled.factory();
-        Scheduler scheduler = new Scheduler();
-
-        factory.submitOrder(new ProductId(1), 3, 12.0, new SimTime(0), scheduler);
-        Event taskEnd = scheduler.nextEvent().orElseThrow();
-        factory.handleEvent(taskEnd, scheduler);
-
-        return scheduler.nextEvent().orElseThrow();
+        FactoryRuntime runtime = runtime();
+        runtime.submitWorkload(new ProductId(1), 3, 12.0);
+        runtime.advance();
+        return runtime.advance().orElseThrow();
     }
 }

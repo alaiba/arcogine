@@ -4,7 +4,7 @@
 > **Scope:** A separate, single-player factory-design game consuming Arcogine as its production engine  
 > **Authority:** Planning only; this document does not describe current capability or accepted architecture  
 > **Dependency:** Game implementation begins only after the model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) and Gates 1-5 in that same document are satisfied  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Related:** [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md), [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Initiative summary
 
@@ -26,7 +26,7 @@ Inspect queues, transfers, and bottlenecks
 Revise the draft and publish another design
 ```
 
-The first outcome is a vertical slice proving that capacity and physical arrangement create understandable, reproducible trade-offs. It is not a commitment to a campaign, generic game framework, or complete factory-management game.
+The first outcome is a vertical slice proving that capacity and physical arrangement create understandable, reproducible trade-offs. It is not a commitment to a campaign, generic game framework, or complete factory-management game. The concrete product thesis, player loop, reference challenge, and product-level success criteria live in [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md); this document owns the consumer boundary, readiness dependencies, and ownership constraints.
 
 ## 2. Upstream dependencies
 
@@ -124,6 +124,8 @@ The first playable slice needs only:
 
 The level should support at least two credible designs, such as parallel bottleneck capacity versus shorter transfer distance.
 
+The product-level reference challenge is described in [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md). Its exact quantities, dimensions, prices, and deadlines are game-content parameters rather than Arcogine contracts.
+
 ### 4.3 Initial editing and publication rule
 
 The game owns an editable `FactoryDraft` or equivalent authoring representation. It may contain temporary IDs, invalid intermediate states, selection, undo history, camera state, previews, and game-only metadata.
@@ -168,7 +170,7 @@ Live placement/movement/removal during active work is not required for the verti
 | Model/command/event/observation compatibility contracts | Arcogine |
 | Combined save file | Game wrapper around Arcogine checkpoint plus game-owned state |
 
-Arcogine should not acquire `Level`, `StarRating`, `Unlock`, `PlayerCurrency`, decorative furniture, campaign progress, or tutorial steps. The game should not reproduce validation, scheduling, queueing, transfer, or KPI semantics that Arcogine owns.
+Arcogine should not acquire `Level`, `StarRating`, `Unlock`, `PlayerCurrency`, decorative furniture, campaign progress, or tutorial steps. The game should not reproduce validation, scheduling, queueing, dispatch, transfer, or KPI semantics that Arcogine owns.
 
 ## 6. Client-specific requirements after upstream readiness
 
@@ -210,6 +212,7 @@ Before external distribution it should wrap an exact Arcogine checkpoint with ga
 
 The vertical slice does not require:
 
+- live machine micromanagement as the primary game loop;
 - workers, skills, fatigue, or pathfinding;
 - aisles/doors/congestion-aware transport;
 - raw-material procurement/suppliers/BOM;
@@ -256,14 +259,16 @@ The game vertical slice is successful when:
 
 1. The player can author a draft and publish a valid factory design without using Arcogine tooling directly.
 2. The resulting run identifies the exact published model version.
-3. The same resources arranged differently produce different deterministic completion times where transfer distance differs.
-4. Adding compatible capacity at the actual bottleneck changes throughput, queueing, utilization, or completion time.
-5. The player can identify the bottleneck from supported observations presented by the game.
-6. Invalid drafts display structured diagnostics and do not publish or partially mutate runtime state.
-7. Retrying the same published model with the same seed/workload/commands reproduces behavior and result.
-8. The game owns presentation, scoring, progression, and player economy; no game-specific concept enters Arcogine's canonical/runtime model.
-9. The client depends only on supported model, command, event, observation, checkpoint, and lifecycle contracts.
-10. ISA-95 guidance is used where relevant without claiming conformance.
+3. A fixed production contract runs independently of pricing, stochastic demand, and autonomous sales behavior.
+4. Quantity represents real production workload rather than primarily commercial value.
+5. The same resources arranged differently produce different deterministic completion times where transfer distance differs.
+6. Adding compatible capacity at the actual bottleneck changes throughput, queueing, utilization, or completion time.
+7. The player can identify the bottleneck and major delay sources from supported observations presented by the game.
+8. Invalid drafts display structured diagnostics and do not publish or partially mutate runtime state.
+9. Retrying the same published model with the same seed/workload/commands reproduces behavior and result.
+10. The game owns presentation, scoring, progression, and player economy; no game-specific concept enters Arcogine's canonical/runtime model.
+11. The client depends only on supported model, command, event, observation, checkpoint, and lifecycle contracts.
+12. ISA-95 guidance is used where relevant without claiming conformance.
 
 ## 11. Documentation lifecycle
 
@@ -273,6 +278,7 @@ As work becomes established:
 
 - keep canonical-model work in [Factory Design Capability](factory-design-capability.md) until it becomes accepted/current architecture;
 - keep runtime work/evidence in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md);
+- keep the concrete first-playable product hypothesis in [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md);
 - record hard-to-reverse decisions as ADRs;
 - update [`../architecture/overview.md`](../architecture/overview.md), [Factory Design Architecture](../architecture/factory-design.md), the [ISA-95 mapping](../architecture/isa-95-semantic-mapping.md), and [`../reference/api.md`](../reference/api.md) only as behavior becomes accepted/implemented;
 - track game implementation in issues or the game consumer repository;

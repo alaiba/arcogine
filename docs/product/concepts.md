@@ -58,7 +58,7 @@ When an order arrives, Arcogine stores an immutable **order** containing the acc
 
 The current implementation remains one order → one job. This separation exists so accepted intent does not have to mutate as execution progresses; later engine-readiness work can allow one order to produce multiple work items/jobs without copying the commercial/order facts into each execution object.
 
-Order quantity now consumes proportional production work: a job's routing repeats once per unit of quantity, so an order for 10 units keeps a machine occupied roughly ten times as long as an otherwise identical order for 1 unit, and the job's step counter reports progress per unit. This is represented as one job with a larger step count -- not as ten separate jobs -- so a large-quantity order still only creates one order and one job.
+Order quantity now consumes proportional production work: a job's routing repeats once per unit of quantity, so an order for 10 units keeps a machine occupied roughly ten times as long as an otherwise identical order for 1 unit. The job's step counter (`current_step` of `total_steps`) advances once per routing step *executed*, not once per unit -- for a multi-step route it advances once per step, so it reaches `total_steps` only after every step has run for every unit. Completed-unit progress can be derived from it (`current_step / steps per unit`), but the counter itself is an executed-step count, not a unit count. This is represented as one job with a larger step count -- not as ten separate jobs -- so a large-quantity order still only creates one order and one job.
 
 The current lifecycle is:
 

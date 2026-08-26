@@ -131,7 +131,7 @@ The React/TypeScript UI is unchanged by the Rust→Java rewrite. From `product/i
 
 ### 16. Playwright E2E
 
-Browser-level user-journey tests. Requires the API server and UI dev server. `cd product/interfaces/web && npx playwright test` (part of `./arcogine check --full`) — runs the Playwright suite against the **Java** API unchanged. Playwright's own config (`product/interfaces/web/playwright.config.ts`) starts both servers via `webServer`, but the API jar (`cd product && ./gradlew :cli:bootJar`) must already be built once for a clean checkout.
+Browser-level user-journey tests. Requires the API server and UI dev server. `cd product/interfaces/web && npx playwright test` (part of `./arcogine check --full`) — runs the Playwright suite against the **Java** API unchanged. Playwright's own config (`product/interfaces/web/playwright.config.ts`) starts both servers via `webServer`, but expects the API jar (`product/cli/build/libs/arcogine.jar`) to already exist. `./arcogine check --full` builds it (`./gradlew :cli:bootJar`) immediately before invoking Playwright, so the flow is self-contained from a clean checkout — no separate manual build step is required, matching what CI's Playwright job does.
 
 ### 17. Docker build and smoke
 
@@ -151,15 +151,41 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 
 | Job | Command | What it checks |
 |-----|---------|----------------|
+| Classify changes | `git diff --name-only` against the PR base (or the pushed range on `main`) | Buckets the diff into backend/frontend/docker/docs-only surfaces to drive the conditional jobs below |
 | Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
-| Frontend | `npm run lint`, `npx tsc --noEmit`, `npm run test:coverage`, `npm run build`, `npm audit --audit-level=high` | Node 22.22.2 floor, lint, typecheck, coverage, build, dependency audit |
+| Frontend | separate steps: lint, typecheck, `test:coverage`, build, `npm audit --audit-level=high` | Node 22.22.2 floor, lint, typecheck, coverage, build, dependency audit — each step is separately attributable on failure, and the audit step always writes `npm-audit.json` (uploaded as an artifact only on failure) while still failing the job on any HIGH+ finding |
 | Playwright | `npx playwright test` (after `./gradlew :cli:bootJar`) | Browser E2E against the Java API at the Java/Node floors |
 | Build dist/ | `./arcogine build` | Canonical `dist/api/arcogine.jar` + `dist/web/`, uploaded as a CI artifact at the Java/Node floors |
 | Docker | `./arcogine image`, then `trivy image` on both images, then the smoke sequence | Runtime image build from `dist/`, CRITICAL/HIGH vulnerability scan, startup health-check |
 | Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
-| Secret scan | `gitleaks detect` | Leaked secrets |
+| Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
+| `gate` | Reads every other job's result from the `needs` context | The single stable, always-run aggregate status check (`CI / gate`) — passes if every required job succeeded or was intentionally skipped, fails if any failed or was cancelled |
 
 The Java-related build jobs use Temurin 21, and frontend-containing jobs use Node 22.22.2. These pins deliberately exercise the supported development floors; they are not required to match the preferred devcontainer's JDK 25 / Node 24.
+
+### Change-aware execution
+
+The `classify` job inspects the changed files (PR diff against its base, or the pushed commit range on `main`) and sets `backend`/`frontend`/`docker`/`docs_only` outputs consumed by `if:` conditions on the other jobs:
+
+- A change under `.github/workflows/`, `arcogine`, Gradle build files, `product/interfaces/web/package(-lock).json`/`tsconfig`, or `infra/docker/` is treated as touching **every** subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
+- A change confined to `product/{types,simulation,domains,agents,interfaces/api,interfaces/cli}/` sets `backend`.
+- A change confined to `product/interfaces/web/` sets `frontend`.
+- A change confined to `infra/docker/` or `.env.example` sets `docker`.
+- A change touching **only** `docs/`, `README.md`, or other `*.md` files (and none of the above) sets `docs_only`, which skips Java tests, Playwright, the dist/Docker build, and the two dependency-scan jobs.
+- The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
+- `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
+
+### Scheduled and manual security runs
+
+A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same jobs used on PRs/`main` — no separate/divergent security workflow — so the SBOM scan, frontend audit, Docker image scans, and secret scan all pick up newly published CVEs even when nothing in the repository changed. `build-dist`/`docker` still run first on these triggers because the image scans need a freshly built image to scan.
+
+### Required status check
+
+`CI / gate` is the only status check meant to be configured as required in branch protection. It depends on every merge-relevant job, runs with `if: always()`, and treats a `skipped` result (e.g. a job skipped by the change classifier) as acceptable while failing on any `failure`/`cancelled` result. This keeps required-check configuration stable even as jobs are added, removed, or made conditional — branch protection never needs to track the individual job list. **Manual follow-up:** after this workflow lands on `main`, the repository ruleset for `main` must be updated by hand (from the GitHub UI/API, not from code) to require `CI / gate` as the passing status check.
+
+### Superseded run cancellation
+
+The workflow sets `concurrency: group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}` with `cancel-in-progress` true only for `pull_request` events, so pushing a new commit to an open PR cancels the previous in-progress run for that PR without affecting concurrent `main` or scheduled runs.
 
 ## Testing architecture
 

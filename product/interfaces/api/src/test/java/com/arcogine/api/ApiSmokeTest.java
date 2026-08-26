@@ -234,6 +234,71 @@ class ApiSmokeTest {
     }
 
     @Test
+    void topologyWithMultiStepRoutingReturnsEdges() {
+        String multiStepToml =
+                """
+                [simulation]
+                rng_seed = 42
+                max_ticks = 100
+                demand_eval_interval = 10
+
+                [[equipment]]
+                id = 1
+                name = "Mill"
+
+                [[equipment]]
+                id = 2
+                name = "Lathe"
+
+                [[material]]
+                id = 1
+                name = "Widget"
+                routing_id = 1
+
+                [[process_segment]]
+                id = 1
+                name = "Milling"
+                equipment_id = 1
+                duration = 5
+
+                [[process_segment]]
+                id = 2
+                name = "Turning"
+                equipment_id = 2
+                duration = 5
+
+                [[operations_definition]]
+                id = 1
+                name = "Widget routing"
+                steps = [1, 2]
+
+                [economy]
+                initial_price = 10.0
+                base_demand = 3.0
+                price_elasticity = 0.3
+                lead_time_sensitivity = 0.0
+                """;
+
+        loadScenario(multiStepToml);
+        sleepQuietly(100);
+
+        JsonNode body = client.get()
+                .uri("/api/factory/topology")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(JsonNode.class)
+                .returnResult()
+                .getResponseBody();
+        assertNotNull(body);
+        assertTrue(body.path("edges").isArray() && body.path("edges").size() > 0,
+                "topology should contain routing edges for a multi-step routing");
+        JsonNode edge = body.path("edges").get(0);
+        assertEquals(1L, edge.path("from_machine_id").asLong());
+        assertEquals(2L, edge.path("to_machine_id").asLong());
+    }
+
+    @Test
     void exportEventsReturnsLog() {
         loadScenario(BASIC_SCENARIO_TOML);
         sleepQuietly(100);
@@ -447,6 +512,24 @@ class ApiSmokeTest {
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void resetAfterStepReturnsSnapshot() {
+        loadScenario(BASIC_SCENARIO_TOML);
+        sleepQuietly(100);
+
+        client.post().uri("/api/sim/step").exchange().expectStatus().isOk();
+        sleepQuietly(100);
+
+        client.post()
+                .uri("/api/sim/reset")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.events_processed")
+                .isEqualTo(0);
     }
 
     @Test

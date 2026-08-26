@@ -53,4 +53,40 @@ class SimErrorTest {
     void otherMessage() {
         assertEquals("oops", new SimError.Other("oops").getMessage());
     }
+
+    @Test
+    void invalidStateTransitionExposesContext() {
+        assertEquals("test", new SimError.InvalidStateTransition("test").context());
+    }
+
+    @Test
+    void unknownIdExposesKindAndId() {
+        SimError.UnknownId error = new SimError.UnknownId("machine", 5);
+        assertEquals("machine", error.kind());
+        assertEquals(5L, error.id());
+    }
+
+    @Test
+    void eventOrderingViolationExposesTimes() {
+        SimError.EventOrderingViolation error =
+            new SimError.EventOrderingViolation(SimTime.of(10), SimTime.of(5));
+        assertEquals(SimTime.of(10), error.expectedMin());
+        assertEquals(SimTime.of(5), error.actual());
+    }
+
+    @Test
+    void outOfRangeExposesField() {
+        assertEquals("price", new SimError.OutOfRange("price", "must be positive").field());
+    }
+
+    @Test
+    void unbalancedJournalEntryMessageAndAccessors() {
+        SimError.UnbalancedJournalEntry error =
+            new SimError.UnbalancedJournalEntry("10", "5", "misc entry");
+        assertEquals(
+            "unbalanced journal entry \"misc entry\": debits=10, credits=5",
+            error.getMessage());
+        assertEquals("10", error.debits());
+        assertEquals("5", error.credits());
+    }
 }

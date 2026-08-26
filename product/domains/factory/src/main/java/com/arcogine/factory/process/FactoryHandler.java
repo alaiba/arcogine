@@ -49,8 +49,7 @@ public class FactoryHandler implements EventHandler {
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
         switch (event.payload()) {
             case EventPayload.OrderCreation oc ->
-                    handleOrderCreation(
-                            oc.productId(), oc.quantity(), oc.unitPrice(), scheduler, event.time());
+                    submitOrder(oc.productId(), oc.quantity(), oc.unitPrice(), event.time(), scheduler);
             case EventPayload.TaskEnd te ->
                     handleTaskEnd(te.jobId(), te.machineId(), te.stepIndex(), scheduler, event.time());
             case EventPayload.MachineAvailabilityChange mac ->
@@ -146,12 +145,23 @@ public class FactoryHandler implements EventHandler {
         });
     }
 
-    private void handleOrderCreation(
+    /**
+     * Accepts an immutable {@link Order} and creates the one execution {@link Job} for it under
+     * the same routing/dispatch semantics regardless of how the caller decided to produce it --
+     * the economy-driven {@link EventPayload.OrderCreation} event and {@link FactoryRuntime}'s
+     * explicit workload submission both resolve to this one acceptance operation.
+     *
+     * <p>Package-private: this method's {@link SimTime}/{@link Scheduler} parameters are
+     * event-engine plumbing that a consumer-neutral workload boundary should not have to own or
+     * supply. {@link FactoryRuntime} is the supported external entry point for explicit workload;
+     * it owns the scheduler/time context and derives {@code currentTime} itself.
+     */
+    OrderId submitOrder(
             ProductId productId,
             long quantity,
             double unitPrice,
-            Scheduler scheduler,
-            SimTime currentTime) {
+            SimTime currentTime,
+            Scheduler scheduler) {
         Routing routing = routings.getRoutingForProduct(productId);
         int totalSteps = routing.stepCount();
 
@@ -177,6 +187,8 @@ public class FactoryHandler implements EventHandler {
                 machine.enqueueJob(jobId);
             }
         });
+
+        return orderId;
     }
 
     private void handleTaskEnd(

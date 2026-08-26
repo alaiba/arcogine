@@ -49,8 +49,7 @@ public class FactoryHandler implements EventHandler {
     public void handleEvent(Event event, Scheduler scheduler) throws SimError {
         switch (event.payload()) {
             case EventPayload.OrderCreation oc ->
-                    handleOrderCreation(
-                            oc.productId(), oc.quantity(), oc.unitPrice(), scheduler, event.time());
+                    submitOrder(oc.productId(), oc.quantity(), oc.unitPrice(), event.time(), scheduler);
             case EventPayload.TaskEnd te ->
                     handleTaskEnd(te.jobId(), te.machineId(), te.stepIndex(), scheduler, event.time());
             case EventPayload.MachineAvailabilityChange mac ->
@@ -146,12 +145,20 @@ public class FactoryHandler implements EventHandler {
         });
     }
 
-    private void handleOrderCreation(
+    /**
+     * Submits explicit production workload: accepts an immutable {@link Order} and creates the one
+     * execution {@link Job} for it under the same routing/dispatch semantics as any other accepted
+     * order, independent of how the caller decided to produce it. This is the supported,
+     * consumer-neutral entry point for production workload -- it depends on nothing outside the
+     * factory runtime (no economy, pricing, demand, or agent involvement), and is the same code
+     * path the economy-driven {@link EventPayload.OrderCreation} event uses.
+     */
+    public OrderId submitOrder(
             ProductId productId,
             long quantity,
             double unitPrice,
-            Scheduler scheduler,
-            SimTime currentTime) {
+            SimTime currentTime,
+            Scheduler scheduler) {
         Routing routing = routings.getRoutingForProduct(productId);
         int totalSteps = routing.stepCount();
 
@@ -177,6 +184,8 @@ public class FactoryHandler implements EventHandler {
                 machine.enqueueJob(jobId);
             }
         });
+
+        return orderId;
     }
 
     private void handleTaskEnd(

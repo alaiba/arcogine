@@ -155,7 +155,7 @@ These are conceptual responsibilities, not accepted Java type names.
 
 ### 5.2 Current state and remaining problem
 
-The first behavior-preserving Gate 1 slice now separates accepted order intent from mutable execution:
+The first behavior-preserving Gate 1 slice separated accepted order intent from mutable execution:
 
 ```text
 Order (immutable)
@@ -176,11 +176,12 @@ Job (mutable execution)
 
 `FactoryHandler` persists an immutable `Order` before creating its execution `Job`; `Job` no longer owns product, quantity, or price fields. Existing `JobView` product/quantity/price/value getters remain compatibility projections delegated to the referenced order so the current API/UI wire contract stays unchanged.
 
+The second Gate 1 slice added an explicit, consumer-neutral workload-submission entry point: `FactoryHandler.submitOrder(productId, quantity, unitPrice, currentTime, scheduler)` accepts the immutable `Order` and creates its execution `Job` through the exact same code path the economy-driven `OrderCreation` event uses -- `FactoryHandler.handleEvent` now delegates to `submitOrder` for that event rather than duplicating the logic. `FactoryHandler` already had no compile-time dependency on economy/pricing/demand/agents; this slice makes that boundary a supported, named entry point instead of something only reachable by hand-constructing an internal event payload. A headless test (`ExplicitWorkloadSubmissionTest`) instantiates a runtime from a published `FactoryModelVersion` via `FactoryRuntimeAssembler` and submits workload directly, with no `DemandModel`, `PricingState`, or agent in the loop, and proves repeated identical submissions are deterministic. Economy-driven scenarios continue to work unchanged: `DemandModel.generateOrders` still schedules `OrderCreation` events, which route through the same `submitOrder` logic.
+
 Gate 1 is still incomplete because:
 
 - one accepted order still corresponds to exactly one execution job;
 - quantity primarily affects commercial value rather than proportional production work;
-- work still originates through the economy demand loop rather than an explicit factory workload contract;
 - the existing `OrderCompleted` event retains `jobId` as its correlation field for compatibility; explicit order identity in external event contracts remains deferred to the later workload/event-contract slice.
 
 The canonical-model seam is already complete enough for this runtime work, so definition-model changes do not need to be mixed into the remaining Gate 1 refactor.
@@ -206,7 +207,7 @@ Gate 1 is satisfied when:
 7. The same model version, seed, and workload produce the same ordered result.
 8. Existing economy-driven scenario behavior remains covered or is migrated deliberately.
 
-Criterion 4 is now established by the behavior-preserving `Order`/`Job` split. The gate remains open until the remaining criteria, especially explicit workload and proportional quantity execution, are proven headlessly.
+Criterion 4 is now established by the behavior-preserving `Order`/`Job` split. Criterion 2 is now established by `FactoryHandler.submitOrder` and its headless economy-independent test. The gate remains open until the remaining criteria, especially proportional quantity execution (criteria 3 and 5), are proven headlessly.
 
 ## 6. Gate 2 — Capability-based deterministic dispatch
 
@@ -580,7 +581,7 @@ Scenario factory semantics
 ### 13.2 Runtime delivery order
 
 1. Separate accepted immutable order intent from mutable job execution. **Implemented as the first behavior-preserving Gate 1 slice.**
-2. Add explicit workload submission independent of the economy/pricing loop.
+2. Add explicit workload submission independent of the economy/pricing loop. **Implemented as the second Gate 1 slice** (`FactoryHandler.submitOrder`).
 3. Make quantity consume proportional production work and allow multiple work items/jobs per order where required.
 4. Capability/eligibility-driven deterministic dispatch.
 5. Consumer-neutral session and bounded advancement.

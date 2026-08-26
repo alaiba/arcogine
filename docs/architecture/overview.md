@@ -95,6 +95,8 @@ Concrete, source-level version of the rule above — checkable in review, not ju
 
 `DemandModel` reads `OfferPrice` and lead time on demand, via `DoubleSupplier`s bound to `PricingState`/`FactoryHandler` at construction — it has no state of its own to keep in sync, so it isn't listed as an owner above.
 
+Order/job creation is not exclusively event-driven: `FactoryHandler.submitOrder(...)` is the supported, consumer-neutral entry point a caller uses to submit production workload directly, with no economy/pricing/demand/agent dependency. The `OrderCreation` event handled above is one caller of `submitOrder` — the one `DemandModel` schedules — not a separate code path; both routes create the same immutable `Order` and its one execution `Job` under identical routing/dispatch semantics.
+
 ### Observations
 
 Observations are immutable, read-only projections of current simulation state, purpose-built for consumers that need information but must not own or mutate it — agents, decision policies, demand models, experiments, reporting/evaluation components. `AgentObservation` is the canonical example.

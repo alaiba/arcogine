@@ -28,6 +28,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | Document | What it covers |
 |----------|-----------------|
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, code style, architecture constraints, required validation |
+| [reviewing.md](development/reviewing.md) | Independent PR review and re-review workflow, severity/disposition, AI-assisted session boundaries, CI language, and durable-knowledge rules |
 | [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates, native test commands |
 | [CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) | Community standards |
 
@@ -50,7 +51,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 
 | Document | What it covers |
 |----------|-----------------|
-| [Examples README](examples/README.md) | Executable TOML scenario fixtures (educational, not runtime assets — never shipped in `dist/` or Docker images) |
+| [Examples README](examples/README.md) | Executable TOML scenario fixture files (educational, not runtime assets — never shipped in `dist/` or Docker images) |
 
 ## Internal planning (maintainers)
 

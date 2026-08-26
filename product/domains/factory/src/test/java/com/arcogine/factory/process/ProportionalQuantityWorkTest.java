@@ -328,4 +328,35 @@ class ProportionalQuantityWorkTest {
                 () -> h.submitOrder(new ProductId(1), unrepresentableQuantity, 10.0, new SimTime(0), sched));
         assertEquals("quantity", error.field());
     }
+
+    /**
+     * The overflow guard itself must not overflow: computing {@code stepsPerUnit * quantity} (even
+     * widened to {@code long}) before comparing against {@code Integer.MAX_VALUE} can wrap for a
+     * sufficiently large {@code long} quantity, silently bypassing the guard. A two-step routing
+     * with {@code quantity = Long.MAX_VALUE} is the case that exposes that: {@code 2 *
+     * Long.MAX_VALUE} overflows a signed long.
+     */
+    @Test
+    void veryLargeLongQuantityOnAMultiStepRoutingIsRejectedWithoutInternalOverflow() {
+        MachineStore machines = new MachineStore();
+        machines.add(new Machine(new MachineId(1), "Mill", 1, null, 0));
+        machines.add(new Machine(new MachineId(2), "Drill", 1, null, 0));
+
+        RoutingStore routings = new RoutingStore();
+        routings.addRouting(new Routing(
+                1,
+                "Widget Route",
+                List.of(
+                        new RoutingStep(1, "Milling", new MachineId(1), 5),
+                        new RoutingStep(2, "Drilling", new MachineId(2), 3))));
+        routings.addProductRouting(new ProductId(1), 1);
+        FactoryHandler h = new FactoryHandler(machines, routings, List.of(new ProductId(1)));
+        Scheduler sched = new Scheduler();
+
+        SimError.OutOfRange error = assertThrows(
+                SimError.OutOfRange.class,
+                () -> h.submitOrder(new ProductId(1), Long.MAX_VALUE, 10.0, new SimTime(0), sched));
+        assertEquals("quantity", error.field());
+        assertEquals(0, h.jobsView().count(), "no job may be created for a rejected quantity");
+    }
 }

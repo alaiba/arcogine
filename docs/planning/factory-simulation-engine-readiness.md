@@ -208,7 +208,7 @@ Gate 1 is satisfied when:
 7. The same model version, seed, and workload produce the same ordered result.
 8. Existing economy-driven scenario behavior remains covered or is migrated deliberately.
 
-Criterion 4 is now established by the behavior-preserving `Order`/`Job` split. Criterion 2 is now established by `FactoryRuntime.submitWorkload` and its headless economy-independent test. Criterion 3 is now established by the quantity-proportional routing-repetition slice above, proven headlessly by `ProportionalQuantityWorkTest`. Criterion 5 is satisfied by that same slice: progress is reported per unit via `Job.currentStep()` advancing once per repeated routing pass, without requiring separate work-item objects for the chosen (single-job, routing-repeated) quantity model. The gate remains open pending Gate 1 acceptance proof (criteria 6-8) and closing the `OrderCompleted` correlation-field gap noted above.
+Criterion 4 is now established by the behavior-preserving `Order`/`Job` split. Criterion 2 is now established by `FactoryRuntime.submitWorkload` and its headless economy-independent test. Criterion 3 is now established by the quantity-proportional routing-repetition slice above, proven headlessly by `ProportionalQuantityWorkTest`. Criterion 5 is satisfied by that same slice: `Job.currentStep()` is a job-global counter that advances once per routing step executed (`routing.stepCount()` times per unit for a multi-step route), from which per-unit progress can be derived (`currentStep / routing.stepCount()` completed units), without requiring separate work-item objects for the chosen (single-job, routing-repeated) quantity model. The gate remains open pending Gate 1 acceptance proof (criteria 6-8) and closing the `OrderCompleted` correlation-field gap noted above.
 
 ## 6. Gate 2 — Capability-based deterministic dispatch
 
@@ -583,7 +583,7 @@ Scenario factory semantics
 
 1. Separate accepted immutable order intent from mutable job execution. **Implemented as the first behavior-preserving Gate 1 slice.**
 2. Add explicit workload submission independent of the economy/pricing loop. **Implemented as the second Gate 1 slice** (`FactoryRuntime.submitWorkload`, backed by package-private `FactoryHandler.submitOrder`).
-3. Make quantity consume proportional production work and allow multiple work items/jobs per order where required. **Implemented as the third Gate 1 slice**: a job's routing repeats once per unit of quantity (`totalSteps = routing.stepCount() * quantity`) rather than spawning multiple `Job`/`JobId` aggregates, giving per-unit progress reporting while keeping `Job` one-to-one with `Order`.
+3. Make quantity consume proportional production work and allow multiple work items/jobs per order where required. **Implemented as the third Gate 1 slice**: a job's routing repeats once per unit of quantity (`totalSteps = routing.stepCount() * quantity`) rather than spawning multiple `Job`/`JobId` aggregates, giving a job-global executed-step counter (`Job.currentStep()`) from which per-unit progress can be derived, while keeping `Job` one-to-one with `Order`.
 4. Capability/eligibility-driven deterministic dispatch.
 5. Consumer-neutral session and bounded advancement.
 6. Stable runtime observations and event envelopes.

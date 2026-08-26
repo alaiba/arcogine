@@ -177,14 +177,18 @@ public class FactoryHandler implements EventHandler {
             throw new SimError.OutOfRange("quantity", "must be at least 1, got " + quantity);
         }
         Routing routing = routings.getRoutingForProduct(productId);
-        long totalStepsExact = (long) routing.stepCount() * quantity;
-        if (totalStepsExact > Integer.MAX_VALUE) {
+        int stepsPerUnit = routing.stepCount();
+        // Guard by division, not multiplication: multiplying stepsPerUnit * quantity first (even
+        // widened to long) can itself overflow for a large long quantity (e.g. Long.MAX_VALUE),
+        // silently wrapping past this check. Dividing Integer.MAX_VALUE by stepsPerUnit instead
+        // never overflows, so the comparison is exact for the full long range of quantity.
+        if (quantity > Integer.MAX_VALUE / (long) stepsPerUnit) {
             throw new SimError.OutOfRange(
                     "quantity",
-                    "quantity " + quantity + " with routing step count " + routing.stepCount()
+                    "quantity " + quantity + " with routing step count " + stepsPerUnit
                             + " exceeds the maximum representable execution step count");
         }
-        int totalSteps = (int) totalStepsExact;
+        int totalSteps = stepsPerUnit * (int) quantity;
 
         OrderId orderId = orders.createOrder(productId, quantity, currentTime, unitPrice);
         Order order = orders.get(orderId);

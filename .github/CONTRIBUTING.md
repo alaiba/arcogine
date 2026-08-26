@@ -41,6 +41,8 @@ Use `./arcogine check` before pushing. Use `./arcogine check --full` when the ch
 
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
+For independent PR review, re-review, severity/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).
+
 ## Change slicing and branch hygiene
 
 Arcogine's larger initiatives are intentionally delivered as small, dependency-ordered pull requests rather than as one broad implementation branch. This keeps architectural decisions reviewable and makes behavior changes attributable.

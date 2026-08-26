@@ -46,6 +46,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Executable coverage for the pure classification function below (docs-only,
+      # known backend/frontend/docker paths, and the unknown-path fail-safe) — a
+      # regex regression here fails this step instead of silently under-running.
+      - name: Validate classifier logic
+        run: bash .github/scripts/classify-changes.test.sh
+
       - name: Determine changed-file surfaces
         id: filter
         run: |
@@ -65,50 +71,7 @@ jobs:
           echo "Changed files:"
           echo "$files"
 
-          # CI/tooling changes or shared manifests conservatively trigger every subsystem.
-          ci_or_shared=false
-          if echo "$files" | grep -qE '^(\.github/workflows/|arcogine$|product/build\.gradle|product/settings\.gradle|product/gradle/|product/gradle\.properties|product/interfaces/web/package(-lock)?\.json|product/interfaces/web/tsconfig|infra/docker/)'; then
-            ci_or_shared=true
-          fi
-
-          # docs_only: every changed file is documentation, nothing else.
-          docs_only=false
-          if [ -n "$files" ] && ! echo "$files" | grep -qvE '^(docs/|README\.md$|.*\.md$)'; then
-            docs_only=true
-          fi
-
-          # Any changed file that isn't documentation and doesn't match a known
-          # subsystem path is unrecognized. Fail safe: an unrecognized non-doc
-          # path (e.g. product/gradlew, .trivyignore, a new top-level dir) forces
-          # every subsystem on rather than silently skipping everything, since
-          # leaving all three flags false would let an unclassified change slip
-          # past every real check.
-          unknown=false
-          if [ "$docs_only" = false ]; then
-            if echo "$files" | grep -qvE '^(docs/|README\.md$|.*\.md$|\.github/workflows/|arcogine$|product/build\.gradle|product/settings\.gradle|product/gradle/|product/gradle\.properties|product/interfaces/web/package(-lock)?\.json|product/interfaces/web/tsconfig|infra/docker/|\.env\.example$|product/(types|simulation|domains|agents|interfaces/api|interfaces/cli)/|product/interfaces/web/)'; then
-              unknown=true
-            fi
-          fi
-
-          backend=false
-          if [ "$ci_or_shared" = true ] || [ "$unknown" = true ] || echo "$files" | grep -qE '^product/(types|simulation|domains|agents|interfaces/api|interfaces/cli)/'; then
-            backend=true
-          fi
-
-          frontend=false
-          if [ "$ci_or_shared" = true ] || [ "$unknown" = true ] || echo "$files" | grep -qE '^product/interfaces/web/'; then
-            frontend=true
-          fi
-
-          docker=false
-          if [ "$ci_or_shared" = true ] || [ "$unknown" = true ] || echo "$files" | grep -qE '^infra/docker/|^\.env\.example$'; then
-            docker=true
-          fi
-
-          echo "backend=$backend" | tee -a "$GITHUB_OUTPUT"
-          echo "frontend=$frontend" | tee -a "$GITHUB_OUTPUT"
-          echo "docker=$docker" | tee -a "$GITHUB_OUTPUT"
-          echo "docs_only=$docs_only" | tee -a "$GITHUB_OUTPUT"
+          printf '%s\n' "$files" | bash .github/scripts/classify-changes.sh | tee -a "$GITHUB_OUTPUT"
 
   java:
     name: Java checks
@@ -403,9 +366,11 @@ jobs:
       - name: Run Gitleaks
         run: gitleaks detect --source . --config .gitleaks.toml --verbose
 
-  # Single stable required status check. Its needs: list may grow as the job graph
-  # evolves, but the pass/fail logic below only ever looks at each needed job's
-  # result, so it never has to be hand-synced beyond that list.
+  # Single stable required status check. Branch protection only ever needs to
+  # require this one job. Its needs: list and the expected_to_run map in the
+  # step below (mirroring each conditional job's own if:) must be kept in sync
+  # by hand when jobs are added/removed/reconditioned; the step fails closed
+  # if they drift, rather than silently accepting an unexamined job.
   gate:
     name: gate
     if: always()
@@ -456,14 +421,27 @@ jobs:
               "security-secrets": True,
           }
 
+          # Fail closed if this job's needs: list and the expectation map above
+          # have drifted apart (e.g. a future job added to needs: but forgotten
+          # here). An unlisted job would otherwise return None from .get(), which
+          # is falsy, silently letting it skip unexamined — exactly the
+          # false-green class this gate exists to eliminate.
+          needs_keys = set(needs.keys())
+          expected_keys = set(expected_to_run.keys())
+          if needs_keys != expected_keys:
+              print("Failing gate: needs: and expected_to_run have drifted apart.")
+              print("  in needs: but missing from expected_to_run:", sorted(needs_keys - expected_keys))
+              print("  in expected_to_run but missing from needs:", sorted(expected_keys - needs_keys))
+              raise SystemExit(1)
+
           failed = []
           unexpected_skips = []
           for job, info in needs.items():
               result = info.get("result")
-              print(f"{job}: {result} (expected to run: {expected_to_run.get(job)})")
+              print(f"{job}: {result} (expected to run: {expected_to_run[job]})")
               if result in ("failure", "cancelled"):
                   failed.append((job, result))
-              elif result == "skipped" and expected_to_run.get(job):
+              elif result == "skipped" and expected_to_run[job]:
                   unexpected_skips.append(job)
 
           if failed:

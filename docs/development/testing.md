@@ -172,6 +172,7 @@ The `classify` job inspects the changed files (PR diff against its base, or the 
 - A change confined to `product/interfaces/web/` sets `frontend`.
 - A change confined to `infra/docker/` or `.env.example` sets `docker`.
 - A change touching **only** `docs/`, `README.md`, or other `*.md` files (and none of the above) sets `docs_only`, which skips Java tests, Playwright, the dist/Docker build, and the two dependency-scan jobs.
+- **Fail-safe default:** any changed file that is neither documentation nor a recognized subsystem/CI path (e.g. `product/gradlew`, `.trivyignore`, a brand-new top-level directory) is "unknown" and forces `backend`/`frontend`/`docker` all `true` — an unrecognized path can never fall through to `docs_only`'s skip behavior by accident.
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
 - `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
 
@@ -181,11 +182,11 @@ A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same j
 
 ### Required status check
 
-`CI / gate` is the only status check meant to be configured as required in branch protection. It depends on every merge-relevant job, runs with `if: always()`, and treats a `skipped` result (e.g. a job skipped by the change classifier) as acceptable while failing on any `failure`/`cancelled` result. This keeps required-check configuration stable even as jobs are added, removed, or made conditional — branch protection never needs to track the individual job list. **Manual follow-up:** after this workflow lands on `main`, the repository ruleset for `main` must be updated by hand (from the GitHub UI/API, not from code) to require `CI / gate` as the passing status check.
+`CI / gate` is the only status check meant to be configured as required in branch protection. It depends on every merge-relevant job, runs with `if: always()`, and treats a `skipped` result as acceptable **only when that job's surface was not selected** by the change classifier (or a `schedule`/`workflow_dispatch` full sweep) — it mirrors each conditional job's own `if:` and fails if a job comes back `skipped` despite its surface being selected, which catches a condition/classifier drift rather than silently accepting it. It also fails on any `failure`/`cancelled` result. This keeps required-check configuration stable even as jobs are added, removed, or made conditional — branch protection never needs to track the individual job list. **Manual follow-up:** after this workflow lands on `main`, the repository ruleset for `main` must be updated by hand (from the GitHub UI/API, not from code) to require `CI / gate` as the passing status check.
 
 ### Superseded run cancellation
 
-The workflow sets `concurrency: group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}` with `cancel-in-progress` true only for `pull_request` events, so pushing a new commit to an open PR cancels the previous in-progress run for that PR without affecting concurrent `main` or scheduled runs.
+The workflow sets `concurrency: group: ${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.ref, github.run_id) }}` with `cancel-in-progress` true only for `pull_request` events. Pushing a new commit to an open PR cancels the previous in-progress run for that PR. Every non-PR run (`main` pushes, `schedule`, `workflow_dispatch`) gets its own concurrency group keyed by `run_id`, so distinct `main`/scheduled runs never share a group and GitHub's per-group "one pending run" behavior can never drop or replace one of them.
 
 ## Testing architecture
 

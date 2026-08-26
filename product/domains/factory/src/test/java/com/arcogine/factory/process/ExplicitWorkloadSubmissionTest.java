@@ -9,7 +9,6 @@ import com.arcogine.core.event.EventType;
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
-import com.arcogine.factory.model.FactoryRuntimeAssembler;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
@@ -43,27 +42,25 @@ class ExplicitWorkloadSubmissionTest {
     }
 
     private static FactoryRuntime runtime() {
-        FactoryRuntimeAssembler.Assembled assembled = FactoryRuntimeAssembler.assemble(publishedModel());
-        return new FactoryRuntime(assembled.factory());
+        return FactoryRuntime.forModel(publishedModel());
     }
 
     @Test
     void submitsExplicitWorkloadWithoutEconomyDemandOrAgents() {
         FactoryRuntime runtime = runtime();
-        FactoryHandler factory = runtime.factory();
 
         OrderId orderId = runtime.submitWorkload(new ProductId(1), 3, 12.0);
 
-        assertEquals(1L, factory.ordersView().count());
-        assertEquals(1L, factory.jobsView().count());
-        var job = factory.jobsView().findFirst().orElseThrow();
+        assertEquals(1L, runtime.ordersView().count());
+        assertEquals(1L, runtime.jobsView().count());
+        var job = runtime.jobsView().findFirst().orElseThrow();
         assertEquals(orderId, job.orderId());
 
         Event taskEnd = runtime.advance().orElseThrow();
         assertEquals(EventType.TaskEnd, taskEnd.eventType());
 
-        assertTrue(factory.jobsView().findFirst().orElseThrow().isComplete());
-        assertEquals(1L, factory.completedSales());
+        assertTrue(runtime.jobsView().findFirst().orElseThrow().isComplete());
+        assertEquals(1L, runtime.completedSales());
         Event completed = runtime.advance().orElseThrow();
         var payload = (EventPayload.OrderCompleted) completed.payload();
         assertEquals(job.id(), payload.jobId());

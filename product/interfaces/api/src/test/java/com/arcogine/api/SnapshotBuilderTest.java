@@ -83,8 +83,12 @@ class SnapshotBuilderTest {
         scheduler.nextEvent();
         handler.handleEvent(priceChange, scheduler);
 
-        Event taskEnd = scheduler.nextEvent().orElseThrow();
-        handler.handleEvent(taskEnd, scheduler);
+        // The job's routing repeats once per unit of quantity (3), so three TaskEnd events are
+        // needed to complete it.
+        for (int i = 0; i < 3; i++) {
+            Event taskEnd = scheduler.nextEvent().orElseThrow();
+            handler.handleEvent(taskEnd, scheduler);
+        }
 
         SimSnapshot snapshot = SnapshotBuilder.buildSnapshot(
                 handler, new EventLog(), SimRunState.Running, scheduler.currentTime(), 3, config, null);

@@ -66,6 +66,20 @@ class FactoryHandlerTest {
                 new EventPayload.OrderCreation(new ProductId(1), quantity, unitPrice));
     }
 
+    /**
+     * A job's routing repeats once per unit of quantity, so completing an order requires driving
+     * one TaskEnd per unit (for a single-step routing). Drains {@code quantity} TaskEnd events,
+     * returning the final one -- the one that completes the order and schedules OrderCompleted.
+     */
+    private static Event driveToCompletion(FactoryHandler h, Scheduler sched, long quantity) {
+        Event taskEnd = null;
+        for (long i = 0; i < quantity; i++) {
+            taskEnd = sched.nextEvent().orElseThrow();
+            h.handleEvent(taskEnd, sched);
+        }
+        return taskEnd;
+    }
+
     @Test
     void newInitializesCorrectly() {
         FactoryHandler h = oneMachineOneProduct();
@@ -240,8 +254,7 @@ class FactoryHandlerTest {
 
         var job = h.jobs.allJobs().findFirst().orElseThrow();
 
-        Event taskEnd = sched.nextEvent().orElseThrow();
-        h.handleEvent(taskEnd, sched);
+        driveToCompletion(h, sched, 3);
 
         Event completed = sched.nextEvent().orElseThrow();
         var payload = (EventPayload.OrderCompleted) completed.payload();
@@ -260,13 +273,13 @@ class FactoryHandlerTest {
         sched.schedule(order1);
         sched.nextEvent();
         h.handleEvent(order1, sched);
-        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+        driveToCompletion(h, sched, 2);
 
-        Event order2 = orderEvent(6, 3, 20.0);
+        Event order2 = orderEvent(sched.currentTime().ticks(), 3, 20.0);
         sched.schedule(order2);
         sched.nextEvent();
         h.handleEvent(order2, sched);
-        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+        driveToCompletion(h, sched, 3);
 
         double expectedValue = h.jobsView()
                 .filter(j -> j.status() == com.arcogine.types.JobStatus.Completed)
@@ -319,8 +332,7 @@ class FactoryHandlerTest {
         sched.nextEvent();
         h.handleEvent(order, sched);
 
-        Event taskEnd = sched.nextEvent().orElseThrow();
-        h.handleEvent(taskEnd, sched);
+        driveToCompletion(h, sched, 3);
 
         assertEquals(30.0, h.completedSalesValue());
     }
@@ -341,8 +353,7 @@ class FactoryHandlerTest {
         assertEquals(30.0, jobA.orderValue());
 
         // The offer price changes to $999 before job A completes. Job A's own price must not move.
-        Event taskEndA = sched.nextEvent().orElseThrow();
-        h.handleEvent(taskEndA, sched);
+        driveToCompletion(h, sched, 3);
 
         assertEquals(10.0, jobA.unitPrice());
         assertEquals(
@@ -360,7 +371,7 @@ class FactoryHandlerTest {
         sched.schedule(orderA);
         sched.nextEvent();
         h.handleEvent(orderA, sched);
-        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+        driveToCompletion(h, sched, 2);
         assertEquals(20.0, h.completedSalesValue());
         Event completedA = sched.nextEvent().orElseThrow();
         assertTrue(
@@ -372,7 +383,7 @@ class FactoryHandlerTest {
         sched.schedule(orderB);
         sched.nextEvent();
         h.handleEvent(orderB, sched);
-        h.handleEvent(sched.nextEvent().orElseThrow(), sched);
+        driveToCompletion(h, sched, 2);
 
         assertEquals(20.0 + 100.0, h.completedSalesValue(), "each order contributes its own creation-time price");
     }

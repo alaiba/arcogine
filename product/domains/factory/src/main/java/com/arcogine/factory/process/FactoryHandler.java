@@ -129,9 +129,10 @@ public class FactoryHandler implements EventHandler {
             int stepIndex = job.currentStep();
             ProductId productId = job.productId();
             Routing routing = routings.getRoutingForProduct(productId);
-            RoutingStep step = routing.getStep(stepIndex)
+            int routingIndex = stepIndex % routing.stepCount();
+            RoutingStep step = routing.getStep(routingIndex)
                     .orElseThrow(() -> new SimError.Other(
-                            "step index " + stepIndex + " out of range for job " + jobId));
+                            "step index " + routingIndex + " out of range for job " + jobId));
 
             Machine m = machines.getMut(machineId);
             m.startJob(jobId);
@@ -151,6 +152,13 @@ public class FactoryHandler implements EventHandler {
      * the economy-driven {@link EventPayload.OrderCreation} event and {@link FactoryRuntime}'s
      * explicit workload submission both resolve to this one acceptance operation.
      *
+     * <p>The job's routing repeats once per unit of {@code quantity}: {@code totalSteps =
+     * routing.stepCount() * quantity}, so a quantity-10 order consumes ten times the routing/
+     * machine work of an otherwise identical quantity-1 order, and progress ({@link
+     * Job#currentStep()}) is countable per unit rather than only per order. Dispatch and
+     * completion resolve each job-level step back to its underlying {@link RoutingStep} by {@code
+     * stepIndex % routing.stepCount()}.
+     *
      * <p>Package-private: this method's {@link SimTime}/{@link Scheduler} parameters are
      * event-engine plumbing that a consumer-neutral workload boundary should not have to own or
      * supply. {@link FactoryRuntime} is the supported external entry point for explicit workload;
@@ -162,8 +170,11 @@ public class FactoryHandler implements EventHandler {
             double unitPrice,
             SimTime currentTime,
             Scheduler scheduler) {
+        if (quantity < 1) {
+            throw new SimError.OutOfRange("quantity", "must be at least 1, got " + quantity);
+        }
         Routing routing = routings.getRoutingForProduct(productId);
-        int totalSteps = routing.stepCount();
+        int totalSteps = Math.multiplyExact(routing.stepCount(), Math.toIntExact(quantity));
 
         OrderId orderId = orders.createOrder(productId, quantity, currentTime, unitPrice);
         Order order = orders.get(orderId);
@@ -215,8 +226,9 @@ public class FactoryHandler implements EventHandler {
             int nextStepIndex = job.currentStep();
             ProductId productId = job.productId();
             Routing routing = routings.getRoutingForProduct(productId);
+            int routingIndex = nextStepIndex % routing.stepCount();
 
-            routing.getStep(nextStepIndex).ifPresent(nextStep -> {
+            routing.getStep(routingIndex).ifPresent(nextStep -> {
                 MachineId nextMachineId = nextStep.machineId();
                 Machine nextMachine = machines.getMut(nextMachineId);
 

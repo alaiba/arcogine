@@ -21,11 +21,10 @@ import com.arcogine.types.scenario.ScenarioConfig;
 import org.junit.jupiter.api.Test;
 
 /**
- * Regression coverage for the pricing/order semantics resolved in
- * devel/architecture-assessment-events-state-observations.md: an order's price is
- * captured once, at OrderCreation, and is immutable for the life of the order. An
- * offer price change while an order is in production must not affect that order's
- * value -- including as reported in an API snapshot.
+ * Regression coverage for the pricing/order semantics documented in the Architecture Overview:
+ * an order's price is captured once, at OrderCreation, and is immutable for the life of the order.
+ * An offer price change while an order is in production must not affect that order's value --
+ * including as reported in an API snapshot.
  */
 class SnapshotBuilderTest {
 

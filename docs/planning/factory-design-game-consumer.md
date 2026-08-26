@@ -26,41 +26,7 @@ Inspect queues, transfers, and bottlenecks
 Revise the draft and publish another design
 ```
 
-The first outcome is a vertical slice proving that capacity and physical arrangement create understandable, reproducible trade-offs. It is not a commitment to a campaign, generic game framework, or complete factory-management game.
-
-### 1.1 Game thesis
-
-The initial game is a bounded production-system design puzzle.
-
-The player receives a fixed production contract, bounded floor, equipment catalogue, construction budget, and completion deadline. The player's primary responsibility is to design a factory capable of satisfying that requirement, run the published design, diagnose the resulting production behavior, and revise the design using supported evidence.
-
-The central optimization tension is between:
-
-```text
-processing capacity
-        versus
-spatial efficiency
-        versus
-capital efficiency
-```
-
-The player acts as a production-system designer or industrial engineer rather than primarily as a live shift operator. The first game should reward understanding why a design works: where capacity is constrained, where work waits, how transfer distance contributes to completion time, and whether additional equipment is worth its cost.
-
-The detailed product hypothesis and reference challenge live in [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md). This document remains the consumer/Arcogine boundary and dependency plan.
-
-### 1.2 Relationship to Arcogine's existing economy simulation
-
-Arcogine's existing pricing, stochastic demand, and autonomous sales behavior are useful simulation capabilities, but they are not part of the first factory-design game loop.
-
-The initial game uses explicit production workload so that the player's question is:
-
-> Can this published factory design execute a known production requirement within its time and budget constraints?
-
-rather than:
-
-> Can the player dynamically control market demand while operating the factory?
-
-Pricing, stochastic demand, and autonomous sales behavior may become later game modes if a concrete product hypothesis justifies them. Their current existence must not cause the first game to become an economy-management wrapper around the existing UI.
+The first outcome is a vertical slice proving that capacity and physical arrangement create understandable, reproducible trade-offs. It is not a commitment to a campaign, generic game framework, or complete factory-management game. The concrete product thesis, player loop, reference challenge, and product-level success criteria live in [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md); this document owns the consumer boundary, readiness dependencies, and ownership constraints.
 
 ## 2. Upstream dependencies
 
@@ -104,8 +70,6 @@ Before game implementation starts, Arcogine must have satisfied:
 
 The headless capacity and layout benchmarks must pass before a game UI is used as evidence for those capabilities.
 
-The player-facing significance of these gates is summarized in the [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md): the model seam enables design/publish/run, Gate 1 enables fixed production contracts with meaningful quantity, Gate 2 enables capacity decisions, Gate 3 enables deterministic interactive control, Gate 4 enables diagnosis, and Gate 5 enables layout optimization.
-
 ## 3. Charter and semantic alignment
 
 The initiative operates under the [Product Charter](../product/charter.md):
@@ -129,15 +93,6 @@ The initiative also follows [Factory Design Architecture](../architecture/factor
 ## 4. Minimal vertical slice
 
 The demonstrator is a factory-layout challenge in which the player receives a fixed production contract, places machines on a bounded floor, publishes the design, runs the factory, observes operational behavior, and redesigns until the contract is completed within its constraints.
-
-The initial vertical slice should make four player decisions legible:
-
-- **capacity:** whether adding compatible equipment at the actual bottleneck is worth its cost;
-- **resource eligibility:** which capabilities are installed, while Arcogine owns deterministic dispatch among eligible resources;
-- **spatial arrangement:** whether shorter transfer paths outperform alternative capacity investments;
-- **capital efficiency:** whether the performance benefit of a design justifies its construction cost.
-
-The player chooses installed capability. The player does not author separate product routings for each individual equivalent machine merely to obtain parallel capacity.
 
 ### 4.1 Game requirements
 
@@ -169,7 +124,7 @@ The first playable slice needs only:
 
 The level should support at least two credible designs, such as parallel bottleneck capacity versus shorter transfer distance.
 
-A reference challenge for product and engine acceptance is described in [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md). Its exact quantities, dimensions, prices, and deadlines are game-content parameters rather than Arcogine contracts.
+The product-level reference challenge is described in [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md). Its exact quantities, dimensions, prices, and deadlines are game-content parameters rather than Arcogine contracts.
 
 ### 4.3 Initial editing and publication rule
 
@@ -239,16 +194,7 @@ The game renders supported observations/events rather than internal engine class
 
 The client should make supported evidence understandable, including queue depth, utilization, completion progress, WIP, lead time, transfer contribution, and active bottleneck.
 
-The player should be able to answer, without reading the raw event log:
-
-- where work is waiting;
-- which operation or resource is the current bottleneck;
-- which resources are saturated or underused;
-- how much delay is attributable to processing versus transfer;
-- how far the contract is from completion;
-- what changed relative to the previous published design and run.
-
-The game may summarize/highlight observations but must not calculate a competing authoritative result from hidden assumptions.
+It may summarize/highlight observations but must not calculate a competing authoritative result from hidden assumptions.
 
 ### 6.5 Game economy
 

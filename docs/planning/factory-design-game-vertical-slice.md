@@ -7,7 +7,7 @@
 
 ## 1. Product thesis
 
-The first Arcogine game is a deterministic factory-design puzzle: given a fixed production contract, floor, budget, and deadline, the player chooses capacity and spatial arrangement, simulates the published design, diagnoses bottlenecks and transfer losses from supported observations, and iterates toward a better factory.
+The first game built on Arcogine is a deterministic factory-design puzzle: given a fixed production contract, floor, budget, and deadline, the player chooses capacity and spatial arrangement, simulates the published design, diagnoses bottlenecks and transfer losses from supported observations, and iterates toward a better factory.
 
 The game is not initially a general factory-management simulation. Its first purpose is to prove that Arcogine can make production-system design trade-offs understandable, reproducible, and engaging.
 
@@ -72,8 +72,6 @@ Arcogine owns deterministic assignment of work among eligible resources. The gam
 
 Resource placement affects deterministic transfer time. Shorter production flows may outperform a more expensive design with additional capacity under some constraints.
 
-The first spatial model is intentionally not a logistics simulation. Workers, vehicles, pathfinding, aisles, congestion, and traffic are not needed to make distance meaningful.
-
 ### 3.4 Capital efficiency
 
 More equipment may improve capacity but consumes the game-owned construction budget. The strongest design is not necessarily the largest factory.
@@ -82,7 +80,7 @@ The initial score should reward successful completion, deadline performance, and
 
 ## 4. Reference challenge
 
-The first head-to-head product challenge should be concrete enough to anchor engine acceptance work and later playtesting.
+The first product challenge should be concrete enough to anchor later playtesting.
 
 ```text
 Contract
@@ -125,7 +123,7 @@ Strategy B
 
 Neither approach should dominate under every constraint. The useful product question is whether the player can understand why one design performs better in a particular run.
 
-## 5. What the player sees
+## 5. Player evidence and attempt comparison
 
 The game should make Arcogine's supported runtime evidence legible without requiring the raw event log.
 
@@ -136,121 +134,31 @@ At minimum the player should be able to answer:
 - Which resources are saturated or underused?
 - How much production time is attributable to processing versus transfer?
 - How far is the contract from completion?
-- What changed relative to the previous published design and run?
+- How did this attempt's outcome compare with the previous attempt?
 
-A run should retain source-model provenance so the game can compare the result of one published design with another without treating mutable editor state as authoritative history.
+For the vertical slice, design-to-design comparison does **not** require Arcogine's deferred D5 semantic-comparison capability. The game may retain immutable game-owned draft snapshots for each attempt and pair them with the published model provenance and supported run outcomes. It can therefore show player-authored design differences from its own snapshots and compare authoritative run results without claiming a canonical semantic diff between two published Arcogine models.
 
-The game may summarize, highlight, animate, and interpolate supported observations. It must not reconstruct a competing production model from presentation assumptions.
+If a future product requirement needs Arcogine itself to explain semantic differences between published model versions, that requirement becomes a concrete trigger to revisit D5 in [Factory Design Capability](factory-design-capability.md).
 
-## 6. Relationship to Arcogine's existing economy simulation
-
-Arcogine currently has pricing, stochastic demand, and autonomous sales behavior. Those capabilities are useful but are not part of this first game loop.
-
-The initial factory-design game uses explicit production workload so that the design problem remains controlled and comparable across retries. Pricing, stochastic demand, and sales-agent behavior would confound the first capacity/layout experiments and are therefore non-goals for the vertical slice.
-
-They may become later game modes if a concrete product hypothesis justifies them. Their current existence should not cause the first game to become an economy-management wrapper around the existing UI.
-
-## 7. Engine dependencies and gameplay significance
-
-The game remains downstream of the readiness gates. Each gate unlocks a specific player-facing mechanic while remaining an Arcogine capability rather than a game-specific implementation.
-
-| Readiness capability | Gameplay unlocked |
-|---|---|
-| Canonical published model seam | Design -> publish -> run loop |
-| Gate 1: explicit workload and execution semantics | Fixed production contracts with meaningful quantity |
-| Gate 2: capability-based deterministic dispatch | Duplicate machines and capacity decisions |
-| Gate 3: consumer-neutral simulation session | Pause, step, bounded acceleration, reset, deterministic retry |
-| Gate 4: stable observations and event envelopes | Bottleneck diagnosis and legible production behavior |
-| Gate 5: spatial runtime consequences | Layout optimization and transfer-cost trade-offs |
-
-The game UI must not be used as the evidence that a gate is correct. Headless acceptance scenarios establish the engine semantics first.
-
-## 8. Gate-oriented product acceptance examples
-
-### 8.1 Workload
-
-Given the same published factory, a production order for 20 units must require materially more production work than an otherwise identical order for one unit. Progress and completion must be observable without enabling pricing, stochastic demand, or agents.
-
-### 8.2 Capacity
-
-Compare two published designs under the same 20-unit workload:
-
-```text
-Model A
-    1 cutter
-    1 assembler
-    1 inspector
-
-Model B
-    2 equivalent cutters
-    1 assembler
-    1 inspector
-```
-
-Both cutters in Model B must be eligible to execute CUT work when workload justifies it. The result should expose the resulting change in queueing, utilization, throughput, completion time, or bottleneck location.
-
-### 8.3 Layout
-
-Compare two published designs with the same resources, operation durations, and workload but different semantic positions. Where transfer distances differ, completion time must differ deterministically and the transfer contribution must be observable.
-
-## 9. Explicit non-goals
-
-The vertical slice does not require:
-
-- live machine micromanagement as the primary game loop;
-- dynamic pricing, stochastic demand, or autonomous sales agents;
-- workers, skills, fatigue, or pathfinding;
-- vehicles, conveyors, aisle routing, or congestion-aware transport;
-- raw-material procurement, suppliers, BOM, or inventory optimization;
-- maintenance, failures, or shift scheduling;
-- research trees or broad campaign progression;
-- multiplayer;
-- live structural reconfiguration while production work is in flight;
-- live-production connectivity or execution;
-- a generic game framework or plugin system.
-
-These omissions are intentional. They keep the first product hypothesis focused on capacity, flow, layout, and diagnosis.
-
-## 10. Ownership boundary
-
-The game owns:
-
-- level definitions and contract presentation;
-- editable draft UX and local undo/history;
-- rendering, animation, input, audio, and presentation pacing;
-- construction prices, budget, payout, score, rewards, and progression;
-- tutorials, narrative, unlocks, and game-only persistence.
-
-Arcogine owns:
-
-- canonical production-system semantics;
-- validation and publication of executable designs;
-- model identity and provenance;
-- production workload and execution semantics;
-- queues, assignments, dispatch, processing, and transfers;
-- simulation time and event ordering;
-- supported runtime observations and KPIs;
-- deterministic consequences of capacity and semantic layout.
-
-Game-specific concepts must not enter Arcogine merely because they make the vertical slice easier to implement.
-
-## 11. Vertical-slice success criteria
+## 6. Product success criteria
 
 The product hypothesis is proven when:
 
-1. A player can design and publish a valid factory without using Arcogine tooling directly.
-2. A fixed production contract can run independently of pricing, stochastic demand, and sales agents.
-3. Quantity represents real production workload rather than only commercial value.
-4. Adding compatible capacity at the actual bottleneck can materially change the result.
-5. Different valid spatial arrangements can materially change deterministic transfer and completion behavior.
-6. The player can identify the bottleneck and major delay sources from supported observations.
-7. Retrying the same published model with the same seed, workload, and ordered commands reproduces the result.
-8. A new published design can be compared with the previous design and its run using retained model provenance.
-9. At least two credible solutions exist for the reference challenge, creating an understandable capacity/layout/cost trade-off.
-10. Game-specific scoring and presentation remain outside Arcogine's authoritative production semantics.
+1. The player understands the fixed production objective, budget, deadline, and available equipment without needing Arcogine-specific tooling knowledge.
+2. Capacity investment creates an understandable trade-off rather than making "buy more machines" universally optimal.
+3. Spatial arrangement creates an understandable performance trade-off rather than acting as decoration.
+4. Solving one production bottleneck can expose another, encouraging diagnosis and redesign.
+5. The player can identify the bottleneck and major delay sources from presented evidence rather than the raw event log.
+6. A retry is useful as an experiment: the player can relate a changed game-owned draft to changed authoritative run outcomes.
+7. At least two credible solutions exist for the reference challenge, creating a meaningful capacity/layout/cost trade-off.
+8. Scoring rewards contract success, deadline performance, and capital efficiency without obscuring why one design performed better.
 
-## 12. Documentation boundary
+The consumer-readiness gates, ownership rules, integration acceptance criteria, and explicit non-goals for implementing this slice are defined in [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), not duplicated here.
 
-This document owns the product hypothesis for the first playable slice. It does not define canonical model fields, runtime APIs, dispatch policy, event envelopes, transfer formulas, or compatibility contracts.
+## 7. Documentation boundary
 
-Those remain in the upstream architecture and capability/readiness documents. Detailed art direction, content expansion, campaign design, and distribution planning should remain outside Arcogine until the vertical slice provides evidence that those investments are justified.
+This document owns only the concrete product hypothesis: player fantasy, loop, decisions, reference challenge, player-facing evidence, and product success criteria.
+
+[Factory-Design Game Consumer Initiative](factory-design-game-consumer.md) owns the Arcogine/game responsibility boundary, upstream readiness dependencies, implementation entry criteria, integration acceptance criteria, and non-goals. [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) owns the runtime gates themselves.
+
+Detailed art direction, content expansion, campaign design, and distribution planning should remain outside Arcogine until the vertical slice provides evidence that those investments are justified.

@@ -3,6 +3,7 @@ package com.arcogine.factory.jobs;
 import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 import java.util.Optional;
@@ -13,10 +14,15 @@ import java.util.Optional;
  * {@code JobStore}) drives a job's production lifecycle; everything else, including anything
  * obtaining a reference via {@code FactoryHandler.jobsView()}/{@code job(JobId)}, is structurally
  * limited to reading, not just conventionally expected to.
+ *
+ * <p>Order/commercial getters are compatibility projections from the immutable accepted order
+ * referenced by this job. They are not mutable job-owned state.
  */
 public interface JobView {
 
     JobId id();
+
+    OrderId orderId();
 
     ProductId productId();
 
@@ -38,9 +44,9 @@ public interface JobView {
 
     boolean isComplete();
 
-    /** The price agreed when this order was created. Immutable for the life of the order. */
+    /** The price agreed by the referenced immutable order. */
     double unitPrice();
 
-    /** OrderValue: quantity x the order's own agreed unit price. */
+    /** OrderValue of the referenced immutable order. */
     double orderValue();
 }

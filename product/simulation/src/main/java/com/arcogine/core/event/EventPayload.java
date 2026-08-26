@@ -28,17 +28,17 @@ public sealed interface EventPayload permits
     record TaskEnd(JobId jobId, MachineId machineId, int stepIndex) implements EventPayload {}
 
     /**
-     * The operational fact that an order fulfilled its full routing -- distinct from a single
-     * {@link TaskEnd}, which only means one production step finished. Carries the immutable
-     * commercial facts a downstream consumer (e.g. Finance) needs to interpret the transaction;
-     * deliberately does not carry the derived orderValue (quantity x unitPrice) to avoid a second
-     * consistency invariant for a value that's trivially recomputed.
+     * The operational fact that an accepted order fulfilled its current execution job's full
+     * routing -- distinct from a single {@link TaskEnd}, which only means one production step
+     * finished. Carries the immutable commercial facts a downstream consumer (e.g. Finance) needs
+     * to interpret the transaction; deliberately does not carry the derived orderValue (quantity x
+     * unitPrice) to avoid a second consistency invariant for a value that's trivially recomputed.
      *
-     * <p>jobId, not orderId: there is currently no separate {@code Order} concept -- a {@code Job}
-     * is the one-to-one representation of an accepted order. If a distinct {@code Order}/{@code
-     * OrderId} is introduced later (see the "commercial vs. operational" note in
-     * docs/architecture.md's "State" section), this field should migrate to that type explicitly,
-     * rather than this record pretending the distinction already exists today.
+     * <p>{@code jobId} is retained as the existing event-contract correlation identifier in this
+     * behavior-preserving slice. Factory now stores immutable accepted {@code Order}/{@code
+     * OrderId} intent separately from mutable {@code Job} execution; migrating externally visible
+     * completion events to explicit order identity belongs with the later workload/event-contract
+     * work rather than silently changing this payload here.
      */
     record OrderCompleted(JobId jobId, ProductId productId, long quantity, double unitPrice)
             implements EventPayload {}

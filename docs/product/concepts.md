@@ -52,13 +52,20 @@ A **product** (e.g., "Widget A") has a **routing** — an ordered list of proces
 
 Example: Widget A's routing might be Mill (5 ticks) → Lathe (3 ticks) → QC Station (2 ticks). A job for Widget A must visit all three machines in order.
 
-### Jobs
+### Orders and jobs
 
-When an order arrives, it creates a **job**. The job moves through the routing steps, waiting in machine queues when the machine is busy. A job's lifecycle is:
+When an order arrives, Arcogine stores an immutable **order** containing the accepted product, quantity, creation time, and unit price. It then creates a mutable **job** that references that order and moves through the routing steps, waiting in machine queues when a machine is busy.
 
-1. **Created** — an order event generates it, locking in its unit price at that instant
-2. **In progress** — being processed on a machine, or waiting in a queue
-3. **Completed** — all routing steps finished; its sales value (quantity x its own locked-in price) is added to completed sales value
+The current implementation remains one order → one job. This separation exists so accepted intent does not have to mutate as execution progresses; later engine-readiness work can allow one order to produce multiple work items/jobs without copying the commercial/order facts into each execution object.
+
+The current lifecycle is:
+
+1. **Order accepted** — the order event freezes the unit price and quantity in immutable order intent
+2. **Job created** — one execution job references that order
+3. **In progress** — the job is processed on a machine or waits in a queue
+4. **Completed** — all routing steps finish; the referenced order's sales value (quantity x its locked-in price) is added to completed sales value
+
+The existing API/UI job projection still shows product, quantity, and completed value on each job for compatibility. Those values are now read from the immutable referenced order rather than stored as mutable job-owned state.
 
 ## The economy
 
@@ -76,7 +83,7 @@ Changing the offer price only affects **future** orders — evaluated the next t
 
 ### Completed sales value
 
-Each order locks in its unit price **at the moment it's created**, using whatever the offer price was at that instant. That price travels with the order for its entire lifecycle and never changes, even if the offer price moves while the order is still in production. An order created at $10 is still worth `quantity x $10` when it finishes, no matter what the offer price is by then.
+Each order locks in its unit price **at the moment it's created**, using whatever the offer price was at that instant. That price stays on the immutable order for its entire lifecycle and never changes, even if the offer price moves while the associated job is still in production. An order created at $10 is still worth `quantity x $10` when it finishes, no matter what the offer price is by then.
 
 The KPI dashboard's completed-sales figure (`completedSalesValue` in the API) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the offer price happens to be right now.
 

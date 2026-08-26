@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.arcogine.factory.jobs.Job;
 import com.arcogine.factory.jobs.JobStore;
 import com.arcogine.factory.machines.Machine;
+import com.arcogine.factory.orders.Order;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
@@ -29,6 +31,10 @@ class PropertiesTest {
 
     private static final long SEED = 0x5EED_F00DL;
 
+    private static Order order(long id) {
+        return new Order(new OrderId(id), new ProductId(1), 1, SimTime.ZERO, 10.0);
+    }
+
     // job_current_step_never_exceeds_total:
     //   total_steps in 1..=10, completions in 0..=15
     static Stream<Arguments> jobStepInputs() {
@@ -49,7 +55,7 @@ class PropertiesTest {
     @ParameterizedTest
     @MethodSource("jobStepInputs")
     void jobCurrentStepNeverExceedsTotal(int totalSteps, int completions) {
-        Job job = new Job(new JobId(1), new ProductId(1), 1, totalSteps, SimTime.ZERO, 10.0);
+        Job job = new Job(new JobId(1), order(1), totalSteps, SimTime.ZERO);
         for (int i = 0; i < completions; i++) {
             if (job.isComplete()) {
                 break;
@@ -136,7 +142,7 @@ class PropertiesTest {
     void noLostJobs(int created) {
         JobStore store = new JobStore();
         for (int i = 0; i < created; i++) {
-            store.createJob(new ProductId(1), 1, 2, SimTime.ZERO, 10.0);
+            store.createJob(order(i + 1L), 2, SimTime.ZERO);
         }
 
         long active = store.activeJobs().count();
@@ -152,7 +158,7 @@ class PropertiesTest {
         Random rng = new Random();
         int totalSteps = rng.nextInt(10) + 1;
         int completions = rng.nextInt(16);
-        Job job = new Job(new JobId(1), new ProductId(1), 1, totalSteps, SimTime.ZERO, 10.0);
+        Job job = new Job(new JobId(1), order(1), totalSteps, SimTime.ZERO);
         for (int i = 0; i < completions; i++) {
             if (job.isComplete()) {
                 break;

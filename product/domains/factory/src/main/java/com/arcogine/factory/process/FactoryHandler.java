@@ -10,21 +10,25 @@ import com.arcogine.factory.jobs.JobView;
 import com.arcogine.factory.machines.Machine;
 import com.arcogine.factory.machines.MachineStore;
 import com.arcogine.factory.machines.MachineView;
+import com.arcogine.factory.orders.Order;
+import com.arcogine.factory.orders.OrderStore;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
-import java.util.Optional;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class FactoryHandler implements EventHandler {
 
     final MachineStore machines;
+    final OrderStore orders;
     final JobStore jobs;
     public final RoutingStore routings;
     public final List<ProductId> productIds;
@@ -33,6 +37,7 @@ public class FactoryHandler implements EventHandler {
 
     public FactoryHandler(MachineStore machines, RoutingStore routings, List<ProductId> productIds) {
         this.machines = machines;
+        this.orders = new OrderStore();
         this.jobs = new JobStore();
         this.routings = routings;
         this.productIds = List.copyOf(productIds);
@@ -60,6 +65,16 @@ public class FactoryHandler implements EventHandler {
 
     public long completedSales() {
         return completedSales;
+    }
+
+    /** Immutable lookup of accepted order intent. */
+    public Order order(OrderId id) {
+        return orders.get(id);
+    }
+
+    /** Immutable view of all accepted orders. */
+    public Stream<Order> ordersView() {
+        return orders.allOrders();
     }
 
     /**
@@ -140,7 +155,9 @@ public class FactoryHandler implements EventHandler {
         Routing routing = routings.getRoutingForProduct(productId);
         int totalSteps = routing.stepCount();
 
-        JobId jobId = jobs.createJob(productId, quantity, totalSteps, currentTime, unitPrice);
+        OrderId orderId = orders.createOrder(productId, quantity, currentTime, unitPrice);
+        Order order = orders.get(orderId);
+        JobId jobId = jobs.createJob(order, totalSteps, currentTime);
 
         routing.getStep(0).ifPresent(firstStep -> {
             MachineId machineId = firstStep.machineId();
@@ -175,12 +192,13 @@ public class FactoryHandler implements EventHandler {
         job.completeStep(currentTime);
 
         if (job.isComplete()) {
-            completedSalesValue += job.orderValue();
+            Order order = orders.get(job.orderId());
+            completedSalesValue += order.orderValue();
             completedSales += 1;
             scheduler.schedule(Event.of(
                     currentTime,
                     new EventPayload.OrderCompleted(
-                            job.id(), job.productId(), job.quantity(), job.unitPrice())));
+                            job.id(), order.productId(), order.quantity(), order.unitPrice())));
         } else {
             int nextStepIndex = job.currentStep();
             ProductId productId = job.productId();

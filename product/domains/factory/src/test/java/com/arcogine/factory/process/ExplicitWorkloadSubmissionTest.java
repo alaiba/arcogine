@@ -56,8 +56,13 @@ class ExplicitWorkloadSubmissionTest {
         var job = runtime.jobsView().findFirst().orElseThrow();
         assertEquals(orderId, job.orderId());
 
-        Event taskEnd = runtime.advance().orElseThrow();
-        assertEquals(EventType.TaskEnd, taskEnd.eventType());
+        // The job's routing repeats once per unit of quantity, so a quantity-3 order needs three
+        // TaskEnd events (one per unit) to complete, not one.
+        Event taskEnd = null;
+        for (int i = 0; i < 3; i++) {
+            taskEnd = runtime.advance().orElseThrow();
+            assertEquals(EventType.TaskEnd, taskEnd.eventType());
+        }
 
         assertTrue(runtime.jobsView().findFirst().orElseThrow().isComplete());
         assertEquals(1L, runtime.completedSales());
@@ -76,6 +81,9 @@ class ExplicitWorkloadSubmissionTest {
         assertEquals(1, runtime.machinesView().size());
         assertEquals(1L, runtime.backlog());
 
+        // Three TaskEnd events (one per unit of quantity) plus the OrderCompleted they trigger.
+        runtime.advance();
+        runtime.advance();
         runtime.advance();
         runtime.advance();
 
@@ -96,6 +104,8 @@ class ExplicitWorkloadSubmissionTest {
     private static Event runToCompletion() {
         FactoryRuntime runtime = runtime();
         runtime.submitWorkload(new ProductId(1), 3, 12.0);
+        runtime.advance();
+        runtime.advance();
         runtime.advance();
         return runtime.advance().orElseThrow();
     }

@@ -45,8 +45,12 @@ class AgentObservationProjectorTest {
         sched.nextEvent();
         factory.handleEvent(order, sched);
 
-        Event taskEnd = sched.nextEvent().orElseThrow();
-        factory.handleEvent(taskEnd, sched);
+        // The job's routing repeats once per unit of quantity (3), so three TaskEnd events are
+        // needed to complete it.
+        for (int i = 0; i < 3; i++) {
+            Event taskEnd = sched.nextEvent().orElseThrow();
+            factory.handleEvent(taskEnd, sched);
+        }
 
         AgentObservation observation = AgentObservationProjector.project(factory, pricing, 10L);
 

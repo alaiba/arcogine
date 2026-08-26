@@ -520,7 +520,16 @@ class ApiSmokeTest {
         sleepQuietly(100);
 
         client.post().uri("/api/sim/step").exchange().expectStatus().isOk();
-        sleepQuietly(100);
+
+        boolean stepped = false;
+        for (int i = 0; i < 20; i++) {
+            if (snapshot().path("events_processed").asLong() > 0) {
+                stepped = true;
+                break;
+            }
+            sleepQuietly(50);
+        }
+        assertTrue(stepped, "step should process at least one event before reset");
 
         client.post()
                 .uri("/api/sim/reset")

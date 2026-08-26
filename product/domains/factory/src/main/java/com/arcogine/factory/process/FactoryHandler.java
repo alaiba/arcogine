@@ -17,12 +17,15 @@ import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.MachineState;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class FactoryHandler implements EventHandler {
@@ -119,6 +122,26 @@ public class FactoryHandler implements EventHandler {
         return (double) completedSales / elapsedTicks;
     }
 
+    /**
+     * Deterministically picks one machine from a step's eligible set to run the next unit of
+     * work. Policy: prefer an online machine that can accept work immediately; among ties, prefer
+     * the shallowest queue; a final tie (including "no eligible machine is online") breaks on the
+     * lowest {@link MachineId}, so identical inputs always resolve the same way.
+     */
+    private MachineId selectMachine(Set<MachineId> eligibleMachines) {
+        List<MachineId> online = eligibleMachines.stream()
+                .filter(id -> machines.get(id).state() != MachineState.Offline)
+                .toList();
+        List<MachineId> candidates = online.isEmpty() ? List.copyOf(eligibleMachines) : online;
+
+        return candidates.stream()
+                .min(Comparator
+                        .<MachineId>comparingInt(id -> machines.get(id).canAcceptJob() ? 0 : 1)
+                        .thenComparingInt(id -> machines.get(id).queueDepth())
+                        .thenComparing(MachineId::value))
+                .orElseThrow();
+    }
+
     private void tryDispatchFromQueue(MachineId machineId, Scheduler scheduler, SimTime currentTime) {
         Machine machine = machines.getMut(machineId);
         if (!machine.canAcceptJob()) {
@@ -195,7 +218,7 @@ public class FactoryHandler implements EventHandler {
         JobId jobId = jobs.createJob(order, totalSteps, currentTime);
 
         routing.getStep(0).ifPresent(firstStep -> {
-            MachineId machineId = firstStep.machineId();
+            MachineId machineId = selectMachine(firstStep.eligibleMachines());
             Machine machine = machines.getMut(machineId);
 
             if (machine.canAcceptJob()) {
@@ -243,7 +266,7 @@ public class FactoryHandler implements EventHandler {
             int routingIndex = nextStepIndex % routing.stepCount();
 
             routing.getStep(routingIndex).ifPresent(nextStep -> {
-                MachineId nextMachineId = nextStep.machineId();
+                MachineId nextMachineId = selectMachine(nextStep.eligibleMachines());
                 Machine nextMachine = machines.getMut(nextMachineId);
 
                 if (nextMachine.canAcceptJob()) {

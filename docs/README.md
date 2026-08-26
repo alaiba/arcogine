@@ -28,6 +28,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | Document | What it covers |
 |----------|-----------------|
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, code style, architecture constraints, required validation |
+| [reviewing.md](development/reviewing.md) | Independent PR review and re-review workflow, severity/disposition, AI-assisted session boundaries, CI language, and durable-knowledge rules |
 | [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates, native test commands |
 | [CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) | Community standards |
 
@@ -61,5 +62,6 @@ These documents are internal planning artifacts, not user-facing guides:
 | [Factory design capability plan](planning/factory-design-capability.md) | Immediate upstream work: canonical model seam, validation, publication/provenance, and behavior-preserving runtime instantiation |
 | [Governance and conformance capability plan](planning/governance-conformance-capability.md) | Cross-cutting sequence after the model seam: durable lineage, semantic ChangeSets, generic conformance, evidence, external-workflow governed change (Jira anticipated), framework mappings, and audit projections |
 | [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Runtime gates after the model seam: explicit workload/work execution, deterministic dispatch, session control, observations/events, and spatial consequences |
+| [Factory-design game challenge readiness](planning/factory-design-game-challenge-readiness.md) | Game-owned parallel track for challenge identity/validation, candidate admissibility, catalogue and budget rules, deterministic evaluation, attempt provenance/comparison, and cross-track learning with governance |
 | [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Downstream consumer boundary between the game and Arcogine, including readiness entry criteria and ownership constraints |
 | [Factory-design game vertical slice](planning/factory-design-game-vertical-slice.md) | Product hypothesis for the first playable slice: fixed contract, capacity/layout/cost trade-offs, diagnosis, and deterministic redesign |

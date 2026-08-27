@@ -410,6 +410,11 @@ product/
 │                         JournalEntry, FinanceObservation — see "Commercial,
 │                         Operational, and Financial Truth" above
 ├── agents/               Agent framework: SalesAgent, AgentObservation
+├── consumer/
+│   └── challenge/        Challenge Readiness: game-owned ChallengeDefinition and
+│                         ChallengeDefinitionValidator (see
+│                         docs/planning/factory-design-game-challenge-readiness.md).
+│                         Headless — no dependency on any module below.
 └── interfaces/
     ├── api/              Spring Boot HTTP + SSE server: controllers, SimThread,
     │                     IntegratedHandler, SnapshotBuilder, DTOs
@@ -428,9 +433,17 @@ types ← simulation ← factory
             api ←────────┘ (all of the above)
                 ↑
             cli (entry point)
+
+challenge   (no dependency on any module above; a sibling, game-owned boundary)
 ```
 
 Each module exposes a clean public API and hides implementation details. Domain modules (`factory`, `economy`, `agents`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
+
+`challenge` is deliberately outside this dependency graph: it is a game-owned Challenge Readiness
+module (`com.arcogine.challenge`) that has no `project(...)` dependency on `types`, `simulation`,
+any domain module, `api`, or `cli`, and no Spring dependency. It defines an immutable
+`ChallengeDefinition` and a `ChallengeDefinitionValidator` that is a distinct validation domain
+from `FactoryModelValidator` — see the Challenge Readiness planning doc for the ownership boundary.
 
 ## Event Dispatch Architecture
 

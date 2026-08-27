@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Cross-consumer factory-design semantics and their boundary with scenario configuration and runtime behavior  
 > **Authority:** Proposed architecture; current implementation remains documented by the architecture overview and product/reference docs until this direction is accepted and implemented  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Governance and Conformance Architecture](governance-conformance.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
 ## 1. Architectural position
 
@@ -212,25 +212,27 @@ FactoryModelPublished as version 4
 | branch/review context | run/session context |
 | published model version | instantiated source model version |
 
-A future deployment workflow may connect them explicitly:
+A future real-operations workflow connects design to governance and deployment explicitly:
 
 ```text
 Candidate change
         ↓
-Controlled revision (persisted, with lineage)
+Controlled revision (Governance; persisted, with lineage)
         ↓
 Technical assessment (validation / simulation / verification)
         ↓
-Approval
+Authorization
         ↓
-Scheduling / deployment
+Operational deployment plan / target application
+        ↓
+Observed result / reconciliation
 ```
 
-The revision is persisted before approval, not after: an unapproved revision, or one approved but never deployed, must remain representable. Approval and deployment are separate records that reference the revision, not steps a revision passes through to come into existence.
+The revision is persisted before authorization, not after: an unauthorized revision, or one authorized but never deployed, must remain representable. Authorization and deployment are separate records that reference the revision, not steps a revision passes through to come into existence.
 
-That bridge preserves provenance and authority; it does not turn editor operations into simulation events.
+Factory Design owns the semantic design and publication boundary. Governance owns controlled revision/change-control and authorization interpretation. [Operational Execution and Digital Twin](operational-execution-digital-twin.md) owns deployment targeting/application, effective transformed/applied-artifact provenance, resulting operational facts, and reconciliation. That bridge preserves provenance and authority; it does not turn editor operations into simulation or production-control events.
 
-Approval may be owned externally: Arcogine can produce the technical assessment evidence a candidate needs (validation results, semantic diff, simulation/verification outcomes) without itself hosting the request/review/approval workflow. See [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) and section 11.1 below.
+Authorization may be owned externally: Arcogine can produce the technical assessment evidence a candidate needs (validation results, semantic diff, simulation/verification outcomes) without itself hosting the request/review/approval workflow. See [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), section 11.1 below, and the operational architecture.
 
 ## 7. Cross-consumer ownership
 
@@ -241,9 +243,11 @@ Approval may be owned externally: Arcogine can produce the technical assessment 
 | Installed resource instances | Arcogine canonical model |
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
 | Structured executability validation | Shared Arcogine model/design capability |
-| Semantic model identity (fingerprint) | Shared Arcogine model infrastructure |
-| Controlled revision lifecycle and lineage (deferred) | Cross-domain Governance and Conformance capability (G1), once a concrete requirement justifies it — see [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
-| Change request/review/approval/scheduling workflow | Cross-domain Governance and Conformance capability (G6), or an external change-management system referenced not depended on |
+| Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; durable fingerprint policy completed by Governance G1 |
+| Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (G1) — see [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
+| Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (G6), or an external change-management system referenced not depended on |
+| Operational deployment target/application and effective applied-artifact provenance | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
+| External operational observations and modeled-versus-observed reconciliation | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
 | Model publication and runtime instantiation | Shared Arcogine boundary |
 | Runtime dispatch/queues/work/transfers | Arcogine runtime |
 | Semantic model comparison/diff | Cross-consumer candidate; share when justified |
@@ -340,7 +344,7 @@ A published model version is the bridge between design and downstream contexts.
 [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) separates two concepts that publication identity must not bundle together:
 
 - **Semantic fingerprint** — a deterministic identity derived from canonical model content. Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the minimum publication identity required today.
-- **Controlled revision** — a persisted, controlled historical configuration state carrying change-control provenance and lineage back to a prior revision, and optionally a stable external change reference (for example, an issue-tracker key). Approval and deployment are separate lifecycle/evidence records that may reference a revision; a revision need not be approved or deployed to exist. This is deferred capability, not part of today's publication boundary.
+- **Controlled revision** — a persisted, controlled historical configuration state carrying change-control provenance and lineage back to a prior revision, and optionally a stable external change reference (for example, an issue-tracker key). Authorization and deployment are separate lifecycle/evidence records that may reference a revision; a revision need not be authorized or deployed to exist. This is deferred capability, not part of today's publication boundary.
 
 Every runtime or verification result must retain the identity of the model version it instantiated, expressed as the fingerprint.
 
@@ -350,13 +354,13 @@ The desired invariant is:
 
 Persistent lineage, authorship, approvals, branches, and change sets should be added only when concrete collaboration or deployment workflows require them.
 
-### 11.1 External change-management integration
+### 11.1 External change-management and deployment integration
 
 Arcogine does not require organizational change-management workflow to live inside the factory domain.
 
-A controlled model revision may reference an external change record, such as a Jira issue. Arcogine remains authoritative for the model, semantic diff, technical assessments, and resulting revision; the external system remains authoritative for request/review/approval workflow unless that responsibility is explicitly brought into Arcogine.
+A controlled model revision may reference an external change record, such as a Jira issue. Arcogine remains authoritative for the model, semantic diff, technical assessments, and resulting revision; the external system remains authoritative for request/review/authorization workflow unless that responsibility is explicitly brought into Arcogine.
 
-Conformance/verification assessments, approvals, simulation runs, and deployments remain separate artifacts from the model and from each other. They may reference a fingerprint and, once it exists, a controlled revision, but none of them is the model.
+Conformance/verification assessments, authorization decisions, simulation runs, and operational deployments remain separate artifacts from the model and from each other. They may reference a fingerprint and, once it exists, a controlled revision, but none of them is the model. The operational deployment record additionally owns target, adapter/profile/transformation, effective applied-artifact/version, apply/verification result, and reconciliation provenance; Factory Design must not duplicate those mechanics.
 
 ## 12. Shared validation and publication boundary
 
@@ -387,17 +391,23 @@ Canonical factory model
           |
      publish version
           |
-     +----+----+
-     |         |
-     v         v
-Simulation   Verification
-runtime      contexts
-     |
-     v
-Interfaces / observations
+     +------------+-------------+
+     |            |             |
+     v            v             v
+Simulation    Verification   Governance
+runtime       contexts       revision/change
+                                |
+                                v
+                         Operational deployment
+                                |
+                                v
+                         External observations
+                                |
+                                v
+                           Reconciliation
 ```
 
-The canonical model must not depend on a specific UI or simulation transport. Runtime must not mutate the published model. Consumers must not depend on mutable runtime internals to author a design.
+The canonical model must not depend on a specific UI, simulation transport, industrial protocol, or deployment target. Runtime must not mutate the published model. Operational deployment references an authorized governed revision rather than becoming part of model publication. Consumers must not depend on mutable runtime internals to author a design.
 
 This may initially be implemented inside existing modules/packages. A new Gradle module is warranted only when dependency direction or ownership invariants justify one.
 
@@ -405,7 +415,7 @@ This may initially be implemented inside existing modules/packages. A new Gradle
 
 When factory-design semantics change, ask:
 
-1. Is this production-system definition, design lifecycle, runtime state, verification state, or one consumer's experience?
+1. Is this production-system definition, design lifecycle, runtime state, verification state, operational deployment/reconciliation state, or one consumer's experience?
 2. Does changing it alter executable behavior across consumers?
 3. Is it part of the scenario/run context rather than the factory itself?
 4. Is the fact ordered by model revision or simulated time?
@@ -415,6 +425,7 @@ When factory-design semantics change, ask:
 8. Can a runtime result identify the exact published model version that produced it?
 9. Are runtime structures derived from that model, or are we creating a second authored representation?
 10. Is a new shared design abstraction justified by a concrete cross-consumer workflow?
+11. Are deployment targeting/application, external observation ingestion, or reconciliation semantics being placed in Factory Design even though they belong to Operational Execution?
 
 ## 15. Triggers for revisiting this proposal
 

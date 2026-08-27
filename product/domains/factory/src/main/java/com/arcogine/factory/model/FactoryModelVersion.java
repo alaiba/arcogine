@@ -12,14 +12,16 @@ import java.util.List;
 /**
  * An immutable, published identity of a {@link FactoryModel}.
  *
- * <p>{@link #contentHash()} is a deterministic digest of the model's semantic content, derived
- * entirely from {@code model} itself: two publications of an equal model always produce the same
- * hash, and there is no way to construct a version whose hash does not identify its model -- the
- * hash is not a constructor parameter a caller could forge or mismatch, it is computed here. This
- * is an internal, in-memory identity policy sufficient to let a runtime/result attribute itself to
- * the exact model it was instantiated from -- it is not a persisted, public, or cross-process
- * compatibility guarantee. A durable model repository/lineage/versioning scheme is out of scope
- * for this milestone; see ADR-0003.
+ * <p>{@link #fingerprint()} is the durable semantic identity contract for published factory
+ * models. It implements the policy-versioned {@code factory-model:v1} canonical encoding from
+ * ADR-0006 and returns a typed {@link ModelFingerprint} suitable for cross-process and
+ * cross-language identity under that released policy.
+ *
+ * <p>{@link #contentHash()} remains the legacy Java-derived digest retained for compatibility with
+ * existing runtime/result provenance. It is deterministic for the current model but is not the
+ * durable fingerprint contract and must not be reinterpreted as a {@code factory-model:v1}
+ * fingerprint. Controlled revision identity, lineage, and persistence are separate concerns from
+ * both values; see ADR-0004 and ADR-0006.
  *
  * <p>{@link FactoryModelPublisher#publish(FactoryModel)} is the intended way to obtain an
  * instance, but the D2/D4 invariant that an invalid model can never be published or instantiated

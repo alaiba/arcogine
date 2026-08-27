@@ -59,6 +59,17 @@ Claude Cloud provisioning is deliberately lightweight: `infra/dev/claude-cloud.s
 
 Before considering a change complete, run `./arcogine check`. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
 
+## Checking a PR after pushing
+
+After opening or pushing to a PR, checking CI status alone is not enough — a
+submitted review with a verdict like `CHANGES REQUIRED` does **not** appear
+in a plain comment listing (e.g. the GitHub MCP server's
+`pull_request_read` with `method: get_comments` or `get_review_comments`
+only surfaces issue comments and inline review threads, not the review
+body itself). Always also fetch reviews explicitly (`method: get_reviews`)
+before declaring a PR green or waiting-on-CI. Do this on every check-in,
+not just the first one after pushing.
+
 ## Do not edit
 
 - `product/**/build/`, `product/interfaces/web/node_modules/`, `product/interfaces/web/coverage/`, `product/interfaces/web/dist/` — generated output.

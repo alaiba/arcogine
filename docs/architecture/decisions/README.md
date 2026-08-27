@@ -56,7 +56,7 @@ glance which parts are established fact versus open question or proposal.
 
 1. Copy [`0000-template.md`](0000-template.md) to `NNNN-short-title.md`,
    where `NNNN` is the next unused four-digit number (check the existing
-   files in this directory).
+   files in this directory and concurrent ADR work before allocating it).
 2. Fill in the sections that apply; don't pad a section with content just to
    fill it in.
 3. Set `Status: Proposed` (or `Accepted` if the decision is already made and
@@ -67,12 +67,37 @@ Numbers are never reused, even if an ADR is later rejected or superseded.
 
 ## Changing a decision
 
-Accepted ADRs are not rewritten to make a past decision look different from
-what was actually decided. Minor corrections or clarifications that don't
-change the decision itself may be edited in place. If the decision itself
-changes:
+Accepted ADRs are immutable historical records. Once an ADR is Accepted, its
+decision/body text is not edited in place, even to make the old decision read
+more like the architecture that exists later. If the decision changes:
 
 1. write a new ADR describing the new decision;
 2. reference the old ADR from the new one (`Supersedes: ADR-NNNN`);
-3. mark the old ADR's status `Superseded` and link forward to the new one
-   (`Superseded by: ADR-NNNN`).
+3. change only the old ADR's supersession metadata: set `Status: Superseded`
+   and add `Superseded by: ADR-NNNN`.
+
+Typos or explanatory improvements discovered after acceptance should normally
+be corrected in current-state documentation, not by rewriting the accepted
+ADR. If an error in the ADR itself is materially misleading, supersede it so
+the historical record and the correction are both explicit.
+
+### CI enforcement
+
+The repository enforces this rule through
+`.github/scripts/check-adr-immutability.py`, which runs in the always-required
+`Classify changes` / `CI / gate` path.
+
+For every ADR that was `Accepted` or `Superseded` on the PR base commit, CI:
+
+- rejects deletion or rename of the ADR file;
+- rejects any change to the ADR body/decision text;
+- permits an `Accepted` ADR only to remain `Accepted` or transition to
+  `Superseded`;
+- permits that transition only when the same change adds a new ADR whose
+  `Supersedes: ADR-NNNN` metadata points back to the old record;
+- keeps an already `Superseded` ADR fully immutable, including its
+  supersession target.
+
+`Proposed` ADRs remain editable until accepted. The guard is intentionally
+stricter than human review: changing an accepted decision requires a new ADR,
+not an exception flag or reviewer override.

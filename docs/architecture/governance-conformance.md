@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Cross-domain model history, semantic change, requirements, conformance, evidence, and governance over Arcogine's canonical business semantics  
 > **Authority:** Proposed architecture; this document does not claim current compliance, audit, or certification capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Standards Alignment](standards-alignment.md), [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md), [Standards Alignment](standards-alignment.md), [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md)
 
 ## 1. Architectural position
 
@@ -88,7 +88,7 @@ One underlying business fact or control may satisfy multiple framework requireme
 
 ## 4. Semantic identity and controlled lineage precede audit claims
 
-[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) separates two identities that governance must not collapse:
+[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md), and [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) establish two identities that governance must not collapse:
 
 ```text
 ModelFingerprint
@@ -96,23 +96,52 @@ ModelFingerprint
     answers: "what exact design/state?"
 
 ControlledRevision
-    durable historical configuration artifact
+    immutable historical configuration occurrence
     revision ID
-    model fingerprint
-    parent revision(s)
-    schema/model version where applicable
-    creation/publication provenance
-    author or decision source
-    ChangeSet reference
-    external change reference
-    answers: "which controlled historical state?"
+    exactly one model fingerprint
+    zero or one parent in the current capability
+    recording provenance: recordedAt + recorder
+    answers: "which controlled historical occurrence?"
 ```
 
-Approval, deployment, conformance evaluation, and simulation execution are separate artifacts that may reference a controlled revision; they are not properties required for the revision to exist.
+The current `0..1` parent rule is a capability constraint, not a permanent assertion that revision history is intrinsically single-parent. Divergence is already representable because multiple revisions may share the same parent. Branch refs, tags, multi-parent merge revisions, merge/conflict semantics, and stronger cryptographic revision-record integrity may be added later without changing the distinction between semantic identity and historical revision identity.
 
-Equal semantic content may therefore occur in distinct controlled revisions. For example, an intentional rollback can create a later revision with the same model fingerprint as an earlier revision while remaining a distinct governed event in history.
+The minimum revision core deliberately does **not** contain a `ChangeSet`, external change reference, approval/authorization state, deployment state, human version label, framework/compliance state, or serialized model artifact. Those are separate relationships or follow-on capabilities.
 
-The current `FactoryModelVersion.contentHash()` is only the implemented proving ground for content-derived identity. It remains an internal, provisional policy until canonicalization, ordering semantics, fingerprint format/versioning, and cross-process compatibility are specified. It must not be described as an audit-grade durable fingerprint merely because it uses SHA-256.
+Equal semantic content may therefore occur in distinct controlled revisions. A rollback illustrates the invariant:
+
+```text
+R1 -> F1
+ |
+ v
+R2 -> F2
+ |
+ v
+R3 -> F1
+```
+
+`R1` and `R3` have equal semantic fingerprints but distinct controlled revision IDs. The later occurrence does not inherit the historical governance meaning of the earlier one merely because the semantic content is equal.
+
+Controlled revision identity and lineage form the **configuration-history and evidence-addressability substrate**. They let later records point at an exact historical occurrence, but they do not themselves mean that the revision was approved, authorized, conformant, certified, deployed, or compliant with an external framework.
+
+This creates two complementary dimensions:
+
+```text
+Configuration history
+
+R40 --------> R41 --------> R42 --------> R43
+                              |
+                              +--> ChangeSet / rationale
+                              +--> conformance evaluation / finding
+                              +--> authorization decision
+                              +--> deployment record
+                              +--> evidence use
+                              +--> external workflow reference
+```
+
+The horizontal dimension is immutable revision lineage. The attached records are governance, evidence, and operational facts about that history.
+
+A controlled revision becomes an authoritative historical fact only when its immutable record is accepted by Arcogine's authoritative revision store. ADR-0008 defines the required identity, immutability, lineage, and provenance semantics, but does not choose the persistence technology. A subsequent G1 persistence slice must also ensure that an authoritative revision can resolve to the exact semantic state/artifact needed for historical reconstruction.
 
 The system should eventually answer:
 
@@ -189,6 +218,8 @@ justification, automated policy)
         v
 Operational deployment record, when deployed
 ```
+
+External workflow references are associations to revisions/changes, not fields that define controlled revision identity. This allows a revision to be recorded before an external ticket is linked and prevents workflow metadata changes from mutating immutable configuration history.
 
 The external reference tracks or governs the change. Arcogine should not duplicate ticket comments, project-management state, or vendor-specific workflow terminology unless those facts become necessary to a cross-system governance contract.
 
@@ -377,15 +408,22 @@ Current factory work establishes:
 canonical semantic model
 immutable publication
 structural validation
-provisional content-derived identity
+durable factory-model:v1 semantic fingerprint
 runtime instantiation from a published model
-handler-level runtime provenance
+runtime/result provenance work in progress
 ```
 
-It does **not** yet provide a durable fingerprint contract, controlled revision repository, approval/deployment lifecycle, or generic conformance engine. Those capabilities should be added when concrete requirements justify them, following their actual dependency order:
+ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 now establishes the controlled revision identity/lineage decision, but the controlled revision value model and authoritative revision persistence are not yet implemented. Arcogine therefore still does **not** have an authoritative controlled revision repository or generic conformance engine.
+
+The Governance dependency remains:
 
 ```text
-G1 fingerprint/revision
+G1.1 durable semantic fingerprint        complete
+    ↓
+G1.2 controlled revision value contract  next implementation slice
+    ↓
+G1.3 authoritative persistence +
+     historical semantic-state resolution
     ↓
 G2 ChangeSet
     ↓
@@ -407,12 +445,12 @@ This proposal does not mean that Arcogine currently:
 - continuously observes cloud, identity, HR, source-control, ticketing, or industrial systems;
 - owns all operational truth in connected systems;
 - replaces Jira or enterprise GRC workflow;
-- has durable model persistence or controlled revision lineage today;
-- has a durable cross-process model fingerprint contract today;
+- has an implemented controlled revision value model or authoritative revision repository;
+- has durable exact historical semantic-state/artifact resolution for controlled revisions;
 - has a generic conformance engine today;
 - has production actuation or digital-twin reconciliation today.
 
-Standards/reference alignment and semantic mappings remain distinct from tested conformance claims.
+Standards/reference alignment and semantic mappings remain distinct from tested conformance claims. Controlled revision identity/lineage is an enabling configuration-management primitive, not evidence that any external standard or control has been satisfied.
 
 ## 15. Architectural review checklist
 
@@ -431,16 +469,19 @@ When governance or compliance work is proposed, ask:
 11. Are modeled intent and observed reality explicit and independently attributable?
 12. Is an external observation kept revision-independent until an `EvidenceUse`/interpretation binds it when appropriate?
 13. Are historical results reproducible rather than dependent on today's mutable mappings?
+14. Is a workflow/change reference being treated as an association rather than an immutable identity field of the revision?
+15. Does a proposed lineage extension preserve the distinction between semantic identity and historical occurrence identity?
 
 ## 16. ADR triggers
 
-[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) already fixes the semantic-identity versus controlled-revision distinction and the external change-control boundary.
+[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) fixes the semantic-identity versus controlled-revision distinction and the external change-control boundary. [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md) fixes the first durable fingerprint contract. [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) fixes controlled revision identity, current lineage cardinality, rollback semantics, immutable recording provenance, and the persistence boundary.
 
 Create or revise ADRs when implementation commits to hard-to-reverse choices about:
 
-- the durable fingerprint canonicalization/format/compatibility contract;
-- concrete controlled revision identifiers and persistence/lineage semantics;
-- parent/branch/merge relationships between controlled revisions;
+- authoritative controlled revision persistence and exact historical semantic-state/artifact resolution;
+- extending current `0..1` lineage to multi-parent merge semantics;
+- branch/ref/tag semantics over controlled revisions;
+- cryptographic revision-record integrity/signature semantics;
 - canonical semantic `ChangeSet` representation;
 - temporal semantics for modeled facts and observations;
 - requirement/assertion evaluation contracts;

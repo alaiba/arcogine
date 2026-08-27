@@ -276,6 +276,78 @@ class Gate3SessionControlAcceptanceTest {
                 machine.activeJobs().isEmpty(), "the active job must still be running after the rejected command");
     }
 
+    private static FactoryModelVersion twoIndependentSingleMachineRoutesModel() {
+        FactoryModel model = new FactoryModel(
+                List.of(
+                        new ResourceDefinition(new MachineId(1), "Mill A", 1, null, 0),
+                        new ResourceDefinition(new MachineId(2), "Mill B", 1, null, 0)),
+                List.of(
+                        new OperationDefinition(
+                                1,
+                                "Route A",
+                                List.of(new OperationStepDefinition(1, "Op A", Set.of(new MachineId(1)), 5))),
+                        new OperationDefinition(
+                                2,
+                                "Route B",
+                                List.of(new OperationStepDefinition(
+                                        2, "Op B", Set.of(new MachineId(2)), Long.MAX_VALUE)))),
+                List.of(
+                        new ProductDefinition(new ProductId(1), "Product A", 1),
+                        new ProductDefinition(new ProductId(2), "Product B", 2)));
+        return FactoryModelPublisher.publish(model);
+    }
+
+    /**
+     * Reproduces the third-round review's repro exactly: a machine coming online can dequeue and
+     * start a previously waiting job (mutating machine/job state) before the resulting
+     * {@code TaskStart}/{@code TaskEnd} scheduling call discovers, deep in that same dispatch
+     * attempt, that simulated time has grown large enough (via an unrelated {@code Long.MAX_VALUE}
+     * duration job on a different machine) to overflow {@code SimTime}. Full preflight safety for
+     * this cascade was judged out of proportion for this slice (see ADR-0007); instead the command
+     * must still return a definite result rather than let the failure escape as a bare exception --
+     * proven here as {@link CommandResult.Faulted}, distinct from {@link CommandResult.Rejected}
+     * precisely because mutation has already happened by the time it's returned.
+     */
+    @Test
+    void setMachineAvailabilityReportsFaultedRatherThanThrowingWhenTheDispatchCascadeFailsAfterMutation() {
+        FactoryRuntime runtime = FactoryRuntime.forModel(twoIndependentSingleMachineRoutesModel());
+
+        runtime.setMachineAvailability(new MachineId(1), false).orElseThrow();
+        runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow(); // waits in M1's own queue
+        runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE).orElseThrow(); // dispatches to M2 immediately
+
+        Event completion = runtime.advance().orElseThrow(); // M2's TaskEnd fires at t=Long.MAX_VALUE
+        assertEquals(EventType.TaskEnd, completion.eventType());
+
+        CommandResult<EventPayload.MachineAvailabilityChange> result =
+                runtime.setMachineAvailability(new MachineId(1), true);
+
+        assertInstanceOf(
+                CommandResult.Faulted.class,
+                result,
+                "a scheduling failure deep in the online-machine dispatch cascade must be reported "
+                        + "as a definite result, not thrown past the command boundary");
+        CommandResult.Faulted<EventPayload.MachineAvailabilityChange> faulted =
+                (CommandResult.Faulted<EventPayload.MachineAvailabilityChange>) result;
+        assertInstanceOf(SimError.EventOrderingViolation.class, faulted.error());
+        assertThrows(SimError.EventOrderingViolation.class, result::orElseThrow);
+
+        // Unlike Rejected, mutation is allowed to have already happened once Faulted is returned:
+        // the queued job was dequeued and started on the now-online machine before the scheduling
+        // call inside that same dispatch attempt failed.
+        MachineView machineOne = runtime.machinesView().stream()
+                .filter(m -> m.id().equals(new MachineId(1)))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(
+                MachineState.Busy,
+                machineOne.state(),
+                "the dispatch attempt must have already started the machine before the fault");
+        assertFalse(
+                machineOne.activeJobs().isEmpty(),
+                "the previously queued job must have already been marked active before the fault");
+    }
+
     @Test
     void advanceUntilBoundedToOneEventPerCallConvergesWithLoopingAdvance() {
         FactoryRuntime stepped = FactoryRuntime.forModel(publishedModel());

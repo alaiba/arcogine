@@ -132,12 +132,14 @@ public class FactoryRuntime {
      * calling into {@link FactoryHandler}, so a returned {@link CommandResult.Rejected} is always
      * genuinely pre-mutation. A machine coming online can trigger a cascade of dispatching
      * previously waiting work; a failure surfacing from deep in that cascade (a genuine engine
-     * fault, not a rejectable input) is deliberately not caught here and propagates as an unchecked
-     * {@link SimError}, exactly as {@link #advance()} already does, rather than being misreported as
-     * a "rejected, nothing changed" result once mutation may already have started.
+     * fault, not a rejectable input this method could have pre-verified) is reported as {@link
+     * CommandResult.Faulted} rather than {@link CommandResult.Rejected} -- unlike a rejection, some
+     * mutation and/or event scheduling may already have happened by that point. This method never
+     * lets such a failure propagate past its own boundary as a bare exception: it always returns a
+     * definite {@link CommandResult}, per docs/planning/factory-simulation-engine-readiness.md §7.2.
      */
     public CommandResult<EventPayload.MachineAvailabilityChange> setMachineAvailability(
-            MachineId machineId, boolean online) throws SimError {
+            MachineId machineId, boolean online) {
         Optional<MachineView> machine =
                 machinesView().stream().filter(m -> m.id().equals(machineId)).findFirst();
         if (machine.isEmpty()) {
@@ -157,6 +159,8 @@ public class FactoryRuntime {
             factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
             return new CommandResult.Accepted<>(
                     new EventPayload.MachineAvailabilityChange(machineId, online), modelVersion, scheduled);
+        } catch (SimError e) {
+            return new CommandResult.Faulted<>(e, modelVersion, scheduled);
         } finally {
             scheduler.stopCapturing();
         }

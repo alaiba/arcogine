@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Establish a cross-consumer factory-design capability over Arcogine's canonical production-system model  
 > **Authority:** Planning only; this document defines delivery slices and readiness criteria, not current capability or accepted architecture  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Governance and Conformance Capability Plan](governance-conformance-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Governance and Conformance Capability Plan](governance-conformance-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Purpose
 
@@ -30,9 +30,9 @@ Consumer-specific draft authoring
 
 This plan establishes the minimal shared design substrate before a game, industrial UI, optimizer, CLI, or integration adapter treats Arcogine as the authority for a published factory design.
 
-## 2. Relationship to engine readiness
+## 2. Relationship to engine and operational readiness
 
-This capability is orthogonal to runtime execution, but both share one canonical production-system model.
+This capability is orthogonal to runtime execution, but downstream simulation and operational contexts share one canonical production-system model.
 
 This plan owns model-side semantics and lifecycle:
 
@@ -43,7 +43,9 @@ This plan owns model-side semantics and lifecycle:
 - deterministic runtime instantiation from a published model;
 - eventual semantic compare/diff and broader design lifecycle when justified.
 
-The [engine-readiness plan](factory-simulation-engine-readiness.md) starts after this boundary exists. It owns runtime execution semantics such as production orders, work items, resource dispatch, bounded advancement, observations, events, and transfer progression.
+The [engine-readiness plan](factory-simulation-engine-readiness.md) starts after this boundary exists. It owns deterministic simulation execution semantics such as production orders, work items, resource dispatch, bounded advancement, simulation observations/events, and transfer progression.
+
+The sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track consumes published/governed semantics when real external systems are involved. It owns production execution context, verified operational trust/authority, deployment target/application, command/result lifecycle, independent external observations, reconciliation, and operational recovery.
 
 ```text
 Factory Design Capability D1-D4
@@ -51,11 +53,16 @@ Factory Design Capability D1-D4
         v
 Published FactoryModelVersion
         |
-        v
-Factory Simulation Engine Readiness
+        +--------------------+
+        |                    |
+        v                    v
+Factory Simulation       Governance G1/G2/G4/G5
+Engine Readiness              |
+                              v
+                    Operational Execution / Twin
 ```
 
-The runtime must not mutate the published model in place. The design capability must not reproduce queues, assignments, transfers in progress, or other runtime state.
+The runtime must not mutate the published model in place. The design capability must not reproduce queues, assignments, transfers in progress, production deployment records, external telemetry, or twin reconciliation state.
 
 ## 3. Delivery policy
 
@@ -74,12 +81,12 @@ D5  Semantic comparison (after concrete need)
     ↓
 D6  Shared draft lifecycle (deferred until justified)
     ↓
-D7  Factory adoption of governed change (deferred until justified; owned cross-domain by Governance and Conformance G1/G2/G6)
+D7  Factory adoption of governed change (deferred until justified; owned cross-domain by Governance and Conformance G1/G2/G6, with Operational Execution owning deployment application)
 ```
 
 D1-D4 form the immediate implementation sequence. D5, D6, and D7 are explicitly deferred and are not prerequisites for engine runtime work or a first game consumer.
 
-The initial spike should establish the model seam without simultaneously redesigning order execution, dispatch policy, spatial behavior, or the public HTTP contract.
+The initial spike should establish the model seam without simultaneously redesigning order execution, dispatch policy, spatial behavior, operational deployment, or the public HTTP contract.
 
 ### 3.1 Implementation status
 
@@ -149,7 +156,7 @@ Before broad runtime refactoring begins:
 5. The existing runtime can be instantiated from the published model or its derived executable representation.
 6. Existing deterministic scenario results remain unchanged for representative regression fixtures.
 7. Runtime observations/results can identify the source model's semantic fingerprint.
-8. No `ProductionOrder`/`WorkItem` redesign, capability-dispatch redesign, spatial-transfer behavior, or game UI is required to prove this spike.
+8. No `ProductionOrder`/`WorkItem` redesign, capability-dispatch redesign, spatial-transfer behavior, operational deployment, or game UI is required to prove this spike.
 
 ## 5. D1 — Canonical factory model contract
 
@@ -308,15 +315,15 @@ D3 is satisfied when:
 
 ### 7.5 Deferred: controlled-revision capability
 
-A controlled-revision lifecycle — persistent repository, lineage, approval state, deployment tracking, and an external change reference (e.g. a Jira issue key) — is explicitly out of scope for D3. Build it only when a concrete trigger makes it necessary:
+A controlled-revision lifecycle — persistent repository, lineage, authorization records, and an external change reference (e.g. a Jira issue key) — is explicitly out of scope for D3. Operational deployment tracking/application is also outside D3 and belongs to the Operational Execution track once Governance supplies durable revision identity. Build these only when a concrete trigger makes them necessary:
 
 - a persistent model repository is needed;
 - a Jira (or equivalent) change-management integration is needed;
-- an approval/deployment workflow is needed;
+- an authorization/deployment workflow is needed;
 - audit requirements demand recorded change history;
 - branching/lineage across concurrent design efforts is needed.
 
-Until one of these triggers a concrete implementation, Arcogine does not need a revision entity, only the fingerprint.
+Until one of these triggers a concrete implementation, Arcogine does not need a controlled revision entity, only the fingerprint.
 
 ## 8. D4 — Deterministic runtime instantiation
 
@@ -399,21 +406,31 @@ D6 is scoped to shared *authoring* mechanics:
 - multi-user/human-agent co-authoring;
 - comments/editor collaboration.
 
-D6 does not include approval or organizational change-management workflow — that belongs to the cross-domain governance capability (G1/G2/G6); factory adoption is covered by D7. Shared drafts/collaboration and organizational change management (per [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md)) are separate concerns that historically got bundled together; they no longer are.
+D6 does not include authorization or organizational change-management workflow — that belongs to the cross-domain governance capability (G1/G2/G6); factory adoption is covered by D7. Shared drafts/collaboration and organizational change management (per [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md)) are separate concerns that historically got bundled together; they no longer are.
 
 Until a trigger applies, Arcogine does not need generic undo/redo, draft branching, merge, collaboration cursors, edit locks, comments, workspace permissions, or autosave semantics.
 
 ## 11. D7 — Factory adoption of governed change
 
-Controlled revision lineage, external change references, technical evidence packages for review, approval hand-off, and deployment linkage are cross-domain concerns, not factory-specific ones. They are owned by the [Governance and Conformance Capability Plan](governance-conformance-capability.md), not by this plan:
+Controlled revision lineage, external change references, technical evidence packages for review, and authorization hand-off are cross-domain concerns, not factory-specific ones. They are owned by the [Governance and Conformance Capability Plan](governance-conformance-capability.md), not by this plan:
 
-- **G1** owns controlled revision identity and lineage;
+- **G1** owns durable semantic fingerprint policy plus controlled revision identity and lineage;
 - **G2** owns the semantic `ChangeSet` (built from factory-domain diffs supplied by D5) and impact analysis;
-- **G6** owns external workflow/change-control integration (an issue tracker or equivalent), including the approval hand-off and deployment linkage.
+- **G4/G5** own conformance/findings and evidence-use semantics when factory technical/operational evidence is evaluated;
+- **G6** owns external workflow/change-control integration (an issue tracker or equivalent), including the authorization hand-off and the governance-side link to any resulting deployment.
 
-D7 is scoped to what remains factory-specific once those cross-domain concerns are owned elsewhere: supplying `FactoryModel`-specific semantics and evidence into that governance capability — factory-domain change classification for G2, factory-specific technical assessment evidence (validation results, simulation/verification outcomes) for the evidence a G2 `ChangeSet` or G6 governed change needs, and factory-model participation in whatever durable identity/lineage scheme G1 establishes.
+The sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) owns what happens **after authorization to a real execution target**:
 
-This plan does not independently build a revision repository, an external change-reference mechanism, or an approval/deployment workflow. Building one of those as a factory-only concept would duplicate G1/G2/G6 and fragment revision identity across domains.
+- deployment plan/target application;
+- adapter/profile/mapping/transformation provenance;
+- effective rendered/applied artifact or authoritative external-version identity;
+- command/result and target verification facts;
+- external operational observations;
+- modeled-versus-observed reconciliation.
+
+D7 is scoped to what remains factory-specific once those cross-domain concerns are owned elsewhere: supplying `FactoryModel`-specific semantics and evidence into Governance — factory-domain change classification for G2, factory-specific technical assessment evidence (validation results, simulation/verification outcomes) for the evidence a G2 `ChangeSet` or G6 governed change needs, and factory-model participation in whatever durable identity/lineage scheme G1 establishes.
+
+This plan does not independently build a revision repository, an external change-reference mechanism, an authorization workflow, a production deployment runtime, telemetry ingestion, or reconciliation. Building any of those as a factory-only concept would duplicate Governance or Operational Execution ownership and fragment identity across domains.
 
 ## 12. Constraint classification
 
@@ -435,7 +452,7 @@ Player construction budget           -> game consumer
 Machine unlock level                 -> game consumer
 ```
 
-## 13. Interaction with engine readiness
+## 13. Interaction with engine and operational readiness
 
 The engine-readiness plan consumes published model versions rather than treating runtime state as the design model.
 
@@ -457,11 +474,21 @@ Production orders and work items
 Quantity execution semantics
 Dispatch and queues
 Active operations/transfers
-Runtime events and observations
+Simulation runtime events and observations
 Performance
 ```
 
-Where a concern crosses the boundary, the model owns the input semantics and runtime owns their changing consequences. For example, model-side position/footprint belong to factory design; transfer-in-progress state and transfer events belong to runtime.
+Operational Execution owns:
+
+```text
+Production execution context / verified trust / authority
+Deployment target application and applied-artifact provenance
+External command/result lifecycle
+External operational observations
+Twin reconciliation and drift/calibration feedback
+```
+
+Where a concern crosses the boundary, the model owns the input semantics and simulation runtime owns their deterministic changing consequences. For example, model-side position/footprint belong to factory design; simulated transfer-in-progress state and transfer events belong to Engine Readiness. When a governed revision is applied to a real target, deployment mechanics and resulting observed/reconciled reality belong to Operational Execution.
 
 ## 14. Factory-design game integration
 
@@ -527,7 +554,7 @@ No ProductionOrder/WorkItem rewrite is required yet
 No shared editor service is required
 ```
 
-This milestone deliberately excludes semantic diff, collaboration, generalized design workspaces, quantity/work-item redesign, capability-based dispatch behavior changes, spatial transfer behavior, public HTTP versioning, and a game UI.
+This milestone deliberately excludes semantic diff, collaboration, generalized design workspaces, quantity/work-item redesign, capability-based dispatch behavior changes, spatial transfer behavior, operational deployment/reconciliation, public HTTP versioning, and a game UI.
 
 ## 17. ADR triggers
 
@@ -541,7 +568,7 @@ Additional ADRs are warranted when implementation commits to hard-to-reverse cho
 - work-center/resource-pool semantics;
 - shared draft lifecycle/collaboration.
 
-A concrete controlled-revision repository, external change-management integration, or deployment-of-a-design-into-real-operations workflow (D7) is a G1/G2/G6 concern owned by the [Governance and Conformance Capability Plan](governance-conformance-capability.md); its ADR triggers are tracked there, not duplicated here.
+A concrete controlled-revision repository or external change-management integration is a Governance G1/G2/G6 concern; production deployment/application and reconciliation are Operational Execution concerns. Their ADR triggers are tracked in those sibling documents, not duplicated here.
 
 Do not create ADRs for consumer-local editor gestures or temporary UI structure.
 
@@ -555,6 +582,7 @@ As D1-D4 are implemented and decisions accepted:
 - update [`../product/concepts.md`](../product/concepts.md) only for capabilities that actually ship;
 - update [`../reference/api.md`](../reference/api.md) only when a public contract exists;
 - update the [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md) when implemented manufacturing concepts change;
-- keep migration/regression fixtures executable and version-controlled.
+- keep migration/regression fixtures executable and version-controlled;
+- keep governed-change integration aligned with the Governance capability and real deployment/reconciliation aligned with the Operational Execution capability.
 
 Once the initiative is complete or abandoned, reduce this file to a concise historical outcome or retire it after durable decisions and current behavior are represented in authoritative locations.

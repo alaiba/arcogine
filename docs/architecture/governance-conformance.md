@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Cross-domain model history, semantic change, requirements, conformance, evidence, and governance over Arcogine's canonical business semantics  
 > **Authority:** Proposed architecture; this document does not claim current compliance, audit, or certification capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Standards Alignment](standards-alignment.md), [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Standards Alignment](standards-alignment.md), [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md)
 
 ## 1. Architectural position
 
@@ -45,6 +45,8 @@ Human/process evidence
 ```
 
 Arcogine must preserve provenance and authority rather than flattening these into one undifferentiated truth store.
+
+For operational systems specifically, the [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md) owns acquisition, trust/authenticity provenance, command/deployment facts, and reconciliation of operational observations. Governance consumes those independent facts through evidence-use relationships; it does not own telemetry ingestion or twin reconciliation.
 
 ## 3. Compliance is a downstream projection
 
@@ -123,6 +125,7 @@ Why was that change proposed?
 Which external change record governed it?
 Who or what approved it, if approval was required?
 Was it deployed, and where/when?
+Which effective transformed/applied artifact governed each deployment target?
 Which requirements were affected?
 Which evidence supported the resulting conformance state?
 ```
@@ -155,6 +158,8 @@ ChangeSet
 
 Design/change history remains distinct from simulated or operational event history.
 
+Operational drift or calibration may motivate a candidate semantic change, but the durable `ChangeSet` remains Governance-owned rather than being duplicated by the digital-twin capability.
+
 ## 6. External change-management systems remain workflow authorities where appropriate
 
 Arcogine does not need to replace Jira or another enterprise change-management system. Organizational workflow may remain external while Arcogine owns semantic meaning, impact, technical evidence, and controlled revision lineage.
@@ -182,10 +187,12 @@ pre-approved standard change, emergency
 justification, automated policy)
         |
         v
-Deployment record, when deployed
+Operational deployment record, when deployed
 ```
 
 The external reference tracks or governs the change. Arcogine should not duplicate ticket comments, project-management state, or vendor-specific workflow terminology unless those facts become necessary to a cross-system governance contract.
+
+Governance owns the revision/change/authorization interpretation. The Operational Execution capability owns applying an authorized revision to an execution target and recording the effective adapter/profile/transformation/applied-artifact provenance and operational result. A Governance deployment reference therefore points to an Operational Execution deployment record rather than redefining deployment mechanics inside Governance.
 
 ## 7. Generic conformance model
 
@@ -257,7 +264,7 @@ One control may map to multiple requirements across multiple frameworks. Framewo
 
 ## 9. Evidence must be attributable and temporal
 
-An external observation does not intrinsically belong to one Arcogine model fingerprint or controlled revision. An AWS configuration snapshot, an IdP login log, or a Jira approval artifact has its own authority, its own observation time, and often its own applicable period, independent of which Arcogine model version or revision happens to exist when it is captured or used. Binding the observation itself to one fingerprint/revision either forces duplicating identical evidence across every subsequent version or misrepresents the observation's actual provenance. Arcogine must therefore separate the evidence itself from any particular evaluation's use of it:
+An external observation does not intrinsically belong to one Arcogine model fingerprint or controlled revision. An AWS configuration snapshot, an IdP login log, a PLC measurement, or a Jira approval artifact has its own authority, its own observation time, and often its own applicable period, independent of which Arcogine model version or revision happens to exist when it is captured or used. Binding the observation itself to one fingerprint/revision either forces duplicating identical evidence across every subsequent version or misrepresents the observation's actual provenance. Arcogine must therefore separate the evidence itself from any particular evaluation's use of it:
 
 ```text
 Evidence
@@ -281,6 +288,8 @@ EvidenceUse (a.k.a. EvaluationEvidence)
 `Evidence` is the source-level fact: what was observed, by what authority, when, and over what period it applies. It does not carry a model fingerprint or revision. `EvidenceUse` is the binding: which evaluation consumed that evidence, against which fingerprint/revision, and why it was judged applicable to that scope at that time. One `Evidence` record may be referenced by many `EvidenceUse` records across multiple model versions, as long as each use's scope/applicability determination independently holds.
 
 Structural evidence derived directly from Arcogine's own authoritative model state is the one case where binding to a fingerprint/revision at the source is natural — the model version *is* the evidence's provenance, so `Evidence` and `EvidenceUse` may collapse into one record for that case. External evidence should generally be bound to fingerprint/revision identity at evaluation/use time (`EvidenceUse`), not at source-observation time (`Evidence`).
+
+Operational observations retain the identity and provenance assigned by the Operational Execution capability. Governance must reference them; it must not rewrite them into revision-bound telemetry records in order to use them as evidence.
 
 Evidence generated from Arcogine's authoritative state must remain distinguishable from evidence observed externally. Reuse is valid only when scope, applicable period, provenance, and semantic meaning remain compatible.
 
@@ -358,7 +367,7 @@ The desired invariant is:
 
 > Given the relevant semantic fingerprint, controlled revision, Arcogine requirement and assertion identities/versions, exact external requirement source identity/version when applicable, framework/mapping versions, observations, evidence, and governance decisions, Arcogine can explain how a historical conformance result was derived.
 
-## 13. Relationship to current factory-model work
+## 13. Relationship to current factory-model and operational work
 
 The factory model is the first implemented proving ground for this broader architecture, not yet a complete business model.
 
@@ -385,6 +394,8 @@ G3-G5 conformance/evidence
 G6 governed-change/authorization integration
 ```
 
+The Operational Execution and Digital Twin track is a sibling consumer/proving ground for G1/G2/G4/G5, not an alternate owner. It may use clearly scoped synthetic fixtures while Governance capabilities are incomplete, but such fixtures do not satisfy Governance gates and must be replaced by the Governance-owned contracts when those gates land.
+
 Other authoritative domain models should participate without being forced into one monolithic `BusinessModel` aggregate. Each domain retains ownership of its facts while cross-domain identity references, lineage, semantic changes, requirements, and evidence form the governance graph over them.
 
 ## 14. What this architecture does not claim
@@ -393,12 +404,13 @@ This proposal does not mean that Arcogine currently:
 
 - implements SOC 2, ISO 27001, ISO 9001, GDPR, or another compliance framework;
 - provides auditor workflows or certification services;
-- continuously observes cloud, identity, HR, source-control, or ticketing systems;
+- continuously observes cloud, identity, HR, source-control, ticketing, or industrial systems;
 - owns all operational truth in connected systems;
 - replaces Jira or enterprise GRC workflow;
 - has durable model persistence or controlled revision lineage today;
 - has a durable cross-process model fingerprint contract today;
-- has a generic conformance engine today.
+- has a generic conformance engine today;
+- has production actuation or digital-twin reconciliation today.
 
 Standards/reference alignment and semantic mappings remain distinct from tested conformance claims.
 
@@ -413,10 +425,12 @@ When governance or compliance work is proposed, ask:
 5. Is semantic identity being confused with historical revision identity?
 6. Is the change represented semantically enough to perform impact analysis?
 7. Does an external workflow system already own the ticket/change-management lifecycle?
-8. Are approval and deployment modeled as records referencing a revision rather than as revision identity itself?
-9. Are failures, exceptions, and risk acceptances distinguishable rather than collapsed into one status?
-10. Are modeled intent and observed reality explicit and independently attributable?
-11. Are historical results reproducible rather than dependent on today's mutable mappings?
+8. Are approval and operational deployment modeled as separate records referencing a revision rather than as revision identity itself?
+9. If a revision is deployed through a transformation/adapter, can the operational deployment record identify the effective applied artifact/profile rather than only the source revision?
+10. Are failures, exceptions, and risk acceptances distinguishable rather than collapsed into one status?
+11. Are modeled intent and observed reality explicit and independently attributable?
+12. Is an external observation kept revision-independent until an `EvidenceUse`/interpretation binds it when appropriate?
+13. Are historical results reproducible rather than dependent on today's mutable mappings?
 
 ## 16. ADR triggers
 
@@ -435,6 +449,6 @@ Create or revise ADRs when implementation commits to hard-to-reverse choices abo
 - evidence integrity/retention semantics;
 - exception and risk-acceptance lifecycle;
 - authority boundaries/protocols with Jira or another external governance system;
-- deployment of approved revisions into real operations.
+- the governance-to-operational deployment record boundary for approved revisions.
 
 Do not create framework-specific ADRs merely to add content mappings when the generic governance architecture is unchanged.

@@ -2,6 +2,20 @@
 
 Operational notes for coding agents working in this repository. See [README.md](README.md) for what Arcogine is, and [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for human contributor workflow/style detail. Don't duplicate either here.
 
+## Specialized agent roles
+
+Some repository tasks have additional repository-owned operating contracts.
+
+- **Consistency review:** when asked to perform a repository consistency
+  review, documentation/architecture reconciliation, periodic consistency
+  sweep, or to operate as the consistency agent, read and follow
+  [`.github/agents/consistency.agent.md`](.github/agents/consistency.agent.md)
+  in addition to this file.
+
+Specialized agent contracts supplement `AGENTS.md`; they do not override
+repository architecture, ADR, contribution, documentation, or executable
+authorities.
+
 ## Commit message footer
 
 Do not append a `Co-Authored-By: Claude ...` or `Claude-Session: ...` trailer

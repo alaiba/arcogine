@@ -105,13 +105,16 @@ public class FactoryRuntime {
      * Order}/{@code Job} is created.
      */
     public CommandResult<OrderId> submitWorkload(ProductId productId, long quantity, double unitPrice) {
-        int mark = scheduler.scheduledCount();
+        List<Event> scheduled = new ArrayList<>();
+        scheduler.startCapturing(scheduled);
         try {
             OrderId orderId =
                     factory.submitOrder(productId, quantity, unitPrice, scheduler.currentTime(), scheduler);
-            return new CommandResult.Accepted<>(orderId, modelVersion, scheduler.scheduledSince(mark));
+            return new CommandResult.Accepted<>(orderId, modelVersion, scheduled);
         } catch (SimError e) {
             return new CommandResult.Rejected<>(e, modelVersion);
+        } finally {
+            scheduler.stopCapturing();
         }
     }
 
@@ -123,20 +126,39 @@ public class FactoryRuntime {
      * because no other eligible machine was available -- any such immediately-dispatched {@code
      * TaskStart}/{@code TaskEnd} events are included in {@link CommandResult#scheduledEvents()}.
      *
-     * <p>On rejection (e.g. {@link SimError.UnknownId} for an unknown {@code machineId}), {@link
-     * CommandResult.Rejected#error()} is the original {@link SimError} and no state changes.
+     * <p>Both rejection paths this method can produce ({@link SimError.UnknownId} for an unknown
+     * {@code machineId}; {@link SimError.InvalidStateTransition} for taking a machine with active
+     * jobs offline) are verified from this method's own read-only {@link #machinesView()} before
+     * calling into {@link FactoryHandler}, so a returned {@link CommandResult.Rejected} is always
+     * genuinely pre-mutation. A machine coming online can trigger a cascade of dispatching
+     * previously waiting work; a failure surfacing from deep in that cascade (a genuine engine
+     * fault, not a rejectable input) is deliberately not caught here and propagates as an unchecked
+     * {@link SimError}, exactly as {@link #advance()} already does, rather than being misreported as
+     * a "rejected, nothing changed" result once mutation may already have started.
      */
     public CommandResult<EventPayload.MachineAvailabilityChange> setMachineAvailability(
-            MachineId machineId, boolean online) {
-        int mark = scheduler.scheduledCount();
+            MachineId machineId, boolean online) throws SimError {
+        Optional<MachineView> machine =
+                machinesView().stream().filter(m -> m.id().equals(machineId)).findFirst();
+        if (machine.isEmpty()) {
+            return new CommandResult.Rejected<>(
+                    new SimError.UnknownId("machine", machineId.value()), modelVersion);
+        }
+        if (!online && !machine.get().activeJobs().isEmpty()) {
+            return new CommandResult.Rejected<>(
+                    new SimError.InvalidStateTransition("cannot take machine " + machineId + " offline while "
+                            + machine.get().activeJobs().size() + " jobs are active"),
+                    modelVersion);
+        }
+
+        List<Event> scheduled = new ArrayList<>();
+        scheduler.startCapturing(scheduled);
         try {
             factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
             return new CommandResult.Accepted<>(
-                    new EventPayload.MachineAvailabilityChange(machineId, online),
-                    modelVersion,
-                    scheduler.scheduledSince(mark));
-        } catch (SimError e) {
-            return new CommandResult.Rejected<>(e, modelVersion);
+                    new EventPayload.MachineAvailabilityChange(machineId, online), modelVersion, scheduled);
+        } finally {
+            scheduler.stopCapturing();
         }
     }
 

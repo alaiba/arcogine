@@ -21,6 +21,7 @@ import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ResourceDefinition;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.MachineState;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
@@ -151,6 +152,75 @@ class Gate3SessionControlAcceptanceTest {
         assertEquals(0L, runtime.jobsView().count(), "a rejection for an unknown product must not create a job");
     }
 
+    private static FactoryModelVersion oneStepMaxDurationModel() {
+        FactoryModel model = new FactoryModel(
+                List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)),
+                List.of(new OperationDefinition(
+                        1,
+                        "Widget Route",
+                        List.of(new OperationStepDefinition(
+                                1, "Milling", Set.of(new MachineId(1)), Long.MAX_VALUE)))),
+                List.of(new ProductDefinition(new ProductId(1), "Widget", 1)));
+        return FactoryModelPublisher.publish(model);
+    }
+
+    /**
+     * Reproduces the scenario independent review of PR #177 identified: {@code
+     * FactoryModelValidator} only requires a step's duration to be positive, so a validly published
+     * model can carry {@code Long.MAX_VALUE}. Once simulated time itself reaches a large enough
+     * value, dispatching a job against such a step computes an end time that overflows {@code
+     * SimTime}'s underlying {@code long} and wraps negative, which {@code Scheduler.schedule} would
+     * reject as an ordering violation. Before the {@code FactoryHandler.submitOrder} reorder this
+     * test proves, that failure surfaced only after the new {@code Order}/{@code Job} were already
+     * created and the machine/job already started -- so a caught-and-wrapped rejection silently
+     * misreported "nothing changed" while state had, in fact, already partially mutated.
+     */
+    @Test
+    void rejectedSubmissionFromAPostValidationSchedulingFailureStillLeavesNoPartialMutation() {
+        FactoryModelVersion version = oneStepMaxDurationModel();
+        FactoryRuntime runtime = FactoryRuntime.forModel(version);
+
+        OrderId firstOrder = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        Event completion = runtime.advance().orElseThrow();
+        assertEquals(EventType.TaskEnd, completion.eventType());
+        assertTrue(
+                runtime.jobsView().findFirst().orElseThrow().isComplete(),
+                "the first order must complete, leaving simulated time at Long.MAX_VALUE and the "
+                        + "machine idle again");
+
+        CommandResult<OrderId> result = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+
+        assertInstanceOf(
+                CommandResult.Rejected.class,
+                result,
+                "a scheduling failure discovered after the quantity/routing preflight must still "
+                        + "surface as a rejection, not an uncaught crash");
+        CommandResult.Rejected<OrderId> rejected = (CommandResult.Rejected<OrderId>) result;
+        assertInstanceOf(SimError.EventOrderingViolation.class, rejected.error());
+        assertTrue(result.scheduledEvents().isEmpty());
+
+        assertEquals(
+                1L,
+                runtime.ordersView().count(),
+                "the rejected second submission must not have created a second order");
+        assertEquals(
+                1L,
+                runtime.jobsView().count(),
+                "the rejected second submission must not have created a second job");
+        assertEquals(
+                firstOrder,
+                runtime.ordersView().findFirst().orElseThrow().id(),
+                "only the first order may exist after the rejection");
+        assertTrue(
+                runtime.pendingWorkView().isEmpty(),
+                "the rejected submission must not have left anything in the pending-work backlog");
+        MachineView machine = runtime.machinesView().get(0);
+        assertTrue(
+                machine.activeJobs().isEmpty(),
+                "the rejected submission must not have started a job on the machine");
+        assertEquals(0, machine.queueDepth(), "the rejected submission must not have queued a job either");
+    }
+
     @Test
     void machineAvailabilityCommandReturnsAStructuredResultForAcceptanceAndRejection() {
         FactoryModelVersion version = publishedModel();
@@ -170,6 +240,40 @@ class Gate3SessionControlAcceptanceTest {
                 runtime.setMachineAvailability(new MachineId(999), true);
         assertInstanceOf(CommandResult.Rejected.class, rejected, "an unknown machine id must be rejected");
         assertThrows(SimError.UnknownId.class, rejected::orElseThrow);
+    }
+
+    @Test
+    void takingABusyMachineOfflineIsRejectedBeforeAnyMutation() {
+        FactoryModelVersion version = publishedModel();
+        FactoryRuntime runtime = FactoryRuntime.forModel(version);
+        runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
+        assertEquals(
+                new MachineId(1),
+                runtime.jobsView().findFirst().orElseThrow().currentMachine(),
+                "the submitted job must be actively running on Mill (MachineId 1)");
+
+        CommandResult<EventPayload.MachineAvailabilityChange> result =
+                runtime.setMachineAvailability(new MachineId(1), false);
+
+        assertInstanceOf(
+                CommandResult.Rejected.class,
+                result,
+                "taking a machine with an active job offline must be rejected, matching Machine#setAvailability");
+        CommandResult.Rejected<EventPayload.MachineAvailabilityChange> rejected =
+                (CommandResult.Rejected<EventPayload.MachineAvailabilityChange>) result;
+        assertInstanceOf(SimError.InvalidStateTransition.class, rejected.error());
+        assertTrue(result.scheduledEvents().isEmpty());
+
+        MachineView machine = runtime.machinesView().stream()
+                .filter(m -> m.id().equals(new MachineId(1)))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(
+                MachineState.Busy,
+                machine.state(),
+                "a rejected offline command must not have changed the machine's operational status");
+        assertFalse(
+                machine.activeJobs().isEmpty(), "the active job must still be running after the rejected command");
     }
 
     @Test

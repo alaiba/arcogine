@@ -298,32 +298,50 @@ public class FactoryHandler implements EventHandler {
         }
         int totalSteps = stepsPerUnit * (int) quantity;
 
+        // Determine the immediate-dispatch outcome for step 0, if any, before mutating any store.
+        // In particular, this validates that scheduling the resulting TaskEnd would actually
+        // succeed (SimTime.plus can silently overflow for a pathologically large but validly
+        // published step duration, which Scheduler.schedule would otherwise reject with
+        // EventOrderingViolation) -- so that failure is caught here, before any Order/Job/Machine
+        // exists, rather than after they do. A rejected submitOrder call must never leave partial
+        // mutation; see FactoryRuntime#submitWorkload.
+        Optional<RoutingStep> firstStepOpt = routing.getStep(0);
+        MachineId selectedMachineId = null;
+        Set<MachineId> eligible = null;
+        SimTime immediateEndTime = null;
+        if (firstStepOpt.isPresent()) {
+            RoutingStep firstStep = firstStepOpt.get();
+            eligible = firstStep.eligibleMachines();
+            selectedMachineId = selectMachine(eligible);
+            if (machines.getMut(selectedMachineId).canAcceptJob()) {
+                SimTime endTime = currentTime.plus(firstStep.duration());
+                if (endTime.compareTo(currentTime) < 0) {
+                    throw new SimError.EventOrderingViolation(currentTime, endTime);
+                }
+                immediateEndTime = endTime;
+            }
+        }
+
         OrderId orderId = orders.createOrder(productId, quantity, currentTime, unitPrice);
         Order order = orders.get(orderId);
         JobId jobId = jobs.createJob(order, totalSteps, currentTime);
 
-        routing.getStep(0).ifPresent(firstStep -> {
-            Set<MachineId> eligible = firstStep.eligibleMachines();
-            MachineId machineId = selectMachine(eligible);
-            Machine machine = machines.getMut(machineId);
-
-            if (machine.canAcceptJob()) {
-                long duration = firstStep.duration();
+        if (firstStepOpt.isPresent()) {
+            if (immediateEndTime != null) {
+                Machine machine = machines.getMut(selectedMachineId);
                 machine.startJob(jobId);
 
                 Job job = jobs.get(jobId);
-                job.start(machineId);
+                job.start(selectedMachineId);
 
-                scheduler.schedule(Event.of(
-                        currentTime.plus(duration),
-                        new EventPayload.TaskEnd(jobId, machineId, 0)));
+                scheduler.schedule(Event.of(immediateEndTime, new EventPayload.TaskEnd(jobId, selectedMachineId, 0)));
             } else if (eligible.size() > 1) {
                 pendingMultiEligible.addLast(
-                        new PendingDispatch(jobId, eligible, 0, firstStep.duration()));
+                        new PendingDispatch(jobId, eligible, 0, firstStepOpt.get().duration()));
             } else {
-                machine.enqueueJob(jobId);
+                machines.getMut(selectedMachineId).enqueueJob(jobId);
             }
-        });
+        }
 
         return orderId;
     }

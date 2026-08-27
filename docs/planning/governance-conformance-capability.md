@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
 > **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, not current product capability  
-> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
+> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
 
 ## 1. Purpose
 
@@ -48,12 +48,13 @@ The implemented seam currently provides:
 FactoryModel
     -> structural validation
     -> immutable publication
-    -> provisional content-derived identity
+    -> durable factory-model:v1 semantic fingerprint
+    -> legacy contentHash compatibility
     -> runtime instantiation
     -> handler-level provenance
 ```
 
-That seam must not be blocked by the generic governance initiative. In particular, the current `FactoryModelVersion.contentHash()` is not yet a durable cross-process fingerprint contract, and the current factory model has no controlled revision repository.
+That seam must not be blocked by the generic governance initiative. `FactoryModelVersion.fingerprint()` now implements the durable cross-process `factory-model:v1` semantic fingerprint contract from ADR-0006, while `FactoryModelVersion.contentHash()` remains a distinct legacy compatibility surface. The current factory model still has no controlled revision identity, lineage, or repository.
 
 The governance use case now provides a concrete cross-consumer reason to pursue work previously deferred in the factory plan. The dependency order matters here, and matches the G1-G9 sequence in §4 below, not the order these concerns happen to be listed elsewhere:
 
@@ -151,7 +152,7 @@ slice. G1 is therefore not complete until that revision and later persistence wo
 
 ### Goal
 
-Promote the current provisional content-derived identity into an explicit durable semantic fingerprint contract, and introduce a separate controlled revision lifecycle for historical lineage.
+Complete G1 by preserving the implemented durable semantic fingerprint contract and introducing a separate controlled revision lifecycle for historical lineage.
 
 The conceptual split is:
 
@@ -197,7 +198,7 @@ G1 is ready when:
 
 ### ADR trigger
 
-[ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) already fixes the semantic separation. A follow-up ADR is warranted before implementation commits to the concrete durable fingerprint format, revision identifier scheme, persistence model, or lineage rules.
+[ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) fixes the semantic separation, and [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md) fixes the released `factory-model:v1` fingerprint policy. A follow-up ADR is warranted before implementation commits to the controlled revision identifier scheme, persistence model, or lineage rules. A new fingerprint ADR is needed only for a new policy version or a compatibility-breaking change to the released contract.
 
 ## 6. G2 — Semantic ChangeSet and impact model
 
@@ -564,10 +565,11 @@ As implementation progresses:
 - update [`../architecture/overview.md`](../architecture/overview.md) only with established current-state behavior;
 - update [`../architecture/governance-conformance.md`](../architecture/governance-conformance.md) when this proposed direction changes materially;
 - keep [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) as the authority for semantic identity vs. revision identity and the external change-control boundary;
+- keep [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md) as the authority for the released `factory-model:v1` fingerprint policy;
 - update factory/domain architecture docs when identity/change requirements alter those models;
 - update the sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) when Governance G1/G2/G4/G5 contract availability changes its blocked/fixture-backed criteria;
 - update [`../architecture/standards-alignment.md`](../architecture/standards-alignment.md) when Arcogine moves from reference/mapping toward an actual tested conformance profile;
-- create ADRs for the concrete durable fingerprint contract, controlled revision persistence/lineage scheme, semantic `ChangeSet` contracts, temporal evidence semantics, and hard-to-reverse external protocols when implementation commits to them;
+- create ADRs for the controlled revision persistence/lineage scheme, semantic `ChangeSet` contracts, temporal evidence semantics, and hard-to-reverse external protocols when implementation commits to them; create a new fingerprint ADR only for a new policy version or compatibility-breaking change;
 - update product/reference docs only for capabilities that actually ship.
 
 Once this initiative is complete or superseded, retain durable decisions in ADR/current architecture and retire or reduce this planning artifact.

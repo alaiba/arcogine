@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 
@@ -101,6 +100,20 @@ def main() -> None:
 
     check_case("supersession requires matching new ADR", supersede_without_new, False)
 
+    def supersede_with_proposed(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        text = path.read_text().replace(
+            "Status: Accepted\n", "Status: Superseded\nSuperseded by: ADR-0003\n"
+        )
+        path.write_text(text)
+        write(
+            repo,
+            "0003-replacement.md",
+            "# ADR-0003: Replacement\n\nStatus: Proposed\nSupersedes: ADR-0001\n\n## Decision\n\nCandidate decision.\n",
+        )
+
+    check_case("proposed ADR cannot supersede accepted ADR", supersede_with_proposed, False)
+
     def valid_supersession(repo: Path) -> None:
         path = repo / "docs/architecture/decisions/0001-example.md"
         text = path.read_text().replace(
@@ -113,7 +126,7 @@ def main() -> None:
             "# ADR-0003: Replacement\n\nStatus: Accepted\nSupersedes: ADR-0001\n\n## Decision\n\nNew decision.\n",
         )
 
-    check_case("metadata-only supersession with matching new ADR is allowed", valid_supersession, True)
+    check_case("metadata-only supersession with matching accepted ADR is allowed", valid_supersession, True)
 
     print("All ADR immutability tests passed.")
 

@@ -341,6 +341,41 @@ Status: OPEN | IN_FLIGHT
 
 Do not manufacture `Introduced by` attribution when history does not establish it.
 
+## Finding lifecycle and triage
+
+Detection is separate from disposition. A consistency run reports evidence-backed findings; it does not silently decide product/architecture intent or close its own findings.
+
+When a prior run or finding ledger is available, carry every unresolved finding forward and re-evaluate it against the new head even when its introducing commit predates the incremental baseline. Do not drop a finding merely because it falls outside the current compare range.
+
+After a run, each finding may be triaged to one of these dispositions:
+
+- `CONFIRMED` - the inconsistency is real and requires a correction or an explicit accepted-debt decision.
+- `FALSE_POSITIVE` - the comparison misunderstood authority, scope, lifecycle state, compatibility debt, or historical context; withdraw the finding and record the reason.
+- `DUPLICATE` - the same underlying inconsistency is already represented by another finding; identify the canonical finding.
+- `IN_FLIGHT` - an open PR contains a plausible correction, but `main` still contains the inconsistency.
+- `NEEDS_DECISION` - the evidence reveals a genuine ambiguity or incompatible intent that requires a product/architecture decision before one side can be called wrong.
+- `ACCEPTED_DEBT` - the inconsistency is real but has been explicitly accepted for later correction; preserve the rationale and any tracking reference.
+
+For a `CONFIRMED` finding, identify the correction owner using the existing resolution classes:
+
+```text
+CODE | CURRENT_DOCS | PLANNING | ADR | TEST/EVIDENCE | MULTIPLE
+```
+
+Do not equate an open corrective PR with resolution. `IN_FLIGHT` remains open until the correction reaches `main` (or the relevant authoritative branch for an explicitly scoped PR-forward review).
+
+On a later run, verify each carried finding and report one of:
+
+- `RESOLVED` - current authoritative evidence no longer contains the inconsistency.
+- `STILL_OPEN` - the inconsistency remains on the reviewed head.
+- `IN_FLIGHT` - the inconsistency remains on the reviewed head but an open PR plausibly corrects it.
+
+Only evidence on the reviewed head can establish `RESOLVED`; a PR title, body, review comment, or green CI result cannot do so by itself.
+
+Finding IDs such as `CONS-001` are run-local unless an external workflow deliberately persists them. If a finding becomes durable work, prefer the stable GitHub issue/PR identity as the long-lived reference rather than inventing a repository-global custom sequence. When comparing later runs, match findings by semantic subject and evidence, not by coincidental run-local number.
+
+If no prior report or ledger is available, do not invent historical disposition. State that carry-forward status could not be reconstructed and evaluate the current repository normally.
+
 ## Run report
 
 Start or end every review with a compact run summary:

@@ -46,6 +46,11 @@ public final class CandidateAdmissibilityPolicy {
                 .toList();
         List<CandidateAdmissibilityIssue> issues = new ArrayList<>();
         addIdentityIssues(placed, issues);
+        if (challenge.catalogueSemanticFingerprint() == null) {
+            issues.add(issue("candidate.catalogue.semantic-fingerprint-unbound",
+                "challenge.catalogueSemanticFingerprint",
+                "challenge does not bind a catalogue semantic fingerprint"));
+        }
         if (!challenge.catalogueIdentity().equals(catalogue.identity())) {
             issues.add(issue("candidate.catalogue.identity-mismatch", "catalogue.identity",
                 "catalogue identity does not match challenge identity: "

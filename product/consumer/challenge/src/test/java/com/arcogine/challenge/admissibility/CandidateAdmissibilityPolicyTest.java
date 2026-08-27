@@ -119,6 +119,21 @@ class CandidateAdmissibilityPolicyTest {
     }
 
     @Test
+    void legacyUnboundChallengeRejectsAdmissibility() {
+        ChallengeDefinition reference = ChallengeFixtures.referenceChallenge();
+        ChallengeDefinition unbound = new ChallengeDefinition(reference.identity(), reference.floor(),
+                reference.startingBudget(), reference.workload(), reference.availableEquipment(),
+                reference.deadline(), reference.evaluationPolicy(), reference.catalogueIdentity());
+
+        CandidateAdmissibilityResult result = assess(unbound,
+                EquipmentCatalogueFixtures.referenceCatalogue(),
+                snapshot(placed("cutter-1", CUTTER, 0, 0)));
+
+        assertEquals("candidate.catalogue.semantic-fingerprint-unbound",
+                result.issues().get(0).code());
+    }
+
+    @Test
     void economicsFailureIsSurfacedExplicitly() {
         EquipmentCatalogue invalidCatalogue = catalogue(List.of(
                 EquipmentOffer.of(CUTTER, -1L)));

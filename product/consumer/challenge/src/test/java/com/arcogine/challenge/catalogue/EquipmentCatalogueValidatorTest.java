@@ -1,6 +1,7 @@
 package com.arcogine.challenge.catalogue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.challenge.ChallengeDefinition;
@@ -120,6 +121,27 @@ class EquipmentCatalogueValidatorTest {
                 result,
                 "challenge.availableEquipment.unresolved",
                 "availableEquipment[2]"));
+    }
+
+    @Test
+    void validateRejectsNullCatalogue() {
+        assertThrows(NullPointerException.class, () -> EquipmentCatalogueValidator.validate(null));
+    }
+
+    @Test
+    void validateChallengeResolutionRejectsNullChallenge() {
+        assertThrows(
+                NullPointerException.class,
+                () -> EquipmentCatalogueValidator.validateChallengeResolution(
+                        null, EquipmentCatalogueFixtures.referenceCatalogue()));
+    }
+
+    @Test
+    void validateChallengeResolutionRejectsNullCatalogue() {
+        assertThrows(
+                NullPointerException.class,
+                () -> EquipmentCatalogueValidator.validateChallengeResolution(
+                        ChallengeFixtures.referenceChallenge(), null));
     }
 
     private static boolean containsIssue(

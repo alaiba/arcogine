@@ -2,11 +2,16 @@ package com.arcogine.challenge.economics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.challenge.ChallengeDefinition;
 import com.arcogine.challenge.ChallengeFixtures;
+import com.arcogine.challenge.ChallengeIdentity;
+import com.arcogine.challenge.ChallengeWorkload;
 import com.arcogine.challenge.EquipmentCatalogueItemId;
+import com.arcogine.challenge.EvaluationPolicyIdentity;
+import com.arcogine.challenge.FactoryFloorConstraint;
 import com.arcogine.challenge.catalogue.EquipmentCatalogue;
 import com.arcogine.challenge.catalogue.EquipmentCatalogueFixtures;
 import com.arcogine.challenge.catalogue.EquipmentOffer;
@@ -146,6 +151,53 @@ class DraftEconomicsCalculatorTest {
         assertEquals(budgetBefore, challenge.startingBudget());
         assertEquals(offersBefore, catalogue.offers());
         assertEquals(occurrencesBefore, occurrences);
+    }
+
+    @Test
+    void remainingBudgetOverflowFailsExplicitlyRatherThanWrapping() {
+        ChallengeDefinition challenge = new ChallengeDefinition(
+                new ChallengeIdentity("challenge.overflow", "1"),
+                new FactoryFloorConstraint(1, 1),
+                Long.MIN_VALUE,
+                new ChallengeWorkload("product.any", 1),
+                List.of(),
+                1L,
+                new EvaluationPolicyIdentity("policy.any", "1"));
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(List.of(EquipmentOffer.of(CUTTER, 1L)));
+        List<DraftEquipmentOccurrence> occurrences = List.of(new DraftEquipmentOccurrence(CUTTER));
+
+        DraftEconomicsResult result = DraftEconomicsCalculator.calculate(challenge, catalogue, occurrences);
+
+        assertFalse(result.isSuccess());
+        assertEquals("draft.cost.overflow", result.failure().code());
+    }
+
+    @Test
+    void calculateRejectsNullChallenge() {
+        EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();
+
+        assertThrows(
+                NullPointerException.class,
+                () -> DraftEconomicsCalculator.calculate(null, catalogue, List.of()));
+    }
+
+    @Test
+    void calculateRejectsNullCatalogue() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+
+        assertThrows(
+                NullPointerException.class,
+                () -> DraftEconomicsCalculator.calculate(challenge, null, List.of()));
+    }
+
+    @Test
+    void calculateRejectsNullOccurrences() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();
+
+        assertThrows(
+                NullPointerException.class,
+                () -> DraftEconomicsCalculator.calculate(challenge, catalogue, null));
     }
 
     @Test

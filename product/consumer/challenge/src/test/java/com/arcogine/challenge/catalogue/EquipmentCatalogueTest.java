@@ -74,4 +74,18 @@ class EquipmentCatalogueTest {
         assertEquals(first, second);
         assertEquals(first.hashCode(), second.hashCode());
     }
+
+    @Test
+    void findByItemIdRejectsNullItemId() {
+        EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();
+
+        assertThrows(NullPointerException.class, () -> catalogue.findByItemId(null));
+    }
+
+    @Test
+    void toStringIncludesOffers() {
+        EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();
+
+        assertTrue(catalogue.toString().contains("EquipmentCatalogue"));
+    }
 }

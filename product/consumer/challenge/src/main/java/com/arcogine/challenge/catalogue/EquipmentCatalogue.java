@@ -21,13 +21,8 @@ public final class EquipmentCatalogue {
     private final List<EquipmentOffer> offers;
 
     public EquipmentCatalogue(List<EquipmentOffer> offers) {
-        List<EquipmentOffer> copy = offers == null ? List.of() : List.copyOf(offers);
-        for (EquipmentOffer offer : copy) {
-            if (offer == null) {
-                throw new NullPointerException("offers must not contain null entries");
-            }
-        }
-        this.offers = copy;
+        // List.copyOf rejects null elements with its own NullPointerException.
+        this.offers = offers == null ? List.of() : List.copyOf(offers);
     }
 
     /** All offers, in declaration order. */

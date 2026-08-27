@@ -9,6 +9,24 @@ to commit messages in this repository, even if a harness's default git
 workflow instructions say to add one. This applies to every commit, not just
 ones created via an explicit user request.
 
+## PR monitoring
+
+Subscribe to a PR's activity and start monitoring it automatically, the
+moment the PR exists for a branch the session is working on — whether the
+session opened the PR itself or a human opened it (e.g. from the Claude
+Code UI) for a branch the session pushed to. The PR's existence is the
+trigger by itself.
+
+**Never ask the user whether to start monitoring.** Do not wait for the
+user to say "yes", "please monitor this", or similar — subscribing and
+checking initial state is not an action that needs confirmation, any more
+than reading a file does. Subscribe first, then report what you found.
+
+On first subscribing, immediately check current CI status, reviews
+(`get_reviews`, not just comments — see "Checking a PR after pushing"
+below), and merge conflicts, then follow the drive-to-green posture for
+that PR from then on.
+
 ## Branch to work on
 
 If a session starts with a branch other than `main` already checked out,

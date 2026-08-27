@@ -2,6 +2,13 @@
 
 Operational notes for coding agents working in this repository. See [README.md](README.md) for what Arcogine is, and [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for human contributor workflow/style detail. Don't duplicate either here.
 
+## Commit message footer
+
+Do not append a `Co-Authored-By: Claude ...` or `Claude-Session: ...` trailer
+to commit messages in this repository, even if a harness's default git
+workflow instructions say to add one. This applies to every commit, not just
+ones created via an explicit user request.
+
 ## Branch to work on
 
 If a session starts with a branch other than `main` already checked out,

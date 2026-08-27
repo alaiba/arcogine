@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Cross-domain model history, semantic change, requirements, conformance, evidence, and governance over Arcogine's canonical business semantics  
 > **Authority:** Proposed architecture; this document does not claim current compliance, audit, or certification capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Standards Alignment](standards-alignment.md), [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md), [Standards Alignment](standards-alignment.md), [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md)
 
 ## 1. Architectural position
 
@@ -112,7 +112,7 @@ Approval, deployment, conformance evaluation, and simulation execution are separ
 
 Equal semantic content may therefore occur in distinct controlled revisions. For example, an intentional rollback can create a later revision with the same model fingerprint as an earlier revision while remaining a distinct governed event in history.
 
-The current `FactoryModelVersion.contentHash()` is only the implemented proving ground for content-derived identity. It remains an internal, provisional policy until canonicalization, ordering semantics, fingerprint format/versioning, and cross-process compatibility are specified. It must not be described as an audit-grade durable fingerprint merely because it uses SHA-256.
+The factory-model proving ground now implements the durable semantic side of this split: `FactoryModelVersion.fingerprint()` produces the typed `ModelFingerprint` defined by the `factory-model:v1` canonical binary contract in [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). `FactoryModelVersion.contentHash()` remains a separate legacy, Java-derived compatibility surface and must not be reinterpreted as the v1 fingerprint. Controlled revision identity, lineage, and persistence remain unimplemented.
 
 The system should eventually answer:
 
@@ -377,15 +377,16 @@ Current factory work establishes:
 canonical semantic model
 immutable publication
 structural validation
-provisional content-derived identity
+durable factory-model:v1 semantic fingerprint
+legacy contentHash compatibility
 runtime instantiation from a published model
 handler-level runtime provenance
 ```
 
-It does **not** yet provide a durable fingerprint contract, controlled revision repository, approval/deployment lifecycle, or generic conformance engine. Those capabilities should be added when concrete requirements justify them, following their actual dependency order:
+It does **not** yet provide a controlled revision repository/lineage, approval/deployment lifecycle, semantic ChangeSet, or generic conformance engine. Those capabilities should be added when concrete requirements justify them, following their actual dependency order:
 
 ```text
-G1 fingerprint/revision
+G1 controlled revision lineage (fingerprint implemented)
     ↓
 G2 ChangeSet
     ↓
@@ -408,7 +409,6 @@ This proposal does not mean that Arcogine currently:
 - owns all operational truth in connected systems;
 - replaces Jira or enterprise GRC workflow;
 - has durable model persistence or controlled revision lineage today;
-- has a durable cross-process model fingerprint contract today;
 - has a generic conformance engine today;
 - has production actuation or digital-twin reconciliation today.
 
@@ -434,11 +434,11 @@ When governance or compliance work is proposed, ask:
 
 ## 16. ADR triggers
 
-[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) already fixes the semantic-identity versus controlled-revision distinction and the external change-control boundary.
+[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) fixes the semantic-identity versus controlled-revision distinction and the external change-control boundary. [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md) fixes the first durable factory-model fingerprint policy.
 
 Create or revise ADRs when implementation commits to hard-to-reverse choices about:
 
-- the durable fingerprint canonicalization/format/compatibility contract;
+- a new durable fingerprint policy version or a compatibility-breaking change to an existing fingerprint contract;
 - concrete controlled revision identifiers and persistence/lineage semantics;
 - parent/branch/merge relationships between controlled revisions;
 - canonical semantic `ChangeSet` representation;

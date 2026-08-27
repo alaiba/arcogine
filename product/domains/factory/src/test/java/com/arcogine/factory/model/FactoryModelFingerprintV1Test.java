@@ -125,6 +125,75 @@ class FactoryModelFingerprintV1Test {
         assertNotEquals(original.fingerprint(), negativeZero.fingerprint());
     }
 
+        @Test
+        void negativeFiniteCapacityUsesItsExactBinary64Payload() {
+                FactoryModelVersion version = FactoryModelPublisher.publish(modelWithCapacity(-123.5));
+
+                assertNotEquals(
+                                FactoryModelPublisher.publish(modelWithCapacity(123.5)).fingerprint(),
+                                version.fingerprint());
+        }
+
+        @Test
+        void allTextFieldsRejectMalformedUnicodeAtPublication() {
+                assertMalformedResourceNameIsRejected();
+                assertMalformedOperationNameIsRejected();
+                assertMalformedStepNameIsRejected();
+                assertMalformedProductNameIsRejected();
+        }
+
+        @Test
+        void differentNaNPayloadsHaveTheSameFingerprint() {
+                assertEquals(
+                                FactoryModelPublisher.publish(modelWithCapacity(Double.longBitsToDouble(0x7ff0000000000001L))).fingerprint(),
+                                FactoryModelPublisher.publish(modelWithCapacity(Double.longBitsToDouble(0x7fffffffffffffffL))).fingerprint());
+        }
+
+        @Test
+        void legacyContentHashCompatibilityValueRemainsPinned() {
+                assertEquals(
+                        "3fbe9d181b8d982150d85a1ef422ad06142fc79a573ae43687fdedbe15cc569c",
+                        FactoryModelPublisher.publish(validLegacyFixture()).contentHash());
+        }
+
+        private static FactoryModel validLegacyFixture() {
+                return new FactoryModel(
+                                List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)),
+                                List.of(new OperationDefinition(100, "Widget routing",
+                                List.of(new OperationStepDefinition(1, "Rough milling", Set.of(new MachineId(1)), 5)))),
+                                List.of(new ProductDefinition(new ProductId(10), "Widget", 100)));
+        }
+
+        private static void assertMalformedResourceNameIsRejected() {
+                FactoryModel malformed = new FactoryModel(
+                                List.of(new ResourceDefinition(new MachineId(1), "bad\uD800", 1, null, 0)),
+                                representativeModel().operations(), representativeModel().products());
+                assertThrows(FactoryModelValidationException.class, () -> FactoryModelPublisher.publish(malformed));
+        }
+
+        private static void assertMalformedOperationNameIsRejected() {
+                OperationDefinition operation = representativeModel().operations().get(0);
+                FactoryModel malformed = new FactoryModel(representativeModel().resources(),
+                                List.of(new OperationDefinition(operation.id(), "bad\uD800", operation.steps())), representativeModel().products());
+                assertThrows(FactoryModelValidationException.class, () -> FactoryModelPublisher.publish(malformed));
+        }
+
+        private static void assertMalformedStepNameIsRejected() {
+                OperationDefinition operation = representativeModel().operations().get(0);
+                OperationStepDefinition step = operation.steps().get(0);
+                FactoryModel malformed = new FactoryModel(representativeModel().resources(),
+                                List.of(new OperationDefinition(operation.id(), operation.name(),
+                                                List.of(new OperationStepDefinition(step.stepId(), "bad\uDC00", step.eligibleResources(), step.duration())))),
+                                representativeModel().products());
+                assertThrows(FactoryModelValidationException.class, () -> FactoryModelPublisher.publish(malformed));
+        }
+
+        private static void assertMalformedProductNameIsRejected() {
+                FactoryModel malformed = new FactoryModel(representativeModel().resources(), representativeModel().operations(),
+                                List.of(new ProductDefinition(new ProductId(8), "bad\uDC00", 42)));
+                assertThrows(FactoryModelValidationException.class, () -> FactoryModelPublisher.publish(malformed));
+        }
+
     private static void assertDifferent(FactoryModelVersion original, FactoryModel changed) {
         assertNotEquals(original.fingerprint(), FactoryModelPublisher.publish(changed).fingerprint());
     }

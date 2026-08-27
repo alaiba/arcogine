@@ -18,11 +18,25 @@ import java.util.Optional;
  */
 public final class EquipmentCatalogue {
 
+    private final EquipmentCatalogueIdentity identity;
     private final List<EquipmentOffer> offers;
 
     public EquipmentCatalogue(List<EquipmentOffer> offers) {
+        this(new EquipmentCatalogueIdentity("catalogue.unversioned", "1"), offers);
+    }
+
+    public EquipmentCatalogue(EquipmentCatalogueIdentity identity, List<EquipmentOffer> offers) {
+        if (identity == null) {
+            throw new NullPointerException("identity");
+        }
+        this.identity = identity;
         // List.copyOf rejects null elements with its own NullPointerException.
         this.offers = offers == null ? List.of() : List.copyOf(offers);
+    }
+
+    /** Identity and semantic version of the catalogue and its economy rules. */
+    public EquipmentCatalogueIdentity identity() {
+        return identity;
     }
 
     /** All offers, in declaration order. */
@@ -51,16 +65,17 @@ public final class EquipmentCatalogue {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof EquipmentCatalogue other && offers.equals(other.offers);
+        return obj instanceof EquipmentCatalogue other
+            && identity.equals(other.identity) && offers.equals(other.offers);
     }
 
     @Override
     public int hashCode() {
-        return offers.hashCode();
+        return 31 * identity.hashCode() + offers.hashCode();
     }
 
     @Override
     public String toString() {
-        return "EquipmentCatalogue" + offers;
+        return "EquipmentCatalogue[" + identity + ", " + offers + "]";
     }
 }

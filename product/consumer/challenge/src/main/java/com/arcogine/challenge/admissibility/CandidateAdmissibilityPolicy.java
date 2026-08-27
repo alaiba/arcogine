@@ -46,6 +46,11 @@ public final class CandidateAdmissibilityPolicy {
                 .toList();
         List<CandidateAdmissibilityIssue> issues = new ArrayList<>();
         addIdentityIssues(placed, issues);
+        if (!challenge.catalogueIdentity().equals(catalogue.identity())) {
+            issues.add(issue("candidate.catalogue.identity-mismatch", "catalogue.identity",
+                "catalogue identity does not match challenge identity: "
+                    + catalogue.identity()));
+        }
         Set<EquipmentCatalogueItemId> available = new HashSet<>(challenge.availableEquipment());
         Map<EquipmentCatalogueItemId, Integer> quantities = new HashMap<>();
 
@@ -80,7 +85,8 @@ public final class CandidateAdmissibilityPolicy {
                     "committed construction cost exceeds starting budget"));
         }
 
-        addPlacementIssues(placed, challenge, issues);
+        addBoundsIssues(placed, challenge, issues);
+        addOverlapIssues(placed, issues);
         return issues.isEmpty() ? CandidateAdmissibilityResult.success()
                 : CandidateAdmissibilityResult.rejected(issues);
     }
@@ -108,9 +114,8 @@ public final class CandidateAdmissibilityPolicy {
                 }));
     }
 
-    private static void addPlacementIssues(List<PlacedEquipment> placed, ChallengeDefinition challenge,
+    private static void addBoundsIssues(List<PlacedEquipment> placed, ChallengeDefinition challenge,
             List<CandidateAdmissibilityIssue> issues) {
-        Set<GridPlacement> occupied = new HashSet<>();
         for (PlacedEquipment equipment : placed) {
             GridPlacement placement = equipment.placement();
             if (placement.x() < 0 || placement.x() >= challenge.floor().width()
@@ -119,6 +124,14 @@ public final class CandidateAdmissibilityPolicy {
                         "placement must satisfy 0 <= x < " + challenge.floor().width()
                                 + " and 0 <= y < " + challenge.floor().height()));
             }
+        }
+    }
+
+    private static void addOverlapIssues(List<PlacedEquipment> placed,
+            List<CandidateAdmissibilityIssue> issues) {
+        Set<GridPlacement> occupied = new HashSet<>();
+        for (PlacedEquipment equipment : placed) {
+            GridPlacement placement = equipment.placement();
             if (!occupied.add(placement)) {
                 issues.add(issue("candidate.placement.overlap", path(equipment),
                         "placement cell is already occupied: (" + placement.x() + ", " + placement.y() + ")"));

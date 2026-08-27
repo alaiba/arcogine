@@ -10,6 +10,7 @@ import com.arcogine.challenge.ChallengeFixtures;
 import com.arcogine.challenge.EquipmentCatalogueItemId;
 import com.arcogine.challenge.catalogue.EquipmentCatalogue;
 import com.arcogine.challenge.catalogue.EquipmentCatalogueFixtures;
+import com.arcogine.challenge.catalogue.EquipmentCatalogueIdentity;
 import com.arcogine.challenge.catalogue.EquipmentOffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +63,7 @@ class CandidateAdmissibilityPolicyTest {
     void unknownAndUnavailableItemsProduceDeterministicReasons() {
         EquipmentCatalogueItemId unknown = item("equipment.unknown");
         EquipmentCatalogueItemId disallowed = item("equipment.disallowed");
-        EquipmentCatalogue catalogue = new EquipmentCatalogue(List.of(
+        EquipmentCatalogue catalogue = catalogue(List.of(
                 EquipmentOffer.of(CUTTER, 5_000L), EquipmentOffer.of(disallowed, 1_000L)));
         CandidateDraftSnapshot snapshot = snapshot(
                 placed("unknown-1", unknown, 0, 0), placed("disallowed-1", disallowed, 1, 0));
@@ -92,9 +93,9 @@ class CandidateAdmissibilityPolicyTest {
 
     @Test
     void budgetAtLimitIsAllowedAndBudgetOverLimitIsRejected() {
-        EquipmentCatalogue exactCatalogue = new EquipmentCatalogue(List.of(
+        EquipmentCatalogue exactCatalogue = catalogue(List.of(
                 EquipmentOffer.of(CUTTER, 40_000L)));
-        EquipmentCatalogue overCatalogue = new EquipmentCatalogue(List.of(
+        EquipmentCatalogue overCatalogue = catalogue(List.of(
                 EquipmentOffer.of(CUTTER, 40_001L)));
         CandidateDraftSnapshot snapshot = snapshot(placed("cutter-1", CUTTER, 0, 0));
 
@@ -105,7 +106,7 @@ class CandidateAdmissibilityPolicyTest {
 
     @Test
     void economicsFailureIsSurfacedExplicitly() {
-        EquipmentCatalogue invalidCatalogue = new EquipmentCatalogue(List.of(
+        EquipmentCatalogue invalidCatalogue = catalogue(List.of(
                 EquipmentOffer.of(CUTTER, -1L)));
 
         CandidateAdmissibilityResult result = assess(ChallengeFixtures.referenceChallenge(),
@@ -141,6 +142,18 @@ class CandidateAdmissibilityPolicyTest {
     }
 
     @Test
+    void catalogueIdentityMustMatchChallengeVersion() {
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(
+                new EquipmentCatalogueIdentity("catalogue.challenge.factory-basics", "2"),
+                List.of(EquipmentOffer.of(CUTTER, 5_000L)));
+
+        CandidateAdmissibilityResult result = assess(ChallengeFixtures.referenceChallenge(), catalogue,
+                snapshot(placed("cutter-1", CUTTER, 0, 0)));
+
+        assertEquals("candidate.catalogue.identity-mismatch", result.issues().get(0).code());
+    }
+
+    @Test
     void differentOccurrenceIdsMayUseTheSameCatalogueItem() {
         CandidateAdmissibilityResult result = assess(ChallengeFixtures.referenceChallenge(),
                 EquipmentCatalogueFixtures.referenceCatalogue(), snapshot(
@@ -161,11 +174,16 @@ class CandidateAdmissibilityPolicyTest {
     }
 
     private static EquipmentCatalogue limitedCatalogue(int cutterLimit) {
-        return new EquipmentCatalogue(List.of(
+        return catalogue(List.of(
                 EquipmentOffer.of(CUTTER, EquipmentCatalogueFixtures.CUTTER_COST_CREDITS, cutterLimit),
                 EquipmentOffer.of(ASSEMBLY, EquipmentCatalogueFixtures.ASSEMBLY_STATION_COST_CREDITS),
                 EquipmentOffer.of(INSPECTOR, EquipmentCatalogueFixtures.INSPECTOR_COST_CREDITS)));
     }
+
+        private static EquipmentCatalogue catalogue(List<EquipmentOffer> offers) {
+                return new EquipmentCatalogue(
+                                new EquipmentCatalogueIdentity("catalogue.challenge.factory-basics", "1"), offers);
+        }
 
     private static CandidateDraftSnapshot snapshot(PlacedEquipment... equipment) {
         return new CandidateDraftSnapshot(List.of(equipment));

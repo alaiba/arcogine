@@ -142,6 +142,13 @@ G1-G5 are architectural substrate. G6-G7 establish governance workflow integrati
 
 ## 5. G1 — Durable fingerprint and controlled revision lineage
 
+### Current status
+
+**Partial.** ADR-0006 is implemented for the factory-model:v1 durable semantic fingerprint. The
+typed fingerprint and canonical binary encoding now coexist with the legacy `contentHash()`;
+controlled revision identity and lineage remain deferred to a subsequent ADR and implementation
+slice. G1 is therefore not complete until that revision and later persistence work exists.
+
 ### Goal
 
 Promote the current provisional content-derived identity into an explicit durable semantic fingerprint contract, and introduce a separate controlled revision lifecycle for historical lineage.

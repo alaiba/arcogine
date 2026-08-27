@@ -105,7 +105,7 @@ D2 Executability validation         PARTIAL
 D3 Publication / semantic identity  PARTIAL
     immutable publication           implemented
     content hash                    implemented, provisional policy
-    durable fingerprint contract    not yet — see ADR-0004
+    durable fingerprint contract    implemented for factory-model:v1 — see ADR-0006
     controlled revision identity    deferred
 D4 Runtime instantiation            PARTIAL
     runtime from published model    implemented
@@ -118,7 +118,8 @@ D1's acceptance criteria call for resource definitions and installed instances t
 
 Two callouts worth being explicit about:
 
-- `FactoryModelVersion.contentHash()` exists and is deterministic, but its own Javadoc describes it as an internal, in-memory identity policy, not a persisted/public/cross-process compatibility guarantee. See [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) for what remains to be specified (canonicalization, ordering semantics, algorithm/format versioning, compatibility guarantee) before it can be promoted to a durable fingerprint contract.
+- `FactoryModelVersion.fingerprint()` now implements the durable `factory-model:v1` contract from [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md). The legacy `contentHash()` remains a separate compatibility surface and must not be reinterpreted as the v1 fingerprint.
+- Controlled revision identity and lineage remain deferred; this durable semantic fingerprint does not make Governance G1 complete and does not introduce revision persistence or workflow state.
 - Model provenance now reaches both `IntegratedHandler` and `SimResult` (the latter via the simulation-module `ModelProvenanceSource` capability, so `SimRunner` stays free of any dependency on `IntegratedHandler` or the API layer). "Runtime observations/results identify the source model version" (the D3/D4 acceptance criteria below, and the equivalent criterion in the [engine-readiness plan](factory-simulation-engine-readiness.md)) is true at both the handler and result layers today; broader run-level provenance (run ID, scenario/input fingerprint, engine build) remains outstanding.
 
 ## 4. Current-model migration strategy

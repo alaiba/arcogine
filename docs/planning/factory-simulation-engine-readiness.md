@@ -4,7 +4,7 @@
 > **Scope:** Prepare Arcogine's factory runtime for external consumers after the canonical factory-model boundary is established  
 > **Authority:** Planning only; this document defines runtime-readiness gates, not current capability or accepted architecture  
 > **Prerequisite:** the model-seam entry gate (§1.1) — narrower than full D1-D4 in [Factory Design Capability](factory-design-capability.md)  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
 
 ## 1. Purpose
 
@@ -53,7 +53,7 @@ Required before engine Gate 1:
 
 This gate is satisfied by what has already landed. It does not require the D1 definition/instance split, the D2 stable finding taxonomy (codes/severity/entity metadata), or the D3 durable cross-process fingerprint contract — those remain open design-capability work, tracked independently, and are not prerequisites for Gate 1 or any later gate in this plan. Result-level model provenance (`SimResult` carrying the provenance `IntegratedHandler` already has) is implemented; broader run-level provenance (run ID, scenario/input fingerprint, engine build) remains a small, separately tracked follow-up rather than a gate blocker.
 
-## 2. Boundary with factory design
+## 2. Boundary with factory design and operational execution
 
 The [Factory Design Capability](factory-design-capability.md) owns model-side concerns:
 
@@ -67,7 +67,7 @@ Publication/model identity/provenance
 Deterministic instantiation boundary
 ```
 
-This plan owns runtime concerns:
+This plan owns deterministic simulation-runtime concerns:
 
 ```text
 Production orders
@@ -77,19 +77,31 @@ Resource dispatch
 Queues and assignments
 Active operations
 Transfers in progress
-Runtime events/observations
+Simulation runtime events/observations
 Performance
-Session control
+Simulation session control
 ```
 
-Where a concern crosses the boundary, the published model owns stable input semantics and runtime owns changing consequences. For example:
+Where a concern crosses the model/runtime boundary, the published model owns stable input semantics and runtime owns changing simulated consequences. For example:
 
 ```text
 Model:   resource position and footprint
-Runtime: transfer start/progress/completion caused by that layout
+Runtime: simulated transfer start/progress/completion caused by that layout
 ```
 
 Runtime may derive indexes or compiled structures from the published model, but it does not author another factory model and never mutates the published version.
+
+The sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track consumes stabilized production semantics later and owns the additional boundary created by real-world consequence. This plan therefore does **not** own:
+
+- production execution-context identity or environment separation;
+- verified operational actor/source/target trust and authorization;
+- external-device command acknowledgement/result lifecycles;
+- production deployment targeting/application or applied-artifact provenance;
+- telemetry/external-observation ingestion and source provenance;
+- modeled-versus-observed twin reconciliation;
+- fail-safe physical actuation, credential lifecycle, or live-adapter recovery semantics.
+
+`FactoryRuntime` is a consumer-neutral **simulation runtime**, not a production-control runtime by implication. An Operational Execution prototype may use Engine-owned semantics or synthetic fixtures while this plan is incomplete, but a synthetic operational adapter is not evidence that an Engine gate is complete, and protocol-driven operational types must not become a second production ontology.
 
 ## 3. Charter and architecture alignment
 
@@ -104,6 +116,7 @@ It follows these constraints:
 - Runtime contracts are established before transport-specific API shapes become public compatibility obligations.
 - The [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md) is a modeling reference, not a requirement for full ISA-95 implementation or conformance.
 - Game-specific scoring, rendering, progression, and player-economy concepts do not enter runtime semantics.
+- Operational trust, deployment, external-observation, and reconciliation semantics remain outside this simulation-readiness track.
 
 ## 4. Readiness policy
 
@@ -407,6 +420,8 @@ payload
 
 The sequence is monotonic within one session and makes order explicit independently of event timestamps.
 
+These are **simulation-runtime** events and observations. A future Operational Execution adapter may translate relevant production semantics into its own command/result and external-observation contracts, but Gate 4 does not define production telemetry envelopes, external source authenticity, or digital-twin reconciliation.
+
 ### 8.4 Acceptance criteria
 
 Gate 4 is satisfied when:
@@ -561,6 +576,8 @@ These capabilities are required before treating an external client as distributa
 
 A game save may wrap an Arcogine checkpoint with game-owned state. Arcogine does not own campaign progress, score, camera state, or user preferences.
 
+This distribution hardening is for simulation consumers. Production connectivity additionally depends on the Operational Execution/Digital Twin readiness gates and must not infer production safety from simulation packaging/recovery maturity.
+
 ## 12. Explicit non-goals
 
 Engine readiness does not require:
@@ -572,12 +589,16 @@ Engine readiness does not require:
 - raw-material procurement/suppliers/BOM merely for this initiative;
 - maintenance, failure, quality, or shift-management domains;
 - live production connectivity or operational execution;
+- production identity/trust/authorization or credential lifecycle;
+- production deployment application or effective applied-artifact provenance;
+- external telemetry ingestion or digital-twin reconciliation;
+- fail-safe physical actuation or production adapter recovery;
 - dynamic mutation of published factory structure while work is in flight;
 - a generic plugin framework;
 - multiplayer/distributed simulation/remote hosting;
 - game rendering, scoring, progression, narrative, tutorials, or player economy.
 
-The objective is a consumer-ready deterministic production runtime over a published factory model, not a universal MES/digital-twin/game framework.
+The objective is a consumer-ready deterministic production **simulation** runtime over a published factory model, not a universal MES/digital-twin/game framework.
 
 ## 13. Delivery order and first runtime milestone
 
@@ -637,7 +658,7 @@ This milestone deliberately excludes changing the canonical-model boundary, layo
 | Spatial metric/transfer policy | Layout benchmark prototype |
 | Public compatibility policy | Before external consumer contract publication |
 
-The canonical model/run/runtime boundary is tracked by [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md). Record additional accepted hard-to-reverse decisions as ADRs rather than expanding this plan into a decision log.
+The canonical model/run/runtime boundary is tracked by [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md). Operational execution-context/trust/command/deployment/reconciliation decisions belong to the sibling operational track and should receive their own ADRs when hard-to-reverse contracts are selected. Record additional accepted Engine decisions as ADRs rather than expanding this plan into a decision log.
 
 ## 15. Documentation lifecycle
 
@@ -650,6 +671,7 @@ As gates become implemented:
 - update the [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md) when manufacturing concepts change;
 - update [`../reference/api.md`](../reference/api.md) only for implemented public behavior;
 - add ADRs for durable execution, scheduling, session, persistence, and compatibility decisions;
-- keep headless acceptance scenarios executable and version-controlled.
+- keep headless acceptance scenarios executable and version-controlled;
+- keep production connectivity, deployment, external observation, reconciliation, and trust semantics in the sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track until they become implemented current architecture.
 
 Once the readiness initiative is complete or abandoned, reduce this file to a concise historical outcome or retire it after durable decisions and current behavior are represented in authoritative locations.

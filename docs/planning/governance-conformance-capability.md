@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
 > **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, not current product capability  
-> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Standards Alignment](../architecture/standards-alignment.md)
+> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
 
 ## 1. Purpose
 
@@ -36,9 +36,9 @@ Governed change / exceptions / risk
 Framework mappings and compliance projections
 ```
 
-The same primitives support design review, architecture governance, deployment approval, internal policy, safety constraints, customer commitments, auditability, digital-twin reconciliation, and agent governance.
+The same primitives support design review, architecture governance, deployment authorization, internal policy, safety constraints, customer commitments, auditability, digital-twin interpretation, and agent governance. Operational execution and reconciliation consume or produce some of the same facts, but remain a sibling capability rather than part of the Governance runtime.
 
-## 2. Relationship to current factory-model work
+## 2. Relationship to current factory-model and operational work
 
 The canonical factory-model work is the first implementation proving ground.
 
@@ -64,23 +64,57 @@ semantic ChangeSet (G2)
           ↓
 requirement-based conformance/evidence (G3-G5)
           ↓
-review/approval/governed-change integration (G6)
+review/authorization/governed-change integration (G6)
 ```
 
-Evaluating a proposed change's conformance before it is authorized is the strategic point (see [architecture §11](../architecture/governance-conformance.md#11-pre-change-conformance-is-strategically-important)); an approval/deployment integration that isn't preceded by conformance evaluation would authorize changes Arcogine hasn't yet assessed.
+Evaluating a proposed change's conformance before it is authorized is the strategic point (see [architecture §11](../architecture/governance-conformance.md#11-pre-change-conformance-is-strategically-important)); an authorization/deployment integration that isn't preceded by conformance evaluation would authorize changes Arcogine hasn't yet assessed.
 
 > **D5 semantic comparison is no longer only an editor convenience. It is an enabling primitive for governed change and impact analysis once the model seam is stable.**
 
 This does not imply generic patch/merge infrastructure. The need is semantic change attribution.
+
+### 2.1 Boundary with Operational Execution and Digital Twin
+
+The sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track is an early consumer/proving ground for Governance-owned identity, change, conformance, and evidence-use contracts.
+
+The dependency is explicit:
+
+```text
+Governance G1
+    durable semantic fingerprint + controlled revision identity
+        |
+        +--> Operational deployment / historical reconciliation
+
+Governance G2
+    semantic ChangeSet / impact
+        |
+        +--> Operational drift/calibration candidate change
+
+Governance G4
+    conformance / findings
+        |
+        +--> governed operational-change assessment when policy requires it
+
+Governance G5
+    Evidence + EvidenceUse
+        |
+        +--> independently provenanced operational observations used as evidence
+```
+
+Operational Execution owns telemetry/external-observation acquisition, operational source trust/authenticity provenance, command/result facts, deployment target application/effective artifact provenance, and modeled-versus-observed reconciliation. Governance owns the durable revision/change/evaluation/evidence-use/finding semantics that may reference those facts.
+
+Operational work may proceed headlessly with clearly scoped synthetic revision, ChangeSet, conformance, or evidence-use fixtures while G1/G2/G4/G5 are incomplete. Those fixtures **do not satisfy Governance gates** and must not escape as duplicate shared production abstractions. When the Governance-owned contract lands, the operational fixture is replaced by an adapter/mapping to it.
 
 ## 3. Delivery principles
 
 1. Framework-specific content remains downstream of generic conformance. Do not add SOC 2, ISO 27001, GDPR, or similar fields to core business objects.
 2. Do not create a monolithic `BusinessModel`. Each domain retains authoritative ownership of its facts.
 3. Distinguish modeled intent from observed reality. Structural facts may be provable from Arcogine state; operational assertions may require external evidence.
-4. Reuse external workflow systems where they already own organizational process state. Jira may remain authoritative for issue workflow while Arcogine owns semantic impact, evidence, and controlled revision lineage.
+4. Reuse external workflow systems where they already own organizational process state. Jira may remain authoritative for issue workflow while Arcogine owns semantic impact, evidence use, and controlled revision lineage.
 5. Keep semantic identity and controlled revision identity separate as required by [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md).
 6. Treat external requirement provenance as versioned input in addition to Arcogine's own requirement and assertion versioning. A standards-family label is not sufficient when an evaluation depends on a specific issuing authority, designation, edition/version, clause/locator, or adoption/profile.
+7. Do not bind raw external operational observations to a model fingerprint/revision at source. The revision relationship belongs to `EvidenceUse`, reconciliation, deployment correlation, or another interpretation record when applicable.
+8. Governance authorization and Operational deployment application are separate concerns. Governance may reference the deployment record but does not define adapter/application mechanics.
 
 ## 4. Delivery sequence
 
@@ -131,7 +165,7 @@ ControlledRevision
     external change reference, when applicable
 ```
 
-Approval and deployment are separate records referencing a controlled revision. They are not components of semantic identity and are not prerequisites for a revision to exist.
+Authorization and deployment are separate records referencing a controlled revision. They are not components of semantic identity and are not prerequisites for a revision to exist.
 
 ### Required properties
 
@@ -151,7 +185,7 @@ G1 is ready when:
 3. Revision lineage identifies predecessor/parent relationships under the chosen policy.
 4. Semantic content remains immutable for a published/referenced revision.
 5. Provenance records who or what created/published the revision and when.
-6. Approval and deployment records can independently reference a revision.
+6. Authorization and deployment records can independently reference a revision.
 7. A downstream result can retain the semantic fingerprint and, when applicable, the controlled revision ID.
 
 ### ADR trigger
@@ -316,6 +350,8 @@ EvidenceUse (binds evidence to one evaluation)
 
 External evidence is generally reusable across model versions as long as each `EvidenceUse` independently re-establishes scope and applicability; only structural evidence derived directly from Arcogine's own model state naturally collapses the two into one record. Initial adapters should be driven by a concrete requirement, not a desire to match a vendor's integration count.
 
+Operational observations sourced through the sibling Operational Execution capability keep their operational observation ID, source/time/trust provenance, and lifecycle. G5 references those facts as `Evidence`; it does not re-ingest them, add a source-level revision binding, or create a second telemetry identity.
+
 ### Acceptance criteria
 
 G5 is ready when:
@@ -325,12 +361,13 @@ G5 is ready when:
 3. An assertion can combine intended model state with observed external state.
 4. An `EvidenceUse` can become stale/invalid when its scope, applicable period, or affected semantics change, without invalidating the underlying `Evidence` record for other uses.
 5. A historical evaluation can identify the evidence set (and the `EvidenceUse` bindings) it relied on.
+6. A pre-existing operational observation can be referenced as evidence without changing its operational identity or provenance.
 
 ## 10. G6 — Governed change and external workflow integration
 
 ### Goal
 
-Connect semantic `ChangeSet`s, candidate controlled revisions, and technical evidence to enterprise change-management workflows without recreating Jira inside Arcogine.
+Connect semantic `ChangeSet`s, candidate controlled revisions, and technical evidence to enterprise change-management workflows without recreating Jira inside Arcogine or absorbing operational deployment mechanics.
 
 Target relationship:
 
@@ -355,14 +392,16 @@ pre-approved standard change, emergency
 justification, automated policy)
         |
         v
-Deployment record, when deployed
+Operational deployment record, when deployed
 ```
 
 ### Authority boundary
 
 Jira or another workflow system may remain authoritative for issue workflow, assignments, discussions, and transitions. Arcogine retains the stable external reference and the technical/governance facts required to explain the semantic change and its resulting revision.
 
-If Arcogine later owns an approval decision itself, that decision must be modeled explicitly with actor, authority, and provenance rather than inferred from mutable UI state.
+If Arcogine later owns an authorization decision itself, that decision must be modeled explicitly with actor, authority, and provenance rather than inferred from mutable UI state.
+
+The Operational Execution capability owns applying the authorized revision to a target, adapter/profile/transformation provenance, effective applied-artifact/external-version identity, operational verification/result facts, and reconciliation. G6 owns the governed-change/authorization interpretation and references that operational deployment record when it exists.
 
 ### Acceptance criteria
 
@@ -371,9 +410,10 @@ G6 is ready when:
 1. A `ChangeSet`/revision can reference an external change request.
 2. Impact and conformance information can be surfaced into the change workflow.
 3. Approval/authorization records reference the relevant controlled revision rather than defining revision identity.
-4. Deployment, when it occurs, is separately attributable to the deployed revision.
-5. External project-management metadata is not duplicated without semantic need.
-6. A reviewer can trace a governed model transition back to the external record that tracked/governed the change.
+4. Operational deployment, when it occurs, is separately attributable to the deployed revision through a referenced Operational Execution deployment record.
+5. Governance does not duplicate target adapter/application/effective-artifact mechanics owned by Operational Execution.
+6. External project-management metadata is not duplicated without semantic need.
+7. A reviewer can trace a governed model transition back to the external record that tracked/governed the change.
 
 ## 11. G7 — Exceptions and risk acceptance
 
@@ -471,7 +511,7 @@ G9 is ready when:
 
 The first milestone should deliberately avoid a full external compliance framework:
 
-> **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked to an external change request, evaluate one Arcogine-native requirement before authorization/deployment, record the approval decision separately, and reconstruct why the resulting semantic state was considered conformant.**
+> **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked to an external change request, evaluate one Arcogine-native requirement before authorization/deployment, record the authorization decision separately, and reconstruct why the resulting semantic state was considered conformant.**
 
 A concrete example could be an ownership requirement once the relevant owner/authority semantics exist.
 
@@ -486,7 +526,7 @@ One versioned requirement applies
 Pre-change assertion evaluates deterministically
 Finding is produced if violated
 External change-request provenance can be linked
-Approval is a separate record referencing the revision
+Authorization is a separate record referencing the revision
 Deployment is not required to prove the milestone
 Historical evaluation remains attributable after later changes
 No framework-specific field exists on the business object
@@ -505,7 +545,8 @@ Do not prioritize:
 - broad vendor-risk management;
 - a monolithic cross-domain business object graph;
 - generic Git branch/merge/rebase semantics for models without a concrete workflow;
-- a replacement for Jira or another organizational change-management system.
+- a replacement for Jira or another organizational change-management system;
+- telemetry ingestion, production command execution, target adapter/application logic, or digital-twin reconciliation inside Governance.
 
 Those may become valid product capabilities later, but they should not distract from the semantic substrate that differentiates Arcogine.
 
@@ -517,6 +558,7 @@ As implementation progresses:
 - update [`../architecture/governance-conformance.md`](../architecture/governance-conformance.md) when this proposed direction changes materially;
 - keep [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) as the authority for semantic identity vs. revision identity and the external change-control boundary;
 - update factory/domain architecture docs when identity/change requirements alter those models;
+- update the sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) when Governance G1/G2/G4/G5 contract availability changes its blocked/fixture-backed criteria;
 - update [`../architecture/standards-alignment.md`](../architecture/standards-alignment.md) when Arcogine moves from reference/mapping toward an actual tested conformance profile;
 - create ADRs for the concrete durable fingerprint contract, controlled revision persistence/lineage scheme, semantic `ChangeSet` contracts, temporal evidence semantics, and hard-to-reverse external protocols when implementation commits to them;
 - update product/reference docs only for capabilities that actually ship.

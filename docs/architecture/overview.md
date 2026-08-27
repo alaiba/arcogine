@@ -142,7 +142,7 @@ Agents and policies observe, decide, and emit events — they never directly mut
 
 ### Pricing, orders, and money: OfferPrice vs. OrderPrice
 
-`price` is not one universal simulation value — collapsing it into a single field is what caused the coupling and bugs described in [`docs/planning/architecture-assessment-events-state-observations.md`](../planning/architecture-assessment-events-state-observations.md). Arcogine distinguishes:
+`price` is not one universal simulation value. Arcogine distinguishes:
 
 | Concept | Meaning | Owner / location | Mutability |
 |---|---|---|---|
@@ -227,7 +227,7 @@ Treat any of the following as a signal to stop and reconsider the design, not ju
 - Finance inspecting another domain's mutable state to infer what happened, instead of reacting to an event that domain emitted;
 - an unbalanced journal entry able to enter financial state.
 
-Arcogine's current implementation already exhibits some of these signals — see [`docs/planning/architecture-assessment-events-state-observations.md`](../planning/architecture-assessment-events-state-observations.md) for a source-level review against this philosophy and a staged backlog for closing the gaps.
+These guardrails are part of the current architecture and are reinforced by executable architecture tests where the invariant can be checked mechanically. Remaining runtime-readiness work is tracked separately in [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md); that document is planning guidance, not architectural authority.
 
 ## Commercial, Operational, and Financial Truth: the Finance Domain
 
@@ -351,7 +351,7 @@ Adding Finance must not become an excuse to introduce a universal `WorldState` o
 
 ### Non-goal: sophisticated accounting
 
-Out of scope: GAAP/IFRS compliance, configurable revenue-recognition frameworks, accounts receivable/payable unless a scenario needs them, tax, depreciation, multi-currency, debt/equity financing, inventory accounting, budgeting, forecasting, or fiscal periods. A minimal double-entry ledger with an immediate-settlement policy is not that — it's the intentional current architecture, sized to establish ownership rather than sophistication. See [`docs/planning/architecture-assessment-events-state-observations.md`](../planning/architecture-assessment-events-state-observations.md) for the remaining migration plan.
+Out of scope: GAAP/IFRS compliance, configurable revenue-recognition frameworks, accounts receivable/payable unless a scenario needs them, tax, depreciation, multi-currency, debt/equity financing, inventory accounting, budgeting, forecasting, or fiscal periods. A minimal double-entry ledger with an immediate-settlement policy is not that — it's the intentional current architecture, sized to establish ownership rather than sophistication. Further finance capability should be introduced through an explicit planning and decision record when requirements justify it, rather than inferred from removed migration notes.
 
 ## Discrete-Event Simulation (DES)
 
@@ -390,7 +390,7 @@ Not every new metric or piece of derived behavior warrants a new `XHandler`/modu
 - Does that state have its own invariants worth protecting at construction/mutation time (the way `JournalEntry` rejects unbalanced entries)?
 - Does it react to events from other domains and produce its own facts, rather than just recomputing a view over another domain's existing state?
 
-If the answer is genuinely yes to state-with-invariants, it's a domain — a new `XHandler implements EventHandler`, its own `XObservation`, one line in `IntegratedHandler`'s explicit dispatch sequence (see "Adding a new domain" in the Target Architecture section of [`docs/planning/architecture-assessment-events-state-observations.md`](../planning/architecture-assessment-events-state-observations.md)). If the answer is no — it's a computed value over state another domain already owns — it belongs as a method/projection on the existing owner (like `FactoryHandler.completedSalesValue()`) or in a KPI/projection layer, not a new module. This keeps the module count matched to genuine ownership boundaries instead of granularity of features.
+If the answer is genuinely yes to state-with-invariants, it's a domain — a new `XHandler implements EventHandler`, its own `XObservation`, one line in `IntegratedHandler`'s explicit dispatch sequence (see [Event Dispatch Architecture](#event-dispatch-architecture)). If the answer is no — it's a computed value over state another domain already owns — it belongs as a method/projection on the existing owner (like `FactoryHandler.completedSalesValue()`) or in a KPI/projection layer, not a new module. This keeps the module count matched to genuine ownership boundaries instead of granularity of features.
 
 ## Module Structure
 
@@ -410,6 +410,11 @@ product/
 │                         JournalEntry, FinanceObservation — see "Commercial,
 │                         Operational, and Financial Truth" above
 ├── agents/               Agent framework: SalesAgent, AgentObservation
+├── consumer/
+│   └── challenge/        Challenge Readiness: game-owned ChallengeDefinition and
+│                         ChallengeDefinitionValidator (see
+│                         docs/planning/factory-design-game-challenge-readiness.md).
+│                         Headless — no dependency on any module below.
 └── interfaces/
     ├── api/              Spring Boot HTTP + SSE server: controllers, SimThread,
     │                     IntegratedHandler, SnapshotBuilder, DTOs
@@ -428,9 +433,17 @@ types ← simulation ← factory
             api ←────────┘ (all of the above)
                 ↑
             cli (entry point)
+
+challenge   (no dependency on any module above; a sibling, game-owned boundary)
 ```
 
 Each module exposes a clean public API and hides implementation details. Domain modules (`factory`, `economy`, `agents`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
+
+`challenge` is deliberately outside this dependency graph: it is a game-owned Challenge Readiness
+module (`com.arcogine.challenge`) that has no `project(...)` dependency on `types`, `simulation`,
+any domain module, `api`, or `cli`, and no Spring dependency. It defines an immutable
+`ChallengeDefinition` and a `ChallengeDefinitionValidator` that is a distinct validation domain
+from `FactoryModelValidator` — see the Challenge Readiness planning doc for the ownership boundary.
 
 ## Event Dispatch Architecture
 

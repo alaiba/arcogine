@@ -21,6 +21,23 @@ Arcogine's documentation is layered, and each layer answers a different question
 
 When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail. Proposed architecture references and Proposed ADRs describe a target or decision under consideration; they do not override current-state documentation. Accepted ADRs constrain intended architecture, but they likewise do not make unimplemented behavior current capability.
 
+## Cross-track ownership map
+
+The active architecture/readiness tracks are siblings with explicit ownership boundaries. They may progress in parallel using clearly scoped fixtures, but one track must not invent durable substitutes for another track's owned semantics.
+
+| Concern | Primary owner | Boundary |
+|---|---|---|
+| Canonical production-system semantics, validation, publication, deterministic instantiation | [Factory design architecture](architecture/factory-design.md) / [Factory design capability](planning/factory-design-capability.md) | Published semantic model is the shared source for downstream contexts |
+| Deterministic workload, dispatch, simulation session, runtime events/observations, spatial consequences | [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Owns simulation/runtime truth; does not become a production-control runtime by default |
+| Durable semantic fingerprint policy, controlled revision lineage, ChangeSets, requirements/assertions, conformance, evidence use, findings/exceptions | [Governance and conformance](architecture/governance-conformance.md) / [capability plan](planning/governance-conformance-capability.md) | Operational facts may be consumed as evidence, but Governance does not ingest telemetry or reconcile the twin |
+| Execution contexts, verified operational identity/trust, command/result lifecycle, deployment application, external observations, reconciliation, drift/calibration feedback, adapter resilience | [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) / [readiness plan](planning/operational-execution-digital-twin-readiness.md) | Raw external observations keep independent provenance; operational work references Governance-owned revision/ChangeSet/evidence-use contracts when those exist |
+| Game challenge identity, admissibility, scoring, attempt provenance/comparison | [Factory-design game challenge readiness](planning/factory-design-game-challenge-readiness.md) | Sibling proving ground; no generic evaluation framework or domain-type unification |
+
+Two dependency rules are especially important:
+
+1. **Fixtures are not sibling completion.** Operational work may use synthetic revision/ChangeSet/evidence fixtures to prove local behavior, but those fixtures do not satisfy Governance G1/G2/G4/G5; likewise synthetic operational adapters do not satisfy Engine Readiness gates.
+2. **External observations are not revision-bound at ingestion.** Their source/time/trust provenance is independent. Model/revision binding belongs to reconciliation, interpretation, deployment correlation, or Governance `EvidenceUse` when applicable.
+
 ## Development and contributing
 
 The root [README](../README.md#quick-start) owns environment setup and local-run instructions. Contributor and testing documents reference that setup rather than maintaining parallel startup procedures.
@@ -39,13 +56,14 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | [Architecture](architecture/overview.md) | Current design philosophy (including Events–State–Observations), module structure, determinism contract, event dispatch, technology stack |
 | [Factory design architecture](architecture/factory-design.md) | Proposed cross-consumer factory-design semantics, scenario/model/runtime separation, publication boundary, spatial ownership, and design-lifecycle principles |
 | [Governance and conformance architecture](architecture/governance-conformance.md) | Proposed cross-domain model lineage, semantic change, requirements, conformance, evidence, governed change, and compliance-as-projection architecture |
+| [Operational execution and digital twin architecture](architecture/operational-execution-digital-twin.md) | Proposed execution-context, verified identity/trust, command/result, deployment, external-observation, reconciliation, drift/calibration, and industrial-adapter boundaries |
 | [ADR-0003: Canonical factory model boundary](architecture/decisions/0003-canonical-factory-model-boundary.md) | Accepted decision that `ScenarioConfig` remains a run envelope while immutable published factory-model versions bridge design and runtime |
 | [ADR-0004: Model identity, revision lineage, and external change control](architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) | Accepted decision separating semantic model fingerprint from controlled revision/change-management identity, with external change-management systems referenced, not depended on |
 | [Standards alignment](architecture/standards-alignment.md) | Standards influence and claim boundaries across ISA-95, ISO 22400, DES, RAMI 4.0, and future integrations |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained Arcogine-to-ISA-95 concept mapping, deliberate divergences, structural gaps, and design-review policy |
 | [Vision (superseded)](product/vision.md) | Pointer to the Product Charter; retains naming/etymology history only |
 | [Decision records](architecture/decisions/README.md) | Architecture/design decision history — why significant choices were made |
-| [SECURITY.md](../.github/SECURITY.md) | Security policy, hardening posture, deployment constraints |
+| [SECURITY.md](../.github/SECURITY.md) | Security policy, hardening posture, deployment constraints, and mature operational trust boundary |
 
 ## Examples
 
@@ -62,6 +80,7 @@ These documents are internal planning artifacts, not user-facing guides:
 | [Factory design capability plan](planning/factory-design-capability.md) | Immediate upstream work: canonical model seam, validation, publication/provenance, and behavior-preserving runtime instantiation |
 | [Governance and conformance capability plan](planning/governance-conformance-capability.md) | Cross-cutting sequence after the model seam: durable lineage, semantic ChangeSets, generic conformance, evidence, external-workflow governed change (Jira anticipated), framework mappings, and audit projections |
 | [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Runtime gates after the model seam: explicit workload/work execution, deterministic dispatch, session control, observations/events, and spatial consequences |
+| [Operational execution and digital twin readiness](planning/operational-execution-digital-twin-readiness.md) | Sibling readiness track for execution-context identity, verified trust/authority, command/deployment lifecycle, external observations, reconciliation, drift/calibration, resilience, and a first live-system adapter proving ground, with explicit Governance/Engine prerequisites |
 | [Factory-design game challenge readiness](planning/factory-design-game-challenge-readiness.md) | Game-owned parallel track for challenge identity/validation, candidate admissibility, catalogue and budget rules, deterministic evaluation, attempt provenance/comparison, and cross-track learning with governance |
 | [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Downstream consumer boundary between the game and Arcogine, including readiness entry criteria and ownership constraints |
 | [Factory-design game vertical slice](planning/factory-design-game-vertical-slice.md) | Product hypothesis for the first playable slice: fixed contract, capacity/layout/cost trade-offs, diagnosis, and deterministic redesign |

@@ -4,6 +4,8 @@ Arcogine sits at the intersection of manufacturing systems, digital twins, simul
 
 Per the [Product Charter](../product/charter.md), Arcogine's mature product direction spans design, understanding, simulation, verification, operation, monitoring, and improvement over one executable business model. Standards matter where they improve semantic continuity, interoperability, verification, or operational trust. They do not define Arcogine's product identity or require speculative implementation.
 
+The proposed [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md) owns the future semantic integration boundary for real operational systems: execution context, verified identity/trust, authority, command/result lifecycle, deployment provenance, independent operational observations, reconciliation, and adapter transformation provenance. Protocol and interchange standards sit behind that boundary rather than defining Arcogine's canonical ontology.
+
 ## How to read alignment claims
 
 These claims are distinct:
@@ -156,6 +158,8 @@ AAS may become relevant when Arcogine represents or exchanges industrial asset i
 
 **Design-for rule:** Do not assume every machine property belongs in one fixed Java record forever. Preserve stable identity and a path to extensible, typed asset metadata when a real integration requires it.
 
+AAS adapters must map through Arcogine's operational identity/observation/deployment boundary. AAS submodels or semantic IDs may inform mappings, but they do not become the canonical Arcogine model solely because an external asset uses them.
+
 **Not current:** Arcogine does not have an AAS adapter, AAS submodels, or a generalized equipment-capability model.
 
 ### ISO 9001
@@ -176,11 +180,23 @@ Arcogine's headless simulation and explicit interfaces make an adapter plausible
 
 ### OPC UA / IEC 62541
 
-Relevant when Arcogine ingests live equipment observations or exposes digital-twin information. A future integration must distinguish modeled state, observed external state, and any reconciled twin state.
+Relevant when Arcogine ingests live equipment observations, issues controlled operations to an industrial endpoint, or exposes digital-twin information. The [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md) is the semantic owner for such an integration.
+
+A future OPC UA profile must preserve:
+
+- Arcogine semantic identity separately from external node/asset identity;
+- raw external observation provenance separately from model/revision interpretation;
+- verified peer/source/target trust appropriate to consequence;
+- command/request/acknowledgement/result separation;
+- adapter/profile/mapping/transformation versioning;
+- applied-artifact or authoritative external-version provenance when configuration is deployed;
+- modeled, observed, and reconciled twin state as distinct concepts.
+
+The IEC 62541 security model or a selected profile may later supply concrete authentication/integrity mechanisms, but the architectural trust requirement exists independently of that mechanism choice.
 
 ### MQTT
 
-Potential transport for distributed observations and commands. Transport choice must not weaken authority, ordering, replay, or command/fact boundaries.
+Potential transport for distributed observations and commands. Transport choice must not weaken identity verification, authority, integrity/authenticity, ordering, replay, idempotency, command/fact boundaries, or observation provenance. Topic names and payload schemas must map into Arcogine semantic contracts rather than define them.
 
 ### BPMN
 
@@ -196,7 +212,7 @@ Relevant only if independently developed autonomous agents need standardized int
 
 ### ISO 8000
 
-Relevant when external master or operational data becomes authoritative input. Data provenance, quality rules, identity, and reconciliation will then require explicit models.
+Relevant when external master or operational data becomes authoritative input. Data provenance, quality rules, identity, and reconciliation will then require explicit models. Raw external data should retain independent source provenance; any binding to an Arcogine controlled revision belongs to interpretation/evidence-use time when applicable.
 
 ### ISO 10303 / STEP
 
@@ -215,6 +231,25 @@ Relevant when Arcogine processes personal data, such as identifiable operator ac
 Potential analytical formats for large event histories, KPI series, experiment results, and comparison datasets. They are storage/interchange choices, not domain models.
 
 ---
+
+## Operational integration policy
+
+The first industrial adapter should be selected for learning value rather than breadth. Before a protocol-backed adapter can be considered production-consequential, the operational track must already define the protocol-independent contracts for:
+
+```text
+execution context
+verified identity / trust
+capability and authorization
+command lifecycle
+external observation provenance
+temporal + unit semantics
+mapping/transformation version
+applied-artifact provenance
+reconciliation
+recovery / ambiguous outcomes
+```
+
+A protocol test server may prove adapter mechanics before physical integration. Connecting successfully to a broker/server, implementing a vendor SDK, or reproducing a protocol object model does not by itself establish Operational Execution readiness or standards conformance.
 
 ## Conceptual foundations
 
@@ -238,11 +273,11 @@ These are not standards conformance targets but remain central to Arcogine's cre
 | Queueing theory / Little's Law | Align now | Operational analysis and validation foundation |
 | OpenAPI | Align now | Intended machine-readable HTTP contract format; not authoritative yet |
 | RAMI 4.0 | Design for | Classification and positioning reference |
-| Asset Administration Shell | Design for | Future asset/digital-twin integration path |
+| Asset Administration Shell | Design for | Future asset/digital-twin integration path behind Arcogine semantic boundaries |
 | ISO 9001 | Design for | Quality-management context, not certification claim |
 | FMI | Design for | Potential interface adapter for model exchange/co-simulation |
-| OPC UA / IEC 62541 | Note for later | Live industrial observation and twin integration |
-| MQTT | Note for later | Distributed messaging transport |
+| OPC UA / IEC 62541 | Note for later | Candidate live industrial adapter; operational identity/trust/command/observation semantics come first |
+| MQTT | Note for later | Distributed messaging transport behind the same operational semantics |
 | BPMN | Note for later | Business/approval workflow notation |
 | SCOR | Note for later | Supply-chain expansion |
 | FIPA | Note for later | External multi-agent interoperability |

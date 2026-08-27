@@ -53,6 +53,38 @@ class Gate2MultiResourceDispatchAcceptanceTest {
         return FactoryRuntime.forModel(twoEligibleMachinesModel());
     }
 
+    private static final long POOL_A_DURATION = 100;
+    private static final long POOL_B_DURATION = 5;
+
+    /**
+     * Two disjoint eligible pools -- {@code {M1, M2}} for product A's operation, {@code {M3, M4}}
+     * for product B's -- so a job waiting on one pool can never be dispatched by the other pool
+     * freeing up.
+     */
+    private static FactoryModelVersion twoDisjointPoolsModel() {
+        FactoryModel model = new FactoryModel(
+                List.of(
+                        new ResourceDefinition(new MachineId(1), "Mill A1", 1, null, 0),
+                        new ResourceDefinition(new MachineId(2), "Mill A2", 1, null, 0),
+                        new ResourceDefinition(new MachineId(3), "Mill B1", 1, null, 0),
+                        new ResourceDefinition(new MachineId(4), "Mill B2", 1, null, 0)),
+                List.of(
+                        new OperationDefinition(
+                                1,
+                                "Pool A Route",
+                                List.of(new OperationStepDefinition(
+                                        1, "Pool A", Set.of(new MachineId(1), new MachineId(2)), POOL_A_DURATION))),
+                        new OperationDefinition(
+                                2,
+                                "Pool B Route",
+                                List.of(new OperationStepDefinition(
+                                        2, "Pool B", Set.of(new MachineId(3), new MachineId(4)), POOL_B_DURATION)))),
+                List.of(
+                        new ProductDefinition(new ProductId(1), "Product A", 1),
+                        new ProductDefinition(new ProductId(2), "Product B", 2)));
+        return FactoryModelPublisher.publish(model);
+    }
+
     @Test
     void publishedMultiEligibleModelSurvivesAssemblyAndDispatchesBothOrdersConcurrently() {
         FactoryRuntime runtime = freshRuntime();
@@ -140,5 +172,57 @@ class Gate2MultiResourceDispatchAcceptanceTest {
             events.add(event);
         }
         assertTrue(!events.isEmpty(), "the order must still complete through the one remaining eligible machine");
+    }
+
+    /**
+     * An undispatchable head-of-line pending entry must not block a later entry with a disjoint
+     * eligible set from dispatching once its own pool frees up. See {@code
+     * FactoryHandler#tryDispatchPendingMultiEligible}.
+     */
+    @Test
+    void disjointPendingPoolDispatchesEvenWhileAnEarlierUnrelatedPoolIsStillFull() {
+        FactoryRuntime runtime = FactoryRuntime.forModel(twoDisjointPoolsModel());
+
+        // Saturate pool A ({M1, M2}) -- both machines busy for a long time.
+        runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+        runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+
+        // Saturate pool B ({M3, M4}) -- both machines busy, but only briefly.
+        runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE);
+        runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE);
+
+        // Both pools are now full: the next order for each pool must wait. Pool A's waiting order
+        // is queued first, so it sits at the head of the pending backlog.
+        OrderId poolAWaiting = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+        OrderId poolBWaiting = runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE);
+
+        JobView poolAJobBefore =
+                runtime.jobsView().filter(j -> j.orderId().equals(poolAWaiting)).findFirst().orElseThrow();
+        JobView poolBJobBefore =
+                runtime.jobsView().filter(j -> j.orderId().equals(poolBWaiting)).findFirst().orElseThrow();
+        assertEquals(null, poolAJobBefore.currentMachine(), "pool A's waiting order must not be dispatched yet");
+        assertEquals(null, poolBJobBefore.currentMachine(), "pool B's waiting order must not be dispatched yet");
+
+        // Pool B's short-duration work finishes first, freeing one of {M3, M4} -- well before pool
+        // A's long-duration work ever completes. The still-pending, still-undispatchable pool-A
+        // entry at the head of the backlog must not stop pool B's waiting order from dispatching.
+        Event event = runtime.advance().orElseThrow();
+        assertTrue(
+                event.payload() instanceof com.arcogine.core.event.EventPayload.TaskEnd,
+                "the first event to fire must be one of pool B's short-duration completions");
+
+        JobView poolBJobAfter =
+                runtime.jobsView().filter(j -> j.orderId().equals(poolBWaiting)).findFirst().orElseThrow();
+        assertTrue(
+                poolBJobAfter.currentMachine() != null,
+                "pool B's waiting order must dispatch as soon as its own pool frees up, even though "
+                        + "pool A's unrelated, still-full pool is stuck ahead of it in the pending backlog");
+
+        JobView poolAJobAfter =
+                runtime.jobsView().filter(j -> j.orderId().equals(poolAWaiting)).findFirst().orElseThrow();
+        assertEquals(
+                null,
+                poolAJobAfter.currentMachine(),
+                "pool A's waiting order correctly remains pending -- its own pool is still full");
     }
 }

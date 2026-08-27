@@ -25,6 +25,7 @@ import com.arcogine.types.SimTime;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -202,29 +203,42 @@ public class FactoryHandler implements EventHandler {
      * Reconsiders multi-eligible pending work against its whole eligible set, not just whichever
      * machine most recently changed state -- so a machine that was offline (or busy) when a job
      * first waited can still pick it up once it becomes available, rather than the job staying
-     * stranded on whichever machine happened to be selected when it was first attempted. Processes
-     * strict FIFO order: stops at the first entry that still cannot be placed, rather than
-     * skipping ahead to a later one, so dispatch order stays predictable.
+     * stranded on whichever machine happened to be selected when it was first attempted.
+     *
+     * <p>Scans for the earliest entry that can actually be placed right now, rather than only
+     * ever looking at the front of the queue: two entries with disjoint eligible sets (e.g. one
+     * waiting on {@code {M1, M2}}, another on {@code {M3, M4}}) must not head-of-line block each
+     * other -- an undispatchable first entry must not stall a later entry whose own eligible
+     * machine has just freed up. Among entries that are dispatchable in a given pass, the
+     * earliest-queued one is dispatched first, so relative order is preserved wherever it
+     * actually matters (competing entries that could land on the same machine).
      */
     private void tryDispatchPendingMultiEligible(Scheduler scheduler, SimTime currentTime) {
-        while (!pendingMultiEligible.isEmpty()) {
-            PendingDispatch head = pendingMultiEligible.peekFirst();
-            MachineId machineId = selectMachine(head.eligibleMachines());
-            Machine machine = machines.getMut(machineId);
-            if (!machine.canAcceptJob()) {
-                return;
+        boolean dispatchedOne = true;
+        while (dispatchedOne) {
+            dispatchedOne = false;
+            for (Iterator<PendingDispatch> it = pendingMultiEligible.iterator(); it.hasNext(); ) {
+                PendingDispatch candidate = it.next();
+                MachineId machineId = selectMachine(candidate.eligibleMachines());
+                Machine machine = machines.getMut(machineId);
+                if (!machine.canAcceptJob()) {
+                    continue;
+                }
+                it.remove();
+
+                machine.startJob(candidate.jobId());
+                Job job = jobs.get(candidate.jobId());
+                job.start(machineId);
+
+                SimTime endTime = currentTime.plus(candidate.duration());
+                scheduler.schedule(Event.of(
+                        endTime, new EventPayload.TaskStart(candidate.jobId(), machineId, candidate.routingIndex())));
+                scheduler.schedule(Event.of(
+                        endTime, new EventPayload.TaskEnd(candidate.jobId(), machineId, candidate.routingIndex())));
+
+                dispatchedOne = true;
+                break;
             }
-            pendingMultiEligible.removeFirst();
-
-            machine.startJob(head.jobId());
-            Job job = jobs.get(head.jobId());
-            job.start(machineId);
-
-            SimTime endTime = currentTime.plus(head.duration());
-            scheduler.schedule(
-                    Event.of(endTime, new EventPayload.TaskStart(head.jobId(), machineId, head.routingIndex())));
-            scheduler.schedule(
-                    Event.of(endTime, new EventPayload.TaskEnd(head.jobId(), machineId, head.routingIndex())));
         }
     }
 

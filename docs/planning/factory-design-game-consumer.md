@@ -3,8 +3,8 @@
 > **Status:** Proposed  
 > **Scope:** A separate, single-player factory-design game consuming Arcogine as its production engine  
 > **Authority:** Planning only; this document does not describe current capability or accepted architecture  
-> **Dependency:** Headless [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md) may progress independently; playable/runtime-integrated game implementation begins only after the model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) and Gates 1-5 in that same document are satisfied  
-> **Related:** [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md), [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md), [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Dependency:** Headless [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md) may progress independently; playable/runtime-integrated game implementation begins only after the model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)), Engine Gates 1-5, and the reference-challenge work-decomposition prerequisite recorded by [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md) are satisfied  
+> **Related:** [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md), [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md), [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Initiative summary
 
@@ -49,6 +49,7 @@ The game may own an editor-specific draft, but that draft is not the authoritati
 [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) owns runtime concerns:
 
 - production orders, quantity semantics, and work execution;
+- work decomposition when one accepted production requirement must expose multiple independently dispatchable execution units;
 - capability/eligibility-based deterministic dispatch;
 - consumer-neutral session and bounded advancement;
 - supported observations and externally visible runtime events;
@@ -79,12 +80,13 @@ Before playable or runtime-integrated game implementation starts, Arcogine must 
 
 1. The model-seam entry gate (§1.1 of Factory Simulation Engine Readiness): the behavior-preserving canonical-model seam, narrower than the full D1-D4 acceptance criteria.
 2. Gate 1: explicit production workload and separate execution semantics.
-3. Gate 2: capability/eligibility-based deterministic resource dispatch.
+3. Gate 2: capability/eligibility-based deterministic resource dispatch for independently dispatchable work.
 4. Gate 3: consumer-neutral simulation session with bounded advancement.
-5. Gate 4: stable observations and ordered external runtime events.
-6. Gate 5: deterministic spatial runtime consequences.
+5. The reference-challenge work-decomposition prerequisite from ADR-0009: one fixed accepted production requirement can expose multiple independently dispatchable execution units so equivalent bottleneck capacity can affect that same contract.
+6. Gate 4: stable observations and ordered external runtime events, including the execution identities/correlation introduced by work decomposition.
+7. Gate 5: deterministic spatial runtime consequences.
 
-The headless capacity and layout benchmarks must pass before a game UI is used as evidence for those capabilities.
+The headless dispatch-capacity, fixed-contract work-decomposition, and layout benchmarks must pass before a game UI is used as evidence for those capabilities. Gate 2 remains complete independently of work decomposition; the extra prerequisite exists because the current reference challenge specifically requires both semantics together.
 
 ## 3. Charter and semantic alignment
 
@@ -117,7 +119,7 @@ The demonstrator is a factory-layout challenge in which the player receives a fi
 | G-01 | Bounded challenge | One level defines a floor, starting budget, fixed contract, deadline, and unambiguous success/failure condition. |
 | G-02 | Factory editor | The player can place, move, rotate, and remove resource instances in a game-owned draft. Out-of-bounds/overlap problems are shown clearly. |
 | G-03 | Small equipment catalogue | At least three resource types support three sequential operations. Multiple instances of a type can be installed. |
-| G-04 | Capacity matters | Adding compatible capacity at a bottleneck can reduce queueing or completion time. |
+| G-04 | Capacity matters | Adding compatible capacity at a bottleneck can reduce queueing or completion time for the fixed production contract. |
 | G-05 | Distance matters | Transfer time depends deterministically on semantic layout. |
 | G-06 | Design-run loop | The player can validate/publish a draft, start a run, pause, step, reset, and return to design mode. Structural edits are between runs initially. |
 | G-07 | Legible operation | The player can see resource state, queues, active work, transfers, contract progress, and core KPIs. |
@@ -188,13 +190,13 @@ Live placement/movement/removal during active work is not required for the verti
 | Shared executability validation | Arcogine design/model boundary |
 | Published model identity/version/provenance | Arcogine design/model boundary |
 | Products, operations, resource definitions/instances, semantic layout | Arcogine canonical model |
-| Orders, work items, queues, dispatch, processing, transfers in progress | Arcogine runtime |
+| Orders, work decomposition/execution units, queues, dispatch, processing, transfers in progress | Arcogine runtime |
 | Simulation clock, event ordering, deterministic random behavior | Arcogine runtime |
 | Runtime observations and KPIs | Arcogine runtime |
 | Model/command/event/observation compatibility contracts | Arcogine |
 | Combined save file | Game wrapper around Arcogine checkpoint plus game-owned state |
 
-Arcogine should not acquire `Level`, `StarRating`, `Unlock`, `PlayerCurrency`, challenge-evaluation policy, game-attempt history, decorative furniture, campaign progress, or tutorial steps. The game should not reproduce validation, scheduling, queueing, dispatch, transfer, or KPI semantics that Arcogine owns.
+Arcogine should not acquire `Level`, `StarRating`, `Unlock`, `PlayerCurrency`, challenge-evaluation policy, game-attempt history, decorative furniture, campaign progress, or tutorial steps. The game should not reproduce validation, workload decomposition, scheduling, queueing, dispatch, transfer, or KPI semantics that Arcogine owns.
 
 ## 6. Client-specific requirements after upstream readiness
 
@@ -227,6 +229,8 @@ The initial game economy may include starting cash, purchase/resale prices, cont
 These are game rules. They do not extend Arcogine Finance unless a separate product-level use case creates a genuine engine requirement.
 
 Challenge identity/version, admissibility, evaluation-policy identity/version, score/success semantics, and attempt provenance/history are specified in [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md). Challenge evaluation may interpret authoritative Arcogine outcome facts but must not recreate production semantics to derive facts Arcogine did not report.
+
+The fixed challenge workload remains one game-owned production requirement. The game does not split it into multiple Arcogine Orders merely to obtain parallel capacity. Arcogine's work-decomposition capability is responsible for exposing independently dispatchable execution units while preserving the authoritative parent production requirement.
 
 ### 6.6 Persistence and local runtime
 
@@ -264,20 +268,22 @@ The vertical slice does not require:
 | Scoring formula | Playtests showing meaningful factory trade-offs |
 | Tutorial sequence | First-time-user observation |
 
-Canonical model, order/work semantics, dispatch, session behavior, event envelopes, and transfer rules are upstream decisions and do not belong here.
+Canonical model, order/work semantics, work decomposition, dispatch, session behavior, event envelopes, and transfer rules are upstream decisions and do not belong here.
 
 ## 9. Playable/runtime-integrated game implementation entry criteria
 
 Headless Challenge Readiness C1-C5 is explicitly outside this entry gate and may proceed earlier under the constraints in §2.3. Playable or runtime-integrated game implementation may begin when all of the following are true:
 
 1. The model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) is satisfied.
-2. Gates 1-5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied.
-3. A game-like draft can project into the canonical model and publish a `FactoryModelVersion` without using mutable runtime classes.
-4. The headless capacity benchmark proves equivalent-resource dispatch and exposes the resulting bottleneck.
-5. The headless layout benchmark proves deterministic transfer consequences across distinct published model versions.
-6. A reference consumer can instantiate, submit workload, advance, observe, and reset without Arcogine internals.
-7. Model and runtime observation contracts are stable enough for a prototype consumer.
-8. No unresolved game requirement requires the client to reproduce authoritative Arcogine logic.
+2. Gates 1-3 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied, including Gate 2 at its deterministic-dispatch boundary.
+3. The ADR-0009 work-decomposition prerequisite is implemented and a single fixed accepted production requirement can exercise parallel equivalent bottleneck capacity without the game manufacturing independent Orders.
+4. Gates 4-5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied after accounting for the execution identities/correlation introduced by work decomposition.
+5. A game-like draft can project into the canonical model and publish a `FactoryModelVersion` without using mutable runtime classes.
+6. The headless capacity benchmark proves equivalent-resource dispatch, and a fixed-contract decomposition benchmark proves the current reference workload can actually use that capacity.
+7. The headless layout benchmark proves deterministic transfer consequences across distinct published model versions.
+8. A reference consumer can instantiate, submit workload, advance, observe, and reset without Arcogine internals.
+9. Model and runtime observation contracts are stable enough for a prototype consumer.
+10. No unresolved game requirement requires the client to reproduce authoritative Arcogine logic.
 
 ## 10. Vertical-slice acceptance criteria
 
@@ -288,7 +294,7 @@ The game vertical slice is successful when:
 3. A fixed production contract runs independently of pricing, stochastic demand, and autonomous sales behavior.
 4. Quantity represents real production workload rather than primarily commercial value.
 5. The same resources arranged differently produce different deterministic completion times where transfer distance differs.
-6. Adding compatible capacity at the actual bottleneck changes throughput, queueing, utilization, or completion time.
+6. Adding compatible capacity at the actual bottleneck changes throughput, queueing, utilization, or completion time for the same fixed production contract; the game does not achieve this by rewriting the contract as artificial independent Orders.
 7. The player can identify the bottleneck and major delay sources from supported observations presented by the game.
 8. Invalid drafts display structured diagnostics and do not publish or partially mutate runtime state.
 9. Retrying the same published model with the same seed/workload/commands reproduces behavior and result.

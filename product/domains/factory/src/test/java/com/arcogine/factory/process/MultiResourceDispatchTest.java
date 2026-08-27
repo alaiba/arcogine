@@ -12,6 +12,7 @@ import com.arcogine.factory.machines.MachineStore;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
+import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
@@ -45,6 +46,25 @@ class MultiResourceDispatchTest {
     private static Event orderEvent(long time) {
         return Event.of(
                 new SimTime(time), new EventPayload.OrderCreation(new ProductId(1), 1, 10.0));
+    }
+
+    /** A two-step routing whose second step is the one with two eligible machines. */
+    private static FactoryHandler secondStepMultiEligibleHandler() {
+        MachineStore machines = new MachineStore();
+        machines.add(new Machine(new MachineId(0), "Prep", 1, null, 0));
+        machines.add(new Machine(new MachineId(1), "Mill A", 1, null, 0));
+        machines.add(new Machine(new MachineId(2), "Mill B", 1, null, 0));
+
+        RoutingStore routings = new RoutingStore();
+        routings.addRouting(new Routing(
+                1,
+                "Widget Route",
+                List.of(
+                        new RoutingStep(1, "Prep", new MachineId(0), 5),
+                        new RoutingStep(2, "Milling", Set.of(new MachineId(1), new MachineId(2)), 5))));
+        routings.addProductRouting(new ProductId(1), 1);
+
+        return new FactoryHandler(machines, routings, List.of(new ProductId(1)));
     }
 
     @Test
@@ -160,5 +180,80 @@ class MultiResourceDispatchTest {
                 jobBAfter.currentMachine(),
                 "a job stranded waiting for either eligible machine must dispatch to whichever "
                         + "one actually comes available, not remain stuck");
+    }
+
+    /**
+     * The multi-eligible pending path is reached from {@code handleTaskEnd} advancing a job to
+     * its *next* routing step too, not only from a job's very first step in {@code submitOrder}.
+     */
+    @Test
+    void nextRoutingStepPendingOnBothEligibleMachinesDispatchesOnceOneFreesUp() {
+        FactoryHandler h = secondStepMultiEligibleHandler();
+        Scheduler sched = new Scheduler();
+
+        // Saturate both of step two's eligible machines before the job ever reaches that step.
+        h.machines.getMut(new MachineId(1)).startJob(new JobId(901));
+        h.machines.getMut(new MachineId(2)).startJob(new JobId(902));
+
+        Event order = orderEvent(1);
+        sched.schedule(order);
+        sched.nextEvent();
+        h.handleEvent(order, sched);
+        assertEquals(new MachineId(0), h.jobsView().findFirst().orElseThrow().currentMachine());
+
+        // Step one (Prep) completes; step two's eligible machines are both busy, so the job must
+        // wait rather than being pinned to one of them.
+        Event stepOneEnd = sched.nextEvent().orElseThrow();
+        h.handleEvent(stepOneEnd, sched);
+        JobId jobId = h.jobsView().findFirst().orElseThrow().id();
+        assertEquals(null, h.job(jobId).currentMachine(), "step two must be waiting, not yet dispatched");
+
+        // Mill B frees up; re-announcing it online must dispatch the waiting job onto it.
+        h.machines.getMut(new MachineId(2)).completeJob(new JobId(902));
+        Event millBOnline = Event.of(
+                new SimTime(20), new EventPayload.MachineAvailabilityChange(new MachineId(2), true));
+        h.handleEvent(millBOnline, sched);
+
+        assertEquals(
+                new MachineId(2),
+                h.job(jobId).currentMachine(),
+                "the pending step-two job must dispatch once one of its eligible machines frees up");
+    }
+
+    /**
+     * An unrelated availability event must not force-dispatch multi-eligible pending work while
+     * none of its eligible machines can actually accept it yet.
+     */
+    @Test
+    void pendingWorkStaysWaitingWhileNoEligibleMachineCanAcceptItYet() {
+        FactoryHandler h = twoEligibleMachinesHandler();
+        Scheduler sched = new Scheduler();
+
+        h.machines.getMut(new MachineId(1)).setAvailability(false);
+
+        Event orderA = orderEvent(1);
+        sched.schedule(orderA);
+        sched.nextEvent();
+        h.handleEvent(orderA, sched);
+        assertEquals(new MachineId(2), h.jobsView().findFirst().orElseThrow().currentMachine());
+
+        Event orderB = orderEvent(1);
+        h.handleEvent(orderB, sched);
+        JobId jobBId = h.jobsView()
+                .filter(j -> j.currentMachine() == null)
+                .findFirst()
+                .orElseThrow()
+                .id();
+
+        // Re-announcing Mill B (M2) as online -- it is already online and still busy -- must not
+        // dispatch job B: neither eligible machine can accept it yet, so it stays pending.
+        Event redundantOnline = Event.of(
+                new SimTime(2), new EventPayload.MachineAvailabilityChange(new MachineId(2), true));
+        h.handleEvent(redundantOnline, sched);
+
+        assertEquals(
+                null,
+                h.job(jobBId).currentMachine(),
+                "pending work must not be dispatched while every eligible machine is still unavailable");
     }
 }

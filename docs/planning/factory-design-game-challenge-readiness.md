@@ -293,6 +293,43 @@ C2 is ready when:
 8. An executable canonical factory may still be rejected for violating challenge rules, and an admitted candidate must still pass Arcogine executability validation before publication/run.
 9. The fixed challenge workload/input cannot be silently replaced by the candidate attempt.
 
+### Implementation status (C2 — partial)
+
+C2 is **partially** implemented. The catalogue seam and deterministic draft-economics
+calculation described in 6.1 are implemented in the existing `:challenge` module
+(package `com.arcogine.challenge.catalogue`, `com.arcogine.challenge.economics`), with no new
+`project(...)` dependency on `:types`, `:simulation`, `:factory`, `:economy`, `:finance`, `:api`,
+or `:cli`. Candidate admissibility (6.2) is **not** implemented and remains for the next slice.
+
+Implemented:
+
+- `EquipmentOffer`, an immutable game-owned catalogue entry (item id, non-negative purchase cost,
+  optional positive quantity limit), and `EquipmentCatalogue`, an immutable collection of offers
+  with value equality and lookup by item id. Neither assumes Arcogine's canonical
+  `ResourceDefinition` is a reusable equipment type.
+- `EquipmentCatalogueValidator`, a deterministic, side-effect-free static validator producing an
+  `EquipmentCatalogueValidationResult` of `EquipmentCatalogueIssue` (stable code, field path,
+  message): catalogue-internal validity (blank/duplicate item ids, negative cost, invalid quantity
+  limit), plus a separate `validateChallengeResolution` check that every
+  `ChallengeDefinition.availableEquipment` identity resolves to exactly one catalogue offer. It
+  does not call, extend, or share a result type with `ChallengeDefinitionValidator` or
+  `FactoryModelValidator`.
+- `DraftEquipmentOccurrence` (a catalogue item id only -- no position, footprint, or canonical
+  resource id) and `DraftEconomicsCalculator`, a pure static calculator that resolves each
+  occurrence through the catalogue and derives an immutable `DraftEconomics` (starting budget,
+  committed construction cost, remaining budget) from the challenge's starting budget. Unknown
+  catalogue references and 64-bit cost/budget overflow are reported as a structured
+  `DraftEconomicsFailure` via `DraftEconomicsResult`, never as an uncaught exception or a silently
+  wrapped total. The calculator mutates none of its inputs and is order-independent over
+  occurrences.
+
+Not implemented, and deliberately deferred to the next C2 slice (candidate admissibility, 6.2):
+rejecting draft occurrences for using catalogue items outside a challenge's `availableEquipment`,
+enforcing per-item quantity limits against candidate occurrence counts, budget-affordability
+rejection, floor/placement constraints, and any projection from a catalogue item occurrence to
+canonical factory/resource semantics. No Engine Readiness gate is satisfied by this partial C2
+work; C3-C5 remain deferred.
+
 ## 7. C3 — Deterministic challenge evaluation
 
 ### Goal

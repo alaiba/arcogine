@@ -8,6 +8,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.FactoryRuntimeAssembler;
 import com.arcogine.factory.orders.Order;
 import com.arcogine.types.JobId;
+import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
@@ -63,6 +64,17 @@ public class FactoryRuntime {
      */
     public OrderId submitWorkload(ProductId productId, long quantity, double unitPrice) {
         return factory.submitOrder(productId, quantity, unitPrice, scheduler.currentTime(), scheduler);
+    }
+
+    /**
+     * Brings a machine online or takes it offline, under the same dispatch semantics as the
+     * economy/scenario-driven {@link com.arcogine.core.event.EventPayload.MachineAvailabilityChange}
+     * event. Taking a machine offline never affects work already active on it; bringing an eligible
+     * machine back online can immediately pick up work that was waiting because no other eligible
+     * machine was available.
+     */
+    public void setMachineAvailability(MachineId machineId, boolean online) {
+        factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
     }
 
     /** Processes exactly one pending event, if any, and returns it. */

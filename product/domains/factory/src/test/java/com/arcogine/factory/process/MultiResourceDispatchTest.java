@@ -117,4 +117,48 @@ class MultiResourceDispatchTest {
                 "an offline eligible machine must not be selected for new dispatch");
         assertNotEquals(new MachineId(1), job.currentMachine());
     }
+
+    /**
+     * Reproduces the stranding bug a machine-local queue would have: a job that started waiting
+     * because M1 was offline and M2 was busy must not stay pinned to M2's queue forever -- once
+     * M1 comes back online, it must pick up that waiting job immediately, even though M1 had
+     * nothing to do with the job when it first started waiting. See {@code
+     * FactoryHandler#pendingMultiEligible}/{@code tryDispatchPendingMultiEligible}.
+     */
+    @Test
+    void machineComingBackOnlineDispatchesWorkThatWasStrandedWaitingOnAnotherMachine() {
+        FactoryHandler h = twoEligibleMachinesHandler();
+        Scheduler sched = new Scheduler();
+
+        h.machines.getMut(new MachineId(1)).setAvailability(false);
+
+        // Order A: only M2 is online, so it starts immediately on M2, leaving M2 busy.
+        Event orderA = orderEvent(1);
+        sched.schedule(orderA);
+        sched.nextEvent();
+        h.handleEvent(orderA, sched);
+        assertEquals(new MachineId(2), h.jobsView().findFirst().orElseThrow().currentMachine());
+
+        // Order B: M1 is offline and M2 is busy, so neither eligible machine can accept it --
+        // it must wait, not be forced onto one specific machine's local queue.
+        Event orderB = orderEvent(1);
+        h.handleEvent(orderB, sched);
+        JobView jobB = h.jobsView()
+                .filter(j -> j.currentMachine() == null)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("job B must be waiting, not yet assigned a machine"));
+
+        // M1 recovers. Even though job B never touched M1 before, M1 coming online must dispatch
+        // it -- proving the wait is against the whole eligible set, not pinned to M2.
+        Event online = Event.of(
+                new SimTime(2), new EventPayload.MachineAvailabilityChange(new MachineId(1), true));
+        h.handleEvent(online, sched);
+
+        JobView jobBAfter = h.job(jobB.id());
+        assertEquals(
+                new MachineId(1),
+                jobBAfter.currentMachine(),
+                "a job stranded waiting for either eligible machine must dispatch to whichever "
+                        + "one actually comes available, not remain stuck");
+    }
 }

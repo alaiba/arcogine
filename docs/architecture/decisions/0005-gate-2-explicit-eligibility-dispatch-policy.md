@@ -32,9 +32,13 @@ Concretely:
 
    If no eligible machine is online, selection falls back to the full eligible set under the same ranking, so a step never becomes undispatchable purely because every eligible machine happens to be offline (existing single-eligible-machine behavior is unchanged in that case).
 
+5. Work that cannot start immediately against a step naming more than one eligible machine is held in `FactoryHandler`'s own cross-machine `pendingMultiEligible` backlog, not pinned to whichever single machine happened to be selected at the time. Every machine-completion and machine-availability event reconsiders the head of that backlog against its *whole* eligible set, so a machine that was offline (or busy) when a job first started waiting can still pick it up once it becomes available -- not only the specific machine the job was checked against originally. A step with exactly one eligible machine is unaffected and keeps using `Machine`'s own per-machine queue exactly as before.
+
 Model-side eligibility (`OperationStepDefinition.eligibleResources`), runtime operational status (`MachineState`), and runtime queue state (`Machine`'s per-machine `ArrayDeque`) remain three distinct types, matching Gate 2's acceptance criterion 7; this decision does not merge them.
 
-Explicitly out of scope for this slice: capability taxonomies/tags, resource pools or work centers as first-class types, projected-completion-time or other load-aware ranking beyond queue depth, multiple `Job`s per `Order`, and any failure/maintenance modeling for offline machines beyond simple exclusion from new dispatch.
+Explicitly out of scope for this slice: capability taxonomies/tags, resource pools or work centers as first-class types, projected-completion-time or other load-aware ranking beyond queue depth, multiple `Job`s per `Order`, and any failure/maintenance modeling for offline machines beyond simple exclusion from new dispatch and reconsideration of already-waiting work.
+
+This slice proves parallel-capacity benefit for independent orders/jobs, not for a single quantity-scaled order: `submitOrder` still creates exactly one `Job` per order, and that job's repeated routing still advances one step at a time. A fixed-contract workload expressed as one large-quantity order therefore cannot yet exploit a second eligible machine's capacity from within that one job -- doing so would require intra-job execution parallelism or multiple execution objects per order, both excluded above. See the planning document's §6.4 criteria 3 and 5 for the acceptance-criteria implication.
 
 ## Alternatives considered
 
@@ -57,7 +61,7 @@ Rejected: eligibility is unordered and must not admit duplicate entries; a `Set`
 ## Consequences
 
 - A single operation step can now be published with, and dispatched against, more than one eligible machine, without any change to `FactoryModel`, `OperationStepDefinition`, `ResourceDefinition`, or `MachineId`.
-- Removing or disabling one eligible instance no longer requires changing the product/operation definition — dispatch simply stops selecting an offline machine for new work among a real multi-candidate eligible set.
+- Removing or disabling one eligible instance no longer requires changing the product/operation definition — dispatch simply stops selecting an offline machine for new work among a real multi-candidate eligible set, and work already waiting is not stranded on it: the whole eligible set is reconsidered as machines free up or come online.
 - `RoutingStep.machineId()` no longer exists; callers read `eligibleMachines()` and, where they need one concrete choice, call `FactoryHandler`'s private `selectMachine`. External consumers (`interfaces/api`, `interfaces/cli`) that construct single-machine `RoutingStep`s are unaffected by the added convenience constructor.
 - `TaskStart`/`TaskEnd` event payloads continue to carry the one machine actually assigned; no externally visible event semantics change.
 - This tie-break policy is now a recorded architectural decision rather than planning-document prose; a future slice that adds load-aware ranking (e.g. projected completion time) should update or supersede this ADR rather than silently reinterpreting the policy.

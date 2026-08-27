@@ -126,6 +126,49 @@ class DraftEconomicsCalculatorTest {
     }
 
     @Test
+    void negativeCostOfferInCatalogueFailsExplicitlyInsteadOfProducingALargerBudget() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(List.of(EquipmentOffer.of(CUTTER, -1L)));
+        List<DraftEquipmentOccurrence> occurrences = List.of(new DraftEquipmentOccurrence(CUTTER));
+
+        DraftEconomicsResult result = DraftEconomicsCalculator.calculate(challenge, catalogue, occurrences);
+
+        assertFalse(result.isSuccess());
+        assertEquals("catalogue.invalid", result.failure().code());
+    }
+
+    @Test
+    void duplicateItemIdInCatalogueFailsExplicitlyRatherThanPricingAmbiguously() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(
+                List.of(EquipmentOffer.of(CUTTER, 1L), EquipmentOffer.of(CUTTER, 2L)));
+        List<DraftEquipmentOccurrence> occurrences = List.of(new DraftEquipmentOccurrence(CUTTER));
+
+        DraftEconomicsResult result = DraftEconomicsCalculator.calculate(challenge, catalogue, occurrences);
+
+        assertFalse(result.isSuccess());
+        assertEquals("catalogue.invalid", result.failure().code());
+    }
+
+    @Test
+    void duplicatePricedCatalogueDoesNotOverflowDifferentlyByOrder() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogueItemId large = new EquipmentCatalogueItemId("equipment.large");
+        EquipmentCatalogueItemId small = new EquipmentCatalogueItemId("equipment.small");
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(List.of(
+                EquipmentOffer.of(large, Long.MAX_VALUE),
+                EquipmentOffer.of(small, 1L),
+                EquipmentOffer.of(small, -1L)));
+        List<DraftEquipmentOccurrence> occurrences =
+                List.of(new DraftEquipmentOccurrence(large), new DraftEquipmentOccurrence(small));
+
+        DraftEconomicsResult result = DraftEconomicsCalculator.calculate(challenge, catalogue, occurrences);
+
+        assertFalse(result.isSuccess());
+        assertEquals("catalogue.invalid", result.failure().code());
+    }
+
+    @Test
     void unknownItemFailureIsOrderIndependentAcrossPermutationsOfTheSameMultiset() {
         ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
         EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();

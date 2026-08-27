@@ -1,6 +1,7 @@
 package com.arcogine.challenge.economics;
 
 import com.arcogine.challenge.EquipmentCatalogueItemId;
+import com.arcogine.challenge.catalogue.EquipmentCatalogueValidationResult;
 
 /**
  * A structured, deterministic reason {@link DraftEconomicsCalculator} could not derive {@link
@@ -18,6 +19,16 @@ public record DraftEconomicsFailure(String code, String message) {
         if (message == null) {
             throw new NullPointerException("message");
         }
+    }
+
+    public static DraftEconomicsFailure invalidCatalogue(EquipmentCatalogueValidationResult validation) {
+        if (validation == null) {
+            throw new NullPointerException("validation");
+        }
+        return new DraftEconomicsFailure(
+                "catalogue.invalid",
+                "catalogue failed internal validation (" + validation.issues().size() + " issue(s)): "
+                        + validation.issues().get(0));
     }
 
     public static DraftEconomicsFailure unknownCatalogueItem(EquipmentCatalogueItemId itemId) {

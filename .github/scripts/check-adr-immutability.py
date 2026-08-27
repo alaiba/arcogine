@@ -3,7 +3,7 @@
 
 Accepted ADRs are historical records. After acceptance, only the metadata
 needed to mark an ADR Superseded may change in place. Decision/body changes
-must be recorded in a new ADR that declares `Supersedes: ADR-NNNN`.
+must be recorded in a new Accepted ADR that declares `Supersedes: ADR-NNNN`.
 """
 
 from __future__ import annotations
@@ -125,7 +125,7 @@ def validate(base_ref: str) -> list[str]:
             continue
 
         # Accepted ADR: unchanged Accepted metadata is fine. The only allowed
-        # transition is Accepted -> Superseded with a matching new ADR.
+        # transition is Accepted -> Superseded with a matching new Accepted ADR.
         if after_status == "Accepted":
             if superseded_by(after) is not None:
                 errors.append(
@@ -148,6 +148,12 @@ def validate(base_ref: str) -> list[str]:
         if new_text is None:
             errors.append(
                 f"{path}: {target} must be a new ADR in the same change when superseding {adr_id(path)}"
+            )
+            continue
+
+        if status(new_text) != "Accepted":
+            errors.append(
+                f"{target}: superseding ADR must be `Status: Accepted` before {adr_id(path)} can become Superseded"
             )
             continue
 

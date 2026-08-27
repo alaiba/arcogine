@@ -439,7 +439,7 @@ types ← simulation ← factory
 challenge   (no dependency on any module above; a sibling, game-owned boundary)
 ```
 
-Each module exposes a clean public API and hides implementation details. Domain modules (`factory`, `economy`, `agents`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
+Each module exposes a clean public API and hides implementation details. Domain modules (`factory`, `economy`, `finance`, `agents`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
 
 `challenge` is deliberately outside this dependency graph: it is a game-owned Challenge Readiness
 module (`com.arcogine.challenge`) that has no `project(...)` dependency on `types`, `simulation`,
@@ -503,13 +503,15 @@ This determinism contract is scoped to simulation, replay, and verification cont
 
 Scenario factory semantics are instantiated through an implemented canonical-model seam: `FactoryModel` (validated) → `FactoryModelVersion` (immutable, published) → `FactoryRuntimeAssembler` (deterministic runtime instantiation). See [ADR-0003](decisions/0003-canonical-factory-model-boundary.md) for the accepted boundary this implements.
 
-`FactoryModelVersion.contentHash()` derives a deterministic, content-based identity from the model's canonical facts, and publication validates the design before it can be instantiated. This hash is presently an internal, in-memory identity policy — sufficient to attribute a runtime to the model it came from within one process — not yet a persisted, public, or cross-process fingerprint contract; canonicalization, ordering semantics (today's encoding hashes `resources`/`operations`/`products` in list order), algorithm/format versioning, and a compatibility guarantee are unresolved. `IntegratedHandler` carries this hash as runtime provenance, and `SimRunner` propagates it onto `SimResult.modelContentHash` (via the handler-agnostic `ModelProvenanceSource` capability) for results produced through the canonical `HandlerFactory.buildFromConfig` path; broader run provenance (run ID, scenario/input fingerprint, engine build) remains outstanding.
+`FactoryModelVersion.fingerprint()` now implements the durable `factory-model:v1` semantic fingerprint contract accepted by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). The contract uses the typed `ModelFingerprint` value and a language-independent canonical binary encoding with explicit policy versioning and compatibility vectors. Equal canonical semantic content therefore has a durable identity that is independent of process memory and implementation language under the v1 policy.
 
-There is no persistent revision repository, controlled-revision lineage, approval workflow, or external change-management integration implemented. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) records the intended future distinction between the semantic fingerprint and a separate, deferred controlled-revision concept, but nothing beyond the current-content hash exists in the codebase today.
+`FactoryModelVersion.contentHash()` remains a separate legacy compatibility surface. It is deterministic for the current Java model but is not the durable fingerprint contract and historical bare content hashes must not be reinterpreted as `factory-model:v1` fingerprints. Existing `IntegratedHandler`/`SimResult.modelContentHash` provenance still carries that legacy hash; broader provenance migration and run identity (run ID, scenario/input fingerprint, engine build) remain separate follow-up concerns.
+
+There is still no persistent revision repository, `ControlledRevisionId`, controlled-revision lineage, approval workflow, or external change-management integration implemented. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) requires historical revision identity to remain distinct from semantic fingerprint equality; the durable fingerprint implementation does not close that deferred side of the contract.
 
 ## API Layer
 
-The HTTP API uses Spring Boot 3 with Spring MVC:
+The HTTP API uses Spring Boot 4 with Spring MVC:
 
 - REST endpoints for scenario loading, simulation control, interventions, and queries
 - Server-Sent Events (SSE) via `SseEmitter` for real-time event streaming
@@ -521,12 +523,12 @@ The HTTP API uses Spring Boot 3 with Spring MVC:
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | Language | Java (release 21 compatibility baseline) | Records, sealed types, pattern matching |
-| Framework | Spring Boot 3.4 | HTTP server, DI, config |
+| Framework | Spring Boot 4 | HTTP server, DI, config |
 | CLI | Picocli | Command-line parsing |
-| Build | Gradle 9.7 (Kotlin DSL, wrapper) | Multi-module build |
+| Build | Gradle (Kotlin DSL, repository wrapper) | Multi-module build; exact version pinned by `product/gradle/wrapper/gradle-wrapper.properties` |
 | Config format | TOML | Scenario files (via Jackson TOML) |
 | Serialization | Jackson | JSON API responses, TOML parsing |
-| Testing | JUnit 5 | Unit and integration tests |
+| Testing | JUnit 6 | Unit and integration tests |
 | Coverage | JaCoCo | Code coverage reporting |
 | Container | Eclipse Temurin 25 | Docker runtime |
 | Frontend | React 19 + TypeScript 6 | Vite, Zustand, Tailwind CSS, Recharts |

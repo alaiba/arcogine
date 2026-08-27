@@ -142,15 +142,33 @@ Exact type names and serialization format remain implementation decisions.
 
 ### Validation boundary
 
-Challenge-definition validation answers questions such as:
+C1's `ChallengeDefinitionValidator` answers only whether an already-constructed
+`ChallengeDefinition`'s own scalar/structural content is internally coherent:
 
 - Is the budget non-negative?
-- Is the deadline valid?
-- Do referenced catalogue entries exist?
-- Is there an unambiguous success condition?
-- Are rating/score thresholds coherent?
+- Is the deadline positive?
+- Are floor dimensions positive?
+- Is the workload reference present and its quantity positive?
+- Are available catalogue-item identities present and free of duplicates?
+- Are identity/evaluation-policy id and version present?
 
-It does **not** replace `FactoryModelValidator`, which answers whether projected production semantics are executable by Arcogine.
+It does **not** replace `FactoryModelValidator`, which answers whether projected production
+semantics are executable by Arcogine.
+
+Questions that require resolving a `ChallengeDefinition`'s references against other state --
+whether referenced catalogue entries exist in an actual catalogue, whether the workload's success
+condition is unambiguous once evaluation semantics exist, whether rating/score thresholds are
+coherent -- belong to later gates (C2's catalogue seam and C3's evaluation-policy work,
+respectively) once that state exists to validate against. C1 does not claim to answer them.
+
+C1 also does not define a content-loading layer. `ChallengeDefinition` and its nested value
+records reject structurally absent required fields (a null identity, a null workload, a null
+nested id/version/reference, a null equipment element) at construction time via ordinary
+constructor invariants (`NullPointerException`), not via `ChallengeDefinitionIssue` diagnostics.
+Converting an untrusted external representation (e.g. loaded JSON/TOML) into either a valid
+`ChallengeDefinition` or a diagnostic explaining why it couldn't be constructed is the
+responsibility of the content-loading layer introduced in C5; C1 supplies the validator that
+layer will run once a definition exists, not a replacement for it.
 
 ### Acceptance criteria
 
@@ -158,9 +176,42 @@ C1 is ready when:
 
 1. A challenge can be loaded independently of an active simulation session.
 2. Challenge identity and content/rules version are explicit.
-3. Invalid challenge content produces deterministic, actionable diagnostics.
+3. A structurally-constructed but scalar/content-invalid `ChallengeDefinition` (blank ids,
+   non-positive dimensions/budget/deadline/quantity, duplicate catalogue ids, etc.) produces
+   deterministic, actionable `ChallengeDefinitionIssue` diagnostics. This criterion covers content
+   validity of a constructed definition -- it does not cover translating absent/malformed
+   external input into diagnostics; that is C5's content-loading responsibility (see "Validation
+   boundary" above).
 4. Challenge-definition validation does not duplicate Arcogine factory-model validation.
 5. Game-only fields do not enter the canonical factory model merely to support challenge loading.
+
+### Implementation status (C1)
+
+C1 is implemented as a new headless Gradle module, `:challenge` (`product/consumer/challenge`,
+package `com.arcogine.challenge`), with no `project(...)` dependency on `:types`, `:simulation`,
+`:factory`, `:economy`, `:finance`, `:api`, or `:cli`.
+
+Implemented:
+
+- Immutable value records: `ChallengeIdentity`, `EvaluationPolicyIdentity`,
+  `EquipmentCatalogueItemId`, `ChallengeWorkload`, `FactoryFloorConstraint`, and the aggregate
+  `ChallengeDefinition`. Construction defensively copies the available-equipment collection so
+  caller mutation cannot affect an already-constructed definition.
+- `com.arcogine.challenge.validation.ChallengeDefinitionValidator`, a deterministic, side-effect-free
+  static validator producing a `ChallengeDefinitionValidationResult` of `ChallengeDefinitionIssue`
+  (stable code, field path, message), covering the scalar/structural rules listed under
+  "Validation boundary" above (presence/positivity of identity, floor, budget, workload, deadline,
+  evaluation-policy fields, plus duplicate/blank available-equipment-id rejection). It does not
+  call, extend, or share a result type with `FactoryModelValidator`.
+
+Not implemented, and not claimed by this validator (see "Validation boundary" above for why each
+belongs to a later gate rather than C1): catalogue-item resolution against real equipment offers
+and their existence/pricing (C2), construction-cost calculation, candidate placement/overlap/
+admissibility, affordability (C2), evaluation-policy implementation lookup and score/rating
+threshold coherence (C3), and any persistence/content-loading format that would translate absent
+or malformed external input into diagnostics (C5).
+
+This module and its no-runtime-dependency boundary are also recorded in `docs/architecture/overview.md`.
 
 ## 6. C2 — Catalogue, construction budget, draft economics, and candidate admissibility
 

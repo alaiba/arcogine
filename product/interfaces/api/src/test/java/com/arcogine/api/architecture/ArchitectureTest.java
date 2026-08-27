@@ -17,11 +17,10 @@ import com.tngtech.archunit.lang.ArchRule;
 
 /**
  * Enforces, as CI-checked rules, the module-boundary and capability guardrails documented in
- * CONTRIBUTING.md and devel/architecture-assessment-events-state-observations.md -- so a future
- * change that reintroduces one of the couplings this codebase has spent effort removing (agents
- * depending on Factory/Economy internals, code outside Finance posting to the ledger directly,
- * code outside Factory driving a Job/Machine's lifecycle directly) fails the build instead of
- * only failing review.
+ * CONTRIBUTING.md and docs/architecture/overview.md -- so a future change that reintroduces one
+ * of the couplings this codebase has spent effort removing (agents depending on Factory/Economy
+ * internals, code outside Finance posting to the ledger directly, code outside Factory driving a
+ * Job/Machine's lifecycle directly) fails the build instead of only failing review.
  *
  * <p>Deliberately a small, fixed rule set -- this is not a general architecture-policy framework,
  * just executable versions of specific invariants this codebase actually relies on. Scans only

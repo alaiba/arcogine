@@ -201,6 +201,28 @@ class FactoryHandlerTest {
     }
 
     @Test
+    void nextStepEnqueuesWhenItsOnlyEligibleMachineIsBusy() {
+        FactoryHandler h = twoStepHandler();
+        Scheduler sched = new Scheduler();
+
+        // Saturate Drilling's only eligible machine before the job ever reaches that step.
+        h.machines.getMut(new MachineId(2)).startJob(new com.arcogine.types.JobId(999));
+
+        Event order = orderEvent(1, 1);
+        sched.schedule(order);
+        sched.nextEvent();
+        h.handleEvent(order, sched);
+
+        Event te1 = sched.nextEvent().orElseThrow();
+        h.handleEvent(te1, sched);
+
+        assertEquals(
+                1,
+                h.machines.get(new MachineId(2)).queueDepth(),
+                "a job whose next step's only eligible machine is busy must be enqueued on it");
+    }
+
+    @Test
     void multiStepRoutingAdvancesToNextStep() {
         FactoryHandler h = twoStepHandler();
         Scheduler sched = new Scheduler();

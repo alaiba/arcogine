@@ -62,7 +62,7 @@ class FactoryModelValidatorTest {
     }
 
     @Test
-    void rejectsStepWithMoreThanOneEligibleResource() {
+    void acceptsStepWithMoreThanOneEligibleResource() {
         ResourceDefinition otherMill = new ResourceDefinition(new MachineId(2), "Mill B", 1, null, 0);
         OperationDefinition multiEligible = new OperationDefinition(
                 100,
@@ -76,10 +76,10 @@ class FactoryModelValidatorTest {
 
         ModelValidationResult result = FactoryModelValidator.validate(model);
 
-        assertFalse(
+        assertTrue(
                 result.isValid(),
-                "runtime cannot faithfully instantiate a step with more than one eligible resource "
-                        + "in this milestone -- see FactoryRuntimeAssembler");
+                () -> "a step may name more than one eligible resource; runtime dispatch selects "
+                        + "one deterministically: " + result.errors());
     }
 
     @Test

@@ -19,6 +19,7 @@ import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /** Ported from crates/sim-factory/tests/job_routing.rs. */
@@ -157,8 +158,8 @@ class JobRoutingTest {
         RoutingStep step0 = routing.getStep(0).orElseThrow();
         RoutingStep step1 = routing.getStep(1).orElseThrow();
 
-        assertEquals(new MachineId(1), step0.machineId());
-        assertEquals(new MachineId(2), step1.machineId());
+        assertEquals(Set.of(new MachineId(1)), step0.eligibleMachines());
+        assertEquals(Set.of(new MachineId(2)), step1.eligibleMachines());
         assertFalse(routing.getStep(2).isPresent());
     }
 }

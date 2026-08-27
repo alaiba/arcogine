@@ -61,20 +61,6 @@ public final class FactoryModelValidator {
                             "must reference at least one resource"));
                     continue;
                 }
-                // Runtime dispatch in this milestone binds a step to exactly one concrete
-                // resource (see ADR-0003 / ScenarioFactoryModelAdapter) -- it does not implement
-                // capability-based dispatch across a multi-resource eligibility set. A model
-                // publishing more than one eligible resource per step therefore cannot be
-                // faithfully instantiated by the current runtime and must be rejected here,
-                // rather than silently collapsed to one resource at assembly time.
-                if (step.eligibleResources().size() > 1) {
-                    errors.add(new ModelValidationError(
-                            "operations[" + operation.id() + "].steps[" + step.stepId()
-                                    + "].eligibleResources",
-                            "must reference exactly one resource in this milestone "
-                                    + "(multi-resource dispatch is not yet supported by the runtime)"));
-                    continue;
-                }
                 for (MachineId resourceId : step.eligibleResources()) {
                     if (!resourceIds.contains(resourceId)) {
                         errors.add(new ModelValidationError(

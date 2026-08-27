@@ -6,7 +6,6 @@ import com.arcogine.factory.process.FactoryHandler;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
-import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +42,8 @@ public final class FactoryRuntimeAssembler {
         for (OperationDefinition operation : model.operations()) {
             List<RoutingStep> steps = new ArrayList<>();
             for (OperationStepDefinition step : operation.steps()) {
-                MachineId equipmentId = step.eligibleResources().iterator().next();
-                steps.add(new RoutingStep(step.stepId(), step.name(), equipmentId, step.duration()));
+                steps.add(new RoutingStep(
+                        step.stepId(), step.name(), step.eligibleResources(), step.duration()));
             }
             routings.addRouting(new Routing(operation.id(), operation.name(), steps));
         }

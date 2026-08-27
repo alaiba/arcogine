@@ -17,12 +17,18 @@ import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.MachineState;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
+import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class FactoryHandler implements EventHandler {
@@ -34,6 +40,21 @@ public class FactoryHandler implements EventHandler {
     public final List<ProductId> productIds;
     private double completedSalesValue;
     private long completedSales;
+
+    /**
+     * Work waiting for one of more than one eligible machine to free up. Unlike {@link
+     * Machine#enqueueJob}, an entry here is not pinned to any single machine, so it is
+     * reconsidered against its whole eligible set -- not just the machine that most recently
+     * changed state -- every time any machine frees up or comes online. This is what lets a
+     * machine that was offline when the job first waited still pick it up once it recovers,
+     * instead of the job staying stranded on whichever specific machine happened to be selected
+     * at enqueue time. A step with exactly one eligible machine keeps using {@link
+     * Machine}'s own per-machine queue unchanged.
+     */
+    private final Deque<PendingDispatch> pendingMultiEligible = new ArrayDeque<>();
+
+    private record PendingDispatch(
+            JobId jobId, Set<MachineId> eligibleMachines, int routingIndex, long duration) {}
 
     public FactoryHandler(MachineStore machines, RoutingStore routings, List<ProductId> productIds) {
         this.machines = machines;
@@ -119,6 +140,38 @@ public class FactoryHandler implements EventHandler {
         return (double) completedSales / elapsedTicks;
     }
 
+    /**
+     * Deterministically picks one machine from a step's eligible set to run the next unit of
+     * work. Policy: prefer an online machine that can accept work immediately; among ties, prefer
+     * the shallowest queue; a final tie (including "no eligible machine is online") breaks on the
+     * lowest {@link MachineId}, so identical inputs always resolve the same way.
+     */
+    private MachineId selectMachine(Set<MachineId> eligibleMachines) {
+        List<MachineId> online = eligibleMachines.stream()
+                .filter(id -> machines.get(id).state() != MachineState.Offline)
+                .toList();
+        List<MachineId> candidates = online.isEmpty() ? List.copyOf(eligibleMachines) : online;
+
+        return candidates.stream()
+                .min(Comparator
+                        .<MachineId>comparingInt(id -> machines.get(id).canAcceptJob() ? 0 : 1)
+                        .thenComparingInt(this::combinedQueueDepth)
+                        .thenComparing(MachineId::value))
+                .orElseThrow();
+    }
+
+    /**
+     * A machine's own physical queue depth plus how many {@link #pendingMultiEligible} entries
+     * could also land on it, so the "shallowest queue" tie-break accounts for shared multi-machine
+     * backlog, not just work already pinned to this one machine.
+     */
+    private int combinedQueueDepth(MachineId id) {
+        return machines.get(id).queueDepth()
+                + (int) pendingMultiEligible.stream()
+                        .filter(pending -> pending.eligibleMachines().contains(id))
+                        .count();
+    }
+
     private void tryDispatchFromQueue(MachineId machineId, Scheduler scheduler, SimTime currentTime) {
         Machine machine = machines.getMut(machineId);
         if (!machine.canAcceptJob()) {
@@ -144,6 +197,49 @@ public class FactoryHandler implements EventHandler {
             scheduler.schedule(Event.of(endTime, new EventPayload.TaskStart(jobId, machineId, routingIndex)));
             scheduler.schedule(Event.of(endTime, new EventPayload.TaskEnd(jobId, machineId, routingIndex)));
         });
+    }
+
+    /**
+     * Reconsiders multi-eligible pending work against its whole eligible set, not just whichever
+     * machine most recently changed state -- so a machine that was offline (or busy) when a job
+     * first waited can still pick it up once it becomes available, rather than the job staying
+     * stranded on whichever machine happened to be selected when it was first attempted.
+     *
+     * <p>Scans for the earliest entry that can actually be placed right now, rather than only
+     * ever looking at the front of the queue: two entries with disjoint eligible sets (e.g. one
+     * waiting on {@code {M1, M2}}, another on {@code {M3, M4}}) must not head-of-line block each
+     * other -- an undispatchable first entry must not stall a later entry whose own eligible
+     * machine has just freed up. Among entries that are dispatchable in a given pass, the
+     * earliest-queued one is dispatched first, so relative order is preserved wherever it
+     * actually matters (competing entries that could land on the same machine).
+     */
+    private void tryDispatchPendingMultiEligible(Scheduler scheduler, SimTime currentTime) {
+        boolean dispatchedOne = true;
+        while (dispatchedOne) {
+            dispatchedOne = false;
+            for (Iterator<PendingDispatch> it = pendingMultiEligible.iterator(); it.hasNext(); ) {
+                PendingDispatch candidate = it.next();
+                MachineId machineId = selectMachine(candidate.eligibleMachines());
+                Machine machine = machines.getMut(machineId);
+                if (!machine.canAcceptJob()) {
+                    continue;
+                }
+                it.remove();
+
+                machine.startJob(candidate.jobId());
+                Job job = jobs.get(candidate.jobId());
+                job.start(machineId);
+
+                SimTime endTime = currentTime.plus(candidate.duration());
+                scheduler.schedule(Event.of(
+                        endTime, new EventPayload.TaskStart(candidate.jobId(), machineId, candidate.routingIndex())));
+                scheduler.schedule(Event.of(
+                        endTime, new EventPayload.TaskEnd(candidate.jobId(), machineId, candidate.routingIndex())));
+
+                dispatchedOne = true;
+                break;
+            }
+        }
     }
 
     /**
@@ -195,7 +291,8 @@ public class FactoryHandler implements EventHandler {
         JobId jobId = jobs.createJob(order, totalSteps, currentTime);
 
         routing.getStep(0).ifPresent(firstStep -> {
-            MachineId machineId = firstStep.machineId();
+            Set<MachineId> eligible = firstStep.eligibleMachines();
+            MachineId machineId = selectMachine(eligible);
             Machine machine = machines.getMut(machineId);
 
             if (machine.canAcceptJob()) {
@@ -208,6 +305,9 @@ public class FactoryHandler implements EventHandler {
                 scheduler.schedule(Event.of(
                         currentTime.plus(duration),
                         new EventPayload.TaskEnd(jobId, machineId, 0)));
+            } else if (eligible.size() > 1) {
+                pendingMultiEligible.addLast(
+                        new PendingDispatch(jobId, eligible, 0, firstStep.duration()));
             } else {
                 machine.enqueueJob(jobId);
             }
@@ -243,7 +343,8 @@ public class FactoryHandler implements EventHandler {
             int routingIndex = nextStepIndex % routing.stepCount();
 
             routing.getStep(routingIndex).ifPresent(nextStep -> {
-                MachineId nextMachineId = nextStep.machineId();
+                Set<MachineId> eligible = nextStep.eligibleMachines();
+                MachineId nextMachineId = selectMachine(eligible);
                 Machine nextMachine = machines.getMut(nextMachineId);
 
                 if (nextMachine.canAcceptJob()) {
@@ -256,6 +357,9 @@ public class FactoryHandler implements EventHandler {
                     scheduler.schedule(Event.of(
                             currentTime.plus(duration),
                             new EventPayload.TaskEnd(jobId, nextMachineId, routingIndex)));
+                } else if (eligible.size() > 1) {
+                    pendingMultiEligible.addLast(
+                            new PendingDispatch(jobId, eligible, routingIndex, nextStep.duration()));
                 } else {
                     nextMachine.enqueueJob(jobId);
                 }
@@ -263,15 +367,23 @@ public class FactoryHandler implements EventHandler {
         }
 
         tryDispatchFromQueue(machineId, scheduler, currentTime);
+        tryDispatchPendingMultiEligible(scheduler, currentTime);
     }
 
-    private void handleMachineAvailability(
+    /**
+     * Package-private for the same reason as {@link #submitOrder}: {@link FactoryRuntime} is the
+     * supported external entry point and owns the scheduler/time context, so it calls this
+     * directly rather than a caller having to construct a {@link EventPayload.MachineAvailabilityChange}
+     * event by hand.
+     */
+    void handleMachineAvailability(
             MachineId machineId, boolean online, Scheduler scheduler, SimTime currentTime) {
         Machine machine = machines.getMut(machineId);
         machine.setAvailability(online);
 
         if (online) {
             tryDispatchFromQueue(machineId, scheduler, currentTime);
+            tryDispatchPendingMultiEligible(scheduler, currentTime);
         }
     }
 }

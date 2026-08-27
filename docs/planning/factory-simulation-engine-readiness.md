@@ -262,33 +262,37 @@ assignment
 dispatch decision
 ```
 
-### 6.2 Current problem
+### 6.2 Current problem (resolved by the first Gate 2 slice)
 
-A current routing step points to one concrete `MachineId`, so a second equivalent machine does not naturally participate in the route. The model migration spike may preserve that behavior initially through an explicit single-resource eligibility mapping; Gate 2 is where runtime behavior becomes flexible.
+A routing step used to point to one concrete `MachineId`, so a second equivalent machine could not naturally participate in the route -- even though `OperationStepDefinition.eligibleResources` was already `Set<MachineId>`, `FactoryModelValidator` rejected any step naming more than one, and `FactoryRuntimeAssembler`/`RoutingStep` collapsed to a single machine.
+
+The first Gate 2 slice removed that restriction: `RoutingStep` now carries `Set<MachineId> eligibleMachines`, and `FactoryHandler` selects among them deterministically at dispatch time. See ADR-0005 for the full decision and its alternatives.
 
 ### 6.3 Deterministic dispatch
 
-Resource selection must have a documented deterministic policy. A possible initial order is:
+The accepted first-slice policy (ADR-0005), applied in `FactoryHandler.selectMachine`:
 
-1. online and capable/eligible;
-2. inside the operation's allowed resource pool if one exists;
-3. lowest projected completion time;
+1. eligible;
+2. online (an eligible machine that is `Offline` is excluded from selection while any eligible machine is online);
+3. able to accept work immediately (`Machine.canAcceptJob()`);
 4. lowest queue depth;
-5. lowest stable resource ID as final tie-breaker.
+5. lowest `MachineId` as final tie-breaker.
 
-This ordering is illustrative, not accepted architecture. The eventual policy should be recorded when it becomes hard to reverse.
+Projected-completion-time ranking, resource pools, and capability taxonomies were considered and deliberately deferred (see ADR-0005's alternatives) -- none are required by the acceptance criteria below. A future slice that adds load-aware ranking should update or supersede ADR-0005 rather than reinterpreting this policy silently.
 
 ### 6.4 Acceptance criteria
 
 Gate 2 is satisfied when:
 
-1. Runtime consumes model-side resource definitions and installed instances rather than redefining them.
-2. Two equivalent eligible resource instances can both execute the same operation.
-3. Both resources are used when workload justifies parallel capacity.
-4. Equal candidates resolve reproducibly through a stable tie-break rule.
-5. Adding a second compatible resource changes queueing, utilization, throughput, or completion time in an appropriate workload.
-6. Removing/disabling one instance does not require changing the product definition.
-7. Resource capability, operational status, and queue state remain distinct concepts.
+1. Runtime consumes model-side resource definitions and installed instances rather than redefining them. **Satisfied** (unchanged by this slice -- `FactoryRuntimeAssembler` builds `Machine`s directly from `ResourceDefinition`).
+2. Two equivalent eligible resource instances can both execute the same operation. **Satisfied** -- proved at both the `FactoryHandler` seam (`MultiResourceDispatchTest`) and end to end through the published-model boundary (`Gate2MultiResourceDispatchAcceptanceTest`, driven entirely through `FactoryRuntime`).
+3. Both resources are used when workload justifies parallel capacity. **Satisfied for independent orders/jobs**: `Gate2MultiResourceDispatchAcceptanceTest.publishedMultiEligibleModelSurvivesAssemblyAndDispatchesBothOrdersConcurrently` proves two independent orders occupy both eligible machines at once, through `FactoryRuntime` alone. **Not yet proved for a single quantity-scaled order.** `submitOrder` still creates exactly one `Job` per order, and `handleTaskEnd` advances that job's repeated routing strictly one step at a time -- a fixed-contract workload expressed as one large-quantity order (rather than many independent orders) cannot yet exploit a second eligible machine's parallel capacity within that one job. Closing that gap would require either intra-job execution parallelism or multiple execution objects per order, both of which the original Gate 2 audit named as non-goals for this slice (see "multiple Jobs per Order" and "per-unit execution objects" in the plan's non-goals). This remains open for a later slice if a concrete workload requires it; it is not claimed satisfied by this slice.
+4. Equal candidates resolve reproducibly through a stable tie-break rule. **Satisfied** -- `MultiResourceDispatchTest.equalCandidatesResolveDeterministicallyToTheLowestMachineId` and `Gate2MultiResourceDispatchAcceptanceTest.identicalWorkloadFromTwoFreshRuntimesResolvesToTheSameMachineAssignments`.
+5. Adding a second compatible resource changes queueing, utilization, throughput, or completion time in an appropriate workload. **Satisfied for independent orders/jobs**, under the same scope note as criterion 3: both machines' queues stay empty under concurrent independent orders where a single-machine model would have queued the second one. Not yet proved for a single quantity-scaled order, for the same reason as criterion 3.
+6. Removing/disabling one instance does not require changing the product definition. **Satisfied**, including the machine-recovery lifecycle: `MultiResourceDispatchTest.machineComingBackOnlineDispatchesWorkThatWasStrandedWaitingOnAnotherMachine` and `Gate2MultiResourceDispatchAcceptanceTest.bringingAnEligibleMachineOnlineDispatchesWorkStrandedWaitingForTheOtherMachine` prove that work waiting because one eligible machine was offline is not pinned to whichever other machine happened to be checked when it started waiting -- `FactoryHandler` reconsiders it against its whole eligible set whenever any eligible machine frees up or comes online (see `pendingMultiEligible`/`tryDispatchPendingMultiEligible`), so a machine that was offline when a job first waited can still pick it up once it recovers. `Gate2MultiResourceDispatchAcceptanceTest.offlineEligibleMachineIsExcludedAndRemovingItDoesNotRequireChangingTheProductDefinition` proves the product/operation definition is untouched, only runtime machine availability changes. `Gate2MultiResourceDispatchAcceptanceTest.disjointPendingPoolDispatchesEvenWhileAnEarlierUnrelatedPoolIsStillFull` proves the pending backlog does not head-of-line block: an undispatchable entry waiting on one still-fully-busy eligible pool does not stop a later entry with a disjoint eligible pool from dispatching the moment its own pool frees up.
+7. Resource capability, operational status, and queue state remain distinct concepts. **Satisfied** -- `OperationStepDefinition.eligibleResources` (model eligibility), `MachineState` (operational status), and `Machine`'s per-machine queue plus `FactoryHandler`'s cross-machine pending backlog (runtime queue state) remain separate types; this slice does not merge them.
+
+This closes the first Gate 2 slice as scoped by ADR-0005, for independent-order/job parallelism proved end to end through `FactoryRuntime`. Criteria 3 and 5 remain explicitly open for intra-job (single quantity-scaled order) parallel dispatch -- that is a distinct, larger design question this slice does not resolve or claim to. Also left for a later slice if a concrete need arises: load-aware ranking beyond queue depth, and resource pools/capability taxonomies.
 
 ## 7. Gate 3 — Consumer-neutral simulation session
 

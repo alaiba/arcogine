@@ -8,6 +8,7 @@ import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /** Ported from the inline #[cfg(test)] module in crates/sim-factory/src/routing.rs. */
@@ -38,7 +39,7 @@ class RoutingStoreTest {
     void getStepValidIndex() {
         Routing r = sampleRouting();
         RoutingStep step = r.getStep(0).orElseThrow();
-        assertEquals(new MachineId(1), step.machineId());
+        assertEquals(Set.of(new MachineId(1)), step.eligibleMachines());
     }
 
     @Test

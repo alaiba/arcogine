@@ -5,22 +5,17 @@ Date: 2026-08-27
 
 ## Context
 
-[ADR-0004](0004-model-identity-revision-lineage-and-external-change-control.md) separates two concepts that Arcogine must not collapse:
+[ADR-0004](0004-model-identity-revision-lineage-and-external-change-control.md) separates semantic identity from controlled revision identity. Semantic identity answers whether two canonical model states represent the same semantic content under a defined policy; controlled revision identity answers which historical governed occurrence of that content is being referenced.
 
-1. **semantic identity** — whether two canonical model states represent the same semantic content under a defined identity policy; and
-2. **controlled revision identity** — which historical governed occurrence of semantic content is being referenced.
+`FactoryModelVersion.contentHash()` is the current factory proving ground for content-derived identity, but ADR-0004 explicitly treats it as provisional rather than a persisted, public, or cross-process compatibility guarantee. Its current representation also depends on Java-specific behavior (`String.valueOf`, `String.length()`, then UTF-8 encoding), so promoting it unchanged would turn Java implementation details into permanent cross-language protocol semantics.
 
-ADR-0004 deliberately left the concrete durable fingerprint policy unresolved. The factory domain now provides the first implemented proving ground: `FactoryModelVersion.contentHash()` deterministically computes a SHA-256 digest from canonical factory-model content, and that digest already participates in runtime/result provenance. Its contract is explicitly provisional: it is not a persisted, public, or cross-process compatibility guarantee.
+The first Governance G1 slice therefore needs an explicit, durable, language-independent fingerprint contract. It must define field membership, ordering, canonical bytes, versioning, compatibility, and the relationship to the existing legacy hash without conflating semantic identity with controlled revision history.
 
-That distinction matters. The current hash is produced by Java implementation details: values are converted with `String.valueOf`, framed using Java `String.length()` semantics, concatenated into one Java string, and only then encoded as UTF-8. Promoting that representation unchanged would make Java UTF-16 code-unit counting and Java scalar lexical rendering part of Arcogine's permanent cross-language identity protocol merely to preserve a compatibility guarantee Arcogine never made.
+The current factory model is not neutral to all ordering. Operation steps are explicitly ordered, and product list order currently participates in deterministic demand generation. The fingerprint must not erase distinctions that can still affect behavior.
 
-A durable fingerprint therefore cannot be established by renaming the existing hash. Arcogine must define what semantic content participates, how that content is canonicalized into bytes independently of implementation language, how collection ordering is interpreted, how the policy evolves, and what compatibility future implementations must preserve.
+This ADR defines the durable fingerprint contract and the first policy, `factory-model:v1`. It does not choose a controlled revision identifier, lineage policy, or revision repository; those remain a separate follow-up decision.
 
-The current factory model is also not semantically neutral with respect to all list ordering. `OperationDefinition.steps()` is explicitly ordered, and the current runtime preserves product ordering into demand generation, where products are selected by deterministic RNG index. Normalizing those collections as unordered during fingerprinting could therefore assign one fingerprint to models that can produce different behavior under the same scenario seed.
-
-This ADR defines the durable semantic fingerprint contract and the first policy, `factory-model:v1`. It intentionally does **not** choose a controlled revision identifier, lineage policy, or revision repository. Those are separate historical-governance decisions and will be addressed by a subsequent ADR when that work is allocated.
-
-Related decisions and plans:
+Related documents:
 
 - [ADR-0003: Canonical factory model boundary](0003-canonical-factory-model-boundary.md)
 - [ADR-0004: Model identity, revision lineage, and external change control](0004-model-identity-revision-lineage-and-external-change-control.md)
@@ -30,18 +25,9 @@ Related decisions and plans:
 
 ## Decision
 
-### Model fingerprints are namespaced and policy-versioned
+### Fingerprints are namespaced and policy-versioned
 
 A durable `ModelFingerprint` identifies canonical semantic content under an explicit fingerprint policy.
-
-A fingerprint consists conceptually of:
-
-```text
-namespace
-policy version
-algorithm
-digest
-```
 
 For the first factory-model policy:
 
@@ -52,17 +38,17 @@ algorithm      = sha256
 digest         = 64 lowercase hexadecimal characters
 ```
 
-Its canonical textual representation is:
+The canonical textual representation is:
 
 ```text
 factory-model:v1:sha256:<digest>
 ```
 
-The policy version identifies the semantic and canonicalization contract. It is independent of the cryptographic algorithm version. Keeping SHA-256 while changing field membership, ordering semantics, normalization, binary encoding, or any other canonicalization rule requires a new fingerprint policy version if the change can alter identity.
+The policy version identifies the semantic/canonicalization contract, not merely the cryptographic algorithm. Any change that can alter semantic field membership, ordering, normalization, binary encoding, or digest semantics requires a new policy version.
 
-### `factory-model:v1` freezes the current semantic field membership
+### `factory-model:v1` freezes current semantic field membership
 
-The v1 fingerprint includes the semantic fields currently represented by the factory model:
+The v1 fingerprint includes:
 
 ```text
 FactoryModel
@@ -89,50 +75,46 @@ FactoryModel
         ProductDefinition.operationId
 ```
 
-Names and allocated IDs therefore participate in `factory-model:v1` semantic identity.
+Names and current allocated IDs therefore participate in `factory-model:v1` identity.
 
-This ADR does not claim that names or current IDs are the ideal permanent ontology for factory semantics. It establishes a durable identity policy over the canonical model Arcogine has today. Reclassifying a field as presentation-only, introducing stable logical identity distinct from current allocated IDs, or changing the canonical factory model is a model-semantics decision and requires a new fingerprint policy version if it changes fingerprint equivalence.
+This does not claim that those fields are the ideal permanent ontology. Reclassifying names as presentation-only, introducing logical identity distinct from current IDs, or otherwise changing canonical model equivalence requires a later policy version if fingerprints can change.
 
-### Current top-level list ordering remains semantic in v1
+### Current list ordering remains semantic in v1
 
-`resources`, `operations`, and `products` are encoded in canonical list order. `OperationDefinition.steps()` is likewise encoded in order.
+`resources`, `operations`, `products`, and operation `steps` are encoded in list order.
 
-This is intentionally conservative. The v1 fingerprint reflects the semantics and deterministic-runtime contract of the current canonical model; it does not attempt to define a stronger order-independent equivalence than the implementation presently guarantees.
+This is intentionally conservative. In particular, current product order can affect deterministic demand generation because runtime preserves product order and selects by RNG index. V1 does not define a stronger order-independent equivalence than the canonical model/runtime currently guarantees.
 
-In particular, product order is behavior-affecting today because runtime assembly preserves product order and deterministic demand generation selects by list index. Treating product order as non-semantic could therefore cause two models capable of different seeded outcomes to share a fingerprint.
-
-If a future canonical model or runtime establishes that one of these collections is semantically unordered, that change does not alter v1. A new fingerprint policy version must encode the new equivalence relation.
-
-### Set-shaped values are canonicalized independently of iteration order
-
-`OperationStepDefinition.eligibleResources` is set-shaped. Its `MachineId` values are sorted by ascending signed numeric ID before encoding.
-
-Equivalent sets must therefore produce the same v1 fingerprint regardless of source collection iteration order.
+`eligibleResources` is set-shaped and is therefore sorted by ascending signed `MachineId` before encoding.
 
 ### The v1 canonical byte grammar is language-independent
 
-The fingerprint digest is SHA-256 over one normative canonical byte stream. The byte stream is defined here independently of Java object/string representation.
+The digest is SHA-256 over one normative canonical byte stream. The stream does not depend on Java object formatting, serializer defaults, locale, or platform byte order.
 
-All multi-byte integers use network byte order (big-endian). There is no platform-native byte order and no locale-sensitive rendering anywhere in the grammar.
+All multi-byte integers use big-endian byte order.
 
-The stream begins with the exact ASCII policy-domain prefix, including the terminal zero byte:
+The stream begins with the exact ASCII bytes for:
 
 ```text
 arcogine.factory-model.v1\0
 ```
 
-The remaining stream is the concatenation of the fields below in the listed order. No field names, separators, whitespace, or serializer metadata are inserted beyond the explicit encodings defined here.
+including the terminal zero byte.
 
 #### Primitive encodings
 
 `U64(n)`
-: exactly eight bytes containing unsigned integer `n` in big-endian order. It is used for collection counts and UTF-8 byte lengths. Values outside `0..2^64-1` are not representable.
+: exactly eight bytes containing unsigned integer `n` in big-endian order. Used for collection counts and UTF-8 byte lengths.
 
 `I64(n)`
-: exactly eight bytes containing the two's-complement signed 64-bit representation of `n` in big-endian order. All model IDs and integral numeric fields are encoded as `I64`, including fields whose current Java representation is narrower than 64 bits.
+: exactly eight bytes containing the signed two's-complement 64-bit representation of `n` in big-endian order. All model IDs and integral numeric fields are encoded as `I64`, including fields currently represented by narrower Java types.
 
 `TEXT(s)`
-: `U64(byteLength)` followed by exactly `byteLength` bytes of the Unicode string encoded as UTF-8. `byteLength` is the number of UTF-8 bytes, not UTF-16 code units and not Unicode code points. No Unicode normalization, case folding, trimming, locale transformation, or presentation cleanup is applied. A value must be a valid Unicode scalar-value sequence; an implementation must reject ill-formed text rather than silently replace malformed code units while fingerprinting.
+: `U64(byteLength)` followed by exactly `byteLength` UTF-8 bytes. `byteLength` counts UTF-8 bytes, not UTF-16 code units or Unicode code points. No Unicode normalization, case folding, trimming, locale transformation, or presentation cleanup is applied.
+
+Every `TEXT` value participating in `factory-model:v1` **must be a valid Unicode scalar-value sequence before publication**. The v1 implementation must extend the canonical factory publication/validation boundary so a model containing ill-formed Unicode text cannot become a published v1-fingerprintable model. Fingerprinting must therefore be total for every successfully published model under the v1 publication contract; malformed Unicode is a publication validation error, not a fingerprint-time surprise.
+
+In the current Java implementation this specifically means unpaired UTF-16 surrogates in resource, operation, step, or product names must be rejected before `FactoryModelVersion` publication succeeds.
 
 `OPTIONAL_F64(x)`
 : one presence byte followed, when present, by an IEEE 754 binary64 payload:
@@ -142,14 +124,14 @@ The remaining stream is the concatenation of the fields below in the listed orde
 01 <8-byte binary64 payload>    present
 ```
 
-The binary64 payload is the exact 64-bit IEEE 754 encoding in big-endian byte order, with these canonicalization rules:
+The payload is big-endian and follows these rules:
 
 - positive and negative zero remain distinct;
 - finite values retain their exact binary64 value;
-- positive and negative infinity retain their IEEE 754 encodings if admitted by the canonical model;
-- every NaN representation, if admitted by the canonical model, is canonicalized to the quiet-NaN bit pattern `0x7ff8000000000000`.
+- positive and negative infinity retain their IEEE 754 encodings if admitted by domain validation;
+- any NaN value admitted by the domain is canonicalized to `0x7ff8000000000000`.
 
-This policy does not assert that NaN or infinity are valid factory-domain values. Domain validation may reject them. The byte grammar is nevertheless total for every nullable binary64 value so fingerprint compatibility does not depend on one language's numeric-to-text formatter.
+This byte grammar is total for nullable binary64 values even if domain validation later chooses to reject NaN or infinity.
 
 #### Collection encoding
 
@@ -162,11 +144,11 @@ U64(elementCount)
 <element N bytes>
 ```
 
-List elements retain list order. `eligibleResources` is sorted numerically before this collection encoding is applied.
+List elements retain list order. `eligibleResources` is numerically sorted before collection encoding.
 
 #### Factory-model v1 stream
 
-After the policy-domain prefix, encode:
+After the policy-domain prefix:
 
 ```text
 U64(resources.size)
@@ -197,19 +179,15 @@ for product in products, in list order:
     I64(product.operationId)
 ```
 
-This grammar, rather than any particular serializer or Java implementation, is the normative source of fingerprint bytes.
+This grammar is the normative source of fingerprint bytes.
 
-### SHA-256 collision resistance is sufficient for operational identity
+### SHA-256 equality is sufficient for operational identity
 
-Arcogine treats equality of correctly formed `factory-model:v1` fingerprints as equality of semantic content under the v1 policy for operational identity purposes.
-
-This is a practical cryptographic identity guarantee, not a mathematical assertion that SHA-256 is injective over every possible model representation. Arcogine relies on SHA-256 collision resistance as sufficient for the identity and provenance use cases governed by this ADR.
+Arcogine treats equality of correctly formed `factory-model:v1` fingerprints as equality of semantic content under v1 for operational identity purposes. This relies on SHA-256 collision resistance and is not a mathematical claim of injectivity.
 
 ### Java equality is not the durable semantic-identity contract
 
-`FactoryModel.equals()` remains Java record/representation equality. This ADR does not redefine it as Arcogine's durable semantic identity relation.
-
-For `factory-model:v1`, implementations must preserve the following implication:
+`FactoryModel.equals()` remains representation equality. V1 requires:
 
 ```text
 FactoryModel a equals FactoryModel b
@@ -217,150 +195,132 @@ FactoryModel a equals FactoryModel b
 fingerprint(a) equals fingerprint(b)
 ```
 
-The reverse implication is not established as a permanent platform invariant. Consumers that need durable semantic identity must compare fingerprints under the same named fingerprint policy rather than depend on Java object equality.
+The reverse implication is not established as a permanent platform invariant. Durable semantic identity is compared through fingerprints under the same policy.
+
+Because v1 publication validation rejects ill-formed text, the implication applies over the complete set of models that can be successfully published under the v1 contract; no published v1 model lacks a defined fingerprint.
 
 ### Existing `contentHash()` remains legacy provisional provenance
 
 `FactoryModelVersion.contentHash()` does **not** become the digest component of `factory-model:v1`.
 
-Its existing algorithm remains a compatibility surface for current runtime/result provenance until consumers are deliberately migrated. It may remain unchanged so existing behavior and recorded `modelContentHash` values are not silently rewritten.
-
-The distinction is explicit:
+Its current Java-derived algorithm remains a compatibility surface for existing runtime/result provenance while consumers are deliberately migrated.
 
 ```text
 contentHash()
-    legacy provisional Java-derived content hash
+    legacy provisional Java-derived hash
     existing raw provenance compatibility
 
 fingerprint()
     durable namespaced semantic identity
     factory-model:v1:sha256:<digest>
-    digest derived from the normative v1 byte grammar
+    digest from the normative v1 byte grammar
 ```
 
-A consumer must not reinterpret a historical bare `modelContentHash` value as the digest of `factory-model:v1` unless that value was explicitly produced by the durable fingerprint implementation. Migration may retain both identifiers during a compatibility period.
-
-This separation is intentional. ADR-0004 expressly declined to promise cross-process durability for the old hash, so G1 is the correct point to replace accidental Java encoding semantics with an intentional language-independent protocol.
+Historical bare `modelContentHash` values must not be silently reinterpreted as v1 digests. A migration may retain both identifiers during a compatibility period.
 
 ### Released fingerprint policies are immutable
 
-Once `factory-model:v1` is released in implementation, every supported Arcogine implementation of that policy must produce the same fingerprint for the same v1 canonical semantic content across process boundaries, software versions, and implementation languages.
+Once `factory-model:v1` ships in implementation, every supported implementation must produce the same fingerprint for the same v1 semantic content across processes, software versions, and implementation languages.
 
-Refactoring the implementation is permitted. Silently changing any of the following while continuing to label the result `factory-model:v1` is not:
+Changing any identity-affecting rule while still calling the policy v1 is forbidden, including:
 
-- semantic field membership;
-- field order;
-- collection ordering rules;
-- set canonicalization;
-- integer width or byte order;
-- string encoding or length unit;
-- Unicode validity or normalization rules;
-- nullable-value tagging;
+- semantic field membership or field order;
+- collection ordering or set sorting;
+- integer widths or byte order;
+- text encoding, byte-length semantics, Unicode-validity requirements, or normalization rules;
+- nullable-value tags;
 - floating-point canonicalization;
 - policy-domain prefix;
-- hashing algorithm;
-- digest rendering.
+- hash algorithm or digest rendering.
 
-A change to any of those rules that can change identity requires a new policy version.
+Such a change requires a new policy version.
 
 ### Golden compatibility vectors are part of the contract
 
-The implementation of a durable fingerprint policy must include pinned golden compatibility vectors with literal expected canonical bytes or byte encodings and literal expected digest/fingerprint outputs.
+The implementation must pin literal expected canonical bytes (or equivalent byte-level fixtures) and expected digest/fingerprint outputs.
 
 At minimum, v1 tests must cover:
 
-- a representative canonical factory model with an exact expected digest/fingerprint;
-- equality of repeated computations across independently constructed equal models;
-- sensitivity to semantic field changes, including names and IDs;
-- sensitivity to resource, operation, product, and operation-step ordering;
-- invariance to `eligibleResources` set iteration order;
+- one representative full factory model with an exact expected fingerprint;
+- repeated/equivalent construction producing the same fingerprint;
+- sensitivity to names, IDs, and ordered collection changes;
+- invariance to `eligibleResources` iteration order;
 - delimiter-bearing text;
-- non-ASCII BMP text and at least one astral Unicode character, proving UTF-8 byte-length framing;
+- non-ASCII BMP and astral Unicode text, proving UTF-8 byte-length framing;
+- publication rejection of unpaired surrogate / otherwise ill-formed Unicode text in every `TEXT`-participating name field;
 - null versus present `capacityLiters`;
-- representative positive/negative/zero floating-point values, including signed zero;
-- NaN canonicalization if NaN remains constructible by the canonical model;
-- a compatibility assertion that the legacy `contentHash()` remains unchanged for its existing fixture, while explicitly allowing its value to differ from the durable v1 digest.
+- positive, negative, zero, and signed-zero floating-point values;
+- NaN canonicalization if NaN remains publishable;
+- explicit evidence that legacy `contentHash()` behavior remains unchanged while its value is allowed to differ from the durable v1 digest.
 
-Golden vectors are additional executable evidence for the grammar, not a substitute for it.
+Golden vectors supplement the normative grammar; they do not replace it.
 
 ## Alternatives considered
 
-### Promote the existing bare SHA-256 string without policy metadata
+### Promote the existing bare SHA-256 string
 
-This would require the least code and preserve current consumers unchanged.
+Rejected because a bare digest does not identify the policy that produced it and would allow later canonicalization changes to silently redefine identity.
 
-It was rejected because a bare digest does not identify the canonicalization policy that produced it. Future changes to field membership, ordering, or normalization could silently redefine identity while retaining the same apparent format.
+### Promote the current Java canonical string as v1
 
-### Promote the current Java canonical string as `factory-model:v1`
-
-This would make the durable v1 digest byte-for-byte equal to today's `contentHash()`.
-
-It was rejected because the current representation depends on Java-specific behavior, including UTF-16 code-unit length through `String.length()` and Java lexical rendering through `String.valueOf`. Those were acceptable for a deliberately provisional in-process hash but are poor foundations for a permanent cross-language protocol. ADR-0004 made no durability promise for the old hash, so preserving it as legacy provenance is preferable to turning its implementation accidents into architecture.
+Rejected because it depends on Java `String.length()` and `String.valueOf()` behavior. Those are acceptable for a deliberately provisional hash, not a permanent cross-language protocol.
 
 ### Canonicalize through JSON
 
-A canonical JSON representation could be human-inspectable and reuse existing serializers.
+Rejected because it introduces serializer, property-order, escaping, numeric-rendering, and library-version dependencies without improving the semantic contract.
 
-It was rejected for v1 because it would introduce additional compatibility dependencies — serializer behavior, property ordering, escaping, numeric rendering, and library-version behavior — without improving the semantic contract. A small explicit binary grammar is easier to specify exactly.
+### Permit ill-formed Java strings and reject them only during fingerprinting
+
+Rejected because that makes the identity function partial over the canonical models Arcogine can publish. V1 instead makes Unicode scalar validity part of the publication contract so every published v1 model has a defined fingerprint.
+
+### Define an encoding for isolated UTF-16 surrogate code units
+
+Rejected because it would standardize a Java representation artifact as cross-language domain content. Valid Unicode scalar values are the durable text domain instead.
 
 ### Sort all top-level model collections
 
-This would make fingerprints insensitive to source ordering and might appear closer to a mathematical semantic model.
+Rejected because current semantics do not justify that equivalence: step ordering is explicit and product order can affect seeded runtime behavior.
 
-It was rejected because current model/runtime semantics do not justify that equivalence. Operation-step order is explicitly meaningful, and current product ordering can affect deterministic demand generation. The fingerprint must not erase behaviorally relevant distinctions merely to produce a tidier canonical form.
+### Exclude names or allocated IDs
 
-### Exclude names from the fingerprint
+Rejected for v1 because both are currently canonical model fields/references. Reclassifying them belongs to future canonical-model evolution and, if identity changes, a later fingerprint policy.
 
-Names could be treated as presentation metadata so renaming an object would not change semantic identity.
+### Combine fingerprint and controlled-revision decisions
 
-It was rejected for v1 because names are currently canonical domain fields rather than a separately modeled presentation layer. Reclassifying them is a model-semantics decision that should be made explicitly and, if adopted, expressed in a later fingerprint policy.
-
-### Exclude allocated IDs from the fingerprint
-
-This could allow independently imported models with newly allocated IDs to reproduce a fingerprint.
-
-It was rejected for v1 because current IDs participate in canonical references and Arcogine has not yet defined a stable logical-identity layer independent of those IDs. Treating them as non-semantic now would assert an equivalence the current domain model does not establish.
-
-### Combine fingerprint and controlled-revision decisions in this ADR
-
-This would keep all G1 identity choices in one place.
-
-It was rejected because ADR-0004's principal architectural distinction is that semantic content identity and historical revision identity are different concerns. Recombining their concrete mechanisms in the next ADR would weaken that boundary. Controlled revision identifiers, lineage rules, rollback/branch semantics, and provenance minimums will be decided separately when that ADR is allocated.
+Rejected because ADR-0004 deliberately separates semantic content identity from historical revision identity. Controlled revision identifiers and lineage will be decided separately when that work is allocated.
 
 ## Consequences
 
-As a result of this decision:
+- Arcogine gains a named, versioned, language-independent semantic identity contract.
+- `factory-model:v1` preserves current field membership and ordering semantics rather than redesigning factory equivalence inside governance work.
+- The durable fingerprint does not inherit Java string-length or scalar-formatting behavior.
+- The factory publication boundary must reject ill-formed Unicode in all v1 `TEXT` fields before a model can be published; fingerprinting is therefore total over published v1 models.
+- Existing `contentHash()` and `modelContentHash` consumers can remain compatible as legacy provenance while durable fingerprint support is introduced additively.
+- Historical bare hashes are not reinterpreted as v1 fingerprints.
+- Future canonical-model evolution can introduce a new policy without changing the meaning of historical v1 identities.
+- Semantic identity remains independent of authorship, time, approval, deployment, workflow state, and controlled revision history.
+- Controlled revision identity and lineage remain unresolved by this ADR.
 
-- Arcogine gains a named, versioned, language-independent, cross-process semantic identity contract;
-- `factory-model:v1` intentionally preserves current field membership and ordering semantics rather than redesigning factory semantic equivalence inside governance work;
-- the durable fingerprint no longer inherits Java `String.length()` or `String.valueOf()` behavior;
-- existing `contentHash()` and `modelContentHash` consumers can remain behaviorally compatible as legacy provenance while the durable fingerprint is introduced additively;
-- migration must not silently reinterpret historical bare hashes as v1 fingerprints;
-- future canonical-model evolution can introduce a new fingerprint policy without rewriting the meaning of historical v1 identifiers;
-- semantic identity remains independent of authorship, time, workflow state, approval, deployment, and external change-management systems;
-- controlled revision identity and lineage remain unresolved by this ADR and must not be inferred from the fingerprint;
-- compatibility tests become part of the architecture contract, so accidental canonicalization changes fail visibly rather than silently changing persisted identity.
-
-The principal costs are an additive migration from the legacy content hash and a deliberately explicit binary grammar. Those costs are preferable to permanently coupling durable identity to one language runtime or retroactively declaring current distinguishable models equivalent.
+The main costs are an additive migration from the legacy content hash, an explicit binary grammar, and a new publication-validation rule for malformed Unicode. Those costs are preferable to a partial identity function or a durable protocol coupled to one language runtime.
 
 ## Non-goals
 
 This ADR does not decide:
 
 - `ControlledRevisionId` representation;
-- revision lineage, branching, merge, or rollback policy;
-- controlled revision persistence or repository authority;
+- lineage, branching, merge, or rollback policy;
+- revision persistence or repository authority;
 - model artifact serialization/retention;
-- schema evolution or migration policy beyond fingerprint coexistence;
+- schema evolution/migration policy;
 - semantic `ChangeSet` representation;
-- whether future factory names become presentation-only metadata;
-- whether future logical identity is separated from current allocated IDs;
-- a universal canonicalization scheme shared by all Arcogine domains;
+- whether future names become presentation-only;
+- whether future logical identity separates from current IDs;
+- a universal canonicalization scheme for all Arcogine domains;
 - Challenge Readiness identity/versioning;
 - approval, authorization, deployment, or external workflow semantics.
 
-A subsequent ADR should address controlled revision identity and lineage independently when that decision is allocated. This ADR does not reserve its number.
+A subsequent ADR should address controlled revision identity and lineage independently when that decision is allocated.
 
 ## Charter alignment
 
-This decision supports the Product Charter's determinism and provenance principles by making semantic identity reproducible and historically interpretable across processes, versions, and implementation languages. It also preserves domain ownership: the factory domain defines the canonical semantic content of its proving-ground model, while Governance supplies the architectural requirement that durable identities be explicit, versioned, and reproducible rather than accidental properties of an implementation hash.
+This decision supports determinism and provenance by making semantic identity reproducible across implementations and complete over the published v1 model domain. It also preserves domain ownership: the factory domain defines the canonical semantic content and publication validity of its proving-ground model, while Governance requires durable identities to be explicit, versioned, and reproducible.

@@ -2,12 +2,16 @@ package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
+import com.arcogine.core.event.EventPayload;
+import com.arcogine.core.event.EventType;
 import com.arcogine.factory.jobs.JobView;
+import com.arcogine.factory.machines.MachineView;
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
@@ -15,13 +19,16 @@ import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -79,7 +86,7 @@ class Gate3SessionControlAcceptanceTest {
                 runtime.modelVersion(),
                 "the runtime must retain the exact published model version it was instantiated from");
 
-        runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
         assertSame(
                 version, runtime.modelVersion(), "source model version identity must not change as the session advances");
 
@@ -88,35 +95,92 @@ class Gate3SessionControlAcceptanceTest {
     }
 
     @Test
-    void rejectedSubmissionThrowsAStableStructuredErrorAndLeavesNoPartialMutation() {
+    void acceptedSubmissionReturnsAStructuredResultWithProvenanceAndScheduledEvents() {
+        FactoryModelVersion version = publishedModel();
+        FactoryRuntime runtime = FactoryRuntime.forModel(version);
+
+        CommandResult<OrderId> result = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+
+        assertInstanceOf(CommandResult.Accepted.class, result, "a valid submission must be accepted");
+        assertEquals("ACCEPTED", result.code(), "an accepted result must carry the stable ACCEPTED code");
+        assertEquals("accepted", result.diagnostic());
+        assertSame(version, result.modelVersion(), "the result must carry the session's model provenance");
+        assertEquals(
+                runtime.jobsView().findFirst().orElseThrow().orderId(),
+                result.orElseThrow(),
+                "the accepted value must be the new OrderId");
+        assertFalse(
+                result.scheduledEvents().isEmpty(),
+                "submitting workload against an idle machine must dispatch immediately, scheduling at "
+                        + "least the first step's TaskEnd as a direct effect of this command");
+        for (Event scheduled : result.scheduledEvents()) {
+            assertEquals(EventType.TaskEnd, scheduled.eventType());
+        }
+    }
+
+    @Test
+    void rejectedSubmissionReturnsAStructuredResultAndLeavesNoPartialMutation() {
         FactoryRuntime runtime = FactoryRuntime.forModel(publishedModel());
 
-        SimError.OutOfRange quantityError = assertThrows(
+        CommandResult<OrderId> quantityResult = runtime.submitWorkload(new ProductId(1), 0, UNIT_PRICE);
+        assertInstanceOf(CommandResult.Rejected.class, quantityResult, "an invalid quantity must be rejected");
+        CommandResult.Rejected<OrderId> quantityRejected = (CommandResult.Rejected<OrderId>) quantityResult;
+        SimError.OutOfRange quantityThrown = assertThrows(
                 SimError.OutOfRange.class,
-                () -> runtime.submitWorkload(new ProductId(1), 0, UNIT_PRICE),
-                "an invalid quantity must be rejected with a stable, typed SimError subtype");
-        assertEquals("quantity", quantityError.field(), "the rejection must identify the offending field");
+                quantityResult::orElseThrow,
+                "orElseThrow() on a rejected result must rethrow the original, typed SimError");
+        assertEquals(
+                quantityThrown, quantityRejected.error(), "orElseThrow() must rethrow the exact wrapped error");
+        assertEquals(
+                "OutOfRange",
+                quantityResult.code(),
+                "the rejection code must be the stable, typed SimError subtype name");
+        assertEquals(quantityThrown.getMessage(), quantityResult.diagnostic());
+        assertEquals("quantity", quantityThrown.field(), "the rejection must identify the offending field");
+        assertTrue(quantityResult.scheduledEvents().isEmpty(), "a rejection must not schedule any event");
         assertEquals(0L, runtime.ordersView().count(), "a rejected submission must not create an order");
         assertEquals(0L, runtime.jobsView().count(), "a rejected submission must not create a job");
 
-        SimError.UnknownId productError = assertThrows(
-                SimError.UnknownId.class,
-                () -> runtime.submitWorkload(new ProductId(999), 1, UNIT_PRICE),
-                "a product with no published routing must be rejected with a stable, typed SimError subtype");
+        CommandResult<OrderId> productResult = runtime.submitWorkload(new ProductId(999), 1, UNIT_PRICE);
+        assertInstanceOf(CommandResult.Rejected.class, productResult, "an unknown product must be rejected");
+        CommandResult.Rejected<OrderId> productRejected = (CommandResult.Rejected<OrderId>) productResult;
+        assertInstanceOf(SimError.UnknownId.class, productRejected.error());
+        SimError.UnknownId productError = (SimError.UnknownId) productRejected.error();
         assertEquals(999L, productError.id(), "the rejection must identify the offending entity id");
         assertEquals(0L, runtime.ordersView().count(), "a rejection for an unknown product must not create an order");
         assertEquals(0L, runtime.jobsView().count(), "a rejection for an unknown product must not create a job");
     }
 
     @Test
+    void machineAvailabilityCommandReturnsAStructuredResultForAcceptanceAndRejection() {
+        FactoryModelVersion version = publishedModel();
+        FactoryRuntime runtime = FactoryRuntime.forModel(version);
+
+        CommandResult<EventPayload.MachineAvailabilityChange> accepted =
+                runtime.setMachineAvailability(new MachineId(1), false);
+        assertInstanceOf(CommandResult.Accepted.class, accepted);
+        assertEquals("ACCEPTED", accepted.code());
+        assertSame(version, accepted.modelVersion());
+        assertEquals(new EventPayload.MachineAvailabilityChange(new MachineId(1), false), accepted.orElseThrow());
+        assertTrue(
+                accepted.scheduledEvents().isEmpty(),
+                "taking an idle machine offline dispatches nothing, so no event is scheduled");
+
+        CommandResult<EventPayload.MachineAvailabilityChange> rejected =
+                runtime.setMachineAvailability(new MachineId(999), true);
+        assertInstanceOf(CommandResult.Rejected.class, rejected, "an unknown machine id must be rejected");
+        assertThrows(SimError.UnknownId.class, rejected::orElseThrow);
+    }
+
+    @Test
     void advanceUntilBoundedToOneEventPerCallConvergesWithLoopingAdvance() {
         FactoryRuntime stepped = FactoryRuntime.forModel(publishedModel());
-        stepped.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        stepped.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
         List<Event> steppedEvents = drainAll(stepped);
         assertFalse(steppedEvents.isEmpty());
 
         FactoryRuntime bounded = FactoryRuntime.forModel(publishedModel());
-        bounded.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        bounded.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
         List<Event> boundedEvents = new ArrayList<>();
         List<Event> batch;
@@ -146,11 +210,11 @@ class Gate3SessionControlAcceptanceTest {
     @Test
     void advanceUntilDrainingInOneUnboundedCallConvergesWithLoopingAdvance() {
         FactoryRuntime stepped = FactoryRuntime.forModel(publishedModel());
-        stepped.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        stepped.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
         List<Event> steppedEvents = drainAll(stepped);
 
         FactoryRuntime bounded = FactoryRuntime.forModel(publishedModel());
-        bounded.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        bounded.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
         List<Event> boundedEvents = bounded.advanceUntil(SimTime.of(Long.MAX_VALUE), Long.MAX_VALUE);
 
         assertEquals(
@@ -164,7 +228,7 @@ class Gate3SessionControlAcceptanceTest {
     @Test
     void advanceUntilStopsAtTheTargetSimulatedTimeWithoutProcessingLaterEvents() {
         FactoryRuntime runtime = FactoryRuntime.forModel(publishedModel());
-        runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
         List<Event> beforeFirstCompletion = runtime.advanceUntil(SimTime.of(STEP_ONE_DURATION - 1), 100);
         assertTrue(
@@ -189,11 +253,85 @@ class Gate3SessionControlAcceptanceTest {
         assertThrows(IllegalArgumentException.class, () -> runtime.advanceUntil(SimTime.ZERO, -1));
     }
 
+    private static final long POOL_STEP_DURATION = 10;
+
+    private static FactoryModelVersion twoEligibleMachinesModel() {
+        FactoryModel model = new FactoryModel(
+                List.of(
+                        new ResourceDefinition(new MachineId(1), "Mill A", 1, null, 0),
+                        new ResourceDefinition(new MachineId(2), "Mill B", 1, null, 0)),
+                List.of(new OperationDefinition(
+                        1,
+                        "Widget Route",
+                        List.of(new OperationStepDefinition(
+                                1, "Milling", Set.of(new MachineId(1), new MachineId(2)), POOL_STEP_DURATION)))),
+                List.of(new ProductDefinition(new ProductId(1), "Widget", 1)));
+        return FactoryModelPublisher.publish(model);
+    }
+
+    @Test
+    void pendingWorkViewExposesAMultiEligibleJobWaitingWhileBothEligibleMachinesAreOccupied() {
+        FactoryRuntime runtime = FactoryRuntime.forModel(twoEligibleMachinesModel());
+
+        OrderId orderA = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        OrderId orderB = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        assertTrue(
+                runtime.pendingWorkView().isEmpty(),
+                "the first two orders must dispatch directly onto the two idle eligible machines");
+
+        assertEquals(
+                0,
+                runtime.machinesView().stream()
+                        .mapToInt(MachineView::queueDepth)
+                        .sum(),
+                "both machines are actively running a job, not queueing one, so per-machine queue "
+                        + "depth must be zero even though a third order is about to have to wait");
+
+        OrderId orderC = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        JobId waitingJobId =
+                runtime.jobsView().filter(j -> j.orderId().equals(orderC)).findFirst().orElseThrow().id();
+
+        assertEquals(
+                0,
+                runtime.machinesView().stream()
+                        .mapToInt(MachineView::queueDepth)
+                        .sum(),
+                "the third order waits in the cross-machine multi-eligible backlog, not in either "
+                        + "machine's own queue -- queueDepth() alone cannot see it");
+
+        List<PendingWorkView> pending = runtime.pendingWorkView();
+        assertEquals(1, pending.size(), "exactly the third order's job must be waiting");
+        assertEquals(waitingJobId, pending.get(0).jobId());
+        assertEquals(Set.of(new MachineId(1), new MachineId(2)), pending.get(0).eligibleMachines());
+
+        assertEquals(
+                null,
+                runtime.jobsView().filter(j -> j.orderId().equals(orderC)).findFirst().orElseThrow().currentMachine(),
+                "the waiting job must not yet be assigned to a machine");
+        assertEquals(
+                Set.of(orderA, orderB),
+                runtime.jobsView()
+                        .filter(j -> !j.orderId().equals(orderC))
+                        .map(JobView::orderId)
+                        .collect(Collectors.toSet()));
+
+        // Freeing one machine must dispatch the waiting job and clear it from pendingWorkView().
+        Event firstCompletion = runtime.advance().orElseThrow();
+        assertEquals(EventType.TaskEnd, firstCompletion.eventType());
+        assertTrue(
+                runtime.pendingWorkView().isEmpty(),
+                "once an eligible machine frees up, the waiting job must be dispatched and no longer pending");
+        assertTrue(
+                runtime.jobsView().filter(j -> j.orderId().equals(orderC)).findFirst().orElseThrow().currentMachine()
+                        != null,
+                "the previously waiting job must now be dispatched to the freed machine");
+    }
+
     @Test
     void resetSessionReproducesIdenticalResultToTheOriginalSessionWithoutMutatingIt() {
         FactoryModelVersion version = publishedModel();
         FactoryRuntime original = FactoryRuntime.forModel(version);
-        original.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        original.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
         List<Event> originalEvents = drainAll(original);
 
         FactoryRuntime resetRuntime = original.reset();
@@ -210,7 +348,7 @@ class Gate3SessionControlAcceptanceTest {
                 original.ordersView().count(),
                 "constructing a reset session must not mutate the original session it was reset from");
 
-        resetRuntime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        resetRuntime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
         List<Event> resetEvents = drainAll(resetRuntime);
 
         assertFalse(resetEvents.isEmpty());

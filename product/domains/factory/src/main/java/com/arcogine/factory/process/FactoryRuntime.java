@@ -1,6 +1,7 @@
 package com.arcogine.factory.process;
 
 import com.arcogine.core.event.Event;
+import com.arcogine.core.event.EventPayload;
 import com.arcogine.core.queue.Scheduler;
 import com.arcogine.factory.jobs.JobView;
 import com.arcogine.factory.machines.MachineView;
@@ -40,19 +41,22 @@ import java.util.stream.Stream;
  * {@link Scheduler} pair from Gate 1/2. {@link #modelVersion()} identifies the published model the
  * session was instantiated from throughout its lifetime; {@link #advance()} and {@link
  * #advanceUntil} give a caller both one-event-at-a-time and bounded-simulated-time control; {@link
- * #reset()} gives a caller a fresh session over the same published model. It deliberately does not
- * attempt a generic simulation-session framework, event envelopes/cursors, or a new session-identity
- * type -- those remain out of scope for this slice or belong to later gates (see the plan).
+ * #reset()} gives a caller a fresh session over the same published model; {@link #submitWorkload}
+ * and {@link #setMachineAvailability} return a definite {@link CommandResult} rather than throwing
+ * or returning {@code void}; {@link #pendingWorkView()} exposes the cross-machine multi-eligible
+ * backlog that no single machine's queue depth reflects. It deliberately does not attempt a generic
+ * simulation-session framework, event envelopes/cursors, or a new session-identity type -- those
+ * remain out of scope for this slice or belong to later gates (see the plan).
  */
 public class FactoryRuntime {
 
     private final FactoryHandler factory;
-    private final Scheduler scheduler;
+    private final RecordingScheduler scheduler;
     private final FactoryModelVersion modelVersion;
 
     private FactoryRuntime(FactoryHandler factory, FactoryModelVersion modelVersion) {
         this.factory = factory;
-        this.scheduler = new Scheduler();
+        this.scheduler = new RecordingScheduler();
         this.modelVersion = modelVersion;
     }
 
@@ -90,32 +94,60 @@ public class FactoryRuntime {
 
     /**
      * Submits one explicit production order and creates its execution job, under the same
-     * acceptance/routing/dispatch semantics as any other accepted order.
+     * acceptance/routing/dispatch semantics as any other accepted order, and returns a definite
+     * {@link CommandResult} per docs/planning/factory-simulation-engine-readiness.md §7.2.
      *
-     * <p>Accepted/rejected status is conveyed the same way every other command on this type conveys
-     * it: a normal return is acceptance, and an unchecked {@link SimError} is rejection. The thrown
-     * {@link SimError} subtype (e.g. {@link SimError.OutOfRange} for an invalid quantity, {@link
-     * SimError.UnknownId} for a product with no published routing) is itself the stable rejection
-     * code, its accessors (e.g. {@code field()}, {@code id()}) are the affected-entity/diagnostic
-     * detail, and {@link Throwable#getMessage()} is the human-readable diagnostic -- there is no
-     * separate result wrapper because {@link SimError} already is a structured, sealed rejection
-     * hierarchy, not a bare string. Session/model provenance for either outcome is {@link
-     * #modelVersion()}. A rejected call never leaves partial mutation: every current rejection path
-     * is checked before any {@code Order}/{@code Job} is created.
+     * <p>On acceptance, {@link CommandResult.Accepted#value()} is the new {@link OrderId}. On
+     * rejection (e.g. {@link SimError.OutOfRange} for an invalid quantity, {@link
+     * SimError.UnknownId} for a product with no published routing), {@link
+     * CommandResult.Rejected#error()} is the original {@link SimError} -- a rejected call never
+     * leaves partial mutation, since every current rejection path is checked before any {@code
+     * Order}/{@code Job} is created.
      */
-    public OrderId submitWorkload(ProductId productId, long quantity, double unitPrice) {
-        return factory.submitOrder(productId, quantity, unitPrice, scheduler.currentTime(), scheduler);
+    public CommandResult<OrderId> submitWorkload(ProductId productId, long quantity, double unitPrice) {
+        int mark = scheduler.scheduledCount();
+        try {
+            OrderId orderId =
+                    factory.submitOrder(productId, quantity, unitPrice, scheduler.currentTime(), scheduler);
+            return new CommandResult.Accepted<>(orderId, modelVersion, scheduler.scheduledSince(mark));
+        } catch (SimError e) {
+            return new CommandResult.Rejected<>(e, modelVersion);
+        }
     }
 
     /**
      * Brings a machine online or takes it offline, under the same dispatch semantics as the
-     * economy/scenario-driven {@link com.arcogine.core.event.EventPayload.MachineAvailabilityChange}
-     * event. Taking a machine offline never affects work already active on it; bringing an eligible
-     * machine back online can immediately pick up work that was waiting because no other eligible
-     * machine was available.
+     * economy/scenario-driven {@link EventPayload.MachineAvailabilityChange} event, and returns a
+     * definite {@link CommandResult}. Taking a machine offline never affects work already active on
+     * it; bringing an eligible machine back online can immediately pick up work that was waiting
+     * because no other eligible machine was available -- any such immediately-dispatched {@code
+     * TaskStart}/{@code TaskEnd} events are included in {@link CommandResult#scheduledEvents()}.
+     *
+     * <p>On rejection (e.g. {@link SimError.UnknownId} for an unknown {@code machineId}), {@link
+     * CommandResult.Rejected#error()} is the original {@link SimError} and no state changes.
      */
-    public void setMachineAvailability(MachineId machineId, boolean online) {
-        factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
+    public CommandResult<EventPayload.MachineAvailabilityChange> setMachineAvailability(
+            MachineId machineId, boolean online) {
+        int mark = scheduler.scheduledCount();
+        try {
+            factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
+            return new CommandResult.Accepted<>(
+                    new EventPayload.MachineAvailabilityChange(machineId, online),
+                    modelVersion,
+                    scheduler.scheduledSince(mark));
+        } catch (SimError e) {
+            return new CommandResult.Rejected<>(e, modelVersion);
+        }
+    }
+
+    /**
+     * Read-only view of work waiting for one of several eligible machines to free up (Gate 2's
+     * cross-machine multi-eligible backlog) -- not reflected in any single machine's {@link
+     * MachineView#queueDepth()}. See {@link PendingWorkView} for why this is a necessary, separate
+     * projection (Gate 3 acceptance criterion 5).
+     */
+    public List<PendingWorkView> pendingWorkView() {
+        return factory.pendingWorkView();
     }
 
     /** Processes exactly one pending event, if any, and returns it. */

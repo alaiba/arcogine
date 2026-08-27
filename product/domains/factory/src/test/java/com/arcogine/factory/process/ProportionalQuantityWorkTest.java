@@ -270,8 +270,8 @@ class ProportionalQuantityWorkTest {
         FactoryRuntime runtimeQty1 = FactoryRuntime.forModel(publishedModel());
         FactoryRuntime runtimeQty10 = FactoryRuntime.forModel(publishedModel());
 
-        runtimeQty1.submitWorkload(new ProductId(1), 1, 10.0);
-        runtimeQty10.submitWorkload(new ProductId(1), 10, 10.0);
+        runtimeQty1.submitWorkload(new ProductId(1), 1, 10.0).orElseThrow();
+        runtimeQty10.submitWorkload(new ProductId(1), 10, 10.0).orElseThrow();
 
         while (runtimeQty1.advance().isPresent()) {
             // drain
@@ -294,7 +294,7 @@ class ProportionalQuantityWorkTest {
         long economyLeadTime = runOrderToCompletion(economyHandler, 5);
 
         FactoryRuntime explicitRuntime = FactoryRuntime.forModel(publishedModel());
-        explicitRuntime.submitWorkload(new ProductId(1), 5, 10.0);
+        explicitRuntime.submitWorkload(new ProductId(1), 5, 10.0).orElseThrow();
         while (explicitRuntime.advance().isPresent()) {
             // drain
         }

@@ -89,8 +89,8 @@ class Gate2MultiResourceDispatchAcceptanceTest {
     void publishedMultiEligibleModelSurvivesAssemblyAndDispatchesBothOrdersConcurrently() {
         FactoryRuntime runtime = freshRuntime();
 
-        OrderId orderA = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
-        OrderId orderB = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+        OrderId orderA = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        OrderId orderB = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
 
         JobView jobA = runtime.jobsView()
                 .filter(j -> j.orderId().equals(orderA))
@@ -113,8 +113,8 @@ class Gate2MultiResourceDispatchAcceptanceTest {
         FactoryRuntime runtimeA = freshRuntime();
         FactoryRuntime runtimeB = freshRuntime();
 
-        runtimeA.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
-        runtimeB.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+        runtimeA.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        runtimeB.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
 
         MachineId assignedA = runtimeA.jobsView().findFirst().orElseThrow().currentMachine();
         MachineId assignedB = runtimeB.jobsView().findFirst().orElseThrow().currentMachine();
@@ -128,21 +128,21 @@ class Gate2MultiResourceDispatchAcceptanceTest {
     void bringingAnEligibleMachineOnlineDispatchesWorkStrandedWaitingForTheOtherMachine() {
         FactoryRuntime runtime = freshRuntime();
 
-        runtime.setMachineAvailability(new MachineId(1), false);
+        runtime.setMachineAvailability(new MachineId(1), false).orElseThrow();
 
         // Order A: only Mill B is online, so it starts immediately there.
-        OrderId orderA = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+        OrderId orderA = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
         JobView jobA = runtime.jobsView().filter(j -> j.orderId().equals(orderA)).findFirst().orElseThrow();
         assertEquals(new MachineId(2), jobA.currentMachine());
 
         // Order B: Mill A is offline and Mill B is now busy, so it must wait rather than being
         // pinned to one specific machine's queue.
-        OrderId orderB = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+        OrderId orderB = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
         JobView jobBWaiting = runtime.jobsView().filter(j -> j.orderId().equals(orderB)).findFirst().orElseThrow();
         assertEquals(null, jobBWaiting.currentMachine(), "order B must be waiting, not yet dispatched");
 
         // Mill A recovers -- even though order B never touched Mill A, this must dispatch it.
-        runtime.setMachineAvailability(new MachineId(1), true);
+        runtime.setMachineAvailability(new MachineId(1), true).orElseThrow();
 
         JobView jobBAfter = runtime.jobsView().filter(j -> j.orderId().equals(orderB)).findFirst().orElseThrow();
         assertEquals(
@@ -155,9 +155,9 @@ class Gate2MultiResourceDispatchAcceptanceTest {
     @Test
     void offlineEligibleMachineIsExcludedAndRemovingItDoesNotRequireChangingTheProductDefinition() {
         FactoryRuntime runtime = freshRuntime();
-        runtime.setMachineAvailability(new MachineId(1), false);
+        runtime.setMachineAvailability(new MachineId(1), false).orElseThrow();
 
-        OrderId orderId = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+        OrderId orderId = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
 
         JobView job = runtime.jobsView().filter(j -> j.orderId().equals(orderId)).findFirst().orElseThrow();
         assertEquals(
@@ -184,17 +184,17 @@ class Gate2MultiResourceDispatchAcceptanceTest {
         FactoryRuntime runtime = FactoryRuntime.forModel(twoDisjointPoolsModel());
 
         // Saturate pool A ({M1, M2}) -- both machines busy for a long time.
-        runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
-        runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
+        runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
 
         // Saturate pool B ({M3, M4}) -- both machines busy, but only briefly.
-        runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE);
-        runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE);
+        runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE).orElseThrow();
+        runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE).orElseThrow();
 
         // Both pools are now full: the next order for each pool must wait. Pool A's waiting order
         // is queued first, so it sits at the head of the pending backlog.
-        OrderId poolAWaiting = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE);
-        OrderId poolBWaiting = runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE);
+        OrderId poolAWaiting = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        OrderId poolBWaiting = runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE).orElseThrow();
 
         JobView poolAJobBefore =
                 runtime.jobsView().filter(j -> j.orderId().equals(poolAWaiting)).findFirst().orElseThrow();

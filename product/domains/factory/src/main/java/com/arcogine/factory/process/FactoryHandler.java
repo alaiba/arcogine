@@ -116,6 +116,18 @@ public class FactoryHandler implements EventHandler {
         return machines.machines().stream().map(MachineView.class::cast).toList();
     }
 
+    /**
+     * Read-only snapshot of {@link #pendingMultiEligible}: work waiting for any one of several
+     * eligible machines to free up, not reflected in any single {@link Machine}'s queue depth. See
+     * {@link PendingWorkView} for why this is a separate, necessary projection from {@link
+     * #machinesView()}.
+     */
+    public List<PendingWorkView> pendingWorkView() {
+        return pendingMultiEligible.stream()
+                .map(p -> new PendingWorkView(p.jobId(), p.eligibleMachines()))
+                .toList();
+    }
+
     public long backlog() {
         return jobs.activeJobs().count();
     }

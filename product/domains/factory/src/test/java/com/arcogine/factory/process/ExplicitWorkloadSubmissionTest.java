@@ -49,7 +49,7 @@ class ExplicitWorkloadSubmissionTest {
     void submitsExplicitWorkloadWithoutEconomyDemandOrAgents() {
         FactoryRuntime runtime = runtime();
 
-        OrderId orderId = runtime.submitWorkload(new ProductId(1), 3, 12.0);
+        OrderId orderId = runtime.submitWorkload(new ProductId(1), 3, 12.0).orElseThrow();
 
         assertEquals(1L, runtime.ordersView().count());
         assertEquals(1L, runtime.jobsView().count());
@@ -74,7 +74,7 @@ class ExplicitWorkloadSubmissionTest {
     @Test
     void exposesReadOnlyProjectionsWithoutAFactoryHandlerAccessor() {
         FactoryRuntime runtime = runtime();
-        runtime.submitWorkload(new ProductId(1), 3, 12.0);
+        runtime.submitWorkload(new ProductId(1), 3, 12.0).orElseThrow();
         var queuedJob = runtime.jobsView().findFirst().orElseThrow();
 
         assertEquals(queuedJob.id(), runtime.job(queuedJob.id()).id());
@@ -103,7 +103,7 @@ class ExplicitWorkloadSubmissionTest {
 
     private static Event runToCompletion() {
         FactoryRuntime runtime = runtime();
-        runtime.submitWorkload(new ProductId(1), 3, 12.0);
+        runtime.submitWorkload(new ProductId(1), 3, 12.0).orElseThrow();
         runtime.advance();
         runtime.advance();
         runtime.advance();

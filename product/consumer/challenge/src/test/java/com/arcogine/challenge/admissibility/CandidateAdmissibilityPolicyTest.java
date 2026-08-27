@@ -68,7 +68,7 @@ class CandidateAdmissibilityPolicyTest {
         CandidateDraftSnapshot snapshot = snapshot(
                 placed("unknown-1", unknown, 0, 0), placed("disallowed-1", disallowed, 1, 0));
 
-        CandidateAdmissibilityResult result = assess(ChallengeFixtures.referenceChallenge(), catalogue, snapshot);
+        CandidateAdmissibilityResult result = assess(challengeFor(catalogue), catalogue, snapshot);
 
         assertFalse(result.admitted());
         assertEquals(List.of("candidate.occurrence.unknown-catalogue-item",
@@ -86,9 +86,9 @@ class CandidateAdmissibilityPolicyTest {
                 placed("cutter-1", CUTTER, 0, 0), placed("cutter-2", CUTTER, 1, 0),
                 placed("cutter-3", CUTTER, 2, 0));
 
-        assertTrue(assess(ChallengeFixtures.referenceChallenge(), catalogue, allowed).admitted());
+        assertTrue(assess(challengeFor(catalogue), catalogue, allowed).admitted());
         assertEquals("candidate.quantity-limit.exceeded",
-                assess(ChallengeFixtures.referenceChallenge(), catalogue, tooMany).issues().get(0).code());
+                assess(challengeFor(catalogue), catalogue, tooMany).issues().get(0).code());
     }
 
     @Test
@@ -99,9 +99,23 @@ class CandidateAdmissibilityPolicyTest {
                 EquipmentOffer.of(CUTTER, 40_001L)));
         CandidateDraftSnapshot snapshot = snapshot(placed("cutter-1", CUTTER, 0, 0));
 
-        assertTrue(assess(ChallengeFixtures.referenceChallenge(), exactCatalogue, snapshot).admitted());
+        assertTrue(assess(challengeFor(exactCatalogue), exactCatalogue, snapshot).admitted());
         assertEquals("candidate.budget.exceeded",
-                assess(ChallengeFixtures.referenceChallenge(), overCatalogue, snapshot).issues().get(0).code());
+                assess(challengeFor(overCatalogue), overCatalogue, snapshot).issues().get(0).code());
+    }
+
+    @Test
+    void changedPriceWithSameCatalogueIdentityIsRejected() {
+        EquipmentCatalogue changedCatalogue = catalogue(List.of(
+                EquipmentOffer.of(CUTTER, 5_001L),
+                EquipmentOffer.of(ASSEMBLY, EquipmentCatalogueFixtures.ASSEMBLY_STATION_COST_CREDITS),
+                EquipmentOffer.of(INSPECTOR, EquipmentCatalogueFixtures.INSPECTOR_COST_CREDITS)));
+
+        CandidateAdmissibilityResult result = assess(ChallengeFixtures.referenceChallenge(),
+                changedCatalogue, snapshot(placed("cutter-1", CUTTER, 0, 0)));
+
+        assertEquals("candidate.catalogue.semantic-fingerprint-mismatch",
+                result.issues().get(0).code());
     }
 
     @Test
@@ -109,7 +123,7 @@ class CandidateAdmissibilityPolicyTest {
         EquipmentCatalogue invalidCatalogue = catalogue(List.of(
                 EquipmentOffer.of(CUTTER, -1L)));
 
-        CandidateAdmissibilityResult result = assess(ChallengeFixtures.referenceChallenge(),
+        CandidateAdmissibilityResult result = assess(challengeFor(invalidCatalogue),
                 invalidCatalogue, snapshot(placed("cutter-1", CUTTER, 0, 0)));
 
         assertEquals("candidate.economics.catalogue.invalid", result.issues().get(0).code());
@@ -188,6 +202,13 @@ class CandidateAdmissibilityPolicyTest {
     private static CandidateDraftSnapshot snapshot(PlacedEquipment... equipment) {
         return new CandidateDraftSnapshot(List.of(equipment));
     }
+
+        private static ChallengeDefinition challengeFor(EquipmentCatalogue catalogue) {
+                ChallengeDefinition reference = ChallengeFixtures.referenceChallenge();
+                return new ChallengeDefinition(reference.identity(), reference.floor(), reference.startingBudget(),
+                                reference.workload(), reference.availableEquipment(), reference.deadline(),
+                                reference.evaluationPolicy(), catalogue.identity(), catalogue.semanticFingerprint());
+        }
 
     private static PlacedEquipment placed(String occurrenceId, EquipmentCatalogueItemId itemId,
             int x, int y) {

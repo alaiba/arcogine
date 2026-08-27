@@ -1,6 +1,10 @@
 package com.arcogine.challenge.catalogue;
 
 import com.arcogine.challenge.EquipmentCatalogueItemId;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +46,28 @@ public final class EquipmentCatalogue {
     /** All offers, in declaration order. */
     public List<EquipmentOffer> offers() {
         return offers;
+    }
+
+    /** Deterministic fingerprint of the result-affecting catalogue and quantity-limit content. */
+    public String semanticFingerprint() {
+        String canonical = offers.stream()
+                .sorted(Comparator.comparing(offer -> offer.itemId().value()))
+                .map(offer -> offer.itemId().value() + "\u0000" + offer.purchaseCostCredits()
+                        + "\u0000" + (offer.quantityLimit().isPresent()
+                                ? offer.quantityLimit().getAsInt() : "unlimited"))
+                .reduce((first, second) -> first + "\n" + second)
+                .orElse("");
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(canonical.getBytes(StandardCharsets.UTF_8));
+            StringBuilder fingerprint = new StringBuilder(digest.length * 2);
+            for (byte value : digest) {
+                fingerprint.append(String.format("%02x", value));
+            }
+            return fingerprint.toString();
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
     }
 
     /**

@@ -51,6 +51,12 @@ public final class CandidateAdmissibilityPolicy {
                 "catalogue identity does not match challenge identity: "
                     + catalogue.identity()));
         }
+                if (challenge.catalogueSemanticFingerprint() != null
+                    && !challenge.catalogueSemanticFingerprint().equals(catalogue.semanticFingerprint())) {
+                    issues.add(issue("candidate.catalogue.semantic-fingerprint-mismatch",
+                        "catalogue.semanticFingerprint",
+                        "catalogue content does not match the challenge's versioned semantics"));
+                }
         Set<EquipmentCatalogueItemId> available = new HashSet<>(challenge.availableEquipment());
         Map<EquipmentCatalogueItemId, Integer> quantities = new HashMap<>();
 

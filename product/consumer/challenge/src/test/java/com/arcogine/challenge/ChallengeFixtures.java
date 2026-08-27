@@ -2,6 +2,7 @@ package com.arcogine.challenge;
 
 import java.util.List;
 import com.arcogine.challenge.catalogue.EquipmentCatalogueIdentity;
+import com.arcogine.challenge.catalogue.EquipmentCatalogueFixtures;
 
 /**
  * The reference challenge used across tests: produce 20 units of Product A on a 12x10 floor with
@@ -23,6 +24,7 @@ public final class ChallengeFixtures {
                         new EquipmentCatalogueItemId("equipment.inspector")),
                 400L,
                 new EvaluationPolicyIdentity("policy.contract-completion", "1"),
-                new EquipmentCatalogueIdentity("catalogue.challenge.factory-basics", "1"));
+                new EquipmentCatalogueIdentity("catalogue.challenge.factory-basics", "1"),
+                EquipmentCatalogueFixtures.referenceCatalogue().semanticFingerprint());
     }
 }

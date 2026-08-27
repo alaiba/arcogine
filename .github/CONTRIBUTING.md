@@ -16,6 +16,7 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | `product/domains/economy/` | Pricing, demand, revenue |
 | `product/domains/finance/` | Ledger, financial interpretation of operational events |
 | `product/agents/` | Agent interface and implementations |
+| `product/consumer/challenge/` | Challenge Readiness: game-owned `ChallengeDefinition` and validator — headless, no dependency on any module above |
 | `product/interfaces/api/` | HTTP API (Spring Boot MVC), SSE |
 | `product/interfaces/cli/` | CLI entrypoint (Picocli, produces `arcogine.jar`) |
 | `product/interfaces/web/` | React/TypeScript experiment console |

@@ -76,7 +76,7 @@ class Gate1EngineReadinessAcceptanceTest {
     void modelAndRuntimeBoundary() {
         FactoryRuntime runtime = freshRuntime();
 
-        OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
         assertEquals(1L, runtime.ordersView().count(), "exactly one accepted order");
         assertEquals(1L, runtime.jobsView().count(), "exactly one job under the quantity model");
@@ -88,7 +88,7 @@ class Gate1EngineReadinessAcceptanceTest {
     @Test
     void quantityDrivesRepeatedProductionStepCompletionBeforeTheJobIsDone() {
         FactoryRuntime runtime = freshRuntime();
-        runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
         // Two routing steps repeated QUANTITY times means QUANTITY * 2 TaskEnd events are
         // required before the job can be complete -- not one, and not just QUANTITY. Other event
@@ -116,7 +116,7 @@ class Gate1EngineReadinessAcceptanceTest {
     @Test
     void completionIsObservableThroughFactoryRuntimeAdvance() {
         FactoryRuntime runtime = freshRuntime();
-        OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
         List<EventPayload.OrderCompleted> completions = new ArrayList<>();
         Event event;
@@ -148,8 +148,8 @@ class Gate1EngineReadinessAcceptanceTest {
         FactoryRuntime runtimeA = freshRuntime();
         FactoryRuntime runtimeB = freshRuntime();
 
-        runtimeA.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
-        runtimeB.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE);
+        runtimeA.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
+        runtimeB.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
         List<Event> eventsA = drainAll(runtimeA);
         List<Event> eventsB = drainAll(runtimeB);

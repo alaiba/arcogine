@@ -1,6 +1,9 @@
 package com.arcogine.challenge.catalogue;
 
 import com.arcogine.challenge.EquipmentCatalogueItemId;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -50,23 +53,38 @@ public final class EquipmentCatalogue {
 
     /** Deterministic fingerprint of the result-affecting catalogue and quantity-limit content. */
     public String semanticFingerprint() {
-        String canonical = offers.stream()
-                .sorted(Comparator.comparing(offer -> offer.itemId().value()))
-                .map(offer -> offer.itemId().value() + "\u0000" + offer.purchaseCostCredits()
-                        + "\u0000" + (offer.quantityLimit().isPresent()
-                                ? offer.quantityLimit().getAsInt() : "unlimited"))
-                .reduce((first, second) -> first + "\n" + second)
-                .orElse("");
         try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            DataOutputStream output = new DataOutputStream(bytes);
+            offers.stream()
+                    .sorted(Comparator.comparing(offer -> offer.itemId().value()))
+                    .forEach(offer -> writeOffer(output, offer));
+            output.flush();
             byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(canonical.getBytes(StandardCharsets.UTF_8));
+                    .digest(bytes.toByteArray());
             StringBuilder fingerprint = new StringBuilder(digest.length * 2);
             for (byte value : digest) {
-                fingerprint.append(String.format("%02x", value));
+                fingerprint.append(Character.forDigit((value >>> 4) & 0x0f, 16));
+                fingerprint.append(Character.forDigit(value & 0x0f, 16));
             }
             return fingerprint.toString();
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        } catch (IOException | NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("unable to fingerprint catalogue", exception);
+        }
+    }
+
+    private static void writeOffer(DataOutputStream output, EquipmentOffer offer) {
+        try {
+            byte[] itemId = offer.itemId().value().getBytes(StandardCharsets.UTF_8);
+            output.writeInt(itemId.length);
+            output.write(itemId);
+            output.writeLong(offer.purchaseCostCredits());
+            output.writeBoolean(offer.quantityLimit().isPresent());
+            if (offer.quantityLimit().isPresent()) {
+                output.writeInt(offer.quantityLimit().getAsInt());
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("unable to encode catalogue", exception);
         }
     }
 

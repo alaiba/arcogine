@@ -119,6 +119,16 @@ class CandidateAdmissibilityPolicyTest {
     }
 
     @Test
+    void structurallyDifferentCataloguesCannotShareFingerprintThroughDelimiters() {
+        EquipmentCatalogue oneOffer = new EquipmentCatalogue(List.of(
+                EquipmentOffer.of(item("a\u00001\u0000unlimited\nb"), 2L)));
+        EquipmentCatalogue twoOffers = new EquipmentCatalogue(List.of(
+                EquipmentOffer.of(item("a"), 1L), EquipmentOffer.of(item("b"), 2L)));
+
+        assertFalse(oneOffer.semanticFingerprint().equals(twoOffers.semanticFingerprint()));
+    }
+
+    @Test
     void legacyUnboundChallengeRejectsAdmissibility() {
         ChallengeDefinition reference = ChallengeFixtures.referenceChallenge();
         ChallengeDefinition unbound = new ChallengeDefinition(reference.identity(), reference.floor(),

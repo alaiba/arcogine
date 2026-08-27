@@ -207,6 +207,20 @@ class CandidateAdmissibilityPolicyTest {
                 () -> Class.forName("com.arcogine.factory.model.validation.FactoryModelValidator"));
     }
 
+    @Test
+    void rejectsNullInputs() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();
+        CandidateDraftSnapshot snapshot = snapshot(placed("cutter-1", CUTTER, 0, 0));
+
+        assertThrows(NullPointerException.class,
+                () -> CandidateAdmissibilityPolicy.assess(null, catalogue, snapshot));
+        assertThrows(NullPointerException.class,
+                () -> CandidateAdmissibilityPolicy.assess(challenge, null, snapshot));
+        assertThrows(NullPointerException.class,
+                () -> CandidateAdmissibilityPolicy.assess(challenge, catalogue, null));
+    }
+
     private static CandidateAdmissibilityResult assess(ChallengeDefinition challenge,
             EquipmentCatalogue catalogue, CandidateDraftSnapshot snapshot) {
         return CandidateAdmissibilityPolicy.assess(challenge, catalogue, snapshot);

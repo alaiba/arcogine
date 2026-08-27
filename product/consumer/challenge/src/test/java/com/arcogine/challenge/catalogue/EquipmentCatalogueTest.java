@@ -88,4 +88,37 @@ class EquipmentCatalogueTest {
 
         assertTrue(catalogue.toString().contains("EquipmentCatalogue"));
     }
+
+    @Test
+    void semanticFingerprintIsStableAcrossOfferOrder() {
+        EquipmentOffer cutter = EquipmentOffer.of(
+                new EquipmentCatalogueItemId("equipment.cutter"), 5_000L);
+        EquipmentOffer inspector = EquipmentOffer.of(
+                new EquipmentCatalogueItemId("equipment.inspector"), 3_000L);
+
+        EquipmentCatalogue first = new EquipmentCatalogue(List.of(cutter, inspector));
+        EquipmentCatalogue reordered = new EquipmentCatalogue(List.of(inspector, cutter));
+
+        assertEquals(first.semanticFingerprint(), reordered.semanticFingerprint());
+    }
+
+    @Test
+    void semanticFingerprintIncludesQuantityLimitAndDistinguishesEmptyCatalogue() {
+        EquipmentCatalogue unlimited = new EquipmentCatalogue(List.of(
+                EquipmentOffer.of(new EquipmentCatalogueItemId("equipment.cutter"), 5_000L)));
+        EquipmentCatalogue limited = new EquipmentCatalogue(List.of(
+                EquipmentOffer.of(new EquipmentCatalogueItemId("equipment.cutter"), 5_000L, 2)));
+        EquipmentCatalogue empty = new EquipmentCatalogue(List.of());
+
+        assertTrue(!unlimited.semanticFingerprint().equals(limited.semanticFingerprint()));
+        assertTrue(!empty.semanticFingerprint().equals(unlimited.semanticFingerprint()));
+    }
+
+    @Test
+    void explicitIdentityIsRetained() {
+        EquipmentCatalogueIdentity identity = new EquipmentCatalogueIdentity("catalogue.test", "2");
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(identity, List.of());
+
+        assertEquals(identity, catalogue.identity());
+    }
 }

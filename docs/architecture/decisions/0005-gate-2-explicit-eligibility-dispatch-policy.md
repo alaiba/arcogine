@@ -1,6 +1,7 @@
 # ADR-0005: Gate 2 explicit-eligibility dispatch policy
 
-Status: Accepted
+Status: Superseded
+Superseded by: ADR-0009
 Date: 2026-08-26
 
 ## Context

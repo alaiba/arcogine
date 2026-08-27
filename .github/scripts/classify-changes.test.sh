@@ -3,10 +3,16 @@
 # .github/scripts/classify-changes.test.sh) or as a CI step in the
 # `classify` job — either way a regression in the classifier regex fails
 # loudly here instead of silently letting a real change skip its checks.
+#
+# The classify job is also the always-running dependency of the repository's
+# single required `gate` status, so repository-wide documentation-link checks
+# are invoked here as part of the same fail-closed path rather than through a
+# separate, non-required workflow.
 set -euo pipefail
 
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 script="$dir/classify-changes.sh"
+repo="$(cd "$dir/../.." && pwd)"
 
 failures=0
 
@@ -76,3 +82,6 @@ if [ "$failures" -gt 0 ]; then
 fi
 
 echo "All classification tests passed."
+
+python3 "$dir/check-markdown-links.test.py"
+python3 "$dir/check-markdown-links.py" "$repo"

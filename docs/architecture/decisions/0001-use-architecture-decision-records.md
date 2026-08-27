@@ -6,7 +6,7 @@ Date: 2026-08-22
 ## Context
 
 Arcogine has substantial current-state documentation under `docs/`
-(`architecture.md`, `concepts.md`, `standards-alignment.md`, etc.) describing
+(`architecture/overview.md`, `product/concepts.md`, `architecture/standards-alignment.md`, etc.) describing
 how the system works today. That documentation is not well suited to
 preserving *why* a given design was chosen: it gets rewritten as the system
 evolves, and older reasoning is overwritten or dropped rather than kept.
@@ -24,7 +24,7 @@ to reconstruct the reasoning from scratch.
 ## Decision
 
 Arcogine will use lightweight Markdown Architecture Decision Records (ADRs),
-stored under [`docs/decisions/`](README.md) and versioned alongside the
+stored under [`docs/architecture/decisions/`](README.md) and versioned alongside the
 source code, to record significant architectural and domain-design
 decisions.
 
@@ -32,14 +32,14 @@ Each ADR is a single Markdown file following the template in
 [`0000-template.md`](0000-template.md), with one of four statuses
 (`Proposed`, `Accepted`, `Rejected`, `Superseded`). The process for creating,
 numbering, and superseding ADRs is documented in
-[`docs/decisions/README.md`](README.md).
+[`docs/architecture/decisions/README.md`](README.md).
 
 ## Alternatives considered
 
 - **Rely on Git history and PR descriptions alone.** Already the status quo;
   doesn't provide a concise, discoverable summary of why a decision was
   made, and is easy to lose track of once a PR ages out of recent history.
-- **Fold rationale into current-state docs (`architecture.md`, etc.).**
+- **Fold rationale into current-state docs (`architecture/overview.md`, etc.).**
   These documents describe the present state and get edited as the system
   changes; embedding rationale in them either bloats them or gets lost when
   the described state changes.

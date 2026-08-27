@@ -15,7 +15,7 @@ This document is **not**:
 - marketing copy;
 - an architecture specification.
 
-It defines what Arcogine is ultimately intended to become and the principles against which future initiatives — features, refactors, architecture proposals, ADRs — should be evaluated. It does not promise dates, phases, or that any specific capability will ship. For what Arcogine implements today, see [`docs/architecture/overview.md`](docs/architecture/overview.md), [`docs/product/concepts.md`](docs/product/concepts.md), and [`docs/reference/api.md`](docs/reference/api.md).
+It defines what Arcogine is ultimately intended to become and the principles against which future initiatives — features, refactors, architecture proposals, ADRs — should be evaluated. It does not promise dates, phases, or that any specific capability will ship. For what Arcogine implements today, see [`docs/architecture/overview.md`](../architecture/overview.md), [`docs/product/concepts.md`](concepts.md), and [`docs/reference/api.md`](../reference/api.md).
 
 ## 1. Purpose
 
@@ -129,7 +129,7 @@ Decisions produce Events.
 
 — is strongly compatible with this charter and provides a useful current realization of several of its principles: explicit events, single-owner state, purpose-specific observations, and accountable decisions are one good way to keep design, simulation, verification, and execution semantically continuous. Existing ideas the current implementation already applies — authoritative state ownership per subsystem, immutable observations, explicit decisions, deterministic simulation, provenance via an event log, the commercial/operational/financial truth distinction, and controlled agent capabilities — remain valuable and are not discarded by this charter.
 
-Whether Events–State–Observations remains an architectural invariant, and how it evolves, is a question for [`docs/architecture/overview.md`](docs/architecture/overview.md), not for this charter. This charter is satisfied by any architecture that upholds its principles — explicit state ownership, purpose-specific observations, causality, and provenance among them — and does not itself mandate this specific pattern as permanent.
+Whether Events–State–Observations remains an architectural invariant, and how it evolves, is a question for [`docs/architecture/overview.md`](../architecture/overview.md), not for this charter. This charter is satisfied by any architecture that upholds its principles — explicit state ownership, purpose-specific observations, causality, and provenance among them — and does not itself mandate this specific pattern as permanent.
 
 One distinction matters enough to state explicitly: **determinism is a critical property of simulation, replay, and verification contexts — it is not a requirement that real-world execution itself somehow become deterministic.** Production operates in a non-deterministic world with real machines, real people, and real failures. What must stay continuous across contexts is the semantic model, not a claim that reality is repeatable the way a seeded simulation is. Language that treats simulation semantics as synonymous with Arcogine's entire future runtime model should be corrected wherever it appears.
 

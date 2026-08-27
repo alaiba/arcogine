@@ -51,8 +51,8 @@ in crate-DAG order, and the resulting Gradle modules preserve that same
 dependency direction and separation of concerns. This mirroring was the
 documented starting point for the rewrite, not a claim that the module
 boundaries must remain fixed forever — module structure is current-
-architecture detail, described authoritatively in
-[`architecture.md`](../architecture.md), and has already evolved since
+architecture detail, described authoritatively in the
+[Architecture Overview](../overview.md), and has already evolved since
 (for example, `sim-finance` was added as a module after the initial
 rewrite).
 
@@ -100,8 +100,8 @@ choices within the rewrite, not for the decision to rewrite in Java itself
   against current output should expect numeric divergence even for
   identical scenarios and seeds.
 - The module DAG mirrors the original crate DAG as a starting point, but is
-  current architecture and may diverge over time (see
-  [`architecture.md`](../architecture.md) for the authoritative current
+  current architecture and may diverge over time (see the
+  [Architecture Overview](../overview.md) for the authoritative current
   structure) — this ADR records why the rewrite started that way, not a
   constraint that it must stay that way.
 - The Rust codebase is fully removed; Git history is the record of the

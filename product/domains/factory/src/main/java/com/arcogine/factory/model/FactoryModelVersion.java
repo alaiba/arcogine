@@ -2,6 +2,7 @@ package com.arcogine.factory.model;
 
 import com.arcogine.factory.model.validation.FactoryModelValidator;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.ModelFingerprint;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -45,6 +46,10 @@ public record FactoryModelVersion(FactoryModel model) {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
+    }
+
+    public ModelFingerprint fingerprint() {
+        return FactoryModelFingerprintV1.fingerprint(model);
     }
 
     /**

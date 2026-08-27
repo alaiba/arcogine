@@ -28,6 +28,7 @@ public final class FactoryModelValidator {
 
         Set<MachineId> resourceIds = new HashSet<>();
         for (ResourceDefinition resource : model.resources()) {
+            rejectMalformedUnicode(errors, "resources[" + resource.id() + "].name", resource.name());
             if (!resourceIds.add(resource.id())) {
                 errors.add(new ModelValidationError(
                         "resources", "duplicate resource id: " + resource.id()));
@@ -40,6 +41,7 @@ public final class FactoryModelValidator {
 
         Set<Long> operationIds = new HashSet<>();
         for (OperationDefinition operation : model.operations()) {
+            rejectMalformedUnicode(errors, "operations[" + operation.id() + "].name", operation.name());
             if (!operationIds.add(operation.id())) {
                 errors.add(new ModelValidationError(
                         "operations", "duplicate operation id: " + operation.id()));
@@ -49,6 +51,10 @@ public final class FactoryModelValidator {
                         "operations[" + operation.id() + "].steps", "must not be empty"));
             }
             for (OperationStepDefinition step : operation.steps()) {
+                rejectMalformedUnicode(
+                        errors,
+                        "operations[" + operation.id() + "].steps[" + step.stepId() + "].name",
+                        step.name());
                 if (step.duration() <= 0) {
                     errors.add(new ModelValidationError(
                             "operations[" + operation.id() + "].steps[" + step.stepId() + "].duration",
@@ -74,6 +80,7 @@ public final class FactoryModelValidator {
 
         Set<com.arcogine.types.ProductId> productIds = new HashSet<>();
         for (ProductDefinition product : model.products()) {
+            rejectMalformedUnicode(errors, "products[" + product.id() + "].name", product.name());
             if (!productIds.add(product.id())) {
                 errors.add(new ModelValidationError(
                         "products", "duplicate product id: " + product.id()));
@@ -86,6 +93,23 @@ public final class FactoryModelValidator {
         }
 
         return new ModelValidationResult(errors);
+    }
+
+    private static void rejectMalformedUnicode(
+            List<ModelValidationError> errors, String field, String value) {
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (Character.isHighSurrogate(character)) {
+                if (index + 1 >= value.length() || !Character.isLowSurrogate(value.charAt(index + 1))) {
+                    errors.add(new ModelValidationError(field, "must contain only valid Unicode scalar values"));
+                    return;
+                }
+                index++;
+            } else if (Character.isLowSurrogate(character)) {
+                errors.add(new ModelValidationError(field, "must contain only valid Unicode scalar values"));
+                return;
+            }
+        }
     }
 
     /**

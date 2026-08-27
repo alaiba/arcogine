@@ -126,6 +126,70 @@ class DraftEconomicsCalculatorTest {
     }
 
     @Test
+    void unknownItemFailureIsOrderIndependentAcrossPermutationsOfTheSameMultiset() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();
+        EquipmentCatalogueItemId unknownA = new EquipmentCatalogueItemId("equipment.unknown-a");
+        EquipmentCatalogueItemId unknownB = new EquipmentCatalogueItemId("equipment.unknown-b");
+        List<DraftEquipmentOccurrence> forward = List.of(
+                new DraftEquipmentOccurrence(unknownA), new DraftEquipmentOccurrence(unknownB));
+        List<DraftEquipmentOccurrence> reversed = List.of(
+                new DraftEquipmentOccurrence(unknownB), new DraftEquipmentOccurrence(unknownA));
+
+        DraftEconomicsResult forwardResult = DraftEconomicsCalculator.calculate(challenge, catalogue, forward);
+        DraftEconomicsResult reversedResult =
+                DraftEconomicsCalculator.calculate(challenge, catalogue, reversed);
+
+        assertEquals(forwardResult, reversedResult);
+        assertEquals("no catalogue offer for item id: equipment.unknown-a", forwardResult.failure().message());
+    }
+
+    @Test
+    void unknownItemFailureTakesPrecedenceOverOverflowRegardlessOfOrder() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(
+                List.of(EquipmentOffer.of(CUTTER, Long.MAX_VALUE)));
+        EquipmentCatalogueItemId unknown = new EquipmentCatalogueItemId("equipment.unknown");
+        List<DraftEquipmentOccurrence> knownFirst = List.of(
+                new DraftEquipmentOccurrence(CUTTER),
+                new DraftEquipmentOccurrence(CUTTER),
+                new DraftEquipmentOccurrence(unknown));
+        List<DraftEquipmentOccurrence> unknownFirst = List.of(
+                new DraftEquipmentOccurrence(unknown),
+                new DraftEquipmentOccurrence(CUTTER),
+                new DraftEquipmentOccurrence(CUTTER));
+
+        DraftEconomicsResult knownFirstResult =
+                DraftEconomicsCalculator.calculate(challenge, catalogue, knownFirst);
+        DraftEconomicsResult unknownFirstResult =
+                DraftEconomicsCalculator.calculate(challenge, catalogue, unknownFirst);
+
+        assertEquals(knownFirstResult, unknownFirstResult);
+        assertEquals("draft.occurrence.unknown-catalogue-item", knownFirstResult.failure().code());
+    }
+
+    @Test
+    void overflowFailureIsOrderIndependentAcrossPermutationsOfTheSameMultiset() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogueItemId large = new EquipmentCatalogueItemId("equipment.large");
+        EquipmentCatalogueItemId small = new EquipmentCatalogueItemId("equipment.small");
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(List.of(
+                EquipmentOffer.of(large, Long.MAX_VALUE), EquipmentOffer.of(small, 1L)));
+        List<DraftEquipmentOccurrence> largeFirst =
+                List.of(new DraftEquipmentOccurrence(large), new DraftEquipmentOccurrence(small));
+        List<DraftEquipmentOccurrence> smallFirst =
+                List.of(new DraftEquipmentOccurrence(small), new DraftEquipmentOccurrence(large));
+
+        DraftEconomicsResult largeFirstResult =
+                DraftEconomicsCalculator.calculate(challenge, catalogue, largeFirst);
+        DraftEconomicsResult smallFirstResult =
+                DraftEconomicsCalculator.calculate(challenge, catalogue, smallFirst);
+
+        assertEquals(largeFirstResult, smallFirstResult);
+        assertEquals("draft.cost.overflow", largeFirstResult.failure().code());
+    }
+
+    @Test
     void repeatedCalculationFromIdenticalInputsReturnsEqualResults() {
         ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
         EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();

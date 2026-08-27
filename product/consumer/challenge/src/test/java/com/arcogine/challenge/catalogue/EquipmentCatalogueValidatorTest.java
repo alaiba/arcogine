@@ -124,6 +124,22 @@ class EquipmentCatalogueValidatorTest {
     }
 
     @Test
+    void duplicateMatchingOffersMakeResolutionAmbiguousRatherThanValid() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(List.of(
+                EquipmentOffer.of(new EquipmentCatalogueItemId("equipment.cutter"), 1L),
+                EquipmentOffer.of(new EquipmentCatalogueItemId("equipment.cutter"), 2L),
+                EquipmentOffer.of(new EquipmentCatalogueItemId("equipment.assembly-station"), 3L),
+                EquipmentOffer.of(new EquipmentCatalogueItemId("equipment.inspector"), 4L)));
+
+        EquipmentCatalogueValidationResult result =
+                EquipmentCatalogueValidator.validateChallengeResolution(challenge, catalogue);
+
+        assertTrue(containsIssue(
+                result, "challenge.availableEquipment.ambiguous", "availableEquipment[0]"));
+    }
+
+    @Test
     void validateRejectsNullCatalogue() {
         assertThrows(NullPointerException.class, () -> EquipmentCatalogueValidator.validate(null));
     }

@@ -68,10 +68,14 @@ public final class EquipmentCatalogueValidator {
      * Validates that every {@link ChallengeDefinition#availableEquipment()} identity resolves to
      * exactly one offer in {@code catalogue}.
      *
-     * <p>This does not decide catalogue-internal validity (duplicates, negative costs, etc.) --
-     * use {@link #validate(EquipmentCatalogue)} for that -- nor does it reject draft occurrences
-     * for using equipment outside the challenge's allowed set; that is candidate admissibility, a
-     * later Challenge Readiness slice.
+     * <p>This counts matching offers itself rather than delegating to {@link
+     * EquipmentCatalogue#findByItemId}, which deliberately returns only the first match -- an
+     * identity with zero or more than one matching offer is reported here even when the
+     * catalogue itself has not been separately validated for internal duplicates via {@link
+     * #validate(EquipmentCatalogue)}. It does not decide other catalogue-internal validity
+     * (blank ids, negative costs, etc.) -- use {@link #validate(EquipmentCatalogue)} for that --
+     * nor does it reject draft occurrences for using equipment outside the challenge's allowed
+     * set; that is candidate admissibility, a later Challenge Readiness slice.
      */
     public static EquipmentCatalogueValidationResult validateChallengeResolution(
             ChallengeDefinition challenge, EquipmentCatalogue catalogue) {
@@ -83,14 +87,23 @@ public final class EquipmentCatalogueValidator {
         }
 
         List<EquipmentCatalogueIssue> issues = new ArrayList<>();
+        List<EquipmentOffer> offers = catalogue.offers();
         List<EquipmentCatalogueItemId> availableEquipment = challenge.availableEquipment();
         for (int i = 0; i < availableEquipment.size(); i++) {
             EquipmentCatalogueItemId itemId = availableEquipment.get(i);
-            if (catalogue.findByItemId(itemId).isEmpty()) {
+            String path = "availableEquipment[" + i + "]";
+
+            long matches = offers.stream().filter(offer -> offer.itemId().equals(itemId)).count();
+            if (matches == 0) {
                 issues.add(new EquipmentCatalogueIssue(
                         "challenge.availableEquipment.unresolved",
-                        "availableEquipment[" + i + "]",
+                        path,
                         "no catalogue offer for item id: " + itemId.value()));
+            } else if (matches > 1) {
+                issues.add(new EquipmentCatalogueIssue(
+                        "challenge.availableEquipment.ambiguous",
+                        path,
+                        "multiple catalogue offers for item id: " + itemId.value()));
             }
         }
 

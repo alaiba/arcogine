@@ -4,6 +4,8 @@ import com.arcogine.challenge.ChallengeDefinition;
 import com.arcogine.challenge.EquipmentCatalogueItemId;
 import com.arcogine.challenge.catalogue.EquipmentCatalogue;
 import com.arcogine.challenge.catalogue.EquipmentOffer;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,11 +13,14 @@ import java.util.Optional;
  * A pure, deterministic calculator that derives {@link DraftEconomics} from an exact challenge
  * budget, catalogue, and set of draft equipment occurrences.
  *
- * <p>{@code calculate} resolves each occurrence through the game catalogue, sums committed
- * construction cost, and derives remaining budget from the challenge's starting budget. It
- * mutates none of its inputs, consults no wall-clock time, environment, random value, or global
- * registry, and never calls Finance or factory validation. For identical inputs it always
- * produces an equal result, regardless of occurrence order.
+ * <p>{@code calculate} resolves every occurrence through the game catalogue before aggregating
+ * cost, sums committed construction cost, and derives remaining budget from the challenge's
+ * starting budget. It mutates none of its inputs, consults no wall-clock time, environment,
+ * random value, or global registry, and never calls Finance or factory validation. For identical
+ * inputs -- including a failure outcome -- it always produces an equal result, regardless of
+ * occurrence order: unresolved item ids are reported via the lexicographically smallest offending
+ * identity rather than the first one encountered, and cost overflow is checked only once all
+ * occurrences have resolved, so which failure is reported never depends on occurrence order.
  *
  * <p>This calculator does not enforce that occurrences use only the challenge's {@code
  * availableEquipment}, nor does it enforce catalogue quantity limits against occurrence counts --
@@ -39,21 +44,34 @@ public final class DraftEconomicsCalculator {
             throw new NullPointerException("occurrences");
         }
 
-        long committedConstructionCostCredits = 0L;
+        List<EquipmentCatalogueItemId> unresolved = new ArrayList<>();
+        List<EquipmentOffer> resolvedOffers = new ArrayList<>();
         for (DraftEquipmentOccurrence occurrence : occurrences) {
             EquipmentCatalogueItemId itemId = occurrence.itemId();
             Optional<EquipmentOffer> offer = catalogue.findByItemId(itemId);
             if (offer.isEmpty()) {
-                return DraftEconomicsResult.failure(
-                        DraftEconomicsFailure.unknownCatalogueItem(itemId));
+                unresolved.add(itemId);
+            } else {
+                resolvedOffers.add(offer.get());
             }
+        }
 
-            try {
-                committedConstructionCostCredits = Math.addExact(
-                        committedConstructionCostCredits, offer.get().purchaseCostCredits());
-            } catch (ArithmeticException overflow) {
-                return DraftEconomicsResult.failure(DraftEconomicsFailure.costOverflow());
+        if (!unresolved.isEmpty()) {
+            EquipmentCatalogueItemId failingItemId = unresolved.stream()
+                    .min(Comparator.comparing(EquipmentCatalogueItemId::value))
+                    .orElseThrow();
+            return DraftEconomicsResult.failure(
+                    DraftEconomicsFailure.unknownCatalogueItem(failingItemId));
+        }
+
+        long committedConstructionCostCredits = 0L;
+        try {
+            for (EquipmentOffer offer : resolvedOffers) {
+                committedConstructionCostCredits =
+                        Math.addExact(committedConstructionCostCredits, offer.purchaseCostCredits());
             }
+        } catch (ArithmeticException overflow) {
+            return DraftEconomicsResult.failure(DraftEconomicsFailure.costOverflow());
         }
 
         long startingBudgetCredits = challenge.startingBudget();

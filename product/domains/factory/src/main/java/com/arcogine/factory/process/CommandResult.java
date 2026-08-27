@@ -29,11 +29,19 @@ import java.util.List;
  * preflight safety for that cascade is out of proportion for this slice). §7.2 requires a definite
  * result even then -- an uncaught exception past the command boundary is not one -- so that case is
  * {@link Faulted}, not {@link Rejected}: unlike {@link Rejected}, which guarantees zero mutation,
- * {@link Faulted} means the command's own preconditions passed but the runtime still failed while
- * carrying it out, and some mutation and/or partial event scheduling may already have happened.
- * {@link #scheduledEvents()} on a {@link Faulted} result is whatever was captured before the
- * failure (possibly non-empty), never assumed empty the way it structurally is for {@link
- * Rejected}.
+ * {@link Faulted} means the command's own preconditions passed and its requested change was
+ * genuinely applied, but the runtime then failed while carrying out the resulting work, after some
+ * further mutation and/or partial event scheduling may already have happened.
+ *
+ * <p>Acceptance and execution outcome are independent facts, not one axis: a command being
+ * accepted (its precondition-verified request applied) does not imply it fully succeeded, and a
+ * later execution fault does not retroactively make it unaccepted. {@link Faulted} therefore still
+ * carries {@code T value} -- the same accepted value {@link Accepted} would have carried, since the
+ * request itself genuinely was applied -- alongside the fault, rather than discarding the affected
+ * entity the caller needs. {@link #scheduledEvents()} on a {@link Faulted} result is whatever was
+ * captured before the failure (possibly non-empty), never assumed empty the way it structurally is
+ * for {@link Rejected}. Only {@link Rejected} means "verified before any mutation, so guaranteed
+ * nothing changed and there is no accepted value to report."
  */
 public sealed interface CommandResult<T> {
 
@@ -106,11 +114,14 @@ public sealed interface CommandResult<T> {
     }
 
     /**
-     * An accepted command whose own preconditions passed, but which then failed while the runtime
-     * was carrying it out, after some mutation and/or event scheduling may already have happened.
-     * See the class-level documentation for how this differs from {@link Rejected}.
+     * A command whose own preconditions passed and whose requested change was genuinely applied
+     * ({@code value} is the same accepted value {@link Accepted} would have carried for the same
+     * outcome), but which then failed while the runtime was carrying out the resulting work, after
+     * some further mutation and/or event scheduling may already have happened. See the class-level
+     * documentation for why acceptance and execution outcome are independent facts and how this
+     * differs from {@link Rejected}.
      */
-    record Faulted<T>(SimError error, FactoryModelVersion modelVersion, List<Event> scheduledEvents)
+    record Faulted<T>(T value, SimError error, FactoryModelVersion modelVersion, List<Event> scheduledEvents)
             implements CommandResult<T> {
 
         public Faulted {

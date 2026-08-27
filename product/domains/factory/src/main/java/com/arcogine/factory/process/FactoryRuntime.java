@@ -133,10 +133,13 @@ public class FactoryRuntime {
      * genuinely pre-mutation. A machine coming online can trigger a cascade of dispatching
      * previously waiting work; a failure surfacing from deep in that cascade (a genuine engine
      * fault, not a rejectable input this method could have pre-verified) is reported as {@link
-     * CommandResult.Faulted} rather than {@link CommandResult.Rejected} -- unlike a rejection, some
-     * mutation and/or event scheduling may already have happened by that point. This method never
-     * lets such a failure propagate past its own boundary as a bare exception: it always returns a
-     * definite {@link CommandResult}, per docs/planning/factory-simulation-engine-readiness.md §7.2.
+     * CommandResult.Faulted} rather than {@link CommandResult.Rejected} -- the requested {@link
+     * EventPayload.MachineAvailabilityChange} genuinely was applied by that point (both pre-checks
+     * above having passed guarantees {@code Machine#setAvailability} itself cannot fail), so {@link
+     * CommandResult.Faulted#value()} still carries it, unlike a rejection, which never has one.
+     * This method never lets such a failure propagate past its own boundary as a bare exception: it
+     * always returns a definite {@link CommandResult}, per
+     * docs/planning/factory-simulation-engine-readiness.md §7.2.
      */
     public CommandResult<EventPayload.MachineAvailabilityChange> setMachineAvailability(
             MachineId machineId, boolean online) {
@@ -155,12 +158,16 @@ public class FactoryRuntime {
 
         List<Event> scheduled = new ArrayList<>();
         scheduler.startCapturing(scheduled);
+        EventPayload.MachineAvailabilityChange requested = new EventPayload.MachineAvailabilityChange(machineId, online);
         try {
             factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
-            return new CommandResult.Accepted<>(
-                    new EventPayload.MachineAvailabilityChange(machineId, online), modelVersion, scheduled);
+            return new CommandResult.Accepted<>(requested, modelVersion, scheduled);
         } catch (SimError e) {
-            return new CommandResult.Faulted<>(e, modelVersion, scheduled);
+            // The availability change itself (Machine#setAvailability) is the first thing
+            // handleMachineAvailability does and always succeeds once the pre-checks above have
+            // passed -- only the subsequent dispatch cascade can fault. So `requested` genuinely
+            // was applied by the time any SimError reaches here, and belongs on Faulted too.
+            return new CommandResult.Faulted<>(requested, e, modelVersion, scheduled);
         } finally {
             scheduler.stopCapturing();
         }

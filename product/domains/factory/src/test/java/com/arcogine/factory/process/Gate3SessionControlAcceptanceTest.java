@@ -336,6 +336,12 @@ class Gate3SessionControlAcceptanceTest {
                 "Faulted's code() must be the wrapped SimError subtype's simple name, matching Rejected");
         assertEquals(faulted.error().getMessage(), faulted.diagnostic());
         assertThrows(SimError.EventOrderingViolation.class, result::orElseThrow);
+        assertEquals(
+                new EventPayload.MachineAvailabilityChange(new MachineId(1), true),
+                faulted.value(),
+                "Faulted must still carry the accepted value -- the availability change was "
+                        + "genuinely applied before the cascade faulted, and the caller must not "
+                        + "lose which entity was affected just because execution later failed");
 
         // Unlike Rejected, mutation is allowed to have already happened once Faulted is returned:
         // the queued job was dequeued and started on the now-online machine before the scheduling

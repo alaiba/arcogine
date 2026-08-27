@@ -330,6 +330,11 @@ class Gate3SessionControlAcceptanceTest {
         CommandResult.Faulted<EventPayload.MachineAvailabilityChange> faulted =
                 (CommandResult.Faulted<EventPayload.MachineAvailabilityChange>) result;
         assertInstanceOf(SimError.EventOrderingViolation.class, faulted.error());
+        assertEquals(
+                "EventOrderingViolation",
+                faulted.code(),
+                "Faulted's code() must be the wrapped SimError subtype's simple name, matching Rejected");
+        assertEquals(faulted.error().getMessage(), faulted.diagnostic());
         assertThrows(SimError.EventOrderingViolation.class, result::orElseThrow);
 
         // Unlike Rejected, mutation is allowed to have already happened once Faulted is returned:

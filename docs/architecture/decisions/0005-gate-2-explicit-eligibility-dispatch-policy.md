@@ -1,6 +1,7 @@
 # ADR-0005: Gate 2 explicit-eligibility dispatch policy
 
-Status: Accepted
+Status: Superseded
+Superseded by: ADR-0009
 Date: 2026-08-26
 
 ## Context
@@ -13,7 +14,7 @@ A repository-grounded audit (see the Gate 2 session preceding this ADR) confirme
 
 ## Decision
 
-Gate 2 is classified **A: preserve existing model eligibility into runtime, plus a deterministic selector** — not a new capability abstraction (classification C) and not a canonical-model extension (classification B), since the model already carries what is needed.
+Gate 2's first slice is classified **A: preserve existing model eligibility into runtime, plus a deterministic selector** — not a new capability abstraction (classification C) and not a canonical-model extension (classification B), since the model already carries what is needed.
 
 Concretely:
 
@@ -36,11 +37,9 @@ Concretely:
 
 Model-side eligibility (`OperationStepDefinition.eligibleResources`), runtime operational status (`MachineState`), and runtime queue state (`Machine`'s per-machine `ArrayDeque`) remain three distinct types, matching Gate 2's acceptance criterion 7; this decision does not merge them.
 
-Gate 2's parallel-capacity requirement applies when the runtime has multiple **independently dispatchable** pieces of work. `Gate2MultiResourceDispatchAcceptanceTest` proves that two independent orders/jobs can occupy two equivalent eligible machines concurrently, and that adding the second eligible resource changes queueing behavior under that workload. The dispatcher is responsible for selecting among eligible resources for work that already exists; it does not define how one accepted production order is decomposed into multiple concurrent execution units.
+Explicitly out of scope for this slice: capability taxonomies/tags, resource pools or work centers as first-class types, projected-completion-time or other load-aware ranking beyond queue depth, multiple `Job`s per `Order`, and any failure/maintenance modeling for offline machines beyond simple exclusion from new dispatch and reconsideration of already-waiting work.
 
-A single quantity-scaled order still maps to one `Job`, whose repeated routing advances one step at a time. Allowing that one order to exploit several equivalent machines concurrently would require a separate work-decomposition decision: for example, independently dispatchable lots, batches, or execution units plus aggregate progress/completion semantics. That capability is explicitly **not part of Gate 2** and is deferred until a supported consumer requires one accepted order to expose multiple independently dispatchable execution units.
-
-Explicitly out of scope for Gate 2: capability taxonomies/tags, resource pools or work centers as first-class types, projected-completion-time or other load-aware ranking beyond queue depth, multiple `Job`s per `Order`, intra-order execution decomposition, and any failure/maintenance modeling for offline machines beyond simple exclusion from new dispatch and reconsideration of already-waiting work.
+This slice proves parallel-capacity benefit for independent orders/jobs, not for a single quantity-scaled order: `submitOrder` still creates exactly one `Job` per order, and that job's repeated routing still advances one step at a time. A fixed-contract workload expressed as one large-quantity order therefore cannot yet exploit a second eligible machine's capacity from within that one job -- doing so would require intra-job execution parallelism or multiple execution objects per order, both excluded above. See the planning document's §6.4 criteria 3 and 5 for the acceptance-criteria implication.
 
 ## Alternatives considered
 
@@ -60,20 +59,14 @@ Rejected for this slice: it requires estimating in-flight completion, which is s
 
 Rejected: eligibility is unordered and must not admit duplicate entries; a `Set` matches `OperationStepDefinition.eligibleResources`'s own shape and avoids inventing meaning for machine order that dispatch does not use (the deterministic order emerges from the selection policy itself, not from insertion order).
 
-### Treat intra-order parallelism as Gate 2 closure work
-
-Rejected: dispatch and work decomposition answer different questions. Gate 2 selects which eligible resource executes an independently dispatchable unit of work. Splitting one accepted order into several concurrently executable units introduces new production semantics around divisibility, lot/batch identity, precedence, partial progress, completion aggregation, and event correlation. Those semantics should be introduced only when a concrete workload requires them, not as an accidental extension of the resource selector.
-
 ## Consequences
 
 - A single operation step can now be published with, and dispatched against, more than one eligible machine, without any change to `FactoryModel`, `OperationStepDefinition`, `ResourceDefinition`, or `MachineId`.
 - Removing or disabling one eligible instance no longer requires changing the product/operation definition — dispatch simply stops selecting an offline machine for new work among a real multi-candidate eligible set, and work already waiting is not stranded on it: the whole eligible set is reconsidered as machines free up or come online.
 - `RoutingStep.machineId()` no longer exists; callers read `eligibleMachines()` and, where they need one concrete choice, call `FactoryHandler`'s private `selectMachine`. External consumers (`interfaces/api`, `interfaces/cli`) that construct single-machine `RoutingStep`s are unaffected by the added convenience constructor.
 - `TaskStart`/`TaskEnd` event payloads continue to carry the one machine actually assigned; no externally visible event semantics change.
-- Gate 2 is complete for deterministic dispatch across equivalent eligible capacity when sufficient independently dispatchable work exists.
-- Intra-order parallelism remains a deferred execution-decomposition capability. If activated, it should define lot/batch/execution-unit identity and aggregate progress/completion explicitly rather than silently changing Gate 2 dispatch semantics.
 - This tie-break policy is now a recorded architectural decision rather than planning-document prose; a future slice that adds load-aware ranking (e.g. projected completion time) should update or supersede this ADR rather than silently reinterpreting the policy.
 
 ## Charter alignment
 
-This decision keeps the **published model owns eligibility / runtime owns dispatch** boundary established by ADR-0003 intact: `FactoryModel` still owns capability/eligibility facts, and `FactoryHandler` still owns the run-time decision of which eligible instance actually executes a given independently dispatchable unit of work.
+This decision keeps the **published model owns eligibility / runtime owns dispatch** boundary established by ADR-0003 intact: `FactoryModel` still owns capability/eligibility facts, and `FactoryHandler` still owns the run-time decision of which eligible instance actually executes a given unit of work.

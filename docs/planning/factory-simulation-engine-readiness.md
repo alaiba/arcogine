@@ -353,6 +353,21 @@ Gate 3 is satisfied when a non-graphical reference consumer can:
 7. identify the source model version throughout the session;
 8. operate without Spring controllers, frontend DTOs, or mutable domain internals.
 
+**Gate 3 is complete.** All eight criteria have identified executable evidence, all through `FactoryRuntime` alone -- see [ADR-0007](../architecture/decisions/0007-gate-3-session-control-primitives.md) for the full decision record behind the additive shapes below.
+
+1. **Instantiate a published model version.** Unchanged from Gate 1/2: `FactoryRuntime.forModel(FactoryModelVersion)` remains the only constructor.
+2. **Structured submit-workload results.** `FactoryRuntime.submitWorkload` keeps its existing return-or-throw contract: a normal return is acceptance; a thrown, sealed `SimError` subtype (`SimError.OutOfRange` for an invalid quantity, `SimError.UnknownId` for a product with no published routing -- both concretely reachable today) is a stable, typed rejection with diagnostic accessors, checked before any mutation. `modelVersion()` (criterion 7) supplies session/model provenance for either outcome. No new result-wrapper type was introduced -- see ADR-0007's rationale. Proven by `Gate3SessionControlAcceptanceTest.rejectedSubmissionThrowsAStableStructuredErrorAndLeavesNoPartialMutation`.
+3. **Advance exactly one event.** Unchanged: `FactoryRuntime.advance()`.
+4. **Advance to a selected simulated time with a maximum event bound.** New: `FactoryRuntime.advanceUntil(SimTime targetTime, long maxEvents)`, implemented directly in terms of `advance()` so it cannot diverge from single-event dispatch semantics. Proven equivalent to looping `advance()` one event at a time -- both bounded to one event per call and unbounded in a single call -- by `Gate3SessionControlAcceptanceTest.advanceUntilBoundedToOneEventPerCallConvergesWithLoopingAdvance` and `.advanceUntilDrainingInOneUnboundedCallConvergesWithLoopingAdvance`; the time bound is proven independently by `.advanceUntilStopsAtTheTargetSimulatedTimeWithoutProcessingLaterEvents`.
+5. **Inspect order, work-item, queue, and resource state.** Unchanged: the existing `ordersView`, `jobsView`, `job`, `machinesView`, `backlog`, `avgLeadTime`, `throughput`, `completedSalesValue`, `completedSales` projections, already proven across the Gate 1/Gate 2 acceptance tests.
+6. **Reset and reproduce the same result.** New: `FactoryRuntime.reset()` returns a fresh `FactoryRuntime.forModel(modelVersion())`, leaving the original session untouched -- fresh construction rather than in-place mutation, since `FactoryHandler`'s stores have no partial-reset subsystem to mutate safely (see ADR-0007). Proven by `Gate3SessionControlAcceptanceTest.resetSessionReproducesIdenticalResultToTheOriginalSessionWithoutMutatingIt`, mirroring `Gate1EngineReadinessAcceptanceTest`'s two-fresh-runtimes determinism pattern: a reset session replaying the identical workload reproduces an identical ordered event stream and terminal state, and the original session's own state is unaffected by the `reset()` call.
+7. **Identify the source model version throughout the session.** New: `FactoryRuntime` retains the exact `FactoryModelVersion` passed to `forModel` and exposes it via `modelVersion()`, unchanged for the session's lifetime. Proven by `Gate3SessionControlAcceptanceTest.runtimeRetainsAndExposesItsSourceModelVersionThroughoutTheSession`.
+8. **Operate without Spring controllers, frontend DTOs, or mutable domain internals.** Unchanged: `FactoryRuntime` has no dependency on `interfaces/api` or `interfaces/web`, and every new method (`modelVersion()`, `advanceUntil`, `reset()`) follows the same read-only-projection/plain-domain-type shape as the rest of the class.
+
+This slice deliberately does not migrate `interfaces/api`'s `SimThread` or `interfaces/cli`'s `SimRunner`/`HeadlessHandler` onto `FactoryRuntime`/`advanceUntil` -- both still duplicate their own bespoke max-time loop, which ADR-0007 records as accepted, separately tracked follow-up rather than silently left unrecorded. It also does not add event envelopes/cursors (Gate 4) or a new session-identity type -- no acceptance criterion above requires one.
+
+With Gate 3 closed, **Gate 4 (stable observations and event envelopes, §8) is the next active gate.**
+
 ## 8. Gate 4 — Stable observations and event envelopes
 
 ### 8.1 Goal
@@ -620,7 +635,7 @@ Scenario factory semantics
 2. Add explicit workload submission independent of the economy/pricing loop. **Implemented as the second Gate 1 slice** (`FactoryRuntime.submitWorkload`, backed by package-private `FactoryHandler.submitOrder`).
 3. Make quantity consume proportional production work and allow multiple work items/jobs per order where required. **Implemented as the third Gate 1 slice**: a job's routing repeats once per unit of quantity (`totalSteps = routing.stepCount() * quantity`) rather than spawning multiple `Job`/`JobId` aggregates, giving a job-global executed-step counter (`Job.currentStep()`) from which per-unit progress can be derived, while keeping `Job` one-to-one with `Order`.
 4. Capability/eligibility-driven deterministic dispatch.
-5. Consumer-neutral session and bounded advancement.
+5. Consumer-neutral session and bounded advancement. **Implemented as the Gate 3 slice** (`FactoryRuntime.modelVersion()`, `advanceUntil(SimTime, long)`, `reset()`; see [ADR-0007](../architecture/decisions/0007-gate-3-session-control-primitives.md)).
 6. Stable runtime observations and event envelopes.
 7. Spatial transfer consequences from published layout.
 8. Public-contract, recovery, persistence, and packaging hardening.

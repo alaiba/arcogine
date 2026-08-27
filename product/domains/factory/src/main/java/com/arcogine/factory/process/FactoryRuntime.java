@@ -12,6 +12,8 @@ import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
+import com.arcogine.types.SimTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -33,19 +35,25 @@ import java.util.stream.Stream;
  * {@code FactoryHandler} is not exposed directly; observation happens through this type's own
  * read-only projections.
  *
- * <p>This is deliberately narrow: it does not attempt a general simulation-session API (bounded
- * advancement, structured accept/reject results, reset) -- that is later Gate 3 work. {@link
- * #advance()} exposes only the one-event-at-a-time pump a headless caller needs to drive submitted
- * workload through to completion.
+ * <p>This class implements Gate 3 (docs/planning/factory-simulation-engine-readiness.md §7):
+ * consumer-neutral session/control semantics layered onto the exclusive {@link FactoryHandler}/
+ * {@link Scheduler} pair from Gate 1/2. {@link #modelVersion()} identifies the published model the
+ * session was instantiated from throughout its lifetime; {@link #advance()} and {@link
+ * #advanceUntil} give a caller both one-event-at-a-time and bounded-simulated-time control; {@link
+ * #reset()} gives a caller a fresh session over the same published model. It deliberately does not
+ * attempt a generic simulation-session framework, event envelopes/cursors, or a new session-identity
+ * type -- those remain out of scope for this slice or belong to later gates (see the plan).
  */
 public class FactoryRuntime {
 
     private final FactoryHandler factory;
     private final Scheduler scheduler;
+    private final FactoryModelVersion modelVersion;
 
-    private FactoryRuntime(FactoryHandler factory) {
+    private FactoryRuntime(FactoryHandler factory, FactoryModelVersion modelVersion) {
         this.factory = factory;
         this.scheduler = new Scheduler();
+        this.modelVersion = modelVersion;
     }
 
     /**
@@ -55,12 +63,45 @@ public class FactoryRuntime {
      */
     public static FactoryRuntime forModel(FactoryModelVersion version) {
         FactoryRuntimeAssembler.Assembled assembled = FactoryRuntimeAssembler.assemble(version);
-        return new FactoryRuntime(assembled.factory());
+        return new FactoryRuntime(assembled.factory(), version);
+    }
+
+    /**
+     * The published model version this session was instantiated from, retained for the lifetime of
+     * the session so a caller can identify its source model without tracking it separately (Gate 3
+     * acceptance criterion 7).
+     */
+    public FactoryModelVersion modelVersion() {
+        return modelVersion;
+    }
+
+    /**
+     * Constructs a fresh {@link FactoryRuntime} over the same {@link #modelVersion()}, with none of
+     * this session's submitted workload or dispatch state carried over (Gate 3 acceptance criterion
+     * 6: reset and reproduce the same result). This session itself is left untouched -- reset is
+     * fresh construction, not in-place mutation, matching {@code FactoryRuntime}'s existing
+     * immutable-identity/exclusive-ownership shape: replaying the same command sequence against the
+     * returned session reproduces the same result as replaying it against any other fresh session
+     * built from this same model version.
+     */
+    public FactoryRuntime reset() {
+        return forModel(modelVersion);
     }
 
     /**
      * Submits one explicit production order and creates its execution job, under the same
      * acceptance/routing/dispatch semantics as any other accepted order.
+     *
+     * <p>Accepted/rejected status is conveyed the same way every other command on this type conveys
+     * it: a normal return is acceptance, and an unchecked {@link SimError} is rejection. The thrown
+     * {@link SimError} subtype (e.g. {@link SimError.OutOfRange} for an invalid quantity, {@link
+     * SimError.UnknownId} for a product with no published routing) is itself the stable rejection
+     * code, its accessors (e.g. {@code field()}, {@code id()}) are the affected-entity/diagnostic
+     * detail, and {@link Throwable#getMessage()} is the human-readable diagnostic -- there is no
+     * separate result wrapper because {@link SimError} already is a structured, sealed rejection
+     * hierarchy, not a bare string. Session/model provenance for either outcome is {@link
+     * #modelVersion()}. A rejected call never leaves partial mutation: every current rejection path
+     * is checked before any {@code Order}/{@code Job} is created.
      */
     public OrderId submitWorkload(ProductId productId, long quantity, double unitPrice) {
         return factory.submitOrder(productId, quantity, unitPrice, scheduler.currentTime(), scheduler);
@@ -84,6 +125,41 @@ public class FactoryRuntime {
             factory.handleEvent(next.get(), scheduler);
         }
         return next;
+    }
+
+    /**
+     * Processes pending events one at a time, in the same order {@link #advance()} would, stopping
+     * as soon as either bound is reached: the next pending event's {@link SimTime} would exceed
+     * {@code targetTime}, or {@code maxEvents} events have already been processed by this call.
+     * Returns every event actually processed, in processing order (empty if none were).
+     *
+     * <p>This is the bounded-advancement primitive Gate 3 requires (acceptance criterion 4):
+     * interactive consumers use it for pause/resume and normal/accelerated presentation speeds
+     * without wall-clock sleeping in the simulation core, and headless consumers use it as
+     * protection against unbounded work monopolizing a call. It is provably equivalent to looping
+     * {@link #advance()} one event at a time under the same two stopping conditions -- it does not
+     * reorder, skip, merge, or otherwise reinterpret events -- so a caller can freely mix the two
+     * without affecting determinism; {@code Gate3SessionControlAcceptanceTest} proves the two
+     * approaches converge to identical ordered event streams and identical terminal state for the
+     * same model/workload.
+     *
+     * @param targetTime the simulated time not to advance past; an event scheduled after this time
+     *     is left pending rather than processed
+     * @param maxEvents the maximum number of events this call may process; must not be negative
+     */
+    public List<Event> advanceUntil(SimTime targetTime, long maxEvents) throws SimError {
+        if (maxEvents < 0) {
+            throw new IllegalArgumentException("maxEvents must not be negative, got " + maxEvents);
+        }
+        List<Event> processed = new ArrayList<>();
+        while (processed.size() < maxEvents) {
+            Optional<SimTime> nextTime = scheduler.peekTime();
+            if (nextTime.isEmpty() || nextTime.get().compareTo(targetTime) > 0) {
+                break;
+            }
+            advance().ifPresent(processed::add);
+        }
+        return processed;
     }
 
     /** Read-only view of every accepted order. */

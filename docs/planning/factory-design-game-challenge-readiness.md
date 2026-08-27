@@ -293,13 +293,14 @@ C2 is ready when:
 8. An executable canonical factory may still be rejected for violating challenge rules, and an admitted candidate must still pass Arcogine executability validation before publication/run.
 9. The fixed challenge workload/input cannot be silently replaced by the candidate attempt.
 
-### Implementation status (C2 — partial)
+### Implementation status (C2 — complete)
 
-C2 is **partially** implemented. The catalogue seam and deterministic draft-economics
-calculation described in 6.1 are implemented in the existing `:challenge` module
-(package `com.arcogine.challenge.catalogue`, `com.arcogine.challenge.economics`), with no new
+C2 is **complete** across the C1, C2a, and C2b slices. The catalogue seam, deterministic
+draft-economics calculation, and deterministic candidate admissibility are implemented in the
+game-owned `:challenge` module (packages `com.arcogine.challenge.catalogue`,
+`com.arcogine.challenge.economics`, and `com.arcogine.challenge.admissibility`), with no
 `project(...)` dependency on `:types`, `:simulation`, `:factory`, `:economy`, `:finance`, `:api`,
-or `:cli`. Candidate admissibility (6.2) is **not** implemented and remains for the next slice.
+or `:cli`.
 
 Implemented:
 
@@ -323,12 +324,23 @@ Implemented:
   wrapped total. The calculator mutates none of its inputs and is order-independent over
   occurrences.
 
-Not implemented, and deliberately deferred to the next C2 slice (candidate admissibility, 6.2):
-rejecting draft occurrences for using catalogue items outside a challenge's `availableEquipment`,
-enforcing per-item quantity limits against candidate occurrence counts, budget-affordability
-rejection, floor/placement constraints, and any projection from a catalogue item occurrence to
-canonical factory/resource semantics. No Engine Readiness gate is satisfied by this partial C2
-work; C3-C5 remain deferred.
+Implemented in C2b:
+
+- `CandidateDraftSnapshot`, `PlacedEquipment`, `EquipmentOccurrenceId`, and `GridPlacement` are
+    immutable game-owned draft values. The candidate contains no workload or contract field, so it
+    cannot replace the fixed challenge requirement.
+- `CandidateAdmissibilityPolicy` returns an immutable `CandidateAdmissibilityResult` with stable
+    game-owned issue codes, occurrence paths, and messages. It checks catalogue resolution,
+    challenge availability, quantity limits, delegated economics and budget affordability, floor
+    bounds, overlap, and duplicate occurrence identity.
+- Diagnostics use a frozen order (identity, resolution, availability, quantity, budget/economics,
+    bounds, overlap) and deterministic occurrence/item ordering. Economics failures are surfaced as
+    explicit admissibility issues rather than being treated as budget failures.
+
+C2 completion does not make the game playable and satisfies no Engine Readiness gate. An admitted
+candidate is not canonically executable: a later game-owned projection still requires Arcogine
+canonical validation before publication/run. Conversely, a canonically executable factory may
+remain inadmissible under a particular challenge. C3-C5 remain deferred.
 
 ## 7. C3 — Deterministic challenge evaluation
 

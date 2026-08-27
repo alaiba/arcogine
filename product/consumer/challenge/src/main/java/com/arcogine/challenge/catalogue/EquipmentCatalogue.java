@@ -1,6 +1,13 @@
 package com.arcogine.challenge.catalogue;
 
 import com.arcogine.challenge.EquipmentCatalogueItemId;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,16 +25,67 @@ import java.util.Optional;
  */
 public final class EquipmentCatalogue {
 
+    private final EquipmentCatalogueIdentity identity;
     private final List<EquipmentOffer> offers;
 
     public EquipmentCatalogue(List<EquipmentOffer> offers) {
+        this(new EquipmentCatalogueIdentity("catalogue.unversioned", "1"), offers);
+    }
+
+    public EquipmentCatalogue(EquipmentCatalogueIdentity identity, List<EquipmentOffer> offers) {
+        if (identity == null) {
+            throw new NullPointerException("identity");
+        }
+        this.identity = identity;
         // List.copyOf rejects null elements with its own NullPointerException.
         this.offers = offers == null ? List.of() : List.copyOf(offers);
+    }
+
+    /** Identity and semantic version of the catalogue and its economy rules. */
+    public EquipmentCatalogueIdentity identity() {
+        return identity;
     }
 
     /** All offers, in declaration order. */
     public List<EquipmentOffer> offers() {
         return offers;
+    }
+
+    /** Deterministic fingerprint of the result-affecting catalogue and quantity-limit content. */
+    public String semanticFingerprint() {
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            DataOutputStream output = new DataOutputStream(bytes);
+            offers.stream()
+                    .sorted(Comparator.comparing(offer -> offer.itemId().value()))
+                    .forEach(offer -> writeOffer(output, offer));
+            output.flush();
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(bytes.toByteArray());
+            StringBuilder fingerprint = new StringBuilder(digest.length * 2);
+            for (byte value : digest) {
+                fingerprint.append(Character.forDigit((value >>> 4) & 0x0f, 16));
+                fingerprint.append(Character.forDigit(value & 0x0f, 16));
+            }
+            return fingerprint.toString();
+        } catch (IOException | NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("unable to fingerprint catalogue", exception);
+        }
+    }
+
+    private static void writeOffer(DataOutputStream output, EquipmentOffer offer) {
+        try {
+            byte[] itemId = offer.itemId().value().getBytes(StandardCharsets.UTF_8);
+            output.writeInt(itemId.length);
+            output.write(itemId);
+            output.writeLong(offer.purchaseCostCredits());
+            output.writeBoolean(offer.quantityLimit().isPresent());
+            if (offer.quantityLimit().isPresent()) {
+                output.writeInt(offer.quantityLimit().getAsInt());
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("unable to encode catalogue", exception);
+        }
     }
 
     /**
@@ -51,16 +109,17 @@ public final class EquipmentCatalogue {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof EquipmentCatalogue other && offers.equals(other.offers);
+        return obj instanceof EquipmentCatalogue other
+            && identity.equals(other.identity) && offers.equals(other.offers);
     }
 
     @Override
     public int hashCode() {
-        return offers.hashCode();
+        return 31 * identity.hashCode() + offers.hashCode();
     }
 
     @Override
     public String toString() {
-        return "EquipmentCatalogue" + offers;
+        return "EquipmentCatalogue[" + identity + ", " + offers + "]";
     }
 }

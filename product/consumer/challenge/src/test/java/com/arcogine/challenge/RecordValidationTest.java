@@ -2,6 +2,7 @@ package com.arcogine.challenge;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.arcogine.challenge.catalogue.EquipmentCatalogueIdentity;
 import org.junit.jupiter.api.Test;
 
 class RecordValidationTest {
@@ -21,6 +22,12 @@ class RecordValidationTest {
     @Test
     void equipmentCatalogueItemIdRejectsNullValue() {
         assertThrows(NullPointerException.class, () -> new EquipmentCatalogueItemId(null));
+    }
+
+    @Test
+    void catalogueIdentityRejectsNullFields() {
+        assertThrows(NullPointerException.class, () -> new EquipmentCatalogueIdentity(null, "1"));
+        assertThrows(NullPointerException.class, () -> new EquipmentCatalogueIdentity("id", null));
     }
 
     @Test
@@ -62,5 +69,18 @@ class RecordValidationTest {
                         base.availableEquipment(),
                         base.deadline(),
                         null));
+    }
+
+    @Test
+    void challengeDefinitionRejectsNullCatalogueIdentityAndBlankFingerprint() {
+        ChallengeDefinition base = ChallengeFixtures.referenceChallenge();
+
+        assertThrows(NullPointerException.class, () -> new ChallengeDefinition(
+                base.identity(), base.floor(), base.startingBudget(), base.workload(),
+                base.availableEquipment(), base.deadline(), base.evaluationPolicy(), null, null));
+        assertThrows(IllegalArgumentException.class, () -> new ChallengeDefinition(
+                base.identity(), base.floor(), base.startingBudget(), base.workload(),
+                base.availableEquipment(), base.deadline(), base.evaluationPolicy(),
+                base.catalogueIdentity(), " "));
     }
 }

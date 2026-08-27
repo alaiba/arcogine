@@ -1,5 +1,6 @@
 package com.arcogine.challenge;
 
+import com.arcogine.challenge.catalogue.EquipmentCatalogueIdentity;
 import java.util.List;
 
 /**
@@ -22,7 +23,35 @@ public record ChallengeDefinition(
         ChallengeWorkload workload,
         List<EquipmentCatalogueItemId> availableEquipment,
         long deadline,
-        EvaluationPolicyIdentity evaluationPolicy) {
+        EvaluationPolicyIdentity evaluationPolicy,
+        EquipmentCatalogueIdentity catalogueIdentity,
+        String catalogueSemanticFingerprint) {
+
+        public ChallengeDefinition(
+            ChallengeIdentity identity,
+            FactoryFloorConstraint floor,
+            long startingBudget,
+            ChallengeWorkload workload,
+            List<EquipmentCatalogueItemId> availableEquipment,
+            long deadline,
+            EvaluationPolicyIdentity evaluationPolicy) {
+        this(identity, floor, startingBudget, workload, availableEquipment, deadline,
+                evaluationPolicy, new EquipmentCatalogueIdentity("catalogue." + identity.id(),
+                identity.version()), null);
+        }
+
+            public ChallengeDefinition(
+                ChallengeIdentity identity,
+                FactoryFloorConstraint floor,
+                long startingBudget,
+                ChallengeWorkload workload,
+                List<EquipmentCatalogueItemId> availableEquipment,
+                long deadline,
+                EvaluationPolicyIdentity evaluationPolicy,
+                EquipmentCatalogueIdentity catalogueIdentity) {
+            this(identity, floor, startingBudget, workload, availableEquipment, deadline,
+                evaluationPolicy, catalogueIdentity, null);
+            }
 
     public ChallengeDefinition {
         if (identity == null) {
@@ -36,6 +65,12 @@ public record ChallengeDefinition(
         }
         if (evaluationPolicy == null) {
             throw new NullPointerException("evaluationPolicy");
+        }
+        if (catalogueIdentity == null) {
+            throw new NullPointerException("catalogueIdentity");
+        }
+        if (catalogueSemanticFingerprint != null && catalogueSemanticFingerprint.isBlank()) {
+            throw new IllegalArgumentException("catalogueSemanticFingerprint must be non-blank");
         }
         availableEquipment = availableEquipment == null ? List.of() : List.copyOf(availableEquipment);
     }

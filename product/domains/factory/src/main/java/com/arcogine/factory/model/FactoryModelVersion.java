@@ -21,7 +21,7 @@ import java.util.List;
  * existing runtime/result provenance. It is deterministic for the current model but is not the
  * durable fingerprint contract and must not be reinterpreted as a {@code factory-model:v1}
  * fingerprint. Controlled revision identity, lineage, and persistence are separate concerns from
- * both values; see ADR-0004 and ADR-0006.
+ * both values; see ADR-0004, ADR-0006, and ADR-0008.
  *
  * <p>{@link FactoryModelPublisher#publish(FactoryModel)} is the intended way to obtain an
  * instance, but the D2/D4 invariant that an invalid model can never be published or instantiated

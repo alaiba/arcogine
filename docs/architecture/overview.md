@@ -419,7 +419,7 @@ product/
 │                         Headless — no dependency on any module below.
 └── interfaces/
     ├── api/              Spring Boot HTTP + SSE server: controllers, SimThread,
-│                         IntegratedHandler, SnapshotBuilder, DTOs
+    │                     IntegratedHandler, SnapshotBuilder, DTOs
     ├── cli/               Picocli CLI entry point: serve + headless run modes
     └── web/               React/TypeScript experiment console
 ```

@@ -45,8 +45,8 @@ Each ADR has one of the following statuses:
 - **Accepted** — the decision has been made and represents the intended
   design.
 - **Rejected** — the proposal was explicitly considered and not adopted.
-- **Superseded** — a later ADR replaced this decision. The original record is
-  preserved as-is and links to the ADR that replaced it.
+- **Superseded** — a later Accepted ADR replaced this decision. The original
+  record is preserved as-is and links to the ADR that replaced it.
 
 A Proposed ADR is a useful way to structure an open design discussion, but
 its existence never implies acceptance — readers should be able to tell at a
@@ -56,7 +56,7 @@ glance which parts are established fact versus open question or proposal.
 
 1. Copy [`0000-template.md`](0000-template.md) to `NNNN-short-title.md`,
    where `NNNN` is the next unused four-digit number (check the existing
-   files in this directory).
+   files in this directory and concurrent ADR work before allocating it).
 2. Fill in the sections that apply; don't pad a section with content just to
    fill it in.
 3. Set `Status: Proposed` (or `Accepted` if the decision is already made and
@@ -67,12 +67,44 @@ Numbers are never reused, even if an ADR is later rejected or superseded.
 
 ## Changing a decision
 
-Accepted ADRs are not rewritten to make a past decision look different from
-what was actually decided. Minor corrections or clarifications that don't
-change the decision itself may be edited in place. If the decision itself
-changes:
+Accepted ADRs are immutable historical records. Once an ADR is Accepted, its
+decision/body text is not edited in place, even to make the old decision read
+more like the architecture that exists later. If the decision changes:
 
 1. write a new ADR describing the new decision;
-2. reference the old ADR from the new one (`Supersedes: ADR-NNNN`);
-3. mark the old ADR's status `Superseded` and link forward to the new one
-   (`Superseded by: ADR-NNNN`).
+2. the replacement ADR must itself be `Status: Accepted` before it can
+   supersede an existing Accepted ADR;
+3. reference the old ADR from the new one (`Supersedes: ADR-NNNN`);
+4. change only the old ADR's supersession metadata: set `Status: Superseded`
+   and add `Superseded by: ADR-NNNN`.
+
+A Proposed replacement does not supersede established architecture. Keep the
+old ADR Accepted until the replacement decision is actually Accepted.
+
+Typos or explanatory improvements discovered after acceptance should normally
+be corrected in current-state documentation, not by rewriting the accepted
+ADR. If an error in the ADR itself is materially misleading, supersede it so
+the historical record and the correction are both explicit.
+
+### CI enforcement
+
+The repository enforces this rule through
+`.github/scripts/check-adr-immutability.py`, which runs in the always-required
+`Classify changes` / `CI / gate` path.
+
+For every ADR that was `Accepted` or `Superseded` on the PR base commit, CI:
+
+- rejects deletion or rename of the ADR file;
+- rejects any change to the ADR body/decision text;
+- permits an `Accepted` ADR only to remain `Accepted` or transition to
+  `Superseded`;
+- permits that transition only when the same change adds a new **Accepted**
+  ADR whose `Supersedes: ADR-NNNN` metadata points back to the old record;
+- rejects a Proposed replacement as insufficient to supersede established
+  architecture;
+- keeps an already `Superseded` ADR fully immutable, including its
+  supersession target.
+
+`Proposed` ADRs remain editable until accepted. The guard is intentionally
+stricter than human review: changing an accepted decision requires a new
+Accepted ADR, not an exception flag or reviewer override.

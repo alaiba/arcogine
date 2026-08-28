@@ -413,13 +413,13 @@ product/
 │                         Operational, and Financial Truth" above
 ├── agents/               Agent framework: SalesAgent, AgentObservation
 ├── consumer/
-│   └── challenge/        Challenge Readiness: game-owned ChallengeDefinition and
-│                         ChallengeDefinitionValidator (see
+│   └── challenge/        Challenge Readiness: game-owned challenge definition/validation,
+│                         catalogue/economics, and candidate admissibility (see
 │                         docs/planning/factory-design-game-challenge-readiness.md).
 │                         Headless — no dependency on any module below.
 └── interfaces/
     ├── api/              Spring Boot HTTP + SSE server: controllers, SimThread,
-    │                     IntegratedHandler, SnapshotBuilder, DTOs
+│                         IntegratedHandler, SnapshotBuilder, DTOs
     ├── cli/               Picocli CLI entry point: serve + headless run modes
     └── web/               React/TypeScript experiment console
 ```
@@ -439,13 +439,14 @@ types ← simulation ← factory
 challenge   (no dependency on any module above; a sibling, game-owned boundary)
 ```
 
-Each module exposes a clean public API and hides implementation details. Domain modules (`factory`, `economy`, `finance`, `agents`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
+Each module exposes a clean public API and hides implementation details. Domain modules (`factory`, `economy`, `agents`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
 
 `challenge` is deliberately outside this dependency graph: it is a game-owned Challenge Readiness
 module (`com.arcogine.challenge`) that has no `project(...)` dependency on `types`, `simulation`,
-any domain module, `api`, or `cli`, and no Spring dependency. It defines an immutable
-`ChallengeDefinition` and a `ChallengeDefinitionValidator` that is a distinct validation domain
-from `FactoryModelValidator` — see the Challenge Readiness planning doc for the ownership boundary.
+any domain module, `api`, or `cli`, and no Spring dependency. It defines immutable challenge
+definitions and validation, game-owned catalogue/economics, and deterministic candidate
+admissibility. These are distinct validation domains from `FactoryModelValidator` — see the
+Challenge Readiness planning doc for the ownership boundary.
 
 ## Event Dispatch Architecture
 
@@ -503,11 +504,11 @@ This determinism contract is scoped to simulation, replay, and verification cont
 
 Scenario factory semantics are instantiated through an implemented canonical-model seam: `FactoryModel` (validated) → `FactoryModelVersion` (immutable, published) → `FactoryRuntimeAssembler` (deterministic runtime instantiation). See [ADR-0003](decisions/0003-canonical-factory-model-boundary.md) for the accepted boundary this implements.
 
-`FactoryModelVersion.fingerprint()` now implements the durable `factory-model:v1` semantic fingerprint contract accepted by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). The contract uses the typed `ModelFingerprint` value and a language-independent canonical binary encoding with explicit policy versioning and compatibility vectors. Equal canonical semantic content therefore has a durable identity that is independent of process memory and implementation language under the v1 policy.
+`FactoryModelVersion.fingerprint()` implements the durable `factory-model:v1` semantic fingerprint contract accepted by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). The contract uses the typed `ModelFingerprint` value and a language-independent canonical binary encoding with explicit policy versioning and compatibility vectors. Equal canonical semantic content therefore has a durable identity that is independent of process memory and implementation language under the v1 policy.
 
 `FactoryModelVersion.contentHash()` remains a separate legacy compatibility surface. It is deterministic for the current Java model but is not the durable fingerprint contract and historical bare content hashes must not be reinterpreted as `factory-model:v1` fingerprints. Existing `IntegratedHandler`/`SimResult.modelContentHash` provenance still carries that legacy hash; broader provenance migration and run identity (run ID, scenario/input fingerprint, engine build) remain separate follow-up concerns.
 
-There is still no persistent revision repository, `ControlledRevisionId`, controlled-revision lineage, approval workflow, or external change-management integration implemented. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) requires historical revision identity to remain distinct from semantic fingerprint equality; the durable fingerprint implementation does not close that deferred side of the contract.
+There is still no implemented `ControlledRevisionId` value model, authoritative revision repository, or controlled-revision persistence/lineage. [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) now fixes the controlled revision identity and lineage contract — opaque UUIDv4 historical identity, current `0..1` parent cardinality, rollback as a new revision, immutable recording provenance, and the persistence boundary — but the corresponding value-model and persistence slices remain outstanding. Approval/authorization, conformance, deployment, and external change-management relationships remain separate follow-on records rather than revision identity.
 
 ## API Layer
 

@@ -16,7 +16,7 @@ public final class EquipmentCatalogueFixtures {
     private EquipmentCatalogueFixtures() {}
 
     public static EquipmentCatalogue referenceCatalogue() {
-        return new EquipmentCatalogue(List.of(
+                return new EquipmentCatalogue(new EquipmentCatalogueIdentity("catalogue.challenge.factory-basics", "1"), List.of(
                 EquipmentOffer.of(
                         new EquipmentCatalogueItemId("equipment.cutter"), CUTTER_COST_CREDITS),
                 EquipmentOffer.of(

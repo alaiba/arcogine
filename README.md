@@ -110,7 +110,7 @@ java -jar dist/api/arcogine.jar run docs/examples/basic.toml
 | Layer | Technology |
 |-------|-----------|
 | Simulation engine | Java (Java 21 compatibility baseline; preferred devcontainer JDK 25) |
-| HTTP API | Spring Boot 3.4 + Spring MVC |
+| HTTP API | Spring Boot 4 + Spring MVC |
 | CLI | Picocli |
 | Build | Gradle (Kotlin DSL), via the `product/gradlew` wrapper |
 | Frontend | React 19 + TypeScript + Vite |

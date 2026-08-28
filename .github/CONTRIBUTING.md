@@ -30,7 +30,7 @@ See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the 
 
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
 2. **Make your changes.** Follow the code style enforced by Checkstyle and the frontend lint/format tooling.
-3. **Write tests** for new functionality. Java modules use JUnit 5; frontend stores and components use Vitest and Testing Library.
+3. **Write tests** for new functionality. Java modules use JUnit 6; frontend stores and components use Vitest and Testing Library.
 4. **Run the checks:**
 
 ```bash

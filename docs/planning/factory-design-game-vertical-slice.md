@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Product hypothesis for the first playable factory-design game slice  
 > **Authority:** Planning only; this document does not describe current Arcogine capability or accepted architecture  
-> **Related:** [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory Design Capability](factory-design-capability.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [Product Charter](../product/charter.md)
+> **Related:** [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory Design Capability](factory-design-capability.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [Product Charter](../product/charter.md)
 
 ## 1. Product thesis
 
@@ -62,7 +62,7 @@ The player decides where additional compatible resources are worth their capital
 
 Adding capacity at a true bottleneck should be capable of reducing queueing or completion time. Adding capacity away from the bottleneck may produce little or no benefit. Solving one bottleneck may expose another.
 
-For the fixed-contract reference challenge below, this requirement applies to one accepted production requirement, not to a game-authored collection of artificial independent orders. Arcogine therefore needs the pre-playable work-decomposition capability recorded by ADR-0009 before the second-cutter strategy can be used as runtime evidence.
+For the fixed-contract reference challenge below, this requirement applies to one accepted production requirement, not to a game-authored collection of artificial independent orders. Arcogine's accepted W1 architecture is now recorded by ADR-0010: one accepted quantity-`N` `Order` decomposes into `N` independently dispatchable unit-quantity `Job`s, while aggregate progress and completion remain order-level. That architecture must be implemented and proven headlessly before the second-cutter strategy can be used as runtime evidence.
 
 ### 3.2 Resource eligibility and dispatch
 
@@ -125,7 +125,7 @@ Strategy B
 
 Neither approach should dominate under every constraint. The useful product question is whether the player can understand why one design performs better in a particular run.
 
-The 20-unit contract remains one fixed game-owned production requirement. The game must not obtain Strategy A's parallelism by silently translating that requirement into several independent Arcogine `Order`s. Arcogine owns how accepted production intent is decomposed into independently dispatchable execution units; that capability is an explicit pre-playable dependency under ADR-0009 and the consumer plan.
+The 20-unit contract remains one fixed game-owned production requirement. The game must not obtain Strategy A's parallelism by silently translating that requirement into several independent Arcogine `Order`s. Under ADR-0010, Arcogine owns the deterministic decomposition of the accepted order into 20 sibling unit-quantity `Job`s, `JobId` is the independently dispatchable work-item identity, and order progress/completion remain aggregate facts correlated by `OrderId`. The game consumes those semantics; it does not choose the decomposition.
 
 ## 5. Player evidence and attempt comparison
 
@@ -163,6 +163,6 @@ The consumer-readiness gates, ownership rules, integration acceptance criteria, 
 
 This document owns only the concrete product hypothesis: player fantasy, loop, decisions, reference challenge, player-facing evidence, and product success criteria.
 
-[Factory-Design Game Consumer Initiative](factory-design-game-consumer.md) owns the Arcogine/game responsibility boundary, upstream readiness dependencies, implementation entry criteria, integration acceptance criteria, and non-goals. [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) owns the runtime gates themselves.
+[Factory-Design Game Consumer Initiative](factory-design-game-consumer.md) owns the Arcogine/game responsibility boundary, upstream readiness dependencies, implementation entry criteria, integration acceptance criteria, and non-goals. [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) owns the runtime gates themselves. [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) owns the accepted W1 decomposition and work-item identity contract.
 
 Detailed art direction, content expansion, campaign design, and distribution planning should remain outside Arcogine until the vertical slice provides evidence that those investments are justified.

@@ -4,7 +4,7 @@
 > **Scope:** Prepare Arcogine's factory runtime for external consumers after the canonical factory-model boundary is established  
 > **Authority:** Planning only; this document defines runtime-readiness gates, not current capability or accepted architecture  
 > **Prerequisite:** the model-seam entry gate (§1.1) — narrower than full D1-D4 in [Factory Design Capability](factory-design-capability.md)  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
 
 ## 1. Purpose
 
@@ -131,7 +131,7 @@ Gate 2        Capability-based deterministic dispatch
         ↓
 Gate 3        Consumer-neutral simulation session
         ↓
-W1            Intra-order work decomposition / lot-and-batch execution
+W1            Intra-order execution decomposition
         ↓
 Gate 4        Stable observations and event envelopes
         ↓
@@ -140,7 +140,7 @@ Gate 5        Spatial runtime consequences
 Game consumer may begin
 ```
 
-The current fixed-quantity factory-design reference challenge already activates **W1 — intra-order work decomposition / lot-and-batch execution**. W1 is therefore a required Engine capability in the critical path between Gate 3 and Gate 4. It is not a hidden completion condition for Gate 2; Gate 2 remains complete for dispatch of independently dispatchable work. See [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md) and §14.1.
+The current fixed-quantity factory-design reference challenge activates **W1 — intra-order execution decomposition**. ADR-0009 records why W1 is separate from Gate 2 dispatch; [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) now records the accepted W1 architecture. W1 remains an implementation/evidence prerequisite in the critical path between Gate 3 and Gate 4: one accepted quantity-`N` `Order` decomposes deterministically into `N` independently dispatchable unit-quantity `Job`s, `JobId` is the work-item identity, aggregate progress/completion remains order-level, and exactly one order completion is emitted. Gate 2 remains complete for dispatch of independently dispatchable work.
 
 Distribution hardening follows the core gates. A first UI experiment may begin after these gates; a distributable client additionally requires the contract, recovery, persistence, and packaging work in Section 11.
 
@@ -195,13 +195,27 @@ Job (mutable execution)
 
 The second Gate 1 slice added an explicit, consumer-neutral workload-submission entry point: `FactoryRuntime.submitWorkload(productId, quantity, unitPrice)`. `FactoryRuntime` wraps a `FactoryHandler` together with a `Scheduler` it owns internally, so a caller supplies only product/quantity/commercial intent -- never a mutable `Scheduler` or an authoritative simulation time, which stayed internal event-engine plumbing rather than becoming part of the workload boundary. Both `FactoryRuntime.submitWorkload` and the economy-driven `OrderCreation` event resolve to the same package-private `FactoryHandler.submitOrder(productId, quantity, unitPrice, currentTime, scheduler)` acceptance operation -- `FactoryHandler.handleEvent` delegates to it for that event rather than duplicating the logic, and it is not exposed outside the `factory.process` package. `FactoryHandler` already had no compile-time dependency on economy/pricing/demand/agents; this slice makes explicit submission a supported, named entry point instead of something only reachable by hand-constructing an internal event payload and owning a `Scheduler`. `FactoryRuntime` is only constructed from a published model, via `FactoryRuntime.forModel(FactoryModelVersion)` (internally using `FactoryRuntimeAssembler`) -- never wrapped around an already-live `FactoryHandler` some other scheduler might also be driving, so it always owns the exclusive factory/scheduler pair it advances and event ordering stays globally authoritative. It also does not expose the mutable `FactoryHandler` directly; callers observe state through `FactoryRuntime`'s own read-only projections (`ordersView`, `jobsView`, `job`, `machinesView`, `backlog`, `avgLeadTime`, `throughput`, `completedSalesValue`, `completedSales`). A headless test (`ExplicitWorkloadSubmissionTest`) builds a runtime this way and submits workload directly, with no `DemandModel`, `PricingState`, or agent in the loop, and proves repeated identical submissions are deterministic. `FactoryRuntime.advance()` pumps exactly one pending event at a time so a headless caller can drive submitted workload to completion without reaching into scheduler internals; this is deliberately not a general session/advancement API -- that remains Gate 3 work. Economy-driven scenarios continue to work unchanged: `DemandModel.generateOrders` still schedules `OrderCreation` events, which route through the same `submitOrder` logic.
 
-The third Gate 1 slice made order quantity consume proportional production work. `FactoryHandler.submitOrder` now sizes a job's routing to `routing.stepCount() * quantity` instead of `routing.stepCount()`: the job repeats its routing once per unit of quantity, and dispatch/completion resolve each job-global step back to its underlying `RoutingStep` by `stepIndex % routing.stepCount()`. This was chosen over multiplying each step's fixed `duration` by quantity, and over creating one `Job`/`JobId` per unit, because it gives countable progress (`Job.currentStep()` is a job-global counter that advances once per routing step executed, i.e. `routing.stepCount()` times per unit) without multiplying `Order`/`Job` object volume per unit of quantity -- a 100,000-unit order still creates exactly one `Order` and one `Job`, just with a larger `totalSteps` counter. This deliberately does not bound *event* volume the same way: `TaskStart`/`TaskEnd` events are still scheduled once per routing step per unit (quantity-proportional), because that is the mechanism that makes quantity actually consume proportional machine-occupied time; only object allocation (`Order`/`Job`/`JobId`) stays flat. The externally visible `TaskStart`/`TaskEnd.stepIndex` continues to carry the routing-local index (`stepIndex % routing.stepCount()`), not the job-global counter, so that event field's existing meaning is unchanged. `Job` remains strictly one-to-one with `Order` under this model, so `OrderCompleted`'s existing `jobId` correlation field stays unambiguous and did not need to change; `OrderCompleted` still fires exactly once per order, only after the job's full (quantity-scaled) routing completes. `completedSales`/`backlog`/`avgLeadTime` keep their existing per-order (per-job) counting semantics -- quantity now changes *how long* a job occupies a machine and stays in backlog, not what those counts measure. Both the economy-driven `OrderCreation` path and `FactoryRuntime.submitWorkload` resolve to this same `submitOrder` operation, so they share identical proportional-quantity semantics. See `ProportionalQuantityWorkTest` for the headless proof, including a multi-step, multi-quantity execution that exercises the `stepIndex` modulo wrap-around directly (quantity 10 taking ten times the machine-occupied ticks of quantity 1, determinism, single completion, and economy/explicit-path equivalence).
+The third Gate 1 slice made order quantity consume proportional production work. `FactoryHandler.submitOrder` now sizes a job's routing to `routing.stepCount() * quantity` instead of `routing.stepCount()`: the job repeats its routing once per unit of quantity, and dispatch/completion resolve each job-global step back to its underlying `RoutingStep` by `stepIndex % routing.stepCount()`. This was chosen over multiplying each step's fixed `duration` by quantity, and over creating one `Job`/`JobId` per unit, because it gives countable progress (`Job.currentStep()` is a job-global counter that advances once per routing step executed, i.e. `routing.stepCount()` times per unit) without multiplying `Order`/`Job` object volume per unit of quantity -- a 100,000-unit order still creates exactly one `Order` and one `Job`, just with a larger `totalSteps` counter. This deliberately does not bound *event* volume the same way: `TaskStart`/`TaskEnd` events are still scheduled once per routing step per unit (quantity-proportional), because that is the mechanism that makes quantity actually consume proportional machine-occupied time; only object allocation (`Order`/`Job`/`JobId`) stays flat. The externally visible `TaskStart`/`TaskEnd.stepIndex` continues to carry the routing-local index (`stepIndex % routing.stepCount()`), not the job-global counter, so that event field's existing meaning is unchanged. `Job` remains strictly one-to-one with `Order` under this implemented model, so `OrderCompleted`'s existing `jobId` correlation field stays unambiguous today and `OrderCompleted` still fires exactly once per order, only after the job's full quantity-scaled routing completes. `completedSales`/`backlog`/`avgLeadTime` keep their existing per-order (per-job) counting semantics. Both the economy-driven `OrderCreation` path and `FactoryRuntime.submitWorkload` resolve to this same `submitOrder` operation, so they share identical proportional-quantity semantics. See `ProportionalQuantityWorkTest` for the headless proof.
 
-One accepted order currently corresponds to exactly one execution job (the routing repeats within that job rather than spawning multiple jobs). This remains the implemented model today, but the current fixed-quantity reference challenge now requires a subsequent W1 work-decomposition capability that can expose independently dispatchable execution units within one accepted order. W1 is active planning under §14.1 and [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md); it is separate from Gate 2.
+That one-`Order`/one-`Job` shape remains the **implemented pre-W1 runtime**, but it is no longer the intended architecture for quantity decomposition. ADR-0010 accepts the W1 target shape:
 
-The existing `OrderCompleted` event retains `jobId`, not an explicit `orderId`, as its correlation field. Under the 1 Order <-> 1 Job invariant this model keeps, that correlation is unambiguous and fully supported: a consumer resolves `OrderCompleted.jobId` through `FactoryRuntime.job(jobId)` to a `JobView`, whose `orderId()` identifies the accepted `Order` the completion belongs to. `Gate1EngineReadinessAcceptanceTest` proves this path end to end through `FactoryRuntime` alone. Adding an explicit `orderId` field to the event payload is a stable-event-contract concern -- it belongs to the later Gate 4 (`§8`) work on event envelopes, not Gate 1: Gate 1 only requires that completion be derivable and observable through a supported observation, which it is.
+```text
+Order (immutable intent, OrderId)
+        |
+        v
+order-level execution aggregate (same OrderId)
+        |
+        +---- Job ordinal 0, executionQuantity 1
+        +---- Job ordinal 1, executionQuantity 1
+        +---- ...
+        +---- Job ordinal N-1, executionQuantity 1
+```
 
-The canonical-model seam is already complete enough for this runtime work, so definition-model changes do not need to be mixed into the remaining Gate 1 refactor.
+Under that contract, `JobId` is the independently dispatchable work-item identity; each child traverses the routing exactly once; child creation/ID allocation/initial dispatch are deterministic in ordinal order; aggregate `releasedQuantity` and `completedQuantity` are order-level; backlog/completed-sales/lead-time remain order-level measures; and the final child completion emits exactly one `OrderCompleted` carrying explicit `OrderId` plus the completing child `JobId`.
+
+The current `OrderCompleted` payload still retains `jobId`, not explicit `orderId`, because W1 has not yet been implemented. ADR-0010 intentionally moves that correlation change into W1 rather than postponing it to Gate 4: once several `JobId`s belong to one `Order`, order completion must identify the aggregate explicitly. Gate 4 remains responsible for the later stable event-envelope contract, not for deciding W1's basic execution identities.
+
+The canonical-model seam is already complete enough for this runtime work, so definition-model changes do not need to be mixed into W1.
 
 ### 5.3 Required behavior
 
@@ -224,16 +238,16 @@ Gate 1 is satisfied when:
 7. The same model version, seed, and workload produce the same ordered result.
 8. Existing economy-driven scenario behavior remains covered or is migrated deliberately.
 
-**Gate 1 is complete.** All eight criteria have identified executable evidence:
+**Gate 1 is complete.** All eight criteria have identified executable evidence for the Gate 1 baseline. That evidence records the implemented pre-W1 representation and should not be read as overriding ADR-0010's later accepted architecture:
 
 1. **Runtime instantiates from a published model.** `FactoryRuntime.forModel(FactoryModelVersion)` is the only constructor; there is no path to a `FactoryRuntime` that was not built from a published model. Proven by every test in `Gate1EngineReadinessAcceptanceTest`, `ExplicitWorkloadSubmissionTest`, and `ProportionalQuantityWorkTest`.
 2. **Explicit submission without economy/demand/agents.** `FactoryRuntime.submitWorkload(productId, quantity, unitPrice)` requires no `DemandModel`, `PricingState`, or agent. Proven by `ExplicitWorkloadSubmissionTest` and `Gate1EngineReadinessAcceptanceTest.modelAndRuntimeBoundary`.
-3. **Quantity consumes proportional production work.** `FactoryHandler.submitOrder` sizes a job's routing to `routing.stepCount() * quantity`. Proven by `ProportionalQuantityWorkTest` (including the routing-local `stepIndex` modulo wrap-around) and, at the `FactoryRuntime` boundary, by `Gate1EngineReadinessAcceptanceTest.quantityDrivesRepeatedProductionStepCompletionBeforeTheJobIsDone`.
-4. **Immutable order intent vs. mutable execution state.** The `Order`/`Job` split: `Order` is an immutable record; `Job` is mutable execution state referencing it. Proven by `OrderIntentSeparationTest` and `Gate1EngineReadinessAcceptanceTest.modelAndRuntimeBoundary`.
-5. **One job per order, with job-global progress standing in for "work items."** `Job.currentStep()` is a job-global counter advancing once per routing step executed (`routing.stepCount()` times per unit), from which per-unit progress is derivable (`currentStep / routing.stepCount()`). This is the deliberate current shape of the quantity model (see §5.2), not multiple `Job` objects per `Order`.
-6. **Completion derived from executed work, observable via `FactoryRuntime.advance()`.** `OrderCompleted` fires only once `Job.isComplete()` (i.e., every quantity-scaled step has executed), and is observed as the return value of `FactoryRuntime.advance()`. Proven end to end by `Gate1EngineReadinessAcceptanceTest.completionIsObservableThroughFactoryRuntimeAdvance`, which also proves the `OrderCompleted.jobId` -> `FactoryRuntime.job(jobId)` -> `JobView.orderId()` correlation path described above.
-7. **Determinism.** The strongest ordered-stream proof reaches the full `FactoryRuntime` contract, not just the `FactoryHandler`/`Scheduler` seam: `Gate1EngineReadinessAcceptanceTest.identicalWorkloadFromTwoFreshRuntimesProducesIdenticalOrderedEventStreamsAndTerminalState` drains the entire ordered event stream from two independently constructed, fresh `FactoryRuntime`s given the same published model and workload and asserts the streams are identical, plus identical terminal state (job completion, lead time, backlog, completed sales count/value, average lead time). `ExplicitWorkloadSubmissionTest.repeatedIdenticalSubmissionsAreDeterministic` and `ProportionalQuantityWorkTest.identicalWorkloadProducesIdenticalOrderedResults` remain as lower-level determinism evidence at the `FactoryHandler`/`Scheduler` seam.
-8. **Economy-driven workload shares the same accepted-order/proportional-work path.** Both the economy-driven `OrderCreation` event and `FactoryRuntime.submitWorkload` resolve to the same package-private `FactoryHandler.submitOrder`. Existing regression evidence: `ProportionalQuantityWorkTest.economyDrivenOrderCreationFollowsTheSameProportionalWorkSemanticsAsQuantityOne` and `.explicitAndEconomyPathsProduceIdenticalProportionalWorkForTheSameQuantity` prove the two paths share identical proportional-work semantics; `OrderLifecycleIntegrationTest` (`interfaces/api`) proves the full economy-driven `OrderCreation -> Factory -> OrderCompleted -> Finance` chain end to end through the real wired `IntegratedHandler`; `DemandModelTest` proves the economy demand loop schedules `OrderCreation` events, which route through the identical acceptance path. This evidence was judged sufficient as-is -- no additional economy scenario test was needed to close this criterion.
+3. **Quantity consumes proportional production work.** The current implementation sizes a job's routing to `routing.stepCount() * quantity`. Proven by `ProportionalQuantityWorkTest` and `Gate1EngineReadinessAcceptanceTest.quantityDrivesRepeatedProductionStepCompletionBeforeTheJobIsDone`. W1 will preserve proportional work while changing representation to unit-quantity sibling jobs.
+4. **Immutable order intent vs. mutable execution state.** The `Order`/`Job` split is established: `Order` is immutable; `Job` is mutable execution state referencing it. ADR-0010 extends that split to several sibling jobs under one order rather than replacing it.
+5. **Work-item progress is represented.** Today one job-global progress counter stands in for the quantity work. ADR-0010 resolves the later concrete multi-work-item representation required by the reference challenge.
+6. **Completion derived from executed work, observable via `FactoryRuntime.advance()`.** Current completion remains proven by Gate 1 acceptance tests; W1 must preserve exactly-once order completion after aggregate child progress reaches requested quantity.
+7. **Determinism.** Existing two-fresh-runtime tests prove the current representation. W1 adds stronger determinism requirements covering child ordinals, `JobId` allocation, initial dispatch, assignments, ordered events, and aggregate terminal state.
+8. **Economy-driven workload shares the same accepted-order/proportional-work path.** Both economy-driven `OrderCreation` and explicit submission resolve to the same acceptance path. W1 must preserve that convergence while changing the internal decomposition.
 
 ## 6. Gate 2 — Capability-based deterministic dispatch
 
@@ -272,7 +286,7 @@ Gate 2 removed that restriction: `RoutingStep` now carries `Set<MachineId> eligi
 
 ### 6.3 Deterministic dispatch
 
-The dispatch policy established by ADR-0005, applied in `FactoryHandler.selectMachine`:
+The dispatch policy established by ADR-0005 and retained by ADR-0009, applied in `FactoryHandler.selectMachine`:
 
 1. eligible;
 2. online (an eligible machine that is `Offline` is excluded from selection while any eligible machine is online);
@@ -282,7 +296,7 @@ The dispatch policy established by ADR-0005, applied in `FactoryHandler.selectMa
 
 Projected-completion-time ranking, resource pools, and capability taxonomies were considered and deliberately deferred -- none are required by the acceptance criteria below. A future slice that changes ranking must record that decision rather than silently reinterpreting the current policy.
 
-Gate 2 is about **dispatch**, not work decomposition: the runtime selects an eligible resource for an independently dispatchable unit of work that already exists. Splitting one accepted production order into several concurrently executable lots/batches/execution units is the separate W1 production-semantic capability now activated by the current reference challenge (§14.1; [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md)).
+Gate 2 is about **dispatch**, not work decomposition: the runtime selects an eligible resource for an independently dispatchable unit of work that already exists. ADR-0010 now defines how W1 creates those units within one accepted quantity-scaled order: deterministic unit-quantity sibling `Job`s identified by `JobId`. That decision does not change Gate 2's selector or `pendingMultiEligible` semantics.
 
 ### 6.4 Acceptance criteria
 
@@ -290,13 +304,13 @@ Gate 2 is satisfied when:
 
 1. Runtime consumes model-side resource definitions and installed instances rather than redefining them. **Satisfied** (unchanged by this slice -- `FactoryRuntimeAssembler` builds `Machine`s directly from `ResourceDefinition`).
 2. Two equivalent eligible resource instances can both execute the same operation. **Satisfied** -- proved at both the `FactoryHandler` seam (`MultiResourceDispatchTest`) and end to end through the published-model boundary (`Gate2MultiResourceDispatchAcceptanceTest`, driven entirely through `FactoryRuntime`).
-3. Both resources are used when workload justifies parallel capacity. **Satisfied** for sufficient independently dispatchable work: `Gate2MultiResourceDispatchAcceptanceTest.publishedMultiEligibleModelSurvivesAssemblyAndDispatchesBothOrdersConcurrently` proves two independent orders occupy both eligible machines at once, through `FactoryRuntime` alone. Gate 2 does not require one quantity-scaled order to be decomposed into several concurrent execution units; that is W1.
+3. Both resources are used when workload justifies parallel capacity. **Satisfied** for sufficient independently dispatchable work: `Gate2MultiResourceDispatchAcceptanceTest.publishedMultiEligibleModelSurvivesAssemblyAndDispatchesBothOrdersConcurrently` proves two independent orders occupy both eligible machines at once, through `FactoryRuntime` alone. Gate 2 does not require one quantity-scaled order to be decomposed; ADR-0010/W1 provides that separate capability.
 4. Equal candidates resolve reproducibly through a stable tie-break rule. **Satisfied** -- `MultiResourceDispatchTest.equalCandidatesResolveDeterministicallyToTheLowestMachineId` and `Gate2MultiResourceDispatchAcceptanceTest.identicalWorkloadFromTwoFreshRuntimesResolvesToTheSameMachineAssignments`.
-5. Adding a second compatible resource changes queueing, utilization, throughput, or completion time in an appropriate workload. **Satisfied**: under concurrent independent orders, both machines' queues stay empty where a single-machine model would queue the second order. The criterion requires an appropriate workload with sufficient independently dispatchable work; it does not require intra-order work decomposition.
-6. Removing/disabling one instance does not require changing the product definition. **Satisfied**, including the machine-recovery lifecycle: `MultiResourceDispatchTest.machineComingBackOnlineDispatchesWorkThatWasStrandedWaitingOnAnotherMachine` and `Gate2MultiResourceDispatchAcceptanceTest.bringingAnEligibleMachineOnlineDispatchesWorkStrandedWaitingForTheOtherMachine` prove that work waiting because one eligible machine was offline is not pinned to whichever other machine happened to be checked when it started waiting -- `FactoryHandler` reconsiders it against its whole eligible set whenever any eligible machine frees up or comes online (see `pendingMultiEligible`/`tryDispatchPendingMultiEligible`), so a machine that was offline when a job first waited can still pick it up once it recovers. `Gate2MultiResourceDispatchAcceptanceTest.offlineEligibleMachineIsExcludedAndRemovingItDoesNotRequireChangingTheProductDefinition` proves the product/operation definition is untouched, only runtime machine availability changes. `Gate2MultiResourceDispatchAcceptanceTest.disjointPendingPoolDispatchesEvenWhileAnEarlierUnrelatedPoolIsStillFull` proves the pending backlog does not head-of-line block: an undispatchable entry waiting on one still-fully-busy eligible pool does not stop a later entry with a disjoint eligible pool from dispatching the moment its own pool frees up.
-7. Resource capability, operational status, and queue state remain distinct concepts. **Satisfied** -- `OperationStepDefinition.eligibleResources` (model eligibility), `MachineState` (operational status), and `Machine`'s per-machine queue plus `FactoryHandler`'s cross-machine pending backlog (runtime queue state) remain separate types; this slice does not merge them.
+5. Adding a second compatible resource changes queueing, utilization, throughput, or completion time in an appropriate workload. **Satisfied** under concurrent independent orders. W1 must separately prove the same capacity can affect sibling jobs from one order.
+6. Removing/disabling one instance does not require changing the product definition. **Satisfied**, including machine recovery and cross-machine pending-work reconsideration.
+7. Resource capability, operational status, and queue state remain distinct concepts. **Satisfied** -- `OperationStepDefinition.eligibleResources`, `MachineState`, per-machine queue state, and `pendingMultiEligible` remain separate concepts.
 
-**Gate 2 is complete.** All seven criteria have executable evidence for deterministic resource selection and parallel-capacity use across independently dispatchable work. Intra-order parallelism is not an unfinished Gate 2 condition; it is the separately activated W1 work-decomposition / lot-and-batch execution capability (§14.1, ADR-0009). Also deferred unless a concrete need arises: load-aware ranking beyond queue depth and resource pools/capability taxonomies.
+**Gate 2 is complete.** Intra-order parallelism is not an unfinished Gate 2 condition; it is the separately accepted W1 execution-decomposition contract in ADR-0010. Also deferred unless a concrete need arises: load-aware ranking beyond queue depth and resource pools/capability taxonomies.
 
 ## 7. Gate 3 — Consumer-neutral simulation session
 
@@ -332,6 +346,8 @@ Every externally initiated runtime change returns a definite result containing a
 
 A rejected runtime command must not leave partial mutation.
 
+W1 preserves this contract. In particular, rejected workload submission must leave no partial `Order`, order-level execution aggregate, child `Job`, machine assignment/queue mutation, `pendingMultiEligible` entry, or command-produced event.
+
 ### 7.3 Bounded advancement
 
 Interactive consumers control presentation speed by requesting bounded simulated progress. Wall-clock sleeping and rendering cadence remain outside the simulation core.
@@ -357,20 +373,9 @@ Gate 3 is satisfied when a non-graphical reference consumer can:
 7. identify the source model version throughout the session;
 8. operate without Spring controllers, frontend DTOs, or mutable domain internals.
 
-**Gate 3 is complete.** All eight criteria have identified executable evidence, all through `FactoryRuntime` alone -- see [ADR-0007](../architecture/decisions/0007-gate-3-session-control-primitives.md) for the full decision record behind the additive shapes below.
+**Gate 3 is complete.** All eight criteria have identified executable evidence through `FactoryRuntime`; see [ADR-0007](../architecture/decisions/0007-gate-3-session-control-primitives.md). W1 is required to preserve those session semantics while changing the work-item representation.
 
-1. **Instantiate a published model version.** Unchanged from Gate 1/2: `FactoryRuntime.forModel(FactoryModelVersion)` remains the only constructor.
-2. **Structured submit-workload results.** `FactoryRuntime.submitWorkload` and `FactoryRuntime.setMachineAvailability` -- the two externally initiated runtime changes this type exposes -- always return a definite `CommandResult<T>` (accepted/rejected/faulted status via the sealed `Accepted`/`Rejected`/`Faulted` variants; a stable code and diagnostic; `modelVersion()` provenance; every `Event` scheduled as a direct effect of the command) rather than ever throwing on rejection or returning `void`. `Rejected` wraps the original, already-structured, sealed `SimError` (`SimError.OutOfRange` for an invalid quantity, `SimError.UnknownId` for a product/machine with no match, `SimError.InvalidStateTransition` for taking a busy machine offline -- all concretely reachable today, and all verified pre-mutation) rather than re-deriving a parallel shape; `Faulted` covers the one case neither command can fully preflight -- a genuine engine fault deep in `setMachineAvailability`'s online-machine dispatch cascade, after mutation may already have started -- so the command still always returns rather than throwing past its boundary, while being honest that `Faulted`, unlike `Rejected`, does not promise zero mutation. Acceptance and execution outcome are independent facts: `Faulted` carries the same accepted value (`EventPayload.MachineAvailabilityChange`) `Accepted` would have, alongside the fault, since the request genuinely was applied before the later failure -- a caller never loses which entity was affected just because execution subsequently failed. See ADR-0007 for the full design and the four successive review rounds that shaped it: why an earlier revision over-claimed this criterion by relying on the exception-based contract alone, why a further revision fixed a real partial-mutation bug in the first `CommandResult` implementation (a `SimTime` overflow discoverable only after `Order`/`Job`/`Machine` mutation had already started), why a third revision added `Faulted` after review found the interim fix could still let a post-mutation fault escape as a bare exception, and why a fourth revision gave `Faulted` an accepted value after review found it had collapsed acceptance and execution outcome onto one axis. Proven by `Gate3SessionControlAcceptanceTest.acceptedSubmissionReturnsAStructuredResultWithProvenanceAndScheduledEvents`, `.rejectedSubmissionReturnsAStructuredResultAndLeavesNoPartialMutation`, `.rejectedSubmissionFromAPostValidationSchedulingFailureStillLeavesNoPartialMutation`, `.machineAvailabilityCommandReturnsAStructuredResultForAcceptanceAndRejection`, `.takingABusyMachineOfflineIsRejectedBeforeAnyMutation`, and `.setMachineAvailabilityReportsFaultedRatherThanThrowingWhenTheDispatchCascadeFailsAfterMutation` -- asserting the actual result fields and post-command state rather than only exception-subtype/no-partial-mutation behavior in the easy cases.
-3. **Advance exactly one event.** Unchanged: `FactoryRuntime.advance()`.
-4. **Advance to a selected simulated time with a maximum event bound.** New: `FactoryRuntime.advanceUntil(SimTime targetTime, long maxEvents)`, implemented directly in terms of `advance()` so it cannot diverge from single-event dispatch semantics. Proven equivalent to looping `advance()` one event at a time -- both bounded to one event per call and unbounded in a single call -- by `Gate3SessionControlAcceptanceTest.advanceUntilBoundedToOneEventPerCallConvergesWithLoopingAdvance` and `.advanceUntilDrainingInOneUnboundedCallConvergesWithLoopingAdvance`; the time bound is proven independently by `.advanceUntilStopsAtTheTargetSimulatedTimeWithoutProcessingLaterEvents`.
-5. **Inspect order, work-item, queue, and resource state.** The existing `ordersView`, `jobsView`, `job`, `machinesView`, `backlog`, `avgLeadTime`, `throughput`, `completedSalesValue`, `completedSales` projections (proven across the Gate 1/Gate 2 acceptance tests) do not, by themselves, expose all authoritative queue state under the current Gate 2 dispatch model: `FactoryHandler.pendingMultiEligible` (ADR-0005) is a second, cross-machine waiting-work structure not reflected in any `MachineView.queueDepth()`. New: `FactoryRuntime.pendingWorkView()` exposes it as read-only `PendingWorkView(JobId, Set<MachineId>)` entries. Proven by `Gate3SessionControlAcceptanceTest.pendingWorkViewExposesAMultiEligibleJobWaitingWhileBothEligibleMachinesAreOccupied`, which occupies both eligible machines, submits a third order, shows every machine's `queueDepth()` at zero while `pendingWorkView()` reports the waiting job and its eligible set, then shows the job dispatched and cleared from `pendingWorkView()` once a machine frees up.
-6. **Reset and reproduce the same result.** New: `FactoryRuntime.reset()` returns a fresh `FactoryRuntime.forModel(modelVersion())`, leaving the original session untouched -- fresh construction rather than in-place mutation, since `FactoryHandler`'s stores have no partial-reset subsystem to mutate safely (see ADR-0007). Proven by `Gate3SessionControlAcceptanceTest.resetSessionReproducesIdenticalResultToTheOriginalSessionWithoutMutatingIt`, mirroring `Gate1EngineReadinessAcceptanceTest`'s two-fresh-runtimes determinism pattern: a reset session replaying the identical workload reproduces an identical ordered event stream and terminal state, and the original session's own state is unaffected by the `reset()` call.
-7. **Identify the source model version throughout the session.** New: `FactoryRuntime` retains the exact `FactoryModelVersion` passed to `forModel` and exposes it via `modelVersion()`, unchanged for the session's lifetime. Proven by `Gate3SessionControlAcceptanceTest.runtimeRetainsAndExposesItsSourceModelVersionThroughoutTheSession`.
-8. **Operate without Spring controllers, frontend DTOs, or mutable domain internals.** Unchanged: `FactoryRuntime` has no dependency on `interfaces/api` or `interfaces/web`, and every new method/type (`modelVersion()`, `advanceUntil`, `reset()`, `CommandResult`, `pendingWorkView()`/`PendingWorkView`) is a plain domain type or read-only projection, following the same shape as the rest of the class.
-
-This slice deliberately does not migrate `interfaces/api`'s `SimThread` or `interfaces/cli`'s `SimRunner`/`HeadlessHandler` onto `FactoryRuntime`/`advanceUntil` -- both still duplicate their own bespoke max-time loop, which ADR-0007 records as accepted, separately tracked follow-up rather than silently left unrecorded. Neither called `submitWorkload`/`setMachineAvailability` either, so this slice's `CommandResult<T>` signature change touches no production code outside the `factory` module's own tests. It also does not add event envelopes/cursors (Gate 4), a new session-identity type, or a general command-result framework beyond the two commands that need one today -- no acceptance criterion above requires more.
-
-With Gate 3 closed, **W1 — intra-order work decomposition / lot-and-batch execution (§14.1) is the next active Engine semantic slice.** Gate 4 follows W1 so its stable observation/event contract can include the execution identities and correlation semantics W1 establishes.
+With Gate 3 closed, **W1 — intra-order execution decomposition (§14.1) is the next active Engine implementation slice.** Its architecture is no longer open: [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) defines the target. Gate 4 follows W1 so its stable observation/event contract can expose the resulting `OrderId`/`JobId` identities and aggregate progress semantics.
 
 ## 8. Gate 4 — Stable observations and event envelopes
 
@@ -407,7 +412,10 @@ Orders
     status
 
 Work items
-    parent order
+    JobId
+    parent OrderId
+    ordinal within order
+    execution quantity
     current operation
     assignment
     execution state
@@ -419,6 +427,8 @@ Performance
     work in process/backlog
     utilization
 ```
+
+The minimum order/work-item split above follows ADR-0010. Gate 4 may choose purpose-specific projection types and envelope structure, but it must not collapse aggregate order progress back into one child job or reinterpret `JobId` as an order identity.
 
 Not every consumer must receive one universal state dump. Purpose-specific observations remain preferable where they preserve capability boundaries.
 
@@ -439,13 +449,15 @@ payload
 
 The sequence is monotonic within one session and makes order explicit independently of event timestamps.
 
+ADR-0010 already requires W1's aggregate completion payload to include explicit `OrderId` while retaining the completing child `JobId`. Gate 4 must preserve that correlation inside whatever stable envelope it chooses.
+
 These are **simulation-runtime** events and observations. A future Operational Execution adapter may translate relevant production semantics into its own command/result and external-observation contracts, but Gate 4 does not define production telemetry envelopes, external source authenticity, or digital-twin reconciliation.
 
 ### 8.4 Acceptance criteria
 
 Gate 4 is satisfied when:
 
-1. Every externally visible runtime entity has a stable identifier.
+1. Every externally visible runtime entity has a stable identifier within the session semantics that own it.
 2. Observation state and emitted events agree about the same authoritative transition history.
 3. Event ordering is explicit and reproducible.
 4. A consumer can identify the active bottleneck using supported observations rather than internal stores.
@@ -566,7 +578,7 @@ Product
     CUT -> ASSEMBLE -> INSPECT
 
 Production requirement
-    one accepted order for 20 units
+    one accepted Order for 20 units
 
 Published model A
     one cutter
@@ -579,17 +591,24 @@ Published model B
     one inspector
 ```
 
-Expected evidence:
+Expected evidence under ADR-0010:
 
-- the workload remains one accepted production requirement / one parent Order rather than being rewritten by the consumer into several independent Orders;
-- the runtime exposes more than one independently dispatchable execution unit under that Order;
-- model B can execute different portions of the same Order concurrently on both eligible cutters;
-- parent-order quantity, progress, completion, and correlation remain deterministic and unambiguous;
-- adding the second cutter changes queueing, throughput, utilization, or completion time for this fixed-contract workload;
-- repeated fresh runs with the same model, workload, and commands reproduce the same decomposition, assignments, ordered events, and terminal result;
+- exactly one accepted parent `Order` exists for the 20-unit requirement;
+- exactly 20 sibling unit-quantity `Job`s exist under that order;
+- child ordinals, `JobId` allocation, and initial dispatch order are deterministic;
+- each child independently traverses `CUT -> ASSEMBLE -> INSPECT` exactly once and preserves its own operation precedence;
+- model B can execute different sibling jobs from the same order concurrently on both eligible cutters;
+- aggregate `releasedQuantity` is 20 after successful acceptance and aggregate `completedQuantity` advances exactly once per completed child from 0 through 20;
+- exactly one `OrderCompleted` is emitted, carrying explicit parent `OrderId` and the child `JobId` whose completion caused the aggregate transition;
+- backlog, completed-sales count/value, and order lead-time semantics remain order-level rather than multiplying by child count;
+- adding the second cutter changes queueing, utilization, throughput, or completion time for this fixed-contract workload;
+- repeated fresh runs reproduce child identities/order, assignments, ordered events, progress transitions, and terminal state;
+- quantity 1 remains the degenerate one-order/one-child case;
 - the proof uses Arcogine-owned execution semantics rather than game-owned splitting logic.
 
-This benchmark is the minimum headless evidence for W1. The concrete representation of execution units/lots/batches is not prescribed by the benchmark and must follow the accepted W1 design.
+The W1 acceptance suite must also preserve existing Gate 2 independent-order behavior, offline/recovery behavior, Gate 3 reset/replay and bounded advancement, and rejected-submission atomicity.
+
+A non-functional large-order benchmark (for example quantity 100,000) must record the memory/execution impact of unit decomposition. W1 accepts quantity-proportional resident work-item count because arbitrary chunking would invent batch semantics; measured evidence should determine whether a later representation-efficiency design is required.
 
 ### 10.3 Layout benchmark
 
@@ -647,6 +666,8 @@ Engine readiness does not require:
 - external telemetry ingestion or digital-twin reconciliation;
 - fail-safe physical actuation or production adapter recovery;
 - dynamic mutation of published factory structure while work is in flight;
+- generalized material-lot identity/genealogy, configurable production batch sizes, transfer batches, or split/merge semantics as part of W1;
+- setup-family optimization, priority/due-date scheduling, or generalized scheduler semantics merely to implement W1;
 - a generic plugin framework;
 - multiplayer/distributed simulation/remote hosting;
 - game rendering, scoring, progression, narrative, tutorials, or player economy.
@@ -671,11 +692,11 @@ Scenario factory semantics
 
 1. Separate accepted immutable order intent from mutable job execution. **Implemented as the first behavior-preserving Gate 1 slice.**
 2. Add explicit workload submission independent of the economy/pricing loop. **Implemented as the second Gate 1 slice** (`FactoryRuntime.submitWorkload`, backed by package-private `FactoryHandler.submitOrder`).
-3. Make quantity consume proportional production work and allow multiple work items/jobs per order where required. **Implemented as the third Gate 1 slice**: a job's routing repeats once per unit of quantity (`totalSteps = routing.stepCount() * quantity`) rather than spawning multiple `Job`/`JobId` aggregates, giving a job-global executed-step counter (`Job.currentStep()`) from which per-unit progress can be derived, while keeping `Job` one-to-one with `Order`.
-4. Capability/eligibility-driven deterministic dispatch. **Implemented as Gate 2**: published multi-resource eligibility survives into runtime routing, independently dispatchable work is selected deterministically across equivalent resources, and queue/recovery semantics are covered by `MultiResourceDispatchTest` and `Gate2MultiResourceDispatchAcceptanceTest` (see ADR-0005 and ADR-0009).
-5. Consumer-neutral session and bounded advancement. **Implemented as the Gate 3 slice** (`FactoryRuntime.modelVersion()`, `advanceUntil(SimTime, long)`, `reset()`, `submitWorkload`/`setMachineAvailability` returning `CommandResult<T>`, `pendingWorkView()`; see [ADR-0007](../architecture/decisions/0007-gate-3-session-control-primitives.md)).
-6. **W1 — intra-order work decomposition / lot-and-batch execution. Active next slice.** Required by the current fixed 20-unit reference challenge; define independently dispatchable execution units under one accepted Order and prove §10.2. See [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md).
-7. Stable runtime observations and event envelopes.
+3. Make quantity consume proportional production work. **Implemented as the third Gate 1 slice** using repeated routing inside one `Job`; this is retained as historical/current pre-W1 behavior, not the accepted final decomposition shape.
+4. Capability/eligibility-driven deterministic dispatch. **Implemented as Gate 2**; see ADR-0009 for the dispatch/decomposition boundary.
+5. Consumer-neutral session and bounded advancement. **Implemented as Gate 3**; see ADR-0007.
+6. **W1 — intra-order execution decomposition. Active next implementation slice.** Architecture resolved by [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md): quantity `N` -> `N` unit-quantity sibling `Job`s; `JobId` is work-item identity; order-level execution progress uses the parent `OrderId`; Gate 2 dispatch is reused unchanged; exactly one order completion; deterministic ordering/replay; large-order benchmark required.
+7. Stable runtime observations and event envelopes, built on W1's execution identities.
 8. Spatial transfer consequences from published layout.
 9. Public-contract, recovery, persistence, and packaging hardening.
 
@@ -702,58 +723,62 @@ This milestone deliberately excludes changing the canonical-model boundary, layo
 
 | Decision | Trigger for resolution |
 |---|---|
-| Final aggregate/type boundaries for order and work execution | Gate 1 implementation |
-| Intra-order work decomposition / lot-and-batch execution | **Activated** by the current fixed 20-unit factory-design reference challenge; see ADR-0009 and §14.1 |
+| Final aggregate/type boundaries for order and work execution | Gate 1 baseline implemented; W1 parent/child shape further resolved by ADR-0010 |
+| Intra-order execution decomposition and work-item identity | **Resolved by ADR-0010; implementation/evidence active next slice** |
+| Future lot/batch sizing or material-lot identity | A concrete domain requirement supplies real lot/batch semantics beyond W1 unit decomposition |
 | Capability pools versus explicit eligible-instance sets | A concrete scheduling/control use case cannot be expressed cleanly by explicit eligibility |
-| Deterministic dispatch policy | Resolved by Gate 2 / ADR-0005 and ADR-0009; revisit only if a concrete workload requires a different ranking policy |
+| Deterministic dispatch policy | Resolved by Gate 2 / ADR-0009; revisit only if a concrete workload requires a different ranking policy |
 | Session interface/module ownership | Resolved by Gate 3 / ADR-0007; revisit only if a concrete consumer proves `FactoryRuntime` is no longer the right boundary |
 | Tick/event-count advancement semantics | Interactive/headless responsiveness tests |
-| Observation decomposition | First reference consumer and capability-boundary review |
+| Observation decomposition | First reference consumer and capability-boundary review after W1 |
 | Spatial metric/transfer policy | Layout benchmark prototype |
 | Public compatibility policy | Before external consumer contract publication |
 
-### 14.1 W1 — active execution capability: work decomposition / lot-and-batch execution
+### 14.1 W1 — active execution capability: intra-order execution decomposition
 
-Intra-order parallelism is a **separate active Engine execution capability**, not unfinished Gate 2 work. [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md) records the dispatch-vs-decomposition boundary and activation of this capability.
+Intra-order parallelism is a **separate active Engine execution capability**, not unfinished Gate 2 work. ADR-0009 records the dispatch-vs-decomposition boundary and activation of W1. [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) resolves the production semantics that ADR-0009 deliberately left open.
 
-The generic activation trigger is:
-
-> A supported consumer requires one accepted production order of quantity N to expose multiple independently dispatchable execution units so equivalent resources can process different portions of that order concurrently.
-
-That trigger is already met by the current factory-design reference challenge: one fixed production requirement for 20 units must be able to benefit from installing a second eligible cutter without the game manufacturing several independent Arcogine Orders. Therefore W1 is the next active Engine semantic slice and must complete before Gate 4.
-
-W1 must define production semantics before implementation, including at minimum:
+The accepted W1 model is:
 
 ```text
-Production Order
-    ↓
-execution decomposition policy
-    ↓
-Lot / batch / execution unit(s)
-    ↓
-operation instances
-    ↓
-deterministic Gate 2 dispatch across eligible resources
+Order
+    immutable production intent
+    OrderId
+    requested quantity N
+        |
+        v
+order-level execution aggregate
+    identity: same OrderId
+    requested/released/completed quantity
+        |
+        +---- Job ordinal 0, executionQuantity 1, JobId
+        +---- Job ordinal 1, executionQuantity 1, JobId
+        +---- ...
+        +---- Job ordinal N-1, executionQuantity 1, JobId
 ```
 
-Questions to resolve include:
+W1 therefore does **not** need another design round to choose whether one unit becomes one execution object: for this first capability, it does. This is a deliberately minimal unit-decomposition policy, not a generalized lot/batch framework.
 
-- whether order quantity is divisible at every operation or only at declared decomposition points;
-- the identity and lifecycle of independently dispatchable execution units;
-- lot/batch sizing and whether transfer batches differ from production batches;
-- precedence when different units of one order are at different operations concurrently;
-- partial and aggregate progress semantics;
-- aggregate order completion and failure semantics;
-- event/observation correlation across Order, Job, and any new execution-unit identity;
-- deterministic interaction with setup/changeover, material, transfer, or other constraints if those capabilities exist when this work is activated.
+Required implementation semantics are fixed by ADR-0010:
 
-Do not assume "one quantity unit = one execution object." The first implementation should be driven by the concrete fixed-contract reference workload that activated the capability.
+- accepting quantity `N` creates exactly `N` unit-quantity sibling `Job`s under one `Order`;
+- `JobId` is the independently dispatchable work-item identity already used by machine queues, active work, pending work, and task events;
+- no new `ExecutionUnitId`, `LotId`, or `BatchId` is introduced;
+- child ordinal is immutable deterministic ordering metadata, not identity;
+- all W1 children are released atomically at acceptance, so `releasedQuantity == requestedQuantity` after successful submission;
+- each child traverses the routing exactly once and has no sibling precedence beyond its own routing order;
+- Gate 2's selector and `pendingMultiEligible` semantics are reused unchanged;
+- aggregate `completedQuantity` increments exactly once per child final completion;
+- the `N-1 -> N` aggregate transition emits exactly one `OrderCompleted`, carrying explicit `OrderId` and the completing child `JobId`;
+- backlog, completed-sales count/value, lead time, and existing order-throughput measures remain order-level;
+- `FactoryRuntime.submitWorkload` continues to return one `OrderId` and rejected submission remains zero-partial-mutation across the entire parent/child creation operation;
+- runtime observation must expose aggregate order progress rather than forcing consumers to infer it by counting child jobs;
+- child creation, `JobId` allocation, initial dispatch, queueing, pending-work reconsideration, machine tie-breaking, and same-time event ordering remain deterministic;
+- implementation must include the fixed-contract acceptance benchmark in §10.2 and a large-order performance/memory benchmark.
 
-This capability does **not** automatically include material-lot tracking, inventory allocation, setup optimization, transfer batching, or generalized production scheduling. Those remain separate unless the activating use case proves they are inseparable.
+This decision intentionally leaves material-lot genealogy, configurable batch sizes, transfer batches, split/merge, setup optimization, inventory allocation, generalized scheduling, and durable cross-session work-item identity out of W1. Those require separate accepted semantics when a concrete use case justifies them.
 
-W1 is placed **before Gate 4** deliberately. W1 establishes the execution identities, parent/child correlation, progress, and completion semantics that Gate 4 must then expose as stable observations and event envelopes. Gate 4 must not freeze a public contract around the current one-Job-per-Order shape and force W1 to retrofit identity later.
-
-Minimum W1 completion evidence is the fixed-contract benchmark in §10.2. Until that benchmark passes, Gate 4 is not the next active Engine gate and playable/runtime-integrated game work remains blocked.
+W1 remains placed **before Gate 4** deliberately. Gate 4 must stabilize observations and event envelopes around the execution identities and aggregate progress model W1 establishes rather than around the obsolete one-Job-per-Order runtime shape.
 
 The canonical model/run/runtime boundary is tracked by [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md). Operational execution-context/trust/command/deployment/reconciliation decisions belong to the sibling operational track and should receive their own ADRs when hard-to-reverse contracts are selected. Record additional accepted Engine decisions as ADRs rather than expanding this plan into a decision log.
 
@@ -765,7 +790,7 @@ As gates become implemented:
 
 - update [`../architecture/overview.md`](../architecture/overview.md) with established runtime architecture;
 - update [Factory Design Architecture](../architecture/factory-design.md) only as the model boundary becomes accepted/implemented;
-- update the [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md) when manufacturing concepts change;
+- update the [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md) when manufacturing concepts change, while distinguishing accepted target architecture from implementation status;
 - update [`../reference/api.md`](../reference/api.md) only for implemented public behavior;
 - add ADRs for durable execution, scheduling, session, persistence, and compatibility decisions;
 - keep headless acceptance scenarios executable and version-controlled;

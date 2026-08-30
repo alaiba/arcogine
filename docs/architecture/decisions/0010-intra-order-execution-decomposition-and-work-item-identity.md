@@ -271,7 +271,11 @@ Creating one lightweight `Job` per quantity unit changes resident execution-obje
 
 That cost is accepted for W1 because any coarser chunk size would be arbitrary without a domain input that actually defines lot or batch size. Decomposing according to available resource count would also be incorrect because it would couple work decomposition to resource dispatch and make work identity change when the factory design changes.
 
-Implementation acceptance must therefore include a large-order non-functional benchmark (for example quantity 100,000) to measure memory and execution impact. If that evidence shows an unacceptable practical limit, the follow-up design must address representation efficiency without silently inventing batch semantics.
+Implementation acceptance must therefore include a large-order non-functional benchmark (for example quantity 100,000) to measure memory and execution impact. That benchmark informs the supported materialization envelope; it is not itself the admission contract.
+
+Before mutating runtime state, workload acceptance must deterministically verify that the requested quantity is within a supported child-materialization envelope. A quantity above that envelope must be rejected through the existing structured command-error semantics before creating the `Order`, order-execution aggregate, child `Job`s, assignments, pending work, or command-produced events. The concrete bound is an implementation/configuration/model decision and is intentionally not frozen by this ADR, but it must be deterministic for the same accepted model/runtime configuration and must be established from evidence rather than ambient heap availability or allocation failure.
+
+This admission rule preserves Gate 3's zero-partial-mutation rejection guarantee and prevents environment-dependent allocation failure from becoming a de facto workload limit. If benchmarking shows that the desired supported envelope is impractical with unit `Job` materialization, the follow-up design must address representation efficiency without silently inventing batch semantics.
 
 A future accepted lot/batch capability may allow one `Job` to represent `executionQuantity > 1` when the production domain provides an explicit lot/batch rule. W1 deliberately leaves that seam open but does not define such a rule now.
 
@@ -307,6 +311,7 @@ Rejected. Those are legitimate future manufacturing concepts but are not require
 - `OrderCompleted` gains explicit `OrderId` correlation and remains exactly once per order.
 - Gate 4 can now stabilize observations and event envelopes against a known execution-identity model rather than the obsolete 1:1 assumption.
 - Resident `Job` count becomes quantity-proportional for W1 and must be measured with a large-order benchmark.
+- Workload acceptance must establish and enforce a deterministic supported child-materialization envelope before mutation; ambient memory exhaustion is not an admissible workload-limit mechanism.
 - Real lot/batch semantics remain open and require a separate accepted decision if introduced.
 
 ## Acceptance evidence required before W1 is complete
@@ -324,7 +329,8 @@ The implementation slice must prove at least:
 9. two fresh identical runtimes produce identical child identities, assignments, event streams, and terminal aggregate state;
 10. quantity 1 still creates one child job and behaves as the degenerate case of the same model;
 11. Gate 2 independent-order dispatch, offline/recovery, reset/replay, bounded advancement, and rejected-submission atomicity remain covered;
-12. a large-order benchmark records the practical cost of unit decomposition.
+12. a large-order benchmark records the practical cost of unit decomposition and justifies the chosen supported child-materialization envelope;
+13. quantities above that supported envelope are deterministically rejected before mutation through the structured command-result/error contract, with zero partial `Order`, aggregate, `Job`, queue, pending-work, assignment, or event state.
 
 ## Explicit non-goals
 

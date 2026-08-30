@@ -3,7 +3,7 @@
 > **Status:** Maintained architectural reference  
 > **Scope:** Mapping between Arcogine manufacturing-domain semantics and ISA-95 / IEC 62264 concepts  
 > **Authority:** Describes current mappings, deliberate divergences, and design constraints; it does not establish ISA-95 conformance  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Standards Alignment](standards-alignment.md), [Factory-Design Game Consumer Initiative](../planning/factory-design-game-consumer.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Standards Alignment](standards-alignment.md), [Factory-Design Game Consumer Initiative](../planning/factory-design-game-consumer.md), [ADR-0010](decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md)
 
 ## 1. Purpose
 
@@ -100,7 +100,7 @@ The correct characterization is therefore:
 
 ## 5. Current concept mapping register
 
-This table is the maintained working register. Update it when the domain model changes; do not preserve obsolete mappings merely for historical continuity.
+This table is the maintained working register. Because ADR-0010 establishes architecture ahead of its implementation, rows below distinguish current runtime behavior from accepted W1 direction where that difference matters.
 
 | Arcogine concept | Current meaning | Closest ISA-95 semantic role | Mapping | Disposition | Current limitation or direction |
 |---|---|---|---|---|---|
@@ -117,18 +117,19 @@ This table is the maintained working register. Update it when the domain model c
 | Scenario `operations_definition` | Named ordered set of process segments | Operations Definition / Work Definition | Good vocabulary mapping | Adopt | Runtime equivalent is simplified `Routing` |
 | Runtime `Routing` | Immutable ordered list of routing steps | Simplified Operations/Work Definition | Partial | Alias | Lacks explicit resource requirements, parameters, alternatives, and version semantics |
 | Scenario `process_segment` | Named step, concrete equipment ID, and duration | Process Segment analogue | Partial vocabulary mapping | Adopt at scenario boundary | A true process segment is more abstract than one concrete machine assignment |
-| Runtime `RoutingStep` | Step ID, name, concrete `MachineId`, and duration | Simplified work step / Process Segment analogue | Weak–partial | Refactor | Direct machine binding prevents capability pools and equivalent-resource dispatch |
-| `Order` | Immutable request/accepted-order intent: product, quantity, agreed unit price, and creation time | Job Order / production request, approximating a production-order aggregate, extended with a commercial price | Partial | Alias | First-class and immutable, but still one-to-one with a `Job` and not a generalized production-order model |
-| `Job` | Mutable execution/work-item analogue: status, current step (of `routing.stepCount() x quantity` repeated routing passes), current machine, completion time, and a reference to its `Order` | Work item / job execution state | Partial | Alias | Request, execution, and result concerns are separated from `Order`, but `Job` still holds the whole `Order` rather than an ID-only reference, and quantity is represented as repeated routing passes within one job rather than distinct work-item records |
+| Runtime `RoutingStep` | Step ID, name, eligible `MachineId` set, and duration | Simplified work step / Process Segment analogue | Partial | Alias | Explicit eligible instances support deterministic equivalent-resource dispatch, but there is no generalized capability requirement/pool model |
+| `Order` | Immutable request/accepted-order intent: product, quantity, agreed unit price, and creation time | Job Order / production request, approximating a production-order aggregate, extended with a commercial price | Partial | Alias | Current implementation still creates one `Job`; ADR-0010 establishes `OrderId` as the aggregate correlation identity for multiple child work items under W1 |
+| `Job` | Mutable execution/work-item analogue identified by `JobId`; current implementation still repeats `routing.stepCount() x quantity` within one job | Work item / job execution state | Partial | Alias | ADR-0010 establishes the W1 target: one unit-quantity `Job` per requested quantity unit, independently dispatchable under the parent `Order`; implementation is pending |
 | `JobStatus` | Queued, in progress, or completed | Work/job execution status | Good narrow mapping | Alias | Does not represent the complete requested/accepted/started/completed lifecycle |
-| `OrderCreation` event | Acceptance/release fact that creates the `Order` and its associated `Job` | Job-order release / acceptance fact | Approximate | Alias | The event still creates exactly one order and one job together |
-| `TaskStart` / `TaskEnd` | Actual operation execution facts | Work execution / performance facts | Good narrow mapping | Alias | No first-class operation-performance record exists beyond state and event history |
-| `OrderCompleted` | Operational fact that one job completed its routing | Job response / production performance fact | Partial | Alias | Correlation is still by `jobId`; `Job` remains one-to-one with an `Order`, so this is only an approximate completion/performance fact |
+| Order-level execution aggregate | Accepted W1 responsibility for released/completed quantity and aggregate completion, correlated by the same `OrderId` | Production-request execution/performance aggregation | Partial | Alias | Architecture accepted by ADR-0010; runtime representation/observation remains to be implemented |
+| `OrderCreation` event | Acceptance/release fact that currently creates one `Order` and one associated `Job` | Job-order release / acceptance fact | Approximate | Alias | W1 will atomically create the order execution aggregate and `N` unit-quantity child jobs for quantity `N` |
+| `TaskStart` / `TaskEnd` | Actual operation execution facts correlated by `JobId` | Work execution / performance facts | Good narrow mapping | Alias | ADR-0010 retains `JobId` as work-item correlation; no first-class operation-performance record exists beyond state and event history |
+| `OrderCompleted` | Current operational completion fact correlated by `jobId` | Job response / production performance fact | Partial | Alias | ADR-0010 requires W1 to emit exactly once per order with explicit `OrderId` plus the completing child `JobId`; implementation is pending |
 | `Scheduler` | Deterministic ordering of simulation events | No direct ISA-95 object equivalent | Arcogine-specific | Extend | Simulation infrastructure, not an Operations Schedule by itself |
 | `EventLog` | Append-only sequence of processed simulation facts | Performance/history source | Partial | Extend | Event history is not yet a structured ISA-95 performance model |
 | `FactoryHandler` | Owner of machines, jobs, queues, routings, and production aggregates | Narrow production-execution function in a Level-3-like scope | Approximate | Alias | A class is not an ISA-95 level; Arcogine covers only a subset of MOM activities |
-| Throughput, lead-time, backlog, utilization and related observations | Operational measures derived from simulation state and history | Operations Performance / manufacturing KPI information | Partial | Adopt or alias per KPI | Each KPI needs an explicit formula and semantic mapping before standards claims |
-| Finance ledger and observations | Financial interpretation of completed operational work | Enterprise/business-side financial information | Adjacent, not one-to-one | Diverge | Deliberately separate from operational production truth |
+| Throughput, lead-time, backlog, utilization and related observations | Operational measures derived from simulation state and history | Operations Performance / manufacturing KPI information | Partial | Adopt or alias per KPI | ADR-0010 requires existing backlog/completed-sales/order-lead-time meanings to remain order-level under child-job decomposition |
+| Finance ledger and observations | Financial interpretation of completed operational work | Enterprise/business-side financial information | Adjacent, not one-to-one | Diverge | Deliberately separate from operational production truth; W1 must not multiply full order value by child-job count |
 | Economy/demand model | Offer price and demand-generation behavior | Business/planning input adjacent to Level 4 | Arcogine-specific | Extend | Not an ISA-95 enterprise-planning implementation |
 | Proposed factory-floor position and footprint | Physical placement with transfer consequences | No one-to-one equipment-hierarchy mapping | Orthogonal | Extend | Must remain distinct from organizational/resource containment |
 | Proposed resource pool / work center | Group of eligible resources and aggregate capacity | Work Center / resource scope | Potentially strong | Adopt or alias when implemented | Introduce only when it owns real dispatch, capacity, or reporting semantics |
@@ -153,7 +154,7 @@ Resource capability and requirements
 Arcogine currently represents part of this through `MaterialConfig`, `OperationsDefinitionConfig`, `Routing`, and `RoutingStep`. The main limitations are:
 
 - no first-class runtime `Product` or generalized material definition;
-- `RoutingStep` selects one concrete machine rather than expressing a resource requirement;
+- `RoutingStep` expresses explicit eligible resource instances rather than a generalized resource-capability requirement;
 - no explicit definition version carried by in-flight work;
 - machine definition and machine instance properties are combined.
 
@@ -171,9 +172,9 @@ Priority
 Scheduling scope
 ```
 
-Arcogine currently receives work through `OrderCreation` events generated by the demand model. An immutable `Order` records the requested work (product, quantity, agreed price, creation time), and a `Job` is created alongside it to hold mutable execution state, referencing the `Order` it was created for.
+Arcogine receives work both through economy-driven `OrderCreation` events and the explicit `FactoryRuntime.submitWorkload` boundary. An immutable `Order` records accepted work intent (product, quantity, agreed price, creation time). The current implementation creates one `Job` alongside it; ADR-0010 keeps the `Order` as one accepted production requirement but establishes that W1 will create multiple independently dispatchable child jobs while aggregate progress remains correlated by `OrderId`.
 
-For explicit production contracts and external consumers, Arcogine should further separate order intent from execution state along these lines:
+For explicit production contracts and external consumers, further request/schedule concerns may later include:
 
 ```text
 ProductionOrder
@@ -201,7 +202,7 @@ WorkItem
     transfer state
 ```
 
-This is the mutable shop-floor concern currently held mostly by `Job`, `Machine`, and machine queues.
+This is the mutable shop-floor concern held mostly by `Job`, `Machine`, machine queues, and cross-machine pending work. ADR-0010 makes the mapping more precise for W1: `JobId` identifies one independently dispatchable work item; quantity `N` becomes `N` unit-quantity sibling jobs under the accepted `Order`; each child progresses through one routing independently. No separate `ExecutionUnitId`, `LotId`, or `BatchId` is introduced by W1.
 
 ### 6.4 Performance
 
@@ -218,11 +219,11 @@ Failures or rejections
 Order completion outcome
 ```
 
-Arcogine currently derives performance from jobs, machine state, aggregate counters, and the event log. This is sufficient for current simulation reports, but it is not yet a first-class performance model or ISA-95 interchange representation.
+Arcogine currently derives performance from jobs, machine state, aggregate counters, and the event log. ADR-0010 further requires an explicit order-level execution observation with requested/released/completed quantity and aggregate completion so consumers do not infer order performance by counting child jobs. This is still not a complete ISA-95 performance model or interchange representation.
 
-### 6.5 Current compression
+### 6.5 Current implementation and accepted W1 direction
 
-The present model can be summarized as:
+The currently implemented pre-W1 model can be summarized as:
 
 ```text
 Routing
@@ -235,13 +236,33 @@ Order
 Job
     reference to its Order
     + mutable execution state
-    + completion result
+    + quantity-scaled repeated routing
 
 EventLog
     historical execution facts
 ```
 
-Order intent is now separated from execution state as an immutable `Order`, but `Job` still holds the whole `Order` object (not an ID-only reference), and the relationship remains strictly one `Job` per `Order`. Order quantity now consumes proportional production work -- `Job.totalSteps = routing.stepCount() * order.quantity()`, with the routing repeating once per unit -- but this was deliberately achieved by scaling one job's step count rather than by introducing multiple `Job`/work-item objects per order, since Arcogine does not yet need per-unit-scoped state (a distinct machine/timing record per unit) and an N-times-larger `Job.totalSteps` counter avoids allocating unbounded objects for a large quantity. The strict one-`Job`-per-`Order` relationship remains a further refactoring target for when a concrete feature needs genuinely separate work-item records (e.g. per-unit-scoped state, or partial per-unit dispatch to parallel equivalent resources), plan versions, or structured performance records that aggregate across jobs -- the trigger Gate 2's capability-based parallel dispatch is expected to supply.
+Order intent is separated from execution state as an immutable `Order`, but the implementation still has one `Job` per `Order`. Quantity consumes proportional production work by repeating the routing within that single job. That remains an accurate statement of current code and test evidence.
+
+The concrete feature that previously justified a future refactor now exists: the fixed 20-unit factory-design challenge must let two equivalent cutters process different portions of one accepted order concurrently. ADR-0010 therefore establishes the accepted target architecture:
+
+```text
+Order
+    immutable accepted production requirement
+    OrderId
+        |
+        v
+order-level execution aggregate
+    same OrderId
+    requested / released / completed quantity
+        |
+        +---- Job 0 (JobId, executionQuantity 1)
+        +---- Job 1 (JobId, executionQuantity 1)
+        +---- ...
+        +---- Job N-1 (JobId, executionQuantity 1)
+```
+
+This direction strengthens rather than weakens the ISA-95-informed separation of request, execution, and performance: the request remains one immutable order, individual `Job`s become concrete work-item execution state, and aggregate production progress/completion remains an order-level fact. It does **not** imply ISA-95 conformance, generalized production-lot semantics, or a requirement to adopt ISA-95 type names internally.
 
 ## 7. Resource definitions, instances, capabilities, and pools
 
@@ -270,9 +291,9 @@ ResourcePool / WorkCenter
 
 ### 7.1 Why the distinction matters
 
-The current `RoutingStep -> MachineId` relationship means a routing selects one exact machine. This prevents a newly added equivalent machine from contributing capacity without changing the routing itself.
+Arcogine's runtime routing now supports an explicit set of eligible machine instances for an operation. That allows a second equivalent eligible machine to contribute capacity without rewriting the product operation for a different concrete machine. This is sufficient for the current deterministic dispatch contract, while generalized capability pools remain deferred.
 
-A capability-oriented operation should instead express something like:
+A future capability-oriented operation may instead express something like:
 
 ```text
 Operation requirement
@@ -281,7 +302,7 @@ Operation requirement
     eligible pool: cutting resources
 ```
 
-The execution layer then selects an eligible instance using a documented deterministic policy.
+The execution layer would then select an eligible instance using a documented deterministic policy.
 
 This supports:
 
@@ -294,7 +315,7 @@ This supports:
 
 ### 7.2 Determinism requirement
 
-Resource selection must remain deterministic. Any ranking policy must define a final stable tie-breaker, such as machine instance ID. The ISA-95 mapping does not prescribe Arcogine's dispatch algorithm; Arcogine owns that simulation semantic.
+Resource selection must remain deterministic. Arcogine's current Gate 2 contract uses a stable ranking ending in `MachineId` as final tie-breaker. The ISA-95 mapping does not prescribe Arcogine's dispatch algorithm; Arcogine owns that simulation semantic.
 
 ## 8. Equipment hierarchy versus spatial layout
 
@@ -350,13 +371,13 @@ Arcogine currently models a narrow production-execution slice, not the complete 
 
 | Area | Current Arcogine coverage | Status |
 |---|---|---|
-| Production definition | Materials linked to routings and concrete-machine steps | Partial |
-| Production requests | Demand-generated order-creation events | Minimal and implicit |
-| Production scheduling | Deterministic event scheduler and per-machine FIFO queues | Simplified, simulation-specific |
-| Production execution | Machines, jobs, task transitions, queues, completion | Core current coverage |
+| Production definition | Materials linked to routings and explicit eligible-resource steps | Partial |
+| Production requests | Immutable `Order` intent accepted through explicit workload submission or economy-driven order creation | Partial |
+| Production scheduling | Deterministic event scheduler, explicit eligible-resource dispatch, per-machine FIFO queues, and cross-machine pending work | Simplified, simulation-specific |
+| Production execution | Machines, jobs, task transitions, queues, completion; W1 child-job decomposition accepted but not yet implemented | Core current coverage plus accepted extension |
 | Production performance | Events, completion aggregates, jobs, and selected KPIs/observations | Partial |
 | Equipment management | Machine identity, state, concurrency, queue, capacity/setup properties | Partial |
-| Equipment capability | Concrete machine binding only | Not first-class |
+| Equipment capability | Explicit eligible-instance sets; no generalized capability taxonomy/pool model | Partial |
 | Equipment hierarchy | None | Deferred |
 | Material management | Product-like material configuration and `ProductId` | Minimal |
 | Inventory operations | None | Deferred |
@@ -393,6 +414,8 @@ Machine
 ```
 
 is preferable to renaming the class `WorkUnit` without adding actual hierarchy or work-unit semantics.
+
+Likewise, ADR-0010 keeps the established Arcogine term `Job` for an independently dispatchable work item instead of adding a standards-sounding type whose semantics would not be clearer.
 
 ### 10.3 Do not use a standard term when
 
@@ -434,9 +457,9 @@ Revisit this document whenever a change introduces or materially alters:
 - ISA-95/B2MML import, export, transactions, or exchange profiles;
 - public claims of ISA-95 compatibility or conformance.
 
-This mapping document records current relationships and open design constraints. Create an ADR when a decision becomes accepted and hard to reverse, for example:
+This mapping document records current relationships and accepted design constraints. Create an ADR when a decision becomes accepted and hard to reverse, for example:
 
-- aggregate boundaries between product, order, work item, and performance;
+- aggregate boundaries between product, order, work item, and performance — ADR-0010 now records the W1 `Order`/aggregate/`Job` boundary;
 - capability-pool and deterministic dispatch semantics;
 - hierarchy and spatial-model separation;
 - the canonical public model contract;
@@ -485,15 +508,17 @@ This semantic mapping does not commit Arcogine to:
 - ERP, MES, or MOM product scope;
 - personnel, maintenance, quality, or inventory modules without concrete requirements;
 - standards certification or conformance testing;
-- treating spatial factory layout as equipment hierarchy.
+- treating spatial factory layout as equipment hierarchy;
+- treating ADR-0010's unit work-item decomposition as material-lot genealogy or generalized batch semantics.
 
 ## 15. Maintenance rule
 
-Keep this document current rather than chronological:
+Keep this document current rather than chronological, while clearly distinguishing implemented behavior from accepted-but-not-yet-implemented architecture:
 
 - update the mapping register when the implementation changes;
 - state implemented semantics as present fact;
-- remove resolved gaps from current-gap descriptions;
+- identify accepted target semantics explicitly when an ADR precedes implementation;
+- remove resolved gaps from current-gap descriptions once implementation lands;
 - use Git history and ADRs to preserve decision chronology;
 - track implementation work in issues or plans, not in this reference;
 - re-check official standard publication metadata before making version-specific claims.

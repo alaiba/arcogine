@@ -3,8 +3,8 @@
 > **Status:** Proposed  
 > **Scope:** A separate, single-player factory-design game consuming Arcogine as its production engine  
 > **Authority:** Planning only; this document does not describe current capability or accepted architecture  
-> **Dependency:** Headless [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md) may progress independently; playable/runtime-integrated game implementation begins only after the model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)), Engine Gates 1-5, and the reference-challenge work-decomposition prerequisite recorded by [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md) are satisfied  
-> **Related:** [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md), [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md), [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Dependency:** Headless [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md) may progress independently; playable/runtime-integrated game implementation begins only after the model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)), Engine Gates 1-5, and the accepted W1 decomposition contract in [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) are implemented and proven  
+> **Related:** [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md), [Factory-Design Game Vertical Slice](factory-design-game-vertical-slice.md), [Factory Design Architecture](../architecture/factory-design.md), [Factory Design Capability](factory-design-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Initiative summary
 
@@ -49,12 +49,14 @@ The game may own an editor-specific draft, but that draft is not the authoritati
 [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) owns runtime concerns:
 
 - production orders, quantity semantics, and work execution;
-- work decomposition when one accepted production requirement must expose multiple independently dispatchable execution units;
+- deterministic decomposition of one accepted quantity-`N` order into independently dispatchable work items under the accepted W1 contract;
 - capability/eligibility-based deterministic dispatch;
 - consumer-neutral session and bounded advancement;
 - supported observations and externally visible runtime events;
 - deterministic transfer/runtime consequences of semantic layout;
 - later recovery, checkpoint, compatibility, and sidecar hardening.
+
+ADR-0009 records why decomposition is separate from Gate 2 dispatch. ADR-0010 resolves the W1 architecture: `Order` remains immutable production intent and the aggregate correlation identity; `JobId` identifies independently dispatchable work items; W1 creates one unit-quantity `Job` per requested quantity unit; aggregate progress/completion remains order-level; and exactly one `OrderCompleted` event is produced for the order. This design is accepted but is not runtime evidence until implemented and proven by the Engine track.
 
 A CLI command, JUnit harness, or thin reference consumer used to prove either upstream plan is not game implementation.
 
@@ -82,8 +84,8 @@ Before playable or runtime-integrated game implementation starts, Arcogine must 
 2. Gate 1: explicit production workload and separate execution semantics.
 3. Gate 2: capability/eligibility-based deterministic resource dispatch for independently dispatchable work.
 4. Gate 3: consumer-neutral simulation session with bounded advancement.
-5. The reference-challenge work-decomposition prerequisite from ADR-0009: one fixed accepted production requirement can expose multiple independently dispatchable execution units so equivalent bottleneck capacity can affect that same contract.
-6. Gate 4: stable observations and ordered external runtime events, including the execution identities/correlation introduced by work decomposition.
+5. W1 as defined by ADR-0010: one fixed accepted quantity-`N` production requirement deterministically creates `N` unit-quantity sibling `Job`s under one `Order`, so equivalent bottleneck capacity can affect that same contract while aggregate progress/completion remains order-level.
+6. Gate 4: stable observations and ordered external runtime events, including the `OrderId`/`JobId` execution correlation established by W1.
 7. Gate 5: deterministic spatial runtime consequences.
 
 The headless dispatch-capacity, fixed-contract work-decomposition, and layout benchmarks must pass before a game UI is used as evidence for those capabilities. Gate 2 remains complete independently of work decomposition; the extra prerequisite exists because the current reference challenge specifically requires both semantics together.
@@ -190,7 +192,7 @@ Live placement/movement/removal during active work is not required for the verti
 | Shared executability validation | Arcogine design/model boundary |
 | Published model identity/version/provenance | Arcogine design/model boundary |
 | Products, operations, resource definitions/instances, semantic layout | Arcogine canonical model |
-| Orders, work decomposition/execution units, queues, dispatch, processing, transfers in progress | Arcogine runtime |
+| Orders, order-level execution progress, child Jobs/work items, queues, dispatch, processing, transfers in progress | Arcogine runtime |
 | Simulation clock, event ordering, deterministic random behavior | Arcogine runtime |
 | Runtime observations and KPIs | Arcogine runtime |
 | Model/command/event/observation compatibility contracts | Arcogine |
@@ -230,7 +232,7 @@ These are game rules. They do not extend Arcogine Finance unless a separate prod
 
 Challenge identity/version, admissibility, evaluation-policy identity/version, score/success semantics, and attempt provenance/history are specified in [Factory-Design Game Challenge Readiness](factory-design-game-challenge-readiness.md). Challenge evaluation may interpret authoritative Arcogine outcome facts but must not recreate production semantics to derive facts Arcogine did not report.
 
-The fixed challenge workload remains one game-owned production requirement. The game does not split it into multiple Arcogine Orders merely to obtain parallel capacity. Arcogine's work-decomposition capability is responsible for exposing independently dispatchable execution units while preserving the authoritative parent production requirement.
+The fixed challenge workload remains one game-owned production requirement. The game does not split it into multiple Arcogine Orders merely to obtain parallel capacity. ADR-0010 assigns decomposition to Arcogine: quantity `N` becomes `N` deterministic unit-quantity sibling `Job`s under the accepted `Order`; the game may visualize those work items and aggregate progress, but it does not choose their count, identity, release order, or dispatch.
 
 ### 6.6 Persistence and local runtime
 
@@ -268,7 +270,7 @@ The vertical slice does not require:
 | Scoring formula | Playtests showing meaningful factory trade-offs |
 | Tutorial sequence | First-time-user observation |
 
-Canonical model, order/work semantics, work decomposition, dispatch, session behavior, event envelopes, and transfer rules are upstream decisions and do not belong here.
+Canonical model, order/work semantics, W1 decomposition/work-item identity, dispatch, session behavior, event envelopes, and transfer rules are upstream decisions and do not belong here.
 
 ## 9. Playable/runtime-integrated game implementation entry criteria
 
@@ -276,10 +278,10 @@ Headless Challenge Readiness C1-C5 is explicitly outside this entry gate and may
 
 1. The model-seam entry gate (§1.1 of [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)) is satisfied.
 2. Gates 1-3 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied, including Gate 2 at its deterministic-dispatch boundary.
-3. The ADR-0009 work-decomposition prerequisite is implemented and a single fixed accepted production requirement can exercise parallel equivalent bottleneck capacity without the game manufacturing independent Orders.
-4. Gates 4-5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied after accounting for the execution identities/correlation introduced by work decomposition.
+3. ADR-0010 is implemented: a single quantity-20 accepted `Order` creates exactly 20 independently dispatchable unit-quantity sibling `Job`s with deterministic identities/order, explicit aggregate progress, and exactly one aggregate order completion.
+4. Gates 4-5 in [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) are satisfied after accounting for the `OrderId`/`JobId` execution correlation introduced by W1.
 5. A game-like draft can project into the canonical model and publish a `FactoryModelVersion` without using mutable runtime classes.
-6. The headless capacity benchmark proves equivalent-resource dispatch, and a fixed-contract decomposition benchmark proves the current reference workload can actually use that capacity.
+6. The headless capacity benchmark proves equivalent-resource dispatch, and the fixed-contract decomposition benchmark proves the current reference workload can actually use that capacity without game-authored order splitting.
 7. The headless layout benchmark proves deterministic transfer consequences across distinct published model versions.
 8. A reference consumer can instantiate, submit workload, advance, observe, and reset without Arcogine internals.
 9. Model and runtime observation contracts are stable enough for a prototype consumer.

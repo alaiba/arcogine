@@ -11,6 +11,12 @@ Some repository tasks have additional repository-owned operating contracts.
   sweep, or to operate as the consistency agent, read and follow
   [`.github/agents/consistency.agent.md`](.github/agents/consistency.agent.md)
   in addition to this file.
+- **PR review:** when asked to independently review, re-review, or assess merge
+  readiness of a pull request, read and follow
+  [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)
+  in addition to this file. This is the repository's dedicated **PR Reviewer**
+  role; do not substitute a generic coding-agent review when the contract is
+  available.
 
 Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable

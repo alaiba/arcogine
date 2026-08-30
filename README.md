@@ -47,6 +47,15 @@ cd arcogine
 
 Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote-containers) extension. The preferred development container currently provides **JDK 25 and Node 24**; dependency caches (`~/.gradle`, `product/interfaces/web/node_modules`) live in named Docker volumes for speed.
 
+On a brand-new machine, the first devcontainer start still needs a one-time GitHub login in the container:
+
+```bash
+gh auth login
+gh auth setup-git
+```
+
+The container stores GitHub CLI auth in the Docker named volume `arcogine-gh-config`, so later rebuilds and reopenings can reuse the same login without re-authenticating while keeping the credential state out of the repository build context.
+
 After the container is ready, start the web app and API in two terminals:
 
 ```bash

@@ -2,6 +2,8 @@
 
 This document defines Arcogine's review discipline for implementation pull requests, including the AI-assisted workflow used for larger initiatives. It complements [CONTRIBUTING.md](../../.github/CONTRIBUTING.md): contribution mechanics live there; this document describes how a change is independently reviewed and re-reviewed before merge.
 
+For AI execution of this policy, the repository-owned **PR Reviewer** procedure lives in [`.github/agents/pr-reviewer.agent.md`](../../.github/agents/pr-reviewer.agent.md). This document remains the normative review policy; the agent file defines how the specialized reviewer executes it.
+
 The repository is the source of truth. Prior chat/session context, branch descriptions, and implementation-agent explanations are useful leads, but they are never authoritative over current `main`, the live PR head, maintained documentation, ADRs, tests, and CI.
 
 ## Role separation for larger initiatives

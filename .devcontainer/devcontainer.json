@@ -17,8 +17,13 @@
 
   "mounts": [
     "source=arcogine-gradle-cache,target=/home/vscode/.gradle,type=volume",
-    "source=arcogine-web-node-modules,target=${containerWorkspaceFolder}/product/interfaces/web/node_modules,type=volume"
+    "source=arcogine-web-node-modules,target=${containerWorkspaceFolder}/product/interfaces/web/node_modules,type=volume",
+    "source=arcogine-gh-config,target=/home/vscode/.config/gh,type=volume"
   ],
+
+  "containerEnv": {
+    "GH_CONFIG_DIR": "/home/vscode/.config/gh"
+  },
 
   "forwardPorts": [3000, 5173],
   "portsAttributes": {

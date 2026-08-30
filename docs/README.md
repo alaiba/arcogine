@@ -47,6 +47,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, code style, architecture constraints, required validation |
 | [reviewing.md](development/reviewing.md) | Independent PR review and re-review workflow, severity/disposition, AI-assisted session boundaries, CI language, and durable-knowledge rules |
 | [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates, native test commands |
+| [codex-cloud.md](development/codex-cloud.md) | Observed Codex Cloud environment model, validated workflow, limitations, and recommended bounded-task usage |
 | [CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) | Community standards |
 
 ## Architecture and design

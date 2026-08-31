@@ -12,6 +12,7 @@ import com.arcogine.factory.machines.MachineStore;
 import com.arcogine.factory.machines.MachineView;
 import com.arcogine.factory.orders.Order;
 import com.arcogine.factory.orders.OrderStore;
+import com.arcogine.factory.orders.OrderExecutionView;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
@@ -97,6 +98,10 @@ public class FactoryHandler implements EventHandler {
         return orders.allOrders();
     }
 
+    public OrderExecutionView orderExecution(OrderId id) { return orders.execution(id); }
+
+    public Stream<OrderExecutionView> orderExecutionsView() { return orders.allOrders().map(order -> orders.execution(order.id())); }
+
     /**
      * Read-only lookup for a single job -- deliberately returns {@link JobView}, not {@link Job},
      * so external callers can't reach {@code start}/{@code completeStep} and bypass event-driven
@@ -129,18 +134,16 @@ public class FactoryHandler implements EventHandler {
     }
 
     public long backlog() {
-        return jobs.activeJobs().count();
+        return orders.allOrders().map(order -> orders.execution(order.id())).filter(view -> !view.complete()).count();
     }
 
     public double avgLeadTime() {
-        List<Job> completed = jobs.completedJobs().toList();
+        List<OrderExecutionView> completed = orderExecutionsView().filter(OrderExecutionView::complete).toList();
         if (completed.isEmpty()) {
             return 0.0;
         }
         long total = completed.stream()
-                .map(Job::leadTime)
-                .filter(Optional::isPresent)
-                .mapToLong(Optional::get)
+                .mapToLong(view -> view.completedAt().minus(orders.get(view.orderId()).createdAt()))
                 .sum();
         return (double) total / completed.size();
     }
@@ -255,20 +258,14 @@ public class FactoryHandler implements EventHandler {
     }
 
     /**
-     * Accepts an immutable {@link Order} and creates the one execution {@link Job} for it under
-     * the same routing/dispatch semantics regardless of how the caller decided to produce it --
+     * Accepts an immutable {@link Order} and deterministically creates one unit execution {@link Job}
+     * per requested unit under the same routing/dispatch semantics regardless of how the caller decided to produce it --
      * the economy-driven {@link EventPayload.OrderCreation} event and {@link FactoryRuntime}'s
      * explicit workload submission both resolve to this one acceptance operation.
      *
-     * <p>The job's routing repeats once per unit of {@code quantity}: {@code totalSteps =
-     * routing.stepCount() * quantity}, so a quantity-10 order consumes ten times the routing/
-     * machine work of an otherwise identical quantity-1 order, and {@link Job#currentStep()} is a
-     * job-global counter across every repeated pass. Dispatch and completion resolve that
-     * job-global step back to its underlying {@link RoutingStep} by {@code stepIndex %
-     * routing.stepCount()}; the externally visible {@link EventPayload.TaskStart}/{@link
-     * EventPayload.TaskEnd#stepIndex()} continues to carry that routing-local index (as it did
-     * before quantity repeated the routing), not the job-global counter, so the event contract's
-     * existing meaning is unchanged.
+     * <p>Children are allocated and initially dispatched in ascending ordinal order. Every child
+     * has {@code totalSteps = routing.stepCount()} and traverses the routing once; the existing
+     * machine queue, pending multi-eligible queue, and selector remain authoritative.
      *
      * <p>Package-private: this method's {@link SimTime}/{@link Scheduler} parameters are
      * event-engine plumbing that a consumer-neutral workload boundary should not have to own or
@@ -290,13 +287,12 @@ public class FactoryHandler implements EventHandler {
         // widened to long) can itself overflow for a large long quantity (e.g. Long.MAX_VALUE),
         // silently wrapping past this check. Dividing Integer.MAX_VALUE by stepsPerUnit instead
         // never overflows, so the comparison is exact for the full long range of quantity.
-        if (quantity > Integer.MAX_VALUE / (long) stepsPerUnit) {
+        final long materializationLimit = 100_000L;
+        if (quantity > materializationLimit) {
             throw new SimError.OutOfRange(
                     "quantity",
-                    "quantity " + quantity + " with routing step count " + stepsPerUnit
-                            + " exceeds the maximum representable execution step count");
+                    "quantity " + quantity + " exceeds supported child materialization limit " + materializationLimit);
         }
-        int totalSteps = stepsPerUnit * (int) quantity;
 
         // Determine the immediate-dispatch outcome for step 0, if any, before mutating any store.
         // In particular, this validates that scheduling the resulting TaskEnd would actually
@@ -324,22 +320,21 @@ public class FactoryHandler implements EventHandler {
 
         OrderId orderId = orders.createOrder(productId, quantity, currentTime, unitPrice);
         Order order = orders.get(orderId);
-        JobId jobId = jobs.createJob(order, totalSteps, currentTime);
-
-        if (firstStepOpt.isPresent()) {
-            if (immediateEndTime != null) {
-                Machine machine = machines.getMut(selectedMachineId);
-                machine.startJob(jobId);
-
-                Job job = jobs.get(jobId);
-                job.start(selectedMachineId);
-
-                scheduler.schedule(Event.of(immediateEndTime, new EventPayload.TaskEnd(jobId, selectedMachineId, 0)));
-            } else if (eligible.size() > 1) {
-                pendingMultiEligible.addLast(
-                        new PendingDispatch(jobId, eligible, 0, firstStepOpt.get().duration()));
-            } else {
-                machines.getMut(selectedMachineId).enqueueJob(jobId);
+        for (long ordinal = 0; ordinal < quantity; ordinal++) {
+            JobId jobId = jobs.createJob(order, ordinal, stepsPerUnit, currentTime);
+            if (firstStepOpt.isPresent()) {
+                // Re-select for every child: each preceding placement changes queue/active state.
+                MachineId machineId = selectMachine(eligible);
+                Machine machine = machines.getMut(machineId);
+                if (machine.canAcceptJob()) {
+                    machine.startJob(jobId);
+                    jobs.get(jobId).start(machineId);
+                    scheduler.schedule(Event.of(currentTime.plus(firstStepOpt.get().duration()), new EventPayload.TaskEnd(jobId, machineId, 0)));
+                } else if (eligible.size() > 1) {
+                    pendingMultiEligible.addLast(new PendingDispatch(jobId, eligible, 0, firstStepOpt.get().duration()));
+                } else {
+                    machine.enqueueJob(jobId);
+                }
             }
         }
 
@@ -360,12 +355,11 @@ public class FactoryHandler implements EventHandler {
 
         if (job.isComplete()) {
             Order order = orders.get(job.orderId());
-            completedSalesValue += order.orderValue();
-            completedSales += 1;
-            scheduler.schedule(Event.of(
-                    currentTime,
-                    new EventPayload.OrderCompleted(
-                            job.id(), order.productId(), order.quantity(), order.unitPrice())));
+            if (orders.completeChild(order.id(), currentTime)) {
+                completedSalesValue += order.orderValue();
+                completedSales += 1;
+                scheduler.schedule(Event.of(currentTime, new EventPayload.OrderCompleted(order.id(), job.id(), order.productId(), order.quantity(), order.unitPrice())));
+            }
         } else {
             int nextStepIndex = job.currentStep();
             ProductId productId = job.productId();

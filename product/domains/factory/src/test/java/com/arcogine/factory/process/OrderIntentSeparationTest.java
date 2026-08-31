@@ -33,7 +33,7 @@ class OrderIntentSeparationTest {
     }
 
     @Test
-    void orderCreationPersistsIntentBeforeCreatingOneExecutionJob() {
+    void orderCreationPersistsIntentBeforeCreatingUnitExecutionJobs() {
         FactoryHandler handler = handler();
         Scheduler scheduler = new Scheduler();
         Event event = Event.of(
@@ -46,8 +46,9 @@ class OrderIntentSeparationTest {
         var job = handler.jobsView().findFirst().orElseThrow();
 
         assertEquals(1L, handler.ordersView().count());
-        assertEquals(1L, handler.jobsView().count());
+        assertEquals(3L, handler.jobsView().count());
         assertEquals(order.id(), job.orderId());
+        assertEquals(List.of(0L, 1L, 2L), handler.jobsView().map(j -> j.ordinalWithinOrder()).toList());
         assertEquals(new ProductId(1), order.productId());
         assertEquals(3L, order.quantity());
         assertEquals(12.0, order.unitPrice());
@@ -68,16 +69,16 @@ class OrderIntentSeparationTest {
 
         var job = handler.jobsView().findFirst().orElseThrow();
         var order = handler.order(job.orderId());
-        // The job's routing repeats once per unit of quantity (3), so completing the order
-        // requires three TaskEnd events, not one.
-        for (int i = 0; i < 3; i++) {
-            Event taskEnd = scheduler.nextEvent().orElseThrow();
-            handler.handleEvent(taskEnd, scheduler);
+        EventPayload.OrderCompleted completed = null;
+        java.util.Optional<Event> pending;
+        while ((pending = scheduler.nextEvent()).isPresent()) {
+            Event next = pending.orElseThrow();
+            handler.handleEvent(next, scheduler);
+            if (next.payload() instanceof EventPayload.OrderCompleted payload) completed = payload;
         }
 
         assertEquals(order.orderValue(), handler.completedSalesValue());
-        Event completed = scheduler.nextEvent().orElseThrow();
-        var payload = (EventPayload.OrderCompleted) completed.payload();
+        var payload = completed;
         assertEquals(order.productId(), payload.productId());
         assertEquals(order.quantity(), payload.quantity());
         assertEquals(order.unitPrice(), payload.unitPrice());

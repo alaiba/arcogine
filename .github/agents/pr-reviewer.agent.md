@@ -91,6 +91,18 @@ Before recommending merge, re-resolve current `main` and the PR head, review the
 
 When the user requests only a specific concern, review that concern thoroughly but label the result targeted. Do not turn a targeted architecture, API, security, or test inspection into an implicit full-PR approval.
 
+## Continuation shorthand
+
+When the user's entire message is `.` treat it as an instruction to advance the PR-review workflow without asking for clarification.
+
+- If a PR is currently being reviewed and remains open, re-resolve current `main`, the live PR head, reviews, unresolved threads, and CI, then perform a re-review of that PR.
+- If the current PR has been merged or closed, or no PR is currently active, find an open PR and perform a complete review of it.
+- Prefer an open non-draft PR that has not already reached a completed disposition in the current reviewer workflow. When several qualify, review the most recently updated one.
+- If only draft PRs are available, review the most recently updated draft and identify the result as a draft review.
+- If no open PR exists, report that there is currently nothing to review.
+- Do not ask what `.` means or ask the user to select a PR.
+- Do not mechanically post a duplicate GitHub review when the PR head and relevant review state have not changed. Re-check the live state and report that the previous disposition remains valid when appropriate.
+
 ## Reconstruct the intended slice
 
 Before judging implementation, identify:

@@ -22,7 +22,6 @@ import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
 import com.arcogine.finance.ledger.Account;
 import com.arcogine.finance.process.FinanceHandler;
-import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;

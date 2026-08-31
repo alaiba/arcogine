@@ -52,23 +52,22 @@ class ExplicitWorkloadSubmissionTest {
         OrderId orderId = runtime.submitWorkload(new ProductId(1), 3, 12.0).orElseThrow();
 
         assertEquals(1L, runtime.ordersView().count());
-        assertEquals(1L, runtime.jobsView().count());
-        var job = runtime.jobsView().findFirst().orElseThrow();
-        assertEquals(orderId, job.orderId());
+        assertEquals(3L, runtime.jobsView().count());
+        var jobs = runtime.jobsView().toList();
+        assertEquals(List.of(0L, 1L, 2L), jobs.stream().map(j -> j.ordinalWithinOrder()).toList());
+        assertTrue(jobs.stream().allMatch(job -> job.orderId().equals(orderId)));
 
         // The job's routing repeats once per unit of quantity, so a quantity-3 order needs three
         // TaskEnd events (one per unit) to complete, not one.
-        Event taskEnd = null;
-        for (int i = 0; i < 3; i++) {
-            taskEnd = runtime.advance().orElseThrow();
-            assertEquals(EventType.TaskEnd, taskEnd.eventType());
+        Event completed = null;
+        while (completed == null) {
+            Event next = runtime.advance().orElseThrow();
+            if (next.eventType() == EventType.OrderCompleted) completed = next;
         }
-
-        assertTrue(runtime.jobsView().findFirst().orElseThrow().isComplete());
+        assertTrue(runtime.jobsView().allMatch(job -> job.isComplete()));
         assertEquals(1L, runtime.completedSales());
-        Event completed = runtime.advance().orElseThrow();
         var payload = (EventPayload.OrderCompleted) completed.payload();
-        assertEquals(job.id(), payload.jobId());
+        assertEquals(orderId, payload.orderId());
     }
 
     @Test
@@ -81,11 +80,7 @@ class ExplicitWorkloadSubmissionTest {
         assertEquals(1, runtime.machinesView().size());
         assertEquals(1L, runtime.backlog());
 
-        // Three TaskEnd events (one per unit of quantity) plus the OrderCompleted they trigger.
-        runtime.advance();
-        runtime.advance();
-        runtime.advance();
-        runtime.advance();
+        while (runtime.advance().isPresent()) { /* drain child and aggregate events */ }
 
         assertEquals(0L, runtime.backlog());
         assertTrue(runtime.avgLeadTime() > 0.0);

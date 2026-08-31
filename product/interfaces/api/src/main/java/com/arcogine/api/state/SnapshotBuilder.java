@@ -70,7 +70,7 @@ public final class SnapshotBuilder {
 
         List<JobInfo> jobs = handler.factory().jobsView()
                 .map(j -> {
-                    Double revenue = j.status() == JobStatus.Completed ? j.orderValue() : null;
+                    Double revenue = null; // jobs are execution units; order completion owns commercial revenue
                     Long completedAt = j.completedAt() != null ? j.completedAt().ticks() : null;
                     return new JobInfo(
                             j.id().value(),

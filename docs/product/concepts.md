@@ -56,9 +56,9 @@ Example: Widget A's routing might be Mill (5 ticks) → Lathe (3 ticks) → QC S
 
 When an order arrives, Arcogine stores an immutable **order** containing the accepted product, quantity, creation time, and unit price. It then creates a mutable **job** that references that order and moves through the routing steps, waiting in machine queues when a machine is busy.
 
-The current implementation remains one order → one job. This separation exists so accepted intent does not have to mutate as execution progresses; later engine-readiness work can allow one order to produce multiple work items/jobs without copying the commercial/order facts into each execution object.
+An accepted order remains one immutable production and commercial requirement. Engine Readiness W1 decomposes its quantity deterministically into unit-quantity child jobs: an order for 10 units creates ten independently dispatchable jobs, with ordinals 0–9, each traversing the routing once. Arcogine owns this decomposition; a game or other caller supplies only the production requirement.
 
-Order quantity now consumes proportional production work: a job's routing repeats once per unit of quantity, so an order for 10 units keeps a machine occupied roughly ten times as long as an otherwise identical order for 1 unit. The job's step counter (`current_step` of `total_steps`) advances once per routing step *executed*, not once per unit -- for a multi-step route it advances once per step, so it reaches `total_steps` only after every step has run for every unit. Completed-unit progress can be derived from it (`current_step / steps per unit`), but the counter itself is an executed-step count, not a unit count. This is represented as one job with a larger step count -- not as ten separate jobs -- so a large-quantity order still only creates one order and one job.
+Order-level execution progress is authoritative: it records released and completed unit quantities and completes only when every child is complete. Commercial completion, backlog, sales count/value, and lead time remain order-level facts, so child jobs do not multiply revenue.
 
 The current lifecycle is:
 

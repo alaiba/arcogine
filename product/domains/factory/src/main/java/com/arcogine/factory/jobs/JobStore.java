@@ -6,30 +6,39 @@ import com.arcogine.types.JobStatus;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Stream;
 
 public class JobStore {
 
     private final List<Job> jobs;
+    private final java.util.Map<JobId, Job> byId;
     private long nextId;
 
     public JobStore() {
         this.jobs = new ArrayList<>();
+        this.byId = new LinkedHashMap<>();
         this.nextId = 1;
     }
 
-    public JobId createJob(Order order, int totalSteps, SimTime createdAt) {
+    public JobId createJob(Order order, long ordinalWithinOrder, int totalSteps, SimTime createdAt) {
         JobId id = new JobId(nextId++);
-        jobs.add(new Job(id, order, totalSteps, createdAt));
+        Job job = new Job(id, order, ordinalWithinOrder, totalSteps, createdAt);
+        jobs.add(job);
+        byId.put(id, job);
         return id;
     }
 
+    /** Compatibility helper for focused store tests; production supplies an ordinal. */
+    public JobId createJob(Order order, int totalSteps, SimTime createdAt) {
+        return createJob(order, 0, totalSteps, createdAt);
+    }
+
     public Job get(JobId id) {
-        return jobs.stream()
-                .filter(j -> j.id().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new SimError.UnknownId("job", id.value()));
+        Job job = byId.get(id);
+        if (job == null) throw new SimError.UnknownId("job", id.value());
+        return job;
     }
 
     public Stream<Job> activeJobs() {

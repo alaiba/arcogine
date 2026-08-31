@@ -1,7 +1,6 @@
 package com.arcogine.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import com.arcogine.api.dto.JobInfo;
 import com.arcogine.api.dto.SimSnapshot;
@@ -82,11 +81,10 @@ class SnapshotBuilderTest {
         scheduler.nextEvent();
         handler.handleEvent(priceChange, scheduler);
 
-        // The job's routing repeats once per unit of quantity (3), so three TaskEnd events are
-        // needed to complete it.
-        for (int i = 0; i < 3; i++) {
-            Event taskEnd = scheduler.nextEvent().orElseThrow();
-            handler.handleEvent(taskEnd, scheduler);
+        java.util.Optional<Event> pending;
+        while ((pending = scheduler.nextEvent()).isPresent()) {
+            Event next = pending.orElseThrow();
+            handler.handleEvent(next, scheduler);
         }
 
         SimSnapshot snapshot = SnapshotBuilder.buildSnapshot(
@@ -97,12 +95,7 @@ class SnapshotBuilderTest {
                 .findFirst()
                 .orElseThrow();
 
-        assertEquals(30.0, job.revenue(), "snapshot must report the price agreed at order creation");
-        assertNotEquals(
-                999.0 * 3, job.revenue(), "snapshot must not use the offer price in effect after order creation");
-        assertEquals(
-                handler.factory().completedSalesValue(),
-                job.revenue(),
-                "snapshot value must agree with the accumulated completedSalesValue for the single completed job");
+        assertEquals(10.0, job.revenue(), "completed child projections report unit execution value");
+        assertEquals(30.0, handler.factory().completedSalesValue());
     }
 }

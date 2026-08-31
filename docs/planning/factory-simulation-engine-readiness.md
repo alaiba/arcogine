@@ -736,9 +736,9 @@ This milestone deliberately excludes changing the canonical-model boundary, layo
 
 ### 14.1 W1 — active execution capability: intra-order execution decomposition
 
-Intra-order parallelism is a **separate active Engine execution capability**, not unfinished Gate 2 work. ADR-0009 records the dispatch-vs-decomposition boundary and activation of W1. [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) resolves the production semantics that ADR-0009 deliberately left open.
+Intra-order parallelism is an **active W1 Engine execution capability with its functional implementation in place**, not unfinished Gate 2 work. ADR-0010 records the child-job identity and aggregate-completion shape. Large-order benchmark evidence remains required before W1 can be marked fully implemented.
 
-The accepted W1 model is:
+The accepted W1 model is implemented: Arcogine materializes deterministic unit-quantity child jobs under one authoritative order-execution aggregate; the game supplies only one production requirement.
 
 ```text
 Order
@@ -779,6 +779,8 @@ Required implementation semantics are fixed by ADR-0010:
 This decision intentionally leaves material-lot genealogy, configurable batch sizes, transfer batches, split/merge, setup optimization, inventory allocation, generalized scheduling, and durable cross-session work-item identity out of W1. Those require separate accepted semantics when a concrete use case justifies them.
 
 W1 remains placed **before Gate 4** deliberately. Gate 4 must stabilize observations and event envelopes around the execution identities and aggregate progress model W1 establishes rather than around the obsolete one-Job-per-Order runtime shape.
+
+`IntraOrderExecutionAcceptanceTest` proves the fixed quantity-20 workload: one order, twenty deterministic children, concurrent use of two eligible cutters, aggregate completion, one business completion, and pre-mutation rejection above the provisional 100,000-child materialization limit. The required large-order benchmark will determine the evidence-backed supported envelope.
 
 The canonical model/run/runtime boundary is tracked by [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md). Operational execution-context/trust/command/deployment/reconciliation decisions belong to the sibling operational track and should receive their own ADRs when hard-to-reverse contracts are selected. Record additional accepted Engine decisions as ADRs rather than expanding this plan into a decision log.
 

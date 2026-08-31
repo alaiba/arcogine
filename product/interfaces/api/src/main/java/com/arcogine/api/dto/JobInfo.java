@@ -4,11 +4,9 @@ import com.arcogine.types.JobStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * {@code revenue} is a completed job's {@code orderValue()} (quantity x its own OrderPrice), not
- * the accounting concept of recognized revenue -- naming debt inherited from the external
- * {@code revenue} JSON field. Left as-is deliberately (API/JSON compatibility boundary, see
- * docs/architecture.md's "Domain observations vs. API/UI snapshots" and CONTRIBUTING.md guardrail
- * 10/11), but flagged here so it isn't mistaken for a resolved naming decision.
+ * {@code revenue} is a completed child job's unit execution value (its immutable accepted unit
+ * price), not recognized revenue. The legacy JSON field name remains for wire compatibility;
+ * consumers must use snapshot-level completed-sales KPIs for commercial revenue.
  */
 public record JobInfo(
         @JsonProperty("job_id") long jobId,

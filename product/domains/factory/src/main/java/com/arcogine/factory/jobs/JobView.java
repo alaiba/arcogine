@@ -24,6 +24,8 @@ public interface JobView {
 
     OrderId orderId();
 
+    long ordinalWithinOrder();
+
     ProductId productId();
 
     long quantity();
@@ -47,6 +49,6 @@ public interface JobView {
     /** The price agreed by the referenced immutable order. */
     double unitPrice();
 
-    /** OrderValue of the referenced immutable order. */
+    /** Unit execution value only; commercial order value belongs to the parent order. */
     double orderValue();
 }

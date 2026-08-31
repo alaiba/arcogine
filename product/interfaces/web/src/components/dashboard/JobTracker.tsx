@@ -86,7 +86,7 @@ export function JobTracker() {
             {headerLabel('status', 'Status')}
             {headerLabel('current_step', 'Current step')}
             {headerLabel('created_at', 'Created at')}
-            {headerLabel('revenue', 'Revenue')}
+            {headerLabel('revenue', 'Unit value')}
           </tr>
         </thead>
         <tbody>

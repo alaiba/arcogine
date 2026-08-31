@@ -67,17 +67,21 @@ class FactoryHandlerTest {
     }
 
     /**
-     * A job's routing repeats once per unit of quantity, so completing an order requires driving
-     * one TaskEnd per unit (for a single-step routing). Drains exactly {@code quantity} TaskEnd
+     * Child jobs each traverse once, so completing an order requires driving one TaskEnd per unit
+     * (for a single-step routing). Drains exactly {@code quantity} TaskEnd
      * events, returning the final one -- the one that completes the order and schedules (but does
      * not drain) OrderCompleted. Callers driving a second order afterward must drain that trailing
      * OrderCompleted first, or it can race the next order's own scheduled events at the same tick.
      */
     private static Event driveToCompletion(FactoryHandler h, Scheduler sched, long quantity) {
         Event taskEnd = null;
-        for (long i = 0; i < quantity; i++) {
-            taskEnd = sched.nextEvent().orElseThrow();
-            h.handleEvent(taskEnd, sched);
+        for (long i = 0; i < quantity;) {
+            Event next = sched.nextEvent().orElseThrow();
+            h.handleEvent(next, sched);
+            if (next.payload() instanceof EventPayload.TaskEnd) {
+                taskEnd = next;
+                i++;
+            }
         }
         return taskEnd;
     }
@@ -160,7 +164,7 @@ class FactoryHandlerTest {
         sched.nextEvent();
         h.handleEvent(order, sched);
 
-        assertEquals(1, h.jobs.allJobs().count());
+        assertEquals(2, h.jobs.allJobs().count());
         assertFalse(sched.isEmpty(), "should have scheduled TaskEnd");
     }
 
@@ -280,9 +284,11 @@ class FactoryHandlerTest {
 
         driveToCompletion(h, sched, 3);
 
-        Event completed = sched.nextEvent().orElseThrow();
+        Event completed;
+        do { completed = sched.nextEvent().orElseThrow(); } while (!(completed.payload() instanceof EventPayload.OrderCompleted));
         var payload = (EventPayload.OrderCompleted) completed.payload();
-        assertEquals(job.id(), payload.jobId());
+        assertEquals(job.orderId(), payload.orderId());
+        assertTrue(h.job(payload.jobId()).isComplete());
         assertEquals(new ProductId(1), payload.productId());
         assertEquals(3L, payload.quantity());
         assertEquals(12.0, payload.unitPrice());
@@ -309,13 +315,8 @@ class FactoryHandlerTest {
         h.handleEvent(order2, sched);
         driveToCompletion(h, sched, 3);
 
-        double expectedValue = h.jobsView()
-                .filter(j -> j.status() == com.arcogine.types.JobStatus.Completed)
-                .mapToDouble(com.arcogine.factory.jobs.JobView::orderValue)
-                .sum();
-        long expectedCount = h.jobsView()
-                .filter(j -> j.status() == com.arcogine.types.JobStatus.Completed)
-                .count();
+        double expectedValue = h.ordersView().mapToDouble(com.arcogine.factory.orders.Order::orderValue).sum();
+        long expectedCount = h.ordersView().count();
 
         assertEquals(
                 expectedValue,
@@ -378,14 +379,14 @@ class FactoryHandlerTest {
 
         var jobA = h.jobs.allJobs().findFirst().orElseThrow();
         assertEquals(10.0, jobA.unitPrice());
-        assertEquals(30.0, jobA.orderValue());
+        assertEquals(10.0, jobA.orderValue());
 
         // The offer price changes to $999 before job A completes. Job A's own price must not move.
         driveToCompletion(h, sched, 3);
 
         assertEquals(10.0, jobA.unitPrice());
         assertEquals(
-                30.0, jobA.orderValue(), "completed order's value must not track later offer price changes");
+                10.0, jobA.orderValue(), "child execution value must not track later offer price changes");
         assertEquals(30.0, h.completedSalesValue());
     }
 

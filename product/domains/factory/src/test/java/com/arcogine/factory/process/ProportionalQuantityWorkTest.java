@@ -79,8 +79,7 @@ class ProportionalQuantityWorkTest {
             h.handleEvent(next.get(), sched);
         }
 
-        JobView job = h.jobsView().findFirst().orElseThrow();
-        return job.leadTime().orElseThrow();
+        return (long) h.avgLeadTime();
     }
 
     @Test
@@ -115,8 +114,8 @@ class ProportionalQuantityWorkTest {
         sched.nextEvent();
         h.handleEvent(order, sched);
 
-        JobView job = h.jobsView().findFirst().orElseThrow();
-        assertEquals(2 * 4, job.totalSteps(), "totalSteps must be routing stepCount * quantity");
+        assertEquals(4, h.jobsView().count());
+        assertTrue(h.jobsView().allMatch(job -> job.totalSteps() == 2));
     }
 
     /**
@@ -280,10 +279,8 @@ class ProportionalQuantityWorkTest {
             // drain
         }
 
-        JobView jobQty1 = runtimeQty1.jobsView().findFirst().orElseThrow();
-        JobView jobQty10 = runtimeQty10.jobsView().findFirst().orElseThrow();
-        assertEquals(STEP_DURATION, jobQty1.leadTime().orElseThrow());
-        assertEquals(STEP_DURATION * 10, jobQty10.leadTime().orElseThrow());
+        assertEquals(STEP_DURATION, runtimeQty1.avgLeadTime());
+        assertEquals(STEP_DURATION * 10, runtimeQty10.avgLeadTime());
         assertEquals(1L, runtimeQty1.completedSales());
         assertEquals(1L, runtimeQty10.completedSales());
     }
@@ -298,7 +295,7 @@ class ProportionalQuantityWorkTest {
         while (explicitRuntime.advance().isPresent()) {
             // drain
         }
-        long explicitLeadTime = explicitRuntime.jobsView().findFirst().orElseThrow().leadTime().orElseThrow();
+        long explicitLeadTime = (long) explicitRuntime.avgLeadTime();
 
         assertEquals(economyLeadTime, explicitLeadTime);
     }

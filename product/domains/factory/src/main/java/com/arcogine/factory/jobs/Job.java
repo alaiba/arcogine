@@ -15,6 +15,7 @@ public class Job implements JobView {
 
     private final JobId id;
     private final Order order;
+    private final long ordinalWithinOrder;
     private JobStatus status;
     private int currentStep;
     private final int totalSteps;
@@ -22,15 +23,21 @@ public class Job implements JobView {
     private final SimTime createdAt;
     private SimTime completedAt;
 
-    public Job(JobId id, Order order, int totalSteps, SimTime createdAt) {
+    public Job(JobId id, Order order, long ordinalWithinOrder, int totalSteps, SimTime createdAt) {
         this.id = id;
         this.order = order;
+        this.ordinalWithinOrder = ordinalWithinOrder;
         this.status = JobStatus.Queued;
         this.currentStep = 0;
         this.totalSteps = totalSteps;
         this.currentMachine = null;
         this.createdAt = createdAt;
         this.completedAt = null;
+    }
+
+    /** Compatibility constructor for focused lifecycle tests; production supplies an ordinal. */
+    public Job(JobId id, Order order, int totalSteps, SimTime createdAt) {
+        this(id, order, 0, totalSteps, createdAt);
     }
 
     public void start(MachineId machineId) {
@@ -81,6 +88,9 @@ public class Job implements JobView {
         return order.id();
     }
 
+    @Override
+    public long ordinalWithinOrder() { return ordinalWithinOrder; }
+
     /** Compatibility projection from immutable order intent; Job does not own this fact. */
     @Override
     public ProductId productId() {
@@ -90,7 +100,7 @@ public class Job implements JobView {
     /** Compatibility projection from immutable order intent; Job does not own this fact. */
     @Override
     public long quantity() {
-        return order.quantity();
+        return 1;
     }
 
     @Override
@@ -132,6 +142,6 @@ public class Job implements JobView {
     /** Compatibility projection from immutable order intent; Job does not own this fact. */
     @Override
     public double orderValue() {
-        return order.orderValue();
+        return unitPrice();
     }
 }

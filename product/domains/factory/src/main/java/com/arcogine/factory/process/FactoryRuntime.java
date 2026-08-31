@@ -8,6 +8,7 @@ import com.arcogine.factory.machines.MachineView;
 import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.FactoryRuntimeAssembler;
 import com.arcogine.factory.orders.Order;
+import com.arcogine.factory.orders.OrderExecutionView;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
@@ -231,6 +232,8 @@ public class FactoryRuntime {
     public Stream<Order> ordersView() {
         return factory.ordersView();
     }
+    public OrderExecutionView orderExecution(OrderId id) { return factory.orderExecution(id); }
+    public Stream<OrderExecutionView> orderExecutionsView() { return factory.orderExecutionsView(); }
 
     /** Read-only view of every execution job. */
     public Stream<JobView> jobsView() {

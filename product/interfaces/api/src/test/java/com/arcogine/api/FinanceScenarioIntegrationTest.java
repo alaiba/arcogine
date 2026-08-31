@@ -55,10 +55,11 @@ class FinanceScenarioIntegrationTest {
      * unrounded sum).
      */
     private static BigDecimal expectedCashFromCompletedJobs(FactoryHandler factory) {
-        return factory.jobsView()
-                .filter(j -> j.status() == JobStatus.Completed)
-                .map(j -> BigDecimal.valueOf(j.unitPrice())
-                        .multiply(BigDecimal.valueOf(j.quantity()))
+        return factory.orderExecutionsView()
+                .filter(execution -> execution.complete())
+                .map(execution -> factory.order(execution.orderId()))
+                .map(order -> BigDecimal.valueOf(order.unitPrice())
+                        .multiply(BigDecimal.valueOf(order.quantity()))
                         .setScale(2, RoundingMode.HALF_UP))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

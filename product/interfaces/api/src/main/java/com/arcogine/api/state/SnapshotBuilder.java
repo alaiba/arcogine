@@ -11,7 +11,6 @@ import com.arcogine.core.kpi.OrderCount;
 import com.arcogine.core.kpi.ThroughputRate;
 import com.arcogine.core.kpi.TotalSimulatedTime;
 import com.arcogine.core.log.EventLog;
-import com.arcogine.types.JobStatus;
 import com.arcogine.types.SimTime;
 import com.arcogine.types.scenario.OperationsDefinitionConfig;
 import com.arcogine.types.scenario.ProcessSegmentConfig;

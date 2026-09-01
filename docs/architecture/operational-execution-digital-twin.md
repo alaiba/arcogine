@@ -52,6 +52,8 @@ The original conceptual list `SIMULATION / REPLAY / TEST / STAGING / PRODUCTION`
 - replay is primarily a processing/history-interpretation mode and should not become a context kind unless a concrete authority/consequence invariant requires it;
 - generic software test execution is not itself an operational environment ontology.
 
+This is a narrower taxonomy than the Product Charter's conceptual use of **execution context**. The Charter requires simulation, replay, staging, and production to remain unambiguously distinguishable; O1 does not relax that invariant. `ExecutionContextKind` is intended only to classify operational consequence/environment semantics, while replay may be represented by a separate explicit processing/execution-mode dimension correlated with the concrete context. A replay must therefore remain visibly distinct from an ordinary simulation, staging, or production interpretation even if `REPLAY` is not an `ExecutionContextKind` member. If later design cannot preserve that distinction cleanly without making replay a context kind, the O1 ADR must revise the taxonomy rather than weaken the Charter requirement.
+
 The exact taxonomy and representation must be fixed before a durable public/persisted contract is introduced.
 
 ### 2.1 `RunId` is not execution-context identity

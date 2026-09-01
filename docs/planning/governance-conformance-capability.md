@@ -311,6 +311,80 @@ A new ADR remains appropriate if future work commits Arcogine to a hard-to-rever
 
 ## 6. G2 — Semantic ChangeSet and impact model
 
+### Current status
+
+**Complete for the initial slice.** The generic `ChangeSet` contract, its semantic-change taxonomy,
+its impact-scope seam, and its factory-domain (D5) comparison adapter are implemented and tested
+against the real G1.3 authoritative persistence boundary.
+
+Implementation:
+
+```text
+:governance (com.arcogine.governance.change) -- generic, domain-neutral
+    SemanticChangeKind          ENTITY_ADDED / ENTITY_REMOVED / ENTITY_MODIFIED
+    ChangedEntityRef            stable (entityType, entityId) identity + presentation label
+    SemanticChange               (kind, entity, detail)
+    ImpactScope                  deterministic Set<ChangedEntityRef> derived from semantic changes;
+                                  intersects(Set<ChangedEntityRef>) is the future-G3 matching seam
+    ExternalChangeReference      (system, identifier) -- association only
+    ChangeProvenance             (source, reason, optional ExternalChangeReference)
+    ChangeSet                    immutable record; deterministically re-sorts semantic changes in
+                                  its canonical constructor so equivalent comparisons always produce
+                                  equal content and order
+    SemanticChangeExtractor      domain adapter SPI (mirrors SemanticArtifactVerifier)
+    ChangeSetFactory              orchestrates ControlledRevisionAuthority.resolve(...) ->
+                                  SemanticChangeExtractor.compare(...) -> ChangeSet, for both
+                                  revision-to-revision and base-revision-to-candidate-snapshot paths
+
+:factory (com.arcogine.factory.change) -- domain-owned D5 comparison content
+    FactoryModelSemanticComparator implements SemanticChangeExtractor, keyed on MachineId /
+        operation id / ProductId stable identity, never list position
+```
+
+`:factory`'s main source now depends on `:governance` (a new edge alongside the existing
+`:types <- governance` and `:types <- simulation <- factory` branches) so the domain can implement
+Governance's generic `SemanticChange`/`SemanticChangeExtractor` vocabulary directly, per the
+capability plan's guidance to prefer "a dependency direction where a domain produces semantic
+comparison facts that Governance associates with controlled history." `:governance` itself still
+depends only on `:types` in main source and gained no dependency on `:factory` or any other domain.
+This was ordinary implementation decomposition following an existing pattern
+(`SemanticArtifactVerifier`/`FactoryModelArtifactV1`), not a hard-to-reverse architectural choice,
+so it did not require a new ADR.
+
+Representative tests (exact names, see the listed files):
+
+- `product/governance/src/test/java/com/arcogine/governance/change/ChangeSetTest.java` --
+  `semanticChangesAreStoredInDeterministicOrderRegardlessOfInputOrder`,
+  `impactScopeIsDerivedFromChangedEntitiesAndDeduplicated`, `noSemanticChangesIsAValidNoOpTransition`,
+  `resultingRevisionIdIsAbsentForAnUnpersistedCandidate`,
+  `externalChangeReferenceIsRetainedAsAssociationNotIdentity`,
+  `minimumContractHasNoAuthorizationDeploymentOrEvidenceFields`.
+- `product/governance/src/test/java/com/arcogine/governance/change/ChangeSetFactoryTest.java`
+  (exercises the real `FileControlledRevisionAuthority` + `FactoryModelSemanticComparator`, not
+  test-only injection) --
+  `comparesTwoAuthoritativeRevisionsThroughHistoricalResolution`,
+  `equalSemanticFingerprintAcrossDistinctRevisionsYieldsNoSemanticChangesButDistinctIdentity`
+  (same-fingerprint rollback across distinct revision IDs),
+  `candidateSnapshotIsComparedWithoutBecomingAControlledRevision`,
+  `externalChangeRequestReferenceSurvivesEndToEnd`,
+  `impactScopeIsUsableForFutureRequirementScopeMatching`.
+- `product/domains/factory/src/test/java/com/arcogine/factory/change/FactoryModelSemanticComparatorTest.java`
+  (pure D5 comparator unit tests) --
+  `identicalModelsProduceNoSemanticChangesRegardlessOfConstructionOrder`,
+  `addedResourceIsClassifiedAsEntityAddedWithStableIdentity`,
+  `removedResourceIsClassifiedAsEntityRemoved`,
+  `modifiedResourceCapacityIsClassifiedAsEntityModifiedByStableId`,
+  `renamingAnEntityDoesNotChangeWhichEntityIsAffected`.
+
+**Boundary called out explicitly, per delivery principle 1 and the G2 acceptance criteria below:**
+acceptance criterion 4 ("impact analysis can determine which registered requirements are
+potentially affected") is satisfied only as an honest *seam* -- `ImpactScope.intersects(Set<
+ChangedEntityRef>)` -- because G3's requirement registry does not exist yet. No G3+ capability
+(requirement registry, assertion evaluation, conformance findings, evidence, exceptions,
+authorization workflow) is implemented or claimed; `ChangeSetFactoryTest
+.impactScopeIsUsableForFutureRequirementScopeMatching` proves the seam against a hypothetical
+in-test scope only, not a real requirement.
+
 ### Goal
 
 Represent a meaningful transition between controlled revisions or between a base revision and a candidate semantic snapshot in domain terms sufficient for review, impact analysis, and governance.
@@ -348,10 +422,24 @@ Which runtime/deployment contexts would consume the changed model?
 G2 is ready when:
 
 1. Two relevant semantic states can be compared in domain terms rather than only byte-for-byte.
-2. Changed entities can be identified with stable domain identity.
-3. At least one domain change has a meaningful typed/classified representation.
+   **Satisfied:** `ChangeSetFactory` resolves both states through the G1.3
+   `ControlledRevisionAuthority.resolve(...)` historical boundary and hands them to
+   `FactoryModelSemanticComparator`, which compares `FactoryModel` content, not artifact bytes.
+2. Changed entities can be identified with stable domain identity. **Satisfied:**
+   `ChangedEntityRef` keys on `MachineId`/operation id/`ProductId`, never list position; proven by
+   `identicalModelsProduceNoSemanticChangesRegardlessOfConstructionOrder` and
+   `renamingAnEntityDoesNotChangeWhichEntityIsAffected`.
+3. At least one domain change has a meaningful typed/classified representation. **Satisfied:**
+   `SemanticChangeKind` (`ENTITY_ADDED`/`ENTITY_REMOVED`/`ENTITY_MODIFIED`) applied to factory
+   resources, operations, and products.
 4. Impact analysis can determine which registered requirements are potentially affected.
-5. ChangeSet provenance can retain an external change-request identifier.
+   **Satisfied only as the minimum honest seam**, since G3's requirement registry does not exist:
+   `ImpactScope.intersects(Set<ChangedEntityRef>)` lets a future requirement scope match against
+   affected entities without redesigning `ChangeSet`. This is not a requirement registry and must
+   not be read as G3 delivered.
+5. ChangeSet provenance can retain an external change-request identifier. **Satisfied:**
+   `ChangeProvenance`/`ExternalChangeReference`, proven end-to-end by
+   `externalChangeRequestReferenceSurvivesEndToEnd`.
 
 ## 7. G3 — Generic requirement and assertion contract
 

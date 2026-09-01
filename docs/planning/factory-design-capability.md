@@ -384,6 +384,15 @@ D4 is satisfied when:
 
 ## 9. D5 — Semantic comparison and design alternatives
 
+**Status: initial slice implemented**, as the direct D5 implementation feeding G2 (below):
+`com.arcogine.factory.change.FactoryModelSemanticComparator`
+(`product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java`)
+implements Governance's `SemanticChangeExtractor` SPI, comparing resources, operations, and
+products by stable domain identity (`MachineId`, operation id, `ProductId`) and classifying
+add/remove/modify via Governance's `SemanticChangeKind`. Route/policy/constraint-level semantic
+change kinds beyond resource/operation/product remain future D5 work; implement them when a
+concrete consumer needs that finer-grained taxonomy, per the principle below.
+
 Implement shared semantic comparison only when more than one concrete consumer/workflow needs a common domain-level diff.
 
 Potential changes include resource added/removed/moved, resource definition changed, operation requirement changed, product definition changed, policy changed, or constraint changed.

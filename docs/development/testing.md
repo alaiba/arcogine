@@ -27,10 +27,10 @@ and resolved Gradle dependencies together. It does not provision toolchains.
 | `./arcogine check --full` | Everything above, plus Playwright, canonical `dist/` build, Docker image build/smoke, and security scans (dependency audit, frontend audit, Trivy image scans, Gitleaks) |
 
 `./arcogine check --full` is a complete local certification command, so it
-fails up front with a scoped diagnostic when Docker, Docker Compose, Trivy, or
-Gitleaks is unavailable. This is intentional rather than a silent skip. Use
-`./arcogine check` or the native commands below when the task does not require
-container/security certification.
+fails up front with a scoped diagnostic when Docker, Docker Compose, Trivy,
+Gitleaks, or `curl` is unavailable. This is intentional rather than a silent
+skip. Use `./arcogine check` or the native commands below when the task does not
+require container/security certification.
 
 ### Command model
 

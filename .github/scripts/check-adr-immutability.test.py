@@ -38,14 +38,15 @@ def commit(cwd: Path, message: str) -> str:
     return run(cwd, "git", "rev-parse", "HEAD").stdout.strip()
 
 
-def check_case(name: str, mutate, expected_ok: bool) -> None:
+def check_case(name: str, mutate, expected_ok: bool, accepted_body: str = "Keep history.\n") -> None:
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp)
         git_init(repo)
         write(
             repo,
             "0001-example.md",
-            "# ADR-0001: Example\n\nStatus: Accepted\nDate: 2026-01-01\n\n## Decision\n\nKeep history.\n",
+            "# ADR-0001: Example\n\nStatus: Accepted\nDate: 2026-01-01\n\n## Decision\n\n"
+            + accepted_body,
         )
         write(
             repo,
@@ -80,6 +81,47 @@ def main() -> None:
 
     check_case("accepted ADR body edit is rejected", edit_body, False)
 
+    def edit_body_status_line(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        path.write_text(path.read_text().replace("Status: Example", "Status: Changed"))
+
+    check_case(
+        "accepted ADR body Status line remains immutable",
+        edit_body_status_line,
+        False,
+        accepted_body="Status: Example\n",
+    )
+
+    check_case(
+        "accepted ADR body Superseded-by line is not treated as header metadata",
+        lambda repo: None,
+        True,
+        accepted_body="Superseded by: ADR-9999\n",
+    )
+
+    def edit_body_superseded_by_line(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        path.write_text(path.read_text().replace("Superseded by: ADR-9999", "Superseded by: ADR-9998"))
+
+    check_case(
+        "accepted ADR body Superseded-by line remains immutable",
+        edit_body_superseded_by_line,
+        False,
+        accepted_body="Superseded by: ADR-9999\n",
+    )
+
+    def duplicate_header_status(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        path.write_text(path.read_text().replace("Date: 2026-01-01\n", "Date: 2026-01-01\nStatus: Superseded\n"))
+
+    check_case("duplicate header Status metadata is rejected", duplicate_header_status, False)
+
+    def malformed_header_status(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        path.write_text(path.read_text().replace("Date: 2026-01-01\n", "Date: 2026-01-01\nStatus: invalid value\n"))
+
+    check_case("malformed extra header Status line remains protected", malformed_header_status, False)
+
     def delete_accepted(repo: Path) -> None:
         (repo / "docs/architecture/decisions/0001-example.md").unlink()
 
@@ -113,6 +155,34 @@ def main() -> None:
         )
 
     check_case("proposed ADR cannot supersede accepted ADR", supersede_with_proposed, False)
+
+    def supersede_with_duplicate_target(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        text = path.read_text().replace(
+            "Status: Accepted\n", "Status: Superseded\nSuperseded by: ADR-0003\nSuperseded by: ADR-0004\n"
+        )
+        path.write_text(text)
+        write(
+            repo,
+            "0003-replacement.md",
+            "# ADR-0003: Replacement\n\nStatus: Accepted\nSupersedes: ADR-0001\n\n## Decision\n\nNew decision.\n",
+        )
+
+    check_case("duplicate Superseded-by metadata is rejected", supersede_with_duplicate_target, False)
+
+    def supersede_with_duplicate_supersedes(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        text = path.read_text().replace(
+            "Status: Accepted\n", "Status: Superseded\nSuperseded by: ADR-0003\n"
+        )
+        path.write_text(text)
+        write(
+            repo,
+            "0003-replacement.md",
+            "# ADR-0003: Replacement\n\nStatus: Accepted\nSupersedes: ADR-0001\nSupersedes: ADR-0002\n\n## Decision\n\nNew decision.\n",
+        )
+
+    check_case("duplicate Supersedes metadata is rejected", supersede_with_duplicate_supersedes, False)
 
     def valid_supersession(repo: Path) -> None:
         path = repo / "docs/architecture/decisions/0001-example.md"

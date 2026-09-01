@@ -2,6 +2,30 @@
 
 Operational notes for coding agents working in this repository. See [README.md](README.md) for what Arcogine is, and [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for human contributor workflow/style detail. Don't duplicate either here.
 
+## Repository identity and task shorthand
+
+This repository is the canonical Arcogine repository:
+
+`alaiba/arcogine`
+
+Agents operating from this repository context must treat that identity as already known. For GitHub operations involving issues, pull requests, branches, commits, workflows, files, or repository state:
+
+- default to `alaiba/arcogine` unless the user explicitly identifies another repository;
+- use repository-scoped operations first;
+- do not search for or rediscover the repository before acting;
+- use global repository discovery only for explicitly cross-repository tasks or when the requested operation genuinely cannot be resolved from this repository.
+
+Repository context is sufficient authority to perform read-only repository operations without asking the user to restate the repository name or URL.
+
+Common shorthand should be interpreted in repository context:
+
+- “read an issue” means select and read an applicable open issue in this repository;
+- “review PR” means select and review an applicable pull request in this repository, following the dedicated PR Reviewer contract;
+- “check repo state” means inspect the state of this repository;
+- references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
+
+Do not replace known repository context with generic GitHub discovery.
+
 ## Specialized agent roles
 
 Some repository tasks have additional repository-owned operating contracts.

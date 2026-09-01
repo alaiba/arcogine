@@ -93,7 +93,7 @@ When the user requests only a specific concern, review that concern thoroughly b
 
 ## Continuation shorthand
 
-When the user's entire message is `.` treat it as an instruction to continue the independent PR-review workflow without asking for clarification. `.` is review-only shorthand; repository-wide remediation shorthand such as `+` is defined in `AGENTS.md` and is not an instruction to perform reviewer-side remediation.
+When the user's entire message is `.` treat it as an instruction to continue the independent PR-review workflow without asking for clarification. `.` is review-only shorthand; repository-wide remediation shorthand `..` is defined in `AGENTS.md` and is not an instruction to perform reviewer-side remediation.
 
 - If a PR is currently being reviewed and remains open, re-resolve current `main`, the live PR head, reviews, unresolved threads, and CI, then perform a re-review of that PR.
 - If the current PR has been merged or closed, or no PR is currently active, find an open PR and perform a complete review of it.

@@ -13,9 +13,11 @@ import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
+import com.arcogine.types.RunId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -46,19 +48,21 @@ import java.util.stream.Stream;
  * and {@link #setMachineAvailability} return a definite {@link CommandResult} rather than throwing
  * or returning {@code void}; {@link #pendingWorkView()} exposes the cross-machine multi-eligible
  * backlog that no single machine's queue depth reflects. It deliberately does not attempt a generic
- * simulation-session framework, event envelopes/cursors, or a new session-identity type -- those
- * remain out of scope for this slice or belong to later gates (see the plan).
+ * simulation-session framework. Gate 4-A adds the opaque run identity and current-state
+ * observation; supported event envelopes and advancing cursors remain later Gate 4 work.
  */
 public class FactoryRuntime {
 
     private final FactoryHandler factory;
     private final RecordingScheduler scheduler;
     private final FactoryModelVersion modelVersion;
+    private final RunId runId;
 
     private FactoryRuntime(FactoryHandler factory, FactoryModelVersion modelVersion) {
         this.factory = factory;
         this.scheduler = new RecordingScheduler();
         this.modelVersion = modelVersion;
+        this.runId = RunId.create();
     }
 
     /**
@@ -78,6 +82,11 @@ public class FactoryRuntime {
      */
     public FactoryModelVersion modelVersion() {
         return modelVersion;
+    }
+
+    /** Opaque correlation identity for this fresh runtime session. */
+    public RunId runId() {
+        return runId;
     }
 
     /**
@@ -268,5 +277,75 @@ public class FactoryRuntime {
 
     public long completedSales() {
         return factory.completedSales();
+    }
+
+    /**
+     * Returns a coherent, immutable, consumer-neutral projection of current authoritative state.
+     * This does not expose internal scheduler events; Gate 4-B owns supported event publication.
+     */
+    public RuntimeObservation observe() {
+        List<ResourceObservation> resources = machinesView().stream()
+                .sorted(Comparator.comparing(view -> view.id().value()))
+                .map(view -> new ResourceObservation(
+                        view.id(),
+                        view.name(),
+                        view.state(),
+                        view.concurrency(),
+                        view.activeJobs().stream().sorted().toList(),
+                        view.queueDepth(),
+                        view.capacityLiters(),
+                        view.setupTime(),
+                        view.busyTicks()))
+                .toList();
+        List<OrderObservation> orders = ordersView()
+                .sorted(Comparator.comparing(order -> order.id().value()))
+                .map(order -> {
+                    OrderExecutionView execution = orderExecution(order.id());
+                    return new OrderObservation(
+                            order.id(),
+                            order.productId(),
+                            execution.requestedQuantity(),
+                            execution.releasedQuantity(),
+                            execution.completedQuantity(),
+                            order.createdAt(),
+                            execution.completedAt(),
+                            execution.complete());
+                })
+                .toList();
+        List<JobObservation> jobs = jobsView()
+                .sorted(Comparator.comparing((JobView view) -> view.orderId().value())
+                        .thenComparingLong(JobView::ordinalWithinOrder)
+                        .thenComparing(view -> view.id().value()))
+                .map(view -> new JobObservation(
+                        view.id(),
+                        view.orderId(),
+                        view.ordinalWithinOrder(),
+                        view.productId(),
+                        view.status(),
+                        view.currentStep(),
+                        view.totalSteps(),
+                        view.currentMachine(),
+                        view.createdAt(),
+                        view.completedAt()))
+                .toList();
+        List<PendingWorkObservation> pending = pendingWorkView().stream()
+                .sorted(Comparator.comparing(view -> view.jobId().value()))
+                .map(view -> new PendingWorkObservation(
+                        view.jobId(), view.eligibleMachines().stream().sorted().toList()))
+                .toList();
+        long elapsedTicks = scheduler.currentTime().value();
+        return new RuntimeObservation(
+                new RuntimeObservationMetadata(
+                        runId,
+                        modelVersion.fingerprint(),
+                        scheduler.currentTime(),
+                        scheduler.isEmpty() ? RuntimeRunState.QUIESCENT : RuntimeRunState.ACTIVE,
+                        0),
+                resources,
+                orders,
+                jobs,
+                pending,
+                new RuntimePerformanceObservation(
+                        backlog(), completedSales(), completedSalesValue(), avgLeadTime(), throughput(elapsedTicks)));
     }
 }

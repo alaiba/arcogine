@@ -101,7 +101,7 @@ Required work:
 
 This slice must not redesign Gate 4.
 
-### Slice G4-A — Active: headless runtime identity and supported observation contract
+### Slice G4-A — Complete: headless runtime identity and supported observation contract
 
 Add the minimum runtime metadata and observation seam at the `FactoryRuntime` boundary.
 
@@ -121,6 +121,23 @@ Minimum observation responsibilities are defined by ADR-0011 and the Engine plan
 `latestEventSequence` starts at `0` before any supported runtime event.
 
 Do not put Spring DTOs or frontend DTOs in this module. Do not create a generic "world state" type if purpose-specific projections preserve a better capability boundary.
+
+**Implemented evidence (2026-09-02):** `FactoryRuntime.observe()` now returns one immutable,
+consumer-neutral current-state projection. Its metadata carries a fresh opaque `RunId`, the durable
+`FactoryModelVersion.fingerprint()` (never the legacy content hash), the scheduler's current
+`SimTime`, an explicit runtime advancement state (`ACTIVE` when authoritative work is pending,
+otherwise `QUIESCENT`), and `latestEventSequence = 0`. The cursor is intentionally reserved for
+G4-B supported runtime events; it is not derived from internal scheduler events. The projection contains resources
+(operational state, active child work, per-resource queue depth, and busy ticks), aggregate orders,
+W1 child jobs with `JobId -> OrderId` correlation and ordinal, cross-machine pending work, and the
+authoritative backlog/completed-order/completed-sales/lead-time/throughput aggregates already owned
+by the factory runtime. Collections are immutable and ordered by stable identities. `reset()` uses
+fresh construction and therefore receives a fresh `RunId` while preserving the same semantic
+outcome for the same model and commands. `Gate4RuntimeObservationAcceptanceTest` proves these
+facts without the API, Spring, frontend, internal-store access, or scheduler-event replay.
+
+G4-B (supported runtime-event taxonomy and post-authoritative publication) and G4-C (headless
+event/observation closure) remain outstanding.
 
 ### Slice G4-B — Supported RuntimeEvent contract and post-authoritative publication
 

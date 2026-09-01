@@ -53,14 +53,14 @@ FactoryModel
     -> runtime/result provenance work in progress
 ```
 
-ADR-0006 and its implementation establish the durable semantic fingerprint contract. ADR-0008 establishes the controlled revision identity and lineage decision, but the controlled revision value model and authoritative revision persistence are not yet implemented.
+ADR-0006 and its implementation establish the durable semantic fingerprint contract. ADR-0008 establishes the controlled revision identity and lineage decision; G1.2 implements its value contracts, while authoritative revision persistence remains outstanding.
 
 The governance use case provides the concrete cross-consumer reason to complete the remaining G1 work. The dependency order matters here, and matches the G1-G9 sequence in §4 below:
 
 ```text
 G1.1 durable semantic fingerprint                 complete
           ↓
-G1.2 controlled revision identity/value contract  next
+G1.2 controlled revision identity/value contract  complete
           ↓
 G1.3 authoritative revision persistence +
      exact historical semantic-state resolution
@@ -154,7 +154,7 @@ G1-G5 are architectural substrate. G6-G7 establish governance workflow integrati
 
 **Partial.** G1.1 is complete: ADR-0006 and the `factory-model:v1` implementation establish the durable semantic fingerprint contract.
 
-**G1.2 is decision-complete but not yet implemented.** ADR-0008 establishes `ControlledRevisionId`, the minimum immutable revision record, current `0..1` parent lineage, rollback-as-new-revision semantics, recording provenance, and the separation from ChangeSet/workflow/authorization/deployment/conformance state.
+**G1.2 is complete.** `:types` provides `ControlledRevisionId`; `:governance` provides the immutable controlled-revision, lineage, and recording-provenance value contracts fixed by ADR-0008. This slice proves local value invariants only; it does not provide authoritative persistence or historical semantic-state resolution.
 
 **G1.3 remains outstanding.** Arcogine still needs authoritative durable controlled-revision persistence, repository-level lineage integrity, exact revision-to-semantic-state/artifact resolution, and downstream provenance integration before G1 can be considered complete.
 
@@ -194,7 +194,7 @@ G1.1 remains the semantic-content identity layer only. It does not identify hist
 
 ### G1.2 — Controlled revision identity and value contract
 
-**Status: Decision complete; implementation next.**
+**Status: Complete.**
 
 ADR-0008 fixes the following contract:
 
@@ -222,7 +222,7 @@ The first implementation slice should be deliberately narrow:
     RevisionRecorder (or equivalently narrow recorder value)
 ```
 
-The implementation should prove local value invariants and the `F1 -> F2 -> F1` historical case. It should not create a fake in-memory repository merely to claim durable persistence.
+The implementation proves local value invariants and the `F1 -> F2 -> F1` historical case. It does not create a fake in-memory repository or claim durable persistence.
 
 ### G1.3 — Authoritative persistence and historical semantic-state resolution
 
@@ -258,7 +258,7 @@ G1.3 may require a follow-up ADR when the implementation commits to hard-to-reve
 G1 is ready when:
 
 1. A durable semantic fingerprint contract is explicitly specified and testable across supported process/version boundaries. **Satisfied by G1.1.**
-2. Controlled revision identity/value semantics are implemented according to ADR-0008, including UUIDv4 identity, exactly one fingerprint, current `0..1` parent lineage, rollback-as-new-revision, and immutable recording provenance. **G1.2.**
+2. Controlled revision identity/value semantics are implemented according to ADR-0008, including UUIDv4 identity, exactly one fingerprint, current `0..1` parent lineage, rollback-as-new-revision, and immutable recording provenance. **Satisfied by G1.2.**
 3. Controlled revisions have authoritative durable identities independent of process memory and semantic fingerprint equality. **G1.3.**
 4. The authoritative store enforces revision-ID uniqueness, immutable ID-to-record binding, and parent existence/integrity under the chosen lineage policy. **G1.3.**
 5. An authoritative controlled revision can resolve to the exact semantic state/artifact needed for historical reconstruction. **G1.3.**

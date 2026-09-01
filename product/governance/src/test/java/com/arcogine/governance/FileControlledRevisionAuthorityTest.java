@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -60,7 +61,10 @@ class FileControlledRevisionAuthorityTest {
     void rootRevisionSurvivesReopenWithExactRevisionArtifactAndProvenance() {
         FactoryModelVersion version = version("Widget", 5);
         ControlledRevision revision = revision(
-                id(1), version.fingerprint(), List.of(), Instant.parse("2026-09-01T20:15:30.123456789Z"));
+                id(1),
+                version.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T20:15:30.123456789Z"));
 
         authority().accept(revision, artifact(version));
 
@@ -69,8 +73,10 @@ class FileControlledRevisionAuthorityTest {
         HistoricalRevision resolved = reopened.resolve(revision.id());
         assertEquals(revision, resolved.revision());
         assertEquals(revision.provenance(), resolved.revision().provenance());
-        assertArrayEquals(FactoryModelArtifactV1.encode(version), resolved.artifact().canonicalBytes());
-        FactoryModelVersion reconstructed = FactoryModelArtifactV1.decode(resolved.artifact().canonicalBytes());
+        assertArrayEquals(
+                FactoryModelArtifactV1.encode(version), resolved.artifact().canonicalBytes());
+        FactoryModelVersion reconstructed =
+                FactoryModelArtifactV1.decode(resolved.artifact().canonicalBytes());
         assertEquals(version.model(), reconstructed.model());
         assertEquals(revision.modelFingerprint(), reconstructed.fingerprint());
     }
@@ -79,12 +85,16 @@ class FileControlledRevisionAuthorityTest {
     void revisionIdCannotBeAcceptedTwiceOrRebound() {
         FactoryModelVersion firstVersion = version("Widget", 5);
         ControlledRevision first = revision(
-                id(2), firstVersion.fingerprint(), List.of(), Instant.parse("2026-09-01T20:00:00Z"));
+                id(2),
+                firstVersion.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T20:00:00Z"));
         FileControlledRevisionAuthority authority = authority();
         authority.accept(first, artifact(firstVersion));
 
         GovernanceHistoryException sameFailure = assertThrows(
-                GovernanceHistoryException.class, () -> authority.accept(first, artifact(firstVersion)));
+                GovernanceHistoryException.class,
+                () -> authority.accept(first, artifact(firstVersion)));
         assertEquals(DUPLICATE_REVISION_ID, sameFailure.code());
 
         FactoryModelVersion secondVersion = version("Widget", 6);
@@ -112,7 +122,8 @@ class FileControlledRevisionAuthorityTest {
         FileControlledRevisionAuthority authority = authority();
 
         GovernanceHistoryException missingFailure = assertThrows(
-                GovernanceHistoryException.class, () -> authority.accept(child, artifact(version)));
+                GovernanceHistoryException.class,
+                () -> authority.accept(child, artifact(version)));
         assertEquals(MISSING_PARENT, missingFailure.code());
         assertTrue(authority.findById(child.id()).isEmpty());
 
@@ -123,7 +134,8 @@ class FileControlledRevisionAuthorityTest {
                 Instant.parse("2026-09-01T19:00:00Z"));
         authority.accept(parent, artifact(version));
         authority.accept(child, artifact(version));
-        assertEquals(List.of(parent.id()), authority.resolve(child.id()).revision().parentRevisionIds());
+        assertEquals(
+                List.of(parent.id()), authority.resolve(child.id()).revision().parentRevisionIds());
 
         ControlledRevisionId self = id(5);
         assertThrows(
@@ -136,15 +148,22 @@ class FileControlledRevisionAuthorityTest {
     }
 
     @Test
-    void f1ToF2ToF1KeepsThreeHistoricalOccurrencesAndDeduplicatesArtifact() throws IOException {
+    void f1ToF2ToF1KeepsThreeHistoricalOccurrencesAndDeduplicatesArtifact()
+            throws IOException {
         FactoryModelVersion f1 = version("Widget", 5);
         FactoryModelVersion f2 = version("Widget", 6);
         ControlledRevision a = revision(
                 id(6), f1.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z"));
         ControlledRevision b = revision(
-                id(7), f2.fingerprint(), List.of(a.id()), Instant.parse("2026-09-01T19:00:00Z"));
+                id(7),
+                f2.fingerprint(),
+                List.of(a.id()),
+                Instant.parse("2026-09-01T19:00:00Z"));
         ControlledRevision c = revision(
-                id(8), f1.fingerprint(), List.of(b.id()), Instant.parse("2026-09-01T20:00:00Z"));
+                id(8),
+                f1.fingerprint(),
+                List.of(b.id()),
+                Instant.parse("2026-09-01T20:00:00Z"));
         FileControlledRevisionAuthority authority = authority();
 
         authority.accept(a, artifact(f1));
@@ -164,7 +183,10 @@ class FileControlledRevisionAuthorityTest {
     void historicalResolutionDoesNotDependOnCurrentModel() {
         FactoryModelVersion historical = version("Historical widget", 5);
         ControlledRevision revision = revision(
-                id(9), historical.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z"));
+                id(9),
+                historical.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T18:00:00Z"));
         FileControlledRevisionAuthority authority = authority();
         authority.accept(revision, artifact(historical));
 
@@ -173,7 +195,9 @@ class FileControlledRevisionAuthorityTest {
 
         HistoricalRevision resolved = authority.resolve(revision.id());
         assertEquals(historical.model(), reconstructed(resolved).model());
-        assertEquals(revision.modelFingerprint(), FACTORY_VERIFIER.fingerprint(resolved.artifact().canonicalBytes()));
+        assertEquals(
+                revision.modelFingerprint(),
+                FACTORY_VERIFIER.fingerprint(resolved.artifact().canonicalBytes()));
     }
 
     @Test
@@ -181,22 +205,29 @@ class FileControlledRevisionAuthorityTest {
         FactoryModelVersion recorded = version("Widget", 5);
         FactoryModelVersion supplied = version("Widget", 6);
         ControlledRevision revision = revision(
-                id(10), recorded.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z"));
+                id(10),
+                recorded.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T18:00:00Z"));
         FileControlledRevisionAuthority authority = authority();
 
         GovernanceHistoryException failure = assertThrows(
-                GovernanceHistoryException.class, () -> authority.accept(revision, artifact(supplied)));
+                GovernanceHistoryException.class,
+                () -> authority.accept(revision, artifact(supplied)));
         assertEquals(FINGERPRINT_MISMATCH, failure.code());
         assertTrue(authority.findById(revision.id()).isEmpty());
         assertTrue(authority.revisions().isEmpty());
     }
 
     @Test
-    void missingOrCorruptHistoricalArtifactFailsExplicitlyAndIsNotSilentlyRepaired()
+    void missingOrCorruptHistoricalArtifactFailsAndIsNotSilentlyRepaired()
             throws IOException {
         FactoryModelVersion version = version("Widget", 5);
         ControlledRevision revision = revision(
-                id(11), version.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z"));
+                id(11),
+                version.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T18:00:00Z"));
         FileControlledRevisionAuthority authority = authority();
         authority.accept(revision, artifact(version));
         Path artifactFile = onlyRegularFile(tempDirectory.resolve("artifacts"));
@@ -212,7 +243,8 @@ class FileControlledRevisionAuthorityTest {
                 List.of(revision.id()),
                 Instant.parse("2026-09-01T19:00:00Z"));
         GovernanceHistoryException noRepair = assertThrows(
-                GovernanceHistoryException.class, () -> authority().accept(later, artifact(version)));
+                GovernanceHistoryException.class,
+                () -> authority().accept(later, artifact(version)));
         assertEquals(MISSING_ARTIFACT, noRepair.code());
         assertTrue(authority().findById(later.id()).isEmpty());
 
@@ -226,7 +258,10 @@ class FileControlledRevisionAuthorityTest {
     void corruptRevisionMetadataFailsAsStorageIntegrityFailure() throws IOException {
         FactoryModelVersion version = version("Widget", 5);
         ControlledRevision revision = revision(
-                id(13), version.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z"));
+                id(13),
+                version.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T18:00:00Z"));
         authority().accept(revision, artifact(version));
 
         Path revisionFile = onlyRegularFile(tempDirectory.resolve("revisions"));
@@ -262,15 +297,18 @@ class FileControlledRevisionAuthorityTest {
             start.countDown();
 
             List<GovernanceHistoryException.Code> results =
-                    List.of(firstResult.get(), secondResult.get());
+                    Arrays.asList(firstResult.get(), secondResult.get());
             assertEquals(1, results.stream().filter(result -> result == null).count());
-            assertEquals(1, results.stream().filter(DUPLICATE_REVISION_ID::equals).count());
+            assertEquals(
+                    1,
+                    results.stream().filter(DUPLICATE_REVISION_ID::equals).count());
         }
 
         FileControlledRevisionAuthority reopened = authority();
         ControlledRevision winner = reopened.findById(sharedId).orElseThrow();
         assertTrue(winner.equals(first) || winner.equals(second));
-        assertEquals(winner.modelFingerprint(), reopened.resolve(sharedId).artifact().fingerprint());
+        assertEquals(
+                winner.modelFingerprint(), reopened.resolve(sharedId).artifact().fingerprint());
         assertEquals(1, reopened.revisions().size());
     }
 
@@ -278,19 +316,32 @@ class FileControlledRevisionAuthorityTest {
     void iterationOrderingIsDeterministicAcrossReopen() {
         FactoryModelVersion version = version("Widget", 5);
         ControlledRevision third = revision(
-                id(23), version.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z"));
+                id(23),
+                version.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T18:00:00Z"));
         ControlledRevision first = revision(
-                id(21), version.fingerprint(), List.of(), Instant.parse("2026-09-01T19:00:00Z"));
+                id(21),
+                version.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T19:00:00Z"));
         ControlledRevision second = revision(
-                id(22), version.fingerprint(), List.of(), Instant.parse("2026-09-01T20:00:00Z"));
+                id(22),
+                version.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T20:00:00Z"));
         FileControlledRevisionAuthority authority = authority();
         authority.accept(third, artifact(version));
         authority.accept(first, artifact(version));
         authority.accept(second, artifact(version));
 
         List<ControlledRevisionId> expected = List.of(first.id(), second.id(), third.id());
-        assertEquals(expected, authority.revisions().stream().map(ControlledRevision::id).toList());
-        assertEquals(expected, authority().revisions().stream().map(ControlledRevision::id).toList());
+        assertEquals(
+                expected,
+                authority.revisions().stream().map(ControlledRevision::id).toList());
+        assertEquals(
+                expected,
+                authority().revisions().stream().map(ControlledRevision::id).toList());
     }
 
     @Test
@@ -299,12 +350,14 @@ class FileControlledRevisionAuthorityTest {
         byte[] bytes = FactoryModelArtifactV1.encode(version);
         SemanticArtifact artifact = new SemanticArtifact(version.fingerprint(), bytes);
         bytes[0] ^= 1;
-        assertEquals(version.fingerprint(), FACTORY_VERIFIER.fingerprint(artifact.canonicalBytes()));
+        assertEquals(
+                version.fingerprint(), FACTORY_VERIFIER.fingerprint(artifact.canonicalBytes()));
 
         byte[] exposed = artifact.canonicalBytes();
         exposed[0] ^= 1;
-        assertEquals(version.fingerprint(), FACTORY_VERIFIER.fingerprint(artifact.canonicalBytes()));
-        assertFalse(java.util.Arrays.equals(bytes, artifact.canonicalBytes()));
+        assertEquals(
+                version.fingerprint(), FACTORY_VERIFIER.fingerprint(artifact.canonicalBytes()));
+        assertFalse(Arrays.equals(bytes, artifact.canonicalBytes()));
     }
 
     private GovernanceHistoryException.Code acceptAfterStart(
@@ -338,7 +391,8 @@ class FileControlledRevisionAuthorityTest {
     }
 
     private static SemanticArtifact artifact(FactoryModelVersion version) {
-        return new SemanticArtifact(version.fingerprint(), FactoryModelArtifactV1.encode(version));
+        return new SemanticArtifact(
+                version.fingerprint(), FactoryModelArtifactV1.encode(version));
     }
 
     private static FactoryModelVersion reconstructed(HistoricalRevision revision) {
@@ -350,7 +404,8 @@ class FileControlledRevisionAuthorityTest {
                 new ResourceDefinition(new MachineId(1), "Mill", 1, 125.5, 2);
         OperationStepDefinition step = new OperationStepDefinition(
                 1, "Machine", Set.of(new MachineId(1)), duration);
-        OperationDefinition operation = new OperationDefinition(100, "Routing", List.of(step));
+        OperationDefinition operation =
+                new OperationDefinition(100, "Routing", List.of(step));
         ProductDefinition product =
                 new ProductDefinition(new ProductId(10), productName, operation.id());
         return FactoryModelPublisher.publish(

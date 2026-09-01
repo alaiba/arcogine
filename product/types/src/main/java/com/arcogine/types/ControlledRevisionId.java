@@ -8,8 +8,8 @@ public record ControlledRevisionId(UUID value) {
 
     public ControlledRevisionId {
         Objects.requireNonNull(value, "value");
-        if (value.version() != 4) {
-            throw new IllegalArgumentException("controlled revision ID must be a UUIDv4");
+        if (value.version() != 4 || value.variant() != 2) {
+            throw new IllegalArgumentException("controlled revision ID must be an RFC UUIDv4");
         }
     }
 

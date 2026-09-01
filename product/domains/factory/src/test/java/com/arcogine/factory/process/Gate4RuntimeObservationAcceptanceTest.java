@@ -48,6 +48,7 @@ class Gate4RuntimeObservationAcceptanceTest {
         assertFalse(first.metadata().runId().value().toString().isBlank());
         assertEquals(version.fingerprint(), first.metadata().modelFingerprint());
         assertEquals(0, first.metadata().currentTime().value());
+        assertEquals(RuntimeRunState.QUIESCENT, first.metadata().runState());
         assertEquals(0, first.metadata().latestEventSequence());
         assertEquals(List.of(new MachineId(1), new MachineId(2)),
                 first.resources().stream().map(ResourceObservation::machineId).toList());
@@ -87,6 +88,7 @@ class Gate4RuntimeObservationAcceptanceTest {
         assertEquals(List.of(0L, 1L, 2L), running.jobs().stream().map(JobObservation::ordinalWithinOrder).toList());
         assertTrue(running.jobs().stream().allMatch(job -> job.orderId().equals(orderId)));
         assertEquals(1, running.performance().backlog());
+        assertEquals(RuntimeRunState.ACTIVE, running.metadata().runState());
         assertEquals(2, running.resources().stream().mapToInt(resource -> resource.activeJobIds().size()).sum());
         assertEquals(1, running.pendingWork().size());
 
@@ -97,6 +99,7 @@ class Gate4RuntimeObservationAcceptanceTest {
         assertEquals(0, completed.performance().backlog());
         assertEquals(1, completed.performance().completedOrders());
         assertEquals(10, completed.metadata().currentTime().value());
+        assertEquals(RuntimeRunState.QUIESCENT, completed.metadata().runState());
     }
 
     @Test

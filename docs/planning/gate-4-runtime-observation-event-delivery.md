@@ -125,8 +125,9 @@ Do not put Spring DTOs or frontend DTOs in this module. Do not create a generic 
 **Implemented evidence (2026-09-02):** `FactoryRuntime.observe()` now returns one immutable,
 consumer-neutral current-state projection. Its metadata carries a fresh opaque `RunId`, the durable
 `FactoryModelVersion.fingerprint()` (never the legacy content hash), the scheduler's current
-`SimTime`, and `latestEventSequence = 0`. The cursor is intentionally reserved for G4-B supported
-runtime events; it is not derived from internal scheduler events. The projection contains resources
+`SimTime`, an explicit runtime advancement state (`ACTIVE` when authoritative work is pending,
+otherwise `QUIESCENT`), and `latestEventSequence = 0`. The cursor is intentionally reserved for
+G4-B supported runtime events; it is not derived from internal scheduler events. The projection contains resources
 (operational state, active child work, per-resource queue depth, and busy ticks), aggregate orders,
 W1 child jobs with `JobId -> OrderId` correlation and ordinal, cross-machine pending work, and the
 authoritative backlog/completed-order/completed-sales/lead-time/throughput aggregates already owned

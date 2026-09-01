@@ -335,7 +335,12 @@ public class FactoryRuntime {
                 .toList();
         long elapsedTicks = scheduler.currentTime().value();
         return new RuntimeObservation(
-                new RuntimeObservationMetadata(runId, modelVersion.fingerprint(), scheduler.currentTime(), 0),
+                new RuntimeObservationMetadata(
+                        runId,
+                        modelVersion.fingerprint(),
+                        scheduler.currentTime(),
+                        scheduler.isEmpty() ? RuntimeRunState.QUIESCENT : RuntimeRunState.ACTIVE,
+                        0),
                 resources,
                 orders,
                 jobs,

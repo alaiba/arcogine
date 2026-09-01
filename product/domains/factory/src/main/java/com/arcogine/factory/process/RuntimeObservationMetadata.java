@@ -6,10 +6,14 @@ import com.arcogine.types.SimTime;
 
 /** Immutable provenance and cursor metadata for one supported runtime observation. */
 public record RuntimeObservationMetadata(
-        RunId runId, ModelFingerprint modelFingerprint, SimTime currentTime, long latestEventSequence) {
+        RunId runId,
+        ModelFingerprint modelFingerprint,
+        SimTime currentTime,
+        RuntimeRunState runState,
+        long latestEventSequence) {
 
     public RuntimeObservationMetadata {
-        if (runId == null || modelFingerprint == null || currentTime == null) {
+        if (runId == null || modelFingerprint == null || currentTime == null || runState == null) {
             throw new NullPointerException("runtime observation metadata values must not be null");
         }
         if (latestEventSequence < 0) {

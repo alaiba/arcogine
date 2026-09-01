@@ -87,6 +87,15 @@ For anything more specific, use the subsystem's native tool directly: `cd produc
 
 `./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. Use the dev container on Windows; it's the supported path.
 
+### Local Windows test environment
+
+On this repository's native Windows/PowerShell host, the available JVM is Java 8 and cannot run
+the project's Gradle build. Run Java tests through the `gradle:9-jdk21` Docker container described
+in [`docs/development/testing.md`](docs/development/testing.md#running-java-tests-on-the-minimum-jdk),
+for example `docker exec arcogine-build ./gradlew test`. Start `arcogine-build` using the documented
+long-lived container command when it is not already running. Do not treat a host-JVM Gradle failure
+as a product test failure.
+
 **Always use `./gradlew` from `product/`, never a globally installed `gradle`.** The wrapper pins the exact build version in `product/gradle/wrapper/gradle-wrapper.properties`; a system Gradle install can silently diverge from it.
 
 Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dockerfile`, `infra/docker/web.Dockerfile`) — it never compiles Java or frontend source. `./arcogine build` must run before `./arcogine image`.

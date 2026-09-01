@@ -118,6 +118,17 @@ For anything more specific, use the subsystem's native tool directly: `cd produc
 
 `./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. Use the dev container on Windows; it's the supported path.
 
+### Backend test environment
+
+Backend validation requires a JDK 21+ runtime and the repository Gradle wrapper. On Windows, use
+the dev container when practical. If the current host exposes only a pre-21 JDK or otherwise cannot
+run the wrapper, do not use it for backend validation; use the dev container or the documented
+`gradle:9-jdk21` Docker workflow in
+[`docs/development/testing.md`](docs/development/testing.md#running-java-tests-on-the-minimum-jdk),
+for example `docker exec arcogine-build ./gradlew test`. Classify a host Gradle failure as
+environmental only when it is attributable to the unsupported or missing JVM; otherwise investigate
+it as a build or product failure.
+
 **Always use `./gradlew` from `product/`, never a globally installed `gradle`.** The wrapper pins the exact build version in `product/gradle/wrapper/gradle-wrapper.properties`; a system Gradle install can silently diverge from it.
 
 Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dockerfile`, `infra/docker/web.Dockerfile`) — it never compiles Java or frontend source. `./arcogine build` must run before `./arcogine image`.

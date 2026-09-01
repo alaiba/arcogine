@@ -29,17 +29,13 @@ public sealed interface EventPayload permits
     record TaskEnd(JobId jobId, MachineId machineId, int stepIndex) implements EventPayload {}
 
     /**
-     * The operational fact that an accepted order fulfilled its current execution job's full
-     * routing -- distinct from a single {@link TaskEnd}, which only means one production step
-     * finished. Carries the immutable commercial facts a downstream consumer (e.g. Finance) needs
-     * to interpret the transaction; deliberately does not carry the derived orderValue (quantity x
-     * unitPrice) to avoid a second consistency invariant for a value that's trivially recomputed.
-     *
-     * <p>{@code jobId} is retained as the existing event-contract correlation identifier in this
-     * behavior-preserving slice. Factory now stores immutable accepted {@code Order}/{@code
-     * OrderId} intent separately from mutable {@code Job} execution; migrating externally visible
-     * completion events to explicit order identity belongs with the later workload/event-contract
-     * work rather than silently changing this payload here.
+     * The operational fact that an accepted order fulfilled its full execution aggregate --
+     * distinct from a single {@link TaskEnd}, which only means one production step finished.
+     * Carries the authoritative {@code orderId}, the completing child {@code jobId} retained for
+     * work-item correlation, and the immutable commercial facts a downstream consumer (e.g.
+     * Finance) needs to interpret the transaction. The derived orderValue (quantity x unitPrice)
+     * is deliberately omitted to avoid a second consistency invariant for a value that's trivially
+     * recomputed.
      */
     record OrderCompleted(OrderId orderId, JobId jobId, ProductId productId, long quantity, double unitPrice)
             implements EventPayload {

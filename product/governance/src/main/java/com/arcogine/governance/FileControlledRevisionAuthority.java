@@ -389,7 +389,10 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         synchronized (PROCESS_LOCK) {
             try (FileChannel channel = FileChannel.open(
                             lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-                    FileLock ignored = channel.lock()) {
+                    FileLock lock = channel.lock()) {
+                if (!lock.isValid()) {
+                    throw new IllegalStateException("controlled revision authority lock is invalid");
+                }
                 return action.get();
             } catch (GovernanceHistoryException e) {
                 throw e;

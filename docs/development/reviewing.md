@@ -188,6 +188,14 @@ Current-state docs must describe what actually exists. Planning docs must distin
 
 After iterative fixes, re-check the PR title/body as well: a description of an API that no longer exists is a review defect even when the code is correct.
 
+#### Semantic propagation
+
+For medium- and high-semantic-risk changes, review by concept as well as by changed file. Identify the small set of concepts whose meaning changed, then search maintained docs, tests, examples, interfaces, and configuration for both the new vocabulary and plausible old assumptions. This is especially important when a semantic change can leave syntactically unrelated prose or tests behind.
+
+When an accepted ADR, readiness gate, capability status, or other authority-bearing artifact changes state — for example `unresolved -> accepted`, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
+
+This is bounded change-impact review. It does not require a repository-wide consistency sweep for every PR.
+
 #### ADR discipline
 
 Request an ADR only for a genuinely hard-to-reverse decision, for example durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind.
@@ -205,6 +213,14 @@ Use severity to communicate merge risk, not rhetorical emphasis:
 - **Nit** — optional polish only.
 
 Do not inflate severity. A P1 must identify a real invariant or correctness failure, not a preferred design alternative.
+
+Use these calibration examples when the boundary is unclear:
+
+- a semantic regression demonstrated by failing integration/contract tests, or a change that violates a binding architecture invariant, is normally **P1**;
+- a PR whose central claimed behavior is still defeated by another maintained execution path is normally **P1**;
+- a false completion/status claim or missing completion evidence that can be corrected without changing otherwise safe runtime behavior is normally **P2**, unless that false status itself unlocks a dependent architectural gate;
+- a stale PR title/body or validation description after remediation is normally **P2** when it materially misstates the proposed head;
+- optional extra coverage, cleanup, or future hardening that does not affect the current invariant is **P3** or **Nit**.
 
 Each actionable finding should state:
 
@@ -259,6 +275,8 @@ Every review/re-review should end with a clear disposition:
 - **READY AFTER CI** — code/docs review is clean; only current-head validation remains.
 - **CHANGES REQUIRED** — at least one blocking/pre-merge finding remains.
 - **NON-BLOCKING FOLLOW-UPS ONLY** — merge is acceptable; remaining items are explicitly optional/future work.
+
+For medium- and high-risk reviews, the final report should also identify the material semantic neighbors inspected, including important surfaces inspected that required no change. This coverage note is evidence of review breadth, not a claim that those surfaces are globally consistent.
 
 Do not leave merge readiness implicit.
 

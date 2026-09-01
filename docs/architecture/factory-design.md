@@ -62,7 +62,7 @@ The proposed model boundary distinguishes an experiment from the production syst
 
 ```text
 Scenario
-    describes an experiment or execution context
+    describes a simulation experiment/run input envelope
 
 FactoryModel
     describes the production system
@@ -138,7 +138,7 @@ FactoryRuntime
 
 These need not all become separate persistence entities or modules initially.
 
-Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it a deterministic content hash under the current provisional identity policy. It is not yet a **controlled revision** entity — there is no persistent revision repository, lineage, approval state, or external change reference. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) draws that distinction; see section 11 below for what the fingerprint does and does not carry.
+Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it the durable `factory-model:v1` `ModelFingerprint` defined by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). It is still not itself a **controlled revision** entity. Governance G1 now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
 
 ### 4.1 What belongs in the canonical model
 
@@ -343,24 +343,24 @@ A published model version is the bridge between design and downstream contexts.
 
 [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) separates two concepts that publication identity must not bundle together:
 
-- **Semantic fingerprint** — a deterministic identity derived from canonical model content. Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the minimum publication identity required today.
-- **Controlled revision** — a persisted, controlled historical configuration state carrying change-control provenance and lineage back to a prior revision, and optionally a stable external change reference (for example, an issue-tracker key). Authorization and deployment are separate lifecycle/evidence records that may reference a revision; a revision need not be authorized or deployed to exist. This is deferred capability, not part of today's publication boundary.
+- **Semantic fingerprint** — a deterministic identity derived from canonical model content under the durable versioned policy in ADR-0006. Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the publication identity carried by `FactoryModelVersion`.
+- **Controlled revision** — a persisted, controlled historical configuration occurrence with separate identity, semantic-fingerprint binding, lineage, and recording provenance. Governance G1 now implements this capability through `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`. Authorization, external workflow linkage, conformance, and deployment remain separate records that may reference a revision; a revision need not be authorized or deployed to exist.
 
-Every runtime or verification result must retain the identity of the model version it instantiated, expressed as the fingerprint.
+Every runtime or verification result must retain the semantic fingerprint of the model version it instantiated. A `ControlledRevisionId` is additional historical provenance only when an authoritative revision binding actually exists; it must not be synthesized from the fingerprint.
 
 The desired invariant is:
 
-> Given a published model version, execution context, seed, and ordered commands, Arcogine can identify exactly which semantic design produced the resulting events and observations.
+> Given a published model version, the relevant runtime inputs (including the seed for simulation), and ordered commands, Arcogine can identify exactly which semantic design produced the resulting events and observations.
 
-Persistent lineage, authorship, approvals, branches, and change sets should be added only when concrete collaboration or deployment workflows require them.
+Persistent controlled-revision lineage is now available through Governance G1. Authorship beyond recording provenance, approvals/authorization, external workflow relationships, branch/ref semantics, and semantic ChangeSets remain separate capabilities and must not be folded into Factory Design publication identity.
 
 ### 11.1 External change-management and deployment integration
 
 Arcogine does not require organizational change-management workflow to live inside the factory domain.
 
-A controlled model revision may reference an external change record, such as a Jira issue. Arcogine remains authoritative for the model, semantic diff, technical assessments, and resulting revision; the external system remains authoritative for request/review/authorization workflow unless that responsibility is explicitly brought into Arcogine.
+A controlled model revision may reference an external change record, such as a Jira issue. Arcogine remains authoritative for the model and its domain-specific semantic facts; Governance owns the durable revision/change interpretation, while the external system remains authoritative for request/review/authorization workflow unless that responsibility is explicitly brought into Arcogine.
 
-Conformance/verification assessments, authorization decisions, simulation runs, and operational deployments remain separate artifacts from the model and from each other. They may reference a fingerprint and, once it exists, a controlled revision, but none of them is the model. The operational deployment record additionally owns target, adapter/profile/transformation, effective applied-artifact/version, apply/verification result, and reconciliation provenance; Factory Design must not duplicate those mechanics.
+Conformance/verification assessments, authorization decisions, simulation runs, and operational deployments remain separate artifacts from the model and from each other. They may reference a fingerprint and authoritative controlled revision when applicable, but none of them is the model. The operational deployment record additionally owns target, execution context, adapter/profile/transformation, effective applied-artifact/version, apply/verification result, and reconciliation provenance; Factory Design must not duplicate those mechanics.
 
 ## 12. Shared validation and publication boundary
 

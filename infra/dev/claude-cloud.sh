@@ -8,8 +8,9 @@
 # so a preceding `cd` would defeat that diagnostic.
 #
 # Provisioning is intentionally lightweight: inspect and validate the base
-# image, but do not install project dependencies. Run `./arcogine setup`
-# explicitly later when a task actually needs the development dependencies.
+# image, but do not install project dependencies. Install only dependencies
+# needed by the task; `./arcogine setup` remains an explicit, optional
+# full-development convenience.
 set -euo pipefail
 
 REPO_DIR="/home/user/arcogine"
@@ -212,7 +213,7 @@ fi
 echo "    Node.js version OK: ${ACTUAL_NODE_VERSION} (supported ${SUPPORTED_NODE_RANGE})"
 
 echo "    No project dependencies were installed during provisioning."
-echo "    Run './arcogine setup' explicitly when a task requires them."
+echo "    Install only task-required dependencies, or explicitly run './arcogine setup' for the full development set."
 
 # ---------------------------------------------------------------------------
 # 3. Done.

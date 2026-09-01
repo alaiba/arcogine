@@ -4,7 +4,7 @@
 > **Scope:** Prepare Arcogine's factory runtime for external consumers after the canonical factory-model boundary is established  
 > **Authority:** Planning only; this document defines runtime-readiness gates, not current capability or accepted architecture  
 > **Prerequisite:** the model-seam entry gate (§1.1) — narrower than full D1-D4 in [Factory Design Capability](factory-design-capability.md)  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
 
 ## 1. Purpose
 
@@ -46,12 +46,12 @@ Required before engine Gate 1:
 - canonical FactoryModel seam exists
 - deterministic structural validation exists
 - immutable publication exists
-- current provenance identity policy exists (today's provisional content hash; see ADR-0004)
+- a model provenance identity policy exists
 - runtime instantiates only from the published model
 - representative baseline behavior is preserved
 ```
 
-This gate is satisfied by what has already landed. It does not require the D1 definition/instance split, the D2 stable finding taxonomy (codes/severity/entity metadata), or the D3 durable cross-process fingerprint contract — those remain open design-capability work, tracked independently, and are not prerequisites for Gate 1 or any later gate in this plan. Result-level model provenance (`SimResult` carrying the provenance `IntegratedHandler` already has) is implemented; broader run-level provenance (run ID, scenario/input fingerprint, engine build) remains a small, separately tracked follow-up rather than a gate blocker.
+This gate is satisfied by what had already landed when Gate 1 began. Historically, Gate 1 did **not** depend on the then-unimplemented D3 durable cross-process fingerprint contract; that historical sequencing remains valid and Gate 1 is not retroactively reopened. Since then, D3/G1.1 has landed: [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md) and `FactoryModelVersion.fingerprint()` establish the durable `factory-model:v1` semantic identity contract. `FactoryModelVersion.contentHash()` remains legacy compatibility only and must not be treated as the durable provenance identity. Gate 4 therefore uses the durable `ModelFingerprint` as mandatory source-model provenance under [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md). Run identity and ordered runtime-event provenance are Gate 4 concerns; optional controlled-revision provenance is carried only when authoritatively supplied and does not make Governance G1.3 persistence a prerequisite for Engine readiness.
 
 ## 2. Boundary with factory design and operational execution
 
@@ -383,6 +383,8 @@ With Gate 3 closed, **W1's functional implementation is now in place (§14.1)**.
 
 Expose enough supported runtime information for a consumer to understand the simulation without reaching into internal stores or reconstructing authoritative state from undocumented events.
 
+[ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md) is the accepted architecture for Gate 4 semantics. The focused [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md) plan owns implementation slicing and evidence sequencing. In particular, internal scheduler `Event`/`EventType`/`EventPayload` remain transition machinery rather than the supported external compatibility contract; supported runtime events describe authoritative changes after processing, and a fresh observation remains sufficient to reconstruct current consumer state without full event replay.
+
 ### 8.2 Minimum observation
 
 The consumer-neutral observation should contain, directly or through purpose-specific projections:
@@ -391,7 +393,7 @@ The consumer-neutral observation should contain, directly or through purpose-spe
 Session
     session/run ID
     model fingerprint
-    model revision ID [optional/future]
+    controlled revision ID [optional when authoritatively bound]
     current simulated time
     run state
     latest event sequence
@@ -434,22 +436,24 @@ Not every consumer must receive one universal state dump. Purpose-specific obser
 
 ### 8.3 Event envelope
 
-Every externally visible runtime event should have an envelope equivalent to:
+Every externally visible supported runtime event has an envelope equivalent to:
 
 ```text
+run/session ID
 sequence
 simulation time
-event type
-session ID
+semantic event type
 model fingerprint
-model revision ID [optional/future]
-affected entity IDs
+controlled revision ID [optional when authoritatively bound]
+affected entity references
 payload
 ```
 
-The sequence is monotonic within one session and makes order explicit independently of event timestamps.
+The sequence is strictly monotonic within one run/session epoch and makes order explicit independently of event timestamps. A reset creates a new run identity and sequence epoch; run identity is correlation metadata and must not influence deterministic simulation outcomes.
 
-ADR-0010 already requires W1's aggregate completion payload to include explicit `OrderId` while retaining the completing child `JobId`. Gate 4 must preserve that correlation inside whatever stable envelope it chooses.
+ADR-0010 already requires W1's aggregate completion payload to include explicit `OrderId` while retaining the completing child `JobId`. Gate 4 preserves that correlation in the supported contract.
+
+`ModelFingerprint` is mandatory source-model provenance under ADR-0006/ADR-0011. `ControlledRevisionId` is optional and present only when the runtime was instantiated with an authoritative revision binding; Gate 4 does not synthesize revision identity or take ownership of Governance G1.3 persistence/resolution.
 
 These are **simulation-runtime** events and observations. A future Operational Execution adapter may translate relevant production semantics into its own command/result and external-observation contracts, but Gate 4 does not define production telemetry envelopes, external source authenticity, or digital-twin reconciliation.
 
@@ -462,9 +466,13 @@ Gate 4 is satisfied when:
 3. Event ordering is explicit and reproducible.
 4. A consumer can identify the active bottleneck using supported observations rather than internal stores.
 5. Requested, assigned, started, completed, and reported states are distinguishable.
-6. Runtime observations include source-model provenance.
+6. Runtime observations and supported runtime events carry the durable source `ModelFingerprint`; a controlled revision ID is carried only when authoritatively bound.
 7. API/UI DTOs remain outward projections and are not reused as domain decision inputs.
 8. A fresh observation can reconstruct current view state without replaying the entire history.
+9. Successful state-change runtime events are published only after the relevant authoritative processing succeeds; rejected changes do not produce successful state-change events.
+10. Supported event sequence is strictly monotonic within a run/session and independent of simulation timestamp; same-time events remain explicitly ordered.
+11. W1 runtime events preserve `OrderId`/child `JobId` correlation where work-item changes belong to an aggregate order.
+12. Reset creates a new run identity/sequence epoch without changing deterministic semantic outcomes for otherwise identical inputs.
 
 ## 9. Gate 5 — Spatial runtime consequences
 
@@ -646,6 +654,8 @@ These capabilities are required before treating an external client as distributa
 | Sidecar lifecycle and packaging | Start, health-check, version-check, communicate with, and stop a bundled local runtime without requiring a separate Java installation |
 | Compatibility tests | Keep consumer-contract fixtures that fail on accidental breaking changes |
 
+Gate 4 establishes the recovery primitives—run identity, monotonic supported-event sequence, observation cursor, and transport-neutral event semantics—but not the complete recovery mechanism. Distribution hardening later owns retained supported-event history, reconnect/resume cursors, explicit gap detection/resynchronization, contract versioning, and exact checkpoint/restore. Recovery uses a fresh observation plus ordered deltas when history cannot be resumed; it does not require event sourcing or full-history replay.
+
 A game save may wrap an Arcogine checkpoint with game-owned state. Arcogine does not own campaign progress, score, camera state, or user preferences.
 
 This distribution hardening is for simulation consumers. Production connectivity additionally depends on the Operational Execution/Digital Twin readiness gates and must not infer production safety from simulation packaging/recovery maturity.
@@ -696,7 +706,7 @@ Scenario factory semantics
 4. Capability/eligibility-driven deterministic dispatch. **Implemented as Gate 2**; see ADR-0009 for the dispatch/decomposition boundary.
 5. Consumer-neutral session and bounded advancement. **Implemented as Gate 3**; see ADR-0007.
 6. **W1 — intra-order execution decomposition. Functional implementation in place.** Architecture resolved by [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md): quantity `N` -> `N` unit-quantity sibling `Job`s; `JobId` is work-item identity; order-level execution progress uses the parent `OrderId`; Gate 2 dispatch is reused unchanged; exactly one order completion; deterministic ordering/replay. The required large-order benchmark remains outstanding before W1 is fully complete.
-7. Stable runtime observations and event envelopes, built on W1's execution identities.
+7. Stable runtime observations and ordered authoritative runtime events under [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), delivered headlessly according to [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md).
 8. Spatial transfer consequences from published layout.
 9. Public-contract, recovery, persistence, and packaging hardening.
 
@@ -730,7 +740,7 @@ This milestone deliberately excludes changing the canonical-model boundary, layo
 | Deterministic dispatch policy | Resolved by Gate 2 / ADR-0009; revisit only if a concrete workload requires a different ranking policy |
 | Session interface/module ownership | Resolved by Gate 3 / ADR-0007; revisit only if a concrete consumer proves `FactoryRuntime` is no longer the right boundary |
 | Tick/event-count advancement semantics | Interactive/headless responsiveness tests |
-| Observation decomposition | First reference consumer and capability-boundary review after W1 |
+| Observation/event contract semantics | **Resolved by ADR-0011; implementation decomposition remains in the focused Gate 4 delivery plan** |
 | Spatial metric/transfer policy | Layout benchmark prototype |
 | Public compatibility policy | Before external consumer contract publication |
 

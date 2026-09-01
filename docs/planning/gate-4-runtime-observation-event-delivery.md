@@ -320,7 +320,7 @@ Silent truncation is never considered successful recovery.
 
 ### Controlled revision
 
-G1.2 and ADR-0008 now provide `ControlledRevisionId` and immutable revision/lineage value objects. G1.3 authoritative revision persistence and exact historical semantic-state resolution are not complete.
+G1 is complete: G1.2 and ADR-0008 provide `ControlledRevisionId` and immutable revision/lineage values, while G1.3 provides authoritative durable revision persistence and exact historical semantic-state resolution. Gate 4 still treats revision provenance as an optional binding because G1 completion does not imply that a particular runtime was instantiated from an authoritative controlled revision.
 
 Therefore Gate 4 uses:
 
@@ -357,7 +357,7 @@ This is the only semantic owner of the Gate 4 runtime-event contract.
 Governance owns:
 
 - controlled historical revision identity/lineage;
-- authoritative revision persistence/resolution (G1.3);
+- authoritative revision persistence/resolution (G1 complete);
 - ChangeSets, requirements/assertions, conformance evaluation, evidence use, findings, governed changes/exceptions in later gates.
 
 Runtime events are not Governance evidence records by default. A later evidence-use boundary may reference selected runtime observations/events with provenance, but RuntimeEvent, ControlledRevision, EvidenceUse, Finding, and ChangeSet remain distinct concepts.

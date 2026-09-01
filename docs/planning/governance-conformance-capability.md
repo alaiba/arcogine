@@ -1,8 +1,8 @@
 # Governance and Conformance Capability Plan
 
-> **Status:** Proposed  
+> **Status:** Proposed; G1 complete  
 > **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
-> **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, not current product capability  
+> **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, while current-state G1 behavior is also recorded in the architectural overview and accepted ADRs  
 > **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Governance G1 Continuity Notes](governance-g1-continuity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
 
 ## 1. Purpose
@@ -42,20 +42,22 @@ The same primitives support design review, architecture governance, deployment a
 
 The canonical factory-model work is the first implementation proving ground.
 
-The implemented seam currently provides:
+The implemented seam now provides:
 
 ```text
 FactoryModel
     -> structural validation
     -> immutable publication
     -> durable factory-model:v1 semantic fingerprint
+    -> canonical semantic artifact encoding/strict historical reconstruction
+    -> authoritative controlled-revision acceptance and durable history
     -> runtime instantiation
     -> runtime/result provenance work in progress
 ```
 
-ADR-0006 and its implementation establish the durable semantic fingerprint contract. ADR-0008 establishes the controlled revision identity and lineage decision; G1.2 implements its value contracts, while authoritative revision persistence remains outstanding.
+ADR-0006 and its implementation establish the durable semantic fingerprint contract. ADR-0008 establishes controlled revision identity and lineage. G1.2 implements its value contracts, and G1.3 now implements authoritative revision acceptance, durable reopenable history, repository-level lineage integrity, and exact historical semantic-state resolution for the factory proving ground.
 
-The governance use case provides the concrete cross-consumer reason to complete the remaining G1 work. The dependency order matters here, and matches the G1-G9 sequence in §4 below:
+The dependency order remains:
 
 ```text
 G1.1 durable semantic fingerprint                 complete
@@ -63,7 +65,9 @@ G1.1 durable semantic fingerprint                 complete
 G1.2 controlled revision identity/value contract  complete
           ↓
 G1.3 authoritative revision persistence +
-     exact historical semantic-state resolution
+     exact historical semantic-state resolution  complete
+          ↓
+G1 durable identity/history substrate              complete
           ↓
 G2 semantic ChangeSet
           ↓
@@ -86,7 +90,7 @@ The dependency is explicit:
 
 ```text
 Governance G1
-    durable semantic fingerprint + controlled revision identity
+    durable semantic fingerprint + controlled revision identity/history
         |
         +--> Operational deployment / historical reconciliation
 
@@ -108,7 +112,7 @@ Governance G5
 
 Operational Execution owns telemetry/external-observation acquisition, operational source trust/authenticity provenance, command/result facts, deployment target application/effective artifact provenance, and modeled-versus-observed reconciliation. Governance owns the durable revision/change/evaluation/evidence-use/finding semantics that may reference those facts.
 
-Operational work may proceed headlessly with clearly scoped synthetic revision, ChangeSet, conformance, or evidence-use fixtures while G1/G2/G4/G5 are incomplete. Those fixtures **do not satisfy Governance gates** and must not escape as duplicate shared production abstractions. When the Governance-owned contract lands, the operational fixture is replaced by an adapter/mapping to it.
+Operational work may proceed headlessly with clearly scoped synthetic ChangeSet, conformance, or evidence-use fixtures while G2/G4/G5 are incomplete. G1 revision fixtures are no longer required: the Governance-owned authoritative revision identity/history contract is available. Fixtures for later gates do not satisfy those Governance gates and must not escape as duplicate shared production abstractions.
 
 ## 3. Delivery principles
 
@@ -127,7 +131,7 @@ Operational work may proceed headlessly with clearly scoped synthetic revision, 
 ## 4. Delivery sequence
 
 ```text
-G1  Durable fingerprint and controlled revision lineage
+G1  Durable fingerprint and controlled revision lineage       complete
     ↓
 G2  Semantic ChangeSet and impact model
     ↓
@@ -152,11 +156,11 @@ G1-G5 are architectural substrate. G6-G7 establish governance workflow integrati
 
 ### Current status
 
-**Partial.** G1.1 is complete: ADR-0006 and the `factory-model:v1` implementation establish the durable semantic fingerprint contract.
+**Complete.** G1.1, G1.2, and G1.3 are implemented and executable.
 
-**G1.2 is complete.** `:types` provides `ControlledRevisionId`; `:governance` provides the immutable controlled-revision, lineage, and recording-provenance value contracts fixed by ADR-0008. This slice proves local value invariants only; it does not provide authoritative persistence or historical semantic-state resolution.
+G1.1 provides the durable semantic fingerprint contract. G1.2 provides `ControlledRevisionId` and immutable controlled-revision/lineage/recording-provenance values. G1.3 provides the authoritative acceptance boundary, reopenable durable history, repository-level parent integrity, exact historical semantic-artifact resolution, fingerprint reverification, typed integrity failures, and concurrent duplicate-ID protection.
 
-**G1.3 remains outstanding.** Arcogine still needs authoritative durable controlled-revision persistence, repository-level lineage integrity, and exact revision-to-semantic-state/artifact resolution before the G1 identity/history substrate can be considered complete. Downstream authorization, deployment, and result-provenance integrations validate their own use of G1 identities in their owning capabilities; those integrations do not gate G1 closure.
+Downstream authorization, deployment, conformance, evidence, and result-provenance integrations validate their own use of G1 identities in their owning capabilities; they are not part of the immutable revision core and did not gate G1 closure.
 
 ### Goal
 
@@ -210,7 +214,7 @@ ADR-0008 fixes the following contract:
 - ID, fingerprint, lineage, and required recording provenance are immutable once accepted by the authoritative revision store;
 - `ChangeSet`, external workflow references, approval/authorization, deployment, conformance/evidence, labels, and model artifact storage are not fields in the minimum immutable revision core.
 
-The implemented slice is deliberately narrow:
+The G1.2 value slice remains deliberately narrow:
 
 ```text
 :types
@@ -219,63 +223,91 @@ The implemented slice is deliberately narrow:
 :governance
     ControlledRevision
     RevisionProvenance
-    RevisionRecorder (or equivalently narrow recorder value)
+    RevisionRecorder
 ```
 
-The implementation proves local value invariants and the `F1 -> F2 -> F1` historical case. It does not create a fake in-memory repository or claim durable persistence.
+Those value invariants remain unchanged by G1.3.
 
 ### G1.3 — Authoritative persistence and historical semantic-state resolution
 
-**Status: Outstanding.**
+**Status: Complete.**
 
-A controlled revision becomes an authoritative historical fact only when its immutable record is accepted by Arcogine's authoritative revision store. G1.3 must establish the durable persistence boundary without reopening the identity semantics fixed by ADR-0008.
+A controlled revision becomes authoritative only when `ControlledRevisionAuthority.accept(...)` succeeds. Constructing a `ControlledRevision` in JVM memory does not create authoritative history.
 
-G1.3 must provide or prove:
+The current implementation provides:
 
-- durable revision-ID uniqueness and stable ID-to-record binding;
-- immutable revision-to-fingerprint and revision-to-provenance relationships;
-- repository-level parent existence and lineage integrity;
-- exact controlled-revision resolution to the semantic state/artifact required for historical reconstruction;
-- persistence semantics sufficient for later ChangeSet reconstruction, conformance attribution, and downstream revision-ID provenance.
+```text
+:governance
+    ControlledRevisionAuthority
+    SemanticArtifact
+    SemanticArtifactVerifier
+    HistoricalRevision
+    FileControlledRevisionAuthority
+```
 
-G1.3 may require a follow-up ADR when the implementation commits to hard-to-reverse repository, artifact-retention/resolution, integrity, or migration semantics. ADR-0008 intentionally does not choose a database, event store, repository API, blob/artifact format, or physical indexing strategy.
+`FileControlledRevisionAuthority` is the current durable adapter. It uses a local JDK filesystem authority root with versioned immutable revision records, immutable semantic-artifact records, a filesystem lock, and atomic revision-record installation. It was selected because the repository had no existing database/persistence infrastructure and G1.3 required executable restart durability without introducing heavyweight infrastructure.
+
+The filesystem layout and binary record encoding are private adapter mechanics, not a selected permanent production persistence architecture. No new ADR was required: the only durable semantic artifact format used by the factory proving ground is the already accepted ADR-0006 `factory-model:v1` canonical representation. A future hard-to-reverse database, retention, migration, or artifact-store contract should receive its own ADR when selected.
+
+Acceptance enforces:
+
+- a revision ID is unused and cannot be silently rebound or overwritten;
+- the revision fingerprint equals the supplied semantic artifact fingerprint;
+- recomputing the durable fingerprint from the canonical artifact reproduces that `ModelFingerprint`;
+- a named parent is already authoritative and intact;
+- the current self-parent/`0..1` value invariants remain in force;
+- an immutable semantic artifact exists before the revision record reaches its atomic authoritative commit point;
+- concurrent conflicting acceptance attempts for one revision ID serialize at the authority boundary so only one binding can win.
+
+The semantic artifact is stored separately from the historical occurrence. Multiple revisions may therefore resolve to the same immutable artifact. The historical `F1 -> F2 -> F1` case produces three controlled revisions while the equal-F1 occurrences reuse the same canonical semantic content.
+
+For the factory proving ground, `FactoryModelArtifactV1` exposes the same canonical `factory-model:v1` bytes used by the durable fingerprint policy and provides strict historical decoding. Decoding rejects malformed UTF-8, invalid structural encodings, trailing bytes, and decodable-but-noncanonical representations. Resolution therefore supports:
+
+```text
+ControlledRevisionId
+    -> ControlledRevision
+    -> ModelFingerprint
+    -> exact canonical semantic artifact
+    -> exact historical FactoryModelVersion
+```
+
+Resolution never substitutes the mutable current model. Stored artifacts are reverified against their recorded fingerprint. Missing revisions, missing artifacts, fingerprint mismatch, unsupported artifact policy, corrupt revision metadata, and corrupt artifact data fail explicitly through typed Governance failure codes rather than vendor/filesystem exceptions.
+
+The authority's consistency strategy installs/verifies the immutable artifact first and treats atomic revision-record installation as the authoritative commit point. Normal failed acceptance removes a newly-created artifact before returning. A hard process failure before the revision commit can at worst leave an unreferenced immutable artifact; it cannot expose a partially authoritative revision.
 
 ### Required properties
 
 - Equal semantic content can have the same model fingerprint across distinct controlled revisions.
 - A later rollback may therefore have the same fingerprint as an earlier revision while remaining historically distinct.
 - Controlled revision identity must not be inferred from the fingerprint or a human label such as `v7`.
-- The same controlled revision ID must always identify the same immutable revision record.
-- Revision lineage must be explicit and independent of fingerprint equality.
-- A revision must not name itself as parent; the authoritative store must preserve parent existence/integrity under the accepted lineage policy.
+- The same controlled revision ID always identifies the same immutable accepted revision record.
+- Revision lineage is explicit and independent of fingerprint equality.
+- A revision cannot name itself as parent; the authoritative store requires a named parent to pre-exist acceptance.
 - Recording provenance identifies when Arcogine accepted the historical record and who/what recorded it, without implying authorization.
 - Human version/revision labels may exist for presentation but are not fundamental identity.
 - External workflow references are associations, not revision identity.
 - Authorization, deployment, conformance, evidence, and framework/compliance state remain separate records/projections.
+- Exact historical semantic state is reconstructed from the stored canonical artifact rather than current runtime/model state.
 
 ### Acceptance criteria
 
-Criteria 1-5 define completion of the G1 identity/history substrate. Criteria 6-7 are cross-capability compatibility boundaries: G1 must make those references possible without absorbing downstream state into revision identity, but the concrete downstream integrations are accepted in their owning capability slices and are not prerequisites for G1 closure.
+Criteria 1-5 define completion of the G1 identity/history substrate. Criteria 6-7 are cross-capability compatibility boundaries: G1 makes those references possible without absorbing downstream state into revision identity, while concrete downstream integrations are accepted in their owning capability slices.
 
 G1 is ready when:
 
 1. A durable semantic fingerprint contract is explicitly specified and testable across supported process/version boundaries. **Satisfied by G1.1.**
 2. Controlled revision identity/value semantics are implemented according to ADR-0008, including UUIDv4 identity, exactly one fingerprint, current `0..1` parent lineage, rollback-as-new-revision, and immutable recording provenance. **Satisfied by G1.2.**
-3. Controlled revisions have authoritative durable identities independent of process memory and semantic fingerprint equality. **G1.3.**
-4. The authoritative store enforces revision-ID uniqueness, immutable ID-to-record binding, and parent existence/integrity under the chosen lineage policy. **G1.3.**
-5. An authoritative controlled revision can resolve to the exact semantic state/artifact needed for historical reconstruction. **G1.3.**
+3. Controlled revisions have authoritative durable identities independent of process memory and semantic fingerprint equality. **Satisfied by G1.3 durable acceptance/reopen tests.**
+4. The authoritative store enforces revision-ID uniqueness, immutable ID-to-record binding, and parent existence/integrity under the chosen lineage policy. **Satisfied by G1.3 duplicate/rebind, lineage, failure-atomicity, and concurrency tests.**
+5. An authoritative controlled revision can resolve to the exact semantic state/artifact needed for historical reconstruction. **Satisfied by G1.3 canonical artifact resolution, reopen, fingerprint-reverification, and corruption tests.**
 6. Authorization and deployment records can independently reference a revision without becoming revision identity. **Compatibility boundary fixed by ADR-0008; concrete authorization/deployment integration is accepted downstream.**
 7. A downstream result can retain the semantic fingerprint and, when applicable, the controlled revision ID. **Compatibility boundary; concrete result-provenance integration is accepted by the owning producer/consumer capability.**
 
 ### ADR status
 
-The identity decisions are no longer open:
+The identity decisions are fixed by ADR-0004, ADR-0006, and ADR-0008. G1.3 did **not** require a new ADR because its filesystem record layout, directory names, lock mechanics, and fingerprint-derived physical artifact key are private, replaceable adapter details rather than a selected permanent persistence architecture; the semantic artifact bytes themselves reuse ADR-0006's existing `factory-model:v1` contract.
 
-- ADR-0004 fixes semantic identity vs. controlled revision identity and the external workflow authority boundary;
-- ADR-0006 fixes the durable semantic fingerprint contract;
-- ADR-0008 fixes controlled revision identity, current lineage semantics, rollback, minimum provenance, immutability, and the persistence boundary.
-
-A new ADR is needed only if G1.3 commits to a hard-to-reverse persistence/artifact-resolution/integrity choice or if future work extends lineage into multi-parent merge/ref semantics.
+A new ADR remains appropriate if future work commits Arcogine to a hard-to-reverse production persistence, migration, retention, artifact-store, integrity, or multi-parent/ref contract.
 
 ## 6. G2 — Semantic ChangeSet and impact model
 
@@ -600,26 +632,28 @@ The first milestone should deliberately avoid a full external compliance framewo
 
 > **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked through a separate association to an external change request, evaluate one Arcogine-native requirement before authorization/deployment, record the authorization decision separately, and reconstruct why the resulting semantic state was considered conformant.**
 
-A concrete example could be an ownership requirement once the relevant owner/authority semantics exist.
+G1 now supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone. The milestone remains outstanding because G2+ must still provide semantic change attribution, requirements/conformance/evidence, and separate workflow/authorization records.
 
 Definition of done:
 
 ```text
-Durable semantic fingerprint contract exists
-Controlled revision identity exists
-Authoritative controlled revision persistence exists
-Exact historical semantic state is resolvable
-Base revision -> ChangeSet -> candidate revision is attributable
-Affected entity is identified
-One versioned requirement applies
-Pre-change assertion evaluates deterministically
-Finding is produced if violated
-External change-request provenance can be linked separately
-Authorization is a separate record referencing the revision
+Durable semantic fingerprint contract exists                         [G1 complete]
+Controlled revision identity exists                                 [G1 complete]
+Authoritative controlled revision persistence exists                 [G1 complete]
+Exact historical semantic state is resolvable                        [G1 complete]
+Base revision -> ChangeSet -> candidate revision is attributable      [G2+]
+Affected entity is identified                                        [G2+]
+One versioned requirement applies                                    [G3+]
+Pre-change assertion evaluates deterministically                      [G4+]
+Finding is produced if violated                                       [G4+]
+External change-request provenance can be linked separately           [G6+]
+Authorization is a separate record referencing the revision           [G6+]
 Deployment is not required to prove the milestone
-Historical evaluation remains attributable after later changes
+Historical evaluation remains attributable after later changes        [G4-G5+]
 No framework-specific field exists on the business object
 ```
+
+A concrete example could be an ownership requirement once the relevant owner/authority semantics exist.
 
 ## 15. What not to build yet
 
@@ -643,15 +677,16 @@ Those may become valid product capabilities later, but they should not distract 
 
 As implementation progresses:
 
-- update [`../architecture/overview.md`](../architecture/overview.md) only with established current-state behavior;
-- update [`../architecture/governance-conformance.md`](../architecture/governance-conformance.md) when this proposed direction changes materially;
+- [`../architecture/overview.md`](../architecture/overview.md) records G1's established current-state behavior;
+- [`governance-g1-continuity.md`](governance-g1-continuity.md) records the implemented G1.3 persistence/resolution mechanism and downstream continuity constraints;
 - keep [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) as the authority for semantic identity vs. revision identity and the external change-control boundary;
 - keep [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md) as the authority for the durable semantic fingerprint contract;
 - keep [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md) as the authority for controlled revision identity, current lineage cardinality, rollback, recording provenance, immutability, and the persistence boundary;
-- update factory/domain architecture docs when identity/change requirements alter those models;
-- update the sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) when Governance G1/G2/G4/G5 contract availability changes its blocked/fixture-backed criteria;
+- no G1.3 ADR was added because the current filesystem adapter is replaceable infrastructure and the semantic artifact format is already governed by ADR-0006;
+- create a follow-up ADR if a future implementation commits to a hard-to-reverse production persistence, artifact-resolution, migration, retention, or revision-record-integrity contract;
+- update factory/domain architecture docs when later identity/change requirements alter those models;
+- update the sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) when G2/G4/G5 contract availability changes its blocked/fixture-backed criteria;
 - update [`../architecture/standards-alignment.md`](../architecture/standards-alignment.md) when Arcogine moves from reference/mapping toward an actual tested conformance profile;
-- create a follow-up ADR for G1.3 only when implementation commits to hard-to-reverse persistence, artifact-resolution, migration, retention, or revision-record-integrity semantics;
 - create later lineage ADRs only when concrete branch/ref/multi-parent merge semantics are required;
 - create ADRs for semantic `ChangeSet` contracts, temporal evidence semantics, and hard-to-reverse external protocols when implementation commits to them;
 - update product/reference docs only for capabilities that actually ship.

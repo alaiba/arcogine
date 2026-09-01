@@ -406,8 +406,9 @@ The Java codebase follows a **modular monolith** pattern with Gradle multi-modul
 product/
 ├── types/                DES primitives: SimTime, MachineId, ProductId, OrderId, JobId,
 │                         Quantity, SimError, scenario config records
-├── governance/            Controlled-revision identity, lineage, and recording-provenance
-│                         value contracts; no persistence or event handling
+├── governance/           Controlled-revision identity, lineage, recording provenance,
+│                         authoritative durable history, and historical resolution;
+│                         current filesystem adapter, no simulation event handling
 ├── simulation/           DES engine: Scheduler, Event, EventHandler interface,
 │                         CompositeHandler, EventLog, KPIs, SimRunner, ScenarioLoader
 ├── domains/
@@ -448,7 +449,7 @@ types ← governance
 challenge   (no dependency on any module above; a sibling, game-owned boundary)
 ```
 
-Each module exposes a clean public API and hides implementation details. Event-handling modules (`factory`, `economy`, `agents`, `finance`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
+Each module exposes a clean public API and hides implementation details. Event-handling modules (`factory`, `economy`, `agents`, `finance`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer. Governance's production dependency remains on `:types`; the factory-domain `factory-model:v1` artifact codec stays domain-owned and is supplied through the Governance `SemanticArtifactVerifier` port rather than introducing a Governance-to-factory production dependency.
 
 `challenge` is deliberately outside this dependency graph: it is a game-owned Challenge Readiness
 module (`com.arcogine.challenge`) that has no `project(...)` dependency on `types`, `simulation`,
@@ -518,7 +519,9 @@ Scenario factory semantics are instantiated through an implemented canonical-mod
 
 `FactoryModelVersion.contentHash()` remains a separate legacy compatibility surface. It is deterministic for the current Java model but is not the durable fingerprint contract and historical bare content hashes must not be reinterpreted as `factory-model:v1` fingerprints. Existing `IntegratedHandler`/`SimResult.modelContentHash` provenance still carries that legacy hash; broader provenance migration and run identity (run ID, scenario/input fingerprint, engine build) remain separate follow-up concerns.
 
-`:types` now provides the `ControlledRevisionId` value model, and `:governance` provides immutable controlled-revision lineage and recording-provenance value contracts. [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) fixes their opaque UUIDv4 identity, current `0..1` parent cardinality, rollback-as-new-revision, and minimum provenance semantics. Authoritative revision persistence, repository-level lineage integrity, exact historical semantic-state resolution, and downstream revision-ID provenance remain G1.3 work. Approval/authorization, conformance, deployment, and external change-management relationships remain separate follow-on records rather than revision identity.
+`:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md). Governance G1 is complete: `ControlledRevisionAuthority` defines the authoritative acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` adapter persists append-only revision records and immutable semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-authoritative parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Historical resolution returns the accepted immutable revision together with its exact semantic artifact; missing/corrupt metadata or artifacts and fingerprint mismatches fail explicitly rather than falling back to current model state.
+
+The factory proving ground reuses ADR-0006's exact `factory-model:v1` canonical bytes as its historical semantic artifact. `FactoryModelArtifactV1` strictly decodes and canonical-reencodes those bytes to reconstruct the exact historical `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one immutable artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The current filesystem record layout and locking mechanics are replaceable adapter details, not a selected permanent production persistence architecture; no new G1.3 ADR was required. Approval/authorization, ChangeSets, conformance/evidence, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain separate G2+ concerns rather than revision identity.
 
 ## API Layer
 

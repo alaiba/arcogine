@@ -130,4 +130,14 @@ describe('useBaselinesStore', () => {
     const deltas = useBaselinesStore.getState().getDeltas(currentSnap, id);
     expect(deltas.revenue.pct).toBe(0);
   });
+
+  it('uses zero when optional lead-time and throughput KPIs are absent', () => {
+    const snap = makeSnapshot({ kpis: [] });
+    useBaselinesStore.getState().saveBaseline('missing-kpis', snap);
+    const id = useBaselinesStore.getState().baselines[0].id;
+
+    const deltas = useBaselinesStore.getState().getDeltas(snap, id);
+    expect(deltas.lead_time).toMatchObject({ current: 0, baseline: 0, delta: 0, pct: 0 });
+    expect(deltas.throughput).toMatchObject({ current: 0, baseline: 0, delta: 0, pct: 0 });
+  });
 });

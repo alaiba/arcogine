@@ -88,14 +88,13 @@ describe('useSimulationStore', () => {
       }));
       useSimulationStore.setState({ kpiHistory: existing });
 
-      const { postScenario, getSnapshot } = await import('../api/client');
-      (postScenario as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
-      (getSnapshot as ReturnType<typeof vi.fn>).mockResolvedValue(makeSnapshot(999));
+      const { postSimRun } = await import('../api/client');
+      (postSimRun as ReturnType<typeof vi.fn>).mockResolvedValue(makeSnapshot(999));
 
-      await useSimulationStore.getState().loadScenario('test');
-      expect(useSimulationStore.getState().kpiHistory.length).toBeLessThanOrEqual(
-        MAX_KPI_HISTORY_POINTS,
-      );
+      await useSimulationStore.getState().runSim();
+      const history = useSimulationStore.getState().kpiHistory;
+      expect(history).toHaveLength(MAX_KPI_HISTORY_POINTS);
+      expect(history.at(-1)).toEqual({ time: 999, values: { event_count: 999 } });
     });
   });
 
@@ -139,6 +138,15 @@ describe('useSimulationStore', () => {
       await useSimulationStore.getState().runSim();
       expect(useSimulationStore.getState().loading).toBe(false);
       expect(useSimulationStore.getState().error).toBe('fail');
+    });
+
+    it('stringifies non-Error command failures', async () => {
+      const { postSimRun } = await import('../api/client');
+      (postSimRun as ReturnType<typeof vi.fn>).mockRejectedValue('service unavailable');
+
+      await useSimulationStore.getState().runSim();
+
+      expect(useSimulationStore.getState().error).toBe('service unavailable');
     });
 
     it('inserts KPI history points to keep sorted order', async () => {
@@ -210,6 +218,15 @@ describe('useSimulationStore', () => {
       await useSimulationStore.getState().fetchSnapshot();
       expect(useSimulationStore.getState().error).toBe('api down');
     });
+
+    it('stringifies non-Error snapshot failures', async () => {
+      const { getSnapshot } = await import('../api/client');
+      (getSnapshot as ReturnType<typeof vi.fn>).mockRejectedValue('snapshot unavailable');
+
+      await useSimulationStore.getState().fetchSnapshot();
+
+      expect(useSimulationStore.getState().error).toBe('snapshot unavailable');
+    });
   });
 
   describe('clearError', () => {
@@ -240,6 +257,15 @@ describe('useSimulationStore', () => {
       expect(useSimulationStore.getState().error).toBe('bad scenario');
       expect(useSimulationStore.getState().snapshot).toBeNull();
     });
+
+    it('stringifies non-Error scenario failures', async () => {
+      const { postScenario } = await import('../api/client');
+      (postScenario as ReturnType<typeof vi.fn>).mockRejectedValue('invalid scenario');
+
+      await useSimulationStore.getState().loadScenario('toml-content');
+
+      expect(useSimulationStore.getState().error).toBe('invalid scenario');
+    });
   });
 
   describe('resetSim', () => {
@@ -268,6 +294,15 @@ describe('useSimulationStore', () => {
       await useSimulationStore.getState().resetSim();
       expect(useSimulationStore.getState().loading).toBe(false);
       expect(useSimulationStore.getState().error).toBe('reset failed');
+    });
+
+    it('stringifies non-Error reset failures', async () => {
+      const { postSimReset } = await import('../api/client');
+      (postSimReset as ReturnType<typeof vi.fn>).mockRejectedValue('reset unavailable');
+
+      await useSimulationStore.getState().resetSim();
+
+      expect(useSimulationStore.getState().error).toBe('reset unavailable');
     });
   });
 

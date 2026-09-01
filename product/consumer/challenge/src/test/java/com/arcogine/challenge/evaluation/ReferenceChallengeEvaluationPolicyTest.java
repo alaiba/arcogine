@@ -116,6 +116,42 @@ class ReferenceChallengeEvaluationPolicyTest {
     }
 
     @Test
+    void valueContractsRejectNullRequiredValues() {
+        ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
+        AuthoritativeOutcomeFacts outcome = new AuthoritativeOutcomeFacts(true, 1L);
+        ChallengeEvaluationIssue issue = new ChallengeEvaluationIssue("code", "path", "message");
+
+        assertThrows(NullPointerException.class,
+                () -> new ChallengeEvaluationInput(null, provenance(), outcome, 0L));
+        assertThrows(NullPointerException.class,
+                () -> new ChallengeEvaluationInput(challenge, null, outcome, 0L));
+        assertThrows(NullPointerException.class,
+                () -> new ChallengeEvaluationInput(challenge, provenance(), null, 0L));
+        assertThrows(NullPointerException.class, () -> new EvaluationProvenance(null, "run"));
+        assertThrows(NullPointerException.class, () -> new EvaluationProvenance("model", null));
+        assertThrows(IllegalArgumentException.class, () -> new EvaluationProvenance("model", " "));
+        assertThrows(NullPointerException.class, () -> new ChallengeEvaluationIssue(null, "path", "message"));
+        assertThrows(NullPointerException.class, () -> new ChallengeEvaluationIssue("code", null, "message"));
+        assertThrows(NullPointerException.class, () -> new ChallengeEvaluationIssue("code", "path", null));
+        assertThrows(NullPointerException.class, () -> new ChallengeEvaluationResult(null,
+                challenge.evaluationPolicy(), provenance(), true, List.of(), 0L, 0L, BigInteger.ONE));
+        assertThrows(NullPointerException.class, () -> new ChallengeEvaluationResult(challenge.identity(), null,
+                provenance(), true, List.of(), 0L, 0L, BigInteger.ONE));
+        assertThrows(NullPointerException.class, () -> new ChallengeEvaluationResult(challenge.identity(),
+                challenge.evaluationPolicy(), null, true, List.of(), 0L, 0L, BigInteger.ONE));
+        assertThrows(NullPointerException.class, () -> new ChallengeEvaluationResult(challenge.identity(),
+                challenge.evaluationPolicy(), provenance(), true, null, 0L, 0L, BigInteger.ONE));
+        assertThrows(NullPointerException.class, () -> new ChallengeEvaluationResult(challenge.identity(),
+                challenge.evaluationPolicy(), provenance(), true, List.of(), 0L, 0L, null));
+        assertThrows(IllegalArgumentException.class, () -> new ChallengeEvaluationResult(challenge.identity(),
+                challenge.evaluationPolicy(), provenance(), true, List.of(issue), 0L, 0L, BigInteger.ONE));
+        assertThrows(IllegalArgumentException.class, () -> new ChallengeEvaluationResult(challenge.identity(),
+                challenge.evaluationPolicy(), provenance(), true, List.of(), null, 0L, BigInteger.ONE));
+        assertThrows(IllegalArgumentException.class, () -> new ChallengeEvaluationResult(challenge.identity(),
+                challenge.evaluationPolicy(), provenance(), false, List.of(issue), null, 0L, BigInteger.ONE));
+    }
+
+    @Test
     void unsupportedPolicyAndMalformedChallengeAreRejected() {
         ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
         ChallengeDefinition unsupported = new ChallengeDefinition(challenge.identity(), challenge.floor(),
@@ -130,6 +166,7 @@ class ReferenceChallengeEvaluationPolicyTest {
                 unsupported, provenance(), new AuthoritativeOutcomeFacts(true, 1L), 0L)));
         assertThrows(IllegalArgumentException.class, () -> evaluate(new ChallengeEvaluationInput(
                 invalidDeadline, provenance(), new AuthoritativeOutcomeFacts(true, 1L), 0L)));
+        assertThrows(NullPointerException.class, () -> evaluate(null));
     }
 
     @Test

@@ -1,3 +1,0 @@
-dependencies {
-    implementation(project(":types"))
-}

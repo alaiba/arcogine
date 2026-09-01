@@ -49,6 +49,46 @@ class ChangeSetTest {
     }
 
     @Test
+    void orderingDoesNotCollideForDelimiterBearingButLegallyDistinctEntityIdentities() {
+        // REV-004 regression: ("a#b", "c") and ("a", "b#c") concatenate to the same "a#b#c" string
+        // via the old identityKey()-based ordering, yet are legally distinct (entityType, entityId)
+        // pairs. Canonical ordering must compare the identity tuple unambiguously (entityType then
+        // entityId as separate keys), not a delimiter-concatenated string, so reversed input still
+        // normalizes to the same, entityType-then-entityId order regardless of input order.
+        ChangedEntityRef first = new ChangedEntityRef("a#b", "c", "");
+        ChangedEntityRef second = new ChangedEntityRef("a", "b#c", "");
+        SemanticChange changeOnFirst =
+                new SemanticChange(SemanticChangeKind.ENTITY_MODIFIED, first, "changed");
+        SemanticChange changeOnSecond =
+                new SemanticChange(SemanticChangeKind.ENTITY_MODIFIED, second, "changed");
+
+        ChangeSet forward =
+                new ChangeSet(
+                        revisionId(1),
+                        BASE_FP,
+                        CANDIDATE_FP,
+                        revisionId(2),
+                        List.of(changeOnFirst, changeOnSecond),
+                        null,
+                        ChangeProvenance.of("test", "colliding identity ordering"));
+        ChangeSet reversed =
+                new ChangeSet(
+                        revisionId(1),
+                        BASE_FP,
+                        CANDIDATE_FP,
+                        revisionId(2),
+                        List.of(changeOnSecond, changeOnFirst),
+                        null,
+                        ChangeProvenance.of("test", "colliding identity ordering"));
+
+        assertEquals(forward.semanticChanges(), reversed.semanticChanges());
+        // entityType "a" sorts before "a#b", so `second` (entityType "a") is canonically first.
+        assertEquals(List.of(changeOnSecond, changeOnFirst), forward.semanticChanges());
+        assertEquals(
+                List.of(second, first), forward.impactScope().affectedEntities());
+    }
+
+    @Test
     void impactScopeIsDerivedFromChangedEntitiesAndDeduplicated() {
         ChangedEntityRef machineA = new ChangedEntityRef("factory.resource", "1", "A");
         SemanticChange first =

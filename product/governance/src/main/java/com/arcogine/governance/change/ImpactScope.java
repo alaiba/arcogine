@@ -1,7 +1,6 @@
 package com.arcogine.governance.change;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -30,7 +29,7 @@ public final class ImpactScope {
             unique.add(change.entity());
         }
         List<ChangedEntityRef> ordered = new ArrayList<>(unique);
-        ordered.sort(Comparator.comparing(ChangedEntityRef::identityKey));
+        ordered.sort(ChangedEntityRef.identityComparator());
         return new ImpactScope(List.copyOf(ordered));
     }
 

@@ -51,7 +51,8 @@ public record ChangeSet(
 
         List<SemanticChange> ordered = new ArrayList<>(semanticChanges);
         ordered.sort(
-                Comparator.<SemanticChange, String>comparing(c -> c.entity().identityKey())
+                Comparator.<SemanticChange, ChangedEntityRef>comparing(
+                                SemanticChange::entity, ChangedEntityRef.identityComparator())
                         .thenComparing(c -> c.kind().name())
                         .thenComparing(SemanticChange::detail));
         semanticChanges = List.copyOf(ordered);

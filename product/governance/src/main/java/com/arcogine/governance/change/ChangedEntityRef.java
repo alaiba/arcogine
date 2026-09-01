@@ -1,5 +1,6 @@
 package com.arcogine.governance.change;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 /**
@@ -25,9 +26,25 @@ public record ChangedEntityRef(String entityType, String entityId, String label)
         label = label == null ? "" : label;
     }
 
-    /** Deterministic sort/equality key derived from stable identity only, ignoring the label. */
+    /**
+     * Deterministic, human-readable identity key derived from stable identity only, ignoring the
+     * label. Presentation/logging only -- a delimiter-concatenated string cannot unambiguously
+     * order or distinguish two legally distinct {@code (entityType, entityId)} pairs (e.g. {@code
+     * ("a#b", "c")} and {@code ("a", "b#c")} would collide), so canonical ordering must use {@link
+     * #identityComparator()} instead, never this key.
+     */
     String identityKey() {
         return entityType + "#" + entityId;
+    }
+
+    /**
+     * Canonical, collision-free ordering over stable identity: {@code entityType} then {@code
+     * entityId} as separate ordering keys, never a delimited concatenation. Unlike {@link
+     * #identityKey()}, this cannot conflate two legally distinct references that merely look alike
+     * when concatenated.
+     */
+    static Comparator<ChangedEntityRef> identityComparator() {
+        return Comparator.comparing(ChangedEntityRef::entityType).thenComparing(ChangedEntityRef::entityId);
     }
 
     @Override

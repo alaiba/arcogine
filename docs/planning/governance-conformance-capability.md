@@ -1,6 +1,6 @@
 # Governance and Conformance Capability Plan
 
-> **Status:** Proposed; G1 complete  
+> **Status:** Proposed; G1 complete, G2 (initial slice) complete  
 > **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
 > **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, while current-state G1 behavior is also recorded in the architectural overview and accepted ADRs  
 > **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Governance G1 Continuity Notes](governance-g1-continuity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
@@ -69,7 +69,7 @@ G1.3 authoritative revision persistence +
           ↓
 G1 durable identity/history substrate              complete
           ↓
-G2 semantic ChangeSet
+G2 semantic ChangeSet                              complete (initial slice)
           ↓
 G3-G5 requirement-based conformance/evidence
           ↓
@@ -133,7 +133,7 @@ Operational work may proceed headlessly with clearly scoped synthetic ChangeSet,
 ```text
 G1  Durable fingerprint and controlled revision lineage       complete
     ↓
-G2  Semantic ChangeSet and impact model
+G2  Semantic ChangeSet and impact model                        complete (initial slice)
     ↓
 G3  Generic requirement/assertion contract
     ↓
@@ -338,8 +338,18 @@ Implementation:
 
 :factory (com.arcogine.factory.change) -- domain-owned D5 comparison content
     FactoryModelSemanticComparator implements SemanticChangeExtractor, keyed on MachineId /
-        operation id / ProductId stable identity, never list position
+        operation id / ProductId stable identity for add/remove/content classification; per
+        ADR-0006 ("current list ordering remains semantic in v1"), a reorder of the top-level
+        resources/operations/products lists is additionally reported as an ENTITY_MODIFIED change
+        against the moved entity, so a behavior-affecting reorder (e.g. product order affecting
+        deterministic demand generation) is never absorbed as a no-op
 ```
+
+`ChangeSetFactory.fromCandidateSnapshot` additionally takes a `SemanticArtifactVerifier` and, before
+recording a caller-supplied candidate's declared fingerprint as `ChangeSet` identity, recomputes that
+fingerprint from the candidate's own canonical bytes and rejects a mismatch with an explicit
+`IllegalArgumentException` -- mirroring `FileControlledRevisionAuthority`'s existing
+fingerprint-to-bytes verification precedent for authoritative artifacts.
 
 `:factory`'s main source now depends on `:governance` (a new edge alongside the existing
 `:types <- governance` and `:types <- simulation <- factory` branches) so the domain can implement
@@ -355,6 +365,8 @@ Representative tests (exact names, see the listed files):
 
 - `product/governance/src/test/java/com/arcogine/governance/change/ChangeSetTest.java` --
   `semanticChangesAreStoredInDeterministicOrderRegardlessOfInputOrder`,
+  `orderingDoesNotCollideForDelimiterBearingButLegallyDistinctEntityIdentities`
+  (colliding-looking `(entityType, entityId)` pairs normalize identically regardless of input order),
   `impactScopeIsDerivedFromChangedEntitiesAndDeduplicated`, `noSemanticChangesIsAValidNoOpTransition`,
   `resultingRevisionIdIsAbsentForAnUnpersistedCandidate`,
   `externalChangeReferenceIsRetainedAsAssociationNotIdentity`,
@@ -366,11 +378,16 @@ Representative tests (exact names, see the listed files):
   `equalSemanticFingerprintAcrossDistinctRevisionsYieldsNoSemanticChangesButDistinctIdentity`
   (same-fingerprint rollback across distinct revision IDs),
   `candidateSnapshotIsComparedWithoutBecomingAControlledRevision`,
+  `candidateSnapshotWithFingerprintNotMatchingItsBytesIsRejected`
+  (fingerprint-to-bytes binding verification, mirroring `FileControlledRevisionAuthority`),
   `externalChangeRequestReferenceSurvivesEndToEnd`,
   `impactScopeIsUsableForFutureRequirementScopeMatching`.
 - `product/domains/factory/src/test/java/com/arcogine/factory/change/FactoryModelSemanticComparatorTest.java`
   (pure D5 comparator unit tests) --
-  `identicalModelsProduceNoSemanticChangesRegardlessOfConstructionOrder`,
+  `identicalModelsWithIdenticalConstructionOrderProduceNoSemanticChanges`,
+  `reorderingTopLevelResourcesIsAttributedAsEntityModifiedPerAdr0006`,
+  `reorderingProductsIsAttributedAsEntityModified`,
+  `reorderingEligibleResourcesWithinAStepDoesNotProduceASemanticChange`,
   `addedResourceIsClassifiedAsEntityAddedWithStableIdentity`,
   `removedResourceIsClassifiedAsEntityRemoved`,
   `modifiedResourceCapacityIsClassifiedAsEntityModifiedByStableId`,
@@ -426,8 +443,11 @@ G2 is ready when:
    `ControlledRevisionAuthority.resolve(...)` historical boundary and hands them to
    `FactoryModelSemanticComparator`, which compares `FactoryModel` content, not artifact bytes.
 2. Changed entities can be identified with stable domain identity. **Satisfied:**
-   `ChangedEntityRef` keys on `MachineId`/operation id/`ProductId`, never list position; proven by
-   `identicalModelsProduceNoSemanticChangesRegardlessOfConstructionOrder` and
+   `ChangedEntityRef` keys on `MachineId`/operation id/`ProductId` for add/remove/content
+   classification (not list position), while top-level list order remains attributed as a real
+   change per ADR-0006; proven by
+   `identicalModelsWithIdenticalConstructionOrderProduceNoSemanticChanges`,
+   `reorderingTopLevelResourcesIsAttributedAsEntityModifiedPerAdr0006`, and
    `renamingAnEntityDoesNotChangeWhichEntityIsAffected`.
 3. At least one domain change has a meaningful typed/classified representation. **Satisfied:**
    `SemanticChangeKind` (`ENTITY_ADDED`/`ENTITY_REMOVED`/`ENTITY_MODIFIED`) applied to factory
@@ -720,7 +740,7 @@ The first milestone should deliberately avoid a full external compliance framewo
 
 > **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked through a separate association to an external change request, evaluate one Arcogine-native requirement before authorization/deployment, record the authorization decision separately, and reconstruct why the resulting semantic state was considered conformant.**
 
-G1 now supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone. The milestone remains outstanding because G2+ must still provide semantic change attribution, requirements/conformance/evidence, and separate workflow/authorization records.
+G1 supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone, and G2's initial slice now supplies semantic change attribution and affected-entity identification. The milestone remains outstanding because G3+ must still provide requirements/conformance/evidence and separate workflow/authorization records.
 
 Definition of done:
 
@@ -729,8 +749,8 @@ Durable semantic fingerprint contract exists                         [G1 complet
 Controlled revision identity exists                                 [G1 complete]
 Authoritative controlled revision persistence exists                 [G1 complete]
 Exact historical semantic state is resolvable                        [G1 complete]
-Base revision -> ChangeSet -> candidate revision is attributable      [G2+]
-Affected entity is identified                                        [G2+]
+Base revision -> ChangeSet -> candidate revision is attributable      [G2 complete]
+Affected entity is identified                                        [G2 complete]
 One versioned requirement applies                                    [G3+]
 Pre-change assertion evaluates deterministically                      [G4+]
 Finding is produced if violated                                       [G4+]

@@ -29,8 +29,12 @@ import java.util.TreeSet;
  * introspects {@link FactoryModel} directly -- keeping factory semantics owned by {@code :factory}
  * and generic transition/impact semantics owned by {@code :governance}.
  *
- * <p>Comparison is by stable domain identity ({@code MachineId}, operation id, {@code ProductId}),
- * never by list position, so reordering a semantically unchanged model produces zero changes.
+ * <p>Comparison is by stable domain identity ({@code MachineId}, operation id, {@code ProductId}).
+ * Per ADR-0006 ("Current list ordering remains semantic in v1"), top-level {@code resources},
+ * {@code operations}, and {@code products} order is itself part of {@code factory-model:v1}
+ * semantic content -- product order in particular can affect deterministic demand generation.
+ * Reordering any of those top-level lists is therefore reported as an {@code ENTITY_MODIFIED}
+ * change against the moved entity, in addition to any content-level change.
  */
 public final class FactoryModelSemanticComparator implements SemanticChangeExtractor {
 
@@ -67,6 +71,9 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
         Map<String, ResourceDefinition> candidateById =
                 indexBy(candidate.resources(), r -> Long.toString(r.id().value()));
 
+        List<String> baseOrder = new ArrayList<>(baseById.keySet());
+        List<String> candidateOrder = new ArrayList<>(candidateById.keySet());
+
         for (Map.Entry<String, ResourceDefinition> entry : baseById.entrySet()) {
             String id = entry.getKey();
             ResourceDefinition baseResource = entry.getValue();
@@ -76,12 +83,16 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
                 changes.add(
                         new SemanticChange(
                                 SemanticChangeKind.ENTITY_REMOVED, ref, "resource removed: " + baseResource.name()));
-            } else if (!baseResource.equals(candidateResource)) {
-                changes.add(
-                        new SemanticChange(
-                                SemanticChangeKind.ENTITY_MODIFIED,
-                                new ChangedEntityRef(RESOURCE_TYPE, id, candidateResource.name()),
-                                describeResourceChange(baseResource, candidateResource)));
+            } else {
+                String detail = describeResourceChange(baseResource, candidateResource);
+                detail = describeOrderChange(detail, baseOrder, candidateOrder, id);
+                if (!detail.isEmpty()) {
+                    changes.add(
+                            new SemanticChange(
+                                    SemanticChangeKind.ENTITY_MODIFIED,
+                                    new ChangedEntityRef(RESOURCE_TYPE, id, candidateResource.name()),
+                                    detail));
+                }
             }
         }
         for (Map.Entry<String, ResourceDefinition> entry : candidateById.entrySet()) {
@@ -119,6 +130,9 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
         Map<String, OperationDefinition> candidateById =
                 indexBy(candidate.operations(), o -> Long.toString(o.id()));
 
+        List<String> baseOrder = new ArrayList<>(baseById.keySet());
+        List<String> candidateOrder = new ArrayList<>(candidateById.keySet());
+
         for (Map.Entry<String, OperationDefinition> entry : baseById.entrySet()) {
             String id = entry.getKey();
             OperationDefinition baseOperation = entry.getValue();
@@ -129,12 +143,19 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
                                 SemanticChangeKind.ENTITY_REMOVED,
                                 new ChangedEntityRef(OPERATION_TYPE, id, baseOperation.name()),
                                 "operation removed: " + baseOperation.name()));
-            } else if (!operationsEqual(baseOperation, candidateOperation)) {
-                changes.add(
-                        new SemanticChange(
-                                SemanticChangeKind.ENTITY_MODIFIED,
-                                new ChangedEntityRef(OPERATION_TYPE, id, candidateOperation.name()),
-                                describeOperationChange(baseOperation, candidateOperation)));
+            } else {
+                String detail =
+                        operationsEqual(baseOperation, candidateOperation)
+                                ? ""
+                                : describeOperationChange(baseOperation, candidateOperation);
+                detail = describeOrderChange(detail, baseOrder, candidateOrder, id);
+                if (!detail.isEmpty()) {
+                    changes.add(
+                            new SemanticChange(
+                                    SemanticChangeKind.ENTITY_MODIFIED,
+                                    new ChangedEntityRef(OPERATION_TYPE, id, candidateOperation.name()),
+                                    detail));
+                }
             }
         }
         for (Map.Entry<String, OperationDefinition> entry : candidateById.entrySet()) {
@@ -183,6 +204,9 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
         Map<String, ProductDefinition> candidateById =
                 indexBy(candidate.products(), p -> Long.toString(p.id().value()));
 
+        List<String> baseOrder = new ArrayList<>(baseById.keySet());
+        List<String> candidateOrder = new ArrayList<>(candidateById.keySet());
+
         for (Map.Entry<String, ProductDefinition> entry : baseById.entrySet()) {
             String id = entry.getKey();
             ProductDefinition baseProduct = entry.getValue();
@@ -193,12 +217,19 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
                                 SemanticChangeKind.ENTITY_REMOVED,
                                 new ChangedEntityRef(PRODUCT_TYPE, id, baseProduct.name()),
                                 "product removed: " + baseProduct.name()));
-            } else if (!baseProduct.equals(candidateProduct)) {
-                changes.add(
-                        new SemanticChange(
-                                SemanticChangeKind.ENTITY_MODIFIED,
-                                new ChangedEntityRef(PRODUCT_TYPE, id, candidateProduct.name()),
-                                describeProductChange(baseProduct, candidateProduct)));
+            } else {
+                String detail =
+                        baseProduct.equals(candidateProduct)
+                                ? ""
+                                : describeProductChange(baseProduct, candidateProduct);
+                detail = describeOrderChange(detail, baseOrder, candidateOrder, id);
+                if (!detail.isEmpty()) {
+                    changes.add(
+                            new SemanticChange(
+                                    SemanticChangeKind.ENTITY_MODIFIED,
+                                    new ChangedEntityRef(PRODUCT_TYPE, id, candidateProduct.name()),
+                                    detail));
+                }
             }
         }
         for (Map.Entry<String, ProductDefinition> entry : candidateById.entrySet()) {
@@ -222,6 +253,24 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
             appendField(detail, "operationId", before.operationId(), after.operationId());
         }
         return detail.toString();
+    }
+
+    /**
+     * Appends an order-change note to {@code detail} when the entity identified by {@code id}
+     * occupies a different index in {@code baseOrder} versus {@code candidateOrder}. Per ADR-0006,
+     * top-level list order is semantic in {@code factory-model:v1} for resources, operations, and
+     * products, so a position change must not be silently absorbed by ID-keyed comparison.
+     */
+    private static String describeOrderChange(
+            String detail, List<String> baseOrder, List<String> candidateOrder, String id) {
+        int baseIndex = baseOrder.indexOf(id);
+        int candidateIndex = candidateOrder.indexOf(id);
+        if (baseIndex != candidateIndex) {
+            StringBuilder combined = new StringBuilder(detail);
+            appendField(combined, "listPosition", baseIndex, candidateIndex);
+            return combined.toString();
+        }
+        return detail;
     }
 
     private static void appendField(StringBuilder detail, String field, Object before, Object after) {

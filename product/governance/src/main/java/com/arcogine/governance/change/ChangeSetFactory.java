@@ -3,7 +3,9 @@ package com.arcogine.governance.change;
 import com.arcogine.governance.ControlledRevisionAuthority;
 import com.arcogine.governance.HistoricalRevision;
 import com.arcogine.governance.SemanticArtifact;
+import com.arcogine.governance.SemanticArtifactVerifier;
 import com.arcogine.types.ControlledRevisionId;
+import com.arcogine.types.ModelFingerprint;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,18 +63,30 @@ public final class ChangeSetFactory {
      * is absent. The candidate becomes historically authoritative only if and when it is later
      * accepted through {@link ControlledRevisionAuthority#accept}, at which point {@link
      * #fromAuthoritativeRevisions} is the applicable path.
+     *
+     * <p>Unlike an authoritative revision -- whose fingerprint-to-bytes binding is verified by the
+     * G1.3 acceptance/resolution boundary ({@code FileControlledRevisionAuthority}) -- a candidate
+     * snapshot is caller-supplied and never passes through that boundary. Before its declared
+     * fingerprint is recorded as {@link ChangeSet#candidateFingerprint()}, {@code verifier} is used
+     * to recompute the fingerprint from {@code candidateArtifact}'s own canonical bytes and confirm
+     * it matches the declared one, mirroring {@code FileControlledRevisionAuthority}'s verification
+     * precedent so a caller cannot claim an untrue candidate identity.
      */
     public static ChangeSet fromCandidateSnapshot(
             ControlledRevisionAuthority authority,
             ControlledRevisionId baseRevisionId,
             SemanticArtifact candidateArtifact,
+            SemanticArtifactVerifier verifier,
             SemanticChangeExtractor extractor,
             ChangeProvenance provenance) {
         Objects.requireNonNull(authority, "authority");
         Objects.requireNonNull(baseRevisionId, "baseRevisionId");
         Objects.requireNonNull(candidateArtifact, "candidateArtifact");
+        Objects.requireNonNull(verifier, "verifier");
         Objects.requireNonNull(extractor, "extractor");
         Objects.requireNonNull(provenance, "provenance");
+
+        verifyCandidateFingerprintBinding(candidateArtifact, verifier);
 
         HistoricalRevision base = authority.resolve(baseRevisionId);
         List<SemanticChange> changes = compare(extractor, base.artifact(), candidateArtifact);
@@ -85,6 +99,29 @@ public final class ChangeSetFactory {
                 changes,
                 null,
                 provenance);
+    }
+
+    private static void verifyCandidateFingerprintBinding(
+            SemanticArtifact candidateArtifact, SemanticArtifactVerifier verifier) {
+        if (!verifier.supports(candidateArtifact.fingerprint())) {
+            throw new IllegalArgumentException(
+                    "verifier does not support the candidate artifact's declared fingerprint policy: "
+                            + candidateArtifact.fingerprint());
+        }
+        ModelFingerprint computed;
+        try {
+            computed = verifier.fingerprint(candidateArtifact.canonicalBytes());
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException(
+                    "candidate artifact fingerprint cannot be verified against its canonical bytes", e);
+        }
+        if (!candidateArtifact.fingerprint().equals(computed)) {
+            throw new IllegalArgumentException(
+                    "candidate artifact fingerprint does not match its canonical bytes: declared "
+                            + candidateArtifact.fingerprint()
+                            + ", computed "
+                            + computed);
+        }
     }
 
     private static List<SemanticChange> compare(

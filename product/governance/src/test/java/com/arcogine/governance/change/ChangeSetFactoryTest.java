@@ -113,6 +113,7 @@ class ChangeSetFactoryTest {
                         authority,
                         base.id(),
                         candidateArtifact,
+                        FACTORY_VERIFIER,
                         COMPARATOR,
                         ChangeProvenance.of("engineer", "proposed change under review"));
 
@@ -121,6 +122,108 @@ class ChangeSetFactoryTest {
         assertEquals(1, changeSet.semanticChanges().size());
         // The candidate never touched the authority: no new revision was accepted.
         assertEquals(1, authority.revisions().size());
+    }
+
+    @Test
+    void candidateSnapshotWithFingerprintNotMatchingItsBytesIsRejected() {
+        // REV-002 regression: a caller must not be able to claim a fingerprint for canonical bytes
+        // that don't actually produce it -- mirroring FileControlledRevisionAuthority's own
+        // fingerprint-to-bytes verification precedent for authoritative artifacts.
+        FileControlledRevisionAuthority authority = authority();
+        ControlledRevision base = accept(authority, model(List.of(1)), List.of());
+        FactoryModelVersion realCandidate = model(List.of(1, 2));
+        FactoryModelVersion differentCandidate = model(List.of(1, 2, 3));
+        // Declares realCandidate's fingerprint but carries differentCandidate's canonical bytes.
+        SemanticArtifact mismatchedArtifact =
+                new SemanticArtifact(
+                        realCandidate.fingerprint(), FactoryModelArtifactV1.encode(differentCandidate));
+
+        IllegalArgumentException exception =
+                org.junit.jupiter.api.Assertions.assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                ChangeSetFactory.fromCandidateSnapshot(
+                                        authority,
+                                        base.id(),
+                                        mismatchedArtifact,
+                                        FACTORY_VERIFIER,
+                                        COMPARATOR,
+                                        ChangeProvenance.of("engineer", "malicious or corrupt candidate")));
+
+        assertTrue(exception.getMessage().contains("fingerprint"));
+        // The rejected candidate never touched the authority.
+        assertEquals(1, authority.revisions().size());
+    }
+
+    @Test
+    void candidateSnapshotWithUnsupportedFingerprintPolicyIsRejected() {
+        FileControlledRevisionAuthority authority = authority();
+        ControlledRevision base = accept(authority, model(List.of(1)), List.of());
+        FactoryModelVersion candidateVersion = model(List.of(1, 2));
+        SemanticArtifact candidateArtifact =
+                new SemanticArtifact(
+                        candidateVersion.fingerprint(), FactoryModelArtifactV1.encode(candidateVersion));
+        SemanticArtifactVerifier unsupportingVerifier = new SemanticArtifactVerifier() {
+            @Override
+            public boolean supports(ModelFingerprint fingerprint) {
+                return false;
+            }
+
+            @Override
+            public ModelFingerprint fingerprint(byte[] canonicalBytes) {
+                throw new AssertionError("must not be reached when the policy is unsupported");
+            }
+        };
+
+        IllegalArgumentException exception =
+                org.junit.jupiter.api.Assertions.assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                ChangeSetFactory.fromCandidateSnapshot(
+                                        authority,
+                                        base.id(),
+                                        candidateArtifact,
+                                        unsupportingVerifier,
+                                        COMPARATOR,
+                                        ChangeProvenance.of("engineer", "unsupported policy")));
+
+        assertTrue(exception.getMessage().contains("does not support"));
+    }
+
+    @Test
+    void candidateSnapshotWhoseFingerprintCannotBeComputedIsRejected() {
+        FileControlledRevisionAuthority authority = authority();
+        ControlledRevision base = accept(authority, model(List.of(1)), List.of());
+        FactoryModelVersion candidateVersion = model(List.of(1, 2));
+        SemanticArtifact candidateArtifact =
+                new SemanticArtifact(
+                        candidateVersion.fingerprint(), FactoryModelArtifactV1.encode(candidateVersion));
+        SemanticArtifactVerifier failingVerifier = new SemanticArtifactVerifier() {
+            @Override
+            public boolean supports(ModelFingerprint fingerprint) {
+                return true;
+            }
+
+            @Override
+            public ModelFingerprint fingerprint(byte[] canonicalBytes) {
+                throw new IllegalStateException("cannot decode candidate bytes");
+            }
+        };
+
+        IllegalArgumentException exception =
+                org.junit.jupiter.api.Assertions.assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                ChangeSetFactory.fromCandidateSnapshot(
+                                        authority,
+                                        base.id(),
+                                        candidateArtifact,
+                                        failingVerifier,
+                                        COMPARATOR,
+                                        ChangeProvenance.of("engineer", "corrupt candidate bytes")));
+
+        assertTrue(exception.getMessage().contains("cannot be verified"));
+        assertEquals(IllegalStateException.class, exception.getCause().getClass());
     }
 
     @Test

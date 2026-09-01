@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.arcogine.challenge.ChallengeDefinition;
 import com.arcogine.challenge.ChallengeFixtures;
 import com.arcogine.challenge.EvaluationPolicyIdentity;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class ReferenceChallengeEvaluationPolicyTest {
         assertEquals(first, second);
         assertEquals(50L, first.deadlineMarginTicks());
         assertEquals(30_000L, first.unusedBudgetCredits());
-        assertEquals(30_051L, first.score());
+        assertEquals(BigInteger.valueOf(30_051L), first.score());
         assertEquals(ChallengeFixtures.referenceChallenge().identity(), first.challengeIdentity());
         assertEquals(ChallengeFixtures.referenceChallenge().evaluationPolicy(), first.evaluationPolicy());
         assertEquals("model.factory-basics:v1", first.provenance().publishedModelReference());
@@ -38,7 +39,7 @@ class ReferenceChallengeEvaluationPolicyTest {
         assertTrue(result.successful());
         assertEquals(0L, result.deadlineMarginTicks());
         assertEquals(0L, result.unusedBudgetCredits());
-        assertEquals(1L, result.score());
+        assertEquals(BigInteger.ONE, result.score());
         assertThrows(ClassNotFoundException.class,
                 () -> Class.forName("com.arcogine.factory.process.FactoryRuntime"));
     }
@@ -51,7 +52,7 @@ class ReferenceChallengeEvaluationPolicyTest {
         assertEquals(List.of("challenge.contract.incomplete"), codes(result));
         assertEquals(null, result.deadlineMarginTicks());
         assertEquals(40_000L, result.unusedBudgetCredits());
-        assertEquals(0L, result.score());
+        assertEquals(BigInteger.ZERO, result.score());
     }
 
     @Test
@@ -76,8 +77,24 @@ class ReferenceChallengeEvaluationPolicyTest {
 
         assertEquals(25L, result.deadlineMarginTicks());
         assertEquals(28_000L, result.unusedBudgetCredits());
-        assertEquals(28_026L, result.score());
+        assertEquals(BigInteger.valueOf(28_026L), result.score());
         assertTrue(result.successful());
+    }
+
+    @Test
+    void scoreIsExactForTheLargestC1ValidDeadlineAndBudget() {
+        ChallengeDefinition reference = ChallengeFixtures.referenceChallenge();
+        ChallengeDefinition challenge = new ChallengeDefinition(reference.identity(), reference.floor(),
+                Long.MAX_VALUE, reference.workload(), reference.availableEquipment(), Long.MAX_VALUE,
+                reference.evaluationPolicy(), reference.catalogueIdentity(),
+                reference.catalogueSemanticFingerprint());
+
+        ChallengeEvaluationResult result = evaluate(new ChallengeEvaluationInput(challenge, provenance(),
+                new AuthoritativeOutcomeFacts(true, 0L), 0L));
+
+        assertTrue(result.successful());
+        assertEquals(BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.TWO).add(BigInteger.ONE),
+                result.score());
     }
 
     @Test
@@ -121,7 +138,7 @@ class ReferenceChallengeEvaluationPolicyTest {
         assertThrows(IllegalArgumentException.class, () -> new ChallengeEvaluationResult(
                 ChallengeFixtures.referenceChallenge().identity(),
                 ChallengeFixtures.referenceChallenge().evaluationPolicy(), provenance(), false, issues,
-                null, 0L, 0L));
+                null, 0L, BigInteger.ZERO));
     }
 
     private static ChallengeEvaluationResult evaluate(ChallengeEvaluationInput input) {

@@ -405,8 +405,9 @@ succeeds only when the supplied authoritative facts report fixed-contract comple
 the challenge deadline and committed construction cost is within the starting budget. It produces
 ordered game-owned reason codes for incomplete contract, missed deadline, and exceeded budget;
 records deadline margin and unused budget; and returns zero score on failure. Its deliberately
-small first score formula is `1 + deadline margin + unused budget` on success, where the one-point
-completion bonus distinguishes exact-deadline/exact-budget completion from failure. This is a
+small first score formula is exact-integer `1 + deadline margin + unused budget` on success, where
+the one-point completion bonus distinguishes exact-deadline/exact-budget completion from failure.
+This is a
 vertical-slice policy, not a permanent balancing decision; any observable semantic change requires
 a new `EvaluationPolicyIdentity` version.
 

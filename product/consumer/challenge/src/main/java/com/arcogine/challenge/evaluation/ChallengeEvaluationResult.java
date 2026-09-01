@@ -2,6 +2,7 @@ package com.arcogine.challenge.evaluation;
 
 import com.arcogine.challenge.ChallengeIdentity;
 import com.arcogine.challenge.EvaluationPolicyIdentity;
+import java.math.BigInteger;
 import java.util.List;
 
 /** The immutable, explainable result of evaluating one exact challenge input. */
@@ -13,7 +14,7 @@ public record ChallengeEvaluationResult(
         List<ChallengeEvaluationIssue> issues,
         Long deadlineMarginTicks,
         long unusedBudgetCredits,
-        long score) {
+        BigInteger score) {
 
     public ChallengeEvaluationResult {
         if (challengeIdentity == null) {
@@ -28,6 +29,9 @@ public record ChallengeEvaluationResult(
         if (issues == null) {
             throw new NullPointerException("issues");
         }
+        if (score == null) {
+            throw new NullPointerException("score");
+        }
         issues = List.copyOf(issues);
         if (successful != issues.isEmpty()) {
             throw new IllegalArgumentException("successful evaluations must have no issues");
@@ -35,7 +39,7 @@ public record ChallengeEvaluationResult(
         if (successful && deadlineMarginTicks == null) {
             throw new IllegalArgumentException("successful evaluations require deadlineMarginTicks");
         }
-        if (!successful && score != 0L) {
+        if (!successful && !score.equals(BigInteger.ZERO)) {
             throw new IllegalArgumentException("unsuccessful evaluations must have zero score");
         }
     }

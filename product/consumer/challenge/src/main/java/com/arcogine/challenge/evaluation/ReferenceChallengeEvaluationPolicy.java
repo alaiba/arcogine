@@ -2,6 +2,7 @@ package com.arcogine.challenge.evaluation;
 
 import com.arcogine.challenge.ChallengeDefinition;
 import com.arcogine.challenge.EvaluationPolicyIdentity;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,8 +12,9 @@ import java.util.List;
  * <p>Policy {@value #POLICY_ID} v{@value #POLICY_VERSION} succeeds only when the supplied
  * authoritative facts say the fixed contract completed on or before the challenge deadline and
  * the supplied game-owned construction cost is within budget. A successful score is {@code 1 +
- * deadlineMarginTicks + unusedBudgetCredits}; an unsuccessful result scores zero. The one-point
- * completion bonus makes exact-deadline, exact-budget completion distinguishable from failure.
+ * deadlineMarginTicks + unusedBudgetCredits}; an unsuccessful result scores zero. The score uses
+ * an exact {@link BigInteger}, so this formula is total for every accepted {@code long} input. The
+ * one-point completion bonus makes exact-deadline, exact-budget completion distinguishable from failure.
  * Changing any of these observable rules requires a new policy version.
  */
 public final class ReferenceChallengeEvaluationPolicy {
@@ -47,7 +49,9 @@ public final class ReferenceChallengeEvaluationPolicy {
         addBudgetIssue(unusedBudget, issues);
 
         boolean successful = issues.isEmpty();
-        long score = successful ? Math.addExact(1L, Math.addExact(deadlineMargin, unusedBudget)) : 0L;
+        BigInteger score = successful
+                ? BigInteger.ONE.add(BigInteger.valueOf(deadlineMargin)).add(BigInteger.valueOf(unusedBudget))
+                : BigInteger.ZERO;
         return new ChallengeEvaluationResult(challenge.identity(), challenge.evaluationPolicy(),
                 input.provenance(), successful, issues, deadlineMargin, unusedBudget, score);
     }

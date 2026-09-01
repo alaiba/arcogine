@@ -2,7 +2,8 @@
 
 > **Status:** Planning/continuity note  
 > **Scope:** Preserve the remaining non-ADR conclusions needed to continue Governance G1 after G1.2  
-> **Authority:** This note does not supersede ADR-0004, ADR-0006, ADR-0008, or the Governance architecture. It clarifies delivery interpretation and records the starting constraints for G1.3 without choosing an implementation technology.
+> **Authority:** This note does not supersede ADR-0004, ADR-0006, ADR-0008, the Governance architecture, or the Governance capability plan. It clarifies delivery interpretation and records the starting constraints for G1.3 without choosing an implementation technology.  
+> **Related:** [Governance and Conformance Capability Plan](governance-conformance-capability.md), [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Standards Alignment](../architecture/standards-alignment.md)
 
 ## 1. Why this note exists
 
@@ -232,7 +233,7 @@ Acceptance must establish at least:
 - repository-level lineage integrity;
 - behavior that prevents silent mutation/rebinding of an accepted historical ID.
 
-Because the current store only accepts existing parents before descendants, append-only acceptance plus parent-existence enforcement can make cycles structurally impossible under the current `0..1` parent policy. Global graph checks should be introduced only if the chosen persistence semantics require them.
+Under the ADR-0008 acceptance contract, G1.3 must require a named parent to have already been accepted before a descendant can be accepted. With append-only acceptance and the current `0..1` parent policy, that rule can make cycles structurally impossible; global graph checks should be introduced only if the chosen persistence semantics require them.
 
 ### 4.3 Exact historical semantic-state resolution is part of G1.3
 

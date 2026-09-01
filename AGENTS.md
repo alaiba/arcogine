@@ -24,6 +24,13 @@ Common shorthand should be interpreted in repository context:
 - “check repo state” means inspect the state of this repository;
 - references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
 
+PR workflow shorthand has distinct review and remediation meanings:
+
+- `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
+- `+` = advance the current implementation pull request toward green by inspecting the latest reviews, comments, unresolved findings, CI, and mergeability; evaluating each finding against repository authority; applying the smallest correct fix for valid findings; challenging invalid findings with repository evidence; and re-checking the resulting PR state.
+
+When handling `+`, continue remediation and re-checking until the PR is green or a genuinely unresolved decision requires user input. Do not treat `+` as an independent review-only action.
+
 Do not replace known repository context with generic GitHub discovery.
 
 ## Specialized agent roles

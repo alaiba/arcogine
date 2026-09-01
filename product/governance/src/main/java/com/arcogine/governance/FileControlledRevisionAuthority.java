@@ -30,6 +30,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,10 +59,16 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     private final Path artifactsDirectory;
     private final Path lockFile;
     private final SemanticArtifactVerifier verifier;
+    private final Clock clock;
 
     public FileControlledRevisionAuthority(Path root, SemanticArtifactVerifier verifier) {
+        this(root, verifier, Clock.systemUTC());
+    }
+
+    FileControlledRevisionAuthority(Path root, SemanticArtifactVerifier verifier, Clock clock) {
         Path authorityRoot = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
         this.verifier = Objects.requireNonNull(verifier, "verifier");
+        this.clock = Objects.requireNonNull(clock, "clock");
         revisionsDirectory = authorityRoot.resolve("revisions");
         artifactsDirectory = authorityRoot.resolve("artifacts");
         lockFile = authorityRoot.resolve("authority.lock");
@@ -74,13 +81,10 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     }
 
     @Override
-    public void accept(ControlledRevision revision, SemanticArtifact artifact) {
-        Objects.requireNonNull(revision, "revision");
+    public ControlledRevision accept(ControlledRevision candidate, SemanticArtifact artifact) {
+        Objects.requireNonNull(candidate, "candidate");
         Objects.requireNonNull(artifact, "artifact");
-        withExclusiveLock(() -> {
-            acceptLocked(revision, artifact);
-            return null;
-        });
+        return withExclusiveLock(() -> acceptLocked(candidate, artifact));
     }
 
     @Override
@@ -127,25 +131,26 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
                 .toList();
     }
 
-    private void acceptLocked(ControlledRevision revision, SemanticArtifact artifact) {
-        Path revisionPath = revisionPath(revision.id());
+    private ControlledRevision acceptLocked(
+            ControlledRevision candidate, SemanticArtifact artifact) {
+        Path revisionPath = revisionPath(candidate.id());
         if (Files.exists(revisionPath)) {
-            ControlledRevision existing = readRevision(revisionPath, revision.id());
+            ControlledRevision existing = readRevision(revisionPath, candidate.id());
             String qualifier =
-                    existing.equals(revision)
+                    sameCandidateBinding(existing, candidate)
                             ? "already accepted"
                             : "bound to different immutable content";
             throw new GovernanceHistoryException(
                     DUPLICATE_REVISION_ID,
-                    "controlled revision ID " + revision.id() + " is " + qualifier);
+                    "controlled revision ID " + candidate.id() + " is " + qualifier);
         }
-        if (!revision.modelFingerprint().equals(artifact.fingerprint())) {
+        if (!candidate.modelFingerprint().equals(artifact.fingerprint())) {
             throw new GovernanceHistoryException(
                     FINGERPRINT_MISMATCH,
                     "revision fingerprint does not match supplied semantic artifact fingerprint");
         }
         verifyArtifact(artifact, false);
-        for (ControlledRevisionId parentId : revision.parentRevisionIds()) {
+        for (ControlledRevisionId parentId : candidate.parentRevisionIds()) {
             if (!Files.exists(revisionPath(parentId))) {
                 throw new GovernanceHistoryException(
                         MISSING_PARENT, "parent revision does not exist: " + parentId);
@@ -169,7 +174,9 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         }
 
         try {
-            writeAtomic(revisionPath, encodeRevision(revision));
+            ControlledRevision accepted = acceptedRevision(candidate);
+            writeAtomic(revisionPath, encodeRevision(accepted));
+            return accepted;
         } catch (RuntimeException e) {
             if (artifactCreated) {
                 try {
@@ -180,6 +187,22 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
             }
             throw e;
         }
+    }
+
+    private ControlledRevision acceptedRevision(ControlledRevision candidate) {
+        return new ControlledRevision(
+                candidate.id(),
+                candidate.modelFingerprint(),
+                candidate.parentRevisionIds(),
+                new RevisionProvenance(clock.instant(), candidate.provenance().recorder()));
+    }
+
+    private static boolean sameCandidateBinding(
+            ControlledRevision existing, ControlledRevision candidate) {
+        return existing.id().equals(candidate.id())
+                && existing.modelFingerprint().equals(candidate.modelFingerprint())
+                && existing.parentRevisionIds().equals(candidate.parentRevisionIds())
+                && existing.provenance().recorder().equals(candidate.provenance().recorder());
     }
 
     private HistoricalRevision resolveLocked(ControlledRevisionId id) {

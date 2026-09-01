@@ -32,6 +32,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.List;
@@ -41,28 +42,29 @@ import java.util.Optional;
 /**
  * Durable append-only controlled-revision authority backed by one filesystem directory.
  *
- * <p>Revision records and semantic artifacts use private versioned binary files. Semantic artifacts
- * are deduplicated by a physical key derived from the complete {@link ModelFingerprint}; the
- * fingerprint remains the semantic identity and the key never escapes this adapter.
+ * <p>Revision records and semantic artifacts use private versioned binary files. Semantic
+ * artifacts are deduplicated by a physical key derived from the complete {@link ModelFingerprint};
+ * the fingerprint remains the semantic identity and the key never escapes this adapter.
  */
 public final class FileControlledRevisionAuthority implements ControlledRevisionAuthority {
 
-    private static final byte[] REVISION_MAGIC = "arcogine-revision-store-v1\0".getBytes(StandardCharsets.US_ASCII);
-    private static final byte[] ARTIFACT_MAGIC = "arcogine-semantic-artifact-v1\0".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] REVISION_MAGIC =
+            "arcogine-revision-store-v1\0".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] ARTIFACT_MAGIC =
+            "arcogine-semantic-artifact-v1\0".getBytes(StandardCharsets.US_ASCII);
     private static final Object PROCESS_LOCK = new Object();
 
-    private final Path root;
     private final Path revisionsDirectory;
     private final Path artifactsDirectory;
     private final Path lockFile;
     private final SemanticArtifactVerifier verifier;
 
     public FileControlledRevisionAuthority(Path root, SemanticArtifactVerifier verifier) {
-        this.root = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
+        Path authorityRoot = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
         this.verifier = Objects.requireNonNull(verifier, "verifier");
-        revisionsDirectory = this.root.resolve("revisions");
-        artifactsDirectory = this.root.resolve("artifacts");
-        lockFile = this.root.resolve("authority.lock");
+        revisionsDirectory = authorityRoot.resolve("revisions");
+        artifactsDirectory = authorityRoot.resolve("artifacts");
+        lockFile = authorityRoot.resolve("authority.lock");
         try {
             Files.createDirectories(revisionsDirectory);
             Files.createDirectories(artifactsDirectory);
@@ -98,47 +100,55 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
 
     @Override
     public List<ControlledRevision> revisions() {
-        return withExclusiveLock(() -> {
-            List<ControlledRevision> revisions = new ArrayList<>();
-            try (var paths = Files.list(revisionsDirectory)) {
-                for (Path path : paths.filter(Files::isRegularFile).sorted().toList()) {
-                    if (!path.getFileName().toString().endsWith(".revision")) {
-                        continue;
-                    }
-                    String value = path.getFileName().toString().replaceFirst("\\.revision$", "");
-                    ControlledRevisionId id;
-                    try {
-                        id = ControlledRevisionId.parse(value);
-                    } catch (RuntimeException e) {
-                        throw storageFailure("invalid revision filename: " + path.getFileName(), e);
-                    }
-                    revisions.add(readRevision(path, id));
+        return withExclusiveLock(this::revisionsLocked);
+    }
+
+    private List<ControlledRevision> revisionsLocked() {
+        List<ControlledRevision> revisions = new ArrayList<>();
+        try (var paths = Files.list(revisionsDirectory)) {
+            for (Path path : paths.filter(Files::isRegularFile).sorted().toList()) {
+                if (!path.getFileName().toString().endsWith(".revision")) {
+                    continue;
                 }
-            } catch (IOException e) {
-                throw storageFailure("cannot enumerate revision history", e);
+                String value = path.getFileName().toString().replaceFirst("\\.revision$", "");
+                ControlledRevisionId id;
+                try {
+                    id = ControlledRevisionId.parse(value);
+                } catch (RuntimeException e) {
+                    throw storageFailure("invalid revision filename: " + path.getFileName(), e);
+                }
+                revisions.add(readRevision(path, id));
             }
-            return revisions.stream()
-                    .sorted(Comparator.comparing(revision -> revision.id().toString()))
-                    .toList();
-        });
+        } catch (IOException e) {
+            throw storageFailure("cannot enumerate revision history", e);
+        }
+        return revisions.stream()
+                .sorted(Comparator.comparing(revision -> revision.id().toString()))
+                .toList();
     }
 
     private void acceptLocked(ControlledRevision revision, SemanticArtifact artifact) {
         Path revisionPath = revisionPath(revision.id());
         if (Files.exists(revisionPath)) {
             ControlledRevision existing = readRevision(revisionPath, revision.id());
-            String qualifier = existing.equals(revision) ? "already accepted" : "bound to different immutable content";
+            String qualifier =
+                    existing.equals(revision)
+                            ? "already accepted"
+                            : "bound to different immutable content";
             throw new GovernanceHistoryException(
-                    DUPLICATE_REVISION_ID, "controlled revision ID " + revision.id() + " is " + qualifier);
+                    DUPLICATE_REVISION_ID,
+                    "controlled revision ID " + revision.id() + " is " + qualifier);
         }
         if (!revision.modelFingerprint().equals(artifact.fingerprint())) {
             throw new GovernanceHistoryException(
-                    FINGERPRINT_MISMATCH, "revision fingerprint does not match supplied semantic artifact fingerprint");
+                    FINGERPRINT_MISMATCH,
+                    "revision fingerprint does not match supplied semantic artifact fingerprint");
         }
         verifyArtifact(artifact, false);
         for (ControlledRevisionId parentId : revision.parentRevisionIds()) {
             if (!Files.exists(revisionPath(parentId))) {
-                throw new GovernanceHistoryException(MISSING_PARENT, "parent revision does not exist: " + parentId);
+                throw new GovernanceHistoryException(
+                        MISSING_PARENT, "parent revision does not exist: " + parentId);
             }
             resolveLocked(parentId);
         }
@@ -149,7 +159,8 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
             SemanticArtifact existingArtifact = readArtifact(artifactPath, artifact.fingerprint());
             if (!existingArtifact.equals(artifact)) {
                 throw new GovernanceHistoryException(
-                        STORAGE_INTEGRITY, "existing artifact binding differs for " + artifact.fingerprint());
+                        STORAGE_INTEGRITY,
+                        "existing artifact binding differs for " + artifact.fingerprint());
             }
         } else {
             ensureNoRevisionReferencesMissingArtifact(artifact.fingerprint());
@@ -172,11 +183,12 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     }
 
     private HistoricalRevision resolveLocked(ControlledRevisionId id) {
-        Path revisionPath = revisionPath(id);
-        if (!Files.exists(revisionPath)) {
-            throw new GovernanceHistoryException(MISSING_REVISION, "controlled revision does not exist: " + id);
+        Path path = revisionPath(id);
+        if (!Files.exists(path)) {
+            throw new GovernanceHistoryException(
+                    MISSING_REVISION, "controlled revision does not exist: " + id);
         }
-        ControlledRevision revision = readRevision(revisionPath, id);
+        ControlledRevision revision = readRevision(path, id);
         Path artifactPath = artifactPath(revision.modelFingerprint());
         if (!Files.exists(artifactPath)) {
             throw new GovernanceHistoryException(
@@ -188,11 +200,14 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     }
 
     private void ensureNoRevisionReferencesMissingArtifact(ModelFingerprint fingerprint) {
-        for (ControlledRevision revision : revisions()) {
+        for (ControlledRevision revision : revisionsLocked()) {
             if (revision.modelFingerprint().equals(fingerprint)) {
                 throw new GovernanceHistoryException(
                         MISSING_ARTIFACT,
-                        "existing revision " + revision.id() + " references missing artifact " + fingerprint);
+                        "existing revision "
+                                + revision.id()
+                                + " references missing artifact "
+                                + fingerprint);
             }
         }
     }
@@ -200,19 +215,24 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     private void verifyArtifact(SemanticArtifact artifact, boolean storedArtifact) {
         if (!verifier.supports(artifact.fingerprint())) {
             throw new GovernanceHistoryException(
-                    UNSUPPORTED_ARTIFACT_POLICY, "unsupported semantic artifact policy: " + artifact.fingerprint());
+                    UNSUPPORTED_ARTIFACT_POLICY,
+                    "unsupported semantic artifact policy: " + artifact.fingerprint());
         }
         ModelFingerprint computed;
         try {
             computed = verifier.fingerprint(artifact.canonicalBytes());
         } catch (RuntimeException e) {
-            GovernanceHistoryException.Code code = storedArtifact ? STORAGE_INTEGRITY : FINGERPRINT_MISMATCH;
+            GovernanceHistoryException.Code code =
+                    storedArtifact ? STORAGE_INTEGRITY : FINGERPRINT_MISMATCH;
             throw new GovernanceHistoryException(code, "semantic artifact cannot be verified", e);
         }
         if (!artifact.fingerprint().equals(computed)) {
             throw new GovernanceHistoryException(
                     FINGERPRINT_MISMATCH,
-                    "semantic artifact fingerprint mismatch: recorded " + artifact.fingerprint() + ", computed " + computed);
+                    "semantic artifact fingerprint mismatch: recorded "
+                            + artifact.fingerprint()
+                            + ", computed "
+                            + computed);
         }
     }
 
@@ -235,9 +255,11 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
                     parents.add(ControlledRevisionId.parse(readString(input)));
                 }
                 Instant recordedAt = Instant.ofEpochSecond(input.readLong(), input.readInt());
-                RevisionRecorder recorder = new RevisionRecorder(readString(input), readString(input));
+                RevisionRecorder recorder =
+                        new RevisionRecorder(readString(input), readString(input));
                 requireEnd(input);
-                return new ControlledRevision(id, fingerprint, parents, new RevisionProvenance(recordedAt, recorder));
+                return new ControlledRevision(
+                        id, fingerprint, parents, new RevisionProvenance(recordedAt, recorder));
             }
         } catch (IOException | RuntimeException e) {
             if (e instanceof GovernanceHistoryException governanceFailure) {
@@ -254,7 +276,8 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
                 requireMagic(input, ARTIFACT_MAGIC);
                 ModelFingerprint fingerprint = readFingerprint(input);
                 if (!fingerprint.equals(expectedFingerprint)) {
-                    throw new IOException("artifact fingerprint metadata does not match revision fingerprint");
+                    throw new IOException(
+                            "artifact fingerprint metadata does not match revision fingerprint");
                 }
                 long length = input.readLong();
                 if (length < 0 || length > Integer.MAX_VALUE) {
@@ -314,7 +337,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     }
 
     private void writeAtomic(Path target, byte[] bytes) {
-        Path temporary;
+        Path temporary = null;
         try {
             temporary = Files.createTempFile(target.getParent(), ".pending-", ".tmp");
             try (FileChannel channel = FileChannel.open(
@@ -327,12 +350,20 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
             }
             try {
                 Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE);
+                temporary = null;
             } catch (AtomicMoveNotSupportedException e) {
-                Files.deleteIfExists(temporary);
                 throw storageFailure("filesystem does not support atomic authority writes", e);
             }
         } catch (IOException e) {
             throw storageFailure("cannot atomically persist controlled revision history", e);
+        } finally {
+            if (temporary != null) {
+                try {
+                    Files.deleteIfExists(temporary);
+                } catch (IOException ignored) {
+                    // A failed temporary-file cleanup never changes authoritative history.
+                }
+            }
         }
     }
 
@@ -347,7 +378,8 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     private String artifactStorageKey(ModelFingerprint fingerprint) {
         byte[] identity = encode(output -> writeFingerprint(output, fingerprint));
         try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(identity));
+            return HexFormat.of()
+                    .formatHex(MessageDigest.getInstance("SHA-256").digest(identity));
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
@@ -367,7 +399,8 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         }
     }
 
-    private static void writeFingerprint(DataOutputStream output, ModelFingerprint fingerprint) throws IOException {
+    private static void writeFingerprint(DataOutputStream output, ModelFingerprint fingerprint)
+            throws IOException {
         writeString(output, fingerprint.namespace());
         writeString(output, fingerprint.policyVersion());
         writeString(output, fingerprint.algorithm());
@@ -375,7 +408,8 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     }
 
     private static ModelFingerprint readFingerprint(DataInputStream input) throws IOException {
-        return new ModelFingerprint(readString(input), readString(input), readString(input), readString(input));
+        return new ModelFingerprint(
+                readString(input), readString(input), readString(input), readString(input));
     }
 
     private static void writeString(DataOutputStream output, String value) throws IOException {
@@ -406,7 +440,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
 
     private static void requireMagic(DataInputStream input, byte[] expected) throws IOException {
         byte[] actual = input.readNBytes(expected.length);
-        if (!java.util.Arrays.equals(expected, actual)) {
+        if (!Arrays.equals(expected, actual)) {
             throw new IOException("unsupported or corrupt storage record");
         }
     }

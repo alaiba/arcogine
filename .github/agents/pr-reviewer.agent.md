@@ -146,7 +146,8 @@ When a surface changes, inspect maintained or executable surfaces that encode or
 
 | Changed surface | Mandatory neighbors to consider |
 | --- | --- |
-| `FactoryModel` / model semantics | factory-design architecture, relevant ADRs, factory-design plan, engine assumptions, provenance/identity contracts, tests |
+| `FactoryModel` / model semantics | factory-design architecture, relevant ADRs, factory-design plan, engine assumptions, product concepts, provenance/identity contracts, tests |
+| routing/resource eligibility or execution decomposition | `docs/product/concepts.md`, factory-design architecture/plan, Engine Readiness, relevant ADRs, runtime/dispatch tests, consumer contracts |
 | `FactoryRuntime`, handlers, orders, jobs | architecture overview, Engine Readiness, runtime ADRs, acceptance/integration tests, consumer contracts |
 | events, scheduler, observations | event/state/observation architecture, API/SSE projections, determinism tests |
 | module dependencies | architecture module graph, executable architecture rules, domain/challenge boundaries |
@@ -158,18 +159,43 @@ When a surface changes, inspect maintained or executable surfaces that encode or
 | `./arcogine` commands | README, CONTRIBUTING, testing guide, AGENTS.md |
 | Gradle / Java / Node policy | executable configuration, CI, devcontainer/runtime policy, maintained development docs |
 | CI workflows/checks | testing guide, CONTRIBUTING, AGENTS.md where workflow depends on checks |
-| ADR added/changed | ADR index, current architecture, applicable planning, implementation evidence where claimed |
-| planning status changed | acceptance criteria, implementation, tests/evidence, architecture/current docs affected by the status claim |
+| ADR added/changed | ADR index, current architecture, applicable planning, maintained product concepts/reference surfaces, implementation evidence where claimed |
+| planning/readiness status changed | acceptance criteria, implementation, tests/evidence, architecture/current docs, maintained product concepts/reference surfaces affected by the status claim |
 
 A semantic neighbor is not automatically required to change. Inspect it and determine whether its existing statement remains correct.
+
+### Concept fan-out for semantic changes
+
+For medium- and high-risk semantic changes, do not rely only on file adjacency or changed-symbol references.
+
+1. Identify 2-5 material concepts whose meaning, ownership, lifecycle, cardinality, status, or authority changed.
+2. Search maintained repository surfaces for the new vocabulary and for plausible old assumptions or prior-state wording.
+3. Inspect hits in current architecture, planning, product concepts, reference docs, examples, tests, interfaces/DTOs, and executable configuration as relevant.
+4. Distinguish a semantically stale statement from harmless alternate wording.
+5. Record the important semantic neighbors inspected, including surfaces that were checked and correctly required no change.
+
+Examples of useful old-assumption searches include singular/plural cardinality shifts, old API/type names, `unresolved`/`deferred`/`partial` wording after a status transition, and phrases that encode an older ownership boundary.
+
+### Authority/status transition propagation
+
+Treat an authority-bearing transition as a mandatory propagation trigger. Examples include:
+
+- ADR `proposed/unresolved -> accepted`;
+- readiness/capability `partial/blocked -> implemented/ready`;
+- compatibility behavior `legacy/default -> removed/redefined`;
+- architecture ownership or identity semantics becoming binding.
+
+When such a transition occurs, explicitly inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
+
+This is bounded PR-impact review. It is not a substitute for the repository-wide Consistency agent.
 
 ## Risk-proportionate depth
 
 Use semantic risk to control review breadth, not severity.
 
 - **Low:** isolated refactors, narrow tests, typo/link corrections, mechanical changes with no contract effect. Inspect direct code/docs, tests/checks, and immediate contracts.
-- **Medium:** domain behavior, planning status, maintained current-state docs, internal interfaces with meaningful consumers. Inspect architecture/planning, semantic neighbors, compatibility, and executable evidence.
-- **High:** durable identity/canonicalization, revision semantics, persistence contracts, scheduler/time authority, determinism, major ownership changes, public compatibility/event contracts, security/authority, or hard-to-reverse architecture. Inspect applicable ADRs, architecture, planning, integration/compatibility evidence, consumers, and relevant prerequisite/recent PRs.
+- **Medium:** domain behavior, planning status, maintained current-state docs, internal interfaces with meaningful consumers. Inspect architecture/planning, semantic neighbors, compatibility, and executable evidence; perform concept fan-out for changed semantics.
+- **High:** durable identity/canonicalization, revision semantics, persistence contracts, scheduler/time authority, determinism, major ownership changes, public compatibility/event contracts, security/authority, or hard-to-reverse architecture. Inspect applicable ADRs, architecture, planning, integration/compatibility evidence, consumers, and relevant prerequisite/recent PRs; perform concept fan-out and authority-transition propagation where applicable.
 
 ## Required evaluation
 
@@ -178,7 +204,8 @@ Apply the review dimensions in `docs/development/reviewing.md`, including functi
 Additionally verify:
 
 - **Acceptance-criterion truth:** identify evidence that actually proves each material completion claim.
-- **Forward consistency:** determine whether the proposed change would introduce contradictions across affected current docs, architecture, planning, ADR constraints, reference contracts, examples, tests, configuration, or consumers. This is bounded PR-impact review, not a substitute for the repository-wide Consistency agent.
+- **Forward consistency:** determine whether the proposed change would introduce contradictions across affected current docs, architecture, planning, ADR constraints, reference contracts, product concepts, examples, tests, configuration, or consumers. Use semantic concept fan-out for medium/high-risk changes rather than relying only on the changed-file list. This is bounded PR-impact review, not a substitute for the repository-wide Consistency agent.
+- **Authority/status propagation:** when a decision or capability changes state, determine whether maintained surfaces that describe that state have been reconciled.
 - **PR-description truthfulness:** after fixes, verify title/body, validation claims, scope, API names, and completion statements describe the current head.
 
 ## High-value Arcogine invariants
@@ -261,7 +288,7 @@ Required invariant/outcome:
 Status: OPEN
 ```
 
-Use the severity semantics from `docs/development/reviewing.md`. Do not manufacture a finding merely to populate the format.
+Use the severity semantics and calibration examples from `docs/development/reviewing.md`. Do not manufacture a finding merely to populate the format.
 
 ## Finding lifecycle
 
@@ -295,7 +322,10 @@ Every complete review/re-review must identify:
 - actionable findings, highest severity first;
 - prior-finding lifecycle on re-review;
 - validation/CI state;
+- semantic neighbors inspected for medium/high-risk reviews, including important checked surfaces that required no change;
 - any inspection limitations;
 - explicit final disposition using `docs/development/reviewing.md`: `READY TO MERGE`, `READY AFTER CI`, `CHANGES REQUIRED`, or `NON-BLOCKING FOLLOW-UPS ONLY`.
+
+The semantic-neighbor coverage note is evidence of review breadth, not proof of repository-wide consistency. Keep it compact and material; do not dump every search hit.
 
 For a targeted review, do not issue a full merge disposition unless you actually completed the full review procedure. A complete review with no findings should say so directly. Do not leave merge readiness implicit.

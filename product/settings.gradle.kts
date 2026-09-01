@@ -2,6 +2,7 @@ rootProject.name = "arcogine"
 
 include(
     "types",
+    "governance",
     "simulation",
     "factory",
     "economy",

@@ -77,7 +77,7 @@ class ChallengeAttemptTest {
     }
 
     @Test
-    void optionalRuntimeProvenanceIsNotFabricated() {
+    void requiredRuntimeProvenanceIsCarriedExactlyAsSuppliedNeverFabricated() {
         ChallengeEvaluationResult result = evaluate(true, 350L, 10_000L);
         ChallengeAttempt attempt = ChallengeAttempt.record(snapshot(), economics(10_000L), result);
 

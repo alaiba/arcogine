@@ -341,7 +341,7 @@ C2 completion does not make the game playable and satisfies no Engine Readiness 
 candidate is not canonically executable: a later game-owned projection still requires Arcogine
 canonical validation before publication/run. Conversely, a canonically executable factory may
 remain inadmissible under a particular challenge. C3 is implemented independently of that
-projection; C4-C5 remain deferred.
+projection; C3 and C4 are now implemented and C5 remains deferred.
 
 ## 7. C3 — Deterministic challenge evaluation
 
@@ -475,9 +475,12 @@ thin accessors onto the retained `ChallengeEvaluationResult`, not a second copy 
 distinct from, and never derived from, `ChallengeIdentity`, `EvaluationPolicyIdentity`, or any
 published-model/run reference. `ChallengeAttempt.record(...)` generates a fresh id and constructs
 an immutable attempt in one step; there is no separate lifecycle/state-machine, submission
-workflow, or persistence -- C4 needed only a reproducible completed-attempt record. Optional
-model/run provenance is carried exactly as C3 supplied it (via `EvaluationProvenance` inside the
-retained result) and is never fabricated when absent.
+workflow, or persistence -- C4 needed only a reproducible completed-attempt record. Model/run
+provenance is carried exactly as C3 supplied it (via the required, non-blank `EvaluationProvenance`
+inside the retained result) and is never fabricated or substituted by C4 -- C3's existing contract
+requires a caller-supplied opaque model/run reference for every evaluation, so C4 has nothing
+optional to preserve here; a later integration that needs genuinely absent runtime provenance would
+require a C3 contract change, not a C4 one.
 
 `ChallengeAttemptComparator.compare(...)` in `com.arcogine.challenge.comparison` first checks
 `AttemptCompatibility`: two attempts are comparable only when they share the exact same

@@ -203,4 +203,73 @@ describe('JobTracker', () => {
     fireEvent.click(header);
     expect(header.textContent).toContain('↑');
   });
+
+  it('renders all supported status styles and sorts numeric values with nulls last', () => {
+    useSimulationStore.setState({
+      snapshot: makeSnapshot([
+        {
+          job_id: 1,
+          product_id: 1,
+          quantity: 1,
+          status: 'InProgress',
+          current_step: 1,
+          total_steps: 2,
+          created_at: 5,
+          completed_at: null,
+          revenue: 10,
+        },
+        {
+          job_id: 2,
+          product_id: 2,
+          quantity: 1,
+          status: 'Cancelled',
+          current_step: 0,
+          total_steps: 2,
+          created_at: 10,
+          completed_at: null,
+          revenue: null,
+        },
+        {
+          job_id: 3,
+          product_id: 3,
+          quantity: 1,
+          status: 'Queued',
+          current_step: 0,
+          total_steps: 2,
+          created_at: 15,
+          completed_at: null,
+          revenue: 5,
+        },
+        {
+          job_id: 4,
+          product_id: 4,
+          quantity: 1,
+          status: 'Queued',
+          current_step: 0,
+          total_steps: 2,
+          created_at: 20,
+          completed_at: null,
+          revenue: null,
+        },
+      ]),
+    });
+    render(<JobTracker />);
+
+    expect(screen.getByText('InProgress').className).toContain('bg-sky-500/20');
+    expect(screen.getByText('Cancelled').className).toContain('bg-red-500/20');
+
+    fireEvent.click(screen.getByText(/Unit value/));
+    const jobIdsAfterAscendingSort = screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => row.querySelector('td')?.textContent);
+    expect(jobIdsAfterAscendingSort).toEqual(['3', '1', '2', '4']);
+
+    fireEvent.click(screen.getByText(/Unit value/));
+    const jobIdsAfterDescendingSort = screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => row.querySelector('td')?.textContent);
+    expect(jobIdsAfterDescendingSort).toEqual(['1', '3', '2', '4']);
+  });
 });

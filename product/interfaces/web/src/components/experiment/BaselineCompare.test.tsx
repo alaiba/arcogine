@@ -69,6 +69,15 @@ describe('BaselineCompare', () => {
     promptSpy.mockRestore();
   });
 
+  it('does not save a blank baseline name', () => {
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('   ');
+    useSimulationStore.setState({ snapshot: makeSnapshot() });
+    render(<BaselineCompare />);
+    fireEvent.click(screen.getByRole('button', { name: /save baseline/i }));
+    expect(screen.getByText(/no saved baselines/i)).toBeInTheDocument();
+    promptSpy.mockRestore();
+  });
+
   it('removes a baseline when remove is clicked', () => {
     const snap = makeSnapshot();
     useSimulationStore.setState({ snapshot: snap });
@@ -101,5 +110,36 @@ describe('BaselineCompare', () => {
     useBaselinesStore.getState().saveBaseline('base', makeSnapshot({ total_revenue: 1000 }));
     render(<BaselineCompare />);
     expect(screen.getByText('Revenue')).toBeInTheDocument();
+  });
+
+  it('renders all metric verdicts, including neutral and zero-baseline values', () => {
+    const baseline = makeSnapshot({ total_revenue: 100, backlog: 4, completed_sales: 8, current_time: 40 });
+    const current = makeSnapshot({ total_revenue: 100, backlog: 3, completed_sales: 0, current_time: 0 });
+    useSimulationStore.setState({ snapshot: current });
+    useBaselinesStore.getState().saveBaseline('All metrics', baseline);
+    render(<BaselineCompare />);
+
+    expect(screen.getByText('Backlog')).toBeInTheDocument();
+    expect(screen.getByText('Lead time')).toBeInTheDocument();
+    expect(screen.getByText('Throughput')).toBeInTheDocument();
+    expect(screen.getAllByText((_, element) => element?.textContent === '(0.0%)')).toHaveLength(2);
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0);
+  });
+
+  it('renders a worsening backlog and lead time with negative delta styling', () => {
+    const baseline = makeSnapshot({
+      backlog: 2,
+      kpis: [{ name: 'lead_time', value: 10, unit: 'ticks' }],
+    });
+    const current = makeSnapshot({
+      backlog: 5,
+      kpis: [{ name: 'lead_time', value: 50, unit: 'ticks' }],
+    });
+    useSimulationStore.setState({ snapshot: current });
+    useBaselinesStore.getState().saveBaseline('Worse', baseline);
+    render(<BaselineCompare />);
+
+    expect(document.querySelectorAll('svg.text-red-500')).toHaveLength(2);
+    expect(document.querySelectorAll('.text-red-400')).toHaveLength(2);
   });
 });

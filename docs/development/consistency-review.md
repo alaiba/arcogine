@@ -70,6 +70,25 @@ When synchronization is authorized, it follows repository truth rather than issu
 
 This deliberately does **not** mean that every raw observation or exploratory suspicion becomes an issue. A finding must meet the evidence rules in the reviewer contract before it qualifies for persistence.
 
+## Finding attribution
+
+Consistency findings may later be used as evidence in a separate review-quality audit. Attribution for that audit must be evidence-backed so the audit distinguishes a PR-review escape from unrelated or inherited repository drift.
+
+This section is **maintainer audit/post-processing guidance**, not an extension of the executable Consistency agent's required finding or run-report schema. Ordinary Consistency-agent runs remain governed by `.github/agents/consistency.agent.md` and are not required to populate the attribution fields below. If Arcogine later wants every consistency run to produce this metadata automatically, the executable agent contract must be changed explicitly in a separate coherent update.
+
+When conducting a review-quality audit, derive or preserve the following attribution facts from repository history where they can be established:
+
+- **first known bad commit** — earliest verified commit in the inspected history where the inconsistency is present;
+- **likely introducing PR** — PR whose merged semantic transition introduced or should have reconciled the stale neighbor;
+- **attribution confidence** — `HIGH`, `MEDIUM`, or `LOW` based on how directly history establishes causation;
+- **origin class** — `REVIEW_ESCAPE`, `LEGACY_DRIFT`, `UNRELATED_DRIFT`, `REGRESSION`, or `UNKNOWN`.
+
+Use `REVIEW_ESCAPE` only when the evidence supports all of these: the relevant semantic change was in a reviewed PR, the stale or contradictory neighbor already existed in that PR's proposed post-merge state, and the PR review did not identify it before merge. A later consistency finding is not automatically a reviewer failure merely because it was discovered after a PR.
+
+Use `LEGACY_DRIFT` when the inconsistency predates the inspected review window or cannot reasonably be tied to the semantic transition under review. Use `UNRELATED_DRIFT` when a recent PR is nearby in time but did not change the concept or authority involved. Use `REGRESSION` when a previously resolved semantic inconsistency reappears.
+
+Do not manufacture attribution to improve metrics. If the introducing point cannot be established from repository history, record `UNKNOWN`. Attribution is diagnostic audit metadata, not product/architecture authority, not part of the finding's durable semantic identity, and not required to be persisted in a consistency issue.
+
 ## Calibration migration
 
 The original calibration findings were migrated to GitHub Issues #204-#209. Their legacy aliases remain stable:
@@ -113,7 +132,7 @@ Keep these concerns separate:
 
 - `.github/agents/consistency.agent.md` owns the consistency review procedure, evidence rules, finding format, identity/lifecycle rules, and resolution policy.
 - GitHub Issues own durable finding identity and lifecycle continuity only.
-- This document owns human/maintainer operating guidance for recurring reviews.
+- This document owns human/maintainer operating guidance for recurring reviews and separate review-quality audit attribution conventions; it does not add fields to the executable Consistency agent's finding/report contract.
 - Normal implementation sessions own remediation once a finding has been accepted.
 - Independent PR review owns acceptance of remediation changes.
 - Architecture, ADR, planning, source, tests, and executable configuration remain authoritative for their respective semantic questions; consistency issues do not replace them.

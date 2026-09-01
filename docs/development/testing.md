@@ -70,7 +70,7 @@ All Java commands run through the Gradle wrapper under `product/`. Raising a min
 | Frontend lint, typecheck, unit tests, coverage, build | A supported Node.js/npm and `node_modules` from `npm ci` | Needed for the initial `npm ci`; not for the checks once dependencies are installed |
 | Playwright E2E | Backend/frontend capabilities, built API jar, and Playwright Chromium | Needed only if dependencies or the browser binary are not installed; Docker is not required |
 | Canonical `./arcogine build` | Backend and frontend build capabilities | Only for uncached dependencies |
-| Image build and Compose smoke test | Docker Engine and Docker Compose, plus a previously built `dist/` | May be needed to pull runtime base images |
+| Image build and Compose smoke test | Docker Engine, Docker Compose, and `curl` (used to health-check the running containers), plus a previously built `dist/` | May be needed to pull runtime base images |
 | Java SBOM scan | JDK/Gradle and Trivy | Needed for uncached Gradle dependencies and Trivy's vulnerability database |
 | Frontend dependency audit | Supported Node.js/npm and installed frontend dependencies | Required to query the npm registry advisory service |
 | Image vulnerability scan | Docker, built images, and Trivy | Needed for Trivy's vulnerability database |

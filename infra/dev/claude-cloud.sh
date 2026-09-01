@@ -173,47 +173,45 @@ done
 
 echo "==> Verifying platform toolchain compatibility..."
 
+# These are inventory/compatibility checks, not provisioning prerequisites:
+# a documentation-only or backend-only task must not fail provisioning over
+# an unrelated or unsupported runtime. Warn, don't exit, and let the task's
+# own validation step (e.g. `./arcogine check`) enforce what it actually needs.
 ACTUAL_JAVA_MAJOR="$(current_java_major)"
 if [ -z "$ACTUAL_JAVA_MAJOR" ]; then
-  echo "FATAL: Java is not available on PATH; Arcogine requires JDK ${MIN_JAVA_MAJOR} or newer." >&2
-  exit 1
+  echo "WARNING: Java is not available on PATH; Arcogine requires JDK ${MIN_JAVA_MAJOR} or newer for Java work." >&2
+elif [ "$ACTUAL_JAVA_MAJOR" -lt "$MIN_JAVA_MAJOR" ]; then
+  echo "WARNING: Arcogine requires Java ${MIN_JAVA_MAJOR} or newer for Java work, but 'java -version' reports major version ${ACTUAL_JAVA_MAJOR}." >&2
+elif ! command -v javac >/dev/null 2>&1; then
+  echo "WARNING: javac is not available; Arcogine requires a JDK, not only a JRE, for Java work." >&2
+else
+  echo "    Java major version OK: ${ACTUAL_JAVA_MAJOR} (compatibility floor ${MIN_JAVA_MAJOR})"
 fi
-if [ "$ACTUAL_JAVA_MAJOR" -lt "$MIN_JAVA_MAJOR" ]; then
-  echo "FATAL: Arcogine requires Java ${MIN_JAVA_MAJOR} or newer, but 'java -version' reports major version ${ACTUAL_JAVA_MAJOR}." >&2
-  exit 1
-fi
-if ! command -v javac >/dev/null 2>&1; then
-  echo "FATAL: javac is not available; Arcogine requires a JDK, not only a JRE." >&2
-  exit 1
-fi
-echo "    Java major version OK: ${ACTUAL_JAVA_MAJOR} (compatibility floor ${MIN_JAVA_MAJOR})"
 
 ACTUAL_NODE_VERSION="$(current_node_version)"
 if [ -z "$ACTUAL_NODE_VERSION" ]; then
-  echo "FATAL: Node.js is not available on PATH; Arcogine supports ${SUPPORTED_NODE_RANGE}." >&2
-  exit 1
-fi
-if ! command -v npm >/dev/null 2>&1; then
-  echo "FATAL: npm is not available on PATH; Arcogine's frontend setup requires npm." >&2
-  exit 1
-fi
+  echo "WARNING: Node.js is not available on PATH; Arcogine supports ${SUPPORTED_NODE_RANGE} for frontend work." >&2
+elif ! command -v npm >/dev/null 2>&1; then
+  echo "WARNING: npm is not available on PATH; Arcogine's frontend setup requires npm." >&2
+else
+  # The package manifest is the frontend's public support contract. Warn
+  # clearly if this lightweight provisioning guard ever drifts from that
+  # source of truth.
+  PACKAGE_NODE_RANGE="$(node -p "require('./product/interfaces/web/package.json').engines.node || ''" 2>/dev/null || true)"
+  if [ "$PACKAGE_NODE_RANGE" != "$SUPPORTED_NODE_RANGE" ]; then
+    echo "WARNING: Node support contract drift: claude-cloud.sh expects '${SUPPORTED_NODE_RANGE}', but package.json declares '${PACKAGE_NODE_RANGE:-none}'." >&2
+  fi
 
-# The package manifest is the frontend's public support contract. Fail clearly
-# if this lightweight provisioning guard ever drifts from that source of truth.
-PACKAGE_NODE_RANGE="$(node -p "require('./product/interfaces/web/package.json').engines.node || ''" 2>/dev/null || true)"
-if [ "$PACKAGE_NODE_RANGE" != "$SUPPORTED_NODE_RANGE" ]; then
-  echo "FATAL: Node support contract drift: claude-cloud.sh expects '${SUPPORTED_NODE_RANGE}', but package.json declares '${PACKAGE_NODE_RANGE:-none}'." >&2
-  exit 1
+  if ! node_version_supported "$ACTUAL_NODE_VERSION"; then
+    echo "WARNING: Node.js ${ACTUAL_NODE_VERSION} is outside Arcogine's supported range: ${SUPPORTED_NODE_RANGE}." >&2
+  else
+    echo "    Node.js version OK: ${ACTUAL_NODE_VERSION} (supported ${SUPPORTED_NODE_RANGE})"
+  fi
 fi
-
-if ! node_version_supported "$ACTUAL_NODE_VERSION"; then
-  echo "FATAL: Node.js ${ACTUAL_NODE_VERSION} is outside Arcogine's supported range: ${SUPPORTED_NODE_RANGE}." >&2
-  exit 1
-fi
-echo "    Node.js version OK: ${ACTUAL_NODE_VERSION} (supported ${SUPPORTED_NODE_RANGE})"
 
 echo "    No project dependencies were installed during provisioning."
 echo "    Install only task-required dependencies, or explicitly run './arcogine setup' for the full development set."
+echo "    Any WARNING above only matters for work that exercises that runtime; it does not block unrelated tasks."
 
 # ---------------------------------------------------------------------------
 # 3. Done.

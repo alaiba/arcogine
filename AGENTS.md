@@ -95,7 +95,7 @@ Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dock
 
 ## Validating changes
 
-Before considering a change complete, run `./arcogine check`. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
+Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching only Java (`product/{types,simulation,domains,agents,consumer,interfaces/api,interfaces/cli}`) needs only the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a change touching only the frontend (`product/interfaces/web/`) needs only its gates (`cd product/interfaces/web && npm run lint && npx tsc --noEmit && npm run test:coverage && npm run build`); a documentation-only change needs neither. When a change spans both, or you can't tell whether it's narrow, run `./arcogine check`, which runs both unconditionally. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
 
 ## Checking a PR after pushing
 

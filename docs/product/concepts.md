@@ -54,7 +54,7 @@ Example: Widget A's routing might require milling for 5 ticks on either Mill A o
 
 ### Orders and jobs
 
-When an order arrives, Arcogine stores an immutable **order** containing the accepted product, quantity, creation time, and unit price. It then creates a mutable **job** that references that order and moves through the routing steps, waiting in machine queues when a machine is busy.
+When an order arrives, Arcogine stores an immutable **order** containing the accepted product, quantity, creation time, and unit price. It then creates one mutable, unit-quantity **job** per requested unit. Each child job references the same order, has its own ordinal within that order, and traverses the routing once while waiting in machine queues when necessary.
 
 An accepted order remains one immutable production and commercial requirement. Engine Readiness W1 decomposes its quantity deterministically into unit-quantity child jobs: an order for 10 units creates ten independently dispatchable jobs, with ordinals 0–9, each traversing the routing once. Arcogine owns this decomposition; a game or other caller supplies only the production requirement.
 
@@ -63,11 +63,11 @@ Order-level execution progress is authoritative: it records released and complet
 The current lifecycle is:
 
 1. **Order accepted** — the order event freezes the unit price and quantity in immutable order intent
-2. **Job created** — one execution job references that order, with its routing sized to repeat once per unit of quantity
-3. **In progress** — the job is processed on a machine or waits in a queue, one routing pass per unit
-4. **Completed** — all routing steps for every unit finish; the referenced order's sales value (quantity x its locked-in price) is added to completed sales value exactly once
+2. **Child jobs created** — one unit-quantity job is created per requested unit; every child references the same order and has a stable ordinal within it
+3. **In progress** — child jobs are dispatched independently, each traversing the routing once while processing on a machine or waiting in a queue
+4. **Completed** — the order completes only after every child job completes; the order's sales value (quantity x its locked-in price) is added to completed sales value exactly once
 
-The existing API/UI job projection still shows product, quantity, and completed value on each job for compatibility. Those values are now read from the immutable referenced order rather than stored as mutable job-owned state.
+The existing API/UI job projection remains a compatibility surface for job-level views, but each child job is unit quantity. Product and commercial fields are projected from the referenced immutable order where applicable rather than owned as mutable job state.
 
 ## The economy
 

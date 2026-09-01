@@ -57,8 +57,8 @@ class ExplicitWorkloadSubmissionTest {
         assertEquals(List.of(0L, 1L, 2L), jobs.stream().map(j -> j.ordinalWithinOrder()).toList());
         assertTrue(jobs.stream().allMatch(job -> job.orderId().equals(orderId)));
 
-        // The job's routing repeats once per unit of quantity, so a quantity-3 order needs three
-        // TaskEnd events (one per unit) to complete, not one.
+        // A quantity-3 order creates three unit jobs, so all three must complete before the
+        // aggregate OrderCompleted event is emitted.
         Event completed = null;
         while (completed == null) {
             Event next = runtime.advance().orElseThrow();

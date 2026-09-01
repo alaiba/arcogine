@@ -243,6 +243,20 @@ class Gate4BRuntimeEventAcceptanceTest {
     }
 
     @Test
+    void acceptedNoOpAvailabilityRequestEmitsNothing() {
+        FactoryRuntime runtime = FactoryRuntime.forModel(twoMachineModel());
+
+        // A freshly constructed machine is already Idle/online, so requesting "online" again is an
+        // accepted no-op: the command succeeds but no authoritative state actually transitions.
+        CommandResult<EventPayload.MachineAvailabilityChange> result =
+                runtime.setMachineAvailability(new MachineId(1), true);
+        assertInstanceOf(CommandResult.Accepted.class, result);
+
+        assertTrue(runtime.drainSupportedEvents().isEmpty());
+        assertEquals(0, runtime.observe().metadata().latestEventSequence());
+    }
+
+    @Test
     void w1EventsPreserveOrderIdAndJobIdCorrelation() throws SimError {
         FactoryRuntime runtime = FactoryRuntime.forModel(twoMachineModel());
         OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();

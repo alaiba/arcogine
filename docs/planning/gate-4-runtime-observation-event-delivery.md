@@ -240,8 +240,9 @@ G4-C (headless event/observation closure across the full acceptance list, includ
 `freshObservationReconstructsCurrentConsumerViewWithoutReplay` and
 `apiDtosDoNotReenterDomainDecisionPaths`) and G4-D (outward consumer convergence: SSE/API DTO
 migration, frontend, CLI) remain outstanding and are not claimed here. No persistence, recovery,
-checkpoint, or replay semantics were introduced; `supportedEvents()`/`supportedEventsSince` are an
-in-memory, per-session log only, not a retained journal (that remains Slice DH-E).
+checkpoint, or replay semantics were introduced; `FactoryRuntime.drainSupportedEvents()` is a
+draining, non-retained accessor only — it is not a cursor-addressable or replayable journal (that
+remains Slice DH-E).
 
 ### Slice G4-C — Gate 4 headless acceptance closure
 

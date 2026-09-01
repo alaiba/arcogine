@@ -52,6 +52,14 @@ jobs:
       - name: Validate classifier logic
         run: bash .github/scripts/classify-changes.test.sh
 
+      # Ordinary CI runs on fully provisioned runners, so it never exercises
+      # ./arcogine's missing-tool preflight branches. Cover them explicitly
+      # here so a regression in the constrained-environment fail-fast
+      # diagnostics fails loudly instead of only surfacing on a real
+      # constrained host partway through an expensive `--full` run.
+      - name: Validate arcogine preflight diagnostics
+        run: bash arcogine.test.sh
+
       - name: Determine changed-file surfaces
         id: filter
         run: |

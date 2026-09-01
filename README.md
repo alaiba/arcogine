@@ -68,10 +68,12 @@ After the container is ready, start the web app and API in two terminals:
 
 Then open **http://127.0.0.1:5173**.
 
-### Other setup paths
+### Other execution environments
 
 - **Docker Compose:** `./arcogine build && ./arcogine up`
-- **Native (Linux/macOS, or Windows via WSL/Git Bash):** `./arcogine setup`, then `./arcogine run api` / `./arcogine run web` as above.
+- **Native full development (Linux/macOS, or Windows via WSL/Git Bash):** optionally run `./arcogine setup`, then `./arcogine run api` / `./arcogine run web` as above.
+
+The devcontainer is one supported environment, not the development contract. `./arcogine setup` is an optional convenience that installs the complete dependency set; it is not required for repository inspection or narrow documentation/backend/frontend work. In task-oriented containers, use the available environment where practical and install only the dependencies or capabilities the task needs. The setup command deliberately does not install or upgrade Java, Node, Docker, or security tools.
 
 `./arcogine` is a Bash script. On Windows it runs in the Dev Container, WSL, or Git Bash — not directly in PowerShell/cmd. The Dev Container is the recommended path on Windows.
 
@@ -79,8 +81,8 @@ Then open **http://127.0.0.1:5173**.
 
 Arcogine deliberately separates **supported compatibility** from the versions used by its preferred development and runtime environments:
 
-- **Java compatibility baseline:** Java 21. Java compilation uses `--release 21`, so a supported newer JDK may compile the project without allowing post-21 language features, APIs, or bytecode. CI runs on an actual JDK 21; the preferred devcontainer currently uses JDK 25.
-- **Node.js support:** `^22.22.2 || ^24.15.0 || ^26.0.0`, declared in `product/interfaces/web/package.json`. CI exercises the lowest supported Node 22 release, 22.22.2; the preferred devcontainer currently uses Node 24.
+- **Java compatibility baseline:** JDK 21 is a first-class development runtime. Java compilation uses `--release 21`, so a supported newer JDK may compile the project without allowing post-21 language features, APIs, or bytecode. CI runs on an actual JDK 21; the preferred devcontainer currently uses JDK 25.
+- **Node.js support:** `^22.22.2 || ^24.15.0 || ^26.0.0`, declared in `product/interfaces/web/package.json`. The current floor is substantive: jsdom 30.0.1 declares that same range, its Undici 8 dependency requires Node 22.19+, and under Node 20.20.2 the Vitest jsdom workers fail at startup because the required Web IDL runtime API is unavailable. CI therefore exercises Node 22.22.2; the preferred devcontainer currently uses Node 24.
 - **Runtime Java:** the API runtime image currently uses Eclipse Temurin 25 JRE. The runtime-image JDK is independent of the Java 21 build-compatibility floor.
 
 Raising a supported minimum is a deliberate repository change: update the compatibility declaration, CI floor, provisioning validation, and current documentation together. Preferred devcontainer/runtime versions may move independently as long as they remain compatible.
@@ -138,7 +140,7 @@ java -jar dist/api/arcogine.jar run docs/examples/basic.toml
 ## Quality gates
 
 ```bash
-./arcogine setup         # install/bootstrap dependencies
+./arcogine setup         # optional full-development dependency bootstrap
 ./arcogine test          # Java + frontend unit tests
 ./arcogine check         # fast gates: compile, tests, coverage, lint, build
 ./arcogine check --full  # everything: check + Playwright E2E + Docker smoke + security scans

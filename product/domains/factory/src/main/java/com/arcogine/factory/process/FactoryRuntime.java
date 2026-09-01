@@ -49,7 +49,11 @@ import java.util.stream.Stream;
  * or returning {@code void}; {@link #pendingWorkView()} exposes the cross-machine multi-eligible
  * backlog that no single machine's queue depth reflects. It deliberately does not attempt a generic
  * simulation-session framework. Gate 4-A adds the opaque run identity and current-state
- * observation; supported event envelopes and advancing cursors remain later Gate 4 work.
+ * observation; Gate 4-B adds the supported {@link RuntimeEventEnvelope} contract -- {@link
+ * #supportedEvents()}/{@link #supportedEventsSince} -- published only after the authoritative
+ * transition each event describes has already succeeded, with {@link
+ * RuntimeObservationMetadata#latestEventSequence()} advancing in lockstep. Persistence/recovery/
+ * checkpoint/replay semantics and consumer (SSE/frontend) migration remain later Gate 4 work.
  */
 public class FactoryRuntime {
 
@@ -57,6 +61,8 @@ public class FactoryRuntime {
     private final RecordingScheduler scheduler;
     private final FactoryModelVersion modelVersion;
     private final RunId runId;
+    private final List<RuntimeEventEnvelope> supportedEvents = new ArrayList<>();
+    private long eventSequence;
 
     private FactoryRuntime(FactoryHandler factory, FactoryModelVersion modelVersion) {
         this.factory = factory;
@@ -117,9 +123,15 @@ public class FactoryRuntime {
     public CommandResult<OrderId> submitWorkload(ProductId productId, long quantity, double unitPrice) {
         List<Event> scheduled = new ArrayList<>();
         scheduler.startCapturing(scheduled);
+        SimTime submittedAt = scheduler.currentTime();
         try {
             OrderId orderId =
                     factory.submitOrder(productId, quantity, unitPrice, scheduler.currentTime(), scheduler);
+            emit(
+                    RuntimeEventType.ORDER_ACCEPTED,
+                    submittedAt,
+                    new RuntimeEventPayload.OrderAccepted(orderId, productId, quantity, unitPrice),
+                    List.of(new AffectedEntityRef.OrderRef(orderId)));
             return new CommandResult.Accepted<>(orderId, modelVersion, scheduled);
         } catch (SimError e) {
             return new CommandResult.Rejected<>(e, modelVersion);
@@ -169,14 +181,27 @@ public class FactoryRuntime {
         List<Event> scheduled = new ArrayList<>();
         scheduler.startCapturing(scheduled);
         EventPayload.MachineAvailabilityChange requested = new EventPayload.MachineAvailabilityChange(machineId, online);
+        SimTime changedAt = scheduler.currentTime();
         try {
             factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
+            emit(
+                    RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
+                    changedAt,
+                    new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
+                    List.of(new AffectedEntityRef.MachineRef(machineId)));
             return new CommandResult.Accepted<>(requested, modelVersion, scheduled);
         } catch (SimError e) {
             // The availability change itself (Machine#setAvailability) is the first thing
             // handleMachineAvailability does and always succeeds once the pre-checks above have
             // passed -- only the subsequent dispatch cascade can fault. So `requested` genuinely
-            // was applied by the time any SimError reaches here, and belongs on Faulted too.
+            // was applied by the time any SimError reaches here, and belongs on Faulted too; the
+            // supported MACHINE_AVAILABILITY_CHANGED event is emitted for the same reason -- that
+            // authoritative change genuinely occurred even though the later cascade did not.
+            emit(
+                    RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
+                    changedAt,
+                    new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
+                    List.of(new AffectedEntityRef.MachineRef(machineId)));
             return new CommandResult.Faulted<>(requested, e, modelVersion, scheduled);
         } finally {
             scheduler.stopCapturing();
@@ -197,9 +222,93 @@ public class FactoryRuntime {
     public Optional<Event> advance() throws SimError {
         Optional<Event> next = scheduler.nextEvent();
         if (next.isPresent()) {
-            factory.handleEvent(next.get(), scheduler);
+            Event event = next.get();
+            List<Event> triggered = new ArrayList<>();
+            scheduler.startCapturing(triggered);
+            try {
+                factory.handleEvent(event, scheduler);
+            } finally {
+                scheduler.stopCapturing();
+                // Post-authoritative derivation happens even on the exception path: whatever
+                // authoritative state change already occurred before a fault (e.g. a job
+                // completing its step before a later dispatch cascade fails) must still be
+                // reported -- see requirement 1 (post-authoritative publication) and the
+                // faultReportsOnlyAuthoritativeChangesThatActuallyOccurred acceptance evidence.
+                recordSupportedEventsFor(event, triggered);
+            }
         }
         return next;
+    }
+
+    /**
+     * Derives and appends the supported runtime event(s) implied by having just processed {@code
+     * trigger}, if any -- never before {@link FactoryHandler#handleEvent} has returned (successfully
+     * or not) for it, since a supported event must never claim a transition occurred before the
+     * authoritative state actually reflects it. {@code triggeredInternalEvents} is whatever the
+     * internal scheduler additionally scheduled while processing {@code trigger}, inspected only for
+     * evidence of a further authoritative fact (order completion) that already happened -- never
+     * itself re-exposed as the supported payload.
+     */
+    private void recordSupportedEventsFor(Event trigger, List<Event> triggeredInternalEvents) {
+        if (!(trigger.payload() instanceof EventPayload.TaskEnd taskEnd)) {
+            // Internal scheduler machinery this runtime never itself schedules through its own
+            // supported API surface (OrderCreation/MachineAvailabilityChange arrive only via
+            // submitWorkload/setMachineAvailability directly, never via the queue) and the
+            // TaskStart timing marker, which never itself changes authoritative state.
+            return;
+        }
+        JobView job = factory.job(taskEnd.jobId());
+        emit(
+                RuntimeEventType.JOB_STEP_COMPLETED,
+                trigger.time(),
+                new RuntimeEventPayload.JobStepCompleted(
+                        taskEnd.jobId(), job.orderId(), taskEnd.machineId(), taskEnd.stepIndex(), job.isComplete()),
+                List.of(new AffectedEntityRef.JobRef(taskEnd.jobId()), new AffectedEntityRef.OrderRef(job.orderId())));
+
+        for (Event internal : triggeredInternalEvents) {
+            if (internal.payload() instanceof EventPayload.OrderCompleted oc) {
+                emit(
+                        RuntimeEventType.ORDER_COMPLETED,
+                        trigger.time(),
+                        new RuntimeEventPayload.OrderCompleted(
+                                oc.orderId(), oc.jobId(), oc.productId(), oc.quantity(), oc.unitPrice()),
+                        List.of(
+                                new AffectedEntityRef.OrderRef(oc.orderId()),
+                                new AffectedEntityRef.JobRef(oc.jobId())));
+            }
+        }
+    }
+
+    /**
+     * Allocates the next strictly monotonic, run-scoped sequence number and appends the resulting
+     * {@link RuntimeEventEnvelope} to this session's supported event log. Package-private emission
+     * point: this is the only place a {@link RuntimeEventEnvelope} is constructed, always after the
+     * authoritative transition it describes has already succeeded.
+     */
+    private void emit(
+            RuntimeEventType eventType, SimTime time, RuntimeEventPayload payload, List<AffectedEntityRef> refs) {
+        eventSequence++;
+        supportedEvents.add(new RuntimeEventEnvelope(
+                runId, eventSequence, time, eventType, modelVersion.fingerprint(), Optional.empty(), refs, payload));
+    }
+
+    /**
+     * Every supported runtime event produced by this session so far, in emission (sequence) order.
+     * Consumer-neutral supplement to {@link #observe()}: distinct from, and never wraps, the
+     * internal scheduler {@link Event} returned by {@link #advance()}/{@link #advanceUntil}.
+     */
+    public List<RuntimeEventEnvelope> supportedEvents() {
+        return List.copyOf(supportedEvents);
+    }
+
+    /**
+     * Every supported runtime event with {@link RuntimeEventEnvelope#sequence()} strictly greater
+     * than {@code sinceSequence}, in emission order -- the incremental-polling counterpart to {@link
+     * #supportedEvents()} for a caller tracking {@code RuntimeObservationMetadata#latestEventSequence()}
+     * as its cursor.
+     */
+    public List<RuntimeEventEnvelope> supportedEventsSince(long sinceSequence) {
+        return supportedEvents.stream().filter(e -> e.sequence() > sinceSequence).toList();
     }
 
     /**
@@ -281,7 +390,8 @@ public class FactoryRuntime {
 
     /**
      * Returns a coherent, immutable, consumer-neutral projection of current authoritative state.
-     * This does not expose internal scheduler events; Gate 4-B owns supported event publication.
+     * This does not expose internal scheduler events; see {@link #supportedEvents()} for the
+     * supported runtime event log this observation's {@code latestEventSequence} cursors.
      */
     public RuntimeObservation observe() {
         List<ResourceObservation> resources = machinesView().stream()
@@ -340,7 +450,7 @@ public class FactoryRuntime {
                         modelVersion.fingerprint(),
                         scheduler.currentTime(),
                         scheduler.isEmpty() ? RuntimeRunState.QUIESCENT : RuntimeRunState.ACTIVE,
-                        0),
+                        eventSequence),
                 resources,
                 orders,
                 jobs,

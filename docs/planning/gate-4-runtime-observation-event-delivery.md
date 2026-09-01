@@ -128,8 +128,9 @@ Do not put Spring DTOs or frontend DTOs in this module. Do not create a generic 
 consumer-neutral current-state projection. Its metadata carries a fresh opaque `RunId`, the durable
 `FactoryModelVersion.fingerprint()` (never the legacy content hash), the scheduler's current
 `SimTime`, an explicit runtime advancement state (`ACTIVE` when authoritative work is pending,
-otherwise `QUIESCENT`), and `latestEventSequence = 0`. The cursor is intentionally reserved for
-G4-B supported runtime events; it is not derived from internal scheduler events. The projection contains resources
+otherwise `QUIESCENT`), and `latestEventSequence` (`0` before any supported runtime event; G4-B below
+wires this cursor to real supported-event sequencing). It is not derived from internal scheduler
+events. The projection contains resources
 (operational state, active child work, per-resource queue depth, and busy ticks), aggregate orders,
 W1 child jobs with `JobId -> OrderId` correlation and ordinal, cross-machine pending work, and the
 authoritative backlog/completed-order/completed-sales/lead-time/throughput aggregates already owned
@@ -138,10 +139,11 @@ fresh construction and therefore receives a fresh `RunId` while preserving the s
 outcome for the same model and commands. `Gate4RuntimeObservationAcceptanceTest` proves these
 facts without the API, Spring, frontend, internal-store access, or scheduler-event replay.
 
-G4-B (supported runtime-event taxonomy and post-authoritative publication) and G4-C (headless
-event/observation closure) remain outstanding.
+G4-B (supported runtime-event taxonomy and post-authoritative publication) is now implemented (see
+below); G4-C (headless event/observation closure) and G4-D (outward consumer convergence) remain
+outstanding.
 
-### Slice G4-B — Supported RuntimeEvent contract and post-authoritative publication
+### Slice G4-B — Complete: Supported RuntimeEvent contract and post-authoritative publication
 
 Introduce separate types equivalent to:
 
@@ -179,6 +181,49 @@ Implementation rules:
 - W1 child events preserve `JobId` and parent `OrderId`; aggregate order completion preserves both parent and completing child identities.
 
 A run ID is correlation metadata only. It must not participate in simulation decisions or make deterministic outcomes differ.
+
+**Implemented evidence (2026-09-02):** `RuntimeEventEnvelope`, `RuntimeEventType`, `RuntimeEventPayload`,
+and `AffectedEntityRef` (`product/domains/factory/.../process/`) introduce the supported,
+consumer-neutral event contract described above; none of them wrap or expose the internal scheduler
+`Event`/`EventType`/`EventPayload`. `FactoryRuntime` now derives and appends a `RuntimeEventEnvelope`
+only after the corresponding authoritative transition has already succeeded:
+
+- `submitWorkload` emits `ORDER_ACCEPTED` after `FactoryHandler.submitOrder` returns successfully;
+- `setMachineAvailability` emits `MACHINE_AVAILABILITY_CHANGED` after `Machine#setAvailability` has
+  been applied — including on the `Faulted` path, since that mutation genuinely happened before a
+  later dispatch-cascade fault, and only that mutation is reported;
+- `advance()` derives `JOB_STEP_COMPLETED` from a successfully processed internal `TaskEnd` event
+  (inspecting the resulting `JobView`, never copying the internal payload) and, when that same call's
+  internal scheduler activity also produced an internal `OrderCompleted` event (proving the order's
+  full execution aggregate already completed), additionally emits `ORDER_COMPLETED` carrying both the
+  order and completing child `JobId` for W1 correlation (ADR-0010). Both derivations run in a
+  `finally`, so a step completion that occurred before a later cascade fault is still reported
+  (`Gate4BRuntimeEventAcceptanceTest.faultReportsOnlyAuthoritativeChangesThatActuallyOccurred`).
+
+Sequence is allocated only at emission (`FactoryRuntime.emit`), strictly increasing per run,
+independent of how many internal scheduler events were involved; `RuntimeObservationMetadata
+.latestEventSequence()` is now the live cursor (no longer hardcoded to `0`) and always equals the
+last emitted envelope's sequence. `controlledRevisionId` is always `Optional.empty()` in this slice —
+G4-B does not bind to or synthesize one, since no established authoritative binding contract exists
+yet (Governance G1.3 is explicitly not a prerequisite here). `modelFingerprint` on every envelope is
+`FactoryModelVersion.fingerprint()`, never the legacy content hash. `FactoryRuntime.supportedEvents()`
+and `supportedEventsSince(long)` are the new read-only accessors a caller uses instead of internal
+`Event` values; `advance()`/`advanceUntil` keep returning internal `Event`s unchanged for existing
+Gate 3 callers. `Gate4BRuntimeEventAcceptanceTest` proves: run/sequence/time/model provenance on the
+envelope; strict monotonic sequencing and same-timestamp sequence ordering within one run; observation
+cursor/state consistency with the applied event log; that a rejected command emits nothing; that a
+faulted command reports only the mutation that actually occurred; W1 `OrderId`/`JobId` correlation on
+both `JOB_STEP_COMPLETED` and `ORDER_COMPLETED`; identical semantic event streams for identical
+inputs (run ID excluded from the comparison); a fresh sequence epoch on `reset()`; and that two
+distinct run IDs replaying the same commands converge to the same event-type sequence and terminal
+state (run identity does not influence simulation outcome).
+
+G4-C (headless event/observation closure across the full acceptance list, including
+`freshObservationReconstructsCurrentConsumerViewWithoutReplay` and
+`apiDtosDoNotReenterDomainDecisionPaths`) and G4-D (outward consumer convergence: SSE/API DTO
+migration, frontend, CLI) remain outstanding and are not claimed here. No persistence, recovery,
+checkpoint, or replay semantics were introduced; `supportedEvents()`/`supportedEventsSince` are an
+in-memory, per-session log only, not a retained journal (that remains Slice DH-E).
 
 ### Slice G4-C — Gate 4 headless acceptance closure
 

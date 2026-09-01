@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
 > **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, not current product capability  
-> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
+> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Governance G1 Continuity Notes](governance-g1-continuity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
 
 ## 1. Purpose
 
@@ -156,7 +156,7 @@ G1-G5 are architectural substrate. G6-G7 establish governance workflow integrati
 
 **G1.2 is complete.** `:types` provides `ControlledRevisionId`; `:governance` provides the immutable controlled-revision, lineage, and recording-provenance value contracts fixed by ADR-0008. This slice proves local value invariants only; it does not provide authoritative persistence or historical semantic-state resolution.
 
-**G1.3 remains outstanding.** Arcogine still needs authoritative durable controlled-revision persistence, repository-level lineage integrity, exact revision-to-semantic-state/artifact resolution, and downstream provenance integration before G1 can be considered complete.
+**G1.3 remains outstanding.** Arcogine still needs authoritative durable controlled-revision persistence, repository-level lineage integrity, and exact revision-to-semantic-state/artifact resolution before the G1 identity/history substrate can be considered complete. Downstream authorization, deployment, and result-provenance integrations validate their own use of G1 identities in their owning capabilities; those integrations do not gate G1 closure.
 
 ### Goal
 
@@ -210,7 +210,7 @@ ADR-0008 fixes the following contract:
 - ID, fingerprint, lineage, and required recording provenance are immutable once accepted by the authoritative revision store;
 - `ChangeSet`, external workflow references, approval/authorization, deployment, conformance/evidence, labels, and model artifact storage are not fields in the minimum immutable revision core.
 
-The first implementation slice should be deliberately narrow:
+The implemented slice is deliberately narrow:
 
 ```text
 :types
@@ -255,6 +255,8 @@ G1.3 may require a follow-up ADR when the implementation commits to hard-to-reve
 
 ### Acceptance criteria
 
+Criteria 1-5 define completion of the G1 identity/history substrate. Criteria 6-7 are cross-capability compatibility boundaries: G1 must make those references possible without absorbing downstream state into revision identity, but the concrete downstream integrations are accepted in their owning capability slices and are not prerequisites for G1 closure.
+
 G1 is ready when:
 
 1. A durable semantic fingerprint contract is explicitly specified and testable across supported process/version boundaries. **Satisfied by G1.1.**
@@ -262,8 +264,8 @@ G1 is ready when:
 3. Controlled revisions have authoritative durable identities independent of process memory and semantic fingerprint equality. **G1.3.**
 4. The authoritative store enforces revision-ID uniqueness, immutable ID-to-record binding, and parent existence/integrity under the chosen lineage policy. **G1.3.**
 5. An authoritative controlled revision can resolve to the exact semantic state/artifact needed for historical reconstruction. **G1.3.**
-6. Authorization and deployment records can independently reference a revision without becoming revision identity. **Boundary fixed by ADR-0008; downstream integration may land later.**
-7. A downstream result can retain the semantic fingerprint and, when applicable, the controlled revision ID. **Downstream integration after G1.2/G1.3 contracts exist.**
+6. Authorization and deployment records can independently reference a revision without becoming revision identity. **Compatibility boundary fixed by ADR-0008; concrete authorization/deployment integration is accepted downstream.**
+7. A downstream result can retain the semantic fingerprint and, when applicable, the controlled revision ID. **Compatibility boundary; concrete result-provenance integration is accepted by the owning producer/consumer capability.**
 
 ### ADR status
 

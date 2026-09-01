@@ -141,7 +141,7 @@ R40 --------> R41 --------> R42 --------> R43
 
 The horizontal dimension is immutable revision lineage. The attached records are governance, evidence, and operational facts about that history.
 
-A controlled revision becomes an authoritative historical fact only when its immutable record is accepted by Arcogine's authoritative revision store. ADR-0008 defines the required identity, immutability, lineage, and provenance semantics, but does not choose the persistence technology. A subsequent G1 persistence slice must also ensure that an authoritative revision can resolve to the exact semantic state/artifact needed for historical reconstruction.
+A controlled revision becomes an authoritative historical fact only when its immutable record is accepted by Arcogine's authoritative revision store. ADR-0008 defines the required identity, immutability, lineage, and provenance semantics, but does not choose the persistence technology. G1.3 must establish that authoritative persistence boundary and ensure an accepted revision can resolve to the exact semantic state/artifact needed for historical reconstruction.
 
 The system should eventually answer:
 
@@ -413,17 +413,17 @@ runtime instantiation from a published model
 runtime/result provenance work in progress
 ```
 
-ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 now establishes the controlled revision identity/lineage decision, but the controlled revision value model and authoritative revision persistence are not yet implemented. Arcogine therefore still does **not** have an authoritative controlled revision repository or generic conformance engine.
+ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes the controlled revision identity/lineage decision, and G1.2 now implements the controlled-revision identity/value contracts in `:types` and `:governance`. Authoritative revision persistence and exact historical semantic-state/artifact resolution remain outstanding in G1.3. Arcogine therefore still does **not** have an authoritative controlled revision repository or generic conformance engine.
 
 The Governance dependency remains:
 
 ```text
 G1.1 durable semantic fingerprint        complete
     ↓
-G1.2 controlled revision value contract  next implementation slice
+G1.2 controlled revision value contract  complete
     ↓
 G1.3 authoritative persistence +
-     historical semantic-state resolution
+     historical semantic-state resolution  remaining G1 substrate slice
     ↓
 G2 ChangeSet
     ↓
@@ -445,7 +445,7 @@ This proposal does not mean that Arcogine currently:
 - continuously observes cloud, identity, HR, source-control, ticketing, or industrial systems;
 - owns all operational truth in connected systems;
 - replaces Jira or enterprise GRC workflow;
-- has an implemented controlled revision value model or authoritative revision repository;
+- has an authoritative controlled revision repository;
 - has durable exact historical semantic-state/artifact resolution for controlled revisions;
 - has a generic conformance engine today;
 - has production actuation or digital-twin reconciliation today.

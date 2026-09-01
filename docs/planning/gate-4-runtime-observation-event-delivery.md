@@ -31,6 +31,8 @@ As of 2026-09-01:
 
 The current legacy API is not the Gate 3 session implementation. `interfaces/api` still has its own `SimThread`/`IntegratedHandler` loop and streams internal scheduler `Event` objects directly over SSE. That path is maintained current behavior, not the architectural owner of Gate 4.
 
+The current CLI headless `run` path also remains on `ScenarioLoader -> HeadlessHandler -> SimRunner.runScenario(...)` rather than the newer `FactoryRuntime` seam. That broader orchestration path is a downstream consumer-convergence decision after the Gate 4 headless contract is stable, not a reason to widen `FactoryRuntime` prematurely.
+
 ## 3. Current implementation debt Gate 4 must not fossilize
 
 ### 3.1 Internal Event is still scheduler machinery
@@ -204,27 +206,37 @@ Deterministic stream comparisons ignore or inject intentionally unique run IDs w
 
 Gate 4 also requires a supported observation that is sufficient for a consumer to identify the active bottleneck without reaching into internal stores or replaying raw events.
 
-### Slice G4-D — Migrate legacy API/SSE as a consumer
+### Slice G4-D — Converge outward consumers on supported runtime semantics
 
-Only after G4-C establishes the headless contract should `interfaces/api` migrate.
+Only after G4-C establishes the headless contract should existing outward consumers migrate or explicitly adapt to it. This is downstream migration/integration work, not a prerequisite for Gate 4 core closure or Gate 5.
 
-Target direction:
+The objective is **semantic convergence**, not forcing every execution path to reuse one concrete runtime type. `FactoryRuntime` remains factory-simulation scoped unless a later architecture decision broadens it; economy/finance/agent orchestration must not be distorted merely to obtain concrete-type reuse.
+
+Current consumer inventory:
+
+- `interfaces/api` uses `SimThread` / `IntegratedHandler` and exposes internal scheduler `Event` values over SSE;
+- `arcogine run` uses `ScenarioLoader -> HeadlessHandler -> SimRunner.runScenario(...)` and may legitimately remain broader than the factory-only session boundary;
+- the Gate 4 acceptance/reference consumer must prove supported observations/events without UI-specific DTOs or undocumented internal stores;
+- the frontend is a consumer of the API projection and must not become a semantic authority.
+
+Target dependency direction:
 
 ```text
-FactoryRuntime / supported session boundary
-        |
-        +--> supported RuntimeObservation
-        |
-        +--> supported RuntimeEvent source
-                    |
-                    v
-              API projection
-                    |
-                    v
-               HTTP / SSE
+       supported Engine semantics
+     RuntimeObservation / RuntimeEvent
+          |                 |
+          |                 +--> API adapter --> HTTP / SSE --> frontend
+          |
+          +--> headless/reference consumer
+          |
+          +--> CLI adapter where semantically applicable
 ```
 
-The exact migration may need an adapter because today's `SimThread` runs a broader scenario/economy/finance/agent integrated loop rather than `FactoryRuntime`. The important constraint is dependency direction: API orchestration may adapt the supported engine semantics; it must not redefine them.
+Where a broader execution path cannot directly reuse `FactoryRuntime` without changing its legitimate scope, keep the broader orchestration and introduce or preserve an explicit adapter/projection boundary. The adapter may translate supported Engine semantics; it must not redefine them.
+
+#### G4-D1 — Legacy API/SSE migration
+
+Migrate `interfaces/api` so supported observations/events, not internal scheduler events, define outward runtime semantics. The exact implementation may require an adapter because today's `SimThread` runs a broader scenario/economy/finance/agent integrated loop rather than `FactoryRuntime`.
 
 When migrated, update in the same slice:
 
@@ -244,7 +256,26 @@ event: runtime-event
 data: <supported envelope DTO>
 ```
 
-The semantic runtime event type stays inside the data envelope.
+The semantic runtime event type stays inside the data envelope. Internal `Event`, `EventPayload`, and `EventLog` remain implementation machinery and must not become outward compatibility types.
+
+#### G4-D2 — CLI and reference/headless consumer convergence
+
+Evaluate the current CLI/headless path against the supported runtime contract after G4-C:
+
+- where factory-only execution can consume the supported runtime/session boundary directly without changing semantics, migrate to that boundary;
+- where `arcogine run` legitimately owns broader scenario/economy/finance/agent orchestration, retain that orchestration and document the deliberate adapter/projection boundary rather than widening `FactoryRuntime` for convenience;
+- provide or preserve a consumer-neutral headless/reference path that can observe `RuntimeObservation` and ordered `RuntimeEvent` semantics without depending on Spring, frontend DTOs, internal scheduler stores, or raw `EventLog` replay;
+- remove duplicated outward observation/event semantics where practical; where reuse would be semantically wrong, make the separate responsibility explicit in code/tests/current planning.
+
+G4-D acceptance requires:
+
+- the CLI/API consumer inventory and direct-consumption versus adapter decisions are documented in current planning or implementation docs;
+- legacy HTTP/SSE projects the supported runtime semantics rather than internal scheduler event taxonomy;
+- headless/reference execution can prove and consume the supported runtime contract without UI-specific code or undocumented internal stores;
+- transport/CLI DTOs remain projections and never re-enter domain decision paths;
+- broader economy/finance/agent orchestration is not forced through `FactoryRuntime` solely for type reuse;
+- behavior-changing slices update current-state docs in the same PR, while unchanged current-state references remain untouched;
+- no new integration framework, protocol selection, generic event bus, or cross-domain interchange ontology is introduced to accomplish convergence.
 
 ### Slice DH-E — Recovery and resynchronization hardening
 
@@ -399,6 +430,7 @@ Gate 4 and this delivery plan do not require:
 - revision persistence inside Engine;
 - production telemetry authenticity/trust/reconciliation;
 - game scoring or attempt-history semantics;
+- forcing broader CLI/economy/finance/agent orchestration through `FactoryRuntime` merely for concrete-type reuse;
 - rewriting accepted ADRs 0005/0007/0009/0010.
 
 ## 9. PR landing strategy
@@ -416,13 +448,17 @@ PR 4  Gate 4 acceptance closure / plan-current-architecture reconciliation
   ↓
 Gate 5 may proceed
 
-separate follow-up:
-PR 5  legacy API/SSE migration
+separate downstream convergence after G4-C:
+PR 5a  legacy API/SSE migration
+  ↓
+PR 5b  CLI/reference consumer convergence where needed
   ↓
 Distribution hardening PRs for recovery/versioning/checkpoint
 ```
 
 If implementation naturally makes G4-A and G4-B one reviewable atomic change, combining them is acceptable, but transport migration must remain separate so transport neutrality is demonstrable.
+
+G4-D does not have to be one large PR. API/SSE migration and CLI/reference convergence should land as separate reviewable slices when they have different code surfaces or semantic risks; combine them only if the resulting change remains narrow and coherent.
 
 Do not combine Gate 4 with:
 
@@ -451,6 +487,7 @@ This delivery plan has done its job when:
 1. W1 benchmark evidence is recorded and W1 status is resolved;
 2. Gate 4 has headless supported observations and ordered authoritative runtime events through the consumer-neutral runtime boundary;
 3. Gate 4 acceptance evidence is executable and current architecture reflects what is actually implemented;
-4. the legacy API either projects the supported contract or is explicitly documented as a legacy/current compatibility path awaiting migration;
-5. recovery/versioning/checkpoint work is clearly owned by distribution hardening rather than hidden inside Gate 4;
-6. no knowledge required to continue the work depends on a conversational session.
+4. outward consumer convergence is explicit: legacy API/SSE projects the supported contract, and CLI/reference execution either consumes the supported runtime boundary where semantically appropriate or documents a deliberate broader orchestration adapter boundary;
+5. a consumer-neutral headless/reference path can prove and consume supported observations/events without UI DTOs, undocumented internal stores, or raw internal-event replay;
+6. recovery/versioning/checkpoint work is clearly owned by distribution hardening rather than hidden inside Gate 4;
+7. no knowledge required to continue the work depends on a conversational session.

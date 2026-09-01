@@ -68,6 +68,12 @@ class ArcogineCommandTest {
     }
 
     @Test
+    void springCommandLineRunnerDoesNotExecuteTheCliMode() {
+        ArcogineCommand command = new ArcogineCommand();
+        command.run("run", "scenario.toml");
+    }
+
+    @Test
     void runModeWithMissingFileReturnsErrorExitCode() {
         int exitCode = new CommandLine(new ArcogineCommand())
                 .execute("run", "does-not-exist.toml");

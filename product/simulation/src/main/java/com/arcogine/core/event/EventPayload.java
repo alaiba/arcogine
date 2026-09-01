@@ -2,6 +2,7 @@ package com.arcogine.core.event;
 
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 
 public sealed interface EventPayload permits
@@ -40,8 +41,13 @@ public sealed interface EventPayload permits
      * completion events to explicit order identity belongs with the later workload/event-contract
      * work rather than silently changing this payload here.
      */
-    record OrderCompleted(JobId jobId, ProductId productId, long quantity, double unitPrice)
-            implements EventPayload {}
+    record OrderCompleted(OrderId orderId, JobId jobId, ProductId productId, long quantity, double unitPrice)
+            implements EventPayload {
+        /** Source-compatible construction for historical fixtures; production always supplies OrderId. */
+        public OrderCompleted(JobId jobId, ProductId productId, long quantity, double unitPrice) {
+            this(new OrderId(jobId.value()), jobId, productId, quantity, unitPrice);
+        }
+    }
 
     record MachineAvailabilityChange(MachineId machineId, boolean online) implements EventPayload {}
 

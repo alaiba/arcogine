@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
  * ExplicitWorkloadSubmissionTest}, {@link ProportionalQuantityWorkTest}, {@link
  * OrderIntentSeparationTest}), this test drives everything through {@link FactoryRuntime} alone --
  * never {@link FactoryHandler}, a {@code Scheduler}, or any store directly -- to prove that
- * published-model runtime construction, explicit workload execution and quantity-scaled progress,
+ * published-model runtime construction, explicit workload execution and child-job progress,
  * completion observation/correlation, and determinism hold together as a single externally
  * observable contract, from a published model through to deterministic completion.
  *
@@ -79,10 +79,11 @@ class Gate1EngineReadinessAcceptanceTest {
         OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
         assertEquals(1L, runtime.ordersView().count(), "exactly one accepted order");
-        assertEquals(1L, runtime.jobsView().count(), "exactly one job under the quantity model");
-        JobView job = runtime.jobsView().findFirst().orElseThrow();
-        assertEquals(orderId, job.orderId(), "the one job must reference the submitted order");
-        assertFalse(job.isComplete(), "a freshly submitted job must not already be complete");
+        List<JobView> jobs = runtime.jobsView().toList();
+        assertEquals(QUANTITY, jobs.size(), "one unit child job per requested unit");
+        assertEquals(List.of(0L, 1L, 2L, 3L), jobs.stream().map(JobView::ordinalWithinOrder).toList());
+        assertTrue(jobs.stream().allMatch(job -> job.orderId().equals(orderId)));
+        assertTrue(jobs.stream().noneMatch(JobView::isComplete));
     }
 
     @Test
@@ -102,12 +103,7 @@ class Gate1EngineReadinessAcceptanceTest {
                 taskEndsSeen++;
             }
             boolean isFinalTaskEnd = taskEndsSeen == requiredTaskEnds;
-            assertEquals(
-                    isFinalTaskEnd,
-                    runtime.jobsView().findFirst().orElseThrow().isComplete(),
-                    isFinalTaskEnd
-                            ? "job must be complete only after the full quantity-scaled routing has executed"
-                            : "job must not be complete before all quantity-scaled routing work has executed");
+            assertEquals(isFinalTaskEnd, runtime.orderExecution(runtime.ordersView().findFirst().orElseThrow().id()).complete());
         }
 
         assertEquals(requiredTaskEnds, taskEndsSeen, "all quantity-scaled routing steps must complete");
@@ -128,6 +124,8 @@ class Gate1EngineReadinessAcceptanceTest {
 
         assertEquals(1, completions.size(), "exactly one OrderCompleted event must be observed");
         var completed = completions.get(0);
+
+        assertEquals(orderId, completed.orderId());
 
         // OrderCompleted correlates back to the submitted order via jobId -> FactoryRuntime.job ->
         // JobView.orderId, under the 1 Order <-> 1 Job invariant this model deliberately keeps.
@@ -158,11 +156,9 @@ class Gate1EngineReadinessAcceptanceTest {
         assertEquals(eventsA, eventsB, "two fresh runtimes given the same model/workload must produce an "
                 + "identical ordered event stream");
 
-        JobView jobA = runtimeA.jobsView().findFirst().orElseThrow();
-        JobView jobB = runtimeB.jobsView().findFirst().orElseThrow();
-        assertEquals(jobA.isComplete(), jobB.isComplete());
-        assertTrue(jobA.isComplete());
-        assertEquals(jobA.leadTime(), jobB.leadTime());
+        assertEquals(runtimeA.jobsView().map(JobView::id).toList(), runtimeB.jobsView().map(JobView::id).toList());
+        assertTrue(runtimeA.jobsView().allMatch(JobView::isComplete));
+        assertEquals(runtimeA.orderExecutionsView().toList(), runtimeB.orderExecutionsView().toList());
         assertEquals(runtimeA.backlog(), runtimeB.backlog());
         assertEquals(runtimeA.completedSales(), runtimeB.completedSales());
         assertEquals(runtimeA.completedSalesValue(), runtimeB.completedSalesValue());

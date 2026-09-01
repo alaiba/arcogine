@@ -22,7 +22,6 @@ import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
 import com.arcogine.finance.ledger.Account;
 import com.arcogine.finance.process.FinanceHandler;
-import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
@@ -55,10 +54,11 @@ class FinanceScenarioIntegrationTest {
      * unrounded sum).
      */
     private static BigDecimal expectedCashFromCompletedJobs(FactoryHandler factory) {
-        return factory.jobsView()
-                .filter(j -> j.status() == JobStatus.Completed)
-                .map(j -> BigDecimal.valueOf(j.unitPrice())
-                        .multiply(BigDecimal.valueOf(j.quantity()))
+        return factory.orderExecutionsView()
+                .filter(execution -> execution.complete())
+                .map(execution -> factory.order(execution.orderId()))
+                .map(order -> BigDecimal.valueOf(order.unitPrice())
+                        .multiply(BigDecimal.valueOf(order.quantity()))
                         .setScale(2, RoundingMode.HALF_UP))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

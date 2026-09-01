@@ -55,15 +55,15 @@ class JobRoutingTest {
         Order order = order(7, 5, 0, 12.0);
         Job job = new Job(new JobId(1), order, 1, new SimTime(0));
         assertEquals(order.productId(), job.productId());
-        assertEquals(order.quantity(), job.quantity());
+        assertEquals(1L, job.quantity());
         assertEquals(order.unitPrice(), job.unitPrice());
-        assertEquals(order.orderValue(), job.orderValue());
+        assertEquals(order.unitPrice(), job.orderValue());
 
         job.start(new MachineId(1));
         job.completeStep(new SimTime(5));
 
         assertEquals(order.unitPrice(), job.unitPrice());
-        assertEquals(order.orderValue(), job.orderValue());
+        assertEquals(order.unitPrice(), job.orderValue());
     }
 
     @Test

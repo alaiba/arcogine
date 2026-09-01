@@ -402,6 +402,8 @@ The Java codebase follows a **modular monolith** pattern with Gradle multi-modul
 product/
 ├── types/                DES primitives: SimTime, MachineId, ProductId, OrderId, JobId,
 │                         Quantity, SimError, scenario config records
+├── governance/            Controlled-revision identity, lineage, and recording-provenance
+│                         value contracts; no persistence or event handling
 ├── simulation/           DES engine: Scheduler, Event, EventHandler interface,
 │                         CompositeHandler, EventLog, KPIs, SimRunner, ScenarioLoader
 ├── domains/
@@ -435,6 +437,8 @@ types ← simulation ← factory
             api ←────────┘ (all of the above)
                 ↑
             cli (entry point)
+
+types ← governance
 
 challenge   (no dependency on any module above; a sibling, game-owned boundary)
 ```
@@ -508,7 +512,7 @@ Scenario factory semantics are instantiated through an implemented canonical-mod
 
 `FactoryModelVersion.contentHash()` remains a separate legacy compatibility surface. It is deterministic for the current Java model but is not the durable fingerprint contract and historical bare content hashes must not be reinterpreted as `factory-model:v1` fingerprints. Existing `IntegratedHandler`/`SimResult.modelContentHash` provenance still carries that legacy hash; broader provenance migration and run identity (run ID, scenario/input fingerprint, engine build) remain separate follow-up concerns.
 
-There is still no implemented `ControlledRevisionId` value model, authoritative revision repository, or controlled-revision persistence/lineage. [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) now fixes the controlled revision identity and lineage contract — opaque UUIDv4 historical identity, current `0..1` parent cardinality, rollback as a new revision, immutable recording provenance, and the persistence boundary — but the corresponding value-model and persistence slices remain outstanding. Approval/authorization, conformance, deployment, and external change-management relationships remain separate follow-on records rather than revision identity.
+`:types` now provides the `ControlledRevisionId` value model, and `:governance` provides immutable controlled-revision lineage and recording-provenance value contracts. [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) fixes their opaque UUIDv4 identity, current `0..1` parent cardinality, rollback-as-new-revision, and minimum provenance semantics. Authoritative revision persistence, repository-level lineage integrity, exact historical semantic-state resolution, and downstream revision-ID provenance remain G1.3 work. Approval/authorization, conformance, deployment, and external change-management relationships remain separate follow-on records rather than revision identity.
 
 ## API Layer
 

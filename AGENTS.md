@@ -2,6 +2,37 @@
 
 Operational notes for coding agents working in this repository. See [README.md](README.md) for what Arcogine is, and [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for human contributor workflow/style detail. Don't duplicate either here.
 
+## Repository identity and task shorthand
+
+This repository is the canonical Arcogine repository:
+
+`alaiba/arcogine`
+
+Agents operating from this repository context must treat that identity as already known. For GitHub operations involving issues, pull requests, branches, commits, workflows, files, or repository state:
+
+- default to `alaiba/arcogine` unless the user explicitly identifies another repository;
+- use repository-scoped operations first;
+- do not search for or rediscover the repository before acting;
+- use global repository discovery only for explicitly cross-repository tasks or when the requested operation genuinely cannot be resolved from this repository.
+
+Repository context is sufficient authority to perform read-only repository operations without asking the user to restate the repository name or URL.
+
+Common shorthand should be interpreted in repository context:
+
+- “read an issue” means select and read an applicable open issue in this repository;
+- “review PR” means select and review an applicable pull request in this repository, following the dedicated PR Reviewer contract;
+- “check repo state” means inspect the state of this repository;
+- references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
+
+PR workflow shorthand has distinct review and remediation meanings:
+
+- `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
+- `..` = advance the current implementation pull request toward green by inspecting the latest reviews, comments, unresolved findings, CI, and mergeability; evaluating each finding against repository authority; applying the smallest correct fix for valid findings; challenging invalid findings with repository evidence; and re-checking the resulting PR state.
+
+When handling `..`, continue remediation and re-checking until the PR is green or a genuinely unresolved decision requires user input. Do not treat `..` as an independent review-only action.
+
+Do not replace known repository context with generic GitHub discovery.
+
 ## Specialized agent roles
 
 Some repository tasks have additional repository-owned operating contracts.
@@ -70,7 +101,7 @@ instead of silently switching.
 Run everything from the repo root via `./arcogine`, a thin wrapper that composes the project's own tools (Gradle wrapper, npm/npx, Docker Compose):
 
 ```bash
-./arcogine setup        # install/bootstrap dependencies, safe to re-run
+./arcogine setup        # optional full-development dependency bootstrap, safe to re-run
 ./arcogine test         # Java + frontend unit tests
 ./arcogine check        # fast quality gates: lint, typecheck, tests, coverage, build
 ./arcogine check --full # + Playwright E2E, dist/ build, Docker image build + smoke test, security scans
@@ -91,11 +122,11 @@ For anything more specific, use the subsystem's native tool directly: `cd produc
 
 Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dockerfile`, `infra/docker/web.Dockerfile`) — it never compiles Java or frontend source. `./arcogine build` must run before `./arcogine image`.
 
-Claude Cloud provisioning is deliberately lightweight: `infra/dev/claude-cloud.sh` inventories and validates the supplied environment but does **not** run `./arcogine setup`. Run setup explicitly when the current task needs project dependencies.
+`./arcogine setup` is an optional convenience for developers who want the full local dependency set (frontend packages, Playwright Chromium, and resolved Gradle dependencies); it is not a prerequisite for inspecting the repository or doing a narrow task. Agents must use the existing environment where practical and install only the tooling or dependencies the current task requires. Do not run setup automatically or turn it into a general-purpose toolchain manager. Environment-specific capabilities such as Docker and security scanners must not gate unrelated work.
 
 ## Validating changes
 
-Before considering a change complete, run `./arcogine check`. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
+Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching only Java (`product/{types,simulation,domains,agents,consumer,interfaces/api,interfaces/cli}`) needs only the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a change touching only the frontend (`product/interfaces/web/`) needs only its gates (`cd product/interfaces/web && npm run lint && npx tsc --noEmit && npm run test:coverage && npm run build`); a documentation-only change needs neither. When a change spans both, or you can't tell whether it's narrow, run `./arcogine check`, which runs both unconditionally. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
 
 ## Checking a PR after pushing
 
@@ -118,7 +149,7 @@ not just the first one after pushing.
 ## Conventions worth knowing
 
 - **Gradle** has one true source: `product/gradle/wrapper/gradle-wrapper.properties`. Both `gradlew` and `gradlew.bat` read it, and no Gradle is installed via the devcontainer feature — don't add one back.
-- **Java and Node distinguish compatibility floors from preferred environments.** Java sources compile with `--release 21`; CI runs on JDK 21 to prove the minimum, while the preferred devcontainer currently uses JDK 25 and the API runtime image uses Temurin 25. The frontend's Node support contract lives in `product/interfaces/web/package.json` (`^22.22.2 || ^24.15.0 || ^26.0.0`); CI pins Node 22.22.2 to exercise the floor, while the preferred devcontainer currently uses Node 24. Do **not** mechanically bump CI and devcontainer versions together. Raising a supported minimum requires updating the Java release or Node engine contract, Claude provisioning validation, CI floor, and current documentation together. Preferred devcontainer/runtime versions may move independently as long as they remain compatible.
+- **Java and Node distinguish compatibility floors from preferred environments.** JDK 21 is a fully supported development runtime: Java sources compile with `--release 21` and CI runs on JDK 21, while the preferred devcontainer currently uses JDK 25 and the API runtime image uses Temurin 25. The frontend's Node support contract lives in `product/interfaces/web/package.json` (`^22.22.2 || ^24.15.0 || ^26.0.0`); its floor is imposed by the current jsdom 30 test environment and transitive Undici requirements, not by the devcontainer. CI pins Node 22.22.2 to exercise that floor, while the preferred devcontainer currently uses Node 24. Do **not** mechanically bump CI and devcontainer versions together. Raising or lowering a supported bound requires concrete build/test evidence and coordinated updates to the Java release or Node engine contract, Claude provisioning validation, CI floor, and current documentation. Preferred devcontainer/runtime versions may move independently as long as they remain compatible.
 - **Trivy and Gitleaks** are environment/security tools pinned independently in the devcontainer and CI. When intentionally changing either tool version, grep the repository for the old version and keep the relevant devcontainer/CI install sites aligned.
 - Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and partly enforced by `interfaces/api`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain or touching `IntegratedHandler`.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture/overview.md`.

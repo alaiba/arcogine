@@ -20,7 +20,7 @@ import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
 import com.arcogine.finance.process.FinanceHandler;
-import com.arcogine.types.JobId;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
@@ -179,17 +179,14 @@ class AgentIntegrationTest {
         assertTrue(handler.agent().interventions() > 0,
                 "agent must actually change price during the run for this test to be meaningful");
 
-        // JobStore assigns ids 1..N in the same order OrderCreation events are dispatched (now
-        // deterministic thanks to Scheduler's same-tick FIFO ordering), so the nth OrderCreation
-        // event corresponds to the job with id n.
+        // OrderStore assigns ids in OrderCreation dispatch order; every child of an order retains
+        // that order's immutable accepted commercial facts.
         for (int i = 0; i < orders.size(); i++) {
-            JobId jobId = new JobId(i + 1L);
-            var job = handler.factory().job(jobId);
-            assertEquals(
-                    orders.get(i).unitPrice(),
-                    job.unitPrice(),
-                    "job " + jobId + "'s price must match the OfferPrice at its own OrderCreation -- "
-                            + "an agent PriceChange issued after this order existed must never have altered it");
+            OrderId orderId = new OrderId(i + 1L);
+            double acceptedPrice = orders.get(i).unitPrice();
+            assertEquals(acceptedPrice, handler.factory().order(orderId).unitPrice());
+            assertTrue(handler.factory().jobsView().filter(job -> job.orderId().equals(orderId))
+                    .allMatch(job -> job.unitPrice() == acceptedPrice));
         }
     }
 

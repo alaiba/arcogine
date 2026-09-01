@@ -66,7 +66,7 @@ Events:
 
 Each subsystem exclusively owns its mutable domain state. Pricing owns `OfferPrice` and its history (`PricingState`) — the firm's own current asking price, not any individual order's terms and not an external market signal. Factory owns accepted orders, machines, jobs, queues, completion state, and production metrics (`FactoryHandler`), including the cached `CompletedSalesValue` KPI state — but the immutable accepted order and completed execution facts, not the cache, remain the authoritative facts it's derived from (see the "stored incrementally" note below). A future inventory subsystem would own stock; finance would own financial state; workforce would own labor state.
 
-Commercial/order intent and mutable production execution are now represented separately. `Order` is an immutable accepted-order record containing `OrderId`, product, quantity, creation time, and agreed unit price; `Job` owns mutable routing/execution state and references that order. One accepted order still creates exactly one job, and `JobView` still exposes product/quantity/price/value as compatibility projections delegated to the referenced order so the existing API/UI contract does not have to change. Order quantity now consumes proportional production work: `Job.totalSteps` is `routing.stepCount() * order.quantity()`, so the job repeats its routing once per unit rather than the routing running once regardless of quantity; dispatch resolves each job-level step back to its `RoutingStep` by `stepIndex % routing.stepCount()`. This keeps `Job` one-to-one with `Order` (no multiple work-item/job aggregates were introduced) while still giving countable progress via `Job.currentStep()`, a job-global counter across every repeated routing pass (it advances once per routing step executed, `routing.stepCount()` times per unit for a multi-step route). The event-visible `TaskStart`/`TaskEnd.stepIndex` still carries the routing-local index (`stepIndex % routing.stepCount()`), not that job-global counter, so the event field's pre-existing meaning is unchanged.
+Commercial/order intent and mutable production execution are represented separately. `Order` is immutable accepted intent; its same `OrderId` identifies an authoritative order-execution aggregate. Acceptance deterministically materializes one unit-quantity `Job` per requested unit, in zero-based ordinal order. Each child has its own `JobId`, traverses the routing once, and can be dispatched independently under the existing selector. The aggregate records release and completion quantities and is the sole source for order completion, backlog, sales KPIs, and lead time; only its final child completion emits `OrderCompleted` with both identities and full order commercial facts.
 
 State should:
 
@@ -439,7 +439,7 @@ types ← simulation ← factory
 challenge   (no dependency on any module above; a sibling, game-owned boundary)
 ```
 
-Each module exposes a clean public API and hides implementation details. Domain modules (`factory`, `economy`, `agents`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
+Each module exposes a clean public API and hides implementation details. Event-handling modules (`factory`, `economy`, `agents`, `finance`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer.
 
 `challenge` is deliberately outside this dependency graph: it is a game-owned Challenge Readiness
 module (`com.arcogine.challenge`) that has no `project(...)` dependency on `types`, `simulation`,

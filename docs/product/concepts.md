@@ -48,26 +48,26 @@ A machine that is **offline** stops accepting new jobs. A machine can only be ta
 
 ### Products and routings
 
-A **product** (e.g., "Widget A") has a **routing** — an ordered list of processing steps. Each step requires a specific machine and takes a specific number of ticks.
+A **product** (e.g., "Widget A") has a **routing** — an ordered list of processing steps. Each step defines a set of **eligible resources** that may perform it and a processing duration. At runtime, Arcogine deterministically selects one eligible resource based on current execution state; the routing defines eligibility, not a permanent one-machine binding.
 
-Example: Widget A's routing might be Mill (5 ticks) → Lathe (3 ticks) → QC Station (2 ticks). A job for Widget A must visit all three machines in order.
+Example: Widget A's routing might require milling for 5 ticks on either Mill A or Mill B, then turning for 3 ticks on Lathe A, then inspection for 2 ticks on QC Station. A job for Widget A must complete those steps in order, but a step with multiple eligible resources may run on any one of them selected by runtime dispatch.
 
 ### Orders and jobs
 
-When an order arrives, Arcogine stores an immutable **order** containing the accepted product, quantity, creation time, and unit price. It then creates a mutable **job** that references that order and moves through the routing steps, waiting in machine queues when a machine is busy.
+When an order arrives, Arcogine stores an immutable **order** containing the accepted product, quantity, creation time, and unit price. It then creates one mutable, unit-quantity **job** per requested unit. Each child job references the same order, has its own ordinal within that order, and traverses the routing once while waiting in machine queues when necessary.
 
-The current implementation remains one order → one job. This separation exists so accepted intent does not have to mutate as execution progresses; later engine-readiness work can allow one order to produce multiple work items/jobs without copying the commercial/order facts into each execution object.
+An accepted order remains one immutable production and commercial requirement. Engine Readiness W1 decomposes its quantity deterministically into unit-quantity child jobs: an order for 10 units creates ten independently dispatchable jobs, with ordinals 0–9, each traversing the routing once. Arcogine owns this decomposition; a game or other caller supplies only the production requirement.
 
-Order quantity now consumes proportional production work: a job's routing repeats once per unit of quantity, so an order for 10 units keeps a machine occupied roughly ten times as long as an otherwise identical order for 1 unit. The job's step counter (`current_step` of `total_steps`) advances once per routing step *executed*, not once per unit -- for a multi-step route it advances once per step, so it reaches `total_steps` only after every step has run for every unit. Completed-unit progress can be derived from it (`current_step / steps per unit`), but the counter itself is an executed-step count, not a unit count. This is represented as one job with a larger step count -- not as ten separate jobs -- so a large-quantity order still only creates one order and one job.
+Order-level execution progress is authoritative: it records released and completed unit quantities and completes only when every child is complete. Commercial completion, backlog, sales count/value, and lead time remain order-level facts, so child jobs do not multiply revenue.
 
 The current lifecycle is:
 
 1. **Order accepted** — the order event freezes the unit price and quantity in immutable order intent
-2. **Job created** — one execution job references that order, with its routing sized to repeat once per unit of quantity
-3. **In progress** — the job is processed on a machine or waits in a queue, one routing pass per unit
-4. **Completed** — all routing steps for every unit finish; the referenced order's sales value (quantity x its locked-in price) is added to completed sales value exactly once
+2. **Child jobs created** — one unit-quantity job is created per requested unit; every child references the same order and has a stable ordinal within it
+3. **In progress** — child jobs are dispatched independently, each traversing the routing once while processing on a machine or waiting in a queue
+4. **Completed** — the order completes only after every child job completes; the order's sales value (quantity x its locked-in price) is added to completed sales value exactly once
 
-The existing API/UI job projection still shows product, quantity, and completed value on each job for compatibility. Those values are now read from the immutable referenced order rather than stored as mutable job-owned state.
+The existing API/UI job projection remains a compatibility surface for job-level views, but each child job is unit quantity. Product and commercial fields are projected from the referenced immutable order where applicable rather than owned as mutable job state.
 
 ## The economy
 

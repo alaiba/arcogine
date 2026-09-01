@@ -43,6 +43,26 @@ compose() {
     "$@"
 }
 
+require_commands() {
+  local workflow="$1"
+  shift
+  local missing=()
+  local command
+
+  for command in "$@"; do
+    if ! command -v "$command" >/dev/null 2>&1; then
+      missing+=("$command")
+    fi
+  done
+
+  if (( ${#missing[@]} > 0 )); then
+    printf 'FATAL: %s requires the following unavailable tool(s): %s\n' \
+      "$workflow" "${missing[*]}" >&2
+    echo "Run a narrower source check instead, or provision only the listed capability." >&2
+    exit 1
+  fi
+}
+
 # Actual host port Compose bound for a running service, per Compose itself
 # (not a reimplementation of its .env/env-var precedence). Only meaningful
 # after `compose up`. container_port is the port as declared in compose.yaml.
@@ -56,7 +76,7 @@ usage() {
 Usage: ./arcogine <command> [args]
 
 Commands:
-  setup             Install/bootstrap all dependencies (safe to re-run)
+  setup             Optional full-development dependency bootstrap (safe to re-run)
   test              Run Java + frontend unit test suites
   check             Fast quality gates: compile, lint, typecheck, tests, coverage, build
   check --full      Everything in check, plus Playwright E2E, canonical dist/
@@ -80,6 +100,7 @@ EOF
 }
 
 cmd_setup() {
+  echo "==> Optional full-development bootstrap (frontend, browser, and Java dependencies)..."
   echo "==> Installing frontend dependencies..."
   npm_web ci
   echo "==> Installing Playwright Chromium browser for E2E tests..."
@@ -96,6 +117,16 @@ cmd_test() {
 }
 
 cmd_check() {
+  if [[ "${1:-}" == "--full" ]]; then
+    require_commands "./arcogine check --full container/security certification" \
+      docker trivy gitleaks curl
+    if ! docker compose version >/dev/null 2>&1; then
+      echo "FATAL: ./arcogine check --full requires Docker Compose." >&2
+      echo "Run './arcogine check' for portable source validation instead." >&2
+      exit 1
+    fi
+  fi
+
   echo "==> Java: compile, Checkstyle, tests, coverage gates..."
   gradle compileJava compileTestJava checkstyleMain checkstyleTest \
     test jacocoTestReport jacocoTestCoverageVerification
@@ -162,6 +193,7 @@ cmd_build() {
 }
 
 cmd_image() {
+  require_commands "./arcogine image" docker
   if [[ ! -f "$DIST_DIR/api/arcogine.jar" ]]; then
     echo "FATAL: $DIST_DIR/api/arcogine.jar not found. Run './arcogine build' first." >&2
     exit 1
@@ -179,6 +211,11 @@ cmd_image() {
 }
 
 cmd_up() {
+  require_commands "./arcogine up" docker
+  if ! docker compose version >/dev/null 2>&1; then
+    echo "FATAL: ./arcogine up requires Docker Compose." >&2
+    exit 1
+  fi
   if [[ "${1:-}" != "--no-rebuild" ]]; then
     cmd_build
     cmd_image
@@ -189,6 +226,11 @@ cmd_up() {
 }
 
 cmd_down() {
+  require_commands "./arcogine down" docker
+  if ! docker compose version >/dev/null 2>&1; then
+    echo "FATAL: ./arcogine down requires Docker Compose." >&2
+    exit 1
+  fi
   cp -n .env.example .env 2>/dev/null || true
   compose down
 }

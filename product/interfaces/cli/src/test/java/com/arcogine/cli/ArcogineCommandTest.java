@@ -70,7 +70,26 @@ class ArcogineCommandTest {
     @Test
     void springCommandLineRunnerDoesNotExecuteTheCliMode() {
         ArcogineCommand command = new ArcogineCommand();
-        command.run("run", "scenario.toml");
+
+        PrintStream originalOut = System.out;
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
+        ByteArrayOutputStream capturedErr = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
+            System.setErr(new PrintStream(capturedErr, true, StandardCharsets.UTF_8));
+            command.run("run", "scenario.toml");
+        } finally {
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+        }
+
+        // If Spring's run(...) ever started delegating to headless CLI
+        // execution, running against the non-existent "scenario.toml" would
+        // print either the completion summary or a "Error: ..." message -
+        // either way, output that this no-op must not produce.
+        assertEquals("", capturedOut.toString(StandardCharsets.UTF_8));
+        assertEquals("", capturedErr.toString(StandardCharsets.UTF_8));
     }
 
     @Test

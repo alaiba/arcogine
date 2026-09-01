@@ -442,7 +442,7 @@ class ApiSmokeTest {
     }
 
     @Test
-    void sseStreamDeliversAuthoritativeRuntimeEventPayload() throws Exception {
+    void sseStreamDeliversPriceChangeEventPayload() throws Exception {
         longClient().post()
                 .uri("/api/scenario")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -452,18 +452,23 @@ class ApiSmokeTest {
                 .isOk();
         sleepQuietly(100);
 
-        CompletableFuture<ServerSentEvent<String>> received = CompletableFuture.supplyAsync(() -> longClient()
+        // exchange() blocks until the response status/headers arrive, and the
+        // controller registers its SimThread listener before it sends the
+        // priming comment that flushes those headers (see SseController), so
+        // by the time exchange() returns the listener is already registered.
+        // Only the wait for the next data event needs to move to the
+        // background so the price-change POST below can proceed.
+        Flux<ServerSentEvent<String>> body = longClient()
                 .get()
                 .uri("/api/events/stream")
                 .exchange()
                 .expectStatus()
                 .isOk()
                 .returnResult(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
-                .getResponseBody()
-                .filter(event -> event.data() != null)
-                .next()
-                .block(Duration.ofSeconds(5)));
-        sleepQuietly(200);
+                .getResponseBody();
+
+        CompletableFuture<ServerSentEvent<String>> received = CompletableFuture.supplyAsync(
+                () -> body.filter(event -> event.data() != null).next().block(Duration.ofSeconds(5)));
 
         client.post()
                 .uri("/api/price")

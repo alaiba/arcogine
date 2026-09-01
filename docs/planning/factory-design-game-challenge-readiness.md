@@ -340,7 +340,8 @@ Implemented in C2b:
 C2 completion does not make the game playable and satisfies no Engine Readiness gate. An admitted
 candidate is not canonically executable: a later game-owned projection still requires Arcogine
 canonical validation before publication/run. Conversely, a canonically executable factory may
-remain inadmissible under a particular challenge. C3-C5 remain deferred.
+remain inadmissible under a particular challenge. C3 is implemented independently of that
+projection; C4-C5 remain deferred.
 
 ## 7. C3 — Deterministic challenge evaluation
 
@@ -390,6 +391,32 @@ C3 is ready when:
 5. Every result-affecting evaluator change creates a new evaluation-policy version.
 6. An old attempt retains the exact challenge and evaluation-policy identities/versions that produced its result.
 7. Reference fixtures can reproduce historical evaluation results under their recorded policy versions.
+
+### Implementation status (C3 — complete)
+
+C3 is **complete** as a headless, deterministic evaluation capability in
+`com.arcogine.challenge.evaluation`. `ChallengeEvaluationInput` carries the exact immutable
+`ChallengeDefinition`, opaque published-model and run references, narrow supplied
+`AuthoritativeOutcomeFacts`, and game-owned committed construction cost. It does not inspect or
+instantiate a factory model, `FactoryRuntime`, scheduler, queue, or API/runtime DTO.
+
+`ReferenceChallengeEvaluationPolicy` implements `policy.contract-completion` version `1`. It
+succeeds only when the supplied authoritative facts report fixed-contract completion on or before
+the challenge deadline and committed construction cost is within the starting budget. It produces
+ordered game-owned reason codes for incomplete contract, missed deadline, and exceeded budget;
+records deadline margin and unused budget; and returns zero score on failure. Its deliberately
+small first score formula is exact-integer `1 + deadline margin + unused budget` on success, where
+the one-point completion bonus distinguishes exact-deadline/exact-budget completion from failure.
+This is a
+vertical-slice policy, not a permanent balancing decision; any observable semantic change requires
+a new `EvaluationPolicyIdentity` version.
+
+`ChallengeEvaluationResult` retains the exact challenge identity/version, policy identity/version,
+opaque model/run provenance, decision, immutable ordered reasons, deadline margin, unused budget,
+and score. Synthetic outcome fixtures demonstrate deterministic historical reproduction without an
+active Arcogine runtime. C3 does not create attempt history or comparison (C4), content loading or
+reference-content serialization (C5), a runtime adapter, a generic evaluation framework, or any
+Engine Readiness evidence. No playable game or Engine Readiness gate is claimed complete.
 
 ## 8. C4 — Attempt provenance and design-to-design comparison
 

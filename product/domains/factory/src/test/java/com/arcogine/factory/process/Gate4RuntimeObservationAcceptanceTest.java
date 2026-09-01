@@ -112,4 +112,33 @@ class Gate4RuntimeObservationAcceptanceTest {
         assertThrows(UnsupportedOperationException.class, () -> observation.pendingWork().clear());
         assertEquals(observation, runtime.observe());
     }
+
+    @Test
+    void observationValueContractsRejectMalformedMetadataAndSnapshotInputs() {
+        FactoryRuntime runtime = FactoryRuntime.forModel(model());
+        RuntimeObservationMetadata metadata = runtime.observe().metadata();
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new RuntimeObservationMetadata(
+                        metadata.runId(),
+                        metadata.modelFingerprint(),
+                        metadata.currentTime(),
+                        metadata.runState(),
+                        -1));
+        assertThrows(
+                NullPointerException.class,
+                () -> new RuntimeObservationMetadata(
+                        metadata.runId(),
+                        metadata.modelFingerprint(),
+                        metadata.currentTime(),
+                        null,
+                        0));
+        assertThrows(
+                NullPointerException.class,
+                () -> new RuntimeObservation(null, List.of(), List.of(), List.of(), List.of(), runtime.observe().performance()));
+        assertThrows(
+                NullPointerException.class,
+                () -> new RuntimeObservation(metadata, List.of(), List.of(), List.of(), List.of(), null));
+    }
 }

@@ -24,9 +24,8 @@ As of 2026-09-01:
 - Gate 1 is complete.
 - Gate 2 is complete.
 - Gate 3 is complete through `FactoryRuntime` and ADR-0007.
-- W1's functional implementation is in place through ADR-0010 and the implemented `Order -> Job*` child-job model.
-- W1's required large-order performance/memory benchmark is the final outstanding W1 completion item.
-- Gate 4 follows W1 specifically so stable observation/event contracts expose the correct `OrderId` aggregate and child `JobId` work-item identities.
+- W1 is complete through ADR-0010, the implemented `Order -> Job*` child-job model, and the executable 100,000-child large-order benchmark.
+- Gate 4 is the active Engine gate and builds stable observation/event contracts around the correct `OrderId` aggregate and child `JobId` work-item identities.
 - Gate 5 remains next after Gate 4 core closure.
 - public-contract versioning, recovery, checkpoint/restore, persistence, and packaging remain later distribution hardening.
 
@@ -87,9 +86,9 @@ Do not rename or repurpose it into the Gate 4 history. If retained supported eve
 
 ## 4. Delivery sequence
 
-### Slice W1-B — Close W1 with large-order benchmark evidence
+### Slice W1-B — Complete: close W1 with large-order benchmark evidence
 
-This is the immediate prerequisite before Gate 4 implementation is declared ready to close.
+This prerequisite is complete. `LargeOrderDecompositionBenchmarkTest` executes the supported 100,000-child materialization ceiling, proves deterministic decomposition and terminal semantics, and records diagnostic memory/execution measurements. The existing W1 acceptance suite preserves the fixed-contract and pre-mutation over-limit rejection evidence.
 
 Required work:
 
@@ -98,11 +97,11 @@ Required work:
 - verify that the current provisional child-materialization limit is justified or adjust it with evidence;
 - determine the evidence-backed supported quantity envelope;
 - keep the benchmark non-semantic: it must not introduce arbitrary batching/chunking merely to improve performance, because configurable batch semantics are explicitly outside W1;
-- update W1 status only when the benchmark evidence is committed and reproducible.
+- update W1 status only when the benchmark evidence is committed and reproducible. **Complete:** the parent Engine Readiness plan records W1 complete and Gate 4 active.
 
 This slice must not redesign Gate 4.
 
-### Slice G4-A — Headless runtime identity and supported observation contract
+### Slice G4-A — Active: headless runtime identity and supported observation contract
 
 Add the minimum runtime metadata and observation seam at the `FactoryRuntime` boundary.
 

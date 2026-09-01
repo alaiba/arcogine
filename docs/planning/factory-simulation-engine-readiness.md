@@ -140,7 +140,7 @@ Gate 5        Spatial runtime consequences
 Game consumer may begin
 ```
 
-The current fixed-quantity factory-design reference challenge activates **W1 — intra-order execution decomposition**. ADR-0009 records why W1 is separate from Gate 2 dispatch; [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) records the accepted W1 architecture. W1's functional implementation is now in place: one accepted quantity-`N` `Order` decomposes deterministically into `N` independently dispatchable unit-quantity `Job`s, `JobId` is the work-item identity, aggregate progress/completion remains order-level, and exactly one order completion is emitted. W1 remains on the critical path between Gate 3 and Gate 4 until its required large-order benchmark evidence is recorded; that remaining benchmark is the only outstanding W1 completion item. Gate 2 remains complete for dispatch of independently dispatchable work.
+The current fixed-quantity factory-design reference challenge made **W1 — intra-order execution decomposition** active. ADR-0009 records why W1 is separate from Gate 2 dispatch; [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) records the accepted W1 architecture. W1 is complete: one accepted quantity-`N` `Order` decomposes deterministically into `N` independently dispatchable unit-quantity `Job`s, `JobId` is the work-item identity, aggregate progress/completion remains order-level, and exactly one order completion is emitted. `LargeOrderDecompositionBenchmarkTest` supplies the required executable evidence at the supported 100,000-child materialization ceiling, including deterministic replay and diagnostic memory/execution measurements. Gate 4 is now the active Engine gate. Gate 2 remains complete for dispatch of independently dispatchable work.
 
 Distribution hardening follows the core gates. A first UI experiment may begin after these gates; a distributable client additionally requires the contract, recovery, persistence, and packaging work in Section 11.
 
@@ -375,7 +375,7 @@ Gate 3 is satisfied when a non-graphical reference consumer can:
 
 **Gate 3 is complete.** All eight criteria have identified executable evidence through `FactoryRuntime`; see [ADR-0007](../architecture/decisions/0007-gate-3-session-control-primitives.md). W1 preserves those session semantics while changing the work-item representation.
 
-With Gate 3 closed, **W1's functional implementation is now in place (§14.1)**. Its remaining completion item is the required large-order performance/memory benchmark. Gate 4 follows W1 completion so its stable observation/event contract can expose the resulting `OrderId`/`JobId` identities and aggregate progress semantics with the supported-envelope evidence known.
+With Gate 3 closed, **W1 is complete (§14.1)**. Its fixed-contract acceptance evidence and required large-order performance/memory benchmark are executable. Gate 4 is active and can stabilize its observation/event contract around W1's `OrderId`/`JobId` identities and aggregate progress semantics with the supported-envelope evidence known.
 
 ## 8. Gate 4 — Stable observations and event envelopes
 
@@ -705,8 +705,8 @@ Scenario factory semantics
 3. Make quantity consume proportional production work. **Implemented as the third Gate 1 slice** using repeated routing inside one `Job`; retained as historical pre-W1 evidence, not current runtime behavior.
 4. Capability/eligibility-driven deterministic dispatch. **Implemented as Gate 2**; see ADR-0009 for the dispatch/decomposition boundary.
 5. Consumer-neutral session and bounded advancement. **Implemented as Gate 3**; see ADR-0007.
-6. **W1 — intra-order execution decomposition. Functional implementation in place.** Architecture resolved by [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md): quantity `N` -> `N` unit-quantity sibling `Job`s; `JobId` is work-item identity; order-level execution progress uses the parent `OrderId`; Gate 2 dispatch is reused unchanged; exactly one order completion; deterministic ordering/replay. The required large-order benchmark remains outstanding before W1 is fully complete.
-7. Stable runtime observations and ordered authoritative runtime events under [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), delivered headlessly according to [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md).
+6. **W1 — intra-order execution decomposition. Complete.** Architecture resolved by [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md): quantity `N` -> `N` unit-quantity sibling `Job`s; `JobId` is work-item identity; order-level execution progress uses the parent `OrderId`; Gate 2 dispatch is reused unchanged; exactly one order completion; deterministic ordering/replay. `LargeOrderDecompositionBenchmarkTest` supplies the required 100,000-child memory/execution evidence.
+7. **Gate 4 — stable runtime observations and ordered authoritative runtime events. Active.** Delivered headlessly according to [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md) and [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md).
 8. Spatial transfer consequences from published layout.
 9. Public-contract, recovery, persistence, and packaging hardening.
 
@@ -734,7 +734,7 @@ This milestone deliberately excludes changing the canonical-model boundary, layo
 | Decision | Trigger for resolution |
 |---|---|
 | Final aggregate/type boundaries for order and work execution | Gate 1 baseline implemented; W1 parent/child shape further resolved by ADR-0010 |
-| Intra-order execution decomposition and work-item identity | **Resolved by ADR-0010; functional implementation in place; large-order benchmark evidence outstanding** |
+| Intra-order execution decomposition and work-item identity | **Resolved by ADR-0010 and complete; fixed-contract and 100,000-child benchmark evidence are executable** |
 | Future lot/batch sizing or material-lot identity | A concrete domain requirement supplies real lot/batch semantics beyond W1 unit decomposition |
 | Capability pools versus explicit eligible-instance sets | A concrete scheduling/control use case cannot be expressed cleanly by explicit eligibility |
 | Deterministic dispatch policy | Resolved by Gate 2 / ADR-0009; revisit only if a concrete workload requires a different ranking policy |
@@ -744,9 +744,9 @@ This milestone deliberately excludes changing the canonical-model boundary, layo
 | Spatial metric/transfer policy | Layout benchmark prototype |
 | Public compatibility policy | Before external consumer contract publication |
 
-### 14.1 W1 — active execution capability: intra-order execution decomposition
+### 14.1 W1 — complete execution capability: intra-order execution decomposition
 
-Intra-order parallelism is an **active W1 Engine execution capability with its functional implementation in place**, not unfinished Gate 2 work. ADR-0010 records the child-job identity and aggregate-completion shape. Large-order benchmark evidence remains required before W1 can be marked fully implemented.
+Intra-order parallelism is a **complete W1 Engine execution capability**, not unfinished Gate 2 work. ADR-0010 records the child-job identity and aggregate-completion shape. `LargeOrderDecompositionBenchmarkTest` supplies the required executable evidence at the supported 100,000-child materialization ceiling.
 
 The accepted W1 model is implemented: Arcogine materializes deterministic unit-quantity child jobs under one authoritative order-execution aggregate; the game supplies only one production requirement.
 
@@ -790,7 +790,7 @@ This decision intentionally leaves material-lot genealogy, configurable batch si
 
 W1 remains placed **before Gate 4** deliberately. Gate 4 must stabilize observations and event envelopes around the execution identities and aggregate progress model W1 establishes rather than around the obsolete one-Job-per-Order runtime shape.
 
-`IntraOrderExecutionAcceptanceTest` proves the fixed quantity-20 workload: one order, twenty deterministic children, concurrent use of two eligible cutters, aggregate completion, one business completion, and pre-mutation rejection above the provisional 100,000-child materialization limit. The required large-order benchmark will determine the evidence-backed supported envelope.
+`IntraOrderExecutionAcceptanceTest` proves the fixed quantity-20 workload: one order, twenty deterministic children, concurrent use of two eligible cutters, aggregate completion, one business completion, and pre-mutation rejection above the supported 100,000-child materialization limit. `LargeOrderDecompositionBenchmarkTest` executes that ceiling, proves its deterministic decomposition and terminal semantics, and records diagnostic memory/execution measurements.
 
 The canonical model/run/runtime boundary is tracked by [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md). Operational execution-context/trust/command/deployment/reconciliation decisions belong to the sibling operational track and should receive their own ADRs when hard-to-reverse contracts are selected. Record additional accepted Engine decisions as ADRs rather than expanding this plan into a decision log.
 

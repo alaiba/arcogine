@@ -19,10 +19,19 @@ from typing import Iterable
 
 ADR_DIR = "docs/architecture/decisions"
 ADR_NAME = re.compile(r"^(\d{4})-[^/]+\.md$")
-STATUS = re.compile(r"^Status:\s*(\S+)\s*$", re.MULTILINE)
-SUPERSEDED_BY = re.compile(r"^Superseded by:\s*(ADR-\d{4})\s*$", re.MULTILINE)
-SUPERSEDES = re.compile(r"^Supersedes:\s*(ADR-\d{4})\s*$", re.MULTILINE)
-ALLOWED_MUTABLE_METADATA = re.compile(r"^(?:Status|Superseded by):.*(?:\n|$)", re.MULTILINE)
+STATUS = re.compile(r"^Status:[ \t]*(\S+)[ \t]*$", re.MULTILINE)
+SUPERSEDED_BY = re.compile(r"^Superseded by:[ \t]*(ADR-\d{4})[ \t]*$", re.MULTILINE)
+SUPERSEDES = re.compile(r"^Supersedes:[ \t]*(ADR-\d{4})[ \t]*$", re.MULTILINE)
+ALLOWED_MUTABLE_METADATA = re.compile(
+    r"^(?:Status:[ \t]*\S+[ \t]*|Superseded by:[ \t]*ADR-\d{4}[ \t]*)(?:\r?\n|$)",
+    re.MULTILINE,
+)
+SECTION_HEADING = re.compile(r"^##\s", re.MULTILINE)
+HEADER_METADATA = (
+    ("Status", STATUS),
+    ("Superseded by", SUPERSEDED_BY),
+    ("Supersedes", SUPERSEDES),
+)
 
 
 def run_git(*args: str, check: bool = True) -> str:
@@ -36,18 +45,39 @@ def run_git(*args: str, check: bool = True) -> str:
     return result.stdout
 
 
+def metadata_header(text: str) -> str:
+    """Return only the ADR header area before the first level-two section."""
+    match = SECTION_HEADING.search(text)
+    return text if match is None else text[: match.start()]
+
+
+def duplicate_header_metadata(text: str) -> list[str]:
+    """Return singular metadata field names that occur more than once in the ADR header."""
+    header = metadata_header(text)
+    return [name for name, pattern in HEADER_METADATA if len(pattern.findall(header)) > 1]
+
+
 def status(text: str) -> str | None:
-    match = STATUS.search(text)
+    match = STATUS.search(metadata_header(text))
     return match.group(1) if match else None
 
 
 def superseded_by(text: str) -> str | None:
-    match = SUPERSEDED_BY.search(text)
+    match = SUPERSEDED_BY.search(metadata_header(text))
+    return match.group(1) if match else None
+
+
+def supersedes(text: str) -> str | None:
+    match = SUPERSEDES.search(metadata_header(text))
     return match.group(1) if match else None
 
 
 def immutable_body(text: str) -> str:
-    return ALLOWED_MUTABLE_METADATA.sub("", text)
+    match = SECTION_HEADING.search(text)
+    if match is None:
+        return ALLOWED_MUTABLE_METADATA.sub("", text)
+    header = ALLOWED_MUTABLE_METADATA.sub("", text[: match.start()])
+    return header + text[match.start() :]
 
 
 def adr_id(path: str) -> str:
@@ -110,6 +140,13 @@ def validate(base_ref: str) -> list[str]:
             errors.append(f"{path}: accepted ADRs may not be deleted or renamed")
             continue
 
+        duplicates = duplicate_header_metadata(after)
+        if duplicates:
+            errors.append(
+                f"{path}: duplicate ADR header metadata is not allowed: {', '.join(duplicates)}"
+            )
+            continue
+
         if immutable_body(before) != immutable_body(after):
             errors.append(
                 f"{path}: {before_status} ADR body changed; create a superseding ADR instead"
@@ -151,15 +188,21 @@ def validate(base_ref: str) -> list[str]:
             )
             continue
 
+        new_duplicates = duplicate_header_metadata(new_text)
+        if new_duplicates:
+            errors.append(
+                f"{target}: duplicate ADR header metadata is not allowed: {', '.join(new_duplicates)}"
+            )
+            continue
+
         if status(new_text) != "Accepted":
             errors.append(
                 f"{target}: superseding ADR must be `Status: Accepted` before {adr_id(path)} can become Superseded"
             )
             continue
 
-        match = SUPERSEDES.search(new_text)
         expected = adr_id(path)
-        if not match or match.group(1) != expected:
+        if supersedes(new_text) != expected:
             errors.append(
                 f"{target}: must declare `Supersedes: {expected}` when replacing {path}"
             )

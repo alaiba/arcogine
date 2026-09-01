@@ -188,10 +188,19 @@ consumer-neutral event contract described above; none of them wrap or expose the
 `Event`/`EventType`/`EventPayload`. `FactoryRuntime` now derives and appends a `RuntimeEventEnvelope`
 only after the corresponding authoritative transition has already succeeded:
 
-- `submitWorkload` emits `ORDER_ACCEPTED` after `FactoryHandler.submitOrder` returns successfully;
-- `setMachineAvailability` emits `MACHINE_AVAILABILITY_CHANGED` after `Machine#setAvailability` has
-  been applied — including on the `Faulted` path, since that mutation genuinely happened before a
-  later dispatch-cascade fault, and only that mutation is reported;
+- `submitWorkload` emits `ORDER_ACCEPTED` (carrying the created child `jobIds`, in ordinal order)
+  after `FactoryHandler.submitOrder` returns successfully, then emits one `JOB_DISPATCHED` or
+  `JOB_WAITING` per created job describing the resulting placement (dispatched to a machine, waiting
+  in that machine's own single-eligible queue, or waiting in the cross-machine multi-eligible
+  backlog) — so a consumer can reconstruct the job creation/assignment/pending-work deltas a
+  quantity>1 submission produces, not just the order-level acceptance fact;
+- `setMachineAvailability` emits `MACHINE_AVAILABILITY_CHANGED` only when `Machine#setAvailability`
+  actually transitioned the machine's online/offline state — a request that is a no-op (e.g. bringing
+  an already-online machine online again) emits nothing and does not advance the sequence — including
+  on the `Faulted` path, since that mutation genuinely happened before a later dispatch-cascade fault,
+  and only that mutation is reported. When a genuine transition to online triggers a dispatch cascade,
+  every job that moved from waiting to dispatched as a result is additionally reported via
+  `JOB_DISPATCHED`, derived by diffing authoritative job state before/after the call;
 - `advance()` derives `JOB_STEP_COMPLETED` from a successfully processed internal `TaskEnd` event
   (inspecting the resulting `JobView`, never copying the internal payload) and, when that same call's
   internal scheduler activity also produced an internal `OrderCompleted` event (proving the order's
@@ -203,20 +212,29 @@ only after the corresponding authoritative transition has already succeeded:
 Sequence is allocated only at emission (`FactoryRuntime.emit`), strictly increasing per run,
 independent of how many internal scheduler events were involved; `RuntimeObservationMetadata
 .latestEventSequence()` is now the live cursor (no longer hardcoded to `0`) and always equals the
-last emitted envelope's sequence. `controlledRevisionId` is always `Optional.empty()` in this slice —
-G4-B does not bind to or synthesize one, since no established authoritative binding contract exists
-yet (Governance G1.3 is explicitly not a prerequisite here). `modelFingerprint` on every envelope is
-`FactoryModelVersion.fingerprint()`, never the legacy content hash. `FactoryRuntime.supportedEvents()`
-and `supportedEventsSince(long)` are the new read-only accessors a caller uses instead of internal
-`Event` values; `advance()`/`advanceUntil` keep returning internal `Event`s unchanged for existing
-Gate 3 callers. `Gate4BRuntimeEventAcceptanceTest` proves: run/sequence/time/model provenance on the
-envelope; strict monotonic sequencing and same-timestamp sequence ordering within one run; observation
-cursor/state consistency with the applied event log; that a rejected command emits nothing; that a
-faulted command reports only the mutation that actually occurred; W1 `OrderId`/`JobId` correlation on
-both `JOB_STEP_COMPLETED` and `ORDER_COMPLETED`; identical semantic event streams for identical
-inputs (run ID excluded from the comparison); a fresh sequence epoch on `reset()`; and that two
-distinct run IDs replaying the same commands converge to the same event-type sequence and terminal
-state (run identity does not influence simulation outcome).
+last emitted envelope's sequence, independent of when a caller drains the event list (see below).
+`controlledRevisionId` is always `Optional.empty()` in this slice — G4-B does not bind to or
+synthesize one, since no established authoritative binding contract exists yet. This is unrelated to
+Governance G1 completion status: G1 is complete (`docs/planning/governance-g1-continuity.md`), but
+Gate 4 still treats revision provenance as an optional binding because G1 completion does not by
+itself mean any given runtime was instantiated from an authoritative controlled revision.
+`modelFingerprint` on every envelope is `FactoryModelVersion.fingerprint()`, never the legacy content
+hash. `FactoryRuntime.drainSupportedEvents()` is the read-only accessor a caller uses instead of
+internal `Event` values: it returns and clears everything accumulated since it was last called.
+It is deliberately draining, not retained/replayable-by-cursor — an unbounded, cursor-addressable
+supported-event history is a separately-named responsibility for later distribution hardening
+(ADR-0011 §8, DH-E), not part of this contract; a caller that needs durable replay retains the
+drained events itself. `advance()`/`advanceUntil` keep returning internal `Event`s unchanged for
+existing Gate 3 callers. `Gate4BRuntimeEventAcceptanceTest` proves: run/sequence/time/model provenance
+on the envelope; the enriched `ORDER_ACCEPTED` job-id list and the `JOB_DISPATCHED`/`JOB_WAITING`
+events it implies; strict monotonic sequencing and same-timestamp sequence ordering within one run;
+observation cursor/state consistency with the applied event log; that a rejected command emits
+nothing; that a no-op availability request emits nothing; that a faulted command reports only the
+mutation that actually occurred; W1 `OrderId`/`JobId` correlation on both `JOB_STEP_COMPLETED` and
+`ORDER_COMPLETED`; identical semantic event streams for identical inputs (run ID excluded from the
+comparison); a fresh sequence epoch on `reset()`; and that two distinct run IDs replaying the same
+commands converge to the same event-type sequence and terminal state (run identity does not influence
+simulation outcome).
 
 G4-C (headless event/observation closure across the full acceptance list, including
 `freshObservationReconstructsCurrentConsumerViewWithoutReplay` and

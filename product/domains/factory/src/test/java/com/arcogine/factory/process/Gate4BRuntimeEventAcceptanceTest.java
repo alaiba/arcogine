@@ -79,7 +79,7 @@ class Gate4BRuntimeEventAcceptanceTest {
             throws SimError {
         runtime.submitWorkload(productId, QUANTITY, UNIT_PRICE).orElseThrow();
         while (runtime.advance().isPresent()) {}
-        return runtime.supportedEvents();
+        return runtime.drainSupportedEvents();
     }
 
     @Test
@@ -89,21 +89,45 @@ class Gate4BRuntimeEventAcceptanceTest {
 
         OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
-        List<RuntimeEventEnvelope> events = runtime.supportedEvents();
-        assertEquals(1, events.size());
+        List<RuntimeEventEnvelope> events = runtime.drainSupportedEvents();
         RuntimeEventEnvelope accepted = events.getFirst();
+        assertEquals(RuntimeEventType.ORDER_ACCEPTED, accepted.eventType());
         assertEquals(runtime.runId(), accepted.runId());
         assertEquals(1, accepted.sequence());
         assertEquals(0, accepted.simulationTime().value());
-        assertEquals(RuntimeEventType.ORDER_ACCEPTED, accepted.eventType());
         assertEquals(version.fingerprint(), accepted.modelFingerprint());
         assertTrue(accepted.controlledRevisionId().isEmpty(),
                 "G4-B must not synthesize a controlled revision without an established binding contract");
         assertEquals(
                 List.of(new AffectedEntityRef.OrderRef(orderId)), accepted.affectedEntityRefs());
+        RuntimeEventPayload.OrderAccepted payload = (RuntimeEventPayload.OrderAccepted) accepted.payload();
+        assertEquals(orderId, payload.orderId());
+        assertEquals(new ProductId(1), payload.productId());
+        assertEquals(QUANTITY, payload.quantity());
+        assertEquals(UNIT_PRICE, payload.unitPrice());
+        assertEquals(QUANTITY, payload.jobIds().size(), "one job per unit of quantity");
+
+        // REV-002: the created jobs are individually represented by JOB_DISPATCHED/JOB_WAITING
+        // events immediately following ORDER_ACCEPTED, so a consumer can reconstruct the
+        // assignment/pending-work deltas submitWorkload just produced.
+        List<RuntimeEventEnvelope> jobPlacementEvents = events.subList(1, events.size());
+        assertEquals(QUANTITY, jobPlacementEvents.size());
         assertEquals(
-                new RuntimeEventPayload.OrderAccepted(orderId, new ProductId(1), QUANTITY, UNIT_PRICE),
-                accepted.payload());
+                payload.jobIds(),
+                jobPlacementEvents.stream()
+                        .map(e -> switch (e.payload()) {
+                            case RuntimeEventPayload.JobDispatched d -> d.jobId();
+                            case RuntimeEventPayload.JobWaiting w -> w.jobId();
+                            default -> throw new AssertionError("unexpected payload " + e.payload());
+                        })
+                        .toList());
+        // Two machines are eligible and idle, so exactly two of the three units dispatch
+        // immediately; the third waits.
+        assertEquals(
+                2,
+                jobPlacementEvents.stream().filter(e -> e.eventType() == RuntimeEventType.JOB_DISPATCHED).count());
+        assertEquals(
+                1, jobPlacementEvents.stream().filter(e -> e.eventType() == RuntimeEventType.JOB_WAITING).count());
     }
 
     @Test
@@ -175,7 +199,7 @@ class Gate4BRuntimeEventAcceptanceTest {
         assertInstanceOf(
                 CommandResult.Rejected.class, runtime.submitWorkload(new ProductId(1), 0, UNIT_PRICE));
 
-        assertTrue(runtime.supportedEvents().isEmpty());
+        assertTrue(runtime.drainSupportedEvents().isEmpty());
         assertEquals(0, runtime.observe().metadata().latestEventSequence());
     }
 
@@ -189,20 +213,27 @@ class Gate4BRuntimeEventAcceptanceTest {
         Event completion = runtime.advance().orElseThrow();
         assertEquals(EventType.TaskEnd, completion.eventType());
 
-        int before = runtime.supportedEvents().size();
+        runtime.drainSupportedEvents(); // discard the setup events; only the transition under test matters
         CommandResult<EventPayload.MachineAvailabilityChange> result =
                 runtime.setMachineAvailability(new MachineId(1), true);
         assertInstanceOf(CommandResult.Faulted.class, result);
 
-        List<RuntimeEventEnvelope> events = runtime.supportedEvents();
-        assertEquals(before + 1, events.size(),
-                "the machine coming online genuinely happened before the cascade faulted, so exactly "
-                        + "one MACHINE_AVAILABILITY_CHANGED event -- and nothing claiming the failed "
-                        + "downstream dispatch succeeded -- must be reported");
-        RuntimeEventEnvelope last = events.getLast();
-        assertEquals(RuntimeEventType.MACHINE_AVAILABILITY_CHANGED, last.eventType());
+        List<RuntimeEventEnvelope> events = runtime.drainSupportedEvents();
+        // The machine coming online genuinely happened, and genuinely dispatched the job that was
+        // waiting in its own queue (machineOne transitions to Busy below) before the *subsequent*
+        // pending-multi-eligible cascade faulted -- so both of those genuine mutations, and nothing
+        // claiming the failed downstream dispatch succeeded, must be reported.
+        assertEquals(2, events.size());
+        RuntimeEventEnvelope availabilityChanged = events.get(0);
+        assertEquals(RuntimeEventType.MACHINE_AVAILABILITY_CHANGED, availabilityChanged.eventType());
         assertEquals(
-                new RuntimeEventPayload.MachineAvailabilityChanged(new MachineId(1), true), last.payload());
+                new RuntimeEventPayload.MachineAvailabilityChanged(new MachineId(1), true),
+                availabilityChanged.payload());
+
+        RuntimeEventEnvelope dispatched = events.get(1);
+        assertEquals(RuntimeEventType.JOB_DISPATCHED, dispatched.eventType());
+        RuntimeEventPayload.JobDispatched dispatchedPayload = (RuntimeEventPayload.JobDispatched) dispatched.payload();
+        assertEquals(new MachineId(1), dispatchedPayload.machineId());
 
         MachineView machineOne = runtime.machinesView().stream()
                 .filter(m -> m.id().equals(new MachineId(1)))
@@ -217,7 +248,8 @@ class Gate4BRuntimeEventAcceptanceTest {
         OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
         while (runtime.advance().isPresent()) {}
 
-        List<RuntimeEventEnvelope> stepEvents = runtime.supportedEvents().stream()
+        List<RuntimeEventEnvelope> allEvents = runtime.drainSupportedEvents();
+        List<RuntimeEventEnvelope> stepEvents = allEvents.stream()
                 .filter(e -> e.eventType() == RuntimeEventType.JOB_STEP_COMPLETED)
                 .toList();
         assertEquals(QUANTITY, stepEvents.size());
@@ -228,7 +260,7 @@ class Gate4BRuntimeEventAcceptanceTest {
             assertTrue(event.affectedEntityRefs().contains(new AffectedEntityRef.OrderRef(orderId)));
         }
 
-        RuntimeEventEnvelope orderCompleted = runtime.supportedEvents().stream()
+        RuntimeEventEnvelope orderCompleted = allEvents.stream()
                 .filter(e -> e.eventType() == RuntimeEventType.ORDER_COMPLETED)
                 .findFirst()
                 .orElseThrow();
@@ -274,7 +306,7 @@ class Gate4BRuntimeEventAcceptanceTest {
         FactoryRuntime reset = original.reset();
 
         assertNotEquals(original.runId(), reset.runId());
-        assertTrue(reset.supportedEvents().isEmpty());
+        assertTrue(reset.drainSupportedEvents().isEmpty());
         assertEquals(0, reset.observe().metadata().latestEventSequence());
     }
 

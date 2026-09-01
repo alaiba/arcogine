@@ -4,6 +4,8 @@ import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The supported, consumer-neutral payload shape for a {@link RuntimeEventEnvelope}. Distinct from
@@ -13,9 +15,40 @@ import com.arcogine.types.ProductId;
  */
 public sealed interface RuntimeEventPayload {
 
-    /** {@link RuntimeEventType#ORDER_ACCEPTED}: a new order was accepted and its jobs created. */
-    record OrderAccepted(OrderId orderId, ProductId productId, long quantity, double unitPrice)
+    /**
+     * {@link RuntimeEventType#ORDER_ACCEPTED}: a new order was accepted and its jobs created.
+     * {@code jobIds} carries every created child job's identity, in ordinal order, so a consumer
+     * can correlate the {@link #JobDispatched}/{@link #JobWaiting} events that immediately follow
+     * this one back to the order that produced them (ADR-0011 REV-002) without needing an
+     * out-of-band job listing.
+     */
+    record OrderAccepted(OrderId orderId, ProductId productId, long quantity, double unitPrice, List<JobId> jobIds)
+            implements RuntimeEventPayload {
+        public OrderAccepted {
+            jobIds = List.copyOf(jobIds);
+        }
+    }
+
+    /**
+     * {@link RuntimeEventType#JOB_DISPATCHED}: {@code jobId} (child of {@code orderId}) was
+     * dispatched to {@code machineId} for the step at {@code stepIndex}.
+     */
+    record JobDispatched(JobId jobId, OrderId orderId, MachineId machineId, int stepIndex)
             implements RuntimeEventPayload {}
+
+    /**
+     * {@link RuntimeEventType#JOB_WAITING}: {@code jobId} (child of {@code orderId}) is not yet
+     * dispatched; {@code eligibleMachines} is every machine that could pick it up next -- a
+     * singleton when only one machine is eligible for the current step (job waits in that
+     * machine's own queue), or several when it is waiting in the cross-machine multi-eligible
+     * backlog ({@link PendingWorkView}).
+     */
+    record JobWaiting(JobId jobId, OrderId orderId, Set<MachineId> eligibleMachines)
+            implements RuntimeEventPayload {
+        public JobWaiting {
+            eligibleMachines = Set.copyOf(eligibleMachines);
+        }
+    }
 
     /**
      * {@link RuntimeEventType#JOB_STEP_COMPLETED}: {@code jobId} (with parent {@code orderId}

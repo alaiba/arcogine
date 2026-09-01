@@ -126,6 +126,11 @@ public class Machine implements MachineView {
     }
 
     @Override
+    public List<JobId> queuedJobs() {
+        return List.copyOf(queue);
+    }
+
+    @Override
     public Double capacityLiters() {
         return capacityLiters;
     }

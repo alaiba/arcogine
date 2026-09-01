@@ -369,6 +369,10 @@ Subject: <semantic subject>
 Status: OPEN | IN_FLIGHT
 ```
 
+Persistence is for continuity, not ceremony. If the user explicitly requests immediate remediation after a review, a genuinely new `P3` or `Nit` finding may remain `UNPERSISTED` when all of the following hold: the inconsistency is localized and unambiguous, no product/architecture/planning decision is required, the corrective change is included in the immediate remediation PR, and no durable tracking value would remain after that PR lands. Do not create a GitHub Issue solely so it can be closed immediately afterward.
+
+Persist or recommend persistence instead when a finding is `P0`/`P1`/`P2`, is deferred or accepted as debt, is disputed or decision-dependent, spans multiple semantic surfaces or likely multiple PRs/runs, represents a regression whose identity must remain stable, or otherwise needs lifecycle continuity beyond the immediate remediation. Existing issue-backed findings always retain their durable identity regardless of severity. Immediate remediation does not make an unpersisted finding `RESOLVED` until authoritative evidence reaches the reviewed `main` head.
+
 For a persisted finding, use:
 
 ```text

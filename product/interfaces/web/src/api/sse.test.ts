@@ -83,6 +83,15 @@ describe('SseClient', () => {
     expect(eventSpy).not.toHaveBeenCalled();
   });
 
+  it('connect is idempotent while the initial connection is still opening', () => {
+    client.connect();
+    const connectingSource = (client as unknown as { es: MockEventSource }).es;
+
+    client.connect();
+
+    expect((client as unknown as { es: MockEventSource }).es).toBe(connectingSource);
+  });
+
   it('onEvent callback fires for valid JSON payloads', async () => {
     client.connect();
     await vi.advanceTimersByTimeAsync(0);
@@ -201,5 +210,33 @@ describe('SseClient', () => {
     expect(es2).not.toBe(es1);
 
     delayedClient.disconnect();
+  });
+
+  it('resets reconnect delay after a successful connection', async () => {
+    client.connect();
+    await vi.advanceTimersByTimeAsync(0);
+
+    const firstSource = (client as unknown as { es: MockEventSource }).es;
+    firstSource.simulateError();
+    await vi.advanceTimersByTimeAsync(100);
+
+    const reconnectedSource = (client as unknown as { es: MockEventSource }).es;
+    reconnectedSource.simulateError();
+
+    await vi.advanceTimersByTimeAsync(99);
+    expect((client as unknown as { es: MockEventSource | null }).es).toBeNull();
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect((client as unknown as { es: MockEventSource | null }).es).not.toBeNull();
+  });
+
+  it('uses the default stream URL when no options are supplied', () => {
+    const defaultClient = new SseClient(eventSpy);
+    defaultClient.connect();
+
+    const es = (defaultClient as unknown as { es: MockEventSource }).es;
+    expect(es.url).toBe('/api/events/stream');
+
+    defaultClient.disconnect();
   });
 });

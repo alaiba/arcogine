@@ -10,12 +10,16 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -435,6 +439,50 @@ class ApiSmokeTest {
                 .isOk()
                 .expectHeader()
                 .contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM);
+    }
+
+    @Test
+    void sseStreamDeliversPriceChangeEventPayload() throws Exception {
+        longClient().post()
+                .uri("/api/scenario")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"toml\":" + jsonString(BASIC_SCENARIO_TOML) + "}")
+                .exchange()
+                .expectStatus()
+                .isOk();
+        sleepQuietly(100);
+
+        // exchange() blocks until the response status/headers arrive, and the
+        // controller registers its SimThread listener before it sends the
+        // priming comment that flushes those headers (see SseController), so
+        // by the time exchange() returns the listener is already registered.
+        // Only the wait for the next data event needs to move to the
+        // background so the price-change POST below can proceed.
+        Flux<ServerSentEvent<String>> body = longClient()
+                .get()
+                .uri("/api/events/stream")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
+                .getResponseBody();
+
+        CompletableFuture<ServerSentEvent<String>> received = CompletableFuture.supplyAsync(
+                () -> body.filter(event -> event.data() != null).next().block(Duration.ofSeconds(5)));
+
+        client.post()
+                .uri("/api/price")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"price\":12.5}")
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        ServerSentEvent<String> event = received.get(5, TimeUnit.SECONDS);
+        assertNotNull(event);
+        assertNotNull(event.data());
+        assertTrue(event.data().contains("PriceChange"), event.data());
+        assertTrue(event.data().contains("12.5"), event.data());
     }
 
     @Test

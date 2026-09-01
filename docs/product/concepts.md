@@ -48,9 +48,9 @@ A machine that is **offline** stops accepting new jobs. A machine can only be ta
 
 ### Products and routings
 
-A **product** (e.g., "Widget A") has a **routing** — an ordered list of processing steps. Each step requires a specific machine and takes a specific number of ticks.
+A **product** (e.g., "Widget A") has a **routing** — an ordered list of processing steps. Each step defines a set of **eligible resources** that may perform it and a processing duration. At runtime, Arcogine deterministically selects one eligible resource based on current execution state; the routing defines eligibility, not a permanent one-machine binding.
 
-Example: Widget A's routing might be Mill (5 ticks) → Lathe (3 ticks) → QC Station (2 ticks). A job for Widget A must visit all three machines in order.
+Example: Widget A's routing might require milling for 5 ticks on either Mill A or Mill B, then turning for 3 ticks on Lathe A, then inspection for 2 ticks on QC Station. A job for Widget A must complete those steps in order, but a step with multiple eligible resources may run on any one of them selected by runtime dispatch.
 
 ### Orders and jobs
 

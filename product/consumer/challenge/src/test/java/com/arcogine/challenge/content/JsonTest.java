@@ -19,8 +19,8 @@ class JsonTest {
         assertTrue(result instanceof Map);
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) result;
-        assertEquals(1.0, map.get("a"));
-        assertEquals(List.of(1.0, 2.5, "x", true, false), ((List<?>) map.get("b")).subList(0, 5));
+        assertEquals(1L, map.get("a"));
+        assertEquals(List.of(1L, 2.5, "x", true, false), ((List<?>) map.get("b")).subList(0, 5));
         assertNull(((List<?>) map.get("b")).get(5));
         assertEquals("e", ((Map<?, ?>) map.get("c")).get("d"));
     }

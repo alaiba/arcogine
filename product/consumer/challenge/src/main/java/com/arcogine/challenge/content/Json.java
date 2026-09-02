@@ -13,6 +13,15 @@ import java.util.Map;
  * null), reports malformed input as a {@link JsonSyntaxException} carrying a human-readable
  * position, and introduces no third-party dependency into the headless {@code :challenge} module.
  *
+ * <p>Numbers are decoded exactly rather than round-tripped through {@code double}: a JSON numeric
+ * literal with no fraction or exponent part is decoded as a {@link Long} when it fits in a {@code
+ * long}, or a {@link java.math.BigInteger} when it does not (preserving the exact authored value
+ * for range checking by callers); a literal with a fraction or exponent part is decoded as a
+ * {@link Double}. This matters because {@code double} cannot exactly represent every {@code long}
+ * (values beyond 2^53 silently lose precision), and this content format's numeric fields (budgets,
+ * deadlines, costs, dimensions, quantities) are all integers where silent rounding would change
+ * authored semantics.
+ *
  * <p>Parsing is pure: it performs no I/O, holds no mutable static state, and always produces an
  * equal result tree for equal input.
  */
@@ -181,8 +190,9 @@ final class Json {
         throw error("invalid literal");
     }
 
-    private Double parseNumber() throws JsonSyntaxException {
+    private Number parseNumber() throws JsonSyntaxException {
         int start = position;
+        boolean isIntegerLiteral = true;
         if (peek() == '-') {
             position++;
         }
@@ -190,12 +200,14 @@ final class Json {
             position++;
         }
         if (position < source.length() && source.charAt(position) == '.') {
+            isIntegerLiteral = false;
             position++;
             while (position < source.length() && Character.isDigit(source.charAt(position))) {
                 position++;
             }
         }
         if (position < source.length() && (source.charAt(position) == 'e' || source.charAt(position) == 'E')) {
+            isIntegerLiteral = false;
             position++;
             if (position < source.length()
                     && (source.charAt(position) == '+' || source.charAt(position) == '-')) {
@@ -208,8 +220,20 @@ final class Json {
         if (position == start) {
             throw error("invalid number");
         }
+        String token = source.substring(start, position);
+        if (isIntegerLiteral) {
+            try {
+                return Long.parseLong(token);
+            } catch (NumberFormatException e) {
+                try {
+                    return new java.math.BigInteger(token);
+                } catch (NumberFormatException e2) {
+                    throw error("invalid number");
+                }
+            }
+        }
         try {
-            return Double.parseDouble(source.substring(start, position));
+            return Double.parseDouble(token);
         } catch (NumberFormatException e) {
             throw error("invalid number");
         }

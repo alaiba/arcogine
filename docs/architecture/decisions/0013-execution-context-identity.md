@@ -219,9 +219,9 @@ S1 == P1
 
 Promotion of a deployment, target, namespace, or installation is therefore distinct from mutation of operational-context identity. This preserves the meaning of historical commands, observations, deployments, reconciliation records, and future authorization decisions.
 
-O1 does not require a persistent registry merely to state this invariant. Any boundary or later authoritative store that already knows an ID's established binding must reject an attempt to rebind that ID to a different kind. In an O1 deployment with no registry, independent configuration sources cannot be globally cross-checked by the semantic value object alone; respecting the permanent binding is still part of the durable identity contract.
+O1 does not require a persistent registry merely to state this invariant. The O1 establishment boundary validates each supplied pair and produces an immutable binding. Any scope that already contains or correlates an established binding for an ID — for example a configured context set, reconstructed persisted records, or a later authoritative store — must reject a second pair that reuses that ID with a different kind. An isolated O1 boundary cannot prove that no conflicting pair exists in some unrelated process with which it has never exchanged state; that limitation is a consequence of deliberately not requiring a registry, not permission to reinterpret the ID when conflicting values later meet.
 
-### 8. Equality is explicit and does not collapse same-kind contexts
+### 8. Semantic context comparison is checked, not ordinary pair inequality
 
 `ExecutionContextId` equality is concrete context identity equality.
 
@@ -235,11 +235,24 @@ A != B
 A.kind == B.kind
 ```
 
-`ExecutionContext` value equality includes both `id` and `kind`. Equal contexts therefore carry the same ID and the same permanently bound kind.
+Comparing two established `ExecutionContext` values has three semantic outcomes:
 
-A pair with the same ID but a different kind is not a legitimate second context and must not be interpreted as ordinary inequality. It represents an invalid rebinding, corrupt/mismatched persisted data, or configuration inconsistency and must fail explicitly wherever the mismatch is observable.
+```text
+different IDs
+    => DISTINCT contexts
 
-Labels and other presentation metadata never participate in semantic equality.
+same ID + same kind
+    => SAME context
+
+same ID + different kind
+    => BINDING CONFLICT; fail explicitly
+```
+
+The third case is not ordinary inequality. It means at least one input violates the permanent ID-to-kind binding and must be treated as invalid/corrupt configuration or persisted data.
+
+This checked relation is the O1 semantic comparison contract. A language-level boolean `equals` method cannot represent the conflict outcome, so ordinary structural/value equality — if the Java implementation provides it — is not authoritative for deciding whether two operational contexts are semantically distinct. Operational maps, indexes, reconstruction code, and correlation boundaries that reason by context identity must key/compare by `ExecutionContextId` first and validate that any repeated ID carries the same bound kind before continuing.
+
+Labels and other presentation metadata never participate in semantic identity or checked comparison.
 
 ### 9. Parsing and validation are strict and deterministic
 
@@ -385,7 +398,7 @@ Costs and constraints include:
 
 - operators need a separate human-facing label mechanism if UUIDs alone are inconvenient for display;
 - configuration/deployment processes must preserve the established UUIDv4 and kind across restart rather than regenerate IDs accidentally;
-- without a registry, O1 alone cannot globally detect that two independent configuration sources have attempted to bind the same UUID to different kinds; that remains an invariant violation and later authoritative registries/persisted records must reject it where observable;
+- without a registry, O1 cannot globally detect conflicting bindings that never enter the same process or authoritative store; whenever values with the same ID do meet, checked context comparison/binding validation must reject a different kind rather than treating it as another context;
 - strict canonical parsing rejects convenient but non-canonical UUID/kind spellings instead of normalizing them;
 - new context kinds and any future identifier-representation change require deliberate compatibility work rather than being treated as harmless enum/serializer edits.
 

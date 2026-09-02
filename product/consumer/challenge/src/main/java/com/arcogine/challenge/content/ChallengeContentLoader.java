@@ -162,6 +162,13 @@ public final class ChallengeContentLoader {
         boolean explicitCatalogueIdentity = catalogueIdentityNode != null;
         boolean explicitCatalogueFingerprint = catalogueSemanticFingerprint != null;
 
+        if (explicitCatalogueFingerprint && !explicitCatalogueIdentity) {
+            issues.add(new ChallengeContentIssue(
+                    "content.catalogueIdentity.missing-for-fingerprint",
+                    "catalogueIdentity",
+                    "catalogueIdentity is required when catalogueSemanticFingerprint is supplied"));
+        }
+
         if (!issues.isEmpty()) {
             return new ChallengeDecodeOutcome(
                     null, issues, explicitCatalogueIdentity, explicitCatalogueFingerprint);

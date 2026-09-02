@@ -693,6 +693,64 @@ class ChallengeContentLoaderTest {
                         && i.path().equals("catalogueSemanticFingerprint")));
     }
 
+    // --- REV-001: a catalogueSemanticFingerprint supplied without a catalogueIdentity is an
+    // incomplete/invalid partial binding and must fail as a structured issue, not silently drop
+    // the fingerprint or throw a NullPointerException from loadChallengeWithCatalogue. ---
+
+    @Test
+    void rejectsCatalogueSemanticFingerprintWithoutCatalogueIdentityAsAStructuredIssue() {
+        String source = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"},
+                  "catalogueSemanticFingerprint": "fp-abc123"
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.catalogueIdentity.missing-for-fingerprint")
+                        && i.path().equals("catalogueIdentity")));
+    }
+
+    @Test
+    void loadChallengeWithCatalogueRejectsFingerprintWithoutCatalogueIdentityInsteadOfThrowing() {
+        String challengeSource = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"},
+                  "catalogueSemanticFingerprint": "fp-abc123"
+                }
+                """;
+        String catalogueSource = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": []
+                }
+                """;
+
+        ChallengeWithCatalogueLoadResult result =
+                ChallengeContentLoader.loadChallengeWithCatalogue(challengeSource, catalogueSource);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.catalogueIdentity.missing-for-fingerprint")
+                        && i.path().equals("catalogueIdentity")));
+    }
+
     // --- Decoder error-branch coverage: mistyped nested values and accessor-misuse edge cases. ---
 
     @Test

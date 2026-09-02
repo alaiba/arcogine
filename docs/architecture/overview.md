@@ -409,9 +409,11 @@ product/
 ├── types/                DES primitives: SimTime, MachineId, ProductId, OrderId, JobId,
 │                         Quantity, SimError, scenario config records
 ├── governance/           Controlled-revision identity, lineage, recording provenance,
-│                         authoritative durable history, historical resolution, and the
+│                         authoritative durable history, historical resolution, the
 │                         generic semantic ChangeSet/impact contract (com.arcogine.
-│                         governance.change); current filesystem adapter, no simulation
+│                         governance.change), and the generic requirement/assertion
+│                         contract (com.arcogine.governance.{requirement,assertion,
+│                         catalogue}); current filesystem adapter, no simulation
 │                         event handling
 ├── simulation/           DES engine: Scheduler, Event, EventHandler interface,
 │                         CompositeHandler, EventLog, KPIs, SimRunner, ScenarioLoader

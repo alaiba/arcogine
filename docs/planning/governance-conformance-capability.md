@@ -1,6 +1,6 @@
 # Governance and Conformance Capability Plan
 
-> **Status:** Proposed; G1 complete, G2 (initial slice) complete  
+> **Status:** Proposed; G1 complete, G2 (initial slice) complete, G3 complete  
 > **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
 > **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, while current-state G1 behavior is also recorded in the architectural overview and accepted ADRs  
 > **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Governance G1 Continuity Notes](governance-g1-continuity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
@@ -71,7 +71,9 @@ G1 durable identity/history substrate              complete
           ↓
 G2 semantic ChangeSet                              complete (initial slice)
           ↓
-G3-G5 requirement-based conformance/evidence
+G3 requirement/assertion contract                  complete
+          ↓
+G4-G5 conformance evaluation/evidence
           ↓
 G6 review/authorization/governed-change integration
 ```
@@ -135,7 +137,7 @@ G1  Durable fingerprint and controlled revision lineage       complete
     ↓
 G2  Semantic ChangeSet and impact model                        complete (initial slice)
     ↓
-G3  Generic requirement/assertion contract
+G3  Generic requirement/assertion contract                     complete
     ↓
 G4  Conformance evaluation and findings
     ↓
@@ -395,12 +397,16 @@ Representative tests (exact names, see the listed files):
 
 **Boundary called out explicitly, per delivery principle 1 and the G2 acceptance criteria below:**
 acceptance criterion 4 ("impact analysis can determine which registered requirements are
-potentially affected") is satisfied only as an honest *seam* -- `ImpactScope.intersects(Set<
-ChangedEntityRef>)` -- because G3's requirement registry does not exist yet. No G3+ capability
-(requirement registry, assertion evaluation, conformance findings, evidence, exceptions,
-authorization workflow) is implemented or claimed; `ChangeSetFactoryTest
-.impactScopeIsUsableForFutureRequirementScopeMatching` proves the seam against a hypothetical
-in-test scope only, not a real requirement.
+potentially affected") was satisfied at G2-close time only as an honest *seam* --
+`ImpactScope.intersects(Set<ChangedEntityRef>)` -- because G3's requirement registry did not exist
+yet; `ChangeSetFactoryTest.impactScopeIsUsableForFutureRequirementScopeMatching` proved the seam
+against a hypothetical in-test scope only. G3 (below) now implements the requirement side of that
+seam (`RequirementScope`, `RequirementCatalogue`) and proves the same `ImpactScope` matches real
+registered `Requirement` values
+(`RequirementScopeTest.requirementScopeCanMatchExistingG2ImpactScope`,
+`RequirementCatalogueTest.impactAnalysisSelectsOnlyRequirementsWithIntersectingScope`). No G4+
+capability (assertion evaluation results, conformance findings, evidence, exceptions,
+authorization workflow) is implemented or claimed by G3.
 
 ### Goal
 
@@ -463,6 +469,54 @@ G2 is ready when:
 
 ## 7. G3 — Generic requirement and assertion contract
 
+### Current status
+
+**Complete.** `:governance` now provides, still depending on nothing beyond `:types` in its main
+source set:
+
+```text
+com.arcogine.governance.requirement
+    RequirementId, RequirementVersion, Requirement
+    RequirementScope
+    RequirementSource (sealed): ArcogineNativeRequirementSource, ExternalRequirementSource
+
+com.arcogine.governance.assertion
+    AssertionId, AssertionVersion, Assertion<T>
+    EvidenceRequirement (MODEL_STATE_SUFFICIENT / EXTERNAL_EVIDENCE_REQUIRED)
+    AssertionRule<T>, StructuralAssertionOutcome
+
+com.arcogine.governance.catalogue
+    RequirementCatalogue
+```
+
+`Requirement` and `Assertion` equality is identity+version only (mirroring how
+`ChangedEntityRef` already excludes its presentation-only `label`); an `Assertion`'s
+`AssertionRule` implementation is therefore explicitly never part of its identity, proven by
+`AssertionIdentityTest.assertionIdentityIsNotDerivedFromEvaluatorImplementationClass`.
+`RequirementScope` reuses G2's `ChangedEntityRef`/`ImpactScope` directly rather than introducing a
+second entity-reference or impact abstraction, and `RequirementScope.intersects(ImpactScope)`
+delegates to the existing `ImpactScope.intersects(Set<ChangedEntityRef>)` seam. `RequirementCatalogue`
+is an immutable, in-memory, deterministically ordered registry -- not a database, workflow engine,
+or framework-ingestion mechanism.
+
+The first proving requirement/assertion pair is Arcogine-native, structurally evaluable from
+authoritative state, and independent of external evidence
+(`StructuralProvingCaseTest`), using a minimal test-domain fixture rather than a permanent
+factory-owned policy or a duplicate of `FactoryModelValidator`, per the G3 non-goals. G4's
+conformance-result model (`PASS`/`FAIL`/`UNKNOWN`/`NOT_APPLICABLE`, `Finding`,
+`ConformanceEvaluation`) and G5's evidence model (`Evidence`/`EvidenceUse`) are explicitly not
+implemented; `EvidenceRequirementDeclarationTest
+.productionAssertionAndRequirementTypesContainNoG4OrG5Concepts` and
+`GovernanceModuleBoundaryTest` provide regression evidence for both the G4/G5 boundary and the
+`:factory`/Spring-free module boundary.
+
+No new ADR was required: this slice implements the requirement/assertion/scope shape already
+documented in [architecture §7](../architecture/governance-conformance.md#7-generic-conformance-model)
+and this plan's G3 acceptance criteria via ordinary, replaceable value/API decomposition. It does
+not freeze a persistence model (the catalogue is in-memory only), an expression/query language
+(scope is a plain deterministic entity set, not a DSL), or a cross-domain authority decision beyond
+what G1/G2 already established.
+
 ### Goal
 
 Define explicit requirements independently of any particular compliance framework while preserving both Arcogine's own requirement/assertion versions and enough external source identity to reproduce the requirement that actually governed an evaluation.
@@ -499,12 +553,48 @@ The first requirement should be Arcogine-native and structurally evaluable from 
 G3 is ready when:
 
 1. A requirement has stable identity and can be versioned separately from both the model it evaluates and the edition/version of any external source it cites.
+   **Satisfied:** `RequirementId`/`RequirementVersion` carry no `ModelFingerprint`/
+   `ControlledRevisionId`/source-edition coupling; proven by
+   `RequirementIdentityTest.sameRequirementIdentityCanApplyToDifferentModelRevisions`,
+   `RequirementIdentityTest.requirementVersionIsIndependentOfModelFingerprintAndControlledRevision`,
+   and `RequirementSourceProvenanceTest.sameExternalClauseCanSupportDifferentArcogineRequirementVersions`.
 2. An assertion has stable identity and version independently of the requirement and model revision it evaluates.
+   **Satisfied:** `AssertionIdentityTest.assertionIdentityAndVersionAreIndependentOfRequirementVersion`
+   and `.assertionIdentityIsNotDerivedFromEvaluatorImplementationClass`.
 3. Scope selection is explicit and deterministic.
+   **Satisfied:** `RequirementScope` is a plain, deterministically ordered `ChangedEntityRef` set
+   reusing the real G2 seam; proven by `RequirementScopeTest.scopeSelectionIsDeterministic`,
+   `.scopeUsesStableChangedEntityIdentity`, `.requirementScopeCanMatchExistingG2ImpactScope`,
+   `.unrelatedImpactDoesNotSelectRequirement`, and
+   `RequirementCatalogueTest.impactAnalysisSelectsOnlyRequirementsWithIntersectingScope`.
 4. An assertion can declare whether model state alone is sufficient or external evidence is required.
+   **Satisfied:** `EvidenceRequirement`, proven by
+   `EvidenceRequirementDeclarationTest.structuralAssertionDeclaresModelStateSufficient` and
+   `.observationDependentAssertionDeclaresExternalEvidenceRequired`.
 5. Requirement wording/source and executable assertion semantics are distinguishable.
+   **Satisfied:** `Requirement` (meaning) and `Assertion`/`AssertionRule` (executable semantics)
+   are separate types; proven by `AssertionIdentityTest.requirementMeaningIsDistinctFromExecutableAssertionSemantics`
+   and `StructuralProvingCaseTest`.
 6. An external requirement can identify its exact source authority, designation, edition/version, locator, and applicable adoption/profile where those facts affect meaning.
+   **Satisfied:** `ExternalRequirementSource`, proven by
+   `RequirementSourceProvenanceTest.externalRequirementRetainsExactAuthorityDesignationEditionAndLocator`,
+   `.differentExternalEditionsRemainDistinguishable`, and
+   `.differentAdoptionsOrProfilesRemainDistinguishableWhenSpecified`.
 7. The contract is generic enough to represent internal policy and architecture rules.
+   **Satisfied:** `ArcogineNativeRequirementSource` requires no external metadata; proven by
+   `RequirementSourceProvenanceTest.arcogineNativeRequirementDoesNotRequireExternalSourceMetadata`
+   and used by the G3 proving case itself.
+
+### Test evidence
+
+- `product/governance/src/test/java/com/arcogine/governance/requirement/` --
+  `RequirementIdentityTest`, `RequirementSourceProvenanceTest`, `RequirementScopeTest`.
+- `product/governance/src/test/java/com/arcogine/governance/assertion/` --
+  `AssertionIdentityTest`, `EvidenceRequirementDeclarationTest`, `StructuralProvingCaseTest`.
+- `product/governance/src/test/java/com/arcogine/governance/catalogue/RequirementCatalogueTest.java`.
+- `product/governance/src/test/java/com/arcogine/governance/GovernanceModuleBoundaryTest.java` --
+  proves `:governance` stays domain-neutral (no `:factory`/Spring dependency in the main source
+  set or main sources).
 
 ## 8. G4 — Conformance evaluation and findings
 
@@ -740,7 +830,7 @@ The first milestone should deliberately avoid a full external compliance framewo
 
 > **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked through a separate association to an external change request, evaluate one Arcogine-native requirement before authorization/deployment, record the authorization decision separately, and reconstruct why the resulting semantic state was considered conformant.**
 
-G1 supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone, and G2's initial slice now supplies semantic change attribution and affected-entity identification. The milestone remains outstanding because G3+ must still provide requirements/conformance/evidence and separate workflow/authorization records.
+G1 supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone, G2's initial slice supplies semantic change attribution and affected-entity identification, and G3 now supplies a registered, versioned requirement whose scope can match that affected-entity identification. The milestone remains outstanding because G4+ must still provide deterministic pre-change assertion evaluation, findings, evidence, and separate workflow/authorization records.
 
 Definition of done:
 
@@ -751,7 +841,7 @@ Authoritative controlled revision persistence exists                 [G1 complet
 Exact historical semantic state is resolvable                        [G1 complete]
 Base revision -> ChangeSet -> candidate revision is attributable      [G2 complete]
 Affected entity is identified                                        [G2 complete]
-One versioned requirement applies                                    [G3+]
+One versioned requirement applies                                    [G3 complete]
 Pre-change assertion evaluates deterministically                      [G4+]
 Finding is produced if violated                                       [G4+]
 External change-request provenance can be linked separately           [G6+]

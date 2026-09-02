@@ -3,7 +3,7 @@
 > **Status:** Proposed; O1 is the next operational implementation target  
 > **Scope:** Establish the semantic and safety boundaries required before Arcogine can connect designed production semantics to real operational systems  
 > **Authority:** Planning only; this document defines readiness gates, dependencies, and implementation sequencing, not current production capability  
-> **Related:** [Operational Execution and Digital Twin Architecture](../architecture/operational-execution-digital-twin.md), [Product Charter](../product/charter.md), [Architecture Overview](../architecture/overview.md), [Factory Design Architecture](../architecture/factory-design.md), [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md), [Governance and Conformance Capability](governance-conformance-capability.md)
+> **Related:** [Operational Execution and Digital Twin Architecture](../architecture/operational-execution-digital-twin.md), [ADR-0013: Execution context identity](../architecture/decisions/0013-execution-context-identity.md), [Product Charter](../product/charter.md), [Architecture Overview](../architecture/overview.md), [Factory Design Architecture](../architecture/factory-design.md), [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md), [Governance and Conformance Capability](governance-conformance-capability.md)
 
 ## 1. Purpose
 
@@ -44,7 +44,7 @@ This plan was originally written while several sibling contracts were still pros
 | Engine Gate 4 G4-A runtime observation slice | **Complete** | `RunId` and consumer-neutral `RuntimeObservation` exist for one factory simulation runtime epoch |
 | Engine Gate 4 G4-B supported runtime events | **Complete** | The supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload` contract per ADR-0011 is implemented at the `FactoryRuntime` boundary |
 | Engine Gate 4 G4-C headless closure | **Outstanding** | Full Gate 4 headless acceptance closure across the runtime/observation boundary is not yet complete |
-| Operational O1 execution-context identity | **Proposed** | Next operational implementation slice after the O1 identity decision is recorded |
+| Operational O1 execution-context identity | **Proposed ADR recorded; implementation outstanding** | [ADR-0013](../architecture/decisions/0013-execution-context-identity.md) records the concrete proposed identity contract. O1 remains the next Operational implementation target and must follow ADR-0013 if/when it becomes Accepted. |
 
 The important Engine/Operational boundary is:
 
@@ -128,7 +128,7 @@ This is not a self-contained linear program. Sibling dependencies and local prer
 
 | Operational gate | Sibling dependency status | Current consequence |
 |---|---|---|
-| O1 execution context | **No hard sibling prerequisite.** Engine G4-A is available but is not the identity source. | O1 can proceed now. It must define a separate operational context contract and keep simulation `RunId` as optional future correlation only. |
+| O1 execution context | **No hard sibling prerequisite.** Engine G4-A is available but is not the identity source. | ADR-0013 records the concrete Proposed O1 identity decision. O1 implementation remains outstanding and should proceed only against the Accepted form of that decision. |
 | O2 identity/trust/authority | **No Governance gate prerequisite.** | O2 remains operational work after O1. Production trust requirements remain entirely outstanding. |
 | O3 command lifecycle | **Partially satisfied.** Stable factory production semantics exist, but the applicable real target-operation contract is not yet an operational capability. | Headless command lifecycle work may proceed after O1/O2; live command integration must map to owned production semantics rather than protocol-driven inventions. |
 | O4 deployment | **Governance G1 satisfied.** | O4 is not implemented, but it is no longer blocked on durable revision identity. It must consume Governance G1 authoritative identities/history instead of synthetic revision fixtures. |
@@ -182,35 +182,37 @@ STAGING
 PRODUCTION
 ```
 
-That list is no longer accepted as an implementation enum merely because it appeared in the first proposal.
+That list is not an implementation enum merely because it appeared in the first proposal.
 
-For O1, the taxonomy must be consequence-oriented rather than process-oriented:
+[ADR-0013](../architecture/decisions/0013-execution-context-identity.md) now proposes the concrete consequence-oriented initial taxonomy:
 
-- `PRODUCTION` is required as a classification for real production-consequential activity.
-- `STAGING` is justified as a distinct non-production operational context where production-like integration semantics may be exercised without production consequence.
-- `SIMULATION` may be represented when operational artifacts need to classify or correlate activity with a simulation, but the context does not replace the Engine `RunId` that identifies the simulation runtime epoch.
-- `REPLAY` is primarily a processing/history-interpretation mode. It must not become an execution-context kind unless a concrete operational invariant later proves that it changes authority/consequence semantics in a way that cannot be modeled separately.
-- generic software `TEST` is not by itself an operational semantic context. Tests may create explicit staging/simulation/fixture contexts; a test runner, Spring profile, or test deployment does not define O1 identity.
+```text
+PRODUCTION
+STAGING
+SIMULATION
+```
 
-The exact initial enum members are a hard-to-reverse compatibility decision and must be fixed by the O1 ADR before code becomes public or persisted. The implementation must not silently preserve the old five-value list.
+It proposes `PRODUCTION` for real production-consequential activity, `STAGING` for production-like integration without production consequence, and `SIMULATION` where an Operational artifact needs to classify/correlate simulated activity while remaining distinct from Engine `RunId`.
+
+`REPLAY` remains a processing/history-interpretation mode rather than an O1 context kind unless a later concrete consequence/authority invariant proves otherwise. Generic software `TEST` remains a process/build/test concern, not an operational context kind. The implementation must follow these semantics only if ADR-0013 becomes Accepted; a Proposed ADR does not make the taxonomy established architecture.
 
 ### 5.3 Concrete context identity
 
 O1 requires a stable concrete context identity in addition to classification.
 
-Required semantics:
+ADR-0013 proposes an opaque RFC 9562 UUID version 4 `ExecutionContextId`, with canonical lowercase hyphenated textual form and strict semantic-boundary parsing. It also proposes:
 
 - one `ExecutionContextId` identifies one concrete Arcogine execution context;
 - equality is identity equality, not equality of label, target, deployment, model, revision, actor, URL, namespace, or process location;
 - the identifier is safe to persist in later operational records and safe to expose through versioned external projections;
-- the same concrete context can be recognized after process restart when the same identity is supplied/resolved;
+- the same concrete context can be recognized after process restart when the same identity and permanently bound kind are supplied/resolved;
 - multiple concrete contexts may share one `ExecutionContextKind`;
-- changing a context's human-facing name must not silently change identity;
-- context identity does not imply which external target is being addressed and does not imply which revision is deployed there;
-- context identity does not imply actor identity or authorization;
-- context identity does not imply a simulation `RunId`.
+- changing a context's human-facing name does not change identity;
+- context identity does not imply external target, deployed revision/model, actor identity, authorization, or simulation `RunId`.
 
-O1 does **not** yet select UUID versus another representation, human-meaningful versus opaque wire spelling, centralized issuance, or a durable registration store. Those are part of the O1 ADR decision because they affect compatibility and lifecycle semantics.
+Identity semantics are distinct from issuance infrastructure: Arcogine or an operator/deployment system may establish a UUIDv4 once, and configuration may later carry it, but O1 does not require a centralized issuance service or derive identity from deployment/configuration metadata.
+
+These representation and lifecycle rules remain proposed until ADR-0013 is Accepted.
 
 ### 5.4 Identity boundaries
 
@@ -276,7 +278,7 @@ The first O1 implementation does not need authorization. It only needs a boundar
 
 O1 requires durable **identity semantics**, not durable **context-registry persistence**.
 
-A context identifier must be usable in persisted future records and must be stable across restart when the same context is re-established. O1 does not require Arcogine to implement a repository of contexts, lifecycle administration, discovery, renaming, or issuance history.
+ADR-0013 proposes that the same durable ID plus its permanently bound kind re-established after restart identifies the same context. O1 does not require Arcogine to implement a repository of contexts, lifecycle administration, discovery, renaming, issuance history, aliases, or retirement.
 
 If a later capability requires authoritative durable context registration, uniqueness across independent Arcogine installations, aliases, retirement, migration, or context metadata history, that is a separate operational persistence concern and may require another ADR.
 
@@ -298,16 +300,7 @@ Arcogine-owned interpretations, reconciliation results, commands, deployments, o
 
 ### 5.8 Public compatibility boundary
 
-Before O1 is projected through HTTP/OpenAPI, SSE/runtime contracts, persisted operational records, or external adapter protocols, the O1 ADR and implementation must settle and test:
-
-- stable identity equality semantics;
-- the initial context-kind taxonomy and how unknown/future kinds are handled;
-- identifier textual/binary representation if one is exposed;
-- whether identifiers are Arcogine-issued, operator-supplied, or accepted through a defined resolver boundary;
-- parsing/validation failure behavior;
-- migration rules for any future representation or taxonomy change;
-- whether a context can change kind without changing identity;
-- compatibility fixtures for any public projection.
+ADR-0013 now proposes the O1 representation and evolution rules that were previously open: UUIDv4 identity with strict canonical parsing, `PRODUCTION`/`STAGING`/`SIMULATION` taxonomy, explicit unknown-kind failure at the semantic boundary, decentralized establishment through the O1 boundary, permanent ID-to-kind binding, and explicit versioned migration handling for public/persisted changes.
 
 ADR-0012 remains authoritative:
 
@@ -319,7 +312,7 @@ versioned projection / adapter
 external representation
 ```
 
-JSON, OpenAPI, OPC UA, MQTT, CloudEvents, environment variables, or deployment tooling must not become the semantic authority for execution-context identity.
+JSON, OpenAPI, OPC UA, MQTT, CloudEvents, environment variables, or deployment tooling must not become the semantic authority for execution-context identity. Any stable public projection still requires its own versioning, mapping, validation, compatibility evidence, and migration behavior.
 
 ### 5.9 O1 acceptance criteria
 
@@ -335,6 +328,8 @@ O1 is complete when:
 8. raw external observations are not forced to invent Arcogine context/model/revision relationships;
 9. compatibility and migration rules are fixed before any stable public/persisted representation is introduced;
 10. tests prove equality, validation, explicit-boundary use, non-inference, and identity separation from `RunId` and `ControlledRevisionId`.
+
+ADR-0013 addresses the architectural compatibility questions behind these criteria, but **O1 is not complete** until the implementation and tests land after the ADR is Accepted.
 
 ### 5.10 O1 non-goals
 
@@ -368,11 +363,11 @@ future operational adapters / API projections
 
 The first slice should not require `:operational -> :simulation`, `:governance`, or `:factory`. Correlation with `RunId` or `ControlledRevisionId` belongs in later operational records that actually need those references; O1 must not create coupling merely to prove non-equivalence.
 
-If the ADR chooses to place only a primitive identifier in `:types`, it must justify why that shared placement is needed immediately. The default is to keep O1 semantics owned together in `:operational` until a concrete cross-module dependency requires otherwise.
+ADR-0013 proposes this module/dependency ownership as part of the O1 decision. Implementation must follow the Accepted form of that ADR rather than treating planning prose as authority.
 
 ### Values/contracts to introduce
 
-Names remain subject to the ADR, but the minimum semantic shape is equivalent to:
+The minimum semantic shape is:
 
 ```text
 ExecutionContextKind
@@ -380,31 +375,34 @@ ExecutionContextId
 ExecutionContext
 ```
 
-`ExecutionContext` should be immutable and contain exactly the minimum identity/classification contract. It should not accumulate target, actor, model, revision, deployment, command, hostname, namespace, URL, or authentication data.
+If ADR-0013 is Accepted as proposed, `ExecutionContextKind` contains `PRODUCTION`, `STAGING`, and `SIMULATION`; `ExecutionContextId` is opaque UUIDv4; and `ExecutionContext` is an immutable pair of ID and kind with permanent ID-to-kind binding.
+
+`ExecutionContext` should not accumulate target, actor, model, revision, deployment, command, hostname, namespace, URL, authentication, permissions, or presentation metadata.
 
 ### Invariants
 
 - non-null/valid kind;
 - non-null/valid concrete identity;
 - equality of context identity is independent of kind labels and unrelated identities;
+- one ID is permanently bound to one kind; consequence-class change creates a new ID;
 - context kind is explicit, never inferred;
 - construction/resolution failure is explicit rather than falling back to a default production/non-production context;
-- no `RunId`/`ControlledRevisionId` conversion constructors or derived-ID helpers;
+- no `RunId`/`ControlledRevisionId`/`ModelFingerprint` conversion constructors or derived-ID helpers;
 - no process/environment inspection inside the semantic types.
 
 ### Persistence
 
-No persistence adapter is required for the first O1 PR. The identity representation selected by the ADR must be stable enough for later persistence and public projections, but context registration/history is deferred.
+No persistence adapter is required for the first O1 PR. The UUIDv4 representation proposed by ADR-0013 is stable enough for later persistence and public projections, while context registration/history remains deferred.
 
 ### Expected tests
 
 At minimum:
 
 - distinct concrete IDs of the same kind remain distinct contexts;
-- the same concrete ID re-established after reconstruction compares as the same identity according to the selected contract;
-- different kinds do not collapse identity semantics;
-- invalid identifiers/kinds fail explicitly;
-- context is not derivable from `RunId` or `ControlledRevisionId`;
+- the same concrete ID and kind re-established after reconstruction compare as the same context;
+- the same ID cannot be rebound to a different kind where the mismatch is observable;
+- malformed/non-canonical UUIDs and invalid/unknown kinds fail explicitly;
+- context is not derivable from `RunId`, `ControlledRevisionId`, or `ModelFingerprint`;
 - no dependency on Spring, API DTOs, factory runtime, Governance authority, hostname, environment profile, or deployment namespace;
 - module-dependency checks preserve the intended direction.
 
@@ -414,22 +412,24 @@ All O2-O9 behavior, persistence, registration, adapters, API projections, comman
 
 ## 7. O1 ADR decision
 
-**A new ADR is required before implementing the durable O1 contract.**
+[ADR-0013: Execution context identity](../architecture/decisions/0013-execution-context-identity.md) is now the concrete **Proposed** O1 identity decision.
 
-This is not because planning prose needs restatement. It is because O1 must make hard-to-reverse choices that will anchor later authorization, commands, deployments, persisted operational records, and external projections.
+It proposes:
 
-The ADR must settle exactly:
+1. separate first-class `ExecutionContextKind` and `ExecutionContextId` concepts;
+2. initial consequence-oriented kinds `PRODUCTION`, `STAGING`, and `SIMULATION`, with `REPLAY` and generic `TEST` excluded;
+3. opaque RFC 9562 UUIDv4 `ExecutionContextId`, canonical lowercase textual form, strict parsing, and identity independent of labels/target/model/revision/actor/process metadata;
+4. decentralized establishment through an explicit O1 parse/validation/resolution boundary, with configuration allowed to carry but not define identity;
+5. permanent one-ID-to-one-kind binding, so a staging-to-production consequence change receives a new ID;
+6. an immutable `ExecutionContext` containing only ID and kind;
+7. the dedicated `:operational` ownership/dependency direction for the first implementation;
+8. versioned projection/migration rules under ADR-0012 and explicit failure for unsupported semantic kinds;
+9. durable restart identity semantics without a context registry;
+10. preservation of raw external-observation independence and all neighboring identity boundaries.
 
-1. whether `ExecutionContextKind` and `ExecutionContextId` are separate first-class concepts (this plan recommends yes);
-2. the initial consequence-oriented kind taxonomy, including disposition of `SIMULATION`, `REPLAY`, and generic `TEST`;
-3. stable `ExecutionContextId` semantics: opaque versus meaningful, issuance/supply authority, equality, allowed mutation/renaming relationship, and restart expectations;
-4. whether a context may change kind without receiving a new identity;
-5. the owning module and initial dependency direction;
-6. the semantic authority/resolution boundary and the rule forbidding inference from process/deployment location;
-7. public/persisted compatibility expectations and representation/versioning policy;
-8. confirmation that O1 establishes durable identity semantics without requiring context-registry persistence.
+Because ADR-0013 is **Proposed**, none of those decisions should be described as implemented or accepted yet. O1 implementation remains outstanding and must follow ADR-0013 if/when it becomes Accepted. If review changes the ADR before acceptance, this plan should follow the Accepted decision rather than preserve stale proposal wording.
 
-The ADR should not choose O2 authorization, O3 command identity, O4 deployment records, O5 observation envelopes, or protocol/infrastructure details.
+The ADR deliberately does not choose O2 authorization, O3 command identity, O4 deployment records, O5 observation envelopes, or protocol/infrastructure details.
 
 ## 8. O2 — Actor, trust, authority, and capability boundary
 
@@ -450,6 +450,8 @@ Deployment still owns target identity, transformation/application provenance, ve
 ## 11. O5 — External observation ingestion and provenance
 
 O5 remains proposed and unimplemented. It owns durable operational facts with independent source/subject/time/quality/trust provenance. Governance G5 is not a prerequisite for ingestion; it is required only for shared evidence-use integration. Engine `RuntimeObservation` is a simulation runtime concept and must not be reused as the raw external-observation identity/envelope merely because both are observations.
+
+O1 and ADR-0013 do not change that boundary: a raw observation is not required to carry an Arcogine `ExecutionContextId`, `ControlledRevisionId`, or `ModelFingerprint`.
 
 ## 12. O6 — Modeled-versus-observed reconciliation
 
@@ -508,9 +510,9 @@ Governance G4/G5 remain future dependencies for the operational capabilities tha
 
 ## 21. Next action
 
-1. Write and accept the narrow O1 ADR described in section 7.
-2. Implement one headless `:operational` PR containing only the minimum execution-context values/boundary and tests described in section 6.
-3. Update `docs/architecture/overview.md` only when that code is actually implemented; until then O1 remains proposed.
+1. Review and accept, revise, or reject [ADR-0013](../architecture/decisions/0013-execution-context-identity.md). Its current status is Proposed.
+2. If accepted, implement one headless `:operational` PR containing only the minimum execution-context values/boundary and tests described in section 6, following the Accepted ADR exactly.
+3. Update `docs/architecture/overview.md` only when that code is actually implemented; until then O1 remains unimplemented and the overview must not claim executable Operational behavior.
 
 ## 22. Exit condition
 

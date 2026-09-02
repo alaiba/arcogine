@@ -131,6 +131,7 @@ class PreChangeConformanceProvingCaseTest {
                         Optional.of(changeSet.impactScope()),
                         Optional.of(changeSet),
                         changeSet.candidateFingerprint(),
+                        ChangeSet::candidateFingerprint,
                         changeSet.resultingRevisionIdOptional(),
                         authority);
 

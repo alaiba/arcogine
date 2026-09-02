@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * The G4 conformance-evaluation engine: turns one G3 {@link Requirement}/{@link Assertion} pair
@@ -37,18 +38,27 @@ import java.util.Set;
  * ControlledRevisionId} attached to the result, mirroring the {@code ChangeSet}/G1.3 precedent
  * that a {@link ControlledRevisionId} exists only for an actually-accepted revision.
  *
- * <p><b>Provenance binding.</b> {@code modelFingerprint} and {@code authoritativeState} remain
- * independent caller-supplied values: the G4 assertion state {@code T} is arbitrary domain state,
- * not necessarily a {@code SemanticArtifact}'s canonical bytes, so no existing G1 authority can
- * recompute a fingerprint from it generically (unlike {@code ChangeSetFactory}, which can rely on
- * {@code SemanticArtifactVerifier} exactly because a {@code SemanticArtifact} is always
- * bytes-with-a-declared-fingerprint). What G4 <em>can</em> and does verify with an existing G1
- * authority is the one binding {@link ControlledRevisionAuthority} already establishes: when a
- * {@link ControlledRevisionId} is supplied, {@link #evaluate} resolves it through {@code
- * authority.resolve(...)} and requires the resolved revision's authoritative fingerprint to equal
- * {@code modelFingerprint}. A generated-but-never-accepted, or accepted-but-mismatched, revision
- * is therefore rejected rather than silently attributed to the evaluation; an unaccepted candidate
- * must be passed as {@code Optional.empty()} and remains revisionless.
+ * <p><b>Provenance binding.</b> The G4 assertion state {@code T} is arbitrary domain state, not
+ * necessarily a {@code SemanticArtifact}'s canonical bytes, so no existing G1 authority can
+ * recompute a fingerprint from it generically the way {@code ChangeSetFactory} recomputes one from
+ * {@code SemanticArtifact} canonical bytes via {@code SemanticArtifactVerifier}. Instead, {@link
+ * #evaluate} requires the caller to supply {@code stateFingerprint}: a domain-owned {@link
+ * Function} that independently derives the {@link ModelFingerprint} of a given {@code T} (e.g.
+ * {@code ChangeSet::candidateFingerprint}, or another domain adapter analogous to {@code
+ * SemanticArtifactVerifier}) rather than trusting a caller-asserted, unrelated fingerprint
+ * parameter. When {@code authoritativeState} is present, {@link #evaluate} applies {@code
+ * stateFingerprint} to it and requires the result to equal {@code modelFingerprint} -- exactly
+ * mirroring the {@code ChangeSetFactory#fromCandidateSnapshot} precedent of verifying a candidate's
+ * declared fingerprint against an independent recomputation before trusting it -- so a caller can
+ * no longer pass unrelated state under an unrelated-but-otherwise-valid fingerprint.
+ *
+ * <p>G4 also verifies, with the existing G1 {@link ControlledRevisionAuthority}, the one binding it
+ * already establishes: when a {@link ControlledRevisionId} is supplied, {@link #evaluate} resolves
+ * it through {@code authority.resolve(...)} and requires the resolved revision's authoritative
+ * fingerprint to equal {@code modelFingerprint}. A generated-but-never-accepted, or
+ * accepted-but-mismatched, revision is therefore rejected rather than silently attributed to the
+ * evaluation; an unaccepted candidate must be passed as {@code Optional.empty()} and remains
+ * revisionless.
  */
 public final class ConformanceEvaluator {
 
@@ -63,6 +73,11 @@ public final class ConformanceEvaluator {
      *     Optional#empty()} means "evaluate unconditionally" (no applicability filtering)
      * @param authoritativeState the candidate's authoritative state for {@code T}, when available
      * @param modelFingerprint the fingerprint of the state being evaluated
+     * @param stateFingerprint a domain-owned function that independently derives the {@link
+     *     ModelFingerprint} of a given {@code T} (e.g. {@code ChangeSet::candidateFingerprint}),
+     *     used to verify -- when {@code authoritativeState} is present -- that it actually is the
+     *     artifact identified by {@code modelFingerprint}, rather than trusting the two as
+     *     unrelated caller-supplied values
      * @param controlledRevisionId the accepted controlled revision, when the candidate has been
      *     persisted through the G1.3 authority boundary; empty for an unpersisted candidate
      * @param authority the G1 {@link ControlledRevisionAuthority} used to verify, when {@code
@@ -72,7 +87,9 @@ public final class ConformanceEvaluator {
      * @throws com.arcogine.governance.GovernanceHistoryException if {@code controlledRevisionId}
      *     is present but was never accepted by {@code authority}
      * @throws IllegalArgumentException if {@code controlledRevisionId} is present but resolves to
-     *     a fingerprint other than {@code modelFingerprint}
+     *     a fingerprint other than {@code modelFingerprint}, or if {@code authoritativeState} is
+     *     present but {@code stateFingerprint} derives a fingerprint other than {@code
+     *     modelFingerprint} from it
      */
     public static <T> ConformanceEvaluation evaluate(
             Requirement requirement,
@@ -80,6 +97,7 @@ public final class ConformanceEvaluator {
             Optional<ImpactScope> impactScope,
             Optional<T> authoritativeState,
             ModelFingerprint modelFingerprint,
+            Function<T, ModelFingerprint> stateFingerprint,
             Optional<ControlledRevisionId> controlledRevisionId,
             ControlledRevisionAuthority authority) {
         Objects.requireNonNull(requirement, "requirement");
@@ -87,9 +105,11 @@ public final class ConformanceEvaluator {
         Objects.requireNonNull(impactScope, "impactScope");
         Objects.requireNonNull(authoritativeState, "authoritativeState");
         Objects.requireNonNull(modelFingerprint, "modelFingerprint");
+        Objects.requireNonNull(stateFingerprint, "stateFingerprint");
         Objects.requireNonNull(controlledRevisionId, "controlledRevisionId");
         Objects.requireNonNull(authority, "authority");
         requireMatchingAssertion(requirement, assertion);
+        requireVerifiedStateBinding(authoritativeState, modelFingerprint, stateFingerprint);
 
         ControlledRevisionId revisionId =
                 requireAuthoritativeBinding(controlledRevisionId, modelFingerprint, authority);
@@ -129,6 +149,32 @@ public final class ConformanceEvaluator {
                         affectedEntities(requirement, impactScope),
                         outcome.explanation());
         return result(requirement, assertion, modelFingerprint, revisionId, ConformanceResult.FAIL, finding);
+    }
+
+    /**
+     * Verifies, when {@code authoritativeState} is present, that {@code stateFingerprint} derives
+     * {@code modelFingerprint} from it -- i.e. that the state actually being evaluated is the
+     * artifact the caller claims it is, rather than an unrelated object attributed to a valid but
+     * unconnected fingerprint. Mirrors {@code ChangeSetFactory#fromCandidateSnapshot}'s
+     * declared-vs-recomputed fingerprint verification, generalized to arbitrary {@code T} through a
+     * caller-supplied domain adapter instead of {@code SemanticArtifactVerifier}'s canonical-bytes
+     * recomputation.
+     */
+    private static <T> void requireVerifiedStateBinding(
+            Optional<T> authoritativeState,
+            ModelFingerprint modelFingerprint,
+            Function<T, ModelFingerprint> stateFingerprint) {
+        if (authoritativeState.isEmpty()) {
+            return;
+        }
+        ModelFingerprint derived = stateFingerprint.apply(authoritativeState.get());
+        if (!modelFingerprint.equals(derived)) {
+            throw new IllegalArgumentException(
+                    "authoritativeState is bound to fingerprint "
+                            + derived
+                            + ", not the evaluated fingerprint "
+                            + modelFingerprint);
+        }
     }
 
     /**

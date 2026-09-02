@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -48,6 +49,15 @@ class ConformanceEvaluatorTest {
             new ModelFingerprint("test-domain", "v1", "sha-256", "deadbeef");
     private static final ModelFingerprint OTHER_FINGERPRINT =
             new ModelFingerprint("test-domain", "v1", "sha-256", "c0ffee");
+
+    /**
+     * The G4 provenance-binding seam ({@code stateFingerprint}) exercised with a domain adapter
+     * that independently derives {@code FINGERPRINT} from a {@code DeclaredResource} -- standing in
+     * for a real domain fingerprinter (e.g. {@code ChangeSet::candidateFingerprint}) the way this
+     * test suite's other real-G2/G3 objects stand in for a full deployment.
+     */
+    private static final Function<DeclaredResource, ModelFingerprint> RESOURCE_FINGERPRINT =
+            resource -> FINGERPRINT;
 
     private static final RequirementId REQUIREMENT_ID =
             new RequirementId("arc.test.declared-capacity-must-be-positive");
@@ -123,6 +133,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(satisfying),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         authority);
 
@@ -136,6 +147,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(satisfying),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         authority);
         assertEquals(evaluation, repeated);
@@ -153,6 +165,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(new DeclaredResource("press-1", 12.5)),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -173,6 +186,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(violating),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -184,6 +198,55 @@ class ConformanceEvaluatorTest {
         assertEquals(ASSERTION_VERSION, finding.assertionVersion());
         assertEquals(FINGERPRINT, finding.modelFingerprint());
         assertTrue(finding.explanation().contains("tank-1"));
+    }
+
+    @Test
+    void stateNotBoundToTheDeclaredFingerprintCannotBeAttributedToAnEvaluation() {
+        // REV-001: modelFingerprint and authoritativeState must be verified as describing the same
+        // artifact, not merely two independent caller-supplied values. A state whose independently
+        // derived fingerprint disagrees with the declared modelFingerprint must be rejected before
+        // any PASS/FAIL/Finding can be attributed to that fingerprint.
+        Requirement requirement = structuralRequirement(RequirementScope.empty());
+        Assertion<DeclaredResource> assertion = structuralAssertion();
+        Function<DeclaredResource, ModelFingerprint> unrelatedFingerprint = resource -> OTHER_FINGERPRINT;
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        ConformanceEvaluator.evaluate(
+                                requirement,
+                                assertion,
+                                Optional.empty(),
+                                Optional.of(new DeclaredResource("tank-1", -1)),
+                                FINGERPRINT,
+                                unrelatedFingerprint,
+                                Optional.empty(),
+                                new InMemoryControlledRevisionAuthority()));
+    }
+
+    @Test
+    void anUnsuppliedStateNeverInvokesTheFingerprintBindingCheck() {
+        // No authoritativeState means nothing was actually evaluated against modelFingerprint --
+        // the UNKNOWN path -- so a fingerprinter that would reject any state must never even run.
+        Requirement requirement = structuralRequirement(RequirementScope.empty());
+        Assertion<DeclaredResource> assertion = structuralAssertion();
+        Function<DeclaredResource, ModelFingerprint> explodingFingerprint =
+                resource -> {
+                    throw new AssertionError("must not be invoked when authoritativeState is empty");
+                };
+
+        ConformanceEvaluation evaluation =
+                ConformanceEvaluator.evaluate(
+                        requirement,
+                        assertion,
+                        Optional.empty(),
+                        Optional.empty(),
+                        FINGERPRINT,
+                        explodingFingerprint,
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
+
+        assertEquals(ConformanceResult.UNKNOWN, evaluation.result());
     }
 
     @Test
@@ -199,6 +262,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(new DeclaredResource("tank-1", -1)),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -228,6 +292,7 @@ class ConformanceEvaluatorTest {
                         Optional.of(partialImpact),
                         Optional.of(new DeclaredResource("tank-1", -1)),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -257,6 +322,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.empty(),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -279,6 +345,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.empty(),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -305,6 +372,7 @@ class ConformanceEvaluatorTest {
                         Optional.of(unrelatedImpact),
                         Optional.of(new DeclaredResource("press-1", -1)),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -334,6 +402,7 @@ class ConformanceEvaluatorTest {
                         Optional.of(impact),
                         Optional.of(new DeclaredResource("press-1", -1)),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -353,6 +422,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(new DeclaredResource("tank-1", -1)),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
 
@@ -375,6 +445,7 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(new DeclaredResource("tank-1", -1)),
                         FINGERPRINT,
+                        RESOURCE_FINGERPRINT,
                         Optional.of(revisionId),
                         authority);
 
@@ -399,6 +470,7 @@ class ConformanceEvaluatorTest {
                                 Optional.empty(),
                                 Optional.of(new DeclaredResource("tank-1", -1)),
                                 FINGERPRINT,
+                                RESOURCE_FINGERPRINT,
                                 Optional.of(neverAccepted),
                                 authority));
     }
@@ -420,6 +492,7 @@ class ConformanceEvaluatorTest {
                                 Optional.empty(),
                                 Optional.of(new DeclaredResource("tank-1", -1)),
                                 FINGERPRINT,
+                                RESOURCE_FINGERPRINT,
                                 Optional.of(mismatchedRevision),
                                 authority));
     }
@@ -449,6 +522,7 @@ class ConformanceEvaluatorTest {
                                 Optional.empty(),
                                 Optional.of(new DeclaredResource("press-1", 12.5)),
                                 FINGERPRINT,
+                                RESOURCE_FINGERPRINT,
                                 Optional.empty(),
                                 new InMemoryControlledRevisionAuthority()));
     }

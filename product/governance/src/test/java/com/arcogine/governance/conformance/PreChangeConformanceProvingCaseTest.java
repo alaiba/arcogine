@@ -75,8 +75,10 @@ class PreChangeConformanceProvingCaseTest {
     void preChangeCandidateIsEvaluatedAgainstRequirementsAffectedByItsRealImpactScope() {
         FileControlledRevisionAuthority authority =
                 new FileControlledRevisionAuthority(tempDirectory, FACTORY_VERIFIER);
-        ControlledRevision base = accept(authority, model(List.of(1)), List.of());
-        ControlledRevision candidate = accept(authority, model(List.of(1, 2)), List.of(base.id()));
+        FactoryModelVersion baseModel = model(List.of(1));
+        FactoryModelVersion candidateModel = model(List.of(1, 2));
+        ControlledRevision base = accept(authority, baseModel, List.of());
+        ControlledRevision candidate = accept(authority, candidateModel, List.of(base.id()));
 
         ChangeSet changeSet =
                 ChangeSetFactory.fromAuthoritativeRevisions(
@@ -110,28 +112,39 @@ class PreChangeConformanceProvingCaseTest {
         List<Requirement> affected = catalogue.potentiallyAffectedBy(changeSet.impactScope());
         assertEquals(List.of(affectedRequirement), affected);
 
-        Assertion<ChangeSet> mustCiteAReviewer =
+        // The assertion subject is the actual candidate semantic model state, not the ChangeSet:
+        // ChangeSet is used above only to drive requirement selection through its ImpactScope. The
+        // binding function is FactoryModelVersion::fingerprint, which recomputes the fingerprint
+        // from the model's own canonical content (FactoryModelFingerprintV1.fingerprint(model)) on
+        // every call -- a non-trivial, content-derived derivation, not a constant or a pass-through
+        // accessor unrelated to the subject's own content. changeSet.candidateFingerprint() is used
+        // only as the expected value being verified against, which is legitimate: it is the
+        // ChangeSet's own recorded candidate fingerprint, compared against the real subject's
+        // independently derived fingerprint, not used as the binding function itself.
+        Assertion<FactoryModelVersion> newMachinesMustBeReviewed =
                 new Assertion<>(
                         new AssertionId("arc.test.new-machines-must-be-reviewed.rule"),
                         new AssertionVersion(1),
                         requirementId,
                         requirementVersion,
-                        "ChangeSet provenance must name a reviewer/source",
+                        "candidate model must declare the reviewed machine",
                         EvidenceRequirement.MODEL_STATE_SUFFICIENT,
-                        candidateChangeSet ->
-                                !candidateChangeSet.provenance().source().isBlank()
+                        candidateModelState ->
+                                candidateModelState.model().resources().stream()
+                                                .anyMatch(resource -> resource.id().equals(new MachineId(2)))
                                         ? StructuralAssertionOutcome.satisfied(
-                                                "provenance source: " + candidateChangeSet.provenance().source())
-                                        : StructuralAssertionOutcome.violated("no provenance source recorded"));
+                                                "candidate model declares machine 2")
+                                        : StructuralAssertionOutcome.violated(
+                                                "candidate model does not declare machine 2"));
 
         ConformanceEvaluation evaluation =
                 ConformanceEvaluator.evaluate(
                         affectedRequirement,
-                        mustCiteAReviewer,
+                        newMachinesMustBeReviewed,
                         Optional.of(changeSet.impactScope()),
-                        Optional.of(changeSet),
+                        Optional.of(candidateModel),
                         changeSet.candidateFingerprint(),
-                        ChangeSet::candidateFingerprint,
+                        FactoryModelVersion::fingerprint,
                         changeSet.resultingRevisionIdOptional(),
                         authority);
 

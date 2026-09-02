@@ -43,10 +43,16 @@ import java.util.function.Function;
  * recompute a fingerprint from it generically the way {@code ChangeSetFactory} recomputes one from
  * {@code SemanticArtifact} canonical bytes via {@code SemanticArtifactVerifier}. Instead, {@link
  * #evaluate} requires the caller to supply {@code stateFingerprint}: a domain-owned {@link
- * Function} that independently derives the {@link ModelFingerprint} of a given {@code T} (e.g.
- * {@code ChangeSet::candidateFingerprint}, or another domain adapter analogous to {@code
+ * Function} that independently derives the {@link ModelFingerprint} of a given {@code T} from its
+ * own content (e.g. {@code FactoryModelVersion::fingerprint}, which recomputes a fingerprint from
+ * the model's canonical bytes on every call, or another domain adapter analogous to {@code
  * SemanticArtifactVerifier}) rather than trusting a caller-asserted, unrelated fingerprint
- * parameter. When {@code authoritativeState} is present, {@link #evaluate} applies {@code
+ * parameter. {@code ChangeSet::candidateFingerprint} is not a valid {@code stateFingerprint}
+ * adapter: it is a pass-through accessor of the {@code ChangeSet}'s own recorded value, not a
+ * derivation from the evaluated subject's content, and {@code ChangeSet} itself drives
+ * requirement/assertion *selection* through its {@code ImpactScope} rather than being the
+ * semantic subject an assertion evaluates. When {@code authoritativeState} is present, {@link
+ * #evaluate} applies {@code
  * stateFingerprint} to it and requires the result to equal {@code modelFingerprint} -- exactly
  * mirroring the {@code ChangeSetFactory#fromCandidateSnapshot} precedent of verifying a candidate's
  * declared fingerprint against an independent recomputation before trusting it -- so a caller can

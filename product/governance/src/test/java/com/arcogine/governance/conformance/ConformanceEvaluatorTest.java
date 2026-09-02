@@ -45,19 +45,46 @@ class ConformanceEvaluatorTest {
 
     private record DeclaredResource(String id, double capacityLiters) {}
 
-    private static final ModelFingerprint FINGERPRINT =
-            new ModelFingerprint("test-domain", "v1", "sha-256", "deadbeef");
-    private static final ModelFingerprint OTHER_FINGERPRINT =
-            new ModelFingerprint("test-domain", "v1", "sha-256", "c0ffee");
-
     /**
      * The G4 provenance-binding seam ({@code stateFingerprint}) exercised with a domain adapter
-     * that independently derives {@code FINGERPRINT} from a {@code DeclaredResource} -- standing in
-     * for a real domain fingerprinter (e.g. {@code ChangeSet::candidateFingerprint}) the way this
-     * test suite's other real-G2/G3 objects stand in for a full deployment.
+     * that <b>actually derives</b> a {@link ModelFingerprint} from a {@code DeclaredResource}'s own
+     * content (a SHA-256 digest of its id and capacity), never a constant -- standing in for a real
+     * domain fingerprinter (e.g. {@code FactoryModelVersion::fingerprint}) the way this test suite's
+     * other real-G2/G3 objects stand in for a full deployment. Because the derivation is genuinely
+     * content-dependent, two {@code DeclaredResource} values with different content never collide on
+     * the same fingerprint, so tests below can no longer pass regardless of which state is supplied.
      */
     private static final Function<DeclaredResource, ModelFingerprint> RESOURCE_FINGERPRINT =
-            resource -> FINGERPRINT;
+            ConformanceEvaluatorTest::fingerprintOf;
+
+    private static ModelFingerprint fingerprintOf(DeclaredResource resource) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash =
+                    digest.digest(
+                            (resource.id() + "|" + resource.capacityLiters())
+                                    .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return new ModelFingerprint("test-domain", "v1", "sha-256", hex.toString());
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    // Content-derived fingerprints for the specific DeclaredResource values the tests below supply
+    // as authoritativeState. FINGERPRINT corresponds to DeclaredResource("tank-1", -1), reused by
+    // every test that evaluates that exact resource; PASS_FINGERPRINT and NOT_APPLICABLE_FINGERPRINT
+    // correspond to the other distinct resource contents used below.
+    private static final ModelFingerprint FINGERPRINT = fingerprintOf(new DeclaredResource("tank-1", -1));
+    private static final ModelFingerprint PASS_FINGERPRINT =
+            fingerprintOf(new DeclaredResource("press-1", 12.5));
+    private static final ModelFingerprint NOT_APPLICABLE_FINGERPRINT =
+            fingerprintOf(new DeclaredResource("press-1", -1));
+    private static final ModelFingerprint OTHER_FINGERPRINT =
+            new ModelFingerprint("test-domain", "v1", "sha-256", "c0ffee");
 
     private static final RequirementId REQUIREMENT_ID =
             new RequirementId("arc.test.declared-capacity-must-be-positive");
@@ -132,7 +159,7 @@ class ConformanceEvaluatorTest {
                         assertion,
                         Optional.empty(),
                         Optional.of(satisfying),
-                        FINGERPRINT,
+                        PASS_FINGERPRINT,
                         RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         authority);
@@ -146,7 +173,7 @@ class ConformanceEvaluatorTest {
                         assertion,
                         Optional.empty(),
                         Optional.of(satisfying),
-                        FINGERPRINT,
+                        PASS_FINGERPRINT,
                         RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         authority);
@@ -164,7 +191,7 @@ class ConformanceEvaluatorTest {
                         assertion,
                         Optional.empty(),
                         Optional.of(new DeclaredResource("press-1", 12.5)),
-                        FINGERPRINT,
+                        PASS_FINGERPRINT,
                         RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
@@ -371,7 +398,7 @@ class ConformanceEvaluatorTest {
                         assertion,
                         Optional.of(unrelatedImpact),
                         Optional.of(new DeclaredResource("press-1", -1)),
-                        FINGERPRINT,
+                        NOT_APPLICABLE_FINGERPRINT,
                         RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());
@@ -401,7 +428,7 @@ class ConformanceEvaluatorTest {
                         assertion,
                         Optional.of(impact),
                         Optional.of(new DeclaredResource("press-1", -1)),
-                        FINGERPRINT,
+                        NOT_APPLICABLE_FINGERPRINT,
                         RESOURCE_FINGERPRINT,
                         Optional.empty(),
                         new InMemoryControlledRevisionAuthority());

@@ -3,8 +3,16 @@ package com.arcogine.governance.conformance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.arcogine.governance.ControlledRevision;
+import com.arcogine.governance.ControlledRevisionAuthority;
+import com.arcogine.governance.GovernanceHistoryException;
+import com.arcogine.governance.HistoricalRevision;
+import com.arcogine.governance.RevisionProvenance;
+import com.arcogine.governance.RevisionRecorder;
+import com.arcogine.governance.SemanticArtifact;
 import com.arcogine.governance.assertion.Assertion;
 import com.arcogine.governance.assertion.AssertionId;
 import com.arcogine.governance.assertion.AssertionVersion;
@@ -21,7 +29,10 @@ import com.arcogine.governance.requirement.RequirementScope;
 import com.arcogine.governance.requirement.RequirementVersion;
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.ModelFingerprint;
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +46,8 @@ class ConformanceEvaluatorTest {
 
     private static final ModelFingerprint FINGERPRINT =
             new ModelFingerprint("test-domain", "v1", "sha-256", "deadbeef");
+    private static final ModelFingerprint OTHER_FINGERPRINT =
+            new ModelFingerprint("test-domain", "v1", "sha-256", "c0ffee");
 
     private static final RequirementId REQUIREMENT_ID =
             new RequirementId("arc.test.declared-capacity-must-be-positive");
@@ -43,11 +56,65 @@ class ConformanceEvaluatorTest {
             new AssertionId("arc.test.declared-capacity-must-be-positive.rule");
     private static final AssertionVersion ASSERTION_VERSION = new AssertionVersion(1);
 
+    /**
+     * Minimal in-memory {@link ControlledRevisionAuthority} test double, used only to exercise the
+     * real G1 authoritative-binding contract ({@code resolve} throwing for anything never {@code
+     * accept}-ed) without depending on the filesystem-backed {@code FileControlledRevisionAuthority}.
+     */
+    private static final class InMemoryControlledRevisionAuthority implements ControlledRevisionAuthority {
+        private final Map<ControlledRevisionId, HistoricalRevision> accepted = new LinkedHashMap<>();
+
+        @Override
+        public ControlledRevision accept(ControlledRevision candidate, SemanticArtifact artifact) {
+            ControlledRevision recorded =
+                    new ControlledRevision(
+                            candidate.id(),
+                            candidate.modelFingerprint(),
+                            candidate.parentRevisionIds(),
+                            new RevisionProvenance(Instant.EPOCH, candidate.provenance().recorder()));
+            accepted.put(recorded.id(), new HistoricalRevision(recorded, artifact));
+            return recorded;
+        }
+
+        @Override
+        public Optional<ControlledRevision> findById(ControlledRevisionId id) {
+            return Optional.ofNullable(accepted.get(id)).map(HistoricalRevision::revision);
+        }
+
+        @Override
+        public HistoricalRevision resolve(ControlledRevisionId id) {
+            HistoricalRevision resolved = accepted.get(id);
+            if (resolved == null) {
+                throw new GovernanceHistoryException(
+                        GovernanceHistoryException.Code.MISSING_REVISION,
+                        "controlled revision does not exist: " + id);
+            }
+            return resolved;
+        }
+
+        @Override
+        public List<ControlledRevision> revisions() {
+            return accepted.values().stream().map(HistoricalRevision::revision).toList();
+        }
+
+        ControlledRevisionId acceptFor(ModelFingerprint fingerprint) {
+            ControlledRevisionId id = ControlledRevisionId.generate();
+            ControlledRevision candidate =
+                    new ControlledRevision(
+                            id, fingerprint, List.of(), new RevisionProvenance(Instant.EPOCH, RECORDER));
+            accept(candidate, new SemanticArtifact(fingerprint, new byte[] {1, 2, 3}));
+            return id;
+        }
+    }
+
+    private static final RevisionRecorder RECORDER = new RevisionRecorder("test", "operator");
+
     @Test
     void deterministicPassYieldsPassResult() {
         Requirement requirement = structuralRequirement(RequirementScope.empty());
         Assertion<DeclaredResource> assertion = structuralAssertion();
         DeclaredResource satisfying = new DeclaredResource("press-1", 12.5);
+        ControlledRevisionAuthority authority = new InMemoryControlledRevisionAuthority();
 
         ConformanceEvaluation evaluation =
                 ConformanceEvaluator.evaluate(
@@ -56,7 +123,8 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(satisfying),
                         FINGERPRINT,
-                        Optional.empty());
+                        Optional.empty(),
+                        authority);
 
         assertEquals(ConformanceResult.PASS, evaluation.result());
         // Re-evaluating the same inputs again must produce an equal result -- no hidden clock,
@@ -68,7 +136,8 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(satisfying),
                         FINGERPRINT,
-                        Optional.empty());
+                        Optional.empty(),
+                        authority);
         assertEquals(evaluation, repeated);
     }
 
@@ -84,7 +153,8 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(new DeclaredResource("press-1", 12.5)),
                         FINGERPRINT,
-                        Optional.empty());
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
 
         assertEquals(ConformanceResult.PASS, evaluation.result());
         assertTrue(evaluation.findingOptional().isEmpty());
@@ -103,7 +173,8 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(violating),
                         FINGERPRINT,
-                        Optional.empty());
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
 
         assertEquals(ConformanceResult.FAIL, evaluation.result());
         Finding finding = evaluation.findingOptional().orElseThrow();
@@ -113,6 +184,57 @@ class ConformanceEvaluatorTest {
         assertEquals(ASSERTION_VERSION, finding.assertionVersion());
         assertEquals(FINGERPRINT, finding.modelFingerprint());
         assertTrue(finding.explanation().contains("tank-1"));
+    }
+
+    @Test
+    void failWithNoImpactScopeAttributesTheFullRequirementScopeAsAffected() {
+        ChangedEntityRef entity = new ChangedEntityRef("factory.resource", "tank-1", "");
+        Requirement requirement = structuralRequirement(RequirementScope.of(entity));
+        Assertion<DeclaredResource> assertion = structuralAssertion();
+
+        ConformanceEvaluation evaluation =
+                ConformanceEvaluator.evaluate(
+                        requirement,
+                        assertion,
+                        Optional.empty(),
+                        Optional.of(new DeclaredResource("tank-1", -1)),
+                        FINGERPRINT,
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
+
+        Finding finding = evaluation.findingOptional().orElseThrow();
+        assertEquals(List.of(entity), finding.affectedEntities());
+    }
+
+    @Test
+    void failWithPartialImpactScopeAttributesOnlyTheIntersectingEntities() {
+        ChangedEntityRef impacted = new ChangedEntityRef("factory.resource", "tank-1", "");
+        ChangedEntityRef notImpacted = new ChangedEntityRef("factory.resource", "tank-2", "");
+        Requirement requirement =
+                structuralRequirement(RequirementScope.of(impacted, notImpacted));
+        // A structural rule over the whole multi-entity requirement; only tank-1 is asserted here,
+        // but the requirement scope covers both -- the impact scope is what narrows attribution.
+        Assertion<DeclaredResource> assertion = structuralAssertion();
+        ImpactScope partialImpact =
+                ImpactScope.of(
+                        List.of(
+                                new SemanticChange(
+                                        SemanticChangeKind.ENTITY_MODIFIED, impacted, "capacity lowered")));
+
+        ConformanceEvaluation evaluation =
+                ConformanceEvaluator.evaluate(
+                        requirement,
+                        assertion,
+                        Optional.of(partialImpact),
+                        Optional.of(new DeclaredResource("tank-1", -1)),
+                        FINGERPRINT,
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
+
+        assertEquals(ConformanceResult.FAIL, evaluation.result());
+        Finding finding = evaluation.findingOptional().orElseThrow();
+        assertEquals(List.of(impacted), finding.affectedEntities());
+        assertFalse(finding.affectedEntities().contains(notImpacted));
     }
 
     @Test
@@ -135,7 +257,8 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.empty(),
                         FINGERPRINT,
-                        Optional.empty());
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
 
         assertEquals(ConformanceResult.UNKNOWN, evaluation.result());
         assertNotEquals(ConformanceResult.FAIL, evaluation.result());
@@ -151,7 +274,13 @@ class ConformanceEvaluatorTest {
         // MODEL_STATE_SUFFICIENT, but no authoritative state was supplied to decide it with.
         ConformanceEvaluation evaluation =
                 ConformanceEvaluator.evaluate(
-                        requirement, assertion, Optional.empty(), Optional.empty(), FINGERPRINT, Optional.empty());
+                        requirement,
+                        assertion,
+                        Optional.empty(),
+                        Optional.empty(),
+                        FINGERPRINT,
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
 
         assertEquals(ConformanceResult.UNKNOWN, evaluation.result());
         assertTrue(evaluation.findingOptional().isEmpty());
@@ -176,13 +305,40 @@ class ConformanceEvaluatorTest {
                         Optional.of(unrelatedImpact),
                         Optional.of(new DeclaredResource("press-1", -1)),
                         FINGERPRINT,
-                        Optional.empty());
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
 
         assertEquals(ConformanceResult.NOT_APPLICABLE, evaluation.result());
         assertTrue(evaluation.findingOptional().isEmpty());
         assertNotEquals(ConformanceResult.PASS, evaluation.result());
         assertNotEquals(ConformanceResult.FAIL, evaluation.result());
         assertNotEquals(ConformanceResult.UNKNOWN, evaluation.result());
+    }
+
+    @Test
+    void emptyRequirementScopeIsNeverApplicableWhenAnImpactScopeIsSupplied() {
+        // G3's invariant: an empty scope never matches any impact (RequirementScopeTest
+        // .emptyScopeIsEmptyAndNeverIntersects). A supplied ImpactScope must preserve that exactly.
+        ChangedEntityRef changed = new ChangedEntityRef("factory.resource", "press-1", "");
+        Requirement requirement = structuralRequirement(RequirementScope.empty());
+        Assertion<DeclaredResource> assertion = structuralAssertion();
+        ImpactScope impact =
+                ImpactScope.of(
+                        List.of(
+                                new SemanticChange(SemanticChangeKind.ENTITY_MODIFIED, changed, "changed")));
+
+        ConformanceEvaluation evaluation =
+                ConformanceEvaluator.evaluate(
+                        requirement,
+                        assertion,
+                        Optional.of(impact),
+                        Optional.of(new DeclaredResource("press-1", -1)),
+                        FINGERPRINT,
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
+
+        assertEquals(ConformanceResult.NOT_APPLICABLE, evaluation.result());
+        assertTrue(evaluation.findingOptional().isEmpty());
     }
 
     @Test
@@ -197,7 +353,8 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(new DeclaredResource("tank-1", -1)),
                         FINGERPRINT,
-                        Optional.empty());
+                        Optional.empty(),
+                        new InMemoryControlledRevisionAuthority());
 
         assertTrue(evaluation.controlledRevisionIdOptional().isEmpty());
         Finding finding = evaluation.findingOptional().orElseThrow();
@@ -205,10 +362,11 @@ class ConformanceEvaluatorTest {
     }
 
     @Test
-    void controlledRevisionIsCarriedThroughUnchangedWhenSupplied() {
+    void controlledRevisionIsCarriedThroughWhenAuthoritativelyBoundToTheEvaluatedFingerprint() {
         Requirement requirement = structuralRequirement(RequirementScope.empty());
         Assertion<DeclaredResource> assertion = structuralAssertion();
-        ControlledRevisionId revisionId = ControlledRevisionId.generate();
+        InMemoryControlledRevisionAuthority authority = new InMemoryControlledRevisionAuthority();
+        ControlledRevisionId revisionId = authority.acceptFor(FINGERPRINT);
 
         ConformanceEvaluation evaluation =
                 ConformanceEvaluator.evaluate(
@@ -217,11 +375,53 @@ class ConformanceEvaluatorTest {
                         Optional.empty(),
                         Optional.of(new DeclaredResource("tank-1", -1)),
                         FINGERPRINT,
-                        Optional.of(revisionId));
+                        Optional.of(revisionId),
+                        authority);
 
         assertEquals(revisionId, evaluation.controlledRevisionIdOptional().orElseThrow());
         Finding finding = evaluation.findingOptional().orElseThrow();
         assertEquals(revisionId, finding.controlledRevisionIdOptional().orElseThrow());
+    }
+
+    @Test
+    void generatedButNeverAcceptedRevisionCannotBeAttributedToAnEvaluation() {
+        Requirement requirement = structuralRequirement(RequirementScope.empty());
+        Assertion<DeclaredResource> assertion = structuralAssertion();
+        ControlledRevisionId neverAccepted = ControlledRevisionId.generate();
+        ControlledRevisionAuthority authority = new InMemoryControlledRevisionAuthority();
+
+        assertThrows(
+                GovernanceHistoryException.class,
+                () ->
+                        ConformanceEvaluator.evaluate(
+                                requirement,
+                                assertion,
+                                Optional.empty(),
+                                Optional.of(new DeclaredResource("tank-1", -1)),
+                                FINGERPRINT,
+                                Optional.of(neverAccepted),
+                                authority));
+    }
+
+    @Test
+    void revisionAuthoritativelyBoundToADifferentFingerprintCannotBeAttributedToAnEvaluation() {
+        Requirement requirement = structuralRequirement(RequirementScope.empty());
+        Assertion<DeclaredResource> assertion = structuralAssertion();
+        InMemoryControlledRevisionAuthority authority = new InMemoryControlledRevisionAuthority();
+        // Accepted for a different fingerprint than the one this evaluation claims to evaluate.
+        ControlledRevisionId mismatchedRevision = authority.acceptFor(OTHER_FINGERPRINT);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        ConformanceEvaluator.evaluate(
+                                requirement,
+                                assertion,
+                                Optional.empty(),
+                                Optional.of(new DeclaredResource("tank-1", -1)),
+                                FINGERPRINT,
+                                Optional.of(mismatchedRevision),
+                                authority));
     }
 
     @Test
@@ -240,7 +440,7 @@ class ConformanceEvaluatorTest {
         assertFalse(
                 requirement.id().equals(mismatched.requirementId())
                         && requirement.version().equals(mismatched.requirementVersion()));
-        org.junit.jupiter.api.Assertions.assertThrows(
+        assertThrows(
                 IllegalArgumentException.class,
                 () ->
                         ConformanceEvaluator.evaluate(
@@ -249,7 +449,8 @@ class ConformanceEvaluatorTest {
                                 Optional.empty(),
                                 Optional.of(new DeclaredResource("press-1", 12.5)),
                                 FINGERPRINT,
-                                Optional.empty()));
+                                Optional.empty(),
+                                new InMemoryControlledRevisionAuthority()));
     }
 
     private static Requirement structuralRequirement(RequirementScope scope) {

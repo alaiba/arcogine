@@ -1,14 +1,21 @@
 package com.arcogine.governance.conformance;
 
+import com.arcogine.governance.ControlledRevisionAuthority;
+import com.arcogine.governance.HistoricalRevision;
 import com.arcogine.governance.assertion.Assertion;
 import com.arcogine.governance.assertion.EvidenceRequirement;
 import com.arcogine.governance.assertion.StructuralAssertionOutcome;
+import com.arcogine.governance.change.ChangedEntityRef;
 import com.arcogine.governance.change.ImpactScope;
 import com.arcogine.governance.requirement.Requirement;
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.ModelFingerprint;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * The G4 conformance-evaluation engine: turns one G3 {@link Requirement}/{@link Assertion} pair
@@ -29,6 +36,19 @@ import java.util.Optional;
  * fingerprint is evaluated exactly like an accepted one, only without a {@link
  * ControlledRevisionId} attached to the result, mirroring the {@code ChangeSet}/G1.3 precedent
  * that a {@link ControlledRevisionId} exists only for an actually-accepted revision.
+ *
+ * <p><b>Provenance binding.</b> {@code modelFingerprint} and {@code authoritativeState} remain
+ * independent caller-supplied values: the G4 assertion state {@code T} is arbitrary domain state,
+ * not necessarily a {@code SemanticArtifact}'s canonical bytes, so no existing G1 authority can
+ * recompute a fingerprint from it generically (unlike {@code ChangeSetFactory}, which can rely on
+ * {@code SemanticArtifactVerifier} exactly because a {@code SemanticArtifact} is always
+ * bytes-with-a-declared-fingerprint). What G4 <em>can</em> and does verify with an existing G1
+ * authority is the one binding {@link ControlledRevisionAuthority} already establishes: when a
+ * {@link ControlledRevisionId} is supplied, {@link #evaluate} resolves it through {@code
+ * authority.resolve(...)} and requires the resolved revision's authoritative fingerprint to equal
+ * {@code modelFingerprint}. A generated-but-never-accepted, or accepted-but-mismatched, revision
+ * is therefore rejected rather than silently attributed to the evaluation; an unaccepted candidate
+ * must be passed as {@code Optional.empty()} and remains revisionless.
  */
 public final class ConformanceEvaluator {
 
@@ -45,6 +65,14 @@ public final class ConformanceEvaluator {
      * @param modelFingerprint the fingerprint of the state being evaluated
      * @param controlledRevisionId the accepted controlled revision, when the candidate has been
      *     persisted through the G1.3 authority boundary; empty for an unpersisted candidate
+     * @param authority the G1 {@link ControlledRevisionAuthority} used to verify, when {@code
+     *     controlledRevisionId} is present, that it is an authoritative revision actually bound to
+     *     {@code modelFingerprint}; ignored (but still required, non-null) when {@code
+     *     controlledRevisionId} is empty
+     * @throws com.arcogine.governance.GovernanceHistoryException if {@code controlledRevisionId}
+     *     is present but was never accepted by {@code authority}
+     * @throws IllegalArgumentException if {@code controlledRevisionId} is present but resolves to
+     *     a fingerprint other than {@code modelFingerprint}
      */
     public static <T> ConformanceEvaluation evaluate(
             Requirement requirement,
@@ -52,20 +80,21 @@ public final class ConformanceEvaluator {
             Optional<ImpactScope> impactScope,
             Optional<T> authoritativeState,
             ModelFingerprint modelFingerprint,
-            Optional<ControlledRevisionId> controlledRevisionId) {
+            Optional<ControlledRevisionId> controlledRevisionId,
+            ControlledRevisionAuthority authority) {
         Objects.requireNonNull(requirement, "requirement");
         Objects.requireNonNull(assertion, "assertion");
         Objects.requireNonNull(impactScope, "impactScope");
         Objects.requireNonNull(authoritativeState, "authoritativeState");
         Objects.requireNonNull(modelFingerprint, "modelFingerprint");
         Objects.requireNonNull(controlledRevisionId, "controlledRevisionId");
+        Objects.requireNonNull(authority, "authority");
         requireMatchingAssertion(requirement, assertion);
 
-        ControlledRevisionId revisionId = controlledRevisionId.orElse(null);
+        ControlledRevisionId revisionId =
+                requireAuthoritativeBinding(controlledRevisionId, modelFingerprint, authority);
 
-        if (impactScope.isPresent()
-                && !requirement.scope().isEmpty()
-                && !requirement.scope().intersects(impactScope.get())) {
+        if (impactScope.isPresent() && !requirement.scope().intersects(impactScope.get())) {
             return result(
                     requirement, assertion, modelFingerprint, revisionId, ConformanceResult.NOT_APPLICABLE, null);
         }
@@ -97,9 +126,58 @@ public final class ConformanceEvaluator {
                         assertion.version(),
                         modelFingerprint,
                         revisionId,
-                        requirement.scope().entities(),
+                        affectedEntities(requirement, impactScope),
                         outcome.explanation());
         return result(requirement, assertion, modelFingerprint, revisionId, ConformanceResult.FAIL, finding);
+    }
+
+    /**
+     * Resolves and validates {@code controlledRevisionId} against the G1 {@link
+     * ControlledRevisionAuthority}, when present. An unaccepted or generated revision fails
+     * resolution; an accepted revision bound to a different fingerprint is rejected explicitly.
+     */
+    private static ControlledRevisionId requireAuthoritativeBinding(
+            Optional<ControlledRevisionId> controlledRevisionId,
+            ModelFingerprint modelFingerprint,
+            ControlledRevisionAuthority authority) {
+        if (controlledRevisionId.isEmpty()) {
+            return null;
+        }
+        ControlledRevisionId revisionId = controlledRevisionId.get();
+        HistoricalRevision resolved = authority.resolve(revisionId);
+        ModelFingerprint boundFingerprint = resolved.artifact().fingerprint();
+        if (!boundFingerprint.equals(modelFingerprint)) {
+            throw new IllegalArgumentException(
+                    "controlledRevisionId "
+                            + revisionId
+                            + " is authoritatively bound to fingerprint "
+                            + boundFingerprint
+                            + ", not the evaluated fingerprint "
+                            + modelFingerprint);
+        }
+        return revisionId;
+    }
+
+    /**
+     * The entities a {@link Finding} attributes as affected: the requirement's full scope when no
+     * {@link ImpactScope} was supplied (an explicit unconditional-evaluation mode), otherwise only
+     * the subset of the requirement's scope actually touched by the supplied {@link ImpactScope} --
+     * never the requirement's full scope when only part of it was impacted.
+     */
+    private static List<ChangedEntityRef> affectedEntities(
+            Requirement requirement, Optional<ImpactScope> impactScope) {
+        List<ChangedEntityRef> scopeEntities = requirement.scope().entities();
+        if (impactScope.isEmpty()) {
+            return scopeEntities;
+        }
+        Set<ChangedEntityRef> impacted = new LinkedHashSet<>(impactScope.get().affectedEntities());
+        List<ChangedEntityRef> intersection = new ArrayList<>();
+        for (ChangedEntityRef entity : scopeEntities) {
+            if (impacted.contains(entity)) {
+                intersection.add(entity);
+            }
+        }
+        return intersection;
     }
 
     private static <T> void requireMatchingAssertion(Requirement requirement, Assertion<T> assertion) {

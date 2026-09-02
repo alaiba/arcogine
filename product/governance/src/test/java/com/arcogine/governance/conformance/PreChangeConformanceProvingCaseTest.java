@@ -131,7 +131,8 @@ class PreChangeConformanceProvingCaseTest {
                         Optional.of(changeSet.impactScope()),
                         Optional.of(changeSet),
                         changeSet.candidateFingerprint(),
-                        changeSet.resultingRevisionIdOptional());
+                        changeSet.resultingRevisionIdOptional(),
+                        authority);
 
         assertEquals(ConformanceResult.PASS, evaluation.result());
         assertTrue(evaluation.findingOptional().isEmpty());

@@ -1,6 +1,6 @@
 # Governance and Conformance Capability Plan
 
-> **Status:** Proposed; G1 complete, G2 (initial slice) complete, G3 complete  
+> **Status:** Proposed; G1 complete, G2 (initial slice) complete, G3 complete, G4 (initial slice) complete  
 > **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
 > **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, while current-state G1 behavior is also recorded in the architectural overview and accepted ADRs  
 > **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Governance G1 Continuity Notes](governance-g1-continuity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
@@ -661,8 +661,12 @@ G4 is ready when:
    `.deterministicFailProducesFinding`.
 2. Findings identify affected entities and the failed assertion.
    **Satisfied:** `Finding` carries `requirementId`/`requirementVersion`, `assertionId`/
-   `assertionVersion`, and `affectedEntities`; proven by `ConformanceEvaluatorTest
-   .deterministicFailProducesFinding` and `PreChangeConformanceProvingCaseTest`.
+   `assertionVersion`, and `affectedEntities`, computed as the full requirement scope when no
+   `ImpactScope` is supplied and as the intersection of the requirement's scope with the supplied
+   `ImpactScope` otherwise; proven by `ConformanceEvaluatorTest
+   .failWithNoImpactScopeAttributesTheFullRequirementScopeAsAffected` and
+   `.failWithPartialImpactScopeAttributesOnlyTheIntersectingEntities` (a multi-entity requirement
+   scope with an `ImpactScope` covering only part of it).
 3. Results distinguish missing evidence from proven non-conformance.
    **Satisfied:** an `EXTERNAL_EVIDENCE_REQUIRED` assertion, and a `MODEL_STATE_SUFFICIENT`
    assertion evaluated with no supplied state, both yield `UNKNOWN` rather than `FAIL`; proven by
@@ -672,10 +676,14 @@ G4 is ready when:
    `PASS` never carries a `Finding`, proven by `.passProducesNoFinding`.
 4. Evaluation output is immutable or historically attributable.
    **Satisfied:** `ConformanceEvaluation`/`Finding` are immutable records; the optional
-   `ControlledRevisionId` is carried through unchanged when supplied and never fabricated when
-   absent, proven by `ConformanceEvaluatorTest
-   .controlledRevisionIsAbsentAndNeverSynthesizedForAnUnpersistedCandidate` and
-   `.controlledRevisionIsCarriedThroughUnchangedWhenSupplied`.
+   `ControlledRevisionId` is never fabricated when absent, and when supplied is resolved and
+   verified against the G1 `ControlledRevisionAuthority` as an authoritative binding to the
+   evaluated `ModelFingerprint` rather than accepted as an unverified caller assertion, proven by
+   `ConformanceEvaluatorTest
+   .controlledRevisionIsAbsentAndNeverSynthesizedForAnUnpersistedCandidate`,
+   `.controlledRevisionIsCarriedThroughWhenAuthoritativelyBoundToTheEvaluatedFingerprint`,
+   `.generatedButNeverAcceptedRevisionCannotBeAttributedToAnEvaluation`, and
+   `.revisionAuthoritativelyBoundToADifferentFingerprintCannotBeAttributedToAnEvaluation`.
 5. A proposed `ChangeSet` can be evaluated before authorization/deployment for at least one requirement.
    **Satisfied:** `PreChangeConformanceProvingCaseTest
    .preChangeCandidateIsEvaluatedAgainstRequirementsAffectedByItsRealImpactScope` builds a real

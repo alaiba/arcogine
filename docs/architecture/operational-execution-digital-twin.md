@@ -284,7 +284,7 @@ The invariant is:
 
 > **An external observation is not created as evidence for one context or revision. It is an operational fact with independent provenance; later Arcogine interpretations may bind it to an execution context/model, and Governance may reference it through an evidence-use relationship.**
 
-Governance G1 is complete and authoritative for durable semantic fingerprint policy, controlled revision identity/lineage, acceptance/persistence, and exact historical resolution. Governance G2's initial slice is complete and authoritative for semantic `ChangeSet`/`ImpactScope`/`SemanticChange` attribution. Later Governance gates own requirements/assertions, conformance, evidence use, findings, exceptions, governed-change interpretation, and audit projections.
+Governance G1 is complete and authoritative for durable semantic fingerprint policy, controlled revision identity/lineage, acceptance/persistence, and exact historical resolution. Governance G2's initial slice is complete and authoritative for semantic `ChangeSet`/`ImpactScope`/`SemanticChange` attribution. Governance G3 is complete and authoritative for the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract. Later Governance gates own conformance evaluation, evidence use, findings, exceptions, governed-change interpretation, and audit projections.
 
 Operational Execution references those contracts when they exist rather than introducing duplicate revision, ChangeSet, evidence-use, or finding types.
 

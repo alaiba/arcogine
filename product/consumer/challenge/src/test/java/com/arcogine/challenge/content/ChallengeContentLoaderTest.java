@@ -4,8 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import com.arcogine.challenge.ChallengeDefinition;
 import com.arcogine.challenge.EquipmentCatalogueItemId;
+import com.arcogine.challenge.admissibility.CandidateAdmissibilityPolicy;
+import com.arcogine.challenge.admissibility.CandidateAdmissibilityResult;
+import com.arcogine.challenge.admissibility.CandidateDraftSnapshot;
 import com.arcogine.challenge.validation.ChallengeDefinitionValidationResult;
 import com.arcogine.challenge.validation.ChallengeDefinitionValidator;
 import java.util.List;
@@ -489,5 +494,398 @@ class ChallengeContentLoaderTest {
 
         assertFalse(result.isSuccess());
         assertTrue(result.issues().stream().anyMatch(i -> i.code().startsWith("definition.")));
+    }
+
+    // --- REV-001: loadChallengeWithCatalogue must produce a definition that is genuinely
+    // provenance-compatible with CandidateAdmissibilityPolicy's own catalogue-identity and
+    // semantic-fingerprint checks, not just one that passes the loader's own narrower checks. ---
+
+    @Test
+    void loadChallengeWithCatalogueResultIsProvenanceCompatibleWithAdmissibility() {
+        ChallengeWithCatalogueLoadResult result =
+                ChallengeContentLoader.loadChallengeWithCatalogue(VALID_MINIMAL, CATALOGUE_CORE);
+
+        assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+
+        CandidateDraftSnapshot emptyDraft = new CandidateDraftSnapshot(List.of());
+        CandidateAdmissibilityResult admissibility =
+                CandidateAdmissibilityPolicy.assess(result.definition(), result.catalogue(), emptyDraft);
+
+        // An empty draft has no candidate-specific issues (no occurrences, no budget spend), so a
+        // rejection here could only be a catalogue-provenance rejection -- exactly what C2
+        // independently checks and what this loader must have already ruled out.
+        assertTrue(admissibility.admitted(),
+                () -> "expected the loaded definition/catalogue pair to be provenance-compatible "
+                        + "with CandidateAdmissibilityPolicy, got: " + admissibility.issues());
+    }
+
+    @Test
+    void rejectsChallengeWithCatalogueWhenExplicitCatalogueIdentityMismatchesTheResolvedCatalogue() {
+        ChallengeWithCatalogueLoadResult result =
+                ChallengeContentLoader.loadChallengeWithCatalogue(VALID_WITH_CATALOGUE_IDENTITY, CATALOGUE_CORE);
+
+        // VALID_WITH_CATALOGUE_IDENTITY declares catalogueIdentity {"id": "catalogue.core",
+        // "version": "3"}; CATALOGUE_CORE's actual identity is {"catalogue.core", "1"} -- an
+        // explicit, mismatched assertion that must be rejected rather than silently accepted.
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.catalogue.identity-mismatch")
+                        && i.path().equals("catalogueIdentity")));
+    }
+
+    @Test
+    void rejectsChallengeWithCatalogueWhenExplicitFingerprintMismatchesTheResolvedCatalogue() {
+        String challengeWithMatchingIdentityButWrongFingerprint = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "bottleneck-101", "version": "1"},
+                  "floor": {"width": 10, "height": 8},
+                  "startingBudget": 5000,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "availableEquipment": [],
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"},
+                  "catalogueIdentity": {"id": "catalogue.core", "version": "1"},
+                  "catalogueSemanticFingerprint": "definitely-not-the-real-fingerprint"
+                }
+                """;
+
+        ChallengeWithCatalogueLoadResult result = ChallengeContentLoader.loadChallengeWithCatalogue(
+                challengeWithMatchingIdentityButWrongFingerprint, CATALOGUE_CORE);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.catalogue.semantic-fingerprint-mismatch")
+                        && i.path().equals("catalogueSemanticFingerprint")));
+    }
+
+    // --- REV-002: integer-looking JSON numbers must decode exactly, not round-trip through
+    // double (which silently loses precision above 2^53 and can saturate outside int/long). ---
+
+    private static String minimalWithStartingBudget(String budgetLiteral) {
+        return """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": %s,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+                }
+                """
+                .formatted(budgetLiteral);
+    }
+
+    @Test
+    void decodesIntegerLiteralsAboveDoublePrecisionExactly() {
+        // 2^53 + 1 = 9007199254740993 cannot be represented exactly as a double.
+        ChallengeContentLoadResult result =
+                ChallengeContentLoader.load(minimalWithStartingBudget("9007199254740993"));
+
+        assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+        assertEquals(9007199254740993L, result.definition().startingBudget());
+    }
+
+    @Test
+    void decodesLongMaxValueExactlyAtTheBoundary() {
+        ChallengeContentLoadResult result =
+                ChallengeContentLoader.load(minimalWithStartingBudget(String.valueOf(Long.MAX_VALUE)));
+
+        assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+        assertEquals(Long.MAX_VALUE, result.definition().startingBudget());
+    }
+
+    @Test
+    void rejectsAnIntegerLiteralOnePastLongMaxValueAsOutOfRangeRatherThanSaturating() {
+        java.math.BigInteger onePastLongMax =
+                java.math.BigInteger.valueOf(Long.MAX_VALUE).add(java.math.BigInteger.ONE);
+        ChallengeContentLoadResult result =
+                ChallengeContentLoader.load(minimalWithStartingBudget(onePastLongMax.toString()));
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.out-of-range") && i.path().equals("startingBudget")));
+    }
+
+    private static String minimalWithFloorWidth(String widthLiteral) {
+        return """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": %s, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+                }
+                """
+                .formatted(widthLiteral);
+    }
+
+    @Test
+    void decodesIntegerMaxValueExactlyAtTheBoundary() {
+        ChallengeContentLoadResult result =
+                ChallengeContentLoader.load(minimalWithFloorWidth(String.valueOf(Integer.MAX_VALUE)));
+
+        assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+        assertEquals(Integer.MAX_VALUE, result.definition().floor().width());
+    }
+
+    @Test
+    void rejectsAnIntegerLiteralOnePastIntegerMaxValueAsOutOfRangeRatherThanSaturating() {
+        long onePastIntMax = ((long) Integer.MAX_VALUE) + 1L;
+        ChallengeContentLoadResult result =
+                ChallengeContentLoader.load(minimalWithFloorWidth(String.valueOf(onePastIntMax)));
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.out-of-range") && i.path().equals("floor.width")));
+    }
+
+    @Test
+    void rejectsAnOfferQuantityLimitOnePastIntegerMaxValue() {
+        long onePastIntMax = ((long) Integer.MAX_VALUE) + 1L;
+        String source =
+                """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": [
+                    {"itemId": "assembler.basic", "purchaseCostCredits": 500, "quantityLimit": %s}
+                  ]
+                }
+                """
+                        .formatted(onePastIntMax);
+
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.out-of-range")
+                        && i.path().equals("offers[0].quantityLimit")));
+    }
+
+    // --- REV-003: a blank (but present) catalogueSemanticFingerprint must fail as a structured
+    // issue, not reach ChallengeDefinition's constructor and throw IllegalArgumentException. ---
+
+    @Test
+    void rejectsBlankCatalogueSemanticFingerprintAsAStructuredIssueNotAThrownException() {
+        String source = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"},
+                  "catalogueIdentity": {"id": "catalogue.core", "version": "1"},
+                  "catalogueSemanticFingerprint": " "
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.blank")
+                        && i.path().equals("catalogueSemanticFingerprint")));
+    }
+
+    // --- Decoder error-branch coverage: mistyped nested values and accessor-misuse edge cases. ---
+
+    @Test
+    void rejectsNonStringIdentityIdField() {
+        String source = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": 5, "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.type") && i.path().equals("identity.id")));
+    }
+
+    @Test
+    void rejectsNonObjectIdentityField() {
+        String source = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": "not-an-object",
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.type") && i.path().equals("identity")));
+    }
+
+    @Test
+    void rejectsNonObjectCatalogueIdentityField() {
+        String source = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"},
+                  "catalogueIdentity": "not-an-object"
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.type") && i.path().equals("catalogueIdentity")));
+    }
+
+    @Test
+    void rejectsNonStringCatalogueSemanticFingerprintField() {
+        String source = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"},
+                  "catalogueSemanticFingerprint": 12345
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.type") && i.path().equals("catalogueSemanticFingerprint")));
+    }
+
+    @Test
+    void rejectsNonArrayOffersField() {
+        String source = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": "not-an-array"
+                }
+                """;
+
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.type") && i.path().equals("offers")));
+    }
+
+    @Test
+    void rejectsNonObjectOfferElement() {
+        String source = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": ["not-an-object"]
+                }
+                """;
+
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.type") && i.path().equals("offers[0]")));
+    }
+
+    @Test
+    void rejectsMissingOffersField() {
+        String source = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"}
+                }
+                """;
+
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.missing") && i.path().equals("offers")));
+    }
+
+    @Test
+    void rejectsNonLongOfferPurchaseCostCredits() {
+        String source = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": [
+                    {"itemId": "assembler.basic", "purchaseCostCredits": 4.5}
+                  ]
+                }
+                """;
+
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.type")
+                        && i.path().equals("offers[0].purchaseCostCredits")));
+    }
+
+    @Test
+    void successfulLoadResultHasNoIssuesAndFailedLoadResultHasNoDefinition() {
+        ChallengeContentLoadResult success = ChallengeContentLoader.load(VALID_MINIMAL);
+        assertTrue(success.issues().isEmpty());
+        assertTrue(success.isSuccess());
+
+        ChallengeContentLoadResult failure = ChallengeContentLoader.load("{}");
+        assertNull(failure.definition());
+        assertFalse(failure.isSuccess());
+        assertFalse(failure.issues().isEmpty());
+    }
+
+    @Test
+    void successfulCatalogueLoadResultHasNoIssuesAndFailedResultHasNoCatalogue() {
+        EquipmentCatalogueContentLoadResult success = ChallengeContentLoader.loadCatalogue(CATALOGUE_CORE);
+        assertTrue(success.issues().isEmpty());
+        assertTrue(success.isSuccess());
+
+        EquipmentCatalogueContentLoadResult failure = ChallengeContentLoader.loadCatalogue("{}");
+        assertNull(failure.catalogue());
+        assertFalse(failure.isSuccess());
+        assertFalse(failure.issues().isEmpty());
+    }
+
+    @Test
+    void successfulAggregateLoadResultHasNoIssuesAndFailedResultHasNoDefinitionOrCatalogue() {
+        ChallengeWithCatalogueLoadResult success =
+                ChallengeContentLoader.loadChallengeWithCatalogue(VALID_MINIMAL, CATALOGUE_CORE);
+        assertTrue(success.issues().isEmpty());
+        assertTrue(success.isSuccess());
+
+        ChallengeWithCatalogueLoadResult failure = ChallengeContentLoader.loadChallengeWithCatalogue("{}", "{}");
+        assertNull(failure.definition());
+        assertNull(failure.catalogue());
+        assertFalse(failure.isSuccess());
+        assertFalse(failure.issues().isEmpty());
     }
 }

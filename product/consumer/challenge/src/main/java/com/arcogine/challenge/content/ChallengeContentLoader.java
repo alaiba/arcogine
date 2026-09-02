@@ -11,6 +11,8 @@ import com.arcogine.challenge.catalogue.EquipmentCatalogueIdentity;
 import com.arcogine.challenge.catalogue.EquipmentCatalogueIssue;
 import com.arcogine.challenge.catalogue.EquipmentCatalogueValidator;
 import com.arcogine.challenge.catalogue.EquipmentOffer;
+import com.arcogine.challenge.validation.ChallengeDefinitionIssue;
+import com.arcogine.challenge.validation.ChallengeDefinitionValidator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -201,6 +203,50 @@ public final class ChallengeContentLoader {
         }
 
         return EquipmentCatalogueContentLoadResult.success(catalogue);
+    }
+
+    /**
+     * Decodes {@code challengeSource} and {@code catalogueSource} together and confirms that
+     * every catalogue reference the challenge declares actually resolves against the decoded
+     * catalogue.
+     *
+     * <p>{@link #load(String)} and {@link #loadCatalogue(String)} each decode and content-validate
+     * one document in isolation; neither calls {@code
+     * EquipmentCatalogueValidator#validateChallengeResolution}, since that check requires both
+     * documents at once. This method runs the full pipeline -- decode both, content-validate both
+     * ({@code ChallengeDefinitionValidator} and {@code EquipmentCatalogueValidator#validate}), then
+     * cross-resolve -- and aggregates every issue from every step into one deterministic, ordered
+     * result rather than stopping at the first failing step.
+     */
+    public static ChallengeWithCatalogueLoadResult loadChallengeWithCatalogue(
+            String challengeSource, String catalogueSource) {
+        ChallengeContentLoadResult challengeResult = load(challengeSource);
+        EquipmentCatalogueContentLoadResult catalogueResult = loadCatalogue(catalogueSource);
+
+        List<ChallengeContentIssue> issues = new ArrayList<>();
+        issues.addAll(challengeResult.issues());
+        issues.addAll(catalogueResult.issues());
+        if (!issues.isEmpty()) {
+            return ChallengeWithCatalogueLoadResult.failure(issues);
+        }
+
+        ChallengeDefinition definition = challengeResult.definition();
+        EquipmentCatalogue catalogue = catalogueResult.catalogue();
+
+        List<ChallengeDefinitionIssue> definitionIssues =
+                ChallengeDefinitionValidator.validate(definition).issues();
+        for (ChallengeDefinitionIssue issue : definitionIssues) {
+            issues.add(new ChallengeContentIssue("definition." + issue.code(), issue.path(), issue.message()));
+        }
+
+        List<EquipmentCatalogueIssue> resolutionIssues =
+                EquipmentCatalogueValidator.validateChallengeResolution(definition, catalogue).issues();
+        issues.addAll(translateCatalogueIssues(resolutionIssues));
+
+        if (!issues.isEmpty()) {
+            return ChallengeWithCatalogueLoadResult.failure(issues);
+        }
+        return ChallengeWithCatalogueLoadResult.success(definition, catalogue);
     }
 
     private static List<ChallengeContentIssue> translateCatalogueIssues(List<EquipmentCatalogueIssue> issues) {

@@ -323,4 +323,171 @@ class ChallengeContentLoaderTest {
         assertTrue(result.issues().stream()
                 .anyMatch(i -> i.code().equals("content.field.missing") && i.path().equals("schemaVersion")));
     }
+
+    private static final String VALID_CAPACITY_COST_TRADEOFF = """
+            {
+              "schemaVersion": "challenge-content:v1",
+              "identity": {"id": "capacity-cost-tradeoff", "version": "1"},
+              "floor": {"width": 14, "height": 12},
+              "startingBudget": 20000,
+              "workload": {"productReference": "widget", "requiredQuantity": 500},
+              "availableEquipment": ["assembler.basic", "assembler.fast", "assembler.premium"],
+              "deadline": 1000,
+              "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+            }
+            """;
+
+    private static final String VALID_TIGHT_DEADLINE = """
+            {
+              "schemaVersion": "challenge-content:v1",
+              "identity": {"id": "tight-deadline", "version": "1"},
+              "floor": {"width": 8, "height": 8},
+              "startingBudget": 3000,
+              "workload": {"productReference": "gizmo", "requiredQuantity": 12},
+              "availableEquipment": ["assembler.basic"],
+              "deadline": 60,
+              "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+            }
+            """;
+
+    private static final String VALID_LARGE_FLOOR_BOTTLENECK = """
+            {
+              "schemaVersion": "challenge-content:v1",
+              "identity": {"id": "bottleneck-relief", "version": "3"},
+              "floor": {"width": 30, "height": 24},
+              "startingBudget": 75000,
+              "workload": {"productReference": "widget-pro", "requiredQuantity": 2000},
+              "availableEquipment": ["assembler.basic", "assembler.fast", "packer.standard"],
+              "deadline": 5000,
+              "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+            }
+            """;
+
+    @Test
+    void loadsMultipleDistinctChallengeDefinitionsThroughTheSameContentPath() {
+        List<String> sources = List.of(
+                VALID_MINIMAL,
+                VALID_WITH_CATALOGUE_IDENTITY,
+                VALID_CAPACITY_COST_TRADEOFF,
+                VALID_TIGHT_DEADLINE,
+                VALID_LARGE_FLOOR_BOTTLENECK);
+
+        List<ChallengeDefinition> definitions = sources.stream()
+                .map(ChallengeContentLoader::load)
+                .map(result -> {
+                    assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+                    return result.definition();
+                })
+                .toList();
+
+        // Every fixture loads through the same ChallengeContentLoader.load(...) entry point yet
+        // produces a distinct, content-valid ChallengeDefinition with meaningfully varied floor
+        // size, budget, deadline, workload quantity, and equipment set.
+        assertEquals(5, definitions.stream().map(ChallengeDefinition::identity).distinct().count());
+        assertEquals(
+                5,
+                definitions.stream()
+                        .map(d -> d.floor().width() + "x" + d.floor().height())
+                        .distinct()
+                        .count());
+        assertEquals(5, definitions.stream().map(ChallengeDefinition::startingBudget).distinct().count());
+        assertEquals(5, definitions.stream().map(ChallengeDefinition::deadline).distinct().count());
+        assertEquals(
+                5,
+                definitions.stream()
+                        .map(d -> d.workload().requiredQuantity())
+                        .distinct()
+                        .count());
+
+        for (ChallengeDefinition definition : definitions) {
+            ChallengeDefinitionValidationResult validation = ChallengeDefinitionValidator.validate(definition);
+            assertTrue(validation.isValid(), () -> "expected content-valid definition, got: " + validation.issues());
+        }
+    }
+
+    private static final String CATALOGUE_CORE = """
+            {
+              "schemaVersion": "equipment-catalogue:v1",
+              "identity": {"id": "catalogue.core", "version": "1"},
+              "offers": [
+                {"itemId": "assembler.basic", "purchaseCostCredits": 500},
+                {"itemId": "assembler.fast", "purchaseCostCredits": 900, "quantityLimit": 2}
+              ]
+            }
+            """;
+
+    @Test
+    void loadsChallengeWithCatalogueWhenEveryReferenceResolves() {
+        ChallengeWithCatalogueLoadResult result =
+                ChallengeContentLoader.loadChallengeWithCatalogue(VALID_MINIMAL, CATALOGUE_CORE);
+
+        assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+        assertEquals("bottleneck-101", result.definition().identity().id());
+        assertEquals("catalogue.core", result.catalogue().identity().id());
+    }
+
+    @Test
+    void rejectsChallengeWithCatalogueWhenAnAvailableEquipmentReferenceIsUnknown() {
+        String challengeWithUnknownReference = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "bottleneck-101", "version": "1"},
+                  "floor": {"width": 10, "height": 8},
+                  "startingBudget": 5000,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "availableEquipment": ["assembler.basic", "assembler.unknown"],
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+                }
+                """;
+
+        ChallengeWithCatalogueLoadResult result = ChallengeContentLoader.loadChallengeWithCatalogue(
+                challengeWithUnknownReference, CATALOGUE_CORE);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("catalogue.challenge.availableEquipment.unresolved")
+                        && i.path().equals("availableEquipment[1]")));
+    }
+
+    @Test
+    void rejectsChallengeWithCatalogueWhenCatalogueItselfHasDuplicateItemIds() {
+        String catalogueWithDuplicates = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": [
+                    {"itemId": "assembler.basic", "purchaseCostCredits": 500},
+                    {"itemId": "assembler.basic", "purchaseCostCredits": 600}
+                  ]
+                }
+                """;
+
+        ChallengeWithCatalogueLoadResult result =
+                ChallengeContentLoader.loadChallengeWithCatalogue(VALID_MINIMAL, catalogueWithDuplicates);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream().anyMatch(i -> i.code().equals("catalogue.offers.itemId.duplicate")));
+    }
+
+    @Test
+    void rejectsChallengeWithCatalogueWhenTheDefinitionItselfIsContentInvalid() {
+        String invalidChallenge = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": -5,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+                }
+                """;
+
+        ChallengeWithCatalogueLoadResult result =
+                ChallengeContentLoader.loadChallengeWithCatalogue(invalidChallenge, CATALOGUE_CORE);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream().anyMatch(i -> i.code().startsWith("definition.")));
+    }
 }

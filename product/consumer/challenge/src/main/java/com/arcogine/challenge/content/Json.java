@@ -199,7 +199,7 @@ final class Json {
             position++;
         }
         int integerPartStart = position;
-        while (position < source.length() && Character.isDigit(source.charAt(position))) {
+        while (position < source.length() && isAsciiDigit(source.charAt(position))) {
             position++;
         }
         int integerPartLength = position - integerPartStart;
@@ -213,7 +213,7 @@ final class Json {
             isIntegerLiteral = false;
             position++;
             int fractionStart = position;
-            while (position < source.length() && Character.isDigit(source.charAt(position))) {
+            while (position < source.length() && isAsciiDigit(source.charAt(position))) {
                 position++;
             }
             if (position == fractionStart) {
@@ -228,7 +228,7 @@ final class Json {
                 position++;
             }
             int exponentDigitsStart = position;
-            while (position < source.length() && Character.isDigit(source.charAt(position))) {
+            while (position < source.length() && isAsciiDigit(source.charAt(position))) {
                 position++;
             }
             if (position == exponentDigitsStart) {
@@ -284,6 +284,15 @@ final class Json {
 
     private static boolean isJsonWhitespace(char c) {
         return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+    }
+
+    /**
+     * True only for the ASCII decimal digits {@code '0'-'9'}. JSON's number grammar permits only
+     * these; {@link Character#isDigit(char)} is broader and also accepts non-ASCII Unicode decimal
+     * digits (e.g. Arabic-indic digits), which would let non-JSON source parse successfully.
+     */
+    private static boolean isAsciiDigit(char c) {
+        return c >= '0' && c <= '9';
     }
 
     private JsonSyntaxException error(String message) {

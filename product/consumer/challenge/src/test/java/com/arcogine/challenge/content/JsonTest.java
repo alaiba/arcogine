@@ -110,6 +110,17 @@ class JsonTest {
     }
 
     @Test
+    void rejectsNonAsciiUnicodeDigits() {
+        // Arabic-indic digit one (U+0661): Character.isDigit(...) accepts it, but JSON's number
+        // grammar permits only ASCII 0-9.
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("١"));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("٠١"));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("1١"));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("1.١"));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("1e١"));
+    }
+
+    @Test
     void rejectsNonJsonWhitespaceBetweenTokens() {
         // Form feed (0x0C) is Java whitespace but not JSON insignificant whitespace.
         assertThrows(JsonSyntaxException.class, () -> Json.parse("{\"a\":\f1}"));

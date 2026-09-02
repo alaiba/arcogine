@@ -415,7 +415,7 @@ runtime instantiation from a published model
 runtime/result provenance work in progress
 ```
 
-ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes controlled revision identity/lineage, and Governance G1 is now complete: G1.2 supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while G1.3 supplies the authoritative acceptance/repository boundary, repository-level parent integrity, restart-durable storage, and exact revision-to-semantic-artifact resolution. The current proving adapter is filesystem-backed and factory artifacts reuse canonical `factory-model:v1` bytes; neither choice changes the durable identity semantics. Arcogine still does **not** have the G2+ semantic ChangeSet, generic conformance, evidence, authorization, deployment, or framework-mapping capabilities described later in this architecture.
+ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes controlled revision identity/lineage, and Governance G1 is complete: G1.2 supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while G1.3 supplies the authoritative acceptance/repository boundary, repository-level parent integrity, restart-durable storage, and exact revision-to-semantic-artifact resolution. The current proving adapter is filesystem-backed and factory artifacts reuse canonical `factory-model:v1` bytes; neither choice changes the durable identity semantics. Governance G2 is now implemented for its initial slice: the generic `ChangeSet`/`ImpactScope`/`SemanticChange` value contracts in `:governance`, the domain-owned `SemanticChangeExtractor` seam, and the factory-domain `FactoryModelSemanticComparator` (D5) that compares `factory-model:v1` artifacts by stable domain identity while still honoring the ADR-0006 order-significance of `resources`, `operations`, and `products`. Arcogine still does **not** have the G3+ generic conformance, evidence, authorization, deployment, or framework-mapping capabilities described later in this architecture.
 
 The Governance dependency is now:
 
@@ -427,7 +427,7 @@ G1.2 controlled revision value contract  complete
 G1.3 authoritative persistence +
      historical semantic-state resolution  complete
     ↓
-G2 ChangeSet
+G2 ChangeSet (initial slice)             complete
     ↓
 G3-G5 conformance/evidence
     ↓

@@ -352,7 +352,7 @@ The desired invariant is:
 
 > Given a published model version, the relevant runtime inputs (including the seed for simulation), and ordered commands, Arcogine can identify exactly which semantic design produced the resulting events and observations.
 
-Persistent controlled-revision lineage is now available through Governance G1. Authorship beyond recording provenance, approvals/authorization, external workflow relationships, branch/ref semantics, and semantic ChangeSets remain separate capabilities and must not be folded into Factory Design publication identity.
+Persistent controlled-revision lineage is now available through Governance G1, and semantic `ChangeSet`/impact comparison (Governance G2's initial slice) is now available through the Governance-owned `ChangeSet`/`ImpactScope` contracts and the factory-domain `FactoryModelSemanticComparator`. Authorship beyond recording provenance, approvals/authorization, external workflow relationships, and branch/ref semantics remain separate, unimplemented capabilities. Semantic ChangeSets remain a separate capability owned by Governance and must not be folded into Factory Design publication identity even though they are now implemented.
 
 ### 11.1 External change-management and deployment integration
 

@@ -21,7 +21,7 @@ This capability is a sibling of Factory Design / Engine Readiness and Governance
 
 The current implementation is simulation-first and does not execute real-world commands. Nothing in this document changes that current-state claim.
 
-Governance G1 is now implemented and authoritative. Operational work that needs durable model/revision identity must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority` rather than inventing synthetic production substitutes. Governance G2's initial slice (`ChangeSet`/`ImpactScope`/`SemanticChange` and the factory-domain semantic comparator) is also now implemented; operational work that needs semantic change attribution should consume it rather than inventing a substitute. G3+ Governance capabilities (requirements/assertions, conformance, evidence use, findings, exceptions, authorization) remain future dependencies where applicable.
+Governance G1 is now implemented and authoritative. Operational work that needs durable model/revision identity must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority` rather than inventing synthetic production substitutes. Governance G2's initial slice (`ChangeSet`/`ImpactScope`/`SemanticChange` and the factory-domain semantic comparator) is also now implemented; operational work that needs semantic change attribution should consume it rather than inventing a substitute. Governance G3 (`Requirement`/`Assertion`/`RequirementCatalogue`) is also now implemented; operational work that needs a registered, versioned requirement/assertion contract should consume it rather than inventing a substitute. G4+ Governance capabilities (conformance evaluation, evidence use, findings, exceptions, authorization) remain future dependencies where applicable.
 
 Engine Gate 4 is only partially implemented: `RunId` and consumer-neutral `RuntimeObservation` have landed through G4-A, and the supported `RuntimeEvent` contract has landed through G4-B, while Gate 4 headless closure (G4-C) remains outstanding. ADR-0011 defines the target event contract; G4-B implements it at the `FactoryRuntime` boundary but does not by itself close Gate 4.
 
@@ -284,7 +284,7 @@ The invariant is:
 
 > **An external observation is not created as evidence for one context or revision. It is an operational fact with independent provenance; later Arcogine interpretations may bind it to an execution context/model, and Governance may reference it through an evidence-use relationship.**
 
-Governance G1 is complete and authoritative for durable semantic fingerprint policy, controlled revision identity/lineage, acceptance/persistence, and exact historical resolution. Governance G2's initial slice is complete and authoritative for semantic `ChangeSet`/`ImpactScope`/`SemanticChange` attribution. Later Governance gates own requirements/assertions, conformance, evidence use, findings, exceptions, governed-change interpretation, and audit projections.
+Governance G1 is complete and authoritative for durable semantic fingerprint policy, controlled revision identity/lineage, acceptance/persistence, and exact historical resolution. Governance G2's initial slice is complete and authoritative for semantic `ChangeSet`/`ImpactScope`/`SemanticChange` attribution. Governance G3 is complete and authoritative for the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract. Later Governance gates own conformance evaluation, evidence use, findings, exceptions, governed-change interpretation, and audit projections.
 
 Operational Execution references those contracts when they exist rather than introducing duplicate revision, ChangeSet, evidence-use, or finding types.
 
@@ -350,7 +350,8 @@ This track may develop operational-owned contracts headlessly and in parallel, b
 Current dependency state:
 
 - Governance G1 is **complete** and must be consumed for durable semantic fingerprint / controlled revision identity and historical resolution where applicable;
-- Governance G2 semantic `ChangeSet`/impact (initial slice) is **complete** and must be consumed for semantic change attribution where applicable; G3+ requirement/conformance/evidence/authorization capabilities remain outstanding;
+- Governance G2 semantic `ChangeSet`/impact (initial slice) is **complete** and must be consumed for semantic change attribution where applicable;
+- Governance G3 generic requirement/assertion contract (`Requirement`, `Assertion`, `RequirementCatalogue`) is **complete**; G4+ conformance-evaluation/evidence/authorization capabilities remain outstanding;
 - Governance G4 conformance/finding semantics remain outstanding;
 - Governance G5 evidence-use semantics remain outstanding;
 - Engine Gate 4 G4-A observations and G4-B supported runtime events are implemented, while headless closure (G4-C) remains outstanding.

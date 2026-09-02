@@ -239,11 +239,12 @@ Requirement
     source edition/version
     source locator
     adoption/profile, when applicable
+    scope
 
 Assertion
     stable identity
     version
-    scope
+    associated requirement identity/version
     expression/evaluator
     evidence requirements
 
@@ -415,7 +416,7 @@ runtime instantiation from a published model
 runtime/result provenance work in progress
 ```
 
-ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes controlled revision identity/lineage, and Governance G1 is complete: G1.2 supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while G1.3 supplies the authoritative acceptance/repository boundary, repository-level parent integrity, restart-durable storage, and exact revision-to-semantic-artifact resolution. The current proving adapter is filesystem-backed and factory artifacts reuse canonical `factory-model:v1` bytes; neither choice changes the durable identity semantics. Governance G2 is now implemented for its initial slice: the generic `ChangeSet`/`ImpactScope`/`SemanticChange` value contracts in `:governance`, the domain-owned `SemanticChangeExtractor` seam, and the factory-domain `FactoryModelSemanticComparator` (D5) that compares `factory-model:v1` artifacts by stable domain identity while still honoring the ADR-0006 order-significance of `resources`, `operations`, and `products`. Arcogine still does **not** have the G3+ generic conformance, evidence, authorization, deployment, or framework-mapping capabilities described later in this architecture.
+ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes controlled revision identity/lineage, and Governance G1 is complete: G1.2 supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while G1.3 supplies the authoritative acceptance/repository boundary, repository-level parent integrity, restart-durable storage, and exact revision-to-semantic-artifact resolution. The current proving adapter is filesystem-backed and factory artifacts reuse canonical `factory-model:v1` bytes; neither choice changes the durable identity semantics. Governance G2 is now implemented for its initial slice: the generic `ChangeSet`/`ImpactScope`/`SemanticChange` value contracts in `:governance`, the domain-owned `SemanticChangeExtractor` seam, and the factory-domain `FactoryModelSemanticComparator` (D5) that compares `factory-model:v1` artifacts by stable domain identity while still honoring the ADR-0006 order-significance of `resources`, `operations`, and `products`. Governance G3 is now implemented: the generic, domain-neutral `Requirement`/`RequirementScope`/`RequirementSource` and `Assertion`/`EvidenceRequirement`/`AssertionRule` value contracts in `:governance`, plus an immutable `RequirementCatalogue` that resolves requirements by identity/version and selects those whose `RequirementScope` intersects a real G2 `ImpactScope`. Arcogine still does **not** have the G4+ conformance-evaluation/findings, G5 evidence, authorization, deployment, or framework-mapping capabilities described later in this architecture.
 
 The Governance dependency is now:
 
@@ -429,7 +430,9 @@ G1.3 authoritative persistence +
     ↓
 G2 ChangeSet (initial slice)             complete
     ↓
-G3-G5 conformance/evidence
+G3 requirement/assertion contract        complete
+    ↓
+G4-G5 conformance evaluation/evidence
     ↓
 G6 governed-change/authorization integration
 ```

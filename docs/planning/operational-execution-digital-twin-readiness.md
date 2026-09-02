@@ -44,7 +44,7 @@ This plan was originally written while several sibling contracts were still pros
 | Governance G5 evidence / `EvidenceUse` | **Outstanding** | O5 ingestion remains independent; O9 evidence-use integration cannot close yet |
 | Engine Gate 4 G4-A runtime observation slice | **Complete** | `RunId` and consumer-neutral `RuntimeObservation` exist for one factory simulation runtime epoch |
 | Engine Gate 4 G4-B supported runtime events | **Complete** | The supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload` contract per ADR-0011 is implemented at the `FactoryRuntime` boundary |
-| Engine Gate 4 G4-C headless closure | **Outstanding** | Full Gate 4 headless acceptance closure across the runtime/observation boundary is not yet complete |
+| Engine Gate 4 G4-C headless closure | **Complete** | Gate 4 core/headless acceptance closure across the runtime/observation boundary is proven: fresh-observation reconstruction without replay, observation/event closure, and consumer-neutral bottleneck identification; distribution hardening (G4-D, DH-E) remains outstanding |
 | Operational O1 execution-context identity | **Proposed** | Next operational implementation slice after the O1 identity decision is recorded |
 
 The important Engine/Operational boundary is:
@@ -468,7 +468,7 @@ O8 remains proposed and unimplemented. It depends primarily on the concrete comm
 
 ## 15. O9 — First live-system adapter proving ground
 
-O9 remains proposed and unimplemented. Governance G1 is available for real deployment revision identity, but G5 evidence-use integration is still outstanding and Engine Gate 4 is not complete. O9 also depends on the local O1-O8 safety and operational semantics; a protocol connection alone is never completion evidence.
+O9 remains proposed and unimplemented. Governance G1 is available for real deployment revision identity, but G5 evidence-use integration is still outstanding. Engine Gate 4 core/headless closure (G4-A/G4-B/G4-C) is complete, but the distribution hardening a live-system adapter would need (G4-D transport/SSE migration, DH-E retained history/replay/reconnect) is not yet implemented. O9 also depends on the local O1-O8 safety and operational semantics; a protocol connection alone is never completion evidence.
 
 ## 16. Cross-cutting persistence dependency
 
@@ -494,7 +494,7 @@ No readiness gate is satisfied merely by choosing or connecting a protocol.
 
 ## 19. Relationship to current Engine Readiness
 
-Engine Readiness continues independently. Gate 4 currently has an implemented G4-A observation slice with `RunId` and consumer-neutral `RuntimeObservation`, and an implemented G4-B supported `RuntimeEvent` contract; Gate 4 headless closure (G4-C) remains outstanding.
+Engine Readiness continues independently. Gate 4 core/headless closure is complete: the G4-A observation slice (`RunId` and consumer-neutral `RuntimeObservation`), the G4-B supported `RuntimeEvent` contract, and G4-C headless acceptance closure are all implemented. Gate 4 distribution hardening (G4-D transport/SSE/CLI migration, DH-E retained history/replay/reconnect) remains outstanding.
 
 Operational O1 must therefore preserve both truths:
 

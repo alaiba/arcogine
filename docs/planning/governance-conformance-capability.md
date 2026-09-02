@@ -73,7 +73,9 @@ G2 semantic ChangeSet                              complete (initial slice)
           ↓
 G3 requirement/assertion contract                  complete
           ↓
-G4-G5 conformance evaluation/evidence
+G4 conformance evaluation/findings                 complete (initial slice)
+          ↓
+G5 evidence
           ↓
 G6 review/authorization/governed-change integration
 ```
@@ -114,7 +116,7 @@ Governance G5
 
 Operational Execution owns telemetry/external-observation acquisition, operational source trust/authenticity provenance, command/result facts, deployment target application/effective artifact provenance, and modeled-versus-observed reconciliation. Governance owns the durable revision/change/evaluation/evidence-use/finding semantics that may reference those facts.
 
-Governance G2's initial `ChangeSet`/`ImpactScope`/`SemanticChange` slice is implemented. New Operational work that needs semantic ChangeSets or impact attribution must consume the Governance-owned G2 contracts rather than create new synthetic or parallel `ChangeSet`/impact production abstractions for O7 or similar downstream work. Clearly scoped synthetic fixtures remain acceptable only for genuinely outstanding sibling-owned capabilities such as G4 conformance/findings and G5 evidence-use semantics. Such fixtures do not satisfy the corresponding Governance gates and must not escape test/fixture scope as duplicate shared production abstractions. G1 revision fixtures are likewise no longer appropriate: G1 is complete, and the Governance-owned authoritative revision identity/history contract is available.
+Governance G2's initial `ChangeSet`/`ImpactScope`/`SemanticChange` slice is implemented, and Governance G4's initial `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` slice is now implemented. New Operational work that needs semantic ChangeSets, impact attribution, or conformance evaluation must consume the Governance-owned G2/G4 contracts rather than create new synthetic or parallel production abstractions for O7 or similar downstream work. Clearly scoped synthetic fixtures remain acceptable only for genuinely outstanding sibling-owned capabilities such as G5 evidence-use semantics. Such fixtures do not satisfy the corresponding Governance gates and must not escape test/fixture scope as duplicate shared production abstractions. G1 revision fixtures are likewise no longer appropriate: G1 is complete, and the Governance-owned authoritative revision identity/history contract is available.
 
 ## 3. Delivery principles
 
@@ -139,7 +141,7 @@ G2  Semantic ChangeSet and impact model                        complete (initial
     ↓
 G3  Generic requirement/assertion contract                     complete
     ↓
-G4  Conformance evaluation and findings
+G4  Conformance evaluation and findings                         complete (initial slice)
     ↓
 G5  Evidence and observation provenance
     ↓
@@ -599,6 +601,26 @@ G3 is ready when:
 
 ## 8. G4 — Conformance evaluation and findings
 
+**Status: implemented for its initial slice.** `com.arcogine.governance.conformance` adds the
+generic `ConformanceResult` taxonomy (`PASS`/`FAIL`/`UNKNOWN`/`NOT_APPLICABLE`), the immutable
+`ConformanceEvaluation` and `Finding` records, and the deterministic `ConformanceEvaluator` that
+turns one G3 `Requirement`/`Assertion<T>` pair, an optional G2 `ImpactScope`, an optional
+authoritative state `T`, a `ModelFingerprint`, and an optional `ControlledRevisionId` into one
+`ConformanceEvaluation`. It consumes the real G2/G3 contracts directly -- no parallel scope,
+change, or requirement representation -- and never calls `Instant.now()`, a random source, or any
+other system clock, so evaluation stays reproducible from its inputs alone. `Finding` is produced
+only for `FAIL`, enforced by `ConformanceEvaluation`'s canonical constructor, and it never
+synthesizes a `ControlledRevisionId` for an unpersisted candidate (mirroring `ChangeSet`/G1.3).
+This slice does **not** implement G5 evidence, authorization, deployment, workflow, a permanent
+severity taxonomy, persistence, or any REST/CLI/UI transport;
+`GovernanceModuleBoundaryTest.productionGovernanceCodeNeverReferencesG5PlusConcepts` provides
+regression evidence for that boundary.
+
+No new ADR was required: this slice implements the evaluation/finding shape already documented in
+[architecture §7](../architecture/governance-conformance.md#7-generic-conformance-model) via
+ordinary, replaceable value/API decomposition. It introduces no new durable identity, no
+persistence model, and no cross-domain authority decision beyond what G1-G3 already established.
+
 ### Goal
 
 Evaluate requirements against an exact semantic state and produce explainable results.
@@ -633,12 +655,47 @@ A failed result produces a finding rather than mutating the underlying business 
 G4 is ready when:
 
 1. The same semantic fingerprint/revision and requirement/assertion identities and versions produce deterministic structural results.
+   **Satisfied:** `ConformanceEvaluator.evaluate` is a pure function of its arguments (no clock,
+   randomness, or mutable state); proven by
+   `ConformanceEvaluatorTest.deterministicPassYieldsPassResult` (repeated-call equality) and
+   `.deterministicFailProducesFinding`.
 2. Findings identify affected entities and the failed assertion.
+   **Satisfied:** `Finding` carries `requirementId`/`requirementVersion`, `assertionId`/
+   `assertionVersion`, and `affectedEntities`; proven by `ConformanceEvaluatorTest
+   .deterministicFailProducesFinding` and `PreChangeConformanceProvingCaseTest`.
 3. Results distinguish missing evidence from proven non-conformance.
+   **Satisfied:** an `EXTERNAL_EVIDENCE_REQUIRED` assertion, and a `MODEL_STATE_SUFFICIENT`
+   assertion evaluated with no supplied state, both yield `UNKNOWN` rather than `FAIL`; proven by
+   `ConformanceEvaluatorTest.missingEvidenceRequirementIsUnknownNotFailOrPass` and
+   `.unknownResultNeverCarriesAFindingAndIsDistinctFromFail`. `NOT_APPLICABLE` is likewise
+   distinct from `PASS`/`FAIL`/`UNKNOWN`, proven by `.notApplicableIsDistinctFromPassFailAndUnknown`.
+   `PASS` never carries a `Finding`, proven by `.passProducesNoFinding`.
 4. Evaluation output is immutable or historically attributable.
+   **Satisfied:** `ConformanceEvaluation`/`Finding` are immutable records; the optional
+   `ControlledRevisionId` is carried through unchanged when supplied and never fabricated when
+   absent, proven by `ConformanceEvaluatorTest
+   .controlledRevisionIsAbsentAndNeverSynthesizedForAnUnpersistedCandidate` and
+   `.controlledRevisionIsCarriedThroughUnchangedWhenSupplied`.
 5. A proposed `ChangeSet` can be evaluated before authorization/deployment for at least one requirement.
+   **Satisfied:** `PreChangeConformanceProvingCaseTest
+   .preChangeCandidateIsEvaluatedAgainstRequirementsAffectedByItsRealImpactScope` builds a real
+   `ChangeSet` via `ChangeSetFactory` against the G1.3 authority, selects affected requirements
+   from a real `RequirementCatalogue` via the resulting `ImpactScope`, and evaluates one with
+   `ConformanceEvaluator` before any authorization or deployment concept is involved.
 
 The last criterion is the first major strategic milestone: pre-change conformance rather than only post-change monitoring.
+
+### Test evidence
+
+- `product/governance/src/test/java/com/arcogine/governance/conformance/ConformanceEvaluatorTest.java`
+  -- deterministic PASS/FAIL, `Finding` shape, `UNKNOWN` for missing evidence and for missing
+  state, `NOT_APPLICABLE` distinctness, and optional/never-synthesized `ControlledRevisionId`.
+- `product/governance/src/test/java/com/arcogine/governance/conformance/PreChangeConformanceProvingCaseTest.java`
+  -- the pre-change proving case against real G1.3/G2/G3 contracts.
+- `product/governance/src/test/java/com/arcogine/governance/GovernanceModuleBoundaryTest.java` --
+  extended with `productionGovernanceCodeNeverReferencesG5PlusConcepts`, a regression guard against
+  G5 evidence, authorization, deployment, or severity-taxonomy concepts appearing in production
+  Governance code ahead of their own gates.
 
 ## 9. G5 — Evidence and observation provenance
 
@@ -831,7 +888,7 @@ The first milestone should deliberately avoid a full external compliance framewo
 
 > **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked through a separate association to an external change request, evaluate one Arcogine-native requirement before authorization/deployment, record the authorization decision separately, and reconstruct why the resulting semantic state was considered conformant.**
 
-G1 supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone, G2's initial slice supplies semantic change attribution and affected-entity identification, and G3 now supplies a registered, versioned requirement whose scope can match that affected-entity identification. The milestone remains outstanding because G4+ must still provide deterministic pre-change assertion evaluation, findings, evidence, and separate workflow/authorization records.
+G1 supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone, G2's initial slice supplies semantic change attribution and affected-entity identification, G3 supplies a registered, versioned requirement whose scope can match that affected-entity identification, and G4's initial slice now supplies deterministic pre-change assertion evaluation and findings (`PreChangeConformanceProvingCaseTest`). The milestone remains outstanding because G5/G6 must still provide evidence-use semantics and separate workflow/authorization records; G4 also does not yet provide durable persistence of evaluation results across later changes.
 
 Definition of done:
 
@@ -843,12 +900,12 @@ Exact historical semantic state is resolvable                        [G1 complet
 Base revision -> ChangeSet -> candidate revision is attributable      [G2 complete]
 Affected entity is identified                                        [G2 complete]
 One versioned requirement applies                                    [G3 complete]
-Pre-change assertion evaluates deterministically                      [G4+]
-Finding is produced if violated                                       [G4+]
+Pre-change assertion evaluates deterministically                      [G4 complete]
+Finding is produced if violated                                       [G4 complete]
 External change-request provenance can be linked separately           [G6+]
 Authorization is a separate record referencing the revision           [G6+]
 Deployment is not required to prove the milestone
-Historical evaluation remains attributable after later changes        [G4-G5+]
+Historical evaluation remains attributable after later changes        [G5+]
 No framework-specific field exists on the business object
 ```
 

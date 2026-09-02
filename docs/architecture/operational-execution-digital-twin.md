@@ -274,7 +274,7 @@ Optional deployment
 
 Calibration proposals must not mutate a published model or production target outside normal publication, governance, and deployment boundaries.
 
-Operational drift analysis may produce a candidate semantic change, but Governance owns the durable `ChangeSet`, conformance, finding, and controlled-revision semantics used to govern that candidate. Governance G2's initial `ChangeSet`/`ImpactScope` slice is now available for that; Governance G4 conformance/finding semantics remain outstanding and Operational Execution must not introduce substitutes.
+Operational drift analysis may produce a candidate semantic change, but Governance owns the durable `ChangeSet`, conformance, finding, and controlled-revision semantics used to govern that candidate. Governance G2's initial `ChangeSet`/`ImpactScope` slice and Governance G4's initial `ConformanceEvaluator`/`Finding` slice are now available for that; Governance G5 evidence-use semantics remain outstanding and Operational Execution must not introduce substitutes.
 
 ## 10. Boundary with Governance and Conformance
 
@@ -352,8 +352,8 @@ Current dependency state:
 
 - Governance G1 is **complete** and must be consumed for durable semantic fingerprint / controlled revision identity and historical resolution where applicable;
 - Governance G2 semantic `ChangeSet`/impact (initial slice) is **complete** and must be consumed for semantic change attribution where applicable;
-- Governance G3 generic requirement/assertion contract (`Requirement`, `Assertion`, `RequirementCatalogue`) is **complete**; G4+ conformance-evaluation/evidence/authorization capabilities remain outstanding;
-- Governance G4 conformance/finding semantics remain outstanding;
+- Governance G3 generic requirement/assertion contract (`Requirement`, `Assertion`, `RequirementCatalogue`) is **complete**;
+- Governance G4 conformance/finding semantics (`ConformanceEvaluator`, `ConformanceEvaluation`, `Finding`, initial slice) are **complete**; evidence/authorization capabilities remain outstanding;
 - Governance G5 evidence-use semantics remain outstanding;
 - Engine Gate 4 core/headless closure is complete — G4-A observations, G4-B supported runtime events, and G4-C headless acceptance evidence are all implemented — while Gate 4 distribution hardening (G4-D, DH-E) remains outstanding.
 

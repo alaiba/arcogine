@@ -25,8 +25,8 @@ As of 2026-09-01:
 - Gate 2 is complete.
 - Gate 3 is complete through `FactoryRuntime` and ADR-0007.
 - W1 is complete through ADR-0010, the implemented `Order -> Job*` child-job model, and the executable 100,000-child large-order benchmark.
-- Gate 4 is the active Engine gate and builds stable observation/event contracts around the correct `OrderId` aggregate and child `JobId` work-item identities.
-- Gate 5 remains next after Gate 4 core closure.
+- Gate 4 core/headless closure is complete through G4-A, G4-B, and G4-C: the consumer-neutral engine boundary carries stable observation/event contracts around the correct `OrderId` aggregate and child `JobId` work-item identities, with executable acceptance evidence. G4-D (outward consumer convergence) remains outstanding.
+- Gate 5 may proceed; Gate 4 core closure no longer blocks it.
 - public-contract versioning, recovery, checkpoint/restore, persistence, and packaging remain later distribution hardening.
 
 The current legacy API is not the Gate 3 session implementation. `interfaces/api` still has its own `SimThread`/`IntegratedHandler` loop and streams internal scheduler `Event` objects directly over SSE. That path is maintained current behavior, not the architectural owner of Gate 4.
@@ -139,9 +139,9 @@ fresh construction and therefore receives a fresh `RunId` while preserving the s
 outcome for the same model and commands. `Gate4RuntimeObservationAcceptanceTest` proves these
 facts without the API, Spring, frontend, internal-store access, or scheduler-event replay.
 
-G4-B (supported runtime-event taxonomy and post-authoritative publication) is now implemented (see
-below); G4-C (headless event/observation closure) and G4-D (outward consumer convergence) remain
-outstanding.
+G4-B (supported runtime-event taxonomy and post-authoritative publication) and G4-C (headless
+event/observation closure) are now implemented (see below); G4-D (outward consumer convergence)
+remains outstanding.
 
 ### Slice G4-B — Complete: Supported RuntimeEvent contract and post-authoritative publication
 
@@ -238,13 +238,14 @@ simulation outcome).
 
 G4-C (headless event/observation closure across the full acceptance list, including
 `freshObservationReconstructsCurrentConsumerViewWithoutReplay` and
-`apiDtosDoNotReenterDomainDecisionPaths`) and G4-D (outward consumer convergence: SSE/API DTO
-migration, frontend, CLI) remain outstanding and are not claimed here. No persistence, recovery,
+`apiDtosDoNotReenterDomainDecisionPaths`) landed separately and is recorded under its own slice
+below; G4-D (outward consumer convergence: SSE/API DTO migration, frontend, CLI) remains
+outstanding and is not claimed here. No persistence, recovery,
 checkpoint, or replay semantics were introduced; `FactoryRuntime.drainSupportedEvents()` is a
 draining, non-retained accessor only — it is not a cursor-addressable or replayable journal (that
 remains Slice DH-E).
 
-### Slice G4-C — Gate 4 headless acceptance closure
+### Slice G4-C — Complete: Gate 4 headless acceptance closure
 
 Gate 4 is closed through the consumer-neutral engine boundary before any legacy transport is used as architectural evidence.
 
@@ -269,6 +270,59 @@ apiDtosDoNotReenterDomainDecisionPaths
 Deterministic stream comparisons ignore or inject intentionally unique run IDs while comparing all semantic event content/order.
 
 Gate 4 also requires a supported observation that is sufficient for a consumer to identify the active bottleneck without reaching into internal stores or replaying raw events.
+
+**Implemented evidence (2026-09-02):** the acceptance list above is executable and passing. Most of
+it was already proved by the G4-A/G4-B suites, which G4-C deliberately reuses rather than
+duplicating: `Gate4BRuntimeEventAcceptanceTest` owns
+`runtimeEventCarriesRunSequenceTimeAndModelProvenance`, `sequenceIsStrictlyMonotonicWithinOneRun`,
+`sameTimeEventsRemainOrderedBySequence`, `observationLatestSequenceMatchesAppliedRuntimeEvents`,
+`observationReflectsStateReportedByLastRuntimeEvent`,
+`rejectedTransitionDoesNotEmitSuccessfulStateChange`,
+`faultReportsOnlyAuthoritativeChangesThatActuallyOccurred`,
+`w1EventsPreserveOrderIdAndJobIdCorrelation`, `identicalInputsProduceIdenticalSemanticEventStreams`,
+`resetCreatesNewRunAndSequenceEpoch`, and `runIdentityDoesNotInfluenceSimulationOutcome`;
+`Gate4RuntimeObservationAcceptanceTest` owns the observation projection, immutability, and
+fresh-`RunId`-without-changed-outcome facts.
+
+G4-C adds only the three remaining facts, in
+`product/domains/factory/src/test/java/com/arcogine/factory/process/Gate4CHeadlessClosureAcceptanceTest.java`:
+
+- `freshObservationReconstructsCurrentConsumerViewWithoutReplay` — drives a runtime to a
+  non-trivial mixed state (one order complete, a second order's child jobs simultaneously
+  completed, in progress, and queued), drains and **discards** every supported event emitted so
+  far, then rebuilds the whole supported consumer view through a pure function of one
+  `FactoryRuntime.observe()` result. No `FactoryHandler`/mutable store, no scheduler `Event` or
+  `EventLog` replay, no previously drained `RuntimeEvent`, and no API/Spring/frontend DTO is
+  available to that reconstruction. It also asserts that `latestEventSequence` survives draining, so
+  a late-joining consumer knows exactly where to continue the stream from;
+- `observationAndSupportedEventsCloseOverTheSameAuthoritativeTransitions` — proves semantic closure
+  in both directions: the supported events emitted after an observation at sequence `S` are exactly
+  `S+1..S'` with no gap or overlap against the later observation's cursor; every transition those
+  events report is consistent with the later observation's authoritative state; and the state the
+  later observation reports that the earlier one did not is explained by the delta. Events are not
+  required to carry redundant full-state payloads;
+- `supportedObservationIdentifiesTheActiveBottleneckWithoutInternalAccess` — runs an unbalanced
+  two-stage routing (fast prep, slow finish) and identifies the finishing resource as the active
+  bottleneck from supported `ResourceObservation` facts alone, independently by carried load
+  (active plus queued work) and by busy-tick utilization, with deterministic tie-breaking by
+  machine id and a reproducible result across an equivalent fresh run.
+
+`apiDtosDoNotReenterDomainDecisionPaths` is a structural rather than behavioural fact and is
+enforced as `ArchitectureTest.api_dtos_must_not_reenter_domain_decision_paths` in
+`interfaces/api` — the only module whose test classpath can see both sides of the boundary — which
+fails the build if anything in `com.arcogine.factory..` ever depends on `com.arcogine.api..`,
+`org.springframework..`, or `jakarta.servlet..`.
+
+One minimal production change was required. `Machine.busyTicks()` was never accumulated anywhere in
+the product, so `ResourceObservation.busyTicks()` advertised a utilization fact that was
+permanently zero. `FactoryHandler.handleTaskEnd` now credits the just-finished step's duration to
+the resource that performed it, which is the only point where a machine is known to have occupied
+itself for exactly that long. No new observation field, scoring concept, or analytics surface was
+introduced; the existing contract now simply reports the fact it already claimed to.
+
+No retained runtime-event journal, replay-by-cursor, `Last-Event-ID`, gap detection, or
+checkpoint/restore behaviour was added — that remains Slice DH-E — and no transport, DTO, frontend,
+or CLI behaviour changed, which remains Slice G4-D.
 
 ### Slice G4-D — Converge outward consumers on supported runtime semantics
 

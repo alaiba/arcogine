@@ -203,14 +203,21 @@ final class Json {
             position++;
         }
         int integerPartLength = position - integerPartStart;
+        if (integerPartLength == 0) {
+            throw error("invalid number: expected a digit before any '.' or exponent");
+        }
         if (integerPartLength > 1 && source.charAt(integerPartStart) == '0') {
             throw error("leading zero not allowed in number");
         }
         if (position < source.length() && source.charAt(position) == '.') {
             isIntegerLiteral = false;
             position++;
+            int fractionStart = position;
             while (position < source.length() && Character.isDigit(source.charAt(position))) {
                 position++;
+            }
+            if (position == fractionStart) {
+                throw error("invalid number: expected a digit after '.'");
             }
         }
         if (position < source.length() && (source.charAt(position) == 'e' || source.charAt(position) == 'E')) {
@@ -220,8 +227,12 @@ final class Json {
                     && (source.charAt(position) == '+' || source.charAt(position) == '-')) {
                 position++;
             }
+            int exponentDigitsStart = position;
             while (position < source.length() && Character.isDigit(source.charAt(position))) {
                 position++;
+            }
+            if (position == exponentDigitsStart) {
+                throw error("invalid number: expected a digit in the exponent");
             }
         }
         if (position == start) {
@@ -260,10 +271,19 @@ final class Json {
         return source.charAt(position);
     }
 
+    /**
+     * Skips exactly JSON's own insignificant whitespace set (space, tab, line feed, carriage
+     * return) rather than {@link Character#isWhitespace}, which also accepts characters such as
+     * form feed or vertical tab that the JSON grammar does not permit between tokens.
+     */
     private void skipWhitespace() {
-        while (position < source.length() && Character.isWhitespace(source.charAt(position))) {
+        while (position < source.length() && isJsonWhitespace(source.charAt(position))) {
             position++;
         }
+    }
+
+    private static boolean isJsonWhitespace(char c) {
+        return c == ' ' || c == '\t' || c == '\n' || c == '\r';
     }
 
     private JsonSyntaxException error(String message) {

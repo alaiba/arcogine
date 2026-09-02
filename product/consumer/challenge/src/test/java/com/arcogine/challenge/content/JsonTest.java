@@ -82,4 +82,42 @@ class JsonTest {
         assertEquals("a\nb", Json.parse("\"a\\nb\""));
         assertEquals("a\tb", Json.parse("\"a\\tb\""));
     }
+
+    @Test
+    void rejectsANumberMissingADigitBeforeTheDecimalPoint() {
+        assertThrows(JsonSyntaxException.class, () -> Json.parse(".5"));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("-.5"));
+    }
+
+    @Test
+    void rejectsANumberMissingADigitAfterTheDecimalPoint() {
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("1."));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("-1."));
+    }
+
+    @Test
+    void rejectsANumberMissingADigitInTheExponent() {
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("1e"));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("1e+"));
+    }
+
+    @Test
+    void acceptsWellFormedFractionalAndExponentialNumbers() throws JsonSyntaxException {
+        assertEquals(1.5, Json.parse("1.5"));
+        assertEquals(-1.5, Json.parse("-1.5"));
+        assertEquals(1.0e10, Json.parse("1e10"));
+        assertEquals(1.5e-3, Json.parse("1.5e-3"));
+    }
+
+    @Test
+    void rejectsNonJsonWhitespaceBetweenTokens() {
+        // Form feed (0x0C) is Java whitespace but not JSON insignificant whitespace.
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("{\"a\":\f1}"));
+    }
+
+    @Test
+    void acceptsAllJsonInsignificantWhitespaceBetweenTokens() throws JsonSyntaxException {
+        Object result = Json.parse("{ \t\r\n\"a\"\t\r\n:\t\r\n1\t\r\n}");
+        assertEquals(Map.of("a", 1L), result);
+    }
 }

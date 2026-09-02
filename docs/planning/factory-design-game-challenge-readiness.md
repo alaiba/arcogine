@@ -581,14 +581,16 @@ budget, floor-bounds, and overlap outcomes.
    `ChallengeContentLoaderTest.loadsMultipleDistinctChallengeDefinitionsThroughTheSameContentPath`
    loads five JSON fixtures with distinct floor size, starting budget, deadline, workload quantity,
    and available-equipment sets (spanning bottleneck-relief, capacity/cost-tradeoff, and
-   tight-deadline archetypes) through the single `ChallengeContentLoader.load(String)` entry point
-   and asserts each round-trips to a distinct, structurally complete `ChallengeDefinition`.
-   `load(String)` itself performs structural decoding only -- it never calls
-   `ChallengeDefinitionValidator` (see the implementation-status note above); content validity of
-   these particular fixtures is not asserted by this test. A caller that needs both decoding and
-   content validation for a single challenge document must additionally run the decoded definition
-   through `ChallengeDefinitionValidator.validate(...)`, or use
-   `loadChallengeWithCatalogue(String, String)`, which runs the full pipeline in one call.
+   tight-deadline archetypes) through the single `ChallengeContentLoader.load(String)` entry point,
+   asserts each round-trips to a distinct, structurally complete `ChallengeDefinition`, and then
+   additionally runs each decoded definition through `ChallengeDefinitionValidator.validate(...)`
+   itself and asserts it is content-valid. `load(String)` itself performs structural decoding only
+   -- it never calls `ChallengeDefinitionValidator` (see the implementation-status note above); the
+   content validity asserted here is established by the test's own explicit validator call, not by
+   `load(String)`. A caller that needs both decoding and content validation for a single challenge
+   document must likewise run the decoded definition through `ChallengeDefinitionValidator.validate(
+   ...)` itself, or use `loadChallengeWithCatalogue(String, String)`, which runs the full pipeline
+   in one call.
 2. **Content validation is independent of rendering technology -- met.** `ChallengeContentLoader`
    decodes plain JSON via the game-owned `Json` parser, and `loadCatalogue`/
    `loadChallengeWithCatalogue` delegate content validation to `ChallengeDefinitionValidator`/
@@ -625,13 +627,17 @@ budget, floor-bounds, and overlap outcomes.
    `CandidateAdmissibilityPolicy.assess()` purely on budget (`candidate.budget.exceeded`).
 
 Additionally, `ChallengeContentLoader.loadChallengeWithCatalogue(String, String)` was added to
-close a real content-loading gap identified during this pass: `load(String)` and
-`loadCatalogue(String)` each validate one document in isolation and neither previously called
-`EquipmentCatalogueValidator.validateChallengeResolution`, so an unknown or ambiguous
-catalogue reference in `availableEquipment` was never checked by the content-loading layer itself
-(only by tests that constructed both sides in Java). The new method decodes and content-validates
-both documents and then cross-resolves references, aggregating every issue into one deterministic
-result; it is covered by `loadsChallengeWithCatalogueWhenEveryReferenceResolves`,
+close a real content-loading gap identified during this pass: `load(String)` decodes a challenge
+document structurally only (it never itself calls `ChallengeDefinitionValidator`), `loadCatalogue`
+decodes and always content-validates one catalogue document in isolation, and neither previously
+called `EquipmentCatalogueValidator.validateChallengeResolution` or bound/verified catalogue
+provenance, so an unknown or ambiguous catalogue reference in `availableEquipment` -- and a
+challenge/catalogue pair C2's `CandidateAdmissibilityPolicy` would reject on catalogue identity or
+semantic fingerprint -- was never checked by the content-loading layer itself (only by tests that
+constructed both sides in Java). The new method decodes both documents, content-validates the
+challenge definition and the catalogue, binds/verifies catalogue-identity and
+semantic-fingerprint provenance, and then cross-resolves references, aggregating every issue into
+one deterministic result; it is covered by `loadsChallengeWithCatalogueWhenEveryReferenceResolves`,
 `rejectsChallengeWithCatalogueWhenAnAvailableEquipmentReferenceIsUnknown`,
 `rejectsChallengeWithCatalogueWhenCatalogueItselfHasDuplicateItemIds`, and
 `rejectsChallengeWithCatalogueWhenTheDefinitionItselfIsContentInvalid`.

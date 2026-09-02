@@ -254,13 +254,16 @@ public final class ChallengeContentLoader {
      * every catalogue reference the challenge declares actually resolves against the decoded
      * catalogue.
      *
-     * <p>{@link #load(String)} and {@link #loadCatalogue(String)} each decode and content-validate
-     * one document in isolation; neither calls {@code
+     * <p>{@link #load(String)} performs structural decoding only and never itself invokes {@code
+     * ChallengeDefinitionValidator}; {@link #loadCatalogue(String)} decodes and always runs {@code
+     * EquipmentCatalogueValidator#validate}. Neither calls {@code
      * EquipmentCatalogueValidator#validateChallengeResolution}, since that check requires both
-     * documents at once. This method runs the full pipeline -- decode both, content-validate both
-     * ({@code ChallengeDefinitionValidator} and {@code EquipmentCatalogueValidator#validate}), then
-     * cross-resolve -- and aggregates every issue from every step into one deterministic, ordered
-     * result rather than stopping at the first failing step.
+     * documents at once, and neither binds or verifies catalogue provenance against a real
+     * catalogue. This method is the one entry point that runs the full pipeline -- decode both,
+     * content-validate both ({@code ChallengeDefinitionValidator} and {@code
+     * EquipmentCatalogueValidator#validate}), bind/verify catalogue-identity and
+     * semantic-fingerprint provenance, then cross-resolve -- and aggregates every issue from every
+     * step into one deterministic, ordered result rather than stopping at the first failing step.
      */
     public static ChallengeWithCatalogueLoadResult loadChallengeWithCatalogue(
             String challengeSource, String catalogueSource) {

@@ -341,7 +341,8 @@ C2 completion does not make the game playable and satisfies no Engine Readiness 
 candidate is not canonically executable: a later game-owned projection still requires Arcogine
 canonical validation before publication/run. Conversely, a canonically executable factory may
 remain inadmissible under a particular challenge. C3 is implemented independently of that
-projection; C3 and C4 are now implemented and C5 remains deferred.
+projection; C3 and C4 are now implemented, and C5 is partially implemented (see its
+"Implementation status" subsection below).
 
 ## 7. C3 — Deterministic challenge evaluation
 
@@ -525,6 +526,53 @@ C5 is ready when:
 4. Synthetic outcome fixtures prove evaluation determinism.
 5. Content does not require engine behavior absent from the applicable readiness gates.
 6. At least one fixture proves a candidate can be canonically executable yet challenge-inadmissible.
+
+### Implementation status (C5 — partially implemented)
+
+C5's content-loading layer is implemented in `com.arcogine.challenge.content`
+(`ChallengeContentLoader`, `EvaluationPolicyResolver`, `Json`/`JsonSyntaxException`,
+`ChallengeContentIssue`, `ChallengeContentLoadResult`,
+`EquipmentCatalogueContentLoadResult`). It decodes challenge and equipment-catalogue content from
+plain JSON -- independent of any rendering technology -- and requires a `schemaVersion` field
+(`"challenge-content:v1"` / `"equipment-catalogue:v1"`) distinct from `ChallengeIdentity.version`
+and `EvaluationPolicyIdentity.version`, so content-format evolution and challenge-semantics
+versioning can move independently. The loader does not reimplement validation rules: it decodes
+JSON into the existing C1/C2 types and then delegates to the existing
+`ChallengeDefinitionValidator` and `EquipmentCatalogueValidator`, returning separate, structured
+`ChallengeContentIssue` outcomes for decode failures, definition-validator failures,
+catalogue-validator failures, and unsupported-evaluation-policy failures. `EvaluationPolicyResolver`
+is an immutable static registry, currently mapping only
+`ReferenceChallengeEvaluationPolicy` (`policy.contract-completion` / version `"1"`). Covered by
+`JsonTest`, `ChallengeContentLoaderTest`, and `EvaluationPolicyResolverTest`.
+
+Acceptance criterion 6 -- proving a candidate can be canonically Factory-executable yet
+challenge-inadmissible -- is met by
+`CanonicalExecutableButChallengeInadmissibleTest` (module
+`consumer/challenge-factory-integration-test`, a new test-only Gradle module that is the only place
+in the repository with a test dependency on both `:factory` and `:challenge`; neither production
+module depends on the other). The test constructs a structurally valid `FactoryModel` accepted by
+`:factory`'s `FactoryModelValidator`, and a corresponding candidate draft rejected by
+`CandidateAdmissibilityPolicy.assess()` purely for exceeding the challenge's starting credit
+budget (`candidate.budget.exceeded`) -- a game rule with no counterpart in Factory's structural
+validation.
+
+Criterion 4 (synthetic outcome fixtures proving evaluation determinism) is substantively covered by
+existing `ReferenceChallengeEvaluationPolicyTest` cases predating this work: deadline exactly at the
+limit vs. one tick over, construction cost exactly at budget vs. one credit over, successful
+completion, and non-completion, plus `completedOnTimeAndWithinBudgetIsSuccessfulAndDeterministic`,
+which asserts that evaluating the same `ChallengeEvaluationInput` twice produces an equal
+`ChallengeEvaluationResult`. Criterion 3's candidate-admissibility half is similarly covered by
+existing `CandidateAdmissibilityPolicyTest` cases for admitted, unavailable-item, quantity-limit,
+budget, floor-bounds, and overlap outcomes.
+
+Not yet done: criterion 3's challenge-definition-failure and score/rating-threshold fixture
+coverage has not been audited or extended beyond what already exists, and criterion 1's "multiple
+challenge definitions loaded through one supported content path" is exercised only by the content
+loader's own tests, not by a fixture set spanning several distinct challenge archetypes as
+suggested in the C5 goal above (bottleneck relief, capacity/cost tradeoff, capacity/transfer
+tradeoff, tighter budget/deadline). C5 is therefore **partially, not fully,** implemented: the
+content-loading path and the AC6 proving case exist and are tested; a fuller reference-fixture
+catalogue across multiple challenge archetypes does not yet exist.
 
 ## 10. Relationship to Engine Readiness
 

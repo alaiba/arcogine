@@ -16,9 +16,11 @@ import java.util.Optional;
  * equality (see {@link #equals(Object)}).
  *
  * <p>{@code evidenceRequirement} declares only whether authoritative model state is sufficient or
- * external evidence is needed; it never ingests, persists, or evaluates that evidence (G5).
- * {@code rule} is optional: an {@link EvidenceRequirement#EXTERNAL_EVIDENCE_REQUIRED} assertion
- * may have no structural rule at all, since G3 does not implement external-evidence evaluation.
+ * external evidence is needed; it never ingests, persists, or evaluates that evidence (G5). A
+ * {@link EvidenceRequirement#MODEL_STATE_SUFFICIENT} assertion must always supply a structural
+ * {@code rule} -- the declaration would otherwise be a claim with no executable backing. {@code
+ * rule} is optional only for {@link EvidenceRequirement#EXTERNAL_EVIDENCE_REQUIRED}, since G3
+ * does not implement external-evidence evaluation.
  */
 public record Assertion<T>(
         AssertionId id,
@@ -36,6 +38,11 @@ public record Assertion<T>(
         Objects.requireNonNull(requirementVersion, "requirementVersion");
         Objects.requireNonNull(evidenceRequirement, "evidenceRequirement");
         description = description == null ? "" : description;
+        if (evidenceRequirement == EvidenceRequirement.MODEL_STATE_SUFFICIENT && rule == null) {
+            throw new IllegalArgumentException(
+                    "an assertion declaring MODEL_STATE_SUFFICIENT must supply a structural AssertionRule"
+                            + " -- only EXTERNAL_EVIDENCE_REQUIRED may omit one");
+        }
     }
 
     public Optional<AssertionRule<T>> ruleOptional() {

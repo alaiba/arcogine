@@ -459,10 +459,11 @@ G2 is ready when:
    `SemanticChangeKind` (`ENTITY_ADDED`/`ENTITY_REMOVED`/`ENTITY_MODIFIED`) applied to factory
    resources, operations, and products.
 4. Impact analysis can determine which registered requirements are potentially affected.
-   **Satisfied only as the minimum honest seam**, since G3's requirement registry does not exist:
-   `ImpactScope.intersects(Set<ChangedEntityRef>)` lets a future requirement scope match against
-   affected entities without redesigning `ChangeSet`. This is not a requirement registry and must
-   not be read as G3 delivered.
+   **Satisfied at G2-close time only as the minimum honest seam** --
+   `ImpactScope.intersects(Set<ChangedEntityRef>)` let a future requirement scope match against
+   affected entities without redesigning `ChangeSet`, since G3's requirement registry did not yet
+   exist. G3 (§7 below) now implements that registry (`RequirementScope`, `RequirementCatalogue`)
+   and proves it selects real registered requirements from a real `ImpactScope`.
 5. ChangeSet provenance can retain an external change-request identifier. **Satisfied:**
    `ChangeProvenance`/`ExternalChangeReference`, proven end-to-end by
    `externalChangeRequestReferenceSurvivesEndToEnd`.

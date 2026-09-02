@@ -38,7 +38,8 @@ This plan was originally written while several sibling contracts were still pros
 | Dependency / capability | Current status | Operational consequence |
 |---|---|---|
 | Governance G1 durable fingerprint + controlled revision history | **Complete** | O4 and revision-bound O6 must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`; synthetic G1 revision fixtures are no longer appropriate for new operational work |
-| Governance G2 semantic `ChangeSet` / impact (initial slice) | **Complete** | O7 must consume the Governance-owned `ChangeSet`/`ImpactScope`/`SemanticChange` contracts for semantic change attribution rather than inventing a substitute; G3+ requirement/conformance/evidence/authorization capabilities remain outstanding |
+| Governance G2 semantic `ChangeSet` / impact (initial slice) | **Complete** | O7 must consume the Governance-owned `ChangeSet`/`ImpactScope`/`SemanticChange` contracts for semantic change attribution rather than inventing a substitute |
+| Governance G3 requirement/assertion contract | **Complete** | O7 should consume the Governance-owned `Requirement`/`Assertion`/`RequirementCatalogue` contracts rather than inventing a substitute once conformance-evaluation integration begins; G4+ conformance-evaluation/evidence/authorization capabilities remain outstanding |
 | Governance G4 conformance / findings | **Outstanding** | O7 conformance/finding integration remains dependent on Governance |
 | Governance G5 evidence / `EvidenceUse` | **Outstanding** | O5 ingestion remains independent; O9 evidence-use integration cannot close yet |
 | Engine Gate 4 G4-A runtime observation slice | **Complete** | `RunId` and consumer-neutral `RuntimeObservation` exist for one factory simulation runtime epoch |

@@ -2,6 +2,7 @@ package com.arcogine.governance.assertion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.governance.requirement.RequirementId;
@@ -54,6 +55,25 @@ class EvidenceRequirementDeclarationTest {
         // G3 declares the need only -- no structural rule is required or expected for this case,
         // and G3 does not implement G5 evidence ingestion/persistence to satisfy it.
         assertTrue(assertion.ruleOptional().isEmpty());
+    }
+
+    @Test
+    void modelStateSufficientAssertionMustSupplyAStructuralRule() {
+        // REV-001: a MODEL_STATE_SUFFICIENT declaration is a claim that the assertion is
+        // decidable from authoritative model state alone -- construction must reject the
+        // contradiction of that claim with no executable rule, rather than deferring failure to
+        // evaluate() time.
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        new Assertion<Integer>(
+                                new AssertionId("arc.test.rule-less-structural"),
+                                new AssertionVersion(1),
+                                REQUIREMENT_ID,
+                                REQUIREMENT_VERSION,
+                                "claims model-state-sufficient with no rule",
+                                EvidenceRequirement.MODEL_STATE_SUFFICIENT,
+                                null));
     }
 
     @Test

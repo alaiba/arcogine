@@ -239,11 +239,12 @@ Requirement
     source edition/version
     source locator
     adoption/profile, when applicable
+    scope
 
 Assertion
     stable identity
     version
-    scope
+    associated requirement identity/version
     expression/evaluator
     evidence requirements
 

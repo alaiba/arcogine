@@ -6,7 +6,11 @@ import com.arcogine.challenge.ChallengeWorkload;
 import com.arcogine.challenge.EquipmentCatalogueItemId;
 import com.arcogine.challenge.EvaluationPolicyIdentity;
 import com.arcogine.challenge.FactoryFloorConstraint;
+import com.arcogine.challenge.catalogue.EquipmentCatalogue;
 import com.arcogine.challenge.catalogue.EquipmentCatalogueIdentity;
+import com.arcogine.challenge.catalogue.EquipmentCatalogueIssue;
+import com.arcogine.challenge.catalogue.EquipmentCatalogueValidator;
+import com.arcogine.challenge.catalogue.EquipmentOffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +40,20 @@ import java.util.Map;
  */
 public final class ChallengeContentLoader {
 
+    /**
+     * The only content schema version this loader accepts for challenge definition documents.
+     *
+     * <p>This is a content-profile concept, distinct from {@link ChallengeIdentity#version()} (the
+     * identity/version of a particular challenge's own content) and from {@link
+     * EvaluationPolicyIdentity#version()} (the version of the evaluation policy a challenge
+     * selects). Bumping it is a breaking change to the JSON document shape this loader understands,
+     * not a change to any individual challenge or policy.
+     */
+    public static final String CHALLENGE_SCHEMA_VERSION = "challenge-content:v1";
+
+    /** The only content schema version this loader accepts for equipment catalogue documents. */
+    public static final String CATALOGUE_SCHEMA_VERSION = "equipment-catalogue:v1";
+
     private ChallengeContentLoader() {}
 
     /** Decodes {@code source} (a JSON document) into a {@link ChallengeContentLoadResult}. */
@@ -61,6 +79,8 @@ public final class ChallengeContentLoader {
         List<ChallengeContentIssue> issues = new ArrayList<>();
         @SuppressWarnings("unchecked")
         Map<String, Object> root = (Map<String, Object>) rawRoot;
+
+        requireSchemaVersion(root, CHALLENGE_SCHEMA_VERSION, issues);
 
         Map<String, Object> identityNode = requireObject(root, "identity", issues);
         String identityId = identityNode == null ? null : requireString(identityNode, "identity.id", issues);
@@ -100,6 +120,11 @@ public final class ChallengeContentLoader {
         String catalogueSemanticFingerprint =
                 optionalString(root, "catalogueSemanticFingerprint", issues);
 
+        if (policyId != null && policyVersion != null) {
+            EvaluationPolicyResolver.resolve(new EvaluationPolicyIdentity(policyId, policyVersion))
+                    .ifPresent(issue -> issues.add(issue));
+        }
+
         if (!issues.isEmpty()) {
             return ChallengeContentLoadResult.failure(issues);
         }
@@ -128,6 +153,119 @@ public final class ChallengeContentLoader {
                     identity, floor, startingBudget, workload, availableEquipment, deadline, evaluationPolicy);
         }
         return ChallengeContentLoadResult.success(definition);
+    }
+
+    /** Decodes {@code source} (a JSON document) into an {@link EquipmentCatalogueContentLoadResult}. */
+    public static EquipmentCatalogueContentLoadResult loadCatalogue(String source) {
+        if (source == null) {
+            return EquipmentCatalogueContentLoadResult.failure(
+                    List.of(new ChallengeContentIssue("content.source.null", "$", "source must not be null")));
+        }
+
+        Object parsed;
+        try {
+            parsed = Json.parse(source);
+        } catch (JsonSyntaxException e) {
+            return EquipmentCatalogueContentLoadResult.failure(
+                    List.of(new ChallengeContentIssue("content.malformed-json", "$", e.getMessage())));
+        }
+
+        if (!(parsed instanceof Map<?, ?> rawRoot)) {
+            return EquipmentCatalogueContentLoadResult.failure(List.of(
+                    new ChallengeContentIssue("content.root.not-object", "$", "root value must be a JSON object")));
+        }
+
+        List<ChallengeContentIssue> issues = new ArrayList<>();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> root = (Map<String, Object>) rawRoot;
+
+        requireSchemaVersion(root, CATALOGUE_SCHEMA_VERSION, issues);
+
+        Map<String, Object> identityNode = requireObject(root, "identity", issues);
+        String identityId = identityNode == null ? null : requireString(identityNode, "identity.id", issues);
+        String identityVersion =
+                identityNode == null ? null : requireString(identityNode, "identity.version", issues);
+
+        List<EquipmentOffer> offers = readOffers(root, issues);
+
+        if (!issues.isEmpty()) {
+            return EquipmentCatalogueContentLoadResult.failure(issues);
+        }
+
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(
+                new EquipmentCatalogueIdentity(identityId, identityVersion), offers);
+
+        List<EquipmentCatalogueIssue> validationIssues = EquipmentCatalogueValidator.validate(catalogue).issues();
+        if (!validationIssues.isEmpty()) {
+            return EquipmentCatalogueContentLoadResult.failure(translateCatalogueIssues(validationIssues));
+        }
+
+        return EquipmentCatalogueContentLoadResult.success(catalogue);
+    }
+
+    private static List<ChallengeContentIssue> translateCatalogueIssues(List<EquipmentCatalogueIssue> issues) {
+        List<ChallengeContentIssue> translated = new ArrayList<>();
+        for (EquipmentCatalogueIssue issue : issues) {
+            translated.add(new ChallengeContentIssue(
+                    "catalogue." + issue.code(), issue.path(), issue.message()));
+        }
+        return translated;
+    }
+
+    private static List<EquipmentOffer> readOffers(Map<String, Object> root, List<ChallengeContentIssue> issues) {
+        if (!root.containsKey("offers")) {
+            issues.add(new ChallengeContentIssue("content.field.missing", "offers", "field is required"));
+            return List.of();
+        }
+        Object raw = root.get("offers");
+        if (!(raw instanceof List<?> rawList)) {
+            issues.add(new ChallengeContentIssue("content.field.type", "offers", "must be an array"));
+            return List.of();
+        }
+        List<EquipmentOffer> offers = new ArrayList<>();
+        for (int i = 0; i < rawList.size(); i++) {
+            Object element = rawList.get(i);
+            String path = "offers[" + i + "]";
+            Map<String, Object> offerNode = asObject(element, path, issues);
+            if (offerNode == null) {
+                continue;
+            }
+            String itemId = requireString(offerNode, path + ".itemId", issues);
+            Long purchaseCostCredits = requireLong(offerNode, path + ".purchaseCostCredits", issues);
+            Integer quantityLimit = optionalOfferQuantityLimit(offerNode, path, issues);
+            if (itemId == null || purchaseCostCredits == null) {
+                continue;
+            }
+            offers.add(quantityLimit == null
+                    ? EquipmentOffer.of(new EquipmentCatalogueItemId(itemId), purchaseCostCredits)
+                    : EquipmentOffer.of(new EquipmentCatalogueItemId(itemId), purchaseCostCredits, quantityLimit));
+        }
+        return offers;
+    }
+
+    private static Integer optionalOfferQuantityLimit(
+            Map<String, Object> offerNode, String offerPath, List<ChallengeContentIssue> issues) {
+        String path = offerPath + ".quantityLimit";
+        if (!offerNode.containsKey("quantityLimit") || offerNode.get("quantityLimit") == null) {
+            return null;
+        }
+        Object value = offerNode.get("quantityLimit");
+        if (!(value instanceof Double d) || d != Math.floor(d) || d.isInfinite()) {
+            issues.add(new ChallengeContentIssue("content.field.type", path, "must be an integer"));
+            return null;
+        }
+        return d.intValue();
+    }
+
+    private static void requireSchemaVersion(
+            Map<String, Object> root, String expected, List<ChallengeContentIssue> issues) {
+        String schemaVersion = requireString(root, "schemaVersion", issues);
+        if (schemaVersion != null && !expected.equals(schemaVersion)) {
+            issues.add(new ChallengeContentIssue(
+                    "content.schemaVersion.unsupported",
+                    "schemaVersion",
+                    "unsupported schema version: " + schemaVersion + " (expected " + expected + ")"));
+        }
     }
 
     private static List<EquipmentCatalogueItemId> readAvailableEquipment(

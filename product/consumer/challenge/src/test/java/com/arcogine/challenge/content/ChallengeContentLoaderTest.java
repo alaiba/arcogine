@@ -15,6 +15,7 @@ class ChallengeContentLoaderTest {
 
     private static final String VALID_MINIMAL = """
             {
+              "schemaVersion": "challenge-content:v1",
               "identity": {"id": "bottleneck-101", "version": "1"},
               "floor": {"width": 10, "height": 8},
               "startingBudget": 5000,
@@ -27,6 +28,7 @@ class ChallengeContentLoaderTest {
 
     private static final String VALID_WITH_CATALOGUE_IDENTITY = """
             {
+              "schemaVersion": "challenge-content:v1",
               "identity": {"id": "budget-squeeze", "version": "2"},
               "floor": {"width": 6, "height": 6},
               "startingBudget": 1200,
@@ -187,6 +189,7 @@ class ChallengeContentLoaderTest {
     void loadingSucceedsButValidatorCatchesContentInvalidValues() {
         String source = """
                 {
+                  "schemaVersion": "challenge-content:v1",
                   "identity": {"id": "", "version": "1"},
                   "floor": {"width": -1, "height": 8},
                   "startingBudget": -5,
@@ -202,5 +205,122 @@ class ChallengeContentLoaderTest {
         ChallengeDefinitionValidationResult validation = ChallengeDefinitionValidator.validate(result.definition());
         assertFalse(validation.isValid());
         assertTrue(validation.issues().size() >= 5);
+    }
+
+    @Test
+    void rejectsMissingSchemaVersion() {
+        String source = """
+                {
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.missing") && i.path().equals("schemaVersion")));
+    }
+
+    @Test
+    void rejectsUnsupportedSchemaVersion() {
+        String source = """
+                {
+                  "schemaVersion": "challenge-content:v99",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertEquals("content.schemaVersion.unsupported", result.issues().get(0).code());
+        assertEquals("schemaVersion", result.issues().get(0).path());
+    }
+
+    @Test
+    void rejectsUnsupportedEvaluationPolicy() {
+        String source = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "x", "version": "1"},
+                  "floor": {"width": 4, "height": 8},
+                  "startingBudget": 100,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.unknown", "version": "7"}
+                }
+                """;
+
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("evaluationPolicy.unsupported") && i.path().equals("evaluationPolicy")));
+    }
+
+    @Test
+    void loadsAValidCatalogue() {
+        String source = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": [
+                    {"itemId": "assembler.basic", "purchaseCostCredits": 500},
+                    {"itemId": "assembler.fast", "purchaseCostCredits": 900, "quantityLimit": 2}
+                  ]
+                }
+                """;
+
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+        assertEquals("catalogue.core", result.catalogue().identity().id());
+        assertEquals(2, result.catalogue().offers().size());
+    }
+
+    @Test
+    void rejectsCatalogueWithDuplicateItemIds() {
+        String source = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": [
+                    {"itemId": "assembler.basic", "purchaseCostCredits": 500},
+                    {"itemId": "assembler.basic", "purchaseCostCredits": 600}
+                  ]
+                }
+                """;
+
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream().anyMatch(i -> i.code().equals("catalogue.offers.itemId.duplicate")));
+    }
+
+    @Test
+    void rejectsCatalogueMissingSchemaVersion() {
+        String source = """
+                {
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": []
+                }
+                """;
+
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("content.field.missing") && i.path().equals("schemaVersion")));
     }
 }

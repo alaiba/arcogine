@@ -38,31 +38,35 @@ import org.junit.jupiter.api.Test;
  * on both {@code :factory} and {@code :challenge}; neither of those production modules depends on
  * the other, and this module carries no production sources of its own.
  *
- * <p>The proof: a design can pass {@link FactoryModelValidator#validate} — the structural,
- * game-rule-agnostic notion of "this factory graph is well-formed and could run" — while the
- * corresponding candidate draft in a challenge is rejected by {@link CandidateAdmissibilityPolicy}
- * for a purely game-rule reason (here: exceeding the challenge's starting credit budget) that has
- * nothing to do with structural validity. Nine cutters is a perfectly coherent, executable factory
- * shape; it is inadmissible only because this challenge's economy caps spend at 40,000 credits.
+ * <p>The proof: ONE conceptual candidate -- nine cutter/mill occurrences -- is used both ways. The
+ * Factory model built from it contains the same nine machines and passes {@link
+ * FactoryModelValidator#validate} -- the structural, game-rule-agnostic notion of "this factory
+ * graph is well-formed and could run". The equal-shaped challenge candidate draft (nine placed
+ * occurrences of the same catalogue item) is rejected by {@link CandidateAdmissibilityPolicy} for
+ * a purely game-rule reason (exceeding the challenge's starting credit budget) that has nothing to
+ * do with structural validity. Nine cutters is a perfectly coherent, executable factory shape; it
+ * is inadmissible only because this challenge's economy caps spend at 40,000 credits.
  */
 class CanonicalExecutableButChallengeInadmissibleTest {
+
+    private static final int CUTTER_COUNT = 9;
 
     @Test
     void factoryValidCandidateCanStillBeChallengeInadmissibleOnBudget() {
         FactoryModel factoryModel = new FactoryModel(
-                List.of(mill()),
+                mills(),
                 List.of(routing()),
                 List.of(new ProductDefinition(new ProductId(10), "Widget", 100)));
 
         ModelValidationResult factoryResult = FactoryModelValidator.validate(factoryModel);
         assertTrue(factoryResult.isValid(),
-                () -> "expected a canonically well-formed, executable factory model: "
-                        + factoryResult.errors());
+                () -> "expected a canonically well-formed, executable factory model mirroring the "
+                        + "nine-occurrence candidate draft: " + factoryResult.errors());
 
         EquipmentCatalogueItemId cutter = new EquipmentCatalogueItemId("equipment.cutter");
         long cutterCostCredits = 5_000L;
         long startingBudget = 40_000L;
-        int cutterCount = 9;
+        int cutterCount = CUTTER_COUNT;
         long totalCost = cutterCostCredits * cutterCount;
         assertTrue(totalCost > startingBudget,
                 "the fixture must actually exceed budget for this proof to hold");
@@ -99,14 +103,22 @@ class CanonicalExecutableButChallengeInadmissibleTest {
                         + "rule -- FactoryModelValidator has no concept of credits or budgets at all");
     }
 
-    private static ResourceDefinition mill() {
-        return new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0);
+    private static List<ResourceDefinition> mills() {
+        List<ResourceDefinition> resources = new ArrayList<>();
+        for (int i = 1; i <= CUTTER_COUNT; i++) {
+            resources.add(new ResourceDefinition(new MachineId(i), "Mill " + i, 1, null, 0));
+        }
+        return resources;
     }
 
     private static OperationDefinition routing() {
+        Set<MachineId> eligibleResources = new java.util.LinkedHashSet<>();
+        for (int i = 1; i <= CUTTER_COUNT; i++) {
+            eligibleResources.add(new MachineId(i));
+        }
         return new OperationDefinition(
                 100,
                 "Widget routing",
-                List.of(new OperationStepDefinition(1, "Rough milling", Set.of(new MachineId(1)), 5)));
+                List.of(new OperationStepDefinition(1, "Rough milling", eligibleResources, 5)));
     }
 }

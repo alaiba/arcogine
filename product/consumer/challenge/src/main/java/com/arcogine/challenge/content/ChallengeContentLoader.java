@@ -29,12 +29,17 @@ import java.util.Map;
  * ChallengeDefinition} constructor uncaught -- every missing, mistyped, or malformed field is
  * translated into a {@link ChallengeContentIssue} before construction is attempted.
  *
- * <p>This loader decodes content only. It does not decide whether an already-constructed
+ * <p>The three entry points draw the decode/validate boundary differently. {@link #load(String)}
+ * decodes a challenge document only: it does not decide whether an already-constructed
  * definition's scalar content is valid (that is {@code ChallengeDefinitionValidator}'s job) and it
- * does not resolve catalogue references against a real catalogue (that is {@code
- * EquipmentCatalogueValidator}'s job). Callers that need both structural decoding and content
- * validation should call {@link #load(String)} and then run the returned definition through {@code
- * ChallengeDefinitionValidator} themselves.
+ * does not resolve catalogue references or bind/verify catalogue provenance against a real
+ * catalogue (that is {@code EquipmentCatalogueValidator}'s job); a caller that needs both
+ * structural decoding and content validation for a single challenge document should call {@link
+ * #load(String)} and then run the returned definition through {@code ChallengeDefinitionValidator}
+ * itself. {@link #loadCatalogue(String)} decodes a catalogue document and always additionally runs
+ * {@code EquipmentCatalogueValidator#validate}. {@link #loadChallengeWithCatalogue(String, String)}
+ * is the one entry point that validates both documents, binds/verifies catalogue-identity and
+ * semantic-fingerprint provenance, and cross-resolves catalogue references.
  *
  * <p>Loading is pure and deterministic: it performs no I/O of its own (callers supply the source
  * text), consults no wall-clock time or random state, and produces an equal result for equal

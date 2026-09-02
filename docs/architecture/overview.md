@@ -407,8 +407,10 @@ product/
 ├── types/                DES primitives: SimTime, MachineId, ProductId, OrderId, JobId,
 │                         Quantity, SimError, scenario config records
 ├── governance/           Controlled-revision identity, lineage, recording provenance,
-│                         authoritative durable history, and historical resolution;
-│                         current filesystem adapter, no simulation event handling
+│                         authoritative durable history, historical resolution, and the
+│                         generic semantic ChangeSet/impact contract (com.arcogine.
+│                         governance.change); current filesystem adapter, no simulation
+│                         event handling
 ├── simulation/           DES engine: Scheduler, Event, EventHandler interface,
 │                         CompositeHandler, EventLog, KPIs, SimRunner, ScenarioLoader
 ├── domains/
@@ -445,12 +447,12 @@ types ← simulation ← factory
                 ↑
             cli (entry point)
 
-types ← governance
+types ← governance ← factory
 
 challenge   (no dependency on any module above; a sibling, game-owned boundary)
 ```
 
-Each module exposes a clean public API and hides implementation details. Event-handling modules (`factory`, `economy`, `agents`, `finance`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer. Governance's production dependency remains on `:types`; the factory-domain `factory-model:v1` artifact codec stays domain-owned and is supplied through the Governance `SemanticArtifactVerifier` port rather than introducing a Governance-to-factory production dependency.
+Each module exposes a clean public API and hides implementation details. Event-handling modules (`factory`, `economy`, `agents`, `finance`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer. Governance's production dependency remains on `:types` only — it has no dependency on `factory` or any other domain. `factory`'s production source depends on `governance` (in addition to its existing `types`/`simulation` dependency) for two narrow adapter ports: `SemanticArtifactVerifier` (the G1.3 historical-artifact codec boundary; `factory-model:v1` artifact encode/decode/fingerprint logic stays domain-owned in `FactoryModelArtifactV1`) and `SemanticChangeExtractor` (the G2 semantic-comparison boundary; domain-specific diff logic stays domain-owned in `com.arcogine.factory.change.FactoryModelSemanticComparator`, classifying changes using Governance's generic `SemanticChangeKind`/`ChangedEntityRef` vocabulary). Governance never introspects `FactoryModel` internals directly; it only depends on the narrow SPIs the domain implements.
 
 `challenge` is deliberately outside this dependency graph: it is a game-owned Challenge Readiness
 module (`com.arcogine.challenge`) that has no `project(...)` dependency on `types`, `simulation`,
@@ -523,7 +525,7 @@ Scenario factory semantics are instantiated through an implemented canonical-mod
 
 `:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md). Governance G1 is complete: `ControlledRevisionAuthority` defines the authoritative acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` adapter persists append-only revision records and immutable semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-authoritative parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Historical resolution returns the accepted immutable revision together with its exact semantic artifact; missing/corrupt metadata or artifacts and fingerprint mismatches fail explicitly rather than falling back to current model state.
 
-The factory proving ground reuses ADR-0006's exact `factory-model:v1` canonical bytes as its historical semantic artifact. `FactoryModelArtifactV1` strictly decodes and canonical-reencodes those bytes to reconstruct the exact historical `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one immutable artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The current filesystem record layout and locking mechanics are replaceable adapter details, not a selected permanent production persistence architecture; no new G1.3 ADR was required. Approval/authorization, ChangeSets, conformance/evidence, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain separate G2+ concerns rather than revision identity.
+The factory proving ground reuses ADR-0006's exact `factory-model:v1` canonical bytes as its historical semantic artifact. `FactoryModelArtifactV1` strictly decodes and canonical-reencodes those bytes to reconstruct the exact historical `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one immutable artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The current filesystem record layout and locking mechanics are replaceable adapter details, not a selected permanent production persistence architecture; no new G1.3 ADR was required. Governance G2's initial slice adds the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance` and the factory-domain `FactoryModelSemanticComparator` (D5) that implements `SemanticChangeExtractor` against `factory-model:v1` artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (per ADR-0006) as a real change. Approval/authorization, conformance/evidence, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain separate G3+ concerns rather than revision identity.
 
 ## API Layer
 

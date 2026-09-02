@@ -23,7 +23,7 @@ The current implementation is simulation-first and does not execute real-world c
 
 Governance G1 is now implemented and authoritative. Operational work that needs durable model/revision identity must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority` rather than inventing synthetic production substitutes. Governance G2 and later capabilities remain future dependencies where applicable.
 
-Engine Gate 4 is only partially implemented: `RunId` and consumer-neutral `RuntimeObservation` have landed through G4-A, while the supported `RuntimeEvent` implementation and Gate 4 headless closure remain outstanding. ADR-0011 defines the target event contract but does not make it current implementation by itself.
+Engine Gate 4 is only partially implemented: `RunId` and consumer-neutral `RuntimeObservation` have landed through G4-A, and the supported `RuntimeEvent` contract has landed through G4-B, while Gate 4 headless closure (G4-C) remains outstanding. ADR-0011 defines the target event contract; G4-B implements it at the `FactoryRuntime` boundary but does not by itself close Gate 4.
 
 ## 2. Execution context has classification and concrete identity
 
@@ -299,8 +299,8 @@ Engine concepts such as workload, dispatch, queues, operations, observations, an
 Current Engine Gate 4 status matters at this boundary:
 
 - `RunId` and consumer-neutral `RuntimeObservation` are implemented through G4-A;
-- the supported `RuntimeEvent` implementation and Gate 4 headless closure are still outstanding;
-- Operational Execution must not claim or depend on a completed event contract merely because ADR-0011 is accepted.
+- the supported `RuntimeEvent` contract is implemented through G4-B, while Gate 4 headless closure (G4-C) is still outstanding;
+- Operational Execution must not claim or depend on a fully closed Gate 4 merely because G4-B implements the supported event contract.
 
 Shared semantics do not imply shared mutable runtime state or identical lifecycle machinery.
 
@@ -353,7 +353,7 @@ Current dependency state:
 - Governance G2 semantic `ChangeSet`/impact remains outstanding;
 - Governance G4 conformance/finding semantics remain outstanding;
 - Governance G5 evidence-use semantics remain outstanding;
-- Engine Gate 4 G4-A observations are implemented, while supported runtime events/headless closure remain outstanding.
+- Engine Gate 4 G4-A observations and G4-B supported runtime events are implemented, while headless closure (G4-C) remains outstanding.
 
 Synthetic fixtures remain appropriate only for still-missing sibling contracts. New synthetic G1 revision identity is no longer justified for operational deployment or revision-bound reconciliation work.
 

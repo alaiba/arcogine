@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Operational execution, external observations, digital-twin reconciliation, and design-to-reality continuity  
 > **Authority:** Proposed architecture; this document does not describe current production capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md), [ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md), [ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md), [ADR-0013](decisions/0013-execution-context-identity.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
 ## 1. Architectural position
 
@@ -54,7 +54,7 @@ The original conceptual list `SIMULATION / REPLAY / TEST / STAGING / PRODUCTION`
 
 This is a narrower taxonomy than the Product Charter's conceptual use of **execution context**. The Charter requires simulation, replay, staging, and production to remain unambiguously distinguishable; O1 does not relax that invariant. `ExecutionContextKind` is intended only to classify operational consequence/environment semantics, while replay may be represented by a separate explicit processing/execution-mode dimension correlated with the concrete context. A replay must therefore remain visibly distinct from an ordinary simulation, staging, or production interpretation even if `REPLAY` is not an `ExecutionContextKind` member. If later design cannot preserve that distinction cleanly without making replay a context kind, the O1 ADR must revise the taxonomy rather than weaken the Charter requirement.
 
-The exact taxonomy and representation must be fixed before a durable public/persisted contract is introduced.
+[ADR-0013](decisions/0013-execution-context-identity.md) now records the concrete O1 proposal: initial kinds `PRODUCTION`, `STAGING`, and `SIMULATION`; opaque UUIDv4 `ExecutionContextId`; immutable ID-plus-kind binding; permanent ID-to-kind association; checked semantic comparison that treats same-ID/different-kind as a binding conflict rather than another context; explicit establishment through an Operational boundary; and no O1 context registry. Because ADR-0013 is still **Proposed**, these are not yet accepted architecture and O1 remains unimplemented.
 
 ### 2.1 `RunId` is not execution-context identity
 
@@ -369,19 +369,10 @@ O1 specifically does not implement actor authorization, target identity, deploym
 
 ## 17. ADR triggers
 
-A new ADR is required before O1 implementation because execution-context identity makes hard-to-reverse decisions that later authorization, deployment, persisted records, and external projections will consume.
+[ADR-0013](decisions/0013-execution-context-identity.md) is the concrete **Proposed** O1 identity decision required before implementation. It settles the proposed separation of kind and concrete identity, initial consequence-oriented taxonomy, UUIDv4 representation and establishment semantics, permanent ID-to-kind binding, checked same-ID comparison/conflict handling, explicit authority/resolution boundary, projection compatibility rules, and the no-registry requirement.
 
-That ADR should settle:
-
-- separation of context kind and concrete identity;
-- initial consequence-oriented context taxonomy;
-- `ExecutionContextId` lifecycle/equality/issuance or supply semantics and restart expectations;
-- whether a context may change kind without changing identity;
-- the Operational Execution module/dependency boundary;
-- the explicit authority/resolution boundary and non-inference rule;
-- public/persisted compatibility expectations and representation/versioning policy;
-- confirmation that durable identity semantics do not require context-registry persistence in O1.
+O1 implementation must not proceed as though those decisions were Accepted while ADR-0013 remains Proposed. If ADR-0013 is Accepted, the implementation slice should follow it; if review changes the proposal, the implementation must follow the accepted decision rather than stale planning prose.
 
 Later ADRs remain appropriate when implementation commits Arcogine to hard-to-reverse choices such as actor/capability/trust model, command correlation/idempotency, operational observation envelope/timestamps, deployment target/application provenance, reconciliation conflict authority, or production persistence/retention contracts.
 
-Creating planning prose alone is not an ADR trigger; the O1 identity decision is.
+Creating planning prose alone is not an ADR trigger; ADR-0013 is the required O1 decision record.

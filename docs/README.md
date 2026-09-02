@@ -35,7 +35,7 @@ The active architecture/readiness tracks are siblings with explicit ownership bo
 
 Two dependency rules are especially important:
 
-1. **Fixtures are not sibling completion.** Governance G1 is complete, so new operational deployment/revision-bound reconciliation work should consume its authoritative revision identity/history rather than synthetic G1 revision fixtures. Clearly scoped synthetic fixtures remain appropriate for still-outstanding sibling contracts such as Governance G2/G4/G5; likewise synthetic operational adapters do not satisfy Engine Readiness gates.
+1. **Fixtures are not sibling completion.** Governance G1 is complete, so new operational deployment/revision-bound reconciliation work should consume its authoritative revision identity/history rather than synthetic G1 revision fixtures. Governance G2's initial slice (semantic `ChangeSet`/`ImpactScope` and the factory-domain semantic comparator) is also complete and available for consumption rather than synthetic substitution. Clearly scoped synthetic fixtures remain appropriate for the still-outstanding G3+ requirements/conformance/evidence/authorization capabilities and for still-outstanding sibling contracts such as Governance G4/G5; likewise synthetic operational adapters do not satisfy Engine Readiness gates.
 2. **External observations are not revision- or Arcogine-context-bound at ingestion.** Their source/time/trust provenance is independent. Arcogine context/model/revision binding belongs to reconciliation, interpretation, deployment correlation, or Governance `EvidenceUse` when applicable.
 
 ## Development and contributing

@@ -341,7 +341,7 @@ C2 completion does not make the game playable and satisfies no Engine Readiness 
 candidate is not canonically executable: a later game-owned projection still requires Arcogine
 canonical validation before publication/run. Conversely, a canonically executable factory may
 remain inadmissible under a particular challenge. C3 is implemented independently of that
-projection; C4-C5 remain deferred.
+projection; C3 and C4 are now implemented and C5 remains deferred.
 
 ## 7. C3 — Deterministic challenge evaluation
 
@@ -459,6 +459,48 @@ C4 is ready when:
 6. Later integration can add supported run/session provenance without changing the meaning of old game-owned records.
 7. Comparison distinguishes authoritative production facts from game-owned score/economics/draft facts.
 8. No comparison requirement implies Arcogine D5 semantic comparison unless a future product requirement explicitly asks Arcogine to explain semantic differences between published model versions.
+
+### Implementation status (C4 — complete)
+
+C4 is **complete** as a headless, deterministic attempt and comparison capability in
+`com.arcogine.challenge.attempt` and `com.arcogine.challenge.comparison`. It reuses C1-C3 facts
+rather than duplicating them: `ChallengeAttempt` retains the exact admitted `CandidateDraftSnapshot`
+(C2), the exact historical `DraftEconomics` used (C2), and the exact `ChallengeEvaluationResult`
+(C3) -- which already carries the challenge identity/version, evaluation-policy identity/version,
+and opaque model/run provenance. `ChallengeAttempt` does not recompute economics against the
+current catalogue or re-evaluate the result; `challengeIdentity()` and `evaluationPolicy()` are
+thin accessors onto the retained `ChallengeEvaluationResult`, not a second copy of those facts.
+
+`ChallengeAttemptId` is a game-owned identity for the historical occurrence of one attempt --
+distinct from, and never derived from, `ChallengeIdentity`, `EvaluationPolicyIdentity`, or any
+published-model/run reference. `ChallengeAttempt.record(...)` generates a fresh id and constructs
+an immutable attempt in one step; there is no separate lifecycle/state-machine, submission
+workflow, or persistence -- C4 needed only a reproducible completed-attempt record. Model/run
+provenance is carried exactly as C3 supplied it (via the required, non-blank `EvaluationProvenance`
+inside the retained result) and is never fabricated or substituted by C4 -- C3's existing contract
+requires a caller-supplied opaque model/run reference for every evaluation, so C4 has nothing
+optional to preserve here; a later integration that needs genuinely absent runtime provenance would
+require a C3 contract change, not a C4 one.
+
+`ChallengeAttemptComparator.compare(...)` in `com.arcogine.challenge.comparison` first checks
+`AttemptCompatibility`: two attempts are comparable only when they share the exact same
+`ChallengeIdentity` and `EvaluationPolicyIdentity` (including version). Incompatible pairs return
+stable, ordered `AttemptIncompatibilityReason` codes (`attempt.challenge.mismatch`,
+`attempt.evaluationPolicy.mismatch`) instead of a silently misleading comparison. Compatible pairs
+produce an `AttemptComparison` of score delta, deadline-margin delta, unused-budget delta, and
+construction-cost delta -- all read directly from already-owned C2/C3 facts, plus a `winner`
+(`FIRST`/`SECOND`/`TIE`) derived solely from the shared policy's own score ordering. Comparison
+never re-evaluates either attempt and never mutates its inputs; attempt identity plays no part in
+the comparison outcome.
+
+Tests in `ChallengeAttemptTest` and `ChallengeAttemptComparatorTest` cover immutability of the
+retained candidate snapshot and economics, non-recomputation of the evaluation result, deterministic
+and identity-independent comparison, and structured incompatibility for mismatched challenge or
+policy versions. C4 does not add persistence, a leaderboard, UI, REST/SSE endpoints, a generic
+comparison framework, or Governance evidence semantics; it does not claim canonical model
+projection or a completed Engine Readiness gate. Remaining work -- data-driven challenge content,
+reference-content serialization, and any durable attempt storage -- is deferred to C5 or later
+consumer integration.
 
 ## 9. C5 — Data-driven challenges and reference fixtures
 

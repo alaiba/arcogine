@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Operational execution, external observations, digital-twin reconciliation, and design-to-reality continuity  
 > **Authority:** Proposed architecture; this document does not describe current production capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md), [ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md), [ADR-0013](decisions/0013-execution-context-identity.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md), [ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
 ## 1. Architectural position
 
@@ -21,9 +21,9 @@ This capability is a sibling of Factory Design / Engine Readiness and Governance
 
 The current implementation is simulation-first and does not execute real-world commands. Nothing in this document changes that current-state claim.
 
-Governance G1 is now implemented and authoritative. Operational work that needs durable model/revision identity must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority` rather than inventing synthetic production substitutes. Governance G2's initial slice (`ChangeSet`/`ImpactScope`/`SemanticChange` and the factory-domain semantic comparator) is also now implemented; operational work that needs semantic change attribution should consume it rather than inventing a substitute. G3+ Governance capabilities (requirements/assertions, conformance, evidence use, findings, exceptions, authorization) remain future dependencies where applicable.
+Governance G1 is now implemented and authoritative. Operational work that needs durable model/revision identity must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority` rather than inventing synthetic production substitutes. Governance G2's initial slice (`ChangeSet`/`ImpactScope`/`SemanticChange` and the factory-domain semantic comparator) is also now implemented; operational work that needs semantic change attribution should consume it rather than inventing a substitute. Governance G3 (`Requirement`/`Assertion`/`RequirementCatalogue`) is also now implemented; operational work that needs a registered, versioned requirement/assertion contract should consume it rather than inventing a substitute. G4+ Governance capabilities (conformance evaluation, evidence use, findings, exceptions, authorization) remain future dependencies where applicable.
 
-Engine Gate 4 is only partially implemented: `RunId` and consumer-neutral `RuntimeObservation` have landed through G4-A, and the supported `RuntimeEvent` contract has landed through G4-B, while Gate 4 headless closure (G4-C) remains outstanding. ADR-0011 defines the target event contract; G4-B implements it at the `FactoryRuntime` boundary but does not by itself close Gate 4.
+Engine Gate 4 core/headless closure is now complete: `RunId` and consumer-neutral `RuntimeObservation` landed through G4-A, the supported `RuntimeEvent` contract landed through G4-B, and G4-C closed the headless acceptance contract (fresh-observation reconstruction without replay, observation/event closure, bottleneck identification from the supported observation, and structural enforcement that API/frontend DTOs never re-enter domain decision paths). ADR-0011 defines the event contract that G4-B/G4-C implement at the `FactoryRuntime` boundary. Gate 4 distribution hardening beyond the headless boundary (G4-D transport/SSE/CLI migration, DH-E retained history/replay/reconnect) remains outstanding and out of scope for Operational Execution to assume.
 
 ## 2. Execution context has classification and concrete identity
 
@@ -54,7 +54,7 @@ The original conceptual list `SIMULATION / REPLAY / TEST / STAGING / PRODUCTION`
 
 This is a narrower taxonomy than the Product Charter's conceptual use of **execution context**. The Charter requires simulation, replay, staging, and production to remain unambiguously distinguishable; O1 does not relax that invariant. `ExecutionContextKind` is intended only to classify operational consequence/environment semantics, while replay may be represented by a separate explicit processing/execution-mode dimension correlated with the concrete context. A replay must therefore remain visibly distinct from an ordinary simulation, staging, or production interpretation even if `REPLAY` is not an `ExecutionContextKind` member. If later design cannot preserve that distinction cleanly without making replay a context kind, the O1 ADR must revise the taxonomy rather than weaken the Charter requirement.
 
-[ADR-0013](decisions/0013-execution-context-identity.md) now records the concrete O1 proposal: initial kinds `PRODUCTION`, `STAGING`, and `SIMULATION`; opaque UUIDv4 `ExecutionContextId`; an immutable ID-plus-kind context; permanent ID-to-kind binding; explicit establishment through an Operational boundary; and no O1 context registry. Because ADR-0013 is still **Proposed**, these are not yet accepted architecture and O1 remains unimplemented.
+The exact taxonomy and representation must be fixed before a durable public/persisted contract is introduced.
 
 ### 2.1 `RunId` is not execution-context identity
 
@@ -284,7 +284,7 @@ The invariant is:
 
 > **An external observation is not created as evidence for one context or revision. It is an operational fact with independent provenance; later Arcogine interpretations may bind it to an execution context/model, and Governance may reference it through an evidence-use relationship.**
 
-Governance G1 is complete and authoritative for durable semantic fingerprint policy, controlled revision identity/lineage, acceptance/persistence, and exact historical resolution. Governance G2's initial slice is complete and authoritative for semantic `ChangeSet`/`ImpactScope`/`SemanticChange` attribution. Later Governance gates own requirements/assertions, conformance, evidence use, findings, exceptions, governed-change interpretation, and audit projections.
+Governance G1 is complete and authoritative for durable semantic fingerprint policy, controlled revision identity/lineage, acceptance/persistence, and exact historical resolution. Governance G2's initial slice is complete and authoritative for semantic `ChangeSet`/`ImpactScope`/`SemanticChange` attribution. Governance G3 is complete and authoritative for the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract. Later Governance gates own conformance evaluation, evidence use, findings, exceptions, governed-change interpretation, and audit projections.
 
 Operational Execution references those contracts when they exist rather than introducing duplicate revision, ChangeSet, evidence-use, or finding types.
 
@@ -299,8 +299,9 @@ Engine concepts such as workload, dispatch, queues, operations, observations, an
 Current Engine Gate 4 status matters at this boundary:
 
 - `RunId` and consumer-neutral `RuntimeObservation` are implemented through G4-A;
-- the supported `RuntimeEvent` contract is implemented through G4-B, while Gate 4 headless closure (G4-C) is still outstanding;
-- Operational Execution must not claim or depend on a fully closed Gate 4 merely because G4-B implements the supported event contract.
+- the supported `RuntimeEvent` contract is implemented through G4-B;
+- Gate 4 core/headless closure is complete through G4-C: fresh observation reconstruction without replay, observation/event closure, and consumer-neutral bottleneck identification are all proven at the `FactoryRuntime` boundary;
+- Operational Execution must not claim or depend on Gate 4 distribution hardening (G4-D transport/SSE/CLI migration, DH-E retained history/replay/reconnect) merely because headless closure is complete — those remain outstanding.
 
 Shared semantics do not imply shared mutable runtime state or identical lifecycle machinery.
 
@@ -350,10 +351,11 @@ This track may develop operational-owned contracts headlessly and in parallel, b
 Current dependency state:
 
 - Governance G1 is **complete** and must be consumed for durable semantic fingerprint / controlled revision identity and historical resolution where applicable;
-- Governance G2 semantic `ChangeSet`/impact (initial slice) is **complete** and must be consumed for semantic change attribution where applicable; G3+ requirement/conformance/evidence/authorization capabilities remain outstanding;
+- Governance G2 semantic `ChangeSet`/impact (initial slice) is **complete** and must be consumed for semantic change attribution where applicable;
+- Governance G3 generic requirement/assertion contract (`Requirement`, `Assertion`, `RequirementCatalogue`) is **complete**; G4+ conformance-evaluation/evidence/authorization capabilities remain outstanding;
 - Governance G4 conformance/finding semantics remain outstanding;
 - Governance G5 evidence-use semantics remain outstanding;
-- Engine Gate 4 G4-A observations and G4-B supported runtime events are implemented, while headless closure (G4-C) remains outstanding.
+- Engine Gate 4 core/headless closure is complete — G4-A observations, G4-B supported runtime events, and G4-C headless acceptance evidence are all implemented — while Gate 4 distribution hardening (G4-D, DH-E) remains outstanding.
 
 Synthetic fixtures remain appropriate only for still-missing sibling contracts. New synthetic G1 revision identity is no longer justified for operational deployment or revision-bound reconciliation work.
 
@@ -367,10 +369,19 @@ O1 specifically does not implement actor authorization, target identity, deploym
 
 ## 17. ADR triggers
 
-[ADR-0013](decisions/0013-execution-context-identity.md) is the concrete **Proposed** O1 identity decision required before implementation. It settles the proposed separation of kind and concrete identity, initial consequence-oriented taxonomy, UUIDv4 representation and establishment semantics, permanent ID-to-kind binding, explicit authority/resolution boundary, projection compatibility rules, and the no-registry requirement.
+A new ADR is required before O1 implementation because execution-context identity makes hard-to-reverse decisions that later authorization, deployment, persisted records, and external projections will consume.
 
-O1 implementation must not proceed as though those decisions were Accepted while ADR-0013 remains Proposed. If ADR-0013 is Accepted, the implementation slice should follow it; if review changes the proposal, the implementation must follow the accepted decision rather than stale planning prose.
+That ADR should settle:
+
+- separation of context kind and concrete identity;
+- initial consequence-oriented context taxonomy;
+- `ExecutionContextId` lifecycle/equality/issuance or supply semantics and restart expectations;
+- whether a context may change kind without changing identity;
+- the Operational Execution module/dependency boundary;
+- the explicit authority/resolution boundary and non-inference rule;
+- public/persisted compatibility expectations and representation/versioning policy;
+- confirmation that durable identity semantics do not require context-registry persistence in O1.
 
 Later ADRs remain appropriate when implementation commits Arcogine to hard-to-reverse choices such as actor/capability/trust model, command correlation/idempotency, operational observation envelope/timestamps, deployment target/application provenance, reconciliation conflict authority, or production persistence/retention contracts.
 
-Creating planning prose alone is not an ADR trigger; ADR-0013 is the required O1 decision record.
+Creating planning prose alone is not an ADR trigger; the O1 identity decision is.

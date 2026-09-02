@@ -351,6 +351,21 @@ public class FactoryHandler implements EventHandler {
         machine.completeJob(jobId);
 
         Job job = jobs.get(jobId);
+
+        // Gate 4 acceptance criterion 4 (identify the active bottleneck from supported
+        // observations): a resource's cumulative busy time is only an authoritative fact if it is
+        // actually accumulated. Credit the just-finished step's duration here -- the one point
+        // where a machine is known to have occupied itself for exactly that long -- so
+        // ResourceObservation.busyTicks() expresses real utilization rather than a constant zero.
+        routings.getRoutingForProduct(job.productId())
+                .getStep(stepIndex)
+                .ifPresent(finished -> {
+                    long updated = machine.busyTicks() + finished.duration();
+                    // Durations are non-negative, so a negative sum can only be overflow; saturate
+                    // rather than report a nonsensical utilization.
+                    machine.setBusyTicks(updated < 0 ? Long.MAX_VALUE : updated);
+                });
+
         job.completeStep(currentTime);
 
         if (job.isComplete()) {

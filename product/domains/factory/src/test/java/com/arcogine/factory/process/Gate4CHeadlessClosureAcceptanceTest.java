@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.arcogine.core.event.Event;
+import com.arcogine.core.event.EventPayload;
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
@@ -24,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -373,6 +376,74 @@ class Gate4CHeadlessClosureAcceptanceTest {
         // Closure: the delta alone carries the earlier placement state to the later one.
         assertNotEquals(beforeView, afterView);
         assertEquals(afterView, beforeView.applyAll(delta));
+    }
+
+    /**
+     * REV-003 regression evidence: the internal scheduler also carries markers {@code
+     * FactoryHandler} ignores -- the {@code TaskStart} paired with every dispatched {@code TaskEnd},
+     * and the {@code OrderCompleted} a terminal {@code TaskEnd} schedules purely so other internal
+     * handlers can observe completion. Processing one is authoritatively a no-op and emits no
+     * supported event, so it must not produce a second, different observation at the same {@code
+     * latestEventSequence}: otherwise "fresh observation at {@code S} + supported events after
+     * {@code S} = current consumer view" would have two contradictory answers at the same {@code
+     * S}.
+     */
+    @Test
+    void processingANoOpInternalMarkerLeavesTheSupportedObservationUnchanged() throws SimError {
+        FactoryRuntime runtime = FactoryRuntime.forModel(twoInterchangeableMachinesModel());
+        runtime.submitWorkload(new ProductId(1), 3, UNIT_PRICE).orElseThrow();
+        runtime.drainSupportedEvents();
+
+        int taskStartMarkers = 0;
+        int orderCompletedMarkers = 0;
+        Optional<Event> processed;
+        while ((processed = advanceObservingMarkers(runtime)).isPresent()) {
+            EventPayload payload = processed.get().payload();
+            if (payload instanceof EventPayload.TaskStart) {
+                taskStartMarkers++;
+            } else if (payload instanceof EventPayload.OrderCompleted) {
+                orderCompletedMarkers++;
+            }
+        }
+
+        assertTrue(taskStartMarkers > 0, "the dispatch path must have produced TaskStart markers");
+        assertTrue(
+                orderCompletedMarkers > 0,
+                "the terminal TaskEnd must have scheduled an internal OrderCompleted marker");
+
+        // The run genuinely drained, and the drained runtime reports quiescence -- not ACTIVE
+        // merely because internal bookkeeping was still queued behind the last supported event.
+        RuntimeObservation drained = runtime.observe();
+        assertEquals(RuntimeRunState.QUIESCENT, drained.metadata().runState());
+        assertTrue(drained.orders().stream().allMatch(OrderObservation::complete));
+    }
+
+    /**
+     * Advances one event, asserting that if it was a no-op internal marker the supported view did
+     * not move at all: no supported event, and an observation identical in every fact -- {@code
+     * latestEventSequence}, {@code currentTime}, {@code runState}, resources, orders, jobs, pending
+     * work and performance alike.
+     */
+    private static Optional<Event> advanceObservingMarkers(FactoryRuntime runtime) throws SimError {
+        RuntimeObservation before = runtime.observe();
+        Optional<Event> processed = runtime.advance();
+        List<RuntimeEventEnvelope> delta = runtime.drainSupportedEvents();
+        if (processed.isEmpty()) {
+            return processed;
+        }
+        boolean marker = !(processed.get().payload() instanceof EventPayload.TaskEnd)
+                && !(processed.get().payload() instanceof EventPayload.OrderCreation)
+                && !(processed.get().payload() instanceof EventPayload.MachineAvailabilityChange);
+        if (marker) {
+            assertTrue(delta.isEmpty(), "a no-op marker must not emit supported events: " + delta);
+            assertEquals(
+                    before,
+                    runtime.observe(),
+                    "processing " + processed.get().payload() + " changed the supported observation");
+        } else {
+            assertFalse(delta.isEmpty(), "an authoritative transition must advance the supported stream");
+        }
+        return processed;
     }
 
     @Test

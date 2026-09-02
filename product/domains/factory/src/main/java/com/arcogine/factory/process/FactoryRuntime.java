@@ -74,6 +74,20 @@ public class FactoryRuntime {
     private final List<RuntimeEventEnvelope> pendingSupportedEvents = new ArrayList<>();
     private long eventSequence;
 
+    /**
+     * The simulated time {@link #observe()} reports: the time as of the most recent supported
+     * boundary (session construction, or the last emitted {@link RuntimeEventEnvelope}), not
+     * whatever the internal scheduler's cursor currently says (ADR-0011 REV-003).
+     *
+     * <p>{@link Scheduler#nextEvent()} advances its cursor for every event it hands out, including
+     * internal markers {@link FactoryHandler#handleEvent} ignores. Reading it directly would let a
+     * no-op marker move observed {@code currentTime} -- and the time-derived throughput -- while
+     * {@link RuntimeObservationMetadata#latestEventSequence()} stood still, so two observations at
+     * the same sequence {@code S} could disagree and break "fresh observation at {@code S} +
+     * supported events after {@code S} = current consumer view".
+     */
+    private SimTime observedTime = SimTime.ZERO;
+
     private FactoryRuntime(FactoryHandler factory, FactoryModelVersion modelVersion) {
         this.factory = factory;
         this.scheduler = new RecordingScheduler();
@@ -485,6 +499,10 @@ public class FactoryRuntime {
     private void emit(
             RuntimeEventType eventType, SimTime time, RuntimeEventPayload payload, List<AffectedEntityRef> refs) {
         eventSequence++;
+        // The supported boundary moves as one: sequence and observed time advance together, so
+        // every observation-visible metadata/performance fact stays coherent with the sequence a
+        // consumer cursors from (ADR-0011 REV-003).
+        observedTime = time;
         pendingSupportedEvents.add(new RuntimeEventEnvelope(
                 runId, eventSequence, time, eventType, modelVersion.fingerprint(), Optional.empty(), refs, payload));
     }
@@ -591,6 +609,12 @@ public class FactoryRuntime {
      * Returns a coherent, immutable, consumer-neutral projection of current authoritative state.
      * This does not expose internal scheduler events; see {@link #drainSupportedEvents()} for the
      * supported runtime events this observation's {@code latestEventSequence} cursors.
+     *
+     * <p>Every fact reported here is coherent with one supported boundary (ADR-0011 REV-003):
+     * metadata time and the time-derived throughput come from {@link #observedTime}, and {@link
+     * RuntimeRunState} from pending <em>authoritative</em> work, so processing an internal no-op
+     * marker cannot produce a second, different observation at the same {@code
+     * latestEventSequence}.
      */
     public RuntimeObservation observe() {
         List<ResourceObservation> resources = machinesView().stream()
@@ -642,13 +666,15 @@ public class FactoryRuntime {
                 .map(view -> new PendingWorkObservation(
                         view.jobId(), view.eligibleMachines().stream().sorted().toList()))
                 .toList();
-        long elapsedTicks = scheduler.currentTime().value();
+        long elapsedTicks = observedTime.value();
         return new RuntimeObservation(
                 new RuntimeObservationMetadata(
                         runId,
                         modelVersion.fingerprint(),
-                        scheduler.currentTime(),
-                        scheduler.isEmpty() ? RuntimeRunState.QUIESCENT : RuntimeRunState.ACTIVE,
+                        observedTime,
+                        scheduler.hasPendingAuthoritativeWork()
+                                ? RuntimeRunState.ACTIVE
+                                : RuntimeRunState.QUIESCENT,
                         eventSequence),
                 resources,
                 orders,

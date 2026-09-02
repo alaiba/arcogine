@@ -126,9 +126,9 @@ Do not put Spring DTOs or frontend DTOs in this module. Do not create a generic 
 
 **Implemented evidence (2026-09-02):** `FactoryRuntime.observe()` now returns one immutable,
 consumer-neutral current-state projection. Its metadata carries a fresh opaque `RunId`, the durable
-`FactoryModelVersion.fingerprint()` (never the legacy content hash), the scheduler's current
-`SimTime`, an explicit runtime advancement state (`ACTIVE` when authoritative work is pending,
-otherwise `QUIESCENT`), and `latestEventSequence` (`0` before any supported runtime event; G4-B below
+`FactoryModelVersion.fingerprint()` (never the legacy content hash), the `SimTime` as of the latest
+supported boundary, an explicit runtime advancement state (`ACTIVE` when authoritative work is
+pending, otherwise `QUIESCENT` — see the REV-003 correction under G4-C), and `latestEventSequence` (`0` before any supported runtime event; G4-B below
 wires this cursor to real supported-event sequencing). It is not derived from internal scheduler
 events. The projection contains resources
 (operational state, active child work, per-resource queue depth, and busy ticks), aggregate orders,
@@ -284,7 +284,8 @@ duplicating: `Gate4BRuntimeEventAcceptanceTest` owns
 `Gate4RuntimeObservationAcceptanceTest` owns the observation projection, immutability, and
 fresh-`RunId`-without-changed-outcome facts.
 
-G4-C adds only the three remaining facts, in
+G4-C adds the three remaining closure facts, plus two review-driven regression facts (REV-002,
+REV-003) described after them, in
 `product/domains/factory/src/test/java/com/arcogine/factory/process/Gate4CHeadlessClosureAcceptanceTest.java`:
 
 - `freshObservationReconstructsCurrentConsumerViewWithoutReplay` — drives a runtime to a
@@ -307,18 +308,53 @@ G4-C adds only the three remaining facts, in
   (active plus queued work) and by busy-tick utilization, with deterministic tie-breaking by
   machine id and a reproducible result across an equivalent fresh run.
 
+Review of the slice surfaced two genuine closure gaps, each fixed in production code and pinned by
+its own regression fact in the same test:
+
+- `taskEndDispatchCascadeIsReportedByTheSupportedEventStream` (REV-002) — a `TaskEnd` frees machine
+  capacity, and `FactoryHandler` re-places not only the completing job onto its next routing step
+  but also whatever queued or multi-eligible backlog work that machine can now accept. Emitting
+  only `JOB_STEP_COMPLETED` left a consumer unable to derive those jobs' status or machine
+  assignment from the supported stream, so the closure claim did not actually hold on the `TaskEnd`
+  path;
+- `processingANoOpInternalMarkerLeavesTheSupportedObservationUnchanged` (REV-003) — the internal
+  scheduler also carries markers `FactoryHandler.handleEvent` ignores (the `TaskStart` paired with
+  every dispatched `TaskEnd`; the `OrderCompleted` a terminal `TaskEnd` schedules purely so other
+  internal handlers can observe completion). Processing one is authoritatively a no-op and emits no
+  supported event, yet it moved the scheduler cursor, which `observe()` read directly — so two
+  observations at the same `latestEventSequence` could report different `currentTime`, throughput,
+  or `runState`, contradicting the supported model.
+
 `apiDtosDoNotReenterDomainDecisionPaths` is a structural rather than behavioural fact and is
 enforced as `ArchitectureTest.api_dtos_must_not_reenter_domain_decision_paths` in
 `interfaces/api` — the only module whose test classpath can see both sides of the boundary — which
 fails the build if anything in `com.arcogine.factory..` ever depends on `com.arcogine.api..`,
 `org.springframework..`, or `jakarta.servlet..`.
 
-One minimal production change was required. `Machine.busyTicks()` was never accumulated anywhere in
-the product, so `ResourceObservation.busyTicks()` advertised a utilization fact that was
-permanently zero. `FactoryHandler.handleTaskEnd` now credits the just-finished step's duration to
-the resource that performed it, which is the only point where a machine is known to have occupied
-itself for exactly that long. No new observation field, scoring concept, or analytics surface was
-introduced; the existing contract now simply reports the fact it already claimed to.
+Three production changes were required, all of them corrections to facts the existing contract
+already claimed rather than new surface:
+
+- **Busy-tick accumulation.** `Machine.busyTicks()` was never accumulated anywhere in the product,
+  so `ResourceObservation.busyTicks()` advertised a utilization fact that was permanently zero.
+  `FactoryHandler.handleTaskEnd` now credits the just-finished step's duration to the resource that
+  performed it, which is the only point where a machine is known to have occupied itself for
+  exactly that long.
+- **`TaskEnd` placement cascade (REV-002).** `FactoryRuntime.advance()` snapshots the placement
+  (status, machine, step) of every job currently occupying machine capacity before processing a
+  `TaskEnd`, and diffs it against authoritative state afterwards, emitting `JOB_DISPATCHED` for
+  everything newly placed and `JOB_WAITING` for a completing job that fell back to waiting. The
+  snapshot is deliberately scoped to jobs occupying capacity — bounded by published machine
+  concurrency, not by backlog size — so a large order's completions stay linear rather than
+  quadratic (`LargeOrderDecompositionBenchmarkTest`).
+- **Supported-boundary coherence (REV-003).** `FactoryRuntime.observe()` no longer reads the
+  internal scheduler cursor. Metadata time (and the throughput derived from it) come from an
+  `observedTime` that advances only when a supported event is emitted, and `RuntimeRunState` comes
+  from whether any *authoritative* event is still queued (`RecordingScheduler
+  .hasPendingAuthoritativeWork()`, counting exactly the payloads `FactoryHandler.handleEvent` acts
+  on) rather than from `Scheduler.isEmpty()`. Every observation-visible metadata and performance
+  fact therefore moves in lockstep with `latestEventSequence`.
+
+No new observation field, event type, scoring concept, or analytics surface was introduced.
 
 No retained runtime-event journal, replay-by-cursor, `Last-Event-ID`, gap detection, or
 checkpoint/restore behaviour was added — that remains Slice DH-E — and no transport, DTO, frontend,

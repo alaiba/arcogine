@@ -112,7 +112,7 @@ Governance G5
 
 Operational Execution owns telemetry/external-observation acquisition, operational source trust/authenticity provenance, command/result facts, deployment target application/effective artifact provenance, and modeled-versus-observed reconciliation. Governance owns the durable revision/change/evaluation/evidence-use/finding semantics that may reference those facts.
 
-Operational work may proceed headlessly with clearly scoped synthetic ChangeSet, conformance, or evidence-use fixtures while G2/G4/G5 are incomplete. G1 revision fixtures are no longer required: the Governance-owned authoritative revision identity/history contract is available. Fixtures for later gates do not satisfy those Governance gates and must not escape as duplicate shared production abstractions.
+Governance G2's initial `ChangeSet`/`ImpactScope`/`SemanticChange` slice is implemented. New Operational work that needs semantic ChangeSets or impact attribution must consume the Governance-owned G2 contracts rather than create new synthetic or parallel `ChangeSet`/impact production abstractions for O7 or similar downstream work. Clearly scoped synthetic fixtures remain acceptable only for genuinely outstanding sibling-owned capabilities such as G4 conformance/findings and G5 evidence-use semantics. Such fixtures do not satisfy the corresponding Governance gates and must not escape test/fixture scope as duplicate shared production abstractions. G1 revision fixtures are likewise no longer appropriate: G1 is complete, and the Governance-owned authoritative revision identity/history contract is available.
 
 ## 3. Delivery principles
 

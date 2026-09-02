@@ -84,7 +84,7 @@ D6  Shared draft lifecycle (deferred until justified)
 D7  Factory adoption of governed change (deferred until justified; owned cross-domain by Governance and Conformance G1/G2/G6, with Operational Execution owning deployment application)
 ```
 
-D1-D4 form the immediate implementation sequence. D5, D6, and D7 are explicitly deferred and are not prerequisites for engine runtime work or a first game consumer.
+D1-D4 form the immediate implementation sequence. D5 has an implemented initial slice covering factory semantic comparison for resources, operations, and products through the Governance `SemanticChangeExtractor` seam (see §9); finer-grained D5 comparison such as route/policy/constraint-level taxonomy remains future work triggered by concrete consumer need. D6 and D7 remain deferred. D5 is not a prerequisite for engine runtime work or a first game consumer unless a specific consumer requirement depends on its semantic-diff capability.
 
 The initial spike should establish the model seam without simultaneously redesigning order execution, dispatch policy, spatial behavior, operational deployment, or the public HTTP contract.
 

@@ -341,7 +341,8 @@ C2 completion does not make the game playable and satisfies no Engine Readiness 
 candidate is not canonically executable: a later game-owned projection still requires Arcogine
 canonical validation before publication/run. Conversely, a canonically executable factory may
 remain inadmissible under a particular challenge. C3 is implemented independently of that
-projection; C3 and C4 are now implemented and C5 remains deferred.
+projection; C3, C4, and C5 are now implemented (see C5's "Implementation status" subsection
+below).
 
 ## 7. C3 — Deterministic challenge evaluation
 
@@ -525,6 +526,130 @@ C5 is ready when:
 4. Synthetic outcome fixtures prove evaluation determinism.
 5. Content does not require engine behavior absent from the applicable readiness gates.
 6. At least one fixture proves a candidate can be canonically executable yet challenge-inadmissible.
+
+### Implementation status (C5 — complete)
+
+C5's content-loading layer is implemented in `com.arcogine.challenge.content`
+(`ChallengeContentLoader`, `EvaluationPolicyResolver`, `Json`/`JsonSyntaxException`,
+`ChallengeContentIssue`, `ChallengeContentLoadResult`,
+`EquipmentCatalogueContentLoadResult`). It decodes challenge and equipment-catalogue content from
+plain JSON -- independent of any rendering technology -- and requires a `schemaVersion` field
+(`"challenge-content:v1"` / `"equipment-catalogue:v1"`) distinct from `ChallengeIdentity.version`
+and `EvaluationPolicyIdentity.version`, so content-format evolution and challenge-semantics
+versioning can move independently. The loader does not reimplement validation rules, but its three
+entry points draw the decode/validate boundary differently: `load(String)` performs structural
+decoding only -- consistent with `ChallengeContentLoadResult`'s own contract that a decoded
+definition's content validity is a separate, later caller step -- and never itself invokes
+`ChallengeDefinitionValidator`; `loadCatalogue(String)` decodes and then always runs
+`EquipmentCatalogueValidator.validate` before reporting success; and
+`loadChallengeWithCatalogue(String, String)` is the one entry point that aggregates both decode
+steps, both content validators (`ChallengeDefinitionValidator` and
+`EquipmentCatalogueValidator.validate`), catalogue-provenance binding/verification (challenge
+`catalogueIdentity`/`catalogueSemanticFingerprint` against the actually resolved catalogue), and
+`EquipmentCatalogueValidator.validateChallengeResolution` into one deterministic, structured
+`ChallengeContentIssue` outcome. A caller that needs `load(String)`'s decoded definition to also be
+content-valid must run it through `ChallengeDefinitionValidator` itself, exactly as
+`ChallengeContentLoaderTest.loadsAMinimalValidDefinition` and the other single-document tests do.
+`EvaluationPolicyResolver`
+is an immutable static registry, currently mapping only
+`ReferenceChallengeEvaluationPolicy` (`policy.contract-completion` / version `"1"`). Covered by
+`JsonTest`, `ChallengeContentLoaderTest`, and `EvaluationPolicyResolverTest`.
+
+Acceptance criterion 6 -- proving a candidate can be canonically Factory-executable yet
+challenge-inadmissible -- is met by
+`CanonicalExecutableButChallengeInadmissibleTest` (module
+`consumer/challenge-factory-integration-test`, a new test-only Gradle module that is the only place
+in the repository with a test dependency on both `:factory` and `:challenge`; neither production
+module depends on the other). The test constructs a structurally valid `FactoryModel` accepted by
+`:factory`'s `FactoryModelValidator`, and a corresponding candidate draft rejected by
+`CandidateAdmissibilityPolicy.assess()` purely for exceeding the challenge's starting credit
+budget (`candidate.budget.exceeded`) -- a game rule with no counterpart in Factory's structural
+validation.
+
+Criterion 4 (synthetic outcome fixtures proving evaluation determinism) is substantively covered by
+existing `ReferenceChallengeEvaluationPolicyTest` cases predating this work: deadline exactly at the
+limit vs. one tick over, construction cost exactly at budget vs. one credit over, successful
+completion, and non-completion, plus `completedOnTimeAndWithinBudgetIsSuccessfulAndDeterministic`,
+which asserts that evaluating the same `ChallengeEvaluationInput` twice produces an equal
+`ChallengeEvaluationResult`. Criterion 3's candidate-admissibility half is similarly covered by
+existing `CandidateAdmissibilityPolicyTest` cases for admitted, unavailable-item, quantity-limit,
+budget, floor-bounds, and overlap outcomes.
+
+### Acceptance-criterion-by-criterion status
+
+1. **Multiple challenge definitions loadable through one supported content path -- met.**
+   `ChallengeContentLoaderTest.loadsMultipleDistinctChallengeDefinitionsThroughTheSameContentPath`
+   loads five JSON fixtures with distinct floor size, starting budget, deadline, workload quantity,
+   and available-equipment sets (spanning bottleneck-relief, capacity/cost-tradeoff, and
+   tight-deadline archetypes) through the single `ChallengeContentLoader.load(String)` entry point,
+   asserts each round-trips to a distinct, structurally complete `ChallengeDefinition`, and then
+   additionally runs each decoded definition through `ChallengeDefinitionValidator.validate(...)`
+   itself and asserts it is content-valid. `load(String)` itself performs structural decoding only
+   -- it never calls `ChallengeDefinitionValidator` (see the implementation-status note above); the
+   content validity asserted here is established by the test's own explicit validator call, not by
+   `load(String)`. A caller that needs both decoding and content validation for a single challenge
+   document must likewise run the decoded definition through `ChallengeDefinitionValidator.validate(
+   ...)` itself, or use `loadChallengeWithCatalogue(String, String)`, which runs the full pipeline
+   in one call.
+2. **Content validation is independent of rendering technology -- met.** `ChallengeContentLoader`
+   decodes plain JSON via the game-owned `Json` parser, and `loadCatalogue`/
+   `loadChallengeWithCatalogue` delegate content validation to `ChallengeDefinitionValidator`/
+   `EquipmentCatalogueValidator` (see the implementation-status note above on which entry point
+   validates what); nothing in the content-loading package depends on a UI, rendering, or
+   presentation technology.
+3. **Reference fixtures cover challenge-definition failures, candidate-admissibility failures,
+   pass/fail boundaries, and score/rating thresholds -- met.** Challenge-definition failures:
+   `ChallengeContentLoaderTest.loadingSucceedsButValidatorCatchesContentInvalidValues` and the
+   dedicated `ChallengeDefinitionValidatorTest` cases (blank ids, non-positive dimensions/budget/
+   deadline/quantity, duplicate/blank available-equipment ids --
+   `duplicateAvailableEquipmentIdsAreRejected`, `blankAvailableEquipmentIdIsRejected`). Candidate-
+   admissibility failures: `CandidateAdmissibilityPolicyTest` (unavailable/unknown items, quantity
+   limits, budget, floor bounds, overlap). Pass/fail boundaries and score/rating thresholds:
+   `ReferenceChallengeEvaluationPolicyTest.deadlineAndBudgetFailuresAreExplainedInStableRuleOrder`,
+   `scoreIsExactForTheLargestC1ValidDeadlineAndBudget`, and the exact-limit-vs-one-over deadline/
+   budget cases. Content-loading-specific catalogue-resolution failures (unknown catalogue
+   reference, duplicate catalogue item id) are covered by
+   `ChallengeContentLoaderTest.rejectsChallengeWithCatalogueWhenAnAvailableEquipmentReferenceIsUnknown`
+   and `rejectsChallengeWithCatalogueWhenCatalogueItselfHasDuplicateItemIds`.
+4. **Synthetic outcome fixtures prove evaluation determinism -- met.**
+   `ReferenceChallengeEvaluationPolicyTest.completedOnTimeAndWithinBudgetIsSuccessfulAndDeterministic`
+   asserts that evaluating the same `ChallengeEvaluationInput` twice produces an equal
+   `ChallengeEvaluationResult`; `ChallengeContentLoaderTest.isDeterministicAcrossRepeatedLoads`
+   covers the content-loading layer's own determinism.
+5. **Content does not require engine behavior absent from the applicable readiness gates -- met.**
+   The content-loading layer (`com.arcogine.challenge.content`) has no dependency on `:types`,
+   `:simulation`, `:factory`, `:economy`, `:finance`, `:api`, or `:cli`; it only decodes JSON into
+   existing C1/C2 game-owned types.
+6. **At least one fixture proves a candidate can be canonically executable yet
+   challenge-inadmissible -- met.** `CanonicalExecutableButChallengeInadmissibleTest`
+   (module `consumer/challenge-factory-integration-test`) constructs a `FactoryModel` accepted by
+   `:factory`'s `FactoryModelValidator` and a corresponding candidate draft rejected by
+   `CandidateAdmissibilityPolicy.assess()` purely on budget (`candidate.budget.exceeded`).
+
+Additionally, `ChallengeContentLoader.loadChallengeWithCatalogue(String, String)` was added to
+close a real content-loading gap identified during this pass: `load(String)` decodes a challenge
+document structurally only (it never itself calls `ChallengeDefinitionValidator`), `loadCatalogue`
+decodes and always content-validates one catalogue document in isolation, and neither previously
+called `EquipmentCatalogueValidator.validateChallengeResolution` or bound/verified catalogue
+provenance, so an unknown or ambiguous catalogue reference in `availableEquipment` -- and a
+challenge/catalogue pair C2's `CandidateAdmissibilityPolicy` would reject on catalogue identity or
+semantic fingerprint -- was never checked by the content-loading layer itself (only by tests that
+constructed both sides in Java). The new method decodes both documents, content-validates the
+challenge definition and the catalogue, binds/verifies catalogue-identity and
+semantic-fingerprint provenance, and then cross-resolves references, aggregating every issue into
+one deterministic result; it is covered by `loadsChallengeWithCatalogueWhenEveryReferenceResolves`,
+`rejectsChallengeWithCatalogueWhenAnAvailableEquipmentReferenceIsUnknown`,
+`rejectsChallengeWithCatalogueWhenCatalogueItselfHasDuplicateItemIds`, and
+`rejectsChallengeWithCatalogueWhenTheDefinitionItselfIsContentInvalid`.
+
+With this pass, all six C5 acceptance criteria have executable proof. C5 is now considered
+**complete**. As with C1-C4, this does not make the game playable, is not Engine Readiness
+evidence, and does not itself expand the fixture set into every archetype named in the C5 goal
+narrative (identify-and-relieve-bottleneck, capacity/cost, capacity/transfer, tighter budget/
+deadline) as a full production content library -- it demonstrates that the content-loading path,
+once exercised by several varied fixtures, satisfies every stated acceptance criterion. A larger
+production reference-content catalogue remains a content-authoring task for later game
+integration, not an open C5 acceptance gap.
 
 ## 10. Relationship to Engine Readiness
 

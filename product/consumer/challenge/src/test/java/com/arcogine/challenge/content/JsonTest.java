@@ -57,4 +57,29 @@ class JsonTest {
         assertEquals(Map.of(), Json.parse("{}"));
         assertEquals(List.of(), Json.parse("[]"));
     }
+
+    @Test
+    void rejectsLeadingZeroInteger() {
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("01"));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("-01"));
+    }
+
+    @Test
+    void acceptsValidZeroLedNumericLiterals() throws JsonSyntaxException {
+        assertEquals(0L, Json.parse("0"));
+        assertEquals(0.5, Json.parse("0.5"));
+        assertEquals(0L, Json.parse("-0"));
+    }
+
+    @Test
+    void rejectsRawControlCharacterInString() {
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("\"a\nb\""));
+        assertThrows(JsonSyntaxException.class, () -> Json.parse("\"a\tb\""));
+    }
+
+    @Test
+    void acceptsEscapedControlCharactersInString() throws JsonSyntaxException {
+        assertEquals("a\nb", Json.parse("\"a\\nb\""));
+        assertEquals("a\tb", Json.parse("\"a\\tb\""));
+    }
 }

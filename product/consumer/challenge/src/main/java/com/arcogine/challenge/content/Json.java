@@ -151,6 +151,8 @@ final class Json {
                     case 'u' -> builder.append(parseUnicodeEscape());
                     default -> throw error("invalid escape '\\" + escape + "'");
                 }
+            } else if (c <= 0x1F) {
+                throw error("unescaped control character in string");
             } else {
                 builder.append(c);
             }
@@ -196,8 +198,13 @@ final class Json {
         if (peek() == '-') {
             position++;
         }
+        int integerPartStart = position;
         while (position < source.length() && Character.isDigit(source.charAt(position))) {
             position++;
+        }
+        int integerPartLength = position - integerPartStart;
+        if (integerPartLength > 1 && source.charAt(integerPartStart) == '0') {
+            throw error("leading zero not allowed in number");
         }
         if (position < source.length() && source.charAt(position) == '.') {
             isIntegerLiteral = false;

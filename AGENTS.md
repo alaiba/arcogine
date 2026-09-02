@@ -37,6 +37,7 @@ Do not replace known repository context with generic GitHub discovery.
 
 Some repository tasks have additional repository-owned operating contracts.
 
+- **Work planning:** when asked to re-ground initiative progress, decide what to work on next, prioritize open work, identify blocked versus ready slices, identify safe parallel lanes, or generate a handoff prompt for a recommended next slice, read and follow [`.github/agents/work-planner.agent.md`](.github/agents/work-planner.agent.md) in addition to this file.
 - **Consistency review:** when asked to perform a repository consistency
   review, documentation/architecture reconciliation, periodic consistency
   sweep, or to operate as the consistency agent, read and follow

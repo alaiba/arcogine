@@ -536,11 +536,21 @@ C5's content-loading layer is implemented in `com.arcogine.challenge.content`
 plain JSON -- independent of any rendering technology -- and requires a `schemaVersion` field
 (`"challenge-content:v1"` / `"equipment-catalogue:v1"`) distinct from `ChallengeIdentity.version`
 and `EvaluationPolicyIdentity.version`, so content-format evolution and challenge-semantics
-versioning can move independently. The loader does not reimplement validation rules: it decodes
-JSON into the existing C1/C2 types and then delegates to the existing
-`ChallengeDefinitionValidator` and `EquipmentCatalogueValidator`, returning separate, structured
-`ChallengeContentIssue` outcomes for decode failures, definition-validator failures,
-catalogue-validator failures, and unsupported-evaluation-policy failures. `EvaluationPolicyResolver`
+versioning can move independently. The loader does not reimplement validation rules, but its three
+entry points draw the decode/validate boundary differently: `load(String)` performs structural
+decoding only -- consistent with `ChallengeContentLoadResult`'s own contract that a decoded
+definition's content validity is a separate, later caller step -- and never itself invokes
+`ChallengeDefinitionValidator`; `loadCatalogue(String)` decodes and then always runs
+`EquipmentCatalogueValidator.validate` before reporting success; and
+`loadChallengeWithCatalogue(String, String)` is the one entry point that aggregates both decode
+steps, both content validators (`ChallengeDefinitionValidator` and
+`EquipmentCatalogueValidator.validate`), catalogue-provenance binding/verification (challenge
+`catalogueIdentity`/`catalogueSemanticFingerprint` against the actually resolved catalogue), and
+`EquipmentCatalogueValidator.validateChallengeResolution` into one deterministic, structured
+`ChallengeContentIssue` outcome. A caller that needs `load(String)`'s decoded definition to also be
+content-valid must run it through `ChallengeDefinitionValidator` itself, exactly as
+`ChallengeContentLoaderTest.loadsAMinimalValidDefinition` and the other single-document tests do.
+`EvaluationPolicyResolver`
 is an immutable static registry, currently mapping only
 `ReferenceChallengeEvaluationPolicy` (`policy.contract-completion` / version `"1"`). Covered by
 `JsonTest`, `ChallengeContentLoaderTest`, and `EvaluationPolicyResolverTest`.
@@ -571,13 +581,20 @@ budget, floor-bounds, and overlap outcomes.
    `ChallengeContentLoaderTest.loadsMultipleDistinctChallengeDefinitionsThroughTheSameContentPath`
    loads five JSON fixtures with distinct floor size, starting budget, deadline, workload quantity,
    and available-equipment sets (spanning bottleneck-relief, capacity/cost-tradeoff, and
-   tight-deadline archetypes) through the single `ChallengeContentLoader.load(String)` entry point,
-   asserts each round-trips to a distinct, content-valid `ChallengeDefinition`, and confirms each
-   passes `ChallengeDefinitionValidator`.
+   tight-deadline archetypes) through the single `ChallengeContentLoader.load(String)` entry point
+   and asserts each round-trips to a distinct, structurally complete `ChallengeDefinition`.
+   `load(String)` itself performs structural decoding only -- it never calls
+   `ChallengeDefinitionValidator` (see the implementation-status note above); content validity of
+   these particular fixtures is not asserted by this test. A caller that needs both decoding and
+   content validation for a single challenge document must additionally run the decoded definition
+   through `ChallengeDefinitionValidator.validate(...)`, or use
+   `loadChallengeWithCatalogue(String, String)`, which runs the full pipeline in one call.
 2. **Content validation is independent of rendering technology -- met.** `ChallengeContentLoader`
-   decodes plain JSON via the game-owned `Json` parser and delegates to
-   `ChallengeDefinitionValidator`/`EquipmentCatalogueValidator`; nothing in the content-loading
-   package depends on a UI, rendering, or presentation technology.
+   decodes plain JSON via the game-owned `Json` parser, and `loadCatalogue`/
+   `loadChallengeWithCatalogue` delegate content validation to `ChallengeDefinitionValidator`/
+   `EquipmentCatalogueValidator` (see the implementation-status note above on which entry point
+   validates what); nothing in the content-loading package depends on a UI, rendering, or
+   presentation technology.
 3. **Reference fixtures cover challenge-definition failures, candidate-admissibility failures,
    pass/fail boundaries, and score/rating thresholds -- met.** Challenge-definition failures:
    `ChallengeContentLoaderTest.loadingSucceedsButValidatorCatchesContentInvalidValues` and the

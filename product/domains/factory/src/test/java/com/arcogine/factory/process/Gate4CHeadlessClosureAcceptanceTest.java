@@ -20,6 +20,8 @@ import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,6 +116,93 @@ class Gate4CHeadlessClosureAcceptanceTest {
                             .map(PendingWorkObservation::jobId)
                             .collect(Collectors.toCollection(java.util.LinkedHashSet::new)),
                     observation.performance().backlog());
+        }
+    }
+
+    /**
+     * Two fully interchangeable single-step machines: submitting three units starts two of them
+     * immediately and leaves the third in the cross-machine multi-eligible backlog, so the first
+     * {@code TaskEnd} frees a machine that must then pick that waiting job up. This is the shape
+     * that exposes a {@code TaskEnd} dispatch cascade missing from the supported event stream.
+     */
+    private static FactoryModelVersion twoInterchangeableMachinesModel() {
+        return FactoryModelPublisher.publish(new FactoryModel(
+                List.of(
+                        new ResourceDefinition(new MachineId(1), "Cell A", 1, null, 0),
+                        new ResourceDefinition(new MachineId(2), "Cell B", 1, null, 0)),
+                List.of(new OperationDefinition(
+                        1,
+                        "Make",
+                        List.of(new OperationStepDefinition(
+                                1, "MAKE", Set.of(new MachineId(1), new MachineId(2)), 5)))),
+                List.of(new ProductDefinition(new ProductId(1), "Widget", 1))));
+    }
+
+    /**
+     * The placement half of the supported consumer view -- what every job is doing, where, and what
+     * is still in the cross-machine multi-eligible backlog -- with a transition function that
+     * consumes nothing but supported {@link RuntimeEventEnvelope}s.
+     *
+     * <p>This is the closure evidence the G4-C criterion actually requires: {@code
+     * of(earlier).applyAll(delta)} equalling {@code of(later)} proves a consumer can derive the
+     * later placement state from an earlier observation using only the supported event stream,
+     * without re-observing or reproducing internal dispatch logic.
+     */
+    private record PlacementView(
+            Map<JobId, JobStatus> statusByJob,
+            Map<JobId, MachineId> assignedMachineByJob,
+            Set<JobId> pendingMultiEligibleJobs) {
+
+        static PlacementView of(RuntimeObservation observation) {
+            Map<JobId, JobStatus> status = new LinkedHashMap<>();
+            observation.jobs().forEach(job -> status.put(job.jobId(), job.status()));
+            Map<JobId, MachineId> assigned = new LinkedHashMap<>();
+            observation.resources().forEach(resource ->
+                    resource.activeJobIds().forEach(jobId -> assigned.put(jobId, resource.machineId())));
+            return new PlacementView(
+                    status,
+                    assigned,
+                    observation.pendingWork().stream()
+                            .map(PendingWorkObservation::jobId)
+                            .collect(Collectors.toCollection(LinkedHashSet::new)));
+        }
+
+        PlacementView applyAll(List<RuntimeEventEnvelope> events) {
+            Map<JobId, JobStatus> status = new LinkedHashMap<>(statusByJob);
+            Map<JobId, MachineId> assigned = new LinkedHashMap<>(assignedMachineByJob);
+            Set<JobId> pending = new LinkedHashSet<>(pendingMultiEligibleJobs);
+            for (RuntimeEventEnvelope event : events) {
+                switch (event.payload()) {
+                    case RuntimeEventPayload.OrderAccepted accepted ->
+                        accepted.jobIds().forEach(jobId -> status.put(jobId, JobStatus.Queued));
+                    case RuntimeEventPayload.JobDispatched dispatched -> {
+                        status.put(dispatched.jobId(), JobStatus.InProgress);
+                        assigned.put(dispatched.jobId(), dispatched.machineId());
+                        pending.remove(dispatched.jobId());
+                    }
+                    case RuntimeEventPayload.JobWaiting waiting -> {
+                        status.put(waiting.jobId(), JobStatus.Queued);
+                        assigned.remove(waiting.jobId());
+                        if (waiting.eligibleMachines().size() > 1) {
+                            pending.add(waiting.jobId());
+                        } else {
+                            pending.remove(waiting.jobId());
+                        }
+                    }
+                    case RuntimeEventPayload.JobStepCompleted completed -> {
+                        status.put(
+                                completed.jobId(),
+                                completed.jobComplete() ? JobStatus.Completed : JobStatus.Queued);
+                        assigned.remove(completed.jobId());
+                        if (completed.jobComplete()) {
+                            pending.remove(completed.jobId());
+                        }
+                    }
+                    case RuntimeEventPayload.OrderCompleted ignored -> { }
+                    case RuntimeEventPayload.MachineAvailabilityChanged ignored -> { }
+                }
+            }
+            return new PlacementView(status, assigned, pending);
         }
     }
 
@@ -220,9 +309,16 @@ class Gate4CHeadlessClosureAcceptanceTest {
                             .anyMatch(o -> o.orderId().equals(completed.orderId()) && o.complete()));
                 case RuntimeEventPayload.JobDispatched dispatched ->
                     assertEquals(orderId, jobsAfter.get(dispatched.jobId()).orderId());
+                case RuntimeEventPayload.JobWaiting waiting ->
+                    assertEquals(orderId, jobsAfter.get(waiting.jobId()).orderId());
                 default -> throw new AssertionError("unexpected supported payload " + event.payload());
             }
         }
+
+        // 2b. The delta is not merely consistent with the later observation, it is sufficient for
+        //     it: replaying only these supported events onto the earlier observation's placement
+        //     state reproduces the later observation's placement state exactly.
+        assertEquals(PlacementView.of(after), PlacementView.of(before).applyAll(delta));
 
         // 3. Conversely, the state the later observation reports that the earlier one did not is
         //    entirely explained by the delta: the order became complete, and the delta says so.
@@ -232,6 +328,51 @@ class Gate4CHeadlessClosureAcceptanceTest {
                 .anyMatch(e -> e.eventType() == RuntimeEventType.ORDER_COMPLETED
                         && ((RuntimeEventPayload.OrderCompleted) e.payload()).orderId().equals(orderId)));
         assertEquals(3, afterView.completedQuantityByOrder().get(orderId));
+    }
+
+    /**
+     * REV-002 regression evidence: a {@code TaskEnd} authoritatively re-places work beyond the job
+     * whose step ended -- the freed machine immediately picks up backlog work -- and the supported
+     * delta must say so. Reporting only {@code JOB_STEP_COMPLETED} here would leave a consumer
+     * unable to derive the newly dispatched job's status or machine assignment from the event
+     * stream, defeating the G4-C closure claim.
+     */
+    @Test
+    void taskEndDispatchCascadeIsReportedByTheSupportedEventStream() throws SimError {
+        FactoryRuntime runtime = FactoryRuntime.forModel(twoInterchangeableMachinesModel());
+        runtime.submitWorkload(new ProductId(1), 3, UNIT_PRICE).orElseThrow();
+        runtime.drainSupportedEvents();
+
+        RuntimeObservation before = runtime.observe();
+        PlacementView beforeView = PlacementView.of(before);
+        assertEquals(2, beforeView.assignedMachineByJob().size(), "two units start immediately");
+        assertEquals(1, beforeView.pendingMultiEligibleJobs().size(), "the third waits on both cells");
+        JobId waiting = beforeView.pendingMultiEligibleJobs().iterator().next();
+
+        // Exactly one authoritative transition: the first unit's TaskEnd, which frees its cell.
+        runtime.advance().orElseThrow();
+        List<RuntimeEventEnvelope> delta = runtime.drainSupportedEvents();
+        RuntimeObservation after = runtime.observe();
+        PlacementView afterView = PlacementView.of(after);
+
+        // The freed capacity genuinely re-placed the waiting job -- that is the authoritative fact.
+        assertEquals(JobStatus.InProgress, afterView.statusByJob().get(waiting));
+        assertTrue(afterView.assignedMachineByJob().containsKey(waiting));
+        assertTrue(afterView.pendingMultiEligibleJobs().isEmpty());
+
+        // ... and the supported delta identifies it, by job and by the machine it landed on.
+        RuntimeEventPayload.JobDispatched dispatched = delta.stream()
+                .filter(e -> e.eventType() == RuntimeEventType.JOB_DISPATCHED)
+                .map(e -> (RuntimeEventPayload.JobDispatched) e.payload())
+                .filter(payload -> payload.jobId().equals(waiting))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "no JOB_DISPATCHED for the job the TaskEnd cascade placed; delta was " + delta));
+        assertEquals(afterView.assignedMachineByJob().get(waiting), dispatched.machineId());
+
+        // Closure: the delta alone carries the earlier placement state to the later one.
+        assertNotEquals(beforeView, afterView);
+        assertEquals(afterView, beforeView.applyAll(delta));
     }
 
     @Test

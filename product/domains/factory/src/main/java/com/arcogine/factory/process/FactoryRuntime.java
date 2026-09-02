@@ -20,6 +20,7 @@ import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -291,19 +292,106 @@ public class FactoryRuntime {
                                 jobId, orderId, job.currentMachine(), job.currentStep()),
                         List.of(new AffectedEntityRef.JobRef(jobId), new AffectedEntityRef.OrderRef(orderId)));
             } else {
-                Set<MachineId> eligible = pendingEligibility.get(jobId);
-                if (eligible == null) {
-                    eligible = machinesView().stream()
-                            .filter(m -> m.queuedJobs().contains(jobId))
-                            .map(MachineView::id)
-                            .collect(Collectors.toCollection(LinkedHashSet::new));
-                }
                 emit(
                         RuntimeEventType.JOB_WAITING,
                         time,
-                        new RuntimeEventPayload.JobWaiting(jobId, orderId, eligible),
+                        new RuntimeEventPayload.JobWaiting(jobId, orderId, waitingOn(jobId, pendingEligibility)),
                         List.of(new AffectedEntityRef.JobRef(jobId), new AffectedEntityRef.OrderRef(orderId)));
             }
+        }
+    }
+
+    /**
+     * The machine(s) {@code jobId} is currently waiting on: its cross-machine multi-eligible
+     * backlog entry when it has one, otherwise the single machine whose own queue holds it.
+     */
+    private Set<MachineId> waitingOn(JobId jobId, Map<JobId, Set<MachineId>> pendingEligibility) {
+        Set<MachineId> eligible = pendingEligibility.get(jobId);
+        if (eligible != null) {
+            return eligible;
+        }
+        return machinesView().stream()
+                .filter(m -> m.queuedJobs().contains(jobId))
+                .map(MachineView::id)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    /**
+     * The authoritative placement of one job: what it is doing, where, and for which step. Any
+     * difference between two snapshots of this triple is an authoritative placement change a
+     * consumer must be told about through the supported event stream (ADR-0011 REV-002) -- the step
+     * index is part of it because a job can legitimately be re-dispatched onto the same machine for
+     * its next routing step.
+     */
+    private record JobPlacement(JobStatus status, MachineId machine, int step) {
+        static JobPlacement of(JobView job) {
+            return new JobPlacement(job.status(), job.currentMachine(), job.currentStep());
+        }
+    }
+
+    /**
+     * Snapshots the placement of every job currently occupying machine capacity. Deliberately not a
+     * snapshot of every job: only work that is (or is about to be) machine-assigned can change
+     * placement during a {@code TaskEnd}, and the number of concurrently active jobs is bounded by
+     * published machine concurrency, so this stays proportional to capacity rather than to backlog
+     * size -- a full per-job snapshot would make each of a large order's completions cost O(jobs).
+     */
+    private Map<JobId, JobPlacement> activePlacements() {
+        Map<JobId, JobPlacement> snapshot = new LinkedHashMap<>();
+        for (MachineView machine : machinesView()) {
+            for (JobId jobId : machine.activeJobs()) {
+                snapshot.put(jobId, JobPlacement.of(factory.job(jobId)));
+            }
+        }
+        return snapshot;
+    }
+
+    /**
+     * Emits {@link RuntimeEventType#JOB_DISPATCHED}/{@link RuntimeEventType#JOB_WAITING} for every
+     * placement change a just-processed {@code TaskEnd} authoritatively caused -- the same
+     * snapshot/diff derivation {@link #emitNewlyDispatchedJobs} already uses for the
+     * machine-availability cascade, widened to cover both directions of placement change.
+     *
+     * <p>This is what closes the {@code TaskEnd} path (ADR-0011 REV-002). Completing a step frees
+     * capacity, and {@code FactoryHandler} re-places not only the completing job onto its next
+     * routing step but also whatever queued or multi-eligible backlog work that freed machine can
+     * now accept; reporting only {@code JOB_STEP_COMPLETED} would leave a consumer unable to derive
+     * those jobs' status or machine assignment from the supported event stream.
+     *
+     * <p>The two directions are found differently because the transition can only move work one
+     * way. Anything newly occupying capacity -- including a job re-dispatched onto the very same
+     * machine for its next step, which is why {@link JobPlacement} carries the step index -- shows
+     * up as a difference against {@code activeBefore}. The only job that can newly stop occupying
+     * capacity without completing is the one whose step just ended, so that is the single {@code
+     * JOB_WAITING} candidate. Dispatches are ordered deterministically by order id then ordinal, so
+     * repeated runs of the same scenario emit identical event streams.
+     */
+    private void emitPlacementChanges(Map<JobId, JobPlacement> activeBefore, JobId completedJobId, SimTime time) {
+        Map<JobId, JobPlacement> activeAfter = activePlacements();
+        activeAfter.entrySet().stream()
+                .filter(entry -> !entry.getValue().equals(activeBefore.get(entry.getKey())))
+                .map(entry -> factory.job(entry.getKey()))
+                .sorted(Comparator.comparing((JobView view) -> view.orderId().value())
+                        .thenComparingLong(JobView::ordinalWithinOrder))
+                .forEach(job -> emit(
+                        RuntimeEventType.JOB_DISPATCHED,
+                        time,
+                        new RuntimeEventPayload.JobDispatched(
+                                job.id(), job.orderId(), job.currentMachine(), job.currentStep()),
+                        List.of(new AffectedEntityRef.JobRef(job.id()), new AffectedEntityRef.OrderRef(job.orderId()))));
+
+        JobView completed = factory.job(completedJobId);
+        if (completed.status() != JobStatus.Completed && !activeAfter.containsKey(completedJobId)) {
+            Map<JobId, Set<MachineId>> pendingEligibility = pendingWorkView().stream()
+                    .collect(Collectors.toMap(PendingWorkView::jobId, PendingWorkView::eligibleMachines));
+            emit(
+                    RuntimeEventType.JOB_WAITING,
+                    time,
+                    new RuntimeEventPayload.JobWaiting(
+                            completed.id(), completed.orderId(), waitingOn(completed.id(), pendingEligibility)),
+                    List.of(
+                            new AffectedEntityRef.JobRef(completed.id()),
+                            new AffectedEntityRef.OrderRef(completed.orderId())));
         }
     }
 
@@ -323,6 +411,11 @@ public class FactoryRuntime {
         if (next.isPresent()) {
             Event event = next.get();
             List<Event> triggered = new ArrayList<>();
+            // Placement is snapshotted before the mutation, so the dispatch cascade a TaskEnd can
+            // trigger (next-step placement plus whatever the freed machine picks up from its queue
+            // or the multi-eligible backlog) is derivable by diffing authoritative state afterwards.
+            Map<JobId, JobPlacement> activeBefore =
+                    event.payload() instanceof EventPayload.TaskEnd ? activePlacements() : Map.of();
             scheduler.startCapturing(triggered);
             try {
                 factory.handleEvent(event, scheduler);
@@ -333,7 +426,7 @@ public class FactoryRuntime {
                 // completing its step before a later dispatch cascade fails) must still be
                 // reported -- see requirement 1 (post-authoritative publication) and the
                 // faultReportsOnlyAuthoritativeChangesThatActuallyOccurred acceptance evidence.
-                recordSupportedEventsFor(event, triggered);
+                recordSupportedEventsFor(event, triggered, activeBefore);
             }
         }
         return next;
@@ -346,9 +439,12 @@ public class FactoryRuntime {
      * authoritative state actually reflects it. {@code triggeredInternalEvents} is whatever the
      * internal scheduler additionally scheduled while processing {@code trigger}, inspected only for
      * evidence of a further authoritative fact (order completion) that already happened -- never
-     * itself re-exposed as the supported payload.
+     * itself re-exposed as the supported payload. {@code activeBefore} is the pre-mutation
+     * machine-assignment snapshot {@link #advance()} took, diffed here so every placement change the
+     * transition authoritatively caused is reported too (ADR-0011 REV-002).
      */
-    private void recordSupportedEventsFor(Event trigger, List<Event> triggeredInternalEvents) {
+    private void recordSupportedEventsFor(
+            Event trigger, List<Event> triggeredInternalEvents, Map<JobId, JobPlacement> activeBefore) {
         if (!(trigger.payload() instanceof EventPayload.TaskEnd taskEnd)) {
             // Internal scheduler machinery this runtime never itself schedules through its own
             // supported API surface (OrderCreation/MachineAvailabilityChange arrive only via
@@ -376,6 +472,8 @@ public class FactoryRuntime {
                                 new AffectedEntityRef.JobRef(oc.jobId())));
             }
         }
+
+        emitPlacementChanges(activeBefore, taskEnd.jobId(), trigger.time());
     }
 
     /**

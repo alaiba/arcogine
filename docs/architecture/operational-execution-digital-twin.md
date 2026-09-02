@@ -23,7 +23,7 @@ The current implementation is simulation-first and does not execute real-world c
 
 Governance G1 is now implemented and authoritative. Operational work that needs durable model/revision identity must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority` rather than inventing synthetic production substitutes. Governance G2's initial slice (`ChangeSet`/`ImpactScope`/`SemanticChange` and the factory-domain semantic comparator) is also now implemented; operational work that needs semantic change attribution should consume it rather than inventing a substitute. G3+ Governance capabilities (requirements/assertions, conformance, evidence use, findings, exceptions, authorization) remain future dependencies where applicable.
 
-Engine Gate 4 is only partially implemented: `RunId` and consumer-neutral `RuntimeObservation` have landed through G4-A, and the supported `RuntimeEvent` contract has landed through G4-B, while Gate 4 headless closure (G4-C) remains outstanding. ADR-0011 defines the target event contract; G4-B implements it at the `FactoryRuntime` boundary but does not by itself close Gate 4.
+Engine Gate 4 core/headless closure is now complete: `RunId` and consumer-neutral `RuntimeObservation` landed through G4-A, the supported `RuntimeEvent` contract landed through G4-B, and G4-C closed the headless acceptance contract (fresh-observation reconstruction without replay, observation/event closure, bottleneck identification from the supported observation, and structural enforcement that API/frontend DTOs never re-enter domain decision paths). ADR-0011 defines the event contract that G4-B/G4-C implement at the `FactoryRuntime` boundary. Gate 4 distribution hardening beyond the headless boundary (G4-D transport/SSE/CLI migration, DH-E retained history/replay/reconnect) remains outstanding and out of scope for Operational Execution to assume.
 
 ## 2. Execution context has classification and concrete identity
 
@@ -299,8 +299,9 @@ Engine concepts such as workload, dispatch, queues, operations, observations, an
 Current Engine Gate 4 status matters at this boundary:
 
 - `RunId` and consumer-neutral `RuntimeObservation` are implemented through G4-A;
-- the supported `RuntimeEvent` contract is implemented through G4-B, while Gate 4 headless closure (G4-C) is still outstanding;
-- Operational Execution must not claim or depend on a fully closed Gate 4 merely because G4-B implements the supported event contract.
+- the supported `RuntimeEvent` contract is implemented through G4-B;
+- Gate 4 core/headless closure is complete through G4-C: fresh observation reconstruction without replay, observation/event closure, and consumer-neutral bottleneck identification are all proven at the `FactoryRuntime` boundary;
+- Operational Execution must not claim or depend on Gate 4 distribution hardening (G4-D transport/SSE/CLI migration, DH-E retained history/replay/reconnect) merely because headless closure is complete — those remain outstanding.
 
 Shared semantics do not imply shared mutable runtime state or identical lifecycle machinery.
 
@@ -353,7 +354,7 @@ Current dependency state:
 - Governance G2 semantic `ChangeSet`/impact (initial slice) is **complete** and must be consumed for semantic change attribution where applicable; G3+ requirement/conformance/evidence/authorization capabilities remain outstanding;
 - Governance G4 conformance/finding semantics remain outstanding;
 - Governance G5 evidence-use semantics remain outstanding;
-- Engine Gate 4 G4-A observations and G4-B supported runtime events are implemented, while headless closure (G4-C) remains outstanding.
+- Engine Gate 4 core/headless closure is complete — G4-A observations, G4-B supported runtime events, and G4-C headless acceptance evidence are all implemented — while Gate 4 distribution hardening (G4-D, DH-E) remains outstanding.
 
 Synthetic fixtures remain appropriate only for still-missing sibling contracts. New synthetic G1 revision identity is no longer justified for operational deployment or revision-bound reconciliation work.
 

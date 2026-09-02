@@ -60,22 +60,54 @@ public final class ChallengeContentLoader {
 
     /** Decodes {@code source} (a JSON document) into a {@link ChallengeContentLoadResult}. */
     public static ChallengeContentLoadResult load(String source) {
+        ChallengeDecodeOutcome outcome = decodeChallenge(source);
+        if (outcome.definition() == null) {
+            return ChallengeContentLoadResult.failure(outcome.issues());
+        }
+        return ChallengeContentLoadResult.success(outcome.definition());
+    }
+
+    /**
+     * Internal decode outcome carrying not just the decoded {@link ChallengeDefinition} (or
+     * failure issues) but also whether the source document explicitly declared a
+     * {@code catalogueIdentity}/{@code catalogueSemanticFingerprint} binding, as opposed to
+     * {@code ChallengeDefinition} synthesizing its own default. {@link #load(String)} discards
+     * this distinction; {@link #loadChallengeWithCatalogue} needs it to decide whether an
+     * unspecified binding should be verified against the real catalogue or bound to it.
+     */
+    private record ChallengeDecodeOutcome(
+            ChallengeDefinition definition,
+            List<ChallengeContentIssue> issues,
+            boolean explicitCatalogueIdentity,
+            boolean explicitCatalogueFingerprint) {}
+
+    private static ChallengeDecodeOutcome decodeChallenge(String source) {
         if (source == null) {
-            return ChallengeContentLoadResult.failure(
-                    List.of(new ChallengeContentIssue("content.source.null", "$", "source must not be null")));
+            return new ChallengeDecodeOutcome(
+                    null,
+                    List.of(new ChallengeContentIssue("content.source.null", "$", "source must not be null")),
+                    false,
+                    false);
         }
 
         Object parsed;
         try {
             parsed = Json.parse(source);
         } catch (JsonSyntaxException e) {
-            return ChallengeContentLoadResult.failure(
-                    List.of(new ChallengeContentIssue("content.malformed-json", "$", e.getMessage())));
+            return new ChallengeDecodeOutcome(
+                    null,
+                    List.of(new ChallengeContentIssue("content.malformed-json", "$", e.getMessage())),
+                    false,
+                    false);
         }
 
         if (!(parsed instanceof Map<?, ?> rawRoot)) {
-            return ChallengeContentLoadResult.failure(List.of(
-                    new ChallengeContentIssue("content.root.not-object", "$", "root value must be a JSON object")));
+            return new ChallengeDecodeOutcome(
+                    null,
+                    List.of(new ChallengeContentIssue(
+                            "content.root.not-object", "$", "root value must be a JSON object")),
+                    false,
+                    false);
         }
 
         List<ChallengeContentIssue> issues = new ArrayList<>();
@@ -120,15 +152,19 @@ public final class ChallengeContentLoader {
                 : requireString(catalogueIdentityNode, "catalogueIdentity.version", issues);
 
         String catalogueSemanticFingerprint =
-                optionalString(root, "catalogueSemanticFingerprint", issues);
+                optionalNonBlankString(root, "catalogueSemanticFingerprint", issues);
 
         if (policyId != null && policyVersion != null) {
             EvaluationPolicyResolver.resolve(new EvaluationPolicyIdentity(policyId, policyVersion))
                     .ifPresent(issue -> issues.add(issue));
         }
 
+        boolean explicitCatalogueIdentity = catalogueIdentityNode != null;
+        boolean explicitCatalogueFingerprint = catalogueSemanticFingerprint != null;
+
         if (!issues.isEmpty()) {
-            return ChallengeContentLoadResult.failure(issues);
+            return new ChallengeDecodeOutcome(
+                    null, issues, explicitCatalogueIdentity, explicitCatalogueFingerprint);
         }
 
         ChallengeIdentity identity = new ChallengeIdentity(identityId, identityVersion);
@@ -154,7 +190,8 @@ public final class ChallengeContentLoader {
             definition = new ChallengeDefinition(
                     identity, floor, startingBudget, workload, availableEquipment, deadline, evaluationPolicy);
         }
-        return ChallengeContentLoadResult.success(definition);
+        return new ChallengeDecodeOutcome(
+                definition, List.of(), explicitCatalogueIdentity, explicitCatalogueFingerprint);
     }
 
     /** Decodes {@code source} (a JSON document) into an {@link EquipmentCatalogueContentLoadResult}. */
@@ -220,23 +257,68 @@ public final class ChallengeContentLoader {
      */
     public static ChallengeWithCatalogueLoadResult loadChallengeWithCatalogue(
             String challengeSource, String catalogueSource) {
-        ChallengeContentLoadResult challengeResult = load(challengeSource);
+        ChallengeDecodeOutcome challengeOutcome = decodeChallenge(challengeSource);
         EquipmentCatalogueContentLoadResult catalogueResult = loadCatalogue(catalogueSource);
 
         List<ChallengeContentIssue> issues = new ArrayList<>();
-        issues.addAll(challengeResult.issues());
+        issues.addAll(challengeOutcome.issues());
         issues.addAll(catalogueResult.issues());
         if (!issues.isEmpty()) {
             return ChallengeWithCatalogueLoadResult.failure(issues);
         }
 
-        ChallengeDefinition definition = challengeResult.definition();
+        ChallengeDefinition definition = challengeOutcome.definition();
         EquipmentCatalogue catalogue = catalogueResult.catalogue();
 
         List<ChallengeDefinitionIssue> definitionIssues =
                 ChallengeDefinitionValidator.validate(definition).issues();
         for (ChallengeDefinitionIssue issue : definitionIssues) {
             issues.add(new ChallengeContentIssue("definition." + issue.code(), issue.path(), issue.message()));
+        }
+
+        // C2's CandidateAdmissibilityPolicy independently rejects a catalogue identity mismatch
+        // or an unbound/mismatched semantic fingerprint. A definition/catalogue pair loaded here
+        // as "success" must not be one C2 would immediately reject on those grounds. When the
+        // source explicitly declared a catalogueIdentity/catalogueSemanticFingerprint, that is an
+        // assertion this method verifies against the actually-resolved catalogue; when it did
+        // not, ChallengeDefinition's own default synthesized a placeholder that this method binds
+        // to the real, resolved catalogue instead of leaving unbound/mismatched.
+        if (challengeOutcome.explicitCatalogueIdentity()
+                && !definition.catalogueIdentity().equals(catalogue.identity())) {
+            issues.add(new ChallengeContentIssue(
+                    "content.catalogue.identity-mismatch",
+                    "catalogueIdentity",
+                    "challenge catalogueIdentity does not match the loaded catalogue's identity: "
+                            + catalogue.identity()));
+        }
+        if (challengeOutcome.explicitCatalogueFingerprint()
+                && !definition.catalogueSemanticFingerprint().equals(catalogue.semanticFingerprint())) {
+            issues.add(new ChallengeContentIssue(
+                    "content.catalogue.semantic-fingerprint-mismatch",
+                    "catalogueSemanticFingerprint",
+                    "catalogue content does not match the challenge's declared semantic fingerprint"));
+        }
+
+        if (!issues.isEmpty()) {
+            return ChallengeWithCatalogueLoadResult.failure(issues);
+        }
+
+        if (!challengeOutcome.explicitCatalogueIdentity() || !challengeOutcome.explicitCatalogueFingerprint()) {
+            EquipmentCatalogueIdentity boundIdentity =
+                    challengeOutcome.explicitCatalogueIdentity() ? definition.catalogueIdentity() : catalogue.identity();
+            String boundFingerprint = challengeOutcome.explicitCatalogueFingerprint()
+                    ? definition.catalogueSemanticFingerprint()
+                    : catalogue.semanticFingerprint();
+            definition = new ChallengeDefinition(
+                    definition.identity(),
+                    definition.floor(),
+                    definition.startingBudget(),
+                    definition.workload(),
+                    definition.availableEquipment(),
+                    definition.deadline(),
+                    definition.evaluationPolicy(),
+                    boundIdentity,
+                    boundFingerprint);
         }
 
         List<EquipmentCatalogueIssue> resolutionIssues =
@@ -296,11 +378,20 @@ public final class ChallengeContentLoader {
             return null;
         }
         Object value = offerNode.get("quantityLimit");
-        if (!(value instanceof Double d) || d != Math.floor(d) || d.isInfinite()) {
+        if (value instanceof Double) {
             issues.add(new ChallengeContentIssue("content.field.type", path, "must be an integer"));
             return null;
         }
-        return d.intValue();
+        if (!(value instanceof Number n)) {
+            issues.add(new ChallengeContentIssue("content.field.type", path, "must be an integer"));
+            return null;
+        }
+        if (value instanceof java.math.BigInteger || n.longValue() < Integer.MIN_VALUE || n.longValue() > Integer.MAX_VALUE) {
+            issues.add(new ChallengeContentIssue(
+                    "content.field.out-of-range", path, "must be within the 32-bit integer range"));
+            return null;
+        }
+        return n.intValue();
     }
 
     private static void requireSchemaVersion(
@@ -393,14 +484,37 @@ public final class ChallengeContentLoader {
         return s;
     }
 
+    /**
+     * Like {@link #optionalString}, but also rejects a present-but-blank value with a structured
+     * issue rather than letting it reach a downstream constructor that itself throws for a blank
+     * value (see {@code ChallengeDefinition}'s constructor check on {@code
+     * catalogueSemanticFingerprint}).
+     */
+    private static String optionalNonBlankString(
+            Map<String, Object> parent, String path, List<ChallengeContentIssue> issues) {
+        String value = optionalString(parent, path, issues);
+        if (value != null && value.isBlank()) {
+            issues.add(new ChallengeContentIssue("content.field.blank", path, "must not be blank when present"));
+            return null;
+        }
+        return value;
+    }
+
     private static Integer requireInt(
             Map<String, Object> parent, String path, List<ChallengeContentIssue> issues) {
-        Double value = requireNumber(parent, path, issues);
+        Number value = requireNumber(parent, path, issues);
         if (value == null) {
             return null;
         }
-        if (value != Math.floor(value) || value.isInfinite()) {
+        if (value instanceof Double) {
             issues.add(new ChallengeContentIssue("content.field.type", path, "must be an integer"));
+            return null;
+        }
+        if (value instanceof java.math.BigInteger
+                || value.longValue() < Integer.MIN_VALUE
+                || value.longValue() > Integer.MAX_VALUE) {
+            issues.add(new ChallengeContentIssue(
+                    "content.field.out-of-range", path, "must be within the 32-bit integer range"));
             return null;
         }
         return value.intValue();
@@ -408,18 +522,23 @@ public final class ChallengeContentLoader {
 
     private static Long requireLong(
             Map<String, Object> parent, String path, List<ChallengeContentIssue> issues) {
-        Double value = requireNumber(parent, path, issues);
+        Number value = requireNumber(parent, path, issues);
         if (value == null) {
             return null;
         }
-        if (value != Math.floor(value) || value.isInfinite()) {
+        if (value instanceof Double) {
             issues.add(new ChallengeContentIssue("content.field.type", path, "must be an integer"));
+            return null;
+        }
+        if (value instanceof java.math.BigInteger) {
+            issues.add(new ChallengeContentIssue(
+                    "content.field.out-of-range", path, "must be within the 64-bit integer range"));
             return null;
         }
         return value.longValue();
     }
 
-    private static Double requireNumber(
+    private static Number requireNumber(
             Map<String, Object> parent, String path, List<ChallengeContentIssue> issues) {
         String simpleKey = simpleKey(path);
         if (!parent.containsKey(simpleKey) || parent.get(simpleKey) == null) {
@@ -427,11 +546,11 @@ public final class ChallengeContentLoader {
             return null;
         }
         Object value = parent.get(simpleKey);
-        if (!(value instanceof Double d)) {
+        if (!(value instanceof Number n)) {
             issues.add(new ChallengeContentIssue("content.field.type", path, "must be a number"));
             return null;
         }
-        return d;
+        return n;
     }
 
     private static String simpleKey(String path) {

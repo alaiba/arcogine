@@ -26,6 +26,15 @@ public interface MachineView {
 
     int queueDepth();
 
+    /**
+     * The jobs waiting in this machine's own single-eligible-machine queue, in dispatch order --
+     * distinct from the cross-machine multi-eligible backlog ({@code
+     * com.arcogine.factory.process.PendingWorkView}), which is not reflected here. Needed so a
+     * runtime-event consumer can attribute a not-yet-dispatched job to the specific machine it is
+     * waiting on (ADR-0011 REV-002).
+     */
+    List<JobId> queuedJobs();
+
     Double capacityLiters();
 
     long setupTime();

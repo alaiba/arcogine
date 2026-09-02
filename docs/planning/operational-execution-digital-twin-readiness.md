@@ -42,7 +42,8 @@ This plan was originally written while several sibling contracts were still pros
 | Governance G4 conformance / findings | **Outstanding** | O7 conformance/finding integration remains dependent on Governance |
 | Governance G5 evidence / `EvidenceUse` | **Outstanding** | O5 ingestion remains independent; O9 evidence-use integration cannot close yet |
 | Engine Gate 4 G4-A runtime observation slice | **Complete** | `RunId` and consumer-neutral `RuntimeObservation` exist for one factory simulation runtime epoch |
-| Engine Gate 4 G4-B/G4-C supported runtime events / headless closure | **Outstanding** | ADR-0011 defines `RuntimeEvent`, but the supported event contract is not yet implemented or a completed Gate 4 capability |
+| Engine Gate 4 G4-B supported runtime events | **Complete** | The supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload` contract per ADR-0011 is implemented at the `FactoryRuntime` boundary |
+| Engine Gate 4 G4-C headless closure | **Outstanding** | Full Gate 4 headless acceptance closure across the runtime/observation boundary is not yet complete |
 | Operational O1 execution-context identity | **Proposed** | Next operational implementation slice after the O1 identity decision is recorded |
 
 The important Engine/Operational boundary is:
@@ -492,7 +493,7 @@ No readiness gate is satisfied merely by choosing or connecting a protocol.
 
 ## 19. Relationship to current Engine Readiness
 
-Engine Readiness continues independently. Gate 4 currently has an implemented G4-A observation slice with `RunId` and consumer-neutral `RuntimeObservation`; supported `RuntimeEvent` implementation and Gate 4 headless closure remain outstanding.
+Engine Readiness continues independently. Gate 4 currently has an implemented G4-A observation slice with `RunId` and consumer-neutral `RuntimeObservation`, and an implemented G4-B supported `RuntimeEvent` contract; Gate 4 headless closure (G4-C) remains outstanding.
 
 Operational O1 must therefore preserve both truths:
 

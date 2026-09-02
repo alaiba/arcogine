@@ -385,6 +385,8 @@ Expose enough supported runtime information for a consumer to understand the sim
 
 [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md) is the accepted architecture for Gate 4 semantics. The focused [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md) plan owns implementation slicing and evidence sequencing. In particular, internal scheduler `Event`/`EventType`/`EventPayload` remain transition machinery rather than the supported external compatibility contract; supported runtime events describe authoritative changes after processing, and a fresh observation remains sufficient to reconstruct current consumer state without full event replay.
 
+Slices G4-A (headless run identity and supported observation projection) and G4-B (supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload`/`AffectedEntityRef` contract, post-authoritative publication, run-scoped monotonic sequencing) are implemented; see the "Implemented evidence" notes under those slices in the focused Gate 4 plan for exact contracts, derivation points, and tests. G4-C (full headless acceptance closure) and G4-D (outward SSE/API/CLI/frontend consumer convergence) remain outstanding — Gate 4 is not yet closed.
+
 ### 8.2 Minimum observation
 
 The consumer-neutral observation should contain, directly or through purpose-specific projections:

@@ -10,7 +10,9 @@ import com.arcogine.factory.model.FactoryRuntimeAssembler;
 import com.arcogine.factory.orders.Order;
 import com.arcogine.factory.orders.OrderExecutionView;
 import com.arcogine.types.JobId;
+import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.MachineState;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.RunId;
@@ -18,8 +20,12 @@ import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -49,7 +55,14 @@ import java.util.stream.Stream;
  * or returning {@code void}; {@link #pendingWorkView()} exposes the cross-machine multi-eligible
  * backlog that no single machine's queue depth reflects. It deliberately does not attempt a generic
  * simulation-session framework. Gate 4-A adds the opaque run identity and current-state
- * observation; supported event envelopes and advancing cursors remain later Gate 4 work.
+ * observation; Gate 4-B adds the supported {@link RuntimeEventEnvelope} contract -- {@link
+ * #drainSupportedEvents()} -- published only after the authoritative transition each event
+ * describes has already succeeded, with {@link RuntimeObservationMetadata#latestEventSequence()}
+ * advancing in lockstep. Retained, cursor-replayable supported-event history is deliberately not
+ * this type's responsibility (ADR-0011 §8, DH-E): {@link #drainSupportedEvents()} returns and
+ * clears only the events accumulated since it was last called, so a caller wanting durable replay
+ * owns that retention itself. Persistence/recovery/checkpoint/replay semantics and consumer
+ * (SSE/frontend) migration remain later Gate 4 work.
  */
 public class FactoryRuntime {
 
@@ -57,6 +70,8 @@ public class FactoryRuntime {
     private final RecordingScheduler scheduler;
     private final FactoryModelVersion modelVersion;
     private final RunId runId;
+    private final List<RuntimeEventEnvelope> pendingSupportedEvents = new ArrayList<>();
+    private long eventSequence;
 
     private FactoryRuntime(FactoryHandler factory, FactoryModelVersion modelVersion) {
         this.factory = factory;
@@ -117,9 +132,21 @@ public class FactoryRuntime {
     public CommandResult<OrderId> submitWorkload(ProductId productId, long quantity, double unitPrice) {
         List<Event> scheduled = new ArrayList<>();
         scheduler.startCapturing(scheduled);
+        SimTime submittedAt = scheduler.currentTime();
         try {
             OrderId orderId =
                     factory.submitOrder(productId, quantity, unitPrice, scheduler.currentTime(), scheduler);
+            List<JobId> jobIds = factory.jobsView()
+                    .filter(j -> j.orderId().equals(orderId))
+                    .sorted(Comparator.comparingLong(JobView::ordinalWithinOrder))
+                    .map(JobView::id)
+                    .toList();
+            emit(
+                    RuntimeEventType.ORDER_ACCEPTED,
+                    submittedAt,
+                    new RuntimeEventPayload.OrderAccepted(orderId, productId, quantity, unitPrice, jobIds),
+                    List.of(new AffectedEntityRef.OrderRef(orderId)));
+            emitJobPlacementEvents(orderId, jobIds, submittedAt);
             return new CommandResult.Accepted<>(orderId, modelVersion, scheduled);
         } catch (SimError e) {
             return new CommandResult.Rejected<>(e, modelVersion);
@@ -166,20 +193,117 @@ public class FactoryRuntime {
                     modelVersion);
         }
 
+        // REV-001: Machine#setAvailability is a no-op when the machine is already in the
+        // requested online/offline state (e.g. bringing an already-idle machine online again).
+        // Only genuinely applied transitions -- online while previously Offline, or offline while
+        // previously not Offline -- may emit MACHINE_AVAILABILITY_CHANGED and advance the
+        // sequence; see the wasOffline/transitioned computation below.
+        boolean wasOffline = machine.get().state() == MachineState.Offline;
+        boolean transitioned = online == wasOffline;
+
+        // REV-002: snapshot every not-yet-dispatched job before mutating, so a genuine dispatch
+        // cascade triggered by this transition can be reported as JOB_DISPATCHED events derived
+        // from the resulting authoritative state, not copied from internal scheduler machinery.
+        List<JobView> waitingBefore = transitioned
+                ? factory.jobsView().filter(j -> j.status() == JobStatus.Queued).toList()
+                : List.of();
+
         List<Event> scheduled = new ArrayList<>();
         scheduler.startCapturing(scheduled);
         EventPayload.MachineAvailabilityChange requested = new EventPayload.MachineAvailabilityChange(machineId, online);
+        SimTime changedAt = scheduler.currentTime();
         try {
             factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
+            if (transitioned) {
+                emit(
+                        RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
+                        changedAt,
+                        new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
+                        List.of(new AffectedEntityRef.MachineRef(machineId)));
+                emitNewlyDispatchedJobs(waitingBefore, changedAt);
+            }
             return new CommandResult.Accepted<>(requested, modelVersion, scheduled);
         } catch (SimError e) {
             // The availability change itself (Machine#setAvailability) is the first thing
             // handleMachineAvailability does and always succeeds once the pre-checks above have
             // passed -- only the subsequent dispatch cascade can fault. So `requested` genuinely
-            // was applied by the time any SimError reaches here, and belongs on Faulted too.
+            // was applied by the time any SimError reaches here, and belongs on Faulted too; the
+            // supported MACHINE_AVAILABILITY_CHANGED event is emitted for the same reason -- that
+            // authoritative change genuinely occurred even though the later cascade did not. Since
+            // `transitioned` was computed from pre-mutation state, it still accurately reports
+            // whether this genuinely was a transition.
+            if (transitioned) {
+                emit(
+                        RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
+                        changedAt,
+                        new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
+                        List.of(new AffectedEntityRef.MachineRef(machineId)));
+                emitNewlyDispatchedJobs(waitingBefore, changedAt);
+            }
             return new CommandResult.Faulted<>(requested, e, modelVersion, scheduled);
         } finally {
             scheduler.stopCapturing();
+        }
+    }
+
+    /**
+     * Emits {@link RuntimeEventType#JOB_DISPATCHED} for every job in {@code waitingBefore} that
+     * has since transitioned to {@link JobStatus#InProgress} -- the genuine dispatch-cascade
+     * outcome of a machine coming online, derived by diffing authoritative job state rather than
+     * inspecting internal scheduler machinery (ADR-0011 REV-002). Ordered deterministically by
+     * order id then ordinal so repeated runs of the same scenario produce identical event streams.
+     */
+    private void emitNewlyDispatchedJobs(List<JobView> waitingBefore, SimTime time) {
+        waitingBefore.stream()
+                .map(JobView::id)
+                .map(factory::job)
+                .filter(job -> job.status() == JobStatus.InProgress)
+                .sorted(Comparator.comparing((JobView view) -> view.orderId().value())
+                        .thenComparingLong(JobView::ordinalWithinOrder))
+                .forEach(job -> emit(
+                        RuntimeEventType.JOB_DISPATCHED,
+                        time,
+                        new RuntimeEventPayload.JobDispatched(
+                                job.id(), job.orderId(), job.currentMachine(), job.currentStep()),
+                        List.of(new AffectedEntityRef.JobRef(job.id()), new AffectedEntityRef.OrderRef(job.orderId()))));
+    }
+
+    /**
+     * Emits, for every job in {@code jobIds} (assumed just-created, in ordinal order), either
+     * {@link RuntimeEventType#JOB_DISPATCHED} if {@link FactoryHandler#submitOrder} immediately
+     * placed it on a machine, or {@link RuntimeEventType#JOB_WAITING} with the machine(s) it is
+     * now waiting on -- the cross-machine multi-eligible backlog ({@link #pendingWorkView()}) when
+     * more than one machine is eligible for its current step, or the single eligible machine's own
+     * queue otherwise. Together with the enriched {@link RuntimeEventPayload.OrderAccepted}, this
+     * lets a consumer reconstruct the job creation/assignment/pending-work deltas {@link
+     * FactoryHandler#submitOrder} can produce (ADR-0011 REV-002).
+     */
+    private void emitJobPlacementEvents(OrderId orderId, List<JobId> jobIds, SimTime time) {
+        Map<JobId, Set<MachineId>> pendingEligibility = pendingWorkView().stream()
+                .collect(Collectors.toMap(PendingWorkView::jobId, PendingWorkView::eligibleMachines));
+        for (JobId jobId : jobIds) {
+            JobView job = factory.job(jobId);
+            if (job.status() == JobStatus.InProgress) {
+                emit(
+                        RuntimeEventType.JOB_DISPATCHED,
+                        time,
+                        new RuntimeEventPayload.JobDispatched(
+                                jobId, orderId, job.currentMachine(), job.currentStep()),
+                        List.of(new AffectedEntityRef.JobRef(jobId), new AffectedEntityRef.OrderRef(orderId)));
+            } else {
+                Set<MachineId> eligible = pendingEligibility.get(jobId);
+                if (eligible == null) {
+                    eligible = machinesView().stream()
+                            .filter(m -> m.queuedJobs().contains(jobId))
+                            .map(MachineView::id)
+                            .collect(Collectors.toCollection(LinkedHashSet::new));
+                }
+                emit(
+                        RuntimeEventType.JOB_WAITING,
+                        time,
+                        new RuntimeEventPayload.JobWaiting(jobId, orderId, eligible),
+                        List.of(new AffectedEntityRef.JobRef(jobId), new AffectedEntityRef.OrderRef(orderId)));
+            }
         }
     }
 
@@ -197,9 +321,95 @@ public class FactoryRuntime {
     public Optional<Event> advance() throws SimError {
         Optional<Event> next = scheduler.nextEvent();
         if (next.isPresent()) {
-            factory.handleEvent(next.get(), scheduler);
+            Event event = next.get();
+            List<Event> triggered = new ArrayList<>();
+            scheduler.startCapturing(triggered);
+            try {
+                factory.handleEvent(event, scheduler);
+            } finally {
+                scheduler.stopCapturing();
+                // Post-authoritative derivation happens even on the exception path: whatever
+                // authoritative state change already occurred before a fault (e.g. a job
+                // completing its step before a later dispatch cascade fails) must still be
+                // reported -- see requirement 1 (post-authoritative publication) and the
+                // faultReportsOnlyAuthoritativeChangesThatActuallyOccurred acceptance evidence.
+                recordSupportedEventsFor(event, triggered);
+            }
         }
         return next;
+    }
+
+    /**
+     * Derives and appends the supported runtime event(s) implied by having just processed {@code
+     * trigger}, if any -- never before {@link FactoryHandler#handleEvent} has returned (successfully
+     * or not) for it, since a supported event must never claim a transition occurred before the
+     * authoritative state actually reflects it. {@code triggeredInternalEvents} is whatever the
+     * internal scheduler additionally scheduled while processing {@code trigger}, inspected only for
+     * evidence of a further authoritative fact (order completion) that already happened -- never
+     * itself re-exposed as the supported payload.
+     */
+    private void recordSupportedEventsFor(Event trigger, List<Event> triggeredInternalEvents) {
+        if (!(trigger.payload() instanceof EventPayload.TaskEnd taskEnd)) {
+            // Internal scheduler machinery this runtime never itself schedules through its own
+            // supported API surface (OrderCreation/MachineAvailabilityChange arrive only via
+            // submitWorkload/setMachineAvailability directly, never via the queue) and the
+            // TaskStart timing marker, which never itself changes authoritative state.
+            return;
+        }
+        JobView job = factory.job(taskEnd.jobId());
+        emit(
+                RuntimeEventType.JOB_STEP_COMPLETED,
+                trigger.time(),
+                new RuntimeEventPayload.JobStepCompleted(
+                        taskEnd.jobId(), job.orderId(), taskEnd.machineId(), taskEnd.stepIndex(), job.isComplete()),
+                List.of(new AffectedEntityRef.JobRef(taskEnd.jobId()), new AffectedEntityRef.OrderRef(job.orderId())));
+
+        for (Event internal : triggeredInternalEvents) {
+            if (internal.payload() instanceof EventPayload.OrderCompleted oc) {
+                emit(
+                        RuntimeEventType.ORDER_COMPLETED,
+                        trigger.time(),
+                        new RuntimeEventPayload.OrderCompleted(
+                                oc.orderId(), oc.jobId(), oc.productId(), oc.quantity(), oc.unitPrice()),
+                        List.of(
+                                new AffectedEntityRef.OrderRef(oc.orderId()),
+                                new AffectedEntityRef.JobRef(oc.jobId())));
+            }
+        }
+    }
+
+    /**
+     * Allocates the next strictly monotonic, run-scoped sequence number and appends the resulting
+     * {@link RuntimeEventEnvelope} to this session's supported event log. Package-private emission
+     * point: this is the only place a {@link RuntimeEventEnvelope} is constructed, always after the
+     * authoritative transition it describes has already succeeded.
+     */
+    private void emit(
+            RuntimeEventType eventType, SimTime time, RuntimeEventPayload payload, List<AffectedEntityRef> refs) {
+        eventSequence++;
+        pendingSupportedEvents.add(new RuntimeEventEnvelope(
+                runId, eventSequence, time, eventType, modelVersion.fingerprint(), Optional.empty(), refs, payload));
+    }
+
+    /**
+     * Returns every supported runtime event accumulated since the last call to this method (or
+     * since session construction, for the first call), in emission (sequence) order, and clears
+     * them from this session. Consumer-neutral supplement to {@link #observe()}: distinct from, and
+     * never wraps, the internal scheduler {@link Event} returned by {@link #advance()}/{@link
+     * #advanceUntil}.
+     *
+     * <p>Deliberately draining rather than retained/replayable-by-cursor: {@link #eventSequence}
+     * still advances monotonically and independently of draining (so {@link
+     * RuntimeObservationMetadata#latestEventSequence()} is unaffected by when a caller drains), but
+     * this type does not itself keep an unbounded, cursor-addressable event history -- that is a
+     * separately-named responsibility for later distribution hardening (ADR-0011 §8, DH-E), not
+     * part of the Gate 4 semantic contract. A caller that needs durable replay must retain the
+     * drained events itself.
+     */
+    public List<RuntimeEventEnvelope> drainSupportedEvents() {
+        List<RuntimeEventEnvelope> drained = List.copyOf(pendingSupportedEvents);
+        pendingSupportedEvents.clear();
+        return drained;
     }
 
     /**
@@ -281,7 +491,8 @@ public class FactoryRuntime {
 
     /**
      * Returns a coherent, immutable, consumer-neutral projection of current authoritative state.
-     * This does not expose internal scheduler events; Gate 4-B owns supported event publication.
+     * This does not expose internal scheduler events; see {@link #drainSupportedEvents()} for the
+     * supported runtime events this observation's {@code latestEventSequence} cursors.
      */
     public RuntimeObservation observe() {
         List<ResourceObservation> resources = machinesView().stream()
@@ -340,7 +551,7 @@ public class FactoryRuntime {
                         modelVersion.fingerprint(),
                         scheduler.currentTime(),
                         scheduler.isEmpty() ? RuntimeRunState.QUIESCENT : RuntimeRunState.ACTIVE,
-                        0),
+                        eventSequence),
                 resources,
                 orders,
                 jobs,

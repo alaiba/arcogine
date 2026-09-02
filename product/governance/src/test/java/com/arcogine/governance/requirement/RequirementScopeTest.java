@@ -2,6 +2,7 @@ package com.arcogine.governance.requirement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.governance.change.ChangedEntityRef;
@@ -62,6 +63,34 @@ class RequirementScopeTest {
         RequirementScope scope = RequirementScope.of(pressA);
 
         assertFalse(scope.intersects(changeSet.impactScope()));
+    }
+
+    @Test
+    void emptyScopeIsEmptyAndNeverIntersects() {
+        RequirementScope fromEmptyCollection = RequirementScope.of(List.of());
+        ChangedEntityRef pressA = new ChangedEntityRef("factory.resource", "1", "Press A");
+        SemanticChange change = new SemanticChange(SemanticChangeKind.ENTITY_MODIFIED, pressA, "capacity changed");
+        ChangeSet changeSet = changeSetWith(change);
+
+        assertEquals(RequirementScope.empty(), fromEmptyCollection);
+        assertTrue(fromEmptyCollection.isEmpty());
+        assertFalse(RequirementScope.of(pressA).isEmpty());
+        assertFalse(fromEmptyCollection.intersects(changeSet.impactScope()));
+    }
+
+    @Test
+    void equalityAndPresentationAreConsistent() {
+        ChangedEntityRef pressA = new ChangedEntityRef("factory.resource", "1", "Press A");
+        ChangedEntityRef pressB = new ChangedEntityRef("factory.resource", "2", "Press B");
+        RequirementScope scope = RequirementScope.of(pressA);
+        RequirementScope sameScope = RequirementScope.of(pressA);
+        RequirementScope differentScope = RequirementScope.of(pressB);
+
+        assertEquals(scope, sameScope);
+        assertEquals(scope.hashCode(), sameScope.hashCode());
+        assertNotEquals(scope, differentScope);
+        assertNotEquals(scope, "not a scope");
+        assertTrue(scope.toString().contains("RequirementScope"));
     }
 
     private static ChangeSet changeSetWith(SemanticChange change) {

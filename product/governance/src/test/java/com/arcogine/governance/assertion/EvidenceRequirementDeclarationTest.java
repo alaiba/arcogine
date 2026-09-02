@@ -58,6 +58,16 @@ class EvidenceRequirementDeclarationTest {
     }
 
     @Test
+    void structuralAssertionOutcomeNullExplanationDefaultsToBlankAndToStringIsReadable() {
+        StructuralAssertionOutcome satisfiedNoExplanation = new StructuralAssertionOutcome(true, null);
+        StructuralAssertionOutcome violatedWithExplanation = StructuralAssertionOutcome.violated("5 <= 0");
+
+        assertEquals("", satisfiedNoExplanation.explanation());
+        assertEquals("true", satisfiedNoExplanation.toString());
+        assertTrue(violatedWithExplanation.toString().contains("5 <= 0"));
+    }
+
+    @Test
     void modelStateSufficientAssertionMustSupplyAStructuralRule() {
         // REV-001: a MODEL_STATE_SUFFICIENT declaration is a claim that the assertion is
         // decidable from authoritative model state alone -- construction must reject the

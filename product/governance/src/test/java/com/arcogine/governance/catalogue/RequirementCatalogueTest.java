@@ -1,6 +1,7 @@
 package com.arcogine.governance.catalogue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.governance.change.ChangeProvenance;
@@ -84,6 +85,23 @@ class RequirementCatalogueTest {
         assertEquals(v2, catalogue.resolve(v1.id(), v2.version()).orElseThrow());
         assertTrue(catalogue.resolve(v1.id(), new RequirementVersion(3)).isEmpty());
         assertEquals(List.of(v1, v2), catalogue.all());
+        assertEquals(2, catalogue.size());
+    }
+
+    @Test
+    void rejectsDuplicateRequirementRegistration() {
+        Requirement requirement =
+                new Requirement(
+                        new RequirementId("arc.factory.duplicate"),
+                        new RequirementVersion(1),
+                        "title",
+                        "",
+                        ArcogineNativeRequirementSource.unspecified(),
+                        RequirementScope.empty());
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> RequirementCatalogue.of(requirement, requirement));
     }
 
     private static ModelFingerprint fingerprint(String suffix) {

@@ -1,7 +1,9 @@
 package com.arcogine.governance.assertion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.governance.requirement.ArcogineNativeRequirementSource;
@@ -84,6 +86,44 @@ class AssertionIdentityTest {
         assertEquals(requirement.id(), assertionV5.requirementId());
         assertEquals(requirement.version(), assertionV5.requirementVersion());
         assertNotEquals(requirement.version().value(), assertionV5.version().value());
+    }
+
+    @Test
+    void nullDescriptionDefaultsToBlank() {
+        Assertion<Integer> assertion =
+                new Assertion<>(
+                        new AssertionId("arc.test.null-description"),
+                        new AssertionVersion(1),
+                        REQUIREMENT_ID,
+                        new RequirementVersion(1),
+                        null,
+                        EvidenceRequirement.MODEL_STATE_SUFFICIENT,
+                        value -> StructuralAssertionOutcome.satisfied("ok"));
+
+        assertEquals("", assertion.description());
+    }
+
+    @Test
+    void evaluatingAnAssertionWithNoRuleFailsExplicitly() {
+        Assertion<Void> withoutRule =
+                new Assertion<>(
+                        new AssertionId("arc.test.no-rule"),
+                        new AssertionVersion(1),
+                        REQUIREMENT_ID,
+                        new RequirementVersion(1),
+                        "requires external evidence",
+                        EvidenceRequirement.EXTERNAL_EVIDENCE_REQUIRED,
+                        null);
+
+        assertThrows(IllegalStateException.class, () -> withoutRule.evaluate(null));
+    }
+
+    @Test
+    void equalityIsIdAndVersionOnlyNotDescriptionOrRequirementVersion() {
+        Assertion<Integer> assertion = structuralAssertion(new RequirementVersion(1));
+
+        assertNotEquals(assertion, "not an assertion");
+        assertFalse(assertion.equals(null));
     }
 
     private static Assertion<Integer> structuralAssertion(RequirementVersion requirementVersion) {

@@ -1,7 +1,9 @@
 package com.arcogine.governance.requirement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.types.ControlledRevisionId;
@@ -48,6 +50,56 @@ class RequirementIdentityTest {
             assertNotEquals(ModelFingerprint.class, component.getType());
             assertNotEquals(ControlledRevisionId.class, component.getType());
         }
+    }
+
+    @Test
+    void equalityIsIdAndVersionOnlyNotWordingOrSource() {
+        Requirement requirement =
+                new Requirement(
+                        new RequirementId("arc.test.example"),
+                        new RequirementVersion(1),
+                        "title",
+                        null,
+                        ArcogineNativeRequirementSource.unspecified(),
+                        RequirementScope.empty());
+        Requirement sameIdAndVersionDifferentWording =
+                new Requirement(
+                        requirement.id(),
+                        requirement.version(),
+                        "a different title",
+                        "a different description",
+                        ArcogineNativeRequirementSource.of("different rationale"),
+                        RequirementScope.empty());
+        Requirement differentVersion =
+                new Requirement(
+                        requirement.id(),
+                        new RequirementVersion(2),
+                        "title",
+                        "",
+                        ArcogineNativeRequirementSource.unspecified(),
+                        RequirementScope.empty());
+
+        assertEquals(requirement, sameIdAndVersionDifferentWording);
+        assertEquals(requirement.hashCode(), sameIdAndVersionDifferentWording.hashCode());
+        assertNotEquals(requirement, differentVersion);
+        assertNotEquals(requirement, "not a requirement");
+        assertEquals("", requirement.description());
+        assertTrue(requirement.isArcogineNative());
+        assertFalse(requirement.isExternallySourced());
+    }
+
+    @Test
+    void rejectsBlankTitle() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        new Requirement(
+                                new RequirementId("arc.test.blank-title"),
+                                new RequirementVersion(1),
+                                " ",
+                                "",
+                                ArcogineNativeRequirementSource.unspecified(),
+                                RequirementScope.empty()));
     }
 
     private static ModelFingerprint fingerprint(String suffix) {

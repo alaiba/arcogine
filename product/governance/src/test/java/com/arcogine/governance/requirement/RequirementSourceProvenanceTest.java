@@ -2,6 +2,7 @@ package com.arcogine.governance.requirement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,30 @@ class RequirementSourceProvenanceTest {
         assertNotEquals(iecPublication, ansiIsaAdoption);
         assertTrue(iecPublication.adoptionProfileOptional().isEmpty());
         assertEquals("ANSI/ISA-95.00.01-2010", ansiIsaAdoption.adoptionProfileOptional().orElseThrow());
+    }
+
+    @Test
+    void nullRationaleAndNullAdoptionProfileDefaultToBlank() {
+        assertEquals("", new ArcogineNativeRequirementSource(null).rationale());
+        ExternalRequirementSource source = new ExternalRequirementSource("IEC", "IEC 62264-1", "2013", "clause", null);
+        assertEquals("", source.adoptionProfile());
+        assertTrue(source.adoptionProfileOptional().isEmpty());
+    }
+
+    @Test
+    void externalSourceRejectsBlankRequiredFields() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new ExternalRequirementSource("", "IEC 62264-1", "2013", "clause", ""));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new ExternalRequirementSource("IEC", " ", "2013", "clause", ""));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new ExternalRequirementSource("IEC", "IEC 62264-1", "", "clause", ""));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new ExternalRequirementSource("IEC", "IEC 62264-1", "2013", "", ""));
     }
 
     @Test

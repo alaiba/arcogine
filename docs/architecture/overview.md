@@ -430,8 +430,12 @@ product/
 ├── consumer/
 │   └── challenge/        Challenge Readiness: game-owned challenge definition/validation,
 │                         catalogue/economics, candidate admissibility, deterministic
-│                         challenge evaluation, and attempt provenance/design-to-design
-│                         comparison (see
+│                         challenge evaluation, attempt provenance/design-to-design
+│                         comparison, and (C5) a rendering-technology-independent JSON
+│                         content-loading layer — schema-versioned decode, catalogue
+│                         loading, and evaluation-policy resolution — that reuses the
+│                         existing definition/catalogue validators rather than
+│                         reimplementing their rules (see
 │                         docs/planning/factory-design-game-challenge-readiness.md).
 │                         Headless — no dependency on any module below.
 └── interfaces/

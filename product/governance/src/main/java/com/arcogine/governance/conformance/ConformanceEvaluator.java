@@ -80,10 +80,11 @@ public final class ConformanceEvaluator {
      * @param authoritativeState the candidate's authoritative state for {@code T}, when available
      * @param modelFingerprint the fingerprint of the state being evaluated
      * @param stateFingerprint a domain-owned function that independently derives the {@link
-     *     ModelFingerprint} of a given {@code T} (e.g. {@code ChangeSet::candidateFingerprint}),
-     *     used to verify -- when {@code authoritativeState} is present -- that it actually is the
-     *     artifact identified by {@code modelFingerprint}, rather than trusting the two as
-     *     unrelated caller-supplied values
+     *     ModelFingerprint} of a given {@code T} from its own semantic content (e.g. {@code
+     *     FactoryModelVersion::fingerprint}; a pass-through accessor such as {@code
+     *     ChangeSet::candidateFingerprint} is not a valid adapter), used to verify -- when {@code
+     *     authoritativeState} is present -- that it actually is the artifact identified by {@code
+     *     modelFingerprint}, rather than trusting the two as unrelated caller-supplied values
      * @param controlledRevisionId the accepted controlled revision, when the candidate has been
      *     persisted through the G1.3 authority boundary; empty for an unpersisted candidate
      * @param authority the G1 {@link ControlledRevisionAuthority} used to verify, when {@code

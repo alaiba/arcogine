@@ -61,204 +61,376 @@ Today that branch already:
 Gate 5 preserves those selection/ranking and recovery semantics. It inserts a deterministic transfer
 interval only after a concrete destination is selected and currently admissible for binding.
 
-## 4. Delivery slices
+## 4. Delivery policy
 
-### G5-A — Factory V2 canonical spatial model
+Gate 5 implementation is deliberately split into small semantic increments so a coding agent can
+execute a well-bounded change without being asked to rediscover architecture while coding.
+
+Every slice should have:
+
+- one dominant semantic invariant;
+- explicit executable evidence that closes that invariant;
+- narrow production ownership and explicit non-goals;
+- an escalation rule: if implementation evidence conflicts with ADR-0014, ADR-0015, or
+  `engine-semantics:v1`, stop and surface the contradiction rather than inventing new semantics.
+
+This decomposition is provider-neutral. Repository architecture and acceptance evidence determine
+whether a slice is sufficiently bounded; no particular model, agent, IDE, or hosted service is an
+implementation dependency.
+
+The vertical transfer-activation slice is intentionally not decomposed into separate state/event/
+observation PRs. Once `TRANSFERRING` becomes reachable, supported state and supported deltas must be
+coherent in the same landed change under ADR-0011.
+
+## 5. Delivery slices
+
+### G5-0 — Pin existing Engine semantics
+
+**Prerequisite:** ADR-0015 landed Accepted.
+
+**Responsibility**
+
+Add characterization/conformance evidence for the result-affecting behavior that
+`engine-semantics:v1` inherits from the pre-Gate-5 Engine:
+
+- Gate 2 offline filtering with all-offline fallback;
+- `canAcceptJob` as the primary ranking key rather than an eligibility filter;
+- `combinedQueueDepth`, including compatible `pendingMultiEligible` work;
+- deterministic `MachineId` tie-breaking;
+- queue-before-`pendingMultiEligible` recovery cascade ordering;
+- W1 child creation/release/dispatch ordering;
+- scheduler equal-time insertion ordering where it is semantically observable.
+
+**Evidence**
+
+Pinned behavioral fixtures fail if any of those results change for identical explicit inputs. The
+slice changes no production behavior and does not freeze incidental DTO or implementation shape.
+
+**Non-goals**
+
+Engine-semantics identity types, Factory V2, transfer behavior, new scheduling policy.
+
+### G5-A1 — Factory V2 spatial model and validation
 
 **Prerequisite:** ADR-0014 landed Accepted.
 
-**Production responsibility**
+**Responsibility**
 
-- introduce the `factory-model:v2` canonical artifact policy;
-- add required floor dimensions, resource position, footprint, `ticksPerCell`, and `handlingTicks`;
-- define position as the footprint's minimum-coordinate reference cell and validate exact occupied
-  cells, containment, and non-overlap;
-- enforce the exact safe-duration predicate from ADR-0014:
-  `maxDistance = (W - 1) + (H - 1)` and
-  `handlingTicks + ticksPerCell * maxDistance` must be representable with overflow-safe arithmetic;
-- do not claim this publication predicate eliminates the pre-existing possibility that adding a
-  valid duration to an extreme current `SimTime` can overflow;
-- register policy-aware verification/decoding without weakening V1 resolution;
-- define the narrow first V1-to-V2 policy-migration/comparison behavior required by real controlled
-  revision use.
+Add the five V2 authored facts and their validation, without yet releasing a V2 fingerprint policy:
 
-**Executable evidence**
+- floor width/height;
+- minimum-coordinate resource reference cell;
+- anchored footprint width/height and exact occupied-cell semantics;
+- `ticksPerCell`;
+- `handlingTicks`;
+- floor containment/non-overlap;
+- the exact maximum-transfer-duration representability predicate from ADR-0014.
 
-- V1 golden vectors/fingerprints remain unchanged;
-- V2 canonical round-trip and fingerprint determinism;
-- moving a resource or changing any V2 authored field changes `ModelFingerprint`;
-- the same `(position, footprint)` pair has one unambiguous occupied-cell set in every conforming
-  implementation;
-- invalid placement/overlap/bounds and unsafe maximum-transfer arithmetic are rejected;
-- V1 and V2 artifacts are both independently resolvable;
-- no automatic V1-to-V2 lift/default synthesis exists.
+Do not claim that the publication predicate eliminates the pre-existing extreme-`SimTime.plus(...)`
+overflow condition.
+
+**Evidence**
+
+Valid/invalid boundary cases prove anchor, containment, overlap and arithmetic semantics
+independently of runtime transfer behavior.
 
 **Non-goals**
 
-- Engine transfer runtime behavior;
-- path networks, orientation, conveyors, transport resources;
-- generic schema/migration framework.
+Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine behavior.
 
-### G5-B — Engine semantics identity, provenance, and v1 conformance substrate
+### G5-A2 — Factory V2 canonical identity
 
-**Prerequisite:** ADR-0015 landed Accepted. This slice may run in parallel with G5-A.
+**Prerequisite:** G5-A1.
 
-**Production responsibility**
+**Responsibility**
 
-- add `EngineSemanticsVersion` as a first-class Engine-owned identity;
-- establish one current supported value for `engine-semantics:v1`;
-- fix the version for each runtime and expose it directly from `FactoryRuntime`;
-- add mandatory semantics-version provenance to `RuntimeObservationMetadata` and
+Release the `factory-model:v2` canonical policy:
+
+- deterministic canonical encoding/decoding/verifying for V2;
+- `ModelFingerprint` derivation under the V2 policy;
+- policy registration while preserving `factory-model:v1`;
+- V2 golden vectors;
+- no automatic V1→V2 lift/default synthesis.
+
+**Evidence**
+
+V1 vectors/fingerprints remain byte-for-byte unchanged; equivalent V2 content reproduces its
+fingerprint; every authored V2 field participates in identity; moving a resource changes the
+fingerprint without changing resource identity.
+
+**Non-goals**
+
+Cross-policy controlled-revision migration/comparison, runtime transfers.
+
+### G5-A3 — Multi-policy historical resolution and evolution seam
+
+**Prerequisite:** G5-A2. Governance G1 historical revision authority is already landed.
+
+**Responsibility**
+
+Make the first V1/V2 coexistence truthful:
+
+- historical artifacts under both released Factory model policies remain resolvable/verifiable;
+- controlled-revision lineage may cross policy versions without rewriting either artifact;
+- a normal semantic `ChangeSet` does not silently invent V2 spatial facts for V1;
+- implement only the narrow migration classification or common-representation seam actually needed
+  for the first V1→V2 controlled transition.
+
+**Evidence**
+
+Historical V1 resolution remains intact after V2 registration, V2 resolves independently, and the
+first cross-policy transition cannot be misreported as an ordinary same-policy empty/equivalent diff.
+
+**Non-goals**
+
+Generic migration/schema framework, transfer runtime behavior.
+
+**Sequencing note:** G5-A3 does not have to block transfer implementation merely because V2 exists.
+It must land before the first real cross-policy controlled transition and before final Gate 5
+closure.
+
+### G5-B1 — Engine semantics identity and runtime establishment
+
+**Prerequisites:** ADR-0015 landed Accepted and G5-0.
+
+**Responsibility**
+
+- add first-class `EngineSemanticsVersion`;
+- establish the one supported current value `engine-semantics:v1`;
+- fix it when a `FactoryRuntime` is established;
+- expose it directly from the runtime;
+- provide a narrow support check that fails explicitly for an unsupported identity;
+- do not add caller-selectable historical versions or a multi-version resolver.
+
+**Evidence**
+
+One runtime reports one immutable semantics version; reset/fresh runtime identity changes do not
+change the semantics version; unsupported identity fails explicitly if the support seam is
+exercised.
+
+**Non-goals**
+
+Observation/event field propagation, transfer behavior, retirement/multi-version support.
+
+### G5-B2 — Runtime provenance propagation
+
+**Prerequisite:** G5-B1.
+
+**Responsibility**
+
+- add mandatory `EngineSemanticsVersion` to `RuntimeObservationMetadata` and
   `RuntimeEventEnvelope`;
-- add the missing optional `ControlledRevisionId` to `RuntimeObservationMetadata`; ADR-0011's
-  provenance contract already requires revision attribution when the runtime is authoritatively
-  revision-bound, and Gate 5 must not leave observation metadata asymmetric with the event envelope;
-- establish a small support check for the current version without a multi-version resolver;
-- pin the actually shipped pre-Gate-5 semantics, including offline filtering/all-offline fallback,
-  `canAcceptJob` ranking, `combinedQueueDepth`, `MachineId` tie-breaking, queue-before-
-  `pendingMultiEligible` recovery ordering, W1 decomposition, and scheduler ordering;
-- extend those fixtures with Gate 5 behavior as later slices land.
+- add the missing optional `ControlledRevisionId` to observation metadata when authoritatively
+  revision-bound, preserving symmetry with event provenance;
+- keep `RunId`, `ModelFingerprint`, revision provenance and Engine semantics identity distinct.
 
-**Executable evidence**
+**Evidence**
 
-- one runtime reports one immutable semantics version;
-- semantics version cannot change mid-run;
-- a fresh runtime has a fresh `RunId` without changing semantics version;
-- observations/events always carry model + Engine semantics provenance;
-- authoritatively revision-bound runtimes expose the same optional `ControlledRevisionId` provenance
-  in supported observation metadata and event envelopes;
-- unsupported semantics identity fails explicitly if the support seam is exercised;
-- conformance fixtures describe the current selector/cascade rather than an idealized variant;
-- semantics-preserving representation changes do not alter the pinned behavioral fixtures.
+Fresh observations and every supported event carry the same model + Engine interpretation identity;
+revision-bound runtimes expose the same optional authoritative revision in observations and events;
+reset creates a new `RunId` without changing semantic interpretation.
 
 **Non-goals**
 
-- caller-selectable historical semantics;
-- multi-version resolver;
-- retirement process;
-- Challenge/Governance/Operational consumer changes.
+REST/SSE migration, transfer state/events, generic provenance framework.
 
-**Parallel/convergence note:** landing the final runtime provenance shape here removes avoidable
-contract churn for the still-deferred Gate 4 API/SSE transport migration (G4-D). G4-D should consume
-the settled provenance shape rather than migrate the old envelope and immediately revise it again.
+**Convergence note:** G4-D outward API/SSE migration should consume this settled runtime provenance
+shape rather than migrate the old envelope and immediately revise it.
 
-### G5-C — Authoritative transfer timing and state
+### G5-C1 — Pure transfer arithmetic
 
-**Prerequisites:** G5-A + the identity/provenance substrate from G5-B.
+**Prerequisite:** G5-A1 and the accepted `engine-semantics:v1` rule.
 
-**Production responsibility**
+**Responsibility**
 
-- insert Gate 5 at the existing `handleTaskEnd` next-step seam;
-- preserve Gate 2 destination selection timing/ranking and its post-selection waiting paths;
-- reserve one unit of **destination admission capacity** at binding for an inbound job;
-- keep inbound reservation distinct from active processing and queued work: reservation affects
-  future `canAcceptJob` capacity, but does not put the job in `activeJobs`, does not make the machine
-  `Busy` by itself, and does not accrue `busyTicks`;
-- compute/fix transfer duration exactly once using Engine Semantics v1;
-- introduce authoritative in-flight state and completion scheduling;
-- preserve no-transfer behavior for same-resource consecutive steps;
-- preserve immutable destination/no-rerouting behavior;
-- allow a destination holding only inbound reservations to be taken offline under the existing
-  command contract;
-- when an inbound job arrives at an offline destination, complete the transfer at its fixed time,
-  then convert/release the reservation into the existing destination waiting path without rerouting.
+Implement a small, deterministic calculation seam for:
 
-**Executable evidence**
+```text
+manhattanDistance = abs(xDestination - xSource) + abs(yDestination - ySource)
+transferDuration = handlingTicks + ticksPerCell * manhattanDistance
+```
 
-- transfer begins only once the selected destination can accept the job;
-- destination binding is immutable after start;
-- duration equals `handlingTicks + ticksPerCell * Manhattan(position)`;
-- source processing capacity is released at step completion;
-- destination admission capacity is reserved while in flight without treating the job as active
-  processing or queued work;
-- another job observes the reservation through the acceptance-capacity decision;
-- the reserved destination can still be taken offline before arrival;
-- same-resource next step creates no transfer;
-- repeated identical inputs produce identical assignment/timing/state;
-- destination-offline-at-arrival completes transfer on time and then waits without rerouting.
+using exact integer arithmetic and the already-validated V2 bounds. Footprint does not participate
+in v1 distance.
+
+**Evidence**
+
+Boundary/property cases cover reference-cell Manhattan distance, handling applied exactly once,
+zero authored magnitudes, and overflow-safe behavior consistent with ADR-0014.
 
 **Non-goals**
 
-- transport capacity/resources;
-- intermediate coordinates/progress authority;
-- pathfinding/routing graphs;
-- KPI redesign;
-- a new public resource/reservation domain abstraction.
+Destination selection, reservations, scheduler integration, runtime transfer state.
 
-### G5-D — Supported transfer observations and events
+### G5-C2 — Destination admission-reservation substrate
 
-**Prerequisite:** G5-C authoritative state transitions.
+**Prerequisite:** G5-B1.
 
-**Production responsibility**
+**Responsibility**
 
-- extend the existing per-job observation with `TRANSFERRING` state and the minimum transfer facts;
-- keep destination/current-resource identity coherent with the admission-reservation semantics;
-- keep resource observation consistent with job state: an inbound reserved job is not reported in
-  `activeJobIds`, does not contribute queue depth, and does not make an otherwise idle machine
-  `Busy` merely because it is reserved;
-- expose enough resource-capacity/admission-load information for the supported bottleneck/capacity
-  observation to account for reserved inbound work without reclassifying it as processing;
-- add supported `TRANSFER_STARTED` and `TRANSFER_COMPLETED` event types/payloads;
-- preserve ADR-0011 late-join reconstruction from one fresh observation plus subsequent events;
-- use only Gate 4 sequence for same-time ordering.
+Add the minimum internal state needed to reserve inbound admission capacity before processing starts:
 
-**Executable evidence**
+- one inbound reservation consumes capacity used by future acceptance decisions;
+- reserved inbound work is not `activeJobs`, is not queue depth, does not make a machine `Busy` by
+  itself, and accrues no `busyTicks`;
+- a destination holding only inbound reservations may still be taken offline;
+- reservation can be released/converted deterministically for arrival and waiting paths.
 
-- a late-joining consumer reconstructs an in-flight transfer from one fresh observation with no
-  replay/journal access;
-- the job projection and resource projection agree on one sequence boundary: the job is
-  `TRANSFERRING`, the destination has admission capacity consumed, the job is not active processing
-  and not queued;
-- start/completion events close over the same authoritative state transitions as observations;
-- zero-duration transfer completion is a separate same-time scheduler turn, so
-  `TRANSFER_STARTED` is published after entering `TRANSFERRING` and before
-  `TRANSFER_COMPLETED`/next dispatch;
-- no event/observation carries frame-by-frame animation state;
-- metadata/envelopes retain `RunId`, `ModelFingerprint`, `EngineSemanticsVersion`, and optional
-  authoritative `ControlledRevisionId` as applicable.
+Keep this substrate unreachable from ordinary runtime execution until G5-C3 activates transfers.
+
+**Evidence**
+
+Direct tests prove capacity admission, active/queue separation, offline behavior, deterministic
+release/conversion and no regression of ordinary pre-Gate-5 processing semantics.
 
 **Non-goals**
 
-- REST/SSE DTO migration itself;
-- UI interpolation;
-- retained event journal.
+Public reservation aggregate, transfer timing/state/events, transport capacity.
+
+### G5-C3 — Vertical transfer activation
+
+**Prerequisites:** G5-A2, G5-B2, G5-C1 and G5-C2.
+
+**Responsibility**
+
+Activate the first coherent transfer path at the existing `handleTaskEnd` next-step seam:
+
+- preserve Gate 2 selection timing/ranking and post-selection waiting paths;
+- bind only when the selected destination is currently admissible;
+- for a distinct resource, reserve admission capacity, compute/fix duration once, enter
+  `TRANSFERRING`, and schedule completion;
+- same-resource consecutive operations retain the no-transfer path;
+- publish the minimum supported `TRANSFER_STARTED` / `TRANSFER_COMPLETED` deltas and expose the
+  minimum in-flight observation facts in the same slice so no reachable authoritative state is
+  invisible to the Gate 4 contract;
+- use only Gate 4 sequence for same-time supported-event ordering.
+
+Minimum in-flight observation facts are job/order correlation, source, bound destination,
+`transferStartedAt`, `transferCompletesAt`, and resource admission load sufficient to keep resource
+and job projections coherent.
+
+**Evidence**
+
+A happy-path distinct-resource job visibly and deterministically transitions from step completion to
+in-flight state to arrival/next processing; source capacity releases; destination admission capacity
+is held without active processing; a late observation during the interval is self-consistent; the
+same-resource path creates no transfer.
+
+**Non-goals**
+
+Every offline/zero-duration edge case, outward API DTO migration, KPI closure beyond minimum
+projection coherence.
+
+### G5-C4 — Transfer edge semantics
+
+**Prerequisite:** G5-C3.
+
+**Responsibility**
+
+Close the remaining v1 transfer rules without changing the core design:
+
+- zero authored transfer magnitudes and zero-duration same-time ordering;
+- immutable destination/no rerouting after transfer start;
+- source going offline after departure has no effect;
+- destination going offline in flight or at exact arrival does not change fixed completion time;
+- arrival at an offline destination converts/releases reservation into the existing waiting path;
+- another eligible destination becoming preferable does not cause rerouting.
+
+**Evidence**
+
+Focused tests prove the exact same-time sequence and all availability/no-rerouting cases, including
+that the bound destination can actually become offline while only inbound-reserved work exists.
+
+**Non-goals**
+
+Transport resources, routing graphs, buffers, congestion, intermediate coordinates.
+
+### G5-D — Observation, KPI and late-join closure
+
+**Prerequisites:** G5-B2 and G5-C4.
+
+**Responsibility**
+
+Complete the supported read model around already-authoritative transfers:
+
+- fresh observation reconstructs in-flight state without replay;
+- job and destination resource projections agree at one sequence boundary;
+- admission load/capacity is visible enough for supported bottleneck diagnosis;
+- inbound reservation is not `activeJobIds`, queue depth, processing `Busy`, or processing
+  `busyTicks`;
+- backlog remains incomplete accepted orders;
+- lead time naturally includes transfer delay;
+- throughput remains completed orders per observed time;
+- supported start/completion events and observations close over the same authoritative transitions.
+
+**Evidence**
+
+Late-join and observation/event-closure tests prove no internal store or scheduler/event-log replay is
+required, and existing KPI meanings remain stable.
+
+**Non-goals**
+
+REST/SSE/UI projection, KPI redesign, retained supported-event history.
 
 ### G5-E — Headless Gate 5 closure
 
-**Prerequisites:** G5-A through G5-D.
+**Prerequisites:** G5-A3, G5-B2, G5-C4 and G5-D.
 
-**Production responsibility**
+**Responsibility**
 
-Add one decisive consumer-neutral headless proving scenario and close the parent Gate 5 acceptance
-criteria without adding presentation/API dependencies.
+Add one decisive consumer-neutral proving scenario and extend the immutable
+`engine-semantics:v1` fixture set with the landed spatial behavior. Reconcile the parent Gate 5
+acceptance/status documentation without adding presentation/API dependencies.
 
 **Required proving case**
 
-The scenario must demonstrate, with minimal fixture complexity:
+The scenario demonstrates:
 
 1. two otherwise equivalent V2 designs differing only in canonical placement produce different
    transfer duration/completion under the same `engine-semantics:v1`;
 2. moving the resource changes `ModelFingerprint` while keeping stable resource identity;
-3. repeated execution with identical model, semantics version, workload, seed, and ordered commands
+3. repeated execution with identical model, semantics version, workload, seed and ordered commands
    produces identical ordered semantic outcomes;
-4. an observation taken mid-transfer reconstructs the supported in-flight state without event
-   replay and agrees with destination resource admission-load state;
-5. transfer start/completion ordering is deterministic and supported;
+4. a mid-transfer fresh observation reconstructs supported in-flight state and agrees with resource
+   admission load without replay;
+5. transfer start/completion ordering is deterministic, including zero-duration behavior;
 6. the result retains both design provenance (`ModelFingerprint`) and interpretation provenance
    (`EngineSemanticsVersion`);
-7. a V2 model with zero transfer magnitudes preserves pre-Gate-5 completion timing while still
-   exposing distinct-resource transfer transitions;
-8. a destination can become offline after binding, transfer completes at the fixed time, and the
-   job waits on that destination without rerouting;
-9. the Engine Semantics v1 conformance fixtures prove that a future different semantics version may
-   change an outcome for the same `ModelFingerprint` without redefining the Factory design.
+7. a destination can become offline after binding, transfer completes at the fixed time, and the
+   job waits on that bound destination without rerouting;
+8. V1 historical fingerprints/resolution remain unchanged and V1 receives no synthesized spatial
+   semantics;
+9. behavioral conformance fixtures make a future different semantics version independently
+   verifiable without requiring the initial runtime to execute two versions.
 
-The final item belongs to the semantic-version conformance contract; the initial runtime need not
-implement two selectable semantics versions merely to demonstrate the identity distinction.
+## 6. Dependency and parallelism map
 
-## 5. KPI acceptance
+```text
+G5-0 existing-semantics fixtures ---> G5-B1 semantics identity ---> G5-B2 provenance ----+
+                                                                                |          |
+G5-A1 V2 model/validation ---> G5-A2 V2 identity -------------------------------+-> G5-C3 activation
+       |                         |                                                        |
+       |                         +--> G5-A3 policy evolution -------------------------+   v
+       |                                                                             | G5-C4 edges
+       +--> G5-C1 transfer arithmetic ---------------------------------------------+ |   |
+                                                                                   | |   v
+G5-B1 semantics identity ---> G5-C2 admission reservation ------------------------+ | G5-D closure
+                                                                                     |   |
+                                                                                     +--> G5-E
+```
 
-Gate 5 must preserve existing metric definitions:
+Practical parallelism after the ADRs land:
+
+- `G5-0` and `G5-A1` are independent first slices;
+- after `G5-0`, `G5-B1` can proceed while `G5-A1/A2` advances;
+- after `G5-A1`/`G5-B1`, `G5-C1` and `G5-C2` can proceed independently;
+- `G5-A3` is compatibility/history work and need not block `G5-C3`, but it must close before
+  `G5-E` and before a real V1→V2 controlled transition;
+- `G5-C3` is the deliberate convergence point and should receive correspondingly strong review.
+
+## 7. KPI acceptance
+
+Gate 5 preserves existing metric definitions:
 
 - machine `busyTicks` / utilization measure processing time, not inbound reservation time;
 - queue depth does not count an in-flight reservation as a queued arrival;
@@ -271,7 +443,7 @@ Bottleneck/capacity interpretation must account for admission capacity held by t
 even when processing busy ticks have not yet accrued. This is an interpretation/projection extension,
 not a redefinition of processing utilization or queue depth.
 
-## 6. Cross-track consequences
+## 8. Cross-track consequences
 
 ### Challenge — REQUIRED WHEN CONSUMER INTEGRATES
 
@@ -293,27 +465,15 @@ result versus which operational consequence context an interpretation belongs to
 
 ### API/SSE Gate 4 transport migration — REQUIRED BEFORE THAT MIGRATION, NOT BEFORE HEADLESS G5
 
-Prefer landing G5-B's final runtime provenance shape before G4-D migrates supported events and
-observations outward. This prevents immediate wire-contract churn. G4-D is not a prerequisite for
-headless Gate 5 implementation.
+Land G5-B2's final runtime provenance shape before G4-D migrates supported events and observations
+outward. This avoids immediate wire-contract churn. G4-D is not a prerequisite for headless Gate 5.
 
-## 7. Acceptance / readiness
+## 9. Acceptance / readiness
 
 Gate 5 is architecture-ready once ADR-0014 and ADR-0015 are Accepted and this focused plan is
-reconciled with the parent Engine/Factory plans.
-
-Implementation order:
-
-```text
-G5-A  Factory V2 model policy -----------┐
-                                         ├─> G5-C transfer runtime
-G5-B  Engine semantics/provenance -------┘          |
-      (may run in parallel;                         v
-       settles provenance for G4-D)            G5-D observations/events
-                                                    |
-                                                    v
-                                               G5-E headless closure
-```
+reconciled with the parent Engine/Factory plans. Implementation remains pending until the slices
+above land with executable evidence.
 
 No additional architecture analysis is required before these slices unless implementation evidence
-falsifies one of the accepted invariants.
+falsifies one of the accepted invariants. A slice that encounters such evidence must stop at that
+boundary rather than silently revising the accepted contract in product code.

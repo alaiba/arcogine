@@ -67,11 +67,11 @@ ones created via an explicit user request.
 
 ## PR lifecycle
 
-Resolve a PR's lifecycle state from the current head, submitted review disposition for that head, unresolved review findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
+Resolve a PR's lifecycle state from its current head and metadata, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
 
-- **AWAITING REVIEW** — the current head has no conclusive independent review disposition. The implementation agent waits.
-- **CHANGES REQUIRED** — the current-head independent review has blocking findings. The implementation agent remediates valid findings, validates, and pushes a new head, returning the PR to **AWAITING REVIEW**.
-- **READY TO MERGE** — the current-head independent review says `READY TO MERGE` and required validation is green. The implementation agent stops; the repository owner merges.
+- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for independent review/re-review or for pending required CI after `READY AFTER CI`.
+- **CHANGES REQUIRED** — an implementation-owned blocker remains, such as a valid blocking review finding, failed required CI, or a merge conflict. Remediate it, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
+- **READY TO MERGE** — the current review disposition permits merge (`READY TO MERGE`, `NON-BLOCKING FOLLOW-UPS ONLY`, or `READY AFTER CI` after required CI turns green), required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
 
 ## PR monitoring
 

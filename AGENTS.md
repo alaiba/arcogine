@@ -75,7 +75,7 @@ Resolve a PR's lifecycle state from its current head and metadata, submitted rev
 
 ## PR monitoring
 
-For any open PR associated with the current branch, subscribe to PR activity without asking for confirmation when the environment provides a native subscription mechanism (for Claude Code, `subscribe_pr_activity`). On notification, re-resolve the PR lifecycle state and perform any available implementation-owned transition. If native subscription is unavailable, `..` is the manual continuation mechanism.
+For any open PR associated with the current branch, subscribe to PR activity without asking for confirmation when the environment provides a native subscription mechanism (for Claude Code, `subscribe_pr_activity`). On notification, re-resolve the PR lifecycle state and perform any available implementation-owned transition. If native subscription is unavailable and scheduled tasks are supported, keep at most one recheck scheduled for about 10 minutes later while the PR is **AWAITING**; on wake, re-resolve the lifecycle state and act on any available transition. `..` remains the immediate manual continuation mechanism.
 
 ## PR merging
 

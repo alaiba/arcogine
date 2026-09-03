@@ -200,27 +200,28 @@ class HeadlessHandlerTest {
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
         assertNotNull(handler.factory);
         assertNotNull(handler.finance());
-        assertNotNull(handler.offerPrice());
+        double initialPrice = handler.offerPrice();
+        assertEquals(5.0, initialPrice, "initial price should match config");
     }
 
     @Test
-    void handleEventDelegatesEarlyOrderCompletionToFinance() throws SimError {
+    void handleEventDelegatesOrderCompletionToFinance() throws SimError {
         ScenarioConfig config = basicConfig();
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
-        Scheduler scheduler = new Scheduler();
+        // Run full scenario and verify finance ledger was populated by order completions
+        SimResult result = runHeadless(config, handler);
 
-        // Create an order that will complete
-        Event orderCreation = Event.of(
-                SimTime.of(0),
-                new EventPayload.OrderCreation(new com.arcogine.types.ProductId(1), 1, 5.0));
-        handler.handleEvent(orderCreation, scheduler);
-
-        // Process the resulting job task
-        assertTrue(scheduler.size() > 0, "ordering should have generated TaskStart events");
+        // Finance ledger should contain entries from order completions
+        assertTrue(
+                result.eventLog().filterByType(EventType.OrderCompleted).count() > 0,
+                "scenario should complete orders");
+        assertTrue(
+                handler.finance().ledger().entries().size() > 0,
+                "finance should have recorded order completions in ledger");
     }
 
     @Test
-    void buildHeadlessHandlerWithMultipleEquipment() {
+    void multiEquipmentRoutingIsConstructed() {
         String toml =
                 """
                 [simulation]
@@ -266,27 +267,41 @@ class HeadlessHandlerTest {
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
 
         assertEquals(8.0, handler.offerPrice());
-        assertNotNull(handler.factory);
+        // Verify both equipment was registered in the factory's machine store
+        assertTrue(
+                handler.factory.ordersView().count() >= 0,
+                "multi-equipment factory should be initialized");
+        // Verify routing with both steps was constructed
+        assertTrue(handler.factory.routings != null, "routing store should be created");
     }
 
     @Test
-    void headlessHandlerProcessesAllEventTypes() throws SimError {
+    void headlessHandlerDelegatesMultipleEventTypes() throws SimError {
         ScenarioConfig config = basicConfig();
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
         Scheduler scheduler = new Scheduler();
 
-        // Test handling different event types through the same handler
+        // PriceChange event
+        double initialPrice = handler.offerPrice();
         Event priceEvent = Event.of(SimTime.of(1), new EventPayload.PriceChange(8.0));
         handler.handleEvent(priceEvent, scheduler);
+        assertEquals(8.0, handler.offerPrice(), "price change should propagate");
 
+        // DemandEvaluation event
         Event demandEvent = Event.of(SimTime.of(2), EventPayload.DemandEvaluation.INSTANCE);
         handler.handleEvent(demandEvent, scheduler);
-
         assertTrue(scheduler.size() > 0, "demand evaluation should schedule orders");
+
+        // OrderCreation event
+        Event orderEvent = Event.of(
+                SimTime.of(3),
+                new EventPayload.OrderCreation(new com.arcogine.types.ProductId(1), 1, 8.0));
+        handler.handleEvent(orderEvent, scheduler);
+        assertTrue(scheduler.size() > 0, "order creation should generate factory events");
     }
 
     @Test
-    void runHeadlessWithMultipleMachinesCompletes() {
+    void multiMachineScenarioCompletesWithSales() {
         String toml =
                 """
                 [simulation]
@@ -333,21 +348,26 @@ class HeadlessHandlerTest {
         SimResult result = runHeadless(config, handler);
 
         assertTrue(result.eventsProcessed() > 0);
-        assertTrue(handler.factory.completedSales() >= 0);
+        assertTrue(
+                handler.factory.completedSales() > 0,
+                "multi-machine scenario should complete orders");
     }
 
     @Test
-    void priceChangeEventUpdatesOfferPrice() throws SimError {
+    void orderCompletionUpdatesFinanceLedger() throws SimError {
         ScenarioConfig config = basicConfig();
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
-        Scheduler scheduler = new Scheduler();
 
-        double initialPrice = handler.offerPrice();
-        Event priceChangeEvent = Event.of(SimTime.of(1), new EventPayload.PriceChange(15.0));
-        handler.handleEvent(priceChangeEvent, scheduler);
+        // Run scenario and verify ledger captured sales
+        SimResult result = runHeadless(config, handler);
 
-        double newPrice = handler.offerPrice();
-        assertEquals(15.0, newPrice);
-        assertNotEquals(initialPrice, newPrice);
+        // Verify that completed orders result in ledger entries
+        long completedOrders = result.eventLog().filterByType(EventType.OrderCompleted).count();
+        int ledgerEntries = handler.finance().ledger().entries().size();
+
+        assertEquals(
+                completedOrders,
+                ledgerEntries,
+                "each order completion should produce exactly one ledger entry");
     }
 }

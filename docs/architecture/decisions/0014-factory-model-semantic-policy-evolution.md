@@ -10,14 +10,14 @@ Arcogine's released `factory-model:v1` fingerprint policy is immutable under
 Factory semantics used by controlled revision history, historical reconstruction, runtime
 provenance, and downstream consumers.
 
-Engine Gate 5 introduces authored spatial facts that change deterministic runtime consequences.
-Those facts cannot be added to `factory-model:v1` without changing the meaning and canonical bytes
-of an already released policy, and they cannot remain outside `ModelFingerprint` without allowing
-two behaviorally different authored designs to share one identity.
+Spatial transfer capability introduces authored spatial facts that change deterministic runtime
+consequences. Those facts cannot be added to `factory-model:v1` without changing the meaning and
+canonical bytes of an already released policy, and they cannot remain outside `ModelFingerprint`
+without allowing two behaviorally different authored designs to share one identity.
 
-Gate 5 also exposed an important ownership boundary: the model identifies **what production system
-the designer authored**; result-affecting rules describing **how Arcogine interprets any design**
-belong to Engine semantic policy. That sibling decision is recorded by
+This capability also exposes an important ownership boundary: the model identifies **what production
+system the designer authored**; result-affecting rules describing **how Arcogine interprets any
+design** belong to Engine semantic policy. That sibling decision is recorded by
 [ADR-0015](0015-engine-semantics-identity-and-reproducibility.md).
 
 ## Decision
@@ -26,8 +26,8 @@ belong to Engine semantic policy. That sibling decision is recorded by
    artifacts, controlled revisions, and historical resolution are never rewritten or rederived
    under a newer policy.
 
-2. **Gate 5 authored spatial semantics use `factory-model:v2`.** V2 is a complete canonical
-   Factory semantic artifact, not a spatial sidecar fingerprint.
+2. **Authored spatial semantics use `factory-model:v2`.** V2 is a complete canonical Factory
+   semantic artifact, not a spatial sidecar fingerprint.
 
 3. **V2 is exactly V1 semantics plus these five required authored additions:**
 
@@ -45,7 +45,7 @@ belong to Engine semantic policy. That sibling decision is recorded by
    `x >= 0`, `y >= 0`, `w >= 1`, `h >= 1`, `x + w <= W`, and `y + h <= H`, evaluated with
    overflow-safe arithmetic. Two resources overlap iff those occupied-cell sets intersect.
 
-   V2 publication must also prove the Gate 5 transfer-duration magnitude is representable for the
+   V2 publication must also prove the spatial transfer-duration magnitude is representable for the
    farthest possible pair of reference cells in the authored floor. With floor dimensions `W` and
    `H`, define:
 
@@ -56,7 +56,7 @@ belong to Engine semantic policy. That sibling decision is recorded by
 
    Publication accepts the artifact only when every subtraction, addition, and multiplication in
    that predicate is representable in the runtime tick-duration type and `maxTransferDuration` is
-   representable there. This bounds the derived Gate 5 duration itself; it does **not** claim that
+   representable there. This bounds the derived transfer duration itself; it does **not** claim that
    adding an otherwise valid duration to an arbitrarily extreme current `SimTime` can never
    overflow. Existing runtime time-addition validation remains responsible for that pre-existing
    condition.
@@ -88,10 +88,9 @@ belong to Engine semantic policy. That sibling decision is recorded by
    verifier/decoder necessary to resolve every released Factory model policy. Registering V2 must
    not make historical V1 revisions unreadable or unverifiable.
 
-9. **A V1 model remains fully supported and behaves exactly as it does before Gate 5.** V1 has no
-   spatial facts, therefore it has no Gate 5 spatial transfer behavior or transfer timing. This is
-   not a degraded mode; it is the truthful execution of a design that never authored spatial
-   semantics.
+9. **A V1 model remains fully supported under its existing non-spatial semantics.** V1 has no
+   spatial facts, therefore it has no spatial transfer behavior or transfer timing. This is not a
+   degraded mode; it is the truthful execution of a design that never authored spatial semantics.
 
 10. **There is no automatic V1-to-V2 lift.** Arcogine never synthesizes position, footprint,
     `ticksPerCell`, or `handlingTicks` for an existing V1 artifact. Spatial behavior requires an
@@ -127,9 +126,9 @@ semantic identity.
 
 ### Add an independent spatial fingerprint
 
-Rejected for the current capability. Gate 5 needs one authored Factory design. Splitting identity
-before independently evolving semantic components are required would add compatibility complexity
-without benefit.
+Rejected for the current capability. Spatial execution needs one authored Factory design. Splitting
+identity before independently evolving semantic components are required would add compatibility
+complexity without benefit.
 
 ### Put the transfer metric in V2
 
@@ -144,7 +143,7 @@ artifact.
 
 ## Consequences
 
-- Gate 5 receives a stable authored spatial substrate without weakening V1 identity.
+- Spatial execution receives a stable authored spatial substrate without weakening V1 identity.
 - `ModelFingerprint` continues to mean "which authored Factory design", not "which Engine outcome".
 - Existing V1 revisions remain valid and executable under their existing non-spatial semantics.
 - Factory must support more than one artifact policy when V2 lands.

@@ -4,7 +4,7 @@
 > **Scope:** Prepare Arcogine's factory runtime for external consumers after the canonical factory-model boundary is established  
 > **Authority:** Planning only; this document defines runtime-readiness gates, not current capability or accepted architecture  
 > **Prerequisite:** the model-seam entry gate (§1.1) — narrower than full D1-D4 in [Factory Design Capability](factory-design-capability.md)  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Engine Semantics v1](../architecture/engine-semantics-v1.md), [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md), [Gate 5 Spatial Runtime Consequences](gate-5-spatial-runtime-consequences.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
 
 ## 1. Purpose
 
@@ -82,14 +82,26 @@ Performance
 Simulation session control
 ```
 
-Where a concern crosses the model/runtime boundary, the published model owns stable input semantics and runtime owns changing simulated consequences. For example:
+Where a concern crosses the model/runtime boundary, the published model owns stable authored input semantics and runtime owns changing simulated consequences. Gate 5 sharpens that split further:
 
 ```text
-Model:   resource position and footprint
-Runtime: simulated transfer start/progress/completion caused by that layout
+Factory model v2
+    floor dimensions
+    resource position + anchored footprint
+    ticksPerCell
+    handlingTicks
+
+Engine semantics
+    how Arcogine interprets those facts
+    including distance, destination binding, admission reservation,
+    transfer timing and availability/no-rerouting rules
+
+Runtime
+    transfer start / in-flight / completion
+    supported observations/events
 ```
 
-Runtime may derive indexes or compiled structures from the published model, but it does not author another factory model and never mutates the published version.
+`ModelFingerprint` identifies the authored design; [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md) separately identifies the result-affecting Engine interpretation with `EngineSemanticsVersion`. Runtime may derive indexes or compiled structures from the published model, but it does not author another factory model and never mutates the published version.
 
 The sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track consumes stabilized production semantics later and owns the additional boundary created by real-world consequence. This plan therefore does **not** own:
 
@@ -112,7 +124,8 @@ It follows these constraints:
 - Arcogine owns executable production semantics; consumers receive controlled commands, events, and purpose-specific observations.
 - Mutable runtime state has one authoritative owner.
 - Request, execution, and performance concerns remain distinguishable.
-- Simulation behavior remains deterministic for identical published models, seeds, workloads, and ordered commands.
+- Deterministic/reproducible simulation outcome is scoped to the same published model, `EngineSemanticsVersion`, explicit workload, seed/random inputs, and ordered external commands; additional explicit inputs join that tuple when they can affect outcome.
+- `RunId` is correlation identity and must not influence simulation outcomes.
 - Runtime contracts are established before transport-specific API shapes become public compatibility obligations.
 - The [ISA-95 semantic mapping](../architecture/isa-95-semantic-mapping.md) is a modeling reference, not a requirement for full ISA-95 implementation or conformance.
 - Game-specific scoring, rendering, progression, and player-economy concepts do not enter runtime semantics.
@@ -286,17 +299,19 @@ Gate 2 removed that restriction: `RoutingStep` now carries `Set<MachineId> eligi
 
 ### 6.3 Deterministic dispatch
 
-The dispatch policy established by ADR-0005 and retained by ADR-0009, applied in `FactoryHandler.selectMachine`:
+`engine-semantics:v1` records the actually shipped selector and recovery behavior that Gate 5 must preserve:
 
-1. eligible;
-2. online (an eligible machine that is `Offline` is excluded from selection while any eligible machine is online);
-3. able to accept work immediately (`Machine.canAcceptJob()`);
-4. lowest queue depth;
-5. lowest `MachineId` as final tie-breaker.
+1. start from the step's explicit eligible-resource set;
+2. filter out `Offline` resources while at least one eligible resource is online; if all eligible resources are offline, use the full eligible set as the deterministic candidate set;
+3. rank candidates first by whether `Machine.canAcceptJob()` is true — this is a ranking key, not an eligibility filter;
+4. then rank by `combinedQueueDepth`, consisting of the machine's physical queue plus compatible `pendingMultiEligible` entries;
+5. break remaining ties by lowest `MachineId`;
+6. after selection, dispatch immediately only if the selected machine can accept the job; otherwise route the job to the existing single-machine queue or `pendingMultiEligible` waiting path;
+7. after a completion/recovery transition, drain the relevant per-machine queue before reconsidering `pendingMultiEligible` work.
 
-Projected-completion-time ranking, resource pools, and capability taxonomies were considered and deliberately deferred -- none are required by the acceptance criteria below. A future slice that changes ranking must record that decision rather than silently reinterpreting the current policy.
+Projected-completion-time ranking, resource pools, and capability taxonomies remain deliberately deferred. Any change that can alter assignments/outcomes for identical explicit inputs requires a new `EngineSemanticsVersion`, not a silent reinterpretation of `engine-semantics:v1`.
 
-Gate 2 is about **dispatch**, not work decomposition: the runtime selects an eligible resource for an independently dispatchable unit of work that already exists. ADR-0010 defines how W1 creates those units within one accepted quantity-scaled order: deterministic unit-quantity sibling `Job`s identified by `JobId`. That decision does not change Gate 2's selector or `pendingMultiEligible` semantics.
+Gate 2 is about **dispatch**, not work decomposition: the runtime selects a resource for an independently dispatchable unit of work that already exists. ADR-0010 defines how W1 creates those units within one accepted quantity-scaled order: deterministic unit-quantity sibling `Job`s identified by `JobId`. That decision does not change Gate 2's selector or `pendingMultiEligible` semantics.
 
 ### 6.4 Acceptance criteria
 
@@ -310,7 +325,7 @@ Gate 2 is satisfied when:
 6. Removing/disabling one instance does not require changing the product definition. **Satisfied**, including machine recovery and cross-machine pending-work reconsideration.
 7. Resource capability, operational status, and queue state remain distinct concepts. **Satisfied** -- `OperationStepDefinition.eligibleResources`, `MachineState`, per-machine queue state, and `pendingMultiEligible` remain separate concepts.
 
-**Gate 2 is complete.** Intra-order parallelism is not an unfinished Gate 2 condition; it is the separately accepted and functionally implemented W1 execution-decomposition contract in ADR-0010. Also deferred unless a concrete need arises: load-aware ranking beyond queue depth and resource pools/capability taxonomies.
+**Gate 2 is complete.** Intra-order parallelism is not an unfinished Gate 2 condition; it is the separately accepted and functionally implemented W1 execution-decomposition contract in ADR-0010. Also deferred unless a concrete need arises: load-aware ranking beyond the recorded v1 policy and resource pools/capability taxonomies.
 
 ## 7. Gate 3 — Consumer-neutral simulation session
 
@@ -383,9 +398,9 @@ With Gate 3 closed, **W1 is complete (§14.1)**. Its fixed-contract acceptance e
 
 Expose enough supported runtime information for a consumer to understand the simulation without reaching into internal stores or reconstructing authoritative state from undocumented events.
 
-[ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md) is the accepted architecture for Gate 4 semantics. The focused [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md) plan owns implementation slicing and evidence sequencing. In particular, internal scheduler `Event`/`EventType`/`EventPayload` remain transition machinery rather than the supported external compatibility contract; supported runtime events describe authoritative changes after processing, and a fresh observation remains sufficient to reconstruct current consumer state without full event replay.
+[ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md) is the accepted architecture for Gate 4 semantics. The focused [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md) plan owns implementation slicing and evidence sequencing. Internal scheduler `Event`/`EventType`/`EventPayload` remain transition machinery rather than the supported external compatibility contract; supported runtime events describe authoritative changes after processing, and a fresh observation remains sufficient to reconstruct current consumer state without full event replay.
 
-Slices G4-A (headless run identity and supported observation projection), G4-B (supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload`/`AffectedEntityRef` contract, post-authoritative publication, run-scoped monotonic sequencing), and G4-C (full headless acceptance closure) are implemented; see the "Implemented evidence" notes under those slices in the focused Gate 4 plan for exact contracts, derivation points, and tests. **Gate 4 core/headless closure is complete**: every §8.4 acceptance criterion is supported by executable headless evidence through the consumer-neutral `FactoryRuntime` boundary. G4-D (outward SSE/API/CLI/frontend consumer convergence) remains outstanding downstream migration work, and recovery/resynchronization hardening (DH-E) remains distribution hardening; neither blocks Gate 5.
+Slices G4-A (headless run identity and supported observation projection), G4-B (supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload`/`AffectedEntityRef` contract, post-authoritative publication, run-scoped monotonic sequencing), and G4-C (full headless acceptance closure) are implemented; see the "Implemented evidence" notes under those slices in the focused Gate 4 plan for exact contracts, derivation points, and tests. **Gate 4 core/headless closure is complete**. G4-D (outward SSE/API/CLI/frontend consumer convergence) remains outstanding downstream migration work, and recovery/resynchronization hardening (DH-E) remains distribution hardening; neither blocks Gate 5. Prefer landing Gate 5 B2's final `EngineSemanticsVersion` provenance shape before G4-D so the outward contract is not migrated twice.
 
 ### 8.2 Minimum observation
 
@@ -396,6 +411,7 @@ Session
     session/run ID
     model fingerprint
     controlled revision ID [optional when authoritatively bound]
+    engine semantics version [required by ADR-0015 when G5-B2 lands]
     current simulated time
     run state
     latest event sequence
@@ -434,8 +450,6 @@ Performance
 
 The minimum order/work-item split above follows ADR-0010. Gate 4 may choose purpose-specific projection types and envelope structure, but it must not collapse aggregate order progress back into one child job or reinterpret `JobId` as an order identity.
 
-Not every consumer must receive one universal state dump. Purpose-specific observations remain preferable where they preserve capability boundaries.
-
 ### 8.3 Event envelope
 
 Every externally visible supported runtime event has an envelope equivalent to:
@@ -446,6 +460,7 @@ sequence
 simulation time
 semantic event type
 model fingerprint
+engine semantics version [required by ADR-0015 when G5-B2 lands]
 controlled revision ID [optional when authoritatively bound]
 affected entity references
 payload
@@ -453,9 +468,7 @@ payload
 
 The sequence is strictly monotonic within one run/session epoch and makes order explicit independently of event timestamps. A reset creates a new run identity and sequence epoch; run identity is correlation metadata and must not influence deterministic simulation outcomes.
 
-ADR-0010 already requires W1's aggregate completion payload to include explicit `OrderId` while retaining the completing child `JobId`. Gate 4 preserves that correlation in the supported contract.
-
-`ModelFingerprint` is mandatory source-model provenance under ADR-0006/ADR-0011. `ControlledRevisionId` is optional and present only when the runtime was instantiated with an authoritative revision binding; Gate 4 does not synthesize revision identity or take ownership of Governance G1.3 persistence/resolution.
+ADR-0010 already requires W1's aggregate completion payload to include explicit `OrderId` while retaining the completing child `JobId`. Gate 4 preserves that correlation. `ModelFingerprint` is mandatory source-model provenance under ADR-0006/ADR-0011. `ControlledRevisionId` is optional and present only when the runtime was instantiated with an authoritative revision binding. ADR-0015 adds mandatory Engine interpretation provenance; G5-B2 implements that additive field without rewriting ADR-0011.
 
 These are **simulation-runtime** events and observations. A future Operational Execution adapter may translate relevant production semantics into its own command/result and external-observation contracts, but Gate 4 does not define production telemetry envelopes, external source authenticity, or digital-twin reconciliation.
 
@@ -476,39 +489,43 @@ Gate 4 is satisfied when:
 11. W1 runtime events preserve `OrderId`/child `JobId` correlation where work-item changes belong to an aggregate order.
 12. Reset creates a new run identity/sequence epoch without changing deterministic semantic outcomes for otherwise identical inputs.
 
+ADR-0015 adds one provenance requirement to the supported Gate 4 shapes; implementing that addition is Gate 5 B2 work and does not reopen the already-complete Gate 4 headless behavior.
+
 ## 9. Gate 5 — Spatial runtime consequences
 
-### 9.1 Goal
+### 9.1 Goal and accepted architecture
 
 Apply deterministic production consequences to semantic layout supplied by the published factory model.
 
-The design/model side owns facts equivalent to:
+The hard-to-reverse architecture is now resolved by [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), and the normative [Engine Semantics v1](../architecture/engine-semantics-v1.md). Implementation remains pending and is decomposed by the focused [Gate 5 delivery plan](gate-5-spatial-runtime-consequences.md).
+
+Factory V2 owns exactly these new authored facts:
 
 ```text
-Factory floor dimensions
-Resource position
-Resource orientation
-Resource footprint
-Semantic transfer/connection inputs
+floor width / height
+resource position x / y = footprint minimum-coordinate reference cell
+footprint width / height
+ticksPerCell
+handlingTicks
 ```
 
-Runtime owns consequences such as:
+They are required, validated, canonical and fingerprinted under `factory-model:v2`. Orientation, paths, aisles, conveyors, transport resources, floor identity, connection points and route topology are not V2. Existing `factory-model:v1` remains fully supported under its existing non-spatial semantics; there is no automatic V1→V2 lift.
 
-```text
-transfer duration
-transfer start/completion
-work-item location/progress
-layout-dependent completion time
-```
+Engine semantics v1 owns the first interpretation:
 
-A sufficient first transfer policy may be:
+- preserve the actual Gate 2 selection and recovery semantics recorded in §6.3;
+- bind a concrete destination only when the selected destination is currently admissible for binding;
+- distinct-resource distance is Manhattan distance between V2 position reference cells;
+- `transferDuration = handlingTicks + ticksPerCell * manhattanDistance` using exact integer arithmetic;
+- footprint does not affect v1 transfer distance;
+- `handlingTicks` is applied once per inter-resource transfer;
+- same-resource consecutive operations create no transfer state/duration/events;
+- a distinct-resource transfer with zero authored magnitudes still has authoritative start/completion transitions at one `SimTime`;
+- binding consumes destination **admission capacity**, distinct from active processing and queue state;
+- binding is immutable after transfer start; v1 does not reroute;
+- destination/source availability changes after departure do not change the fixed destination or completion time; an offline destination at arrival receives the job through the existing waiting path after transfer completes.
 
-```text
-transfer time = fixed handling time
-              + Manhattan distance * ticks per cell
-```
-
-The exact metric remains an open runtime/model-policy decision until validated by a prototype.
+Runtime owns the mutable consequence: `TRANSFER_STARTED`, in-flight `TRANSFERRING`, `TRANSFER_COMPLETED`, the fixed completion time, destination reservation/admission load, and supported observations/events. A consumer may interpolate visual movement from authoritative times and canonical placement; frame-by-frame coordinates are not authoritative runtime state.
 
 ### 9.2 Hierarchy is not layout
 
@@ -519,33 +536,42 @@ Resource scope
     Factory -> Work Center / Resource Pool -> Resource Instance
 
 Spatial layout
-    Floor -> Position -> Footprint -> Transfer distance
+    Floor -> Position -> Footprint
 ```
 
-Moving a resource changes spatial consequences without changing its identity or hierarchy membership. Changing pool/work-center membership does not implicitly move it.
+Moving a resource changes canonical spatial content and therefore `ModelFingerprint` without changing stable resource identity or hierarchy membership. Changing pool/work-center membership does not implicitly move it.
 
-### 9.3 Transfer state
+### 9.3 Provenance and reproducibility
 
-Transfers should be represented through explicit runtime state and/or events such as:
+`ModelFingerprint` identifies which authored Factory design ran. `EngineSemanticsVersion` identifies which Arcogine interpretation ran. The durable result inputs are conceptually:
 
 ```text
-TransferStarted
-TransferCompleted
+ModelFingerprint
++ EngineSemanticsVersion
++ explicit workload
++ seed/random inputs
++ ordered external commands
 ```
 
-The runtime owns transfer timing. A consumer may interpolate visual movement between authoritative times.
+A released Engine semantics version retains an immutable specification and pinned behavioral conformance fixtures; permanent exact re-execution of every historical version is not promised. `RunId` remains correlation identity only.
 
 ### 9.4 Acceptance criteria
 
 Gate 5 is satisfied when:
 
-1. Runtime consumes validated semantic layout from a published model rather than accepting editor-specific geometry directly.
-2. Two published models with identical resources/workload/processing durations but different semantic positions produce different completion times when transfer distance differs.
-3. Both results are deterministic.
-4. Transfer time is observable and attributable through supported events/observations.
-5. Moving a resource creates a new model version and changes transfer behavior without changing resource identity.
-6. Resource-pool/hierarchy changes do not implicitly change spatial placement.
-7. No pathfinding, worker, vehicle, aisle, or congestion model is required to satisfy the gate.
+1. Runtime consumes validated V2 semantic layout from a published model rather than accepting editor-specific geometry directly.
+2. Two otherwise equivalent V2 designs with different canonical positions produce different transfer/completion times under the same `engine-semantics:v1` when Manhattan distance differs.
+3. Repeated execution with identical model, semantics version, workload, seed and ordered commands is deterministic.
+4. Transfer start/completion and in-flight state are observable and attributable through supported events/observations without replay.
+5. Moving a resource changes `ModelFingerprint` and transfer behavior without changing resource identity.
+6. Results retain both `ModelFingerprint` and `EngineSemanticsVersion` provenance.
+7. Destination admission reservation remains distinct from processing activity and queue depth, including when the bound destination goes offline before arrival.
+8. Zero-duration and same-resource cases follow the exact semantics-v1 rules and deterministic Gate 4 sequence ordering.
+9. V1 artifacts/fingerprints remain unchanged and receive no synthesized spatial facts or transfer semantics.
+10. Resource-pool/hierarchy changes do not implicitly change spatial placement.
+11. No pathfinding, worker, vehicle, aisle, conveyor, transport-capacity or congestion model is required to satisfy the gate.
+
+The focused Gate 5 plan breaks this acceptance boundary into twelve semantic implementation slices, starting with pre-Gate-5 conformance fixtures and V2 model work, converging on one vertically coherent transfer-activation slice, then closing edge cases, observation/KPI evidence and the final headless proving case.
 
 ## 10. Headless engine acceptance scenarios
 
@@ -620,29 +646,32 @@ The W1 acceptance suite must also preserve existing Gate 2 independent-order beh
 
 A non-functional large-order benchmark (for example quantity 100,000) must record the memory/execution impact of unit decomposition. W1 accepts quantity-proportional resident work-item count because arbitrary chunking would invent batch semantics; measured evidence should determine whether a later representation-efficiency design is required.
 
-### 10.3 Layout benchmark
+### 10.3 Gate 5 layout benchmark
 
 ```text
 Same product definition
 Same production order
-Same resource definitions/instances
+Same resource identities
 Same processing durations
+Same EngineSemanticsVersion = engine-semantics:v1
 
-Published model A
+Published V2 model A
     resources close together
 
-Published model B
-    resources far apart
+Published V2 model B
+    same resources placed farther apart
 ```
 
 Expected evidence:
 
 - processing work is identical;
-- transfer duration differs;
+- canonical placement difference changes `ModelFingerprint`;
+- transfer duration differs according to the semantics-v1 Manhattan rule;
 - total completion time differs;
-- transfer events/observations explain the difference;
-- repeated runs reproduce each model's results;
-- each run identifies the model version used.
+- transfer events/observations explain the difference, including a reconstructable in-flight view;
+- repeated runs reproduce each model's ordered semantic outcomes;
+- each result retains both model fingerprint and Engine semantics provenance;
+- V1 golden vectors/fingerprints remain unchanged and no V1 spatial defaults are synthesized.
 
 ## 11. Distribution hardening after the core gates
 
@@ -652,11 +681,11 @@ These capabilities are required before treating an external client as distributa
 |---|---|
 | Public contract versioning | Version model, command, event, observation, and protocol schemas |
 | Reliable event recovery | Support monotonic event IDs and a defined reconnect/resynchronization strategy |
-| Exact checkpoint and restore | Persist source model identity, simulated time, runtime state, queues, active work, scheduler contents, random state, and event position |
+| Exact checkpoint and restore | Persist source model identity, Engine semantics identity, simulated time, runtime state, queues, active work, scheduler contents, random state, and event position |
 | Sidecar lifecycle and packaging | Start, health-check, version-check, communicate with, and stop a bundled local runtime without requiring a separate Java installation |
 | Compatibility tests | Keep consumer-contract fixtures that fail on accidental breaking changes |
 
-Gate 4 establishes the recovery primitives—run identity, monotonic supported-event sequence, observation cursor, and transport-neutral event semantics—but not the complete recovery mechanism. Distribution hardening later owns retained supported-event history, reconnect/resume cursors, explicit gap detection/resynchronization, contract versioning, and exact checkpoint/restore. Recovery uses a fresh observation plus ordered deltas when history cannot be resumed; it does not require event sourcing or full-history replay.
+Gate 4 establishes the recovery primitives—run identity, monotonic supported-event sequence, observation cursor, and transport-neutral event semantics—but not the complete recovery mechanism. ADR-0015 adds Engine interpretation provenance that any future exact checkpoint/recovery format must retain. Distribution hardening later owns retained supported-event history, reconnect/resume cursors, explicit gap detection/resynchronization, contract versioning, and exact checkpoint/restore. Recovery uses a fresh observation plus ordered deltas when history cannot be resumed; it does not require event sourcing or full-history replay.
 
 A game save may wrap an Arcogine checkpoint with game-owned state. Arcogine does not own campaign progress, score, camera state, or user preferences.
 
@@ -707,9 +736,9 @@ Scenario factory semantics
 3. Make quantity consume proportional production work. **Implemented as the third Gate 1 slice** using repeated routing inside one `Job`; retained as historical pre-W1 evidence, not current runtime behavior.
 4. Capability/eligibility-driven deterministic dispatch. **Implemented as Gate 2**; see ADR-0009 for the dispatch/decomposition boundary.
 5. Consumer-neutral session and bounded advancement. **Implemented as Gate 3**; see ADR-0007.
-6. **W1 — intra-order execution decomposition. Complete.** Architecture resolved by [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md): quantity `N` -> `N` unit-quantity sibling `Job`s; `JobId` is work-item identity; order-level execution progress uses the parent `OrderId`; Gate 2 dispatch is reused unchanged; exactly one order completion; deterministic ordering/replay. `LargeOrderDecompositionBenchmarkTest` supplies the required 100,000-child memory/execution evidence.
-7. **Gate 4 — stable runtime observations and ordered authoritative runtime events. Core/headless closure complete.** `FactoryRuntime.observe()` supplies an immutable, headless current-state projection with opaque per-runtime `RunId`, durable `ModelFingerprint`, simulated time, explicit active/quiescent run state, the live supported-event cursor, ordered resource/order/W1-child/pending-work state, and existing authoritative performance aggregates (G4-A). `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload`/`AffectedEntityRef` add the supported, post-authoritative, strictly monotonic runtime-event contract (G4-B). G4-C closes the §8.4 acceptance list headlessly: fresh-observation reconstruction without replay, observation/event closure over the same authoritative transitions, bottleneck identification from supported observations alone, and an ArchUnit-enforced ban on API/Spring DTOs re-entering domain decision paths. None of it exposes or rebrands internal scheduler events. G4-D (outward SSE/API/CLI/frontend convergence) and DH-E (recovery/resynchronization hardening) remain outstanding and do not block Gate 5; see [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md) and [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md).
-8. Spatial transfer consequences from published layout.
+6. **W1 — intra-order execution decomposition. Complete.** Architecture resolved by ADR-0010; quantity `N` -> `N` unit-quantity sibling `Job`s, with fixed-contract and large-order evidence.
+7. **Gate 4 — stable runtime observations and ordered authoritative runtime events. Core/headless closure complete.** G4-D outward convergence and DH-E recovery hardening remain downstream and do not block Gate 5.
+8. **Gate 5 — architecture accepted; implementation pending.** ADR-0014 fixes Factory V2 evolution, ADR-0015 fixes Engine semantic identity/reproducibility, `engine-semantics:v1` fixes the first interpretation, and [the focused Gate 5 plan](gate-5-spatial-runtime-consequences.md) decomposes implementation into twelve incremental semantic slices (`G5-0`, `G5-A1..A3`, `G5-B1..B2`, `G5-C1..C4`, `G5-D`, `G5-E`).
 9. Public-contract, recovery, persistence, and packaging hardening.
 
 ### 13.3 First runtime milestone
@@ -739,11 +768,13 @@ This milestone deliberately excludes changing the canonical-model boundary, layo
 | Intra-order execution decomposition and work-item identity | **Resolved by ADR-0010 and complete; fixed-contract and 100,000-child benchmark evidence are executable** |
 | Future lot/batch sizing or material-lot identity | A concrete domain requirement supplies real lot/batch semantics beyond W1 unit decomposition |
 | Capability pools versus explicit eligible-instance sets | A concrete scheduling/control use case cannot be expressed cleanly by explicit eligibility |
-| Deterministic dispatch policy | Resolved by Gate 2 / ADR-0009; revisit only if a concrete workload requires a different ranking policy |
+| Deterministic dispatch policy | **Current result-affecting behavior is frozen by `engine-semantics:v1`; a semantics-changing revision requires a new `EngineSemanticsVersion`** |
 | Session interface/module ownership | Resolved by Gate 3 / ADR-0007; revisit only if a concrete consumer proves `FactoryRuntime` is no longer the right boundary |
 | Tick/event-count advancement semantics | Interactive/headless responsiveness tests |
-| Observation/event contract semantics | **Resolved by ADR-0011; implementation decomposition remains in the focused Gate 4 delivery plan** |
-| Spatial metric/transfer policy | Layout benchmark prototype |
+| Observation/event contract semantics | **Resolved by ADR-0011; ADR-0015 adds Engine-semantics provenance, implemented by G5-B2; outward migration remains G4-D** |
+| Spatial model-policy evolution | **Resolved by ADR-0014 (`factory-model:v2`); implementation in G5-A1/A2/A3** |
+| Spatial metric/transfer policy | **Resolved for `engine-semantics:v1` by ADR-0015 + the normative Engine Semantics v1 specification; implementation in G5-C1..C4** |
+| Engine semantics identity/reproducibility | **Resolved by ADR-0015; implementation in G5-0/B1/B2 and conformance closure in G5-E** |
 | Public compatibility policy | Before external consumer contract publication |
 
 ### 14.1 W1 — complete execution capability: intra-order execution decomposition
@@ -790,11 +821,11 @@ Required implementation semantics are fixed by ADR-0010:
 
 This decision intentionally leaves material-lot genealogy, configurable batch sizes, transfer batches, split/merge, setup optimization, inventory allocation, generalized scheduling, and durable cross-session work-item identity out of W1. Those require separate accepted semantics when a concrete use case justifies them.
 
-W1 remains placed **before Gate 4** deliberately. Gate 4 must stabilize observations and event envelopes around the execution identities and aggregate progress model W1 establishes rather than around the obsolete one-Job-per-Order runtime shape.
+W1 remains placed **before Gate 4** deliberately. Gate 4 stabilizes observations and event envelopes around the execution identities and aggregate progress model W1 establishes rather than around the obsolete one-Job-per-Order runtime shape.
 
 `IntraOrderExecutionAcceptanceTest` proves the fixed quantity-20 workload: one order, twenty deterministic children, concurrent use of two eligible cutters, aggregate completion, one business completion, and pre-mutation rejection above the supported 100,000-child materialization limit. `LargeOrderDecompositionBenchmarkTest` executes that ceiling, proves its deterministic decomposition and terminal semantics, and records diagnostic memory/execution measurements.
 
-The canonical model/run/runtime boundary is tracked by [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md). Operational execution-context/trust/command/deployment/reconciliation decisions belong to the sibling operational track and should receive their own ADRs when hard-to-reverse contracts are selected. Record additional accepted Engine decisions as ADRs rather than expanding this plan into a decision log.
+The canonical model/run/runtime boundary is tracked by ADR-0003. Operational execution-context/trust/command/deployment/reconciliation decisions belong to the sibling operational track and should receive their own ADRs when hard-to-reverse contracts are selected. Record additional accepted Engine decisions as ADRs rather than expanding this plan into a decision log.
 
 ## 15. Documentation lifecycle
 
@@ -808,6 +839,6 @@ As gates become implemented:
 - update [`../reference/api.md`](../reference/api.md) only for implemented public behavior;
 - add ADRs for durable execution, scheduling, session, persistence, and compatibility decisions;
 - keep headless acceptance scenarios executable and version-controlled;
-- keep production connectivity, deployment, external observation, reconciliation, and trust semantics in the sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track until they become implemented current architecture.
+- keep production connectivity, deployment, external observation, reconciliation, and trust semantics in the sibling Operational Execution track until they become implemented current architecture.
 
 Once the readiness initiative is complete or abandoned, reduce this file to a concise historical outcome or retire it after durable decisions and current behavior are represented in authoritative locations.

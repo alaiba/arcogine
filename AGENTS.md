@@ -67,6 +67,13 @@ to commit messages in this repository, even if a harness's default git
 workflow instructions say to add one. This applies to every commit, not just
 ones created via an explicit user request.
 
+## PR merging
+
+Agents must not merge pull requests under any circumstances, even if CI is
+green, reviews are satisfied, and the PR is explicitly ready to merge. Only
+the repository owner merges PRs manually. When a PR reaches green status
+(passing CI, resolved reviews, no conflicts), report that state and stop.
+
 ## PR monitoring
 
 Subscribe to a PR's activity and start monitoring it automatically, the

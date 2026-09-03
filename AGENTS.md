@@ -29,7 +29,14 @@ PR workflow shorthand has distinct review and remediation meanings:
 - `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
 - `..` = advance the current implementation pull request toward green by inspecting the latest reviews, comments, unresolved findings, CI, and mergeability; evaluating each finding against repository authority; applying the smallest correct fix for valid findings; challenging invalid findings with repository evidence; and re-checking the resulting PR state.
 
-When handling `..`, continue remediation and re-checking until the PR is green or a genuinely unresolved decision requires user input. Do not treat `..` as an independent review-only action.
+When handling `..`:
+
+1. **Check reviews first** (via `get_reviews`, not just comments) — a review with `CHANGES REQUIRED` takes precedence over green CI.
+2. Check CI status and merge conflicts.
+3. Apply fixes for valid findings.
+4. Continue remediation and re-checking until the PR is green or a genuinely unresolved decision requires user input.
+
+Never report a PR as green or ready based on CI alone. Do not treat `..` as an independent review-only action.
 
 Do not replace known repository context with generic GitHub discovery.
 

@@ -30,15 +30,16 @@ configurations.named("jmh") {
 }
 
 // Coverage gate: fails the build if sim-core line coverage drops below the
-// floor (e.g. if its test suite is deleted). The minimum is set a few points
-// below measured actual coverage.
+// floor (e.g. if its test suite is deleted). Raised from 0.82 following
+// enhanced test coverage for EventLog edge cases, capacity boundaries, and
+// equality/hashing semantics (see EventLogTest).
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {
         rule {
             limit {
                 counter = "LINE"
-                minimum = "0.82".toBigDecimal()
+                minimum = "0.88".toBigDecimal()
             }
         }
     }

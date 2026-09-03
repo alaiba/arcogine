@@ -2,6 +2,7 @@ package com.arcogine.core.log;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
@@ -102,5 +103,107 @@ class EventLogTest {
         EventLog log = new EventLog();
         assertEquals(0, log.count());
         assertFalse(log.isTruncated());
+    }
+
+    @Test
+    void filterByTypeWithNoMatchesReturnsEmptyStream() {
+        EventLog log = new EventLog();
+        log.append(makeOrder(1));
+        log.append(makeOrder(2));
+        assertEquals(0, log.filterByType(EventType.TaskStart).count());
+    }
+
+    @Test
+    void filterByTypeReturnsSingleMatchWhenOnlyOne() {
+        EventLog log = new EventLog();
+        log.append(makeOrder(1));
+        log.append(Event.of(new SimTime(2), EventPayload.DemandEvaluation.INSTANCE));
+        log.append(makeOrder(3));
+        assertEquals(1, log.filterByType(EventType.DemandEvaluation).count());
+    }
+
+    @Test
+    void eventsReturnsUnmodifiableList() {
+        EventLog log = new EventLog();
+        log.append(makeOrder(1));
+        List<Event> events = log.events();
+        assertThrows(UnsupportedOperationException.class, () -> events.add(makeOrder(2)));
+    }
+
+    @Test
+    void snapshotIsIndependentCopy() {
+        EventLog original = new EventLog();
+        original.append(makeOrder(1));
+        EventLog snap = original.snapshot();
+
+        original.append(makeOrder(2));
+        assertEquals(1, snap.count());
+        assertEquals(2, original.count());
+    }
+
+    @Test
+    void snapshotEqualsOriginalBeforeModification() {
+        EventLog log = new EventLog();
+        log.append(makeOrder(1));
+        log.append(makeOrder(2));
+        EventLog snap = log.snapshot();
+
+        assertTrue(log.equals(snap));
+        assertTrue(snap.equals(log));
+    }
+
+    @Test
+    void logHashCodeConsistent() {
+        EventLog log1 = new EventLog();
+        log1.append(makeOrder(1));
+
+        EventLog log2 = new EventLog();
+        log2.append(makeOrder(1));
+
+        assertEquals(log1.hashCode(), log2.hashCode());
+    }
+
+    @Test
+    void logNotEqualToDifferentContent() {
+        EventLog log1 = new EventLog();
+        log1.append(makeOrder(1));
+
+        EventLog log2 = new EventLog();
+        log2.append(makeOrder(2));
+
+        assertFalse(log1.equals(log2));
+    }
+
+    @Test
+    void logNotEqualToNonEventLogObject() {
+        EventLog log = new EventLog();
+        log.append(makeOrder(1));
+
+        assertFalse(log.equals("not an eventlog"));
+        assertFalse(log.equals(null));
+    }
+
+    @Test
+    void appendStopsAtMaxCapacity() {
+        EventLog log = new EventLog(2);
+        log.append(makeOrder(1));
+        assertFalse(log.isTruncated());
+
+        log.append(makeOrder(2));
+        assertTrue(log.isTruncated());
+
+        log.append(makeOrder(3));
+        assertEquals(2, log.count());
+        assertTrue(log.isTruncated());
+    }
+
+    @Test
+    void eventLogWithCapacityOne() {
+        EventLog log = new EventLog(1);
+        log.append(makeOrder(1));
+        assertTrue(log.isTruncated());
+
+        log.append(makeOrder(2));
+        assertEquals(1, log.count());
     }
 }

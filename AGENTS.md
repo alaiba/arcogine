@@ -54,6 +54,12 @@ Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable
 authorities.
 
+## Temporary artifacts
+
+Ad hoc diagnostic reports, one-off log captures, and transient session artifacts that would otherwise be written at repository root should go to the `logs/` directory at the repository root. The `logs/` directory is gitignored as a whole. Keep the root and working directory clean; use `logs/coverage.txt`, `logs/test-output.log`, etc. instead of root-level files.
+
+Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`), npm/Vitest (`product/interfaces/web/coverage/`, `test-results/`), Playwright (`playwright-report/`), and `dist/` continue to write to their configured locations per the canonical build commands.
+
 ## Commit message footer
 
 Do not append a `Co-Authored-By: Claude ...` or `Claude-Session: ...` trailer

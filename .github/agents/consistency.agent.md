@@ -397,7 +397,7 @@ Why inconsistent:
 Authority analysis:
 <which artifact owns this question and why>
 
-Likely resolution: CODE | CURRENT DOCS | PLANNING | ADR | TEST/EVIDENCE | MULTIPLE
+Likely resolution: CODE | CURRENT_DOCS | PLANNING | ADR | TEST/EVIDENCE | MULTIPLE
 Suggested action:
 <smallest coherent corrective action; do not perform it during a diagnostic run>
 

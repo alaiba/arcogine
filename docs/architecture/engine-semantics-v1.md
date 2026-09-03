@@ -1,6 +1,6 @@
 # Engine Semantics v1
 
-Status: Normative design contract; implementation pending Gate 5 delivery
+Status: Normative design contract; implementation pending
 Semantic identity: `engine-semantics:v1`
 Decision authority: [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md)
 
@@ -22,9 +22,10 @@ ModelFingerprint
 
 A run fixes its Engine semantics version at establishment. The version never changes mid-run.
 
-## 2. Existing dispatch semantics retained by v1
+## 2. Resource-selection and dispatch semantics
 
-Gate 5 does not redefine Gate 2 dispatch. The current semantics remain part of v1:
+Spatial transfer semantics do not redefine the existing resource-selection and dispatch behavior.
+The following rules are part of v1:
 
 1. Start from the routing step's authored eligible-machine set. Prefer online machines by filtering
    out `Offline` resources when at least one eligible machine is online. If every eligible machine
@@ -35,48 +36,48 @@ Gate 5 does not redefine Gate 2 dispatch. The current semantics remain part of v
 3. Among candidates tied on immediate acceptance, rank by `combinedQueueDepth` as currently defined
    by the Factory Engine, including pending multi-eligible work that could land on that resource.
 4. Break a remaining tie deterministically by `MachineId`.
-5. Selection runs at the existing semantic points even when the selected machine cannot yet accept
-   the job. The post-selection branch determines immediate dispatch versus `pendingMultiEligible`
-   versus the selected single-machine queue.
+5. Selection runs at the established semantic points even when the selected machine cannot yet
+   accept the job. The post-selection branch determines immediate dispatch versus
+   `pendingMultiEligible` versus the selected single-machine queue.
 6. Recovery after a machine/step completion preserves the current cascade order: drain that
    machine's own queue first, then reconsider pending multi-eligible work. Within the multi-eligible
    backlog, the earliest queued entry that can actually be placed is dispatched first, with repeated
    re-selection after each placement.
-7. Gate 5 inserts transfer time only after a concrete destination is both selected and currently
-   admissible under the same acceptance rule that would permit immediate pre-Gate-5 processing; it
-   does not move selection earlier or redefine ranking.
+7. Spatial transfer time is inserted only after a concrete destination is both selected and
+   currently admissible under the same acceptance rule that otherwise permits immediate processing;
+   transfer semantics do not move selection earlier or redefine ranking.
 
 Changing any of those result-affecting rules requires a new Engine semantics version.
 
-## 3. Existing work-decomposition semantics retained by v1
+## 3. Unit-work decomposition semantics
 
-W1 child-work semantics remain part of v1:
+The existing unit-work decomposition rules remain part of v1:
 
 1. Workload quantity `N` decomposes into `N` independently dispatchable `JobId` children.
-2. Child creation/release and initial dispatch use the deterministic ordinal ordering established by
-   W1.
+2. Child creation/release and initial dispatch use deterministic ordinal ordering.
 3. Aggregate completion continues to correlate explicit `OrderId` with the completing child
    `JobId`.
 
 A change that can alter assignment, ordering, or completion outcome for identical explicit inputs
 requires a new Engine semantics version.
 
-## 4. Existing scheduler and dispatch-cascade ordering retained by v1
+## 4. Scheduler and dispatch-cascade ordering
 
 1. Authoritative scheduled work is ordered first by `SimTime`.
 2. Equal-time scheduled work uses the existing deterministic insertion-order tie-break.
 3. Internal scheduler markers that do not represent authoritative Factory state changes do not gain
    semantic significance merely because they are present in the implementation.
-4. Supported runtime event ordering at the same `SimTime` is represented only by the existing Gate
-   4 sequence; Gate 5 introduces no second event-ordering mechanism.
+4. Supported runtime-event ordering at the same `SimTime` is represented only by the monotonic
+   supported-event sequence established by ADR-0011; spatial transfer semantics introduce no second
+   event-ordering mechanism.
 5. The intra-handler recovery cascade is also semantic ordering where it changes assignment:
    after a completed step releases a machine, the Engine first attempts to dispatch that machine's
    own queued work and only then reconsiders `pendingMultiEligible` work. A change to that ordering
    can change assignments and therefore requires a new Engine semantics version.
 
-## 5. Gate 5 ownership rule
+## 5. Spatial model/Engine ownership boundary
 
-Gate 5 applies this boundary:
+Spatial transfer semantics apply this boundary:
 
 - authored plant facts belong to the canonical Factory model and `ModelFingerprint`;
 - result-affecting rules for interpreting those facts belong to `engine-semantics:v1`;
@@ -88,13 +89,13 @@ resource footprint, `ticksPerCell`, and `handlingTicks`, as fixed by ADR-0014.
 
 ## 6. Destination selection and binding
 
-The initial Gate 5 rule is **transfer begins when the selected destination becomes admissible for
-binding under the existing acceptance semantics**.
+The v1 rule is **transfer begins when the selected destination becomes admissible for binding under
+the existing acceptance semantics**.
 
 1. On completion of operation `k`, the source resource releases processing capacity exactly as it
-   does before Gate 5.
-2. Existing Gate 2 selection/ranking runs at the existing semantic point, including deterministic
-   selection of a non-accepting machine when that is the current outcome.
+   does without spatial transfer delay.
+2. Existing resource selection/ranking runs at the established semantic point, including
+   deterministic selection of a non-accepting machine when that is the current outcome.
 3. If the selected machine cannot currently accept the job, the job remains in the existing waiting
    path (`machine queue` or `pendingMultiEligible`) and the existing recovery cascade controls when
    selection/placement is retried.
@@ -107,7 +108,7 @@ binding under the existing acceptance semantics**.
 8. Destination binding is immutable after transfer start. V1 does not reroute.
 
 This changes only the delay between destination binding and next-step processing; it does not change
-Gate 2 selection/ranking semantics.
+resource-selection/ranking semantics.
 
 ## 7. Transfer timing
 
@@ -131,18 +132,18 @@ Semantic rules:
 6. Factory V2 publication validation must prove the exact maximum-duration predicate defined by
    ADR-0014: `(W - 1) + (H - 1)` and
    `handlingTicks + ticksPerCell * maxManhattanDistance` must be representable with overflow-safe
-   arithmetic in the runtime duration type. This guarantees representability of Gate 5's derived
-   duration; it does not guarantee that `currentSimTime + transferDuration` is representable at an
-   arbitrarily extreme current time. The existing runtime time-addition guard remains responsible
-   for that condition.
+   arithmetic in the runtime duration type. This guarantees representability of the derived
+   transfer duration; it does not guarantee that `currentSimTime + transferDuration` is
+   representable at an arbitrarily extreme current time. The existing runtime time-addition guard
+   remains responsible for that condition.
 7. Distinct resource footprints may not overlap. Because each reference cell lies inside its own
    footprint under ADR-0014, distinct valid resources cannot share the same reference cell, so a
    zero-distance inter-resource transfer is not a supported v1 state.
 8. Consecutive operations on the **same resource** perform no transfer at all: no transfer state,
    no duration, and no transfer events.
-9. A V2 design with `ticksPerCell = 0` and `handlingTicks = 0` therefore preserves pre-Gate-5
-   completion timing while still exposing the authoritative transfer start/completion transitions
-   for distinct resources.
+9. A V2 design with `ticksPerCell = 0` and `handlingTicks = 0` therefore preserves the completion
+   timing that would occur without spatial transfer delay while still exposing the authoritative
+   transfer start/completion transitions for distinct resources.
 
 Changing metric, endpoint interpretation, handling application, arithmetic/rounding, zero-distance
 semantics, or same-resource behavior requires a new Engine semantics version.
@@ -184,11 +185,12 @@ else:
 
 `TRANSFERRING` is a runtime state between two moments, not a third event/moment. There is no separate
 "destination selected", "transfer pending", "destination queued while in flight", or
-"next-operation-dispatched" Gate 5 moment beyond the existing authoritative transitions.
+"next-operation-dispatched" transfer moment beyond the existing authoritative transitions.
 
 ## 9. Capacity and availability semantics
 
-1. The source releases its processing capacity at step completion exactly as before Gate 5.
+1. The source releases its processing capacity at step completion exactly as it does without
+   spatial transfer delay.
 2. A transferring job consumes **destination admission capacity only** from binding until arrival.
    That reserved inbound capacity counts when deciding whether the destination can admit additional
    work, but the job is not in the destination's active-processing set and does not make the machine
@@ -210,7 +212,7 @@ else:
 
 ## 10. KPI and resource-observation interpretation
 
-Gate 5 does not redefine existing metric formulas:
+Spatial transfer semantics do not redefine existing metric formulas:
 
 - `busyTicks` / utilization remain processing-time measures; transfer time does not accrue resource
   busy ticks merely because destination admission capacity is reserved;
@@ -227,8 +229,8 @@ otherwise have (`Idle` when it has no active processing, or `Busy` only because 
 jobs). Supported resource observation must nevertheless expose enough capacity information for its
 existing bottleneck/capacity interpretation to account for admission capacity consumed by inbound
 reservations; it must not silently count the in-flight job as processing or queue depth. The exact
-projection field used for this admission-load fact is an implementation/API-shape choice for G5-D,
-not a change to the semantic distinction.
+projection field used for this admission-load fact is an implementation/API-shape choice, not a
+change to the semantic distinction.
 
 Bottleneck interpretation must therefore widen: a destination can have constrained admission
 capacity because of transfer-bound work while not yet accruing processing busy ticks. Consumers must
@@ -238,8 +240,8 @@ not misdiagnose that state as ordinary processing utilization.
 
 A fresh supported observation must reconstruct an in-progress transfer without replay.
 
-Gate 5 extends the existing per-job projection rather than creating a parallel transfer authority.
-For an in-flight job it exposes, at minimum:
+Spatial transfer support extends the existing per-job projection rather than creating a parallel
+transfer authority. For an in-flight job it exposes, at minimum:
 
 - job status `TRANSFERRING`;
 - `JobId` and existing order/step correlation;
@@ -262,7 +264,7 @@ Runtime observation metadata carries once per observation:
 - `ModelFingerprint`;
 - mandatory `EngineSemanticsVersion`;
 - optional `ControlledRevisionId` only when authoritatively bound;
-- existing Gate 4 sequence/time/run-state metadata.
+- the existing supported-event sequence, time, and run-state metadata.
 
 ## 12. Supported transfer events
 
@@ -291,8 +293,8 @@ Carries:
 The envelope also carries existing run/model/revision provenance plus mandatory
 `EngineSemanticsVersion`.
 
-At a shared `SimTime`, ordering uses only Gate 4 sequence. A zero-duration transfer is still a
-scheduled completion turn, so the authoritative chain can be:
+At a shared `SimTime`, ordering uses only the supported runtime-event sequence. A zero-duration
+transfer is still a scheduled completion turn, so the authoritative chain can be:
 
 ```text
 JOB_STEP_COMPLETED
@@ -326,10 +328,10 @@ actual ownership and result-affecting meaning become concrete.
 Before `engine-semantics:v1` is considered released, pinned behavioral fixtures must prove the
 normative semantics above using representative explicit inputs. The fixtures must cover at least:
 
-1. current deterministic dispatch behavior, including offline filtering/all-offline fallback,
-   `canAcceptJob` ranking, `combinedQueueDepth`, `MachineId` tie-breaking, and the queue-before-
-   `pendingMultiEligible` recovery cascade;
-2. current W1 decomposition/release ordering;
+1. current deterministic resource-selection behavior, including offline filtering/all-offline
+   fallback, `canAcceptJob` ranking, `combinedQueueDepth`, `MachineId` tie-breaking, and the
+   queue-before-`pendingMultiEligible` recovery cascade;
+2. current unit-work decomposition/release ordering;
 3. current scheduler same-time ordering;
 4. distinct-resource transfer with nonzero distance;
 5. same-resource consecutive steps with no transfer;

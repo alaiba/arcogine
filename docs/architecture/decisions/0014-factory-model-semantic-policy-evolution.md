@@ -33,11 +33,33 @@ belong to Engine semantic policy. That sibling decision is recorded by
 
    | Addition | Meaning | Validation | Zero legal? | Fingerprinted? |
    |---|---|---|---|---|
-   | floor width / height | plant extent in integer cells | each `>= 1`; bounds participate in safe transfer-duration arithmetic | no | yes |
-   | resource position `x` / `y` | integer reference cell of the resource | reference cell is inside the floor and the resource footprint fits inside the floor | yes (`0,0` is valid) | yes |
-   | footprint width / height | integer cells occupied by the resource | each `>= 1`; distinct resource footprints must not overlap | no | yes |
-   | `ticksPerCell` | authored material-handling rate magnitude | integer `>= 0`; publication bounds must keep derived durations representable | yes | yes |
-   | `handlingTicks` | authored fixed overhead applied once per inter-resource transfer | integer `>= 0` | yes | yes |
+   | floor width / height | plant extent in integer cells | each `>= 1`; the exact maximum-transfer predicate below must hold | no | yes |
+   | resource position `x` / `y` | minimum-coordinate reference cell of the resource footprint | `x >= 0`, `y >= 0`; footprint occupies the exact cells defined below and must fit inside the floor | yes (`0,0` is valid) | yes |
+   | footprint width / height | integer cells occupied by the resource from its reference cell | each `>= 1`; distinct resource footprints must not overlap | no | yes |
+   | `ticksPerCell` | authored material-handling rate magnitude | integer `>= 0`; the exact maximum-transfer predicate below must hold | yes | yes |
+   | `handlingTicks` | authored fixed overhead applied once per inter-resource transfer | integer `>= 0`; the exact maximum-transfer predicate below must hold | yes | yes |
+
+   The position anchor is part of V2 model semantics: for a resource at `(x,y)` with footprint
+   width `w` and height `h`, the footprint occupies exactly the integer cells
+   `x..x+w-1` by `y..y+h-1`. A footprint fits inside a floor of width `W` and height `H` iff
+   `x >= 0`, `y >= 0`, `w >= 1`, `h >= 1`, `x + w <= W`, and `y + h <= H`, evaluated with
+   overflow-safe arithmetic. Two resources overlap iff those occupied-cell sets intersect.
+
+   V2 publication must also prove the Gate 5 transfer-duration magnitude is representable for the
+   farthest possible pair of reference cells in the authored floor. With floor dimensions `W` and
+   `H`, define:
+
+   ```text
+   maxManhattanDistance = (W - 1) + (H - 1)
+   maxTransferDuration = handlingTicks + ticksPerCell * maxManhattanDistance
+   ```
+
+   Publication accepts the artifact only when every subtraction, addition, and multiplication in
+   that predicate is representable in the runtime tick-duration type and `maxTransferDuration` is
+   representable there. This bounds the derived Gate 5 duration itself; it does **not** claim that
+   adding an otherwise valid duration to an arbitrarily extreme current `SimTime` can never
+   overflow. Existing runtime time-addition validation remains responsible for that pre-existing
+   condition.
 
    All five additions are mandatory in a V2 artifact. Changing any of them changes the authored
    Factory design and therefore changes `ModelFingerprint`.

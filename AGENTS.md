@@ -74,12 +74,41 @@ to commit messages in this repository, even if a harness's default git
 workflow instructions say to add one. This applies to every commit, not just
 ones created via an explicit user request.
 
+## PR lifecycle states
+
+A pull request moves through distinct states. Agents and owners have different responsibilities at each. Understanding when to stop and hand off is critical.
+
+### State 0: PR created, awaiting initial review
+- Agent pushed commits and opened the PR
+- Status: no reviews yet
+- Agent responsibility: **STOP. Do not push additional commits or declare anything ready.**
+- Owner/Reviewer responsibility: perform initial review
+- **Next step: Initial review will post findings or approve**
+
+### State 1: Initial review posted with findings
+- Status: `CHANGES REQUIRED` or similar finding disposition
+- Agent responsibility: apply fixes to address findings
+- Owner/Reviewer responsibility: (none until fixes are staged)
+- **Next step: agent pushes fixes and CI runs**
+
+### State 2: Fixes applied, CI green, awaiting re-review
+- Status: new commits pushed, CI passing, but fixes not yet validated
+- Agent responsibility: **STOP HERE. Do not declare readiness.** Explicitly state: "Fixes applied, CI green. **Re-review needed to confirm fixes address the findings.** I will not report merge-readiness until an independent review confirms this."
+- Owner/Reviewer responsibility: perform re-review of fixes
+- **Next step: re-review will confirm or request additional fixes**
+
+### State 3: Re-review confirms fixes
+- Status: independent review approved the fixes
+- Agent responsibility: can now report "ready to merge"
+- Owner responsibility: merge the PR
+
+**Key rule:** Never skip from "fixes applied + CI green" directly to "ready to merge". Re-review must confirm the fixes actually address the stated findings.
+
 ## PR merging
 
 Agents must not merge pull requests under any circumstances, even if CI is
 green, reviews are satisfied, and the PR is explicitly ready to merge. Only
-the repository owner merges PRs manually. When a PR reaches green status
-(passing CI, resolved reviews, no conflicts), report that state and stop.
+the repository owner merges PRs manually.
 
 ## PR monitoring
 

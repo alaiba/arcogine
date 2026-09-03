@@ -7,14 +7,15 @@ Date: 2026-09-03
 
 Arcogine already distinguishes canonical Factory model identity from runtime identity.
 `ModelFingerprint` identifies authored semantic content, while `RunId` identifies one simulation
-runtime epoch. Gate 2, W1, Gate 3, and Gate 4 also establish deterministic Engine-owned behavior
-such as resource-selection ranking, child-work decomposition, scheduler ordering, session
-advancement, and supported runtime transitions.
+runtime epoch. Existing resource-selection and dispatch rules, unit-work decomposition, scheduler
+ordering, session advancement, and supported runtime transitions also establish deterministic
+Engine-owned behavior.
 
-Gate 5 exposes the missing provenance dimension. Spatial outcomes depend partly on authored Factory
-facts and partly on Arcogine's interpretation of those facts. More generally, the same canonical
-design can legitimately produce a different semantic outcome under a later Engine interpretation
-that intentionally changes dispatch, scheduling, decomposition, or transfer behavior.
+Spatial transfer semantics expose the missing provenance dimension. Spatial outcomes depend partly
+on authored Factory facts and partly on Arcogine's interpretation of those facts. More generally,
+the same canonical design can legitimately produce a different semantic outcome under a later
+Engine interpretation that intentionally changes dispatch, scheduling, decomposition, or transfer
+behavior.
 
 Forcing every such Engine change into `ModelFingerprint` would make Engine policy masquerade as
 Factory design. Using ordinary build/release identity is also insufficient: many builds can preserve
@@ -66,10 +67,10 @@ ADR-0011; it does not rewrite it.
    enumerates every result-affecting Engine rule in that version, including rules that predate the
    versioning mechanism and were previously implicit in code/tests. For the first version this
    includes at minimum:
-   - Gate 2 resource eligibility, ranking, queue-depth interpretation, and final tie-breaking;
-   - W1 decomposition/release behavior that affects execution outcome;
+   - resource eligibility, selection ranking, queue-depth interpretation, and final tie-breaking;
+   - unit-work decomposition/release behavior that affects execution outcome;
    - scheduler/same-time ordering behavior;
-   - Gate 5 destination binding, transfer timing/distance interpretation, capacity reservation,
+   - spatial-transfer destination binding, timing/distance interpretation, capacity reservation,
      zero/same-resource behavior, and arrival/offline behavior;
    - any other Engine-owned rule whose change could alter assignment, event/transition ordering,
      simulated time, terminal execution state, or derived outcome facts for the same explicit
@@ -175,8 +176,8 @@ plus behavioral fixtures gives durable verification without requiring every old 
 
 - `ModelFingerprint` remains a truthful identity for authored Factory design rather than a proxy for
   all possible runtime outcomes.
-- Gate 5 can place authored spatial facts in `factory-model:v2` while keeping distance, destination
-  binding, reservation, and other Arcogine interpretation rules Engine-owned.
+- Spatial execution can place authored spatial facts in `factory-model:v2` while keeping distance,
+  destination binding, reservation, and other Arcogine interpretation rules Engine-owned.
 - Runtime observation/event metadata gains one mandatory provenance field under a decision that
   supplements ADR-0011.
 - The first Engine semantics release requires a normative `engine-semantics:v1` specification and

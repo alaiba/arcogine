@@ -13,6 +13,7 @@ import com.arcogine.core.queue.Scheduler;
 import com.arcogine.core.runner.SimResult;
 import com.arcogine.core.runner.SimRunner;
 import com.arcogine.core.scenario.ScenarioLoader;
+import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import com.arcogine.types.scenario.ScenarioConfig;
@@ -266,12 +267,13 @@ class HeadlessHandlerTest {
         HeadlessHandler handler = HeadlessHandler.fromConfig(config);
 
         assertEquals(8.0, handler.offerPrice());
-        // Verify both equipment was registered in the factory's machine store
-        assertTrue(
-                handler.factory.ordersView().count() >= 0,
-                "multi-equipment factory should be initialized");
-        // Verify routing with both steps was constructed
-        assertTrue(handler.factory.routings != null, "routing store should be created");
+        // Verify both pieces of equipment (Mill and Dryer) were registered
+        assertEquals(2, handler.factory.machinesView().size(), "both machines should be registered");
+        // Verify the two-step routing for product 1 was constructed correctly
+        assertEquals(
+                2,
+                handler.factory.routings.getRoutingForProduct(new ProductId(1)).stepCount(),
+                "product 1 should have two-step routing (Milling then Drying)");
     }
 
     @Test

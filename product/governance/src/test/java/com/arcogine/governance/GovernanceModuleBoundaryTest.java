@@ -56,6 +56,43 @@ class GovernanceModuleBoundaryTest {
         }
     }
 
+    @Test
+    void productionGovernanceCodeNeverReferencesG5PlusConcepts() throws IOException {
+        // Regression guard for the G4 conformance-evaluation/findings slice: production code must
+        // not smuggle in G5 evidence, authorization, deployment, workflow, or a severity taxonomy
+        // ahead of their own gates.
+        // Matches actual type declarations only (not javadoc prose describing these as non-goals).
+        Path mainSourceRoot = moduleRoot().resolve("src/main/java");
+        List<String> forbiddenDeclarations =
+                List.of(
+                        "class EvidenceUse",
+                        "record EvidenceUse(",
+                        "interface EvidenceUse",
+                        "class Evidence ",
+                        "record Evidence(",
+                        "interface Evidence ",
+                        "class Severity",
+                        "record Severity(",
+                        "enum Severity",
+                        "class AuthorizationDecision",
+                        "record AuthorizationDecision(",
+                        "class DeploymentRecord",
+                        "record DeploymentRecord(",
+                        "class RiskAcceptance",
+                        "record RiskAcceptance(");
+        try (var stream = Files.walk(mainSourceRoot)) {
+            List<Path> javaFiles = stream.filter(p -> p.toString().endsWith(".java")).toList();
+            for (Path file : javaFiles) {
+                String content = Files.readString(file);
+                for (String token : forbiddenDeclarations) {
+                    assertFalse(
+                            content.contains(token),
+                            file + " declares out-of-scope G5+ concept: " + token);
+                }
+            }
+        }
+    }
+
     private static Path findGovernanceBuildFile() {
         Path candidate = moduleRoot().resolve("build.gradle.kts");
         if (!Files.exists(candidate)) {

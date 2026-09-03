@@ -39,8 +39,8 @@ This plan was originally written while several sibling contracts were still pros
 |---|---|---|
 | Governance G1 durable fingerprint + controlled revision history | **Complete** | O4 and revision-bound O6 must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`; synthetic G1 revision fixtures are no longer appropriate for new operational work |
 | Governance G2 semantic `ChangeSet` / impact (initial slice) | **Complete** | O7 must consume the Governance-owned `ChangeSet`/`ImpactScope`/`SemanticChange` contracts for semantic change attribution rather than inventing a substitute |
-| Governance G3 requirement/assertion contract | **Complete** | O7 should consume the Governance-owned `Requirement`/`Assertion`/`RequirementCatalogue` contracts rather than inventing a substitute once conformance-evaluation integration begins; G4+ conformance-evaluation/evidence/authorization capabilities remain outstanding |
-| Governance G4 conformance / findings | **Outstanding** | O7 conformance/finding integration remains dependent on Governance |
+| Governance G3 requirement/assertion contract | **Complete** | O7 should consume the Governance-owned `Requirement`/`Assertion`/`RequirementCatalogue` contracts rather than inventing a substitute once conformance-evaluation integration begins |
+| Governance G4 conformance / findings (initial slice) | **Complete** | O7 should consume the Governance-owned `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contracts for evaluation/finding semantics rather than inventing a substitute; G5 evidence/authorization capabilities remain outstanding |
 | Governance G5 evidence / `EvidenceUse` | **Outstanding** | O5 ingestion remains independent; O9 evidence-use integration cannot close yet |
 | Engine Gate 4 G4-A runtime observation slice | **Complete** | `RunId` and consumer-neutral `RuntimeObservation` exist for one factory simulation runtime epoch |
 | Engine Gate 4 G4-B supported runtime events | **Complete** | The supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload` contract per ADR-0011 is implemented at the `FactoryRuntime` boundary |
@@ -135,7 +135,7 @@ This is not a self-contained linear program. Sibling dependencies and local prer
 | O4 deployment | **Governance G1 satisfied.** | O4 is not implemented, but it is no longer blocked on durable revision identity. It must consume Governance G1 authoritative identities/history instead of synthetic revision fixtures. |
 | O5 external observations | **No G5 prerequisite for ingestion.** Engine runtime observations are a sibling simulation concept, not an O5 prerequisite. | O5 may define independent external-observation provenance. G5 is required only when observations are used through Governance `EvidenceUse`. |
 | O6 reconciliation | **Governance G1 satisfied; modeled-side Engine maturity partial.** | Historical/revision-bound reconciliation can use authoritative G1 resolution when implemented. O6 still depends locally on O5 and on the modeled semantics relevant to the reconciliation. |
-| O7 drift/calibration | **Governance G2 (initial slice) and G3 satisfied; G4 outstanding.** | Operational-local drift analysis should consume Governance-owned `ChangeSet`/`ImpactScope` and registered `Requirement`/`Assertion` contracts where applicable, but conformance/finding semantics remain Governance-owned and outstanding. |
+| O7 drift/calibration | **Governance G2 (initial slice), G3, and G4 (initial slice) satisfied; G5 outstanding.** | Operational-local drift analysis should consume Governance-owned `ChangeSet`/`ImpactScope`, registered `Requirement`/`Assertion` contracts, and the `ConformanceEvaluator`/`Finding` contracts where applicable; evidence-use integration remains Governance-owned and outstanding. |
 | O8 resilience | **No separate Governance prerequisite.** | Depends primarily on the command/observation identity and persistence contracts selected by O3/O5; those are not implemented yet. |
 | O9 live adapter | **Governance G1 satisfied; G5 outstanding; Engine Gate 4 core/headless closure complete.** | A protocol test server may prove local adapter behavior, but O9 cannot close until its local O2-O8 requirements, Governance evidence-use integration where required, and applicable Engine distribution hardening are actually available. |
 
@@ -149,7 +149,7 @@ Synthetic fixtures remain allowed where a sibling-owned contract genuinely has n
 4. Synthetic operational adapters do not satisfy Engine Readiness gates.
 5. **Do not create new synthetic revision/fingerprint identity fixtures for O4/O6. Governance G1 is complete and its authoritative contracts are available.**
 6. **Do not create new synthetic ChangeSet/impact fixtures for O7. Governance G2's initial slice is complete and its authoritative `ChangeSet`/`ImpactScope`/`SemanticChange` contracts are available.**
-7. **Do not create synthetic requirement/assertion contracts for O7. Governance G3 is complete and its authoritative `Requirement`/`Assertion`/`RequirementCatalogue` contracts are available.** Synthetic conformance/finding or evidence-use fixtures still do not satisfy Governance G4/G5.
+7. **Do not create synthetic requirement/assertion contracts for O7. Governance G3 is complete and its authoritative `Requirement`/`Assertion`/`RequirementCatalogue` contracts are available.** Do not create synthetic conformance/finding fixtures either: Governance G4's initial slice is complete and its authoritative `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contracts are available. Synthetic evidence-use fixtures still do not satisfy Governance G5.
 8. When a later sibling contract lands, replace fixture mappings with the owned contract rather than preserving a parallel identity system.
 
 ## 5. O1 — Execution-context identity
@@ -467,7 +467,7 @@ That satisfied dependency does not implement reconciliation. O6 still must defin
 
 ## 13. O7 — Divergence, drift, and calibration feedback
 
-O7 remains proposed and unimplemented. Operational-local drift analysis may eventually produce candidate changes and should consume the now-complete Governance G2 `ChangeSet`/impact and G3 requirement/assertion contracts where applicable. Final cross-track integration still depends on Governance G4 conformance/finding semantics, which is not currently complete. Operational Execution must not invent substitutes for G4.
+O7 remains proposed and unimplemented. Operational-local drift analysis may eventually produce candidate changes and should consume the now-complete Governance G2 `ChangeSet`/impact, G3 requirement/assertion, and G4 `ConformanceEvaluator`/`Finding` contracts where applicable. Final cross-track integration still depends on Governance G5 evidence-use semantics, which is not currently complete. Operational Execution must not invent substitutes for G5.
 
 ## 14. O8 — Operational resilience and recovery semantics
 
@@ -510,9 +510,9 @@ Operational O1 must therefore preserve both truths:
 
 ## 20. Relationship to Governance and Conformance
 
-Governance G1 is complete and now supplies the authoritative durable fingerprint/revision history needed by later deployment and revision-bound reconciliation. Governance G2's initial slice is also complete and now supplies the authoritative semantic `ChangeSet`/`ImpactScope` needed by candidate-change attribution. Governance G3 is complete and supplies the generic registered `Requirement`/`Assertion`/`RequirementCatalogue` contract for later conformance integration.
+Governance G1 is complete and now supplies the authoritative durable fingerprint/revision history needed by later deployment and revision-bound reconciliation. Governance G2's initial slice is also complete and now supplies the authoritative semantic `ChangeSet`/`ImpactScope` needed by candidate-change attribution. Governance G3 is complete and supplies the generic registered `Requirement`/`Assertion`/`RequirementCatalogue` contract for later conformance integration. Governance G4's initial slice is also complete and supplies the generic `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contract for evaluating a requirement/assertion pair against a model fingerprint (and an optional, never-synthesized controlled revision).
 
-Governance G4/G5 remain future dependencies for the operational capabilities that need conformance/findings and evidence use. There should be no generic evaluation or persistence framework introduced merely because these tracks have analogous needs.
+Governance G5 remains a future dependency for the operational capabilities that need evidence use. There should be no generic evaluation or persistence framework introduced merely because these tracks have analogous needs.
 
 ## 21. Next action
 

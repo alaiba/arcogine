@@ -512,7 +512,8 @@ Governance owns:
 
 - controlled historical revision identity/lineage;
 - authoritative revision persistence/resolution (G1 complete);
-- ChangeSets, requirements/assertions, conformance evaluation, evidence use, findings, governed changes/exceptions in later gates.
+- ChangeSets and impact scoping (G2 complete), requirements/assertions (G3 complete), conformance evaluation and findings (G4 complete);
+- evidence use, governed changes/exceptions in later gates (G5+, not yet implemented).
 
 Runtime events are not Governance evidence records by default. A later evidence-use boundary may reference selected runtime observations/events with provenance, but RuntimeEvent, ControlledRevision, EvidenceUse, Finding, and ChangeSet remain distinct concepts.
 

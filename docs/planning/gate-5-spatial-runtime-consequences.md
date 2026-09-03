@@ -26,8 +26,7 @@ Gate 5 preserves the ownership split:
 ```text
 Factory model v2
     floor dimensions
-    resource position
-    resource footprint
+    resource position + anchored footprint occupancy
     ticksPerCell
     handlingTicks
 
@@ -37,7 +36,7 @@ Engine semantics v1
     Manhattan distance on position reference cells
     transfer timing arithmetic
     same-resource / zero-distance behavior
-    destination reservation and in-flight availability behavior
+    destination admission reservation and in-flight availability behavior
 
 Runtime state
     transfer start / in-flight / completion
@@ -53,12 +52,14 @@ The implementation seam is the current next-step branch in `FactoryHandler.handl
 Today that branch already:
 
 1. determines the next routing step;
-2. runs existing Gate 2 resource selection at the established semantic point;
-3. starts immediately when the selected resource can accept the job;
-4. otherwise leaves the job in the existing waiting path.
+2. runs existing Gate 2 selection at the established semantic point;
+3. may select a machine that cannot currently accept the job because `canAcceptJob` is a ranking
+   key rather than an eligibility filter;
+4. starts immediately only when the selected resource can accept the job;
+5. otherwise routes the job into the existing single-machine queue or `pendingMultiEligible` path.
 
-Gate 5 preserves those selection/ranking semantics. It inserts a deterministic transfer interval
-between concrete destination binding and next-step processing for distinct resources.
+Gate 5 preserves those selection/ranking and recovery semantics. It inserts a deterministic transfer
+interval only after a concrete destination is selected and currently admissible for binding.
 
 ## 4. Delivery slices
 
@@ -70,7 +71,13 @@ between concrete destination binding and next-step processing for distinct resou
 
 - introduce the `factory-model:v2` canonical artifact policy;
 - add required floor dimensions, resource position, footprint, `ticksPerCell`, and `handlingTicks`;
-- enforce V2 validation and safe arithmetic bounds;
+- define position as the footprint's minimum-coordinate reference cell and validate exact occupied
+  cells, containment, and non-overlap;
+- enforce the exact safe-duration predicate from ADR-0014:
+  `maxDistance = (W - 1) + (H - 1)` and
+  `handlingTicks + ticksPerCell * maxDistance` must be representable with overflow-safe arithmetic;
+- do not claim this publication predicate eliminates the pre-existing possibility that adding a
+  valid duration to an extreme current `SimTime` can overflow;
 - register policy-aware verification/decoding without weakening V1 resolution;
 - define the narrow first V1-to-V2 policy-migration/comparison behavior required by real controlled
   revision use.
@@ -80,7 +87,9 @@ between concrete destination binding and next-step processing for distinct resou
 - V1 golden vectors/fingerprints remain unchanged;
 - V2 canonical round-trip and fingerprint determinism;
 - moving a resource or changing any V2 authored field changes `ModelFingerprint`;
-- invalid placement/overlap/bounds are rejected;
+- the same `(position, footprint)` pair has one unambiguous occupied-cell set in every conforming
+  implementation;
+- invalid placement/overlap/bounds and unsafe maximum-transfer arithmetic are rejected;
 - V1 and V2 artifacts are both independently resolvable;
 - no automatic V1-to-V2 lift/default synthesis exists.
 
@@ -105,8 +114,10 @@ between concrete destination binding and next-step processing for distinct resou
   provenance contract already requires revision attribution when the runtime is authoritatively
   revision-bound, and Gate 5 must not leave observation metadata asymmetric with the event envelope;
 - establish a small support check for the current version without a multi-version resolver;
-- add pinned behavioral conformance fixtures for pre-Gate-5 dispatch, W1, and scheduler semantics,
-  then extend them with Gate 5 behavior as later slices land.
+- pin the actually shipped pre-Gate-5 semantics, including offline filtering/all-offline fallback,
+  `canAcceptJob` ranking, `combinedQueueDepth`, `MachineId` tie-breaking, queue-before-
+  `pendingMultiEligible` recovery ordering, W1 decomposition, and scheduler ordering;
+- extend those fixtures with Gate 5 behavior as later slices land.
 
 **Executable evidence**
 
@@ -117,6 +128,7 @@ between concrete destination binding and next-step processing for distinct resou
 - authoritatively revision-bound runtimes expose the same optional `ControlledRevisionId` provenance
   in supported observation metadata and event envelopes;
 - unsupported semantics identity fails explicitly if the support seam is exercised;
+- conformance fixtures describe the current selector/cascade rather than an idealized variant;
 - semantics-preserving representation changes do not alter the pinned behavioral fixtures.
 
 **Non-goals**
@@ -137,21 +149,30 @@ the settled provenance shape rather than migrate the old envelope and immediatel
 **Production responsibility**
 
 - insert Gate 5 at the existing `handleTaskEnd` next-step seam;
-- preserve Gate 2 destination selection timing/ranking;
-- reserve destination processing capacity at binding;
+- preserve Gate 2 destination selection timing/ranking and its post-selection waiting paths;
+- reserve one unit of **destination admission capacity** at binding for an inbound job;
+- keep inbound reservation distinct from active processing and queued work: reservation affects
+  future `canAcceptJob` capacity, but does not put the job in `activeJobs`, does not make the machine
+  `Busy` by itself, and does not accrue `busyTicks`;
 - compute/fix transfer duration exactly once using Engine Semantics v1;
 - introduce authoritative in-flight state and completion scheduling;
 - preserve no-transfer behavior for same-resource consecutive steps;
 - preserve immutable destination/no-rerouting behavior;
-- handle destination offline at arrival through the existing waiting path.
+- allow a destination holding only inbound reservations to be taken offline under the existing
+  command contract;
+- when an inbound job arrives at an offline destination, complete the transfer at its fixed time,
+  then convert/release the reservation into the existing destination waiting path without rerouting.
 
 **Executable evidence**
 
-- transfer begins only once a destination is assignable;
+- transfer begins only once the selected destination can accept the job;
 - destination binding is immutable after start;
 - duration equals `handlingTicks + ticksPerCell * Manhattan(position)`;
-- source capacity is released at step completion;
-- destination capacity is occupied while in flight;
+- source processing capacity is released at step completion;
+- destination admission capacity is reserved while in flight without treating the job as active
+  processing or queued work;
+- another job observes the reservation through the acceptance-capacity decision;
+- the reserved destination can still be taken offline before arrival;
 - same-resource next step creates no transfer;
 - repeated identical inputs produce identical assignment/timing/state;
 - destination-offline-at-arrival completes transfer on time and then waits without rerouting.
@@ -161,7 +182,8 @@ the settled provenance shape rather than migrate the old envelope and immediatel
 - transport capacity/resources;
 - intermediate coordinates/progress authority;
 - pathfinding/routing graphs;
-- KPI redesign.
+- KPI redesign;
+- a new public resource/reservation domain abstraction.
 
 ### G5-D — Supported transfer observations and events
 
@@ -170,7 +192,12 @@ the settled provenance shape rather than migrate the old envelope and immediatel
 **Production responsibility**
 
 - extend the existing per-job observation with `TRANSFERRING` state and the minimum transfer facts;
-- keep destination/current-resource identity coherent with the reservation semantics;
+- keep destination/current-resource identity coherent with the admission-reservation semantics;
+- keep resource observation consistent with job state: an inbound reserved job is not reported in
+  `activeJobIds`, does not contribute queue depth, and does not make an otherwise idle machine
+  `Busy` merely because it is reserved;
+- expose enough resource-capacity/admission-load information for the supported bottleneck/capacity
+  observation to account for reserved inbound work without reclassifying it as processing;
 - add supported `TRANSFER_STARTED` and `TRANSFER_COMPLETED` event types/payloads;
 - preserve ADR-0011 late-join reconstruction from one fresh observation plus subsequent events;
 - use only Gate 4 sequence for same-time ordering.
@@ -179,8 +206,13 @@ the settled provenance shape rather than migrate the old envelope and immediatel
 
 - a late-joining consumer reconstructs an in-flight transfer from one fresh observation with no
   replay/journal access;
+- the job projection and resource projection agree on one sequence boundary: the job is
+  `TRANSFERRING`, the destination has admission capacity consumed, the job is not active processing
+  and not queued;
 - start/completion events close over the same authoritative state transitions as observations;
-- zero-duration transfer ordering at one `SimTime` is deterministic;
+- zero-duration transfer completion is a separate same-time scheduler turn, so
+  `TRANSFER_STARTED` is published after entering `TRANSFERRING` and before
+  `TRANSFER_COMPLETED`/next dispatch;
 - no event/observation carries frame-by-frame animation state;
 - metadata/envelopes retain `RunId`, `ModelFingerprint`, `EngineSemanticsVersion`, and optional
   authoritative `ControlledRevisionId` as applicable.
@@ -210,13 +242,15 @@ The scenario must demonstrate, with minimal fixture complexity:
 3. repeated execution with identical model, semantics version, workload, seed, and ordered commands
    produces identical ordered semantic outcomes;
 4. an observation taken mid-transfer reconstructs the supported in-flight state without event
-   replay;
+   replay and agrees with destination resource admission-load state;
 5. transfer start/completion ordering is deterministic and supported;
 6. the result retains both design provenance (`ModelFingerprint`) and interpretation provenance
    (`EngineSemanticsVersion`);
 7. a V2 model with zero transfer magnitudes preserves pre-Gate-5 completion timing while still
    exposing distinct-resource transfer transitions;
-8. the Engine Semantics v1 conformance fixtures prove that a future different semantics version may
+8. a destination can become offline after binding, transfer completes at the fixed time, and the
+   job waits on that destination without rerouting;
+9. the Engine Semantics v1 conformance fixtures prove that a future different semantics version may
    change an outcome for the same `ModelFingerprint` without redefining the Factory design.
 
 The final item belongs to the semantic-version conformance contract; the initial runtime need not
@@ -226,15 +260,16 @@ implement two selectable semantics versions merely to demonstrate the identity d
 
 Gate 5 must preserve existing metric definitions:
 
-- machine `busyTicks` / utilization measure processing time, not transfer reservation time;
+- machine `busyTicks` / utilization measure processing time, not inbound reservation time;
 - queue depth does not count an in-flight reservation as a queued arrival;
+- `activeJobIds` contains processing jobs, not inbound reserved jobs;
 - backlog remains incomplete accepted orders;
 - lead time naturally increases with transfer delay;
 - throughput remains completed orders per observed time.
 
-Bottleneck interpretation must account for destination capacity held by transfer-bound work even
-when processing busy ticks have not yet accrued. This is an interpretation consequence, not a
-metric-definition rewrite.
+Bottleneck/capacity interpretation must account for admission capacity held by transfer-bound work
+even when processing busy ticks have not yet accrued. This is an interpretation/projection extension,
+not a redefinition of processing utilization or queue depth.
 
 ## 6. Cross-track consequences
 

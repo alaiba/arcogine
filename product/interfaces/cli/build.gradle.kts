@@ -54,14 +54,16 @@ tasks.register<Copy>("stageDist") {
 }
 
 // Coverage gate: fails the build if sim-cli line coverage drops below the
-// floor (e.g. if its tests are deleted). Mirrors the gate in sim-types.
+// floor (e.g. if its tests are deleted). Raised from 0.60 following enhanced
+// test coverage in command-line argument handling, error paths, and handler
+// delegation (see tests in ArcogineCommandTest and HeadlessHandlerTest).
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {
         rule {
             limit {
                 counter = "LINE"
-                minimum = "0.60".toBigDecimal()
+                minimum = "0.85".toBigDecimal()
             }
         }
     }

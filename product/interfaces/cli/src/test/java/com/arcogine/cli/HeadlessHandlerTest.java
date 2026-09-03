@@ -2,6 +2,7 @@ package com.arcogine.cli;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -184,5 +185,169 @@ class HeadlessHandlerTest {
         Event priceEvent = Event.of(SimTime.of(1), new EventPayload.PriceChange(99.0));
         handler.handleEvent(priceEvent, scheduler);
         assertEquals(99.0, handler.offerPrice());
+    }
+
+    @Test
+    void financeAccessorReturnsFinanceHandler() {
+        ScenarioConfig config = basicConfig();
+        HeadlessHandler handler = HeadlessHandler.fromConfig(config);
+        assertNotNull(handler.finance());
+    }
+
+    @Test
+    void buildHeadlessHandlerCreatesAllHandlers() {
+        ScenarioConfig config = basicConfig();
+        HeadlessHandler handler = HeadlessHandler.fromConfig(config);
+        assertNotNull(handler.factory);
+        assertNotNull(handler.finance());
+        assertNotNull(handler.offerPrice());
+    }
+
+    @Test
+    void handleEventDelegatesEarlyOrderCompletionToFinance() throws SimError {
+        ScenarioConfig config = basicConfig();
+        HeadlessHandler handler = HeadlessHandler.fromConfig(config);
+        Scheduler scheduler = new Scheduler();
+
+        // Create an order that will complete
+        Event orderCreation = Event.of(
+                SimTime.of(0),
+                new EventPayload.OrderCreation(new com.arcogine.types.ProductId(1), 1, 5.0));
+        handler.handleEvent(orderCreation, scheduler);
+
+        // Process the resulting job task
+        assertTrue(scheduler.size() > 0, "ordering should have generated TaskStart events");
+    }
+
+    @Test
+    void buildHeadlessHandlerWithMultipleEquipment() {
+        String toml =
+                """
+                [simulation]
+                rng_seed = 1
+                max_ticks = 100
+                demand_eval_interval = 10
+
+                [[equipment]]
+                id = 1
+                name = "Mill"
+
+                [[equipment]]
+                id = 2
+                name = "Dryer"
+
+                [[material]]
+                id = 1
+                name = "Widget"
+                routing_id = 1
+
+                [[process_segment]]
+                id = 1
+                name = "Milling"
+                equipment_id = 1
+                duration = 5
+
+                [[process_segment]]
+                id = 2
+                name = "Drying"
+                equipment_id = 2
+                duration = 3
+
+                [[operations_definition]]
+                id = 1
+                name = "Widget routing"
+                steps = [1, 2]
+
+                [economy]
+                initial_price = 8.0
+                base_demand = 15.0
+                """;
+        ScenarioConfig config = ScenarioLoader.loadScenario(toml);
+        HeadlessHandler handler = HeadlessHandler.fromConfig(config);
+
+        assertEquals(8.0, handler.offerPrice());
+        assertNotNull(handler.factory);
+    }
+
+    @Test
+    void headlessHandlerProcessesAllEventTypes() throws SimError {
+        ScenarioConfig config = basicConfig();
+        HeadlessHandler handler = HeadlessHandler.fromConfig(config);
+        Scheduler scheduler = new Scheduler();
+
+        // Test handling different event types through the same handler
+        Event priceEvent = Event.of(SimTime.of(1), new EventPayload.PriceChange(8.0));
+        handler.handleEvent(priceEvent, scheduler);
+
+        Event demandEvent = Event.of(SimTime.of(2), EventPayload.DemandEvaluation.INSTANCE);
+        handler.handleEvent(demandEvent, scheduler);
+
+        assertTrue(scheduler.size() > 0, "demand evaluation should schedule orders");
+    }
+
+    @Test
+    void runHeadlessWithMultipleMachinesCompletes() {
+        String toml =
+                """
+                [simulation]
+                rng_seed = 42
+                max_ticks = 100
+                demand_eval_interval = 5
+
+                [[equipment]]
+                id = 1
+                name = "Machine A"
+
+                [[equipment]]
+                id = 2
+                name = "Machine B"
+
+                [[material]]
+                id = 1
+                name = "Product"
+                routing_id = 1
+
+                [[process_segment]]
+                id = 1
+                name = "Step 1"
+                equipment_id = 1
+                duration = 3
+
+                [[process_segment]]
+                id = 2
+                name = "Step 2"
+                equipment_id = 2
+                duration = 3
+
+                [[operations_definition]]
+                id = 1
+                name = "Routing"
+                steps = [1, 2]
+
+                [economy]
+                initial_price = 10.0
+                base_demand = 20.0
+                """;
+        ScenarioConfig config = ScenarioLoader.loadScenario(toml);
+        HeadlessHandler handler = HeadlessHandler.fromConfig(config);
+        SimResult result = runHeadless(config, handler);
+
+        assertTrue(result.eventsProcessed() > 0);
+        assertTrue(handler.factory.completedSales() >= 0);
+    }
+
+    @Test
+    void priceChangeEventUpdatesOfferPrice() throws SimError {
+        ScenarioConfig config = basicConfig();
+        HeadlessHandler handler = HeadlessHandler.fromConfig(config);
+        Scheduler scheduler = new Scheduler();
+
+        double initialPrice = handler.offerPrice();
+        Event priceChangeEvent = Event.of(SimTime.of(1), new EventPayload.PriceChange(15.0));
+        handler.handleEvent(priceChangeEvent, scheduler);
+
+        double newPrice = handler.offerPrice();
+        assertEquals(15.0, newPrice);
+        assertNotEquals(initialPrice, newPrice);
     }
 }

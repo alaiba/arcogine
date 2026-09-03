@@ -27,16 +27,7 @@ Common shorthand should be interpreted in repository context:
 PR workflow shorthand has distinct review and remediation meanings:
 
 - `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
-- `..` = advance the current implementation pull request toward green by inspecting the latest reviews, comments, unresolved findings, CI, and mergeability; evaluating each finding against repository authority; applying the smallest correct fix for valid findings; challenging invalid findings with repository evidence; and re-checking the resulting PR state.
-
-When handling `..`:
-
-1. **Check reviews first** (via `get_reviews`, not just comments) — a review with `CHANGES REQUIRED` takes precedence over green CI.
-2. Check CI status and merge conflicts.
-3. Apply fixes for valid findings.
-4. Continue remediation and re-checking until the PR is green or a genuinely unresolved decision requires user input.
-
-Never report a PR as green or ready based on CI alone. Do not treat `..` as an independent review-only action.
+- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available.
 
 Do not replace known repository context with generic GitHub discovery.
 
@@ -74,59 +65,21 @@ to commit messages in this repository, even if a harness's default git
 workflow instructions say to add one. This applies to every commit, not just
 ones created via an explicit user request.
 
-## PR lifecycle states
+## PR lifecycle
 
-A pull request moves through distinct states. Agents and owners have different responsibilities at each. Understanding when to stop and hand off is critical.
+Resolve a PR's lifecycle state from the current head, submitted review disposition for that head, unresolved review findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
 
-### State 0: PR created, awaiting initial review
-- Agent pushed commits and opened the PR
-- Status: no reviews yet
-- Agent responsibility: **STOP. Do not push additional commits or declare anything ready.**
-- Owner/Reviewer responsibility: perform initial review
-- **Next step: Initial review will post findings or approve**
-
-### State 1: Initial review posted with findings
-- Status: `CHANGES REQUIRED` or similar finding disposition
-- Agent responsibility: apply fixes to address findings
-- Owner/Reviewer responsibility: (none until fixes are staged)
-- **Next step: agent pushes fixes and CI runs**
-
-### State 2: Fixes applied, CI green, awaiting re-review
-- Status: new commits pushed, CI passing, but fixes not yet validated
-- Agent responsibility: **STOP HERE. Do not declare readiness.** Explicitly state: "Fixes applied, CI green. **Re-review needed to confirm fixes address the findings.** I will not report merge-readiness until an independent review confirms this."
-- Owner/Reviewer responsibility: perform re-review of fixes
-- **Next step: re-review will confirm or request additional fixes**
-
-### State 3: Re-review confirms fixes
-- Status: independent review approved the fixes
-- Agent responsibility: can now report "ready to merge"
-- Owner responsibility: merge the PR
-
-**Key rule:** Never skip from "fixes applied + CI green" directly to "ready to merge". Re-review must confirm the fixes actually address the stated findings.
-
-## PR merging
-
-Agents must not merge pull requests under any circumstances, even if CI is
-green, reviews are satisfied, and the PR is explicitly ready to merge. Only
-the repository owner merges PRs manually.
+- **AWAITING REVIEW** — the current head has no conclusive independent review disposition. The implementation agent waits.
+- **CHANGES REQUIRED** — the current-head independent review has blocking findings. The implementation agent remediates valid findings, validates, and pushes a new head, returning the PR to **AWAITING REVIEW**.
+- **READY TO MERGE** — the current-head independent review says `READY TO MERGE` and required validation is green. The implementation agent stops; the repository owner merges.
 
 ## PR monitoring
 
-Subscribe to a PR's activity and start monitoring it automatically, the
-moment the PR exists for a branch the session is working on — whether the
-session opened the PR itself or a human opened it (e.g. from the Claude
-Code UI) for a branch the session pushed to. The PR's existence is the
-trigger by itself.
+For any open PR associated with the current branch, subscribe to PR activity without asking for confirmation when the environment provides a native subscription mechanism (for Claude Code, `subscribe_pr_activity`). On notification, re-resolve the PR lifecycle state and perform any available implementation-owned transition. If native subscription is unavailable, `..` is the manual continuation mechanism.
 
-**Never ask the user whether to start monitoring.** Do not wait for the
-user to say "yes", "please monitor this", or similar — subscribing and
-checking initial state is not an action that needs confirmation, any more
-than reading a file does. Subscribe first, then report what you found.
+## PR merging
 
-On first subscribing, immediately check current CI status, reviews
-(`get_reviews`, not just comments — see "Checking a PR after pushing"
-below), and merge conflicts, then follow the drive-to-green posture for
-that PR from then on.
+Agents never merge pull requests. `READY TO MERGE` hands control to the repository owner, who performs the merge manually.
 
 ## Branch to work on
 
@@ -142,7 +95,7 @@ instead of silently switching.
 - `product/` — all executable product source.
   - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `simulation`, `domains/{factory,economy,finance}`, `agents`, `consumer/challenge`, `interfaces/api` (Spring Boot HTTP API), `interfaces/cli` (Picocli entrypoint, produces `arcogine.jar`).
   - `product/interfaces/web/` — React + TypeScript + Vite frontend, tested with Vitest (unit) and Playwright (`product/interfaces/web/e2e/`).
-- `docs/` — architecture, product, development, reference, planning docs, and executable example scenarios (`docs/examples/`). Read `docs/architecture/overview.md` before touching cross-module boundaries.
+- `docs/` — architecture, product, development, reference docs, and executable example scenarios (`docs/examples/`). Read `docs/architecture/overview.md` before touching cross-module boundaries.
 - `infra/` — container and dev-environment infrastructure: `infra/docker/` (runtime-only Dockerfiles + Compose) and `infra/dev/claude-cloud.sh` (Claude Cloud environment provisioning).
 - `dist/` — generated, gitignored canonical distribution output (`dist/api/arcogine.jar`, `dist/web/`). Never commit to it directly; it's produced by `./arcogine build`.
 
@@ -188,17 +141,6 @@ Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dock
 ## Validating changes
 
 Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching only Java (`product/{types,simulation,domains,agents,consumer,interfaces/api,interfaces/cli}`) needs only the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a change touching only the frontend (`product/interfaces/web/`) needs only its gates (`cd product/interfaces/web && npm run lint && npx tsc --noEmit && npm run test:coverage && npm run build`); a documentation-only change needs neither. When a change spans both, or you can't tell whether it's narrow, run `./arcogine check`, which runs both unconditionally. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
-
-## Checking a PR after pushing
-
-After opening or pushing to a PR, checking CI status alone is not enough — a
-submitted review with a verdict like `CHANGES REQUIRED` does **not** appear
-in a plain comment listing (e.g. the GitHub MCP server's
-`pull_request_read` with `method: get_comments` or `get_review_comments`
-only surfaces issue comments and inline review threads, not the review
-body itself). Always also fetch reviews explicitly (`method: get_reviews`)
-before declaring a PR green or waiting-on-CI. Do this on every check-in,
-not just the first one after pushing.
 
 ## Do not edit
 

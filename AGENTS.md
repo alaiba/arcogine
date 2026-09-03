@@ -54,6 +54,10 @@ Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable
 authorities.
 
+## Temporary artifacts
+
+Test output, coverage reports, logs, and other transient build artifacts must be written to the `logs/` directory at the repository root (not to the root level or scattered across the tree). The `logs/` directory is gitignored as a whole. Keep the root and working directory clean; use `logs/coverage.txt`, `logs/test-output.log`, etc. instead of root-level files.
+
 ## Commit message footer
 
 Do not append a `Co-Authored-By: Claude ...` or `Claude-Session: ...` trailer

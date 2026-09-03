@@ -31,6 +31,8 @@ product/interfaces/web/coverage/
 product/interfaces/web/playwright-report/
 product/interfaces/web/test-results/
 
+# Temporary build/test artifacts and logs
+/logs/
 cobertura.xml
 
 # Canonical distribution output (built by ./arcogine build)

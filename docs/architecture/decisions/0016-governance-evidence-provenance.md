@@ -75,9 +75,10 @@ The proposed decision is:
 
 6. **Arcogine-derived analytical evidence retains the interpretation provenance needed to explain
    the result.** For Engine-produced simulation/verification output this includes the subject model
-   fingerprint, the applicable `EngineSemanticsVersion` once that decision is accepted, and the
-   explicit run inputs/result provenance required by the producing capability. Governance does not
-   own or redefine Engine semantics.
+   fingerprint, the applicable `EngineSemanticsVersion` established by
+   [ADR-0015](0015-engine-semantics-identity-and-reproducibility.md), and the explicit run
+   inputs/result provenance required by the producing capability. Governance does not own or
+   redefine Engine semantics.
 
 7. **Historical evidence validity does not require permanent re-executability.** Evidence validity
    is based on integrity, provenance, and applicability. A historical Arcogine analytical result may

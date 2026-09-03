@@ -7,8 +7,9 @@ plugins {
 }
 
 // Override the Spring Boot-managed Tomcat version to patch shipped CVEs
-// (CVE-2026-41293/43512/43515 CRITICAL + 41284/42498/43513 HIGH).
-extra["tomcat.version"] = "11.0.22"
+// (CVE-2026-41293/43512/43515 CRITICAL + 41284/42498/43513 HIGH,
+// CVE-2026-65182/65905/68525 CRITICAL).
+extra["tomcat.version"] = "11.0.25"
 // Override the Spring Boot-managed Spring Framework version to patch
 // CVE-2026-41842/41845/41850 (HIGH).
 extra["spring-framework.version"] = "7.0.8"
@@ -53,14 +54,16 @@ tasks.register<Copy>("stageDist") {
 }
 
 // Coverage gate: fails the build if sim-cli line coverage drops below the
-// floor (e.g. if its tests are deleted). Mirrors the gate in sim-types.
+// floor (e.g. if its tests are deleted). Raised from 0.60 following enhanced
+// test coverage in command-line argument handling, error paths, and handler
+// delegation (see tests in ArcogineCommandTest and HeadlessHandlerTest).
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {
         rule {
             limit {
                 counter = "LINE"
-                minimum = "0.60".toBigDecimal()
+                minimum = "0.85".toBigDecimal()
             }
         }
     }

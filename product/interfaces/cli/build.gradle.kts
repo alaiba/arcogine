@@ -7,8 +7,9 @@ plugins {
 }
 
 // Override the Spring Boot-managed Tomcat version to patch shipped CVEs
-// (CVE-2026-41293/43512/43515 CRITICAL + 41284/42498/43513 HIGH).
-extra["tomcat.version"] = "11.0.22"
+// (CVE-2026-41293/43512/43515 CRITICAL + 41284/42498/43513 HIGH,
+// CVE-2026-65182/65905/68525 CRITICAL).
+extra["tomcat.version"] = "11.0.25"
 // Override the Spring Boot-managed Spring Framework version to patch
 // CVE-2026-41842/41845/41850 (HIGH).
 extra["spring-framework.version"] = "7.0.8"

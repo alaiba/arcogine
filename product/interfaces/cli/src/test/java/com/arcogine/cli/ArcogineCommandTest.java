@@ -151,4 +151,81 @@ class ArcogineCommandTest {
         String output = captured.toString(StandardCharsets.UTF_8);
         assertTrue(output.contains("Simulation complete."), output);
     }
+
+    @Test
+    void withServerPropertiesExtractsHostAndPort() {
+        String[] result = callWithServerProperties(new String[] {"serve"}, "0.0.0.0:8080");
+        assertTrue(anyItemContains(result, "--server.address=0.0.0.0"));
+        assertTrue(anyItemContains(result, "--server.port=8080"));
+    }
+
+    @Test
+    void withServerPropertiesHandlesAddressWithoutPort() {
+        String[] result = callWithServerProperties(new String[] {"serve"}, "0.0.0.0");
+        assertTrue(anyItemContains(result, "--server.address=0.0.0.0"));
+        assertTrue(anyItemContains(result, "--server.port=3000"));
+    }
+
+    @Test
+    void withServerPropertiesPreservesExistingArgs() {
+        String[] result = callWithServerProperties(new String[] {"serve", "--some-flag"}, "127.0.0.1:5000");
+        assertTrue(anyItemContains(result, "--some-flag"));
+        assertTrue(anyItemContains(result, "--server.address=127.0.0.1"));
+        assertTrue(anyItemContains(result, "--server.port=5000"));
+    }
+
+    @Test
+    void runModeWithBlankScenarioPathReturnsError() {
+        ArcogineCommand command = new ArcogineCommand();
+        new CommandLine(command).parseArgs("run", "");
+        assertEquals(1, command.call());
+    }
+
+    @Test
+    void runModeWithWhitespaceScenarioPathReturnsError() {
+        ArcogineCommand command = new ArcogineCommand();
+        new CommandLine(command).parseArgs("run", "   ");
+        assertEquals(1, command.call());
+    }
+
+    @Test
+    void runModeErrorMessagePrintedToStderr(@TempDir Path tempDir) throws IOException {
+        Path nonExistent = tempDir.resolve("missing.toml");
+
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream capturedErr = new ByteArrayOutputStream();
+        int exitCode;
+        try {
+            System.setErr(new PrintStream(capturedErr, true, StandardCharsets.UTF_8));
+            exitCode = new CommandLine(new ArcogineCommand())
+                    .execute("run", nonExistent.toString());
+        } finally {
+            System.setErr(originalErr);
+        }
+
+        assertEquals(1, exitCode);
+        String errorOutput = capturedErr.toString(StandardCharsets.UTF_8);
+        assertTrue(errorOutput.contains("Error:"), errorOutput);
+    }
+
+    private String[] callWithServerProperties(String[] args, String addr) {
+        // Use reflection to call the private static method
+        try {
+            var method = ArcogineCommand.class.getDeclaredMethod(
+                    "withServerProperties", String[].class, String.class);
+            method.setAccessible(true);
+            return (String[]) method.invoke(null, args, addr);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean anyItemContains(String[] array, String substring) {
+        for (String item : array) {
+            if (item.contains(substring)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -101,8 +101,9 @@ between concrete destination binding and next-step processing for distinct resou
 - fix the version for each runtime and expose it directly from `FactoryRuntime`;
 - add mandatory semantics-version provenance to `RuntimeObservationMetadata` and
   `RuntimeEventEnvelope`;
-- add the missing optional controlled-revision provenance to observation metadata if needed to keep
-  the observation/event provenance contract symmetric with the accepted authoritative-binding rule;
+- add the missing optional `ControlledRevisionId` to `RuntimeObservationMetadata`; ADR-0011's
+  provenance contract already requires revision attribution when the runtime is authoritatively
+  revision-bound, and Gate 5 must not leave observation metadata asymmetric with the event envelope;
 - establish a small support check for the current version without a multi-version resolver;
 - add pinned behavioral conformance fixtures for pre-Gate-5 dispatch, W1, and scheduler semantics,
   then extend them with Gate 5 behavior as later slices land.
@@ -113,6 +114,8 @@ between concrete destination binding and next-step processing for distinct resou
 - semantics version cannot change mid-run;
 - a fresh runtime has a fresh `RunId` without changing semantics version;
 - observations/events always carry model + Engine semantics provenance;
+- authoritatively revision-bound runtimes expose the same optional `ControlledRevisionId` provenance
+  in supported observation metadata and event envelopes;
 - unsupported semantics identity fails explicitly if the support seam is exercised;
 - semantics-preserving representation changes do not alter the pinned behavioral fixtures.
 

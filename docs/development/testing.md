@@ -210,6 +210,14 @@ The `classify` job inspects the changed files (PR diff against its base, or the 
 
 The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the four `key=true|false` outputs), separated from the git/GitHub-context plumbing that builds the file list in the workflow step. `.github/scripts/classify-changes.test.sh` is a small table-driven test over that script — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression in the classifier fails visibly instead of silently under-running checks. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
 
+`infra/dev/pr-watch.test.mjs` covers the PR lifecycle resolver in `infra/dev/pr-watch.mjs`, which decides whether a pull request is `AWAITING`, `CHANGES REQUIRED`, or `READY TO MERGE` (see the PR monitoring section of [AGENTS.md](../../AGENTS.md)). The cases are synthetic — no network, no dependencies, only Node builtins — and concentrate on the paths where a wrong answer reports a PR merge-ready when it is not: required-check identity and success, base-branch movement invalidating an earlier review, per-author blocking-review lifetime, final-disposition parsing, and connection truncation. Like the classifier test it runs as a step in the always-running `classify` job, so it cannot be skipped by a docs-only or backend-only classification. Run it locally with:
+
+```bash
+node --test infra/dev/pr-watch.test.mjs
+```
+
+Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODULE_NOT_FOUND` rather than discovering the suite.
+
 ### Scheduled and manual security runs
 
 A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same jobs used on PRs/`main` — no separate/divergent security workflow — so the SBOM scan, frontend audit, Docker image scans, and secret scan all pick up newly published CVEs even when nothing in the repository changed. `build-dist`/`docker` still run first on these triggers because the image scans need a freshly built image to scan.

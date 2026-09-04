@@ -141,7 +141,7 @@ R40 --------> R41 --------> R42 --------> R43
 
 The horizontal dimension is immutable revision lineage. The attached records are governance, evidence, and operational facts about that history.
 
-A controlled revision becomes an authoritative historical fact only when its immutable record is accepted by Arcogine's authoritative revision store. ADR-0008 defines the identity, immutability, lineage, and provenance semantics; Governance G1.3 now implements the corresponding authority boundary and exact historical resolution. `ControlledRevisionAuthority` accepts candidate revision content, the authority establishes the accepted record's `recordedAt` at its commit boundary, and the current filesystem adapter durably binds the accepted revision to its immutable semantic artifact. Historical resolution re-verifies the artifact against the recorded `ModelFingerprint`; missing or corrupt history fails explicitly rather than falling back to current state. The filesystem record layout and locking mechanics remain replaceable adapter details rather than a permanent production persistence contract.
+A controlled revision becomes an authoritative historical fact only when its immutable record is accepted by Arcogine's authoritative revision store. ADR-0008 defines the identity, immutability, lineage, and provenance semantics; Governance authoritative controlled-revision persistence and historical resolution now implements the corresponding authority boundary and exact historical resolution. `ControlledRevisionAuthority` accepts candidate revision content, the authority establishes the accepted record's `recordedAt` at its commit boundary, and the current filesystem adapter durably binds the accepted revision to its immutable semantic artifact. Historical resolution re-verifies the artifact against the recorded `ModelFingerprint`; missing or corrupt history fails explicitly rather than falling back to current state. The filesystem record layout and locking mechanics remain replaceable adapter details rather than a permanent production persistence contract.
 
 The system should eventually answer:
 
@@ -416,31 +416,31 @@ runtime instantiation from a published model
 runtime/result provenance work in progress
 ```
 
-ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes controlled revision identity/lineage, and Governance G1 is complete: G1.2 supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while G1.3 supplies the authoritative acceptance/repository boundary, repository-level parent integrity, restart-durable storage, and exact revision-to-semantic-artifact resolution. The current proving adapter is filesystem-backed and factory artifacts reuse canonical `factory-model:v1` bytes; neither choice changes the durable identity semantics. Governance G2 is now implemented for its initial slice: the generic `ChangeSet`/`ImpactScope`/`SemanticChange` value contracts in `:governance`, the domain-owned `SemanticChangeExtractor` seam, and the factory-domain `FactoryModelSemanticComparator` (D5) that compares `factory-model:v1` artifacts by stable domain identity while still honoring the ADR-0006 order-significance of `resources`, `operations`, and `products`. Governance G3 is now implemented: the generic, domain-neutral `Requirement`/`RequirementScope`/`RequirementSource` and `Assertion`/`EvidenceRequirement`/`AssertionRule` value contracts in `:governance`, plus an immutable `RequirementCatalogue` that resolves requirements by identity/version and selects those whose `RequirementScope` intersects a real G2 `ImpactScope`. Governance G4 is now implemented for its initial slice: the generic `ConformanceResult` (`PASS`/`FAIL`/`UNKNOWN`/`NOT_APPLICABLE`) taxonomy, the deterministic `ConformanceEvaluator` that turns one G3 `Requirement`/`Assertion` pair and a model fingerprint (with an optional, never-synthesized `ControlledRevisionId`) into a `ConformanceEvaluation`, and the immutable `Finding` type produced only for `FAIL`. Arcogine still does **not** have the G5 evidence, authorization, deployment, or framework-mapping capabilities described later in this architecture.
+ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes controlled revision identity/lineage, and Governance Governance identity/history capability is complete: controlled-revision identity and lineage supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while authoritative controlled-revision persistence and historical resolution supplies the authoritative acceptance/repository boundary, repository-level parent integrity, restart-durable storage, and exact revision-to-semantic-artifact resolution. The current proving adapter is filesystem-backed and factory artifacts reuse canonical `factory-model:v1` bytes; neither choice changes the durable identity semantics. Governance semantic ChangeSet/impact capability is now implemented for its initial slice: the generic `ChangeSet`/`ImpactScope`/`SemanticChange` value contracts in `:governance`, the domain-owned `SemanticChangeExtractor` seam, and the factory-domain `FactoryModelSemanticComparator` (Factory semantic-comparison capability) that compares `factory-model:v1` artifacts by stable domain identity while still honoring the ADR-0006 order-significance of `resources`, `operations`, and `products`. Governance requirements/assertions capability is now implemented: the generic, domain-neutral `Requirement`/`RequirementScope`/`RequirementSource` and `Assertion`/`EvidenceRequirement`/`AssertionRule` value contracts in `:governance`, plus an immutable `RequirementCatalogue` that resolves requirements by identity/version and selects those whose `RequirementScope` intersects a real semantic ChangeSet/impact capability `ImpactScope`. Governance conformance evaluation/findings capability is now implemented for its initial slice: the generic `ConformanceResult` (`PASS`/`FAIL`/`UNKNOWN`/`NOT_APPLICABLE`) taxonomy, the deterministic `ConformanceEvaluator` that turns one requirements/assertions capability `Requirement`/`Assertion` pair and a model fingerprint (with an optional, never-synthesized `ControlledRevisionId`) into a `ConformanceEvaluation`, and the immutable `Finding` type produced only for `FAIL`. Arcogine still does **not** have the evidence/evidence-use capability evidence, authorization, deployment, or framework-mapping capabilities described later in this architecture.
 
 The Governance dependency is now:
 
 ```text
-G1.1 durable semantic fingerprint        complete
+durable semantic fingerprint contract durable semantic fingerprint        complete
     ↓
-G1.2 controlled revision value contract  complete
+controlled-revision identity and lineage controlled revision value contract  complete
     ↓
-G1.3 authoritative persistence +
+authoritative controlled-revision persistence and historical resolution authoritative persistence +
      historical semantic-state resolution  complete
     ↓
-G2 ChangeSet (initial slice)             complete
+semantic ChangeSet/impact capability ChangeSet (initial slice)             complete
     ↓
-G3 requirement/assertion contract        complete
+requirements/assertions capability requirement/assertion contract        complete
     ↓
-G4 conformance evaluation/findings
+conformance evaluation/findings capability conformance evaluation/findings
      (initial slice)                     complete
     ↓
-G5 evidence
+evidence/evidence-use capability evidence
     ↓
-G6 governed-change/authorization integration
+governed-change and external-workflow integration governed-change/authorization integration
 ```
 
-The Operational Execution and Digital Twin track is a sibling consumer/proving ground for G1/G2/G4/G5, not an alternate owner. It may use clearly scoped synthetic fixtures while the specific Governance capabilities it depends on are incomplete, but such fixtures do not satisfy Governance gates and must be replaced by Governance-owned contracts when those gates land. G1 consumers may now depend on the durable controlled-revision boundary itself; that does not imply a runtime or deployment has already been bound to a particular revision.
+The Operational Execution and Digital Twin track is a sibling consumer/proving ground for Governance identity/history capability/semantic ChangeSet/impact capability/conformance evaluation/findings capability/evidence/evidence-use capability, not an alternate owner. It may use clearly scoped synthetic fixtures while the specific Governance capabilities it depends on are incomplete, but such fixtures do not satisfy Governance gates and must be replaced by Governance-owned contracts when those gates land. Governance identity/history capability consumers may now depend on the durable controlled-revision boundary itself; that does not imply a runtime or deployment has already been bound to a particular revision.
 
 Other authoritative domain models should participate without being forced into one monolithic `BusinessModel` aggregate. Each domain retains ownership of its facts while cross-domain identity references, lineage, semantic changes, requirements, and evidence form the governance graph over them.
 
@@ -453,7 +453,7 @@ This proposal does not mean that Arcogine currently:
 - continuously observes cloud, identity, HR, source-control, ticketing, or industrial systems;
 - owns all operational truth in connected systems;
 - replaces Jira or enterprise GRC workflow;
-- has a complete generic conformance engine today (only the minimal G4 evaluation/findings slice exists, with no evidence, authorization, deployment, or framework-mapping backing it);
+- has a complete generic conformance engine today (only the minimal conformance evaluation/findings capability evaluation/findings slice exists, with no evidence, authorization, deployment, or framework-mapping backing it);
 - has production actuation or digital-twin reconciliation today.
 
 Standards/reference alignment and semantic mappings remain distinct from tested conformance claims. Controlled revision identity/lineage and durable history are enabling configuration-management primitives, not evidence that any external standard or control has been satisfied.
@@ -484,7 +484,7 @@ When governance or compliance work is proposed, ask:
 
 Create or revise ADRs when implementation commits to hard-to-reverse choices about:
 
-- replacement/production controlled-revision persistence, artifact retention/resolution, migration, or integrity semantics beyond the current replaceable G1 adapter;
+- replacement/production controlled-revision persistence, artifact retention/resolution, migration, or integrity semantics beyond the current replaceable Governance identity/history capability adapter;
 - extending current `0..1` lineage to multi-parent merge semantics;
 - branch/ref/tag semantics over controlled revisions;
 - cryptographic revision-record integrity/signature semantics;

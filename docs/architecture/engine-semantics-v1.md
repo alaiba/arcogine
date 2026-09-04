@@ -64,14 +64,14 @@ Four consequences follow.
 
 ### 1.2 Session and control semantics, in scope by reference
 
-Gate 3 session/control behavior satisfies the section 1.1 membership test: it decides how far a
-session advances and whether an externally initiated change is applied, for an identical ordered
-command sequence. It is therefore part of the `engine-semantics:v1` interpretation, and two
+The consumer-neutral session/control behavior satisfies the section 1.1 membership test: it decides
+how far a session advances and whether an externally initiated change is applied, for an identical
+ordered command sequence. It is therefore part of the `engine-semantics:v1` interpretation, and two
 implementations may not claim this version while differing on it.
 
-[ADR-0007](decisions/0007-gate-3-session-control-primitives.md) is Accepted and is the normative
-authority for those rules. This specification adopts them **by reference** rather than restating
-them. In scope:
+[ADR-0007](decisions/0007-consumer-neutral-session-control-primitives.md) is Accepted and is the
+normative authority for those rules. This specification adopts them **by reference** rather than
+restating them. In scope:
 
 - `advance()` as the unchanged one-event primitive, and `advanceUntil(targetTime, maxEvents)`
   defined in terms of it — processing events one at a time in `advance()` order and stopping as soon
@@ -476,10 +476,11 @@ halves of one contract; specifying only the first leaves the second ambient.
 
 **Implementation obligation.** Rule 1's saturation requirement is satisfied today for `busyTicks` but
 **not** for mean-lead-time accumulation, which currently sums lead times without an overflow check.
-That is a real gap between this contract and shipped behavior, and closing it is `G5-0` work: the
-slice must make the accumulation saturating and pin it, rather than the specification being relaxed
-to describe wrapping. Specifying wrap-around would freeze an arithmetic defect into a durable
-reproducibility contract, which is the opposite of what `EngineSemanticsVersion` exists to guarantee.
+That is a real gap between this contract and shipped behavior. The implementation slice that pins
+existing semantics must make the accumulation saturating and prove it, rather than relaxing this
+specification to describe wrapping. Specifying wrap-around would freeze an arithmetic defect into a
+durable reproducibility contract, which is the opposite of what `EngineSemanticsVersion` exists to
+guarantee.
 
 ## 11. Supported job and runtime observation contract
 

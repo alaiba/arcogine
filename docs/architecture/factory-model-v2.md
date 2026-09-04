@@ -307,9 +307,9 @@ malformed or non-canonical artifact acquire a well-formed-looking V2 identity.
 
 ## 10. Immutability and lifecycle
 
-Until the V2 implementation ships (focused Gate 5 slice `G5-A2` in the
-[Gate 5 delivery plan](../planning/gate-5-spatial-runtime-consequences.md)), this grammar is a
-normative design contract and may be corrected by amending this document.
+Until a shipped implementation produces `factory-model:v2` fingerprints or records them against
+controlled revisions, this grammar is a normative design contract and may be corrected by amending
+this document.
 
 Once a V2 fingerprint is produced by a shipped implementation or recorded against a controlled
 revision, the grammar is frozen permanently. From that point, every supported implementation must

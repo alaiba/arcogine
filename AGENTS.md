@@ -75,7 +75,20 @@ Resolve a PR's lifecycle state from its current head and metadata, submitted rev
 
 ## PR monitoring
 
-For any open PR associated with the current branch, subscribe to PR activity without asking for confirmation when the environment provides a native subscription mechanism (for Claude Code, `subscribe_pr_activity`). On notification, re-resolve the PR lifecycle state and perform any available implementation-owned transition. If native subscription is unavailable and scheduled tasks are supported, keep at most one recheck scheduled for about 10 minutes later while the PR is **AWAITING**; on wake, re-resolve the lifecycle state and act on any available transition. `..` remains the immediate manual continuation mechanism.
+For any open PR associated with the current branch, start monitoring it without asking for confirmation. On any signal, re-resolve the PR lifecycle state and perform any available implementation-owned transition.
+
+Use `infra/dev/pr-watch.mjs` rather than rediscovering how to query GitHub:
+
+```bash
+node infra/dev/pr-watch.mjs <pr-number>            # resolve lifecycle state once, then exit
+node infra/dev/pr-watch.mjs <pr-number> --watch    # emit one line per change, for a background watcher
+```
+
+It is dependency-free Node (builtins only, no install step) and reads `GH_TOKEN`/`GITHUB_TOKEN`, falling back to `gh auth token` once at startup. `--json` gives machine-readable output and `--exit-code` maps the lifecycle state onto the exit status; see `--help`.
+
+Prefer a native subscription mechanism if the environment provides one, and prefer `--watch` under a background-task facility if it does not. If neither is available and scheduled tasks are supported, keep at most one recheck scheduled for about 10 minutes later while the PR is **AWAITING**; on wake, re-resolve the lifecycle state and act on any available transition. `..` remains the immediate manual continuation mechanism.
+
+Whatever the mechanism, a monitor must fail loudly: if it cannot reach GitHub it must say so, because a silent watcher is indistinguishable from a quiet PR. Do not report a PR as unchanged on the strength of a monitor that has not actually confirmed it.
 
 ## PR merging
 

@@ -110,9 +110,15 @@ The following rules are part of v1:
    compatible multi-eligible entries. Unlike the derived-result accumulators of section 10.2 it may
    not saturate, narrow, or approximate: it is a ranking key, so a wrapped or truncated value would
    change which machine is selected and therefore change assignment, not merely a reported number.
-   Both terms and their sum must be representable in the ranking arithmetic. The child
-   materialization envelope of section 3 bounds a single submission, not a session's cumulative
-   queued work, so representability is a real obligation rather than a vacuous one.
+
+   Exactness here is **total, and requires no session-wide envelope**. Each term is structurally
+   bounded by the size of the collection holding it, so their true sum cannot exceed twice that
+   bound. The obligation is therefore only that the sum be accumulated and compared at a width that
+   holds it — never that a run be restricted to keep it representable. The concrete failures this
+   rule forbids are a narrowing conversion of either term and a same-width addition of two
+   independently bounded terms. Section 3's per-submission materialization envelope is unrelated: it
+   bounds one submission's children, not a session's cumulative waiting set, and must not be cited
+   as the reason this sum is representable.
 4. Break a remaining tie deterministically by `MachineId`.
 5. Selection runs at the established semantic points even when the selected machine cannot yet
    accept the job. The post-selection branch determines immediate dispatch versus
@@ -453,7 +459,11 @@ halves of one contract; specifying only the first leaves the second ambient.
    accumulator would not merely lose precision — it would report a qualitatively wrong mean, and two
    implementations differing only in accumulator width would disagree on a supported observation.
 2. **Counting accumulators are exact.** The completed-order counter increments once per completing
-   order and is exact over any workload the child-materialization envelope (section 3) admits.
+   order and is exact for every run that can exist: each increment corresponds to a distinct
+   materialized child job, so the count stays far below the 64-bit range however many
+   `submitWorkload` commands a session issues. Its exactness rests on the counter's width, not on
+   section 3's per-submission envelope — that envelope bounds one submission's children and says
+   nothing about a session's cumulative completions, so it must not be cited as the justification.
 3. **Value accumulation is deterministic by completion order.** Completed order value accumulates
    once per completing order, in the deterministic completion order this specification already fixes.
    Because floating-point addition is not associative, that fixed order is what makes the running
@@ -607,10 +617,13 @@ normative semantics above using representative explicit inputs. The fixtures mus
     mutation rather than saturating;
 16. the section 10.2 accumulator rules: **non-empty** mean-lead-time accumulation saturating rather
     than wrapping when the summed lead times exceed the representable tick range, exact
-    completed-order counting, completed-value accumulation reproducing bit-identically under the
-    fixed completion order, and `combinedQueueDepth` remaining exact — with a case proving a
-    would-be-wrapping queue-depth sum does not change machine selection;
-17. terminal state / derived result agreement for repeated identical explicit inputs.
+    completed-order counting across many submissions rather than one large one, and completed-value
+    accumulation reproducing bit-identically under the fixed completion order;
+17. section 2 rule 3 ranking exactness: a `combinedQueueDepth` whose two terms sum beyond the 32-bit
+    range selects the same machine an exact sum would, proving neither the narrowing conversion nor
+    a same-width addition survives — and proving it without appealing to section 3's per-submission
+    envelope, which does not bound the cumulative waiting set;
+18. terminal state / derived result agreement for repeated identical explicit inputs.
 
 Fixtures pin semantic outcomes, not DTO/JSON bytes, transport representation, or unrelated
 non-behavioral observation fields.

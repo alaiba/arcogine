@@ -114,12 +114,23 @@ Add characterization/conformance evidence for the result-affecting behavior that
 Pinned behavioral fixtures fail if any of those results change for identical explicit inputs. The
 slice does not freeze incidental DTO or implementation shape.
 
-`G5-0` is characterization work with **one deliberate exception**: mean-lead-time accumulation
-currently sums completed-order lead times without an overflow check, which `engine-semantics:v1`
-section 10.2 rule 1 requires to saturate rather than wrap. `G5-0` must close that gap in production
-code and pin it, rather than the specification being relaxed to describe wrapping — freezing
-wrap-around into a durable reproducibility contract would defeat the purpose of
-`EngineSemanticsVersion`. Every other behavior in this slice is pinned as-is.
+`G5-0` is characterization work with **two deliberate production changes**, both required to make the
+normative arithmetic implementable at all:
+
+1. **Mean-lead-time accumulation** currently sums completed-order lead times without an overflow
+   check, which `engine-semantics:v1` section 10.2 rule 1 requires to saturate rather than wrap.
+2. **`combinedQueueDepth`** currently narrows a 64-bit backlog count to 32 bits and adds it to a
+   32-bit queue depth, which section 2 rule 3 forbids. Both terms are structurally bounded by their
+   backing collections, so their true sum can exceed the 32-bit range while fitting a 64-bit
+   accumulator with wide headroom: widen the sum and the ranking comparison rather than introducing
+   any session-wide envelope.
+
+Neither is a semantics change in any regime reachable today — each preserves current results wherever
+the current arithmetic is already correct — and both are prerequisites for the exactness and
+saturation rules to be implementable. Make them in production code and pin them; do not relax the
+specification to describe wrapping or truncation, which would freeze an arithmetic defect into a
+durable reproducibility contract and defeat the purpose of `EngineSemanticsVersion`. Every other
+behavior in this slice is pinned as-is.
 
 The behaviors above are the ones `engine-semantics:v1` section 1.1 requires to be versioned rather
 than left as ambient implementation policy. `G5-0` is where that requirement becomes executable

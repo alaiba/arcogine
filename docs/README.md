@@ -23,11 +23,11 @@ When documents disagree, the higher layer governs product direction; the lower l
 
 ### Durable semantic vocabulary
 
-Planning documents may use initiative-local stage and slice identifiers because those coordinates are useful while work is being sequenced. Documents outside `docs/planning/` must name capabilities, contracts, identities, invariants, and behaviors directly instead of depending on those temporary coordinates.
+Planning documents may use initiative-local stage and slice identifiers because those coordinates are useful while work is being sequenced. Durable semantic/current-state documentation must instead name capabilities, contracts, identities, invariants, and behaviors directly rather than depend on temporary delivery coordinates. Working/process documentation may mention a planning coordinate when the coordinate itself is part of the process being explained.
 
-A durable document may link to a planning document for implementation sequencing, but it must remain understandable if the plan is later completed, condensed, renamed, or removed. When a planned outcome becomes architecture or current capability, translate the delivery label into semantic terminology rather than carrying the plan's coordinate into ADRs, architecture, product, reference, or development documentation.
+A durable document may link to a planning document for implementation sequencing, but it must remain understandable if the plan is later completed, condensed, renamed, or removed. When a planned outcome becomes architecture or current capability, translate the delivery label into semantic terminology rather than carrying the plan's coordinate into ADRs, architecture, product, reference, or durable development guidance.
 
-This is enforced mechanically for Markdown under `docs/` by `.github/scripts/check-durable-doc-vocabulary.py` and semantically by PR review. ADR-specific semantics-preserving editorial amendments follow the policy in [`architecture/decisions/README.md`](architecture/decisions/README.md).
+The mechanical checker covers the repository's durable reader-facing Markdown surfaces — root `README.md`, this index, `docs/architecture/**`, `docs/product/**`, `docs/reference/**`, and `docs/examples/**` — while PR review applies the broader semantic rule and catches context-dependent leakage outside that mechanically classified set. ADR-specific semantics-preserving editorial amendments follow the policy in [`architecture/decisions/README.md`](architecture/decisions/README.md).
 
 ## Cross-track ownership map
 

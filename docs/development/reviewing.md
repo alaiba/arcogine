@@ -277,10 +277,10 @@ CI absence alone is not automatically an architectural blocker, but merge readin
 
 Every review/re-review should end with a clear disposition. There are exactly two:
 
-- **READY TO MERGE** — independent review is complete and authorizes merge of this exact PR head. Required validation does not have to be green yet for the review itself to reach this disposition, but merge readiness (see `AGENTS.md`'s PR lifecycle) additionally requires it.
+- **READY TO MERGE** — independent review of the code/docs is complete and finds no blocking issue on this exact PR head.
 - **CHANGES REQUIRED** — at least one blocking/pre-merge finding remains.
 
-CI is not a reviewer disposition. There is no third disposition for "review is clean but CI is still pending" — required CI is enforced independently by GitHub branch protection, never by review vocabulary. If code/docs inspection is clean but required validation has not finished, report that plainly and do not emit a canonical disposition block for this review; the PR lifecycle stays `AWAITING` until CI is green and a current-head review concludes `READY TO MERGE`. Do not treat green CI alone as authorizing merge, and do not treat an earlier clean inspection as sufficient once the head or required validation has moved — re-resolve and issue a fresh disposition.
+CI is not a reviewer disposition, and review authorization is genuinely orthogonal to CI status — there is no third disposition for "review is clean but CI is still pending." A review may conclude `READY TO MERGE` based solely on the code/docs review, regardless of whether required CI has finished running for this head. That disposition is necessary but not sufficient for merge: required CI is enforced independently by GitHub branch protection (see `AGENTS.md`'s PR lifecycle), and the PR does not reach lifecycle state `READY TO MERGE` until CI is also green. A current-head `READY TO MERGE` review is not invalidated merely because CI later transitions from pending to green with the reviewed head and base unchanged — no second review is required solely for that reason. Do treat the head or base changing, or new findings surfacing, as requiring a fresh disposition.
 
 Optional, genuinely non-blocking observations belong in review prose or a follow-up issue, not in a formal disposition. If the only remaining items are non-blocking, the disposition is simply `READY TO MERGE`.
 
@@ -302,7 +302,7 @@ Reviewed head: <full-PR-head-SHA>
 Disposition: **READY TO MERGE**
 ```
 
-where the disposition value is `READY TO MERGE` or `CHANGES REQUIRED` (in `**...**` markdown bold markers). If review is clean but required CI is still pending, omit the block entirely rather than inventing a third value — see Final disposition above.
+where the disposition value is `READY TO MERGE` or `CHANGES REQUIRED` (in `**...**` markdown bold markers). `READY TO MERGE` reflects the code/docs review outcome only and may be issued regardless of CI status — see Final disposition above.
 
 **Key semantics:**
 
@@ -322,7 +322,7 @@ where the disposition value is `READY TO MERGE` or `CHANGES REQUIRED` (in `**...
 The repository enforces the canonical disposition format via `.github/workflows/pr-disposition.yml`, which:
 
 - Runs on PR open, commit push (`synchronize`), and review submission/edit/dismissal
-- Fetches the current PR head SHA and all review bodies (paginated)
+- Fetches the current PR head SHA and every review authored by a trusted repository authority (`author_association` of `OWNER`, `MEMBER`, or `COLLABORATOR`) across all pages, since this is a public repository and an unfiltered pass-through would let any unrelated external account mint a canonical disposition
 - Evaluates whether the latest applicable review for the current head contains a canonical `READY TO MERGE` disposition
 - Fails closed if:
   - No disposition exists for the current head

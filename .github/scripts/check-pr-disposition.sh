@@ -17,9 +17,16 @@
 # requirements are enforced independently by GitHub.
 #
 # Input (environment variables):
-#   PR_HEAD_SHA   - current pull_request.head.sha
-#   REVIEWS_JSON  - JSON array of review objects: [{ "body": "..." }, ...]
-#                   in chronological order (oldest first), as returned by GitHub.
+#   PR_HEAD_SHA        - current pull_request.head.sha
+#   REVIEW_BODIES_B64  - newline-separated list of base64-encoded review
+#                        bodies, one per authoritative review, in
+#                        chronological order (oldest first) as returned by
+#                        GitHub. Base64 encoding (rather than a JSON array)
+#                        is deliberate: it needs no JSON re-parsing and no
+#                        ad-hoc object-boundary splitting downstream, so a
+#                        review body's own content (quotes, braces, embedded
+#                        JSON-looking text) can never be misread as a
+#                        structural delimiter.
 #
 # Output:
 #   Exit 0 if the latest applicable current-head disposition is READY TO MERGE.
@@ -32,22 +39,28 @@ if [ -z "${PR_HEAD_SHA:-}" ]; then
   exit 1
 fi
 
-if [ -z "${REVIEWS_JSON:-}" ]; then
-  echo "error: REVIEWS_JSON not set" >&2
+if [ -z "${REVIEW_BODIES_B64:-}" ]; then
+  echo "error: REVIEW_BODIES_B64 not set" >&2
   exit 1
 fi
 
 # Extract the canonical disposition block from a review body, if present.
 # Canonical format (strict: exactly these two lines, adjacent, at the end of
-# the body — no content between them, no content after):
+# the body, with "Reviewed head:" anchored to the start of its own line --
+# no content between the lines, no content after, no content before
+# "Reviewed" on its line):
 #   Reviewed head: <SHA>
 #   Disposition: **VALUE**
 # Prints "head_sha disposition" if found, else nothing.
 extract_canonical_disposition() {
   local body="$1"
 
-  if [[ "$body" =~ Reviewed[[:space:]]+head:[[:space:]]*([a-f0-9]+)[[:space:]]*$'\n'[[:space:]]*Disposition:[[:space:]]*\*\*([A-Z][A-Z_[:space:]-]*)\*\*[[:space:]]*$ ]]; then
-    echo "${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+  # Group 1 is the (start-of-string | newline) anchor; group 2 is the head
+  # SHA; group 3 is the disposition value. Anchoring group 1 immediately
+  # before optional leading whitespace and "Reviewed" rejects a body like
+  # "Example Reviewed head: <sha>" where the marker does not begin its line.
+  if [[ "$body" =~ (^|$'\n')[[:space:]]*Reviewed[[:space:]]+head:[[:space:]]*([a-f0-9]+)[[:space:]]*$'\n'[[:space:]]*Disposition:[[:space:]]*\*\*([A-Z][A-Z_[:space:]-]*)\*\*[[:space:]]*$ ]]; then
+    echo "${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
   fi
 }
 
@@ -64,40 +77,17 @@ is_valid_disposition() {
   esac
 }
 
-# Split the REVIEWS_JSON array into individual review-body strings, in order.
-# No external JSON tooling required (bash + sed only), so this evaluator has
-# no runtime dependency beyond bash itself and can be tested anywhere.
-extract_bodies() {
-  local json="$1"
-
-  # Split "}, {" object boundaries onto their own lines, strip the outer [ ].
-  local normalized
-  normalized=$(echo "$json" | sed 's/}, {/\n/g; s/^\[//; s/\]$//')
-
-  while IFS= read -r line; do
-    [ -z "$line" ] && continue
-
-    local body
-    body=$(echo "$line" | sed -n 's/.*"body":[[:space:]]*"\(.*\)"[[:space:]]*}.*/\1/p')
-    [ -z "$body" ] && body=$(echo "$line" | sed -n 's/.*"body":[[:space:]]*"\(.*\)"[[:space:]]*,.*/\1/p')
-    [ -z "$body" ] && continue
-
-    # Unescape JSON string escapes
-    body="${body//\\n/$'\n'}"
-    body="${body//\\\"/\"}"
-    body="${body//\\\\/\\}"
-
-    printf '%s\0' "$body"
-  done <<<"$normalized"
-}
-
 # Latest applicable disposition for the current head. Reviews are processed in
 # the order given (chronological); the last one matching the current head wins.
 # Older-head canonical blocks are ignored entirely — this gate enforces
 # current-head binding only, not historical reviewer authority.
 latest_disp=""
 
-while IFS= read -r -d '' body; do
+while IFS= read -r b64_line; do
+  [ -z "$b64_line" ] && continue
+
+  body=$(printf '%s' "$b64_line" | base64 -d 2>/dev/null) || continue
+
   canonical=$(extract_canonical_disposition "$body") || true
   [ -z "$canonical" ] && continue
 
@@ -113,7 +103,7 @@ while IFS= read -r -d '' body; do
   fi
 
   latest_disp="$disp"
-done < <(extract_bodies "$REVIEWS_JSON")
+done <<<"$REVIEW_BODIES_B64"
 
 if [ -z "$latest_disp" ]; then
   echo "PR disposition gate failed: no canonical reviewer disposition exists for current head $PR_HEAD_SHA." >&2

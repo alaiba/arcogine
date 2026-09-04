@@ -10,9 +10,10 @@ name: PR Disposition
 # NOTE: This workflow runs on every qualifying PR event and produces the
 # "PR Disposition / disposition" status check. That check is NOT currently a
 # required status check. To ENFORCE the merge gate, a maintainer must add
-# "PR Disposition / disposition" to the branch protection ruleset on main.
-# Until that step is completed, the workflow runs but merge-gate enforcement
-# is not active.
+# "disposition" (the exact check-run name; branch-protection required
+# contexts use the check-run name, e.g. "gate", not the workflow-qualified
+# label) to the branch protection ruleset on main. Until that step is
+# completed, the workflow runs but merge-gate enforcement is not active.
 #
 # Trigger when PR state or reviews change.
 on:
@@ -50,7 +51,7 @@ jobs:
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
           echo "Current PR head: $HEAD_SHA"
 
-      - name: Fetch PR review bodies with pagination
+      - name: Fetch authoritative review bodies with pagination
         id: reviews
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,17 +61,42 @@ jobs:
 
           # Fetch all reviews (paginated). `gh api` rejects --slurp combined
           # with --jq in one invocation, so --slurp collects the raw page
-          # arrays here and a separate jq pipe flattens them with `add` into
-          # a single ordered array before extracting review bodies. The
-          # evaluator does not reason about review action type (APPROVED /
-          # CHANGES_REQUESTED / COMMENTED / DISMISSED) at all, so only body is
-          # passed through — this is the complete normalized input it needs.
-          REVIEWS_JSON=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews \
+          # arrays here and a separate jq pipe does the rest of the work:
+          #
+          #  1. `add` flattens the page arrays into one ordered array.
+          #  2. Only reviews from a trusted repository authority
+          #     (author_association OWNER/MEMBER/COLLABORATOR) are kept.
+          #     This repository is public: any user with read access can
+          #     submit a review, so an unfiltered pass-through would let an
+          #     unrelated external account mint a canonical READY TO MERGE
+          #     block and satisfy the gate. Only accounts GitHub itself
+          #     reports as having repository authority may author an
+          #     authoritative disposition.
+          #  3. Each surviving body is base64-encoded and emitted one per
+          #     line. This is the complete normalized input the evaluator
+          #     needs — a plain newline-separated list of opaque strings,
+          #     not a JSON array. It needs no JSON re-parsing or ad-hoc
+          #     object-boundary splitting downstream, so a review body's own
+          #     content (quotes, braces, embedded JSON-looking text) can
+          #     never be misread as a structural delimiter.
+          BODIES=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews \
             --paginate \
             --slurp \
-            | jq -c 'add | map({body})')
+            | jq -r '
+                add
+                | map(select(.author_association == "OWNER" or .author_association == "MEMBER" or .author_association == "COLLABORATOR"))
+                | map((.body // "") | @base64)
+                | .[]
+              ')
 
-          echo "reviews_json=$REVIEWS_JSON" >> "$GITHUB_OUTPUT"
+          # Multiline values must use the heredoc form of GITHUB_OUTPUT with a
+          # delimiter unlikely to collide with the (base64-only) payload.
+          DELIM="REVIEW_BODIES_$(date +%s%N)_$RANDOM"
+          {
+            echo "review_bodies_b64<<$DELIM"
+            echo "$BODIES"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository at main (trusted base)
         # A candidate PR must not be able to modify the evaluator used to
@@ -83,5 +109,5 @@ jobs:
       - name: Run disposition check
         env:
           PR_HEAD_SHA: ${{ steps.head.outputs.head_sha }}
-          REVIEWS_JSON: ${{ steps.reviews.outputs.reviews_json }}
+          REVIEW_BODIES_B64: ${{ steps.reviews.outputs.review_bodies_b64 }}
         run: bash .github/scripts/check-pr-disposition.sh

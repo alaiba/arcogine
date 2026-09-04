@@ -47,9 +47,11 @@ Four consequences follow.
    only reachable at extreme inputs" do not exempt a limit that two conforming implementations could
    choose differently and thereby disagree on a run's outcome. This covers derived-result arithmetic
    as much as acceptance limits: a saturation, clamp, or zero-denominator rule decides a supported
-   observation's value and is therefore in scope. The currently known rules of this kind are recorded
-   in the section that owns the behavior they bound — the child materialization envelope in section
-   3, and the derived-result arithmetic in section 10.1.
+   observation's value and is therefore in scope, and so does the **accumulation** feeding that
+   value, not only its edge cases. The currently known rules of this kind are recorded in the section
+   that owns the behavior they bound — the child materialization envelope in section 3, the exact
+   ranking arithmetic in section 2 rule 3, the derived-result edge cases in section 10.1, and the
+   accumulator register in section 10.2.
 2. **A rule is in scope even when the capability that motivated this version did not introduce it.**
    Pre-existing behavior that satisfies the membership test is captured here rather than left
    implicit because it predates spatial transfer work. Sections 1.2, 2, 3 and 4 exist for exactly
@@ -104,6 +106,13 @@ The following rules are part of v1:
    eligibility filter: a machine that can accept immediately ranks ahead of one that cannot.
 3. Among candidates tied on immediate acceptance, rank by `combinedQueueDepth` as currently defined
    by the Factory Engine, including pending multi-eligible work that could land on that resource.
+   `combinedQueueDepth` is an **exact** sum of that machine's own queue depth and the count of
+   compatible multi-eligible entries. Unlike the derived-result accumulators of section 10.2 it may
+   not saturate, narrow, or approximate: it is a ranking key, so a wrapped or truncated value would
+   change which machine is selected and therefore change assignment, not merely a reported number.
+   Both terms and their sum must be representable in the ranking arithmetic. The child
+   materialization envelope of section 3 bounds a single submission, not a session's cumulative
+   queued work, so representability is a real obligation rather than a vacuous one.
 4. Break a remaining tie deterministically by `MachineId`.
 5. Selection runs at the established semantic points even when the selected machine cannot yet
    accept the job. The post-selection branch determines immediate dispatch versus
@@ -423,6 +432,45 @@ Rule 5 is the deliberate exception, and it is a rejection rule rather than a val
 of them changes supported derived results for identical explicit inputs and therefore requires a new
 Engine semantics version.
 
+### 10.2 Derived-result accumulator register
+
+Section 10.1 fixes edge-case *values*. This register fixes the **accumulation** behind each supported
+derived result, because an accumulator's overflow policy changes the reported value for identical
+explicit inputs exactly as a zero-denominator rule does. Sentinel cases and accumulators are two
+halves of one contract; specifying only the first leaves the second ambient.
+
+| Supported derived result | Accumulator | v1 accumulation rule |
+|---|---|---|
+| resource `busyTicks` / utilization | per-resource cumulative tick sum | saturating (rule 1 below) |
+| mean lead time | sum of completed-order lead times ÷ completed count | saturating (rule 1 below) |
+| throughput | completed-order counter ÷ elapsed ticks | exact counting (rule 2 below) |
+| backlog | count of incomplete accepted orders | current-state count, not a running accumulator |
+| completed sales value | running total of completed order value | deterministic by completion order (rule 3 below) |
+
+1. **Every tick-valued accumulator saturates; none wraps.** This extends section 10.1 rule 1 beyond
+   `busyTicks` to mean-lead-time accumulation: summing completed-order lead times saturates at the
+   maximum representable tick value and never wraps to a negative or small positive total. A wrapping
+   accumulator would not merely lose precision — it would report a qualitatively wrong mean, and two
+   implementations differing only in accumulator width would disagree on a supported observation.
+2. **Counting accumulators are exact.** The completed-order counter increments once per completing
+   order and is exact over any workload the child-materialization envelope (section 3) admits.
+3. **Value accumulation is deterministic by completion order.** Completed order value accumulates
+   once per completing order, in the deterministic completion order this specification already fixes.
+   Because floating-point addition is not associative, that fixed order is what makes the running
+   total reproducible; an implementation may not reorder, batch, or parallelise the accumulation. It
+   saturates toward infinity rather than wrapping.
+4. **Conversion to the reported representation is IEEE 754 round-to-nearest.** Converting an integral
+   accumulator to the reported floating-point value is exact below the mantissa limit and
+   round-to-nearest above it — deterministic across conforming implementations either way, so no
+   further rounding rule is required.
+
+**Implementation obligation.** Rule 1's saturation requirement is satisfied today for `busyTicks` but
+**not** for mean-lead-time accumulation, which currently sums lead times without an overflow check.
+That is a real gap between this contract and shipped behavior, and closing it is `G5-0` work: the
+slice must make the accumulation saturating and pin it, rather than the specification being relaxed
+to describe wrapping. Specifying wrap-around would freeze an arithmetic defect into a durable
+reproducibility contract, which is the opposite of what `EngineSemanticsVersion` exists to guarantee.
+
 ## 11. Supported job and runtime observation contract
 
 A fresh supported observation must reconstruct an in-progress transfer without replay.
@@ -557,7 +605,12 @@ normative semantics above using representative explicit inputs. The fixtures mus
     throughput and empty-set mean lead time each yielding `0` rather than a non-finite value, and
     simulated-time addition overflow being rejected at the command boundary with no partial
     mutation rather than saturating;
-16. terminal state / derived result agreement for repeated identical explicit inputs.
+16. the section 10.2 accumulator rules: **non-empty** mean-lead-time accumulation saturating rather
+    than wrapping when the summed lead times exceed the representable tick range, exact
+    completed-order counting, completed-value accumulation reproducing bit-identically under the
+    fixed completion order, and `combinedQueueDepth` remaining exact — with a case proving a
+    would-be-wrapping queue-depth sum does not change machine selection;
+17. terminal state / derived result agreement for repeated identical explicit inputs.
 
 Fixtures pin semantic outcomes, not DTO/JSON bytes, transport representation, or unrelated
 non-behavioral observation fields.

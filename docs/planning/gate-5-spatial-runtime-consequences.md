@@ -105,12 +105,21 @@ Add characterization/conformance evidence for the result-affecting behavior that
 - the W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
 - the derived-result arithmetic: `busyTicks` overflow saturation, elapsed-time subtraction flooring
   at zero, and the zero-denominator throughput / empty-set mean-lead-time results;
+- the derived-result accumulators: exact completed-order counting, completion-ordered value
+  accumulation, and exact `combinedQueueDepth` ranking arithmetic;
 - scheduler equal-time insertion ordering where it is semantically observable.
 
 **Evidence**
 
 Pinned behavioral fixtures fail if any of those results change for identical explicit inputs. The
-slice changes no production behavior and does not freeze incidental DTO or implementation shape.
+slice does not freeze incidental DTO or implementation shape.
+
+`G5-0` is characterization work with **one deliberate exception**: mean-lead-time accumulation
+currently sums completed-order lead times without an overflow check, which `engine-semantics:v1`
+section 10.2 rule 1 requires to saturate rather than wrap. `G5-0` must close that gap in production
+code and pin it, rather than the specification being relaxed to describe wrapping — freezing
+wrap-around into a durable reproducibility contract would defeat the purpose of
+`EngineSemanticsVersion`. Every other behavior in this slice is pinned as-is.
 
 The behaviors above are the ones `engine-semantics:v1` section 1.1 requires to be versioned rather
 than left as ambient implementation policy. `G5-0` is where that requirement becomes executable

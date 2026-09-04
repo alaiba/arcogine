@@ -83,6 +83,8 @@ function usage() {
 USAGE
   node infra/dev/pr-watch.mjs <pr-number> [options]
 
+  Exactly one pull request per invocation. Run it once per PR to follow several.
+
 OPTIONS
   --repo <owner/name>   Repository (default: ${DEFAULT_REPO})
   --watch               Poll continuously, emitting one line per change.
@@ -479,6 +481,16 @@ async function main() {
   if (values.help || positionals.length === 0) {
     process.stdout.write(usage());
     return values.help ? 0 : 1;
+  }
+
+  // Exactly one PR. Silently resolving the first and discarding the rest is worse than
+  // refusing, because the output looks like it honoured every argument.
+  if (positionals.length > 1) {
+    process.stderr.write(
+      `expected exactly one pr-number, got ${positionals.length}: ${positionals.join(' ')}\n` +
+        'pr-watch handles one pull request per invocation; run it once per PR.\n',
+    );
+    return 1;
   }
 
   const number = Number(positionals[0]);

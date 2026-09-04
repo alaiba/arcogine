@@ -1,0 +1,86 @@
+name: PR Disposition
+
+# PR disposition merge-gate workflow.
+#
+# Enforces exactly one invariant: the latest applicable canonical reviewer
+# disposition for the current PR head must be READY TO MERGE. This workflow
+# does not evaluate CI, mergeability, or unresolved threads — those remain
+# independently enforced by GitHub branch protection and infra/dev/pr-watch.mjs.
+#
+# NOTE: This workflow runs on every qualifying PR event and produces the
+# "PR Disposition / disposition" status check. That check is NOT currently a
+# required status check. To ENFORCE the merge gate, a maintainer must add
+# "PR Disposition / disposition" to the branch protection ruleset on main.
+# Until that step is completed, the workflow runs but merge-gate enforcement
+# is not active.
+#
+# Trigger when PR state or reviews change.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+  pull_request_review:
+    branches: [main]
+    types: [submitted, edited, dismissed]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-disposition:
+    name: disposition
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch current PR head SHA
+        id: head
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+
+          HEAD_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER \
+            --jq '.head.sha')
+
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "Current PR head: $HEAD_SHA"
+
+      - name: Fetch PR review bodies with pagination
+        id: reviews
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+
+          # Fetch all reviews (paginated). --paginate with --jq emits one array
+          # per page; --slurp collects those page arrays so `add` can flatten
+          # them into a single ordered array before extracting review bodies.
+          # The evaluator does not reason about review action type (APPROVED /
+          # CHANGES_REQUESTED / COMMENTED / DISMISSED) at all, so only body is
+          # passed through — this is the complete normalized input it needs.
+          REVIEWS_JSON=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews \
+            --paginate \
+            --slurp \
+            --jq 'add | map({body})')
+
+          echo "reviews_json=$(echo "$REVIEWS_JSON" | jq -c .)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository at main (trusted base)
+        # A candidate PR must not be able to modify the evaluator used to
+        # authorize itself, so the evaluator always runs from main, never from
+        # the PR's own (possibly attacker-controlled) checkout.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+
+      - name: Run disposition check
+        env:
+          PR_HEAD_SHA: ${{ steps.head.outputs.head_sha }}
+          REVIEWS_JSON: ${{ steps.reviews.outputs.reviews_json }}
+        run: bash .github/scripts/check-pr-disposition.sh

@@ -87,9 +87,11 @@ ones created via an explicit user request.
 
 Resolve a PR's lifecycle state from its current head and metadata, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
 
-- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for independent review/re-review or for pending required CI after `READY AFTER CI`.
+- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for initial review, re-review, or for required CI to finish once review is otherwise clean. A review that is clean while CI is still pending does not get a special disposition of its own — it simply has no current-head `READY TO MERGE` yet, which is `AWAITING`.
 - **CHANGES REQUIRED** — an implementation-owned blocker remains, such as a valid blocking review finding, failed required CI, or a merge conflict. Remediate it, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
-- **READY TO MERGE** — the current review disposition permits merge (`READY TO MERGE`, `NON-BLOCKING FOLLOW-UPS ONLY`, or `READY AFTER CI` after required CI turns green), required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+- **READY TO MERGE** — the latest applicable reviewer disposition for the current PR head is `READY TO MERGE`, required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+
+Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). CI is not a reviewer disposition and is never folded into it: required CI is enforced independently by GitHub branch protection. Only a current-head `READY TO MERGE` review, together with green required CI, produces the `READY TO MERGE` lifecycle state.
 
 ## PR monitoring
 

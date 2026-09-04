@@ -30,6 +30,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
+import { pathToFileURL } from 'node:url';
 
 const DEFAULT_REPO = 'alaiba/arcogine';
 const DEFAULT_INTERVAL_SECONDS = 60;
@@ -43,13 +44,17 @@ const DISPOSITIONS = [
   'NON-BLOCKING FOLLOW-UPS ONLY',
 ];
 
+const DISPOSITION_ALTERNATION = DISPOSITIONS.map((d) => d.replace(/ /g, '\\s+')).join('|');
+
 const QUERY = `
 query($owner:String!, $name:String!, $number:Int!) {
   repository(owner:$owner, name:$name) {
     pullRequest(number:$number) {
       number title isDraft state
       headRefOid mergeable mergeStateStatus
-      reviews(last:20) {
+      baseRefName baseRefOid
+      reviews(last:100) {
+        totalCount
         nodes { author { login } state submittedAt body commit { oid } }
       }
       reviewThreads(last:100) { nodes { isResolved } }
@@ -150,16 +155,56 @@ async function fetchPullRequest({ repo, number, token }) {
   return pr;
 }
 
-/** Extract the reviewer contract's explicit final disposition, or null when absent. */
+/**
+ * How far the head is ahead of / behind the base branch.
+ *
+ * Needed because a review is only evidence about the base-to-head transition that existed
+ * when it was written. GraphQL's mergeStateStatus does not reliably report BEHIND (it
+ * depends on branch-protection settings), so ask the compare endpoint directly.
+ */
+async function fetchComparison({ repo, token }, pr) {
+  const response = await fetch(
+    `https://api.github.com/repos/${repo}/compare/${encodeURIComponent(pr.baseRefName)}...${pr.headRefOid}`,
+    {
+      headers: {
+        authorization: `bearer ${token}`,
+        accept: 'application/vnd.github+json',
+        'user-agent': 'arcogine-pr-watch',
+        connection: 'close',
+      },
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`GitHub compare HTTP ${response.status} ${response.statusText}`);
+  }
+  const body = await response.json();
+  return { aheadBy: body.ahead_by ?? 0, behindBy: body.behind_by ?? 0 };
+}
+
+/**
+ * Extract the reviewer contract's explicit FINAL disposition, or null when absent.
+ *
+ * Two rules matter, and both exist because of an observed false positive: a review whose
+ * prose contained the literal text "Disposition: READY TO MERGE" as an example was read as
+ * merge-ready even though its actual closing disposition was CHANGES REQUIRED.
+ *
+ *  - Prefer a disposition that starts its own line. A disposition quoted mid-sentence is
+ *    discussion, not a verdict.
+ *  - Take the LAST match, never the first. The contract calls for an explicit *final*
+ *    disposition, so earlier occurrences are superseded by construction.
+ *
+ * There is deliberately no "only one token appears anywhere" fallback: guessing a verdict
+ * out of prose is how the original bug happened. No explicit disposition resolves to null,
+ * which the lifecycle treats conservatively as AWAITING.
+ */
 function dispositionOf(body) {
   if (!body) return null;
-  const match = body.match(
-    /Disposition:\s*\**\s*(READY TO MERGE|READY AFTER CI|CHANGES REQUIRED|NON-BLOCKING FOLLOW-UPS ONLY)/i,
-  );
-  if (match) return match[1].toUpperCase();
-  // Fall back to a lone disposition token only if exactly one appears anywhere.
-  const present = DISPOSITIONS.filter((d) => body.toUpperCase().includes(d));
-  return present.length === 1 ? present[0] : null;
+  const anchored = [...body.matchAll(new RegExp(`^[ \\t>*_-]*Disposition:\\s*\\**\\s*(${DISPOSITION_ALTERNATION})`, 'gim'))];
+  const chosen = anchored.length > 0
+    ? anchored
+    : [...body.matchAll(new RegExp(`Disposition:\\s*\\**\\s*(${DISPOSITION_ALTERNATION})`, 'gi'))];
+  if (chosen.length === 0) return null;
+  return chosen.at(-1)[1].replace(/\s+/g, ' ').toUpperCase();
 }
 
 function normalizeChecks(pr) {
@@ -175,7 +220,7 @@ function normalizeChecks(pr) {
 const GREEN = new Set(['SUCCESS', 'SKIPPED', 'NEUTRAL']);
 const PENDING = new Set(['PENDING', 'QUEUED', 'IN_PROGRESS', 'WAITING', 'EXPECTED', 'REQUESTED']);
 
-function summarize(pr) {
+function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }) {
   const checks = normalizeChecks(pr);
   const reviews = (pr.reviews?.nodes ?? []).map((r) => ({
     author: r.author?.login ?? '(unknown)',
@@ -189,11 +234,25 @@ function summarize(pr) {
   const onHead = reviews.filter((r) => r.commit === pr.headRefOid);
   const openThreads = (pr.reviewThreads?.nodes ?? []).filter((t) => !t.isResolved).length;
 
+  // Per author, not globally: a later review by someone else must not erase a standing
+  // blocker. Each author's own latest review supersedes only their own earlier ones.
+  const latestByAuthor = new Map();
+  for (const review of reviews) latestByAuthor.set(review.author, review);
+  const blockers = [...latestByAuthor.values()].filter(
+    (r) => r.state === 'CHANGES_REQUESTED' || r.disposition === 'CHANGES REQUIRED',
+  );
+
+  const reviewsTruncated = (pr.reviews?.totalCount ?? reviews.length) > reviews.length;
+
   return {
     number: pr.number,
     title: pr.title,
     isDraft: pr.isDraft,
     head: pr.headRefOid,
+    baseRef: pr.baseRefName,
+    baseOid: pr.baseRefOid,
+    behindBy: comparison.behindBy,
+    aheadBy: comparison.aheadBy,
     mergeable: pr.mergeable,
     mergeStateStatus: pr.mergeStateStatus,
     checks,
@@ -201,6 +260,8 @@ function summarize(pr) {
     checksPending: checks.filter((c) => PENDING.has(c.verdict)),
     openThreads,
     reviews,
+    reviewsTruncated,
+    blockers,
     newestReview: reviews.at(-1) ?? null,
     newestReviewOnHead: onHead.at(-1) ?? null,
   };
@@ -214,47 +275,63 @@ function summarize(pr) {
  * carrying a stale verdict forward.
  */
 function resolveLifecycle(s) {
-  const reasons = [];
-
   if (s.isDraft) return { state: 'AWAITING', reasons: ['pull request is a draft'] };
 
-  if (s.mergeable === 'CONFLICTING') reasons.push('merge conflict with the base branch');
+  const blocking = [];
+  if (s.mergeable === 'CONFLICTING') blocking.push('merge conflict with the base branch');
   if (s.checksFailing.length > 0) {
-    reasons.push(`failing checks: ${s.checksFailing.map((c) => `${c.name} (${c.verdict})`).join(', ')}`);
+    blocking.push(`failing checks: ${s.checksFailing.map((c) => `${c.name} (${c.verdict})`).join(', ')}`);
   }
-  const head = s.newestReviewOnHead;
-  if (head?.disposition === 'CHANGES REQUIRED') reasons.push('review disposition on current head is CHANGES REQUIRED');
-  if (head?.state === 'CHANGES_REQUESTED') reasons.push('a CHANGES_REQUESTED review stands on the current head');
-  if (reasons.length > 0) return { state: 'CHANGES REQUIRED', reasons };
+  // Every author's standing blocker counts, not just the newest review overall.
+  for (const b of s.blockers) {
+    const why = b.state === 'CHANGES_REQUESTED' ? 'CHANGES_REQUESTED' : 'disposition CHANGES REQUIRED';
+    blocking.push(`${b.author} has a standing ${why} review (${b.submittedAt} on ${b.commit.slice(0, 7)})`);
+  }
+  if (blocking.length > 0) return { state: 'CHANGES REQUIRED', reasons: blocking };
 
+  const waiting = [];
+  // A review only ever attests to the base-to-head transition that existed when it was
+  // written. If the base has advanced, no existing review covers the current transition.
+  if (s.behindBy > 0) {
+    waiting.push(
+      `head is ${s.behindBy} commit(s) behind ${s.baseRef}; no review covers the current base-to-head transition`,
+    );
+  }
+  if (s.reviewsTruncated) {
+    waiting.push('review history exceeds the fetched window, so review state cannot be fully resolved');
+  }
+
+  const head = s.newestReviewOnHead;
   if (!head) {
-    return {
-      state: 'AWAITING',
-      reasons: [
-        s.newestReview
-          ? `newest review is on ${s.newestReview.commit.slice(0, 7)}, not the current head -- awaiting re-review`
-          : 'no review has been submitted',
-      ],
-    };
+    waiting.push(
+      s.newestReview
+        ? `newest review is on ${s.newestReview.commit.slice(0, 7)}, not the current head -- awaiting re-review`
+        : 'no review has been submitted',
+    );
+  } else if (!head.disposition) {
+    waiting.push('review on current head states no explicit disposition');
   }
-  if (!head.disposition) {
-    return { state: 'AWAITING', reasons: ['review on current head states no explicit disposition'] };
-  }
-  if (head.disposition === 'READY AFTER CI' && s.checksPending.length > 0) {
-    return { state: 'AWAITING', reasons: ['READY AFTER CI with required checks still pending'] };
+
+  // Absence of evidence is not green. A workflow that never started, was not triggered, or
+  // is temporarily missing must not be read as passing validation.
+  if (s.checks.length === 0) {
+    waiting.push('no check contexts present on the head commit; required validation is not proven to have run');
   }
   if (s.checksPending.length > 0) {
-    return { state: 'AWAITING', reasons: ['required checks still pending'] };
+    waiting.push(`required checks still pending: ${s.checksPending.map((c) => c.name).join(', ')}`);
   }
-  if (s.openThreads > 0) {
-    return { state: 'AWAITING', reasons: [`${s.openThreads} unresolved review thread(s)`] };
-  }
-  if (s.mergeable !== 'MERGEABLE') {
-    return { state: 'AWAITING', reasons: [`GitHub reports mergeable=${s.mergeable}`] };
-  }
+  if (s.openThreads > 0) waiting.push(`${s.openThreads} unresolved review thread(s)`);
+  if (s.mergeable !== 'MERGEABLE') waiting.push(`GitHub reports mergeable=${s.mergeable}`);
+
+  if (waiting.length > 0) return { state: 'AWAITING', reasons: waiting };
+
   return {
     state: 'READY TO MERGE',
-    reasons: [`review disposition on current head is ${head.disposition}; required checks green`],
+    reasons: [
+      `review disposition on current head is ${head.disposition}`,
+      `${s.checks.length} check context(s) green`,
+      `head is level with ${s.baseRef}`,
+    ],
   };
 }
 
@@ -262,8 +339,12 @@ function resolveLifecycle(s) {
 function stateLines(s) {
   const lines = [
     `head: ${s.head.slice(0, 7)}`,
+    // Base identity and distance are part of the watched state: a base advance can
+    // invalidate an existing review without the head changing at all.
+    `base: ${s.baseRef}@${String(s.baseOid).slice(0, 7)} (behind ${s.behindBy}, ahead ${s.aheadBy})`,
     `merge: ${s.mergeStateStatus} (${s.mergeable})`,
     `open-threads: ${s.openThreads}`,
+    `checks-present: ${s.checks.length}`,
   ];
   for (const r of s.reviews) {
     lines.push(
@@ -281,6 +362,7 @@ function renderOnce(s, lifecycle) {
   const out = [
     `PR #${s.number}  ${s.title}`,
     `head        ${s.head.slice(0, 7)}`,
+    `base        ${s.baseRef}@${String(s.baseOid).slice(0, 7)}  (behind ${s.behindBy}, ahead ${s.aheadBy})`,
     `merge       ${s.mergeStateStatus} (${s.mergeable})`,
     `checks      ${s.checks.length - s.checksFailing.length - s.checksPending.length} green, ` +
       `${s.checksFailing.length} failing, ${s.checksPending.length} pending`,
@@ -320,7 +402,7 @@ async function watch(options) {
   for (;;) {
     try {
       const pr = await fetchPullRequest(options);
-      const summary = summarize(pr);
+      const summary = summarize(pr, await fetchComparison(options, pr));
       const lines = stateLines(summary);
 
       if (consecutiveFailures > 0 && alerted) {
@@ -402,7 +484,8 @@ async function main() {
 
   let summary;
   try {
-    summary = summarize(await fetchPullRequest(options));
+    const pr = await fetchPullRequest(options);
+    summary = summarize(pr, await fetchComparison(options, pr));
   } catch (error) {
     process.stderr.write(`${error.message}\n`);
     return 1;
@@ -421,15 +504,24 @@ async function main() {
   return 3;
 }
 
-// Set exitCode and let the event loop drain rather than calling process.exit(): forcing
-// exit while HTTP handles are still closing aborts the process instead of returning the
-// intended status (observed on Windows as a libuv UV_HANDLE_CLOSING assertion).
-main().then(
-  (code) => {
-    process.exitCode = code;
-  },
-  (error) => {
-    process.stderr.write(`pr-watch: ${error?.stack ?? error}\n`);
-    process.exitCode = 1;
-  },
-);
+// Pure resolution logic is exported so pr-watch.test.mjs can exercise the lifecycle states
+// deterministically, without network access.
+export { dispositionOf, summarize, resolveLifecycle, stateLines, diff };
+
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (invokedDirectly) {
+  // Set exitCode and let the event loop drain rather than calling process.exit(): forcing
+  // exit while HTTP handles are still closing aborts the process instead of returning the
+  // intended status (observed on Windows as a libuv UV_HANDLE_CLOSING assertion).
+  main().then(
+    (code) => {
+      process.exitCode = code;
+    },
+    (error) => {
+      process.stderr.write(`pr-watch: ${error?.stack ?? error}\n`);
+      process.exitCode = 1;
+    },
+  );
+}

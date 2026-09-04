@@ -2,6 +2,7 @@
 
 Status: Accepted
 Date: 2026-09-03
+Amendment: 2026-09-04 — replace delivery-coordinate terminology with semantic implementation wording; no semantic change
 
 ## Context
 
@@ -156,7 +157,7 @@ artifact.
 - Spatial execution receives a stable authored spatial substrate without weakening V1 identity.
 - The V2 canonicalization contract required by ADR-0006 is a separate normative document rather than
   ADR text, so the durable byte grammar and its golden vectors can be reviewed, cited, and amended
-  before `G5-A2` ships without reopening this decision record.
+  before `factory-model:v2` is implemented and released without reopening this decision record.
 - `ModelFingerprint` continues to mean "which authored Factory design", not "which Engine outcome".
 - Existing V1 revisions remain valid and executable under their existing non-spatial semantics.
 - Factory must support more than one artifact policy when V2 lands.

@@ -2,6 +2,7 @@
 
 Status: Accepted
 Date: 2026-08-28
+Amendment: 2026-09-03 — replaced transient Engine Readiness coordinates with semantic terminology; no semantic change
 
 ## Context
 
@@ -15,18 +16,18 @@ resource dispatch
     which eligible resource executes one such unit?
 ```
 
-Gate 2 is complete at the dispatch boundary. The remaining W1 question is therefore not how to rank eligible resources, but how one accepted production `Order` with quantity greater than one becomes independently dispatchable runtime work without moving authoritative production semantics into the game or another consumer.
+Deterministic resource dispatch is complete at the dispatch boundary. The remaining decomposition question is therefore not how to rank eligible resources, but how one accepted production `Order` with quantity greater than one becomes independently dispatchable runtime work without moving authoritative production semantics into the game or another consumer.
 
-The current implementation has one immutable `Order` and one mutable `Job` per accepted workload. Quantity is represented by repeating the product routing inside that one `Job`: a quantity-20 order for a three-step routing executes 60 task steps sequentially. This makes quantity consume proportional production work, but it also means one order cannot use two equivalent resources concurrently because only one `JobId` exists to dispatch at a time.
+The implementation at the time of this decision had one immutable `Order` and one mutable `Job` per accepted workload. Quantity was represented by repeating the product routing inside that one `Job`: a quantity-20 order for a three-step routing executed 60 task steps sequentially. This made quantity consume proportional production work, but it also meant one order could not use two equivalent resources concurrently because only one `JobId` existed to dispatch at a time.
 
-The factory-design reference challenge makes this limitation concrete. The game owns one fixed requirement to produce 20 units of Product A through `CUT -> ASSEMBLE -> INSPECT`, and one credible player strategy is to install a second cutter. The game must not fabricate multiple Arcogine `Order`s merely to make that strategy effective. Arcogine therefore needs an accepted intra-order decomposition contract before Gate 4 stabilizes externally visible execution identities and event correlation.
+The factory-design reference challenge makes this limitation concrete. The game owns one fixed requirement to produce 20 units of Product A through `CUT -> ASSEMBLE -> INSPECT`, and one credible player strategy is to install a second cutter. The game must not fabricate multiple Arcogine `Order`s merely to make that strategy effective. Arcogine therefore needs an accepted intra-order decomposition contract before the supported runtime observation/event contract stabilizes externally visible execution identities and event correlation.
 
 The existing runtime already provides an important architectural seam:
 
 - `Order` is immutable accepted production intent;
 - `Job` is mutable executable work and already carries the identity used by machine queues, active-machine state, pending multi-eligible work, and task events;
 - `Order` was deliberately modeled so that multiple jobs may later reference the same order;
-- Gate 2 dispatch already operates correctly once several independently dispatchable `Job`s exist.
+- deterministic resource dispatch already operates correctly once several independently dispatchable `Job`s exist.
 
 The design therefore needs to choose the smallest execution shape that enables the reference workload while preserving determinism, aggregate order semantics, and future room for real lot/batch concepts.
 
@@ -76,9 +77,9 @@ A `Job` owns mutable execution state for that work item:
 - status and timing;
 - completion state.
 
-No new `ExecutionUnitId`, `LotId`, or `BatchId` is introduced for W1. Machine queues, active-machine state, `pendingMultiEligible`, and `TaskStart` / `TaskEnd` continue to use `JobId` as their concrete execution identity.
+No new `ExecutionUnitId`, `LotId`, or `BatchId` is introduced for this unit-work decomposition contract. Machine queues, active-machine state, `pendingMultiEligible`, and `TaskStart` / `TaskEnd` continue to use `JobId` as their concrete execution identity.
 
-### 3. W1 decomposes quantity N into N unit-quantity Jobs
+### 3. Quantity N decomposes into N unit-quantity Jobs
 
 For the first supported intra-order decomposition contract, accepting an `Order` with quantity `N` deterministically creates exactly `N` child `Job`s, each representing execution quantity `1`.
 
@@ -96,9 +97,9 @@ Job ordinal 1: step 0 -> step 1 -> ... -> step R-1
 Job ordinal N-1: step 0 -> step 1 -> ... -> step R-1
 ```
 
-This reifies the `N` routing passes already implicit in the current quantity-scaled single-Job implementation. It does not introduce an arbitrary batch size or invent material-lot semantics.
+This reifies the `N` routing passes already implicit in the prior quantity-scaled single-Job implementation. It does not introduce an arbitrary batch size or invent material-lot semantics.
 
-For W1, every accepted child is released for dispatch as part of the atomic order-acceptance operation. `releasedQuantity == requestedQuantity` immediately after successful acceptance.
+Every accepted child is released for dispatch as part of the atomic order-acceptance operation. `releasedQuantity == requestedQuantity` immediately after successful acceptance.
 
 ### 4. ordinalWithinOrder is deterministic ordering metadata, not identity
 
@@ -119,7 +120,7 @@ completedQuantity
 completedAt
 ```
 
-For W1:
+For this unit-work decomposition contract:
 
 - `requestedQuantity` comes from immutable `Order.quantity`;
 - `releasedQuantity` is the number of child work items released for execution and equals requested quantity immediately after acceptance;
@@ -131,7 +132,7 @@ A child `Job` completing one intermediate routing step does not change completed
 
 ### 6. Each Job progresses through one routing independently
 
-The current quantity-scaled `Job.totalSteps = routing.stepCount() * order.quantity` representation is superseded for W1 execution.
+The prior quantity-scaled `Job.totalSteps = routing.stepCount() * order.quantity` representation is superseded for unit-work execution.
 
 Each child `Job` instead has one routing traversal:
 
@@ -140,15 +141,15 @@ Job.totalSteps = routing.stepCount()
 Job.currentStep = routing-local execution progress
 ```
 
-A job cannot begin routing step `k + 1` until its own step `k` completes. Sibling jobs of the same order have no additional precedence relationship in W1 and may therefore occupy different eligible resources concurrently.
+A job cannot begin routing step `k + 1` until its own step `k` completes. Sibling jobs of the same order have no additional precedence relationship in this contract and may therefore occupy different eligible resources concurrently.
 
 No cross-job batching, synchronization barrier, split/merge rule, or transfer-batch constraint is introduced by this decision.
 
-### 7. Existing Gate 2 dispatch policy is reused unchanged
+### 7. Existing deterministic dispatch policy is reused unchanged
 
-W1 creates independently dispatchable work; it does not redefine resource selection.
+Unit-work decomposition creates independently dispatchable work; it does not redefine resource selection.
 
-Every released child `Job` is dispatched using the existing deterministic Gate 2 policy:
+Every released child `Job` is dispatched using the existing deterministic policy:
 
 ```text
 eligible
@@ -160,7 +161,7 @@ eligible
 
 `pendingMultiEligible` retains its existing semantics and continues to hold `JobId`-identified waiting work.
 
-A second equivalent machine can therefore improve execution of one order only because W1 supplies multiple dispatchable sibling jobs; the selector itself remains unchanged.
+A second equivalent machine can therefore improve execution of one order only because decomposition supplies multiple dispatchable sibling jobs; the selector itself remains unchanged.
 
 ### 8. Order completion is emitted exactly once
 
@@ -182,7 +183,7 @@ may emit the order-completion event.
 
 Exactly one `OrderCompleted` event is emitted for one accepted `Order`, regardless of child count.
 
-To remove the ambiguity created by several `JobId`s belonging to one order, W1 evolves the completion payload to carry explicit order identity while retaining the completing child correlation:
+To remove the ambiguity created by several `JobId`s belonging to one order, the completion payload carries explicit order identity while retaining the completing child correlation:
 
 ```text
 OrderCompleted(
@@ -196,13 +197,13 @@ OrderCompleted(
 
 `jobId` identifies the child whose final completion caused the aggregate order to become complete. `orderId` identifies the completed production requirement.
 
-`TaskStart` and `TaskEnd` may retain their current `JobId`, `MachineId`, and routing-local `stepIndex` fields for W1. Gate 4 remains responsible for any later stable event-envelope design; this ADR does not require adding `OrderId` to every task event.
+`TaskStart` and `TaskEnd` may retain their current `JobId`, `MachineId`, and routing-local `stepIndex` fields. The supported runtime-event envelope is a separate contract; this ADR does not require adding `OrderId` to every internal task event.
 
 ### 9. Order-level business and performance semantics remain order-level
 
 Introducing several `Job`s underneath one `Order` must not silently redefine existing business/performance measures.
 
-For W1:
+For this decomposition contract:
 
 - backlog remains the count of incomplete accepted orders, not the count of child jobs;
 - completed sales remains the count of completed orders;
@@ -242,7 +243,7 @@ The exact Java representation may differ, but a consumer must not need to infer 
 
 ### 11. Deterministic decomposition and replay are required
 
-For the same published model, runtime state, seed, workload, and ordered commands, W1 must reproduce the same:
+For the same published model, runtime state, seed, workload, and ordered commands, the decomposition contract must reproduce the same:
 
 - child count;
 - child ordinals;
@@ -265,25 +266,25 @@ The required ordering rules are:
 
 Hash/set iteration order must not become a semantic tie-breaker.
 
-### 12. Unit decomposition is the minimum supported W1 policy, not a generalized batch model
+### 12. Unit decomposition is the minimum supported policy, not a generalized batch model
 
 Creating one lightweight `Job` per quantity unit changes resident execution-object scaling from approximately O(orders) to O(quantity), while event work was already O(quantity * routing steps) in the existing quantity-scaled implementation.
 
-That cost is accepted for W1 because any coarser chunk size would be arbitrary without a domain input that actually defines lot or batch size. Decomposing according to available resource count would also be incorrect because it would couple work decomposition to resource dispatch and make work identity change when the factory design changes.
+That cost is accepted because any coarser chunk size would be arbitrary without a domain input that actually defines lot or batch size. Decomposing according to available resource count would also be incorrect because it would couple work decomposition to resource dispatch and make work identity change when the factory design changes.
 
 Implementation acceptance must therefore include a large-order non-functional benchmark (for example quantity 100,000) to measure memory and execution impact. That benchmark informs the supported materialization envelope; it is not itself the admission contract.
 
 Before mutating runtime state, workload acceptance must deterministically verify that the requested quantity is within a supported child-materialization envelope. A quantity above that envelope must be rejected through the existing structured command-error semantics before creating the `Order`, order-execution aggregate, child `Job`s, assignments, pending work, or command-produced events. The concrete bound is an implementation/configuration/model decision and is intentionally not frozen by this ADR, but it must be deterministic for the same accepted model/runtime configuration and must be established from evidence rather than ambient heap availability or allocation failure.
 
-This admission rule preserves Gate 3's zero-partial-mutation rejection guarantee and prevents environment-dependent allocation failure from becoming a de facto workload limit. If benchmarking shows that the desired supported envelope is impractical with unit `Job` materialization, the follow-up design must address representation efficiency without silently inventing batch semantics.
+This admission rule preserves the consumer-neutral session command contract's zero-partial-mutation rejection guarantee and prevents environment-dependent allocation failure from becoming a de facto workload limit. If benchmarking shows that the desired supported envelope is impractical with unit `Job` materialization, the follow-up design must address representation efficiency without silently inventing batch semantics.
 
-A future accepted lot/batch capability may allow one `Job` to represent `executionQuantity > 1` when the production domain provides an explicit lot/batch rule. W1 deliberately leaves that seam open but does not define such a rule now.
+A future accepted lot/batch capability may allow one `Job` to represent `executionQuantity > 1` when the production domain provides an explicit lot/batch rule. This decision deliberately leaves that seam open but does not define such a rule now.
 
 ## Alternatives considered
 
 ### Keep one parent Job and introduce a new ExecutionUnit identity below it
 
-Rejected for W1. The current runtime already treats `JobId` as the identity that machines, queues, pending work, and task events execute. Preserving `Job` as a parent aggregate would require threading a new identity through all of those structures while retaining two mutable execution layers with overlapping responsibilities. The concrete requirement does not justify that complexity.
+Rejected. The current runtime already treats `JobId` as the identity that machines, queues, pending work, and task events execute. Preserving `Job` as a parent aggregate would require threading a new identity through all of those structures while retaining two mutable execution layers with overlapping responsibilities. The concrete requirement does not justify that complexity.
 
 ### Use one Job per arbitrary chunk of quantity
 
@@ -303,20 +304,20 @@ Rejected. Those are legitimate future manufacturing concepts but are not require
 
 ## Consequences
 
-- The former one-`Order`-to-one-`Job` runtime invariant becomes historical implementation shape rather than intended architecture once W1 is implemented.
+- The former one-`Order`-to-one-`Job` runtime invariant becomes historical implementation shape rather than intended architecture once unit-work decomposition is implemented.
 - `JobId` has a clear semantic meaning: identity of one independently dispatchable execution work item.
-- One order can use several equivalent resources concurrently without changing Gate 2 dispatch policy.
+- One order can use several equivalent resources concurrently without changing deterministic dispatch policy.
 - Aggregate order progress and completion become explicit instead of being synonymous with one job's progress.
 - Existing job-oriented API/DTO compatibility projections require review because parent quantity/value can no longer safely be interpreted as child-job quantity/value.
 - `OrderCompleted` gains explicit `OrderId` correlation and remains exactly once per order.
-- Gate 4 can now stabilize observations and event envelopes against a known execution-identity model rather than the obsolete 1:1 assumption.
-- Resident `Job` count becomes quantity-proportional for W1 and must be measured with a large-order benchmark.
+- The supported observation/event contract can stabilize against a known execution-identity model rather than the obsolete 1:1 assumption.
+- Resident `Job` count becomes quantity-proportional and must be measured with a large-order benchmark.
 - Workload acceptance must establish and enforce a deterministic supported child-materialization envelope before mutation; ambient memory exhaustion is not an admissible workload-limit mechanism.
 - Real lot/batch semantics remain open and require a separate accepted decision if introduced.
 
-## Acceptance evidence required before W1 is complete
+## Acceptance evidence required before the decomposition contract is complete
 
-The implementation slice must prove at least:
+The implementation must prove at least:
 
 1. accepting quantity 20 creates exactly one `Order` and exactly 20 sibling `Job`s under that order;
 2. the child ordinals and `JobId` allocation are deterministic;
@@ -328,7 +329,7 @@ The implementation slice must prove at least:
 8. the one-cutter and two-cutter reference models produce observably different queue/utilization/completion behavior for the same single order;
 9. two fresh identical runtimes produce identical child identities, assignments, event streams, and terminal aggregate state;
 10. quantity 1 still creates one child job and behaves as the degenerate case of the same model;
-11. Gate 2 independent-order dispatch, offline/recovery, reset/replay, bounded advancement, and rejected-submission atomicity remain covered;
+11. independent-order dispatch, offline/recovery, reset/replay, bounded advancement, and rejected-submission atomicity remain covered;
 12. a large-order benchmark records the practical cost of unit decomposition and justifies the chosen supported child-materialization envelope;
 13. quantities above that supported envelope are deterministically rejected before mutation through the structured command-result/error contract, with zero partial `Order`, aggregate, `Job`, queue, pending-work, assignment, or event state.
 
@@ -345,7 +346,7 @@ This decision does not define:
 - resource pools beyond current explicit eligibility;
 - priority, due-date, or generalized scheduling policy;
 - durable cross-session `JobId` identity;
-- Gate 4's final event-envelope contract;
+- the final supported runtime event-envelope contract;
 - game scoring, challenge evaluation, or player-owned workload decomposition.
 
 ## Charter alignment

@@ -2,17 +2,18 @@
 
 Status: Accepted
 Date: 2026-09-01
+Amendment: 2026-09-03 — replaced transient Engine/Governance delivery coordinates with semantic terminology; no semantic change
 
 ## Context
 
-Arcogine's Engine Readiness sequence has now established the prerequisites needed to stabilize externally supported simulation observations and runtime events:
+Arcogine has established the prerequisites needed to stabilize externally supported simulation observations and runtime events:
 
-- Gate 1 established explicit workload and separate order/execution semantics;
-- Gate 2 established deterministic dispatch for independently dispatchable work;
-- Gate 3 established `FactoryRuntime` as the consumer-neutral simulation-session/control boundary;
-- ADR-0010 and W1 established the current execution identity model: one accepted quantity-`N` `Order` keeps aggregate identity/progress under `OrderId` and deterministically materializes `N` independently dispatchable unit-quantity child `Job`s identified by `JobId`.
+- explicit workload with separate immutable order intent and mutable execution semantics;
+- deterministic resource dispatch for independently dispatchable work;
+- `FactoryRuntime` as the consumer-neutral simulation-session/control boundary;
+- ADR-0010's execution identity model: one accepted quantity-`N` `Order` keeps aggregate identity/progress under `OrderId` and deterministically materializes `N` independently dispatchable unit-quantity child `Job`s identified by `JobId`.
 
-W1's functional implementation is in place. Its required large-order performance/memory benchmark remains the final completion item before Gate 4 implementation is declared complete.
+The unit-work decomposition implementation is in place. Its required large-order performance/memory benchmark remains the final completion item before the supported observation/event capability is considered complete.
 
 The repository also already contains several things called or treated as events, but they do not all mean the same thing:
 
@@ -20,17 +21,17 @@ The repository also already contains several things called or treated as events,
 2. `EventLog` is a bounded in-memory simulation trace used by the current API/export path. It is not a durable supported recovery journal.
 3. `SimThread` currently publishes internal `Event` instances directly to SSE listeners. In several paths it logs/notifies before `handleEvent(...)` completes, so the stream can describe a dispatched transition attempt before authoritative processing has succeeded.
 4. `/api/events/stream` currently uses the internal `EventType` name as the SSE transport event name and serializes the internal `Event` shape directly.
-5. `FactoryRuntime.advance()` and `advanceUntil(...)` currently return internal processed `Event` instances. `CommandResult.scheduledEvents()` reports internal events scheduled as a direct command effect. Gate 3 deliberately did not claim these as stable external event-envelope contracts.
+5. `FactoryRuntime.advance()` and `advanceUntil(...)` currently return internal processed `Event` instances. `CommandResult.scheduledEvents()` reports internal events scheduled as a direct command effect. The consumer-neutral session-control contract deliberately did not claim these as stable external event-envelope contracts.
 
 Those implementation surfaces are useful current behavior, but promoting them directly into the long-term consumer contract would couple external compatibility to scheduler internals and would make it difficult to distinguish "transition attempted" from "authoritative state changed".
 
-The project also now has stronger provenance primitives than it did when Gate 4 was first sketched:
+The project also has stronger provenance primitives than it did when the supported runtime observation/event contract was first sketched:
 
-- ADR-0006 and G1.1 establish `FactoryModelVersion.fingerprint()` / typed `ModelFingerprint` as the durable `factory-model:v1` semantic identity contract;
-- ADR-0008 and G1.2 establish `ControlledRevisionId` and immutable controlled-revision value/lineage contracts;
-- G1.3 authoritative revision persistence and exact revision-to-semantic-state resolution are still outstanding.
+- ADR-0006 establishes `FactoryModelVersion.fingerprint()` / typed `ModelFingerprint` as the durable `factory-model:v1` semantic identity contract;
+- ADR-0008 establishes `ControlledRevisionId` and immutable controlled-revision value/lineage contracts;
+- authoritative revision persistence and exact revision-to-semantic-state resolution remain outstanding.
 
-Gate 4 therefore needs a durable semantic boundary for current authoritative state and ordered authoritative runtime change without making Arcogine event sourced, without making SSE or another transport part of the engine domain, and without creating a second Governance or Operational Execution ontology.
+The runtime therefore needs a durable semantic boundary for current authoritative state and ordered authoritative runtime change without making Arcogine event sourced, without making SSE or another transport part of the engine domain, and without creating a second Governance or Operational Execution ontology.
 
 ## Decision
 
@@ -61,7 +62,7 @@ Internal Event
 
 `Event`, `EventType`, and `EventPayload` remain internal simulation-engine contracts. They are not automatically public compatibility types.
 
-Gate 4 introduces separate supported runtime-observation and runtime-event types. A first implementation may map many internal events closely, but it must not define the supported envelope as a wrapper around `Event` or expose `EventPayload` as its payload type.
+The supported runtime contract introduces separate runtime-observation and runtime-event types. A first implementation may map many internal events closely, but it must not define the supported envelope as a wrapper around `Event` or expose `EventPayload` as its payload type.
 
 The conceptual contract is:
 
@@ -85,7 +86,7 @@ RuntimeEvents after S
 current consumer view
 ```
 
-Deterministic rerun, exact checkpoint/restore, durable history, and transport recovery are related but separate capabilities. Section 11 of Engine Readiness remains the owner of distribution/recovery/checkpoint hardening.
+Deterministic rerun, exact checkpoint/restore, durable history, and transport recovery are related but separate capabilities. Distribution/recovery/checkpoint hardening remains a later responsibility.
 
 ### 3. Runtime events are published only after authoritative processing
 
@@ -95,9 +96,9 @@ Sequence allocation and supported publication occur after the relevant authorita
 
 A rejected command or rejected/failed transition must not emit a successful state-change `RuntimeEvent` for a change that did not become authoritative.
 
-If a command is accepted and a later execution cascade faults after partial authoritative mutation, Gate 3's distinction between acceptance and execution outcome is preserved. Gate 4 must report only the supported authoritative changes that actually occurred; it must not pretend an all-or-nothing transition happened when it did not. Fault/result reporting remains distinct from state-change event publication.
+If a command is accepted and a later execution cascade faults after partial authoritative mutation, the consumer-neutral session-control distinction between acceptance and execution outcome is preserved. The supported runtime-event contract reports only the authoritative changes that actually occurred; it does not pretend an all-or-nothing transition happened when it did not. Fault/result reporting remains distinct from state-change event publication.
 
-This deliberately differs from the current `SimThread` SSE path, which can log and notify internal events before `handleEvent(...)` completes. That legacy behavior is compatibility/current-implementation debt to migrate after the headless Gate 4 contract exists; it is not the semantic model for Gate 4.
+This deliberately differs from the current `SimThread` SSE path, which can log and notify internal events before `handleEvent(...)` completes. That legacy behavior is compatibility/current-implementation debt to migrate after the headless supported runtime contract exists; it is not the semantic model defined here.
 
 ### 4. Every runtime has explicit run identity and a per-run sequence epoch
 
@@ -138,11 +139,11 @@ The Java type names and payload decomposition may vary by implementation, but th
 
 `affectedEntityRefs` provide stable correlation without forcing consumers to parse domain-specific payloads merely to identify affected runtime entities. Entity references must preserve domain identity rather than introducing stringly typed replacement identities.
 
-W1 correlation is part of the supported contract. Events concerning a child work item must preserve its `JobId` and enough parent correlation to identify the owning `OrderId`. The aggregate order-completion event preserves both explicit `OrderId` and the completing child `JobId`, as required by ADR-0010.
+The unit-work decomposition correlation established by ADR-0010 is part of the supported contract. Events concerning a child work item must preserve its `JobId` and enough parent correlation to identify the owning `OrderId`. The aggregate order-completion event preserves both explicit `OrderId` and the completing child `JobId`, as required by ADR-0010.
 
 ### 6. Supported observations expose authoritative current state and the event cursor they include
 
-Gate 4 observations are consumer-neutral outward runtime projections, distinct from both internal domain observations used for deterministic decisions and API/UI DTOs used for a specific wire representation.
+Supported runtime observations are consumer-neutral outward runtime projections, distinct from both internal domain observations used for deterministic decisions and API/UI DTOs used for a specific wire representation.
 
 A supported runtime observation carries at least:
 
@@ -190,11 +191,11 @@ API/UI DTOs may project these supported observations, but DTO types never become
 
 ### 7. Model fingerprint is mandatory provenance; controlled revision is conditional provenance
 
-Every supported Gate 4 observation and runtime event carries the durable `ModelFingerprint` of the published `FactoryModelVersion` that instantiated the runtime.
+Every supported runtime observation and runtime event carries the durable `ModelFingerprint` of the published `FactoryModelVersion` that instantiated the runtime.
 
 A `ControlledRevisionId` is carried only when the runtime was actually instantiated with an authoritative controlled-revision binding supplied by the owning revision/repository boundary.
 
-Gate 4 must not generate, infer, or synthesize a controlled revision merely to fill the field, and Engine Readiness does not take ownership of G1.3 persistence or revision resolution.
+The runtime must not generate, infer, or synthesize a controlled revision merely to fill the field, and the simulation Engine does not take ownership of authoritative revision persistence or resolution.
 
 Thus:
 
@@ -207,13 +208,13 @@ ControlledRevisionId
     present only when authoritatively supplied
 ```
 
-This permits later Governance provenance integration without making Gate 4 wait for or duplicate G1.3.
+This permits later Governance provenance integration without making the runtime contract wait for or duplicate authoritative revision persistence.
 
 ### 8. `EventLog` and a supported runtime-event history have different responsibilities
 
 The current `EventLog` remains an internal simulation trace of scheduler events. It is not renamed or silently repurposed into the supported external runtime-event history.
 
-If Gate 4 or later distribution hardening needs retained supported events, use a separately named responsibility such as `RuntimeEventJournal`/`RuntimeEventHistory` behind the runtime-event source contract.
+If supported runtime delivery or later distribution hardening needs retained supported events, use a separately named responsibility such as `RuntimeEventJournal`/`RuntimeEventHistory` behind the runtime-event source contract.
 
 A bounded retained history is not a durable audit ledger. If retention drops events, recovery must detect the gap rather than silently pretending replay is complete.
 
@@ -227,11 +228,11 @@ This avoids requiring transport-listener registration changes whenever a support
 
 `docs/reference/api.md` remains a current-state reference and is updated only when that API migration is implemented; this ADR does not claim the current SSE endpoint already has the new behavior.
 
-CloudEvents or another integration envelope may later be an adapter representation, but it is not the Arcogine domain type and is not required by Gate 4.
+CloudEvents or another integration envelope may later be an adapter representation, but it is not the Arcogine domain type and is not required by this runtime contract.
 
 ### 10. Recovery uses snapshot/resynchronization semantics, not mandatory full replay
 
-Gate 4 establishes the primitives needed for later recovery:
+The supported runtime contract establishes the primitives needed for later recovery:
 
 - run identity;
 - monotonic supported-event sequence;
@@ -262,31 +263,31 @@ A bounded journal must expose enough information to detect that a cursor has fal
 
 ### 11. Challenge/Game and Operational Execution remain consumers/siblings, not owners
 
-Challenge/Game code may consume supported Engine observations/outcome facts but does not define runtime event semantics, reconstruct authoritative queues/dispatch from event replay, or make challenge scoring part of the runtime event contract. The playable consumer continues to wait for Gate 4 and Gate 5 as already specified by the game-consumer initiative.
+Challenge/Game code may consume supported Engine observations/outcome facts but does not define runtime event semantics, reconstruct authoritative queues/dispatch from event replay, or make challenge scoring part of the runtime event contract. The playable consumer continues to depend on a complete supported runtime observation/event contract and deterministic spatial runtime consequences as specified by its own planning initiative.
 
-Operational Execution / Digital Twin remains a sibling track. Gate 4 events are simulation-runtime events. They do not define production telemetry envelopes, source authenticity, operational actor/target identity, actuation acknowledgements, deployment provenance, external-observation ingestion, or modeled-versus-observed reconciliation.
+Operational Execution / Digital Twin remains a sibling track. These events are simulation-runtime events. They do not define production telemetry envelopes, source authenticity, operational actor/target identity, actuation acknowledgements, deployment provenance, external-observation ingestion, or modeled-versus-observed reconciliation.
 
 An Operational adapter may later translate relevant Arcogine semantics, but production trust and consequence cannot be inferred from simulation event-stream maturity.
 
-### 12. Gate 4 closes headlessly before legacy transport migration is allowed to define the contract
+### 12. The supported runtime contract closes headlessly before legacy transport migration is allowed to define it
 
-Gate 4 is proven first through `FactoryRuntime` and a headless reference consumer/acceptance tests.
+The contract is proven first through `FactoryRuntime` and a headless reference consumer/acceptance tests.
 
 The existing `SimThread`/SSE path is then migrated as a consumer of the established contract. The legacy API is not allowed to dictate the headless type shape merely because it already has an event stream.
 
-The implementation order is:
+The implementation dependency is:
 
 ```text
-W1 large-order benchmark / W1 closure
+unit-work large-order benchmark / decomposition closure
         ↓
-Gate 4 headless observation + RuntimeEvent contract
+headless supported observation + RuntimeEvent contract
         ↓
-Gate 4 deterministic acceptance closure
+deterministic headless acceptance closure
         ↓
 legacy API/SSE projection migration
 
-Gate 5 may proceed after Gate 4 core closure.
-Recovery/resynchronization remains later distribution hardening.
+spatial runtime consequences may proceed after headless observation/event closure.
+recovery/resynchronization remains later distribution hardening.
 ```
 
 ## Alternatives considered
@@ -297,7 +298,7 @@ Rejected. It would freeze scheduler machinery, evaluation/control triggers, and 
 
 ### Make Arcogine event sourced
 
-Rejected. Domain state already has clear authoritative owners, and Gate 4 explicitly requires a fresh observation to reconstruct current consumer state without full replay. Event sourcing would add a different persistence/state-ownership model without a demonstrated requirement.
+Rejected. Domain state already has clear authoritative owners, and the supported runtime contract explicitly requires a fresh observation to reconstruct current consumer state without full replay. Event sourcing would add a different persistence/state-ownership model without a demonstrated requirement.
 
 ### Treat `EventLog` as the supported journal
 
@@ -309,11 +310,11 @@ Rejected. The current transport-specific naming has already demonstrated drift r
 
 ### Require `ControlledRevisionId` on every event now
 
-Rejected. G1.2 provides the value contract, but G1.3 authoritative persistence/resolution is not complete. A revision ID is meaningful only when an authoritative revision binding exists. `ModelFingerprint` is already durable and mandatory.
+Rejected. The controlled-revision value contract exists, but authoritative persistence/resolution is not complete. A revision ID is meaningful only when an authoritative revision binding exists. `ModelFingerprint` is already durable and mandatory.
 
-### Block Gate 4 on complete recovery, persistence, or checkpointing
+### Block the supported runtime contract on complete recovery, persistence, or checkpointing
 
-Rejected. Run identity, sequence, provenance, observation cursor, and supported event semantics are Gate 4 primitives. Retention/reconnect/gap handling/checkpoint durability are distribution-hardening concerns already sequenced after the core gates.
+Rejected. Run identity, sequence, provenance, observation cursor, and supported event semantics are the primitives required now. Retention/reconnect/gap handling/checkpoint durability are later distribution-hardening concerns.
 
 ### Introduce Kafka, NATS, MQTT, WebSocket, or CloudEvents as the core implementation
 
@@ -329,24 +330,24 @@ Positive consequences:
 
 - external consumers gain a stable distinction between current truth and ordered authoritative change;
 - deterministic scheduler internals remain evolvable without automatically breaking public consumers;
-- W1's `OrderId`/`JobId` model is stabilized at the correct point in the Engine sequence;
+- ADR-0010's `OrderId`/`JobId` model is stabilized at the correct point in the Engine sequence;
 - event ordering no longer depends on simulated timestamps alone;
 - model provenance uses the already-established durable fingerprint contract;
 - later controlled-revision provenance can be added without inventing revision identity in Engine;
 - SSE and future transports become thin adapters rather than architectural owners;
-- reconnect/resynchronization has explicit primitives without forcing event sourcing or durable replay into Gate 4;
+- reconnect/resynchronization has explicit primitives without forcing event sourcing or durable replay into the core runtime contract;
 - Challenge/Game and Operational Execution can consume the contract without taking ownership of it.
 
 Costs and constraints:
 
-- Gate 4 requires new types rather than simply reusing `Event`, `EventType`, and `EventPayload`;
+- the supported runtime contract requires new types rather than simply reusing `Event`, `EventType`, and `EventPayload`;
 - command-result scheduled events and supported runtime events must remain conceptually distinct;
 - post-processing publication may require explicit mapping/enrichment from authoritative state;
 - deterministic tests must normalize/inject run identity while still asserting semantic event equality;
 - the current `SimThread` and SSE implementation remain migration debt until they project the supported contract;
 - a later retained runtime-event journal must handle history gaps explicitly rather than inheriting `EventLog` truncation behavior.
 
-Required Gate 4 evidence includes tests equivalent to:
+Required acceptance evidence includes tests equivalent to:
 
 ```text
 runtimeEventCarriesRunSequenceTimeAndModelProvenance
@@ -356,7 +357,7 @@ observationLatestSequenceMatchesAppliedRuntimeEvents
 observationReflectsStateReportedByLastRuntimeEvent
 rejectedTransitionDoesNotEmitSuccessfulStateChange
 faultReportsOnlyAuthoritativeChangesThatActuallyOccurred
-w1EventsPreserveOrderIdAndJobIdCorrelation
+unitWorkEventsPreserveOrderIdAndJobIdCorrelation
 identicalInputsProduceIdenticalSemanticEventStreams
 freshObservationReconstructsCurrentConsumerViewWithoutReplay
 resetCreatesNewRunAndSequenceEpoch

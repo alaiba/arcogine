@@ -2,12 +2,13 @@
 
 Status: Accepted
 Date: 2026-08-28
+Amendment: 2026-09-03 — replaced transient Governance delivery coordinates with semantic terminology; no semantic change
 
 ## Context
 
 [ADR-0004](0004-model-identity-revision-lineage-and-external-change-control.md) established that semantic identity and controlled revision identity are different concerns. [ADR-0006](0006-durable-semantic-fingerprint-contract.md) then established the first durable semantic fingerprint contract, `factory-model:v1`.
 
-The remaining Governance G1 identity gap is historical identity: Arcogine needs to distinguish one controlled occurrence of semantic content from another even when the semantic content is equal.
+The remaining Governance identity gap is historical identity: Arcogine needs to distinguish one controlled occurrence of semantic content from another even when the semantic content is equal.
 
 For example, the following history is valid and must remain representable:
 
@@ -29,7 +30,7 @@ The required invariant is therefore:
 
 The revision identifier must also remain independent of human version labels, authorship, timestamps, parents, external workflow identifiers, approval state, deployment state, and any particular persistence technology. Those facts may be associated with a revision, but none of them defines which historical occurrence the revision is.
 
-At the same time, the first controlled-revision contract should not prematurely implement a source-control system. Arcogine does not yet require branch objects, merge commits, rebase/cherry-pick semantics, generic patching, or a revision DAG with arbitrary parent cardinality. The contract should preserve paths to those capabilities without making them part of G1.2.
+At the same time, the first controlled-revision contract should not prematurely implement a source-control system. Arcogine does not yet require branch objects, merge commits, rebase/cherry-pick semantics, generic patching, or a revision DAG with arbitrary parent cardinality. The contract should preserve paths to those capabilities without making them part of the initial controlled-revision contract.
 
 Controlled revision identity and lineage are also a Governance and GRC substrate rather than a compliance result. They make exact historical configuration states addressable by later ChangeSets, requirements, conformance evaluations, evidence uses, authorization records, deployments, exceptions, and audit projections. A revision's existence does not itself mean that the revision was approved, deployed, conformant, certified, or compliant with any external framework.
 
@@ -107,11 +108,11 @@ A revision does not contain multiple alternate fingerprints for the same semanti
 
 This ADR also does not introduce a generic model/schema-version field. `ModelFingerprint.policyVersion` already versions the fingerprint semantics. A separate domain model or serialization schema version should be added only when a concrete cross-domain contract requires it; it must not be invented as part of historical revision identity.
 
-### G1.2 supports zero or one parent
+### The initial controlled-revision contract supports zero or one parent
 
 A root revision has no parent. A non-root revision has one parent.
 
-The contract is structurally expressed as `parentRevisionIds` so that parent cardinality can be extended later without redefining historical revision identity, but the G1.2 capability accepts at most one parent.
+The contract is structurally expressed as `parentRevisionIds` so that parent cardinality can be extended later without redefining historical revision identity, but the initial capability accepts at most one parent.
 
 ```text
 root:
@@ -120,7 +121,7 @@ root:
 current descendant:
     parentRevisionIds = [R1]
 
-not supported in G1.2:
+not supported initially:
     parentRevisionIds = [R1, R2]
 ```
 
@@ -136,7 +137,7 @@ R1 --+
 
 The current `0..1` parent rule is a capability constraint, not a permanent assertion that controlled history is intrinsically single-parent. Future branch refs, tags, multi-parent merge revisions, primary-parent rules, or other source-control-like topology may extend the model through a later decision.
 
-G1.2 does not define merge semantics, parent ordering for multi-parent revisions, branch names, branch heads, conflict resolution, rebase, or cherry-pick semantics.
+The initial controlled-revision contract does not define merge semantics, parent ordering for multi-parent revisions, branch names, branch heads, conflict resolution, rebase, or cherry-pick semantics.
 
 ### Lineage integrity is explicit
 
@@ -194,7 +195,7 @@ RevisionRecorder
 
 This is recording provenance, not authorization. A recorder is not thereby an approver, reviewer, owner, or deployer.
 
-`recordedAt` is explicit provenance and does not participate in `ControlledRevisionId` generation or lineage ordering. The durable persistence slice must preserve its value; exact database/serialization representation and precision are persistence concerns unless a later interoperability contract requires stronger normalization.
+`recordedAt` is explicit provenance and does not participate in `ControlledRevisionId` generation or lineage ordering. The durable persistence capability must preserve its value; exact database/serialization representation and precision are persistence concerns unless a later interoperability contract requires stronger normalization.
 
 ### The controlled revision core is immutable
 
@@ -214,7 +215,7 @@ Human labels, tags, descriptions, workflow state, and other presentation or orga
 
 ### External workflow references are associations, not revision identity/core state
 
-This ADR refines ADR-0004's statement that a controlled revision may carry an external change reference: the durable relationship is allowed, but it is not part of the minimum immutable `ControlledRevision` record established by G1.2.
+This ADR refines ADR-0004's statement that a controlled revision may carry an external change reference: the durable relationship is allowed, but it is not part of the minimum immutable `ControlledRevision` record established here.
 
 A later capability may associate a revision with an external authority and identifier, conceptually:
 
@@ -264,7 +265,7 @@ The horizontal dimension is configuration history. The attached records are gove
 
 A controlled revision references semantic content through `ModelFingerprint`; this ADR does not require serialized model bytes, an artifact URI, or a content-addressed blob to be embedded in the revision record.
 
-However, downstream historical change attribution cannot be considered complete if Arcogine can identify `R42 -> F1` but cannot recover the exact semantic state represented by F1. A subsequent G1 persistence/artifact-resolution slice must define how an authoritative controlled revision can resolve to the exact semantic state required for historical reconstruction.
+However, downstream historical change attribution cannot be considered complete if Arcogine can identify `R42 -> F1` but cannot recover the exact semantic state represented by F1. A subsequent persistence/artifact-resolution capability must define how an authoritative controlled revision can resolve to the exact semantic state required for historical reconstruction.
 
 That later work may choose a repository, artifact store, content-addressed store, event store, or another persistence mechanism. ADR-0008 does not select the technology.
 
@@ -334,11 +335,11 @@ Rejected because it couples identity allocation to one persistence authority/tec
 
 Rejected because labels are presentation/workflow conveniences, may be renamed or scoped, and do not reliably identify historical occurrences across systems.
 
-### Make arbitrary multi-parent lineage part of G1.2
+### Make arbitrary multi-parent lineage part of the initial controlled-revision contract
 
 Rejected because Arcogine does not yet have a concrete merge workflow or semantic merge contract. Supporting arbitrary DAG topology now would force decisions about parent ordering, merge meaning, conflict handling, and ChangeSet semantics before they are required.
 
-The current schema remains structurally extensible through `parentRevisionIds`, while G1.2 enforces `0..1` parents.
+The current schema remains structurally extensible through `parentRevisionIds`, while the initial contract enforces `0..1` parents.
 
 ### Model rollback as a special revision type
 
@@ -354,7 +355,7 @@ Rejected because historical identity does not require choosing a storage/seriali
 
 ### Use the revision ID itself as a cryptographic hash of the revision record
 
-Rejected for G1.2 because referential identity and cryptographic integrity are distinct requirements. UUIDv4 provides stable opaque identity; a later integrity digest/signature can commit to canonical revision metadata without making every revision-reference contract content-addressed.
+Rejected because referential identity and cryptographic integrity are distinct requirements. UUIDv4 provides stable opaque identity; a later integrity digest/signature can commit to canonical revision metadata without making every revision-reference contract content-addressed.
 
 ## Consequences
 
@@ -362,8 +363,8 @@ Rejected for G1.2 because referential identity and cryptographic integrity are d
 - `ModelFingerprint` and `ControlledRevisionId` have non-overlapping meanings that downstream governance, runtime, and audit records can retain together.
 - The initial revision ID is simple, opaque, standardized, and independent of content, lineage, time, actors, and external workflow.
 - Revision records are immutable historical facts once accepted by the authoritative revision store.
-- G1.2 can implement the value contracts and local invariants without pretending that an in-memory collection is durable persistence.
-- G1.2 supports roots, linear history, and divergence, while merge/multi-parent semantics remain deferred but not structurally foreclosed.
+- The initial contract can implement the value contracts and local invariants without pretending that an in-memory collection is durable persistence.
+- It supports roots, linear history, and divergence, while merge/multi-parent semantics remain deferred but not structurally foreclosed.
 - Rollback/reversion preserves history rather than rewinding or mutating it.
 - External change workflow, approval/authorization, conformance, deployment, evidence, labels, and ChangeSets remain separate relationships/artifacts.
 - Controlled revision history can serve as an addressable substrate for later GRC and standards mappings without claiming compliance by virtue of revision existence.
@@ -391,30 +392,30 @@ This ADR does not define:
 - Challenge Readiness versioning/identity;
 - a shared all-domain evaluation/evidence framework.
 
-## G1 delivery boundary
+## Delivery boundary
 
-With this ADR accepted, the G1 work can be split without reopening identity semantics:
+With this ADR accepted, controlled-revision work can be split without reopening identity semantics:
 
 ```text
-G1.1  Durable semantic fingerprint
-      established by ADR-0006 and implementation
+Durable semantic fingerprint
+    established by ADR-0006 and implementation
 
-G1.2  Controlled revision value contract
-      ControlledRevisionId
-      immutable ControlledRevision
-      one ModelFingerprint
-      current 0..1 parent lineage
-      recording provenance
-      rollback-as-new-revision semantics
+Controlled revision value contract
+    ControlledRevisionId
+    immutable ControlledRevision
+    one ModelFingerprint
+    current 0..1 parent lineage
+    recording provenance
+    rollback-as-new-revision semantics
 
-G1.3  Authoritative persistence and historical resolution
-      durable revision repository
-      repository-level lineage integrity
-      exact revision -> semantic state/artifact resolution
-      downstream provenance integration
+Authoritative persistence and historical resolution
+    durable revision repository
+    repository-level lineage integrity
+    exact revision -> semantic state/artifact resolution
+    downstream provenance integration
 ```
 
-G1 remains incomplete until the G1.3 persistence/resolution obligations required by downstream historical reconstruction are satisfied.
+The controlled-revision capability remains incomplete until the persistence/resolution obligations required by downstream historical reconstruction are satisfied.
 
 ## Charter alignment
 

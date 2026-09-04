@@ -5,7 +5,7 @@
 > **Architecture authority:** [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md)  
 > **Parent plan:** [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)  
 > **Upstream execution identity:** [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) / W1  
-> **Session boundary:** [ADR-0007](../architecture/decisions/0007-gate-3-session-control-primitives.md) / Gate 3
+> **Session boundary:** [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md) / Gate 3
 
 ## 1. Purpose
 

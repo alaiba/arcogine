@@ -32,7 +32,7 @@ A good review:
 - verifies correctness and architectural fit rather than personal style preference;
 - distinguishes blockers from non-blocking improvements and future work;
 - prefers the smallest change that satisfies the current slice;
-- does not pull later roadmap gates into the current PR without a concrete dependency;
+- does not pull later roadmap work into the current PR without a concrete dependency;
 - says explicitly when no blocking issues remain.
 
 Unless asked to modify the branch, review work should follow:
@@ -173,7 +173,7 @@ An intentional compatibility change must be necessary, explicit, documented, and
 
 Check for silent pull-forward of:
 
-- later readiness gates;
+- later readiness work;
 - generalized frameworks;
 - speculative abstractions;
 - unrelated cleanup;
@@ -188,11 +188,15 @@ Current-state docs must describe what actually exists. Planning docs must distin
 
 After iterative fixes, re-check the PR title/body as well: a description of an API that no longer exists is a review defect even when the code is correct.
 
+**Durable semantic vocabulary is a mandatory review check.** Initiative-local stage, gate, and slice identifiers are valid in `docs/planning/`, issues, PR descriptions/comments, and implementation handoffs where they help sequence delivery. Markdown documentation under `docs/` outside `docs/planning/` must instead name the capability, contract, identity, invariant, or behavior directly. A durable document may link to a plan, but understanding the document must not require reconstructing a temporary planning coordinate after that plan is completed, condensed, renamed, or removed.
+
+The required CI check catches known coordinate-shaped vocabulary mechanically; review must catch semantic leakage that a regex cannot recognize. Do not waive a durable-document hit merely because the identifier is historically familiar.
+
 #### Semantic propagation
 
 For medium- and high-semantic-risk changes, review by concept as well as by changed file. Identify the small set of concepts whose meaning changed, then search maintained docs, tests, examples, interfaces, and configuration for both the new vocabulary and plausible old assumptions. This is especially important when a semantic change can leave syntactically unrelated prose or tests behind.
 
-When an accepted ADR, readiness gate, capability status, or other authority-bearing artifact changes state — for example `unresolved -> accepted`, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
+When an accepted ADR, readiness criterion, capability status, or other authority-bearing artifact changes state — for example `unresolved -> accepted`, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
 
 This is bounded change-impact review. It does not require a repository-wide consistency sweep for every PR.
 
@@ -201,6 +205,8 @@ This is bounded change-impact review. It does not require a repository-wide cons
 Request an ADR only for a genuinely hard-to-reverse decision, for example durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind.
 
 Do not require ADRs for ordinary local refactors.
+
+Accepted and Superseded ADRs are semantically immutable. If a PR amends one in place under the editorial-amendment policy in `docs/architecture/decisions/README.md`, the reviewer must compare the pre-amendment and post-amendment record and independently establish that the decision, constraints, applicability, alternatives, and consequences have not changed. The required `Amendment: ...; no semantic change` metadata is process evidence, not proof. If semantic equivalence is uncertain or false, require a superseding ADR instead.
 
 ## Finding severity
 
@@ -218,7 +224,7 @@ Use these calibration examples when the boundary is unclear:
 
 - a semantic regression demonstrated by failing integration/contract tests, or a change that violates a binding architecture invariant, is normally **P1**;
 - a PR whose central claimed behavior is still defeated by another maintained execution path is normally **P1**;
-- a false completion/status claim or missing completion evidence that can be corrected without changing otherwise safe runtime behavior is normally **P2**, unless that false status itself unlocks a dependent architectural gate;
+- a false completion/status claim or missing completion evidence that can be corrected without changing otherwise safe runtime behavior is normally **P2**, unless that false status itself unlocks a dependent architectural boundary;
 - a stale PR title/body or validation description after remediation is normally **P2** when it materially misstates the proposed head;
 - optional extra coverage, cleanup, or future hardening that does not affect the current invariant is **P3** or **Nit**.
 
@@ -280,6 +286,11 @@ For medium- and high-risk reviews, the final report should also identify the mat
 
 Do not leave merge readiness implicit.
 
+Before `READY TO MERGE`, explicitly verify two documentation-lifetime conditions when applicable:
+
+1. durable documentation touched or semantically affected by the PR does not depend on temporary planning coordinates; and
+2. every in-place Accepted/Superseded ADR amendment is independently proven semantics-preserving, otherwise supersession is required.
+
 ## Tests as design evidence
 
 Prefer tests that demonstrate observable semantics and invariants, including as applicable:
@@ -305,4 +316,4 @@ Before considering an initiative slice complete, ask whether deleting the implem
 - what remains intentionally deferred;
 - how the change is validated.
 
-If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation, planning, an ADR, or the PR record.
+If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation, planning, an ADR, or the PR record. When promoting knowledge out of planning into a durable document, translate temporary delivery coordinates into semantic terminology.

@@ -52,6 +52,24 @@ Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable
 authorities.
 
+## Planning coordinates and durable documentation
+
+Initiative-local stage, gate, and slice identifiers are delivery coordinates. They may be used in
+`docs/planning/`, issues, pull requests, handoff prompts, and other active delivery context where the
+coordinate helps sequence work.
+
+Do not carry those identifiers into durable documentation. When a planned result is recorded in an
+ADR, architecture, product, reference, or development document, translate it into the semantic
+capability, contract, identity, invariant, or behavior it actually represents. Working/process
+material may mention a planning coordinate when the coordinate itself is the subject, but durable
+semantic claims must remain understandable after the originating plan is completed, condensed,
+renamed, or removed.
+
+When editing an Accepted or Superseded ADR only to improve durable terminology or legibility, follow
+`docs/architecture/decisions/README.md`: the amendment must be semantics-preserving, explicitly
+recorded as an editorial amendment, and independently reviewed for semantic equivalence. A semantic
+decision change still requires supersession.
+
 ## Temporary artifacts
 
 Ad hoc diagnostic reports, one-off log captures, and transient session artifacts that would otherwise be written at repository root should go to the `logs/` directory at the repository root. The `logs/` directory is gitignored as a whole. Keep the root and working directory clean; use `logs/coverage.txt`, `logs/test-output.log`, etc. instead of root-level files.

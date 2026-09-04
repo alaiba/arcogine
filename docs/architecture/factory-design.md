@@ -138,7 +138,7 @@ FactoryRuntime
 
 These need not all become separate persistence entities or modules initially.
 
-Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it the durable `factory-model:v1` `ModelFingerprint` defined by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). It is still not itself a **controlled revision** entity. Governance G1 now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
+Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it the durable `factory-model:v1` `ModelFingerprint` defined by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). It is still not itself a **controlled revision** entity. Governance Governance identity/history capability now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
 
 ### 4.1 What belongs in the canonical model
 
@@ -243,9 +243,9 @@ Authorization may be owned externally: Arcogine can produce the technical assess
 | Installed resource instances | Arcogine canonical model |
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
 | Structured executability validation | Shared Arcogine model/design capability |
-| Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; durable fingerprint policy completed by Governance G1 |
-| Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (G1) — see [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
-| Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (G6), or an external change-management system referenced not depended on |
+| Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; durable fingerprint policy completed by Governance Governance identity/history capability |
+| Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
+| Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (governed-change and external-workflow integration), or an external change-management system referenced not depended on |
 | Operational deployment target/application and effective applied-artifact provenance | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
 | External operational observations and modeled-versus-observed reconciliation | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
 | Model publication and runtime instantiation | Shared Arcogine boundary |
@@ -344,7 +344,7 @@ A published model version is the bridge between design and downstream contexts.
 [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) separates two concepts that publication identity must not bundle together:
 
 - **Semantic fingerprint** — a deterministic identity derived from canonical model content under the durable versioned policy in ADR-0006. Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the publication identity carried by `FactoryModelVersion`.
-- **Controlled revision** — a persisted, controlled historical configuration occurrence with separate identity, semantic-fingerprint binding, lineage, and recording provenance. Governance G1 now implements this capability through `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`. Authorization, external workflow linkage, conformance, and deployment remain separate records that may reference a revision; a revision need not be authorized or deployed to exist.
+- **Controlled revision** — a persisted, controlled historical configuration occurrence with separate identity, semantic-fingerprint binding, lineage, and recording provenance. Governance Governance identity/history capability now implements this capability through `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`. Authorization, external workflow linkage, conformance, and deployment remain separate records that may reference a revision; a revision need not be authorized or deployed to exist.
 
 Every runtime or verification result must retain the semantic fingerprint of the model version it instantiated. A `ControlledRevisionId` is additional historical provenance only when an authoritative revision binding actually exists; it must not be synthesized from the fingerprint.
 
@@ -352,7 +352,7 @@ The desired invariant is:
 
 > Given a published model version, the relevant runtime inputs (including the seed for simulation), and ordered commands, Arcogine can identify exactly which semantic design produced the resulting events and observations.
 
-Persistent controlled-revision lineage is now available through Governance G1, and semantic `ChangeSet`/impact comparison (Governance G2's initial slice) is now available through the Governance-owned `ChangeSet`/`ImpactScope` contracts and the factory-domain `FactoryModelSemanticComparator`. Authorship beyond recording provenance, approvals/authorization, external workflow relationships, and branch/ref semantics remain separate, unimplemented capabilities. Semantic ChangeSets remain a separate capability owned by Governance and must not be folded into Factory Design publication identity even though they are now implemented.
+Persistent controlled-revision lineage is now available through Governance Governance identity/history capability, and semantic `ChangeSet`/impact comparison (Governance semantic ChangeSet/impact capability's initial slice) is now available through the Governance-owned `ChangeSet`/`ImpactScope` contracts and the factory-domain `FactoryModelSemanticComparator`. Authorship beyond recording provenance, approvals/authorization, external workflow relationships, and branch/ref semantics remain separate, unimplemented capabilities. Semantic ChangeSets remain a separate capability owned by Governance and must not be folded into Factory Design publication identity even though they are now implemented.
 
 ### 11.1 External change-management and deployment integration
 

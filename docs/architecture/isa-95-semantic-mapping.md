@@ -100,7 +100,7 @@ The correct characterization is therefore:
 
 ## 5. Current concept mapping register
 
-This table is the maintained working register. ADR-0010's W1 order/work-item decomposition is implemented, so rows below state that behavior as current runtime fact rather than future direction.
+This table is the maintained working register. ADR-0010's unit-work decomposition order/work-item decomposition is implemented, so rows below state that behavior as current runtime fact rather than future direction.
 
 | Arcogine concept | Current meaning | Closest ISA-95 semantic role | Mapping | Disposition | Current limitation or direction |
 |---|---|---|---|---|---|
@@ -126,7 +126,7 @@ This table is the maintained working register. ADR-0010's W1 order/work-item dec
 | `TaskStart` / `TaskEnd` | Actual operation execution facts correlated by child `JobId` and parent order membership | Work execution / performance facts | Good narrow mapping | Alias | No first-class operation-performance record exists beyond state and event history |
 | `OrderCompleted` | Order-level completion fact emitted exactly once with explicit `OrderId` plus the completing child `JobId` | Job response / production performance fact | Partial | Alias | Narrow completion fact, not a complete production-performance response model |
 | `Scheduler` | Deterministic ordering of simulation events | No direct ISA-95 object equivalent | Arcogine-specific | Extend | Simulation infrastructure, not an Operations Schedule by itself |
-| `EventLog` | Bounded internal scheduler trace used by current debugging/export paths | Performance/history source analogue only | Partial | Extend | Not the supported Gate 4 `RuntimeEvent` history or a structured ISA-95 performance model |
+| `EventLog` | Bounded internal scheduler trace used by current debugging/export paths | Performance/history source analogue only | Partial | Extend | Not the supported supported runtime observation/event contract `RuntimeEvent` history or a structured ISA-95 performance model |
 | `FactoryHandler` | Owner of machines, jobs, queues, routings, and production aggregates | Narrow production-execution function in a Level-3-like scope | Approximate | Alias | A class is not an ISA-95 level; Arcogine covers only a subset of MOM activities |
 | Throughput, lead-time, backlog, utilization and related observations | Operational measures derived from simulation state and history | Operations Performance / manufacturing KPI information | Partial | Adopt or alias per KPI | Backlog, completed-sales, and order lead-time meanings remain order-level under child-job decomposition |
 | Finance ledger and observations | Financial interpretation of completed operational work | Enterprise/business-side financial information | Adjacent, not one-to-one | Diverge | Deliberately separate from operational production truth; child jobs do not multiply full order value |
@@ -202,7 +202,7 @@ WorkItem
     transfer state
 ```
 
-This is the mutable shop-floor concern held mostly by `Job`, `Machine`, machine queues, and cross-machine pending work. `JobId` identifies one independently dispatchable work item; quantity `N` becomes `N` unit-quantity sibling jobs under the accepted `Order`; each child progresses through one routing independently. `ordinalWithinOrder` is deterministic ordering metadata, not identity. No separate `ExecutionUnitId`, `LotId`, or `BatchId` is introduced by W1.
+This is the mutable shop-floor concern held mostly by `Job`, `Machine`, machine queues, and cross-machine pending work. `JobId` identifies one independently dispatchable work item; quantity `N` becomes `N` unit-quantity sibling jobs under the accepted `Order`; each child progresses through one routing independently. `ordinalWithinOrder` is deterministic ordering metadata, not identity. No separate `ExecutionUnitId`, `LotId`, or `BatchId` is introduced by unit-work decomposition.
 
 ### 6.4 Performance
 
@@ -221,7 +221,7 @@ Order completion outcome
 
 Arcogine currently derives performance from jobs, machine state, order-level execution aggregates, counters, and the event log. The implemented order execution view exposes requested/released/completed quantity and aggregate completion so consumers do not need to infer order performance by counting child jobs. `OrderCompleted` is emitted exactly once per order and carries explicit `OrderId` plus the completing child `JobId`. This is still not a complete ISA-95 performance model or interchange representation.
 
-### 6.5 Current implemented W1 model
+### 6.5 Current implemented unit-work decomposition model
 
 The implemented model can be summarized as:
 
@@ -320,7 +320,7 @@ This supports:
 
 ### 7.2 Determinism requirement
 
-Resource selection must remain deterministic. Arcogine's current Gate 2 contract uses a stable ranking ending in `MachineId` as final tie-breaker. The ISA-95 mapping does not prescribe Arcogine's dispatch algorithm; Arcogine owns that simulation semantic.
+Resource selection must remain deterministic. Arcogine's current deterministic resource-dispatch contract contract uses a stable ranking ending in `MachineId` as final tie-breaker. The ISA-95 mapping does not prescribe Arcogine's dispatch algorithm; Arcogine owns that simulation semantic.
 
 ## 8. Equipment hierarchy versus spatial layout
 
@@ -464,7 +464,7 @@ Revisit this document whenever a change introduces or materially alters:
 
 This mapping document records current relationships and accepted design constraints. Create an ADR when a decision becomes accepted and hard to reverse, for example:
 
-- aggregate boundaries between product, order, work item, and performance — ADR-0010 records the implemented W1 `Order`/aggregate/`Job` boundary;
+- aggregate boundaries between product, order, work item, and performance — ADR-0010 records the implemented unit-work decomposition `Order`/aggregate/`Job` boundary;
 - capability-pool and deterministic dispatch semantics;
 - hierarchy and spatial-model separation;
 - the canonical public model contract;

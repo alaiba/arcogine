@@ -56,7 +56,7 @@ Example: Widget A's routing might require milling for 5 ticks on either Mill A o
 
 When an order arrives, Arcogine stores an immutable **order** containing the accepted product, quantity, creation time, and unit price. It then creates one mutable, unit-quantity **job** per requested unit. Each child job references the same order, has its own ordinal within that order, and traverses the routing once while waiting in machine queues when necessary.
 
-An accepted order remains one immutable production and commercial requirement. Engine Readiness W1 decomposes its quantity deterministically into unit-quantity child jobs: an order for 10 units creates ten independently dispatchable jobs, with ordinals 0–9, each traversing the routing once. Arcogine owns this decomposition; a game or other caller supplies only the production requirement.
+Arcogine decomposes each accepted order quantity deterministically into unit-quantity child jobs: an order for 10 units creates ten independently dispatchable jobs, with ordinals 0–9, each traversing the routing once. Arcogine owns this decomposition; a game or other caller supplies only the production requirement.
 
 Order-level execution progress is authoritative: it records released and completed unit quantities and completes only when every child is complete. Commercial completion, backlog, sales count/value, and lead time remain order-level facts, so child jobs do not multiply revenue.
 

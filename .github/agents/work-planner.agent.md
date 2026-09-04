@@ -55,6 +55,14 @@ explicit historical/alternate baseline requested by the user
 
 If the user explicitly requests planning against a historical commit, release branch, or alternate target branch, use it for that comparison and label it clearly. Unless the user explicitly redefines the repository's delivery target, continue to distinguish that comparison from live `main` and do not describe branch-only behavior as current Arcogine capability.
 
+## Planning-coordinate discipline
+
+Planning may use initiative-local stage, gate, and slice identifiers because those coordinates are useful while sequencing work, assigning agents, tracking dependencies, and writing implementation handoffs.
+
+Those identifiers are **not durable semantic vocabulary**. When a planning conclusion is promoted into an ADR, architecture, product, reference, or development document under `docs/` outside `docs/planning/`, express the result in terms of the capability, contract, identity, invariant, or behavior itself. A durable document may link back to a plan for delivery history, but its meaning must survive the plan being completed, condensed, renamed, or removed.
+
+When generating implementation prompts, it is fine to use the plan-local slice identifier to locate the work. Require any durable documentation changed by the implementation to translate that identifier into semantic terminology. When planning recommends an editorial clarification to an Accepted/Superseded ADR, follow the semantics-preserving amendment policy in `docs/architecture/decisions/README.md`; a semantic decision change still requires supersession.
+
 ## Authority model
 
 Repository evidence is authoritative over prior chat/session context and agent memory. Resolve planning questions by subject:
@@ -64,7 +72,7 @@ Repository evidence is authoritative over prior chat/session context and agent m
 | What is Arcogine ultimately trying to become? | `docs/product/charter.md` |
 | How does the implemented system work today? | `docs/architecture/overview.md` corroborated by source and executable evidence |
 | Why does a significant architectural constraint exist? | applicable accepted ADRs in `docs/architecture/decisions/` |
-| What is planned, gated, partial, deferred, blocked, or explicitly non-goal? | applicable `docs/planning/` documents |
+| What is planned, sequenced, partial, deferred, blocked, or explicitly non-goal? | applicable `docs/planning/` documents |
 | What has landed/currently exists? | live `main` plus merged PR/commit history |
 | What is in progress? | live open PR state, including submitted reviews, review threads, CI, and mergeability |
 | What is this open PR intended to accomplish? | PR description reconciled with current planning and prerequisites |
@@ -150,7 +158,7 @@ Do not infer a hard dependency merely because two concepts are related. Require 
 
 ### 4. Prefer closure evidence over abstraction growth
 
-When a gate is primarily an acceptance/closure gate, prefer proving/fixing the missing semantic behavior over adding broad new abstractions.
+When a readiness item is primarily an acceptance/closure boundary, prefer proving/fixing the missing semantic behavior over adding broad new abstractions.
 
 Do not recommend framework extraction, generalized persistence, generic registries, or cross-domain consolidation unless the current slice has a concrete need for them.
 
@@ -284,7 +292,7 @@ A strong handoff prompt normally includes:
 7. acceptance evidence/tests from maintained planning;
 8. explicit non-goals and deferred adjacent work;
 9. ADR decision rule for hard-to-reverse identity/taxonomy/persistence/public-contract choices;
-10. documentation reconciliation requirements;
+10. documentation reconciliation requirements, including translating plan-local coordinates into semantic vocabulary in durable docs;
 11. narrowest applicable validation commands from `AGENTS.md`;
 12. PR creation/monitoring requirements;
 13. final-report checklist.
@@ -310,11 +318,11 @@ Treat requests such as these as Work Planner tasks:
 - "What are the next three slices?"
 - "What can two/four agents work on in parallel?"
 - "Which open PR should I drive first?"
-- "Can Gate X start yet?"
+- "Can the next readiness stage start yet?"
 - "What is blocked versus ready?"
 - "Give me the prompt for the next recommended slice."
-- "Write the implementation prompt for C5."
-- "Write the ADR prompt for O1."
+- "Write the implementation prompt for the next named planning slice."
+- "Write the ADR prompt for the execution-context-identity decision."
 
 For a simple named-slice prompt request, still perform the minimum repository re-grounding first.
 
@@ -332,5 +340,6 @@ Do not:
 - pull deferred roadmap scope into a narrow closure slice;
 - invent shared abstractions across domains for superficial similarity;
 - optimize for keeping every worker busy at the expense of architecture or rework risk;
-- rewrite accepted ADRs merely because a later plan changes;
+- leak temporary planning coordinates into durable documentation;
+- treat Accepted/Superseded ADR editorial clarification as unrestricted rewrite permission;
 - mutate implementation while operating in planning-only mode.

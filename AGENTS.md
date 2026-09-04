@@ -90,7 +90,9 @@ It is dependency-free Node (builtins only, no install step) and reads `GH_TOKEN`
 
 The script is harness-neutral. How you keep it running is not — each agent harness has different primitives, so use whichever of these applies.
 
-`pr-watch.mjs` is the documented path, because it depends on nothing but Node and the GitHub API. Do not name a specific harness tool here: this section previously did, the name did not resolve, and agents improvised a poller per session instead. If the harness you are running under happens to offer its own PR-activity subscription primitive, using it is fine — but check what the session actually exposes rather than relying on this file to tell you it exists.
+**Prefer a native PR-activity subscription when the current session actually exposes one** — webhook-driven wake beats polling and costs no API traffic. Otherwise use `pr-watch.mjs`, which depends on nothing but Node and the GitHub API and is therefore always available.
+
+This section deliberately names no subscription tool. It previously named one that did not resolve, and agents improvised a poller per session instead; naming a replacement would pin repository guidance to an external detail this file cannot keep accurate. Check the tools the session actually exposes rather than expecting this file to tell you what exists.
 
 **Claude Code** — run `--watch` under the `Monitor` tool with `persistent: true`, so each emitted line arrives as a notification:
 

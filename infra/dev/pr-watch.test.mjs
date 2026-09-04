@@ -81,9 +81,31 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf('For example, Disposition: READY TO MERGE would end the review.'), null);
   });
 
-  await t.test('a blockquoted or list-marked disposition still counts', () => {
-    assert.equal(dispositionOf('> Disposition: **CHANGES REQUIRED**'), 'CHANGES REQUIRED');
+  await t.test('a list-marked disposition still counts, a blockquoted one does not', () => {
     assert.equal(dispositionOf('- Disposition: READY TO MERGE'), 'READY TO MERGE');
+    // Quoted text is another review's verdict, not this one's.
+    assert.equal(dispositionOf('> Disposition: **READY TO MERGE**'), null);
+  });
+
+  // REV-005: the marker must actually END the review. A verdict followed by substantive
+  // blocker prose is not the reviewer's final disposition.
+  await t.test('a disposition followed by substantive prose is not final', () => {
+    const body = [
+      'Disposition: READY TO MERGE',
+      '',
+      'Actually, on reflection the resolver still has a false-positive path and',
+      'this needs another pass before it can merge.',
+    ].join('\n');
+    assert.equal(dispositionOf(body), null);
+  });
+
+  await t.test('trailing blank lines do not defeat a final disposition', () => {
+    assert.equal(dispositionOf('Looks good.\n\nDisposition: **READY TO MERGE**.\n\n   \n'), 'READY TO MERGE');
+  });
+
+  await t.test('an earlier disposition does not win when the review ends on another', () => {
+    const body = 'Disposition: READY TO MERGE\n\nsecond pass follows\n\nDisposition: **CHANGES REQUIRED**.';
+    assert.equal(dispositionOf(body), 'CHANGES REQUIRED');
   });
 });
 
@@ -159,11 +181,25 @@ test('terminal pull-request states (REV-006)', async (t) => {
   });
 });
 
-test('review-thread truncation (REV-008)', () => {
+test('review-thread truncation (REV-008)', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
-  const payload = pr({ reviews });
-  payload.reviewThreads = { totalCount: 250, nodes: [{ isResolved: true }] };
-  assert.equal(stateOf(payload, { aheadBy: 1, behindBy: 0 }), 'AWAITING');
+  const comparison = { aheadBy: 1, behindBy: 0 };
+  const truncated = pr({ reviews });
+  truncated.reviewThreads = { totalCount: 250, nodes: [{ isResolved: true }] };
+
+  await t.test('truncated threads hold single-shot resolution at AWAITING', () => {
+    assert.equal(stateOf(truncated, comparison), 'AWAITING');
+  });
+
+  // The resolver's answer changes, so --watch must see it: every returned thread is
+  // resolved in both cases, so openThreads alone would show no difference at all.
+  await t.test('crossing the truncation boundary produces a watch signal', () => {
+    const whole = pr({ reviews, threads: [{ isResolved: true }] });
+    const before = stateLines(summarize(whole, comparison));
+    const after = stateLines(summarize(truncated, comparison));
+    assert.notDeepEqual(before, after);
+    assert.ok(diff(before, after).length > 0, 'thread truncation must be observable');
+  });
 });
 
 test('review freshness against the base (REV-001)', async (t) => {
@@ -194,12 +230,39 @@ test('blocking review aggregation (REV-002)', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
-  await t.test('a reviewer own later review supersedes their earlier blocker', () => {
+  // GitHub clears requested changes only on an approving review by the same collaborator,
+  // or on dismissal. A later COMMENT does not, so neither may this.
+  await t.test('a later comment by the same author does NOT clear their CHANGES_REQUESTED', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
       review({ author: 'alice', at: '2026-01-02T00:00:00Z', body: READY_BODY }),
     ];
+    assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
+  });
+
+  await t.test('an approving review by the same author clears their CHANGES_REQUESTED', () => {
+    const reviews = [
+      review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
+      review({ author: 'alice', at: '2026-01-02T00:00:00Z', state: 'APPROVED', body: READY_BODY }),
+    ];
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'READY TO MERGE');
+  });
+
+  await t.test('a dismissed review clears the block', () => {
+    const reviews = [
+      review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
+      review({ author: 'alice', at: '2026-01-02T00:00:00Z', state: 'DISMISSED' }),
+      review({ author: 'bob', at: '2026-01-03T00:00:00Z', body: READY_BODY }),
+    ];
+    assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'READY TO MERGE');
+  });
+
+  await t.test('an approval before the block does not clear it', () => {
+    const reviews = [
+      review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'APPROVED' }),
+      review({ author: 'alice', at: '2026-01-02T00:00:00Z', state: 'CHANGES_REQUESTED' }),
+    ];
+    assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
   await t.test('a CHANGES REQUIRED disposition blocks as firmly as CHANGES_REQUESTED', () => {

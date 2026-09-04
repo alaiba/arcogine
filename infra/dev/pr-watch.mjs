@@ -204,19 +204,37 @@ async function fetchComparison({ repo, token }, pr) {
  *  - Take the LAST match, never the first. The contract calls for an explicit *final*
  *    disposition, so earlier occurrences are superseded by construction.
  *
- * Only a line-anchored disposition counts. There is deliberately NO unanchored fallback:
- * an inline or code-quoted "Disposition: READY TO MERGE" in an explanatory sentence would
- * otherwise manufacture the positive review authority needed to reach READY TO MERGE. A
- * body with no contract-shaped final disposition resolves to null, which the lifecycle
- * treats conservatively as AWAITING.
+ * The contract calls for an explicit *final* disposition, so this recognises one only when
+ * it genuinely ends the review: the marker must start its own line AND that line must be
+ * the last non-blank line of the body.
+ *
+ * Everything weaker has been tried and produced a false READY:
+ *  - taking the first match read a disposition quoted in prose as the verdict;
+ *  - an unanchored fallback let an inline `Disposition: ...` code span do the same;
+ *  - taking the last anchored match anywhere still accepted a marker followed by
+ *    substantive blocker prose, where the reviewer plainly did not end on that verdict.
+ *
+ * Blockquoted lines are excluded outright -- quoted text is someone else's verdict, not
+ * this review's. A body with no contract-shaped final disposition resolves to null, which
+ * the lifecycle treats conservatively as AWAITING.
  */
 function dispositionOf(body) {
   if (!body) return null;
-  const anchored = [
-    ...body.matchAll(new RegExp(`^[ \\t>*_-]*Disposition:\\s*\\**\\s*(${DISPOSITION_ALTERNATION})`, 'gim')),
-  ];
-  if (anchored.length === 0) return null;
-  return anchored.at(-1)[1].replace(/\s+/g, ' ').toUpperCase();
+  const lines = String(body).split(/\r?\n/);
+  let lastMeaningful = null;
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (lines[i].trim() !== '') {
+      lastMeaningful = lines[i];
+      break;
+    }
+  }
+  if (lastMeaningful === null) return null;
+  // No '>' in the prefix class: a quoted disposition is not this review's verdict.
+  const match = lastMeaningful.match(
+    new RegExp(`^[ \\t*_+-]*Disposition:\\s*\\**\\s*(${DISPOSITION_ALTERNATION})\\b`, 'i'),
+  );
+  if (!match) return null;
+  return match[1].replace(/\s+/g, ' ').toUpperCase();
 }
 
 function normalizeChecks(pr) {
@@ -261,12 +279,36 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck =
   //    the PR back in AWAITING for re-evaluation -- so it becomes a stale blocker, not a
   //    standing one. Treating it as standing would leave a PR permanently CHANGES REQUIRED
   //    no matter how much remediation landed.
+  // A formal CHANGES_REQUESTED is cleared only by that same author later APPROVING or by
+  // the review being DISMISSED -- never by them merely commenting again. Collapsing to the
+  // author's chronologically latest review would let a follow-up COMMENT silently discard a
+  // block GitHub still enforces.
+  const formalBlockers = [];
+  for (const [author, _latest] of latestByAuthor) {
+    const mine = reviews.filter((r) => r.author === author);
+    const lastRequested = mine.findLast((r) => r.state === 'CHANGES_REQUESTED');
+    if (!lastRequested) continue;
+    const clearedAfter = mine.some(
+      (r) =>
+        String(r.submittedAt) > String(lastRequested.submittedAt) &&
+        (r.state === 'APPROVED' || r.state === 'DISMISSED'),
+    );
+    if (!clearedAfter) formalBlockers.push(lastRequested);
+  }
+
+  // A CHANGES REQUIRED *disposition* in a COMMENTED review attests to the commit it
+  // reviewed, so once the head moves it becomes stale rather than standing.
   const latest = [...latestByAuthor.values()];
-  const blockers = latest.filter(
-    (r) => r.state === 'CHANGES_REQUESTED' || (r.disposition === 'CHANGES REQUIRED' && r.commit === pr.headRefOid),
+  const dispositionBlockers = latest.filter(
+    (r) => r.state !== 'CHANGES_REQUESTED' && r.disposition === 'CHANGES REQUIRED' && r.commit === pr.headRefOid,
   );
+  const blockers = [...formalBlockers, ...dispositionBlockers];
   const staleBlockers = latest.filter(
-    (r) => r.state !== 'CHANGES_REQUESTED' && r.disposition === 'CHANGES REQUIRED' && r.commit !== pr.headRefOid,
+    (r) =>
+      r.state !== 'CHANGES_REQUESTED' &&
+      r.disposition === 'CHANGES REQUIRED' &&
+      r.commit !== pr.headRefOid &&
+      !formalBlockers.includes(r),
   );
 
   const reviewsTruncated = (pr.reviews?.totalCount ?? reviews.length) > reviews.length;
@@ -403,7 +445,11 @@ function stateLines(s) {
     // invalidate an existing review without the head changing at all.
     `base: ${s.baseRef}@${String(s.baseOid).slice(0, 7)} (behind ${s.behindBy}, ahead ${s.aheadBy})`,
     `merge: ${s.mergeStateStatus} (${s.mergeable})`,
-    `open-threads: ${s.openThreads}`,
+    // Truncation flags are lifecycle inputs, so they belong in the projection too: crossing
+    // a connection boundary can flip the resolver to AWAITING while every returned item
+    // still looks resolved, which would otherwise change the answer with no watch signal.
+    `open-threads: ${s.openThreads}${s.threadsTruncated ? ' (truncated)' : ''}`,
+    `reviews-truncated: ${s.reviewsTruncated ? 'yes' : 'no'}`,
     `checks-present: ${s.checks.length}`,
   ];
   for (const r of s.reviews) {

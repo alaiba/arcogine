@@ -107,6 +107,21 @@ test('disposition parsing', async (t) => {
     const body = 'Disposition: READY TO MERGE\n\nsecond pass follows\n\nDisposition: **CHANGES REQUIRED**.';
     assert.equal(dispositionOf(body), 'CHANGES REQUIRED');
   });
+
+  // REV-005 (second pass): the final line must BE the verdict. A prefix-only match accepts
+  // a negated or qualified sentence that merely starts with the vocabulary.
+  await t.test('same-line trailing prose or negation is not a verdict', () => {
+    assert.equal(dispositionOf('Disposition: READY TO MERGE? Actually no.'), null);
+    assert.equal(dispositionOf('Disposition: READY TO MERGE once the resolver is fixed'), null);
+    assert.equal(dispositionOf('Disposition: CHANGES REQUIRED, but only cosmetically -- see below'), null);
+  });
+
+  await t.test('intentional surrounding markdown and a closing stop are still accepted', () => {
+    assert.equal(dispositionOf('Disposition: **READY TO MERGE**.'), 'READY TO MERGE');
+    assert.equal(dispositionOf('Disposition: READY TO MERGE'), 'READY TO MERGE');
+    assert.equal(dispositionOf('**Disposition: CHANGES REQUIRED**'), 'CHANGES REQUIRED');
+    assert.equal(dispositionOf('_Disposition: READY AFTER CI_'), 'READY AFTER CI');
+  });
 });
 
 test('required check identity (REV-003)', async (t) => {
@@ -128,6 +143,25 @@ test('required check identity (REV-003)', async (t) => {
 
   await t.test('a failing gate blocks', () => {
     assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'FAILURE' }] }), comparison), 'CHANGES REQUIRED');
+  });
+
+  // SKIPPED/NEUTRAL are green enough for an auxiliary context but prove nothing about the
+  // required one: a skipped gate ran no validation at all.
+  await t.test('a skipped required gate is not validation evidence', () => {
+    assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'SKIPPED' }] }), comparison), 'AWAITING');
+  });
+
+  await t.test('a neutral required gate is not validation evidence', () => {
+    assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'NEUTRAL' }] }), comparison), 'AWAITING');
+  });
+
+  await t.test('a skipped gate is not rescued by other green contexts', () => {
+    const checks = [
+      { name: 'gate', conclusion: 'SKIPPED' },
+      { name: 'Secret scan', conclusion: 'SUCCESS' },
+      { name: 'Java checks', conclusion: 'SUCCESS' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
   });
 
   await t.test('a green gate alongside other contexts is validation evidence', () => {

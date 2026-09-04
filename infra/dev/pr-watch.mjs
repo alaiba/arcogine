@@ -229,9 +229,12 @@ function dispositionOf(body) {
     }
   }
   if (lastMeaningful === null) return null;
-  // No '>' in the prefix class: a quoted disposition is not this review's verdict.
+  // The whole line must BE the verdict, not merely begin with one. A prefix-only match
+  // accepts "Disposition: READY TO MERGE? Actually no." as READY. Only intentional
+  // surrounding markdown and a closing full stop may follow the vocabulary.
+  // No '>' in the prefix class either: a quoted disposition is not this review's verdict.
   const match = lastMeaningful.match(
-    new RegExp(`^[ \\t*_+-]*Disposition:\\s*\\**\\s*(${DISPOSITION_ALTERNATION})\\b`, 'i'),
+    new RegExp(`^[ \\t*_+-]*Disposition:\\s*[*_]*\\s*(${DISPOSITION_ALTERNATION})\\s*[*_]*\\s*[.]?\\s*$`, 'i'),
   );
   if (!match) return null;
   return match[1].replace(/\s+/g, ' ').toUpperCase();
@@ -408,8 +411,14 @@ function resolveLifecycle(s) {
       `required check "${s.requiredCheckName}" is not present on the head commit; ` +
         `required validation is not proven to have run (${s.checks.length} other context(s) present)`,
     );
-  } else if (PENDING.has(s.requiredCheck.verdict)) {
-    waiting.push(`required check "${s.requiredCheckName}" is ${s.requiredCheck.verdict}`);
+  } else if (s.requiredCheck.verdict !== 'SUCCESS') {
+    // SKIPPED and NEUTRAL are green enough for an auxiliary context, but not for the one
+    // status that is supposed to prove validation ran: a skipped gate ran nothing. Only
+    // SUCCESS is evidence here, whatever the broader green class allows elsewhere.
+    waiting.push(
+      `required check "${s.requiredCheckName}" is ${s.requiredCheck.verdict}; ` +
+        'only SUCCESS proves required validation',
+    );
   }
   if (s.checksPending.length > 0) {
     waiting.push(`checks still pending: ${s.checksPending.map((c) => c.name).join(', ')}`);

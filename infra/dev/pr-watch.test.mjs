@@ -115,6 +115,20 @@ test('blocking review aggregation (REV-002)', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
+  // A PR must be able to leave CHANGES REQUIRED. AGENTS.md's cycle is remediate -> AWAITING
+  // for re-evaluation, so a disposition attached to a superseded commit must not pin the PR
+  // in CHANGES REQUIRED forever.
+  await t.test('a CHANGES REQUIRED disposition on a superseded head becomes AWAITING', () => {
+    const reviews = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, body: 'Disposition: **CHANGES REQUIRED**.' })];
+    assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'AWAITING');
+  });
+
+  // ...but a formal GitHub CHANGES_REQUESTED review is not cleared by pushing.
+  await t.test('a formal CHANGES_REQUESTED review still blocks after the head moves', () => {
+    const reviews = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, state: 'CHANGES_REQUESTED' })];
+    assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
+  });
+
   await t.test('a truncated review window cannot resolve READY', () => {
     const payload = pr({ reviews: [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })] });
     payload.reviews.totalCount = 500;

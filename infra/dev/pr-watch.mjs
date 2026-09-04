@@ -238,8 +238,22 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }) {
   // blocker. Each author's own latest review supersedes only their own earlier ones.
   const latestByAuthor = new Map();
   for (const review of reviews) latestByAuthor.set(review.author, review);
-  const blockers = [...latestByAuthor.values()].filter(
-    (r) => r.state === 'CHANGES_REQUESTED' || r.disposition === 'CHANGES REQUIRED',
+
+  // Two different kinds of "changes required", with different lifetimes:
+  //
+  //  - A formal GitHub CHANGES_REQUESTED review stands until its author submits a newer
+  //    review or it is dismissed. Pushing does not clear it, so it blocks on any head.
+  //  - A CHANGES REQUIRED *disposition* in a COMMENTED review attests to the commit it
+  //    reviewed. Once the head moves past it, remediation has happened and AGENTS.md puts
+  //    the PR back in AWAITING for re-evaluation -- so it becomes a stale blocker, not a
+  //    standing one. Treating it as standing would leave a PR permanently CHANGES REQUIRED
+  //    no matter how much remediation landed.
+  const latest = [...latestByAuthor.values()];
+  const blockers = latest.filter(
+    (r) => r.state === 'CHANGES_REQUESTED' || (r.disposition === 'CHANGES REQUIRED' && r.commit === pr.headRefOid),
+  );
+  const staleBlockers = latest.filter(
+    (r) => r.state !== 'CHANGES_REQUESTED' && r.disposition === 'CHANGES REQUIRED' && r.commit !== pr.headRefOid,
   );
 
   const reviewsTruncated = (pr.reviews?.totalCount ?? reviews.length) > reviews.length;
@@ -262,6 +276,7 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }) {
     reviews,
     reviewsTruncated,
     blockers,
+    staleBlockers,
     newestReview: reviews.at(-1) ?? null,
     newestReviewOnHead: onHead.at(-1) ?? null,
   };
@@ -299,6 +314,12 @@ function resolveLifecycle(s) {
   }
   if (s.reviewsTruncated) {
     waiting.push('review history exceeds the fetched window, so review state cannot be fully resolved');
+  }
+
+  for (const b of s.staleBlockers ?? []) {
+    waiting.push(
+      `${b.author} required changes on ${b.commit.slice(0, 7)}; the head has since moved -- awaiting re-review`,
+    );
   }
 
   const head = s.newestReviewOnHead;

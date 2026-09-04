@@ -58,7 +58,7 @@ jobs:
       # diagnostics fails loudly instead of only surfacing on a real
       # constrained host partway through an expensive `--full` run.
       - name: Validate arcogine preflight diagnostics
-        run: bash arcogine.test.sh
+        run: bash .github/scripts/arcogine-preflight.test.sh
 
       # The PR lifecycle resolver in infra/dev/pr-watch.mjs decides whether an
       # implementation-owned transition exists, so a regression there can report a PR
@@ -385,7 +385,7 @@ jobs:
           echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum -c -
           tar xz -C /usr/local/bin -f /tmp/gitleaks.tar.gz gitleaks
       - name: Run Gitleaks
-        run: gitleaks detect --source . --config .gitleaks.toml --verbose
+        run: gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
 
   # Single stable required status check. Branch protection only ever needs to
   # require this one job. Its needs: list and the expected_to_run map in the

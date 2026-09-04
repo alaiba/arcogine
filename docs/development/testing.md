@@ -175,7 +175,7 @@ Browser-level user-journey tests. Requires the API server and UI dev server. `cd
 
 ### 19. Secret scan
 
-`gitleaks detect --source . --config .gitleaks.toml --verbose` (part of `./arcogine check --full`) — scans the repo for leaked secrets.
+`gitleaks detect --source . --config .github/security/gitleaks.toml --verbose` (part of `./arcogine check --full`) — scans the repo for leaked secrets.
 
 ## CI pipeline
 

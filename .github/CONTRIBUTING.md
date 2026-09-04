@@ -42,7 +42,7 @@ Use `./arcogine check` before pushing. Use `./arcogine check --full` when the ch
 
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
-**Temporary artifacts:** ad hoc diagnostic reports and one-off session artifacts (that would otherwise litter the root) should go to a dedicated `logs/` directory at the repository root (gitignored as a whole). This keeps the root directory clean. Do not redirect canonical tool outputs — Gradle, npm/Vitest coverage, Playwright reports, and `dist/` continue to use their configured locations.
+**Temporary artifacts:** test output, coverage reports, and other transient build/test artifacts should be written to a dedicated `logs/` directory at the repository root (which is gitignored as a whole). This keeps the root directory clean and makes cleanup simple (`rm -rf logs/`).
 
 For independent PR review, re-review, severity/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).
 
@@ -58,13 +58,15 @@ When a roadmap item spans several capabilities:
 - preserve deterministic behavior and existing API/wire compatibility by default; intentional compatibility breaks must be explicit in the PR and supported by migration/contract tests as appropriate;
 - do not introduce abstractions only because a later roadmap step might need them; add the abstraction when the current slice gives it a concrete responsibility;
 - update authoritative current-state documentation when implementation changes established behavior or ownership, and update planning documents when the remaining sequence changes; do not make planning prose claim that deferred capability already exists;
+- keep initiative-local stage/gate/slice identifiers in planning, issues, PRs, branch names, commits, and implementation handoffs where they help coordinate delivery; when knowledge moves into `docs/` outside `docs/planning/`, translate the coordinate into the durable semantic capability, contract, identity, invariant, or behavior it represents;
 - record hard-to-reverse architectural decisions in an ADR rather than relying on a PR discussion, branch name, issue comment, or chat transcript;
+- use the semantics-preserving editorial-amendment process in [`docs/architecture/decisions/README.md`](../docs/architecture/decisions/README.md) when an Accepted/Superseded ADR needs only clearer durable terminology; any actual decision change still requires supersession;
 - reconcile the feature branch with the latest `main` before final review when `main` has moved materially, then review the **net diff against current `main`**, not merely the original branch commit;
 - after a PR is merged, delete feature/review branches once they contain no unique work that still needs to be preserved.
 
 A useful review question is: **if this PR were merged by itself, would the repository tell the truth about what exists now, while leaving later roadmap decisions genuinely open?**
 
-Near-term sequencing may live in issues, PRs, or planning documents; durable product and architecture knowledge must live in the repository's charter, architecture, ADRs, tests, and maintained documentation rather than depending on conversational history.
+Near-term sequencing may live in issues, PRs, or planning documents; durable product and architecture knowledge must live in the repository's charter, architecture, ADRs, tests, and maintained documentation rather than depending on conversational history or an obsolete planning coordinate.
 
 ## Code style
 
@@ -107,7 +109,7 @@ See [`docs/development/testing.md`](../docs/development/testing.md) for the test
 
 ## Commit messages
 
-Use concise, descriptive commit messages. Reference the phase and task number when applicable (e.g., "Phase 2: implement event scheduler").
+Use concise, descriptive commit messages. Reference a delivery phase or task number when it helps active coordination; do not promote that coordinate into durable semantic documentation.
 
 ## License
 

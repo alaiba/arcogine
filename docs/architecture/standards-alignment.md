@@ -99,7 +99,7 @@ ISA-95 and IEC 62264 are closely harmonized standards families with shared linea
 
 - The scenario schema already uses selected ISA-95-oriented terms: `equipment`, `material`, `process_segment`, and `operations_definition`.
 - Runtime concepts such as `Machine`, `Routing`, `RoutingStep`, `Order`, and `Job` are mappable to a narrow production-execution subset, but the mappings are approximate.
-- W1 now keeps one accepted quantity-`N` `Order` as the aggregate request/correlation identity and deterministically materializes `N` independently dispatchable unit-quantity child `Job`s under that `OrderId`.
+- unit-work decomposition now keeps one accepted quantity-`N` `Order` as the aggregate request/correlation identity and deterministically materializes `N` independently dispatchable unit-quantity child `Job`s under that `OrderId`.
 - The current runtime model still does not consistently separate generalized resource definitions, production schedules, execution records, and performance records.
 - Arcogine does not implement the ISA-95 equipment hierarchy, generalized personnel/material/equipment capability models, B2MML exchange profiles, transactions, or conformance validation.
 
@@ -112,7 +112,7 @@ ISA-95 and IEC 62264 are closely harmonized standards families with shared linea
 | `process_segment` / `RoutingStep` | Process Segment or work-step analogue | Partial; explicit eligible resource instances, no generalized capability requirement |
 | `Order` | Job Order / production request aggregate | Partial; one accepted quantity-bearing request under stable `OrderId` |
 | child `Job` | Independently dispatchable work item / execution state | Partial; unit-quantity child under parent `OrderId`, identified by `JobId` |
-| Factory events and observations | Work execution and performance facts | Narrow but useful semantic mapping; supported Gate 4 contract is being established separately from internal scheduler events |
+| Factory events and observations | Work execution and performance facts | Narrow but useful semantic mapping; supported supported runtime observation/event contract contract is being established separately from internal scheduler events |
 
 **Current commitment:**
 
@@ -123,7 +123,7 @@ ISA-95 and IEC 62264 are closely harmonized standards families with shared linea
 - Use `ISA-95 / IEC 62264` for family-level architectural discussion, but identify the exact normative source and edition when a requirement, profile, or conformance claim depends on one.
 - Do not claim ISA-95 compatibility or conformance without a defined and tested interchange profile.
 
-See [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md) for the maintained concept register, current structural gaps, naming policy, review checklist, and future adapter path. Its W1 current-state wording should remain synchronized with implemented order/child-job behavior.
+See [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md) for the maintained concept register, current structural gaps, naming policy, review checklist, and future adapter path. Its unit-work decomposition current-state wording should remain synchronized with implemented order/child-job behavior.
 
 ### Discrete-event simulation methodology
 
@@ -169,7 +169,7 @@ OpenAPI is the intended standard description format for stable HTTP contracts.
 
 **Current status:** The HTTP API is documented manually in [`docs/reference/api.md`](../reference/api.md) and consumed through typed frontend code. OpenAPI generation and contract validation are not yet established as the authoritative source.
 
-**Design direction:** Stable HTTP projections should have machine-readable schemas and compatibility tests. OpenAPI follows accepted domain semantics rather than driving them. In particular, Gate 4 `RuntimeObservation` / `RuntimeEvent` semantics should stabilize before the legacy API/SSE projection is promoted into a durable external compatibility surface.
+**Design direction:** Stable HTTP projections should have machine-readable schemas and compatibility tests. OpenAPI follows accepted domain semantics rather than driving them. In particular, supported runtime observation/event contract `RuntimeObservation` / `RuntimeEvent` semantics should stabilize before the legacy API/SSE projection is promoted into a durable external compatibility surface.
 
 ### JSON for structured external projections
 
@@ -201,7 +201,7 @@ AutomationML maps through Arcogine's canonical factory-design boundary. It does 
 
 CloudEvents is a plausible integration-envelope projection for supported `RuntimeEvent` instances once an external event integration needs a standardized envelope.
 
-It is not the Arcogine runtime-event domain type, does not define simulation ordering or provenance semantics, and is not required by Gate 4. Arcogine-specific responsibilities such as run identity, supported sequence, simulated time, `ModelFingerprint`, optional authoritative `ControlledRevisionId`, affected entities, and semantic payload remain explicit.
+It is not the Arcogine runtime-event domain type, does not define simulation ordering or provenance semantics, and is not required by supported runtime observation/event contract. Arcogine-specific responsibilities such as run identity, supported sequence, simulated time, `ModelFingerprint`, optional authoritative `ControlledRevisionId`, affected entities, and semantic payload remain explicit.
 
 ### Apache Parquet
 
@@ -386,7 +386,7 @@ Do not create a generic `interop`, `formats`, `ExternalModel`, or cross-domain i
 
 This standards register deliberately does **not** choose:
 
-- Governance G1.3 persistence/database/artifact format;
+- Governance authoritative controlled-revision persistence and historical resolution persistence/database/artifact format;
 - a canonical JSON representation for `FactoryModel`;
 - CloudEvents, Kafka, NATS, MQTT, WebSocket, or another runtime transport as the Engine domain contract;
 - one universal industrial interchange format;

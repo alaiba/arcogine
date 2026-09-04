@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Fail when an Accepted/Superseded ADR body is rewritten.
+"""Protect accepted ADR decisions while permitting audited editorial amendments.
 
-Accepted ADRs are historical records. After acceptance, only the metadata
-needed to mark an ADR Superseded may change in place. Decision/body changes
-must be recorded in a new Accepted ADR that declares `Supersedes: ADR-NNNN`.
+Accepted and Superseded ADRs remain historical semantic decision records. A semantic decision change
+still requires a new Accepted ADR that declares `Supersedes: ADR-NNNN`. An in-place prose/title or
+filename clarification is permitted only when the PR adds explicit `Amendment:` metadata declaring
+that the edit makes no semantic change. CI can enforce that process evidence; independent review
+remains responsible for verifying the semantic-equivalence claim.
 """
 
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 import os
 from pathlib import Path
@@ -22,8 +25,9 @@ ADR_NAME = re.compile(r"^(\d{4})-[^/]+\.md$")
 STATUS = re.compile(r"^Status:[ \t]*(\S+)[ \t]*$", re.MULTILINE)
 SUPERSEDED_BY = re.compile(r"^Superseded by:[ \t]*(ADR-\d{4})[ \t]*$", re.MULTILINE)
 SUPERSEDES = re.compile(r"^Supersedes:[ \t]*(ADR-\d{4})[ \t]*$", re.MULTILINE)
+AMENDMENT = re.compile(r"^Amendment:[ \t]*(.+?)[ \t]*$", re.MULTILINE)
 ALLOWED_MUTABLE_METADATA = re.compile(
-    r"^(?:Status:[ \t]*\S+[ \t]*|Superseded by:[ \t]*ADR-\d{4}[ \t]*)(?:\r?\n|$)",
+    r"^(?:Status:[ \t]*\S+[ \t]*|Superseded by:[ \t]*ADR-\d{4}[ \t]*|Amendment:[ \t]*.+?[ \t]*)(?:\r?\n|$)",
     re.MULTILINE,
 )
 SECTION_HEADING = re.compile(r"^##\s", re.MULTILINE)
@@ -72,7 +76,12 @@ def supersedes(text: str) -> str | None:
     return match.group(1) if match else None
 
 
-def immutable_body(text: str) -> str:
+def amendments(text: str) -> list[str]:
+    return AMENDMENT.findall(metadata_header(text))
+
+
+def protected_body(text: str) -> str:
+    """Return ADR content excluding mutable status/supersession/amendment metadata."""
     match = SECTION_HEADING.search(text)
     if match is None:
         return ALLOWED_MUTABLE_METADATA.sub("", text)
@@ -103,88 +112,130 @@ def read_base(base_ref: str, path: str) -> str:
     return run_git("show", f"{base_ref}:{path}")
 
 
-def read_current(path: str) -> str | None:
-    file_path = Path(path)
-    if not file_path.exists():
-        return None
-    return file_path.read_text(encoding="utf-8")
-
-
-def current_new_adrs(base_paths: set[str]) -> dict[str, str]:
-    found: dict[str, str] = {}
+def current_adrs_by_id() -> tuple[dict[str, tuple[str, str]], list[str]]:
+    found: dict[str, tuple[str, str]] = {}
+    duplicates: list[str] = []
     root = Path(ADR_DIR)
     if not root.exists():
-        return found
+        return found, duplicates
     for path in sorted(root.glob("[0-9][0-9][0-9][0-9]-*.md")):
-        relative = path.as_posix()
-        if relative in base_paths or path.name.startswith("0000-"):
+        if path.name.startswith("0000-"):
             continue
-        found[adr_id(relative)] = path.read_text(encoding="utf-8")
-    return found
+        relative = path.as_posix()
+        identifier = adr_id(relative)
+        if identifier in found:
+            duplicates.append(identifier)
+            continue
+        found[identifier] = (relative, path.read_text(encoding="utf-8"))
+    return found, duplicates
+
+
+def new_amendments(before: str, after: str) -> tuple[list[str], list[str]]:
+    before_counter = Counter(amendments(before))
+    after_counter = Counter(amendments(after))
+    removed = list((before_counter - after_counter).elements())
+    added = list((after_counter - before_counter).elements())
+    return removed, added
+
+
+def valid_editorial_amendment(entry: str) -> bool:
+    return "no semantic change" in entry.casefold()
 
 
 def validate(base_ref: str) -> list[str]:
     errors: list[str] = []
     base_paths = list_base_adrs(base_ref)
-    base_path_set = set(base_paths)
-    new_adrs = current_new_adrs(base_path_set)
+    base_ids = {adr_id(path) for path in base_paths}
+    current_adrs, duplicate_ids = current_adrs_by_id()
+    for identifier in duplicate_ids:
+        errors.append(f"{identifier}: ADR number appears in more than one current filename")
 
-    for path in base_paths:
-        before = read_base(base_ref, path)
+    new_adrs = {
+        identifier: text
+        for identifier, (_path, text) in current_adrs.items()
+        if identifier not in base_ids
+    }
+
+    for base_path in base_paths:
+        identifier = adr_id(base_path)
+        before = read_base(base_ref, base_path)
         before_status = status(before)
         if before_status not in {"Accepted", "Superseded"}:
             continue
 
-        after = read_current(path)
-        if after is None:
-            errors.append(f"{path}: accepted ADRs may not be deleted or renamed")
+        current = current_adrs.get(identifier)
+        if current is None:
+            errors.append(f"{base_path}: accepted ADR may not be deleted")
             continue
+        after_path, after = current
 
         duplicates = duplicate_header_metadata(after)
         if duplicates:
             errors.append(
-                f"{path}: duplicate ADR header metadata is not allowed: {', '.join(duplicates)}"
+                f"{after_path}: duplicate ADR header metadata is not allowed: {', '.join(duplicates)}"
             )
             continue
 
-        if immutable_body(before) != immutable_body(after):
+        removed_amendments, added_amendments = new_amendments(before, after)
+        if removed_amendments:
             errors.append(
-                f"{path}: {before_status} ADR body changed; create a superseding ADR instead"
+                f"{after_path}: existing Amendment metadata is historical and may not be removed"
+            )
+            continue
+        invalid_amendments = [
+            entry for entry in added_amendments if not valid_editorial_amendment(entry)
+        ]
+        if invalid_amendments:
+            errors.append(
+                f"{after_path}: new Amendment metadata must explicitly declare `no semantic change`"
+            )
+            continue
+
+        body_changed = protected_body(before) != protected_body(after)
+        path_changed = base_path != after_path
+        if (body_changed or path_changed) and not added_amendments:
+            changed_what = "body/title or filename" if body_changed and path_changed else (
+                "body/title" if body_changed else "filename"
+            )
+            errors.append(
+                f"{after_path}: {before_status} ADR {changed_what} changed without an audited "
+                "editorial Amendment; add `Amendment: <date> — ...; no semantic change` only for "
+                "a genuinely semantics-preserving clarification, otherwise create a superseding ADR"
             )
             continue
 
         after_status = status(after)
         if before_status == "Superseded":
             if after_status != "Superseded":
-                errors.append(f"{path}: Superseded status is immutable")
+                errors.append(f"{after_path}: Superseded status is immutable")
             if superseded_by(before) != superseded_by(after):
-                errors.append(f"{path}: existing Superseded-by metadata is immutable")
+                errors.append(f"{after_path}: existing Superseded-by metadata is immutable")
             continue
 
-        # Accepted ADR: unchanged Accepted metadata is fine. The only allowed
-        # transition is Accepted -> Superseded with a matching new Accepted ADR.
+        # Accepted ADR: unchanged Accepted status is fine, including a reviewed editorial amendment.
+        # The only semantic-status transition is Accepted -> Superseded with a matching new Accepted ADR.
         if after_status == "Accepted":
             if superseded_by(after) is not None:
                 errors.append(
-                    f"{path}: Accepted ADR cannot declare Superseded by without Status: Superseded"
+                    f"{after_path}: Accepted ADR cannot declare Superseded by without Status: Superseded"
                 )
             continue
 
         if after_status != "Superseded":
             errors.append(
-                f"{path}: Accepted ADR status may only remain Accepted or become Superseded"
+                f"{after_path}: Accepted ADR status may only remain Accepted or become Superseded"
             )
             continue
 
         target = superseded_by(after)
         if target is None:
-            errors.append(f"{path}: Superseded ADR must declare `Superseded by: ADR-NNNN`")
+            errors.append(f"{after_path}: Superseded ADR must declare `Superseded by: ADR-NNNN`")
             continue
 
         new_text = new_adrs.get(target)
         if new_text is None:
             errors.append(
-                f"{path}: {target} must be a new ADR in the same change when superseding {adr_id(path)}"
+                f"{after_path}: {target} must be a new ADR in the same change when superseding {identifier}"
             )
             continue
 
@@ -197,14 +248,13 @@ def validate(base_ref: str) -> list[str]:
 
         if status(new_text) != "Accepted":
             errors.append(
-                f"{target}: superseding ADR must be `Status: Accepted` before {adr_id(path)} can become Superseded"
+                f"{target}: superseding ADR must be `Status: Accepted` before {identifier} can become Superseded"
             )
             continue
 
-        expected = adr_id(path)
-        if supersedes(new_text) != expected:
+        if supersedes(new_text) != identifier:
             errors.append(
-                f"{target}: must declare `Supersedes: {expected}` when replacing {path}"
+                f"{target}: must declare `Supersedes: {identifier}` when replacing {after_path}"
             )
 
     return errors
@@ -240,7 +290,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     if args.ci:
         base_ref = base_from_ci_event()
         if base_ref is None:
-            print("ADR immutability: no comparable CI base for this event; skipped")
+            print("ADR history: no comparable CI base for this event; skipped")
             return 0
 
     if not base_ref:
@@ -248,12 +298,12 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     errors = validate(base_ref)
     if errors:
-        print("ADR immutability check failed:", file=sys.stderr)
+        print("ADR history check failed:", file=sys.stderr)
         for error in errors:
             print(f"- {error}", file=sys.stderr)
         return 1
 
-    print(f"ADR immutability check passed against {base_ref}")
+    print(f"ADR history check passed against {base_ref}")
     return 0
 
 

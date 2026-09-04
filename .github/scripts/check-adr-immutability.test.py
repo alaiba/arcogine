@@ -79,14 +79,75 @@ def main() -> None:
         path = repo / "docs/architecture/decisions/0001-example.md"
         path.write_text(path.read_text().replace("Keep history.", "Rewrite history."))
 
-    check_case("accepted ADR body edit is rejected", edit_body, False)
+    check_case("accepted ADR body edit without amendment is rejected", edit_body, False)
+
+    def editorial_amendment(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        text = path.read_text().replace("# ADR-0001: Example", "# ADR-0001: Semantic Example")
+        text = text.replace(
+            "Date: 2026-01-01\n",
+            "Date: 2026-01-01\nAmendment: 2026-09-03 — editorial terminology clarification; no semantic change\n",
+        )
+        path.write_text(text)
+
+    check_case("audited editorial amendment is allowed", editorial_amendment, True)
+
+    def amendment_without_declaration(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        text = path.read_text().replace("Keep history.", "Clarify history.")
+        text = text.replace(
+            "Date: 2026-01-01\n",
+            "Date: 2026-01-01\nAmendment: 2026-09-03 — editorial wording cleanup\n",
+        )
+        path.write_text(text)
+
+    check_case(
+        "editorial amendment must explicitly declare no semantic change",
+        amendment_without_declaration,
+        False,
+    )
+
+    def preserve_prior_amendment(repo: Path) -> None:
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        original = path.read_text().replace(
+            "Date: 2026-01-01\n",
+            "Date: 2026-01-01\nAmendment: 2026-08-01 — typo clarification; no semantic change\n",
+        )
+        path.write_text(original)
+        commit(repo, "historical amendment")
+        path.write_text(
+            path.read_text().replace(
+                "Amendment: 2026-08-01 — typo clarification; no semantic change\n", ""
+            )
+        )
+
+    # This helper creates its own intermediate commit, so exercise removal in a dedicated repository below.
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        git_init(repo)
+        write(
+            repo,
+            "0001-example.md",
+            "# ADR-0001: Example\n\nStatus: Accepted\nDate: 2026-01-01\n"
+            "Amendment: 2026-08-01 — typo clarification; no semantic change\n\n"
+            "## Decision\n\nKeep history.\n",
+        )
+        base = commit(repo, "base with amendment")
+        path = repo / "docs/architecture/decisions/0001-example.md"
+        path.write_text(path.read_text().replace(
+            "Amendment: 2026-08-01 — typo clarification; no semantic change\n", ""
+        ))
+        result = run(repo, "python3", str(SCRIPT), "--base-ref", base, check=False)
+        if result.returncode == 0:
+            raise AssertionError("removing historical Amendment metadata should fail")
+        print("PASS: historical Amendment metadata cannot be removed")
 
     def edit_body_status_line(repo: Path) -> None:
         path = repo / "docs/architecture/decisions/0001-example.md"
         path.write_text(path.read_text().replace("Status: Example", "Status: Changed"))
 
     check_case(
-        "accepted ADR body Status line remains immutable",
+        "accepted ADR body Status line remains protected",
         edit_body_status_line,
         False,
         accepted_body="Status: Example\n",
@@ -104,7 +165,7 @@ def main() -> None:
         path.write_text(path.read_text().replace("Superseded by: ADR-9999", "Superseded by: ADR-9998"))
 
     check_case(
-        "accepted ADR body Superseded-by line remains immutable",
+        "accepted ADR body Superseded-by line remains protected",
         edit_body_superseded_by_line,
         False,
         accepted_body="Superseded by: ADR-9999\n",
@@ -198,7 +259,7 @@ def main() -> None:
 
     check_case("metadata-only supersession with matching accepted ADR is allowed", valid_supersession, True)
 
-    print("All ADR immutability tests passed.")
+    print("All ADR history tests passed.")
 
 
 if __name__ == "__main__":

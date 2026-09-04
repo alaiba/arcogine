@@ -2,6 +2,7 @@
 
 Status: Accepted
 Date: 2026-08-27
+Amendment: 2026-09-03 — replaced transient Governance delivery terminology with semantic terminology; no semantic change
 
 ## Context
 
@@ -9,7 +10,7 @@ Date: 2026-08-27
 
 `FactoryModelVersion.contentHash()` is the current factory proving ground for content-derived identity, but ADR-0004 explicitly treats it as provisional rather than a persisted, public, or cross-process compatibility guarantee. Its current representation also depends on Java-specific behavior (`String.valueOf`, `String.length()`, then UTF-8 encoding), so promoting it unchanged would turn Java implementation details into permanent cross-language protocol semantics.
 
-The first Governance G1 slice therefore needs an explicit, durable, language-independent fingerprint contract. It must define field membership, ordering, canonical bytes, versioning, compatibility, and the relationship to the existing legacy hash without conflating semantic identity with controlled revision history.
+The first durable Governance fingerprint implementation therefore needs an explicit, language-independent fingerprint contract. It must define field membership, ordering, canonical bytes, versioning, compatibility, and the relationship to the existing legacy hash without conflating semantic identity with controlled revision history.
 
 The current factory model is not neutral to all ordering. Operation steps are explicitly ordered, and product list order currently participates in deterministic demand generation. The fingerprint must not erase distinctions that can still affect behavior.
 

@@ -46,6 +46,19 @@ A merged PR, closed issue, or green CI result is not itself evidence that a find
 
 For routine recurring runs, use the normal high-scrutiny reasoning setting available in the review environment. Reserve the highest available scrutiny for calibration runs, major architecture transitions, or periods where several capability tracks have changed in parallel. This is operating advice, not a repository requirement, and may need reinterpretation as external tooling evolves.
 
+## Documentation-lifetime consistency
+
+Recurring consistency review must treat documentation lifetime as a first-class consistency boundary. Initiative-local stage, gate, and slice identifiers are useful in `docs/planning/` and delivery history while work is active, but durable Markdown outside `docs/planning/` must name the semantic capability, contract, identity, invariant, or behavior directly.
+
+A full or incremental consistency scan should therefore check two things:
+
+- whether temporary delivery coordinates have leaked into durable filenames or prose; and
+- whether a durable document still depends on an obsolete planning artifact for its meaning even when no machine-detectable coordinate remains.
+
+The repository vocabulary checker provides a fail-closed syntactic baseline. It is not sufficient evidence of semantic self-containment: reviewers still need to recognize prose such as “the next stage” or “the previous slice” when those phrases only make sense in a plan that may later disappear.
+
+Accepted and Superseded ADRs may be clarified under the semantics-preserving amendment policy in [`../architecture/decisions/README.md`](../architecture/decisions/README.md). During consistency review, such an amendment is valid only when the historical decision, applicability, constraints, alternatives, consequences, and impact remain unchanged. If an edit changed the architecture rather than its presentation, the inconsistency is the use of an editorial amendment where a superseding ADR was required.
+
 ## Finding persistence
 
 GitHub Issues persist **finding identity and lifecycle**, not product/architecture truth and not the repository comparison baseline.

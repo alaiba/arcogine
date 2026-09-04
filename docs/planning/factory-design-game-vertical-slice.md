@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Product hypothesis for the first playable factory-design game slice  
 > **Authority:** Planning only; this document does not describe current Arcogine capability or accepted architecture  
-> **Related:** [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory Design Capability](factory-design-capability.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [Product Charter](../product/charter.md)
+> **Related:** [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Factory Design Capability](factory-design-capability.md), [ADR-0009](../architecture/decisions/0009-deterministic-dispatch-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [Product Charter](../product/charter.md)
 
 ## 1. Product thesis
 

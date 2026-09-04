@@ -3,7 +3,12 @@
 Status: Proposed
 Date: YYYY-MM-DD
 
-<!-- Optional, when applicable:
+<!--
+Use a durable semantic filename/title. Do not name the ADR after an initiative-local stage, gate, or
+slice from `docs/planning/`; the record must remain understandable after that plan is retired.
+Accepted/Superseded editorial amendments follow the policy in this directory's README.
+
+Optional, when applicable:
 Supersedes: ADR-NNNN
 Superseded by: ADR-NNNN
 -->

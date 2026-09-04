@@ -45,9 +45,11 @@ Four consequences follow.
 
    There is no third category. "It is only a guard", "it is an implementation detail", and "it is
    only reachable at extreme inputs" do not exempt a limit that two conforming implementations could
-   choose differently and thereby disagree on a run's outcome. The currently known limits of this
-   kind are recorded in the section that owns the behavior they bound — see the child
-   materialization envelope in section 3.
+   choose differently and thereby disagree on a run's outcome. This covers derived-result arithmetic
+   as much as acceptance limits: a saturation, clamp, or zero-denominator rule decides a supported
+   observation's value and is therefore in scope. The currently known rules of this kind are recorded
+   in the section that owns the behavior they bound — the child materialization envelope in section
+   3, and the derived-result arithmetic in section 10.1.
 2. **A rule is in scope even when the capability that motivated this version did not introduce it.**
    Pre-existing behavior that satisfies the membership test is captured here rather than left
    implicit because it predates spatial transfer work. Sections 1.2, 2, 3 and 4 exist for exactly
@@ -392,6 +394,35 @@ Bottleneck interpretation must therefore widen: a destination can have constrain
 capacity because of transfer-bound work while not yet accruing processing busy ticks. Consumers must
 not misdiagnose that state as ordinary processing utilization.
 
+### 10.1 Derived-result arithmetic
+
+The arithmetic that produces supported derived results is itself result-affecting under section 1.1:
+two implementations computing these differently would report different supported observations for an
+identical model, workload, seed and ordered command sequence. These rules are part of v1.
+
+1. **Cumulative `busyTicks` saturates.** A resource's cumulative busy time is credited at step
+   completion by adding the finished step's duration. Because durations are non-negative, a negative
+   sum can only be signed 64-bit overflow, so the accumulator saturates at the maximum representable
+   tick value rather than wrapping. Utilization derived from a saturated `busyTicks` is pinned at
+   its maximum rather than becoming negative or nonsensical.
+2. **Elapsed-time subtraction saturates at zero.** Subtracting one simulated time from another
+   yields zero when the subtrahend is the greater, never a negative interval. Lead time and every
+   other interval-derived measure therefore has a floor of zero by construction.
+3. **Throughput over a zero-tick window is zero.** Throughput is completed orders per observed tick;
+   an observation window of zero ticks yields `0`, not a division by zero, an infinity, or a NaN.
+4. **Mean lead time over an empty completed set is zero.** With no completed orders the mean is `0`,
+   not a NaN from a zero denominator.
+5. Simulated-time **addition is not saturating.** It is unchecked, and the pre-existing runtime
+   time-addition guard rejects an overflowing schedule at the command boundary instead of silently
+   producing a wrapped time — see section 7 rule 6 and ADR-0007's zero-mutation rejection contract
+   adopted by section 1.2.
+
+Rules 1 to 4 are deliberate total-function choices at domain edges, not incidental defensive coding:
+each replaces an undefined, wrapped, or non-finite value with a defined one a consumer can interpret.
+Rule 5 is the deliberate exception, and it is a rejection rule rather than a value rule. Changing any
+of them changes supported derived results for identical explicit inputs and therefore requires a new
+Engine semantics version.
+
 ## 11. Supported job and runtime observation contract
 
 A fresh supported observation must reconstruct an in-progress transfer without replay.
@@ -521,7 +552,12 @@ normative semantics above using representative explicit inputs. The fixtures mus
     `Gate3SessionControlAcceptanceTest` rather than duplicated here;
 13. agreement between job transfer observation and destination resource admission-load observation;
 14. deterministic event-type/entity-reference ordering and simulated times;
-15. terminal state / derived result agreement for repeated identical explicit inputs.
+15. the section 10.1 derived-result arithmetic: `busyTicks` saturating at the maximum representable
+    tick value instead of wrapping negative, elapsed-time subtraction flooring at zero, zero-tick
+    throughput and empty-set mean lead time each yielding `0` rather than a non-finite value, and
+    simulated-time addition overflow being rejected at the command boundary with no partial
+    mutation rather than saturating;
+16. terminal state / derived result agreement for repeated identical explicit inputs.
 
 Fixtures pin semantic outcomes, not DTO/JSON bytes, transport representation, or unrelated
 non-behavioral observation fields.

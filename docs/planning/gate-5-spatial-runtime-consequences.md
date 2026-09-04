@@ -103,6 +103,8 @@ Add characterization/conformance evidence for the result-affecting behavior that
 - multi-eligible backlog arrival order, captured eligible sets, and non-head-of-line-blocking;
 - W1 child creation/release/dispatch ordering;
 - the W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
+- the derived-result arithmetic: `busyTicks` overflow saturation, elapsed-time subtraction flooring
+  at zero, and the zero-denominator throughput / empty-set mean-lead-time results;
 - scheduler equal-time insertion ordering where it is semantically observable.
 
 **Evidence**

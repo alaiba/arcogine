@@ -75,7 +75,47 @@ Resolve a PR's lifecycle state from its current head and metadata, submitted rev
 
 ## PR monitoring
 
-For any open PR associated with the current branch, subscribe to PR activity without asking for confirmation when the environment provides a native subscription mechanism (for Claude Code, `subscribe_pr_activity`). On notification, re-resolve the PR lifecycle state and perform any available implementation-owned transition. If native subscription is unavailable and scheduled tasks are supported, keep at most one recheck scheduled for about 10 minutes later while the PR is **AWAITING**; on wake, re-resolve the lifecycle state and act on any available transition. `..` remains the immediate manual continuation mechanism.
+For any open PR associated with the current branch, start monitoring it without asking for confirmation. On any signal, re-resolve the PR lifecycle state and perform any available implementation-owned transition.
+
+Use `infra/dev/pr-watch.mjs` rather than rediscovering how to query GitHub:
+
+```bash
+node infra/dev/pr-watch.mjs <pr-number>            # resolve lifecycle state once, then exit
+node infra/dev/pr-watch.mjs <pr-number> --watch    # emit one line per change, for a background watcher
+```
+
+It is dependency-free Node (builtins only, no install step) and reads `GH_TOKEN`/`GITHUB_TOKEN`, falling back to `gh auth token` once at startup. `--json` gives machine-readable output and `--exit-code` maps the lifecycle state onto the exit status; see `--help`.
+
+### Keeping a watcher running
+
+The script is harness-neutral. How you keep it running is not — each agent harness has different primitives, so use whichever of these applies.
+
+**Prefer a native PR-activity subscription when the current session actually exposes one** — webhook-driven wake beats polling and costs no API traffic. Otherwise use `pr-watch.mjs`, which depends on nothing but Node and the GitHub API and is therefore always available.
+
+This section deliberately names no subscription tool. It previously named one that did not resolve, and agents improvised a poller per session instead; naming a replacement would pin repository guidance to an external detail this file cannot keep accurate. Check the tools the session actually exposes rather than expecting this file to tell you what exists.
+
+**Claude Code** — run `--watch` under the `Monitor` tool with `persistent: true`, so each emitted line arrives as a notification:
+
+```bash
+export PATH="/c/Program Files/nodejs:/c/Program Files/Git/cmd:/c/Program Files/GitHub CLI:$PATH"
+cd <repo-root>
+exec node infra/dev/pr-watch.mjs <pr-number> --watch --interval 60
+```
+
+Two things that are easy to get wrong:
+
+- The harness shell may not share your interactive shell's `PATH`. On Windows/Git Bash, `node`, `git` and `gh` are all commonly missing from it, and `gh` fails without `git`. Set `PATH` explicitly, as above, rather than assuming. Verify the invocation once directly before trusting a background watcher.
+- A running watcher holds the script it loaded at startup. Editing `pr-watch.mjs` does **not** affect it — stop and restart the watcher after changing the script, or it will keep running the old logic.
+
+**Other harnesses** (Codex and others) have their own primitives and generally no equivalent of `Monitor`. Use whatever background or streaming facility exists; if there is none, run the single-resolution form at each decision point, and if scheduled tasks are supported keep at most one recheck scheduled about 10 minutes out while the PR is **AWAITING**.
+
+A session-scoped watcher is expected and sufficient: its purpose is to let the session react to review and CI feedback on its own rather than the repository owner relaying state changes. It ends with the session, and that is fine — it is not intended as durable infrastructure.
+
+### Rules for any monitoring mechanism
+
+A monitor must fail loudly: if it cannot reach GitHub it must say so, because a silent watcher is indistinguishable from a quiet PR. Do not report a PR as unchanged on the strength of a monitor that has not actually confirmed it.
+
+`..` remains the immediate manual continuation mechanism, and works regardless of whether a watcher is running.
 
 ## PR merging
 

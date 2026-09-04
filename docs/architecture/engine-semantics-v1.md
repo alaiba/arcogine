@@ -50,13 +50,44 @@ Four consequences follow.
    materialization envelope in section 3.
 2. **A rule is in scope even when the capability that motivated this version did not introduce it.**
    Pre-existing behavior that satisfies the membership test is captured here rather than left
-   implicit because it predates spatial transfer work. Sections 2, 3 and 4 exist for exactly that
-   reason.
+   implicit because it predates spatial transfer work. Sections 1.2, 2, 3 and 4 exist for exactly
+   that reason.
 3. **Recording a previously unwritten rule is a correction, not a semantics change**, provided the
    rule's behavior is unchanged. Changing the behavior requires a new Engine semantics version.
 4. **A rule that satisfies the membership test but is absent here is a defect in this document**,
    not a licence to treat the behavior as unversioned. The correct response is to record it, or to
    promote it to an explicitly identified reproducibility input — not to leave it ambient.
+
+### 1.2 Session and control semantics, in scope by reference
+
+Gate 3 session/control behavior satisfies the section 1.1 membership test: it decides how far a
+session advances and whether an externally initiated change is applied, for an identical ordered
+command sequence. It is therefore part of the `engine-semantics:v1` interpretation, and two
+implementations may not claim this version while differing on it.
+
+[ADR-0007](decisions/0007-gate-3-session-control-primitives.md) is Accepted and is the normative
+authority for those rules. This specification adopts them **by reference** rather than restating
+them. In scope:
+
+- `advance()` as the unchanged one-event primitive, and `advanceUntil(targetTime, maxEvents)`
+  defined in terms of it — processing events one at a time in `advance()` order and stopping as soon
+  as either bound is reached, returning every event actually processed, in order. Because
+  `advanceUntil` is defined as a loop over `advance()`, the two cannot diverge in event ordering or
+  dispatch behavior.
+- `reset()` as a fresh session over the same retained model version: replaying an identical command
+  sequence reproduces an identical ordered event stream and identical terminal state, and the
+  original session is left untouched.
+- The `CommandResult` outcome contract for the two externally initiated commands, `submitWorkload`
+  and `setMachineAvailability` — `Accepted`; `Rejected` with its zero-mutation guarantee and
+  structurally empty scheduled-event list; and `Faulted` for a command whose requested change was
+  genuinely applied before the runtime failed while carrying out the resulting work. Acceptance and
+  execution outcome are independent facts, so `Faulted` is not a variant of `Rejected`.
+
+Adoption by reference is deliberate. ADR-0007 is already normative and its rules are proven by
+`Gate3SessionControlAcceptanceTest`; restating them here would create two independently editable
+statements of one contract, which is exactly the drift this document exists to prevent. The
+consequence is unchanged: a change to any rule above is a change to `engine-semantics:v1` and
+requires a new Engine semantics version, even though its text lives in ADR-0007.
 
 ## 2. Resource-selection and dispatch semantics
 
@@ -80,20 +111,33 @@ The following rules are part of v1:
    starts at most one job (see section 4); it does not drain the queue to capacity. Within the
    multi-eligible backlog, the earliest queued entry that can actually be placed is dispatched
    first, with repeated re-selection after each placement.
-7. **Which waiting path a job enters is determined by the eligible-set size of the step it is
-   waiting for, not by why it is waiting.** When the selected machine cannot currently accept the
-   job, a step with more than one eligible machine enters the shared multi-eligible backlog, and a
-   step with exactly one eligible machine enters that single machine's own queue. A multi-eligible
-   step therefore never occupies a per-machine queue while waiting, and a single-eligible step never
-   occupies the shared backlog.
+7. **Which waiting path a job enters is determined by its effective eligible set at the moment it
+   enters the waiting state.** Before any destination is bound, the effective eligible set is the
+   routing step's authored eligible-machine set: when the selected machine cannot currently accept
+   the job, a step with more than one eligible machine enters the shared multi-eligible backlog, and
+   a step with exactly one eligible machine enters that single machine's own queue.
+
+   Destination binding collapses the effective eligible set to the single bound destination (section
+   6 rule 9). A **bound** job that must wait therefore has an effective eligible set of size one and
+   waits in the bound destination's own queue, whatever the authored step's eligible-set size was.
+   That is what keeps this rule consistent with immutable binding: a bound job must never re-enter
+   the shared multi-eligible backlog, because reconsideration there re-runs selection over the
+   authored eligible set and could place the job on a different machine — a reroute the transfer
+   contract forbids.
+
+   So a multi-eligible step never occupies a per-machine queue **while waiting pre-binding**, and a
+   single-eligible step never occupies the shared backlog. Post-binding waiting is the deliberate
+   and only exception, and it is governed by section 6 rule 9 and section 9 rule 8.
 8. **Each machine's own queue is strict FIFO in arrival order.** Entries are appended at the tail on
    enqueue and taken from the head on dispatch. Queue position is not re-derived from job identity,
    ordinal, order identity, step duration, remaining steps, waiting time, or priority; v1 has no
    priority, aging, or reordering rule for per-machine queues.
-9. **The shared multi-eligible backlog also retains arrival order**, and an entry's eligible set is
-   the one captured when it was enqueued. Reconsideration re-runs selection over that captured set
-   against current machine state, so an entry may be placed on a machine other than the one selected
-   when it first waited; see section 4 for the scan order.
+9. **The shared multi-eligible backlog holds pre-binding work only**, and retains arrival order. An
+   entry's eligible set is the one captured when it was enqueued. Reconsideration re-runs selection
+   over that captured set against current machine state, so an entry may be placed on a machine
+   other than the one selected when it first waited; see section 4 for the scan order. Because that
+   reselection can change the destination, a job that has already bound a destination is never
+   placed in this backlog.
 10. Spatial transfer time is inserted only after a concrete destination is both selected and
     currently admissible under the same acceptance rule that otherwise permits immediate processing;
     transfer semantics do not move selection earlier or redefine ranking.
@@ -194,6 +238,19 @@ the existing acceptance semantics**.
 6. Transfer duration is computed and fixed at that binding instant.
 7. `TRANSFER_STARTED` is emitted for the authoritative transition into the in-flight state.
 8. Destination binding is immutable after transfer start. V1 does not reroute.
+9. **Binding collapses the job's effective eligible set to the bound destination** for every
+   subsequent waiting decision. From binding until the job begins processing there, the bound
+   destination is the only machine the job can be placed on, regardless of how many machines the
+   authored routing step listed as eligible. If the job must wait after arrival, it waits in that
+   destination's own queue — appended at the tail in arrival order like any other queued entry —
+   and never in the shared multi-eligible backlog. Section 9 rule 8 fixes the arrival-offline case
+   this exists for.
+
+   This rule is what makes immutable binding implementable. Without it, a multi-eligible step
+   arriving at an offline destination would have no waiting path: the shared backlog would re-select
+   and could reroute, contradicting rule 8, while the destination's own queue would contradict the
+   pre-binding form of section 2 rule 7. Collapsing the effective eligible set resolves both by
+   making the bound job a single-eligible job for waiting purposes.
 
 This changes only the delay between destination binding and next-step processing; it does not change
 resource-selection/ranking semantics.
@@ -267,8 +324,10 @@ else:
           -> convert reservation into active processing
           -> next processing start / JOB_DISPATCHED under existing semantics
       else:
-          -> release/convert the inbound reservation as required by the existing wait path
-          -> existing destination wait/queue path / JOB_WAITING
+          -> convert the inbound reservation into a queue entry on the BOUND destination
+             (tail, arrival order) -- never the shared multi-eligible backlog
+          -> JOB_WAITING, still bound, no rerouting
+          -> released by the existing recovery cascade when that destination is online
 ```
 
 `TRANSFERRING` is a runtime state between two moments, not a third event/moment. There is no separate
@@ -294,9 +353,18 @@ else:
    transfer start does not change the bound destination or fixed completion time.
 7. Another eligible destination becoming preferable after departure does not cause rerouting.
 8. If the destination is offline at exact arrival time, `TRANSFER_COMPLETED` still occurs at the
-   fixed time. The inbound reservation is then converted/released into the existing destination
-   wait/queue path, and the job reports `JOB_WAITING`; it remains bound to that destination and is
-   not rerouted.
+   fixed time. The inbound admission reservation is then **converted into an entry in that
+   destination's own queue** — the bound-destination wait fixed by section 6 rule 9 — and the job
+   reports `JOB_WAITING`. It remains bound to that destination, never enters the shared
+   multi-eligible backlog, and is not rerouted. The existing recovery cascade releases it when the
+   destination comes back online.
+
+   From arrival onward the entry is ordinary queued work, which resolves its observation
+   consequences unambiguously: it **counts in the destination's queue depth**, it is **no longer
+   held as reserved admission capacity** (the reservation is converted, not additionally retained,
+   so one waiting job never consumes two units of the same destination's capacity), and it is not an
+   active job until processing starts. This is the one case in v1 where a job whose authored routing
+   step listed several eligible machines legitimately occupies a per-machine queue.
 
 ## 10. KPI and resource-observation interpretation
 
@@ -427,9 +495,9 @@ normative semantics above using representative explicit inputs. The fixtures mus
    plausible alternative ordering — arrival order must be distinguishable from `JobId` order,
    ordinal order, and step-duration order — plus the one-dispatch-per-trigger rule for a machine
    that has free capacity and more than one queued job;
-5. waiting-path selection by eligible-set size: a multi-eligible step waiting in the shared backlog
-   and never in a per-machine queue, and a single-eligible step waiting in that machine's queue and
-   never in the backlog;
+5. pre-binding waiting-path selection by eligible-set size: a multi-eligible step waiting in the
+   shared backlog and never in a per-machine queue, and a single-eligible step waiting in that
+   machine's queue and never in the backlog;
 6. multi-eligible backlog ordering: two simultaneously placeable entries competing for one machine
    resolving in arrival order; an unplaceable head entry not blocking a later placeable entry with a
    disjoint eligible set; an entry placed on a machine other than the one selected when it first
@@ -441,9 +509,19 @@ normative semantics above using representative explicit inputs. The fixtures mus
 9. zero authored transfer magnitudes and the same-time transfer event chain;
 10. destination becoming unavailable after binding, arrival while offline, immutable binding, and no
     rerouting;
-11. agreement between job transfer observation and destination resource admission-load observation;
-12. deterministic event-type/entity-reference ordering and simulated times;
-13. terminal state / derived result agreement for repeated identical explicit inputs.
+11. the bound-destination wait for a **multi-eligible** step: a job whose authored step lists several
+    eligible machines, bound to one destination, arriving while that destination is offline — it
+    waits in the bound destination's own queue, is absent from the shared multi-eligible backlog,
+    is still bound to the same destination after another eligible machine becomes free and the
+    recovery cascade runs, counts in that destination's queue depth, and no longer counts as
+    reserved admission capacity;
+12. session/control rules adopted by section 1.2: `advanceUntil` converging with looping `advance()`
+    under both bounds, reset-session reproduction, and the `Accepted`/`Rejected`/`Faulted` outcome
+    shapes with `Rejected`'s zero-mutation guarantee — satisfied by ADR-0007's existing
+    `Gate3SessionControlAcceptanceTest` rather than duplicated here;
+13. agreement between job transfer observation and destination resource admission-load observation;
+14. deterministic event-type/entity-reference ordering and simulated times;
+15. terminal state / derived result agreement for repeated identical explicit inputs.
 
 Fixtures pin semantic outcomes, not DTO/JSON bytes, transport representation, or unrelated
 non-behavioral observation fields.

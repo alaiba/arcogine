@@ -345,13 +345,21 @@ Close the remaining v1 transfer rules without changing the core design:
 - immutable destination/no rerouting after transfer start;
 - source going offline after departure has no effect;
 - destination going offline in flight or at exact arrival does not change fixed completion time;
-- arrival at an offline destination converts/releases reservation into the existing waiting path;
+- arrival at an offline destination converts the inbound reservation into a queue entry on the bound
+  destination, including for a multi-eligible authored step;
 - another eligible destination becoming preferable does not cause rerouting.
 
 **Evidence**
 
 Focused tests prove the exact same-time sequence and all availability/no-rerouting cases, including
 that the bound destination can actually become offline while only inbound-reserved work exists.
+
+The multi-eligible arrival-offline case is the load-bearing one: it is the only v1 state where a job
+whose authored step listed several eligible machines waits in a per-machine queue, and it is what
+makes immutable binding implementable rather than contradictory. A test must prove the job stays
+bound after another eligible machine frees up and the recovery cascade runs, that it never appears
+in `pendingMultiEligible`, and that it counts once — in destination queue depth, not additionally as
+reserved admission capacity.
 
 **Non-goals**
 

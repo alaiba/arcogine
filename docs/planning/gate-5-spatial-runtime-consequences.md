@@ -97,14 +97,22 @@ Add characterization/conformance evidence for the result-affecting behavior that
 - `canAcceptJob` as the primary ranking key rather than an eligibility filter;
 - `combinedQueueDepth`, including compatible `pendingMultiEligible` work;
 - deterministic `MachineId` tie-breaking;
-- queue-before-`pendingMultiEligible` recovery cascade ordering;
+- queue-before-`pendingMultiEligible` recovery cascade ordering, including one dispatch per trigger
+  from a machine's own queue and the fixpoint rescan of the multi-eligible backlog;
+- per-machine queue FIFO arrival order, and waiting-path selection by eligible-set size;
+- multi-eligible backlog arrival order, captured eligible sets, and non-head-of-line-blocking;
 - W1 child creation/release/dispatch ordering;
+- the W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
 - scheduler equal-time insertion ordering where it is semantically observable.
 
 **Evidence**
 
 Pinned behavioral fixtures fail if any of those results change for identical explicit inputs. The
 slice changes no production behavior and does not freeze incidental DTO or implementation shape.
+
+The behaviors above are the ones `engine-semantics:v1` section 1.1 requires to be versioned rather
+than left as ambient implementation policy. `G5-0` is where that requirement becomes executable
+evidence, so a fixture gap here is a semantics gap, not a coverage preference.
 
 **Non-goals**
 
@@ -144,19 +152,23 @@ Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine 
 
 **Responsibility**
 
-Release the `factory-model:v2` canonical policy:
+Release the `factory-model:v2` canonical policy exactly as specified by
+[Factory Model v2 Canonicalization](../architecture/factory-model-v2.md), which is the normative
+source of V2 fingerprint bytes:
 
-- deterministic canonical encoding/decoding/verifying for V2;
+- deterministic canonical encoding/decoding/verifying for V2 under that byte grammar;
 - `ModelFingerprint` derivation under the V2 policy;
 - policy registration while preserving `factory-model:v1`;
-- V2 golden vectors;
+- the V2 golden vectors that specification requires;
 - no automatic V1→V2 lift/default synthesis.
 
 **Evidence**
 
-V1 vectors/fingerprints remain byte-for-byte unchanged; equivalent V2 content reproduces its
-fingerprint; every authored V2 field participates in identity; moving a resource changes the
-fingerprint without changing resource identity.
+The golden-vector set in that specification, including exact canonical bytes and the pinned
+policy-domain prefix. V1 vectors/fingerprints remain byte-for-byte unchanged; equivalent V2 content
+reproduces its fingerprint; every authored V2 field participates in identity; moving a resource
+changes the fingerprint without changing resource identity; a grammar-valid artifact that violates a
+V2 publication predicate is rejected on decode.
 
 **Non-goals**
 

@@ -3,7 +3,7 @@
 > **Status:** Proposed  
 > **Scope:** Establish a cross-consumer factory-design capability over Arcogine's canonical production-system model  
 > **Authority:** Planning only; this document defines delivery slices and readiness criteria, not current capability or accepted architecture  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Engine Semantics v1](../architecture/engine-semantics-v1.md), [Gate 5 Spatial Runtime Consequences](gate-5-spatial-runtime-consequences.md), [Governance and Conformance Capability Plan](governance-conformance-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Engine Semantics v1](../architecture/engine-semantics-v1.md), [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md), [Gate 5 Spatial Runtime Consequences](gate-5-spatial-runtime-consequences.md), [Governance and Conformance Capability Plan](governance-conformance-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
 
 ## 1. Purpose
 
@@ -135,7 +135,8 @@ D3 Publication / semantic identity  PARTIAL
     immutable publication           implemented
     content hash                    implemented, legacy compatibility
     durable fingerprint v1          implemented — see ADR-0006
-    durable fingerprint v2          accepted by ADR-0014; implementation pending G5-A2
+    durable fingerprint v2          accepted by ADR-0014, canonicalization fixed by
+                                    factory-model-v2.md; implementation pending G5-A2
     multi-policy historical resolve accepted; implementation pending G5-A3
     controlled revision identity    implemented cross-domain by Governance G1
 
@@ -249,7 +250,9 @@ ADR-0014 establishes the next released Factory fingerprint policy. `factory-mode
 | `ticksPerCell` | authored material-handling rate magnitude |
 | `handlingTicks` | authored fixed overhead applied once per inter-resource transfer |
 
-All are mandatory and fingerprinted in V2. Position/footprint containment and non-overlap are publication semantics. V2 publication also proves with overflow-safe arithmetic that
+All are mandatory and fingerprinted in V2. The exact bytes those additions are digested through — the `arcogine.factory-model.v2\0` policy-domain prefix, the plant-scope header, the per-resource spatial suffix, collection ordering and digest rendering — are fixed normatively by [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md), because ADR-0006 makes a fingerprint-policy version a canonicalization contract rather than a field-membership label.
+
+Position/footprint containment and non-overlap are publication semantics. V2 publication also proves with overflow-safe arithmetic that
 
 ```text
 maxManhattanDistance = (floorWidth - 1) + (floorHeight - 1)
@@ -523,7 +526,8 @@ Gate 5's hard-to-reverse decisions are now accepted rather than open triggers:
 
 - [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md) fixes Factory fingerprint-policy evolution and `factory-model:v2`;
 - [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md) fixes design-vs-Engine interpretation ownership and `EngineSemanticsVersion`;
-- [Engine Semantics v1](../architecture/engine-semantics-v1.md) fixes the first concrete result-affecting interpretation.
+- [Engine Semantics v1](../architecture/engine-semantics-v1.md) fixes the first concrete result-affecting interpretation;
+- [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md) fixes the durable `factory-model:v2` byte grammar that ADR-0014's policy version contractually implies.
 
 Future ADRs remain warranted for genuinely new hard-to-reverse model aggregate boundaries, work-center/resource-pool semantics, shared draft lifecycle, or a new released Factory/Engine semantics contract. Do not create ADRs for consumer-local editor gestures or temporary UI structure.
 

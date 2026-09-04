@@ -4,7 +4,7 @@
 > **Scope:** Prepare Arcogine's factory runtime for external consumers after the canonical factory-model boundary is established  
 > **Authority:** Planning only; this document defines runtime-readiness gates, not current capability or accepted architecture  
 > **Prerequisite:** the model-seam entry gate (§1.1) — narrower than full D1-D4 in [Factory Design Capability](factory-design-capability.md)  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Engine Semantics v1](../architecture/engine-semantics-v1.md), [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md), [Gate 5 Spatial Runtime Consequences](gate-5-spatial-runtime-consequences.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0009](../architecture/decisions/0009-gate-2-closure-and-work-decomposition-boundary.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Engine Semantics v1](../architecture/engine-semantics-v1.md), [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md), [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md), [Gate 5 Spatial Runtime Consequences](gate-5-spatial-runtime-consequences.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md), [Architecture Overview](../architecture/overview.md)
 
 ## 1. Purpose
 
@@ -307,9 +307,13 @@ Gate 2 removed that restriction: `RoutingStep` now carries `Set<MachineId> eligi
 4. then rank by `combinedQueueDepth`, consisting of the machine's physical queue plus compatible `pendingMultiEligible` entries;
 5. break remaining ties by lowest `MachineId`;
 6. after selection, dispatch immediately only if the selected machine can accept the job; otherwise route the job to the existing single-machine queue or `pendingMultiEligible` waiting path;
-7. after a completion/recovery transition, drain the relevant per-machine queue before reconsidering `pendingMultiEligible` work.
+7. after a completion/recovery transition, attempt the relevant per-machine queue before reconsidering `pendingMultiEligible` work — the per-machine attempt starts at most one head-of-queue job per trigger rather than draining the queue to capacity, while the multi-eligible stage runs to fixpoint, rescanning from the head after each placement;
+8. hold work in per-machine queues in strict FIFO arrival order, with the waiting path chosen by eligible-set size — a multi-eligible step waits in the shared backlog, a single-eligible step waits in that machine's queue;
+9. accept a submitted workload quantity only within the supported child-materialization envelope `1 <= N <= 100000`, rejecting anything outside it before any runtime mutation.
 
 Projected-completion-time ranking, resource pools, and capability taxonomies remain deliberately deferred. Any change that can alter assignments/outcomes for identical explicit inputs requires a new `EngineSemanticsVersion`, not a silent reinterpretation of `engine-semantics:v1`.
+
+Item 9 is recorded as versioned semantics, not as an implementation guard, under the `engine-semantics:v1` completeness rule: a result-affecting limit is either part of `EngineSemanticsVersion` or an explicitly identified reproducibility input, and may not remain ambient implementation policy.
 
 Gate 2 is about **dispatch**, not work decomposition: the runtime selects a resource for an independently dispatchable unit of work that already exists. ADR-0010 defines how W1 creates those units within one accepted quantity-scaled order: deterministic unit-quantity sibling `Job`s identified by `JobId`. That decision does not change Gate 2's selector or `pendingMultiEligible` semantics.
 
@@ -497,7 +501,7 @@ ADR-0015 adds one provenance requirement to the supported Gate 4 shapes; impleme
 
 Apply deterministic production consequences to semantic layout supplied by the published factory model.
 
-The hard-to-reverse architecture is now resolved by [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), and the normative [Engine Semantics v1](../architecture/engine-semantics-v1.md). Implementation remains pending and is decomposed by the focused [Gate 5 delivery plan](gate-5-spatial-runtime-consequences.md).
+The hard-to-reverse architecture is now resolved by [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), and the normative [Engine Semantics v1](../architecture/engine-semantics-v1.md) and [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md) specifications. Implementation remains pending and is decomposed by the focused [Gate 5 delivery plan](gate-5-spatial-runtime-consequences.md).
 
 Factory V2 owns exactly these new authored facts:
 
@@ -738,7 +742,7 @@ Scenario factory semantics
 5. Consumer-neutral session and bounded advancement. **Implemented as Gate 3**; see ADR-0007.
 6. **W1 — intra-order execution decomposition. Complete.** Architecture resolved by ADR-0010; quantity `N` -> `N` unit-quantity sibling `Job`s, with fixed-contract and large-order evidence.
 7. **Gate 4 — stable runtime observations and ordered authoritative runtime events. Core/headless closure complete.** G4-D outward convergence and DH-E recovery hardening remain downstream and do not block Gate 5.
-8. **Gate 5 — architecture accepted; implementation pending.** ADR-0014 fixes Factory V2 evolution, ADR-0015 fixes Engine semantic identity/reproducibility, `engine-semantics:v1` fixes the first interpretation, and [the focused Gate 5 plan](gate-5-spatial-runtime-consequences.md) decomposes implementation into twelve incremental semantic slices (`G5-0`, `G5-A1..A3`, `G5-B1..B2`, `G5-C1..C4`, `G5-D`, `G5-E`).
+8. **Gate 5 — architecture accepted; implementation pending.** ADR-0014 fixes Factory V2 evolution and [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md) fixes its durable byte grammar, ADR-0015 fixes Engine semantic identity/reproducibility, `engine-semantics:v1` fixes the first interpretation, and [the focused Gate 5 plan](gate-5-spatial-runtime-consequences.md) decomposes implementation into twelve incremental semantic slices (`G5-0`, `G5-A1..A3`, `G5-B1..B2`, `G5-C1..C4`, `G5-D`, `G5-E`).
 9. Public-contract, recovery, persistence, and packaging hardening.
 
 ### 13.3 First runtime milestone
@@ -772,7 +776,7 @@ This milestone deliberately excludes changing the canonical-model boundary, layo
 | Session interface/module ownership | Resolved by Gate 3 / ADR-0007; revisit only if a concrete consumer proves `FactoryRuntime` is no longer the right boundary |
 | Tick/event-count advancement semantics | Interactive/headless responsiveness tests |
 | Observation/event contract semantics | **Resolved by ADR-0011; ADR-0015 adds Engine-semantics provenance, implemented by G5-B2; outward migration remains G4-D** |
-| Spatial model-policy evolution | **Resolved by ADR-0014 (`factory-model:v2`); implementation in G5-A1/A2/A3** |
+| Spatial model-policy evolution | **Resolved by ADR-0014 (`factory-model:v2`) plus the normative Factory Model v2 Canonicalization specification; implementation in G5-A1/A2/A3** |
 | Spatial metric/transfer policy | **Resolved for `engine-semantics:v1` by ADR-0015 + the normative Engine Semantics v1 specification; implementation in G5-C1..C4** |
 | Engine semantics identity/reproducibility | **Resolved by ADR-0015; implementation in G5-0/B1/B2 and conformance closure in G5-E** |
 | Public compatibility policy | Before external consumer contract publication |

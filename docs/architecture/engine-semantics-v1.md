@@ -3,6 +3,8 @@
 Status: Normative design contract; implementation pending
 Semantic identity: `engine-semantics:v1`
 Decision authority: [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md)
+Model-side counterpart: [ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md) and
+[Factory Model v2 Canonicalization](factory-model-v2.md)
 
 ## 1. Purpose
 
@@ -22,6 +24,40 @@ ModelFingerprint
 
 A run fixes its Engine semantics version at establishment. The version never changes mid-run.
 
+### 1.1 Completeness rule
+
+This specification claims to identify the **complete** result-affecting Engine interpretation. That
+claim is operational, not aspirational. The membership test is:
+
+> A rule belongs to `engine-semantics:v1` if changing it can change the outcome — acceptance or
+> rejection, assignment, ordering, timing, or derived result — for an identical `ModelFingerprint`,
+> explicit workload, seed/random inputs, and ordered external commands.
+
+Four consequences follow.
+
+1. **No result-affecting limit may remain ambient implementation policy.** A hard-coded threshold,
+   envelope, ceiling, or bound that deterministically decides acceptance, rejection, assignment,
+   ordering, or timing is a semantic rule regardless of where it currently sits in the
+   implementation. Every such limit is either
+   - part of `EngineSemanticsVersion` and recorded in this specification, or
+   - an explicitly identified reproducibility input recorded alongside `ModelFingerprint`, explicit
+     workload, seed, and ordered commands.
+
+   There is no third category. "It is only a guard", "it is an implementation detail", and "it is
+   only reachable at extreme inputs" do not exempt a limit that two conforming implementations could
+   choose differently and thereby disagree on a run's outcome. The currently known limits of this
+   kind are recorded in the section that owns the behavior they bound — see the child
+   materialization envelope in section 3.
+2. **A rule is in scope even when the capability that motivated this version did not introduce it.**
+   Pre-existing behavior that satisfies the membership test is captured here rather than left
+   implicit because it predates spatial transfer work. Sections 2, 3 and 4 exist for exactly that
+   reason.
+3. **Recording a previously unwritten rule is a correction, not a semantics change**, provided the
+   rule's behavior is unchanged. Changing the behavior requires a new Engine semantics version.
+4. **A rule that satisfies the membership test but is absent here is a defect in this document**,
+   not a licence to treat the behavior as unversioned. The correct response is to record it, or to
+   promote it to an explicitly identified reproducibility input — not to leave it ambient.
+
 ## 2. Resource-selection and dispatch semantics
 
 Spatial transfer semantics do not redefine the existing resource-selection and dispatch behavior.
@@ -39,13 +75,28 @@ The following rules are part of v1:
 5. Selection runs at the established semantic points even when the selected machine cannot yet
    accept the job. The post-selection branch determines immediate dispatch versus
    `pendingMultiEligible` versus the selected single-machine queue.
-6. Recovery after a machine/step completion preserves the current cascade order: drain that
-   machine's own queue first, then reconsider pending multi-eligible work. Within the multi-eligible
-   backlog, the earliest queued entry that can actually be placed is dispatched first, with repeated
-   re-selection after each placement.
-7. Spatial transfer time is inserted only after a concrete destination is both selected and
-   currently admissible under the same acceptance rule that otherwise permits immediate processing;
-   transfer semantics do not move selection earlier or redefine ranking.
+6. Recovery after a machine/step completion preserves the current cascade order: attempt that
+   machine's own queue first, then reconsider pending multi-eligible work. The per-machine attempt
+   starts at most one job (see section 4); it does not drain the queue to capacity. Within the
+   multi-eligible backlog, the earliest queued entry that can actually be placed is dispatched
+   first, with repeated re-selection after each placement.
+7. **Which waiting path a job enters is determined by the eligible-set size of the step it is
+   waiting for, not by why it is waiting.** When the selected machine cannot currently accept the
+   job, a step with more than one eligible machine enters the shared multi-eligible backlog, and a
+   step with exactly one eligible machine enters that single machine's own queue. A multi-eligible
+   step therefore never occupies a per-machine queue while waiting, and a single-eligible step never
+   occupies the shared backlog.
+8. **Each machine's own queue is strict FIFO in arrival order.** Entries are appended at the tail on
+   enqueue and taken from the head on dispatch. Queue position is not re-derived from job identity,
+   ordinal, order identity, step duration, remaining steps, waiting time, or priority; v1 has no
+   priority, aging, or reordering rule for per-machine queues.
+9. **The shared multi-eligible backlog also retains arrival order**, and an entry's eligible set is
+   the one captured when it was enqueued. Reconsideration re-runs selection over that captured set
+   against current machine state, so an entry may be placed on a machine other than the one selected
+   when it first waited; see section 4 for the scan order.
+10. Spatial transfer time is inserted only after a concrete destination is both selected and
+    currently admissible under the same acceptance rule that otherwise permits immediate processing;
+    transfer semantics do not move selection earlier or redefine ranking.
 
 Changing any of those result-affecting rules requires a new Engine semantics version.
 
@@ -57,6 +108,22 @@ The existing unit-work decomposition rules remain part of v1:
 2. Child creation/release and initial dispatch use deterministic ordinal ordering.
 3. Aggregate completion continues to correlate explicit `OrderId` with the completing child
    `JobId`.
+4. **The supported child-materialization envelope is part of `engine-semantics:v1`.** Workload
+   submission accepts `1 <= N <= 100000` and rejects anything outside that closed interval as an
+   out-of-range explicit input. The bound is a flat count of children; it does not vary with routing
+   step count, resource count, or any other model content.
+5. Rejection under rule 4 is total and occurs **before any runtime mutation**: no `Order`, no child
+   `Job`, no queue entry, and no scheduled event exists after a rejected submission. A rejected
+   submission is therefore not a partial run with a smaller workload.
+
+Rule 4 is recorded here rather than left as an implementation guard because it satisfies the section
+1.1 membership test directly: for an identical model, seed, and command sequence, a workload of
+`100001` is deterministically rejected and a workload of `100000` is deterministically accepted and
+executed. Two implementations choosing different envelopes would disagree about whether a run
+happens at all, which is the strongest possible outcome difference. The envelope is consequently
+neither an ambient policy nor a free implementation choice; changing the accepted interval requires
+a new Engine semantics version, and a deployment that needs a different interval must expose it as
+an explicitly identified reproducibility input rather than silently widening or narrowing v1.
 
 A change that can alter assignment, ordering, or completion outcome for identical explicit inputs
 requires a new Engine semantics version.
@@ -74,6 +141,25 @@ requires a new Engine semantics version.
    after a completed step releases a machine, the Engine first attempts to dispatch that machine's
    own queued work and only then reconsiders `pendingMultiEligible` work. A change to that ordering
    can change assignments and therefore requires a new Engine semantics version.
+6. The cascade runs at the same two trigger points and in the same shape for both of them: a step
+   completion that releases a machine, and a machine coming back online. Taking a machine offline
+   runs no cascade.
+7. **The per-machine stage of the cascade dispatches at most one queued job per trigger.** If the
+   released machine can accept work, exactly one head-of-queue entry is started; the machine is not
+   drained to capacity in one pass. Remaining queued work waits for the next trigger.
+8. **The multi-eligible stage runs to fixpoint, scanning from the head each pass.** One pass walks
+   the backlog in arrival order, re-running selection over each entry's captured eligible set, and
+   dispatches the first entry whose selected machine can currently accept it. After a placement the
+   scan restarts from the head, because that placement changes queue and active state and can change
+   subsequent selections. The stage ends when a complete pass places nothing.
+9. **An unplaceable entry does not head-of-line block the backlog.** A pass skips entries whose
+   selected machine cannot accept and continues to later entries, so an entry waiting on a disjoint
+   eligible set is still reachable. Arrival order is therefore decisive only among entries that are
+   simultaneously placeable, which is exactly the case where it can change assignment.
+
+Rules 7, 8 and 9 satisfy the section 1.1 membership test — each of them can change which job lands on
+which machine at which time for identical explicit inputs — and are recorded here for that reason,
+not because spatial transfer introduced them.
 
 ## 5. Spatial model/Engine ownership boundary
 
@@ -85,7 +171,9 @@ Spatial transfer semantics apply this boundary:
 - replaceable mechanisms preserving the same semantic outcomes are implementation details.
 
 The V2 model facts consumed by this specification are floor dimensions, resource position,
-resource footprint, `ticksPerCell`, and `handlingTicks`, as fixed by ADR-0014.
+resource footprint, `ticksPerCell`, and `handlingTicks`, as fixed by ADR-0014 and canonicalized by
+[Factory Model v2 Canonicalization](factory-model-v2.md). This specification consumes those facts;
+it never defines their canonical encoding or identity.
 
 ## 6. Destination selection and binding
 
@@ -331,16 +419,31 @@ normative semantics above using representative explicit inputs. The fixtures mus
 1. current deterministic resource-selection behavior, including offline filtering/all-offline
    fallback, `canAcceptJob` ranking, `combinedQueueDepth`, `MachineId` tie-breaking, and the
    queue-before-`pendingMultiEligible` recovery cascade;
-2. current unit-work decomposition/release ordering;
+2. current unit-work decomposition/release ordering, plus the child-materialization envelope: `1`
+   and `100000` accepted, `0` and `100001` rejected, and a rejected submission leaving no `Order`,
+   child `Job`, queue entry, or scheduled event behind;
 3. current scheduler same-time ordering;
-4. distinct-resource transfer with nonzero distance;
-5. same-resource consecutive steps with no transfer;
-6. zero authored transfer magnitudes and the same-time transfer event chain;
-7. destination becoming unavailable after binding, arrival while offline, immutable binding, and no
-   rerouting;
-8. agreement between job transfer observation and destination resource admission-load observation;
-9. deterministic event-type/entity-reference ordering and simulated times;
-10. terminal state / derived result agreement for repeated identical explicit inputs.
+4. per-machine queue FIFO order, proved by a dispatch sequence whose FIFO result differs from every
+   plausible alternative ordering — arrival order must be distinguishable from `JobId` order,
+   ordinal order, and step-duration order — plus the one-dispatch-per-trigger rule for a machine
+   that has free capacity and more than one queued job;
+5. waiting-path selection by eligible-set size: a multi-eligible step waiting in the shared backlog
+   and never in a per-machine queue, and a single-eligible step waiting in that machine's queue and
+   never in the backlog;
+6. multi-eligible backlog ordering: two simultaneously placeable entries competing for one machine
+   resolving in arrival order; an unplaceable head entry not blocking a later placeable entry with a
+   disjoint eligible set; an entry placed on a machine other than the one selected when it first
+   waited; the fixpoint rescan placing more than one entry per trigger; and the
+   queue-before-backlog cascade order at both trigger points, step completion and machine coming
+   back online;
+7. distinct-resource transfer with nonzero distance;
+8. same-resource consecutive steps with no transfer;
+9. zero authored transfer magnitudes and the same-time transfer event chain;
+10. destination becoming unavailable after binding, arrival while offline, immutable binding, and no
+    rerouting;
+11. agreement between job transfer observation and destination resource admission-load observation;
+12. deterministic event-type/entity-reference ordering and simulated times;
+13. terminal state / derived result agreement for repeated identical explicit inputs.
 
 Fixtures pin semantic outcomes, not DTO/JSON bytes, transport representation, or unrelated
 non-behavioral observation fields.

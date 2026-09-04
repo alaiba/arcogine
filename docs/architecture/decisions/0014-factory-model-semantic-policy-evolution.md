@@ -29,6 +29,16 @@ design** belong to Engine semantic policy. That sibling decision is recorded by
 2. **Authored spatial semantics use `factory-model:v2`.** V2 is a complete canonical Factory
    semantic artifact, not a spatial sidecar fingerprint.
 
+   Because ADR-0006 makes a fingerprint-policy version a canonicalization contract and not merely a
+   field-membership label, V2 is not fully specified until its durable byte grammar is fixed.
+   **V2 canonicalization is defined normatively in
+   [Factory Model v2 Canonicalization](../factory-model-v2.md)**: the policy-domain prefix, exact
+   field order, primitive encodings, placement/footprint encoding, collection ordering, digest
+   rendering, decode/canonicality obligations, and the required golden compatibility vectors. That
+   document is the authoritative source of V2 fingerprint bytes, as ADR-0006's v1 byte-grammar
+   section is for V1. This ADR remains the authority for V2's semantic field membership, validation
+   predicates, and compatibility rules; it does not restate the grammar.
+
 3. **V2 is exactly V1 semantics plus these five required authored additions:**
 
    | Addition | Meaning | Validation | Zero legal? | Fingerprinted? |
@@ -144,6 +154,9 @@ artifact.
 ## Consequences
 
 - Spatial execution receives a stable authored spatial substrate without weakening V1 identity.
+- The V2 canonicalization contract required by ADR-0006 is a separate normative document rather than
+  ADR text, so the durable byte grammar and its golden vectors can be reviewed, cited, and amended
+  before `G5-A2` ships without reopening this decision record.
 - `ModelFingerprint` continues to mean "which authored Factory design", not "which Engine outcome".
 - Existing V1 revisions remain valid and executable under their existing non-spatial semantics.
 - Factory must support more than one artifact policy when V2 lands.

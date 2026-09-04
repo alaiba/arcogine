@@ -27,9 +27,7 @@ Common shorthand should be interpreted in repository context:
 PR workflow shorthand has distinct review and remediation meanings:
 
 - `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
-- `..` = advance the current implementation pull request toward green by inspecting the latest reviews, comments, unresolved findings, CI, and mergeability; evaluating each finding against repository authority; applying the smallest correct fix for valid findings; challenging invalid findings with repository evidence; and re-checking the resulting PR state.
-
-When handling `..`, continue remediation and re-checking until the PR is green or a genuinely unresolved decision requires user input. Do not treat `..` as an independent review-only action.
+- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available.
 
 Do not replace known repository context with generic GitHub discovery.
 
@@ -60,11 +58,12 @@ Initiative-local stage, gate, and slice identifiers are delivery coordinates. Th
 `docs/planning/`, issues, pull requests, handoff prompts, and other active delivery context where the
 coordinate helps sequence work.
 
-Do not carry those identifiers into durable documentation under `docs/` outside `docs/planning/`.
-When a planned result is recorded in an ADR, architecture, product, reference, or development
-document, translate it into the semantic capability, contract, identity, invariant, or behavior it
-actually represents. A durable document must remain understandable after the originating plan is
-completed, condensed, renamed, or removed.
+Do not carry those identifiers into durable documentation. When a planned result is recorded in an
+ADR, architecture, product, reference, or development document, translate it into the semantic
+capability, contract, identity, invariant, or behavior it actually represents. Working/process
+material may mention a planning coordinate when the coordinate itself is the subject, but durable
+semantic claims must remain understandable after the originating plan is completed, condensed,
+renamed, or removed.
 
 When editing an Accepted or Superseded ADR only to improve durable terminology or legibility, follow
 `docs/architecture/decisions/README.md`: the amendment must be semantics-preserving, explicitly
@@ -73,7 +72,9 @@ decision change still requires supersession.
 
 ## Temporary artifacts
 
-Test output, coverage reports, logs, and other transient build artifacts must be written to the `logs/` directory at the repository root (not to the root level or scattered across the tree). The `logs/` directory is gitignored as a whole. Keep the root and working directory clean; use `logs/coverage.txt`, `logs/test-output.log`, etc. instead of root-level files.
+Ad hoc diagnostic reports, one-off log captures, and transient session artifacts that would otherwise be written at repository root should go to the `logs/` directory at the repository root. The `logs/` directory is gitignored as a whole. Keep the root and working directory clean; use `logs/coverage.txt`, `logs/test-output.log`, etc. instead of root-level files.
+
+Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`), npm/Vitest (`product/interfaces/web/coverage/`, `test-results/`), Playwright (`playwright-report/`), and `dist/` continue to write to their configured locations per the canonical build commands.
 
 ## Commit message footer
 
@@ -82,23 +83,61 @@ to commit messages in this repository, even if a harness's default git
 workflow instructions say to add one. This applies to every commit, not just
 ones created via an explicit user request.
 
+## PR lifecycle
+
+Resolve a PR's lifecycle state from its current head and metadata, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
+
+- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for independent review/re-review or for pending required CI after `READY AFTER CI`.
+- **CHANGES REQUIRED** — an implementation-owned blocker remains, such as a valid blocking review finding, failed required CI, or a merge conflict. Remediate it, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
+- **READY TO MERGE** — the current review disposition permits merge (`READY TO MERGE`, `NON-BLOCKING FOLLOW-UPS ONLY`, or `READY AFTER CI` after required CI turns green), required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+
 ## PR monitoring
 
-Subscribe to a PR's activity and start monitoring it automatically, the
-moment the PR exists for a branch the session is working on — whether the
-session opened the PR itself or a human opened it (e.g. from the Claude
-Code UI) for a branch the session pushed to. The PR's existence is the
-trigger by itself.
+For any open PR associated with the current branch, start monitoring it without asking for confirmation. On any signal, re-resolve the PR lifecycle state and perform any available implementation-owned transition.
 
-**Never ask the user whether to start monitoring.** Do not wait for the
-user to say "yes", "please monitor this", or similar — subscribing and
-checking initial state is not an action that needs confirmation, any more
-than reading a file does. Subscribe first, then report what you found.
+Use `infra/dev/pr-watch.mjs` rather than rediscovering how to query GitHub:
 
-On first subscribing, immediately check current CI status, reviews
-(`get_reviews`, not just comments — see "Checking a PR after pushing"
-below), and merge conflicts, then follow the drive-to-green posture for
-that PR from then on.
+```bash
+node infra/dev/pr-watch.mjs <pr-number>            # resolve lifecycle state once, then exit
+node infra/dev/pr-watch.mjs <pr-number> --watch    # emit one line per change, for a background watcher
+```
+
+It is dependency-free Node (builtins only, no install step) and reads `GH_TOKEN`/`GITHUB_TOKEN`, falling back to `gh auth token` once at startup. `--json` gives machine-readable output and `--exit-code` maps the lifecycle state onto the exit status; see `--help`.
+
+### Keeping a watcher running
+
+The script is harness-neutral. How you keep it running is not — each agent harness has different primitives, so use whichever of these applies.
+
+**Prefer a native PR-activity subscription when the current session actually exposes one** — webhook-driven wake beats polling and costs no API traffic. Otherwise use `pr-watch.mjs`, which depends on nothing but Node and the GitHub API and is therefore always available.
+
+This section deliberately names no subscription tool. It previously named one that did not resolve, and agents improvised a poller per session instead; naming a replacement would pin repository guidance to an external detail this file cannot keep accurate. Check the tools the session actually exposes rather than expecting this file to tell you what exists.
+
+**Claude Code** — run `--watch` under the `Monitor` tool with `persistent: true`, so each emitted line arrives as a notification:
+
+```bash
+export PATH="/c/Program Files/nodejs:/c/Program Files/Git/cmd:/c/Program Files/GitHub CLI:$PATH"
+cd <repo-root>
+exec node infra/dev/pr-watch.mjs <pr-number> --watch --interval 60
+```
+
+Two things that are easy to get wrong:
+
+- The harness shell may not share your interactive shell's `PATH`. On Windows/Git Bash, `node`, `git` and `gh` are all commonly missing from it, and `gh` fails without `git`. Set `PATH` explicitly, as above, rather than assuming. Verify the invocation once directly before trusting a background watcher.
+- A running watcher holds the script it loaded at startup. Editing `pr-watch.mjs` does **not** affect it — stop and restart the watcher after changing the script, or it will keep running the old logic.
+
+**Other harnesses** (Codex and others) have their own primitives and generally no equivalent of `Monitor`. Use whatever background or streaming facility exists; if there is none, run the single-resolution form at each decision point, and if scheduled tasks are supported keep at most one recheck scheduled about 10 minutes out while the PR is **AWAITING**.
+
+A session-scoped watcher is expected and sufficient: its purpose is to let the session react to review and CI feedback on its own rather than the repository owner relaying state changes. It ends with the session, and that is fine — it is not intended as durable infrastructure.
+
+### Rules for any monitoring mechanism
+
+A monitor must fail loudly: if it cannot reach GitHub it must say so, because a silent watcher is indistinguishable from a quiet PR. Do not report a PR as unchanged on the strength of a monitor that has not actually confirmed it.
+
+`..` remains the immediate manual continuation mechanism, and works regardless of whether a watcher is running.
+
+## PR merging
+
+Agents never merge pull requests. `READY TO MERGE` hands control to the repository owner, who performs the merge manually.
 
 ## Branch to work on
 
@@ -160,17 +199,6 @@ Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dock
 ## Validating changes
 
 Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching only Java (`product/{types,simulation,domains,agents,consumer,interfaces/api,interfaces/cli}`) needs only the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a change touching only the frontend (`product/interfaces/web/`) needs only its gates (`cd product/interfaces/web && npm run lint && npx tsc --noEmit && npm run test:coverage && npm run build`); a documentation-only change needs neither. When a change spans both, or you can't tell whether it's narrow, run `./arcogine check`, which runs both unconditionally. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
-
-## Checking a PR after pushing
-
-After opening or pushing to a PR, checking CI status alone is not enough — a
-submitted review with a verdict like `CHANGES REQUIRED` does **not** appear
-in a plain comment listing (e.g. the GitHub MCP server's
-`pull_request_read` with `method: get_comments` or `get_review_comments`
-only surfaces issue comments and inline review threads, not the review
-body itself). Always also fetch reviews explicitly (`method: get_reviews`)
-before declaring a PR green or waiting-on-CI. Do this on every check-in,
-not just the first one after pushing.
 
 ## Do not edit
 

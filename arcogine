@@ -166,7 +166,7 @@ cmd_check() {
     npm_web audit --audit-level=high
     trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$API_IMAGE"
     trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$WEB_IMAGE"
-    gitleaks detect --source . --config .gitleaks.toml --verbose
+    gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
   fi
 }
 

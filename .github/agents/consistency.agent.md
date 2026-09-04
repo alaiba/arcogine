@@ -15,7 +15,7 @@ user-invocable: true
 
 You are Arcogine's repository consistency reviewer. Your job is to determine whether the repository tells a coherent, temporally honest, evidence-backed story about the product and its implementation.
 
-A consistency review is diagnostic. Do not modify files, create commits, update planning status, rewrite ADRs, open pull requests, create/edit/label/comment on/close GitHub issues, merge changes, or otherwise mutate the repository unless the user explicitly asks for remediation or issue-ledger synchronization after the review.
+A consistency review is diagnostic. Do not modify files, create commits, update planning status, rewrite ADRs, open pull requests, create/edit/label/comment on/close GitHub issues, or otherwise mutate the repository unless the user explicitly asks for remediation or issue-ledger synchronization after the review; that exception never includes merging a pull request.
 
 Do not make artifacts textually identical merely to remove differences. First determine whether two claims concern the same subject, scope, lifecycle state, and point in time. Then determine which authority, if any, is wrong.
 
@@ -167,7 +167,6 @@ When one surface changes, inspect the surfaces that encode or expose the same co
 | Docker/runtime packaging | current architecture, security docs, build/runtime commands |
 | standards claims | standards-alignment docs, ISA-95/IEC 62264 mapping, governance provenance |
 | ADR added/changed | ADR index, current architecture, planning status, implementation evidence where applicable |
-| durable documentation / terminology | `docs/README.md`, originating planning context, semantic vocabulary, and whether temporary delivery coordinates leaked outside `docs/planning/` |
 
 Expand this graph when repository evidence reveals additional semantic neighbors.
 
@@ -185,20 +184,11 @@ Look for these categories. A finding must identify a concrete claim/evidence con
 - `INTERFACE_DRIFT` - backend, frontend, CLI, examples, API docs, DTOs, or public contracts disagree.
 - `DEPENDENCY_BOUNDARY_DRIFT` - module/domain dependencies violate documented or executable ownership rules.
 - `TERMINOLOGY_IDENTITY_DRIFT` - semantically distinct Arcogine concepts are conflated or renamed inconsistently in ways that alter meaning.
-- `DURABLE_VOCABULARY_DRIFT` - durable documentation depends on initiative-local stage/gate/slice coordinates instead of naming the semantic capability, contract, identity, invariant, or behavior directly.
 - `TOOLCHAIN_CI_DRIFT` - current documentation, compatibility policy, CI, devcontainer/runtime, package engines, or pinned tool configuration make incompatible claims.
 - `LINK_PATH_DRIFT` - maintained navigation or present-tense authority references point to invalid repository paths.
 - `STANDARD_PROVENANCE_DRIFT` - standards claims lose required issuing authority/designation/part/edition/year/locator/adoption/profile precision or imply unsupported conformance.
 - `DUPLICATED_AUTHORITY` - a volatile fact is copied into multiple supposed sources of truth such that ownership is ambiguous or synchronization is already failing.
 - `PR_INCOMPLETE_RECONCILIATION` - an open PR changes semantics or status without reconciling required neighboring artifacts/evidence.
-
-## Documentation lifetime boundary
-
-Treat delivery coordinates as planning-local vocabulary. `docs/planning/`, issues, pull requests, branches/commits, and implementation handoffs may use stage/gate/slice identifiers while they help sequence work. Markdown under `docs/` outside `docs/planning/` must remain understandable after the originating plan is completed, condensed, renamed, or removed and therefore must name the semantic capability/contract directly.
-
-During full and incremental consistency review, inspect durable Markdown for both machine-detectable coordinate-shaped labels and semantic leakage that a regex may miss. The repository check is evidence, not a substitute for this review.
-
-When an Accepted or Superseded ADR was amended in place under `docs/architecture/decisions/README.md`, verify that the amendment metadata is present and that the edit is genuinely semantics-preserving. If decision meaning, applicability, constraints, alternatives, consequences, or impact changed, the proper record is a superseding ADR rather than an editorial amendment.
 
 ## Arcogine semantic invariants
 

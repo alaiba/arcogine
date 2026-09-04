@@ -307,9 +307,8 @@ malformed or non-canonical artifact acquire a well-formed-looking V2 identity.
 
 ## 10. Immutability and lifecycle
 
-Until a shipped implementation produces `factory-model:v2` fingerprints or records them against
-controlled revisions, this grammar is a normative design contract and may be corrected by amending
-this document.
+Until the `factory-model:v2` implementation ships, this grammar is a normative design contract and
+may be corrected by amending this document.
 
 Once a V2 fingerprint is produced by a shipped implementation or recorded against a controlled
 revision, the grammar is frozen permanently. From that point, every supported implementation must

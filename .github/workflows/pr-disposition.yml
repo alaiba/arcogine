@@ -58,18 +58,19 @@ jobs:
           set -euo pipefail
           PR_NUMBER="${{ github.event.pull_request.number }}"
 
-          # Fetch all reviews (paginated). --paginate with --jq emits one array
-          # per page; --slurp collects those page arrays so `add` can flatten
-          # them into a single ordered array before extracting review bodies.
-          # The evaluator does not reason about review action type (APPROVED /
+          # Fetch all reviews (paginated). `gh api` rejects --slurp combined
+          # with --jq in one invocation, so --slurp collects the raw page
+          # arrays here and a separate jq pipe flattens them with `add` into
+          # a single ordered array before extracting review bodies. The
+          # evaluator does not reason about review action type (APPROVED /
           # CHANGES_REQUESTED / COMMENTED / DISMISSED) at all, so only body is
           # passed through — this is the complete normalized input it needs.
           REVIEWS_JSON=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews \
             --paginate \
             --slurp \
-            --jq 'add | map({body})')
+            | jq -c 'add | map({body})')
 
-          echo "reviews_json=$(echo "$REVIEWS_JSON" | jq -c .)" >> "$GITHUB_OUTPUT"
+          echo "reviews_json=$REVIEWS_JSON" >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository at main (trusted base)
         # A candidate PR must not be able to modify the evaluator used to

@@ -90,9 +90,9 @@ It is dependency-free Node (builtins only, no install step) and reads `GH_TOKEN`
 
 The script is harness-neutral. How you keep it running is not — each agent harness has different primitives, so use whichever of these applies.
 
-Prefer a **native PR-activity subscription whenever the current harness actually exposes one** — it gives webhook-driven wake semantics with no polling traffic. Some Claude Code surfaces provide this through the GitHub MCP server (`mcp__github__subscribe_pr_activity`); others, including plain terminal sessions without that server, do not. Check the tools actually available in the session rather than assuming either way, and fall back to `pr-watch.mjs` when no subscription primitive is present.
+`pr-watch.mjs` is the documented path, because it depends on nothing but Node and the GitHub API. Do not name a specific harness tool here: this section previously did, the name did not resolve, and agents improvised a poller per session instead. If the harness you are running under happens to offer its own PR-activity subscription primitive, using it is fine — but check what the session actually exposes rather than relying on this file to tell you it exists.
 
-**Claude Code without a native subscription** — run `--watch` under the `Monitor` tool with `persistent: true`, so each emitted line arrives as a notification:
+**Claude Code** — run `--watch` under the `Monitor` tool with `persistent: true`, so each emitted line arrives as a notification:
 
 ```bash
 export PATH="/c/Program Files/nodejs:/c/Program Files/Git/cmd:/c/Program Files/GitHub CLI:$PATH"

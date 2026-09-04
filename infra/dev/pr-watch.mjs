@@ -36,6 +36,14 @@ const DEFAULT_REPO = 'alaiba/arcogine';
 const DEFAULT_INTERVAL_SECONDS = 60;
 const FAILURE_ALERT_THRESHOLD = 3;
 
+/**
+ * The one status branch protection needs to require. `.github/workflows/ci.yml` defines
+ * `gate` as the always-running aggregate job for exactly this purpose. Naming it is what
+ * lets the resolver tell "required validation passed" apart from "some unrelated context
+ * happens to be green" -- any green context would otherwise stand in for the real gate.
+ */
+const DEFAULT_REQUIRED_CHECK = 'gate';
+
 /** Disposition vocabulary owned by .github/agents/pr-reviewer.agent.md. */
 const DISPOSITIONS = [
   'READY TO MERGE',
@@ -57,7 +65,7 @@ query($owner:String!, $name:String!, $number:Int!) {
         totalCount
         nodes { author { login } state submittedAt body commit { oid } }
       }
-      reviewThreads(last:100) { nodes { isResolved } }
+      reviewThreads(last:100) { totalCount nodes { isResolved } }
       commits(last:1) {
         nodes {
           commit {
@@ -91,6 +99,7 @@ OPTIONS
                         Without it, the state is resolved once and printed.
   --interval <seconds>  Poll interval for --watch (default: ${DEFAULT_INTERVAL_SECONDS}, minimum: 10)
   --json                Emit a single JSON object instead of text (single resolution only)
+  --required-check <n>  Status that proves required validation ran (default: ${DEFAULT_REQUIRED_CHECK})
   --exit-code           Exit 0 READY TO MERGE, 2 CHANGES REQUIRED, 3 AWAITING
                         (without it, exit 0 on any successful resolution)
   --help                Show this help
@@ -195,18 +204,19 @@ async function fetchComparison({ repo, token }, pr) {
  *  - Take the LAST match, never the first. The contract calls for an explicit *final*
  *    disposition, so earlier occurrences are superseded by construction.
  *
- * There is deliberately no "only one token appears anywhere" fallback: guessing a verdict
- * out of prose is how the original bug happened. No explicit disposition resolves to null,
- * which the lifecycle treats conservatively as AWAITING.
+ * Only a line-anchored disposition counts. There is deliberately NO unanchored fallback:
+ * an inline or code-quoted "Disposition: READY TO MERGE" in an explanatory sentence would
+ * otherwise manufacture the positive review authority needed to reach READY TO MERGE. A
+ * body with no contract-shaped final disposition resolves to null, which the lifecycle
+ * treats conservatively as AWAITING.
  */
 function dispositionOf(body) {
   if (!body) return null;
-  const anchored = [...body.matchAll(new RegExp(`^[ \\t>*_-]*Disposition:\\s*\\**\\s*(${DISPOSITION_ALTERNATION})`, 'gim'))];
-  const chosen = anchored.length > 0
-    ? anchored
-    : [...body.matchAll(new RegExp(`Disposition:\\s*\\**\\s*(${DISPOSITION_ALTERNATION})`, 'gi'))];
-  if (chosen.length === 0) return null;
-  return chosen.at(-1)[1].replace(/\s+/g, ' ').toUpperCase();
+  const anchored = [
+    ...body.matchAll(new RegExp(`^[ \\t>*_-]*Disposition:\\s*\\**\\s*(${DISPOSITION_ALTERNATION})`, 'gim')),
+  ];
+  if (anchored.length === 0) return null;
+  return anchored.at(-1)[1].replace(/\s+/g, ' ').toUpperCase();
 }
 
 function normalizeChecks(pr) {
@@ -222,8 +232,9 @@ function normalizeChecks(pr) {
 const GREEN = new Set(['SUCCESS', 'SKIPPED', 'NEUTRAL']);
 const PENDING = new Set(['PENDING', 'QUEUED', 'IN_PROGRESS', 'WAITING', 'EXPECTED', 'REQUESTED']);
 
-function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }) {
+function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck = DEFAULT_REQUIRED_CHECK) {
   const checks = normalizeChecks(pr);
+  const required = checks.find((c) => c.name === requiredCheck) ?? null;
   const reviews = (pr.reviews?.nodes ?? []).map((r) => ({
     author: r.author?.login ?? '(unknown)',
     state: r.state,
@@ -259,11 +270,17 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }) {
   );
 
   const reviewsTruncated = (pr.reviews?.totalCount ?? reviews.length) > reviews.length;
+  const threadNodes = pr.reviewThreads?.nodes ?? [];
+  const threadsTruncated = (pr.reviewThreads?.totalCount ?? threadNodes.length) > threadNodes.length;
 
   return {
     number: pr.number,
     title: pr.title,
     isDraft: pr.isDraft,
+    prState: pr.state ?? 'OPEN',
+    requiredCheckName: requiredCheck,
+    requiredCheck: required,
+    threadsTruncated,
     head: pr.headRefOid,
     baseRef: pr.baseRefName,
     baseOid: pr.baseRefOid,
@@ -292,6 +309,12 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }) {
  * carrying a stale verdict forward.
  */
 function resolveLifecycle(s) {
+  // A merged or closed PR has no open-PR lifecycle left to resolve. Report the terminal
+  // fact instead of continuing to answer a question that no longer applies.
+  if (s.prState && s.prState !== 'OPEN') {
+    return { state: s.prState, terminal: true, reasons: [`pull request is ${s.prState.toLowerCase()}`] };
+  }
+
   if (s.isDraft) return { state: 'AWAITING', reasons: ['pull request is a draft'] };
 
   const blocking = [];
@@ -335,13 +358,22 @@ function resolveLifecycle(s) {
     waiting.push('review on current head states no explicit disposition');
   }
 
-  // Absence of evidence is not green. A workflow that never started, was not triggered, or
-  // is temporarily missing must not be read as passing validation.
-  if (s.checks.length === 0) {
-    waiting.push('no check contexts present on the head commit; required validation is not proven to have run');
+  // Absence of evidence is not green, and an unrelated green context is not the required
+  // one. Only the named required check proves validation ran; other contexts may fail (and
+  // block above) but can never substitute for it.
+  if (!s.requiredCheck) {
+    waiting.push(
+      `required check "${s.requiredCheckName}" is not present on the head commit; ` +
+        `required validation is not proven to have run (${s.checks.length} other context(s) present)`,
+    );
+  } else if (PENDING.has(s.requiredCheck.verdict)) {
+    waiting.push(`required check "${s.requiredCheckName}" is ${s.requiredCheck.verdict}`);
   }
   if (s.checksPending.length > 0) {
-    waiting.push(`required checks still pending: ${s.checksPending.map((c) => c.name).join(', ')}`);
+    waiting.push(`checks still pending: ${s.checksPending.map((c) => c.name).join(', ')}`);
+  }
+  if (s.threadsTruncated) {
+    waiting.push('review threads exceed the fetched window, so unresolved-thread state cannot be fully resolved');
   }
   if (s.openThreads > 0) waiting.push(`${s.openThreads} unresolved review thread(s)`);
   if (s.mergeable !== 'MERGEABLE') waiting.push(`GitHub reports mergeable=${s.mergeable}`);
@@ -352,7 +384,7 @@ function resolveLifecycle(s) {
     state: 'READY TO MERGE',
     reasons: [
       `review disposition on current head is ${head.disposition}`,
-      `${s.checks.length} check context(s) green`,
+      `required check "${s.requiredCheckName}" is ${s.requiredCheck.verdict}`,
       `head is level with ${s.baseRef}`,
     ],
   };
@@ -362,6 +394,11 @@ function resolveLifecycle(s) {
 function stateLines(s) {
   const lines = [
     `head: ${s.head.slice(0, 7)}`,
+    // Every field the resolver reads must appear here, or a change that moves the lifecycle
+    // can produce no signal at all: a draft being marked ready, or the PR being merged or
+    // closed, would otherwise be invisible to --watch.
+    `pr-state: ${s.prState}${s.isDraft ? ' (draft)' : ''}`,
+    `required-check: ${s.requiredCheck ? s.requiredCheck.verdict : 'ABSENT'}`,
     // Base identity and distance are part of the watched state: a base advance can
     // invalidate an existing review without the head changing at all.
     `base: ${s.baseRef}@${String(s.baseOid).slice(0, 7)} (behind ${s.behindBy}, ahead ${s.aheadBy})`,
@@ -388,7 +425,8 @@ function renderOnce(s, lifecycle) {
     `base        ${s.baseRef}@${String(s.baseOid).slice(0, 7)}  (behind ${s.behindBy}, ahead ${s.aheadBy})`,
     `merge       ${s.mergeStateStatus} (${s.mergeable})`,
     `checks      ${s.checks.length - s.checksFailing.length - s.checksPending.length} green, ` +
-      `${s.checksFailing.length} failing, ${s.checksPending.length} pending`,
+      `${s.checksFailing.length} failing, ${s.checksPending.length} pending` +
+      `  [required "${s.requiredCheckName}": ${s.requiredCheck ? s.requiredCheck.verdict : 'ABSENT'}]`,
     `threads     ${s.openThreads} unresolved`,
   ];
   if (s.newestReview) {
@@ -425,7 +463,7 @@ async function watch(options) {
   for (;;) {
     try {
       const pr = await fetchPullRequest(options);
-      const summary = summarize(pr, await fetchComparison(options, pr));
+      const summary = summarize(pr, await fetchComparison(options, pr), options.requiredCheck);
       const lines = stateLines(summary);
 
       if (consecutiveFailures > 0 && alerted) {
@@ -434,18 +472,25 @@ async function watch(options) {
       consecutiveFailures = 0;
       alerted = false;
 
+      const lifecycle = resolveLifecycle(summary);
+
       if (previous === null) {
-        const { state } = resolveLifecycle(summary);
-        console.log(`baseline ${summary.head.slice(0, 7)} -- ${state}`);
+        console.log(`baseline ${summary.head.slice(0, 7)} -- ${lifecycle.state}`);
       } else {
         const changes = diff(previous, lines);
         if (changes.length > 0) {
-          const { state } = resolveLifecycle(summary);
-          console.log(`CHANGED -- ${state}`);
+          console.log(`CHANGED -- ${lifecycle.state}`);
           for (const change of changes) console.log(change);
         }
       }
       previous = lines;
+
+      // Stop on a terminal state rather than polling a merged or closed PR forever while
+      // pretending to resolve an open-PR lifecycle.
+      if (lifecycle.terminal) {
+        console.log(`TERMINAL -- ${lifecycle.state}; stopping watch`);
+        return;
+      }
     } catch (error) {
       consecutiveFailures += 1;
       // Rule 1: never let a broken watcher look like a quiet PR.
@@ -469,6 +514,7 @@ async function main() {
         interval: { type: 'string', default: String(DEFAULT_INTERVAL_SECONDS) },
         json: { type: 'boolean', default: false },
         'exit-code': { type: 'boolean', default: false },
+        'required-check': { type: 'string', default: DEFAULT_REQUIRED_CHECK },
         help: { type: 'boolean', default: false },
       },
     });
@@ -508,7 +554,7 @@ async function main() {
     return 1;
   }
 
-  const options = { repo: values.repo, number, token, interval };
+  const options = { repo: values.repo, number, token, interval, requiredCheck: values['required-check'] };
 
   if (values.watch) {
     await watch(options);
@@ -518,7 +564,7 @@ async function main() {
   let summary;
   try {
     const pr = await fetchPullRequest(options);
-    summary = summarize(pr, await fetchComparison(options, pr));
+    summary = summarize(pr, await fetchComparison(options, pr), options.requiredCheck);
   } catch (error) {
     process.stderr.write(`${error.message}\n`);
     return 1;

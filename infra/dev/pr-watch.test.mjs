@@ -23,10 +23,11 @@ function pr({ reviews = [], checks = [{ name: 'gate', conclusion: 'SUCCESS' }], 
     headRefOid: HEAD,
     baseRefName: 'main',
     baseRefOid: 'cccccccccccccccccccccccccccccccccccccccc',
+    state: 'OPEN',
     mergeable: 'MERGEABLE',
     mergeStateStatus: 'CLEAN',
     reviews: { totalCount: reviews.length, nodes: reviews },
-    reviewThreads: { nodes: threads },
+    reviewThreads: { totalCount: threads.length, nodes: threads },
     commits: { nodes: [{ commit: { statusCheckRollup: { contexts: { nodes: checks } } } }] },
     ...rest,
   };
@@ -72,6 +73,97 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf(''), null);
     assert.equal(dispositionOf(null), null);
   });
+
+  // REV-005: an inline or code-quoted marker is discussion, and must not manufacture the
+  // positive review authority needed to reach READY TO MERGE.
+  await t.test('an inline or code-quoted marker is not a verdict when nothing is anchored', () => {
+    assert.equal(dispositionOf('A reviewer may write `Disposition: READY TO MERGE` in prose.'), null);
+    assert.equal(dispositionOf('For example, Disposition: READY TO MERGE would end the review.'), null);
+  });
+
+  await t.test('a blockquoted or list-marked disposition still counts', () => {
+    assert.equal(dispositionOf('> Disposition: **CHANGES REQUIRED**'), 'CHANGES REQUIRED');
+    assert.equal(dispositionOf('- Disposition: READY TO MERGE'), 'READY TO MERGE');
+  });
+});
+
+test('required check identity (REV-003)', async (t) => {
+  const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+  const comparison = { aheadBy: 1, behindBy: 0 };
+
+  await t.test('an unrelated green context cannot substitute for the required gate', () => {
+    const checks = [{ name: 'Secret scan', conclusion: 'SUCCESS' }];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
+  });
+
+  await t.test('a pending gate is not green even when everything else passed', () => {
+    const checks = [
+      { name: 'Secret scan', conclusion: 'SUCCESS' },
+      { name: 'gate', conclusion: null, status: 'QUEUED' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
+  });
+
+  await t.test('a failing gate blocks', () => {
+    assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'FAILURE' }] }), comparison), 'CHANGES REQUIRED');
+  });
+
+  await t.test('a green gate alongside other contexts is validation evidence', () => {
+    const checks = [
+      { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'Secret scan', conclusion: 'SUCCESS' },
+      { name: 'Java checks', conclusion: 'SKIPPED' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'READY TO MERGE');
+  });
+
+  await t.test('the required check name is configurable', () => {
+    const payload = pr({ reviews, checks: [{ name: 'ci/custom', conclusion: 'SUCCESS' }] });
+    assert.equal(resolveLifecycle(summarize(payload, comparison, 'ci/custom')).state, 'READY TO MERGE');
+    assert.equal(resolveLifecycle(summarize(payload, comparison, 'gate')).state, 'AWAITING');
+  });
+});
+
+test('terminal pull-request states (REV-006)', async (t) => {
+  const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+  const comparison = { aheadBy: 1, behindBy: 0 };
+
+  await t.test('a merged PR reports a terminal state, not an open-PR lifecycle', () => {
+    const resolved = resolveLifecycle(summarize(pr({ reviews, state: 'MERGED' }), comparison));
+    assert.equal(resolved.state, 'MERGED');
+    assert.equal(resolved.terminal, true);
+  });
+
+  await t.test('a closed PR reports a terminal state', () => {
+    const resolved = resolveLifecycle(summarize(pr({ reviews, state: 'CLOSED' }), comparison));
+    assert.equal(resolved.state, 'CLOSED');
+    assert.equal(resolved.terminal, true);
+  });
+
+  await t.test('a draft-to-ready transition produces a watch signal', () => {
+    const draft = stateLines(summarize(pr({ reviews, isDraft: true }), comparison));
+    const ready = stateLines(summarize(pr({ reviews, isDraft: false }), comparison));
+    assert.ok(diff(draft, ready).length > 0, 'readiness change must be observable');
+  });
+
+  await t.test('a merge produces a watch signal', () => {
+    const open = stateLines(summarize(pr({ reviews }), comparison));
+    const merged = stateLines(summarize(pr({ reviews, state: 'MERGED' }), comparison));
+    assert.ok(diff(open, merged).length > 0, 'merge must be observable');
+  });
+
+  await t.test('required-check presence is part of the watched projection', () => {
+    const withGate = stateLines(summarize(pr({ reviews }), comparison));
+    const without = stateLines(summarize(pr({ reviews, checks: [] }), comparison));
+    assert.ok(diff(withGate, without).length > 0, 'required-check absence must be observable');
+  });
+});
+
+test('review-thread truncation (REV-008)', () => {
+  const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+  const payload = pr({ reviews });
+  payload.reviewThreads = { totalCount: 250, nodes: [{ isResolved: true }] };
+  assert.equal(stateOf(payload, { aheadBy: 1, behindBy: 0 }), 'AWAITING');
 });
 
 test('review freshness against the base (REV-001)', async (t) => {

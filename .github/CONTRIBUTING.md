@@ -24,6 +24,8 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | `docs/` | Project documentation |
 | `infra/` | Container and dev-environment infrastructure |
 
+Keep the repository root limited to primary entry points, standard discovery/configuration files, and files whose tools conventionally expect them there. CI, test-support, and security-support files should prefer `.github/` when their paths are explicitly controlled. Do not move conventionally discovered files merely to reduce visual clutter. For example, `.trivyignore` stays at the root because Trivy conventionally discovers it there, while the Gitleaks config can live under `.github/security/` because Arcogine invokes it with an explicit `--config` path.
+
 See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the full module dependency graph and design rationale.
 
 ## Development workflow

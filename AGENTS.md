@@ -57,13 +57,17 @@ authorities.
 Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (such as
 a reviewer's own `REV-NNN` numbering for a single PR's findings), are temporary delivery coordinates.
 They may be used in `docs/planning/`, issues, pull requests, PR descriptions/comments, reviews,
-handoff prompts, and other active delivery context where the coordinate helps sequence or track work.
+branch names, commit messages, handoff prompts, and other active/delivery-history context where the
+coordinate helps sequence or track work — see [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s
+commit message guidance, which this section does not change.
 
-Do not carry those identifiers into durable repository artifacts — this includes not just ADR,
-architecture, product, reference, or development documents, but also code comments, commit messages,
-workflow definitions, and test names introduced alongside the change. When a planned result, a review
-finding's resolution, or other delivery-context outcome is recorded durably, translate it into the
-semantic capability, contract, identity, invariant, or behavior it actually represents rather than
+Do not carry those identifiers into durable semantic naming — content whose meaning is expected to
+outlive the delivery context that produced it. This includes ADR, architecture, product, reference, or
+development documents; code comments; workflow definitions; and test names introduced alongside the
+change. It does not include commit messages or other delivery-history records, which may keep the
+coordinate that was actually used to track the work. When a planned result, a review finding's
+resolution, or other delivery-context outcome is recorded as durable semantic naming, translate it into
+the semantic capability, contract, identity, invariant, or behavior it actually represents rather than
 naming it after the coordinate that tracked it. Working/process material may mention a temporary
 delivery coordinate when the coordinate itself is the subject, but durable semantic claims must remain
 understandable without reconstructing that coordinate after the originating plan, PR, or review is

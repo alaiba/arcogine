@@ -48,6 +48,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | [reviewing.md](development/reviewing.md) | Independent PR review and re-review workflow, severity/disposition, AI-assisted session boundaries, CI language, and durable-knowledge rules |
 | [consistency-review.md](development/consistency-review.md) | Human operating model for recurring repository consistency reviews, finding persistence, baseline discipline, and the trigger for durable review-state storage |
 | [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates, native test commands |
+| [repository-snapshot.md](development/repository-snapshot.md) | Generate the canonical whole-repository Repomix retrieval snapshot |
 | [codex-cloud.md](development/codex-cloud.md) | Observed Codex Cloud environment model, validated workflow, limitations, and recommended bounded-task usage |
 | [CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) | Community standards |
 

@@ -46,12 +46,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Executable coverage for the pure classification function below (docs-only,
+      # known backend/frontend/docker paths, and the unknown-path fail-safe) — a
+      # regex regression here fails this step instead of silently under-running.
       - name: Validate classifier logic
         run: bash .github/scripts/classify-changes.test.sh
 
+      # Ordinary CI runs on fully provisioned runners, so it never exercises
+      # ./arcogine's missing-tool preflight branches. Cover them explicitly
+      # here so a regression in the constrained-environment fail-fast
+      # diagnostics fails loudly instead of only surfacing on a real
+      # constrained host partway through an expensive `--full` run.
       - name: Validate arcogine preflight diagnostics
         run: bash .github/scripts/arcogine-preflight.test.sh
 
+      # The PR lifecycle resolver in infra/dev/pr-watch.mjs decides whether an
+      # implementation-owned transition exists, so a regression there can report a PR
+      # merge-ready when it is not. Run its suite here, in the always-running job the
+      # aggregate gate accounts for, rather than in a path-filtered job that a
+      # docs-only or backend-only change would skip.
       - name: Set up Node for tooling tests
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -72,6 +85,7 @@ jobs:
           elif [ "${{ github.event_name }}" = "push" ]; then
             files=$(git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}" 2>/dev/null || git ls-files)
           else
+            # schedule / workflow_dispatch: treat as "everything relevant" for a full security sweep.
             files=$(git ls-files)
           fi
 
@@ -215,6 +229,9 @@ jobs:
           restore-keys: ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers
+        # ubuntu-latest runners have Chromium system dependencies pre-installed;
+        # --with-deps triggers a large apt install on every run (not cached)
+        # and was causing multi-minute hangs even after the browser cache hit.
         run: npx playwright install chromium
         working-directory: product/interfaces/web
 
@@ -352,6 +369,7 @@ jobs:
 
   security-secrets:
     name: Secret scan
+    # Always runs, even for docs-only changes and non-classification event types.
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -368,6 +386,11 @@ jobs:
       - name: Run Gitleaks
         run: gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
 
+  # Single stable required status check. Branch protection only ever needs to
+  # require this one job. Its needs: list and the expected_to_run map in the
+  # step below (mirroring each conditional job's own if:) must be kept in sync
+  # by hand when jobs are added/removed/reconditioned; the step fails closed
+  # if they drift, rather than silently accepting an unexamined job.
   gate:
     name: gate
     if: always()
@@ -403,6 +426,10 @@ jobs:
           docker = os.environ["DOCKER"] == "true"
           full_sweep = os.environ["EVENT_NAME"] in ("schedule", "workflow_dispatch")
 
+          # Mirrors each conditional job's own `if:` in this workflow. A job whose
+          # surface was selected must not come back skipped — that would mean its
+          # condition and this expectation drifted apart, which is exactly the
+          # silent-skip failure mode this gate exists to catch.
           expected_to_run = {
               "classify": True,
               "java": backend or full_sweep,
@@ -414,6 +441,11 @@ jobs:
               "security-secrets": True,
           }
 
+          # Fail closed if this job's needs: list and the expectation map above
+          # have drifted apart (e.g. a future job added to needs: but forgotten
+          # here). An unlisted job would otherwise return None from .get(), which
+          # is falsy, silently letting it skip unexamined — exactly the
+          # false-green class this gate exists to eliminate.
           needs_keys = set(needs.keys())
           expected_keys = set(expected_to_run.keys())
           if needs_keys != expected_keys:

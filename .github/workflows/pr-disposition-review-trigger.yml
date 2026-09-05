@@ -27,4 +27,10 @@ jobs:
   noop:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "review event recorded for PR #${{ github.event.pull_request.number }}"
+      # A block scalar (|), not a single-line plain value, is required here:
+      # in an unquoted YAML plain scalar, " #" (space then hash) starts a
+      # YAML comment and silently truncates everything after it -- which is
+      # exactly what "PR #${{ ... }}" would trigger on a single `run: echo
+      # "..."` line, breaking the shell string before its closing quote.
+      - run: |
+          echo "review event recorded for PR #${{ github.event.pull_request.number }}"

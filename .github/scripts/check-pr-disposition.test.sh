@@ -232,25 +232,25 @@ test_case \
   "Reviewed head: $CURRENT
 Disposition: **APPROVED**"
 
-# 18. REV-001 regression: a controlling current-head disposition followed by
+# 18. Review-ingestion regression: a controlling current-head disposition followed by
 #     a later, unrelated review with no disposition must still authorize
 #     merge. This is the exact production-shaped scenario where naive
 #     object-boundary text splitting (rather than a decode that needs no
 #     re-parsing at all) previously hid the earlier disposition.
 test_case \
-  "REV-001: controlling disposition survives a later unrelated review -> PASS" \
+  "review-ingestion: controlling disposition survives a later unrelated review -> PASS" \
   0 \
   "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**" \
   "unrelated later comment with no disposition"
 
-# 19. REV-009 regression: "Reviewed head:" must be anchored to the start of
+# 19. Canonical-block anchoring regression: "Reviewed head:" must be anchored to the start of
 #     its own line. A body where the marker is preceded by other text on the
 #     same line is not a canonical block, even though the two-line shape
 #     otherwise matches.
 test_case \
-  "REV-009: Reviewed head: not anchored to line start -> FAIL" \
+  "canonical-block anchoring: Reviewed head: not anchored to line start -> FAIL" \
   1 \
   "$CURRENT" \
   "Example Reviewed head: $CURRENT
@@ -270,47 +270,47 @@ Disposition: **READY TO MERGE**" \
   "later unrelated comment" \
   "another later unrelated comment"
 
-# 21. REV-009 (second pass): indented "Reviewed head:" reads as a Markdown
+# 21. Canonical-block anchoring (second pass): indented "Reviewed head:" reads as a Markdown
 #     code block, not the live canonical block, and must not match. Bash's
 #     [[:space:]] class matches newline as well as horizontal whitespace, so
 #     an earlier fix that tolerated leading [[:space:]]* before "Reviewed"
 #     accidentally tolerated leading indentation too.
 test_case \
-  "REV-009: indented Reviewed head: (code-block formatting) -> FAIL" \
+  "canonical-block anchoring: indented Reviewed head: (code-block formatting) -> FAIL" \
   1 \
   "$CURRENT" \
   "Example:
     Reviewed head: $CURRENT
     Disposition: **READY TO MERGE**"
 
-# 22. REV-009 (second pass): a blank line between "Reviewed head:" and
+# 22. Canonical-block anchoring (second pass): a blank line between "Reviewed head:" and
 #     "Disposition:" violates the documented strict-adjacency requirement and
 #     must not match, even though both lines are otherwise well-formed.
 test_case \
-  "REV-009: blank line between the two canonical lines -> FAIL" \
+  "canonical-block anchoring: blank line between the two canonical lines -> FAIL" \
   1 \
   "$CURRENT" \
   "Reviewed head: $CURRENT
 
 Disposition: **READY TO MERGE**"
 
-# 23. REV-009 (third pass): a bracket expression like [\ \t] does not mean
+# 23. Canonical-block whitespace parsing (third pass): a bracket expression like [\ \t] does not mean
 #     "space or tab" -- inside [...], backslash is an ordinary literal
 #     character in POSIX bracket expressions, so that construct actually
 #     matched a literal backslash, a literal space, or a literal letter "t".
 #     A malformed token using literal "t" in place of real whitespace must
 #     not be accepted as canonical.
 test_case \
-  "REV-009: literal letter t must not substitute for whitespace (word boundary) -> FAIL" \
+  "canonical-block whitespace parsing: literal letter t must not substitute for whitespace (word boundary) -> FAIL" \
   1 \
   "$CURRENT" \
   "Reviewedthead:${CURRENT}
 Disposition: **READY TO MERGE**"
 
-# 24. REV-009 (third pass): the same malformed-token defect around "head:"
+# 24. Canonical-block whitespace parsing (third pass): the same malformed-token defect around "head:"
 #     and the disposition markers.
 test_case \
-  "REV-009: literal letter t must not substitute for whitespace (head/value) -> FAIL" \
+  "canonical-block whitespace parsing: literal letter t must not substitute for whitespace (head/value) -> FAIL" \
   1 \
   "$CURRENT" \
   "Reviewed head:t${CURRENT}

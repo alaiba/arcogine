@@ -52,18 +52,24 @@ Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable
 authorities.
 
-## Planning coordinates and durable documentation
+## Temporary delivery coordinates and durable documentation
 
-Initiative-local stage, gate, and slice identifiers are delivery coordinates. They may be used in
-`docs/planning/`, issues, pull requests, handoff prompts, and other active delivery context where the
-coordinate helps sequence work.
+Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (such as
+a reviewer's own `REV-NNN` numbering for a single PR's findings), are temporary delivery coordinates.
+They may be used in `docs/planning/`, issues, pull requests, PR descriptions/comments, reviews,
+handoff prompts, and other active delivery context where the coordinate helps sequence or track work.
 
-Do not carry those identifiers into durable documentation. When a planned result is recorded in an
-ADR, architecture, product, reference, or development document, translate it into the semantic
-capability, contract, identity, invariant, or behavior it actually represents. Working/process
-material may mention a planning coordinate when the coordinate itself is the subject, but durable
-semantic claims must remain understandable after the originating plan is completed, condensed,
-renamed, or removed.
+Do not carry those identifiers into durable repository artifacts — this includes not just ADR,
+architecture, product, reference, or development documents, but also code comments, commit messages,
+workflow definitions, and test names introduced alongside the change. When a planned result, a review
+finding's resolution, or other delivery-context outcome is recorded durably, translate it into the
+semantic capability, contract, identity, invariant, or behavior it actually represents rather than
+naming it after the coordinate that tracked it. Working/process material may mention a temporary
+delivery coordinate when the coordinate itself is the subject, but durable semantic claims must remain
+understandable without reconstructing that coordinate after the originating plan, PR, or review is
+completed, condensed, renamed, or removed. The mechanical planning-coordinate checker is intentionally
+narrow to the patterns it can recognize safely; catching identifier leakage that pattern can't reach
+(such as PR-local finding IDs) is a human review responsibility.
 
 When editing an Accepted or Superseded ADR only to improve durable terminology or legibility, follow
 `docs/architecture/decisions/README.md`: the amendment must be semantics-preserving, explicitly

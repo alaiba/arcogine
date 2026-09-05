@@ -21,24 +21,45 @@ name: PR Disposition
 # this PR's own heads, proving the PR was supplying its own workflow
 # definition.
 #
-# Fixed with two trusted-orchestration triggers, neither of which ever checks
-# out or executes PR-supplied code:
+# Three trusted-orchestration triggers, none of which ever checks out or
+# executes PR-supplied code:
 #   - `pull_request_target` for PR lifecycle events (opened/reopened/
 #     synchronize). GitHub always loads a pull_request_target workflow's
 #     definition from the base branch (main), never from the PR.
 #   - `workflow_run`, chained from the minimal, unprivileged, no-checkout
-#     listener in pr-disposition-review-trigger.yml, for review events.
-#     pull_request_review has no trusted "_target" variant, so the listener
-#     (sourced from the PR, but inert) reacts to the review; workflow_run
-#     (always sourced from main) reacts to the listener's completion and
-#     independently re-derives the PR number, head SHA, and review bodies via
-#     the API -- it never trusts anything the untrusted listener run produced.
+#     listener in pr-disposition-review-trigger.yml, as a fast path for
+#     review events. pull_request_review has no trusted "_target" variant,
+#     so the listener (sourced from the PR, but inert) reacts to the review;
+#     workflow_run (always sourced from main) reacts to the listener's
+#     completion and independently re-derives the PR number, head SHA, and
+#     review bodies via the API -- it never trusts anything the untrusted
+#     listener run produced.
+#   - `schedule`, as a trusted backstop that does NOT depend on the listener
+#     at all. The listener's own `pull_request_review.types` list is itself
+#     PR-editable content (this workflow file lives on the PR branch): a PR
+#     could narrow it to `[submitted]` only, so an initial READY review
+#     mints a green disposition but a later edit to CHANGES REQUIRED, or a
+#     dismissal of that review, produces no listener run and therefore no
+#     re-evaluation -- leaving a stale passing check attached to an
+#     unchanged head. A schedule trigger is always read from the version of
+#     this file on the default branch regardless of any PR, so it re-checks
+#     every open PR against `main` on a fixed interval independent of
+#     whatever event coverage a candidate PR's own listener declares.
 #
-# Neither `pull_request_target` nor `workflow_run` implicitly attaches a
-# check result to the correct PR head SHA the way a `pull_request`-triggered
-# job would, so this workflow explicitly publishes a check run against the
-# resolved head SHA via the Checks API rather than relying on ambient job
-# status.
+# Neither `pull_request_target`, `workflow_run`, nor `schedule` implicitly
+# attaches a check result to the correct PR head SHA the way a
+# `pull_request`-triggered job would, so this workflow explicitly publishes a
+# check run against the resolved head SHA via the Checks API.
+#
+# KNOWN REMAINING LIMITATION (see docs/development/reviewing.md, REV-015):
+# GitHub branch-protection required status checks match by check NAME only,
+# not by which workflow produced them. A separate PR-authored workflow
+# (triggered by an ordinary, untrusted event) could create its own job named
+# "disposition" and satisfy the same required-check name without ever
+# running this evaluator. Closing that gap is a repository-governance
+# decision (e.g. requiring review on changes under `.github/workflows/`),
+# not something this workflow's own code can enforce -- see reviewing.md for
+# the full required-activation checklist.
 on:
   pull_request_target:
     branches: [main]
@@ -46,10 +67,9 @@ on:
   workflow_run:
     workflows: ["PR Disposition Review Trigger"]
     types: [completed]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.workflow_run.id }}
-  cancel-in-progress: true
+  schedule:
+    # Bounded staleness backstop, independent of any PR-controlled trigger.
+    - cron: '*/10 * * * *'
 
 permissions:
   contents: read
@@ -57,34 +77,71 @@ permissions:
   checks: write
 
 jobs:
-  check-disposition:
+  resolve-targets:
     runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.resolve.outputs.targets }}
     steps:
-      - name: Resolve PR number and current head SHA
-        id: pr
+      - name: Resolve PR number(s) to evaluate
+        id: resolve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          if [ "${{ github.event_name }}" = "pull_request_target" ]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-          else
-            # workflow_run: derive the associated PR from its head commit via
-            # the API rather than trusting anything from the untrusted
-            # listener run. This also works for fork PRs, unlike relying on
-            # the workflow_run event's own (sometimes-empty) pull_requests list.
-            RUN_HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-            PR_NUMBER=$(gh api "repos/${{ github.repository }}/commits/$RUN_HEAD_SHA/pulls" --jq '.[0].number')
-          fi
+          case "${{ github.event_name }}" in
+            pull_request_target)
+              TARGETS=$(jq -nc --arg n "${{ github.event.pull_request.number }}" '[{pr_number: $n}]')
+              ;;
+            workflow_run)
+              # Derive the associated PR from the listener run's head commit via
+              # the API rather than trusting anything from the untrusted
+              # listener run. This also works for fork PRs, unlike relying on
+              # the workflow_run event's own (sometimes-empty) pull_requests list.
+              RUN_HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+              PR_NUMBER=$(gh api "repos/${{ github.repository }}/commits/$RUN_HEAD_SHA/pulls" --jq '.[0].number')
+              if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
+                echo "::error::could not resolve an associated pull request for this event"
+                exit 1
+              fi
+              TARGETS=$(jq -nc --arg n "$PR_NUMBER" '[{pr_number: $n}]')
+              ;;
+            schedule)
+              # Trusted backstop: re-evaluate every open PR targeting main,
+              # independent of any PR-controlled event coverage. --repo is
+              # required here: this job has no checkout, so there is no local
+              # git context for gh to auto-detect the repository from.
+              TARGETS=$(gh pr list --repo "${{ github.repository }}" --state open --base main --json number --jq 'map({pr_number: (.number | tostring)})')
+              ;;
+            *)
+              echo "::error::unexpected event: ${{ github.event_name }}"
+              exit 1
+              ;;
+          esac
 
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
-            echo "::error::could not resolve an associated pull request for this event"
-            exit 1
-          fi
+          echo "targets=$(echo "$TARGETS" | jq -c .)" >> "$GITHUB_OUTPUT"
+          echo "Resolved targets: $TARGETS"
 
+  check-disposition:
+    needs: resolve-targets
+    if: needs.resolve-targets.outputs.targets != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.resolve-targets.outputs.targets) }}
+    concurrency:
+      group: pr-disposition-${{ matrix.target.pr_number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve current head SHA
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ matrix.target.pr_number }}"
           HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER" --jq '.head.sha')
-
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
           echo "Resolved PR #$PR_NUMBER, current head: $HEAD_SHA"
@@ -163,9 +220,9 @@ jobs:
             CONCLUSION="failure"
           fi
 
-          # Neither pull_request_target nor workflow_run implicitly attaches
-          # this job's status to the PR head SHA (pull_request_target's
-          # default GITHUB_SHA is the base branch commit; workflow_run has no
+          # None of this workflow's triggers implicitly attach a check result
+          # to the correct PR head SHA (pull_request_target's default
+          # GITHUB_SHA is the base commit; workflow_run and schedule have no
           # commit association at all), so the check is published explicitly
           # against the resolved head SHA via the Checks API.
           gh api "repos/${{ github.repository }}/check-runs" \

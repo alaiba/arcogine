@@ -94,16 +94,33 @@ jobs:
               TARGETS=$(jq -nc --arg n "${{ github.event.pull_request.number }}" '[{pr_number: $n}]')
               ;;
             workflow_run)
-              # Derive the associated PR from the listener run's head commit via
-              # the API rather than trusting anything from the untrusted
-              # listener run. This also works for fork PRs, unlike relying on
-              # the workflow_run event's own (sometimes-empty) pull_requests list.
-              RUN_HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-              PR_NUMBER=$(gh api "repos/${{ github.repository }}/commits/$RUN_HEAD_SHA/pulls" --jq '.[0].number')
-              if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
-                echo "::error::could not resolve an associated pull request for this event"
+              # Resolve the associated PR from the TRUSTED job's own event
+              # context (github.event.workflow_run.pull_requests), computed by
+              # GitHub itself -- not from anything the untrusted listener run
+              # produced. This is the field GitHub docs describe as populated
+              # for same-repository PRs; for a pull_request_review-triggered
+              # listener run specifically, github.event.workflow_run.head_sha
+              # is the ephemeral refs/pull/<n>/merge commit, NOT a real commit
+              # in the PR's own history, so GET /commits/<sha>/pulls (which
+              # only recognizes actual commits) always returns an empty array
+              # for it -- confirmed live, this previously made PR resolution
+              # fail on every single review-triggered run.
+              PR_NUMBER=$(echo '${{ toJson(github.event.workflow_run.pull_requests) }}' | jq -r '.[0].number // empty')
+
+              if [ -z "$PR_NUMBER" ]; then
+                # Fallback for the case GitHub's docs say pull_requests can be
+                # empty (a fork PR): resolve via the run's own head branch name,
+                # which (unlike head_sha) is the PR's real source branch, not
+                # the synthetic merge ref.
+                HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
+                PR_NUMBER=$(gh pr list --repo "${{ github.repository }}" --head "$HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
+              fi
+
+              if [ -z "$PR_NUMBER" ]; then
+                echo "::error::could not resolve an associated pull request for this workflow_run event"
                 exit 1
               fi
+
               TARGETS=$(jq -nc --arg n "$PR_NUMBER" '[{pr_number: $n}]')
               ;;
             schedule)

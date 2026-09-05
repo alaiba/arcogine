@@ -343,7 +343,7 @@ At time of writing, this status check is **not yet required** by the branch prot
 3. Enable "require branches to be up to date before merging" (or an equivalent base-freshness safeguard). The gate binds only to the PR head SHA and is not triggered by a push to `main`, so a base-branch advance after a passing disposition/CI check would otherwise leave a stale authorization mergeable even though the reviewed base-to-head transition is no longer current.
 4. Decide how (or whether) to address the check-name-spoofing limitation described above. This is a residual risk under GitHub's current required-status-check model even after full activation of 1–3, and closing it is a repository-governance decision, not a configuration step this checklist can complete on a maintainer's behalf.
 
-Until all three are true, the workflow existing and passing does not mean the merge invariant is actually enforced.
+Until all four are true, the workflow existing and passing does not mean the merge invariant is actually enforced.
 
 ## Tests as design evidence
 

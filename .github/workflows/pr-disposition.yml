@@ -92,12 +92,26 @@ jobs:
         id: resolve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Untrusted event fields (PR number, workflow_run.pull_requests,
+          # workflow_run.head_branch) are passed as data via environment
+          # variables rather than interpolated directly into the shell
+          # script text. GitHub explicitly documents ref/branch names and
+          # other `github.event.*` fields as attacker-controllable
+          # script-injection vectors when interpolated as `${{ ... }}` into
+          # an inline `run:` block; reading them through `$NAME` here means
+          # their content is never parsed as shell syntax, regardless of
+          # what characters they contain. This job also has no `checks:
+          # write`/no privileged output, but the same pattern is required in
+          # the privileged check-disposition job below.
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_WORKFLOW_RUN_PRS_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
+          EVENT_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           set -euo pipefail
 
           case "${{ github.event_name }}" in
             pull_request_target)
-              TARGETS=$(jq -nc --arg n "${{ github.event.pull_request.number }}" '[{pr_number: $n}]')
+              TARGETS=$(jq -nc --arg n "$EVENT_PR_NUMBER" '[{pr_number: $n}]')
               ;;
             workflow_run)
               # Resolve the associated PR from the TRUSTED job's own event
@@ -111,15 +125,18 @@ jobs:
               # only recognizes actual commits) always returns an empty array
               # for it -- confirmed live, this previously made PR resolution
               # fail on every single review-triggered run.
-              PR_NUMBER=$(echo '${{ toJson(github.event.workflow_run.pull_requests) }}' | jq -r '.[0].number // empty')
+              PR_NUMBER=$(echo "$EVENT_WORKFLOW_RUN_PRS_JSON" | jq -r '.[0].number // empty')
 
               if [ -z "$PR_NUMBER" ]; then
                 # Fallback for the case GitHub's docs say pull_requests can be
                 # empty (a fork PR): resolve via the run's own head branch name,
                 # which (unlike head_sha) is the PR's real source branch, not
-                # the synthetic merge ref.
-                HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
-                PR_NUMBER=$(gh pr list --repo "${{ github.repository }}" --head "$HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
+                # the synthetic merge ref. Read as data ($EVENT_HEAD_BRANCH),
+                # never interpolated into the script text -- a branch name is
+                # attacker-controlled content and GitHub's script-injection
+                # guidance gives a concrete example of one breaking out of
+                # this exact `NAME="${{ ... }}"` shell-assignment style.
+                PR_NUMBER=$(gh pr list --repo "${{ github.repository }}" --head "$EVENT_HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
               fi
 
               if [ -z "$PR_NUMBER" ]; then
@@ -161,9 +178,21 @@ jobs:
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Read as data, not interpolated into the script text -- see the
+          # resolve-targets job above for why. matrix.target.pr_number is
+          # always produced upstream by jq/gh from an actual numeric PR
+          # number, but this job holds `checks: write`, so its inputs are
+          # validated as numeric here rather than trusted by construction.
+          TARGET_PR_NUMBER: ${{ matrix.target.pr_number }}
         run: |
           set -euo pipefail
-          PR_NUMBER="${{ matrix.target.pr_number }}"
+          PR_NUMBER="$TARGET_PR_NUMBER"
+          case "$PR_NUMBER" in
+            ''|*[!0-9]*)
+              echo "::error::resolved PR number is not numeric: $PR_NUMBER" >&2
+              exit 1
+              ;;
+          esac
           HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER" --jq '.head.sha')
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"

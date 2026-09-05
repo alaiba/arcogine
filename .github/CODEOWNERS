@@ -11,4 +11,14 @@
 # review from Code Owners" on the branch protection ruleset for `main`
 # (see docs/development/reviewing.md's PR disposition merge gate
 # activation checklist) -- CODEOWNERS alone does not enforce anything.
+#
+# This file also owns itself (and the rest of .github/), per GitHub's own
+# guidance that protecting a repository fully against unauthorized changes
+# requires defining an owner for CODEOWNERS in addition to the paths it
+# protects: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Without this, a PR could narrow or remove the /.github/workflows/ rule
+# below in one change, then narrow the listener's trigger coverage or spoof
+# the disposition check name in a later, no-longer-covered change.
+/.github/ @alaiba
+
 /.github/workflows/ @alaiba

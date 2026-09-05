@@ -41,25 +41,31 @@ name: PR Disposition
 #     mints a green disposition but a later edit to CHANGES REQUIRED, or a
 #     dismissal of that review, produces no listener run and therefore no
 #     re-evaluation -- leaving a stale passing check attached to an
-#     unchanged head. A schedule trigger is always read from the version of
-#     this file on the default branch regardless of any PR, so it re-checks
-#     every open PR against `main` on a fixed interval independent of
-#     whatever event coverage a candidate PR's own listener declares.
+#     unchanged head. `.github/CODEOWNERS` requires an independent owner to
+#     review any change under `.github/workflows/`, including that
+#     narrowing, before it can merge (see reviewing.md, REV-002) -- once the
+#     ruleset enforces it, this closes the candidate-controlled part of the
+#     gap; the schedule sweep is always read from the version of this file
+#     on the default branch regardless of any PR, and remains as
+#     defense-in-depth, re-checking every open PR against `main` on a fixed
+#     interval independent of whatever event coverage a candidate PR's own
+#     listener declares.
 #
 # Neither `pull_request_target`, `workflow_run`, nor `schedule` implicitly
 # attaches a check result to the correct PR head SHA the way a
 # `pull_request`-triggered job would, so this workflow explicitly publishes a
 # check run against the resolved head SHA via the Checks API.
 #
-# KNOWN REMAINING LIMITATION (see docs/development/reviewing.md, REV-015):
+# CHECK-NAME PROVENANCE (see docs/development/reviewing.md, REV-015):
 # GitHub branch-protection required status checks match by check NAME only,
 # not by which workflow produced them. A separate PR-authored workflow
 # (triggered by an ordinary, untrusted event) could create its own job named
 # "disposition" and satisfy the same required-check name without ever
-# running this evaluator. Closing that gap is a repository-governance
-# decision (e.g. requiring review on changes under `.github/workflows/`),
-# not something this workflow's own code can enforce -- see reviewing.md for
-# the full required-activation checklist.
+# running this evaluator. The same `.github/CODEOWNERS` entry mitigates
+# this: authoring such a workflow is itself a change under
+# `.github/workflows/`, so it requires an owner's independent review and
+# approval first -- see reviewing.md for the full required-activation
+# checklist, including enabling "Require review from Code Owners".
 on:
   pull_request_target:
     branches: [main]

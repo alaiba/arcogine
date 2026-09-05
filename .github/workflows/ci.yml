@@ -60,6 +60,12 @@ jobs:
       - name: Validate arcogine preflight diagnostics
         run: bash .github/scripts/arcogine-preflight.test.sh
 
+      # ensure_env seeds root .env from the relocated infra/docker/.env.example
+      # template. Cover its create/preserve/no-stale-path invariants here so a
+      # regression is caught without depending on Docker actually running.
+      - name: Validate arcogine env template handling
+        run: bash .github/scripts/arcogine-env.test.sh
+
       # The PR lifecycle resolver in infra/dev/pr-watch.mjs decides whether an
       # implementation-owned transition exists, so a regression there can report a PR
       # merge-ready when it is not. Run its suite here, in the always-running job the

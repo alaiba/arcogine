@@ -47,19 +47,31 @@ fi
 # Extract the canonical disposition block from a review body, if present.
 # Canonical format (strict: exactly these two lines, adjacent, at the end of
 # the body, with "Reviewed head:" anchored to the start of its own line --
-# no content between the lines, no content after, no content before
-# "Reviewed" on its line):
+# no content between the lines, no blank line between the lines, no
+# indentation before "Reviewed" (which would read as a Markdown code block),
+# and no content after the disposition line):
 #   Reviewed head: <SHA>
 #   Disposition: **VALUE**
 # Prints "head_sha disposition" if found, else nothing.
+#
+# [:space:] deliberately does NOT appear in the line-start/adjacency portions
+# of this pattern: in Bash's regex engine it matches newline as well as
+# horizontal whitespace, so using it there would let a blank line between the
+# two canonical lines, or Markdown-code-block indentation before "Reviewed",
+# both match as if they were the strict adjacent block. Only [ \t] (space and
+# tab, no newline) is used for intentionally-tolerated in-line whitespace;
+# the line break between the two lines is a single literal newline with
+# nothing else permitted around it.
 extract_canonical_disposition() {
   local body="$1"
 
   # Group 1 is the (start-of-string | newline) anchor; group 2 is the head
-  # SHA; group 3 is the disposition value. Anchoring group 1 immediately
-  # before optional leading whitespace and "Reviewed" rejects a body like
-  # "Example Reviewed head: <sha>" where the marker does not begin its line.
-  if [[ "$body" =~ (^|$'\n')[[:space:]]*Reviewed[[:space:]]+head:[[:space:]]*([a-f0-9]+)[[:space:]]*$'\n'[[:space:]]*Disposition:[[:space:]]*\*\*([A-Z][A-Z_[:space:]-]*)\*\*[[:space:]]*$ ]]; then
+  # SHA; group 3 is the disposition value. "Reviewed" must immediately follow
+  # that anchor with no leading whitespace of any kind, so a body like
+  # "Example Reviewed head: <sha>" (same-line prefix) or "    Reviewed head:
+  # <sha>" (code-block indentation) does not match. The exactly-one-newline
+  # between the SHA and "Disposition:" rejects a blank line between them.
+  if [[ "$body" =~ (^|$'\n')Reviewed[\ \t]+head:[\ \t]*([a-f0-9]+)[\ \t]*$'\n'Disposition:[\ \t]*\*\*([A-Z][A-Z\ _-]*)\*\*[[:space:]]*$ ]]; then
     echo "${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
   fi
 }

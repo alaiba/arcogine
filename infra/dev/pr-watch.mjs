@@ -47,10 +47,12 @@ const DEFAULT_REQUIRED_CHECK = 'gate';
 /**
  * Disposition vocabulary owned by .github/agents/pr-reviewer.agent.md. Exactly two
  * values: READY TO MERGE authorizes merge of the exact reviewed head; CHANGES REQUIRED
- * blocks it. CI is not a reviewer disposition -- required validation is enforced
- * independently via requiredCheck, never folded into this vocabulary. A review that is
- * otherwise clean while CI is still pending simply carries no disposition yet (or an
- * older head's), which resolves to AWAITING below, not a dedicated CI-pending verdict.
+ * blocks it. CI is not a reviewer disposition and review authorization is independent of
+ * it -- a current-head review may already be READY TO MERGE while CI is still pending.
+ * required validation is enforced independently via requiredCheck below: AWAITING below
+ * covers both "no current-head disposition yet" and "disposition is READY but the
+ * independent CI condition is not yet green", without needing a second review solely
+ * because CI transitions from pending to green.
  */
 const DISPOSITIONS = ['READY TO MERGE', 'CHANGES REQUIRED'];
 

@@ -87,7 +87,7 @@ ones created via an explicit user request.
 
 Resolve a PR's lifecycle state from its current head and metadata, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
 
-- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for initial review, re-review, or for required CI to finish once review is otherwise clean. A review that is clean while CI is still pending does not get a special disposition of its own — it simply has no current-head `READY TO MERGE` yet, which is `AWAITING`.
+- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for initial review, re-review, or for required CI to finish. A current-head review may already be `READY TO MERGE` while CI is still pending — review authorization is independent of CI — but the lifecycle stays `AWAITING` until CI also turns green; no second review is needed solely because CI changed from pending to green with the reviewed head/base unchanged.
 - **CHANGES REQUIRED** — an implementation-owned blocker remains, such as a valid blocking review finding, failed required CI, or a merge conflict. Remediate it, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
 - **READY TO MERGE** — the latest applicable reviewer disposition for the current PR head is `READY TO MERGE`, required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
 

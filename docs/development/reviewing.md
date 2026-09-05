@@ -332,7 +332,13 @@ The repository enforces the canonical disposition format via `.github/workflows/
 
 The gate does not evaluate CI, mergeability, or unresolved threads — only the current-head disposition. Required CI is enforced independently by GitHub branch protection alongside this check. Only `READY TO MERGE` for the exact current PR head produces a passing check.
 
-At time of writing, this status check is **not yet required** by the branch protection ruleset on `main` — see the check's own workflow file for the exact context name to add. Enforcement activates only once a maintainer adds it to the ruleset.
+At time of writing, this status check is **not yet required** by the branch protection ruleset on `main` — see the check's own workflow file for the exact context name to add. This bootstrap PR does not need to activate the rule before merging. Enforcement activates only once a maintainer completes all of the following, not merely adding the status name:
+
+1. Add the exact check-run context (see the workflow file) to the ruleset's required status checks.
+2. Ensure the identity available to coding agents cannot bypass the required disposition and CI checks. A ruleset actor with a "for pull requests only" bypass can still choose to bypass at merge time; if Arcogine's agents operate through that same identity, adding a required check does not constrain them. A separate human-only emergency bypass is acceptable as long as agents cannot exercise it.
+3. Enable "require branches to be up to date before merging" (or an equivalent base-freshness safeguard). The gate binds only to the PR head SHA and is not triggered by a push to `main`, so a base-branch advance after a passing disposition/CI check would otherwise leave a stale authorization mergeable even though the reviewed base-to-head transition is no longer current.
+
+Until all three are true, the workflow existing and passing does not mean the merge invariant is actually enforced.
 
 ## Tests as design evidence
 

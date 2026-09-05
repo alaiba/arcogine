@@ -270,6 +270,30 @@ Disposition: **READY TO MERGE**" \
   "later unrelated comment" \
   "another later unrelated comment"
 
+# 21. REV-009 (second pass): indented "Reviewed head:" reads as a Markdown
+#     code block, not the live canonical block, and must not match. Bash's
+#     [[:space:]] class matches newline as well as horizontal whitespace, so
+#     an earlier fix that tolerated leading [[:space:]]* before "Reviewed"
+#     accidentally tolerated leading indentation too.
+test_case \
+  "REV-009: indented Reviewed head: (code-block formatting) -> FAIL" \
+  1 \
+  "$CURRENT" \
+  "Example:
+    Reviewed head: $CURRENT
+    Disposition: **READY TO MERGE**"
+
+# 22. REV-009 (second pass): a blank line between "Reviewed head:" and
+#     "Disposition:" violates the documented strict-adjacency requirement and
+#     must not match, even though both lines are otherwise well-formed.
+test_case \
+  "REV-009: blank line between the two canonical lines -> FAIL" \
+  1 \
+  "$CURRENT" \
+  "Reviewed head: $CURRENT
+
+Disposition: **READY TO MERGE**"
+
 # Summary
 echo ""
 echo "Test Results: $pass_count/$test_count passed"

@@ -7,56 +7,87 @@ name: PR Disposition
 # does not evaluate CI, mergeability, or unresolved threads — those remain
 # independently enforced by GitHub branch protection and infra/dev/pr-watch.mjs.
 #
-# NOTE: This workflow runs on every qualifying PR event and produces the
-# "disposition" status check (the exact check-run name; branch-protection
-# required contexts use the check-run name, e.g. "gate", not a
-# workflow-qualified label). That check is NOT currently required by the
-# branch protection ruleset on main. Full activation additionally requires
-# (see docs/development/reviewing.md's "PR disposition merge gate" section):
-#   1. adding this exact check-run context to the ruleset's required checks;
-#   2. ensuring the identity available to coding agents cannot bypass the
-#      required checks at merge time (a PR-only bypass actor can);
-#   3. enabling "require branches to be up to date before merging" (or an
-#      equivalent base-freshness safeguard), since this gate binds only to
-#      the PR head SHA and does not itself detect a base-branch advance.
-# Until all three are true, this workflow existing and passing does not mean
-# the merge invariant is actually enforced.
+# TRUST BOUNDARY (this is why the triggers below look unusual):
 #
-# Trigger when PR state or reviews change.
+# A candidate PR must not be able to author the code that judges its own
+# disposition. Checking out the evaluator script from a trusted `main` ref is
+# not sufficient on its own: GitHub sources a `pull_request` or
+# `pull_request_review` triggered workflow's *definition* from the pull
+# request's own merge commit, not from `main`. A PR could therefore edit this
+# very file to skip the evaluator and fabricate a passing result. This is not
+# hypothetical -- it was caught live on this branch: `main` did not yet
+# contain this file at all, yet earlier revisions of this workflow (under
+# `pull_request`/`pull_request_review` triggers) were already executing on
+# this PR's own heads, proving the PR was supplying its own workflow
+# definition.
+#
+# Fixed with two trusted-orchestration triggers, neither of which ever checks
+# out or executes PR-supplied code:
+#   - `pull_request_target` for PR lifecycle events (opened/reopened/
+#     synchronize). GitHub always loads a pull_request_target workflow's
+#     definition from the base branch (main), never from the PR.
+#   - `workflow_run`, chained from the minimal, unprivileged, no-checkout
+#     listener in pr-disposition-review-trigger.yml, for review events.
+#     pull_request_review has no trusted "_target" variant, so the listener
+#     (sourced from the PR, but inert) reacts to the review; workflow_run
+#     (always sourced from main) reacts to the listener's completion and
+#     independently re-derives the PR number, head SHA, and review bodies via
+#     the API -- it never trusts anything the untrusted listener run produced.
+#
+# Neither `pull_request_target` nor `workflow_run` implicitly attaches a
+# check result to the correct PR head SHA the way a `pull_request`-triggered
+# job would, so this workflow explicitly publishes a check run against the
+# resolved head SHA via the Checks API rather than relying on ambient job
+# status.
 on:
-  pull_request:
+  pull_request_target:
     branches: [main]
     types: [opened, reopened, synchronize]
-  pull_request_review:
-    branches: [main]
-    types: [submitted, edited, dismissed]
+  workflow_run:
+    workflows: ["PR Disposition Review Trigger"]
+    types: [completed]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.workflow_run.id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
   pull-requests: read
+  checks: write
 
 jobs:
   check-disposition:
-    name: disposition
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch current PR head SHA
-        id: head
+      - name: Resolve PR number and current head SHA
+        id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          PR_NUMBER="${{ github.event.pull_request.number }}"
 
-          HEAD_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER \
-            --jq '.head.sha')
+          if [ "${{ github.event_name }}" = "pull_request_target" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          else
+            # workflow_run: derive the associated PR from its head commit via
+            # the API rather than trusting anything from the untrusted
+            # listener run. This also works for fork PRs, unlike relying on
+            # the workflow_run event's own (sometimes-empty) pull_requests list.
+            RUN_HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+            PR_NUMBER=$(gh api "repos/${{ github.repository }}/commits/$RUN_HEAD_SHA/pulls" --jq '.[0].number')
+          fi
 
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
+            echo "::error::could not resolve an associated pull request for this event"
+            exit 1
+          fi
+
+          HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER" --jq '.head.sha')
+
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-          echo "Current PR head: $HEAD_SHA"
+          echo "Resolved PR #$PR_NUMBER, current head: $HEAD_SHA"
 
       - name: Fetch authoritative review bodies with pagination
         id: reviews
@@ -64,7 +95,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_NUMBER="${{ steps.pr.outputs.pr_number }}"
 
           # Fetch all reviews (paginated). `gh api` rejects --slurp combined
           # with --jq in one invocation, so --slurp collects the raw page
@@ -76,17 +107,12 @@ jobs:
           #     This repository is public: any user with read access can
           #     submit a review, so an unfiltered pass-through would let an
           #     unrelated external account mint a canonical READY TO MERGE
-          #     block and satisfy the gate. Only accounts GitHub itself
-          #     reports as having repository authority may author an
-          #     authoritative disposition.
+          #     block and satisfy the gate.
           #  3. Each surviving body is base64-encoded and emitted one per
-          #     line. This is the complete normalized input the evaluator
-          #     needs — a plain newline-separated list of opaque strings,
-          #     not a JSON array. It needs no JSON re-parsing or ad-hoc
-          #     object-boundary splitting downstream, so a review body's own
-          #     content (quotes, braces, embedded JSON-looking text) can
-          #     never be misread as a structural delimiter.
-          BODIES=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews \
+          #     line -- a plain newline-separated list of opaque strings, not
+          #     a JSON array, so the evaluator needs no JSON re-parsing or
+          #     ad-hoc object-boundary splitting.
+          BODIES=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews" \
             --paginate \
             --slurp \
             | jq -r '
@@ -107,14 +133,44 @@ jobs:
 
       - name: Checkout repository at main (trusted base)
         # A candidate PR must not be able to modify the evaluator used to
-        # authorize itself, so the evaluator always runs from main, never from
-        # the PR's own (possibly attacker-controlled) checkout.
+        # authorize itself, so the evaluator always runs from main, never
+        # from the PR's own (possibly attacker-controlled) checkout. No
+        # PR-supplied ref is ever checked out or executed by this workflow.
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
 
       - name: Run disposition check
+        id: evaluate
         env:
-          PR_HEAD_SHA: ${{ steps.head.outputs.head_sha }}
+          PR_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           REVIEW_BODIES_B64: ${{ steps.reviews.outputs.review_bodies_b64 }}
-        run: bash .github/scripts/check-pr-disposition.sh
+        run: |
+          set +e
+          bash .github/scripts/check-pr-disposition.sh
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Publish disposition check
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ "${{ steps.evaluate.outputs.exit_code }}" = "0" ]; then
+            CONCLUSION="success"
+          else
+            CONCLUSION="failure"
+          fi
+
+          # Neither pull_request_target nor workflow_run implicitly attaches
+          # this job's status to the PR head SHA (pull_request_target's
+          # default GITHUB_SHA is the base branch commit; workflow_run has no
+          # commit association at all), so the check is published explicitly
+          # against the resolved head SHA via the Checks API.
+          gh api "repos/${{ github.repository }}/check-runs" \
+            -f name="disposition" \
+            -f head_sha="${{ steps.pr.outputs.head_sha }}" \
+            -f status="completed" \
+            -f conclusion="$CONCLUSION" \
+            --silent

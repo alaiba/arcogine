@@ -58,10 +58,16 @@ fi
 # of this pattern: in Bash's regex engine it matches newline as well as
 # horizontal whitespace, so using it there would let a blank line between the
 # two canonical lines, or Markdown-code-block indentation before "Reviewed",
-# both match as if they were the strict adjacent block. Only [ \t] (space and
-# tab, no newline) is used for intentionally-tolerated in-line whitespace;
-# the line break between the two lines is a single literal newline with
-# nothing else permitted around it.
+# both match as if they were the strict adjacent block. [[:blank:]] (the
+# POSIX class for space and tab, and nothing else -- notably NOT newline) is
+# used for intentionally-tolerated in-line whitespace instead. A bracket
+# expression like [\ \t] does NOT mean "space or tab": inside [...], a
+# backslash is an ordinary literal character in POSIX bracket expressions, so
+# that construct actually matches a literal backslash, a literal space, or a
+# literal letter "t" -- meaning the token "Reviewedthead" would wrongly parse
+# as "Reviewed<tab>head". [[:blank:]] has no such trap. The line break
+# between the two canonical lines is a single literal newline with nothing
+# else permitted around it.
 extract_canonical_disposition() {
   local body="$1"
 
@@ -71,7 +77,7 @@ extract_canonical_disposition() {
   # "Example Reviewed head: <sha>" (same-line prefix) or "    Reviewed head:
   # <sha>" (code-block indentation) does not match. The exactly-one-newline
   # between the SHA and "Disposition:" rejects a blank line between them.
-  if [[ "$body" =~ (^|$'\n')Reviewed[\ \t]+head:[\ \t]*([a-f0-9]+)[\ \t]*$'\n'Disposition:[\ \t]*\*\*([A-Z][A-Z\ _-]*)\*\*[[:space:]]*$ ]]; then
+  if [[ "$body" =~ (^|$'\n')Reviewed[[:blank:]]+head:[[:blank:]]*([a-f0-9]+)[[:blank:]]*$'\n'Disposition:[[:blank:]]*\*\*([A-Z][A-Z _-]*)\*\*[[:space:]]*$ ]]; then
     echo "${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
   fi
 }

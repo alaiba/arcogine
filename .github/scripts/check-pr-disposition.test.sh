@@ -294,6 +294,28 @@ test_case \
 
 Disposition: **READY TO MERGE**"
 
+# 23. REV-009 (third pass): a bracket expression like [\ \t] does not mean
+#     "space or tab" -- inside [...], backslash is an ordinary literal
+#     character in POSIX bracket expressions, so that construct actually
+#     matched a literal backslash, a literal space, or a literal letter "t".
+#     A malformed token using literal "t" in place of real whitespace must
+#     not be accepted as canonical.
+test_case \
+  "REV-009: literal letter t must not substitute for whitespace (word boundary) -> FAIL" \
+  1 \
+  "$CURRENT" \
+  "Reviewedthead:${CURRENT}
+Disposition: **READY TO MERGE**"
+
+# 24. REV-009 (third pass): the same malformed-token defect around "head:"
+#     and the disposition markers.
+test_case \
+  "REV-009: literal letter t must not substitute for whitespace (head/value) -> FAIL" \
+  1 \
+  "$CURRENT" \
+  "Reviewed head:t${CURRENT}
+Disposition:t**READY TO MERGE**"
+
 # Summary
 echo ""
 echo "Test Results: $pass_count/$test_count passed"

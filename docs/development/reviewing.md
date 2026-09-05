@@ -319,12 +319,12 @@ where the disposition value is `READY TO MERGE` or `CHANGES REQUIRED` (in `**...
 
 ### PR disposition merge gate
 
-The repository enforces the canonical disposition format via `.github/workflows/pr-disposition.yml`, which:
+The repository enforces the canonical disposition format via `.github/workflows/pr-disposition.yml` plus a minimal companion listener, `.github/workflows/pr-disposition-review-trigger.yml`, which together:
 
-- Runs on PR open, commit push (`synchronize`), and review submission/edit/dismissal
-- Fetches the current PR head SHA and every review authored by a trusted repository authority (`author_association` of `OWNER`, `MEMBER`, or `COLLABORATOR`) across all pages, since this is a public repository and an unfiltered pass-through would let any unrelated external account mint a canonical disposition
-- Evaluates whether the latest applicable review for the current head contains a canonical `READY TO MERGE` disposition
-- Fails closed if:
+- React to PR open, commit push (`synchronize`), and review submission/edit/dismissal
+- Fetch the current PR head SHA and every review authored by a trusted repository authority (`author_association` of `OWNER`, `MEMBER`, or `COLLABORATOR`) across all pages, since this is a public repository and an unfiltered pass-through would let any unrelated external account mint a canonical disposition
+- Evaluate whether the latest applicable review for the current head contains a canonical `READY TO MERGE` disposition
+- Fail closed if:
   - No disposition exists for the current head
   - The latest disposition is `CHANGES REQUIRED`
   - The disposition is malformed or uses an unsupported value (including retired legacy values such as `READY AFTER CI` or `NON-BLOCKING FOLLOW-UPS ONLY`)
@@ -332,7 +332,9 @@ The repository enforces the canonical disposition format via `.github/workflows/
 
 The gate does not evaluate CI, mergeability, or unresolved threads — only the current-head disposition. Required CI is enforced independently by GitHub branch protection alongside this check. Only `READY TO MERGE` for the exact current PR head produces a passing check.
 
-At time of writing, this status check is **not yet required** by the branch protection ruleset on `main` — see the check's own workflow file for the exact context name to add. This bootstrap PR does not need to activate the rule before merging. Enforcement activates only once a maintainer completes all of the following, not merely adding the status name:
+**Trust boundary:** a candidate PR must not be able to author the code that judges its own disposition. Checking out the evaluator from trusted `main` is not sufficient by itself, because GitHub sources an ordinary `pull_request`/`pull_request_review`-triggered workflow's *definition* from the PR's own merge commit, not from `main` — a PR could edit the workflow file itself to fabricate a passing result. `pr-disposition.yml` therefore triggers on `pull_request_target` (always sourced from `main`) for PR lifecycle events, and on `workflow_run` (also always sourced from `main`) chained from the deliberately inert, unprivileged `pr-disposition-review-trigger.yml` listener for review events, which has no trusted `_target` variant of its own. Neither trigger ever checks out or executes PR-supplied code; both re-derive the PR number, head SHA, and review bodies independently via the API and publish the check result explicitly against the resolved head SHA via the Checks API.
+
+At time of writing, this status check is **not yet required** by the branch protection ruleset on `main` — see the check's own workflow file for the exact context name to add. This bootstrap PR does not need to activate the rule before merging. Because both workflow files must exist on `main` for `pull_request_target`/`workflow_run` to fire at all, no `disposition` check runs on this bootstrap PR's own head — this is expected, not a defect, and is a stronger form of the same bootstrap boundary as the evaluator script itself. The gate becomes active for the first time on the first PR opened after this one merges. Enforcement activates only once a maintainer completes all of the following, not merely adding the status name:
 
 1. Add the exact check-run context (see the workflow file) to the ruleset's required status checks.
 2. Ensure the identity available to coding agents cannot bypass the required disposition and CI checks. A ruleset actor with a "for pull requests only" bypass can still choose to bypass at merge time; if Arcogine's agents operate through that same identity, adding a required check does not constrain them. A separate human-only emergency bypass is acceptable as long as agents cannot exercise it.

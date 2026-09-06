@@ -113,6 +113,7 @@ def scanned_markdown_paths(paths: list[str]) -> list[str]:
             MODULE.DURABLE_MARKDOWN_FILES = (
                 MODULE.ROOT / "README.md",
                 MODULE.ROOT / "docs" / "README.md",
+                MODULE.ROOT / "product" / "interfaces" / "web" / "README.md",
             )
             MODULE.DURABLE_MARKDOWN_DIRS = tuple(
                 MODULE.ROOT / path
@@ -205,6 +206,7 @@ def test_scan_scope_includes_durable_reader_facing_surfaces_only() -> None:
         ".github/agents/reviewer.md",
         "AGENTS.md",
         "product/module/README.md",
+        "product/interfaces/web/README.md",
     ]
     assert scanned_markdown_paths(paths) == [
         "README.md",
@@ -213,6 +215,7 @@ def test_scan_scope_includes_durable_reader_facing_surfaces_only() -> None:
         "docs/examples/d.md",
         "docs/product/b.md",
         "docs/reference/c.md",
+        "product/interfaces/web/README.md",
     ]
 
 

@@ -13,11 +13,13 @@ This mechanical check is a syntactic baseline, not proof of semantic self-contai
 two tiers of pattern, deliberately scoped by collision risk:
 
 - BROAD patterns (`REV-123`, `Gate 4`/`Gate4...`, `DH-E`) are unambiguous enough to flag across
-  every Markdown file under `docs/` outside `docs/planning/` (plus the root/`docs/` READMEs),
-  Java/Javadoc comments, JS/TS/TSX source and test comments, Python and Bash tooling (including
-  this repository's own `.github/scripts/`), and GitHub Actions workflow definitions. A short,
-  explicit `EXEMPT_FILES` list covers process/policy documents (e.g. this repository's own review
-  and consistency-check policy) where the coordinate syntax itself is genuinely the subject.
+  every Markdown file under `docs/` outside `docs/planning/`, the root/`docs/` READMEs, and
+  `product/interfaces/web/README.md` (named as equivalent-status durable capability/reference
+  documentation in `docs/README.md`'s own table), plus Java/Javadoc comments, JS/TS/TSX source and
+  test comments, Python and Bash tooling (including this repository's own `.github/scripts/`), and
+  GitHub Actions workflow definitions. A short, explicit `EXEMPT_FILES` list covers process/policy
+  documents (e.g. this repository's own review and consistency-check policy) where the coordinate
+  syntax itself is genuinely the subject.
 - NARROW compact patterns (bare `G1`, `O2`, `C1`, `D1`, `W1`) are collision-prone against ordinary
   prose and identifiers, so they stay scoped to the repository's original durable reader-facing
   Markdown surfaces (`docs/{architecture,product,reference,examples}`, root/`docs/` READMEs) —
@@ -37,7 +39,15 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # Durable reader-facing Markdown surfaces (original scope; also carries the narrow compact-form
 # patterns, which are too collision-prone for the broader source/workflow/Markdown scan below).
-DURABLE_MARKDOWN_FILES = (ROOT / "README.md", ROOT / "docs" / "README.md")
+# product/interfaces/web/README.md is explicitly named alongside docs/product/concepts.md and
+# docs/reference/api.md in docs/README.md's own "current capability/reference documentation" row
+# -- the same durable-doc status as the other two, which already live under docs/ and are covered
+# by BROAD_MARKDOWN_DIRS below, but this one lives outside docs/ entirely.
+DURABLE_MARKDOWN_FILES = (
+    ROOT / "README.md",
+    ROOT / "docs" / "README.md",
+    ROOT / "product" / "interfaces" / "web" / "README.md",
+)
 DURABLE_MARKDOWN_DIRS = (
     ROOT / "docs" / "architecture",
     ROOT / "docs" / "product",

@@ -87,9 +87,14 @@ the semantic capability, contract, identity, invariant, or behavior it actually 
 naming it after the coordinate that tracked it. Working/process material may mention a temporary
 delivery coordinate when the coordinate itself is the subject, but durable semantic claims must remain
 understandable without reconstructing that coordinate after the originating plan, PR, or review is
-completed, condensed, renamed, or removed. The mechanical planning-coordinate checker is intentionally
-narrow to the patterns it can recognize safely; catching identifier leakage that pattern can't reach
-(such as PR-local finding IDs) is a human review responsibility.
+completed, condensed, renamed, or removed. The mechanical checker (`.github/scripts/check-durable-vocabulary.py`)
+recognizes high-confidence patterns like `Gate 4`/`Gate4...`, `REV-123`, and `DH-E` across durable
+Markdown under `docs/` (outside `docs/planning/`), `product/interfaces/web/README.md`, Java/Javadoc
+comments, JS/TS/TSX and Python/Bash source and test comments, and GitHub Actions workflow
+definitions; collision-prone compact forms (bare `G1`, `O2`, `C1`, `D1`, `W1`) stay narrowly scoped
+to the repository's original durable-Markdown surfaces. Catching identifier leakage that pattern
+can't reach safely (prose like "the next stage" with no literal coordinate, or a compact form
+outside that narrow scope) remains a human review responsibility.
 
 When editing an Accepted or Superseded ADR only to improve durable terminology or legibility, follow
 `docs/architecture/decisions/README.md`: the amendment must be semantics-preserving, explicitly

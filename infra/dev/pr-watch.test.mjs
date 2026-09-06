@@ -243,15 +243,19 @@ test('review-thread truncation (REV-008)', async (t) => {
   });
 });
 
-test('review freshness against the base (REV-001)', async (t) => {
+test('base reconciliation ownership', async (t) => {
   const approved = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
 
   await t.test('ready when level with the base', () => {
     assert.equal(stateOf(pr({ reviews: approved }), { aheadBy: 1, behindBy: 0 }), 'READY TO MERGE');
   });
 
-  await t.test('a base advance invalidates an otherwise clean review', () => {
-    assert.equal(stateOf(pr({ reviews: approved }), { aheadBy: 1, behindBy: 1 }), 'AWAITING');
+  await t.test('a base advance is an implementation-owned reconciliation blocker', () => {
+    const resolved = resolveLifecycle(
+      summarize(pr({ reviews: approved }), { aheadBy: 1, behindBy: 1 }),
+    );
+    assert.equal(resolved.state, 'CHANGES REQUIRED');
+    assert.match(resolved.reasons.join('\n'), /reconcile with the current base before review/);
   });
 
   await t.test('base identity and distance are part of the watched state', () => {

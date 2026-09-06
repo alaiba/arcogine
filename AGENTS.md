@@ -111,11 +111,13 @@ ones created via an explicit user request.
 
 ## PR lifecycle
 
-Resolve a PR's lifecycle state from its current head and metadata, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
+Resolve a PR's lifecycle state from its current head and metadata, base freshness, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
 
 - **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for initial review, re-review, or for required CI to finish. A current-head review may already be `READY TO MERGE` while CI is still pending — review authorization is independent of CI — but the lifecycle stays `AWAITING` until CI also turns green; no second review is needed solely because CI changed from pending to green with the reviewed head/base unchanged.
-- **CHANGES REQUIRED** — an implementation-owned blocker remains, such as a valid blocking review finding, failed required CI, or a merge conflict. Remediate it, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
-- **READY TO MERGE** — the latest applicable reviewer disposition for the current PR head is `READY TO MERGE`, required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+- **CHANGES REQUIRED** — an implementation-owned blocker remains, such as the head being behind its current base, a valid blocking review finding, failed required CI, or a merge conflict. Reconcile a behind-base branch before review; otherwise remediate the blocker, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
+- **READY TO MERGE** — the latest applicable reviewer disposition for the current PR head is `READY TO MERGE`, required validation is green, the head is level with its current base, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+
+Base freshness is implementation-owned lifecycle state, not something the reviewer should normally have to discover. `infra/dev/pr-watch.mjs` must treat any behind-base head as **CHANGES REQUIRED**, making reconciliation with the current base the next implementation-owned transition. Independent review still verifies the current base and head as defense in depth.
 
 Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). CI is not a reviewer disposition and is never folded into it: required CI is enforced independently by GitHub branch protection. Only a current-head `READY TO MERGE` review, together with green required CI, produces the `READY TO MERGE` lifecycle state.
 

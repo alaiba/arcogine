@@ -367,6 +367,14 @@ function resolveLifecycle(s) {
   if (s.isDraft) return { state: 'AWAITING', reasons: ['pull request is a draft'] };
 
   const blocking = [];
+  // Base freshness is implementation-owned. If the branch is behind its base, `..` has a
+  // concrete next transition: reconcile first, then validate and return for review. The
+  // reviewer still checks freshness independently, but should not be the normal detector.
+  if (s.behindBy > 0) {
+    blocking.push(
+      `head is ${s.behindBy} commit(s) behind ${s.baseRef}; reconcile with the current base before review`,
+    );
+  }
   if (s.mergeable === 'CONFLICTING') blocking.push('merge conflict with the base branch');
   if (s.checksFailing.length > 0) {
     blocking.push(`failing checks: ${s.checksFailing.map((c) => `${c.name} (${c.verdict})`).join(', ')}`);
@@ -379,13 +387,6 @@ function resolveLifecycle(s) {
   if (blocking.length > 0) return { state: 'CHANGES REQUIRED', reasons: blocking };
 
   const waiting = [];
-  // A review only ever attests to the base-to-head transition that existed when it was
-  // written. If the base has advanced, no existing review covers the current transition.
-  if (s.behindBy > 0) {
-    waiting.push(
-      `head is ${s.behindBy} commit(s) behind ${s.baseRef}; no review covers the current base-to-head transition`,
-    );
-  }
   if (s.reviewsTruncated) {
     waiting.push('review history exceeds the fetched window, so review state cannot be fully resolved');
   }

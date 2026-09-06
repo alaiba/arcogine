@@ -48,7 +48,15 @@ test('disposition parsing', async (t) => {
   await t.test('reads an explicit final disposition', () => {
     assert.equal(dispositionOf(READY_BODY), 'READY TO MERGE');
     assert.equal(dispositionOf('Disposition: CHANGES REQUIRED'), 'CHANGES REQUIRED');
-    assert.equal(dispositionOf('Disposition: **NON-BLOCKING FOLLOW-UPS ONLY**'), 'NON-BLOCKING FOLLOW-UPS ONLY');
+  });
+
+  // Only two reviewer dispositions exist. CI is not a reviewer disposition, so a review
+  // that predates this simplification (or any other unrecognized vocabulary) must not be
+  // read as a verdict -- it resolves to null, which the lifecycle treats as AWAITING.
+  await t.test('removed/unsupported disposition vocabulary is not recognized', () => {
+    assert.equal(dispositionOf('Disposition: READY AFTER CI'), null);
+    assert.equal(dispositionOf('Disposition: **NON-BLOCKING FOLLOW-UPS ONLY**'), null);
+    assert.equal(dispositionOf('Disposition: APPROVED'), null);
   });
 
   // Regression: a review whose prose quoted "Disposition: READY TO MERGE" as an example was
@@ -120,7 +128,6 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf('Disposition: **READY TO MERGE**.'), 'READY TO MERGE');
     assert.equal(dispositionOf('Disposition: READY TO MERGE'), 'READY TO MERGE');
     assert.equal(dispositionOf('**Disposition: CHANGES REQUIRED**'), 'CHANGES REQUIRED');
-    assert.equal(dispositionOf('_Disposition: READY AFTER CI_'), 'READY AFTER CI');
   });
 });
 
@@ -381,6 +388,31 @@ test('remaining lifecycle inputs', async (t) => {
   await t.test('a review with no explicit disposition awaits', () => {
     const vague = [review({ at: '2026-01-01T00:00:00Z', body: 'nice work' })];
     assert.equal(stateOf(pr({ reviews: vague }), comparison), 'AWAITING');
+  });
+
+  // CI is not a reviewer disposition. A removed vocabulary value (or any other
+  // unrecognized text) must never authorize merge merely because required CI is green --
+  // only an explicit current-head READY TO MERGE disposition may.
+  await t.test('a removed disposition value never authorizes merge, even with green CI', () => {
+    const stale = [review({ at: '2026-01-01T00:00:00Z', body: 'Disposition: **READY AFTER CI**' })];
+    assert.equal(stateOf(pr({ reviews: stale }), comparison), 'AWAITING');
+  });
+
+  await t.test('current-head READY with required CI pending awaits, not a CI-specific verdict', () => {
+    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+    const checks = [{ name: 'gate', conclusion: null, status: 'IN_PROGRESS' }];
+    assert.equal(stateOf(pr({ reviews: ready, checks }), comparison), 'AWAITING');
+  });
+
+  await t.test('current-head READY with required CI failure is CHANGES REQUIRED', () => {
+    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+    const checks = [{ name: 'gate', conclusion: 'FAILURE' }];
+    assert.equal(stateOf(pr({ reviews: ready, checks }), comparison), 'CHANGES REQUIRED');
+  });
+
+  await t.test('current-head READY with required CI success and mergeable is READY TO MERGE', () => {
+    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+    assert.equal(stateOf(pr({ reviews: ready }), comparison), 'READY TO MERGE');
   });
 });
 

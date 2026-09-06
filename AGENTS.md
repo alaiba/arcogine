@@ -52,18 +52,28 @@ Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable
 authorities.
 
-## Planning coordinates and durable documentation
+## Temporary delivery coordinates and durable documentation
 
-Initiative-local stage, gate, and slice identifiers are delivery coordinates. They may be used in
-`docs/planning/`, issues, pull requests, handoff prompts, and other active delivery context where the
-coordinate helps sequence work.
+Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (such as
+a reviewer's own `REV-NNN` numbering for a single PR's findings), are temporary delivery coordinates.
+They may be used in `docs/planning/`, issues, pull requests, PR descriptions/comments, reviews,
+branch names, commit messages, handoff prompts, and other active/delivery-history context where the
+coordinate helps sequence or track work — see [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s
+commit message guidance, which this section does not change.
 
-Do not carry those identifiers into durable documentation. When a planned result is recorded in an
-ADR, architecture, product, reference, or development document, translate it into the semantic
-capability, contract, identity, invariant, or behavior it actually represents. Working/process
-material may mention a planning coordinate when the coordinate itself is the subject, but durable
-semantic claims must remain understandable after the originating plan is completed, condensed,
-renamed, or removed.
+Do not carry those identifiers into durable semantic naming — content whose meaning is expected to
+outlive the delivery context that produced it. This includes ADR, architecture, product, reference, or
+development documents; code comments; workflow definitions; and test names introduced alongside the
+change. It does not include commit messages or other delivery-history records, which may keep the
+coordinate that was actually used to track the work. When a planned result, a review finding's
+resolution, or other delivery-context outcome is recorded as durable semantic naming, translate it into
+the semantic capability, contract, identity, invariant, or behavior it actually represents rather than
+naming it after the coordinate that tracked it. Working/process material may mention a temporary
+delivery coordinate when the coordinate itself is the subject, but durable semantic claims must remain
+understandable without reconstructing that coordinate after the originating plan, PR, or review is
+completed, condensed, renamed, or removed. The mechanical planning-coordinate checker is intentionally
+narrow to the patterns it can recognize safely; catching identifier leakage that pattern can't reach
+(such as PR-local finding IDs) is a human review responsibility.
 
 When editing an Accepted or Superseded ADR only to improve durable terminology or legibility, follow
 `docs/architecture/decisions/README.md`: the amendment must be semantics-preserving, explicitly
@@ -87,9 +97,11 @@ ones created via an explicit user request.
 
 Resolve a PR's lifecycle state from its current head and metadata, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
 
-- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for independent review/re-review or for pending required CI after `READY AFTER CI`.
+- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for initial review, re-review, or for required CI to finish. A current-head review may already be `READY TO MERGE` while CI is still pending — review authorization is independent of CI — but the lifecycle stays `AWAITING` until CI also turns green; no second review is needed solely because CI changed from pending to green with the reviewed head/base unchanged.
 - **CHANGES REQUIRED** — an implementation-owned blocker remains, such as a valid blocking review finding, failed required CI, or a merge conflict. Remediate it, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
-- **READY TO MERGE** — the current review disposition permits merge (`READY TO MERGE`, `NON-BLOCKING FOLLOW-UPS ONLY`, or `READY AFTER CI` after required CI turns green), required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+- **READY TO MERGE** — the latest applicable reviewer disposition for the current PR head is `READY TO MERGE`, required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+
+Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). CI is not a reviewer disposition and is never folded into it: required CI is enforced independently by GitHub branch protection. Only a current-head `READY TO MERGE` review, together with green required CI, produces the `READY TO MERGE` lifecycle state.
 
 ## PR monitoring
 

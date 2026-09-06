@@ -89,6 +89,7 @@ Commands:
   check --full      Everything in check, plus Playwright E2E, canonical dist/
                      build, Docker image build + smoke test, and security scans
   build             Produce the canonical dist/ (dist/api/arcogine.jar, dist/web/)
+  snapshot          Generate the canonical whole-repository AI retrieval snapshot
   image             Package existing dist/ into runtime Docker images
   up                Build, package, and start the full local container stack
   down              Stop the local container stack
@@ -104,6 +105,11 @@ For anything more specific, use the subsystem's native tool directly:
   trivy / gitleaks                               # security scans
 See docs/development/testing.md for the full native-command reference.
 EOF
+}
+
+cmd_snapshot() {
+  require_commands "./arcogine snapshot" node npx
+  node "$REPO_ROOT/infra/dev/repo-snapshot.mjs"
 }
 
 cmd_setup() {
@@ -279,6 +285,13 @@ case "$cmd" in
       exit 1
     fi
     cmd_build
+    ;;
+  snapshot)
+    if [[ $# -ne 1 ]]; then
+      echo "Usage: ./arcogine snapshot" >&2
+      exit 1
+    fi
+    cmd_snapshot
     ;;
   image)
     if [[ $# -ne 1 ]]; then

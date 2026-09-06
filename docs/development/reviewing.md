@@ -262,6 +262,10 @@ When a new head is pushed:
 
 A fix is complete when the violated invariant is restored, not merely when the named method/type from the original comment has changed.
 
+Watch specifically for a remediation that closes the reported **instance** rather than the class it belongs to. A finding usually cites one concrete input that produced a wrong outcome; fixing that input while leaving the underlying predicate permissive yields a clean re-review and then the same defect under a slightly different input. When a finding recurs across successive heads with a new example each time, treat the recurrence itself as evidence that the remediation is tracking examples rather than the property — stop accepting narrower patches and require the invariant to be stated and tested directly.
+
+Also check what the accompanying tests assert. A regression test that encodes the defective behavior is worse than no test: it makes the defect look deliberate, and it will be defended by the next person who tries to fix it. When a finding shows that behavior was wrong, an existing test asserting that behavior must be inverted as part of the fix, not left passing alongside it.
+
 ## CI and validation language
 
 Distinguish these states precisely:

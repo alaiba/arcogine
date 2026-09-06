@@ -69,7 +69,7 @@ class EvidenceRequirementDeclarationTest {
 
     @Test
     void modelStateSufficientAssertionMustSupplyAStructuralRule() {
-        // REV-001: a MODEL_STATE_SUFFICIENT declaration is a claim that the assertion is
+        // A MODEL_STATE_SUFFICIENT declaration is a claim that the assertion is
         // decidable from authoritative model state alone -- construction must reject the
         // contradiction of that claim with no executable rule, rather than deferring failure to
         // evaluate() time.

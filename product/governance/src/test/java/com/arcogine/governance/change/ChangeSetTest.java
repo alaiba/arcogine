@@ -50,7 +50,7 @@ class ChangeSetTest {
 
     @Test
     void orderingDoesNotCollideForDelimiterBearingButLegallyDistinctEntityIdentities() {
-        // REV-004 regression: ("a#b", "c") and ("a", "b#c") concatenate to the same "a#b#c" string
+        // ("a#b", "c") and ("a", "b#c") concatenate to the same "a#b#c" string
         // via the old identityKey()-based ordering, yet are legally distinct (entityType, entityId)
         // pairs. Canonical ordering must compare the identity tuple unambiguously (entityType then
         // entityId as separate keys), not a delimiter-concatenated string, so reversed input still

@@ -89,13 +89,13 @@ class ArchitectureTest {
                     + "jobsView()), which excludes them");
 
     /**
-     * Gate 4 acceptance criterion 7 (docs/planning/factory-simulation-engine-readiness.md §8.4):
+     * API/UI DTO separation (docs/planning/factory-simulation-engine-readiness.md §8.4):
      * API/UI DTOs remain outward projections and are never reused as domain decision inputs. The
      * supported direction is {@code factory runtime semantics -> RuntimeObservation/RuntimeEvent ->
      * outward adapters/DTOs}; a DTO must never flow back into a {@code FactoryRuntime} decision
      * path. This is the structural half of the G4-C acceptance list
      * ({@code apiDtosDoNotReenterDomainDecisionPaths}); the behavioural half lives in
-     * {@code Gate4CHeadlessClosureAcceptanceTest}. This module's test classpath is the only place
+     * {@code HeadlessClosureAcceptanceTest}. This module's test classpath is the only place
      * that can see both sides of the boundary, since the domain modules do not depend on
      * {@code interfaces/api} at all.
      */
@@ -106,7 +106,7 @@ class ArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("com.arcogine.api..", "org.springframework..", "jakarta.servlet..")
-            .because("Gate 4 runtime semantics must be decided from authoritative factory state "
+            .because("Runtime semantics must be decided from authoritative factory state "
                     + "alone -- RuntimeObservation/RuntimeEvent project outward to API DTOs, and "
                     + "those DTOs must never re-enter a FactoryRuntime decision path");
 

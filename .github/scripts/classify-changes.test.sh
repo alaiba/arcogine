@@ -85,8 +85,8 @@ echo "All classification tests passed."
 
 python3 "$dir/check-markdown-links.test.py"
 python3 "$dir/check-markdown-links.py" "$repo"
-python3 "$dir/check-durable-doc-vocabulary.test.py"
-python3 "$dir/check-durable-doc-vocabulary.py"
+python3 "$dir/check-durable-vocabulary.test.py"
+python3 "$dir/check-durable-vocabulary.py"
 python3 "$dir/check-adr-immutability.test.py"
 python3 "$dir/check-adr-rename.test.py"
 python3 "$dir/check-adr-immutability.py" --ci

@@ -126,7 +126,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void candidateSnapshotWithFingerprintNotMatchingItsBytesIsRejected() {
-        // REV-002 regression: a caller must not be able to claim a fingerprint for canonical bytes
+        // A caller must not be able to claim a fingerprint for canonical bytes
         // that don't actually produce it -- mirroring FileControlledRevisionAuthority's own
         // fingerprint-to-bytes verification precedent for authoritative artifacts.
         FileControlledRevisionAuthority authority = authority();

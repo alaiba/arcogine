@@ -496,7 +496,7 @@ class ChallengeContentLoaderTest {
         assertTrue(result.issues().stream().anyMatch(i -> i.code().startsWith("definition.")));
     }
 
-    // --- REV-001: loadChallengeWithCatalogue must produce a definition that is genuinely
+    // --- loadChallengeWithCatalogue must produce a definition that is genuinely
     // provenance-compatible with CandidateAdmissibilityPolicy's own catalogue-identity and
     // semantic-fingerprint checks, not just one that passes the loader's own narrower checks. ---
 
@@ -559,7 +559,7 @@ class ChallengeContentLoaderTest {
                         && i.path().equals("catalogueSemanticFingerprint")));
     }
 
-    // --- REV-002: integer-looking JSON numbers must decode exactly, not round-trip through
+    // --- Integer-looking JSON numbers must decode exactly, not round-trip through
     // double (which silently loses precision above 2^53 and can saturate outside int/long). ---
 
     private static String minimalWithStartingBudget(String budgetLiteral) {
@@ -666,7 +666,7 @@ class ChallengeContentLoaderTest {
                         && i.path().equals("offers[0].quantityLimit")));
     }
 
-    // --- REV-003: a blank (but present) catalogueSemanticFingerprint must fail as a structured
+    // --- A blank (but present) catalogueSemanticFingerprint must fail as a structured
     // issue, not reach ChallengeDefinition's constructor and throw IllegalArgumentException. ---
 
     @Test
@@ -693,7 +693,7 @@ class ChallengeContentLoaderTest {
                         && i.path().equals("catalogueSemanticFingerprint")));
     }
 
-    // --- REV-001: a catalogueSemanticFingerprint supplied without a catalogueIdentity is an
+    // --- A catalogueSemanticFingerprint supplied without a catalogueIdentity is an
     // incomplete/invalid partial binding and must fail as a structured issue, not silently drop
     // the fingerprint or throw a NullPointerException from loadChallengeWithCatalogue. ---
 

@@ -82,7 +82,7 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf(null), null);
   });
 
-  // REV-005: an inline or code-quoted marker is discussion, and must not manufacture the
+  // An inline or code-quoted marker is discussion, and must not manufacture the
   // positive review authority needed to reach READY TO MERGE.
   await t.test('an inline or code-quoted marker is not a verdict when nothing is anchored', () => {
     assert.equal(dispositionOf('A reviewer may write `Disposition: READY TO MERGE` in prose.'), null);
@@ -95,7 +95,7 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf('> Disposition: **READY TO MERGE**'), null);
   });
 
-  // REV-005: the marker must actually END the review. A verdict followed by substantive
+  // The marker must actually END the review. A verdict followed by substantive
   // blocker prose is not the reviewer's final disposition.
   await t.test('a disposition followed by substantive prose is not final', () => {
     const body = [
@@ -116,7 +116,7 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf(body), 'CHANGES REQUIRED');
   });
 
-  // REV-005 (second pass): the final line must BE the verdict. A prefix-only match accepts
+  // The final line must BE the verdict. A prefix-only match accepts
   // a negated or qualified sentence that merely starts with the vocabulary.
   await t.test('same-line trailing prose or negation is not a verdict', () => {
     assert.equal(dispositionOf('Disposition: READY TO MERGE? Actually no.'), null);
@@ -131,7 +131,7 @@ test('disposition parsing', async (t) => {
   });
 });
 
-test('required check identity (REV-003)', async (t) => {
+test('required check identity', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
 
@@ -187,7 +187,7 @@ test('required check identity (REV-003)', async (t) => {
   });
 });
 
-test('terminal pull-request states (REV-006)', async (t) => {
+test('terminal pull-request states', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
 
@@ -222,7 +222,7 @@ test('terminal pull-request states (REV-006)', async (t) => {
   });
 });
 
-test('review-thread truncation (REV-008)', async (t) => {
+test('review-thread truncation', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
   const truncated = pr({ reviews });
@@ -243,7 +243,7 @@ test('review-thread truncation (REV-008)', async (t) => {
   });
 });
 
-test('review freshness against the base (REV-001)', async (t) => {
+test('review freshness against the base', async (t) => {
   const approved = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
 
   await t.test('ready when level with the base', () => {
@@ -262,7 +262,7 @@ test('review freshness against the base (REV-001)', async (t) => {
   });
 });
 
-test('blocking review aggregation (REV-002)', async (t) => {
+test('blocking review aggregation', async (t) => {
   await t.test('a later positive review cannot mask another reviewer standing blocker', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
@@ -332,7 +332,7 @@ test('blocking review aggregation (REV-002)', async (t) => {
   });
 });
 
-test('validation presence (REV-003)', async (t) => {
+test('validation presence', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
 

@@ -20,17 +20,17 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end Gate 2 acceptance evidence, driven entirely through {@link FactoryRuntime} -- never
+ * End-to-end acceptance evidence, driven entirely through {@link FactoryRuntime} -- never
  * {@link FactoryHandler}, a store, or a scheduler directly -- proving that a published {@link
  * FactoryModelVersion} naming more than one eligible resource per step survives {@link
  * com.arcogine.factory.model.FactoryRuntimeAssembler} unchanged and produces deterministic
  * multi-resource dispatch through the supported consumer-facing seam. {@link
  * MultiResourceDispatchTest} exercises the same dispatch invariants at the narrower {@link
  * FactoryHandler} seam; this class exists to prove the full model -> assembler -> runtime
- * boundary specifically, matching how {@link Gate1EngineReadinessAcceptanceTest} proves Gate 1
- * end to end.
+ * boundary specifically, matching how {@link EngineReadinessAcceptanceTest} proves the runtime
+ * boundary end to end.
  */
-class Gate2MultiResourceDispatchAcceptanceTest {
+class MultiResourceDispatchAcceptanceTest {
 
     private static final double UNIT_PRICE = 10.0;
     private static final long STEP_DURATION = 5;

@@ -229,7 +229,7 @@ class ConformanceEvaluatorTest {
 
     @Test
     void stateNotBoundToTheDeclaredFingerprintCannotBeAttributedToAnEvaluation() {
-        // REV-001: modelFingerprint and authoritativeState must be verified as describing the same
+        // modelFingerprint and authoritativeState must be verified as describing the same
         // artifact, not merely two independent caller-supplied values. A state whose independently
         // derived fingerprint disagrees with the declared modelFingerprint must be rejected before
         // any PASS/FAIL/Finding can be attributed to that fingerprint.

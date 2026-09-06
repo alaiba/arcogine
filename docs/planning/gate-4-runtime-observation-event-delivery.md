@@ -136,7 +136,7 @@ W1 child jobs with `JobId -> OrderId` correlation and ordinal, cross-machine pen
 authoritative backlog/completed-order/completed-sales/lead-time/throughput aggregates already owned
 by the factory runtime. Collections are immutable and ordered by stable identities. `reset()` uses
 fresh construction and therefore receives a fresh `RunId` while preserving the same semantic
-outcome for the same model and commands. `Gate4RuntimeObservationAcceptanceTest` proves these
+outcome for the same model and commands. `RuntimeObservationAcceptanceTest` proves these
 facts without the API, Spring, frontend, internal-store access, or scheduler-event replay.
 
 G4-B (supported runtime-event taxonomy and post-authoritative publication) and G4-C (headless
@@ -207,7 +207,7 @@ only after the corresponding authoritative transition has already succeeded:
   full execution aggregate already completed), additionally emits `ORDER_COMPLETED` carrying both the
   order and completing child `JobId` for W1 correlation (ADR-0010). Both derivations run in a
   `finally`, so a step completion that occurred before a later cascade fault is still reported
-  (`Gate4BRuntimeEventAcceptanceTest.faultReportsOnlyAuthoritativeChangesThatActuallyOccurred`).
+  (`RuntimeEventDeliveryAcceptanceTest.faultReportsOnlyAuthoritativeChangesThatActuallyOccurred`).
 
 Sequence is allocated only at emission (`FactoryRuntime.emit`), strictly increasing per run,
 independent of how many internal scheduler events were involved; `RuntimeObservationMetadata
@@ -225,7 +225,7 @@ It is deliberately draining, not retained/replayable-by-cursor — an unbounded,
 supported-event history is a separately-named responsibility for later distribution hardening
 (ADR-0011 §8, DH-E), not part of this contract; a caller that needs durable replay retains the
 drained events itself. `advance()`/`advanceUntil` keep returning internal `Event`s unchanged for
-existing Gate 3 callers. `Gate4BRuntimeEventAcceptanceTest` proves: run/sequence/time/model provenance
+existing Gate 3 callers. `RuntimeEventDeliveryAcceptanceTest` proves: run/sequence/time/model provenance
 on the envelope; the enriched `ORDER_ACCEPTED` job-id list and the `JOB_DISPATCHED`/`JOB_WAITING`
 events it implies; strict monotonic sequencing and same-timestamp sequence ordering within one run;
 observation cursor/state consistency with the applied event log; that a rejected command emits
@@ -273,7 +273,7 @@ Gate 4 also requires a supported observation that is sufficient for a consumer t
 
 **Implemented evidence (2026-09-02):** the acceptance list above is executable and passing. Most of
 it was already proved by the G4-A/G4-B suites, which G4-C deliberately reuses rather than
-duplicating: `Gate4BRuntimeEventAcceptanceTest` owns
+duplicating: `RuntimeEventDeliveryAcceptanceTest` owns
 `runtimeEventCarriesRunSequenceTimeAndModelProvenance`, `sequenceIsStrictlyMonotonicWithinOneRun`,
 `sameTimeEventsRemainOrderedBySequence`, `observationLatestSequenceMatchesAppliedRuntimeEvents`,
 `observationReflectsStateReportedByLastRuntimeEvent`,
@@ -281,12 +281,12 @@ duplicating: `Gate4BRuntimeEventAcceptanceTest` owns
 `faultReportsOnlyAuthoritativeChangesThatActuallyOccurred`,
 `w1EventsPreserveOrderIdAndJobIdCorrelation`, `identicalInputsProduceIdenticalSemanticEventStreams`,
 `resetCreatesNewRunAndSequenceEpoch`, and `runIdentityDoesNotInfluenceSimulationOutcome`;
-`Gate4RuntimeObservationAcceptanceTest` owns the observation projection, immutability, and
+`RuntimeObservationAcceptanceTest` owns the observation projection, immutability, and
 fresh-`RunId`-without-changed-outcome facts.
 
 G4-C adds the three remaining closure facts, plus two review-driven regression facts (REV-002,
 REV-003) described after them, in
-`product/domains/factory/src/test/java/com/arcogine/factory/process/Gate4CHeadlessClosureAcceptanceTest.java`:
+`product/domains/factory/src/test/java/com/arcogine/factory/process/HeadlessClosureAcceptanceTest.java`:
 
 - `freshObservationReconstructsCurrentConsumerViewWithoutReplay` — drives a runtime to a
   non-trivial mixed state (one order complete, a second order's child jobs simultaneously

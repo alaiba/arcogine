@@ -79,6 +79,12 @@ jobs:
       - name: Validate PR watcher lifecycle resolver
         run: node --test infra/dev/pr-watch.test.mjs
 
+      # Validate PR disposition merge gate evaluator. This gate enforces the central
+      # merge invariant: current-head READY TO MERGE disposition required for merge.
+      # A regression in the evaluator would allow unintended merges.
+      - name: Validate PR disposition gate evaluator
+        run: bash .github/scripts/check-pr-disposition.test.sh
+
       - name: Determine changed-file surfaces
         id: filter
         run: |

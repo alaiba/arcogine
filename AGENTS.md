@@ -24,10 +24,26 @@ Common shorthand should be interpreted in repository context:
 - “check repo state” means inspect the state of this repository;
 - references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
 
-PR workflow shorthand has distinct review and remediation meanings:
+Repository workflow shorthand has distinct meanings:
 
 - `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
-- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available.
+- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available;
+- `.?` = perform the Session-close Kaizen review before ending or deleting the current session.
+
+### Session-close Kaizen
+
+When the user's entire message is `.?`, inspect the current session and live repository for anything learned, decided, repeated, or encountered that should survive deletion of the conversation by changing executable safeguards, standard work, or maintained repository knowledge.
+
+Classify each material candidate as one of:
+
+- **Already encoded** — the repository already captures the lesson or invariant adequately; make no duplicate change.
+- **Bake in** — the lesson is durable and generally reusable; identify the narrowest authoritative repository surface that should encode it.
+- **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being smuggled into the current PR or slice.
+- **Discard** — the observation is situational, transient, or otherwise not worth preserving.
+
+Prefer stronger forms of durable capture in this order when they fit the lesson: executable guard/test, canonical helper/tooling, agent/contributor standard work, maintained documentation, then an ADR only for genuinely architectural or hard-to-reverse decisions. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
+
+Do not manufacture a lesson merely to produce an output. Finish every Session-close Kaizen review with an explicit deletion verdict: either the session is safe to delete because nothing unique remains, or name exactly what still needs to be captured first.
 
 Do not replace known repository context with generic GitHub discovery.
 

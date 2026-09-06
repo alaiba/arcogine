@@ -6,10 +6,10 @@ import java.util.Objects;
  * The narrow structural fact an {@link AssertionRule} produces: whether the authoritative state
  * it examined satisfied the rule, and why.
  *
- * <p>This is deliberately not the G4 conformance-result model. It carries no {@code PASS}/{@code
+ * <p>This is deliberately not the conformance-evaluation result model. It carries no {@code PASS}/{@code
  * FAIL}/{@code UNKNOWN}/{@code NOT_APPLICABLE} taxonomy, no finding, no severity, no evidence
- * set, and no historical evaluation record -- it exists only so a G3 {@link AssertionRule} has
- * something deterministic to return to prove executable semantics. G4 owns turning this (and
+ * set, and no historical evaluation record -- it exists only so a requirement-scope {@link AssertionRule} has
+ * something deterministic to return to prove executable semantics. Conformance evaluation owns turning this (and
  * external-evidence-backed results) into a real conformance evaluation and finding.
  */
 public record StructuralAssertionOutcome(boolean satisfied, String explanation) {

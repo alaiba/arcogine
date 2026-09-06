@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Consumer-neutral immutable snapshot of authoritative runtime state.
  *
- * <p>The cursor remains zero until Gate 4-B introduces supported runtime events. Internal
+ * <p>The cursor remains zero until the supported runtime-event contract introduces supported runtime events. Internal
  * scheduler events are deliberately absent from this contract.
  */
 public record RuntimeObservation(

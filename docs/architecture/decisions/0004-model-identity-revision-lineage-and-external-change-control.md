@@ -2,6 +2,7 @@
 
 Status: Accepted
 Date: 2026-08-25
+Amendment: 2026-09-03 — replaced transient Factory Design delivery coordinates with semantic terminology; no semantic change
 
 ## Context
 
@@ -12,9 +13,9 @@ That deferral is no longer safe to leave unstated, because two different ideas k
 1. **Semantic identity** — whether two published models mean the same production system. This is a content question: given the same canonical facts, Arcogine should be able to derive the same identity deterministically.
 2. **Controlled revision identity** — whether a persisted historical configuration state carries change-control provenance and lineage back to a prior state, independent of whether that state has since been approved or deployed. This is a governance question, not a content question.
 
-Requirements documents ([`factory-design.md`](../factory-design.md) section 11, [`factory-design-capability.md`](../../planning/factory-design-capability.md) D3) currently bundle "model ID, revision/version, schema version, content hash, publication provenance" into one minimum-identity list. That bundling implies persistent revision lineage, approval state, and an external ticketing key are needed before Arcogine can publish a model at all. They are not: the current implementation need only prove content-derived semantic identity.
+Requirements documents ([`factory-design.md`](../factory-design.md) section 11 and the publication/identity requirements in [`factory-design-capability.md`](../../planning/factory-design-capability.md)) currently bundle "model ID, revision/version, schema version, content hash, publication provenance" into one minimum-identity list. That bundling implies persistent revision lineage, approval state, and an external ticketing key are needed before Arcogine can publish a model at all. They are not: the current implementation need only prove content-derived semantic identity.
 
-This distinction is not hypothetical: [`FactoryModelVersion.contentHash()`](../../../product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelVersion.java) already exists (introduced alongside the canonical `FactoryModel` in the model-boundary implementation), and its own Javadoc is explicit that it is "an internal, in-memory identity policy... not a persisted, public, or cross-process compatibility guarantee." Meanwhile `IntegratedHandler` already carries that content hash as runtime provenance, but `SimResult` does not — so "runtime results identify their source model" is true at the handler layer today and not yet true at the result layer. Any document claiming D3/D4 are simply "done" or that the content hash is already a durable fingerprint contract would overstate what has actually shipped.
+This distinction is not hypothetical: [`FactoryModelVersion.contentHash()`](../../../product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelVersion.java) already exists (introduced alongside the canonical `FactoryModel` in the model-boundary implementation), and its own Javadoc is explicit that it is "an internal, in-memory identity policy... not a persisted, public, or cross-process compatibility guarantee." Meanwhile `IntegratedHandler` already carries that content hash as runtime provenance, but `SimResult` does not — so "runtime results identify their source model" is true at the handler layer today and not yet true at the result layer. Any document claiming the publication/identity and runtime-instantiation work are simply "done" or that the content hash is already a durable fingerprint contract would overstate what has actually shipped.
 
 Separately, Arcogine is very likely to need an integration with an external organizational change-management system once controlled revisions, approvals, and deployment of design changes into real operations become real requirements. That integration is a reference relationship, not a domain dependency: Arcogine must not require any particular ticketing system's workflow, schema, or terminology to determine what a model *is*. Several such systems exist (issue trackers, PLM/QMS tools, ITSM platforms); this ADR does not pick one, and no example used below should be read as narrowing the field.
 
@@ -125,7 +126,7 @@ It was rejected because it would make Arcogine's domain depend on one specific e
 
 This would avoid writing an ADR before there is code to constrain.
 
-It was rejected because the ambiguity is already visible in current planning prose (D3's identity list) and in `factory-design.md` section 11, and leaving it unresolved risks the fingerprint implementation and a future revision/change-management integration being designed against conflated requirements.
+It was rejected because the ambiguity is already visible in the factory-design planning document's publication/identity requirements and in `factory-design.md` section 11, and leaving it unresolved risks the fingerprint implementation and a future revision/change-management integration being designed against conflated requirements.
 
 ## Consequences
 
@@ -134,7 +135,7 @@ As a result of this decision:
 - fingerprint work can proceed against a precise, minimal target: content-derived semantic identity, nothing else — with canonicalization, ordering, versioning, and compatibility guarantees specified before `contentHash()` (or a successor) is promoted to a durable fingerprint contract;
 - a future controlled-revision capability (persistent repository, lineage, approval, deployment tracking) can be designed and justified independently, triggered by concrete need rather than assumed upfront;
 - a future external change-management integration attaches as a stable external reference on a revision, never as a domain dependency, and is not tied to any one vendor or product;
-- planning and architecture documents must stop presenting "model ID/revision/hash/provenance" as one bundled minimum requirement, and must not describe D3/D4 as uniformly complete when result-level provenance (e.g. `SimResult`) does not yet carry it;
+- planning and architecture documents must stop presenting "model ID/revision/hash/provenance" as one bundled minimum requirement, and must not describe publication/identity and runtime-instantiation work as uniformly complete when result-level provenance (e.g. `SimResult`) does not yet carry it;
 - conformance assessments, approvals, simulation runs, and deployments remain distinct, separately referenceable artifacts;
 - current-state documentation (`overview.md`) should describe only what exists today: content-derived semantic identity with an explicitly provisional durability policy, and no revision repository or change-management integration yet implemented.
 

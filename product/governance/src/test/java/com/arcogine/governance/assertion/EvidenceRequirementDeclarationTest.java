@@ -12,7 +12,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves invariant 4 (structural vs. external-evidence declaration) and the explicit G3/G4/G5
+ * Proves invariant 4 (structural vs. external-evidence declaration) and the explicit requirement-scope/conformance-evaluation/external-evidence
  * boundary: production assertion types declare evidence need only, never a conformance result or
  * evidence record.
  */
@@ -52,8 +52,8 @@ class EvidenceRequirementDeclarationTest {
 
         assertEquals(EvidenceRequirement.EXTERNAL_EVIDENCE_REQUIRED, assertion.evidenceRequirement());
         assertTrue(assertion.requiresExternalEvidence());
-        // G3 declares the need only -- no structural rule is required or expected for this case,
-        // and G3 does not implement G5 evidence ingestion/persistence to satisfy it.
+        // The requirement-scope declaration records the need only -- no structural rule is required or expected for this case,
+        // and the requirement-scope declaration does not implement external-evidence ingestion/persistence to satisfy it.
         assertTrue(assertion.ruleOptional().isEmpty());
     }
 
@@ -69,7 +69,7 @@ class EvidenceRequirementDeclarationTest {
 
     @Test
     void modelStateSufficientAssertionMustSupplyAStructuralRule() {
-        // REV-001: a MODEL_STATE_SUFFICIENT declaration is a claim that the assertion is
+        // A MODEL_STATE_SUFFICIENT declaration is a claim that the assertion is
         // decidable from authoritative model state alone -- construction must reject the
         // contradiction of that claim with no executable rule, rather than deferring failure to
         // evaluate() time.
@@ -99,8 +99,8 @@ class EvidenceRequirementDeclarationTest {
                         "exception",
                         "riskacceptance",
                         "frameworkcontrolmapping");
-        // "evidence" itself is allowed (EvidenceRequirement is the G3 declaration seam); the
-        // forbidden fragments above are the G4/G5/G6 concepts G3 must not pull forward.
+        // "evidence" itself is allowed (EvidenceRequirement is the requirement-scope declaration seam); the
+        // forbidden fragments above are the conformance-evaluation, external-evidence, and later governance concepts the requirement-scope capability must not pull forward.
         Class<?>[] productionTypes = {
             Assertion.class,
             AssertionId.class,

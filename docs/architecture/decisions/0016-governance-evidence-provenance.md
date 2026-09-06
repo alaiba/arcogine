@@ -5,20 +5,20 @@ Date: 2026-09-02
 
 ## Context
 
-Governance G3 already distinguishes whether an assertion can be evaluated from model state alone or
-requires evidence beyond structural model state:
+Governance requirements and assertions already distinguish whether an assertion can be evaluated
+from model state alone or requires evidence beyond structural model state:
 
 ```text
 MODEL_STATE_SUFFICIENT
 EXTERNAL_EVIDENCE_REQUIRED
 ```
 
-Governance G4 adds deterministic conformance evaluation and findings. The current G4 implementation
-work deliberately keeps G5 evidence semantics out of scope and returns `UNKNOWN` when a result
-cannot be proven from the supplied model state.
+Governance conformance evaluation adds deterministic evaluation results and findings. The current
+conformance-evaluation implementation deliberately keeps evidence lifecycle/provenance semantics out
+of scope and returns `UNKNOWN` when a result cannot be proven from the supplied model state.
 
-The broader architecture, however, needs G5 to consume several provenance classes without lying
-about where facts came from. Examples include:
+The broader architecture, however, needs a future evidence capability to consume several provenance
+classes without lying about where facts came from. Examples include:
 
 - facts read directly from canonical Arcogine semantic state;
 - simulation/verification/analysis results produced by Arcogine;
@@ -27,13 +27,13 @@ about where facts came from. Examples include:
 
 The current two-member `EvidenceRequirement` answers a different question: whether an assertion can
 be decided from model state alone. It does not necessarily need to encode the provenance class of
-every evidence artifact that G5 may later bind to an evaluation.
+every evidence artifact that a future evidence capability may later bind to an evaluation.
 
-This distinction became important while reviewing Governance G4. Pulling analytical-result
-provenance into G4 would prematurely couple conformance result semantics to a not-yet-designed G5
-evidence model. Conversely, failing to make provenance explicit in G5 would risk treating
-Arcogine-derived analysis as either raw model fact or external observation, obscuring how a
-historical conformance result was established.
+This distinction became important while reviewing conformance evaluation. Pulling analytical-result
+provenance into that evaluator would prematurely couple conformance result semantics to a
+not-yet-designed evidence model. Conversely, failing to make provenance explicit in the evidence
+capability would risk treating Arcogine-derived analysis as either raw model fact or external
+observation, obscuring how a historical conformance result was established.
 
 ## Decision
 
@@ -41,7 +41,7 @@ The proposed decision is:
 
 1. **Keep assertion evidence requirement and evidence provenance as separate dimensions.**
    `EvidenceRequirement` continues to answer whether model state alone is sufficient to evaluate an
-   assertion. G5 evidence records answer what fact/result is being supplied and where/how it was
+   assertion. Evidence records answer what fact/result is being supplied and where/how it was
    produced.
 
 2. **Do not add a third `EvidenceRequirement` member merely to represent Arcogine-produced analysis.**
@@ -50,7 +50,8 @@ The proposed decision is:
    conformance evaluator. Evidence provenance belongs on the evidence/evidence-use side of the
    boundary.
 
-3. **G5 must support provenance sufficient to distinguish at least these semantic origins:**
+3. **The evidence capability must support provenance sufficient to distinguish at least these
+   semantic origins:**
    - authoritative modeled/semantic-state fact, where the evidence use directly addresses immutable
      Arcogine semantic state;
    - Arcogine-derived analytical/verification result, including simulation or deterministic
@@ -75,9 +76,10 @@ The proposed decision is:
 
 6. **Arcogine-derived analytical evidence retains the interpretation provenance needed to explain
    the result.** For Engine-produced simulation/verification output this includes the subject model
-   fingerprint, the applicable `EngineSemanticsVersion` once that decision is accepted, and the
-   explicit run inputs/result provenance required by the producing capability. Governance does not
-   own or redefine Engine semantics.
+   fingerprint, the applicable `EngineSemanticsVersion` established by
+   [ADR-0015](0015-engine-semantics-identity-and-reproducibility.md), and the explicit run
+   inputs/result provenance required by the producing capability. Governance does not own or
+   redefine Engine semantics.
 
 7. **Historical evidence validity does not require permanent re-executability.** Evidence validity
    is based on integrity, provenance, and applicability. A historical Arcogine analytical result may
@@ -95,10 +97,10 @@ The proposed decision is:
    utilization, safety separation, or operational reconciliation. Governance consumes the resulting
    attributable evidence; it does not become a generic simulation/verification engine.
 
-10. **G4 remains narrow.** `PASS`, `FAIL`, `UNKNOWN`, `NOT_APPLICABLE`, immutable evaluation
-    provenance, and `Finding` are valid G4 responsibilities without G5 evidence-source taxonomy.
-    G5 composes with those results later rather than forcing G4 to freeze evidence implementation
-    details now.
+10. **Conformance evaluation remains narrow.** `PASS`, `FAIL`, `UNKNOWN`, `NOT_APPLICABLE`,
+    immutable evaluation provenance, and `Finding` remain conformance-evaluation responsibilities
+    without an evidence-source taxonomy. Evidence/evidence-use semantics compose with those results
+    later rather than forcing the evaluator to freeze evidence implementation details now.
 
 ## Alternatives considered
 
@@ -114,10 +116,10 @@ Rejected. While the requirement may still be evidence-requiring, provenance must
 simulation/verification result from a PLC reading, IdP log, or other external observation so
 historical interpretation and applicability remain explainable.
 
-### Make simulation/verification output direct G4 evaluation input and skip G5 evidence
+### Make simulation/verification output direct conformance-evaluation input and skip evidence
 
-Rejected. That would make G4 own producer-specific analytical provenance and would duplicate the
-future evidence/evidence-use lifecycle instead of composing with it.
+Rejected. That would make the conformance evaluator own producer-specific analytical provenance and
+would duplicate the future evidence/evidence-use lifecycle instead of composing with it.
 
 ### Create a generic cross-domain verification framework now
 
@@ -127,9 +129,10 @@ and interpret its use, not a universal rule engine.
 
 ## Consequences
 
-- G4 can land without prematurely designing G5.
-- G5 gets an explicit architecture question before implementation rather than inferring provenance
-  semantics from whichever first producer integrates with it.
+- Conformance evaluation can remain implemented without prematurely designing the evidence
+  lifecycle.
+- The evidence capability gets an explicit architecture question before implementation rather than
+  inferring provenance semantics from whichever first producer integrates with it.
 - Operational external observations can remain independently provenanced and later become evidence
   without being rebound to a revision at ingestion.
 - Engine simulation/verification output can become Governance evidence while retaining
@@ -138,7 +141,7 @@ and interpret its use, not a universal rule engine.
 - Future reconciliation results can remain distinct lifecycle records rather than collapsing raw
   observation, analytical interpretation, finding, and candidate change into one object.
 - A detailed evidence identity, persistence, integrity/signature, retention, or transport schema is
-  not selected by this proposal and should receive its own decision only when a concrete G5
+  not selected by this proposal and should receive its own decision only when a concrete evidence
   implementation requires it.
 
 ## Charter alignment

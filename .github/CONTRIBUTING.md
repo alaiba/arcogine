@@ -24,6 +24,8 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | `docs/` | Project documentation |
 | `infra/` | Container and dev-environment infrastructure |
 
+Keep the repository root limited to primary entry points, standard discovery/configuration files, and files whose tools conventionally expect them there. CI, test-support, and security-support files should prefer `.github/` when their paths are explicitly controlled. Do not move conventionally discovered files merely to reduce visual clutter. For example, `.trivyignore` stays at the root because Trivy conventionally discovers it there, while the Gitleaks config can live under `.github/security/` because Arcogine invokes it with an explicit `--config` path.
+
 See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the full module dependency graph and design rationale.
 
 ## Development workflow
@@ -58,13 +60,15 @@ When a roadmap item spans several capabilities:
 - preserve deterministic behavior and existing API/wire compatibility by default; intentional compatibility breaks must be explicit in the PR and supported by migration/contract tests as appropriate;
 - do not introduce abstractions only because a later roadmap step might need them; add the abstraction when the current slice gives it a concrete responsibility;
 - update authoritative current-state documentation when implementation changes established behavior or ownership, and update planning documents when the remaining sequence changes; do not make planning prose claim that deferred capability already exists;
+- keep initiative-local stage/gate/slice identifiers, and PR-local review/finding identifiers (see `AGENTS.md`), in planning, issues, PRs, reviews, branch names, commits, and implementation handoffs where they help coordinate or track delivery; when knowledge moves into durable semantic naming — current-state documentation, code comments, workflow definitions, test names — translate the coordinate into the capability, contract, identity, invariant, or behavior it represents;
 - record hard-to-reverse architectural decisions in an ADR rather than relying on a PR discussion, branch name, issue comment, or chat transcript;
+- use the semantics-preserving editorial-amendment process in [`docs/architecture/decisions/README.md`](../docs/architecture/decisions/README.md) when an Accepted/Superseded ADR needs only clearer durable terminology; any actual decision change still requires supersession;
 - reconcile the feature branch with the latest `main` before final review when `main` has moved materially, then review the **net diff against current `main`**, not merely the original branch commit;
 - after a PR is merged, delete feature/review branches once they contain no unique work that still needs to be preserved.
 
 A useful review question is: **if this PR were merged by itself, would the repository tell the truth about what exists now, while leaving later roadmap decisions genuinely open?**
 
-Near-term sequencing may live in issues, PRs, or planning documents; durable product and architecture knowledge must live in the repository's charter, architecture, ADRs, tests, and maintained documentation rather than depending on conversational history.
+Near-term sequencing may live in issues, PRs, or planning documents; durable product and architecture knowledge must live in the repository's charter, architecture, ADRs, tests, and maintained documentation rather than depending on conversational history or an obsolete planning coordinate.
 
 ## Code style
 
@@ -107,7 +111,7 @@ See [`docs/development/testing.md`](../docs/development/testing.md) for the test
 
 ## Commit messages
 
-Use concise, descriptive commit messages. Reference the phase and task number when applicable (e.g., "Phase 2: implement event scheduler").
+Use concise, descriptive commit messages. Reference a delivery phase or task number when it helps active coordination; do not promote that coordinate into durable semantic documentation.
 
 ## License
 

@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * The supported, consumer-neutral runtime event envelope (Gate 4-B, ADR-0011). This is the
+ * The supported, consumer-neutral runtime event envelope (ADR-0011). This is the
  * externally observable contract a {@link FactoryRuntime} caller correlates against -- distinct
  * from, and never a wrapper around, the internal scheduler's {@code Event}.
  *
@@ -27,7 +27,7 @@ import java.util.Optional;
  * @param modelFingerprint the durable semantic fingerprint ({@code FactoryModelVersion#fingerprint()})
  *     of the model this run was instantiated from
  * @param controlledRevisionId present only when the runtime is actually authoritatively bound to a
- *     controlled revision through an established contract; G4-B never synthesizes one
+ *     controlled revision through an established contract; this envelope never synthesizes one
  * @param affectedEntityRefs typed, stable correlation to every entity this event concerns
  * @param payload the supported, consumer-neutral payload for {@link #eventType()}
  */

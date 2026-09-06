@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Table-driven test for ./arcogine's require_commands preflights. Run
-# directly (bash arcogine.test.sh). Exercises the missing-tool branches that
-# ordinary CI (fully provisioned runners) never hits, so a regression in the
-# fail-fast diagnostics added for constrained environments fails loudly here
-# instead of only surfacing as a late, unrelated error partway through an
-# expensive `--full` run.
+# directly (bash .github/scripts/arcogine-preflight.test.sh). Exercises the
+# missing-tool branches that ordinary CI (fully provisioned runners) never
+# hits, so a regression in the fail-fast diagnostics added for constrained
+# environments fails loudly here instead of only surfacing as a late,
+# unrelated error partway through an expensive `--full` run.
 #
 # Deliberately hermetic: every optional tool the script preflights (docker,
 # trivy, gitleaks, curl) is provided as a fake stub rather than relying on
@@ -13,7 +13,8 @@
 set -euo pipefail
 
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-script="$dir/arcogine"
+repo_root="$(git -C "$dir" rev-parse --show-toplevel)"
+script="$repo_root/arcogine"
 
 failures=0
 

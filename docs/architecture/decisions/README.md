@@ -46,7 +46,8 @@ Each ADR has one of the following statuses:
   design.
 - **Rejected** — the proposal was explicitly considered and not adopted.
 - **Superseded** — a later Accepted ADR replaced this decision. The original
-  record is preserved as-is and links to the ADR that replaced it.
+  semantic decision remains a historical record and links to the ADR that
+  replaced it.
 
 A Proposed ADR is a useful way to structure an open design discussion, but
 its existence never implies acceptance — readers should be able to tell at a
@@ -65,46 +66,90 @@ glance which parts are established fact versus open question or proposal.
 
 Numbers are never reused, even if an ADR is later rejected or superseded.
 
+## Durable vocabulary
+
+An ADR is a durable semantic record, not a retained implementation plan. Its
+filename, title, and prose must name the capability, contract, invariant,
+identity, or behavior being decided directly. Initiative-local stage, gate,
+or slice identifiers belong in `docs/planning/`, issues, pull requests, and
+other delivery history; they must not be required to find or understand an
+ADR after the originating plan has been completed, condensed, or removed.
+
+A planning document may link to an ADR and may say which delivery slice
+implements it. The ADR must remain understandable if that planning document
+no longer exists.
+
 ## Changing a decision
 
-Accepted ADRs are immutable historical records. Once an ADR is Accepted, its
-decision/body text is not edited in place, even to make the old decision read
-more like the architecture that exists later. If the decision changes:
+Accepted and Superseded ADRs are **semantically immutable** historical
+records. A change to the decision, its applicability, its constraints, its
+consequences, or the meaning of an accepted alternative requires a new ADR:
 
-1. write a new ADR describing the new decision;
+1. write a new ADR describing the changed decision;
 2. the replacement ADR must itself be `Status: Accepted` before it can
    supersede an existing Accepted ADR;
 3. reference the old ADR from the new one (`Supersedes: ADR-NNNN`);
-4. change only the old ADR's supersession metadata: set `Status: Superseded`
-   and add `Superseded by: ADR-NNNN`.
+4. change the old ADR's supersession metadata: set `Status: Superseded` and
+   add `Superseded by: ADR-NNNN`.
 
 A Proposed replacement does not supersede established architecture. Keep the
 old ADR Accepted until the replacement decision is actually Accepted.
 
-Typos or explanatory improvements discovered after acceptance should normally
-be corrected in current-state documentation, not by rewriting the accepted
-ADR. If an error in the ADR itself is materially misleading, supersede it so
-the historical record and the correction are both explicit.
+### Semantics-preserving editorial amendments
+
+An Accepted or Superseded ADR may be amended in place when the amendment does
+**not** change its semantic decision or impact and instead improves the
+historical record's legibility or self-containment. Appropriate examples
+include replacing transient delivery terminology with stable semantic terms
+in the filename/title/prose, correcting a typo that materially obscures the
+existing decision, or clarifying wording that otherwise requires obsolete
+planning context.
+
+Every such amendment must add a header entry in this form:
+
+```text
+Amendment: YYYY-MM-DD — concise reason; no semantic change
+```
+
+Amendment entries are cumulative historical metadata and must not be removed.
+The pull request must explain why the edit is semantics-preserving. Independent
+review must verify that claim against the pre-amendment ADR; adding the
+metadata is not permission to revise architecture without supersession.
+
+A filename amendment keeps the ADR number unchanged and must update all
+repository references in the same change. Renaming an ADR is therefore a
+legibility/maintainability operation, never a way to create a new decision or
+reuse an ADR number.
+
+If a reviewer cannot establish semantic equivalence confidently, the change
+must use the normal superseding-ADR process instead.
 
 ### CI enforcement
 
-The repository enforces this rule through
+The repository enforces the mechanical part of this policy through
 `.github/scripts/check-adr-immutability.py`, which runs in the always-required
 `Classify changes` / `CI / gate` path.
 
 For every ADR that was `Accepted` or `Superseded` on the PR base commit, CI:
 
-- rejects deletion or rename of the ADR file;
-- rejects any change to the ADR body/decision text;
+- rejects deletion of the ADR number/history;
+- rejects filename, title, or body changes that do not add a new `Amendment:` entry;
+- permits a semantics-preserving filename clarification only when the ADR number is unchanged and
+  the amendment is explicitly recorded;
+- requires every new amendment entry to state `no semantic change` explicitly;
+- prevents existing amendment metadata from being removed;
 - permits an `Accepted` ADR only to remain `Accepted` or transition to
   `Superseded`;
 - permits that transition only when the same change adds a new **Accepted**
   ADR whose `Supersedes: ADR-NNNN` metadata points back to the old record;
 - rejects a Proposed replacement as insufficient to supersede established
   architecture;
-- keeps an already `Superseded` ADR fully immutable, including its
-  supersession target.
+- keeps an already `Superseded` ADR's status and supersession target immutable.
 
-`Proposed` ADRs remain editable until accepted. The guard is intentionally
-stricter than human review: changing an accepted decision requires a new
-Accepted ADR, not an exception flag or reviewer override.
+CI cannot determine whether prose or a filename change is truly semantically
+equivalent. That is a mandatory review responsibility. The automated guard
+verifies that an edit is explicitly presented as an editorial amendment; the
+reviewer decides whether that claim is valid.
+
+`Proposed` ADRs remain freely editable until accepted, subject to normal
+review and the same durable-vocabulary rule.

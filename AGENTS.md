@@ -24,10 +24,26 @@ Common shorthand should be interpreted in repository context:
 - “check repo state” means inspect the state of this repository;
 - references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
 
-PR workflow shorthand has distinct review and remediation meanings:
+Repository workflow shorthand has distinct meanings:
 
 - `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
-- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available.
+- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available;
+- `.?` = perform the Session-close Kaizen review before ending or deleting the current session.
+
+### Session-close Kaizen
+
+When the user's entire message is `.?`, inspect the current session and live repository for anything learned, decided, repeated, or encountered that should survive deletion of the conversation by changing executable safeguards, standard work, or maintained repository knowledge.
+
+Classify each material candidate as one of:
+
+- **Already encoded** — the repository already captures the lesson or invariant adequately; make no duplicate change.
+- **Bake in** — the lesson is durable and generally reusable; identify the narrowest authoritative repository surface that should encode it.
+- **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being smuggled into the current PR or slice.
+- **Discard** — the observation is situational, transient, or otherwise not worth preserving.
+
+Prefer stronger forms of durable capture in this order when they fit the lesson: executable guard/test, canonical helper/tooling, agent/contributor standard work, maintained documentation, then an ADR only for genuinely architectural or hard-to-reverse decisions. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
+
+Do not manufacture a lesson merely to produce an output. Finish every Session-close Kaizen review with an explicit deletion verdict: either the session is safe to delete because nothing unique remains, or name exactly what still needs to be captured first.
 
 Do not replace known repository context with generic GitHub discovery.
 
@@ -95,11 +111,13 @@ ones created via an explicit user request.
 
 ## PR lifecycle
 
-Resolve a PR's lifecycle state from its current head and metadata, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
+Resolve a PR's lifecycle state from its current head and metadata, base freshness, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
 
 - **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for initial review, re-review, or for required CI to finish. A current-head review may already be `READY TO MERGE` while CI is still pending — review authorization is independent of CI — but the lifecycle stays `AWAITING` until CI also turns green; no second review is needed solely because CI changed from pending to green with the reviewed head/base unchanged.
-- **CHANGES REQUIRED** — an implementation-owned blocker remains, such as a valid blocking review finding, failed required CI, or a merge conflict. Remediate it, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
-- **READY TO MERGE** — the latest applicable reviewer disposition for the current PR head is `READY TO MERGE`, required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+- **CHANGES REQUIRED** — an implementation-owned blocker remains, such as the head being behind its current base, a valid blocking review finding, failed required CI, or a merge conflict. Reconcile a behind-base branch before review; otherwise remediate the blocker, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
+- **READY TO MERGE** — the latest applicable reviewer disposition for the current PR head is `READY TO MERGE`, required validation is green, the head is level with its current base, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+
+Base freshness is implementation-owned lifecycle state, not something the reviewer should normally have to discover. `infra/dev/pr-watch.mjs` must treat any behind-base head as **CHANGES REQUIRED**, making reconciliation with the current base the next implementation-owned transition. Independent review still verifies the current base and head as defense in depth.
 
 Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). CI is not a reviewer disposition and is never folded into it: required CI is enforced independently by GitHub branch protection. Only a current-head `READY TO MERGE` review, together with green required CI, produces the `READY TO MERGE` lifecycle state.
 

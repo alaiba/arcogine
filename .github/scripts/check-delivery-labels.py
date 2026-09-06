@@ -16,8 +16,8 @@ exactly two content rules, plus one path rule:
 
 1. Outside `docs/planning/`: any `PLAN-...` or `REV-...` token is a durable-naming leak and fails
    the check -- whether or not the token is well-formed. A malformed variant (wrong case, a
-   dotted/underscore-joined segment, ...) is not a loophole: the whole point of a reserved
-   namespace is that nothing shaped like it is allowed to leak into durable material.
+   dotted/underscore-joined segment, `REV-abc`, ...) is not a loophole: the whole point of a
+   reserved namespace is that nothing shaped like it is allowed to leak into durable material.
 2. Inside `docs/planning/`: a `PLAN-...`/`REV-...` token must fully conform to the canonical
    grammar (`PLAN-<TRACK>-<LOCAL-ID>` with an uppercase-ASCII track and hyphen-separated segments;
    `REV-<digits>`) or the check fails -- the namespace stays unambiguous only if every instance of
@@ -142,11 +142,18 @@ def main() -> int:
                         "invariant instead"
                     )
                 for match in REV_TOKEN_PATTERN.finditer(line):
-                    if CANONICAL_REV.fullmatch(match.group(0)):
+                    token = match.group(0)
+                    if CANONICAL_REV.fullmatch(token):
                         errors.append(
                             f"{rel}:{line_number}: durable artifact contains a REV-NNN delivery "
-                            f"coordinate (`{match.group(0)}`) -- name the capability/contract/"
+                            f"coordinate (`{token}`) -- name the capability/contract/"
                             "invariant instead"
+                        )
+                    else:
+                        errors.append(
+                            f"{rel}:{line_number}: malformed delivery-coordinate token "
+                            f"`{token}` -- review/finding identifiers must conform exactly to "
+                            "REV-<digits>"
                         )
             else:
                 # Every PLAN-* token must fully conform to the canonical grammar -- a malformed
@@ -171,6 +178,12 @@ def main() -> int:
                     token = match.group(0)
                     if CANONICAL_REV.fullmatch(token):
                         masked[match.start() : match.end()] = " " * len(token)
+                    else:
+                        errors.append(
+                            f"{rel}:{line_number}: malformed delivery-coordinate token "
+                            f"`{token}` -- review/finding identifiers must conform exactly to "
+                            "REV-<digits>"
+                        )
                 masked_line = "".join(masked)
                 for pattern in LEGACY_PATTERNS:
                     for match in pattern.finditer(masked_line):

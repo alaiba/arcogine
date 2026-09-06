@@ -78,7 +78,7 @@ more hyphen-separated segments, extended for hierarchical items rather than inve
 namespace. Compact, ad-hoc, or track-local coordinate syntax (a bare letter+number, a dotted or
 space-separated variant, etc.) must not be introduced — the whole point of one reserved namespace
 is that a temporary coordinate is always unmistakable on sight. PR-local review/finding
-identifiers use the separate `REV-NNN` namespace.
+identifiers use the separate `REV-<NNN>` namespace.
 
 Both namespaces are temporary delivery coordinates. They may be used in `docs/planning/`, issues,
 pull requests, PR descriptions/comments, reviews, branch names, commit messages, handoff prompts,
@@ -104,7 +104,7 @@ changes later.
 
 The mechanical checker (`.github/scripts/check-delivery-labels.py`) enforces this deterministically
 by scanning every tracked repository file (`git ls-files`, so generated/untracked/build output is
-never in scope): a `PLAN-*` or `REV-NNN` token outside `docs/planning/` is a durable-naming leak;
+never in scope): a `PLAN-*` or `REV-<NNN>` token outside `docs/planning/` is a durable-naming leak;
 inside `docs/planning/`, the old ambiguous label forms it replaced (a bare `Gate` plus number, a
 bare letter-plus-number optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be
 reintroduced. Those old forms are not banned outside `docs/planning/` — they can be ordinary,

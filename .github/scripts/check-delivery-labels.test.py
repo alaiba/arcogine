@@ -132,6 +132,20 @@ def test_well_formed_plan_token_at_end_of_sentence_is_not_flagged_as_malformed()
     assert_passes({"docs/planning/example.md": "Tracked as PLAN-ENG-4.\n"})
 
 
+def test_malformed_rev_token_rejected_in_planning() -> None:
+    assert_fails(
+        {"docs/planning/example.md": "See REV-abc for context.\n"},
+        "malformed delivery-coordinate token `REV-abc`",
+    )
+
+
+def test_malformed_rev_token_rejected_durably() -> None:
+    assert_fails(
+        {"docs/architecture/overview.md": "Fixed per REV-12.foo.\n"},
+        "malformed delivery-coordinate token",
+    )
+
+
 # --- Reserved labels must never become durable filenames/paths ----------------------------------
 
 
@@ -199,7 +213,7 @@ def test_policy_metavariable_syntax_passes_without_exemption() -> None:
         {
             "AGENTS.md": (
                 "Planning coordinates use PLAN-<TRACK>-<LOCAL-ID>. "
-                "PR-local review identifiers use REV-NNN.\n"
+                "PR-local review identifiers use REV-<NNN>.\n"
             )
         }
     )

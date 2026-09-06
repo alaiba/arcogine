@@ -44,13 +44,17 @@ const FAILURE_ALERT_THRESHOLD = 3;
  */
 const DEFAULT_REQUIRED_CHECK = 'gate';
 
-/** Disposition vocabulary owned by .github/agents/pr-reviewer.agent.md. */
-const DISPOSITIONS = [
-  'READY TO MERGE',
-  'READY AFTER CI',
-  'CHANGES REQUIRED',
-  'NON-BLOCKING FOLLOW-UPS ONLY',
-];
+/**
+ * Disposition vocabulary owned by .github/agents/pr-reviewer.agent.md. Exactly two
+ * values: READY TO MERGE authorizes merge of the exact reviewed head; CHANGES REQUIRED
+ * blocks it. CI is not a reviewer disposition and review authorization is independent of
+ * it -- a current-head review may already be READY TO MERGE while CI is still pending.
+ * required validation is enforced independently via requiredCheck below: AWAITING below
+ * covers both "no current-head disposition yet" and "disposition is READY but the
+ * independent CI condition is not yet green", without needing a second review solely
+ * because CI transitions from pending to green.
+ */
+const DISPOSITIONS = ['READY TO MERGE', 'CHANGES REQUIRED'];
 
 const DISPOSITION_ALTERNATION = DISPOSITIONS.map((d) => d.replace(/ /g, '\\s+')).join('|');
 

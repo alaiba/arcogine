@@ -1,0 +1,25 @@
+# Code owners for security-sensitive paths.
+#
+# Required review from a code owner is the mitigation for the PR disposition
+# merge gate's listener-coverage-narrowing and required-check-provenance
+# gaps (see docs/development/reviewing.md): a candidate PR can no longer
+# merge a
+# change under .github/workflows/ -- including narrowing
+# pr-disposition-review-trigger.yml's pull_request_review.types coverage,
+# or authoring an unrelated workflow that mints its own check run named
+# "disposition" -- without an independent owner approving that exact
+# change. This entry has no effect until a maintainer enables "Require
+# review from Code Owners" on the branch protection ruleset for `main`
+# (see docs/development/reviewing.md's PR disposition merge gate
+# activation checklist) -- CODEOWNERS alone does not enforce anything.
+#
+# This file also owns itself (and the rest of .github/), per GitHub's own
+# guidance that protecting a repository fully against unauthorized changes
+# requires defining an owner for CODEOWNERS in addition to the paths it
+# protects: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Without this, a PR could narrow or remove the /.github/workflows/ rule
+# below in one change, then narrow the listener's trigger coverage or spoof
+# the disposition check name in a later, no-longer-covered change.
+/.github/ @alaiba
+
+/.github/workflows/ @alaiba

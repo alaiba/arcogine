@@ -324,8 +324,32 @@ Every complete review/re-review must identify:
 - validation/CI state;
 - semantic neighbors inspected for medium/high-risk reviews, including important checked surfaces that required no change;
 - any inspection limitations;
-- explicit final disposition using `docs/development/reviewing.md`: `READY TO MERGE`, `READY AFTER CI`, `CHANGES REQUIRED`, or `NON-BLOCKING FOLLOW-UPS ONLY`.
+- explicit final disposition using `docs/development/reviewing.md`: `READY TO MERGE` or `CHANGES REQUIRED`.
 
 The semantic-neighbor coverage note is evidence of review breadth, not proof of repository-wide consistency. Keep it compact and material; do not dump every search hit.
+
+## Canonical disposition format
+
+Every complete review/re-review must end with a machine-readable canonical disposition block. This block is parsed by the repository's PR disposition merge gate and must appear exactly once per review, at the end of the review body, in this format:
+
+```
+Reviewed head: <full-PR-head-SHA>
+Disposition: **READY TO MERGE**
+```
+
+There are exactly two disposition values:
+- `**READY TO MERGE**` — independent review of the code/docs is complete and finds no blocking issue on this exact PR head
+- `**CHANGES REQUIRED**` — an implementation-owned review blocker remains
+
+There is no third disposition for "review is clean but CI is still pending." CI is not a reviewer disposition and review authorization is genuinely orthogonal to CI status, never coupled to it in review vocabulary: you may issue `READY TO MERGE` based solely on the code/docs review, regardless of whether required CI has finished for this head. That disposition is necessary but not sufficient for merge — required CI is enforced independently by GitHub branch protection, and the PR lifecycle (per `AGENTS.md`) does not reach `READY TO MERGE` until CI is also green. Do not withhold a `READY TO MERGE` disposition merely because CI is still running, and do not treat CI transitioning from pending to green as by itself requiring a fresh review when the reviewed head and base are unchanged.
+
+**Important semantics:**
+
+- The `Reviewed head:` must be the exact current PR head SHA inspected in this review. When a new commit is pushed (new PR head), the prior review's disposition becomes stale and does not authorize merge.
+- The disposition block must be the final block in the review body. Prose elsewhere (examples, quoted prior reviews, discussion) mentioning disposition names is not authoritative.
+- A targeted/incomplete review must not emit a merge-authorizing disposition unless you completed the full review procedure.
+- A new commit, a new finding, or the base branch advancing all require a fresh disposition; CI alone changing state on an otherwise-unchanged reviewed head does not.
+
+When re-reviewing or editing an existing review, update the canonical block to reflect the current state: new head SHA if a commit was pushed, and potentially a new disposition value.
 
 For a targeted review, do not issue a full merge disposition unless you actually completed the full review procedure. A complete review with no findings should say so directly. Do not leave merge readiness implicit.

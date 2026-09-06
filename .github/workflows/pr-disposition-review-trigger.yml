@@ -1,0 +1,36 @@
+name: PR Disposition Review Trigger
+
+# Minimal, unprivileged listener for pull_request_review events.
+#
+# GitHub sources a pull_request_review-triggered workflow's DEFINITION from
+# the pull request's own merge commit, not from main -- unlike
+# pull_request_target, there is no trusted variant of this event. This
+# workflow's job is therefore deliberately inert: no checkout, no secrets, no
+# write permissions, nothing that could be exploited by a PR that edits this
+# file. Its only purpose is to complete, so that the trusted workflow in
+# .github/workflows/pr-disposition.yml -- whose definition IS sourced from
+# main via workflow_run -- can react to the review event safely. That trusted
+# workflow re-derives everything it needs (PR number, head SHA, review
+# bodies) independently via the GitHub API; it does not trust any output from
+# this listener run.
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions: {}
+
+concurrency:
+  group: pr-disposition-review-trigger-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      # A block scalar (|), not a single-line plain value, is required here:
+      # in an unquoted YAML plain scalar, " #" (space then hash) starts a
+      # YAML comment and silently truncates everything after it -- which is
+      # exactly what "PR #${{ ... }}" would trigger on a single `run: echo
+      # "..."` line, breaking the shell string before its closing quote.
+      - run: |
+          echo "review event recorded for PR #${{ github.event.pull_request.number }}"

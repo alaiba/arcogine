@@ -23,7 +23,7 @@ When documents disagree, the higher layer governs product direction; the lower l
 
 ### Durable semantic vocabulary
 
-Planning documents may use initiative-local stage and slice identifiers because those coordinates are useful while work is being sequenced. Durable semantic/current-state documentation must instead name capabilities, contracts, identities, invariants, and behaviors directly rather than depend on temporary delivery coordinates. Working/process documentation may mention a planning coordinate when the coordinate itself is part of the process being explained.
+Planning documents may use initiative-local stage and slice identifiers, and PRs/reviews may use PR-local review/finding identifiers (see `AGENTS.md`), because those coordinates are useful while work is being sequenced or tracked. Durable semantic naming — current-state documentation, and non-Markdown durable artifacts such as code comments, workflow definitions, and test names — must instead name capabilities, contracts, identities, invariants, and behaviors directly rather than depend on a temporary delivery coordinate. Working/process documentation and delivery-history records (including commit messages) may mention a delivery coordinate when the coordinate itself is part of the process being explained or was actually used to track the work.
 
 A durable document may link to a planning document for implementation sequencing, but it must remain understandable if the plan is later completed, condensed, renamed, or removed. When a planned outcome becomes architecture or current capability, translate the delivery label into semantic terminology rather than carrying the plan's coordinate into ADRs, architecture, product, reference, or durable development guidance.
 

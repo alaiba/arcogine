@@ -95,6 +95,60 @@ def test_old_compact_forms_rejected_in_planning() -> None:
         assert_fails({"docs/planning/example.md": legacy}, f"legacy delivery-coordinate form `{label}`")
 
 
+# --- Malformed canonical-looking tokens must fail, not silently pass ----------------------------
+
+
+def test_dotted_plan_variant_rejected_in_planning() -> None:
+    assert_fails(
+        {"docs/planning/example.md": "PLAN-GOV-1.3 is complete.\n"},
+        "malformed delivery-coordinate token `PLAN-GOV-1.3`",
+    )
+
+
+def test_underscore_plan_variant_rejected_in_planning() -> None:
+    assert_fails(
+        {"docs/planning/example.md": "PLAN-ENG-4_B is complete.\n"},
+        "malformed delivery-coordinate token `PLAN-ENG-4_B`",
+    )
+
+
+def test_lowercase_track_plan_variant_rejected_in_planning() -> None:
+    assert_fails(
+        {"docs/planning/example.md": "PLAN-eng-4 is complete.\n"},
+        "malformed delivery-coordinate token `PLAN-eng-4`",
+    )
+
+
+def test_lowercase_track_plan_variant_rejected_durably() -> None:
+    assert_fails(
+        {"docs/architecture/overview.md": "Tracked as PLAN-eng-4.\n"},
+        "durable artifact contains a PLAN-* delivery coordinate (`PLAN-eng-4`)",
+    )
+
+
+def test_well_formed_plan_token_at_end_of_sentence_is_not_flagged_as_malformed() -> None:
+    # A trailing "." is sentence punctuation, not part of the token -- must not be treated as a
+    # malformed dotted variant.
+    assert_passes({"docs/planning/example.md": "Tracked as PLAN-ENG-4.\n"})
+
+
+# --- Reserved labels must never become durable filenames/paths ----------------------------------
+
+
+def test_canonical_plan_label_in_planning_filename_is_rejected() -> None:
+    assert_fails(
+        {"docs/planning/PLAN-ENG-4-runtime-observation.md": "Semantic content.\n"},
+        "file path embeds a reserved PLAN-*/REV-NNN delivery-coordinate token",
+    )
+
+
+def test_plan_label_in_durable_filename_outside_planning_is_rejected() -> None:
+    assert_fails(
+        {"docs/architecture/PLAN-GOV-1-overview.md": "Semantic content.\n"},
+        "file path embeds a reserved PLAN-*/REV-NNN delivery-coordinate token",
+    )
+
+
 # --- Durable semantic material must not acquire PLAN-*/REV-NNN labels ---------------------------
 
 

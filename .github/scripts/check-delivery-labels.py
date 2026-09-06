@@ -12,16 +12,26 @@ Because both namespaces are unmistakable (`PLAN-` and `REV-` are not ordinary En
 vocabulary), this checker needs no per-language extension lists, Markdown-directory tiers, or
 per-file exemptions the way a collection of ambiguous compact labels (`G1`, `D3`, `C2`, `O1`,
 `Gate 4`, `W1`, `DH-E`, ...) would. It enumerates tracked files via `git ls-files` and applies
-exactly two rules:
+exactly two content rules, plus one path rule:
 
-1. Outside `docs/planning/`: a `PLAN-<TRACK>-...` or `REV-<digits>` token is a durable-naming
-   leak and fails the check.
-2. Inside `docs/planning/`: `PLAN-*` and `REV-<digits>` are expected and allowed, but the old
-   ambiguous label families they replaced (`Gate 4`, `G1`, `G1.3`, `G4-B`, `D1`, `C1`, `O1`, `W1`,
-   `DH-E`, ...) must not be reintroduced at their planning source. These legacy forms are not
-   banned outside `docs/planning/` -- `C1`, `O1`, `D3`, etc. are ordinary identifiers elsewhere in
-   the codebase (see the existing package/dependency corpus), and rejecting them there would be
-   exactly the ambiguous, collision-prone enforcement this namespace exists to avoid.
+1. Outside `docs/planning/`: any `PLAN-...` or `REV-...` token is a durable-naming leak and fails
+   the check -- whether or not the token is well-formed. A malformed variant (wrong case, a
+   dotted/underscore-joined segment, ...) is not a loophole: the whole point of a reserved
+   namespace is that nothing shaped like it is allowed to leak into durable material.
+2. Inside `docs/planning/`: a `PLAN-...`/`REV-...` token must fully conform to the canonical
+   grammar (`PLAN-<TRACK>-<LOCAL-ID>` with an uppercase-ASCII track and hyphen-separated segments;
+   `REV-<digits>`) or the check fails -- the namespace stays unambiguous only if every instance of
+   it actually is the canonical shape. Once a line's well-formed tokens are accounted for, the old
+   ambiguous label families this namespace replaced (`Gate 4`, `G1`, `G1.3`, `G4-B`, `D1`, `C1`,
+   `O1`, `W1`, `DH-E`, ...) must not be reintroduced at their planning source. These legacy forms
+   are not banned outside `docs/planning/` -- `C1`, `O1`, `D3`, etc. are ordinary identifiers
+   elsewhere in the codebase (see the existing package/dependency corpus), and rejecting them there
+   would be exactly the ambiguous, collision-prone enforcement this namespace exists to avoid.
+3. A tracked file's path must never embed a `PLAN-*`/`REV-NNN` token, anywhere in the repository.
+   A filename or directory name is always durable naming (it outlives whatever sequenced the work
+   that produced it), so a reserved delivery label belongs in a planning document's content, never
+   its path. Inside `docs/planning/`, the older per-track coordinate-derived filenames this
+   convention replaced are rejected the same way.
 
 Human review remains responsible for semantic leakage no syntax checker can identify (e.g. prose
 like "the next stage" with no literal coordinate).
@@ -49,8 +59,16 @@ SELF_FILES = {
 
 PLANNING_DIR = "docs/planning/"
 
-PLAN_PATTERN = re.compile(r"\bPLAN-[A-Z]+(?:-[A-Za-z0-9]+)+\b")
-REV_PATTERN = re.compile(r"\bREV-\d+\b")
+# Broad tokenizers: catch every literal that *starts* as a delivery-coordinate attempt, whether or
+# not it is actually well-formed, so a malformed variant (wrong case, a dotted or underscore-joined
+# segment, ...) cannot silently evade detection merely by not matching the strict grammar below.
+PLAN_TOKEN_PATTERN = re.compile(r"\bPLAN-[A-Za-z0-9]+(?:[-._][A-Za-z0-9]+)*")
+REV_TOKEN_PATTERN = re.compile(r"\bREV-[A-Za-z0-9]+(?:[-._][A-Za-z0-9]+)*")
+
+# The canonical grammar every token above must fully conform to (AGENTS.md: PLAN-<TRACK>-<LOCAL-ID>
+# with an uppercase-ASCII track and hyphen-separated LOCAL-ID segments; REV-NNN, digits only).
+CANONICAL_PLAN = re.compile(r"PLAN-[A-Z]+(?:-[A-Za-z0-9]+)+")
+CANONICAL_REV = re.compile(r"REV-\d+")
 
 # Legacy ambiguous planning-coordinate forms this namespace replaces. Rejected only at their
 # planning source (docs/planning/**), never globally -- see module docstring.
@@ -100,7 +118,12 @@ def main() -> int:
 
         in_planning = rel.startswith(PLANNING_DIR)
 
-        if in_planning and LEGACY_FILENAME_PATTERN.search(path.name):
+        if PLAN_TOKEN_PATTERN.search(rel) or REV_TOKEN_PATTERN.search(rel):
+            errors.append(
+                f"{rel}: file path embeds a reserved PLAN-*/REV-NNN delivery-coordinate token; "
+                "filenames must remain semantic, never coordinate-derived"
+            )
+        elif in_planning and LEGACY_FILENAME_PATTERN.search(path.name):
             errors.append(
                 f"{rel}: planning filename still embeds a legacy delivery-coordinate form; "
                 "planning filenames should be semantic (the label belongs in the content, not the path)"
@@ -112,21 +135,45 @@ def main() -> int:
 
         for line_number, line in enumerate(text.splitlines(), start=1):
             if not in_planning:
-                for pattern, name in ((PLAN_PATTERN, "PLAN-*"), (REV_PATTERN, "REV-NNN")):
-                    for match in pattern.finditer(line):
+                for match in PLAN_TOKEN_PATTERN.finditer(line):
+                    errors.append(
+                        f"{rel}:{line_number}: durable artifact contains a PLAN-* delivery "
+                        f"coordinate (`{match.group(0)}`) -- name the capability/contract/"
+                        "invariant instead"
+                    )
+                for match in REV_TOKEN_PATTERN.finditer(line):
+                    if CANONICAL_REV.fullmatch(match.group(0)):
                         errors.append(
-                            f"{rel}:{line_number}: durable artifact contains a {name} delivery "
+                            f"{rel}:{line_number}: durable artifact contains a REV-NNN delivery "
                             f"coordinate (`{match.group(0)}`) -- name the capability/contract/"
                             "invariant instead"
                         )
             else:
-                # Mask already-canonical PLAN-*/REV-NNN tokens first, so a legacy pattern never
-                # matches a substring embedded inside one (e.g. "W1" inside "PLAN-ENG-W1", or
-                # "C1" inside "PLAN-ENG-5-C1").
-                masked = PLAN_PATTERN.sub(lambda m: " " * len(m.group(0)), line)
-                masked = REV_PATTERN.sub(lambda m: " " * len(m.group(0)), masked)
+                # Every PLAN-* token must fully conform to the canonical grammar -- a malformed
+                # variant (wrong case, a dotted/underscore-joined segment, ...) is flagged here
+                # rather than silently passing through unmatched. Well-formed tokens are masked out
+                # before the legacy sweep below, so a legacy pattern never matches a substring
+                # embedded inside one (e.g. "W1" inside "PLAN-ENG-W1", or "C1" inside
+                # "PLAN-ENG-5-C1").
+                masked = list(line)
+                for match in PLAN_TOKEN_PATTERN.finditer(line):
+                    token = match.group(0)
+                    if CANONICAL_PLAN.fullmatch(token):
+                        masked[match.start() : match.end()] = " " * len(token)
+                    else:
+                        errors.append(
+                            f"{rel}:{line_number}: malformed delivery-coordinate token "
+                            f"`{token}` -- planning coordinates must conform exactly to "
+                            "PLAN-<TRACK>-<LOCAL-ID> (uppercase-ASCII track, hyphen-separated "
+                            "segments)"
+                        )
+                for match in REV_TOKEN_PATTERN.finditer(line):
+                    token = match.group(0)
+                    if CANONICAL_REV.fullmatch(token):
+                        masked[match.start() : match.end()] = " " * len(token)
+                masked_line = "".join(masked)
                 for pattern in LEGACY_PATTERNS:
-                    for match in pattern.finditer(masked):
+                    for match in pattern.finditer(masked_line):
                         errors.append(
                             f"{rel}:{line_number}: legacy delivery-coordinate form "
                             f"`{match.group(0)}` -- use the canonical PLAN-<TRACK>-<LOCAL-ID> "

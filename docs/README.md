@@ -88,7 +88,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 
 ## Internal planning (maintainers)
 
-These documents are internal planning artifacts, not user-facing guides. Their link text below uses semantic descriptions even when a historical planning filename retains an initiative-local coordinate.
+These documents are internal planning artifacts, not user-facing guides. Planning filenames are semantic rather than coordinate-derived (see "Durable semantic vocabulary" above), so the link text below simply matches each document's subject.
 
 | Document | What it covers |
 |----------|-----------------|

@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * End-to-end G2 tests: {@link ChangeSetFactory} against the real G1.3 authoritative persistence
+ * End-to-end change-set/impact-scope tests: {@link ChangeSetFactory} against the real controlled-revision-authority persistence
  * boundary ({@link FileControlledRevisionAuthority}) and the real factory-domain D5 comparator
  * ({@link FactoryModelSemanticComparator}) -- not test-only object injection.
  */
@@ -259,7 +259,7 @@ class ChangeSetFactoryTest {
                         ChangeProvenance.of("engineer", "add machine"));
 
         // A hypothetical future requirement's registered scope, matched against ImpactScope
-        // without any ChangeSet redesign -- proving the seam without fabricating G3 infrastructure.
+        // without any ChangeSet redesign -- proving the seam without fabricating requirement-scope infrastructure.
         Set<ChangedEntityRef> requirementScope = Set.of(new ChangedEntityRef("factory.resource", "2", ""));
         assertTrue(changeSet.impactScope().intersects(requirementScope));
         Set<ChangedEntityRef> unrelatedScope = Set.of(new ChangedEntityRef("factory.resource", "99", ""));

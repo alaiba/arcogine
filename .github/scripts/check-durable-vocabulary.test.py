@@ -57,6 +57,51 @@ def check_broad_path(relative: str) -> list[str]:
             MODULE.ROOT = old_root
 
 
+def check_broad_markdown_content(text: str, relative: str) -> list[str]:
+    with tempfile.TemporaryDirectory() as directory:
+        old_root = MODULE.ROOT
+        old_exempt_files = MODULE.EXEMPT_FILES
+        try:
+            MODULE.ROOT = Path(directory)
+            MODULE.EXEMPT_FILES = tuple(
+                MODULE.ROOT / rel
+                for rel in ("docs/development/reviewing.md", "docs/development/consistency-review.md")
+            )
+            path = MODULE.ROOT / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+            return [identifier for _, identifier in MODULE.content_violations(path, MODULE.BROAD_CONTENT_PATTERNS)]
+        finally:
+            MODULE.ROOT = old_root
+            MODULE.EXEMPT_FILES = old_exempt_files
+
+
+def scanned_broad_markdown_paths(paths: list[str]) -> list[str]:
+    with tempfile.TemporaryDirectory() as directory:
+        old_root = MODULE.ROOT
+        old_dirs = MODULE.BROAD_MARKDOWN_DIRS
+        old_exempt_dirs = MODULE.EXEMPT_DIRS
+        old_exempt_files = MODULE.EXEMPT_FILES
+        try:
+            MODULE.ROOT = Path(directory)
+            MODULE.BROAD_MARKDOWN_DIRS = (MODULE.ROOT / "docs",)
+            MODULE.EXEMPT_DIRS = (MODULE.ROOT / "docs" / "planning",)
+            MODULE.EXEMPT_FILES = tuple(
+                MODULE.ROOT / rel
+                for rel in ("docs/development/reviewing.md", "docs/development/consistency-review.md")
+            )
+            for relative in paths:
+                path = MODULE.ROOT / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("semantic content\n", encoding="utf-8")
+            return [path.relative_to(MODULE.ROOT).as_posix() for path in MODULE.broad_markdown_files()]
+        finally:
+            MODULE.ROOT = old_root
+            MODULE.BROAD_MARKDOWN_DIRS = old_dirs
+            MODULE.EXEMPT_DIRS = old_exempt_dirs
+            MODULE.EXEMPT_FILES = old_exempt_files
+
+
 def scanned_markdown_paths(paths: list[str]) -> list[str]:
     with tempfile.TemporaryDirectory() as directory:
         old_root = MODULE.ROOT
@@ -258,6 +303,48 @@ def test_planning_docs_remain_allowed() -> None:
     assert (
         scanned_markdown_paths(["docs/planning/gate-4-runtime-observation-event-delivery.md"]) == []
     )
+
+
+# --- New: broad Markdown coverage beyond the four narrow durable-doc directories ---------------
+
+
+def test_rev_identifier_is_rejected_in_durable_development_markdown() -> None:
+    assert check_broad_markdown_content(
+        "REV-042 fixed a stale reference.\n", "docs/development/testing.md"
+    ) == ["REV-042"]
+
+
+def test_broad_markdown_scan_covers_all_of_docs_outside_planning() -> None:
+    paths = [
+        "README.md",
+        "docs/README.md",
+        "docs/architecture/a.md",
+        "docs/development/testing.md",
+        "docs/planning/plan.md",
+        "docs/development/reviewing.md",
+        "docs/development/consistency-review.md",
+    ]
+    assert scanned_broad_markdown_paths(paths) == [
+        "docs/README.md",
+        "docs/architecture/a.md",
+        "docs/development/testing.md",
+    ]
+
+
+def test_policy_documents_remain_exempt_from_broad_markdown_scan() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        old_root = MODULE.ROOT
+        old_exempt_files = MODULE.EXEMPT_FILES
+        try:
+            MODULE.ROOT = Path(directory)
+            MODULE.EXEMPT_FILES = (MODULE.ROOT / "docs" / "development" / "reviewing.md",)
+            path = MODULE.ROOT / "docs" / "development" / "reviewing.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("A reviewer's own REV-123 numbering for a single PR's findings.\n", encoding="utf-8")
+            assert MODULE.skipped(path) is True
+        finally:
+            MODULE.ROOT = old_root
+            MODULE.EXEMPT_FILES = old_exempt_files
 
 
 def test_planning_scoped_source_files_remain_allowed() -> None:

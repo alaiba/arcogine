@@ -13,12 +13,15 @@ This mechanical check is a syntactic baseline, not proof of semantic self-contai
 two tiers of pattern, deliberately scoped by collision risk:
 
 - BROAD patterns (`REV-123`, `Gate 4`/`Gate4...`, `DH-E`) are unambiguous enough to flag across
-  durable Markdown, Java/Javadoc comments, JS/TS/TSX source and test comments, Python and Bash
-  tooling (including this repository's own `.github/scripts/`), and GitHub Actions workflow
-  definitions.
+  every Markdown file under `docs/` outside `docs/planning/` (plus the root/`docs/` READMEs),
+  Java/Javadoc comments, JS/TS/TSX source and test comments, Python and Bash tooling (including
+  this repository's own `.github/scripts/`), and GitHub Actions workflow definitions. A short,
+  explicit `EXEMPT_FILES` list covers process/policy documents (e.g. this repository's own review
+  and consistency-check policy) where the coordinate syntax itself is genuinely the subject.
 - NARROW compact patterns (bare `G1`, `O2`, `C1`, `D1`, `W1`) are collision-prone against ordinary
-  prose and identifiers, so they stay scoped to the repository's durable reader-facing Markdown
-  surfaces only, matching this checker's original behavior.
+  prose and identifiers, so they stay scoped to the repository's original durable reader-facing
+  Markdown surfaces (`docs/{architecture,product,reference,examples}`, root/`docs/` READMEs) —
+  human review remains responsible for these elsewhere.
 
 Human review remains responsible for semantic leakage that cannot be recognized safely by syntax
 alone (e.g. prose like "the next stage" with no literal coordinate).
@@ -33,7 +36,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 
 # Durable reader-facing Markdown surfaces (original scope; also carries the narrow compact-form
-# patterns, which are too collision-prone for the broader source/workflow scan below).
+# patterns, which are too collision-prone for the broader source/workflow/Markdown scan below).
 DURABLE_MARKDOWN_FILES = (ROOT / "README.md", ROOT / "docs" / "README.md")
 DURABLE_MARKDOWN_DIRS = (
     ROOT / "docs" / "architecture",
@@ -41,6 +44,13 @@ DURABLE_MARKDOWN_DIRS = (
     ROOT / "docs" / "reference",
     ROOT / "docs" / "examples",
 )
+
+# Broader durable Markdown scope for BROAD patterns only: every Markdown file under docs/ outside
+# docs/planning/ (which is EXEMPT_DIRS below). This is a superset of DURABLE_MARKDOWN_DIRS -- it
+# additionally covers docs/development/ and any other current or future docs/ subdirectory, so a
+# high-confidence coordinate like REV-123 can't accumulate in durable development guidance just
+# because it isn't one of the four narrow-scan directories.
+BROAD_MARKDOWN_DIRS = (ROOT / "docs",)
 
 # Durable non-Markdown artifacts: source/test comments, test/class/file names, workflow
 # definitions, and this repository's own policy/check tooling. Only the BROAD patterns apply here
@@ -68,13 +78,16 @@ BROAD_SCAN_SUFFIXES = {
 # scanned, regardless of file type.
 EXEMPT_DIRS = (ROOT / "docs" / "planning",)
 
-# This checker's own script and test fixtures are the canonical place these coordinate patterns
-# are documented and exercised as deliberate bad examples -- exactly the "process/policy material
-# where the temporary-coordinate syntax itself is the subject" exemption the policy allows. They
-# would otherwise fail their own broadened scan once .github/scripts/ is in scope.
+# This checker's own script/test fixtures, and the repository's normative review/consistency
+# policy documents, are the canonical places these coordinate patterns are documented or exercised
+# as deliberate examples -- exactly the "process/policy material where the temporary-coordinate
+# syntax itself is the subject" exemption the policy allows. They would otherwise fail their own
+# scan once .github/scripts/ and all of docs/ are in scope.
 EXEMPT_FILES = (
     ROOT / ".github" / "scripts" / "check-durable-vocabulary.py",
     ROOT / ".github" / "scripts" / "check-durable-vocabulary.test.py",
+    ROOT / "docs" / "development" / "reviewing.md",
+    ROOT / "docs" / "development" / "consistency-review.md",
 )
 
 SKIP_DIR_NAMES = {
@@ -132,6 +145,19 @@ def durable_markdown_files() -> list[Path]:
     return sorted(files)
 
 
+def broad_markdown_files() -> list[Path]:
+    """Every Markdown file under docs/ outside docs/planning/, for BROAD patterns only.
+
+    A superset of durable_markdown_files(); callers should skip files already covered there to
+    avoid double-reporting the same violation under both the BROAD and NARROW+BROAD passes.
+    """
+    files: set[Path] = set()
+    for directory in BROAD_MARKDOWN_DIRS:
+        if directory.is_dir():
+            files.update(path for path in directory.rglob("*.md") if not skipped(path))
+    return sorted(files)
+
+
 def broad_scan_files() -> list[Path]:
     files: set[Path] = set()
     for directory in BROAD_SCAN_DIRS:
@@ -160,7 +186,8 @@ def path_violations(path: Path, pattern: re.Pattern[str]) -> list[str]:
 def main() -> int:
     errors: list[str] = []
 
-    for path in durable_markdown_files():
+    narrow_scanned = set(durable_markdown_files())
+    for path in narrow_scanned:
         relative = path.relative_to(ROOT)
         for identifier in path_violations(path, BROAD_PATH_PATTERN):
             errors.append(f"{relative}: temporary delivery identifier `{identifier}` in durable path")
@@ -169,6 +196,15 @@ def main() -> int:
         for line_number, identifier in content_violations(
             path, BROAD_CONTENT_PATTERNS + NARROW_CONTENT_PATTERNS
         ):
+            errors.append(f"{relative}:{line_number}: temporary delivery identifier `{identifier}`")
+
+    for path in broad_markdown_files():
+        if path in narrow_scanned:
+            continue
+        relative = path.relative_to(ROOT)
+        for identifier in path_violations(path, BROAD_PATH_PATTERN):
+            errors.append(f"{relative}: temporary delivery identifier `{identifier}` in durable path")
+        for line_number, identifier in content_violations(path, BROAD_CONTENT_PATTERNS):
             errors.append(f"{relative}:{line_number}: temporary delivery identifier `{identifier}`")
 
     for path in broad_scan_files():

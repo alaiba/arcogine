@@ -512,7 +512,7 @@ class ChallengeContentLoaderTest {
                 CandidateAdmissibilityPolicy.assess(result.definition(), result.catalogue(), emptyDraft);
 
         // An empty draft has no candidate-specific issues (no occurrences, no budget spend), so a
-        // rejection here could only be a catalogue-provenance rejection -- exactly what C2
+        // rejection here could only be a catalogue-provenance rejection -- exactly what the candidate-admissibility capability
         // independently checks and what this loader must have already ruled out.
         assertTrue(admissibility.admitted(),
                 () -> "expected the loaded definition/catalogue pair to be provenance-compatible "

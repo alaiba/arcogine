@@ -150,9 +150,6 @@ async function fetchPullRequest({ repo, number, token }) {
       authorization: `bearer ${token}`,
       'content-type': 'application/json',
       'user-agent': 'arcogine-pr-watch',
-      // Do not pool the socket. A pooled keep-alive connection outlives the response and
-      // delays process exit (and, on Windows, trips a libuv assertion if the process is
-      // torn down while it is still closing).
       connection: 'close',
     },
     body: JSON.stringify({ query: QUERY, variables: { owner, name, number } }),
@@ -170,13 +167,7 @@ async function fetchPullRequest({ repo, number, token }) {
   return pr;
 }
 
-/**
- * How far the head is ahead of / behind the base branch.
- *
- * Needed because a review is only evidence about the base-to-head transition that existed
- * when it was written. GraphQL's mergeStateStatus does not reliably report BEHIND (it
- * depends on branch-protection settings), so ask the compare endpoint directly.
- */
+/** How far the head is ahead of / behind the base branch. */
 async function fetchComparison({ repo, token }, pr) {
   const response = await fetch(
     `https://api.github.com/repos/${repo}/compare/${encodeURIComponent(pr.baseRefName)}...${pr.headRefOid}`,
@@ -196,32 +187,6 @@ async function fetchComparison({ repo, token }, pr) {
   return { aheadBy: body.ahead_by ?? 0, behindBy: body.behind_by ?? 0 };
 }
 
-/**
- * Extract the reviewer contract's explicit FINAL disposition, or null when absent.
- *
- * Two rules matter, and both exist because of an observed false positive: a review whose
- * prose contained the literal text "Disposition: READY TO MERGE" as an example was read as
- * merge-ready even though its actual closing disposition was CHANGES REQUIRED.
- *
- *  - Prefer a disposition that starts its own line. A disposition quoted mid-sentence is
- *    discussion, not a verdict.
- *  - Take the LAST match, never the first. The contract calls for an explicit *final*
- *    disposition, so earlier occurrences are superseded by construction.
- *
- * The contract calls for an explicit *final* disposition, so this recognises one only when
- * it genuinely ends the review: the marker must start its own line AND that line must be
- * the last non-blank line of the body.
- *
- * Everything weaker has been tried and produced a false READY:
- *  - taking the first match read a disposition quoted in prose as the verdict;
- *  - an unanchored fallback let an inline `Disposition: ...` code span do the same;
- *  - taking the last anchored match anywhere still accepted a marker followed by
- *    substantive blocker prose, where the reviewer plainly did not end on that verdict.
- *
- * Blockquoted lines are excluded outright -- quoted text is someone else's verdict, not
- * this review's. A body with no contract-shaped final disposition resolves to null, which
- * the lifecycle treats conservatively as AWAITING.
- */
 function dispositionOf(body) {
   if (!body) return null;
   const lines = String(body).split(/\r?\n/);
@@ -233,10 +198,6 @@ function dispositionOf(body) {
     }
   }
   if (lastMeaningful === null) return null;
-  // The whole line must BE the verdict, not merely begin with one. A prefix-only match
-  // accepts "Disposition: READY TO MERGE? Actually no." as READY. Only intentional
-  // surrounding markdown and a closing full stop may follow the vocabulary.
-  // No '>' in the prefix class either: a quoted disposition is not this review's verdict.
   const match = lastMeaningful.match(
     new RegExp(`^[ \\t*_+-]*Disposition:\\s*[*_]*\\s*(${DISPOSITION_ALTERNATION})\\s*[*_]*\\s*[.]?\\s*$`, 'i'),
   );
@@ -272,26 +233,11 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck =
   const onHead = reviews.filter((r) => r.commit === pr.headRefOid);
   const openThreads = (pr.reviewThreads?.nodes ?? []).filter((t) => !t.isResolved).length;
 
-  // Per author, not globally: a later review by someone else must not erase a standing
-  // blocker. Each author's own latest review supersedes only their own earlier ones.
   const latestByAuthor = new Map();
   for (const review of reviews) latestByAuthor.set(review.author, review);
 
-  // Two different kinds of "changes required", with different lifetimes:
-  //
-  //  - A formal GitHub CHANGES_REQUESTED review stands until its author submits a newer
-  //    review or it is dismissed. Pushing does not clear it, so it blocks on any head.
-  //  - A CHANGES REQUIRED *disposition* in a COMMENTED review attests to the commit it
-  //    reviewed. Once the head moves past it, remediation has happened and AGENTS.md puts
-  //    the PR back in AWAITING for re-evaluation -- so it becomes a stale blocker, not a
-  //    standing one. Treating it as standing would leave a PR permanently CHANGES REQUIRED
-  //    no matter how much remediation landed.
-  // A formal CHANGES_REQUESTED is cleared only by that same author later APPROVING or by
-  // the review being DISMISSED -- never by them merely commenting again. Collapsing to the
-  // author's chronologically latest review would let a follow-up COMMENT silently discard a
-  // block GitHub still enforces.
   const formalBlockers = [];
-  for (const [author, _latest] of latestByAuthor) {
+  for (const [author] of latestByAuthor) {
     const mine = reviews.filter((r) => r.author === author);
     const lastRequested = mine.findLast((r) => r.state === 'CHANGES_REQUESTED');
     if (!lastRequested) continue;
@@ -303,8 +249,6 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck =
     if (!clearedAfter) formalBlockers.push(lastRequested);
   }
 
-  // A CHANGES REQUIRED *disposition* in a COMMENTED review attests to the commit it
-  // reviewed, so once the head moves it becomes stale rather than standing.
   const latest = [...latestByAuthor.values()];
   const dispositionBlockers = latest.filter(
     (r) => r.state !== 'CHANGES_REQUESTED' && r.disposition === 'CHANGES REQUIRED' && r.commit === pr.headRefOid,
@@ -350,16 +294,7 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck =
   };
 }
 
-/**
- * Map the observed facts onto the AGENTS.md PR lifecycle states.
- *
- * Deliberately conservative: a review that predates the current head cannot establish a
- * merge disposition for the head, so it resolves to AWAITING re-review rather than
- * carrying a stale verdict forward.
- */
 function resolveLifecycle(s) {
-  // A merged or closed PR has no open-PR lifecycle left to resolve. Report the terminal
-  // fact instead of continuing to answer a question that no longer applies.
   if (s.prState && s.prState !== 'OPEN') {
     return { state: s.prState, terminal: true, reasons: [`pull request is ${s.prState.toLowerCase()}`] };
   }
@@ -367,11 +302,15 @@ function resolveLifecycle(s) {
   if (s.isDraft) return { state: 'AWAITING', reasons: ['pull request is a draft'] };
 
   const blocking = [];
+  if (s.behindBy > 0) {
+    blocking.push(
+      `head is ${s.behindBy} commit(s) behind ${s.baseRef}; reconcile with the current base before review`,
+    );
+  }
   if (s.mergeable === 'CONFLICTING') blocking.push('merge conflict with the base branch');
   if (s.checksFailing.length > 0) {
     blocking.push(`failing checks: ${s.checksFailing.map((c) => `${c.name} (${c.verdict})`).join(', ')}`);
   }
-  // Every author's standing blocker counts, not just the newest review overall.
   for (const b of s.blockers) {
     const why = b.state === 'CHANGES_REQUESTED' ? 'CHANGES_REQUESTED' : 'disposition CHANGES REQUIRED';
     blocking.push(`${b.author} has a standing ${why} review (${b.submittedAt} on ${b.commit.slice(0, 7)})`);
@@ -379,13 +318,6 @@ function resolveLifecycle(s) {
   if (blocking.length > 0) return { state: 'CHANGES REQUIRED', reasons: blocking };
 
   const waiting = [];
-  // A review only ever attests to the base-to-head transition that existed when it was
-  // written. If the base has advanced, no existing review covers the current transition.
-  if (s.behindBy > 0) {
-    waiting.push(
-      `head is ${s.behindBy} commit(s) behind ${s.baseRef}; no review covers the current base-to-head transition`,
-    );
-  }
   if (s.reviewsTruncated) {
     waiting.push('review history exceeds the fetched window, so review state cannot be fully resolved');
   }
@@ -407,18 +339,12 @@ function resolveLifecycle(s) {
     waiting.push('review on current head states no explicit disposition');
   }
 
-  // Absence of evidence is not green, and an unrelated green context is not the required
-  // one. Only the named required check proves validation ran; other contexts may fail (and
-  // block above) but can never substitute for it.
   if (!s.requiredCheck) {
     waiting.push(
       `required check "${s.requiredCheckName}" is not present on the head commit; ` +
         `required validation is not proven to have run (${s.checks.length} other context(s) present)`,
     );
   } else if (s.requiredCheck.verdict !== 'SUCCESS') {
-    // SKIPPED and NEUTRAL are green enough for an auxiliary context, but not for the one
-    // status that is supposed to prove validation ran: a skipped gate ran nothing. Only
-    // SUCCESS is evidence here, whatever the broader green class allows elsewhere.
     waiting.push(
       `required check "${s.requiredCheckName}" is ${s.requiredCheck.verdict}; ` +
         'only SUCCESS proves required validation',
@@ -445,22 +371,13 @@ function resolveLifecycle(s) {
   };
 }
 
-/** Stable, sorted, line-oriented projection used for change detection in --watch. */
 function stateLines(s) {
   const lines = [
     `head: ${s.head.slice(0, 7)}`,
-    // Every field the resolver reads must appear here, or a change that moves the lifecycle
-    // can produce no signal at all: a draft being marked ready, or the PR being merged or
-    // closed, would otherwise be invisible to --watch.
     `pr-state: ${s.prState}${s.isDraft ? ' (draft)' : ''}`,
     `required-check: ${s.requiredCheck ? s.requiredCheck.verdict : 'ABSENT'}`,
-    // Base identity and distance are part of the watched state: a base advance can
-    // invalidate an existing review without the head changing at all.
     `base: ${s.baseRef}@${String(s.baseOid).slice(0, 7)} (behind ${s.behindBy}, ahead ${s.aheadBy})`,
     `merge: ${s.mergeStateStatus} (${s.mergeable})`,
-    // Truncation flags are lifecycle inputs, so they belong in the projection too: crossing
-    // a connection boundary can flip the resolver to AWAITING while every returned item
-    // still looks resolved, which would otherwise change the answer with no watch signal.
     `open-threads: ${s.openThreads}${s.threadsTruncated ? ' (truncated)' : ''}`,
     `reviews-truncated: ${s.reviewsTruncated ? 'yes' : 'no'}`,
     `checks-present: ${s.checks.length}`,
@@ -544,15 +461,12 @@ async function watch(options) {
       }
       previous = lines;
 
-      // Stop on a terminal state rather than polling a merged or closed PR forever while
-      // pretending to resolve an open-PR lifecycle.
       if (lifecycle.terminal) {
         console.log(`TERMINAL -- ${lifecycle.state}; stopping watch`);
         return;
       }
     } catch (error) {
       consecutiveFailures += 1;
-      // Rule 1: never let a broken watcher look like a quiet PR.
       if (consecutiveFailures >= FAILURE_ALERT_THRESHOLD && !alerted) {
         console.log(`POLL FAILED (${consecutiveFailures} consecutive): ${error.message}`);
         alerted = true;
@@ -588,8 +502,6 @@ async function main() {
     return values.help ? 0 : 1;
   }
 
-  // Exactly one PR. Silently resolving the first and discarding the rest is worse than
-  // refusing, because the output looks like it honoured every argument.
   if (positionals.length > 1) {
     process.stderr.write(
       `expected exactly one pr-number, got ${positionals.length}: ${positionals.join(' ')}\n` +
@@ -617,7 +529,7 @@ async function main() {
 
   if (values.watch) {
     await watch(options);
-    return 0; // unreachable; watch loops until the process is stopped
+    return 0;
   }
 
   let summary;
@@ -642,17 +554,12 @@ async function main() {
   return 3;
 }
 
-// Pure resolution logic is exported so pr-watch.test.mjs can exercise the lifecycle states
-// deterministically, without network access.
 export { dispositionOf, summarize, resolveLifecycle, stateLines, diff };
 
 const invokedDirectly =
   process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (invokedDirectly) {
-  // Set exitCode and let the event loop drain rather than calling process.exit(): forcing
-  // exit while HTTP handles are still closing aborts the process instead of returning the
-  // intended status (observed on Windows as a libuv UV_HANDLE_CLOSING assertion).
   main().then(
     (code) => {
       process.exitCode = code;

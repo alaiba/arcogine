@@ -7,10 +7,10 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * The minimum useful G2 impact representation: the set of stable domain entities a {@link
+ * The minimum useful impact representation: the set of stable domain entities a {@link
  * ChangeSet} touched, in deterministic order.
  *
- * <p>This is deliberately not a requirement-registry match. It is the seam a future G3 requirement
+ * <p>This is deliberately not a requirement-registry match. It is the seam a future requirement
  * scope can intersect against ({@link #intersects(Set)}) without redesigning {@code ChangeSet}. It
  * does not itself know about requirements, conformance, or evaluation.
  */

@@ -21,7 +21,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves Gate 1's explicit-workload-submission slice: a headless caller can instantiate a
+ * Proves the engine-readiness explicit-workload-submission criterion: a headless caller can instantiate a
  * published factory model's runtime and submit production workload through {@link
  * FactoryRuntime#submitWorkload}, supplying only product/quantity/commercial intent -- no
  * economy, pricing, demand, or agent handler in the loop, and no caller-owned {@code Scheduler} or

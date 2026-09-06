@@ -23,7 +23,7 @@ public final class ChangeSetFactory {
      * Compares two already-accepted, authoritative controlled revisions.
      *
      * <p>Both revisions are resolved through {@code authority.resolve(...)}, so this always
-     * exercises the G1.3 exact historical semantic-state resolution path. If the two revisions
+     * exercises the persistence-acceptance boundary's exact historical semantic-state resolution path. If the two revisions
      * happen to share a fingerprint (e.g. a rollback), the extractor naturally yields zero
      * semantic changes while {@code baseRevisionId} and {@code resultingRevisionId} remain
      * distinct revision identities.
@@ -64,8 +64,8 @@ public final class ChangeSetFactory {
      * accepted through {@link ControlledRevisionAuthority#accept}, at which point {@link
      * #fromAuthoritativeRevisions} is the applicable path.
      *
-     * <p>Unlike an authoritative revision -- whose fingerprint-to-bytes binding is verified by the
-     * G1.3 acceptance/resolution boundary ({@code FileControlledRevisionAuthority}) -- a candidate
+     * <p>Unlike an authoritative revision -- whose fingerprint-to-bytes binding is verified by
+     * the persistence-acceptance/resolution boundary ({@code FileControlledRevisionAuthority}) -- a candidate
      * snapshot is caller-supplied and never passes through that boundary. Before its declared
      * fingerprint is recorded as {@link ChangeSet#candidateFingerprint()}, {@code verifier} is used
      * to recompute the fingerprint from {@code candidateArtifact}'s own canonical bytes and confirm

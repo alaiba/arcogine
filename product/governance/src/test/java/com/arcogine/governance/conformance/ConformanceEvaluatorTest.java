@@ -38,7 +38,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 
 /**
- * G4 acceptance tests for {@link ConformanceEvaluator} against the real G2/G3 contracts (no
+ * conformance-evaluation acceptance tests for {@link ConformanceEvaluator} against the real change-set/impact-scope and requirement-scope contracts (no
  * evaluation-specific test doubles for {@code Requirement}/{@code Assertion}/{@code ImpactScope}).
  */
 class ConformanceEvaluatorTest {
@@ -46,11 +46,11 @@ class ConformanceEvaluatorTest {
     private record DeclaredResource(String id, double capacityLiters) {}
 
     /**
-     * The G4 provenance-binding seam ({@code stateFingerprint}) exercised with a domain adapter
+     * The conformance-evaluation provenance-binding seam ({@code stateFingerprint}) exercised with a domain adapter
      * that <b>actually derives</b> a {@link ModelFingerprint} from a {@code DeclaredResource}'s own
      * content (a SHA-256 digest of its id and capacity), never a constant -- standing in for a real
      * domain fingerprinter (e.g. {@code FactoryModelVersion::fingerprint}) the way this test suite's
-     * other real-G2/G3 objects stand in for a full deployment. Because the derivation is genuinely
+     * other real change-set/impact-scope and requirement-scope objects stand in for a full deployment. Because the derivation is genuinely
      * content-dependent, two {@code DeclaredResource} values with different content never collide on
      * the same fingerprint, so tests below can no longer pass regardless of which state is supplied.
      */
@@ -95,7 +95,7 @@ class ConformanceEvaluatorTest {
 
     /**
      * Minimal in-memory {@link ControlledRevisionAuthority} test double, used only to exercise the
-     * real G1 authoritative-binding contract ({@code resolve} throwing for anything never {@code
+     * real controlled-revision-authority-binding contract ({@code resolve} throwing for anything never {@code
      * accept}-ed) without depending on the filesystem-backed {@code FileControlledRevisionAuthority}.
      */
     private static final class InMemoryControlledRevisionAuthority implements ControlledRevisionAuthority {
@@ -229,7 +229,7 @@ class ConformanceEvaluatorTest {
 
     @Test
     void stateNotBoundToTheDeclaredFingerprintCannotBeAttributedToAnEvaluation() {
-        // REV-001: modelFingerprint and authoritativeState must be verified as describing the same
+        // modelFingerprint and authoritativeState must be verified as describing the same
         // artifact, not merely two independent caller-supplied values. A state whose independently
         // derived fingerprint disagrees with the declared modelFingerprint must be rejected before
         // any PASS/FAIL/Finding can be attributed to that fingerprint.
@@ -338,7 +338,7 @@ class ConformanceEvaluatorTest {
                         ASSERTION_VERSION,
                         REQUIREMENT_ID,
                         REQUIREMENT_VERSION,
-                        "requires an external observation G4 cannot supply",
+                        "requires an external observation conformance evaluation cannot supply",
                         EvidenceRequirement.EXTERNAL_EVIDENCE_REQUIRED,
                         null);
 
@@ -412,7 +412,7 @@ class ConformanceEvaluatorTest {
 
     @Test
     void emptyRequirementScopeIsNeverApplicableWhenAnImpactScopeIsSupplied() {
-        // G3's invariant: an empty scope never matches any impact (RequirementScopeTest
+        // the requirement-scope invariant: an empty scope never matches any impact (RequirementScopeTest
         // .emptyScopeIsEmptyAndNeverIntersects). A supplied ImpactScope must preserve that exactly.
         ChangedEntityRef changed = new ChangedEntityRef("factory.resource", "press-1", "");
         Requirement requirement = structuralRequirement(RequirementScope.empty());
@@ -560,7 +560,7 @@ class ConformanceEvaluatorTest {
                 REQUIREMENT_VERSION,
                 "Declared resource capacity must be positive",
                 "Every declared resource must state a strictly positive capacity.",
-                ArcogineNativeRequirementSource.of("minimum viable structural invariant, G4 proving case"),
+                ArcogineNativeRequirementSource.of("minimum viable structural invariant, conformance-evaluation proving case"),
                 scope);
     }
 

@@ -5,7 +5,7 @@ package com.arcogine.challenge;
  *
  * <p>This is deliberately distinct from Arcogine's canonical {@code ResourceDefinition}: a
  * catalogue item is a game-owned purchasable equipment offer, not a canonical production
- * resource. C1 does not resolve this identity against any catalogue -- it only carries it.
+ * resource. This type does not resolve this identity against any catalogue -- it only carries it.
  */
 public record EquipmentCatalogueItemId(String value) {
 

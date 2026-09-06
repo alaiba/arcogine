@@ -19,14 +19,14 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * The G4 conformance-evaluation engine: turns one G3 {@link Requirement}/{@link Assertion} pair
+ * The conformance-evaluation engine: turns one {@link Requirement}/{@link Assertion} pair
  * and a candidate's authoritative state into one {@link ConformanceEvaluation}, consuming the real
- * G2 {@link ImpactScope} and G3 {@link com.arcogine.governance.requirement.RequirementScope}
+ * {@link ImpactScope} and {@link com.arcogine.governance.requirement.RequirementScope}
  * contracts rather than any new scope representation.
  *
  * <p>This is deliberately narrow: it decides {@link ConformanceResult#PASS}/{@link
  * ConformanceResult#FAIL}/{@link ConformanceResult#UNKNOWN}/{@link
- * ConformanceResult#NOT_APPLICABLE} for one assertion at a time. It does not implement G5
+ * ConformanceResult#NOT_APPLICABLE} for one assertion at a time. It does not implement external
  * evidence, authorization, deployment, workflow, a severity taxonomy, persistence, or any
  * transport (REST/CLI/UI). It never calls {@code Instant.now()}, a random source, or any other
  * system clock -- every input (fingerprint, revision, scope, state) is supplied by the caller, so
@@ -35,11 +35,11 @@ import java.util.function.Function;
  *
  * <p>{@code controlledRevisionId} is optional and never synthesized: an unpersisted candidate
  * fingerprint is evaluated exactly like an accepted one, only without a {@link
- * ControlledRevisionId} attached to the result, mirroring the {@code ChangeSet}/G1.3 precedent
+ * ControlledRevisionId} attached to the result, mirroring the {@code ChangeSet} precedent
  * that a {@link ControlledRevisionId} exists only for an actually-accepted revision.
  *
- * <p><b>Provenance binding.</b> The G4 assertion state {@code T} is arbitrary domain state, not
- * necessarily a {@code SemanticArtifact}'s canonical bytes, so no existing G1 authority can
+ * <p><b>Provenance binding.</b> The conformance-evaluation assertion state {@code T} is arbitrary domain state, not
+ * necessarily a {@code SemanticArtifact}'s canonical bytes, so no existing controlled-revision authority can
  * recompute a fingerprint from it generically the way {@code ChangeSetFactory} recomputes one from
  * {@code SemanticArtifact} canonical bytes via {@code SemanticArtifactVerifier}. Instead, {@link
  * #evaluate} requires the caller to supply {@code stateFingerprint}: a domain-owned {@link
@@ -58,7 +58,7 @@ import java.util.function.Function;
  * declared fingerprint against an independent recomputation before trusting it -- so a caller can
  * no longer pass unrelated state under an unrelated-but-otherwise-valid fingerprint.
  *
- * <p>G4 also verifies, with the existing G1 {@link ControlledRevisionAuthority}, the one binding it
+ * <p>Conformance evaluation also verifies, with the existing {@link ControlledRevisionAuthority}, the one binding it
  * already establishes: when a {@link ControlledRevisionId} is supplied, {@link #evaluate} resolves
  * it through {@code authority.resolve(...)} and requires the resolved revision's authoritative
  * fingerprint to equal {@code modelFingerprint}. A generated-but-never-accepted, or
@@ -86,8 +86,8 @@ public final class ConformanceEvaluator {
      *     authoritativeState} is present -- that it actually is the artifact identified by {@code
      *     modelFingerprint}, rather than trusting the two as unrelated caller-supplied values
      * @param controlledRevisionId the accepted controlled revision, when the candidate has been
-     *     persisted through the G1.3 authority boundary; empty for an unpersisted candidate
-     * @param authority the G1 {@link ControlledRevisionAuthority} used to verify, when {@code
+     *     persisted through the persistence-acceptance boundary; empty for an unpersisted candidate
+     * @param authority the {@link ControlledRevisionAuthority} used to verify, when {@code
      *     controlledRevisionId} is present, that it is an authoritative revision actually bound to
      *     {@code modelFingerprint}; ignored (but still required, non-null) when {@code
      *     controlledRevisionId} is empty
@@ -127,7 +127,7 @@ public final class ConformanceEvaluator {
         }
 
         if (assertion.evidenceRequirement() == EvidenceRequirement.EXTERNAL_EVIDENCE_REQUIRED) {
-            // G4 does not implement G5 evidence: an external-evidence assertion can never be
+            // Conformance evaluation does not implement external evidence: an external-evidence assertion can never be
             // decided here. This is UNKNOWN, never a silent PASS or FAIL.
             return result(
                     requirement, assertion, modelFingerprint, revisionId, ConformanceResult.UNKNOWN, null);
@@ -185,7 +185,7 @@ public final class ConformanceEvaluator {
     }
 
     /**
-     * Resolves and validates {@code controlledRevisionId} against the G1 {@link
+     * Resolves and validates {@code controlledRevisionId} against the {@link
      * ControlledRevisionAuthority}, when present. An unaccepted or generated revision fails
      * resolution; an accepted revision bound to a different fingerprint is rejected explicitly.
      */

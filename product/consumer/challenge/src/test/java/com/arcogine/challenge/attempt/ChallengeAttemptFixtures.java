@@ -14,7 +14,7 @@ import com.arcogine.challenge.evaluation.EvaluationProvenance;
 import com.arcogine.challenge.evaluation.ReferenceChallengeEvaluationPolicy;
 import java.util.List;
 
-/** Shared fixtures for C4 attempt/comparison tests. */
+/** Shared fixtures for attempt/comparison tests. */
 public final class ChallengeAttemptFixtures {
 
     private ChallengeAttemptFixtures() {}

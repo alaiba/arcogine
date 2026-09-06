@@ -46,10 +46,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * G4 pre-change conformance proving case (architecture §11): a proposed candidate is compared
- * against its authoritative base with the real G1.3/G2 boundary, the affected requirements are
- * selected from a real G3 {@link RequirementCatalogue} via the resulting {@link
- * com.arcogine.governance.change.ImpactScope}, and each is evaluated with the real G4 {@link
+ * pre-change conformance-evaluation proving case (architecture §11): a proposed candidate is compared
+ * against its authoritative base with the real the persistence-acceptance and change-set/impact-scope boundary, the affected requirements are
+ * selected from a real {@link RequirementCatalogue} via the resulting {@link
+ * com.arcogine.governance.change.ImpactScope}, and each is evaluated with the real {@link
  * ConformanceEvaluator} -- entirely before the candidate is authorized or deployed.
  */
 class PreChangeConformanceProvingCaseTest {
@@ -97,7 +97,7 @@ class PreChangeConformanceProvingCaseTest {
                         requirementVersion,
                         "New machines must be reviewed before deployment",
                         "Any newly added factory resource requires explicit pre-change review.",
-                        ArcogineNativeRequirementSource.of("G4 pre-change proving case"),
+                        ArcogineNativeRequirementSource.of("pre-change conformance-evaluation proving case"),
                         RequirementScope.of(newMachine));
         Requirement unaffectedRequirement =
                 new Requirement(
@@ -105,7 +105,7 @@ class PreChangeConformanceProvingCaseTest {
                         requirementVersion,
                         "Unrelated requirement",
                         "Applies to an entity this change never touches.",
-                        ArcogineNativeRequirementSource.of("G4 pre-change proving case"),
+                        ArcogineNativeRequirementSource.of("pre-change conformance-evaluation proving case"),
                         RequirementScope.of(new ChangedEntityRef("factory.resource", "99", "")));
         RequirementCatalogue catalogue = RequirementCatalogue.of(affectedRequirement, unaffectedRequirement);
 

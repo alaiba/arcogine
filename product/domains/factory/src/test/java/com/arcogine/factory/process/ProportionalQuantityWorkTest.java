@@ -31,7 +31,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves Gate 1's quantity-proportional-work criterion: an order for quantity N consumes N times
+ * Proves the engine-readiness quantity-proportional-work criterion: an order for quantity N consumes N times
  * the routing/machine work of an otherwise identical quantity-1 order, for both the economy-driven
  * {@link EventPayload.OrderCreation} path and {@link FactoryRuntime}'s explicit workload
  * submission, while order completion still fires exactly once per order.

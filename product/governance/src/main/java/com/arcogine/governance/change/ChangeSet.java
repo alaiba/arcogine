@@ -22,8 +22,8 @@ import java.util.Optional;
  *   <li>the candidate's semantic-content identity ({@link #candidateFingerprint()}), which may or
  *       may not yet correspond to an authoritative controlled revision;
  *   <li>the resulting controlled revision, once the candidate has actually been persisted through
- *       the G1.3 acceptance boundary ({@link #resultingRevisionId()} -- absent for a
- *       not-yet-accepted candidate snapshot, per ADR-0008/G1.3: a {@code ChangeSet} never
+ *       the persistence-acceptance boundary ({@link #resultingRevisionId()} -- absent for a
+ *       not-yet-accepted candidate snapshot, per ADR-0008: a {@code ChangeSet} never
  *       fabricates a synthetic {@link ControlledRevisionId} for an unaccepted candidate);
  *   <li>the classified {@link SemanticChange}s and the derived {@link ImpactScope};
  *   <li>{@link ChangeProvenance} (source, reason, optional external change-request reference).

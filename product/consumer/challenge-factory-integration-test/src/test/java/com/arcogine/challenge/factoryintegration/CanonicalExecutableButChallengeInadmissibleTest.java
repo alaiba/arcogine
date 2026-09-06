@@ -33,7 +33,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * C5 acceptance criterion 6: canonical Factory-executability and challenge admissibility are
+ * Content-loading acceptance criterion: canonical Factory-executability and challenge admissibility are
  * independent validation axes. This is the only module in the repository with a test dependency
  * on both {@code :factory} and {@code :challenge}; neither of those production modules depends on
  * the other, and this module carries no production sources of its own.

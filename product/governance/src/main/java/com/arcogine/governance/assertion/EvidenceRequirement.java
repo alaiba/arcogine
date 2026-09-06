@@ -4,11 +4,11 @@ package com.arcogine.governance.assertion;
  * Whether an {@link Assertion} can be decided from authoritative Arcogine model state alone, or
  * needs an external observation.
  *
- * <p>This is a declaration only. G3 does not implement G5 evidence: no {@code Evidence}/{@code
- * EvidenceUse} type, no telemetry ingestion, no persistence, no freshness semantics. An assertion
- * declaring {@link #EXTERNAL_EVIDENCE_REQUIRED} simply records that later (G5-backed, G4-driven)
- * evaluation will need external evidence to reach a result -- it never ingests or fabricates that
- * evidence itself.
+ * <p>This is a declaration only; it does not implement external evidence itself: no {@code
+ * Evidence}/{@code EvidenceUse} type, no telemetry ingestion, no persistence, no freshness
+ * semantics. An assertion declaring {@link #EXTERNAL_EVIDENCE_REQUIRED} simply records that later
+ * (external-evidence-backed, conformance-evaluation-driven) evaluation will need external evidence
+ * to reach a result -- it never ingests or fabricates that evidence itself.
  */
 public enum EvidenceRequirement {
     /** Decidable purely from authoritative Arcogine model state. */

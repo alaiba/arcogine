@@ -1,4 +1,4 @@
-# Gate 5 — Spatial Runtime Consequences Delivery Plan
+# PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
 Status: Proposed delivery plan; architecture fixed by ADR-0014 / ADR-0015, implementation not yet started
 Owner: Factory Simulation Engine Readiness
@@ -6,7 +6,7 @@ Parent plan: [Factory simulation engine readiness](factory-simulation-engine-rea
 
 ## 1. Purpose
 
-Gate 5 turns canonical Factory V2 spatial facts into deterministic transfer consequences in the
+PLAN-ENG-5 turns canonical Factory V2 spatial facts into deterministic transfer consequences in the
 headless simulation runtime without moving design semantics into consumers or inventing a transport
 network capability.
 
@@ -19,9 +19,9 @@ The architecture is fixed by:
 
 Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted.
 
-## 2. Gate 5 semantic boundary
+## 2. PLAN-ENG-5 semantic boundary
 
-Gate 5 preserves the ownership split:
+PLAN-ENG-5 preserves the ownership split:
 
 ```text
 Factory model v2
@@ -44,7 +44,7 @@ Runtime state
 ```
 
 No pathfinding, aisle/conveyor graph, transport-resource scheduling, congestion, rerouting,
-authoritative animation coordinates, or resource orientation is part of Gate 5.
+authoritative animation coordinates, or resource orientation is part of PLAN-ENG-5.
 
 ## 3. Existing insertion seam
 
@@ -52,18 +52,18 @@ The implementation seam is the current next-step branch in `FactoryHandler.handl
 Today that branch already:
 
 1. determines the next routing step;
-2. runs existing Gate 2 selection at the established semantic point;
+2. runs existing PLAN-ENG-2 selection at the established semantic point;
 3. may select a machine that cannot currently accept the job because `canAcceptJob` is a ranking
    key rather than an eligibility filter;
 4. starts immediately only when the selected resource can accept the job;
 5. otherwise routes the job into the existing single-machine queue or `pendingMultiEligible` path.
 
-Gate 5 preserves those selection/ranking and recovery semantics. It inserts a deterministic transfer
+PLAN-ENG-5 preserves those selection/ranking and recovery semantics. It inserts a deterministic transfer
 interval only after a concrete destination is selected and currently admissible for binding.
 
 ## 4. Delivery policy
 
-Gate 5 implementation is deliberately split into small semantic increments so a coding agent can
+PLAN-ENG-5 implementation is deliberately split into small semantic increments so a coding agent can
 execute a well-bounded change without being asked to rediscover architecture while coding.
 
 Every slice should have:
@@ -84,7 +84,7 @@ coherent in the same landed change under ADR-0011.
 
 ## 5. Delivery slices
 
-### G5-0 — Pin existing Engine semantics
+### PLAN-ENG-5-0 — Pin existing Engine semantics
 
 **Prerequisite:** ADR-0015 landed Accepted.
 
@@ -93,7 +93,7 @@ coherent in the same landed change under ADR-0011.
 Add characterization/conformance evidence for the result-affecting behavior that
 `engine-semantics:v1` inherits from the pre-Gate-5 Engine:
 
-- Gate 2 offline filtering with all-offline fallback;
+- PLAN-ENG-2 offline filtering with all-offline fallback;
 - `canAcceptJob` as the primary ranking key rather than an eligibility filter;
 - `combinedQueueDepth`, including compatible `pendingMultiEligible` work;
 - deterministic `MachineId` tie-breaking;
@@ -101,8 +101,8 @@ Add characterization/conformance evidence for the result-affecting behavior that
   from a machine's own queue and the fixpoint rescan of the multi-eligible backlog;
 - per-machine queue FIFO arrival order, and waiting-path selection by eligible-set size;
 - multi-eligible backlog arrival order, captured eligible sets, and non-head-of-line-blocking;
-- W1 child creation/release/dispatch ordering;
-- the W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
+- PLAN-ENG-W1 child creation/release/dispatch ordering;
+- the PLAN-ENG-W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
 - the derived-result arithmetic: `busyTicks` overflow saturation, elapsed-time subtraction flooring
   at zero, and the zero-denominator throughput / empty-set mean-lead-time results;
 - the derived-result accumulators: exact completed-order counting, completion-ordered value
@@ -114,7 +114,7 @@ Add characterization/conformance evidence for the result-affecting behavior that
 Pinned behavioral fixtures fail if any of those results change for identical explicit inputs. The
 slice does not freeze incidental DTO or implementation shape.
 
-`G5-0` is characterization work with **two deliberate production changes**, both required to make the
+`PLAN-ENG-5-0` is characterization work with **two deliberate production changes**, both required to make the
 normative arithmetic implementable at all:
 
 1. **Mean-lead-time accumulation** currently sums completed-order lead times without an overflow
@@ -133,14 +133,14 @@ durable reproducibility contract and defeat the purpose of `EngineSemanticsVersi
 behavior in this slice is pinned as-is.
 
 The behaviors above are the ones `engine-semantics:v1` section 1.1 requires to be versioned rather
-than left as ambient implementation policy. `G5-0` is where that requirement becomes executable
+than left as ambient implementation policy. `PLAN-ENG-5-0` is where that requirement becomes executable
 evidence, so a fixture gap here is a semantics gap, not a coverage preference.
 
 **Non-goals**
 
 Engine-semantics identity types, Factory V2, transfer behavior, new scheduling policy.
 
-### G5-A1 — Factory V2 spatial model and validation
+### PLAN-ENG-5-A1 — Factory V2 spatial model and validation
 
 **Prerequisite:** ADR-0014 landed Accepted.
 
@@ -168,9 +168,9 @@ independently of runtime transfer behavior.
 
 Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine behavior.
 
-### G5-A2 — Factory V2 canonical identity
+### PLAN-ENG-5-A2 — Factory V2 canonical identity
 
-**Prerequisite:** G5-A1.
+**Prerequisite:** PLAN-ENG-5-A1.
 
 **Responsibility**
 
@@ -196,9 +196,9 @@ V2 publication predicate is rejected on decode.
 
 Cross-policy controlled-revision migration/comparison, runtime transfers.
 
-### G5-A3 — Multi-policy historical resolution and evolution seam
+### PLAN-ENG-5-A3 — Multi-policy historical resolution and evolution seam
 
-**Prerequisite:** G5-A2. Governance G1 historical revision authority is already landed.
+**Prerequisite:** PLAN-ENG-5-A2. Governance PLAN-GOV-1 historical revision authority is already landed.
 
 **Responsibility**
 
@@ -219,13 +219,13 @@ first cross-policy transition cannot be misreported as an ordinary same-policy e
 
 Generic migration/schema framework, transfer runtime behavior.
 
-**Sequencing note:** G5-A3 does not have to block transfer implementation merely because V2 exists.
-It must land before the first real cross-policy controlled transition and before final Gate 5
+**Sequencing note:** PLAN-ENG-5-A3 does not have to block transfer implementation merely because V2 exists.
+It must land before the first real cross-policy controlled transition and before final PLAN-ENG-5
 closure.
 
-### G5-B1 — Engine semantics identity and runtime establishment
+### PLAN-ENG-5-B1 — Engine semantics identity and runtime establishment
 
-**Prerequisites:** ADR-0015 landed Accepted and G5-0.
+**Prerequisites:** ADR-0015 landed Accepted and PLAN-ENG-5-0.
 
 **Responsibility**
 
@@ -246,9 +246,9 @@ exercised.
 
 Observation/event field propagation, transfer behavior, retirement/multi-version support.
 
-### G5-B2 — Runtime provenance propagation
+### PLAN-ENG-5-B2 — Runtime provenance propagation
 
-**Prerequisite:** G5-B1.
+**Prerequisite:** PLAN-ENG-5-B1.
 
 **Responsibility**
 
@@ -268,12 +268,12 @@ reset creates a new `RunId` without changing semantic interpretation.
 
 REST/SSE migration, transfer state/events, generic provenance framework.
 
-**Convergence note:** G4-D outward API/SSE migration should consume this settled runtime provenance
+**Convergence note:** PLAN-ENG-4-D outward API/SSE migration should consume this settled runtime provenance
 shape rather than migrate the old envelope and immediately revise it.
 
-### G5-C1 — Pure transfer arithmetic
+### PLAN-ENG-5-C1 — Pure transfer arithmetic
 
-**Prerequisite:** G5-A1 and the accepted `engine-semantics:v1` rule.
+**Prerequisite:** PLAN-ENG-5-A1 and the accepted `engine-semantics:v1` rule.
 
 **Responsibility**
 
@@ -296,9 +296,9 @@ zero authored magnitudes, and overflow-safe behavior consistent with ADR-0014.
 
 Destination selection, reservations, scheduler integration, runtime transfer state.
 
-### G5-C2 — Destination admission-reservation substrate
+### PLAN-ENG-5-C2 — Destination admission-reservation substrate
 
-**Prerequisite:** G5-B1.
+**Prerequisite:** PLAN-ENG-5-B1.
 
 **Responsibility**
 
@@ -310,7 +310,7 @@ Add the minimum internal state needed to reserve inbound admission capacity befo
 - a destination holding only inbound reservations may still be taken offline;
 - reservation can be released/converted deterministically for arrival and waiting paths.
 
-Keep this substrate unreachable from ordinary runtime execution until G5-C3 activates transfers.
+Keep this substrate unreachable from ordinary runtime execution until PLAN-ENG-5-C3 activates transfers.
 
 **Evidence**
 
@@ -321,23 +321,23 @@ release/conversion and no regression of ordinary pre-Gate-5 processing semantics
 
 Public reservation aggregate, transfer timing/state/events, transport capacity.
 
-### G5-C3 — Vertical transfer activation
+### PLAN-ENG-5-C3 — Vertical transfer activation
 
-**Prerequisites:** G5-A2, G5-B2, G5-C1 and G5-C2.
+**Prerequisites:** PLAN-ENG-5-A2, PLAN-ENG-5-B2, PLAN-ENG-5-C1 and PLAN-ENG-5-C2.
 
 **Responsibility**
 
 Activate the first coherent transfer path at the existing `handleTaskEnd` next-step seam:
 
-- preserve Gate 2 selection timing/ranking and post-selection waiting paths;
+- preserve PLAN-ENG-2 selection timing/ranking and post-selection waiting paths;
 - bind only when the selected destination is currently admissible;
 - for a distinct resource, reserve admission capacity, compute/fix duration once, enter
   `TRANSFERRING`, and schedule completion;
 - same-resource consecutive operations retain the no-transfer path;
 - publish the minimum supported `TRANSFER_STARTED` / `TRANSFER_COMPLETED` deltas and expose the
   minimum in-flight observation facts in the same slice so no reachable authoritative state is
-  invisible to the Gate 4 contract;
-- use only Gate 4 sequence for same-time supported-event ordering.
+  invisible to the PLAN-ENG-4 contract;
+- use only PLAN-ENG-4 sequence for same-time supported-event ordering.
 
 Minimum in-flight observation facts are job/order correlation, source, bound destination,
 `transferStartedAt`, `transferCompletesAt`, and resource admission load sufficient to keep resource
@@ -355,9 +355,9 @@ same-resource path creates no transfer.
 Every offline/zero-duration edge case, outward API DTO migration, KPI closure beyond minimum
 projection coherence.
 
-### G5-C4 — Transfer edge semantics
+### PLAN-ENG-5-C4 — Transfer edge semantics
 
-**Prerequisite:** G5-C3.
+**Prerequisite:** PLAN-ENG-5-C3.
 
 **Responsibility**
 
@@ -387,9 +387,9 @@ reserved admission capacity.
 
 Transport resources, routing graphs, buffers, congestion, intermediate coordinates.
 
-### G5-D — Observation, KPI and late-join closure
+### PLAN-ENG-5-D — Observation, KPI and late-join closure
 
-**Prerequisites:** G5-B2 and G5-C4.
+**Prerequisites:** PLAN-ENG-5-B2 and PLAN-ENG-5-C4.
 
 **Responsibility**
 
@@ -414,14 +414,14 @@ required, and existing KPI meanings remain stable.
 
 REST/SSE/UI projection, KPI redesign, retained supported-event history.
 
-### G5-E — Headless Gate 5 closure
+### PLAN-ENG-5-E — Headless PLAN-ENG-5 closure
 
-**Prerequisites:** G5-A3, G5-B2, G5-C4 and G5-D.
+**Prerequisites:** PLAN-ENG-5-A3, PLAN-ENG-5-B2, PLAN-ENG-5-C4 and PLAN-ENG-5-D.
 
 **Responsibility**
 
 Add one decisive consumer-neutral proving scenario and extend the immutable
-`engine-semantics:v1` fixture set with the landed spatial behavior. Reconcile the parent Gate 5
+`engine-semantics:v1` fixture set with the landed spatial behavior. Reconcile the parent PLAN-ENG-5
 acceptance/status documentation without adding presentation/API dependencies.
 
 **Required proving case**
@@ -448,31 +448,31 @@ The scenario demonstrates:
 ## 6. Dependency and parallelism map
 
 ```text
-G5-0 existing-semantics fixtures ---> G5-B1 semantics identity ---> G5-B2 provenance ----+
+PLAN-ENG-5-0 existing-semantics fixtures ---> PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-B2 provenance ----+
                                                                                 |          |
-G5-A1 V2 model/validation ---> G5-A2 V2 identity -------------------------------+-> G5-C3 activation
+PLAN-ENG-5-A1 V2 model/validation ---> PLAN-ENG-5-A2 V2 identity -------------------------------+-> PLAN-ENG-5-C3 activation
        |                         |                                                        |
-       |                         +--> G5-A3 policy evolution -------------------------+   v
-       |                                                                             | G5-C4 edges
-       +--> G5-C1 transfer arithmetic ---------------------------------------------+ |   |
+       |                         +--> PLAN-ENG-5-A3 policy evolution -------------------------+   v
+       |                                                                             | PLAN-ENG-5-C4 edges
+       +--> PLAN-ENG-5-C1 transfer arithmetic ---------------------------------------------+ |   |
                                                                                    | |   v
-G5-B1 semantics identity ---> G5-C2 admission reservation ------------------------+ | G5-D closure
+PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-C2 admission reservation ------------------------+ | PLAN-ENG-5-D closure
                                                                                      |   |
-                                                                                     +--> G5-E
+                                                                                     +--> PLAN-ENG-5-E
 ```
 
 Practical parallelism after the ADRs land:
 
-- `G5-0` and `G5-A1` are independent first slices;
-- after `G5-0`, `G5-B1` can proceed while `G5-A1/A2` advances;
-- after `G5-A1`/`G5-B1`, `G5-C1` and `G5-C2` can proceed independently;
-- `G5-A3` is compatibility/history work and need not block `G5-C3`, but it must close before
-  `G5-E` and before a real V1→V2 controlled transition;
-- `G5-C3` is the deliberate convergence point and should receive correspondingly strong review.
+- `PLAN-ENG-5-0` and `PLAN-ENG-5-A1` are independent first slices;
+- after `PLAN-ENG-5-0`, `PLAN-ENG-5-B1` can proceed while `PLAN-ENG-5-A1/A2` advances;
+- after `PLAN-ENG-5-A1`/`PLAN-ENG-5-B1`, `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` can proceed independently;
+- `PLAN-ENG-5-A3` is compatibility/history work and need not block `PLAN-ENG-5-C3`, but it must close before
+  `PLAN-ENG-5-E` and before a real V1→V2 controlled transition;
+- `PLAN-ENG-5-C3` is the deliberate convergence point and should receive correspondingly strong review.
 
 ## 7. KPI acceptance
 
-Gate 5 preserves existing metric definitions:
+PLAN-ENG-5 preserves existing metric definitions:
 
 - machine `busyTicks` / utilization measure processing time, not inbound reservation time;
 - queue depth does not count an in-flight reservation as a queued arrival;
@@ -491,7 +491,7 @@ not a redefinition of processing utilization or queue depth.
 
 When Challenge attempts consume real Engine-produced results, compatibility must include
 `EngineSemanticsVersion` wherever changed Engine semantics can affect compared outcomes. Synthetic
-Challenge-only attempts do not block Gate 5.
+Challenge-only attempts do not block PLAN-ENG-5.
 
 ### Governance — REQUIRED WHEN CONSUMER INTEGRATES
 
@@ -505,14 +505,14 @@ Future twin/reconciliation analytics retain Engine interpretation provenance ind
 `ExecutionContextId`. The two answer different questions: which Arcogine interpretation produced a
 result versus which operational consequence context an interpretation belongs to.
 
-### API/SSE Gate 4 transport migration — REQUIRED BEFORE THAT MIGRATION, NOT BEFORE HEADLESS G5
+### API/SSE PLAN-ENG-4 transport migration — REQUIRED BEFORE THAT MIGRATION, NOT BEFORE HEADLESS PLAN-GOV-5
 
-Land G5-B2's final runtime provenance shape before G4-D migrates supported events and observations
-outward. This avoids immediate wire-contract churn. G4-D is not a prerequisite for headless Gate 5.
+Land PLAN-ENG-5-B2's final runtime provenance shape before PLAN-ENG-4-D migrates supported events and observations
+outward. This avoids immediate wire-contract churn. PLAN-ENG-4-D is not a prerequisite for headless PLAN-ENG-5.
 
 ## 9. Acceptance / readiness
 
-Gate 5 is architecture-ready once ADR-0014 and ADR-0015 are Accepted and this focused plan is
+PLAN-ENG-5 is architecture-ready once ADR-0014 and ADR-0015 are Accepted and this focused plan is
 reconciled with the parent Engine/Factory plans. Implementation remains pending until the slices
 above land with executable evidence.
 

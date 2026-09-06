@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/** Pure unit tests for the D5 factory-domain comparator, independent of Governance persistence. */
+/** Pure unit tests for the factory-domain semantic comparator, independent of Governance persistence. */
 class FactoryModelSemanticComparatorTest {
 
     private final FactoryModelSemanticComparator comparator = new FactoryModelSemanticComparator();

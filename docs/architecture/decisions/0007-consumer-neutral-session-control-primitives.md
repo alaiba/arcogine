@@ -3,6 +3,7 @@
 Status: Accepted
 Date: 2026-08-27
 Amendment: 2026-09-03 — replaced transient Engine Readiness coordinates with semantic terminology; no semantic change
+Amendment: 2026-09-06 — updated references to `SessionControlAcceptanceTest`, renamed from a class name that embedded its originating planning-gate coordinate; no semantic change
 
 ## Context
 
@@ -46,13 +47,13 @@ As with [ADR-0005](0005-explicit-eligibility-deterministic-dispatch-policy.md)'s
 
 This directly generalizes the two bespoke max-time loops already duplicated in `SimThread.Run`/`SimThread.Step` (`product/interfaces/api/src/main/java/com/arcogine/api/state/SimThread.java`) and `SimRunner.runScenario` (`product/simulation/src/main/java/com/arcogine/core/runner/SimRunner.java`), both of which stop at `event.time() > maxTime` without ever comparing to a caller-supplied max event count. Migrating those call sites onto `FactoryRuntime`/`advanceUntil` is explicitly out of scope for this decision; this ADR only establishes the primitive's shape.
 
-`Gate3SessionControlAcceptanceTest` proves `advanceUntil` converges with looping `advance()` for identical workloads, both bounded to one event per call and unbounded in a single call, and proves the time bound is respected independently of the event-count bound.
+`SessionControlAcceptanceTest` proves `advanceUntil` converges with looping `advance()` for identical workloads, both bounded to one event per call and unbounded in a single call, and proves the time bound is respected independently of the event-count bound.
 
 ### Reset is fresh construction over the retained model version, not in-place mutation
 
 `FactoryRuntime.reset()` returns `FactoryRuntime.forModel(this.modelVersion)` -- a brand-new instance with none of the original session's submitted workload or dispatch state, leaving the original session itself untouched. `FactoryRuntime` only owns a `FactoryHandler`+`Scheduler` pair with no partial/selective-reset subsystem; a general in-place reset would require adding mutation paths to types (`OrderStore`, `JobStore`, `MachineStore`, `RoutingStore`) that are otherwise never mutated outside event handling, purely to serve a reset case. Fresh construction reuses the same construction path every other session already goes through, so reset-session behavior is provably identical to any other fresh session over the same model version.
 
-`Gate3SessionControlAcceptanceTest.resetSessionReproducesIdenticalResultToTheOriginalSessionWithoutMutatingIt` proves the invariant: a reset session replaying the identical workload/command sequence reproduces an identical ordered event stream and identical terminal state, mirroring the established two-fresh-runtimes determinism evidence.
+`SessionControlAcceptanceTest.resetSessionReproducesIdenticalResultToTheOriginalSessionWithoutMutatingIt` proves the invariant: a reset session replaying the identical workload/command sequence reproduces an identical ordered event stream and identical terminal state, mirroring the established two-fresh-runtimes determinism evidence.
 
 ### Externally initiated commands return a `CommandResult<T>` instead of throwing or returning `void`
 
@@ -72,19 +73,19 @@ Rejection carries the original, already-structured, sealed `SimError` (`Rejected
 
 `scheduledEvents()` is populated by `RecordingScheduler` (`com.arcogine.factory.process`, package-private), a `Scheduler` subclass. `FactoryRuntime` opens a capture window with `startCapturing(sink)` immediately before calling into `FactoryHandler`, and closes it with `stopCapturing()` in a `finally` block; only events scheduled while a window is open are appended anywhere. This is entirely local to the `factory` module -- the shared `com.arcogine.core.queue.Scheduler` type used by every other domain is unchanged.
 
-`Gate3SessionControlAcceptanceTest` proves all three shapes directly (`acceptedSubmissionReturnsAStructuredResultWithProvenanceAndScheduledEvents`, `rejectedSubmissionReturnsAStructuredResultAndLeavesNoPartialMutation`, `machineAvailabilityCommandReturnsAStructuredResultForAcceptanceAndRejection`, `setMachineAvailabilityReportsFaultedRatherThanThrowingWhenTheDispatchCascadeFailsAfterMutation`).
+`SessionControlAcceptanceTest` proves all three shapes directly (`acceptedSubmissionReturnsAStructuredResultWithProvenanceAndScheduledEvents`, `rejectedSubmissionReturnsAStructuredResultAndLeavesNoPartialMutation`, `machineAvailabilityCommandReturnsAStructuredResultForAcceptanceAndRejection`, `setMachineAvailabilityReportsFaultedRatherThanThrowingWhenTheDispatchCascadeFailsAfterMutation`).
 
 ### Cross-machine pending work gets its own read-only projection
 
 `FactoryRuntime` gains `pendingWorkView(): List<PendingWorkView>`, delegating to a new `FactoryHandler.pendingWorkView()` that snapshots `pendingMultiEligible` into the new public record `PendingWorkView(JobId jobId, Set<MachineId> eligibleMachines)`. This is a second, necessary queue/pending-dispatch projection alongside `machinesView()`'s per-machine `queueDepth()` -- not a replacement for it, and not folded into `machinesView()` itself, because a `PendingWorkView` entry is by definition not queued on any single machine. A consumer resolves `jobId` through the existing `FactoryRuntime.job(JobId)` for the waiting job's order/execution state, rather than `PendingWorkView` duplicating those fields.
 
-`Gate3SessionControlAcceptanceTest.pendingWorkViewExposesAMultiEligibleJobWaitingWhileBothEligibleMachinesAreOccupied` proves the gap directly: with both eligible machines occupied and a third order waiting, every machine's `queueDepth()` reads zero while `pendingWorkView()` reports the waiting job and its eligible set -- and that freeing a machine dispatches the job and clears it from `pendingWorkView()`.
+`SessionControlAcceptanceTest.pendingWorkViewExposesAMultiEligibleJobWaitingWhileBothEligibleMachinesAreOccupied` proves the gap directly: with both eligible machines occupied and a third order waiting, every machine's `queueDepth()` reads zero while `pendingWorkView()` reports the waiting job and its eligible set -- and that freeing a machine dispatches the job and clears it from `pendingWorkView()`.
 
 ### `FactoryHandler.submitOrder` preflights immediate-dispatch scheduling before any mutation
 
 `submitOrder`'s immediate-dispatch branch now computes and validates the resulting `TaskEnd`'s end time -- the same `SimTime` ordering check `Scheduler.schedule` itself performs -- *before* `orders.createOrder`/`jobs.createJob`/`Machine.startJob`/`Job.start` run. `routing.getStep(0)`, `selectMachine`, and `Machine.canAcceptJob()` are all pure reads, so hoisting them and the end-time check ahead of mutation changes nothing about dispatch selection; it only moves the one remaining throw-capable step earlier. If the check fails, `submitOrder` throws `SimError.EventOrderingViolation` having created nothing; `FactoryRuntime.submitWorkload`'s broad `catch (SimError e)` is therefore safe to keep because every remaining throw path is pre-mutation.
 
-`Gate3SessionControlAcceptanceTest.rejectedSubmissionFromAPostValidationSchedulingFailureStillLeavesNoPartialMutation` proves the rejected result leaves no order, no job, and the machine still idle for the overflow repro.
+`SessionControlAcceptanceTest.rejectedSubmissionFromAPostValidationSchedulingFailureStillLeavesNoPartialMutation` proves the rejected result leaves no order, no job, and the machine still idle for the overflow repro.
 
 ### `setMachineAvailability` rejections are verified before calling into `FactoryHandler`; deeper cascade faults are reported as `Faulted`, never thrown
 
@@ -97,7 +98,7 @@ Unlike `submitOrder`, `FactoryHandler.handleMachineAvailability` cannot be made 
 
 Both are pure reads verified before any call into `FactoryHandler`, so a `Rejected` result from this method is pre-mutation by construction. Past that point, `setMachineAvailability` calls `handleMachineAvailability` inside a `try`/`catch (SimError e)`: a fault surfacing from deep in the dispatch cascade is a genuine engine fault, not a rejectable input this method could have pre-verified, and is returned as `CommandResult.Faulted<>(requested, e, modelVersion, scheduled)` -- carrying the same `EventPayload.MachineAvailabilityChange requested` value `Accepted` would have carried, plus whatever events the capture window saw before the failure. Because the pre-checks guarantee `Machine.setAvailability` itself cannot fail, by the time any `SimError` reaches this catch the availability change was genuinely applied.
 
-`Gate3SessionControlAcceptanceTest.takingABusyMachineOfflineIsRejectedBeforeAnyMutation` proves the pre-check path. `Gate3SessionControlAcceptanceTest.setMachineAvailabilityReportsFaultedRatherThanThrowingWhenTheDispatchCascadeFailsAfterMutation` proves a post-mutation cascade fault returns `Faulted` rather than escaping or being misreported as rejection.
+`SessionControlAcceptanceTest.takingABusyMachineOfflineIsRejectedBeforeAnyMutation` proves the pre-check path. `SessionControlAcceptanceTest.setMachineAvailabilityReportsFaultedRatherThanThrowingWhenTheDispatchCascadeFailsAfterMutation` proves a post-mutation cascade fault returns `Faulted` rather than escaping or being misreported as rejection.
 
 ### `RecordingScheduler` captures a command-scoped window, not the session's lifetime
 

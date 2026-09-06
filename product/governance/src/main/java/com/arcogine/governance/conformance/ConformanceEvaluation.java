@@ -10,15 +10,15 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * The G4 outcome of evaluating one {@code Assertion}, for one {@code Requirement} identity/
+ * The conformance-evaluation outcome of evaluating one {@code Assertion}, for one {@code Requirement} identity/
  * version, against one {@code ModelFingerprint} (and, when available, one {@code
  * ControlledRevisionId}).
  *
- * <p>This is the minimal shape from the architecture's generic conformance model (§7) that G4
+ * <p>This is the minimal shape from the architecture's generic conformance model (§7) that conformance evaluation
  * actually implements: requirement/assertion identity and version, the fingerprint/revision
  * evaluated, the {@link ConformanceResult}, and -- only for {@link ConformanceResult#FAIL} -- the
  * associated {@link Finding}. It deliberately omits {@code observed-at}/applicable-period and
- * evidence-set fields from the architecture's full sketch: those require G5 {@code Evidence}/
+ * evidence-set fields from the architecture's full sketch: those require the external-evidence capability's {@code Evidence}/
  * {@code EvidenceUse}, which this slice does not implement.
  *
  * <p>{@code controlledRevisionId} is {@code null} when the evaluated state is an unpersisted

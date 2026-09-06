@@ -13,14 +13,14 @@ import java.util.Set;
 /**
  * Deterministic, explicit business/entity applicability of one {@link Requirement}.
  *
- * <p>This is the G3 half of the seam G2 deliberately left open: {@code ChangeSet ->
- * ImpactScope -> ChangedEntityRef} on one side, {@code Requirement -> RequirementScope ->
- * ChangedEntityRef} on the other. {@link #intersects(ImpactScope)} reuses {@link
- * ImpactScope#intersects(Set)} directly rather than duplicating an entity-reference abstraction.
+ * <p>This is the requirement half of a seam the change-set/impact-scope capability deliberately
+ * left open: {@code ChangeSet -> ImpactScope -> ChangedEntityRef} on one side, {@code Requirement
+ * -> RequirementScope -> ChangedEntityRef} on the other. {@link #intersects(ImpactScope)} reuses
+ * {@link ImpactScope#intersects(Set)} directly rather than duplicating an entity-reference
+ * abstraction.
  *
  * <p>Scope is a plain, deterministically ordered set of stable {@link ChangedEntityRef} values --
- * intentionally not a query language or expression DSL, per G3 non-goals. An empty scope never
- * matches any impact.
+ * intentionally not a query language or expression DSL. An empty scope never matches any impact.
  */
 public final class RequirementScope {
 
@@ -61,7 +61,7 @@ public final class RequirementScope {
         return entities.isEmpty();
     }
 
-    /** Whether this scope shares any entity with a {@link ImpactScope} produced by a G2 {@code ChangeSet}. */
+    /** Whether this scope shares any entity with a {@link ImpactScope} produced by a change-set/impact-scope {@code ChangeSet}. */
     public boolean intersects(ImpactScope impactScope) {
         Objects.requireNonNull(impactScope, "impactScope");
         if (entities.isEmpty()) {

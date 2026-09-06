@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/** Headless Gate 4-A evidence for the supported observation boundary. */
-class Gate4RuntimeObservationAcceptanceTest {
+/** Headless acceptance evidence for the supported {@code observe()} observation boundary. */
+class RuntimeObservationAcceptanceTest {
 
     private static FactoryModelVersion model() {
         return FactoryModelPublisher.publish(new FactoryModel(
@@ -72,7 +72,7 @@ class Gate4RuntimeObservationAcceptanceTest {
         assertEquals(originalObservation.orders(), resetObservation.orders());
         assertEquals(originalObservation.jobs(), resetObservation.jobs());
         assertEquals(originalObservation.performance(), resetObservation.performance());
-        // G4-B: latestEventSequence is a fresh, independent cursor epoch per run -- not always 0,
+        // latestEventSequence is a fresh, independent cursor epoch per run -- not always 0,
         // but identical here because replaying the same commands against a fresh reset session
         // produces the same semantic (and therefore same-length) supported event stream.
         assertTrue(resetObservation.metadata().latestEventSequence() > 0);

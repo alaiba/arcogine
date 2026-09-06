@@ -13,15 +13,15 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * First structural proving case for G3: an Arcogine-native requirement backed by a deterministic,
+ * First structural proving case for the requirement-scope capability: an Arcogine-native requirement backed by a deterministic,
  * headless structural assertion, evaluated purely from authoritative semantic facts.
  *
- * <p>Per the G3 acceptance criteria, this uses a minimal test-domain fixture ({@link
+ * <p>Per the requirement-scope acceptance criteria, this uses a minimal test-domain fixture ({@link
  * DeclaredResource}) rather than manufacturing a permanent factory policy or duplicating {@code
  * FactoryModelValidator} as a competing executability authority. It proves the contract is
  * headlessly operable -- no Spring, no HTTP/API DTOs, no frontend code, no mutable runtime state,
  * no external evidence, no compliance framework -- while leaving the choice of a real permanent
- * factory-owned invariant to a future G4 slice with actual conformance-evaluation semantics.
+ * factory-owned invariant to a future conformance-evaluation slice with actual conformance-evaluation semantics.
  */
 class StructuralProvingCaseTest {
 
@@ -36,7 +36,7 @@ class StructuralProvingCaseTest {
                         "Declared resource capacity must be positive",
                         "Every declared resource must state a strictly positive capacity; this is an "
                                 + "Arcogine-native structural invariant, not an external-standard requirement.",
-                        ArcogineNativeRequirementSource.of("minimum viable structural invariant, G3 proving case"),
+                        ArcogineNativeRequirementSource.of("minimum viable structural invariant, requirement-scope proving case"),
                         RequirementScope.empty());
         Assertion<DeclaredResource> assertion =
                 new Assertion<>(

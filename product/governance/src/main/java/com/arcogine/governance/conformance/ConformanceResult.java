@@ -1,7 +1,7 @@
 package com.arcogine.governance.conformance;
 
 /**
- * The G4 result taxonomy for one {@code Requirement}/{@code Assertion} evaluation against a
+ * The conformance-evaluation result taxonomy for one {@code Requirement}/{@code Assertion} evaluation against a
  * particular model fingerprint (and, when available, controlled revision).
  *
  * <p>Per the governance-conformance architecture (§7, §11), {@code UNKNOWN} is a first-class
@@ -17,7 +17,7 @@ public enum ConformanceResult {
     FAIL,
     /**
      * The assertion could not be decided -- typically because it declares {@code
-     * EXTERNAL_EVIDENCE_REQUIRED} and G4 does not implement G5 evidence, or because the
+     * EXTERNAL_EVIDENCE_REQUIRED} and conformance evaluation does not implement external evidence, or because the
      * authoritative state needed to decide a {@code MODEL_STATE_SUFFICIENT} assertion was not
      * supplied.
      */

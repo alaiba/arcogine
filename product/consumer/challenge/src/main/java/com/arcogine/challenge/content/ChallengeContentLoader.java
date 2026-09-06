@@ -18,11 +18,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The C5 content-loading layer: converts an untrusted external JSON representation of a challenge
+ * The content-loading layer: converts an untrusted external JSON representation of a challenge
  * into a structurally complete {@link ChallengeDefinition}, or into deterministic, actionable
  * {@link ChallengeContentIssue} diagnostics explaining why it could not.
  *
- * <p>This is the layer C1 explicitly deferred: {@code ChallengeDefinition} and its nested value
+ * <p>This is the layer that the baseline challenge-definition types explicitly deferred: {@code ChallengeDefinition} and its nested value
  * records reject structurally absent fields via ordinary constructor {@code
  * NullPointerException}s, which is unsuitable for untrusted input. {@code ChallengeContentLoader}
  * never lets a malformed or incomplete external representation reach a {@code
@@ -291,9 +291,9 @@ public final class ChallengeContentLoader {
             issues.add(new ChallengeContentIssue("definition." + issue.code(), issue.path(), issue.message()));
         }
 
-        // C2's CandidateAdmissibilityPolicy independently rejects a catalogue identity mismatch
+        // CandidateAdmissibilityPolicy independently rejects a catalogue identity mismatch
         // or an unbound/mismatched semantic fingerprint. A definition/catalogue pair loaded here
-        // as "success" must not be one C2 would immediately reject on those grounds. When the
+        // as "success" must not be one that CandidateAdmissibilityPolicy would immediately reject on those grounds. When the
         // source explicitly declared a catalogueIdentity/catalogueSemanticFingerprint, that is an
         // assertion this method verifies against the actually-resolved catalogue; when it did
         // not, ChallengeDefinition's own default synthesized a placeholder that this method binds

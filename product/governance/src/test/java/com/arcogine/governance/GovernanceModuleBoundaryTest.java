@@ -12,10 +12,10 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * Structural evidence that {@code :governance} (and the G3 requirement/assertion/catalogue
+ * Structural evidence that {@code :governance} (and the requirement/assertion/catalogue
  * packages added by this slice) stays domain-neutral: it may only depend on {@code :types} in its
  * main source set. {@code :factory} may only be a {@code testImplementation} dependency (used to
- * prove the G2/G3 seam against a real domain, not to let production Governance code depend on
+ * prove the change-set/requirement-scope seam against a real domain, not to let production Governance code depend on
  * factory implementation classes).
  */
 class GovernanceModuleBoundaryTest {
@@ -47,7 +47,7 @@ class GovernanceModuleBoundaryTest {
         Path mainSourceRoot = moduleRoot().resolve("src/main/java");
         try (var stream = Files.walk(mainSourceRoot)) {
             List<Path> javaFiles = stream.filter(p -> p.toString().endsWith(".java")).toList();
-            assertTrue(javaFiles.size() > 10, "expected the G1/G2/G3 governance sources to be present");
+            assertTrue(javaFiles.size() > 10, "expected the controlled-revision/change-set/requirement-scope governance sources to be present");
             for (Path file : javaFiles) {
                 String content = Files.readString(file);
                 assertFalse(content.contains("com.arcogine.factory"), file + " references com.arcogine.factory");
@@ -58,8 +58,8 @@ class GovernanceModuleBoundaryTest {
 
     @Test
     void productionGovernanceCodeNeverReferencesG5PlusConcepts() throws IOException {
-        // Regression guard for the G4 conformance-evaluation/findings slice: production code must
-        // not smuggle in G5 evidence, authorization, deployment, workflow, or a severity taxonomy
+        // Regression guard for the conformance-evaluation/findings slice: production code must
+        // not smuggle in external-evidence, authorization, deployment, workflow, or a severity taxonomy
         // ahead of their own gates.
         // Matches actual type declarations only (not javadoc prose describing these as non-goals).
         Path mainSourceRoot = moduleRoot().resolve("src/main/java");
@@ -87,7 +87,7 @@ class GovernanceModuleBoundaryTest {
                 for (String token : forbiddenDeclarations) {
                     assertFalse(
                             content.contains(token),
-                            file + " declares out-of-scope G5+ concept: " + token);
+                            file + " declares out-of-scope external-evidence-or-later concept: " + token);
                 }
             }
         }

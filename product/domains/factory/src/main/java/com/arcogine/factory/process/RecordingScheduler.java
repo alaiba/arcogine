@@ -51,7 +51,7 @@ final class RecordingScheduler extends Scheduler {
 
     /**
      * Whether any queued event can still authoritatively change factory state -- the sense in which
-     * {@link RuntimeRunState#ACTIVE} means "pending authoritative work" (ADR-0011 REV-003).
+     * {@link RuntimeRunState#ACTIVE} means "pending authoritative work" (ADR-0011).
      *
      * <p>Deliberately not {@link #isEmpty()}: the queue can still hold internal markers ({@code
      * TaskStart}, the {@code OrderCompleted} a terminal {@code TaskEnd} schedules purely so other

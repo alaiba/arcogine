@@ -21,7 +21,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Gate 2 acceptance evidence: one operation step naming two equivalent eligible machines, with
+ * Multi-resource-dispatch acceptance evidence: one operation step naming two equivalent eligible machines, with
  * runtime dispatch selecting between them deterministically. See {@code
  * FactoryHandler#selectMachine}.
  */

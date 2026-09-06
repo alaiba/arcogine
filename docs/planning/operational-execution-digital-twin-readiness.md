@@ -1,9 +1,9 @@
 # Operational Execution and Digital Twin Readiness
 
-> **Status:** Proposed; O1 is the next operational implementation target  
+> **Status:** Proposed; PLAN-OPS-1 is the next operational implementation target  
 > **Scope:** Establish the semantic and safety boundaries required before Arcogine can connect designed production semantics to real operational systems  
 > **Authority:** Planning only; this document defines readiness gates, dependencies, and implementation sequencing, not current production capability  
-> **Related:** [Operational Execution and Digital Twin Architecture](../architecture/operational-execution-digital-twin.md), [ADR-0013: Execution context identity](../architecture/decisions/0013-execution-context-identity.md), [Product Charter](../product/charter.md), [Architecture Overview](../architecture/overview.md), [Factory Design Architecture](../architecture/factory-design.md), [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Gate 4 Runtime Observation and Event Delivery](gate-4-runtime-observation-event-delivery.md), [Governance and Conformance Capability](governance-conformance-capability.md)
+> **Related:** [Operational Execution and Digital Twin Architecture](../architecture/operational-execution-digital-twin.md), [ADR-0013: Execution context identity](../architecture/decisions/0013-execution-context-identity.md), [Product Charter](../product/charter.md), [Architecture Overview](../architecture/overview.md), [Factory Design Architecture](../architecture/factory-design.md), [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [PLAN-ENG-4 Runtime Observation and Event Delivery](runtime-observation-event-delivery.md), [Governance and Conformance Capability](governance-conformance-capability.md)
 
 ## 1. Purpose
 
@@ -37,15 +37,15 @@ This plan was originally written while several sibling contracts were still pros
 
 | Dependency / capability | Current status | Operational consequence |
 |---|---|---|
-| Governance G1 durable fingerprint + controlled revision history | **Complete** | O4 and revision-bound O6 must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`; synthetic G1 revision fixtures are no longer appropriate for new operational work |
-| Governance G2 semantic `ChangeSet` / impact (initial slice) | **Complete** | O7 must consume the Governance-owned `ChangeSet`/`ImpactScope`/`SemanticChange` contracts for semantic change attribution rather than inventing a substitute |
-| Governance G3 requirement/assertion contract | **Complete** | O7 should consume the Governance-owned `Requirement`/`Assertion`/`RequirementCatalogue` contracts rather than inventing a substitute once conformance-evaluation integration begins |
-| Governance G4 conformance / findings (initial slice) | **Complete** | O7 should consume the Governance-owned `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contracts for evaluation/finding semantics rather than inventing a substitute; G5 evidence/authorization capabilities remain outstanding |
-| Governance G5 evidence / `EvidenceUse` | **Outstanding** | O5 ingestion remains independent; O9 evidence-use integration cannot close yet |
-| Engine Gate 4 G4-A runtime observation slice | **Complete** | `RunId` and consumer-neutral `RuntimeObservation` exist for one factory simulation runtime epoch |
-| Engine Gate 4 G4-B supported runtime events | **Complete** | The supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload` contract per ADR-0011 is implemented at the `FactoryRuntime` boundary |
-| Engine Gate 4 G4-C headless closure | **Complete** | Gate 4 core/headless acceptance closure across the runtime/observation boundary is proven: fresh-observation reconstruction without replay, observation/event closure, and consumer-neutral bottleneck identification; distribution hardening (G4-D, DH-E) remains outstanding |
-| Operational O1 execution-context identity | **Proposed ADR recorded; implementation outstanding** | [ADR-0013](../architecture/decisions/0013-execution-context-identity.md) records the concrete proposed identity contract. O1 remains the next Operational implementation target and must follow ADR-0013 if/when it becomes Accepted. |
+| Governance PLAN-GOV-1 durable fingerprint + controlled revision history | **Complete** | PLAN-OPS-4 and revision-bound PLAN-OPS-6 must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`; synthetic PLAN-GOV-1 revision fixtures are no longer appropriate for new operational work |
+| Governance PLAN-GOV-2 semantic `ChangeSet` / impact (initial slice) | **Complete** | PLAN-OPS-7 must consume the Governance-owned `ChangeSet`/`ImpactScope`/`SemanticChange` contracts for semantic change attribution rather than inventing a substitute |
+| Governance PLAN-GOV-3 requirement/assertion contract | **Complete** | PLAN-OPS-7 should consume the Governance-owned `Requirement`/`Assertion`/`RequirementCatalogue` contracts rather than inventing a substitute once conformance-evaluation integration begins |
+| Governance PLAN-GOV-4 conformance / findings (initial slice) | **Complete** | PLAN-OPS-7 should consume the Governance-owned `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contracts for evaluation/finding semantics rather than inventing a substitute; PLAN-GOV-5 evidence/authorization capabilities remain outstanding |
+| Governance PLAN-GOV-5 evidence / `EvidenceUse` | **Outstanding** | PLAN-OPS-5 ingestion remains independent; PLAN-OPS-9 evidence-use integration cannot close yet |
+| Engine PLAN-ENG-4 PLAN-ENG-4-A runtime observation slice | **Complete** | `RunId` and consumer-neutral `RuntimeObservation` exist for one factory simulation runtime epoch |
+| Engine PLAN-ENG-4 PLAN-ENG-4-B supported runtime events | **Complete** | The supported `RuntimeEventEnvelope`/`RuntimeEventType`/`RuntimeEventPayload` contract per ADR-0011 is implemented at the `FactoryRuntime` boundary |
+| Engine PLAN-ENG-4 PLAN-ENG-4-C headless closure | **Complete** | PLAN-ENG-4 core/headless acceptance closure across the runtime/observation boundary is proven: fresh-observation reconstruction without replay, observation/event closure, and consumer-neutral bottleneck identification; distribution hardening (PLAN-ENG-4-D, PLAN-ENG-DH-E) remains outstanding |
+| Operational PLAN-OPS-1 execution-context identity | **Proposed ADR recorded; implementation outstanding** | [ADR-0013](../architecture/decisions/0013-execution-context-identity.md) records the concrete proposed identity contract. PLAN-OPS-1 remains the next Operational implementation target and must follow ADR-0013 if/when it becomes Accepted. |
 
 The important Engine/Operational boundary is:
 
@@ -106,40 +106,40 @@ Operational facts may become Governance evidence, but Governance does not own te
 The local operational sequence remains:
 
 ```text
-O1  Execution-context identity
+PLAN-OPS-1  Execution-context identity
  ↓
-O2  Actor, trust, authority, and capability boundary
+PLAN-OPS-2  Actor, trust, authority, and capability boundary
  ↓
-O3  External command / actuation lifecycle
+PLAN-OPS-3  External command / actuation lifecycle
  ↓
-O4  Deployment target and deployment-record semantics
+PLAN-OPS-4  Deployment target and deployment-record semantics
  ↓
-O5  External observation ingestion and provenance
+PLAN-OPS-5  External observation ingestion and provenance
  ↓
-O6  Modeled-versus-observed reconciliation
+PLAN-OPS-6  Modeled-versus-observed reconciliation
  ↓
-O7  Divergence, drift, and calibration feedback
+PLAN-OPS-7  Divergence, drift, and calibration feedback
  ↓
-O8  Operational resilience / recovery semantics
+PLAN-OPS-8  Operational resilience / recovery semantics
  ↓
-O9  First live-system adapter proving ground
+PLAN-OPS-9  First live-system adapter proving ground
 ```
 
 This is not a self-contained linear program. Sibling dependencies and local prerequisites must be kept separate.
 
 | Operational gate | Sibling dependency status | Current consequence |
 |---|---|---|
-| O1 execution context | **No hard sibling prerequisite.** Engine G4-A is available but is not the identity source. | ADR-0013 records the concrete Proposed O1 identity decision. O1 implementation remains outstanding and should proceed only against the Accepted form of that decision. |
-| O2 identity/trust/authority | **No Governance gate prerequisite.** | O2 remains operational work after O1. Production trust requirements remain entirely outstanding. |
-| O3 command lifecycle | **Partially satisfied.** Stable factory production semantics exist, but the applicable real target-operation contract is not yet an operational capability. | Headless command lifecycle work may proceed after O1/O2; live command integration must map to owned production semantics rather than protocol-driven inventions. |
-| O4 deployment | **Governance G1 satisfied.** | O4 is not implemented, but it is no longer blocked on durable revision identity. It must consume Governance G1 authoritative identities/history instead of synthetic revision fixtures. |
-| O5 external observations | **No G5 prerequisite for ingestion.** Engine runtime observations are a sibling simulation concept, not an O5 prerequisite. | O5 may define independent external-observation provenance. G5 is required only when observations are used through Governance `EvidenceUse`. |
-| O6 reconciliation | **Governance G1 satisfied; modeled-side Engine maturity partial.** | Historical/revision-bound reconciliation can use authoritative G1 resolution when implemented. O6 still depends locally on O5 and on the modeled semantics relevant to the reconciliation. |
-| O7 drift/calibration | **Governance G2 (initial slice), G3, and G4 (initial slice) satisfied; G5 outstanding.** | Operational-local drift analysis should consume Governance-owned `ChangeSet`/`ImpactScope`, registered `Requirement`/`Assertion` contracts, and the `ConformanceEvaluator`/`Finding` contracts where applicable; evidence-use integration remains Governance-owned and outstanding. |
-| O8 resilience | **No separate Governance prerequisite.** | Depends primarily on the command/observation identity and persistence contracts selected by O3/O5; those are not implemented yet. |
-| O9 live adapter | **Governance G1 satisfied; G5 outstanding; Engine Gate 4 core/headless closure complete.** | A protocol test server may prove local adapter behavior, but O9 cannot close until its local O2-O8 requirements, Governance evidence-use integration where required, and applicable Engine distribution hardening are actually available. |
+| PLAN-OPS-1 execution context | **No hard sibling prerequisite.** Engine PLAN-ENG-4-A is available but is not the identity source. | ADR-0013 records the concrete Proposed PLAN-OPS-1 identity decision. PLAN-OPS-1 implementation remains outstanding and should proceed only against the Accepted form of that decision. |
+| PLAN-OPS-2 identity/trust/authority | **No Governance gate prerequisite.** | PLAN-OPS-2 remains operational work after PLAN-OPS-1. Production trust requirements remain entirely outstanding. |
+| PLAN-OPS-3 command lifecycle | **Partially satisfied.** Stable factory production semantics exist, but the applicable real target-operation contract is not yet an operational capability. | Headless command lifecycle work may proceed after PLAN-OPS-1/PLAN-OPS-2; live command integration must map to owned production semantics rather than protocol-driven inventions. |
+| PLAN-OPS-4 deployment | **Governance PLAN-GOV-1 satisfied.** | PLAN-OPS-4 is not implemented, but it is no longer blocked on durable revision identity. It must consume Governance PLAN-GOV-1 authoritative identities/history instead of synthetic revision fixtures. |
+| PLAN-OPS-5 external observations | **No PLAN-GOV-5 prerequisite for ingestion.** Engine runtime observations are a sibling simulation concept, not an PLAN-OPS-5 prerequisite. | PLAN-OPS-5 may define independent external-observation provenance. PLAN-GOV-5 is required only when observations are used through Governance `EvidenceUse`. |
+| PLAN-OPS-6 reconciliation | **Governance PLAN-GOV-1 satisfied; modeled-side Engine maturity partial.** | Historical/revision-bound reconciliation can use authoritative PLAN-GOV-1 resolution when implemented. PLAN-OPS-6 still depends locally on PLAN-OPS-5 and on the modeled semantics relevant to the reconciliation. |
+| PLAN-OPS-7 drift/calibration | **Governance PLAN-GOV-2 (initial slice), PLAN-GOV-3, and PLAN-GOV-4 (initial slice) satisfied; PLAN-GOV-5 outstanding.** | Operational-local drift analysis should consume Governance-owned `ChangeSet`/`ImpactScope`, registered `Requirement`/`Assertion` contracts, and the `ConformanceEvaluator`/`Finding` contracts where applicable; evidence-use integration remains Governance-owned and outstanding. |
+| PLAN-OPS-8 resilience | **No separate Governance prerequisite.** | Depends primarily on the command/observation identity and persistence contracts selected by PLAN-OPS-3/PLAN-OPS-5; those are not implemented yet. |
+| PLAN-OPS-9 live adapter | **Governance PLAN-GOV-1 satisfied; PLAN-GOV-5 outstanding; Engine PLAN-ENG-4 core/headless closure complete.** | A protocol test server may prove local adapter behavior, but PLAN-OPS-9 cannot close until its local PLAN-OPS-2 to PLAN-OPS-8 requirements, Governance evidence-use integration where required, and applicable Engine distribution hardening are actually available. |
 
-### 4.1 Fixture rules after Governance G1
+### 4.1 Fixture rules after Governance PLAN-GOV-1
 
 Synthetic fixtures remain allowed where a sibling-owned contract genuinely has not landed, under these constraints:
 
@@ -147,18 +147,18 @@ Synthetic fixtures remain allowed where a sibling-owned contract genuinely has n
 2. A fixture must be visibly test/fixture scoped and must not escape as a shared production type merely because it was convenient.
 3. Completion of an operational-local behavior criterion may be demonstrated with fixtures, but a criterion explicitly requiring an outstanding sibling capability remains incomplete.
 4. Synthetic operational adapters do not satisfy Engine Readiness gates.
-5. **Do not create new synthetic revision/fingerprint identity fixtures for O4/O6. Governance G1 is complete and its authoritative contracts are available.**
-6. **Do not create new synthetic ChangeSet/impact fixtures for O7. Governance G2's initial slice is complete and its authoritative `ChangeSet`/`ImpactScope`/`SemanticChange` contracts are available.**
-7. **Do not create synthetic requirement/assertion contracts for O7. Governance G3 is complete and its authoritative `Requirement`/`Assertion`/`RequirementCatalogue` contracts are available.** Do not create synthetic conformance/finding fixtures either: Governance G4's initial slice is complete and its authoritative `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contracts are available. Synthetic evidence-use fixtures still do not satisfy Governance G5.
+5. **Do not create new synthetic revision/fingerprint identity fixtures for PLAN-OPS-4/PLAN-OPS-6. Governance PLAN-GOV-1 is complete and its authoritative contracts are available.**
+6. **Do not create new synthetic ChangeSet/impact fixtures for PLAN-OPS-7. Governance PLAN-GOV-2's initial slice is complete and its authoritative `ChangeSet`/`ImpactScope`/`SemanticChange` contracts are available.**
+7. **Do not create synthetic requirement/assertion contracts for PLAN-OPS-7. Governance PLAN-GOV-3 is complete and its authoritative `Requirement`/`Assertion`/`RequirementCatalogue` contracts are available.** Do not create synthetic conformance/finding fixtures either: Governance PLAN-GOV-4's initial slice is complete and its authoritative `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contracts are available. Synthetic evidence-use fixtures still do not satisfy Governance PLAN-GOV-5.
 8. When a later sibling contract lands, replace fixture mappings with the owned contract rather than preserving a parallel identity system.
 
-## 5. O1 — Execution-context identity
+## 5. PLAN-OPS-1 — Execution-context identity
 
 ### 5.1 Goal
 
 Make operational consequence explicit before real-system behavior is introduced.
 
-O1 establishes an Arcogine semantic contract that answers two different questions:
+PLAN-OPS-1 establishes an Arcogine semantic contract that answers two different questions:
 
 ```text
 ExecutionContextKind
@@ -196,11 +196,11 @@ SIMULATION
 
 It proposes `PRODUCTION` for real production-consequential activity, `STAGING` for production-like integration without production consequence, and `SIMULATION` where an Operational artifact needs to classify/correlate simulated activity while remaining distinct from Engine `RunId`.
 
-`REPLAY` remains a processing/history-interpretation mode rather than an O1 context kind unless a later concrete consequence/authority invariant proves otherwise. Generic software `TEST` remains a process/build/test concern, not an operational context kind. The implementation must follow these semantics only if ADR-0013 becomes Accepted; a Proposed ADR does not make the taxonomy established architecture.
+`REPLAY` remains a processing/history-interpretation mode rather than an PLAN-OPS-1 context kind unless a later concrete consequence/authority invariant proves otherwise. Generic software `TEST` remains a process/build/test concern, not an operational context kind. The implementation must follow these semantics only if ADR-0013 becomes Accepted; a Proposed ADR does not make the taxonomy established architecture.
 
 ### 5.3 Concrete context identity
 
-O1 requires a stable concrete context identity in addition to classification.
+PLAN-OPS-1 requires a stable concrete context identity in addition to classification.
 
 ADR-0013 proposes an opaque RFC 9562 UUID version 4 `ExecutionContextId`, with canonical lowercase hyphenated textual form and strict semantic-boundary parsing. It also proposes:
 
@@ -214,7 +214,7 @@ ADR-0013 proposes an opaque RFC 9562 UUID version 4 `ExecutionContextId`, with c
 - changing a context's human-facing name does not change identity;
 - context identity does not imply external target, deployed revision/model, actor identity, authorization, or simulation `RunId`.
 
-Identity semantics are distinct from issuance infrastructure: Arcogine or an operator/deployment system may establish a UUIDv4 once, and configuration may later carry it, but O1 does not require a centralized issuance service or derive identity from deployment/configuration metadata.
+Identity semantics are distinct from issuance infrastructure: Arcogine or an operator/deployment system may establish a UUIDv4 once, and configuration may later carry it, but PLAN-OPS-1 does not require a centralized issuance service or derive identity from deployment/configuration metadata.
 
 These representation and lifecycle rules remain proposed until ADR-0013 is Accepted.
 
@@ -261,7 +261,7 @@ A later command, deployment, reconciliation result, or interpretation may correl
 
 Execution context must be established explicitly at an Operational Execution boundary and then propagated as data.
 
-Downstream operational code may rely on an `ExecutionContext` only after it has been supplied or resolved through the O1-owned boundary. It must not infer context from:
+Downstream operational code may rely on an `ExecutionContext` only after it has been supplied or resolved through the PLAN-OPS-1-owned boundary. It must not infer context from:
 
 - Spring profile;
 - process hostname;
@@ -276,13 +276,13 @@ Downstream operational code may rely on an `ExecutionContext` only after it has 
 
 Environment variables or deployment tooling may later **carry** an already-defined context identifier as configuration input, but they are projections/configuration mechanisms, not the semantic authority that decides what the identifier means.
 
-The first O1 implementation does not need authorization. It only needs a boundary strong enough that O2 can later evaluate rules such as "allowed in staging" or "production-consequential in production" against an explicit context kind and concrete context identity.
+The first PLAN-OPS-1 implementation does not need authorization. It only needs a boundary strong enough that PLAN-OPS-2 can later evaluate rules such as "allowed in staging" or "production-consequential in production" against an explicit context kind and concrete context identity.
 
 ### 5.6 Persistence and restart semantics
 
-O1 requires durable **identity semantics**, not durable **context-registry persistence**.
+PLAN-OPS-1 requires durable **identity semantics**, not durable **context-registry persistence**.
 
-ADR-0013 proposes that the same durable ID plus its permanently bound kind re-established after restart identifies the same context. O1 does not require Arcogine to implement a repository of contexts, lifecycle administration, discovery, renaming, issuance history, aliases, or retirement.
+ADR-0013 proposes that the same durable ID plus its permanently bound kind re-established after restart identifies the same context. PLAN-OPS-1 does not require Arcogine to implement a repository of contexts, lifecycle administration, discovery, renaming, issuance history, aliases, or retirement.
 
 If a later capability requires authoritative durable context registration, uniqueness across independent Arcogine installations, aliases, retirement, migration, or context metadata history, that is a separate operational persistence concern and may require another ADR.
 
@@ -304,7 +304,7 @@ Arcogine-owned interpretations, reconciliation results, commands, deployments, o
 
 ### 5.8 Public compatibility boundary
 
-ADR-0013 now proposes the O1 representation and evolution rules that were previously open: UUIDv4 identity with strict canonical parsing, `PRODUCTION`/`STAGING`/`SIMULATION` taxonomy, explicit unknown-kind failure at the semantic boundary, decentralized establishment through the O1 boundary, permanent ID-to-kind binding with checked conflict handling, and explicit versioned migration handling for public/persisted changes.
+ADR-0013 now proposes the PLAN-OPS-1 representation and evolution rules that were previously open: UUIDv4 identity with strict canonical parsing, `PRODUCTION`/`STAGING`/`SIMULATION` taxonomy, explicit unknown-kind failure at the semantic boundary, decentralized establishment through the PLAN-OPS-1 boundary, permanent ID-to-kind binding with checked conflict handling, and explicit versioned migration handling for public/persisted changes.
 
 ADR-0012 remains authoritative:
 
@@ -318,24 +318,24 @@ external representation
 
 JSON, OpenAPI, OPC UA, MQTT, CloudEvents, environment variables, or deployment tooling must not become the semantic authority for execution-context identity. Any stable public projection still requires its own versioning, mapping, validation, compatibility evidence, and migration behavior.
 
-### 5.9 O1 acceptance criteria
+### 5.9 PLAN-OPS-1 acceptance criteria
 
-O1 is complete when:
+PLAN-OPS-1 is complete when:
 
 1. context classification and concrete context identity are explicit and distinct;
 2. one immutable operational context value can carry both responsibilities;
 3. multiple contexts of the same kind are representable and compare by concrete identity;
 4. context is supplied/resolved explicitly at an Operational Execution boundary rather than inferred from process location or transport configuration;
 5. simulation `RunId`, Governance `ControlledRevisionId`, target identity, actor identity, and model fingerprint remain non-conflated;
-6. the contract can survive process restart when the same concrete context identity is re-established, without requiring a context registry in O1;
-7. O2 can make consequence-sensitive decisions from context kind/identity without forking factory production semantics;
+6. the contract can survive process restart when the same concrete context identity is re-established, without requiring a context registry in PLAN-OPS-1;
+7. PLAN-OPS-2 can make consequence-sensitive decisions from context kind/identity without forking factory production semantics;
 8. raw external observations are not forced to invent Arcogine context/model/revision relationships;
 9. compatibility and migration rules are fixed before any stable public/persisted representation is introduced;
 10. tests prove checked identity comparison/conflict handling, validation, explicit-boundary use, non-inference, and identity separation from `RunId`, `ControlledRevisionId`, and `ModelFingerprint`.
 
-ADR-0013 addresses the architectural compatibility questions behind these criteria, but **O1 is not complete** until the implementation and tests land after the ADR is Accepted.
+ADR-0013 addresses the architectural compatibility questions behind these criteria, but **PLAN-OPS-1 is not complete** until the implementation and tests land after the ADR is Accepted.
 
-### 5.10 O1 non-goals
+### 5.10 PLAN-OPS-1 non-goals
 
 - actor identity, authentication, authorization, or policy evaluation;
 - OAuth/OIDC, certificates/PKI, or secrets management;
@@ -347,13 +347,13 @@ ADR-0013 addresses the architectural compatibility questions behind these criter
 - making simulation runtime identity an operational identity;
 - choosing a protocol-specific representation.
 
-## 6. First O1 implementation slice
+## 6. First PLAN-OPS-1 implementation slice
 
-The first implementation slice should fit in one PR **after the O1 ADR decision is accepted**.
+The first implementation slice should fit in one PR **after the PLAN-OPS-1 ADR decision is accepted**.
 
 ### Owning module
 
-No Operational Execution module exists in the current Gradle graph. O1 is the first concrete durable semantic responsibility of this track and is sufficient justification to introduce a dedicated `:operational` module rather than placing these concepts in `:simulation`, `:governance`, `:factory`, or API DTOs.
+No Operational Execution module exists in the current Gradle graph. PLAN-OPS-1 is the first concrete durable semantic responsibility of this track and is sufficient justification to introduce a dedicated `:operational` module rather than placing these concepts in `:simulation`, `:governance`, `:factory`, or API DTOs.
 
 Proposed dependency direction:
 
@@ -365,9 +365,9 @@ Proposed dependency direction:
 future operational adapters / API projections
 ```
 
-The first slice should not require `:operational -> :simulation`, `:governance`, or `:factory`. Correlation with `RunId` or `ControlledRevisionId` belongs in later operational records that actually need those references; O1 must not create coupling merely to prove non-equivalence.
+The first slice should not require `:operational -> :simulation`, `:governance`, or `:factory`. Correlation with `RunId` or `ControlledRevisionId` belongs in later operational records that actually need those references; PLAN-OPS-1 must not create coupling merely to prove non-equivalence.
 
-ADR-0013 proposes this module/dependency ownership as part of the O1 decision. Implementation must follow the Accepted form of that ADR rather than treating planning prose as authority.
+ADR-0013 proposes this module/dependency ownership as part of the PLAN-OPS-1 decision. Implementation must follow the Accepted form of that ADR rather than treating planning prose as authority.
 
 ### Values/contracts to introduce
 
@@ -397,7 +397,7 @@ If ADR-0013 is Accepted as proposed, `ExecutionContextKind` contains `PRODUCTION
 
 ### Persistence
 
-No persistence adapter is required for the first O1 PR. The UUIDv4 representation proposed by ADR-0013 is stable enough for later persistence and public projections, while context registration/history remains deferred.
+No persistence adapter is required for the first PLAN-OPS-1 PR. The UUIDv4 representation proposed by ADR-0013 is stable enough for later persistence and public projections, while context registration/history remains deferred.
 
 ### Expected tests
 
@@ -413,18 +413,18 @@ At minimum:
 
 ### Explicit non-goals for the PR
 
-All O2-O9 behavior, persistence, registration, adapters, API projections, commands, deployments, telemetry, reconciliation, live-system integration, and production actuation remain out of scope.
+All PLAN-OPS-2 to PLAN-OPS-9 behavior, persistence, registration, adapters, API projections, commands, deployments, telemetry, reconciliation, live-system integration, and production actuation remain out of scope.
 
-## 7. O1 ADR decision
+## 7. PLAN-OPS-1 ADR decision
 
-[ADR-0013: Execution context identity](../architecture/decisions/0013-execution-context-identity.md) is now the concrete **Proposed** O1 identity decision.
+[ADR-0013: Execution context identity](../architecture/decisions/0013-execution-context-identity.md) is now the concrete **Proposed** PLAN-OPS-1 identity decision.
 
 It proposes:
 
 1. separate first-class `ExecutionContextKind` and `ExecutionContextId` concepts;
 2. initial consequence-oriented kinds `PRODUCTION`, `STAGING`, and `SIMULATION`, with `REPLAY` and generic `TEST` excluded;
 3. opaque RFC 9562 UUIDv4 `ExecutionContextId`, canonical lowercase textual form, strict parsing, and identity independent of labels/target/model/revision/actor/process metadata;
-4. decentralized establishment through an explicit O1 parse/validation/resolution boundary, with configuration allowed to carry but not define identity;
+4. decentralized establishment through an explicit PLAN-OPS-1 parse/validation/resolution boundary, with configuration allowed to carry but not define identity;
 5. permanent one-ID-to-one-kind binding, so a staging-to-production consequence change receives a new ID;
 6. checked semantic context comparison: different ID = distinct, same ID/same kind = same, same ID/different kind = explicit binding conflict;
 7. an immutable `ExecutionContext` containing only ID and kind;
@@ -433,61 +433,61 @@ It proposes:
 10. durable restart identity semantics without a context registry;
 11. preservation of raw external-observation independence and all neighboring identity boundaries.
 
-Because ADR-0013 is **Proposed**, none of those decisions should be described as implemented or accepted yet. O1 implementation remains outstanding and must follow ADR-0013 if/when it becomes Accepted. If review changes the ADR before acceptance, this plan should follow the Accepted decision rather than preserve stale proposal wording.
+Because ADR-0013 is **Proposed**, none of those decisions should be described as implemented or accepted yet. PLAN-OPS-1 implementation remains outstanding and must follow ADR-0013 if/when it becomes Accepted. If review changes the ADR before acceptance, this plan should follow the Accepted decision rather than preserve stale proposal wording.
 
-The ADR deliberately does not choose O2 authorization, O3 command identity, O4 deployment records, O5 observation envelopes, or protocol/infrastructure details.
+The ADR deliberately does not choose PLAN-OPS-2 authorization, PLAN-OPS-3 command identity, PLAN-OPS-4 deployment records, PLAN-OPS-5 observation envelopes, or protocol/infrastructure details.
 
-## 8. O2 — Actor, trust, authority, and capability boundary
+## 8. PLAN-OPS-2 — Actor, trust, authority, and capability boundary
 
-O2 remains proposed and unimplemented. It will consume O1 so consequential requests can be evaluated against explicit context kind and identity. It owns actor identity/provenance, claimed-versus-verified identity, authority/capability checks, denial, least privilege, and production trust semantics. It does not change the O1 identity contract.
+PLAN-OPS-2 remains proposed and unimplemented. It will consume PLAN-OPS-1 so consequential requests can be evaluated against explicit context kind and identity. It owns actor identity/provenance, claimed-versus-verified identity, authority/capability checks, denial, least privilege, and production trust semantics. It does not change the PLAN-OPS-1 identity contract.
 
-## 9. O3 — External command / actuation lifecycle
+## 9. PLAN-OPS-3 — External command / actuation lifecycle
 
-O3 remains proposed and unimplemented. It will keep requested action, authorization, submission, acknowledgement, execution, success/failure/unknown outcome, and later reconciliation distinct. Commands must correlate actor, execution context, and target without collapsing those identities. Real command integration must map to stable production semantics owned by the relevant domain/Engine surface.
+PLAN-OPS-3 remains proposed and unimplemented. It will keep requested action, authorization, submission, acknowledgement, execution, success/failure/unknown outcome, and later reconciliation distinct. Commands must correlate actor, execution context, and target without collapsing those identities. Real command integration must map to stable production semantics owned by the relevant domain/Engine surface.
 
-## 10. O4 — Deployment target and deployment-record semantics
+## 10. PLAN-OPS-4 — Deployment target and deployment-record semantics
 
-O4 remains proposed and unimplemented, but its Governance G1 prerequisite is now satisfied.
+PLAN-OPS-4 remains proposed and unimplemented, but its Governance PLAN-GOV-1 prerequisite is now satisfied.
 
-When implemented, deployment records must reference the exact source `ModelFingerprint` and, when the deployment is revision-bound, the authoritative `ControlledRevisionId` supplied/resolved through Governance G1. New O4 work must not use synthetic revision identity as a substitute for the available Governance contract.
+When implemented, deployment records must reference the exact source `ModelFingerprint` and, when the deployment is revision-bound, the authoritative `ControlledRevisionId` supplied/resolved through Governance PLAN-GOV-1. New PLAN-OPS-4 work must not use synthetic revision identity as a substitute for the available Governance contract.
 
 Deployment still owns target identity, transformation/application provenance, verification outcome, and rollback reference. Governance revision identity does not make deployment complete and does not identify the target or execution context.
 
-## 11. O5 — External observation ingestion and provenance
+## 11. PLAN-OPS-5 — External observation ingestion and provenance
 
-O5 remains proposed and unimplemented. It owns durable operational facts with independent source/subject/time/quality/trust provenance. Governance G5 is not a prerequisite for ingestion; it is required only for shared evidence-use integration. Engine `RuntimeObservation` is a simulation runtime concept and must not be reused as the raw external-observation identity/envelope merely because both are observations.
+PLAN-OPS-5 remains proposed and unimplemented. It owns durable operational facts with independent source/subject/time/quality/trust provenance. Governance PLAN-GOV-5 is not a prerequisite for ingestion; it is required only for shared evidence-use integration. Engine `RuntimeObservation` is a simulation runtime concept and must not be reused as the raw external-observation identity/envelope merely because both are observations.
 
-O1 and ADR-0013 do not change that boundary: a raw observation is not required to carry an Arcogine `ExecutionContextId`, `ControlledRevisionId`, or `ModelFingerprint`.
+PLAN-OPS-1 and ADR-0013 do not change that boundary: a raw observation is not required to carry an Arcogine `ExecutionContextId`, `ControlledRevisionId`, or `ModelFingerprint`.
 
-## 12. O6 — Modeled-versus-observed reconciliation
+## 12. PLAN-OPS-6 — Modeled-versus-observed reconciliation
 
-O6 remains proposed and unimplemented. Governance G1 now makes authoritative historical revision resolution available where a controlled revision applies. O6 may therefore consume `ControlledRevisionAuthority` to resolve the exact historical semantic state rather than using a synthetic revision fixture or the mutable current model.
+PLAN-OPS-6 remains proposed and unimplemented. Governance PLAN-GOV-1 now makes authoritative historical revision resolution available where a controlled revision applies. PLAN-OPS-6 may therefore consume `ControlledRevisionAuthority` to resolve the exact historical semantic state rather than using a synthetic revision fixture or the mutable current model.
 
-That satisfied dependency does not implement reconciliation. O6 still must define independent observation inputs, source authority/trust/freshness, temporal alignment, conflict/divergence/unknown semantics, and reproducibility.
+That satisfied dependency does not implement reconciliation. PLAN-OPS-6 still must define independent observation inputs, source authority/trust/freshness, temporal alignment, conflict/divergence/unknown semantics, and reproducibility.
 
-## 13. O7 — Divergence, drift, and calibration feedback
+## 13. PLAN-OPS-7 — Divergence, drift, and calibration feedback
 
-O7 remains proposed and unimplemented. Operational-local drift analysis may eventually produce candidate changes and should consume the now-complete Governance G2 `ChangeSet`/impact, G3 requirement/assertion, and G4 `ConformanceEvaluator`/`Finding` contracts where applicable. Final cross-track integration still depends on Governance G5 evidence-use semantics, which is not currently complete. Operational Execution must not invent substitutes for G5.
+PLAN-OPS-7 remains proposed and unimplemented. Operational-local drift analysis may eventually produce candidate changes and should consume the now-complete Governance PLAN-GOV-2 `ChangeSet`/impact, PLAN-GOV-3 requirement/assertion, and PLAN-GOV-4 `ConformanceEvaluator`/`Finding` contracts where applicable. Final cross-track integration still depends on Governance PLAN-GOV-5 evidence-use semantics, which is not currently complete. Operational Execution must not invent substitutes for PLAN-GOV-5.
 
-## 14. O8 — Operational resilience and recovery semantics
+## 14. PLAN-OPS-8 — Operational resilience and recovery semantics
 
-O8 remains proposed and unimplemented. It depends primarily on the concrete command/observation identity, persistence, idempotency, retry, ambiguity, and resynchronization contracts selected by O3/O5. No sibling Governance gate independently closes O8.
+PLAN-OPS-8 remains proposed and unimplemented. It depends primarily on the concrete command/observation identity, persistence, idempotency, retry, ambiguity, and resynchronization contracts selected by PLAN-OPS-3/PLAN-OPS-5. No sibling Governance gate independently closes PLAN-OPS-8.
 
-## 15. O9 — First live-system adapter proving ground
+## 15. PLAN-OPS-9 — First live-system adapter proving ground
 
-O9 remains proposed and unimplemented. Governance G1 is available for real deployment revision identity, but G5 evidence-use integration is still outstanding. Engine Gate 4 core/headless closure (G4-A/G4-B/G4-C) is complete, but the distribution hardening a live-system adapter would need (G4-D transport/SSE migration, DH-E retained history/replay/reconnect) is not yet implemented. O9 also depends on the local O1-O8 safety and operational semantics; a protocol connection alone is never completion evidence.
+PLAN-OPS-9 remains proposed and unimplemented. Governance PLAN-GOV-1 is available for real deployment revision identity, but PLAN-GOV-5 evidence-use integration is still outstanding. Engine PLAN-ENG-4 core/headless closure (PLAN-ENG-4-A/PLAN-ENG-4-B/PLAN-ENG-4-C) is complete, but the distribution hardening a live-system adapter would need (PLAN-ENG-4-D transport/SSE migration, PLAN-ENG-DH-E retained history/replay/reconnect) is not yet implemented. PLAN-OPS-9 also depends on the local PLAN-OPS-1 to PLAN-OPS-8 safety and operational semantics; a protocol connection alone is never completion evidence.
 
 ## 16. Cross-cutting persistence dependency
 
 Later operational artifacts such as commands, acknowledgements/results, observations, deployment records, reconciliation outputs, and drift/calibration proposals require stable identity, history, retention, and compatibility. Storage technology is not selected here.
 
-O1 is deliberately narrower: it requires stable context identity semantics that later records can carry, not a generic operational database or context registry.
+PLAN-OPS-1 is deliberately narrower: it requires stable context identity semantics that later records can carry, not a generic operational database or context registry.
 
 ## 17. Temporal and measurement dependencies
 
-Before O5/O6 become public contracts, Arcogine must define temporal vocabulary sufficient to distinguish simulation time, source/event time, observed-at time, received/ingested-at time, effective intervals, recorded-at time, deployment time, and processing wall-clock time.
+Before PLAN-OPS-5/PLAN-OPS-6 become public contracts, Arcogine must define temporal vocabulary sufficient to distinguish simulation time, source/event time, observed-at time, received/ingested-at time, effective intervals, recorded-at time, deployment time, and processing wall-clock time.
 
-Before measured values become durable O5 contracts, Arcogine also needs explicit units/dimensions, precision, and conversion semantics. Neither dependency belongs in O1.
+Before measured values become durable PLAN-OPS-5 contracts, Arcogine also needs explicit units/dimensions, precision, and conversion semantics. Neither dependency belongs in PLAN-OPS-1.
 
 ## 18. Standards and adapter policy
 
@@ -501,24 +501,24 @@ No readiness gate is satisfied merely by choosing or connecting a protocol.
 
 ## 19. Relationship to current Engine Readiness
 
-Engine Readiness continues independently. Gate 4 core/headless closure is complete: the G4-A observation slice (`RunId` and consumer-neutral `RuntimeObservation`), the G4-B supported `RuntimeEvent` contract, and G4-C headless acceptance closure are all implemented. Gate 4 distribution hardening (G4-D transport/SSE/CLI migration, DH-E retained history/replay/reconnect) remains outstanding.
+Engine Readiness continues independently. PLAN-ENG-4 core/headless closure is complete: the PLAN-ENG-4-A observation slice (`RunId` and consumer-neutral `RuntimeObservation`), the PLAN-ENG-4-B supported `RuntimeEvent` contract, and PLAN-ENG-4-C headless acceptance closure are all implemented. PLAN-ENG-4 distribution hardening (PLAN-ENG-4-D transport/SSE/CLI migration, PLAN-ENG-DH-E retained history/replay/reconnect) remains outstanding.
 
-Operational O1 must therefore preserve both truths:
+Operational PLAN-OPS-1 must therefore preserve both truths:
 
 - simulation runtime identity is already explicit and useful;
 - operational execution-context identity is a different semantic responsibility and must not be derived from `RunId`.
 
 ## 20. Relationship to Governance and Conformance
 
-Governance G1 is complete and now supplies the authoritative durable fingerprint/revision history needed by later deployment and revision-bound reconciliation. Governance G2's initial slice is also complete and now supplies the authoritative semantic `ChangeSet`/`ImpactScope` needed by candidate-change attribution. Governance G3 is complete and supplies the generic registered `Requirement`/`Assertion`/`RequirementCatalogue` contract for later conformance integration. Governance G4's initial slice is also complete and supplies the generic `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contract for evaluating a requirement/assertion pair against a model fingerprint (and an optional, never-synthesized controlled revision).
+Governance PLAN-GOV-1 is complete and now supplies the authoritative durable fingerprint/revision history needed by later deployment and revision-bound reconciliation. Governance PLAN-GOV-2's initial slice is also complete and now supplies the authoritative semantic `ChangeSet`/`ImpactScope` needed by candidate-change attribution. Governance PLAN-GOV-3 is complete and supplies the generic registered `Requirement`/`Assertion`/`RequirementCatalogue` contract for later conformance integration. Governance PLAN-GOV-4's initial slice is also complete and supplies the generic `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` contract for evaluating a requirement/assertion pair against a model fingerprint (and an optional, never-synthesized controlled revision).
 
-Governance G5 remains a future dependency for the operational capabilities that need evidence use. There should be no generic evaluation or persistence framework introduced merely because these tracks have analogous needs.
+Governance PLAN-GOV-5 remains a future dependency for the operational capabilities that need evidence use. There should be no generic evaluation or persistence framework introduced merely because these tracks have analogous needs.
 
 ## 21. Next action
 
 1. Review and accept, revise, or reject [ADR-0013](../architecture/decisions/0013-execution-context-identity.md). Its current status is Proposed.
 2. If accepted, implement one headless `:operational` PR containing only the minimum execution-context values/boundary and tests described in section 6, following the Accepted ADR exactly.
-3. Update `docs/architecture/overview.md` only when that code is actually implemented; until then O1 remains unimplemented and the overview must not claim executable Operational behavior.
+3. Update `docs/architecture/overview.md` only when that code is actually implemented; until then PLAN-OPS-1 remains unimplemented and the overview must not claim executable Operational behavior.
 
 ## 22. Exit condition
 

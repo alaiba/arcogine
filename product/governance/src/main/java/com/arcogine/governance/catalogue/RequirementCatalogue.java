@@ -15,10 +15,10 @@ import java.util.Optional;
 /**
  * Immutable, headless, in-memory catalogue of known {@link Requirement} definitions.
  *
- * <p>This is the minimum registration/catalogue capability needed to make G2's documented
- * "registered requirements" seam real: deterministic construction, resolution by stable identity
- * and version, and selection of requirements whose {@link
- * com.arcogine.governance.requirement.RequirementScope} intersects a G2 {@link ImpactScope}.
+ * <p>This is the minimum registration/catalogue capability needed to make the change-set/impact-scope
+ * capability's documented "registered requirements" seam real: deterministic construction,
+ * resolution by stable identity and version, and selection of requirements whose {@link
+ * com.arcogine.governance.requirement.RequirementScope} intersects a given {@link ImpactScope}.
  *
  * <p>It is not a database, a mutable workflow system, a plugin marketplace, framework ingestion,
  * or remote configuration. "Registered" here means only "known to this catalogue" -- it is not
@@ -66,7 +66,7 @@ public final class RequirementCatalogue {
     }
 
     /**
-     * Registered requirements whose explicit {@code RequirementScope} intersects the given G2
+     * Registered requirements whose explicit {@code RequirementScope} intersects the given change-set/impact-scope
      * {@link ImpactScope}, deterministically ordered. An unrelated impact (no shared entity)
      * selects nothing.
      */

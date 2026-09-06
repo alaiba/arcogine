@@ -24,7 +24,7 @@ import java.util.List;
  * both values; see ADR-0004, ADR-0006, and ADR-0008.
  *
  * <p>{@link FactoryModelPublisher#publish(FactoryModel)} is the intended way to obtain an
- * instance, but the D2/D4 invariant that an invalid model can never be published or instantiated
+ * instance, but the invariant that an invalid model can never be published or instantiated
  * is enforced here, in the canonical constructor itself, rather than relied upon merely by
  * convention: constructing a {@code FactoryModelVersion} directly from an invalid model throws
  * {@link com.arcogine.factory.model.validation.FactoryModelValidationException} exactly as

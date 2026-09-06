@@ -33,18 +33,18 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end acceptance evidence for the Gate 3 session-control criteria of the Factory
- * Simulation Engine Readiness plan (see {@code docs/planning/factory-simulation-engine-readiness.md}
- * §7), driven entirely through {@link FactoryRuntime} -- never {@link FactoryHandler}, a store, or
- * a scheduler directly -- matching how {@link Gate1EngineReadinessAcceptanceTest} and {@link
- * Gate2MultiResourceDispatchAcceptanceTest} prove their gates end to end.
+ * End-to-end acceptance evidence for the session-control criteria of the Factory Simulation
+ * Engine Readiness plan (see {@code docs/planning/factory-simulation-engine-readiness.md} §7),
+ * driven entirely through {@link FactoryRuntime} -- never {@link FactoryHandler}, a store, or
+ * a scheduler directly -- matching how {@link EngineReadinessAcceptanceTest} and {@link
+ * MultiResourceDispatchAcceptanceTest} prove their own boundaries end to end.
  *
  * <p>The published model here has two routing steps on two different machines and a quantity
  * greater than one, so the event stream used to prove {@link FactoryRuntime#advanceUntil}
  * convergence and {@link FactoryRuntime#reset()} reproducibility is more than a one-event
  * coincidence.
  */
-class Gate3SessionControlAcceptanceTest {
+class SessionControlAcceptanceTest {
 
     private static final long QUANTITY = 3;
     private static final double UNIT_PRICE = 9.0;

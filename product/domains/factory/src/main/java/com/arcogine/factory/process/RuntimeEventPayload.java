@@ -19,7 +19,7 @@ public sealed interface RuntimeEventPayload {
      * {@link RuntimeEventType#ORDER_ACCEPTED}: a new order was accepted and its jobs created.
      * {@code jobIds} carries every created child job's identity, in ordinal order, so a consumer
      * can correlate the {@link #JobDispatched}/{@link #JobWaiting} events that immediately follow
-     * this one back to the order that produced them (ADR-0011 REV-002) without needing an
+     * this one back to the order that produced them (ADR-0011) without needing an
      * out-of-band job listing.
      */
     record OrderAccepted(OrderId orderId, ProductId productId, long quantity, double unitPrice, List<JobId> jobIds)
@@ -52,7 +52,7 @@ public sealed interface RuntimeEventPayload {
 
     /**
      * {@link RuntimeEventType#JOB_STEP_COMPLETED}: {@code jobId} (with parent {@code orderId}
-     * retained for W1 correlation, ADR-0010) finished the step at {@code stepIndex} on {@code
+     * retained for cross-cutting correlation, ADR-0010) finished the step at {@code stepIndex} on {@code
      * machineId}. {@code jobComplete} reports whether that step was the job's last.
      */
     record JobStepCompleted(
@@ -61,7 +61,7 @@ public sealed interface RuntimeEventPayload {
 
     /**
      * {@link RuntimeEventType#ORDER_COMPLETED}: the operational fact that {@code orderId} fulfilled
-     * its full execution aggregate, with the completing child {@code jobId} retained for W1
+     * its full execution aggregate, with the completing child {@code jobId} retained for cross-cutting
      * work-item correlation (ADR-0010) alongside the commercial facts a downstream consumer needs.
      */
     record OrderCompleted(OrderId orderId, JobId jobId, ProductId productId, long quantity, double unitPrice)

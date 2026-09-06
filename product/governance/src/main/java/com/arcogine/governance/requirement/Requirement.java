@@ -16,7 +16,7 @@ import java.util.Objects;
  * <p>{@code source} distinguishes an Arcogine-native rule from an external-standard requirement;
  * only the latter carries exact external provenance. No framework-specific field (SOC 2, ISO
  * 27001, IEC, ISA, GDPR, ...) belongs on this core contract -- framework mappings are downstream
- * G8 work.
+ * governance work.
  */
 public record Requirement(
         RequirementId id,

@@ -24,9 +24,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end acceptance evidence for the Gate 1 runtime-boundary criteria of the Factory
- * Simulation Engine Readiness plan (see {@code docs/planning/factory-simulation-engine-readiness.md}
- * §5). Unlike the narrower slice tests it deliberately does not duplicate ({@link
+ * End-to-end acceptance evidence for the runtime-boundary criteria of the Factory Simulation
+ * Engine Readiness plan (see {@code docs/planning/factory-simulation-engine-readiness.md} §5).
+ * Unlike the narrower slice tests it deliberately does not duplicate ({@link
  * ExplicitWorkloadSubmissionTest}, {@link ProportionalQuantityWorkTest}, {@link
  * OrderIntentSeparationTest}), this test drives everything through {@link FactoryRuntime} alone --
  * never {@link FactoryHandler}, a {@code Scheduler}, or any store directly -- to prove that
@@ -34,17 +34,16 @@ import org.junit.jupiter.api.Test;
  * completion observation/correlation, and determinism hold together as a single externally
  * observable contract, from a published model through to deterministic completion.
  *
- * <p>This class does not itself exercise the economy-driven order path (Gate 1 criterion 8) or
- * prove the immutable-intent/mutable-execution ownership separation (criterion 4); those remain
- * the province of the existing slice/economy tests. See {@code
- * docs/planning/factory-simulation-engine-readiness.md} §5 for the full eight-criterion evidence
- * mapping.
+ * <p>This class does not itself exercise the economy-driven order path or prove the
+ * immutable-intent/mutable-execution ownership separation; those remain the province of the
+ * existing slice/economy tests. See {@code docs/planning/factory-simulation-engine-readiness.md}
+ * §5 for the full criterion-by-criterion evidence mapping.
  *
  * <p>The published model here has two routing steps and a quantity greater than one, so
  * completion genuinely depends on the full quantity-scaled routing executing, not on a
  * single-step coincidence.
  */
-class Gate1EngineReadinessAcceptanceTest {
+class EngineReadinessAcceptanceTest {
 
     private static final long QUANTITY = 4;
     private static final double UNIT_PRICE = 12.5;

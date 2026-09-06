@@ -26,14 +26,14 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Headless Gate 4-B evidence for the supported {@link RuntimeEventEnvelope} contract: post-
+ * Headless acceptance evidence for the supported {@link RuntimeEventEnvelope} contract: post-
  * authoritative publication, run-scoped strictly monotonic sequencing independent of internal
- * scheduler machinery, durable model provenance, and W1 {@code OrderId}/{@code JobId} correlation.
- * Driven entirely through {@link FactoryRuntime}, matching {@link
- * Gate4RuntimeObservationAcceptanceTest} and {@link Gate3SessionControlAcceptanceTest}'s
+ * scheduler machinery, durable model provenance, and cross-cutting {@code OrderId}/{@code JobId}
+ * correlation. Driven entirely through {@link FactoryRuntime}, matching {@link
+ * RuntimeObservationAcceptanceTest} and {@link SessionControlAcceptanceTest}'s
  * conventions.
  */
-class Gate4BRuntimeEventAcceptanceTest {
+class RuntimeEventDeliveryAcceptanceTest {
 
     private static final long QUANTITY = 3;
     private static final double UNIT_PRICE = 7.5;
@@ -53,7 +53,7 @@ class Gate4BRuntimeEventAcceptanceTest {
                 List.of(new ProductDefinition(new ProductId(1), "Widget", 1))));
     }
 
-    /** Two independent single-machine routes -- reproduces the same fault repro as Gate 3. */
+    /** Two independent single-machine routes -- reproduces the same fault repro as {@link SessionControlAcceptanceTest}. */
     private static FactoryModelVersion twoIndependentSingleMachineRoutesModel() {
         FactoryModel model = new FactoryModel(
                 List.of(
@@ -97,7 +97,7 @@ class Gate4BRuntimeEventAcceptanceTest {
         assertEquals(0, accepted.simulationTime().value());
         assertEquals(version.fingerprint(), accepted.modelFingerprint());
         assertTrue(accepted.controlledRevisionId().isEmpty(),
-                "G4-B must not synthesize a controlled revision without an established binding contract");
+                "the supported event stream must not synthesize a controlled revision without an established binding contract");
         assertEquals(
                 List.of(new AffectedEntityRef.OrderRef(orderId)), accepted.affectedEntityRefs());
         RuntimeEventPayload.OrderAccepted payload = (RuntimeEventPayload.OrderAccepted) accepted.payload();
@@ -107,7 +107,7 @@ class Gate4BRuntimeEventAcceptanceTest {
         assertEquals(UNIT_PRICE, payload.unitPrice());
         assertEquals(QUANTITY, payload.jobIds().size(), "one job per unit of quantity");
 
-        // REV-002: the created jobs are individually represented by JOB_DISPATCHED/JOB_WAITING
+        // The created jobs are individually represented by JOB_DISPATCHED/JOB_WAITING
         // events immediately following ORDER_ACCEPTED, so a consumer can reconstruct the
         // assignment/pending-work deltas submitWorkload just produced.
         List<RuntimeEventEnvelope> jobPlacementEvents = events.subList(1, events.size());
@@ -151,9 +151,9 @@ class Gate4BRuntimeEventAcceptanceTest {
 
         // Two JOB_STEP_COMPLETED events share simulationTime=5 (the two immediately-dispatched
         // units both finish their single step at the same instant), as does the JOB_DISPATCHED for
-        // the third unit that the first of those completions frees a machine for (ADR-0011
-        // REV-002); a JOB_STEP_COMPLETED and the ORDER_COMPLETED it triggers share
-        // simulationTime=10.
+        // the third unit that the first of those completions frees a machine for (ADR-0011: the
+        // whole TaskEnd placement cascade is reported through the supported event stream); a
+        // JOB_STEP_COMPLETED and the ORDER_COMPLETED it triggers share simulationTime=10.
         for (int i = 1; i < events.size(); i++) {
             RuntimeEventEnvelope prev = events.get(i - 1);
             RuntimeEventEnvelope curr = events.get(i);

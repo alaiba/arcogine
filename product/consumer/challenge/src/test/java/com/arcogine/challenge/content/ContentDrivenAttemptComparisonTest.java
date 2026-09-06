@@ -23,14 +23,14 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves that C4's attempt/comparison contract composes correctly with C5 data-driven content:
- * a {@link ChallengeDefinition} loaded through {@link ChallengeContentLoader} feeds two {@link
- * ChallengeAttempt} instances with different outcomes, and {@link ChallengeAttemptComparator}
- * ranks them deterministically without depending on attempt identity.
+ * Proves that the attempt/comparison capability's contract composes correctly with data-driven
+ * content: a {@link ChallengeDefinition} loaded through {@link ChallengeContentLoader} feeds two
+ * {@link ChallengeAttempt} instances with different outcomes, and {@link
+ * ChallengeAttemptComparator} ranks them deterministically without depending on attempt identity.
  *
- * <p>This is not a new C4 feature: it reuses the existing attempt/comparison types exactly as
- * {@code ChallengeAttemptComparatorTest} does, but derives the challenge definition from the C5
- * content path instead of a hand-built fixture.
+ * <p>This is not a new attempt/comparison feature: it reuses the existing attempt/comparison types
+ * exactly as {@code ChallengeAttemptComparatorTest} does, but derives the challenge definition
+ * from the content-loading capability's content path instead of a hand-built fixture.
  */
 class ContentDrivenAttemptComparisonTest {
 

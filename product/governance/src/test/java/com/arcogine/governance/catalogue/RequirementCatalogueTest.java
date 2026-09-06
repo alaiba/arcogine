@@ -19,7 +19,7 @@ import com.arcogine.types.ModelFingerprint;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Proves the catalogue makes G2's "registered requirements" seam real, deterministically. */
+/** Proves the catalogue makes the change-set/impact-scope capability's "registered requirements" seam real, deterministically. */
 class RequirementCatalogueTest {
 
     private static final ChangedEntityRef PRESS_A = new ChangedEntityRef("factory.resource", "1", "Press A");

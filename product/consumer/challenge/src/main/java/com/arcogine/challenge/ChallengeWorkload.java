@@ -5,7 +5,7 @@ package com.arcogine.challenge;
  *
  * <p>{@code productReference} is a game-owned identity naming the fixed product or contract this
  * challenge is built around. It is not an executable routing model -- Arcogine's canonical
- * production model remains the sole authority for executable routing semantics. C1 does not
+ * production model remains the sole authority for executable routing semantics. This type does not
  * validate that this reference resolves to anything.
  */
 public record ChallengeWorkload(String productReference, int requiredQuantity) {

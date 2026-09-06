@@ -13,17 +13,18 @@ This mechanical check is a syntactic baseline, not proof of semantic self-contai
 two tiers of pattern, deliberately scoped by collision risk:
 
 - BROAD patterns (`REV-123`, `Gate 4`/`Gate4...`, `DH-E`) are unambiguous enough to flag across
-  every Markdown file under `docs/` outside `docs/planning/`, the root/`docs/` READMEs, and
+  every Markdown file under `docs/` outside `docs/planning/`, the root/`docs/` READMEs,
   `product/interfaces/web/README.md` (named as equivalent-status durable capability/reference
-  documentation in `docs/README.md`'s own table), plus Java/Javadoc comments, JS/TS/TSX source and
-  test comments, Python and Bash tooling (including this repository's own `.github/scripts/`), and
-  GitHub Actions workflow definitions. A short, explicit `EXEMPT_FILES` list covers process/policy
-  documents (e.g. this repository's own review and consistency-check policy) where the coordinate
-  syntax itself is genuinely the subject.
+  documentation in `docs/README.md`'s own table, BROAD-only, see below), Java/Javadoc comments,
+  JS/TS/TSX source and test comments, Python and Bash tooling (including this repository's own
+  `.github/scripts/`), and GitHub Actions workflow definitions. A short, explicit `EXEMPT_FILES`
+  list covers process/policy documents (e.g. this repository's own review and consistency-check
+  policy) where the coordinate syntax itself is genuinely the subject.
 - NARROW compact patterns (bare `G1`, `O2`, `C1`, `D1`, `W1`) are collision-prone against ordinary
-  prose and identifiers, so they stay scoped to the repository's original durable reader-facing
-  Markdown surfaces (`docs/{architecture,product,reference,examples}`, root/`docs/` READMEs) —
-  human review remains responsible for these elsewhere.
+  prose and identifiers, so they stay scoped to only the repository's original durable
+  reader-facing Markdown surfaces (`docs/{architecture,product,reference,examples}`, root/`docs/`
+  READMEs) — everywhere else in BROAD's wider scope, including `product/interfaces/web/README.md`,
+  gets BROAD patterns only, and human review remains responsible for compact-form leakage there.
 
 Human review remains responsible for semantic leakage that cannot be recognized safely by syntax
 alone (e.g. prose like "the next stage" with no literal coordinate).
@@ -39,15 +40,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # Durable reader-facing Markdown surfaces (original scope; also carries the narrow compact-form
 # patterns, which are too collision-prone for the broader source/workflow/Markdown scan below).
-# product/interfaces/web/README.md is explicitly named alongside docs/product/concepts.md and
-# docs/reference/api.md in docs/README.md's own "current capability/reference documentation" row
-# -- the same durable-doc status as the other two, which already live under docs/ and are covered
-# by BROAD_MARKDOWN_DIRS below, but this one lives outside docs/ entirely.
-DURABLE_MARKDOWN_FILES = (
-    ROOT / "README.md",
-    ROOT / "docs" / "README.md",
-    ROOT / "product" / "interfaces" / "web" / "README.md",
-)
+DURABLE_MARKDOWN_FILES = (ROOT / "README.md", ROOT / "docs" / "README.md")
 DURABLE_MARKDOWN_DIRS = (
     ROOT / "docs" / "architecture",
     ROOT / "docs" / "product",
@@ -61,6 +54,14 @@ DURABLE_MARKDOWN_DIRS = (
 # high-confidence coordinate like REV-123 can't accumulate in durable development guidance just
 # because it isn't one of the four narrow-scan directories.
 BROAD_MARKDOWN_DIRS = (ROOT / "docs",)
+
+# Individual Markdown files outside docs/ that carry the same BROAD-only durable status as
+# BROAD_MARKDOWN_DIRS above (not NARROW -- compact forms like "G1" stay confined to
+# DURABLE_MARKDOWN_FILES/DIRS, the original collision-checked surfaces). product/interfaces/web/
+# README.md is explicitly named alongside docs/product/concepts.md and docs/reference/api.md in
+# docs/README.md's own "current capability/reference documentation" row, but lives outside docs/
+# entirely, so it isn't reached by BROAD_MARKDOWN_DIRS.
+BROAD_ONLY_MARKDOWN_FILES = (ROOT / "product" / "interfaces" / "web" / "README.md",)
 
 # Durable non-Markdown artifacts: source/test comments, test/class/file names, workflow
 # definitions, and this repository's own policy/check tooling. Only the BROAD patterns apply here
@@ -156,12 +157,14 @@ def durable_markdown_files() -> list[Path]:
 
 
 def broad_markdown_files() -> list[Path]:
-    """Every Markdown file under docs/ outside docs/planning/, for BROAD patterns only.
+    """Every Markdown file under docs/ outside docs/planning/, plus BROAD_ONLY_MARKDOWN_FILES,
+    for BROAD patterns only -- never NARROW's collision-prone compact forms.
 
-    A superset of durable_markdown_files(); callers should skip files already covered there to
-    avoid double-reporting the same violation under both the BROAD and NARROW+BROAD passes.
+    Overlaps with durable_markdown_files() wherever a docs/ subdirectory happens to also be one of
+    DURABLE_MARKDOWN_DIRS; callers should skip files already covered there to avoid
+    double-reporting the same violation under both the BROAD-only and NARROW+BROAD passes.
     """
-    files: set[Path] = set()
+    files: set[Path] = {path for path in BROAD_ONLY_MARKDOWN_FILES if path.is_file() and not skipped(path)}
     for directory in BROAD_MARKDOWN_DIRS:
         if directory.is_dir():
             files.update(path for path in directory.rglob("*.md") if not skipped(path))

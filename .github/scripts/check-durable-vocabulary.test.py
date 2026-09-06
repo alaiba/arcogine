@@ -80,11 +80,15 @@ def scanned_broad_markdown_paths(paths: list[str]) -> list[str]:
     with tempfile.TemporaryDirectory() as directory:
         old_root = MODULE.ROOT
         old_dirs = MODULE.BROAD_MARKDOWN_DIRS
+        old_only_files = MODULE.BROAD_ONLY_MARKDOWN_FILES
         old_exempt_dirs = MODULE.EXEMPT_DIRS
         old_exempt_files = MODULE.EXEMPT_FILES
         try:
             MODULE.ROOT = Path(directory)
             MODULE.BROAD_MARKDOWN_DIRS = (MODULE.ROOT / "docs",)
+            MODULE.BROAD_ONLY_MARKDOWN_FILES = (
+                MODULE.ROOT / "product" / "interfaces" / "web" / "README.md",
+            )
             MODULE.EXEMPT_DIRS = (MODULE.ROOT / "docs" / "planning",)
             MODULE.EXEMPT_FILES = tuple(
                 MODULE.ROOT / rel
@@ -98,6 +102,7 @@ def scanned_broad_markdown_paths(paths: list[str]) -> list[str]:
         finally:
             MODULE.ROOT = old_root
             MODULE.BROAD_MARKDOWN_DIRS = old_dirs
+            MODULE.BROAD_ONLY_MARKDOWN_FILES = old_only_files
             MODULE.EXEMPT_DIRS = old_exempt_dirs
             MODULE.EXEMPT_FILES = old_exempt_files
 
@@ -113,7 +118,6 @@ def scanned_markdown_paths(paths: list[str]) -> list[str]:
             MODULE.DURABLE_MARKDOWN_FILES = (
                 MODULE.ROOT / "README.md",
                 MODULE.ROOT / "docs" / "README.md",
-                MODULE.ROOT / "product" / "interfaces" / "web" / "README.md",
             )
             MODULE.DURABLE_MARKDOWN_DIRS = tuple(
                 MODULE.ROOT / path
@@ -208,6 +212,9 @@ def test_scan_scope_includes_durable_reader_facing_surfaces_only() -> None:
         "product/module/README.md",
         "product/interfaces/web/README.md",
     ]
+    # product/interfaces/web/README.md deliberately does NOT appear here: it gets BROAD-only
+    # coverage via broad_markdown_files() (see test_broad_markdown_scan_covers_all_of_docs_outside_planning),
+    # not the NARROW-compact-form scan this scope function feeds.
     assert scanned_markdown_paths(paths) == [
         "README.md",
         "docs/README.md",
@@ -215,7 +222,6 @@ def test_scan_scope_includes_durable_reader_facing_surfaces_only() -> None:
         "docs/examples/d.md",
         "docs/product/b.md",
         "docs/reference/c.md",
-        "product/interfaces/web/README.md",
     ]
 
 
@@ -326,12 +332,31 @@ def test_broad_markdown_scan_covers_all_of_docs_outside_planning() -> None:
         "docs/planning/plan.md",
         "docs/development/reviewing.md",
         "docs/development/consistency-review.md",
+        "product/interfaces/web/README.md",
     ]
     assert scanned_broad_markdown_paths(paths) == [
         "docs/README.md",
         "docs/architecture/a.md",
         "docs/development/testing.md",
+        "product/interfaces/web/README.md",
     ]
+
+
+def test_web_readme_gets_broad_but_not_narrow_scanning() -> None:
+    # product/interfaces/web/README.md is BROAD-only: an ordinary compact form must NOT be
+    # flagged there, unlike the original narrow-scan surfaces (docs/architecture/**, etc.), even
+    # though it does get BROAD-pattern coverage (see test_rev_identifier_is_rejected_in_durable_development_markdown
+    # for the equivalent REV-123 case on a docs/ file).
+    assert (
+        check_broad_markdown_content(
+            "G1 is an ordinary compact identifier here, not a coordinate leak.\n",
+            "product/interfaces/web/README.md",
+        )
+        == []
+    )
+    assert check_broad_markdown_content(
+        "REV-042 fixed a stale reference.\n", "product/interfaces/web/README.md"
+    ) == ["REV-042"]
 
 
 def test_policy_documents_remain_exempt_from_broad_markdown_scan() -> None:

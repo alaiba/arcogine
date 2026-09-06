@@ -199,10 +199,10 @@ The Java-related build jobs use Temurin 21, and frontend-containing jobs use Nod
 
 The `classify` job inspects the changed files (PR diff against its base, or the pushed commit range on `main`) and sets `backend`/`frontend`/`docker`/`docs_only` outputs consumed by `if:` conditions on the other jobs:
 
-- A change under `.github/workflows/`, `arcogine`, Gradle build files, `product/interfaces/web/package(-lock).json`/`tsconfig`, or `infra/docker/` is treated as touching **every** subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
+- A change under `.github/workflows/`, `arcogine`, Gradle build files, `product/interfaces/web/package(-lock).json`/`tsconfig`, or `infra/docker/` other than `infra/docker/.env.example` is treated as touching **every** subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
 - A change confined to `product/{types,simulation,domains,agents,interfaces/api,interfaces/cli}/` sets `backend`.
 - A change confined to `product/interfaces/web/` sets `frontend`.
-- A change confined to `infra/docker/` or `.env.example` sets `docker`.
+- A change confined to `infra/docker/.env.example` sets `docker`.
 - A change touching **only** `docs/`, `README.md`, or other `*.md` files (and none of the above) sets `docs_only`, which skips Java tests, Playwright, the dist/Docker build, and the two dependency-scan jobs.
 - **Fail-safe default:** any changed file that is neither documentation nor a recognized subsystem/CI path (e.g. `product/gradlew`, `.trivyignore`, a brand-new top-level directory) is "unknown" and forces `backend`/`frontend`/`docker` all `true` — an unrecognized path can never fall through to `docs_only`'s skip behavior by accident.
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.

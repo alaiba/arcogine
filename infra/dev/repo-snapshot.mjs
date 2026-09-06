@@ -15,6 +15,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const REPOMIX_VERSION = '1.18.0';
 export const REPOSITORY = 'alaiba/arcogine';
 export const REQUIRED_BRANCH = 'main';
+export const CANONICAL_REMOTE_PATTERN = /(?:^|[/:])alaiba\/arcogine(?:\.git)?$/i;
+export const CANONICAL_MAIN_REF = 'refs/remotes/origin/main';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 export const REPOSITORY_ROOT = resolve(scriptDirectory, '..', '..');
@@ -66,6 +68,25 @@ export function validateRepositoryState({ branch, status }) {
   }
 }
 
+export function isCanonicalRemoteUrl(url) {
+  return CANONICAL_REMOTE_PATTERN.test((url || '').trim().replace(/\/$/, ''));
+}
+
+export function validateCanonicalProvenance({ remoteUrl, commit, isAncestorOfMain }) {
+  if (!isCanonicalRemoteUrl(remoteUrl)) {
+    throw new Error(
+      `snapshot requires the 'origin' remote to point at the canonical ${REPOSITORY} repository, but it resolved to ` +
+        `${remoteUrl || '(no origin remote)'}. Canonical provenance cannot be established from a fork or unrelated remote.`,
+    );
+  }
+  if (!isAncestorOfMain) {
+    throw new Error(
+      `snapshot requires HEAD (${commit}) to be reachable from the canonical ${REPOSITORY} history at ${CANONICAL_MAIN_REF}, ` +
+        `but it is not. Push or fetch so the local ${REQUIRED_BRANCH} branch reflects canonical history, then run './arcogine snapshot' again.`,
+    );
+  }
+}
+
 function git(args, { allowFailure = false } = {}) {
   try {
     return execFileSync('git', args, {
@@ -78,6 +99,14 @@ function git(args, { allowFailure = false } = {}) {
     const detail = error?.stderr?.toString().trim();
     throw new Error(`could not inspect Git repository${detail ? `: ${detail}` : ''}`);
   }
+}
+
+function isAncestor(commit, ref) {
+  const result = spawnSync('git', ['merge-base', '--is-ancestor', commit, ref], {
+    cwd: REPOSITORY_ROOT,
+    stdio: 'ignore',
+  });
+  return result.status === 0;
 }
 
 function invokeRepomix({ temporaryOutputPath }) {
@@ -145,6 +174,11 @@ export function generateSnapshot() {
   if (!/^[0-9a-f]{40}$/.test(commit)) {
     throw new Error(`Git returned an invalid full commit SHA: ${commit}`);
   }
+
+  const remoteUrl = git(['remote', 'get-url', 'origin'], { allowFailure: true });
+  const isAncestorOfMain = isAncestor(commit, CANONICAL_MAIN_REF);
+  validateCanonicalProvenance({ remoteUrl, commit, isAncestorOfMain });
+
   const generatedAt = new Date().toISOString();
   const outputPath = snapshotPath({ commit });
   const temporaryOutputPath = join(LOG_DIRECTORY, `.arcogine-main-${commit.slice(0, 7)}.repomix.xml`);

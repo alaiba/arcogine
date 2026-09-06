@@ -7,7 +7,9 @@ import {
   REPOMIX_VERSION,
   assertHeaderPresent,
   buildHeader,
+  isCanonicalRemoteUrl,
   snapshotPath,
+  validateCanonicalProvenance,
   validateRepositoryState,
 } from './repo-snapshot.mjs';
 
@@ -53,6 +55,53 @@ test('feature branches and dirty working trees are refused', () => {
 
 test('clean main is accepted', () => {
   strictEqual(validateRepositoryState({ branch: 'main', status: '' }), undefined);
+});
+
+test('canonical remote urls are recognized regardless of protocol, case, or trailing slash', () => {
+  ok(isCanonicalRemoteUrl('git@github.com:alaiba/arcogine.git'));
+  ok(isCanonicalRemoteUrl('https://github.com/alaiba/arcogine.git'));
+  ok(isCanonicalRemoteUrl('https://github.com/alaiba/arcogine'));
+  ok(isCanonicalRemoteUrl('https://github.com/Alaiba/Arcogine.git'));
+  ok(isCanonicalRemoteUrl('https://github.com/alaiba/arcogine/'));
+  ok(!isCanonicalRemoteUrl('https://github.com/someone-else/arcogine.git'));
+  ok(!isCanonicalRemoteUrl('https://github.com/alaiba/arcogine-fork.git'));
+  ok(!isCanonicalRemoteUrl(''));
+  ok(!isCanonicalRemoteUrl(undefined));
+});
+
+test('canonical provenance is refused for a fork remote even on a branch named main', () => {
+  throws(
+    () =>
+      validateCanonicalProvenance({
+        remoteUrl: 'https://github.com/someone-else/arcogine.git',
+        commit,
+        isAncestorOfMain: true,
+      }),
+    /canonical alaiba\/arcogine repository/,
+  );
+});
+
+test('canonical provenance is refused for a local-only commit not reachable from canonical main', () => {
+  throws(
+    () =>
+      validateCanonicalProvenance({
+        remoteUrl: 'https://github.com/alaiba/arcogine.git',
+        commit,
+        isAncestorOfMain: false,
+      }),
+    /not\. Push or fetch/,
+  );
+});
+
+test('canonical provenance is accepted for a canonical remote whose HEAD is reachable from canonical main', () => {
+  strictEqual(
+    validateCanonicalProvenance({
+      remoteUrl: 'git@github.com:alaiba/arcogine.git',
+      commit,
+      isAncestorOfMain: true,
+    }),
+    undefined,
+  );
 });
 
 test('config retains source and documentation while excluding generated/dependency material', async () => {

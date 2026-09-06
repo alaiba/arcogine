@@ -79,6 +79,14 @@ jobs:
       - name: Validate PR watcher lifecycle resolver
         run: node --test infra/dev/pr-watch.test.mjs
 
+      # infra/dev/repo-snapshot.mjs establishes the canonical-repository
+      # provenance the ./arcogine snapshot artifact asserts. A regression here
+      # could let the header claim canonical alaiba/arcogine state for a fork
+      # or a local-only commit, so it runs alongside the other always-running
+      # tooling suites rather than a path-filtered job.
+      - name: Validate repository snapshot tooling
+        run: node --test infra/dev/repo-snapshot.test.mjs
+
       # Validate PR disposition merge gate evaluator. This gate enforces the central
       # merge invariant: current-head READY TO MERGE disposition required for merge.
       # A regression in the evaluator would allow unintended merges.

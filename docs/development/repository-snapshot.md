@@ -12,4 +12,6 @@ The command writes `logs/arcogine-main-<short-sha>.xml`. The file records the fu
 
 The snapshot is useful for repository-content retrieval and claims about the recorded commit. It is not live authority for later changes to `main`, pull requests, reviews, CI/check status, mergeability, issues, or other mutable GitHub state. Inspect the live repository or GitHub whenever freshness or delivery state matters.
 
-Generation refuses feature branches, detached HEADs, and dirty working trees so the artifact cannot silently be labeled as a clean `main` snapshot.
+Generation refuses feature branches, detached HEADs, and dirty working trees so the artifact cannot silently be labeled as a clean `main` snapshot. It also refuses to run unless the `origin` remote resolves to the canonical `alaiba/arcogine` repository and `HEAD` is reachable from `refs/remotes/origin/main`, so a fork or an unpushed local-only commit on a branch named `main` cannot be captioned as canonical `alaiba/arcogine` state.
+
+Generation invokes the pinned Repomix package via `npx`, which requires network access to fetch it (subject to npm's local cache) the first time it runs on a given machine.

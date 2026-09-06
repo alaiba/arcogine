@@ -32,7 +32,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * End-to-end change-set/impact-scope tests: {@link ChangeSetFactory} against the real controlled-revision-authority persistence
- * boundary ({@link FileControlledRevisionAuthority}) and the real factory-domain D5 comparator
+ * boundary ({@link FileControlledRevisionAuthority}) and the real factory-domain semantic comparator
  * ({@link FactoryModelSemanticComparator}) -- not test-only object injection.
  */
 class ChangeSetFactoryTest {

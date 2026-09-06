@@ -93,7 +93,7 @@ class ArchitectureTest {
      * API/UI DTOs remain outward projections and are never reused as domain decision inputs. The
      * supported direction is {@code factory runtime semantics -> RuntimeObservation/RuntimeEvent ->
      * outward adapters/DTOs}; a DTO must never flow back into a {@code FactoryRuntime} decision
-     * path. This is the structural half of the G4-C acceptance list
+     * path. This is the structural half of the headless-closure acceptance list
      * ({@code apiDtosDoNotReenterDomainDecisionPaths}); the behavioural half lives in
      * {@code HeadlessClosureAcceptanceTest}. This module's test classpath is the only place
      * that can see both sides of the boundary, since the domain modules do not depend on

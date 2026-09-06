@@ -70,31 +70,47 @@ authorities.
 
 ## Temporary delivery coordinates and durable documentation
 
-Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (such as
-a reviewer's own `REV-NNN` numbering for a single PR's findings), are temporary delivery coordinates.
-They may be used in `docs/planning/`, issues, pull requests, PR descriptions/comments, reviews,
-branch names, commit messages, handoff prompts, and other active/delivery-history context where the
-coordinate helps sequence or track work — see [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s
-commit message guidance, which this section does not change.
+Arcogine planning coordinates use the reserved `PLAN-<TRACK>-<LOCAL-ID>` namespace (for example, a
+hierarchical item might read `PLAN-<TRACK>-4-B`). `<TRACK>` is a stable, repository-wide track code
+(currently `FD` Factory Design, `ENG` Factory Simulation Engine, `GOV` Governance/Conformance,
+`CHAL` Factory-Design Challenge, `OPS` Operational Execution/Digital Twin); `<LOCAL-ID>` is one or
+more hyphen-separated segments, extended for hierarchical items rather than inventing another
+namespace. Compact, ad-hoc, or track-local coordinate syntax (a bare letter+number, a dotted or
+space-separated variant, etc.) must not be introduced — the whole point of one reserved namespace
+is that a temporary coordinate is always unmistakable on sight. PR-local review/finding
+identifiers use the separate `REV-NNN` namespace.
+
+Both namespaces are temporary delivery coordinates. They may be used in `docs/planning/`, issues,
+pull requests, PR descriptions/comments, reviews, branch names, commit messages, handoff prompts,
+and other active/delivery-history context where the coordinate helps sequence or track work — see
+[`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s commit message guidance, which this section
+does not change.
 
 Do not carry those identifiers into durable semantic naming — content whose meaning is expected to
 outlive the delivery context that produced it. This includes ADR, architecture, product, reference, or
-development documents; code comments; workflow definitions; and test names introduced alongside the
-change. It does not include commit messages or other delivery-history records, which may keep the
-coordinate that was actually used to track the work. When a planned result, a review finding's
-resolution, or other delivery-context outcome is recorded as durable semantic naming, translate it into
-the semantic capability, contract, identity, invariant, or behavior it actually represents rather than
-naming it after the coordinate that tracked it. Working/process material may mention a temporary
-delivery coordinate when the coordinate itself is the subject, but durable semantic claims must remain
-understandable without reconstructing that coordinate after the originating plan, PR, or review is
-completed, condensed, renamed, or removed. The mechanical checker (`.github/scripts/check-durable-vocabulary.py`)
-recognizes high-confidence patterns like `Gate 4`/`Gate4...`, `REV-123`, and `DH-E` across durable
-Markdown under `docs/` (outside `docs/planning/`), `product/interfaces/web/README.md`, Java/Javadoc
-comments, JS/TS/TSX and Python/Bash source and test comments, and GitHub Actions workflow
-definitions; collision-prone compact forms (bare `G1`, `O2`, `C1`, `D1`, `W1`) stay narrowly scoped
-to the repository's original durable-Markdown surfaces. Catching identifier leakage that pattern
-can't reach safely (prose like "the next stage" with no literal coordinate, or a compact form
-outside that narrow scope) remains a human review responsibility.
+development documents; code comments; workflow definitions; and test/class/file names introduced
+alongside the change. It does not include commit messages or other delivery-history records, which
+may keep the coordinate that was actually used to track the work. When a planned result, a review
+finding's resolution, or other delivery-context outcome is recorded as durable semantic naming,
+translate it into the semantic capability, contract, identity, invariant, or behavior it actually
+represents rather than naming it after the coordinate that tracked it. Working/process material
+may mention a temporary delivery coordinate when the coordinate itself is the subject, but durable
+semantic claims must remain understandable without reconstructing that coordinate after the
+originating plan, PR, or review is completed, condensed, renamed, or removed.
+
+Planning filenames are semantic, not coordinate-derived: the delivery label belongs in a planning
+document's content, not its path, so the filename keeps describing the subject if sequencing
+changes later.
+
+The mechanical checker (`.github/scripts/check-delivery-labels.py`) enforces this deterministically
+by scanning every tracked repository file (`git ls-files`, so generated/untracked/build output is
+never in scope): a `PLAN-*` or `REV-NNN` token outside `docs/planning/` is a durable-naming leak;
+inside `docs/planning/`, the old ambiguous label forms it replaced (a bare `Gate` plus number, a
+bare letter-plus-number optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be
+reintroduced. Those old forms are not banned outside `docs/planning/` — they can be ordinary,
+unrelated identifiers elsewhere in the codebase — which is exactly why the reserved `PLAN-`/`REV-`
+namespaces exist: catching identifier leakage no syntax pattern can safely recognize (prose like
+"the next stage" with no literal coordinate) remains a human review responsibility.
 
 When editing an Accepted or Superseded ADR only to improve durable terminology or legibility, follow
 `docs/architecture/decisions/README.md`: the amendment must be semantics-preserving, explicitly

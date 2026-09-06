@@ -1,17 +1,17 @@
-# Gate 4 Runtime Observation and Event Delivery
+# PLAN-ENG-4 Runtime Observation and Event Delivery
 
 > **Status:** Active implementation plan  
-> **Owner:** Factory Simulation Engine Readiness / Gate 4  
+> **Owner:** Factory Simulation Engine Readiness / PLAN-ENG-4  
 > **Architecture authority:** [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md)  
 > **Parent plan:** [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)  
-> **Upstream execution identity:** [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) / W1  
-> **Session boundary:** [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md) / Gate 3
+> **Upstream execution identity:** [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) / PLAN-ENG-W1  
+> **Session boundary:** [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md) / PLAN-ENG-3
 
 ## 1. Purpose
 
-This file is the implementation/delivery companion for Engine Readiness Gate 4. It records the execution order, code boundaries, acceptance evidence, transport migration, and cross-track responsibilities needed to implement ADR-0011 without turning event streaming into a separate Arcogine initiative.
+This file is the implementation/delivery companion for Engine Readiness PLAN-ENG-4. It records the execution order, code boundaries, acceptance evidence, transport migration, and cross-track responsibilities needed to implement ADR-0011 without turning event streaming into a separate Arcogine initiative.
 
-Event streaming is not a new top-level track. Its semantic owner is Engine Readiness Gate 4; transport recovery/versioning maturity remains Engine distribution hardening. Governance, Challenge/Game, and Operational Execution remain sibling or downstream tracks with their existing ownership boundaries.
+Event streaming is not a new top-level track. Its semantic owner is Engine Readiness PLAN-ENG-4; transport recovery/versioning maturity remains Engine distribution hardening. Governance, Challenge/Game, and Operational Execution remain sibling or downstream tracks with their existing ownership boundaries.
 
 The core rule is:
 
@@ -21,19 +21,19 @@ The core rule is:
 
 As of 2026-09-01:
 
-- Gate 1 is complete.
-- Gate 2 is complete.
-- Gate 3 is complete through `FactoryRuntime` and ADR-0007.
-- W1 is complete through ADR-0010, the implemented `Order -> Job*` child-job model, and the executable 100,000-child large-order benchmark.
-- Gate 4 core/headless closure is complete through G4-A, G4-B, and G4-C: the consumer-neutral engine boundary carries stable observation/event contracts around the correct `OrderId` aggregate and child `JobId` work-item identities, with executable acceptance evidence. G4-D (outward consumer convergence) remains outstanding.
-- Gate 5 may proceed; Gate 4 core closure no longer blocks it.
+- PLAN-ENG-1 is complete.
+- PLAN-ENG-2 is complete.
+- PLAN-ENG-3 is complete through `FactoryRuntime` and ADR-0007.
+- PLAN-ENG-W1 is complete through ADR-0010, the implemented `Order -> Job*` child-job model, and the executable 100,000-child large-order benchmark.
+- PLAN-ENG-4 core/headless closure is complete through PLAN-ENG-4-A, PLAN-ENG-4-B, and PLAN-ENG-4-C: the consumer-neutral engine boundary carries stable observation/event contracts around the correct `OrderId` aggregate and child `JobId` work-item identities, with executable acceptance evidence. PLAN-ENG-4-D (outward consumer convergence) remains outstanding.
+- PLAN-ENG-5 may proceed; PLAN-ENG-4 core closure no longer blocks it.
 - public-contract versioning, recovery, checkpoint/restore, persistence, and packaging remain later distribution hardening.
 
-The current legacy API is not the Gate 3 session implementation. `interfaces/api` still has its own `SimThread`/`IntegratedHandler` loop and streams internal scheduler `Event` objects directly over SSE. That path is maintained current behavior, not the architectural owner of Gate 4.
+The current legacy API is not the PLAN-ENG-3 session implementation. `interfaces/api` still has its own `SimThread`/`IntegratedHandler` loop and streams internal scheduler `Event` objects directly over SSE. That path is maintained current behavior, not the architectural owner of PLAN-ENG-4.
 
-The current CLI headless `run` path also remains on `ScenarioLoader -> HeadlessHandler -> SimRunner.runScenario(...)` rather than the newer `FactoryRuntime` seam. That broader orchestration path is a downstream consumer-convergence decision after the Gate 4 headless contract is stable, not a reason to widen `FactoryRuntime` prematurely.
+The current CLI headless `run` path also remains on `ScenarioLoader -> HeadlessHandler -> SimRunner.runScenario(...)` rather than the newer `FactoryRuntime` seam. That broader orchestration path is a downstream consumer-convergence decision after the PLAN-ENG-4 headless contract is stable, not a reason to widen `FactoryRuntime` prematurely.
 
-## 3. Current implementation debt Gate 4 must not fossilize
+## 3. Current implementation debt PLAN-ENG-4 must not fossilize
 
 ### 3.1 Internal Event is still scheduler machinery
 
@@ -45,13 +45,13 @@ event type
 payload
 ```
 
-It has no run identity, supported sequence, durable model provenance, or external compatibility contract. This is correct for scheduler machinery and should remain possible after Gate 4.
+It has no run identity, supported sequence, durable model provenance, or external compatibility contract. This is correct for scheduler machinery and should remain possible after PLAN-ENG-4.
 
 ### 3.2 `FactoryRuntime` still returns internal events
 
-Gate 3's `FactoryRuntime.advance()` / `advanceUntil(...)` return processed internal `Event`s. `CommandResult.scheduledEvents()` captures the internal events scheduled as a direct command effect.
+PLAN-ENG-3's `FactoryRuntime.advance()` / `advanceUntil(...)` return processed internal `Event`s. `CommandResult.scheduledEvents()` captures the internal events scheduled as a direct command effect.
 
-Those are useful headless control/evidence surfaces but are not the supported runtime-event contract. Gate 4 must add separate supported types rather than silently rebranding those internal values.
+Those are useful headless control/evidence surfaces but are not the supported runtime-event contract. PLAN-ENG-4 must add separate supported types rather than silently rebranding those internal values.
 
 ### 3.3 Legacy `SimThread` publication is pre-authoritative in several paths
 
@@ -63,7 +63,7 @@ notifyListeners(event)
 handler.handleEvent(event, scheduler)
 ```
 
-That means the current SSE stream can expose a transition attempt before authoritative processing succeeds. Gate 4's supported publication rule is the opposite: derive/publish a successful state-change event only after authoritative processing has occurred.
+That means the current SSE stream can expose a transition attempt before authoritative processing succeeds. PLAN-ENG-4's supported publication rule is the opposite: derive/publish a successful state-change event only after authoritative processing has occurred.
 
 This is a migration target, not a reason to weaken ADR-0011.
 
@@ -84,13 +84,13 @@ When migrated, SSE should be a thin adapter over supported runtime events. Prefe
 
 The current `EventLog` is a bounded in-memory trace of internal events. It is suitable for simulation trace/debug/export behavior. It does not supply a durable authoritative external history or gap-aware recovery contract.
 
-Do not rename or repurpose it into the Gate 4 history. If retained supported events are needed, introduce a separately named responsibility such as `RuntimeEventJournal` or `RuntimeEventHistory`.
+Do not rename or repurpose it into the PLAN-ENG-4 history. If retained supported events are needed, introduce a separately named responsibility such as `RuntimeEventJournal` or `RuntimeEventHistory`.
 
 ## 4. Delivery sequence
 
-### Slice W1-B — Complete: close W1 with large-order benchmark evidence
+### Slice PLAN-ENG-W1-B — Complete: close PLAN-ENG-W1 with large-order benchmark evidence
 
-This prerequisite is complete. `LargeOrderDecompositionBenchmarkTest` executes the supported 100,000-child materialization ceiling, proves deterministic decomposition and terminal semantics, and records diagnostic memory/execution measurements. The existing W1 acceptance suite preserves the fixed-contract and pre-mutation over-limit rejection evidence.
+This prerequisite is complete. `LargeOrderDecompositionBenchmarkTest` executes the supported 100,000-child materialization ceiling, proves deterministic decomposition and terminal semantics, and records diagnostic memory/execution measurements. The existing PLAN-ENG-W1 acceptance suite preserves the fixed-contract and pre-mutation over-limit rejection evidence.
 
 Required work:
 
@@ -98,12 +98,12 @@ Required work:
 - record resident-memory and execution/event-volume behavior;
 - verify that the current provisional child-materialization limit is justified or adjust it with evidence;
 - determine the evidence-backed supported quantity envelope;
-- keep the benchmark non-semantic: it must not introduce arbitrary batching/chunking merely to improve performance, because configurable batch semantics are explicitly outside W1;
-- update W1 status only when the benchmark evidence is committed and reproducible. **Complete:** the parent Engine Readiness plan records W1 complete and Gate 4 active.
+- keep the benchmark non-semantic: it must not introduce arbitrary batching/chunking merely to improve performance, because configurable batch semantics are explicitly outside PLAN-ENG-W1;
+- update PLAN-ENG-W1 status only when the benchmark evidence is committed and reproducible. **Complete:** the parent Engine Readiness plan records PLAN-ENG-W1 complete and PLAN-ENG-4 active.
 
-This slice must not redesign Gate 4.
+This slice must not redesign PLAN-ENG-4.
 
-### Slice G4-A — Complete: headless runtime identity and supported observation contract
+### Slice PLAN-ENG-4-A — Complete: headless runtime identity and supported observation contract
 
 Add the minimum runtime metadata and observation seam at the `FactoryRuntime` boundary.
 
@@ -128,22 +128,22 @@ Do not put Spring DTOs or frontend DTOs in this module. Do not create a generic 
 consumer-neutral current-state projection. Its metadata carries a fresh opaque `RunId`, the durable
 `FactoryModelVersion.fingerprint()` (never the legacy content hash), the `SimTime` as of the latest
 supported boundary, an explicit runtime advancement state (`ACTIVE` when authoritative work is
-pending, otherwise `QUIESCENT` — see the REV-003 correction under G4-C), and `latestEventSequence` (`0` before any supported runtime event; G4-B below
+pending, otherwise `QUIESCENT` — see the REV-003 correction under PLAN-ENG-4-C), and `latestEventSequence` (`0` before any supported runtime event; PLAN-ENG-4-B below
 wires this cursor to real supported-event sequencing). It is not derived from internal scheduler
 events. The projection contains resources
 (operational state, active child work, per-resource queue depth, and busy ticks), aggregate orders,
-W1 child jobs with `JobId -> OrderId` correlation and ordinal, cross-machine pending work, and the
+PLAN-ENG-W1 child jobs with `JobId -> OrderId` correlation and ordinal, cross-machine pending work, and the
 authoritative backlog/completed-order/completed-sales/lead-time/throughput aggregates already owned
 by the factory runtime. Collections are immutable and ordered by stable identities. `reset()` uses
 fresh construction and therefore receives a fresh `RunId` while preserving the same semantic
 outcome for the same model and commands. `RuntimeObservationAcceptanceTest` proves these
 facts without the API, Spring, frontend, internal-store access, or scheduler-event replay.
 
-G4-B (supported runtime-event taxonomy and post-authoritative publication) and G4-C (headless
-event/observation closure) are now implemented (see below); G4-D (outward consumer convergence)
+PLAN-ENG-4-B (supported runtime-event taxonomy and post-authoritative publication) and PLAN-ENG-4-C (headless
+event/observation closure) are now implemented (see below); PLAN-ENG-4-D (outward consumer convergence)
 remains outstanding.
 
-### Slice G4-B — Complete: Supported RuntimeEvent contract and post-authoritative publication
+### Slice PLAN-ENG-4-B — Complete: Supported RuntimeEvent contract and post-authoritative publication
 
 Introduce separate types equivalent to:
 
@@ -178,7 +178,7 @@ Implementation rules:
 - rejected commands/transitions do not emit a successful state-change runtime event;
 - a fault after partial mutation reports only authoritative changes that actually happened;
 - the event mapper may inspect resulting authoritative state to enrich a supported payload/correlation;
-- W1 child events preserve `JobId` and parent `OrderId`; aggregate order completion preserves both parent and completing child identities.
+- PLAN-ENG-W1 child events preserve `JobId` and parent `OrderId`; aggregate order completion preserves both parent and completing child identities.
 
 A run ID is correlation metadata only. It must not participate in simulation decisions or make deterministic outcomes differ.
 
@@ -205,7 +205,7 @@ only after the corresponding authoritative transition has already succeeded:
   (inspecting the resulting `JobView`, never copying the internal payload) and, when that same call's
   internal scheduler activity also produced an internal `OrderCompleted` event (proving the order's
   full execution aggregate already completed), additionally emits `ORDER_COMPLETED` carrying both the
-  order and completing child `JobId` for W1 correlation (ADR-0010). Both derivations run in a
+  order and completing child `JobId` for PLAN-ENG-W1 correlation (ADR-0010). Both derivations run in a
   `finally`, so a step completion that occurred before a later cascade fault is still reported
   (`RuntimeEventDeliveryAcceptanceTest.faultReportsOnlyAuthoritativeChangesThatActuallyOccurred`).
 
@@ -213,41 +213,41 @@ Sequence is allocated only at emission (`FactoryRuntime.emit`), strictly increas
 independent of how many internal scheduler events were involved; `RuntimeObservationMetadata
 .latestEventSequence()` is now the live cursor (no longer hardcoded to `0`) and always equals the
 last emitted envelope's sequence, independent of when a caller drains the event list (see below).
-`controlledRevisionId` is always `Optional.empty()` in this slice — G4-B does not bind to or
+`controlledRevisionId` is always `Optional.empty()` in this slice — PLAN-ENG-4-B does not bind to or
 synthesize one, since no established authoritative binding contract exists yet. This is unrelated to
-Governance G1 completion status: G1 is complete (`docs/planning/governance-g1-continuity.md`), but
-Gate 4 still treats revision provenance as an optional binding because G1 completion does not by
+Governance PLAN-GOV-1 completion status: PLAN-GOV-1 is complete (`docs/planning/governance-continuity.md`), but
+PLAN-ENG-4 still treats revision provenance as an optional binding because PLAN-GOV-1 completion does not by
 itself mean any given runtime was instantiated from an authoritative controlled revision.
 `modelFingerprint` on every envelope is `FactoryModelVersion.fingerprint()`, never the legacy content
 hash. `FactoryRuntime.drainSupportedEvents()` is the read-only accessor a caller uses instead of
 internal `Event` values: it returns and clears everything accumulated since it was last called.
 It is deliberately draining, not retained/replayable-by-cursor — an unbounded, cursor-addressable
 supported-event history is a separately-named responsibility for later distribution hardening
-(ADR-0011 §8, DH-E), not part of this contract; a caller that needs durable replay retains the
+(ADR-0011 §8, PLAN-ENG-DH-E), not part of this contract; a caller that needs durable replay retains the
 drained events itself. `advance()`/`advanceUntil` keep returning internal `Event`s unchanged for
-existing Gate 3 callers. `RuntimeEventDeliveryAcceptanceTest` proves: run/sequence/time/model provenance
+existing PLAN-ENG-3 callers. `RuntimeEventDeliveryAcceptanceTest` proves: run/sequence/time/model provenance
 on the envelope; the enriched `ORDER_ACCEPTED` job-id list and the `JOB_DISPATCHED`/`JOB_WAITING`
 events it implies; strict monotonic sequencing and same-timestamp sequence ordering within one run;
 observation cursor/state consistency with the applied event log; that a rejected command emits
 nothing; that a no-op availability request emits nothing; that a faulted command reports only the
-mutation that actually occurred; W1 `OrderId`/`JobId` correlation on both `JOB_STEP_COMPLETED` and
+mutation that actually occurred; PLAN-ENG-W1 `OrderId`/`JobId` correlation on both `JOB_STEP_COMPLETED` and
 `ORDER_COMPLETED`; identical semantic event streams for identical inputs (run ID excluded from the
 comparison); a fresh sequence epoch on `reset()`; and that two distinct run IDs replaying the same
 commands converge to the same event-type sequence and terminal state (run identity does not influence
 simulation outcome).
 
-G4-C (headless event/observation closure across the full acceptance list, including
+PLAN-ENG-4-C (headless event/observation closure across the full acceptance list, including
 `freshObservationReconstructsCurrentConsumerViewWithoutReplay` and
 `apiDtosDoNotReenterDomainDecisionPaths`) landed separately and is recorded under its own slice
-below; G4-D (outward consumer convergence: SSE/API DTO migration, frontend, CLI) remains
+below; PLAN-ENG-4-D (outward consumer convergence: SSE/API DTO migration, frontend, CLI) remains
 outstanding and is not claimed here. No persistence, recovery,
 checkpoint, or replay semantics were introduced; `FactoryRuntime.drainSupportedEvents()` is a
 draining, non-retained accessor only — it is not a cursor-addressable or replayable journal (that
-remains Slice DH-E).
+remains Slice PLAN-ENG-DH-E).
 
-### Slice G4-C — Complete: Gate 4 headless acceptance closure
+### Slice PLAN-ENG-4-C — Complete: PLAN-ENG-4 headless acceptance closure
 
-Gate 4 is closed through the consumer-neutral engine boundary before any legacy transport is used as architectural evidence.
+PLAN-ENG-4 is closed through the consumer-neutral engine boundary before any legacy transport is used as architectural evidence.
 
 Acceptance evidence should include tests equivalent to:
 
@@ -269,10 +269,10 @@ apiDtosDoNotReenterDomainDecisionPaths
 
 Deterministic stream comparisons ignore or inject intentionally unique run IDs while comparing all semantic event content/order.
 
-Gate 4 also requires a supported observation that is sufficient for a consumer to identify the active bottleneck without reaching into internal stores or replaying raw events.
+PLAN-ENG-4 also requires a supported observation that is sufficient for a consumer to identify the active bottleneck without reaching into internal stores or replaying raw events.
 
 **Implemented evidence (2026-09-02):** the acceptance list above is executable and passing. Most of
-it was already proved by the G4-A/G4-B suites, which G4-C deliberately reuses rather than
+it was already proved by the PLAN-ENG-4-A/PLAN-ENG-4-B suites, which PLAN-ENG-4-C deliberately reuses rather than
 duplicating: `RuntimeEventDeliveryAcceptanceTest` owns
 `runtimeEventCarriesRunSequenceTimeAndModelProvenance`, `sequenceIsStrictlyMonotonicWithinOneRun`,
 `sameTimeEventsRemainOrderedBySequence`, `observationLatestSequenceMatchesAppliedRuntimeEvents`,
@@ -284,7 +284,7 @@ duplicating: `RuntimeEventDeliveryAcceptanceTest` owns
 `RuntimeObservationAcceptanceTest` owns the observation projection, immutability, and
 fresh-`RunId`-without-changed-outcome facts.
 
-G4-C adds the three remaining closure facts, plus two review-driven regression facts (REV-002,
+PLAN-ENG-4-C adds the three remaining closure facts, plus two review-driven regression facts (REV-002,
 REV-003) described after them, in
 `product/domains/factory/src/test/java/com/arcogine/factory/process/HeadlessClosureAcceptanceTest.java`:
 
@@ -357,12 +357,12 @@ already claimed rather than new surface:
 No new observation field, event type, scoring concept, or analytics surface was introduced.
 
 No retained runtime-event journal, replay-by-cursor, `Last-Event-ID`, gap detection, or
-checkpoint/restore behaviour was added — that remains Slice DH-E — and no transport, DTO, frontend,
-or CLI behaviour changed, which remains Slice G4-D.
+checkpoint/restore behaviour was added — that remains Slice PLAN-ENG-DH-E — and no transport, DTO, frontend,
+or CLI behaviour changed, which remains Slice PLAN-ENG-4-D.
 
-### Slice G4-D — Converge outward consumers on supported runtime semantics
+### Slice PLAN-ENG-4-D — Converge outward consumers on supported runtime semantics
 
-Only after G4-C establishes the headless contract should existing outward consumers migrate or explicitly adapt to it. This is downstream migration/integration work, not a prerequisite for Gate 4 core closure or Gate 5.
+Only after PLAN-ENG-4-C establishes the headless contract should existing outward consumers migrate or explicitly adapt to it. This is downstream migration/integration work, not a prerequisite for PLAN-ENG-4 core closure or PLAN-ENG-5.
 
 The objective is **semantic convergence**, not forcing every execution path to reuse one concrete runtime type. `FactoryRuntime` remains factory-simulation scoped unless a later architecture decision broadens it; economy/finance/agent orchestration must not be distorted merely to obtain concrete-type reuse.
 
@@ -370,7 +370,7 @@ Current consumer inventory:
 
 - `interfaces/api` uses `SimThread` / `IntegratedHandler` and exposes internal scheduler `Event` values over SSE;
 - `arcogine run` uses `ScenarioLoader -> HeadlessHandler -> SimRunner.runScenario(...)` and may legitimately remain broader than the factory-only session boundary;
-- the Gate 4 acceptance/reference consumer must prove supported observations/events without UI-specific DTOs or undocumented internal stores;
+- the PLAN-ENG-4 acceptance/reference consumer must prove supported observations/events without UI-specific DTOs or undocumented internal stores;
 - the frontend is a consumer of the API projection and must not become a semantic authority.
 
 Target dependency direction:
@@ -388,7 +388,7 @@ Target dependency direction:
 
 Where a broader execution path cannot directly reuse `FactoryRuntime` without changing its legitimate scope, keep the broader orchestration and introduce or preserve an explicit adapter/projection boundary. The adapter may translate supported Engine semantics; it must not redefine them.
 
-#### G4-D1 — Legacy API/SSE migration
+#### PLAN-ENG-4-D1 — Legacy API/SSE migration
 
 Migrate `interfaces/api` so supported observations/events, not internal scheduler events, define outward runtime semantics. The exact implementation may require an adapter because today's `SimThread` runs a broader scenario/economy/finance/agent integrated loop rather than `FactoryRuntime`.
 
@@ -412,16 +412,16 @@ data: <supported envelope DTO>
 
 The semantic runtime event type stays inside the data envelope. Internal `Event`, `EventPayload`, and `EventLog` remain implementation machinery and must not become outward compatibility types.
 
-#### G4-D2 — CLI and reference/headless consumer convergence
+#### PLAN-ENG-4-D2 — CLI and reference/headless consumer convergence
 
-Evaluate the current CLI/headless path against the supported runtime contract after G4-C:
+Evaluate the current CLI/headless path against the supported runtime contract after PLAN-ENG-4-C:
 
 - where factory-only execution can consume the supported runtime/session boundary directly without changing semantics, migrate to that boundary;
 - where `arcogine run` legitimately owns broader scenario/economy/finance/agent orchestration, retain that orchestration and document the deliberate adapter/projection boundary rather than widening `FactoryRuntime` for convenience;
 - provide or preserve a consumer-neutral headless/reference path that can observe `RuntimeObservation` and ordered `RuntimeEvent` semantics without depending on Spring, frontend DTOs, internal scheduler stores, or raw `EventLog` replay;
 - remove duplicated outward observation/event semantics where practical; where reuse would be semantically wrong, make the separate responsibility explicit in code/tests/current planning.
 
-G4-D acceptance requires:
+PLAN-ENG-4-D acceptance requires:
 
 - the CLI/API consumer inventory and direct-consumption versus adapter decisions are documented in current planning or implementation docs;
 - legacy HTTP/SSE projects the supported runtime semantics rather than internal scheduler event taxonomy;
@@ -431,9 +431,9 @@ G4-D acceptance requires:
 - behavior-changing slices update current-state docs in the same PR, while unchanged current-state references remain untouched;
 - no new integration framework, protocol selection, generic event bus, or cross-domain interchange ontology is introduced to accomplish convergence.
 
-### Slice DH-E — Recovery and resynchronization hardening
+### Slice PLAN-ENG-DH-E — Recovery and resynchronization hardening
 
-This is not a Gate 4 core blocker and must not hold up Gate 5.
+This is not a PLAN-ENG-4 core blocker and must not hold up PLAN-ENG-5.
 
 Distribution hardening later owns:
 
@@ -470,13 +470,13 @@ Silent truncation is never considered successful recovery.
 
 ### Model fingerprint
 
-`ModelFingerprint` is mandatory Gate 4 provenance. G1.1 and ADR-0006 have already established `factory-model:v1`; Gate 4 should use `FactoryModelVersion.fingerprint()` rather than legacy `contentHash()` for its supported provenance contract.
+`ModelFingerprint` is mandatory PLAN-ENG-4 provenance. PLAN-GOV-1-1 and ADR-0006 have already established `factory-model:v1`; PLAN-ENG-4 should use `FactoryModelVersion.fingerprint()` rather than legacy `contentHash()` for its supported provenance contract.
 
 ### Controlled revision
 
-G1 is complete: G1.2 and ADR-0008 provide `ControlledRevisionId` and immutable revision/lineage values, while G1.3 provides authoritative durable revision persistence and exact historical semantic-state resolution. Gate 4 still treats revision provenance as an optional binding because G1 completion does not imply that a particular runtime was instantiated from an authoritative controlled revision.
+PLAN-GOV-1 is complete: PLAN-GOV-1-2 and ADR-0008 provide `ControlledRevisionId` and immutable revision/lineage values, while PLAN-GOV-1-3 provides authoritative durable revision persistence and exact historical semantic-state resolution. PLAN-ENG-4 still treats revision provenance as an optional binding because PLAN-GOV-1 completion does not imply that a particular runtime was instantiated from an authoritative controlled revision.
 
-Therefore Gate 4 uses:
+Therefore PLAN-ENG-4 uses:
 
 ```text
 modelFingerprint      required
@@ -485,13 +485,13 @@ controlledRevisionId optional
 
 `ControlledRevisionId` is present only when an authoritative upstream revision binding actually exists. Engine must not generate one or infer one from the fingerprint.
 
-No Gate 4 dependency may turn Governance persistence into an Engine responsibility.
+No PLAN-ENG-4 dependency may turn Governance persistence into an Engine responsibility.
 
 ## 6. Track ownership and cross-track impact
 
 ### Factory Design
 
-Factory Design continues to own published executable model semantics, validation/publication, model identity, and semantic layout input. Gate 4 consumes the published model and its durable fingerprint; it does not author another model/version system.
+Factory Design continues to own published executable model semantics, validation/publication, model identity, and semantic layout input. PLAN-ENG-4 consumes the published model and its durable fingerprint; it does not author another model/version system.
 
 ### Engine Readiness
 
@@ -501,19 +501,19 @@ Engine owns:
 - runtime observations;
 - runtime-event semantic taxonomy/envelope;
 - runtime-event ordering;
-- W1 order/work correlation;
+- PLAN-ENG-W1 order/work correlation;
 - later simulation event recovery/versioning/checkpoint integration.
 
-This is the only semantic owner of the Gate 4 runtime-event contract.
+This is the only semantic owner of the PLAN-ENG-4 runtime-event contract.
 
 ### Governance / Conformance
 
 Governance owns:
 
 - controlled historical revision identity/lineage;
-- authoritative revision persistence/resolution (G1 complete);
-- ChangeSets and impact scoping (G2 complete), requirements/assertions (G3 complete), conformance evaluation and findings (G4 complete);
-- evidence use, governed changes/exceptions in later gates (G5+, not yet implemented).
+- authoritative revision persistence/resolution (PLAN-GOV-1 complete);
+- ChangeSets and impact scoping (PLAN-GOV-2 complete), requirements/assertions (PLAN-GOV-3 complete), conformance evaluation and findings (PLAN-GOV-4 complete);
+- evidence use, governed changes/exceptions in later gates (PLAN-GOV-5+, not yet implemented).
 
 Runtime events are not Governance evidence records by default. A later evidence-use boundary may reference selected runtime observations/events with provenance, but RuntimeEvent, ControlledRevision, EvidenceUse, Finding, and ChangeSet remain distinct concepts.
 
@@ -523,7 +523,7 @@ Challenge/Game owns challenge admissibility, scoring/evaluation policy, attempt 
 
 The playable game consumes supported Engine observations/outcome facts/events. It must not:
 
-- define Gate 4 event semantics;
+- define PLAN-ENG-4 event semantics;
 - reconstruct authoritative queue/dispatch state from the raw event stream;
 - simulate missing Engine behavior;
 - treat challenge attempt history as runtime event history;
@@ -543,7 +543,7 @@ Operational Execution remains the owner of real-world consequence:
 - reconciliation and drift/calibration;
 - operational resilience and live-adapter recovery.
 
-Gate 4 runtime events are simulation events. They do not become production telemetry merely because an adapter can serialize them. An operational adapter may translate shared production semantics, but it must preserve the trust/provenance/reconciliation boundary of the Operational track.
+PLAN-ENG-4 runtime events are simulation events. They do not become production telemetry merely because an adapter can serialize them. An operational adapter may translate shared production semantics, but it must preserve the trust/provenance/reconciliation boundary of the Operational track.
 
 ## 7. Important history distinctions
 
@@ -573,13 +573,13 @@ They can correlate through typed identities and provenance. They are not one gen
 
 ## 8. Explicit non-goals
 
-Gate 4 and this delivery plan do not require:
+PLAN-ENG-4 and this delivery plan do not require:
 
 - event sourcing;
 - Kafka, NATS, MQTT, WebSocket, or another broker/protocol;
 - CloudEvents as an engine-domain type;
 - durable external event history;
-- exact checkpoint/restore before Gate 4 closure;
+- exact checkpoint/restore before PLAN-ENG-4 closure;
 - a generic event bus abstraction;
 - a generic rules/evaluation/evidence framework shared with Governance or Challenge;
 - revision persistence inside Engine;
@@ -593,17 +593,17 @@ Gate 4 and this delivery plan do not require:
 Land from fresh `main` in small dependency-ordered PRs rather than maintaining a long stacked branch:
 
 ```text
-PR 1  W1 large-order benchmark / close W1
+PR 1  PLAN-ENG-W1 large-order benchmark / close PLAN-ENG-W1
   ↓
-PR 2  Gate 4 headless run identity + observation seam
+PR 2  PLAN-ENG-4 headless run identity + observation seam
   ↓
 PR 3  supported RuntimeEvent + post-authoritative publication
   ↓
-PR 4  Gate 4 acceptance closure / plan-current-architecture reconciliation
+PR 4  PLAN-ENG-4 acceptance closure / plan-current-architecture reconciliation
   ↓
-Gate 5 may proceed
+PLAN-ENG-5 may proceed
 
-separate downstream convergence after G4-C:
+separate downstream convergence after PLAN-ENG-4-C:
 PR 5a  legacy API/SSE migration
   ↓
 PR 5b  CLI/reference consumer convergence where needed
@@ -611,27 +611,27 @@ PR 5b  CLI/reference consumer convergence where needed
 Distribution hardening PRs for recovery/versioning/checkpoint
 ```
 
-If implementation naturally makes G4-A and G4-B one reviewable atomic change, combining them is acceptable, but transport migration must remain separate so transport neutrality is demonstrable.
+If implementation naturally makes PLAN-ENG-4-A and PLAN-ENG-4-B one reviewable atomic change, combining them is acceptable, but transport migration must remain separate so transport neutrality is demonstrable.
 
-G4-D does not have to be one large PR. API/SSE migration and CLI/reference convergence should land as separate reviewable slices when they have different code surfaces or semantic risks; combine them only if the resulting change remains narrow and coherent.
+PLAN-ENG-4-D does not have to be one large PR. API/SSE migration and CLI/reference convergence should land as separate reviewable slices when they have different code surfaces or semantic risks; combine them only if the resulting change remains narrow and coherent.
 
-Do not combine Gate 4 with:
+Do not combine PLAN-ENG-4 with:
 
 - a Kafka/NATS/MQTT selection;
 - Governance persistence;
 - Challenge evaluation;
 - Operational telemetry/reconciliation;
-- Gate 5 transfer-policy decisions.
+- PLAN-ENG-5 transfer-policy decisions.
 
 ## 10. Documentation propagation rules
 
 As implementation lands:
 
 - `docs/planning/factory-simulation-engine-readiness.md` remains the parent status/gate authority and should be updated for completed slices/evidence;
-- `docs/architecture/overview.md` receives only implemented current-state behavior, while ADR-0011 remains the accepted design authority for not-yet-landed Gate 4 details;
+- `docs/architecture/overview.md` receives only implemented current-state behavior, while ADR-0011 remains the accepted design authority for not-yet-landed PLAN-ENG-4 details;
 - `docs/reference/api.md` changes only when the HTTP/SSE behavior actually changes;
 - the game-consumer planning remains downstream and should only update when entry-gate status changes or its consumption contract materially changes;
-- Governance planning updates only when revision/evidence responsibilities change, not merely because Gate 4 carries existing provenance values;
+- Governance planning updates only when revision/evidence responsibilities change, not merely because PLAN-ENG-4 carries existing provenance values;
 - Operational Execution planning updates only if the operational adapter boundary itself changes;
 - accepted ADR history is immutable; later changes to ADR-0011 require a new Accepted superseding ADR rather than editing this decision in place.
 
@@ -639,10 +639,10 @@ As implementation lands:
 
 This delivery plan has done its job when:
 
-1. W1 benchmark evidence is recorded and W1 status is resolved;
-2. Gate 4 has headless supported observations and ordered authoritative runtime events through the consumer-neutral runtime boundary;
-3. Gate 4 acceptance evidence is executable and current architecture reflects what is actually implemented;
+1. PLAN-ENG-W1 benchmark evidence is recorded and PLAN-ENG-W1 status is resolved;
+2. PLAN-ENG-4 has headless supported observations and ordered authoritative runtime events through the consumer-neutral runtime boundary;
+3. PLAN-ENG-4 acceptance evidence is executable and current architecture reflects what is actually implemented;
 4. outward consumer convergence is explicit: legacy API/SSE projects the supported contract, and CLI/reference execution either consumes the supported runtime boundary where semantically appropriate or documents a deliberate broader orchestration adapter boundary;
 5. a consumer-neutral headless/reference path can prove and consume supported observations/events without UI DTOs, undocumented internal stores, or raw internal-event replay;
-6. recovery/versioning/checkpoint work is clearly owned by distribution hardening rather than hidden inside Gate 4;
+6. recovery/versioning/checkpoint work is clearly owned by distribution hardening rather than hidden inside PLAN-ENG-4;
 7. no knowledge required to continue the work depends on a conversational session.

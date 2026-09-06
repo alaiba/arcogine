@@ -101,24 +101,24 @@ A challenge may say that completion before tick 400 earns a bonus. It may not in
 ## 4. Delivery sequence
 
 ```text
-C1  Challenge definition, identity, and validation
+PLAN-CHAL-1  Challenge definition, identity, and validation
     |
     v
-C2  Catalogue, construction budget, draft economics, and candidate admissibility
+PLAN-CHAL-2  Catalogue, construction budget, draft economics, and candidate admissibility
     |
     v
-C3  Deterministic challenge evaluation
+PLAN-CHAL-3  Deterministic challenge evaluation
     |
     v
-C4  Attempt provenance and design-to-design comparison
+PLAN-CHAL-4  Attempt provenance and design-to-design comparison
     |
     v
-C5  Data-driven challenge content and reference fixtures
+PLAN-CHAL-5  Data-driven challenge content and reference fixtures
 ```
 
-C1-C5 are game-owned capabilities. None is evidence that an Engine Readiness gate is satisfied.
+PLAN-CHAL-1 to PLAN-CHAL-5 are game-owned capabilities. None is evidence that an Engine Readiness gate is satisfied.
 
-## 5. C1 — Challenge definition, identity, and validation
+## 5. PLAN-CHAL-1 — Challenge definition, identity, and validation
 
 ### Goal
 
@@ -142,7 +142,7 @@ Exact type names and serialization format remain implementation decisions.
 
 ### Validation boundary
 
-C1's `ChallengeDefinitionValidator` answers only whether an already-constructed
+PLAN-CHAL-1's `ChallengeDefinitionValidator` answers only whether an already-constructed
 `ChallengeDefinition`'s own scalar/structural content is internally coherent:
 
 - Is the budget non-negative?
@@ -158,21 +158,21 @@ semantics are executable by Arcogine.
 Questions that require resolving a `ChallengeDefinition`'s references against other state --
 whether referenced catalogue entries exist in an actual catalogue, whether the workload's success
 condition is unambiguous once evaluation semantics exist, whether rating/score thresholds are
-coherent -- belong to later gates (C2's catalogue seam and C3's evaluation-policy work,
-respectively) once that state exists to validate against. C1 does not claim to answer them.
+coherent -- belong to later gates (PLAN-CHAL-2's catalogue seam and PLAN-CHAL-3's evaluation-policy work,
+respectively) once that state exists to validate against. PLAN-CHAL-1 does not claim to answer them.
 
-C1 also does not define a content-loading layer. `ChallengeDefinition` and its nested value
+PLAN-CHAL-1 also does not define a content-loading layer. `ChallengeDefinition` and its nested value
 records reject structurally absent required fields (a null identity, a null workload, a null
 nested id/version/reference, a null equipment element) at construction time via ordinary
 constructor invariants (`NullPointerException`), not via `ChallengeDefinitionIssue` diagnostics.
 Converting an untrusted external representation (e.g. loaded JSON/TOML) into either a valid
 `ChallengeDefinition` or a diagnostic explaining why it couldn't be constructed is the
-responsibility of the content-loading layer introduced in C5; C1 supplies the validator that
+responsibility of the content-loading layer introduced in PLAN-CHAL-5; PLAN-CHAL-1 supplies the validator that
 layer will run once a definition exists, not a replacement for it.
 
 ### Acceptance criteria
 
-C1 is ready when:
+PLAN-CHAL-1 is ready when:
 
 1. A challenge can be loaded independently of an active simulation session.
 2. Challenge identity and content/rules version are explicit.
@@ -180,14 +180,14 @@ C1 is ready when:
    non-positive dimensions/budget/deadline/quantity, duplicate catalogue ids, etc.) produces
    deterministic, actionable `ChallengeDefinitionIssue` diagnostics. This criterion covers content
    validity of a constructed definition -- it does not cover translating absent/malformed
-   external input into diagnostics; that is C5's content-loading responsibility (see "Validation
+   external input into diagnostics; that is PLAN-CHAL-5's content-loading responsibility (see "Validation
    boundary" above).
 4. Challenge-definition validation does not duplicate Arcogine factory-model validation.
 5. Game-only fields do not enter the canonical factory model merely to support challenge loading.
 
-### Implementation status (C1)
+### Implementation status (PLAN-CHAL-1)
 
-C1 is implemented as a new headless Gradle module, `:challenge` (`product/consumer/challenge`,
+PLAN-CHAL-1 is implemented as a new headless Gradle module, `:challenge` (`product/consumer/challenge`,
 package `com.arcogine.challenge`), with no `project(...)` dependency on `:types`, `:simulation`,
 `:factory`, `:economy`, `:finance`, `:api`, or `:cli`.
 
@@ -205,15 +205,15 @@ Implemented:
   call, extend, or share a result type with `FactoryModelValidator`.
 
 Not implemented, and not claimed by this validator (see "Validation boundary" above for why each
-belongs to a later gate rather than C1): catalogue-item resolution against real equipment offers
-and their existence/pricing (C2), construction-cost calculation, candidate placement/overlap/
-admissibility, affordability (C2), evaluation-policy implementation lookup and score/rating
-threshold coherence (C3), and any persistence/content-loading format that would translate absent
-or malformed external input into diagnostics (C5).
+belongs to a later gate rather than PLAN-CHAL-1): catalogue-item resolution against real equipment offers
+and their existence/pricing (PLAN-CHAL-2), construction-cost calculation, candidate placement/overlap/
+admissibility, affordability (PLAN-CHAL-2), evaluation-policy implementation lookup and score/rating
+threshold coherence (PLAN-CHAL-3), and any persistence/content-loading format that would translate absent
+or malformed external input into diagnostics (PLAN-CHAL-5).
 
 This module and its no-runtime-dependency boundary are also recorded in `docs/architecture/overview.md`.
 
-## 6. C2 — Catalogue, construction budget, draft economics, and candidate admissibility
+## 6. PLAN-CHAL-2 — Catalogue, construction budget, draft economics, and candidate admissibility
 
 ### Goal
 
@@ -243,7 +243,7 @@ The challenge evaluator and budget logic reason about catalogue item occurrences
 
 The game draft-authoring/projection layer maps one catalogue item occurrence into whatever supported canonical resource semantics the current model requires. That projection is an authoring convenience only; once published, Arcogine's canonical model is authoritative for production semantics.
 
-If the canonical definition/instance split later lands, this projection seam may simplify. C2 does not require that split as a prerequisite and must not duplicate canonical dispatch, capability, or execution semantics in the game.
+If the canonical definition/instance split later lands, this projection seam may simplify. PLAN-CHAL-2 does not require that split as a prerequisite and must not duplicate canonical dispatch, capability, or execution semantics in the game.
 
 ### 6.2 Candidate admissibility
 
@@ -281,7 +281,7 @@ Admissibility does **not** prove canonical executability. An admitted candidate 
 
 ### Acceptance criteria
 
-C2 is ready when:
+PLAN-CHAL-2 is ready when:
 
 1. Placing/removing game catalogue items updates construction cost deterministically.
 2. Unaffordable drafts can be rejected by game rules without mutating Arcogine runtime state.
@@ -293,9 +293,9 @@ C2 is ready when:
 8. An executable canonical factory may still be rejected for violating challenge rules, and an admitted candidate must still pass Arcogine executability validation before publication/run.
 9. The fixed challenge workload/input cannot be silently replaced by the candidate attempt.
 
-### Implementation status (C2 — complete)
+### Implementation status (PLAN-CHAL-2 — complete)
 
-C2 is **complete** across the C1, C2a, and C2b slices. The catalogue seam, deterministic
+PLAN-CHAL-2 is **complete** across the PLAN-CHAL-1, C2a, and C2b slices. The catalogue seam, deterministic
 draft-economics calculation, and deterministic candidate admissibility are implemented in the
 game-owned `:challenge` module (packages `com.arcogine.challenge.catalogue`,
 `com.arcogine.challenge.economics`, and `com.arcogine.challenge.admissibility`), with no
@@ -337,14 +337,14 @@ Implemented in C2b:
     bounds, overlap) and deterministic occurrence/item ordering. Economics failures are surfaced as
     explicit admissibility issues rather than being treated as budget failures.
 
-C2 completion does not make the game playable and satisfies no Engine Readiness gate. An admitted
+PLAN-CHAL-2 completion does not make the game playable and satisfies no Engine Readiness gate. An admitted
 candidate is not canonically executable: a later game-owned projection still requires Arcogine
 canonical validation before publication/run. Conversely, a canonically executable factory may
-remain inadmissible under a particular challenge. C3 is implemented independently of that
-projection; C3, C4, and C5 are now implemented (see C5's "Implementation status" subsection
+remain inadmissible under a particular challenge. PLAN-CHAL-3 is implemented independently of that
+projection; PLAN-CHAL-3, PLAN-CHAL-4, and PLAN-CHAL-5 are now implemented (see PLAN-CHAL-5's "Implementation status" subsection
 below).
 
-## 7. C3 — Deterministic challenge evaluation
+## 7. PLAN-CHAL-3 — Deterministic challenge evaluation
 
 ### Goal
 
@@ -383,7 +383,7 @@ This rule avoids requiring a second independent evaluator-version concept while 
 
 ### Acceptance criteria
 
-C3 is ready when:
+PLAN-CHAL-3 is ready when:
 
 1. Identical explicit evaluation inputs under the same evaluation-policy identity/version produce identical results.
 2. Success/failure can be explained through structured reasons rather than only a scalar score.
@@ -393,9 +393,9 @@ C3 is ready when:
 6. An old attempt retains the exact challenge and evaluation-policy identities/versions that produced its result.
 7. Reference fixtures can reproduce historical evaluation results under their recorded policy versions.
 
-### Implementation status (C3 — complete)
+### Implementation status (PLAN-CHAL-3 — complete)
 
-C3 is **complete** as a headless, deterministic evaluation capability in
+PLAN-CHAL-3 is **complete** as a headless, deterministic evaluation capability in
 `com.arcogine.challenge.evaluation`. `ChallengeEvaluationInput` carries the exact immutable
 `ChallengeDefinition`, opaque published-model and run references, narrow supplied
 `AuthoritativeOutcomeFacts`, and game-owned committed construction cost. It does not inspect or
@@ -415,11 +415,11 @@ a new `EvaluationPolicyIdentity` version.
 `ChallengeEvaluationResult` retains the exact challenge identity/version, policy identity/version,
 opaque model/run provenance, decision, immutable ordered reasons, deadline margin, unused budget,
 and score. Synthetic outcome fixtures demonstrate deterministic historical reproduction without an
-active Arcogine runtime. C3 does not create attempt history or comparison (C4), content loading or
-reference-content serialization (C5), a runtime adapter, a generic evaluation framework, or any
+active Arcogine runtime. PLAN-CHAL-3 does not create attempt history or comparison (PLAN-CHAL-4), content loading or
+reference-content serialization (PLAN-CHAL-5), a runtime adapter, a generic evaluation framework, or any
 Engine Readiness evidence. No playable game or Engine Readiness gate is claimed complete.
 
-## 8. C4 — Attempt provenance and design-to-design comparison
+## 8. PLAN-CHAL-4 — Attempt provenance and design-to-design comparison
 
 ### Goal
 
@@ -450,7 +450,7 @@ Only supported facts may be compared as authoritative production results. Game p
 
 ### Acceptance criteria
 
-C4 is ready when:
+PLAN-CHAL-4 is ready when:
 
 1. An attempt references the exact challenge version and admitted game-owned draft snapshot used.
 2. An attempt references the published model identity when publication succeeds.
@@ -459,15 +459,15 @@ C4 is ready when:
 5. Two synthetic attempts can be compared without Arcogine runtime internals.
 6. Later integration can add supported run/session provenance without changing the meaning of old game-owned records.
 7. Comparison distinguishes authoritative production facts from game-owned score/economics/draft facts.
-8. No comparison requirement implies Arcogine D5 semantic comparison unless a future product requirement explicitly asks Arcogine to explain semantic differences between published model versions.
+8. No comparison requirement implies Arcogine PLAN-FD-5 semantic comparison unless a future product requirement explicitly asks Arcogine to explain semantic differences between published model versions.
 
-### Implementation status (C4 — complete)
+### Implementation status (PLAN-CHAL-4 — complete)
 
-C4 is **complete** as a headless, deterministic attempt and comparison capability in
-`com.arcogine.challenge.attempt` and `com.arcogine.challenge.comparison`. It reuses C1-C3 facts
+PLAN-CHAL-4 is **complete** as a headless, deterministic attempt and comparison capability in
+`com.arcogine.challenge.attempt` and `com.arcogine.challenge.comparison`. It reuses PLAN-CHAL-1 to PLAN-CHAL-3 facts
 rather than duplicating them: `ChallengeAttempt` retains the exact admitted `CandidateDraftSnapshot`
-(C2), the exact historical `DraftEconomics` used (C2), and the exact `ChallengeEvaluationResult`
-(C3) -- which already carries the challenge identity/version, evaluation-policy identity/version,
+(PLAN-CHAL-2), the exact historical `DraftEconomics` used (PLAN-CHAL-2), and the exact `ChallengeEvaluationResult`
+(PLAN-CHAL-3) -- which already carries the challenge identity/version, evaluation-policy identity/version,
 and opaque model/run provenance. `ChallengeAttempt` does not recompute economics against the
 current catalogue or re-evaluate the result; `challengeIdentity()` and `evaluationPolicy()` are
 thin accessors onto the retained `ChallengeEvaluationResult`, not a second copy of those facts.
@@ -476,12 +476,12 @@ thin accessors onto the retained `ChallengeEvaluationResult`, not a second copy 
 distinct from, and never derived from, `ChallengeIdentity`, `EvaluationPolicyIdentity`, or any
 published-model/run reference. `ChallengeAttempt.record(...)` generates a fresh id and constructs
 an immutable attempt in one step; there is no separate lifecycle/state-machine, submission
-workflow, or persistence -- C4 needed only a reproducible completed-attempt record. Model/run
-provenance is carried exactly as C3 supplied it (via the required, non-blank `EvaluationProvenance`
-inside the retained result) and is never fabricated or substituted by C4 -- C3's existing contract
-requires a caller-supplied opaque model/run reference for every evaluation, so C4 has nothing
+workflow, or persistence -- PLAN-CHAL-4 needed only a reproducible completed-attempt record. Model/run
+provenance is carried exactly as PLAN-CHAL-3 supplied it (via the required, non-blank `EvaluationProvenance`
+inside the retained result) and is never fabricated or substituted by PLAN-CHAL-4 -- PLAN-CHAL-3's existing contract
+requires a caller-supplied opaque model/run reference for every evaluation, so PLAN-CHAL-4 has nothing
 optional to preserve here; a later integration that needs genuinely absent runtime provenance would
-require a C3 contract change, not a C4 one.
+require a PLAN-CHAL-3 contract change, not a PLAN-CHAL-4 one.
 
 `ChallengeAttemptComparator.compare(...)` in `com.arcogine.challenge.comparison` first checks
 `AttemptCompatibility`: two attempts are comparable only when they share the exact same
@@ -489,7 +489,7 @@ require a C3 contract change, not a C4 one.
 stable, ordered `AttemptIncompatibilityReason` codes (`attempt.challenge.mismatch`,
 `attempt.evaluationPolicy.mismatch`) instead of a silently misleading comparison. Compatible pairs
 produce an `AttemptComparison` of score delta, deadline-margin delta, unused-budget delta, and
-construction-cost delta -- all read directly from already-owned C2/C3 facts, plus a `winner`
+construction-cost delta -- all read directly from already-owned PLAN-CHAL-2/PLAN-CHAL-3 facts, plus a `winner`
 (`FIRST`/`SECOND`/`TIE`) derived solely from the shared policy's own score ordering. Comparison
 never re-evaluates either attempt and never mutates its inputs; attempt identity plays no part in
 the comparison outcome.
@@ -497,13 +497,13 @@ the comparison outcome.
 Tests in `ChallengeAttemptTest` and `ChallengeAttemptComparatorTest` cover immutability of the
 retained candidate snapshot and economics, non-recomputation of the evaluation result, deterministic
 and identity-independent comparison, and structured incompatibility for mismatched challenge or
-policy versions. C4 does not add persistence, a leaderboard, UI, REST/SSE endpoints, a generic
+policy versions. PLAN-CHAL-4 does not add persistence, a leaderboard, UI, REST/SSE endpoints, a generic
 comparison framework, or Governance evidence semantics; it does not claim canonical model
 projection or a completed Engine Readiness gate. Remaining work -- data-driven challenge content,
-reference-content serialization, and any durable attempt storage -- is deferred to C5 or later
+reference-content serialization, and any durable attempt storage -- is deferred to PLAN-CHAL-5 or later
 consumer integration.
 
-## 9. C5 — Data-driven challenges and reference fixtures
+## 9. PLAN-CHAL-5 — Data-driven challenges and reference fixtures
 
 ### Goal
 
@@ -518,7 +518,7 @@ Initial content should stay small. Useful challenge archetypes include:
 
 ### Acceptance criteria
 
-C5 is ready when:
+PLAN-CHAL-5 is ready when:
 
 1. Multiple challenge definitions can be loaded through one supported content path.
 2. Content validation is independent of rendering technology.
@@ -527,9 +527,9 @@ C5 is ready when:
 5. Content does not require engine behavior absent from the applicable readiness gates.
 6. At least one fixture proves a candidate can be canonically executable yet challenge-inadmissible.
 
-### Implementation status (C5 — complete)
+### Implementation status (PLAN-CHAL-5 — complete)
 
-C5's content-loading layer is implemented in `com.arcogine.challenge.content`
+PLAN-CHAL-5's content-loading layer is implemented in `com.arcogine.challenge.content`
 (`ChallengeContentLoader`, `EvaluationPolicyResolver`, `Json`/`JsonSyntaxException`,
 `ChallengeContentIssue`, `ChallengeContentLoadResult`,
 `EquipmentCatalogueContentLoadResult`). It decodes challenge and equipment-catalogue content from
@@ -619,7 +619,7 @@ budget, floor-bounds, and overlap outcomes.
 5. **Content does not require engine behavior absent from the applicable readiness gates -- met.**
    The content-loading layer (`com.arcogine.challenge.content`) has no dependency on `:types`,
    `:simulation`, `:factory`, `:economy`, `:finance`, `:api`, or `:cli`; it only decodes JSON into
-   existing C1/C2 game-owned types.
+   existing PLAN-CHAL-1/PLAN-CHAL-2 game-owned types.
 6. **At least one fixture proves a candidate can be canonically executable yet
    challenge-inadmissible -- met.** `CanonicalExecutableButChallengeInadmissibleTest`
    (module `consumer/challenge-factory-integration-test`) constructs a `FactoryModel` accepted by
@@ -632,7 +632,7 @@ document structurally only (it never itself calls `ChallengeDefinitionValidator`
 decodes and always content-validates one catalogue document in isolation, and neither previously
 called `EquipmentCatalogueValidator.validateChallengeResolution` or bound/verified catalogue
 provenance, so an unknown or ambiguous catalogue reference in `availableEquipment` -- and a
-challenge/catalogue pair C2's `CandidateAdmissibilityPolicy` would reject on catalogue identity or
+challenge/catalogue pair PLAN-CHAL-2's `CandidateAdmissibilityPolicy` would reject on catalogue identity or
 semantic fingerprint -- was never checked by the content-loading layer itself (only by tests that
 constructed both sides in Java). The new method decodes both documents, content-validates the
 challenge definition and the catalogue, binds/verifies catalogue-identity and
@@ -642,14 +642,14 @@ one deterministic result; it is covered by `loadsChallengeWithCatalogueWhenEvery
 `rejectsChallengeWithCatalogueWhenCatalogueItselfHasDuplicateItemIds`, and
 `rejectsChallengeWithCatalogueWhenTheDefinitionItselfIsContentInvalid`.
 
-With this pass, all six C5 acceptance criteria have executable proof. C5 is now considered
-**complete**. As with C1-C4, this does not make the game playable, is not Engine Readiness
-evidence, and does not itself expand the fixture set into every archetype named in the C5 goal
+With this pass, all six PLAN-CHAL-5 acceptance criteria have executable proof. PLAN-CHAL-5 is now considered
+**complete**. As with PLAN-CHAL-1 to PLAN-CHAL-4, this does not make the game playable, is not Engine Readiness
+evidence, and does not itself expand the fixture set into every archetype named in the PLAN-CHAL-5 goal
 narrative (identify-and-relieve-bottleneck, capacity/cost, capacity/transfer, tighter budget/
 deadline) as a full production content library -- it demonstrates that the content-loading path,
 once exercised by several varied fixtures, satisfies every stated acceptance criterion. A larger
 production reference-content catalogue remains a content-authoring task for later game
-integration, not an open C5 acceptance gap.
+integration, not an open PLAN-CHAL-5 acceptance gap.
 
 ## 10. Relationship to Engine Readiness
 
@@ -721,15 +721,15 @@ Reuse architectural principles immediately; extract shared concrete abstractions
 
 The tracks should compare lessons at three non-blocking checkpoints.
 
-**Identity review — after Challenge C1 and Governance G1**
+**Identity review — after Challenge PLAN-CHAL-1 and Governance PLAN-GOV-1**
 
 Compare semantic/content identity, historical identity, ruleset versioning, persistence needs, and the role of human labels versus durable identifiers.
 
-**Evaluation review — after Challenge C3 and Governance G4**
+**Evaluation review — after Challenge PLAN-CHAL-3 and Governance PLAN-GOV-4**
 
 Compare the stable semantics of subject, exact rule/policy version, evaluator semantic identity, result, explanation/findings, and deterministic reproduction. Ask whether a genuinely domain-neutral evaluation envelope exists; do not assume that it does.
 
-**Provenance review — after Challenge C4 and Governance G5**
+**Provenance review — after Challenge PLAN-CHAL-4 and Governance PLAN-GOV-5**
 
 Compare what exact subject, rules, evaluator policy, evidence/input, and result must be retained to reconstruct a historical decision. Evaluation provenance is the most plausible eventual convergence point, but remains an evidence-driven architecture decision.
 
@@ -761,7 +761,7 @@ Using only game-owned draft/economics facts plus synthetic authoritative outcome
 3. project the admitted candidate through the supported game-to-canonical seam without relying on reusable-type semantics absent from today's model;
 4. evaluate at least two attributable attempts under an exact evaluation-policy version;
 5. reproduce the same evaluations deterministically; and
-6. compare why the second attempt performed differently without depending on Arcogine runtime internals or D5 semantic comparison.
+6. compare why the second attempt performed differently without depending on Arcogine runtime internals or PLAN-FD-5 semantic comparison.
 
 That milestone proves the challenge/admissibility/evaluation boundary while Engine Readiness continues independently.
 

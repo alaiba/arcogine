@@ -91,6 +91,7 @@ test('disposition parsing', async (t) => {
 
   await t.test('a list-marked disposition still counts, a blockquoted one does not', () => {
     assert.equal(dispositionOf('- Disposition: READY TO MERGE'), 'READY TO MERGE');
+    // Quoted text is another review's verdict, not this one's.
     assert.equal(dispositionOf('> Disposition: **READY TO MERGE**'), null);
   });
 
@@ -151,6 +152,8 @@ test('required check identity (REV-003)', async (t) => {
     assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'FAILURE' }] }), comparison), 'CHANGES REQUIRED');
   });
 
+  // SKIPPED/NEUTRAL are green enough for an auxiliary context but prove nothing about the
+  // required one: a skipped gate ran no validation at all.
   await t.test('a skipped required gate is not validation evidence', () => {
     assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'SKIPPED' }] }), comparison), 'AWAITING');
   });
@@ -229,6 +232,8 @@ test('review-thread truncation (REV-008)', async (t) => {
     assert.equal(stateOf(truncated, comparison), 'AWAITING');
   });
 
+  // The resolver's answer changes, so --watch must see it: every returned thread is
+  // resolved in both cases, so openThreads alone would show no difference at all.
   await t.test('crossing the truncation boundary produces a watch signal', () => {
     const whole = pr({ reviews, threads: [{ isResolved: true }] });
     const before = stateLines(summarize(whole, comparison));
@@ -270,6 +275,8 @@ test('blocking review aggregation (REV-002)', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
+  // GitHub clears requested changes only on an approving review by the same collaborator,
+  // or on dismissal. A later COMMENT does not, so neither may this.
   await t.test('a later comment by the same author does NOT clear their CHANGES_REQUESTED', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
@@ -308,11 +315,15 @@ test('blocking review aggregation (REV-002)', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
+  // A PR must be able to leave CHANGES REQUIRED. AGENTS.md's cycle is remediate -> AWAITING
+  // for re-evaluation, so a disposition attached to a superseded commit must not pin the PR
+  // in CHANGES REQUIRED forever.
   await t.test('a CHANGES REQUIRED disposition on a superseded head becomes AWAITING', () => {
     const reviews = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, body: 'Disposition: **CHANGES REQUIRED**.' })];
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'AWAITING');
   });
 
+  // ...but a formal GitHub CHANGES_REQUESTED review is not cleared by pushing.
   await t.test('a formal CHANGES_REQUESTED review still blocks after the head moves', () => {
     const reviews = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, state: 'CHANGES_REQUESTED' })];
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
@@ -383,6 +394,9 @@ test('remaining lifecycle inputs', async (t) => {
     assert.equal(stateOf(pr({ reviews: vague }), comparison), 'AWAITING');
   });
 
+  // CI is not a reviewer disposition. A removed vocabulary value (or any other
+  // unrecognized text) must never authorize merge merely because required CI is green --
+  // only an explicit current-head READY TO MERGE disposition may.
   await t.test('a removed disposition value never authorizes merge, even with green CI', () => {
     const stale = [review({ at: '2026-01-01T00:00:00Z', body: 'Disposition: **READY AFTER CI**' })];
     assert.equal(stateOf(pr({ reviews: stale }), comparison), 'AWAITING');

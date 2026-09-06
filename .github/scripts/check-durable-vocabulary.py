@@ -13,7 +13,8 @@ This mechanical check is a syntactic baseline, not proof of semantic self-contai
 two tiers of pattern, deliberately scoped by collision risk:
 
 - BROAD patterns (`REV-123`, `Gate 4`/`Gate4...`, `DH-E`) are unambiguous enough to flag across
-  durable Markdown, Java/Javadoc comments, JS/TS test comments, and GitHub Actions workflow
+  durable Markdown, Java/Javadoc comments, JS/TS/TSX source and test comments, Python and Bash
+  tooling (including this repository's own `.github/scripts/`), and GitHub Actions workflow
   definitions.
 - NARROW compact patterns (bare `G1`, `O2`, `C1`, `D1`, `W1`) are collision-prone against ordinary
   prose and identifiers, so they stay scoped to the repository's durable reader-facing Markdown
@@ -41,19 +42,40 @@ DURABLE_MARKDOWN_DIRS = (
     ROOT / "docs" / "examples",
 )
 
-# Durable non-Markdown artifacts: source/test comments, test/class/file names, and workflow
-# definitions. Only the BROAD patterns apply here -- compact forms like "G1" are far too likely to
-# collide with ordinary code identifiers to scan blindly across all of product/ and infra/.
+# Durable non-Markdown artifacts: source/test comments, test/class/file names, workflow
+# definitions, and this repository's own policy/check tooling. Only the BROAD patterns apply here
+# -- compact forms like "G1" are far too likely to collide with ordinary code identifiers to scan
+# blindly across all of product/ and infra/.
 BROAD_SCAN_DIRS = (
     ROOT / "product",
     ROOT / "infra",
     ROOT / ".github" / "workflows",
+    ROOT / ".github" / "scripts",
 )
-BROAD_SCAN_SUFFIXES = {".java", ".mjs", ".yml", ".yaml"}
+BROAD_SCAN_SUFFIXES = {
+    ".java",
+    ".mjs",
+    ".js",
+    ".ts",
+    ".tsx",
+    ".py",
+    ".sh",
+    ".yml",
+    ".yaml",
+}
 
 # Planning documents are the legitimate home for these coordinates while work is active; never
 # scanned, regardless of file type.
 EXEMPT_DIRS = (ROOT / "docs" / "planning",)
+
+# This checker's own script and test fixtures are the canonical place these coordinate patterns
+# are documented and exercised as deliberate bad examples -- exactly the "process/policy material
+# where the temporary-coordinate syntax itself is the subject" exemption the policy allows. They
+# would otherwise fail their own broadened scan once .github/scripts/ is in scope.
+EXEMPT_FILES = (
+    ROOT / ".github" / "scripts" / "check-durable-vocabulary.py",
+    ROOT / ".github" / "scripts" / "check-durable-vocabulary.test.py",
+)
 
 SKIP_DIR_NAMES = {
     ".git",
@@ -96,6 +118,8 @@ NARROW_PATH_PATTERN = re.compile(
 
 def skipped(path: Path) -> bool:
     if any(part in SKIP_DIR_NAMES for part in path.parts):
+        return True
+    if path in EXEMPT_FILES:
         return True
     return any(exempt in path.parents or path == exempt for exempt in EXEMPT_DIRS)
 

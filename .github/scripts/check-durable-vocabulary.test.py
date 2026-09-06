@@ -90,13 +90,19 @@ def scanned_broad_paths(paths: list[str]) -> list[str]:
     with tempfile.TemporaryDirectory() as directory:
         old_root = MODULE.ROOT
         old_dirs = MODULE.BROAD_SCAN_DIRS
-        old_exempt = MODULE.EXEMPT_DIRS
+        old_exempt_dirs = MODULE.EXEMPT_DIRS
+        old_exempt_files = MODULE.EXEMPT_FILES
         try:
             MODULE.ROOT = Path(directory)
             MODULE.BROAD_SCAN_DIRS = tuple(
-                MODULE.ROOT / path for path in ("product", "infra", ".github/workflows")
+                MODULE.ROOT / path
+                for path in ("product", "infra", ".github/workflows", ".github/scripts")
             )
             MODULE.EXEMPT_DIRS = (MODULE.ROOT / "docs" / "planning",)
+            MODULE.EXEMPT_FILES = (
+                MODULE.ROOT / ".github" / "scripts" / "check-durable-vocabulary.py",
+                MODULE.ROOT / ".github" / "scripts" / "check-durable-vocabulary.test.py",
+            )
             for relative in paths:
                 path = MODULE.ROOT / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -105,7 +111,8 @@ def scanned_broad_paths(paths: list[str]) -> list[str]:
         finally:
             MODULE.ROOT = old_root
             MODULE.BROAD_SCAN_DIRS = old_dirs
-            MODULE.EXEMPT_DIRS = old_exempt
+            MODULE.EXEMPT_DIRS = old_exempt_dirs
+            MODULE.EXEMPT_FILES = old_exempt_files
 
 
 # --- Durable Markdown: unchanged baseline behavior ---------------------------------------------
@@ -189,6 +196,32 @@ def test_rev_identifier_is_rejected_in_js_test_comment() -> None:
 def test_rev_identifier_is_rejected_in_workflow_comment() -> None:
     text = "# REV-002 fixed the listener resolution\n"
     assert check_broad_content(text, ".yml") == ["REV-002"]
+
+
+def test_rev_identifier_is_rejected_in_typescript_comment() -> None:
+    text = "// REV-011: keep the reducer pure\n"
+    assert check_broad_content(text, ".tsx") == ["REV-011"]
+    assert check_broad_content(text, ".ts") == ["REV-011"]
+
+
+def test_rev_identifier_is_rejected_in_python_tooling() -> None:
+    text = "# REV-004: guard against an empty manifest\n"
+    assert check_broad_content(text, ".py") == ["REV-004"]
+
+
+def test_rev_identifier_is_rejected_in_shell_tooling() -> None:
+    text = "# REV-007 fixed the classifier regex\n"
+    assert check_broad_content(text, ".sh") == ["REV-007"]
+
+
+def test_own_checker_script_and_fixtures_are_exempt() -> None:
+    assert scanned_broad_paths(
+        [
+            ".github/scripts/check-durable-vocabulary.py",
+            ".github/scripts/check-durable-vocabulary.test.py",
+            ".github/scripts/check-pr-disposition.sh",
+        ]
+    ) == [".github/scripts/check-pr-disposition.sh"]
 
 
 def test_gate_identifier_is_rejected_in_broad_scan() -> None:

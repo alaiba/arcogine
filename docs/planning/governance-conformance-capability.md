@@ -1,9 +1,9 @@
 # Governance and Conformance Capability Plan
 
-> **Status:** Proposed; G1 complete, G2 (initial slice) complete, G3 complete, G4 (initial slice) complete  
+> **Status:** Proposed; PLAN-GOV-1 complete, PLAN-GOV-2 (initial slice) complete, PLAN-GOV-3 complete, PLAN-GOV-4 (initial slice) complete  
 > **Scope:** Establish the cross-domain substrate for durable semantic identity, controlled revision history, semantic change, requirements, conformance, evidence, and governed change  
-> **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, while current-state G1 behavior is also recorded in the architectural overview and accepted ADRs  
-> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Governance G1 Continuity Notes](governance-g1-continuity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
+> **Authority:** Planning only; this document defines delivery dependencies and readiness criteria, while current-state PLAN-GOV-1 behavior is also recorded in the architectural overview and accepted ADRs  
+> **Related:** [Governance and Conformance Architecture](../architecture/governance-conformance.md), [Governance PLAN-GOV-1 Continuity Notes](governance-continuity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md), [Product Charter](../product/charter.md), [Factory Design Capability Plan](factory-design-capability.md), [Factory Design Architecture](../architecture/factory-design.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Standards Alignment](../architecture/standards-alignment.md)
 
 ## 1. Purpose
 
@@ -55,34 +55,34 @@ FactoryModel
     -> runtime/result provenance work in progress
 ```
 
-ADR-0006 and its implementation establish the durable semantic fingerprint contract. ADR-0008 establishes controlled revision identity and lineage. G1.2 implements its value contracts, and G1.3 now implements authoritative revision acceptance, durable reopenable history, repository-level lineage integrity, and exact historical semantic-state resolution for the factory proving ground.
+ADR-0006 and its implementation establish the durable semantic fingerprint contract. ADR-0008 establishes controlled revision identity and lineage. PLAN-GOV-1-2 implements its value contracts, and PLAN-GOV-1-3 now implements authoritative revision acceptance, durable reopenable history, repository-level lineage integrity, and exact historical semantic-state resolution for the factory proving ground.
 
 The dependency order remains:
 
 ```text
-G1.1 durable semantic fingerprint                 complete
+PLAN-GOV-1-1 durable semantic fingerprint                 complete
           ↓
-G1.2 controlled revision identity/value contract  complete
+PLAN-GOV-1-2 controlled revision identity/value contract  complete
           ↓
-G1.3 authoritative revision persistence +
+PLAN-GOV-1-3 authoritative revision persistence +
      exact historical semantic-state resolution  complete
           ↓
-G1 durable identity/history substrate              complete
+PLAN-GOV-1 durable identity/history substrate              complete
           ↓
-G2 semantic ChangeSet                              complete (initial slice)
+PLAN-GOV-2 semantic ChangeSet                              complete (initial slice)
           ↓
-G3 requirement/assertion contract                  complete
+PLAN-GOV-3 requirement/assertion contract                  complete
           ↓
-G4 conformance evaluation/findings                 complete (initial slice)
+PLAN-GOV-4 conformance evaluation/findings                 complete (initial slice)
           ↓
-G5 evidence
+PLAN-GOV-5 evidence
           ↓
-G6 review/authorization/governed-change integration
+PLAN-GOV-6 review/authorization/governed-change integration
 ```
 
 Evaluating a proposed change's conformance before it is authorized is the strategic point (see [architecture §11](../architecture/governance-conformance.md#11-pre-change-conformance-is-strategically-important)); an authorization/deployment integration that isn't preceded by conformance evaluation would authorize changes Arcogine hasn't yet assessed.
 
-> **D5 semantic comparison is no longer only an editor convenience. It is an enabling primitive for governed change and impact analysis once the model seam is stable.**
+> **PLAN-FD-5 semantic comparison is no longer only an editor convenience. It is an enabling primitive for governed change and impact analysis once the model seam is stable.**
 
 This does not imply generic patch/merge infrastructure. The need is semantic change attribution.
 
@@ -93,22 +93,22 @@ The sibling [Operational Execution and Digital Twin Readiness](operational-execu
 The dependency is explicit:
 
 ```text
-Governance G1
+Governance PLAN-GOV-1
     durable semantic fingerprint + controlled revision identity/history
         |
         +--> Operational deployment / historical reconciliation
 
-Governance G2
+Governance PLAN-GOV-2
     semantic ChangeSet / impact
         |
         +--> Operational drift/calibration candidate change
 
-Governance G4
+Governance PLAN-GOV-4
     conformance / findings
         |
         +--> governed operational-change assessment when policy requires it
 
-Governance G5
+Governance PLAN-GOV-5
     Evidence + EvidenceUse
         |
         +--> independently provenanced operational observations used as evidence
@@ -116,7 +116,7 @@ Governance G5
 
 Operational Execution owns telemetry/external-observation acquisition, operational source trust/authenticity provenance, command/result facts, deployment target application/effective artifact provenance, and modeled-versus-observed reconciliation. Governance owns the durable revision/change/evaluation/evidence-use/finding semantics that may reference those facts.
 
-Governance G2's initial `ChangeSet`/`ImpactScope`/`SemanticChange` slice is implemented, and Governance G4's initial `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` slice is now implemented. New Operational work that needs semantic ChangeSets, impact attribution, or conformance evaluation must consume the Governance-owned G2/G4 contracts rather than create new synthetic or parallel production abstractions for O7 or similar downstream work. Clearly scoped synthetic fixtures remain acceptable only for genuinely outstanding sibling-owned capabilities such as G5 evidence-use semantics. Such fixtures do not satisfy the corresponding Governance gates and must not escape test/fixture scope as duplicate shared production abstractions. G1 revision fixtures are likewise no longer appropriate: G1 is complete, and the Governance-owned authoritative revision identity/history contract is available.
+Governance PLAN-GOV-2's initial `ChangeSet`/`ImpactScope`/`SemanticChange` slice is implemented, and Governance PLAN-GOV-4's initial `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` slice is now implemented. New Operational work that needs semantic ChangeSets, impact attribution, or conformance evaluation must consume the Governance-owned PLAN-GOV-2/PLAN-GOV-4 contracts rather than create new synthetic or parallel production abstractions for PLAN-OPS-7 or similar downstream work. Clearly scoped synthetic fixtures remain acceptable only for genuinely outstanding sibling-owned capabilities such as PLAN-GOV-5 evidence-use semantics. Such fixtures do not satisfy the corresponding Governance gates and must not escape test/fixture scope as duplicate shared production abstractions. PLAN-GOV-1 revision fixtures are likewise no longer appropriate: PLAN-GOV-1 is complete, and the Governance-owned authoritative revision identity/history contract is available.
 
 ## 3. Delivery principles
 
@@ -130,41 +130,41 @@ Governance G2's initial `ChangeSet`/`ImpactScope`/`SemanticChange` slice is impl
 8. Treat external requirement provenance as versioned input in addition to Arcogine's own requirement and assertion versioning. A standards-family label is not sufficient when an evaluation depends on a specific issuing authority, designation, edition/version, clause/locator, or adoption/profile.
 9. Do not bind raw external operational observations to a model fingerprint/revision at source. The revision relationship belongs to `EvidenceUse`, reconciliation, deployment correlation, or another interpretation record when applicable.
 10. Governance authorization and Operational deployment application are separate concerns. Governance may reference the deployment record but does not define adapter/application mechanics.
-11. Preserve future lineage extensions without implementing generic source-control semantics prematurely. G1.2 supports `0..1` parent today; branch refs, tags, multi-parent merges, and cryptographic revision-record integrity are deferred rather than forbidden.
+11. Preserve future lineage extensions without implementing generic source-control semantics prematurely. PLAN-GOV-1-2 supports `0..1` parent today; branch refs, tags, multi-parent merges, and cryptographic revision-record integrity are deferred rather than forbidden.
 
 ## 4. Delivery sequence
 
 ```text
-G1  Durable fingerprint and controlled revision lineage       complete
+PLAN-GOV-1  Durable fingerprint and controlled revision lineage       complete
     ↓
-G2  Semantic ChangeSet and impact model                        complete (initial slice)
+PLAN-GOV-2  Semantic ChangeSet and impact model                        complete (initial slice)
     ↓
-G3  Generic requirement/assertion contract                     complete
+PLAN-GOV-3  Generic requirement/assertion contract                     complete
     ↓
-G4  Conformance evaluation and findings                         complete (initial slice)
+PLAN-GOV-4  Conformance evaluation and findings                         complete (initial slice)
     ↓
-G5  Evidence and observation provenance
+PLAN-GOV-5  Evidence and observation provenance
     ↓
-G6  Governed change and external workflow integration
+PLAN-GOV-6  Governed change and external workflow integration
     ↓
-G7  Exceptions and risk acceptance
+PLAN-GOV-7  Exceptions and risk acceptance
     ↓
-G8  Framework/control mappings
+PLAN-GOV-8  Framework/control mappings
     ↓
-G9  Audit snapshots and compliance projections
+PLAN-GOV-9  Audit snapshots and compliance projections
 ```
 
-G1-G5 are architectural substrate. G6-G7 establish governance workflow integration. G8-G9 make conventional compliance automation possible without turning compliance into Arcogine's core ontology.
+PLAN-GOV-1 to PLAN-GOV-5 are architectural substrate. PLAN-GOV-6 to PLAN-GOV-7 establish governance workflow integration. PLAN-GOV-8 to PLAN-GOV-9 make conventional compliance automation possible without turning compliance into Arcogine's core ontology.
 
-## 5. G1 — Durable fingerprint and controlled revision lineage
+## 5. PLAN-GOV-1 — Durable fingerprint and controlled revision lineage
 
 ### Current status
 
-**Complete.** G1.1, G1.2, and G1.3 are implemented and executable.
+**Complete.** PLAN-GOV-1-1, PLAN-GOV-1-2, and PLAN-GOV-1-3 are implemented and executable.
 
-G1.1 provides the durable semantic fingerprint contract. G1.2 provides `ControlledRevisionId` and immutable controlled-revision/lineage/recording-provenance values. G1.3 provides the authoritative acceptance boundary, reopenable durable history, repository-level parent integrity, exact historical semantic-artifact resolution, fingerprint reverification, typed integrity failures, and concurrent duplicate-ID protection.
+PLAN-GOV-1-1 provides the durable semantic fingerprint contract. PLAN-GOV-1-2 provides `ControlledRevisionId` and immutable controlled-revision/lineage/recording-provenance values. PLAN-GOV-1-3 provides the authoritative acceptance boundary, reopenable durable history, repository-level parent integrity, exact historical semantic-artifact resolution, fingerprint reverification, typed integrity failures, and concurrent duplicate-ID protection.
 
-Downstream authorization, deployment, conformance, evidence, and result-provenance integrations validate their own use of G1 identities in their owning capabilities; they are not part of the immutable revision core and did not gate G1 closure.
+Downstream authorization, deployment, conformance, evidence, and result-provenance integrations validate their own use of PLAN-GOV-1 identities in their owning capabilities; they are not part of the immutable revision core and did not gate PLAN-GOV-1 closure.
 
 ### Goal
 
@@ -192,15 +192,15 @@ The invariant is:
 
 Equal semantic content may appear in multiple controlled revisions. A revision's existence does not imply approval, authorization, deployment, conformance, certification, or compliance.
 
-### G1.1 — Durable semantic fingerprint
+### PLAN-GOV-1-1 — Durable semantic fingerprint
 
 **Status: Complete.**
 
 ADR-0006 defines the versioned, cross-process `ModelFingerprint` contract and the first `factory-model:v1` policy. The implementation supplies the typed fingerprint and canonical binary encoding while retaining legacy `contentHash()` compatibility where needed.
 
-G1.1 remains the semantic-content identity layer only. It does not identify historical occurrences.
+PLAN-GOV-1-1 remains the semantic-content identity layer only. It does not identify historical occurrences.
 
-### G1.2 — Controlled revision identity and value contract
+### PLAN-GOV-1-2 — Controlled revision identity and value contract
 
 **Status: Complete.**
 
@@ -218,7 +218,7 @@ ADR-0008 fixes the following contract:
 - ID, fingerprint, lineage, and required recording provenance are immutable once accepted by the authoritative revision store;
 - `ChangeSet`, external workflow references, approval/authorization, deployment, conformance/evidence, labels, and model artifact storage are not fields in the minimum immutable revision core.
 
-The G1.2 value slice remains deliberately narrow:
+The PLAN-GOV-1-2 value slice remains deliberately narrow:
 
 ```text
 :types
@@ -230,9 +230,9 @@ The G1.2 value slice remains deliberately narrow:
     RevisionRecorder
 ```
 
-Those value invariants remain unchanged by G1.3.
+Those value invariants remain unchanged by PLAN-GOV-1-3.
 
-### G1.3 — Authoritative persistence and historical semantic-state resolution
+### PLAN-GOV-1-3 — Authoritative persistence and historical semantic-state resolution
 
 **Status: Complete.**
 
@@ -249,7 +249,7 @@ The current implementation provides:
     FileControlledRevisionAuthority
 ```
 
-`FileControlledRevisionAuthority` is the current durable adapter. It uses a local JDK filesystem authority root with versioned immutable revision records, immutable semantic-artifact records, a filesystem lock, and atomic revision-record installation. It was selected because the repository had no existing database/persistence infrastructure and G1.3 required executable restart durability without introducing heavyweight infrastructure.
+`FileControlledRevisionAuthority` is the current durable adapter. It uses a local JDK filesystem authority root with versioned immutable revision records, immutable semantic-artifact records, a filesystem lock, and atomic revision-record installation. It was selected because the repository had no existing database/persistence infrastructure and PLAN-GOV-1-3 required executable restart durability without introducing heavyweight infrastructure.
 
 The filesystem layout and binary record encoding are private adapter mechanics, not a selected permanent production persistence architecture. No new ADR was required: the only durable semantic artifact format used by the factory proving ground is the already accepted ADR-0006 `factory-model:v1` canonical representation. A future hard-to-reverse database, retention, migration, or artifact-store contract should receive its own ADR when selected.
 
@@ -295,31 +295,31 @@ The authority's consistency strategy installs/verifies the immutable artifact fi
 
 ### Acceptance criteria
 
-Criteria 1-5 define completion of the G1 identity/history substrate. Criteria 6-7 are cross-capability compatibility boundaries: G1 makes those references possible without absorbing downstream state into revision identity, while concrete downstream integrations are accepted in their owning capability slices.
+Criteria 1-5 define completion of the PLAN-GOV-1 identity/history substrate. Criteria 6-7 are cross-capability compatibility boundaries: PLAN-GOV-1 makes those references possible without absorbing downstream state into revision identity, while concrete downstream integrations are accepted in their owning capability slices.
 
-G1 is ready when:
+PLAN-GOV-1 is ready when:
 
-1. A durable semantic fingerprint contract is explicitly specified and testable across supported process/version boundaries. **Satisfied by G1.1.**
-2. Controlled revision identity/value semantics are implemented according to ADR-0008, including UUIDv4 identity, exactly one fingerprint, current `0..1` parent lineage, rollback-as-new-revision, and immutable recording provenance. **Satisfied by G1.2.**
-3. Controlled revisions have authoritative durable identities independent of process memory and semantic fingerprint equality. **Satisfied by G1.3 durable acceptance/reopen tests.**
-4. The authoritative store enforces revision-ID uniqueness, immutable ID-to-record binding, and parent existence/integrity under the chosen lineage policy. **Satisfied by G1.3 duplicate/rebind, lineage, failure-atomicity, and concurrency tests.**
-5. An authoritative controlled revision can resolve to the exact semantic state/artifact needed for historical reconstruction. **Satisfied by G1.3 canonical artifact resolution, reopen, fingerprint-reverification, and corruption tests.**
+1. A durable semantic fingerprint contract is explicitly specified and testable across supported process/version boundaries. **Satisfied by PLAN-GOV-1-1.**
+2. Controlled revision identity/value semantics are implemented according to ADR-0008, including UUIDv4 identity, exactly one fingerprint, current `0..1` parent lineage, rollback-as-new-revision, and immutable recording provenance. **Satisfied by PLAN-GOV-1-2.**
+3. Controlled revisions have authoritative durable identities independent of process memory and semantic fingerprint equality. **Satisfied by PLAN-GOV-1-3 durable acceptance/reopen tests.**
+4. The authoritative store enforces revision-ID uniqueness, immutable ID-to-record binding, and parent existence/integrity under the chosen lineage policy. **Satisfied by PLAN-GOV-1-3 duplicate/rebind, lineage, failure-atomicity, and concurrency tests.**
+5. An authoritative controlled revision can resolve to the exact semantic state/artifact needed for historical reconstruction. **Satisfied by PLAN-GOV-1-3 canonical artifact resolution, reopen, fingerprint-reverification, and corruption tests.**
 6. Authorization and deployment records can independently reference a revision without becoming revision identity. **Compatibility boundary fixed by ADR-0008; concrete authorization/deployment integration is accepted downstream.**
 7. A downstream result can retain the semantic fingerprint and, when applicable, the controlled revision ID. **Compatibility boundary; concrete result-provenance integration is accepted by the owning producer/consumer capability.**
 
 ### ADR status
 
-The identity decisions are fixed by ADR-0004, ADR-0006, and ADR-0008. G1.3 did **not** require a new ADR because its filesystem record layout, directory names, lock mechanics, and fingerprint-derived physical artifact key are private, replaceable adapter details rather than a selected permanent persistence architecture; the semantic artifact bytes themselves reuse ADR-0006's existing `factory-model:v1` contract.
+The identity decisions are fixed by ADR-0004, ADR-0006, and ADR-0008. PLAN-GOV-1-3 did **not** require a new ADR because its filesystem record layout, directory names, lock mechanics, and fingerprint-derived physical artifact key are private, replaceable adapter details rather than a selected permanent persistence architecture; the semantic artifact bytes themselves reuse ADR-0006's existing `factory-model:v1` contract.
 
 A new ADR remains appropriate if future work commits Arcogine to a hard-to-reverse production persistence, migration, retention, artifact-store, integrity, or multi-parent/ref contract.
 
-## 6. G2 — Semantic ChangeSet and impact model
+## 6. PLAN-GOV-2 — Semantic ChangeSet and impact model
 
 ### Current status
 
 **Complete for the initial slice.** The generic `ChangeSet` contract, its semantic-change taxonomy,
-its impact-scope seam, and its factory-domain (D5) comparison adapter are implemented and tested
-against the real G1.3 authoritative persistence boundary.
+its impact-scope seam, and its factory-domain (PLAN-FD-5) comparison adapter are implemented and tested
+against the real PLAN-GOV-1-3 authoritative persistence boundary.
 
 Implementation:
 
@@ -329,7 +329,7 @@ Implementation:
     ChangedEntityRef            stable (entityType, entityId) identity + presentation label
     SemanticChange               (kind, entity, detail)
     ImpactScope                  deterministic Set<ChangedEntityRef> derived from semantic changes;
-                                  intersects(Set<ChangedEntityRef>) is the future-G3 matching seam
+                                  intersects(Set<ChangedEntityRef>) is the future-PLAN-GOV-3 matching seam
     ExternalChangeReference      (system, identifier) -- association only
     ChangeProvenance             (source, reason, optional ExternalChangeReference)
     ChangeSet                    immutable record; deterministically re-sorts semantic changes in
@@ -340,7 +340,7 @@ Implementation:
                                   SemanticChangeExtractor.compare(...) -> ChangeSet, for both
                                   revision-to-revision and base-revision-to-candidate-snapshot paths
 
-:factory (com.arcogine.factory.change) -- domain-owned D5 comparison content
+:factory (com.arcogine.factory.change) -- domain-owned PLAN-FD-5 comparison content
     FactoryModelSemanticComparator implements SemanticChangeExtractor, keyed on MachineId /
         operation id / ProductId stable identity for add/remove/content classification; per
         ADR-0006 ("current list ordering remains semantic in v1"), a reorder of the top-level
@@ -387,7 +387,7 @@ Representative tests (exact names, see the listed files):
   `externalChangeRequestReferenceSurvivesEndToEnd`,
   `impactScopeIsUsableForFutureRequirementScopeMatching`.
 - `product/domains/factory/src/test/java/com/arcogine/factory/change/FactoryModelSemanticComparatorTest.java`
-  (pure D5 comparator unit tests) --
+  (pure PLAN-FD-5 comparator unit tests) --
   `identicalModelsWithIdenticalConstructionOrderProduceNoSemanticChanges`,
   `reorderingTopLevelResourcesIsAttributedAsEntityModifiedPerAdr0006`,
   `reorderingProductsIsAttributedAsEntityModified`,
@@ -397,18 +397,18 @@ Representative tests (exact names, see the listed files):
   `modifiedResourceCapacityIsClassifiedAsEntityModifiedByStableId`,
   `renamingAnEntityDoesNotChangeWhichEntityIsAffected`.
 
-**Boundary called out explicitly, per delivery principle 1 and the G2 acceptance criteria below:**
+**Boundary called out explicitly, per delivery principle 1 and the PLAN-GOV-2 acceptance criteria below:**
 acceptance criterion 4 ("impact analysis can determine which registered requirements are
-potentially affected") was satisfied at G2-close time only as an honest *seam* --
-`ImpactScope.intersects(Set<ChangedEntityRef>)` -- because G3's requirement registry did not exist
+potentially affected") was satisfied at PLAN-GOV-2-close time only as an honest *seam* --
+`ImpactScope.intersects(Set<ChangedEntityRef>)` -- because PLAN-GOV-3's requirement registry did not exist
 yet; `ChangeSetFactoryTest.impactScopeIsUsableForFutureRequirementScopeMatching` proved the seam
-against a hypothetical in-test scope only. G3 (below) now implements the requirement side of that
+against a hypothetical in-test scope only. PLAN-GOV-3 (below) now implements the requirement side of that
 seam (`RequirementScope`, `RequirementCatalogue`) and proves the same `ImpactScope` matches real
 registered `Requirement` values
 (`RequirementScopeTest.requirementScopeCanMatchExistingG2ImpactScope`,
-`RequirementCatalogueTest.impactAnalysisSelectsOnlyRequirementsWithIntersectingScope`). No G4+
+`RequirementCatalogueTest.impactAnalysisSelectsOnlyRequirementsWithIntersectingScope`). No PLAN-GOV-4+
 capability (assertion evaluation results, conformance findings, evidence, exceptions,
-authorization workflow) is implemented or claimed by G3.
+authorization workflow) is implemented or claimed by PLAN-GOV-3.
 
 ### Goal
 
@@ -428,7 +428,7 @@ external change-request reference
 
 ### Non-goal
 
-Do not build generic JSON patching, arbitrary text merge, collaborative cursors, or a distributed source-control system for models merely to satisfy G2.
+Do not build generic JSON patching, arbitrary text merge, collaborative cursors, or a distributed source-control system for models merely to satisfy PLAN-GOV-2.
 
 ### Impact analysis
 
@@ -444,10 +444,10 @@ Which runtime/deployment contexts would consume the changed model?
 
 ### Acceptance criteria
 
-G2 is ready when:
+PLAN-GOV-2 is ready when:
 
 1. Two relevant semantic states can be compared in domain terms rather than only byte-for-byte.
-   **Satisfied:** `ChangeSetFactory` resolves both states through the G1.3
+   **Satisfied:** `ChangeSetFactory` resolves both states through the PLAN-GOV-1-3
    `ControlledRevisionAuthority.resolve(...)` historical boundary and hands them to
    `FactoryModelSemanticComparator`, which compares `FactoryModel` content, not artifact bytes.
 2. Changed entities can be identified with stable domain identity. **Satisfied:**
@@ -461,16 +461,16 @@ G2 is ready when:
    `SemanticChangeKind` (`ENTITY_ADDED`/`ENTITY_REMOVED`/`ENTITY_MODIFIED`) applied to factory
    resources, operations, and products.
 4. Impact analysis can determine which registered requirements are potentially affected.
-   **Satisfied at G2-close time only as the minimum honest seam** --
+   **Satisfied at PLAN-GOV-2-close time only as the minimum honest seam** --
    `ImpactScope.intersects(Set<ChangedEntityRef>)` let a future requirement scope match against
-   affected entities without redesigning `ChangeSet`, since G3's requirement registry did not yet
-   exist. G3 (§7 below) now implements that registry (`RequirementScope`, `RequirementCatalogue`)
+   affected entities without redesigning `ChangeSet`, since PLAN-GOV-3's requirement registry did not yet
+   exist. PLAN-GOV-3 (§7 below) now implements that registry (`RequirementScope`, `RequirementCatalogue`)
    and proves it selects real registered requirements from a real `ImpactScope`.
 5. ChangeSet provenance can retain an external change-request identifier. **Satisfied:**
    `ChangeProvenance`/`ExternalChangeReference`, proven end-to-end by
    `externalChangeRequestReferenceSurvivesEndToEnd`.
 
-## 7. G3 — Generic requirement and assertion contract
+## 7. PLAN-GOV-3 — Generic requirement and assertion contract
 
 ### Current status
 
@@ -496,7 +496,7 @@ com.arcogine.governance.catalogue
 `ChangedEntityRef` already excludes its presentation-only `label`); an `Assertion`'s
 `AssertionRule` implementation is therefore explicitly never part of its identity, proven by
 `AssertionIdentityTest.assertionIdentityIsNotDerivedFromEvaluatorImplementationClass`.
-`RequirementScope` reuses G2's `ChangedEntityRef`/`ImpactScope` directly rather than introducing a
+`RequirementScope` reuses PLAN-GOV-2's `ChangedEntityRef`/`ImpactScope` directly rather than introducing a
 second entity-reference or impact abstraction, and `RequirementScope.intersects(ImpactScope)`
 delegates to the existing `ImpactScope.intersects(Set<ChangedEntityRef>)` seam. `RequirementCatalogue`
 is an immutable, in-memory, deterministically ordered registry -- not a database, workflow engine,
@@ -505,20 +505,20 @@ or framework-ingestion mechanism.
 The first proving requirement/assertion pair is Arcogine-native, structurally evaluable from
 authoritative state, and independent of external evidence
 (`StructuralProvingCaseTest`), using a minimal test-domain fixture rather than a permanent
-factory-owned policy or a duplicate of `FactoryModelValidator`, per the G3 non-goals. G4's
+factory-owned policy or a duplicate of `FactoryModelValidator`, per the PLAN-GOV-3 non-goals. PLAN-GOV-4's
 conformance-result model (`PASS`/`FAIL`/`UNKNOWN`/`NOT_APPLICABLE`, `Finding`,
-`ConformanceEvaluation`) and G5's evidence model (`Evidence`/`EvidenceUse`) are explicitly not
+`ConformanceEvaluation`) and PLAN-GOV-5's evidence model (`Evidence`/`EvidenceUse`) are explicitly not
 implemented; `EvidenceRequirementDeclarationTest
 .productionAssertionAndRequirementTypesContainNoG4OrG5Concepts` and
-`GovernanceModuleBoundaryTest` provide regression evidence for both the G4/G5 boundary and the
+`GovernanceModuleBoundaryTest` provide regression evidence for both the PLAN-GOV-4/PLAN-GOV-5 boundary and the
 `:factory`/Spring-free module boundary.
 
 No new ADR was required: this slice implements the requirement/assertion/scope shape already
 documented in [architecture §7](../architecture/governance-conformance.md#7-generic-conformance-model)
-and this plan's G3 acceptance criteria via ordinary, replaceable value/API decomposition. It does
+and this plan's PLAN-GOV-3 acceptance criteria via ordinary, replaceable value/API decomposition. It does
 not freeze a persistence model (the catalogue is in-memory only), an expression/query language
 (scope is a plain deterministic entity set, not a DSL), or a cross-domain authority decision beyond
-what G1/G2 already established.
+what PLAN-GOV-1/PLAN-GOV-2 already established.
 
 ### Goal
 
@@ -553,7 +553,7 @@ The first requirement should be Arcogine-native and structurally evaluable from 
 
 ### Acceptance criteria
 
-G3 is ready when:
+PLAN-GOV-3 is ready when:
 
 1. A requirement has stable identity and can be versioned separately from both the model it evaluates and the edition/version of any external source it cites.
    **Satisfied:** `RequirementId`/`RequirementVersion` carry no `ModelFingerprint`/
@@ -566,7 +566,7 @@ G3 is ready when:
    and `.assertionIdentityIsNotDerivedFromEvaluatorImplementationClass`.
 3. Scope selection is explicit and deterministic.
    **Satisfied:** `RequirementScope` is a plain, deterministically ordered `ChangedEntityRef` set
-   reusing the real G2 seam; proven by `RequirementScopeTest.scopeSelectionIsDeterministic`,
+   reusing the real PLAN-GOV-2 seam; proven by `RequirementScopeTest.scopeSelectionIsDeterministic`,
    `.scopeUsesStableChangedEntityIdentity`, `.requirementScopeCanMatchExistingG2ImpactScope`,
    `.unrelatedImpactDoesNotSelectRequirement`, and
    `RequirementCatalogueTest.impactAnalysisSelectsOnlyRequirementsWithIntersectingScope`.
@@ -586,7 +586,7 @@ G3 is ready when:
 7. The contract is generic enough to represent internal policy and architecture rules.
    **Satisfied:** `ArcogineNativeRequirementSource` requires no external metadata; proven by
    `RequirementSourceProvenanceTest.arcogineNativeRequirementDoesNotRequireExternalSourceMetadata`
-   and used by the G3 proving case itself.
+   and used by the PLAN-GOV-3 proving case itself.
 
 ### Test evidence
 
@@ -599,19 +599,19 @@ G3 is ready when:
   proves `:governance` stays domain-neutral (no `:factory`/Spring dependency in the main source
   set or main sources).
 
-## 8. G4 — Conformance evaluation and findings
+## 8. PLAN-GOV-4 — Conformance evaluation and findings
 
 **Status: implemented for its initial slice.** `com.arcogine.governance.conformance` adds the
 generic `ConformanceResult` taxonomy (`PASS`/`FAIL`/`UNKNOWN`/`NOT_APPLICABLE`), the immutable
 `ConformanceEvaluation` and `Finding` records, and the deterministic `ConformanceEvaluator` that
-turns one G3 `Requirement`/`Assertion<T>` pair, an optional G2 `ImpactScope`, an optional
+turns one PLAN-GOV-3 `Requirement`/`Assertion<T>` pair, an optional PLAN-GOV-2 `ImpactScope`, an optional
 authoritative state `T`, a `ModelFingerprint`, and an optional `ControlledRevisionId` into one
-`ConformanceEvaluation`. It consumes the real G2/G3 contracts directly -- no parallel scope,
+`ConformanceEvaluation`. It consumes the real PLAN-GOV-2/PLAN-GOV-3 contracts directly -- no parallel scope,
 change, or requirement representation -- and never calls `Instant.now()`, a random source, or any
 other system clock, so evaluation stays reproducible from its inputs alone. `Finding` is produced
 only for `FAIL`, enforced by `ConformanceEvaluation`'s canonical constructor, and it never
-synthesizes a `ControlledRevisionId` for an unpersisted candidate (mirroring `ChangeSet`/G1.3).
-This slice does **not** implement G5 evidence, authorization, deployment, workflow, a permanent
+synthesizes a `ControlledRevisionId` for an unpersisted candidate (mirroring `ChangeSet`/PLAN-GOV-1-3).
+This slice does **not** implement PLAN-GOV-5 evidence, authorization, deployment, workflow, a permanent
 severity taxonomy, persistence, or any REST/CLI/UI transport;
 `GovernanceModuleBoundaryTest.productionGovernanceCodeNeverReferencesG5PlusConcepts` provides
 regression evidence for that boundary.
@@ -619,7 +619,7 @@ regression evidence for that boundary.
 No new ADR was required: this slice implements the evaluation/finding shape already documented in
 [architecture §7](../architecture/governance-conformance.md#7-generic-conformance-model) via
 ordinary, replaceable value/API decomposition. It introduces no new durable identity, no
-persistence model, and no cross-domain authority decision beyond what G1-G3 already established.
+persistence model, and no cross-domain authority decision beyond what PLAN-GOV-1 to PLAN-GOV-3 already established.
 
 ### Goal
 
@@ -652,7 +652,7 @@ A failed result produces a finding rather than mutating the underlying business 
 
 ### Acceptance criteria
 
-G4 is ready when:
+PLAN-GOV-4 is ready when:
 
 1. The same semantic fingerprint/revision and requirement/assertion identities and versions produce deterministic structural results.
    **Satisfied:** `ConformanceEvaluator.evaluate` is a pure function of its arguments (no clock,
@@ -677,7 +677,7 @@ G4 is ready when:
 4. Evaluation output is immutable or historically attributable.
    **Satisfied:** `ConformanceEvaluation`/`Finding` are immutable records; the optional
    `ControlledRevisionId` is never fabricated when absent, and when supplied is resolved and
-   verified against the G1 `ControlledRevisionAuthority` as an authoritative binding to the
+   verified against the PLAN-GOV-1 `ControlledRevisionAuthority` as an authoritative binding to the
    evaluated `ModelFingerprint` rather than accepted as an unverified caller assertion, proven by
    `ConformanceEvaluatorTest
    .controlledRevisionIsAbsentAndNeverSynthesizedForAnUnpersistedCandidate`,
@@ -687,7 +687,7 @@ G4 is ready when:
 5. A proposed `ChangeSet` can be evaluated before authorization/deployment for at least one requirement.
    **Satisfied:** `PreChangeConformanceProvingCaseTest
    .preChangeCandidateIsEvaluatedAgainstRequirementsAffectedByItsRealImpactScope` builds a real
-   `ChangeSet` via `ChangeSetFactory` against the G1.3 authority, selects affected requirements
+   `ChangeSet` via `ChangeSetFactory` against the PLAN-GOV-1-3 authority, selects affected requirements
    from a real `RequirementCatalogue` via the resulting `ImpactScope`, and evaluates one with
    `ConformanceEvaluator` before any authorization or deployment concept is involved.
 
@@ -699,13 +699,13 @@ The last criterion is the first major strategic milestone: pre-change conformanc
   -- deterministic PASS/FAIL, `Finding` shape, `UNKNOWN` for missing evidence and for missing
   state, `NOT_APPLICABLE` distinctness, and optional/never-synthesized `ControlledRevisionId`.
 - `product/governance/src/test/java/com/arcogine/governance/conformance/PreChangeConformanceProvingCaseTest.java`
-  -- the pre-change proving case against real G1.3/G2/G3 contracts.
+  -- the pre-change proving case against real PLAN-GOV-1-3/PLAN-GOV-2/PLAN-GOV-3 contracts.
 - `product/governance/src/test/java/com/arcogine/governance/GovernanceModuleBoundaryTest.java` --
   extended with `productionGovernanceCodeNeverReferencesG5PlusConcepts`, a regression guard against
-  G5 evidence, authorization, deployment, or severity-taxonomy concepts appearing in production
+  PLAN-GOV-5 evidence, authorization, deployment, or severity-taxonomy concepts appearing in production
   Governance code ahead of their own gates.
 
-## 9. G5 — Evidence and observation provenance
+## 9. PLAN-GOV-5 — Evidence and observation provenance
 
 ### Goal
 
@@ -731,11 +731,11 @@ EvidenceUse (binds evidence to one evaluation)
 
 External evidence is generally reusable across model versions as long as each `EvidenceUse` independently re-establishes scope and applicability; only structural evidence derived directly from Arcogine's own model state naturally collapses the two into one record. Initial adapters should be driven by a concrete requirement, not a desire to match a vendor's integration count.
 
-Operational observations sourced through the sibling Operational Execution capability keep their operational observation ID, source/time/trust provenance, and lifecycle. G5 references those facts as `Evidence`; it does not re-ingest them, add a source-level revision binding, or create a second telemetry identity.
+Operational observations sourced through the sibling Operational Execution capability keep their operational observation ID, source/time/trust provenance, and lifecycle. PLAN-GOV-5 references those facts as `Evidence`; it does not re-ingest them, add a source-level revision binding, or create a second telemetry identity.
 
 ### Acceptance criteria
 
-G5 is ready when:
+PLAN-GOV-5 is ready when:
 
 1. External evidence is distinguishable from Arcogine-derived structural evidence.
 2. Evidence is attributable to source and observation time, independent of any model fingerprint or revision.
@@ -744,7 +744,7 @@ G5 is ready when:
 5. A historical evaluation can identify the evidence set (and the `EvidenceUse` bindings) it relied on.
 6. A pre-existing operational observation can be referenced as evidence without changing its operational identity or provenance.
 
-## 10. G6 — Governed change and external workflow integration
+## 10. PLAN-GOV-6 — Governed change and external workflow integration
 
 ### Goal
 
@@ -784,11 +784,11 @@ External change references are separate associations/provenance records, not imm
 
 If Arcogine later owns an authorization decision itself, that decision must be modeled explicitly with actor, authority, and provenance rather than inferred from mutable UI state.
 
-The Operational Execution capability owns applying the authorized revision to a target, adapter/profile/transformation provenance, effective applied-artifact/external-version identity, operational verification/result facts, and reconciliation. G6 owns the governed-change/authorization interpretation and references that operational deployment record when it exists.
+The Operational Execution capability owns applying the authorized revision to a target, adapter/profile/transformation provenance, effective applied-artifact/external-version identity, operational verification/result facts, and reconciliation. PLAN-GOV-6 owns the governed-change/authorization interpretation and references that operational deployment record when it exists.
 
 ### Acceptance criteria
 
-G6 is ready when:
+PLAN-GOV-6 is ready when:
 
 1. A `ChangeSet`/revision can reference an external change request through a separate association/provenance relationship.
 2. Impact and conformance information can be surfaced into the change workflow.
@@ -798,7 +798,7 @@ G6 is ready when:
 6. External project-management metadata is not duplicated without semantic need.
 7. A reviewer can trace a governed model transition back to the external record that tracked/governed the change.
 
-## 11. G7 — Exceptions and risk acceptance
+## 11. PLAN-GOV-7 — Exceptions and risk acceptance
 
 ### Goal
 
@@ -817,14 +817,14 @@ An approved exception does not change a failed assertion into `PASS`; it changes
 
 ### Acceptance criteria
 
-G7 is ready when:
+PLAN-GOV-7 is ready when:
 
 1. Findings retain their factual conformance result independently of disposition.
 2. Exceptions have rationale, accountable owner/approver, and effective/expiration periods.
 3. Expired exceptions become visible without rewriting history.
 4. Compensating controls/evidence can be linked when used.
 
-## 12. G8 — Controls and framework mappings
+## 12. PLAN-GOV-8 — Controls and framework mappings
 
 ### Goal
 
@@ -847,7 +847,7 @@ Do not attempt broad framework coverage. Select one small, legally permissible s
 
 ### Acceptance criteria
 
-G8 is ready when:
+PLAN-GOV-8 is ready when:
 
 1. Requirements and controls are versioned independently of business model revisions/fingerprints.
 2. One control can map to more than one requirement/framework.
@@ -855,7 +855,7 @@ G8 is ready when:
 4. Framework/mapping changes do not mutate historical evaluations.
 5. Evidence reuse respects scope, time, and semantic compatibility.
 
-## 13. G9 — Audit snapshots and compliance projections
+## 13. PLAN-GOV-9 — Audit snapshots and compliance projections
 
 ### Goal
 
@@ -882,7 +882,7 @@ The first useful UX can be headless/export-oriented. Do not build a large GRC da
 
 ### Acceptance criteria
 
-G9 is ready when:
+PLAN-GOV-9 is ready when:
 
 1. A historical compliance result can be reconstructed from explicit versioned inputs, including the Arcogine requirement/assertion identities and versions and the exact external requirement source identity that governed the evaluation, when applicable.
 2. The system can explain why a control passed, failed, or was unknown.
@@ -896,24 +896,24 @@ The first milestone should deliberately avoid a full external compliance framewo
 
 > **Take a proposed semantic change to an Arcogine model, derive its candidate fingerprint, persist a controlled revision linked through a separate association to an external change request, evaluate one Arcogine-native requirement before authorization/deployment, record the authorization decision separately, and reconstruct why the resulting semantic state was considered conformant.**
 
-G1 supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone, G2's initial slice supplies semantic change attribution and affected-entity identification, G3 supplies a registered, versioned requirement whose scope can match that affected-entity identification, and G4's initial slice now supplies deterministic pre-change assertion evaluation and findings (`PreChangeConformanceProvingCaseTest`). The milestone remains outstanding because G5/G6 must still provide evidence-use semantics and separate workflow/authorization records; G4 also does not yet provide durable persistence of evaluation results across later changes.
+PLAN-GOV-1 supplies the durable fingerprint, authoritative controlled revision, and exact historical-state prerequisites for this milestone, PLAN-GOV-2's initial slice supplies semantic change attribution and affected-entity identification, PLAN-GOV-3 supplies a registered, versioned requirement whose scope can match that affected-entity identification, and PLAN-GOV-4's initial slice now supplies deterministic pre-change assertion evaluation and findings (`PreChangeConformanceProvingCaseTest`). The milestone remains outstanding because PLAN-GOV-5/PLAN-GOV-6 must still provide evidence-use semantics and separate workflow/authorization records; PLAN-GOV-4 also does not yet provide durable persistence of evaluation results across later changes.
 
 Definition of done:
 
 ```text
-Durable semantic fingerprint contract exists                         [G1 complete]
-Controlled revision identity exists                                 [G1 complete]
-Authoritative controlled revision persistence exists                 [G1 complete]
-Exact historical semantic state is resolvable                        [G1 complete]
-Base revision -> ChangeSet -> candidate revision is attributable      [G2 complete]
-Affected entity is identified                                        [G2 complete]
-One versioned requirement applies                                    [G3 complete]
-Pre-change assertion evaluates deterministically                      [G4 complete]
-Finding is produced if violated                                       [G4 complete]
-External change-request provenance can be linked separately           [G6+]
-Authorization is a separate record referencing the revision           [G6+]
+Durable semantic fingerprint contract exists                         [PLAN-GOV-1 complete]
+Controlled revision identity exists                                 [PLAN-GOV-1 complete]
+Authoritative controlled revision persistence exists                 [PLAN-GOV-1 complete]
+Exact historical semantic state is resolvable                        [PLAN-GOV-1 complete]
+Base revision -> ChangeSet -> candidate revision is attributable      [PLAN-GOV-2 complete]
+Affected entity is identified                                        [PLAN-GOV-2 complete]
+One versioned requirement applies                                    [PLAN-GOV-3 complete]
+Pre-change assertion evaluates deterministically                      [PLAN-GOV-4 complete]
+Finding is produced if violated                                       [PLAN-GOV-4 complete]
+External change-request provenance can be linked separately           [PLAN-GOV-6+]
+Authorization is a separate record referencing the revision           [PLAN-GOV-6+]
 Deployment is not required to prove the milestone
-Historical evaluation remains attributable after later changes        [G5+]
+Historical evaluation remains attributable after later changes        [PLAN-GOV-5+]
 No framework-specific field exists on the business object
 ```
 
@@ -941,15 +941,15 @@ Those may become valid product capabilities later, but they should not distract 
 
 As implementation progresses:
 
-- [`../architecture/overview.md`](../architecture/overview.md) records G1's established current-state behavior;
-- [`governance-g1-continuity.md`](governance-g1-continuity.md) records the implemented G1.3 persistence/resolution mechanism and downstream continuity constraints;
+- [`../architecture/overview.md`](../architecture/overview.md) records PLAN-GOV-1's established current-state behavior;
+- [`governance-continuity.md`](governance-continuity.md) records the implemented PLAN-GOV-1-3 persistence/resolution mechanism and downstream continuity constraints;
 - keep [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) as the authority for semantic identity vs. revision identity and the external change-control boundary;
 - keep [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md) as the authority for the durable semantic fingerprint contract;
 - keep [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md) as the authority for controlled revision identity, current lineage cardinality, rollback, recording provenance, immutability, and the persistence boundary;
-- no G1.3 ADR was added because the current filesystem adapter is replaceable infrastructure and the semantic artifact format is already governed by ADR-0006;
+- no PLAN-GOV-1-3 ADR was added because the current filesystem adapter is replaceable infrastructure and the semantic artifact format is already governed by ADR-0006;
 - create a follow-up ADR if a future implementation commits to a hard-to-reverse production persistence, artifact-resolution, migration, retention, or revision-record-integrity contract;
 - update factory/domain architecture docs when later identity/change requirements alter those models;
-- update the sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) when G2/G4/G5 contract availability changes its blocked/fixture-backed criteria;
+- update the sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) when PLAN-GOV-2/PLAN-GOV-4/PLAN-GOV-5 contract availability changes its blocked/fixture-backed criteria;
 - update [`../architecture/standards-alignment.md`](../architecture/standards-alignment.md) when Arcogine moves from reference/mapping toward an actual tested conformance profile;
 - create later lineage ADRs only when concrete branch/ref/multi-parent merge semantics are required;
 - create ADRs for semantic `ChangeSet` contracts, temporal evidence semantics, and hard-to-reverse external protocols when implementation commits to them;

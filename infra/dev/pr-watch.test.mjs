@@ -48,7 +48,15 @@ test('disposition parsing', async (t) => {
   await t.test('reads an explicit final disposition', () => {
     assert.equal(dispositionOf(READY_BODY), 'READY TO MERGE');
     assert.equal(dispositionOf('Disposition: CHANGES REQUIRED'), 'CHANGES REQUIRED');
-    assert.equal(dispositionOf('Disposition: **NON-BLOCKING FOLLOW-UPS ONLY**'), 'NON-BLOCKING FOLLOW-UPS ONLY');
+  });
+
+  // Only two reviewer dispositions exist. CI is not a reviewer disposition, so a review
+  // that predates this simplification (or any other unrecognized vocabulary) must not be
+  // read as a verdict -- it resolves to null, which the lifecycle treats as AWAITING.
+  await t.test('removed/unsupported disposition vocabulary is not recognized', () => {
+    assert.equal(dispositionOf('Disposition: READY AFTER CI'), null);
+    assert.equal(dispositionOf('Disposition: **NON-BLOCKING FOLLOW-UPS ONLY**'), null);
+    assert.equal(dispositionOf('Disposition: APPROVED'), null);
   });
 
   // Regression: a review whose prose quoted "Disposition: READY TO MERGE" as an example was
@@ -74,7 +82,7 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf(null), null);
   });
 
-  // REV-005: an inline or code-quoted marker is discussion, and must not manufacture the
+  // An inline or code-quoted marker is discussion, and must not manufacture the
   // positive review authority needed to reach READY TO MERGE.
   await t.test('an inline or code-quoted marker is not a verdict when nothing is anchored', () => {
     assert.equal(dispositionOf('A reviewer may write `Disposition: READY TO MERGE` in prose.'), null);
@@ -87,7 +95,7 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf('> Disposition: **READY TO MERGE**'), null);
   });
 
-  // REV-005: the marker must actually END the review. A verdict followed by substantive
+  // The marker must actually END the review. A verdict followed by substantive
   // blocker prose is not the reviewer's final disposition.
   await t.test('a disposition followed by substantive prose is not final', () => {
     const body = [
@@ -108,7 +116,7 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf(body), 'CHANGES REQUIRED');
   });
 
-  // REV-005 (second pass): the final line must BE the verdict. A prefix-only match accepts
+  // The final line must BE the verdict. A prefix-only match accepts
   // a negated or qualified sentence that merely starts with the vocabulary.
   await t.test('same-line trailing prose or negation is not a verdict', () => {
     assert.equal(dispositionOf('Disposition: READY TO MERGE? Actually no.'), null);
@@ -120,11 +128,10 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf('Disposition: **READY TO MERGE**.'), 'READY TO MERGE');
     assert.equal(dispositionOf('Disposition: READY TO MERGE'), 'READY TO MERGE');
     assert.equal(dispositionOf('**Disposition: CHANGES REQUIRED**'), 'CHANGES REQUIRED');
-    assert.equal(dispositionOf('_Disposition: READY AFTER CI_'), 'READY AFTER CI');
   });
 });
 
-test('required check identity (REV-003)', async (t) => {
+test('required check identity', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
 
@@ -180,7 +187,7 @@ test('required check identity (REV-003)', async (t) => {
   });
 });
 
-test('terminal pull-request states (REV-006)', async (t) => {
+test('terminal pull-request states', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
 
@@ -215,7 +222,7 @@ test('terminal pull-request states (REV-006)', async (t) => {
   });
 });
 
-test('review-thread truncation (REV-008)', async (t) => {
+test('review-thread truncation', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
   const truncated = pr({ reviews });
@@ -236,15 +243,19 @@ test('review-thread truncation (REV-008)', async (t) => {
   });
 });
 
-test('review freshness against the base (REV-001)', async (t) => {
+test('base reconciliation ownership', async (t) => {
   const approved = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
 
   await t.test('ready when level with the base', () => {
     assert.equal(stateOf(pr({ reviews: approved }), { aheadBy: 1, behindBy: 0 }), 'READY TO MERGE');
   });
 
-  await t.test('a base advance invalidates an otherwise clean review', () => {
-    assert.equal(stateOf(pr({ reviews: approved }), { aheadBy: 1, behindBy: 1 }), 'AWAITING');
+  await t.test('a base advance is an implementation-owned reconciliation blocker', () => {
+    const resolved = resolveLifecycle(
+      summarize(pr({ reviews: approved }), { aheadBy: 1, behindBy: 1 }),
+    );
+    assert.equal(resolved.state, 'CHANGES REQUIRED');
+    assert.match(resolved.reasons.join('\n'), /reconcile with the current base before review/);
   });
 
   await t.test('base identity and distance are part of the watched state', () => {
@@ -255,7 +266,7 @@ test('review freshness against the base (REV-001)', async (t) => {
   });
 });
 
-test('blocking review aggregation (REV-002)', async (t) => {
+test('blocking review aggregation', async (t) => {
   await t.test('a later positive review cannot mask another reviewer standing blocker', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
@@ -325,7 +336,7 @@ test('blocking review aggregation (REV-002)', async (t) => {
   });
 });
 
-test('validation presence (REV-003)', async (t) => {
+test('validation presence', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
 
@@ -381,6 +392,31 @@ test('remaining lifecycle inputs', async (t) => {
   await t.test('a review with no explicit disposition awaits', () => {
     const vague = [review({ at: '2026-01-01T00:00:00Z', body: 'nice work' })];
     assert.equal(stateOf(pr({ reviews: vague }), comparison), 'AWAITING');
+  });
+
+  // CI is not a reviewer disposition. A removed vocabulary value (or any other
+  // unrecognized text) must never authorize merge merely because required CI is green --
+  // only an explicit current-head READY TO MERGE disposition may.
+  await t.test('a removed disposition value never authorizes merge, even with green CI', () => {
+    const stale = [review({ at: '2026-01-01T00:00:00Z', body: 'Disposition: **READY AFTER CI**' })];
+    assert.equal(stateOf(pr({ reviews: stale }), comparison), 'AWAITING');
+  });
+
+  await t.test('current-head READY with required CI pending awaits, not a CI-specific verdict', () => {
+    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+    const checks = [{ name: 'gate', conclusion: null, status: 'IN_PROGRESS' }];
+    assert.equal(stateOf(pr({ reviews: ready, checks }), comparison), 'AWAITING');
+  });
+
+  await t.test('current-head READY with required CI failure is CHANGES REQUIRED', () => {
+    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+    const checks = [{ name: 'gate', conclusion: 'FAILURE' }];
+    assert.equal(stateOf(pr({ reviews: ready, checks }), comparison), 'CHANGES REQUIRED');
+  });
+
+  await t.test('current-head READY with required CI success and mergeable is READY TO MERGE', () => {
+    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
+    assert.equal(stateOf(pr({ reviews: ready }), comparison), 'READY TO MERGE');
   });
 });
 

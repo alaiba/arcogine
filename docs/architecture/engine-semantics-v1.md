@@ -88,7 +88,7 @@ restating them. In scope:
   execution outcome are independent facts, so `Faulted` is not a variant of `Rejected`.
 
 Adoption by reference is deliberate. ADR-0007 is already normative and its rules are proven by
-`Gate3SessionControlAcceptanceTest`; restating them here would create two independently editable
+`SessionControlAcceptanceTest`; restating them here would create two independently editable
 statements of one contract, which is exactly the drift this document exists to prevent. The
 consequence is unchanged: a change to any rule above is a change to `engine-semantics:v1` and
 requires a new Engine semantics version, even though its text lives in ADR-0007.
@@ -608,7 +608,7 @@ normative semantics above using representative explicit inputs. The fixtures mus
 12. session/control rules adopted by section 1.2: `advanceUntil` converging with looping `advance()`
     under both bounds, reset-session reproduction, and the `Accepted`/`Rejected`/`Faulted` outcome
     shapes with `Rejected`'s zero-mutation guarantee — satisfied by ADR-0007's existing
-    `Gate3SessionControlAcceptanceTest` rather than duplicated here;
+    `SessionControlAcceptanceTest` rather than duplicated here;
 13. agreement between job transfer observation and destination resource admission-load observation;
 14. deterministic event-type/entity-reference ordering and simulated times;
 15. the section 10.1 derived-result arithmetic: `busyTicks` saturating at the maximum representable

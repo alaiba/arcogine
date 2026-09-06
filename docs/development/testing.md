@@ -199,16 +199,24 @@ The Java-related build jobs use Temurin 21, and frontend-containing jobs use Nod
 
 The `classify` job inspects the changed files (PR diff against its base, or the pushed commit range on `main`) and sets `backend`/`frontend`/`docker`/`docs_only` outputs consumed by `if:` conditions on the other jobs:
 
-- A change under `.github/workflows/`, `arcogine`, Gradle build files, `product/interfaces/web/package(-lock).json`/`tsconfig`, or `infra/docker/` is treated as touching **every** subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
+- A change under `.github/workflows/`, `arcogine`, Gradle build files, `product/interfaces/web/package(-lock).json`/`tsconfig`, or `infra/docker/` other than `infra/docker/.env.example` is treated as touching **every** subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
 - A change confined to `product/{types,simulation,domains,agents,interfaces/api,interfaces/cli}/` sets `backend`.
 - A change confined to `product/interfaces/web/` sets `frontend`.
-- A change confined to `infra/docker/` or `.env.example` sets `docker`.
+- A change confined to `infra/docker/.env.example` sets `docker`.
 - A change touching **only** `docs/`, `README.md`, or other `*.md` files (and none of the above) sets `docs_only`, which skips Java tests, Playwright, the dist/Docker build, and the two dependency-scan jobs.
 - **Fail-safe default:** any changed file that is neither documentation nor a recognized subsystem/CI path (e.g. `product/gradlew`, `.trivyignore`, a brand-new top-level directory) is "unknown" and forces `backend`/`frontend`/`docker` all `true` — an unrecognized path can never fall through to `docs_only`'s skip behavior by accident.
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
 - `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
 
 The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the four `key=true|false` outputs), separated from the git/GitHub-context plumbing that builds the file list in the workflow step. `.github/scripts/classify-changes.test.sh` is a small table-driven test over that script — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression in the classifier fails visibly instead of silently under-running checks. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
+
+`infra/dev/pr-watch.test.mjs` covers the PR lifecycle resolver in `infra/dev/pr-watch.mjs`, which decides whether a pull request is `AWAITING`, `CHANGES REQUIRED`, or `READY TO MERGE` (see the PR monitoring section of [AGENTS.md](../../AGENTS.md)). The cases are synthetic — no network, no dependencies, only Node builtins — and concentrate on the paths where a wrong answer reports a PR merge-ready when it is not: required-check identity and success, base-branch movement invalidating an earlier review, per-author blocking-review lifetime, final-disposition parsing, and connection truncation. Like the classifier test it runs as a step in the always-running `classify` job, so it cannot be skipped by a docs-only or backend-only classification. Run it locally with:
+
+```bash
+node --test infra/dev/pr-watch.test.mjs
+```
+
+Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODULE_NOT_FOUND` rather than discovering the suite.
 
 ### Scheduled and manual security runs
 

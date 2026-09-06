@@ -46,24 +46,26 @@ import java.util.stream.Stream;
  * {@code FactoryHandler} is not exposed directly; observation happens through this type's own
  * read-only projections.
  *
- * <p>This class implements Gate 3 (docs/planning/factory-simulation-engine-readiness.md §7):
- * consumer-neutral session/control semantics layered onto the exclusive {@link FactoryHandler}/
- * {@link Scheduler} pair from Gate 1/2. {@link #modelVersion()} identifies the published model the
- * session was instantiated from throughout its lifetime; {@link #advance()} and {@link
- * #advanceUntil} give a caller both one-event-at-a-time and bounded-simulated-time control; {@link
- * #reset()} gives a caller a fresh session over the same published model; {@link #submitWorkload}
- * and {@link #setMachineAvailability} return a definite {@link CommandResult} rather than throwing
- * or returning {@code void}; {@link #pendingWorkView()} exposes the cross-machine multi-eligible
- * backlog that no single machine's queue depth reflects. It deliberately does not attempt a generic
- * simulation-session framework. Gate 4-A adds the opaque run identity and current-state
- * observation; Gate 4-B adds the supported {@link RuntimeEventEnvelope} contract -- {@link
+ * <p>This class implements the consumer-neutral session-control boundary
+ * (docs/planning/factory-simulation-engine-readiness.md §7): consumer-neutral session/control
+ * semantics layered onto the exclusive {@link FactoryHandler}/{@link Scheduler} pair underlying
+ * the runtime-boundary and multi-resource-dispatch criteria of the same readiness plan. {@link
+ * #modelVersion()} identifies the published model the session was instantiated from throughout
+ * its lifetime; {@link #advance()} and {@link #advanceUntil} give a caller both
+ * one-event-at-a-time and bounded-simulated-time control; {@link #reset()} gives a caller a fresh
+ * session over the same published model; {@link #submitWorkload} and {@link
+ * #setMachineAvailability} return a definite {@link CommandResult} rather than throwing or
+ * returning {@code void}; {@link #pendingWorkView()} exposes the cross-machine multi-eligible
+ * backlog that no single machine's queue depth reflects. It deliberately does not attempt a
+ * generic simulation-session framework. The opaque run identity and current-state observation sit
+ * alongside the supported {@link RuntimeEventEnvelope} contract -- {@link
  * #drainSupportedEvents()} -- published only after the authoritative transition each event
  * describes has already succeeded, with {@link RuntimeObservationMetadata#latestEventSequence()}
  * advancing in lockstep. Retained, cursor-replayable supported-event history is deliberately not
- * this type's responsibility (ADR-0011 §8, DH-E): {@link #drainSupportedEvents()} returns and
+ * this type's responsibility (ADR-0011 §8): {@link #drainSupportedEvents()} returns and
  * clears only the events accumulated since it was last called, so a caller wanting durable replay
  * owns that retention itself. Persistence/recovery/checkpoint/replay semantics and consumer
- * (SSE/frontend) migration remain later Gate 4 work.
+ * (SSE/frontend) migration remain later work on this supported boundary.
  */
 public class FactoryRuntime {
 
@@ -77,7 +79,7 @@ public class FactoryRuntime {
     /**
      * The simulated time {@link #observe()} reports: the time as of the most recent supported
      * boundary (session construction, or the last emitted {@link RuntimeEventEnvelope}), not
-     * whatever the internal scheduler's cursor currently says (ADR-0011 REV-003).
+     * whatever the internal scheduler's cursor currently says (ADR-0011).
      *
      * <p>{@link Scheduler#nextEvent()} advances its cursor for every event it hands out, including
      * internal markers {@link FactoryHandler#handleEvent} ignores. Reading it directly would let a
@@ -107,8 +109,7 @@ public class FactoryRuntime {
 
     /**
      * The published model version this session was instantiated from, retained for the lifetime of
-     * the session so a caller can identify its source model without tracking it separately (Gate 3
-     * acceptance criterion 7).
+     * the session so a caller can identify its source model without tracking it separately.
      */
     public FactoryModelVersion modelVersion() {
         return modelVersion;
@@ -121,8 +122,8 @@ public class FactoryRuntime {
 
     /**
      * Constructs a fresh {@link FactoryRuntime} over the same {@link #modelVersion()}, with none of
-     * this session's submitted workload or dispatch state carried over (Gate 3 acceptance criterion
-     * 6: reset and reproduce the same result). This session itself is left untouched -- reset is
+     * this session's submitted workload or dispatch state carried over (reset and reproduce the same
+     * result from the same published model). This session itself is left untouched -- reset is
      * fresh construction, not in-place mutation, matching {@code FactoryRuntime}'s existing
      * immutable-identity/exclusive-ownership shape: replaying the same command sequence against the
      * returned session reproduces the same result as replaying it against any other fresh session
@@ -208,7 +209,7 @@ public class FactoryRuntime {
                     modelVersion);
         }
 
-        // REV-001: Machine#setAvailability is a no-op when the machine is already in the
+        // Machine#setAvailability is a no-op when the machine is already in the
         // requested online/offline state (e.g. bringing an already-idle machine online again).
         // Only genuinely applied transitions -- online while previously Offline, or offline while
         // previously not Offline -- may emit MACHINE_AVAILABILITY_CHANGED and advance the
@@ -216,7 +217,7 @@ public class FactoryRuntime {
         boolean wasOffline = machine.get().state() == MachineState.Offline;
         boolean transitioned = online == wasOffline;
 
-        // REV-002: snapshot every not-yet-dispatched job before mutating, so a genuine dispatch
+        // Snapshot every not-yet-dispatched job before mutating, so a genuine dispatch
         // cascade triggered by this transition can be reported as JOB_DISPATCHED events derived
         // from the resulting authoritative state, not copied from internal scheduler machinery.
         List<JobView> waitingBefore = transitioned
@@ -265,7 +266,7 @@ public class FactoryRuntime {
      * Emits {@link RuntimeEventType#JOB_DISPATCHED} for every job in {@code waitingBefore} that
      * has since transitioned to {@link JobStatus#InProgress} -- the genuine dispatch-cascade
      * outcome of a machine coming online, derived by diffing authoritative job state rather than
-     * inspecting internal scheduler machinery (ADR-0011 REV-002). Ordered deterministically by
+     * inspecting internal scheduler machinery (ADR-0011). Ordered deterministically by
      * order id then ordinal so repeated runs of the same scenario produce identical event streams.
      */
     private void emitNewlyDispatchedJobs(List<JobView> waitingBefore, SimTime time) {
@@ -291,7 +292,7 @@ public class FactoryRuntime {
      * more than one machine is eligible for its current step, or the single eligible machine's own
      * queue otherwise. Together with the enriched {@link RuntimeEventPayload.OrderAccepted}, this
      * lets a consumer reconstruct the job creation/assignment/pending-work deltas {@link
-     * FactoryHandler#submitOrder} can produce (ADR-0011 REV-002).
+     * FactoryHandler#submitOrder} can produce (ADR-0011).
      */
     private void emitJobPlacementEvents(OrderId orderId, List<JobId> jobIds, SimTime time) {
         Map<JobId, Set<MachineId>> pendingEligibility = pendingWorkView().stream()
@@ -333,7 +334,7 @@ public class FactoryRuntime {
     /**
      * The authoritative placement of one job: what it is doing, where, and for which step. Any
      * difference between two snapshots of this triple is an authoritative placement change a
-     * consumer must be told about through the supported event stream (ADR-0011 REV-002) -- the step
+     * consumer must be told about through the supported event stream (ADR-0011) -- the step
      * index is part of it because a job can legitimately be re-dispatched onto the same machine for
      * its next routing step.
      */
@@ -366,7 +367,7 @@ public class FactoryRuntime {
      * snapshot/diff derivation {@link #emitNewlyDispatchedJobs} already uses for the
      * machine-availability cascade, widened to cover both directions of placement change.
      *
-     * <p>This is what closes the {@code TaskEnd} path (ADR-0011 REV-002). Completing a step frees
+     * <p>This is what closes the {@code TaskEnd} path (ADR-0011). Completing a step frees
      * capacity, and {@code FactoryHandler} re-places not only the completing job onto its next
      * routing step but also whatever queued or multi-eligible backlog work that freed machine can
      * now accept; reporting only {@code JOB_STEP_COMPLETED} would leave a consumer unable to derive
@@ -410,10 +411,10 @@ public class FactoryRuntime {
     }
 
     /**
-     * Read-only view of work waiting for one of several eligible machines to free up (Gate 2's
+     * Read-only view of work waiting for one of several eligible machines to free up (the
      * cross-machine multi-eligible backlog) -- not reflected in any single machine's {@link
      * MachineView#queueDepth()}. See {@link PendingWorkView} for why this is a necessary, separate
-     * projection (Gate 3 acceptance criterion 5).
+     * projection.
      */
     public List<PendingWorkView> pendingWorkView() {
         return factory.pendingWorkView();
@@ -455,7 +456,7 @@ public class FactoryRuntime {
      * evidence of a further authoritative fact (order completion) that already happened -- never
      * itself re-exposed as the supported payload. {@code activeBefore} is the pre-mutation
      * machine-assignment snapshot {@link #advance()} took, diffed here so every placement change the
-     * transition authoritatively caused is reported too (ADR-0011 REV-002).
+     * transition authoritatively caused is reported too (ADR-0011).
      */
     private void recordSupportedEventsFor(
             Event trigger, List<Event> triggeredInternalEvents, Map<JobId, JobPlacement> activeBefore) {
@@ -501,7 +502,7 @@ public class FactoryRuntime {
         eventSequence++;
         // The supported boundary moves as one: sequence and observed time advance together, so
         // every observation-visible metadata/performance fact stays coherent with the sequence a
-        // consumer cursors from (ADR-0011 REV-003).
+        // consumer cursors from (ADR-0011).
         observedTime = time;
         pendingSupportedEvents.add(new RuntimeEventEnvelope(
                 runId, eventSequence, time, eventType, modelVersion.fingerprint(), Optional.empty(), refs, payload));
@@ -518,8 +519,8 @@ public class FactoryRuntime {
      * still advances monotonically and independently of draining (so {@link
      * RuntimeObservationMetadata#latestEventSequence()} is unaffected by when a caller drains), but
      * this type does not itself keep an unbounded, cursor-addressable event history -- that is a
-     * separately-named responsibility for later distribution hardening (ADR-0011 §8, DH-E), not
-     * part of the Gate 4 semantic contract. A caller that needs durable replay must retain the
+     * separately-named responsibility for later distribution hardening (ADR-0011 §8), not
+     * part of this supported-boundary contract. A caller that needs durable replay must retain the
      * drained events itself.
      */
     public List<RuntimeEventEnvelope> drainSupportedEvents() {
@@ -534,13 +535,13 @@ public class FactoryRuntime {
      * {@code targetTime}, or {@code maxEvents} events have already been processed by this call.
      * Returns every event actually processed, in processing order (empty if none were).
      *
-     * <p>This is the bounded-advancement primitive Gate 3 requires (acceptance criterion 4):
+     * <p>This is the session-control boundary's bounded-advancement primitive:
      * interactive consumers use it for pause/resume and normal/accelerated presentation speeds
      * without wall-clock sleeping in the simulation core, and headless consumers use it as
      * protection against unbounded work monopolizing a call. It is provably equivalent to looping
      * {@link #advance()} one event at a time under the same two stopping conditions -- it does not
      * reorder, skip, merge, or otherwise reinterpret events -- so a caller can freely mix the two
-     * without affecting determinism; {@code Gate3SessionControlAcceptanceTest} proves the two
+     * without affecting determinism; {@link SessionControlAcceptanceTest} proves the two
      * approaches converge to identical ordered event streams and identical terminal state for the
      * same model/workload.
      *
@@ -610,7 +611,7 @@ public class FactoryRuntime {
      * This does not expose internal scheduler events; see {@link #drainSupportedEvents()} for the
      * supported runtime events this observation's {@code latestEventSequence} cursors.
      *
-     * <p>Every fact reported here is coherent with one supported boundary (ADR-0011 REV-003):
+     * <p>Every fact reported here is coherent with one supported boundary (ADR-0011):
      * metadata time and the time-derived throughput come from {@link #observedTime}, and {@link
      * RuntimeRunState} from pending <em>authoritative</em> work, so processing an internal no-op
      * marker cannot produce a second, different observation at the same {@code

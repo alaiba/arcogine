@@ -24,10 +24,26 @@ Common shorthand should be interpreted in repository context:
 - “check repo state” means inspect the state of this repository;
 - references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
 
-PR workflow shorthand has distinct review and remediation meanings:
+Repository workflow shorthand has distinct meanings:
 
 - `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
-- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available.
+- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available;
+- `.?` = perform the Session-close Kaizen review before ending or deleting the current session.
+
+### Session-close Kaizen
+
+When the user's entire message is `.?`, inspect the current session and live repository for anything learned, decided, repeated, or encountered that should survive deletion of the conversation by changing executable safeguards, standard work, or maintained repository knowledge.
+
+Classify each material candidate as one of:
+
+- **Already encoded** — the repository already captures the lesson or invariant adequately; make no duplicate change.
+- **Bake in** — the lesson is durable and generally reusable; identify the narrowest authoritative repository surface that should encode it.
+- **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being smuggled into the current PR or slice.
+- **Discard** — the observation is situational, transient, or otherwise not worth preserving.
+
+Prefer stronger forms of durable capture in this order when they fit the lesson: executable guard/test, canonical helper/tooling, agent/contributor standard work, maintained documentation, then an ADR only for genuinely architectural or hard-to-reverse decisions. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
+
+Do not manufacture a lesson merely to produce an output. Finish every Session-close Kaizen review with an explicit deletion verdict: either the session is safe to delete because nothing unique remains, or name exactly what still needs to be captured first.
 
 Do not replace known repository context with generic GitHub discovery.
 
@@ -52,18 +68,49 @@ Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable
 authorities.
 
-## Planning coordinates and durable documentation
+## Temporary delivery coordinates and durable documentation
 
-Initiative-local stage, gate, and slice identifiers are delivery coordinates. They may be used in
-`docs/planning/`, issues, pull requests, handoff prompts, and other active delivery context where the
-coordinate helps sequence work.
+Arcogine planning coordinates use the reserved `PLAN-<TRACK>-<LOCAL-ID>` namespace (for example, a
+hierarchical item might read `PLAN-<TRACK>-4-B`). `<TRACK>` is a stable, repository-wide track code
+(currently `FD` Factory Design, `ENG` Factory Simulation Engine, `GOV` Governance/Conformance,
+`CHAL` Factory-Design Challenge, `OPS` Operational Execution/Digital Twin); `<LOCAL-ID>` is one or
+more hyphen-separated segments, extended for hierarchical items rather than inventing another
+namespace. Compact, ad-hoc, or track-local coordinate syntax (a bare letter+number, a dotted or
+space-separated variant, etc.) must not be introduced — the whole point of one reserved namespace
+is that a temporary coordinate is always unmistakable on sight. PR-local review/finding
+identifiers use the separate `REV-<NNN>` namespace.
 
-Do not carry those identifiers into durable documentation. When a planned result is recorded in an
-ADR, architecture, product, reference, or development document, translate it into the semantic
-capability, contract, identity, invariant, or behavior it actually represents. Working/process
-material may mention a planning coordinate when the coordinate itself is the subject, but durable
-semantic claims must remain understandable after the originating plan is completed, condensed,
-renamed, or removed.
+Both namespaces are temporary delivery coordinates. They may be used in `docs/planning/`, issues,
+pull requests, PR descriptions/comments, reviews, branch names, commit messages, handoff prompts,
+and other active/delivery-history context where the coordinate helps sequence or track work — see
+[`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s commit message guidance, which this section
+does not change.
+
+Do not carry those identifiers into durable semantic naming — content whose meaning is expected to
+outlive the delivery context that produced it. This includes ADR, architecture, product, reference, or
+development documents; code comments; workflow definitions; and test/class/file names introduced
+alongside the change. It does not include commit messages or other delivery-history records, which
+may keep the coordinate that was actually used to track the work. When a planned result, a review
+finding's resolution, or other delivery-context outcome is recorded as durable semantic naming,
+translate it into the semantic capability, contract, identity, invariant, or behavior it actually
+represents rather than naming it after the coordinate that tracked it. Working/process material
+may mention a temporary delivery coordinate when the coordinate itself is the subject, but durable
+semantic claims must remain understandable without reconstructing that coordinate after the
+originating plan, PR, or review is completed, condensed, renamed, or removed.
+
+Planning filenames are semantic, not coordinate-derived: the delivery label belongs in a planning
+document's content, not its path, so the filename keeps describing the subject if sequencing
+changes later.
+
+The mechanical checker (`.github/scripts/check-delivery-labels.py`) enforces this deterministically
+by scanning every tracked repository file (`git ls-files`, so generated/untracked/build output is
+never in scope): a `PLAN-*` or `REV-<NNN>` token outside `docs/planning/` is a durable-naming leak;
+inside `docs/planning/`, the old ambiguous label forms it replaced (a bare `Gate` plus number, a
+bare letter-plus-number optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be
+reintroduced. Those old forms are not banned outside `docs/planning/` — they can be ordinary,
+unrelated identifiers elsewhere in the codebase — which is exactly why the reserved `PLAN-`/`REV-`
+namespaces exist: catching identifier leakage no syntax pattern can safely recognize (prose like
+"the next stage" with no literal coordinate) remains a human review responsibility.
 
 When editing an Accepted or Superseded ADR only to improve durable terminology or legibility, follow
 `docs/architecture/decisions/README.md`: the amendment must be semantics-preserving, explicitly
@@ -85,11 +132,15 @@ ones created via an explicit user request.
 
 ## PR lifecycle
 
-Resolve a PR's lifecycle state from its current head and metadata, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
+Resolve a PR's lifecycle state from its current head and metadata, base freshness, submitted reviews, unresolved findings/threads, required CI, and mergeability. Do not infer review state from comments or CI alone.
 
-- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for independent review/re-review or for pending required CI after `READY AFTER CI`.
-- **CHANGES REQUIRED** — an implementation-owned blocker remains, such as a valid blocking review finding, failed required CI, or a merge conflict. Remediate it, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
-- **READY TO MERGE** — the current review disposition permits merge (`READY TO MERGE`, `NON-BLOCKING FOLLOW-UPS ONLY`, or `READY AFTER CI` after required CI turns green), required validation is green, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for initial review, re-review, or for required CI to finish. A current-head review may already be `READY TO MERGE` while CI is still pending — review authorization is independent of CI — but the lifecycle stays `AWAITING` until CI also turns green; no second review is needed solely because CI changed from pending to green with the reviewed head/base unchanged.
+- **CHANGES REQUIRED** — an implementation-owned blocker remains, such as the head being behind its current base, a valid blocking review finding, failed required CI, or a merge conflict. Reconcile a behind-base branch before review; otherwise remediate the blocker, validate, update the branch or PR metadata as required, then return to **AWAITING** for re-evaluation.
+- **READY TO MERGE** — the latest applicable reviewer disposition for the current PR head is `READY TO MERGE`, required validation is green, the head is level with its current base, and the PR is mergeable. The implementation agent stops; the repository owner merges.
+
+Base freshness is implementation-owned lifecycle state, not something the reviewer should normally have to discover. `infra/dev/pr-watch.mjs` must treat any behind-base head as **CHANGES REQUIRED**, making reconciliation with the current base the next implementation-owned transition. Independent review still verifies the current base and head as defense in depth.
+
+Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). CI is not a reviewer disposition and is never folded into it: required CI is enforced independently by GitHub branch protection. Only a current-head `READY TO MERGE` review, together with green required CI, produces the `READY TO MERGE` lifecycle state.
 
 ## PR monitoring
 

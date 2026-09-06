@@ -30,7 +30,7 @@ class RequirementIdentityTest {
         ControlledRevisionId revisionTwo = revisionId(2);
 
         // The same requirement identity/version is applicable regardless of which model
-        // fingerprint or controlled revision it is later evaluated against (G4 concern) -- G3
+        // fingerprint or controlled revision it is later evaluated against (conformance evaluation concern) -- the requirement-scope capability
         // only needs to prove the requirement itself carries no model/revision coupling.
         assertNotEquals(revisionOneFingerprint, revisionTwoFingerprint);
         assertNotEquals(revisionOne, revisionTwo);

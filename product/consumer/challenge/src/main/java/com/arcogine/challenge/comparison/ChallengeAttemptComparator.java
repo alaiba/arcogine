@@ -9,8 +9,8 @@ import java.util.List;
 /**
  * Deterministic, headless design-to-design comparison of two completed {@link ChallengeAttempt}s.
  *
- * <p>Comparison never re-evaluates either attempt: it only reads already-owned C2 economics and
- * C3 evaluation facts. It first checks compatibility -- attempts must share the exact same
+ * <p>Comparison never re-evaluates either attempt: it only reads already-owned economics and
+ * evaluation facts. It first checks compatibility -- attempts must share the exact same
  * challenge identity/version and evaluation-policy identity/version -- and only ever explains
  * differences that already-supported facts contain. It introduces no new scoring dimension.
  */

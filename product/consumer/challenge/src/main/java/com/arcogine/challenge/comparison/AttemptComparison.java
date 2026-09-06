@@ -5,7 +5,7 @@ import java.math.BigInteger;
 /**
  * Deterministic, explainable differences between two compatible completed attempts.
  *
- * <p>Every field here is derived directly from facts already owned by C2 (economics) or C3
+ * <p>Every field here is derived directly from facts already owned by the candidate-admissibility capability (economics) or the evaluation capability
  * (evaluation result) -- this does not introduce a second scoring or evaluation policy. All deltas
  * are {@code second - first}, matching the order the two attempts were supplied in.
  */

@@ -23,11 +23,11 @@ When documents disagree, the higher layer governs product direction; the lower l
 
 ### Durable semantic vocabulary
 
-Planning documents may use initiative-local stage and slice identifiers because those coordinates are useful while work is being sequenced. Durable semantic/current-state documentation must instead name capabilities, contracts, identities, invariants, and behaviors directly rather than depend on temporary delivery coordinates. Working/process documentation may mention a planning coordinate when the coordinate itself is part of the process being explained.
+Planning documents use the reserved `PLAN-<TRACK>-<LOCAL-ID>` namespace for delivery coordinates, and PRs/reviews use the separate `REV-<NNN>` namespace for review/finding identifiers (see `AGENTS.md`), because those coordinates are useful while work is being sequenced or tracked. Durable semantic naming — current-state documentation, and non-Markdown durable artifacts such as code comments, workflow definitions, and test names — must instead name capabilities, contracts, identities, invariants, and behaviors directly rather than depend on a temporary delivery coordinate. Working/process documentation and delivery-history records (including commit messages) may mention a delivery coordinate when the coordinate itself is part of the process being explained or was actually used to track the work.
 
-A durable document may link to a planning document for implementation sequencing, but it must remain understandable if the plan is later completed, condensed, renamed, or removed. When a planned outcome becomes architecture or current capability, translate the delivery label into semantic terminology rather than carrying the plan's coordinate into ADRs, architecture, product, reference, or durable development guidance.
+A durable document may link to a planning document for implementation sequencing, but it must remain understandable if the plan is later completed, condensed, renamed, or removed. When a planned outcome becomes architecture or current capability, translate the delivery label into semantic terminology rather than carrying the plan's coordinate into ADRs, architecture, product, reference, or durable development guidance. Planning filenames stay semantic rather than coordinate-derived for the same reason.
 
-The mechanical checker covers the repository's durable reader-facing Markdown surfaces — root `README.md`, this index, `docs/architecture/**`, `docs/product/**`, `docs/reference/**`, and `docs/examples/**` — while PR review applies the broader semantic rule and catches context-dependent leakage outside that mechanically classified set. ADR-specific semantics-preserving editorial amendments follow the policy in [`architecture/decisions/README.md`](architecture/decisions/README.md).
+The mechanical checker (`.github/scripts/check-delivery-labels.py`) enforces this deterministically across every tracked repository file: a `PLAN-*`/`REV-<NNN>` coordinate outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the old ambiguous label forms this namespace replaced may not be reintroduced. PR review applies the broader semantic rule and catches context-dependent leakage no syntax pattern can recognize safely. ADR-specific semantics-preserving editorial amendments follow the policy in [`architecture/decisions/README.md`](architecture/decisions/README.md).
 
 ## Cross-track ownership map
 
@@ -57,6 +57,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | [consistency-review.md](development/consistency-review.md) | Human operating model for recurring repository consistency reviews, finding persistence, baseline discipline, and the trigger for durable review-state storage |
 | [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates, native test commands |
 | [codex-cloud.md](development/codex-cloud.md) | Observed Codex Cloud environment model, validated workflow, limitations, and recommended bounded-task usage |
+| [coding-agent-evaluation.md](development/coding-agent-evaluation.md) | Dated, non-normative evaluation of coding-agent/model cost-effectiveness, Arcogine task routing, and comparative experiment evidence |
 | [CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) | Community standards |
 
 ## Architecture and design
@@ -88,14 +89,14 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 
 ## Internal planning (maintainers)
 
-These documents are internal planning artifacts, not user-facing guides. Their link text below uses semantic descriptions even when a historical planning filename retains an initiative-local coordinate.
+These documents are internal planning artifacts, not user-facing guides. Planning filenames are semantic rather than coordinate-derived (see "Durable semantic vocabulary" above), so the link text below simply matches each document's subject.
 
 | Document | What it covers |
 |----------|-----------------|
 | [Factory design capability plan](planning/factory-design-capability.md) | Immediate upstream work: canonical model seam, validation, publication/provenance, and behavior-preserving runtime instantiation |
 | [Governance and conformance capability plan](planning/governance-conformance-capability.md) | Cross-cutting sequence after the model seam: durable lineage, semantic ChangeSets, generic conformance, evidence, external-workflow governed change, framework mappings, and audit projections |
 | [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Runtime readiness after the model seam: explicit workload/work execution, deterministic dispatch, session control, observations/events, and spatial consequences |
-| [Runtime observation/event delivery plan](planning/gate-4-runtime-observation-event-delivery.md) | Implementation companion for ADR-0011: work-decomposition benchmark prerequisite, headless observation/event slices, provenance, API/SSE migration, recovery boundary, and PR landing sequence |
+| [Runtime observation/event delivery plan](planning/runtime-observation-event-delivery.md) | Implementation companion for ADR-0011: work-decomposition benchmark prerequisite, headless observation/event slices, provenance, API/SSE migration, recovery boundary, and PR landing sequence |
 | [Operational execution and digital twin readiness](planning/operational-execution-digital-twin-readiness.md) | Sibling readiness track for execution-context identity, verified trust/authority, command/deployment lifecycle, external observations, reconciliation, drift/calibration, resilience, and a first live-system adapter proving ground, with explicit Governance/Engine prerequisites |
 | [Factory-design game challenge readiness](planning/factory-design-game-challenge-readiness.md) | Game-owned parallel track for challenge identity/validation, candidate admissibility, catalogue and budget rules, deterministic evaluation, attempt provenance/comparison, and cross-track learning with governance |
 | [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Downstream consumer boundary between the game and Arcogine, including readiness entry criteria and ownership constraints |

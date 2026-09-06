@@ -48,11 +48,11 @@ For routine recurring runs, use the normal high-scrutiny reasoning setting avail
 
 ## Documentation-lifetime consistency
 
-Recurring consistency review must treat documentation lifetime as a first-class consistency boundary. Initiative-local stage, gate, and slice identifiers are useful in `docs/planning/` and delivery history while work is active, but durable Markdown outside `docs/planning/` must name the semantic capability, contract, identity, invariant, or behavior directly.
+Recurring consistency review must treat documentation lifetime as a first-class consistency boundary. Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (see `AGENTS.md`), are useful in `docs/planning/`, PRs/reviews, and delivery history (including commit messages) while work is active, but durable semantic naming — Markdown outside `docs/planning/`, and non-Markdown durable artifacts such as code comments, workflow definitions, and test names — must name the semantic capability, contract, identity, invariant, or behavior directly.
 
 A full or incremental consistency scan should therefore check two things:
 
-- whether temporary delivery coordinates have leaked into durable filenames or prose; and
+- whether temporary delivery coordinates have leaked into durable filenames, prose, comments, or test/workflow names; and
 - whether a durable document still depends on an obsolete planning artifact for its meaning even when no machine-detectable coordinate remains.
 
 The repository vocabulary checker provides a fail-closed syntactic baseline. It is not sufficient evidence of semantic self-containment: reviewers still need to recognize prose such as “the next stage” or “the previous slice” when those phrases only make sense in a plan that may later disappear.

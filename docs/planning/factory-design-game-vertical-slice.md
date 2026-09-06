@@ -62,7 +62,7 @@ The player decides where additional compatible resources are worth their capital
 
 Adding capacity at a true bottleneck should be capable of reducing queueing or completion time. Adding capacity away from the bottleneck may produce little or no benefit. Solving one bottleneck may expose another.
 
-For the fixed-contract reference challenge below, this requirement applies to one accepted production requirement, not to a game-authored collection of artificial independent orders. Arcogine's accepted W1 architecture is recorded by ADR-0010 and is current implemented Engine Readiness semantics, including the 100,000-child benchmark: one accepted quantity-`N` `Order` decomposes into `N` independently dispatchable unit-quantity `Job`s, while aggregate progress and completion remain order-level. The game must not manufacture multiple orders to obtain parallelism; the second-cutter strategy relies on this existing W1 runtime evidence.
+For the fixed-contract reference challenge below, this requirement applies to one accepted production requirement, not to a game-authored collection of artificial independent orders. Arcogine's accepted PLAN-ENG-W1 architecture is recorded by ADR-0010 and is current implemented Engine Readiness semantics, including the 100,000-child benchmark: one accepted quantity-`N` `Order` decomposes into `N` independently dispatchable unit-quantity `Job`s, while aggregate progress and completion remain order-level. The game must not manufacture multiple orders to obtain parallelism; the second-cutter strategy relies on this existing PLAN-ENG-W1 runtime evidence.
 
 ### 3.2 Resource eligibility and dispatch
 
@@ -140,9 +140,9 @@ At minimum the player should be able to answer:
 - How far is the contract from completion?
 - How did this attempt's outcome compare with the previous attempt?
 
-For the vertical slice, design-to-design comparison does **not** require Arcogine's semantic-model-diffing capability. The game may retain immutable game-owned draft snapshots for each attempt and pair them with the published model provenance and supported run outcomes. It can therefore show player-authored design differences from its own snapshots and compare authoritative run results without claiming a canonical semantic diff between two published Arcogine models. D5's existing initial slice ([Factory Design Capability](factory-design-capability.md#9-d5--semantic-comparison-and-design-alternatives)) is available but is not required for this vertical slice.
+For the vertical slice, design-to-design comparison does **not** require Arcogine's semantic-model-diffing capability. The game may retain immutable game-owned draft snapshots for each attempt and pair them with the published model provenance and supported run outcomes. It can therefore show player-authored design differences from its own snapshots and compare authoritative run results without claiming a canonical semantic diff between two published Arcogine models. PLAN-FD-5's existing initial slice ([Factory Design Capability](factory-design-capability.md#9-plan-fd-5--semantic-comparison-and-design-alternatives)) is available but is not required for this vertical slice.
 
-If a future product requirement needs Arcogine itself to explain semantic differences between published model versions, that requirement should extend the existing D5 capability with finer-grained comparison semantics rather than create a second diff abstraction.
+If a future product requirement needs Arcogine itself to explain semantic differences between published model versions, that requirement should extend the existing PLAN-FD-5 capability with finer-grained comparison semantics rather than create a second diff abstraction.
 
 ## 6. Product success criteria
 
@@ -163,6 +163,6 @@ The consumer-readiness gates, ownership rules, integration acceptance criteria, 
 
 This document owns only the concrete product hypothesis: player fantasy, loop, decisions, reference challenge, player-facing evidence, and product success criteria.
 
-[Factory-Design Game Consumer Initiative](factory-design-game-consumer.md) owns the Arcogine/game responsibility boundary, upstream readiness dependencies, implementation entry criteria, integration acceptance criteria, and non-goals. [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) owns the runtime gates themselves. [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) owns the accepted W1 decomposition and work-item identity contract.
+[Factory-Design Game Consumer Initiative](factory-design-game-consumer.md) owns the Arcogine/game responsibility boundary, upstream readiness dependencies, implementation entry criteria, integration acceptance criteria, and non-goals. [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) owns the runtime gates themselves. [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md) owns the accepted PLAN-ENG-W1 decomposition and work-item identity contract.
 
 Detailed art direction, content expansion, campaign design, and distribution planning should remain outside Arcogine until the vertical slice provides evidence that those investments are justified.

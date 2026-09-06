@@ -24,7 +24,7 @@ Common shorthand should be interpreted in repository context:
 - “check repo state” means inspect the state of this repository;
 - references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
 
-PR workflow shorthand has distinct review and remediation meanings:
+Repository workflow shorthand has distinct meanings:
 
 - `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
 - `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available;

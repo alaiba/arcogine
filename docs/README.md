@@ -57,6 +57,7 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 | [consistency-review.md](development/consistency-review.md) | Human operating model for recurring repository consistency reviews, finding persistence, baseline discipline, and the trigger for durable review-state storage |
 | [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates, native test commands |
 | [codex-cloud.md](development/codex-cloud.md) | Observed Codex Cloud environment model, validated workflow, limitations, and recommended bounded-task usage |
+| [coding-agent-evaluation.md](development/coding-agent-evaluation.md) | Dated, non-normative evaluation of coding-agent/model cost-effectiveness, Arcogine task routing, and comparative experiment evidence |
 | [CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) | Community standards |
 
 ## Architecture and design

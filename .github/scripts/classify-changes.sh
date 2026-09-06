@@ -10,8 +10,12 @@ set -euo pipefail
 files="$(cat)"
 
 # CI/tooling changes or shared manifests conservatively trigger every subsystem.
+# The Docker environment template is the exception: it affects only the Docker
+# surface even though it lives under infra/docker/.
 ci_or_shared=false
-if printf '%s\n' "$files" | grep -qE '^(\.github/workflows/|arcogine$|product/build\.gradle|product/settings\.gradle|product/gradle/|product/gradle\.properties|product/interfaces/web/package(-lock)?\.json|product/interfaces/web/tsconfig|infra/docker/)'; then
+if printf '%s\n' "$files" | grep -qE '^(\.github/workflows/|arcogine$|product/build\.gradle|product/settings\.gradle|product/gradle/|product/gradle\.properties|product/interfaces/web/package(-lock)?\.json|product/interfaces/web/tsconfig)'; then
+  ci_or_shared=true
+elif printf '%s\n' "$files" | grep -E '^infra/docker/' | grep -qvE '^infra/docker/\.env\.example$'; then
   ci_or_shared=true
 fi
 
@@ -27,7 +31,7 @@ fi
 # subsystem on rather than silently skipping everything.
 unknown=false
 if [ -n "$files" ] && [ "$docs_only" = false ]; then
-  if printf '%s\n' "$files" | grep -qvE '^(docs/|README\.md$|.*\.md$|\.github/workflows/|arcogine$|product/build\.gradle|product/settings\.gradle|product/gradle/|product/gradle\.properties|product/interfaces/web/package(-lock)?\.json|product/interfaces/web/tsconfig|infra/docker/|\.env\.example$|product/(types|simulation|domains|agents|interfaces/api|interfaces/cli)/|product/interfaces/web/)'; then
+  if printf '%s\n' "$files" | grep -qvE '^(docs/|README\.md$|.*\.md$|\.github/workflows/|arcogine$|product/build\.gradle|product/settings\.gradle|product/gradle/|product/gradle\.properties|product/interfaces/web/package(-lock)?\.json|product/interfaces/web/tsconfig|infra/docker/|product/(types|simulation|domains|agents|interfaces/api|interfaces/cli)/|product/interfaces/web/)'; then
     unknown=true
   fi
 fi
@@ -43,7 +47,7 @@ if [ "$ci_or_shared" = true ] || [ "$unknown" = true ] || printf '%s\n' "$files"
 fi
 
 docker=false
-if [ "$ci_or_shared" = true ] || [ "$unknown" = true ] || printf '%s\n' "$files" | grep -qE '^infra/docker/|^\.env\.example$'; then
+if [ "$ci_or_shared" = true ] || [ "$unknown" = true ] || printf '%s\n' "$files" | grep -qE '^infra/docker/'; then
   docker=true
 fi
 

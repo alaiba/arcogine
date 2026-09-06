@@ -47,8 +47,8 @@ check "frontend-only" \
   "product/interfaces/web/src/App.tsx" \
   "backend=false,frontend=true,docker=false,docs_only=false,"
 
-check "docker-only (non-shared path)" \
-  ".env.example" \
+check "docker-only environment template" \
+  "infra/docker/.env.example" \
   "backend=false,frontend=false,docker=true,docs_only=false,"
 
 check "docs mixed with backend is not docs-only" \

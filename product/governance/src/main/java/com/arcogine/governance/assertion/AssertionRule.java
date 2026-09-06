@@ -9,8 +9,8 @@ package com.arcogine.governance.assertion;
  * re-expressed) without silently becoming "a different assertion" to anything that only holds a
  * durable identity/version reference.
  *
- * <p>This narrow evaluation seam exists only to let G3 prove deterministic executable semantics
- * for structural assertions; it is not the G4 conformance-evaluation engine.
+ * <p>This narrow evaluation seam exists only to let the requirement-scope capability prove deterministic executable semantics
+ * for structural assertions; it is not the conformance-evaluation engine.
  */
 @FunctionalInterface
 public interface AssertionRule<T> {

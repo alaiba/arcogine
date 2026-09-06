@@ -7,7 +7,7 @@ import java.util.Objects;
 
 /**
  * Typed, stable correlation to one authoritative entity affected by a {@link RuntimeEventEnvelope},
- * used in place of an ambiguous display string (ADR-0011, ADR-0010 W1 identity semantics). A single
+ * used in place of an ambiguous display string (ADR-0011, ADR-0010 child-job identity semantics). A single
  * supported event can carry more than one ref -- e.g. a job-step-completion event correlates both
  * the completing {@link JobId} and its parent {@link OrderId}.
  */

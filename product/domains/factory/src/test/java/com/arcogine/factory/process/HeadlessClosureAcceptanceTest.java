@@ -33,9 +33,9 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 /**
- * Headless Gate 4-C closure evidence: the remaining acceptance facts that G4-A's observation
- * boundary ({@link Gate4RuntimeObservationAcceptanceTest}) and G4-B's supported event contract
- * ({@link Gate4BRuntimeEventAcceptanceTest}) do not already prove on their own --
+ * Headless closure evidence: the remaining acceptance facts that the observation boundary
+ * ({@link RuntimeObservationAcceptanceTest}) and the supported event contract
+ * ({@link RuntimeEventDeliveryAcceptanceTest}) do not already prove on their own --
  *
  * <ul>
  *   <li>a consumer joining an already-progressed runtime can reconstruct the complete current
@@ -48,15 +48,15 @@ import org.junit.jupiter.api.Test;
  *   <li>the supported observation is sufficient to identify the active production bottleneck.
  * </ul>
  *
- * <p>The seventh Gate 4 acceptance criterion (API/UI DTOs never re-enter domain decision paths) is
- * structural rather than behavioural and is enforced by {@code ArchitectureTest
+ * <p>The complementary structural fact -- API/UI DTOs never re-enter domain decision paths -- is
+ * behavioural evidence this class does not itself carry, and is instead enforced by {@code ArchitectureTest
  * .api_dtos_must_not_reenter_domain_decision_paths} in {@code interfaces/api}, the only module
  * whose test classpath can see both sides of that boundary.
  *
  * <p>Everything here is driven purely through {@link FactoryRuntime}'s supported surface, matching
  * the conventions of the two tests above.
  */
-class Gate4CHeadlessClosureAcceptanceTest {
+class HeadlessClosureAcceptanceTest {
 
     private static final double UNIT_PRICE = 4.25;
 
@@ -146,7 +146,7 @@ class Gate4CHeadlessClosureAcceptanceTest {
      * is still in the cross-machine multi-eligible backlog -- with a transition function that
      * consumes nothing but supported {@link RuntimeEventEnvelope}s.
      *
-     * <p>This is the closure evidence the G4-C criterion actually requires: {@code
+     * <p>This is the closure evidence this class actually requires: {@code
      * of(earlier).applyAll(delta)} equalling {@code of(later)} proves a consumer can derive the
      * later placement state from an earlier observation using only the supported event stream,
      * without re-observing or reproducing internal dispatch logic.
@@ -334,11 +334,11 @@ class Gate4CHeadlessClosureAcceptanceTest {
     }
 
     /**
-     * REV-002 regression evidence: a {@code TaskEnd} authoritatively re-places work beyond the job
-     * whose step ended -- the freed machine immediately picks up backlog work -- and the supported
-     * delta must say so. Reporting only {@code JOB_STEP_COMPLETED} here would leave a consumer
-     * unable to derive the newly dispatched job's status or machine assignment from the event
-     * stream, defeating the G4-C closure claim.
+     * A {@code TaskEnd} authoritatively re-places work beyond the job whose step ended -- the
+     * freed machine immediately picks up backlog work -- and the supported delta must say so.
+     * Reporting only {@code JOB_STEP_COMPLETED} here would leave a consumer unable to derive the
+     * newly dispatched job's status or machine assignment from the event stream, defeating this
+     * class's headless-closure claim.
      */
     @Test
     void taskEndDispatchCascadeIsReportedByTheSupportedEventStream() throws SimError {
@@ -379,7 +379,7 @@ class Gate4CHeadlessClosureAcceptanceTest {
     }
 
     /**
-     * REV-003 regression evidence: the internal scheduler also carries markers {@code
+     * The internal scheduler also carries markers {@code
      * FactoryHandler} ignores -- the {@code TaskStart} paired with every dispatched {@code TaskEnd},
      * and the {@code OrderCompleted} a terminal {@code TaskEnd} schedules purely so other internal
      * handlers can observe completion. Processing one is authoritatively a no-op and emits no

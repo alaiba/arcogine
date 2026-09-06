@@ -16,10 +16,10 @@ import java.util.Optional;
  * equality (see {@link #equals(Object)}).
  *
  * <p>{@code evidenceRequirement} declares only whether authoritative model state is sufficient or
- * external evidence is needed; it never ingests, persists, or evaluates that evidence (G5). A
+ * external evidence is needed; it never ingests, persists, or evaluates that evidence (the external-evidence capability). A
  * {@link EvidenceRequirement#MODEL_STATE_SUFFICIENT} assertion must always supply a structural
  * {@code rule} -- the declaration would otherwise be a claim with no executable backing. {@code
- * rule} is optional only for {@link EvidenceRequirement#EXTERNAL_EVIDENCE_REQUIRED}, since G3
+ * rule} is optional only for {@link EvidenceRequirement#EXTERNAL_EVIDENCE_REQUIRED}, since the requirement-scope capability
  * does not implement external-evidence evaluation.
  */
 public record Assertion<T>(

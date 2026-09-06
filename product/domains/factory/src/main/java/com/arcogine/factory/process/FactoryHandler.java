@@ -352,8 +352,8 @@ public class FactoryHandler implements EventHandler {
 
         Job job = jobs.get(jobId);
 
-        // Gate 4 acceptance criterion 4 (identify the active bottleneck from supported
-        // observations): a resource's cumulative busy time is only an authoritative fact if it is
+        // Identifying the active bottleneck from supported observations alone requires a
+        // resource's cumulative busy time to be an authoritative fact -- which it is only if it is
         // actually accumulated. Credit the just-finished step's duration here -- the one point
         // where a machine is known to have occupied itself for exactly that long -- so
         // ResourceObservation.busyTicks() expresses real utilization rather than a constant zero.

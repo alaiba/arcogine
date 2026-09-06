@@ -15,7 +15,7 @@ import com.arcogine.types.ModelFingerprint;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Proves invariant 3: scope is explicit, deterministic, and integrates with the real G2 seam. */
+/** Proves invariant 3: scope is explicit, deterministic, and integrates with the real the change-set/impact-scope capability seam. */
 class RequirementScopeTest {
 
     @Test

@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * End-to-end G2 tests: {@link ChangeSetFactory} against the real G1.3 authoritative persistence
- * boundary ({@link FileControlledRevisionAuthority}) and the real factory-domain D5 comparator
+ * End-to-end change-set/impact-scope tests: {@link ChangeSetFactory} against the real controlled-revision-authority persistence
+ * boundary ({@link FileControlledRevisionAuthority}) and the real factory-domain semantic comparator
  * ({@link FactoryModelSemanticComparator}) -- not test-only object injection.
  */
 class ChangeSetFactoryTest {
@@ -126,7 +126,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void candidateSnapshotWithFingerprintNotMatchingItsBytesIsRejected() {
-        // REV-002 regression: a caller must not be able to claim a fingerprint for canonical bytes
+        // A caller must not be able to claim a fingerprint for canonical bytes
         // that don't actually produce it -- mirroring FileControlledRevisionAuthority's own
         // fingerprint-to-bytes verification precedent for authoritative artifacts.
         FileControlledRevisionAuthority authority = authority();
@@ -259,7 +259,7 @@ class ChangeSetFactoryTest {
                         ChangeProvenance.of("engineer", "add machine"));
 
         // A hypothetical future requirement's registered scope, matched against ImpactScope
-        // without any ChangeSet redesign -- proving the seam without fabricating G3 infrastructure.
+        // without any ChangeSet redesign -- proving the seam without fabricating requirement-scope infrastructure.
         Set<ChangedEntityRef> requirementScope = Set.of(new ChangedEntityRef("factory.resource", "2", ""));
         assertTrue(changeSet.impactScope().intersects(requirementScope));
         Set<ChangedEntityRef> unrelatedScope = Set.of(new ChangedEntityRef("factory.resource", "99", ""));

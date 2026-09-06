@@ -19,6 +19,7 @@ PRODUCT_DIR="$REPO_ROOT/product"
 WEB_DIR="$REPO_ROOT/product/interfaces/web"
 DIST_DIR="$REPO_ROOT/dist"
 DOCKER_DIR="$REPO_ROOT/infra/docker"
+ENV_TEMPLATE="$DOCKER_DIR/.env.example"
 
 API_IMAGE="arcogine-api:ci"
 WEB_IMAGE="arcogine-ui:ci"
@@ -33,6 +34,12 @@ npm_web() {
 
 npx_web() {
   (cd "$WEB_DIR" && npx "$@")
+}
+
+ensure_env() {
+  if [[ ! -f "$REPO_ROOT/.env" ]]; then
+    cp "$ENV_TEMPLATE" "$REPO_ROOT/.env"
+  fi
 }
 
 compose() {
@@ -151,7 +158,7 @@ cmd_check() {
     cmd_image
 
     echo "==> Docker smoke test..."
-    cp -n .env.example .env 2>/dev/null || true
+    ensure_env
     compose up -d --wait --wait-timeout 120
     trap 'compose down' EXIT
     curl -sf "http://localhost:$(bound_port api 3000)/api/health" > /dev/null
@@ -166,7 +173,7 @@ cmd_check() {
     npm_web audit --audit-level=high
     trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$API_IMAGE"
     trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$WEB_IMAGE"
-    gitleaks detect --source . --config .gitleaks.toml --verbose
+    gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
   fi
 }
 
@@ -220,7 +227,7 @@ cmd_up() {
     cmd_build
     cmd_image
   fi
-  cp -n .env.example .env 2>/dev/null || true
+  ensure_env
   compose up -d --wait --wait-timeout 120
   echo "==> Stack up. API: http://localhost:$(bound_port api 3000)  Web: http://localhost:$(bound_port ui 5173)"
 }
@@ -231,7 +238,7 @@ cmd_down() {
     echo "FATAL: ./arcogine down requires Docker Compose." >&2
     exit 1
   fi
-  cp -n .env.example .env 2>/dev/null || true
+  ensure_env
   compose down
 }
 

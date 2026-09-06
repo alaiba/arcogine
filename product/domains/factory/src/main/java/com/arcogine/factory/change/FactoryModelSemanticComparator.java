@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * The G2 D5 seam: domain-owned semantic comparison for {@code factory-model:v1} artifacts.
+ * The change-set/impact-scope and semantic-comparison seam: domain-owned semantic comparison for {@code factory-model:v1} artifacts.
  *
  * <p>This is the only place that knows how to interpret {@link FactoryModel} internals for
  * change-attribution purposes. It never depends on Governance's {@code ChangeSet} orchestration

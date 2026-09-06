@@ -58,7 +58,13 @@ jobs:
       # diagnostics fails loudly instead of only surfacing on a real
       # constrained host partway through an expensive `--full` run.
       - name: Validate arcogine preflight diagnostics
-        run: bash arcogine.test.sh
+        run: bash .github/scripts/arcogine-preflight.test.sh
+
+      # ensure_env seeds root .env from the relocated infra/docker/.env.example
+      # template. Cover its create/preserve/no-stale-path invariants here so a
+      # regression is caught without depending on Docker actually running.
+      - name: Validate arcogine env template handling
+        run: bash .github/scripts/arcogine-env.test.sh
 
       # The PR lifecycle resolver in infra/dev/pr-watch.mjs decides whether an
       # implementation-owned transition exists, so a regression there can report a PR
@@ -72,6 +78,12 @@ jobs:
 
       - name: Validate PR watcher lifecycle resolver
         run: node --test infra/dev/pr-watch.test.mjs
+
+      # Validate PR disposition merge gate evaluator. This gate enforces the central
+      # merge invariant: current-head READY TO MERGE disposition required for merge.
+      # A regression in the evaluator would allow unintended merges.
+      - name: Validate PR disposition gate evaluator
+        run: bash .github/scripts/check-pr-disposition.test.sh
 
       - name: Determine changed-file surfaces
         id: filter
@@ -317,7 +329,6 @@ jobs:
 
       - name: Docker smoke test
         run: |
-          cp .env.example .env
           ./arcogine up --no-rebuild
           COMPOSE="docker compose --project-directory . --env-file .env -f infra/docker/compose.yaml"
           api_port="$($COMPOSE port api 3000 | sed -E 's/^.*://')"
@@ -385,7 +396,7 @@ jobs:
           echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum -c -
           tar xz -C /usr/local/bin -f /tmp/gitleaks.tar.gz gitleaks
       - name: Run Gitleaks
-        run: gitleaks detect --source . --config .gitleaks.toml --verbose
+        run: gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
 
   # Single stable required status check. Branch protection only ever needs to
   # require this one job. Its needs: list and the expected_to_run map in the

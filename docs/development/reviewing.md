@@ -32,7 +32,7 @@ A good review:
 - verifies correctness and architectural fit rather than personal style preference;
 - distinguishes blockers from non-blocking improvements and future work;
 - prefers the smallest change that satisfies the current slice;
-- does not pull later roadmap gates into the current PR without a concrete dependency;
+- does not pull later roadmap work into the current PR without a concrete dependency;
 - says explicitly when no blocking issues remain.
 
 Unless asked to modify the branch, review work should follow:
@@ -173,7 +173,7 @@ An intentional compatibility change must be necessary, explicit, documented, and
 
 Check for silent pull-forward of:
 
-- later readiness gates;
+- later readiness work;
 - generalized frameworks;
 - speculative abstractions;
 - unrelated cleanup;
@@ -188,11 +188,15 @@ Current-state docs must describe what actually exists. Planning docs must distin
 
 After iterative fixes, re-check the PR title/body as well: a description of an API that no longer exists is a review defect even when the code is correct.
 
+**Durable semantic vocabulary is a mandatory review check.** Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (see `AGENTS.md`), are valid in `docs/planning/`, issues, PR descriptions/comments, reviews, commit messages, and implementation handoffs where they help sequence or track delivery. Durable semantic naming must instead name the capability, contract, identity, invariant, or behavior directly rather than depend on one of these coordinates — this covers Markdown documentation under `docs/` outside `docs/planning/`, and non-Markdown durable artifacts a PR introduces, such as code comments, workflow definitions, and test names. A durable document or artifact may link to a plan or review, but understanding it must not require reconstructing a temporary delivery coordinate after that plan, PR, or review is completed, condensed, renamed, or removed.
+
+The required CI check catches known coordinate-shaped vocabulary mechanically; review must catch semantic leakage that a regex cannot recognize. Do not waive a durable-document hit merely because the identifier is historically familiar.
+
 #### Semantic propagation
 
 For medium- and high-semantic-risk changes, review by concept as well as by changed file. Identify the small set of concepts whose meaning changed, then search maintained docs, tests, examples, interfaces, and configuration for both the new vocabulary and plausible old assumptions. This is especially important when a semantic change can leave syntactically unrelated prose or tests behind.
 
-When an accepted ADR, readiness gate, capability status, or other authority-bearing artifact changes state — for example `unresolved -> accepted`, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
+When an accepted ADR, readiness criterion, capability status, or other authority-bearing artifact changes state — for example `unresolved -> accepted`, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
 
 This is bounded change-impact review. It does not require a repository-wide consistency sweep for every PR.
 
@@ -201,6 +205,8 @@ This is bounded change-impact review. It does not require a repository-wide cons
 Request an ADR only for a genuinely hard-to-reverse decision, for example durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind.
 
 Do not require ADRs for ordinary local refactors.
+
+Accepted and Superseded ADRs are semantically immutable. If a PR amends one in place under the editorial-amendment policy in `docs/architecture/decisions/README.md`, the reviewer must compare the pre-amendment and post-amendment record and independently establish that the decision, constraints, applicability, alternatives, and consequences have not changed. The required `Amendment: ...; no semantic change` metadata is process evidence, not proof. If semantic equivalence is uncertain or false, require a superseding ADR instead.
 
 ## Finding severity
 
@@ -218,7 +224,7 @@ Use these calibration examples when the boundary is unclear:
 
 - a semantic regression demonstrated by failing integration/contract tests, or a change that violates a binding architecture invariant, is normally **P1**;
 - a PR whose central claimed behavior is still defeated by another maintained execution path is normally **P1**;
-- a false completion/status claim or missing completion evidence that can be corrected without changing otherwise safe runtime behavior is normally **P2**, unless that false status itself unlocks a dependent architectural gate;
+- a false completion/status claim or missing completion evidence that can be corrected without changing otherwise safe runtime behavior is normally **P2**, unless that false status itself unlocks a dependent architectural boundary;
 - a stale PR title/body or validation description after remediation is normally **P2** when it materially misstates the proposed head;
 - optional extra coverage, cleanup, or future hardening that does not affect the current invariant is **P3** or **Nit**.
 
@@ -273,16 +279,79 @@ CI absence alone is not automatically an architectural blocker, but merge readin
 
 ## Final disposition
 
-Every review/re-review should end with a clear disposition:
+Every review/re-review should end with a clear disposition. There are exactly two:
 
-- **READY TO MERGE** — no blocking findings and required validation is green.
-- **READY AFTER CI** — code/docs review is clean; only current-head validation remains.
+- **READY TO MERGE** — independent review of the code/docs is complete and finds no blocking issue on this exact PR head.
 - **CHANGES REQUIRED** — at least one blocking/pre-merge finding remains.
-- **NON-BLOCKING FOLLOW-UPS ONLY** — merge is acceptable; remaining items are explicitly optional/future work.
+
+CI is not a reviewer disposition, and review authorization is genuinely orthogonal to CI status — there is no third disposition for "review is clean but CI is still pending." A review may conclude `READY TO MERGE` based solely on the code/docs review, regardless of whether required CI has finished running for this head. That disposition is necessary but not sufficient for merge: required CI is enforced independently by GitHub branch protection (see `AGENTS.md`'s PR lifecycle), and the PR does not reach lifecycle state `READY TO MERGE` until CI is also green. A current-head `READY TO MERGE` review is not invalidated merely because CI later transitions from pending to green with the reviewed head and base unchanged — no second review is required solely for that reason. Do treat the head or base changing, or new findings surfacing, as requiring a fresh disposition.
+
+Optional, genuinely non-blocking observations belong in review prose or a follow-up issue, not in a formal disposition. If the only remaining items are non-blocking, the disposition is simply `READY TO MERGE`.
 
 For medium- and high-risk reviews, the final report should also identify the material semantic neighbors inspected, including important surfaces inspected that required no change. This coverage note is evidence of review breadth, not a claim that those surfaces are globally consistent.
 
 Do not leave merge readiness implicit.
+
+Before `READY TO MERGE`, explicitly verify two documentation-lifetime conditions when applicable:
+
+1. durable documentation touched or semantically affected by the PR does not depend on temporary planning coordinates; and
+2. every in-place Accepted/Superseded ADR amendment is independently proven semantics-preserving, otherwise supersession is required.
+
+### Canonical disposition format
+
+To make merge disposition enforceable, every complete review/re-review that reaches a final verdict must end with a machine-readable canonical disposition block. This block is parsed by Arcogine's PR disposition merge gate (`.github/workflows/pr-disposition.yml`) and must appear exactly once per review, as the final block in the review body, in this format:
+
+```
+Reviewed head: <full-PR-head-SHA>
+Disposition: **READY TO MERGE**
+```
+
+where the disposition value is `READY TO MERGE` or `CHANGES REQUIRED` (in `**...**` markdown bold markers). `READY TO MERGE` reflects the code/docs review outcome only and may be issued regardless of CI status — see Final disposition above.
+
+**Key semantics:**
+
+1. **Current-head binding:** The reviewed head SHA must match the exact current PR head that was inspected. When a new commit is pushed to the PR (new head SHA), the prior review's disposition becomes stale and does not authorize merge.
+
+2. **Canonical final block only:** The disposition block is the authoritative source. Prose elsewhere in the review (discussion, examples, quoted prior reviews) that mentions disposition names is not authoritative and does not trigger merge-gate evaluation.
+
+3. **Staleness invalidation:** If a new commit is pushed, the PR head SHA changes, and any prior review's disposition (including `READY TO MERGE`) is no longer valid. Merge remains blocked until the current head receives a fresh `READY TO MERGE` disposition.
+
+**When updating or re-reviewing:**
+
+- If the PR head has not changed since your last review, you may edit the existing review to update the disposition value or findings without changing the reviewed head SHA.
+- If a new commit has been pushed since your review, treat it as a new head that requires fresh re-review, and update the `Reviewed head:` SHA to the new current head before submitting.
+
+### PR disposition merge gate
+
+The repository enforces the canonical disposition format via `.github/workflows/pr-disposition.yml` plus a minimal companion listener, `.github/workflows/pr-disposition-review-trigger.yml`, which together:
+
+- React to PR open, commit push (`synchronize`), and review submission/edit/dismissal
+- Fetch the current PR head SHA and every review authored by a trusted repository authority (`author_association` of `OWNER`, `MEMBER`, or `COLLABORATOR`) across all pages, since this is a public repository and an unfiltered pass-through would let any unrelated external account mint a canonical disposition
+- Evaluate whether the latest applicable review for the current head contains a canonical `READY TO MERGE` disposition
+- Fail closed if:
+  - No disposition exists for the current head
+  - The latest disposition is `CHANGES REQUIRED`
+  - The disposition is malformed or uses an unsupported value (including retired legacy values such as `READY AFTER CI` or `NON-BLOCKING FOLLOW-UPS ONLY`)
+  - The disposition applies to a stale (old) PR head
+
+The gate does not evaluate CI, mergeability, or unresolved threads — only the current-head disposition. Required CI is enforced independently by GitHub branch protection alongside this check. Only `READY TO MERGE` for the exact current PR head produces a passing check.
+
+**Trust boundary:** a candidate PR must not be able to author the code that judges its own disposition. Checking out the evaluator from trusted `main` is not sufficient by itself, because GitHub sources an ordinary `pull_request`/`pull_request_review`-triggered workflow's *definition* from the PR's own merge commit, not from `main` — a PR could edit the workflow file itself to fabricate a passing result. `pr-disposition.yml` therefore triggers on `pull_request_target` (always sourced from `main`) for PR lifecycle events, on `workflow_run` (also always sourced from `main`) chained from the deliberately inert, unprivileged `pr-disposition-review-trigger.yml` listener for review events as a fast path, and on a fixed `schedule` (also always sourced from `main`) as a backstop.
+
+The listener's own `pull_request_review.types` list is itself PR-editable content, so a PR could narrow it and leave a later revocation (an edit to `CHANGES REQUIRED`, or a dismissal) unable to reach the trusted evaluator via the fast path, stranding a stale passing check until the scheduled sweep corrects it. `.github/CODEOWNERS` requires an independent owner to review every change under `.github/workflows/`, including that narrowing, before it can merge — closing the candidate-controlled part of this gap once the ruleset enforces it (see the activation checklist below). CODEOWNERS also owns itself and the rest of `.github/`, per GitHub's own documentation that fully protecting a repository this way requires an owner for the CODEOWNERS file too; without that, a PR could narrow or remove the `/.github/workflows/` rule in one (unreviewed-by-rule) change and exploit the now-uncovered path in a later one. The scheduled sweep remains as defense-in-depth, bounding staleness for any change that predates CODEOWNERS enforcement or that an owner approves in error. None of the three triggers ever checks out or executes PR-supplied code; all re-derive the PR number, head SHA, and review bodies independently via the API and publish the check result explicitly against the resolved head SHA via the Checks API.
+
+**Check-name provenance:** GitHub branch-protection required status checks match by check *name* only, not by which workflow produced them. A separate PR-authored workflow — triggered by an ordinary, untrusted event such as `pull_request` — could create its own job named `disposition` and satisfy the same required-check name without ever running this evaluator, because every GitHub Actions job automatically creates its own check run and pinning a required check to "the GitHub Actions app" does not distinguish which workflow within that app produced it. This is a limitation of GitHub's required-status-check model that this workflow's own code cannot close by itself. The same `.github/CODEOWNERS` entry closes it the same way as above: a new workflow file is a change under `.github/workflows/`, so minting a same-named `disposition` check run from PR-authored content requires an owner's independent review and approval first.
+
+Both mitigations depend on the *reviewing* owner identity being genuinely independent of whoever could otherwise self-approve the change (see activation item 2 below); CODEOWNERS enforcement is necessary but not sufficient on its own.
+
+At time of writing, this status check is **not yet required** by the branch protection ruleset on `main` — see the check's own workflow file for the exact context name to add. This bootstrap PR does not need to activate the rule before merging. Because all three workflow files must exist on `main` for `pull_request_target`/`workflow_run`/`schedule` to fire at all, no `disposition` check runs on this bootstrap PR's own head — this is expected, not a defect, and is a stronger form of the same bootstrap boundary as the evaluator script itself. The gate becomes active for the first time on the first PR opened after this one merges. Enforcement activates only once a maintainer completes all of the following, not merely adding the status name:
+
+1. Add the exact check-run context (see the workflow file) to the ruleset's required status checks.
+2. Ensure the identity available to coding agents cannot bypass the required disposition and CI checks, and cannot satisfy the `.github/CODEOWNERS` review requirement on itself. A ruleset actor with a "for pull requests only" bypass can still choose to bypass at merge time; if Arcogine's agents operate through that same identity, adding a required check (or a code-owner review requirement naming that same identity) does not constrain them. A separate human-only emergency bypass, reviewed by a distinct human code owner, is acceptable as long as agents cannot exercise it and cannot self-approve as the listed owner.
+3. Enable "require branches to be up to date before merging" (or an equivalent base-freshness safeguard). The gate binds only to the PR head SHA and is not triggered by a push to `main`, so a base-branch advance after a passing disposition/CI check would otherwise leave a stale authorization mergeable even though the reviewed base-to-head transition is no longer current.
+4. Enable "Require review from Code Owners" on the ruleset for `main`, so that `.github/CODEOWNERS`'s entry for `.github/workflows/` is actually enforced. Until this is on, the CODEOWNERS file is documentation only and does not mitigate the candidate-controlled listener-narrowing or check-name-spoofing gaps described above.
+
+Until all four are true, the workflow existing and passing does not mean the merge invariant is actually enforced.
 
 ## Tests as design evidence
 
@@ -309,4 +378,4 @@ Before considering an initiative slice complete, ask whether deleting the implem
 - what remains intentionally deferred;
 - how the change is validated.
 
-If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation, planning, an ADR, or the PR record.
+If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation, planning, an ADR, or the PR record. When promoting knowledge out of planning into a durable document, translate temporary delivery coordinates into semantic terminology.

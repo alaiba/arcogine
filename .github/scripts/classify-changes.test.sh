@@ -5,7 +5,7 @@
 # loudly here instead of silently letting a real change skip its checks.
 #
 # The classify job is also the always-running dependency of the repository's
-# single required `gate` status, so repository-wide documentation-link and ADR
+# single required `gate` status, so repository-wide documentation-link, delivery-label, and ADR
 # history checks are invoked here as part of the same fail-closed path rather
 # than through separate, non-required workflows.
 set -euo pipefail
@@ -47,8 +47,8 @@ check "frontend-only" \
   "product/interfaces/web/src/App.tsx" \
   "backend=false,frontend=true,docker=false,docs_only=false,"
 
-check "docker-only (non-shared path)" \
-  ".env.example" \
+check "docker-only environment template" \
+  "infra/docker/.env.example" \
   "backend=false,frontend=false,docker=true,docs_only=false,"
 
 check "docs mixed with backend is not docs-only" \
@@ -85,5 +85,8 @@ echo "All classification tests passed."
 
 python3 "$dir/check-markdown-links.test.py"
 python3 "$dir/check-markdown-links.py" "$repo"
+python3 "$dir/check-delivery-labels.test.py"
+python3 "$dir/check-delivery-labels.py"
 python3 "$dir/check-adr-immutability.test.py"
+python3 "$dir/check-adr-rename.test.py"
 python3 "$dir/check-adr-immutability.py" --ci

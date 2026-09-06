@@ -9,11 +9,11 @@ import com.arcogine.challenge.evaluation.ChallengeEvaluationResult;
 /**
  * An immutable, reproducible record of one completed challenge attempt.
  *
- * <p>{@code ChallengeAttempt} is the C4 historical aggregate: it retains the exact admitted
- * candidate snapshot, the exact construction economics used, and the exact C3 evaluation result
+ * <p>{@code ChallengeAttempt} is the attempt/comparison capability's historical aggregate: it retains the exact admitted
+ * candidate snapshot, the exact construction economics used, and the exact evaluation result
  * (which itself already retains the exact challenge identity/version, evaluation-policy
  * identity/version, and opaque model/run provenance). It does not recompute or duplicate any of
- * those C3 facts -- it only adds a stable game-owned identity for the historical occurrence and
+ * those evaluation facts -- it only adds a stable game-owned identity for the historical occurrence and
  * guarantees the whole record stays immutable once constructed.
  *
  * <p>This is not an event-sourcing or workflow record: it captures one already-completed

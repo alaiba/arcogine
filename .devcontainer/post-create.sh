@@ -13,8 +13,8 @@ if [[ "$REMOTE_URL" == git@github.com:* ]]; then
   echo "    Switched remote to HTTPS for credential forwarding"
 fi
 
-echo "==> Copying .env.example -> .env (if not present)..."
-[ -f .env ] || cp .env.example .env
+echo "==> Copying infra/docker/.env.example -> .env (if not present)..."
+[ -f .env ] || cp infra/docker/.env.example .env
 
 echo "==> Ensuring node_modules volume is writable..."
 # Non-recursive: the mount point itself is what a fresh named volume

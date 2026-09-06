@@ -2,6 +2,7 @@
 
 Status: Accepted
 Date: 2026-09-01
+Amendment: 2026-09-03 — replaced transient runtime/Governance delivery coordinates with semantic terminology; no semantic change
 
 ## Context
 
@@ -83,7 +84,7 @@ OpenAPI schemas follow accepted Arcogine domain semantics; they do not drive tho
 
 The current manually documented API remains current-state authority until a versioned supported HTTP surface is migrated and OpenAPI generation/validation is deliberately established.
 
-In particular, the Gate 4 `RuntimeObservation` / `RuntimeEvent` domain contract must stabilize before the legacy HTTP/SSE surface is promoted into a durable external compatibility contract.
+In particular, the supported `RuntimeObservation` / `RuntimeEvent` domain contract must stabilize before the legacy HTTP/SSE surface is promoted into a durable external compatibility contract.
 
 ### 5. Runtime transports and integration envelopes project `RuntimeEvent`; they do not define it
 
@@ -106,7 +107,7 @@ semantic payload
 
 A transport may encode or map those responsibilities differently, but it must not silently discard or redefine them.
 
-CloudEvents is a plausible future integration-envelope profile. It is not the Arcogine runtime-event domain type and is not required for Gate 4.
+CloudEvents is a plausible future integration-envelope profile. It is not the Arcogine runtime-event domain type and is not required for the supported runtime observation/event contract.
 
 AsyncAPI may later describe supported asynchronous channels once multiple durable async transports justify a shared machine-readable channel contract. It is not required merely because SSE exists.
 
@@ -188,11 +189,11 @@ A future Asset Administration Shell adapter may use AAS/AASX packages and submod
 
 External AAS semantic IDs and asset identities remain distinct from Arcogine semantic identity where their meanings differ. AASX packaging does not define Arcogine controlled revision identity, model fingerprinting, runtime execution state, or deployment truth.
 
-### 12. G1.3 owns durable controlled-revision artifact persistence and exact historical resolution
+### 12. Authoritative revision persistence owns durable controlled-revision artifact storage and exact historical resolution
 
 This ADR does not select the physical persistence representation for authoritative controlled revisions or historical semantic artifacts.
 
-Governance G1.3 remains responsible for durable revision persistence, repository-level lineage integrity, and exact controlled-revision-to-semantic-state/artifact resolution.
+The Governance-owned authoritative revision persistence capability remains responsible for durable revision persistence, repository-level lineage integrity, and exact controlled-revision-to-semantic-state/artifact resolution.
 
 A later implementation decision may choose JSON, binary storage, a database representation, content-addressed blobs, or another mechanism. That choice must preserve the already-fixed distinction between:
 
@@ -276,9 +277,9 @@ Positive consequences:
 
 - serializers and external standards cannot silently become Arcogine's domain authority;
 - `factory-model:v1` identity remains independent of JSON/TOML/library behavior;
-- Gate 4 runtime-event semantics remain independent of SSE, CloudEvents, brokers, and other transports;
+- supported runtime-event semantics remain independent of SSE, CloudEvents, brokers, and other transports;
 - future supported exports will use outward runtime contracts rather than internal scheduler traces;
-- G1.3 can choose artifact persistence independently without reopening semantic or revision identity;
+- authoritative controlled-revision persistence can choose artifact storage independently without reopening semantic or revision identity;
 - B2MML, AutomationML, AASX, FMI, Parquet, IFC, glTF, STEP, OPC UA, and other formats have explicit architectural homes and implementation triggers;
 - adapters can evolve independently while preserving Arcogine-owned semantic continuity.
 
@@ -321,7 +322,7 @@ This ADR does not:
 
 - implement any new serializer, adapter, broker, protocol, or export path;
 - change current HTTP/SSE behavior or `docs/reference/api.md`;
-- choose G1.3 persistence, artifact-retention, database, or repository technology;
+- choose authoritative revision persistence, artifact-retention, database, or repository technology;
 - define a new factory-model fingerprint policy;
 - add YAML support;
 - implement B2MML, AutomationML, AASX, FMI/FMU, Parquet, Arrow, IFC, glTF, STEP, OPC UA, MQTT, ReqIF, SARIF, PROV, OSCAL, or AsyncAPI;

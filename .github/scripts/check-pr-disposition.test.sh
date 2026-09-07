@@ -23,9 +23,6 @@ test_count=0
 pass_count=0
 fail_count=0
 
-# Encode one or more review bodies (each a full multi-line string, passed as
-# a separate argument) into the newline-separated base64 list the evaluator
-# expects.
 encode_bodies() {
   local out=""
   local body
@@ -315,6 +312,12 @@ test_case \
   "$CURRENT" \
   "Reviewed head:t${CURRENT}
 Disposition:t**READY TO MERGE**"
+
+# GitHub can reject an Actions workflow before scheduling any job, which makes
+# evaluator-only tests insufficient. Lint every workflow definition from the
+# always-running disposition test suite so malformed orchestration cannot
+# reach main while the required gate is green.
+bash "$SCRIPT_DIR/check-actions-workflows.sh"
 
 # Summary
 echo ""

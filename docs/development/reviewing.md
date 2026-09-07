@@ -344,14 +344,16 @@ The listener's own `pull_request_review.types` list is itself PR-editable conten
 
 Both mitigations depend on the *reviewing* owner identity being genuinely independent of whoever could otherwise self-approve the change (see activation item 2 below); CODEOWNERS enforcement is necessary but not sufficient on its own.
 
-At time of writing, this status check is **not yet required** by the branch protection ruleset on `main` — see the check's own workflow file for the exact context name to add. This bootstrap PR does not need to activate the rule before merging. Because all three workflow files must exist on `main` for `pull_request_target`/`workflow_run`/`schedule` to fire at all, no `disposition` check runs on this bootstrap PR's own head — this is expected, not a defect, and is a stronger form of the same bootstrap boundary as the evaluator script itself. The gate becomes active for the first time on the first PR opened after this one merges. Enforcement activates only once a maintainer completes all of the following, not merely adding the status name:
+The `disposition` check is intended to be required on `main`. Enforcement is considered active only when all of the following are true:
 
-1. Add the exact check-run context (see the workflow file) to the ruleset's required status checks.
-2. Ensure the identity available to coding agents cannot bypass the required disposition and CI checks, and cannot satisfy the `.github/CODEOWNERS` review requirement on itself. A ruleset actor with a "for pull requests only" bypass can still choose to bypass at merge time; if Arcogine's agents operate through that same identity, adding a required check (or a code-owner review requirement naming that same identity) does not constrain them. A separate human-only emergency bypass, reviewed by a distinct human code owner, is acceptable as long as agents cannot exercise it and cannot self-approve as the listed owner.
-3. Enable "require branches to be up to date before merging" (or an equivalent base-freshness safeguard). The gate binds only to the PR head SHA and is not triggered by a push to `main`, so a base-branch advance after a passing disposition/CI check would otherwise leave a stale authorization mergeable even though the reviewed base-to-head transition is no longer current.
-4. Enable "Require review from Code Owners" on the ruleset for `main`, so that `.github/CODEOWNERS`'s entry for `.github/workflows/` is actually enforced. Until this is on, the CODEOWNERS file is documentation only and does not mitigate the candidate-controlled listener-narrowing or check-name-spoofing gaps described above.
+1. The exact `disposition` check-run context is required by the `main` ruleset.
+2. The identity available to coding agents cannot bypass the required disposition and CI checks and cannot satisfy its own `.github/CODEOWNERS` review requirement. A separate human-only emergency bypass is acceptable only when agents cannot exercise it and cannot self-approve as the listed owner.
+3. Required checks enforce base freshness, for example by requiring branches to be up to date before merging. The disposition gate binds to the PR head SHA and is not triggered by a push to `main`, so a base advance must not leave stale review authorization mergeable.
+4. The ruleset requires review from Code Owners, so `.github/CODEOWNERS` actually protects workflow and CODEOWNERS changes against candidate-controlled listener narrowing or same-named check spoofing.
 
-Until all four are true, the workflow existing and passing does not mean the merge invariant is actually enforced.
+If the disposition infrastructure itself is broken such that GitHub cannot publish the `disposition` check, temporarily remove only `disposition` from the required-check list while repairing the trusted workflow. Keep the remaining protections active, including `gate`, base-freshness enforcement, Code Owner review, and the no-bypass posture. After the repair reaches `main`, verify end to end that a canonical current-head review produces a `disposition` check on that PR head and that a subsequent head change invalidates the old authorization. Restore `disposition` as a required status check only after that live verification succeeds.
+
+Until all four activation conditions are true, the workflow existing and passing does not mean the merge invariant is actually enforced.
 
 ## Tests as design evidence
 

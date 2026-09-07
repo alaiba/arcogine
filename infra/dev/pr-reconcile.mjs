@@ -13,7 +13,8 @@
  *   - clean working tree;
  *   - current branch is the PR head branch;
  *   - local HEAD exactly matches the live remote PR head;
- *   - PR is open and its head branch lives in the canonical repository.
+ *   - PR is open and its head branch lives in the canonical repository;
+ *   - git and an authenticated gh CLI are available.
  *
  * Reconciliation is a rebase, not a merge, to preserve Arcogine's linear-history policy.
  * Conflicts abort the operation before any remote ref changes.
@@ -34,6 +35,9 @@ USAGE
 OPTIONS
   --repo <owner/name>  Repository (default: ${DEFAULT_REPO})
   --help               Show this help
+
+REQUIRES
+  git and an authenticated gh CLI. Run from a clean checkout of the PR head branch.
 
 SAFETY
   The PR branch is never moved to the base commit as an intermediate step. The helper
@@ -132,10 +136,15 @@ async function reconcilePr({ number, repo = DEFAULT_REPO, run = commandRunner, l
     );
   }
 
-  run('git', ['fetch', 'origin', baseRef, headRef]);
-
   const baseRemote = `refs/remotes/origin/${baseRef}`;
   const headRemote = `refs/remotes/origin/${headRef}`;
+  run('git', [
+    'fetch',
+    'origin',
+    `+refs/heads/${baseRef}:${baseRemote}`,
+    `+refs/heads/${headRef}:${headRemote}`,
+  ]);
+
   const fetchedHead = run('git', ['rev-parse', headRemote]);
   if (fetchedHead !== oldHead) {
     throw new Error(`PR head moved during reconciliation setup: expected ${oldHead}, fetched ${fetchedHead}`);

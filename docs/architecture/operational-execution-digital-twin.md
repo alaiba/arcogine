@@ -1,179 +1,200 @@
 # Operational Execution and Digital Twin Architecture
 
 > **Status:** Proposed architectural reference  
-> **Scope:** Operational execution, external observations, digital-twin reconciliation, and design-to-reality continuity  
+> **Scope:** Execution/reality relationships, external observations, digital-twin reconciliation, and design-to-reality continuity  
 > **Authority:** Proposed architecture; this document does not describe current production capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md), [ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md), [ADR-0013](decisions/0013-execution-context-identity.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md), [ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md), [ADR-0013](decisions/0013-execution-context-identity.md), [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
 ## 1. Architectural position
 
-Arcogine's product thesis requires continuity from designed intent to operational reality without collapsing simulation, production control, external observations, and governance into one mutable runtime.
+Arcogine's product thesis requires continuity from designed intent through simulation and verification to independently existing operational reality without forking the business semantics into separate simulation and production ontologies.
 
-The proposed architectural rule is:
+The architectural rule is:
 
-> **Arcogine reuses production semantics across lifecycle contexts. Consequential Arcogine interpretations, commands, deployments, and reconciliation results must identify their execution context, authority, provenance, and the semantic model/revision relationship that informed them when one exists. Raw external observations retain independent source and time provenance and must not be forced to identify an Arcogine execution context or controlled revision at ingestion.**
+> **Arcogine reuses the same semantic model across synthetic and externally grounded execution. What differs is expressed through relationships: how state transitions are realized, what provenance and authority they carry, what evidence is available, what trust applies, and what consequence can escape Arcogine. Raw external observations retain independent source and time provenance and must not be forced to invent Arcogine model, revision, or operational-history identity at ingestion.**
 
 This capability is a sibling of Factory Design / Engine Readiness and Governance / Conformance:
 
-- **Factory Design / Engine Readiness** owns production semantics and deterministic simulation runtime truth.
-- **Operational Execution / Digital Twin** owns operational execution-context identity, command/result lifecycle, deployment application, external observations, operational trust boundaries, and modeled-versus-observed reconciliation.
+- **Factory Design / Engine Readiness** owns canonical production semantics and deterministic simulation runtime truth.
+- **Operational Execution / Digital Twin** owns the future semantic integration boundary where independently existing systems, external observations, trusted correspondences, command/result facts, deployment application, and modeled-versus-observed reconciliation enter the picture.
 - **Governance / Conformance** owns durable semantic identity, controlled revision history, requirements/assertions, evidence use, findings, exceptions, and governed-change interpretation.
 
 The current implementation is simulation-first and does not execute real-world commands. Nothing in this document changes that current-state claim.
 
-Governance Governance identity/history capability is now implemented and authoritative. Operational work that needs durable model/revision identity must consume `ModelFingerprint`, `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority` rather than inventing synthetic production substitutes. Governance semantic ChangeSet/impact capability's initial slice (`ChangeSet`/`ImpactScope`/`SemanticChange` and the factory-domain semantic comparator) is also now implemented; operational work that needs semantic change attribution should consume it rather than inventing a substitute. Governance requirements/assertions capability (`Requirement`/`Assertion`/`RequirementCatalogue`) is also now implemented; operational work that needs a registered, versioned requirement/assertion contract should consume it rather than inventing a substitute. Governance conformance evaluation/findings capability's initial slice (`ConformanceEvaluator`/`ConformanceEvaluation`/`Finding`) is also now implemented; operational work that needs single-assertion conformance evaluation or findings attribution should consume it rather than inventing a substitute. evidence/evidence-use capability+ Governance capabilities (evidence use, exceptions, authorization) remain future dependencies where applicable.
+Governance durable fingerprint/revision history, semantic change/impact, requirement/assertion, and initial conformance/finding contracts are implemented and authoritative. Operational work that needs those responsibilities must consume them rather than inventing substitutes. Governance evidence-use/authorization capabilities remain future dependencies where applicable.
 
-Engine supported runtime observation/event contract core/headless closure is now complete: `RunId` and consumer-neutral `RuntimeObservation` landed through conformance evaluation/findings capability-A, the supported `RuntimeEvent` contract landed through conformance evaluation/findings capability-B, and conformance evaluation/findings capability-C closed the headless acceptance contract (fresh-observation reconstruction without replay, observation/event closure, bottleneck identification from the supported observation, and structural enforcement that API/frontend DTOs never re-enter domain decision paths). ADR-0011 defines the event contract that conformance evaluation/findings capability-B/conformance evaluation/findings capability-C implement at the `FactoryRuntime` boundary. supported runtime observation/event contract distribution hardening beyond the headless boundary (conformance evaluation/findings capability-D transport/SSE/CLI migration, runtime-event recovery/resynchronization hardening retained history/replay/reconnect) remains outstanding and out of scope for Operational Execution to assume.
+Engine runtime observation/event core/headless closure is also implemented. `RunId`, supported runtime observations/events, and `EngineSemanticsVersion` remain Engine-owned concepts. Distribution hardening and durable replay/reconnect remain separate future Engine work; Operational Execution must not assume they already exist.
 
-## 2. Execution context has classification and concrete identity
+## 2. Synthetic versus operational is not a global execution kind
 
-Operational consequence must be explicit, but classification is not identity.
-
-The architecture distinguishes concepts equivalent to:
+A single Arcogine execution may legitimately combine, for example:
 
 ```text
-ExecutionContextKind
-    what consequence/environment semantics apply?
-
-ExecutionContextId
-    which concrete Arcogine execution context is this?
-
-ExecutionContext
-    immutable binding of kind + concrete identity
+Machine A        externally observed
+Machine B        externally observed and physically controllable
+Machine C        synthetic
+Demand           historical trace
+Operator         verified human
+Supplier         synthetic autonomous agent
+Controller       physical hardware
+Plant dynamics   simulated
 ```
 
-`PRODUCTION` is therefore a classification, not one global production context. Arcogine must be able to represent several production, staging, or simulation-linked contexts at the same time without conflating them.
+No single `SIMULATION`, `STAGING`, `PRODUCTION`, or `OPERATIONAL` label adequately describes that whole graph.
 
-The original conceptual list `SIMULATION / REPLAY / TEST / STAGING / PRODUCTION` was exploratory, not a frozen enum. The execution-context identity decision must use consequence-oriented semantics:
+The architecture therefore does **not** treat `PRODUCTION / STAGING / SIMULATION` as a durable global execution taxonomy. The earlier consequence-oriented `ExecutionContextKind` proposal in ADR-0013 is under revision and must not be implemented as established architecture.
 
-- production consequence is a distinct classification;
-- staging-like production integration without production consequence is a justified classification;
-- simulation may be classified or linked when operational artifacts need that distinction, but simulation runtime identity remains `RunId`;
-- replay is primarily a processing/history-interpretation mode and should not become a context kind unless a concrete authority/consequence invariant requires it;
-- generic software test execution is not itself an operational environment ontology.
+Several concerns that were previously candidates for one context kind are orthogonal:
 
-This is a narrower taxonomy than the Product Charter's conceptual use of **execution context**. The Charter requires simulation, replay, staging, and production to remain unambiguously distinguishable; execution-context identity does not relax that invariant. `ExecutionContextKind` is intended only to classify operational consequence/environment semantics, while replay may be represented by a separate explicit processing/execution-mode dimension correlated with the concrete context. A replay must therefore remain visibly distinct from an ordinary simulation, staging, or production interpretation even if `REPLAY` is not an `ExecutionContextKind` member. If later design cannot preserve that distinction cleanly without making replay a context kind, the execution-context identity ADR must revise the taxonomy rather than weaken the Charter requirement.
+- whether a subject's authoritative state is synthetic or independently external;
+- how an operation is realized;
+- whether an external target can suffer consequence;
+- what actor/capability policy applies;
+- what trust and authentication basis applies;
+- installation lifecycle such as commissioning, qualification, production, maintenance, or decommissioning;
+- historical processing such as seek, replay, or fork.
 
-[ADR-0013](decisions/0013-execution-context-identity.md) now records the concrete execution-context identity proposal: initial kinds `PRODUCTION`, `STAGING`, and `SIMULATION`; opaque UUIDv4 `ExecutionContextId`; immutable ID-plus-kind binding; permanent ID-to-kind association; checked semantic comparison that treats same-ID/different-kind as a binding conflict rather than another context; explicit establishment through an Operational boundary; and no execution-context identity context registry. Because ADR-0013 is still **Proposed**, these are not yet accepted architecture and execution-context identity remains unimplemented.
+Hybrid configurations are expected rather than exceptional. These concerns must remain independently representable instead of being compressed into one permanent enum value.
 
-### 2.1 `RunId` is not execution-context identity
+### 2.1 Digital twin is relational
 
-ADR-0011 defines `RunId` as opaque correlation identity for one fresh simulation runtime epoch. A reset creates a new `RunId` even when the same semantic model and deterministic workload are reused.
+A digital twin is not a global execution kind and no top-level `DigitalTwinId` is justified merely by the concept.
 
-Operational execution context answers a different question: under what consequence/environment semantics is an Arcogine-owned operational artifact interpreted, and which concrete operational context does it belong to?
+A twin exists where Arcogine-modeled subjects are related to independently existing external subjects through sufficiently authoritative correspondence, observation, provenance, and reconciliation relationships. Some subjects in one model may be externally grounded while others remain synthetic.
 
-Therefore:
+A twin can also use simulation internally for prediction or hypothetical continuation. A synthetic fork from a reconciled historical state does not make the continuing physical world synthetic; it creates a separate hypothetical continuation from that point.
 
-```text
-RunId != ExecutionContextId
-```
+### 2.2 A durable operational-history identity problem remains
 
-A later operational record may correlate both. The existence of a `RunId` must never be used to infer an operational context.
+ADR-0013 identified a real requirement even though its permanent kind binding is not retained: later durable operational records need an Arcogine-owned identity that can keep one independently continuing operational history/partition distinct from another across process restart, storage migration, deployment changes, lifecycle changes, and changes in physical correspondence.
 
-### 2.2 Context identity is not target, actor, revision, or model identity
-
-The architecture preserves these distinct identities:
+That identity is not:
 
 ```text
-ModelFingerprint
-    which semantic content?
-
-ControlledRevisionId
-    which governed historical occurrence?
-
 RunId
-    which simulation runtime epoch?
-
-ExecutionContextKind
-    what consequence/environment semantics apply?
-
-ExecutionContextId
-    which concrete operational context?
-
-Target identity
-    which external system/resource receives an action?
-
-Actor identity
-    who/what requested or performed the consequential action?
+ModelFingerprint
+ControlledRevisionId
+target identity
+actor identity
 ```
 
-Required non-equivalences are:
+A deliberately divergent continuation must not silently share one history identity with its source.
 
-```text
-ControlledRevisionId != ExecutionContextId
-RunId               != ExecutionContextId
-target identity      != ExecutionContextId
-actor identity       != ExecutionContextId
-ModelFingerprint     != ExecutionContextId
-```
+The exact referent, lifecycle/equality rule, and final name of this durable identity remain open. In particular, this document does not yet decide whether `ExecutionContextId` remains the right name. ADR-0013 must resolve that question before implementation.
 
-Correlation among these values belongs in the operational artifact that needs it. No convenient neighboring identity becomes a substitute for context identity.
+### 2.3 Identity must not be inferred from deployment location
 
-### 2.3 Authoritative context boundary
-
-Execution context becomes trustworthy only when explicitly supplied or resolved through an Operational Execution-owned semantic boundary. Downstream operational artifacts propagate that value as data.
-
-Context must not be inferred from:
+Whatever durable operational-history identity is ultimately accepted, it must not be inferred from:
 
 - Spring profile;
 - process hostname;
-- environment variable alone;
+- environment variable naming convention;
 - API URL;
-- deployment namespace;
-- caller convention;
-- existence of a `RunId`;
-- existence of a `ControlledRevisionId`;
+- Kubernetes/deployment namespace;
 - target identity;
-- actor identity.
+- actor identity;
+- `RunId`;
+- `ControlledRevisionId`;
+- `ModelFingerprint`;
+- build, test, replay, or process mode.
 
-Configuration mechanisms may later carry an already-defined context identifier, but configuration syntax/location is not the semantic authority.
+Configuration may carry an already-established identity. Configuration syntax/location is not semantic identity or authority.
 
-This boundary intentionally precedes operational identity/trust/authority authorization. operational identity/trust/authority can later evaluate policy against explicit context kind and concrete identity rather than duplicating environment heuristics or forking factory production semantics.
+## 3. Modeled, external, observed, reconciled, and predicted state are distinct
 
-## 3. Modeled state, observed reality, and reconciled twin state are different things
-
-Arcogine must preserve three distinct concepts:
+Arcogine must preserve at least these concepts:
 
 ```text
 Modeled intent/state
     what the selected semantic model and, when applicable,
     controlled revision say should exist
 
-Observed external reality
-    immutable facts reported by external systems or measurements
-    with independent source/time provenance
+External reality
+    independently existing state that Arcogine does not own as a database value
+
+Observation
+    immutable/provenanced evidence reported about external reality
 
 Reconciled twin interpretation
-    Arcogine's current interpretation of reality after considering model,
-    observations, authority, freshness, confidence, and discrepancies
+    Arcogine's current evidence-based interpretation after considering
+    model, observations, authority, freshness, confidence, and discrepancy
+
+Simulated/predicted state
+    hypothetical or forecast continuation generated from selected inputs
 ```
 
-An observation does not automatically overwrite modeled state. A model does not automatically override an external authoritative fact. Reconciliation is an explicit domain responsibility.
+An observation does not automatically overwrite modeled state. A model does not override an independently authoritative external fact. A prediction does not silently become reconciled reality. Reconciliation is an explicit domain responsibility.
 
-A reconciled twin may represent agreement, stale or missing observations, conflicting external authorities, known divergence, inferred state with confidence, or a pending commanded transition that is not yet observed as complete.
+A reconciled twin may represent agreement, stale or missing evidence, conflicting authorities, known divergence, inferred state with confidence, or a pending requested transition that has not yet been observed as complete.
 
-The model/revision relationship belongs naturally to the reconciliation result or another interpretation/evidence-use record because that is where Arcogine decides which model semantics were applied to independent external facts.
+## 4. Subjects, operations, transitions, and realization
 
-## 4. Identity, trust, authority, and capability
+The same semantic operation should remain meaningful whether its realization is synthetic, physical, hardware-in-the-loop, software-in-the-loop, or another hybrid.
 
-Operational execution requires a common actor and peer boundary broader than interactive login.
+Conceptually:
 
-Conceptually, an actor may be human, agent, service, or external system. Every consequential request must be attributable to an actor identity and evaluated against explicit capability/scope in the target execution context.
+```text
+Operation
+    semantic request/decision intended to affect state
 
-For a production-consequential boundary, identity is not sufficient by itself. Arcogine must distinguish claimed identity from verified identity and establish an explicit trust basis for consequential peers, sources, and targets.
+Transition
+    state change that actually occurs
 
-Before production actuation or authoritative production observation is considered mature, the boundary must provide semantics for peer/source/target verification, integrity/authenticity, credential/secret lifecycle sufficient for the integration, least privilege, trust assumptions, revocation/expiry or equivalent loss of trust, and fail-safe treatment of unverifiable or integrity-failed inputs.
+Realization
+    mechanism through which an operation can produce or request a transition
+
+Observation
+    evidence about state or a transition
+```
+
+These names are conceptual; this document does not require corresponding Java types yet.
+
+For an Arcogine-owned synthetic state machine, an authorized operation may directly and deterministically produce the authoritative next state.
+
+For an independently existing system, Arcogine can request an operation through an external realization mechanism, but request, acceptance, adapter success, physical transition, observation, and reconciled interpretation remain separate facts.
+
+Therefore:
+
+```text
+requested operation
+!= accepted command
+!= actual transition
+!= observation of transition
+!= reconciled interpretation
+```
+
+This distinction is substrate-independent and is more fundamental than an `observe / actuate` direction flag on an identity correspondence.
+
+## 5. Actor, authority, trust, and capability
+
+Actor/action/capability semantics are not intrinsically operational. Synthetic execution may need humans, agents, NPCs, adversaries, delegated authority, protected resources, approvals, or forbidden actions.
+
+The reusable semantic question is approximately:
+
+```text
+May actor A perform operation X on subject S under the applicable policy?
+```
+
+Real external consequence adds further requirements rather than a second authorization ontology:
+
+- claimed identity versus verified identity;
+- trust roots and peer/source/target authenticity;
+- credential/secret lifecycle;
+- least privilege;
+- revocation/expiry or equivalent loss of trust;
+- physical safety enforcement;
+- fail-safe behavior when identity, integrity, authority, or target state is uncertain.
 
 Authentication mechanism, identity provider, certificate scheme, protocol security profile, and policy engine remain implementation choices.
 
-## 5. Commands are not facts
+The exact module ownership of reusable actor/capability semantics is still open and must not be forced into Operational merely because the first real-world consumer needs it.
 
-A request to change reality must remain distinguishable from the resulting operational facts.
+## 6. External commands are not facts about reality
 
-A conceptual lifecycle is:
+A conceptual external command lifecycle is:
 
 ```text
-CommandRequested
+Operation requested
       ↓
 Validated
       ↓
@@ -187,16 +208,16 @@ Executing
       ↓
 Succeeded / Failed / Unknown
       ↓
-Reconciled with observed reality
+Observed and reconciled
 ```
 
-The exact state machine may vary by adapter, but production actuation requires stable command identity/correlation, target identity and verified trust context, actor and authority provenance, explicit execution context, requested/effective values, source semantic fingerprint / controlled revision when derived from one, submission/acknowledgement facts, timeout/retry rules, partial outcome handling, cancellation/compensation where meaningful, and resulting observation/reconciliation links.
+The exact state machine may vary by adapter. Consequential external realization requires stable correlation, target identity and trust, actor/authority provenance, requested/effective values, semantic model/revision provenance when derived from one, timeout/retry rules, partial outcome handling, and cancellation/compensation where meaningful.
 
-An accepted command is not proof that reality changed. A successful adapter call is not automatically proof that the physical system reached the requested state.
+An accepted command is not proof that reality changed. A successful adapter call is not proof that the physical system reached the requested state.
 
-## 6. Deployment is distinct from publication and approval
+## 7. Deployment is distinct from publication and approval
 
-Factory Design publishes semantic model versions. Governance owns controlled revision identity/history. Operational Execution applies an appropriately authorized semantic state to a target execution context.
+Factory Design publishes semantic model versions. Governance owns controlled revision identity/history. Operational Execution applies an appropriately authorized semantic state to external targets.
 
 ```text
 Factory model version
@@ -218,48 +239,105 @@ Verification
 Promote or rollback
 ```
 
-Deployment records remain separate from models, revision records, and authorization decisions. Different targets or execution contexts may legitimately be at different revisions.
+Deployment records remain separate from models, revisions, authorization decisions, target identities, and the still-open durable operational-history identity.
 
-A deployment record must be able to answer not only which source revision was intended, but what effective representation was applied. Provenance should bind source semantic fingerprint and authoritative controlled revision when applicable, target identity and execution context, mapping/profile/transformation identity/version, material tool version, rendered/applied artifact fingerprint or authoritative external applied-version/reference, authorization, application acknowledgement, verification result, and rollback reference.
+A deployment record must be able to answer not only which source revision was intended, but what effective representation was applied. Provenance should bind source semantic fingerprint and authoritative controlled revision when applicable, target identity, mapping/profile/transformation identity/version, material tool version, rendered/applied artifact fingerprint or authoritative external applied-version/reference, authorization, application acknowledgement, verification result, and rollback reference.
 
-Governance Governance identity/history capability now provides the durable revision/history prerequisite for this work. That availability does not implement deployment semantics.
+Governance durable revision/history capability supplies the identity/history prerequisite; it does not implement deployment semantics.
 
-## 7. External observations have independent provenance
+## 8. External observations and subject correspondence
 
-An external observation is an operational fact, not merely a governance evidence attachment and not intrinsically a fact about one Arcogine context or revision.
+An external observation is an operational fact, not merely a Governance evidence attachment and not intrinsically a fact about one Arcogine model/revision or operational history.
 
-A durable observation contract should be able to identify observation identity, source system/identity, source trust/authenticity provenance where required, observed subject, observed value/fact, unit/dimension where applicable, source event/measurement time, ingestion/receipt time, quality/confidence metadata, correlation to command/deployment/run when genuinely known, and raw-source reference when retention policy permits.
+A durable observation contract should be able to identify observation identity, source system/identity, source trust/authenticity provenance where required, observed external subject, observed value/fact, unit/dimension where applicable, source event/measurement time, ingestion/receipt time, quality/confidence metadata, genuine correlations, and raw-source reference when retention policy permits.
 
 A raw observation does **not** require:
 
-- an Arcogine `ExecutionContextId`;
+- an Arcogine operational-history identity;
 - a `ModelFingerprint`;
 - a `ControlledRevisionId`.
 
-If the external source genuinely supplies its own environment/context, that fact may be retained as source provenance. If Arcogine later interprets the observation against an operational context or model, that binding belongs to the interpretation, reconciliation result, deployment correlation, or Governance `EvidenceUse` relationship.
+If an external source supplies its own environment/context, that fact may be retained as source provenance. Arcogine-owned interpretation establishes later relationships only when it has authority to do so.
 
-Transport protocols such as OPC UA or MQTT are adapters over this semantic boundary; they are not the domain model themselves.
+### 8.1 External-subject correspondence is first-class future work
 
-## 8. Reconciliation owns modeled-versus-observed divergence
+Before reconciliation can claim that an external subject is evidence about an Arcogine semantic subject, Arcogine needs an explicit authoritative correspondence assertion conceptually equivalent to:
 
-Reconciliation compares what Arcogine expects with what authoritative observations indicate.
+```text
+external identity namespace + external subject
+                    ↕
+        authoritative correspondence
+                    ↕
+          Arcogine semantic subject
+```
+
+Names, endpoints, connector configuration, namespace placement, or coincident identifiers must never establish this correspondence implicitly.
+
+A mature correspondence contract must eventually address at least:
+
+- namespace-qualified external subject identity;
+- Arcogine semantic subject reference;
+- asserting/mapping authority;
+- mapping/profile version;
+- effective interval;
+- historical preservation;
+- explicit unknown/unmapped state;
+- conflict/replacement/alias semantics where required.
+
+Subject correspondence answers **which subjects correspond**. It does not itself say how evidence arrives or how an operation is realized.
+
+Observation-side mapping and operation-realization mapping are therefore separate semantic responsibilities even when one adapter/profile supports both.
+
+Transport protocols such as OPC UA or MQTT remain adapters over this boundary; they do not define Arcogine identity.
+
+## 9. Reconciliation owns modeled-versus-observed divergence
+
+Reconciliation compares modeled/reconciled expectations with authoritative external evidence.
 
 It should distinguish states equivalent to match, pending, stale, missing, conflict, diverged, and unknown without freezing those illustrative names prematurely.
 
-A reconciliation result should be historically attributable to the exact semantic fingerprint / controlled revision interpreted when applicable, the observations considered, source authority/trust decisions, reconciliation policy/version, relevant pending commands/deployments, execution context, and temporal frame.
+A reconciliation result should be historically attributable to the exact semantic fingerprint / controlled revision interpreted when applicable, the observations considered, the correspondence assertions used, source authority/trust decisions, reconciliation policy/version, relevant pending commands/deployments, and temporal frame.
 
-Governance Governance identity/history capability now allows revision-bound reconciliation to resolve an exact authoritative historical semantic state through `ControlledRevisionAuthority`; it must not substitute the mutable current model or a synthetic revision fixture when the historical revision matters.
+Governance controlled-revision history allows revision-bound reconciliation to resolve the exact authoritative historical semantic state; mutable current model state must not substitute when historical attribution matters.
 
-Reconciliation must account for temporal semantics including simulation time, source/event time, observed-at time, received/ingested-at time, effective intervals, recorded-at time, deployment time, and processing wall-clock time.
+Reconciliation must eventually account for temporal semantics including source/event time, observed-at time, received/ingested-at time, effective intervals, recorded-at time, deployment time, simulation time where relevant, and processing wall-clock time.
 
-## 9. Calibration and drift close the improvement loop
+## 10. History, seek, replay, checkpoint, and fork are distinct capabilities
+
+`REPLAY` is not an execution/world/context kind.
+
+The architecture distinguishes at least:
+
+```text
+seek / reconstitution
+    recover or view state at a historical point
+
+replay
+    derive/reconstruct state or results by consuming retained historical inputs/trace
+
+checkpoint / restore
+    resume runtime state from a retained checkpoint
+
+fork
+    create an independently evolving continuation from a selected historical state
+```
+
+These capabilities have different retention and reproducibility requirements. Forking from a snapshot does not require replaying every event that produced the snapshot.
+
+The physical world does not replay. Arcogine may replay or reinterpret records about it, and may fork synthetic futures from historical reconciled state.
+
+ADR-0011 does not currently promise an unbounded cursor-addressable durable event history, and ADR-0015 does not promise permanent exact executability of every historical Engine version. Those remain separate design concerns.
+
+No higher-rank execution identity above `RunId` should be introduced until checkpoint/recovery or another concrete capability proves its lifecycle/equality semantics.
+
+## 11. Calibration and drift close the improvement loop
 
 The Product Charter's "reality improves the model" principle requires a governed feedback path rather than direct mutation of published semantics.
 
 ```text
 Expected behavior from model
         +
-Observed operational behavior
+Observed / reconciled operational behavior
         ↓
 Drift / discrepancy analysis
         ↓
@@ -272,107 +350,99 @@ Controlled revision
 Optional deployment
 ```
 
-Calibration proposals must not mutate a published model or production target outside normal publication, governance, and deployment boundaries.
+Calibration proposals must not mutate a published model or external target outside normal publication, governance, and deployment boundaries.
 
-Operational drift analysis may produce a candidate semantic change, but Governance owns the durable `ChangeSet`, conformance, finding, and controlled-revision semantics used to govern that candidate. Governance semantic ChangeSet/impact capability's initial `ChangeSet`/`ImpactScope` slice and Governance conformance evaluation/findings capability's initial `ConformanceEvaluator`/`Finding` slice are now available for that; Governance evidence/evidence-use capability evidence-use semantics remain outstanding and Operational Execution must not introduce substitutes.
+Operational drift analysis may propose a semantic change, but Governance owns durable `ChangeSet`, conformance/finding, evidence-use, and controlled-revision semantics.
 
-## 10. Boundary with Governance and Conformance
+## 12. Boundary with Governance and Conformance
 
-Operational Execution owns acquisition and provenance of operational facts. Governance consumes those facts as evidence when evaluating requirements or governed change.
+Operational Execution owns acquisition and provenance of operational facts and the interpretation/reconciliation relationships that connect them to modeled semantics. Governance consumes those facts through explicit evidence-use relationships when evaluating requirements or governed change.
 
 The invariant is:
 
-> **An external observation is not created as evidence for one context or revision. It is an operational fact with independent provenance; later Arcogine interpretations may bind it to an execution context/model, and Governance may reference it through an evidence-use relationship.**
+> **An external observation is not created as evidence for one Arcogine model, revision, or operational history. It is an operational fact with independent provenance; later authoritative relationships may interpret it, and Governance may reference it through evidence use.**
 
-Governance Governance identity/history capability is complete and authoritative for durable semantic fingerprint policy, controlled revision identity/lineage, acceptance/persistence, and exact historical resolution. Governance semantic ChangeSet/impact capability's initial slice is complete and authoritative for semantic `ChangeSet`/`ImpactScope`/`SemanticChange` attribution. Governance requirements/assertions capability is complete and authoritative for the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract. Governance conformance evaluation/findings capability's initial slice is complete and authoritative for single-assertion conformance evaluation and `Finding` attribution (`ConformanceEvaluator`/`ConformanceEvaluation`/`Finding`). Later Governance gates (evidence/evidence-use capability+) own evidence use, exceptions, governed-change interpretation, and audit projections.
+Operational Execution must consume Governance-owned fingerprint, revision, semantic change, requirement/assertion, conformance/finding, and evidence-use contracts when they exist rather than introducing duplicates.
 
-Operational Execution references those contracts when they exist rather than introducing duplicate revision, ChangeSet, evidence-use, or finding types.
-
-## 11. Boundary with Factory Design and Engine Readiness
+## 13. Boundary with Factory Design and Engine Readiness
 
 Factory Design / Engine Readiness remains authoritative for executable production semantics and deterministic simulated execution.
 
 Operational Execution does not turn `FactoryRuntime` into a production-control runtime by default.
 
-Engine concepts such as workload, dispatch, queues, operations, observations, and spatial consequences may inform shared semantic contracts. Production actuation additionally requires execution context, verified identity/trust, authorization, command acknowledgement, external-system failures, deployment targeting, operational observation provenance, and reconciliation.
+The architectural pressure from Operational work is broader than simply adding a second command vocabulary. Domain-level operations and state-transition meaning should remain reusable across synthetic and externally grounded realization where the semantics genuinely match. Exactly where that reusable contract belongs — Factory, Engine, a lower shared domain, or only structural analogy — remains an open design question and must not be generalized prematurely.
 
-Current Engine supported runtime observation/event contract status matters at this boundary:
+`EngineSemanticsVersion` remains Engine-owned. It identifies result-affecting Engine interpretation for simulation, including future Engine-driven prediction or virtual-commissioning use where applicable. It is not a generic Arcogine execution-semantics version.
 
-- `RunId` and consumer-neutral `RuntimeObservation` are implemented through conformance evaluation/findings capability-A;
-- the supported `RuntimeEvent` contract is implemented through conformance evaluation/findings capability-B;
-- supported runtime observation/event contract core/headless closure is complete through conformance evaluation/findings capability-C: fresh observation reconstruction without replay, observation/event closure, and consumer-neutral bottleneck identification are all proven at the `FactoryRuntime` boundary;
-- Operational Execution must not claim or depend on supported runtime observation/event contract distribution hardening (conformance evaluation/findings capability-D transport/SSE/CLI migration, runtime-event recovery/resynchronization hardening retained history/replay/reconnect) merely because headless closure is complete — those remain outstanding.
+Current Engine runtime observation/event core/headless closure is complete. Operational Execution must not assume outstanding transport, retained-history, replay, reconnect, or distribution hardening merely because the headless contract exists.
 
-Shared semantics do not imply shared mutable runtime state or identical lifecycle machinery.
+## 14. Integration adapter boundary
 
-## 12. Integration adapter boundary
+Industrial adapters sit behind Arcogine semantic contracts rather than defining them.
 
-Industrial adapters should sit behind a common semantic integration contract that identifies external identity mapping/version, direction, authority/trust expectations, transport/profile/security profile where relevant, lossiness/transformation rules, mapping/tool version, retry/idempotency behavior, provenance, and compatibility expectations.
+An adapter/profile may eventually carry several independent relationships, including:
 
-Candidate protocols and standards include OPC UA, MQTT, Asset Administration Shell profiles, ERP/MES interfaces, FMI/co-simulation boundaries, and ISA-95/B2MML-style interchange where justified.
+```text
+subject correspondence
+    external subject ↔ Arcogine semantic subject
 
-No protocol should become the canonical Arcogine domain model.
+observation mapping
+    external evidence → Arcogine observation facts
 
-## 13. Persistence and history
+operation realization mapping
+    Arcogine semantic operation → protocol/target-specific request
+```
 
-Operational execution will eventually create durable artifacts whose historical identity matters: commands/results, observations, deployment records and effective applied-artifact provenance, reconciliation records, and drift/calibration proposals.
+Do not collapse these responsibilities into a generic `direction = observe | actuate` property.
 
-Execution-context identity has a narrower first requirement:
+Adapter/profile contracts also need attributable transformation/mapping version, authority/trust expectations, transport/security profile where relevant, lossiness rules, retry/idempotency behavior, provenance, and compatibility expectations.
 
-- a concrete context identity must be stable enough to appear in persisted later records and be re-established after restart;
-- execution-context identity does **not** require a context registry, context-history database, issuance service, alias store, or generic persistence framework;
-- later registration/lifecycle requirements such as retirement, aliases, metadata history, or global uniqueness are separate operational persistence decisions.
+Candidate protocols and standards include OPC UA, MQTT, Asset Administration Shell profiles, ERP/MES interfaces, FMI/co-simulation boundaries, and ISA-95/B2MML-style interchange where justified. No protocol becomes the canonical Arcogine domain model.
 
-The Governance `FileControlledRevisionAuthority` is a revision-specific adapter and must not be generalized into operational storage by reuse.
+## 15. Persistence, history, and time
 
-Storage technology remains deliberately unspecified. Future durable operational records require explicit retention, compatibility, and migration semantics appropriate to their own responsibilities.
+Operational execution will eventually create durable artifacts whose historical identity matters: commands/results, observations, subject correspondences, deployment records and effective applied-artifact provenance, reconciliation records, and drift/calibration proposals.
 
-## 14. Safety and failure principles
+A durable operational-history identity remains a narrower but unresolved requirement:
 
-For production contexts:
+- it must be stable enough for later records to identify one independently continuing history across restart and infrastructure change;
+- it must remain separate from model/revision, run, target, actor, and subject identity;
+- a deliberately independent divergent continuation must not silently share one history identity;
+- the architecture does **not** yet define a registry, alias service, lifecycle administration model, or exact identity referent.
+
+Storage technology remains unspecified. Future durable operational records require explicit retention, compatibility, migration, and temporal semantics appropriate to their own responsibilities.
+
+Late/corrected evidence also pressures the future twin state model toward explicit valid/effective time versus knowledge/recorded time. This document does not select a bitemporal storage representation or query API yet.
+
+## 16. Safety and failure principles
+
+Where an operation can have external consequence:
 
 1. Absence of authority is denial, not implicit permission.
 2. An unverifiable actor/source/target is not silently treated as trusted.
 3. Integrity/authenticity failure on a consequential path fails safe according to documented policy.
-4. Ambiguous command outcome must remain representable as ambiguous.
-5. Retry must be governed by explicit idempotency semantics.
-6. Loss of observation must not be interpreted as successful state convergence.
-7. External system rejection or partial failure must remain visible.
-8. Rollback/compensation semantics must distinguish logical model rollback from physical-world reversibility.
-9. Credential or trust loss must have explicit operational consequences rather than falling through to permissive behavior.
-10. Execution context must never be silently defaulted from process/deployment location when consequence semantics are required.
+4. Ambiguous command outcome remains representable as ambiguous.
+5. Retry is governed by explicit idempotency semantics.
+6. Loss of observation is not interpreted as successful convergence.
+7. External rejection or partial failure remains visible.
+8. Rollback/compensation distinguishes logical model rollback from physical-world reversibility.
+9. Credential or trust loss has explicit operational consequences.
+10. Consequence must not be inferred or downgraded from a caller-supplied global environment label.
 
 These are architecture requirements, not claims that current Arcogine implements production-grade safety controls.
 
-## 15. Cross-track dependency rule
+## 17. Current open questions, non-goals, and ADR triggers
 
-This track may develop operational-owned contracts headlessly and in parallel, but it must not complete sibling-owned semantics by inventing substitutes.
+The next architecture work is deliberately bounded to these unresolved questions:
 
-Current dependency state:
+1. **Durable operational identity:** what exactly is the independently continuing history/partition that needs identity, and what lifecycle/equality rule proves it?
+2. **Universal execution primitives:** what minimum semantics are shared among subject, state, operation/action/actuation, transition, realization, observation/evidence, reconciliation, provenance, and authority without creating unnecessary generic types?
+3. **Factory/Engine/Operational ownership:** where does reusable operation/transition meaning belong when the same semantic operation can have synthetic and external realizations?
+4. **Correspondence/realization contracts:** what cardinality, effective-time, authority, conflict, and mapping rules are actually required?
+5. **Temporal twin history:** what temporal/history semantics are required before durable reconciliation and historical reinterpretation become public contracts?
 
-- Governance Governance identity/history capability is **complete** and must be consumed for durable semantic fingerprint / controlled revision identity and historical resolution where applicable;
-- Governance semantic ChangeSet/impact capability semantic `ChangeSet`/impact (initial slice) is **complete** and must be consumed for semantic change attribution where applicable;
-- Governance requirements/assertions capability generic requirement/assertion contract (`Requirement`, `Assertion`, `RequirementCatalogue`) is **complete**;
-- Governance conformance evaluation/findings capability conformance/finding semantics (`ConformanceEvaluator`, `ConformanceEvaluation`, `Finding`, initial slice) are **complete**; evidence/authorization capabilities remain outstanding;
-- Governance evidence/evidence-use capability evidence-use semantics remain outstanding;
-- Engine supported runtime observation/event contract core/headless closure is complete — conformance evaluation/findings capability-A observations, conformance evaluation/findings capability-B supported runtime events, and conformance evaluation/findings capability-C headless acceptance evidence are all implemented — while supported runtime observation/event contract distribution hardening (conformance evaluation/findings capability-D, runtime-event recovery/resynchronization hardening) remains outstanding.
+Do not spend this architecture round selecting OPC UA/MQTT schemas, authentication providers, database technology, a central context registry, exact checkpoint/replay storage, distributed execution, autonomous physical control, or a generic cross-domain policy framework. Those are proving cases or future implementation choices, not current prerequisites.
 
-Synthetic fixtures remain appropriate only for still-missing sibling contracts. New synthetic Governance identity/history capability revision identity is no longer justified for operational deployment or revision-bound reconciliation work.
+[ADR-0013](decisions/0013-execution-context-identity.md) remains **Proposed** and must not be accepted or implemented in its current kind-bound form. Its useful identity/non-inference/raw-observation constraints should be preserved, but the durable identity referent must be resolved before the decision is rewritten and accepted.
 
-The detailed gate policy lives in the [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md) plan.
-
-## 16. Non-goals for the first readiness track
-
-The first track does not require choosing an identity provider, implementing generic enterprise RBAC, choosing one universal industrial transport, building a full MES/SCADA platform, replacing PLC/device safety logic, implementing every ISA-95 object, building a universal workflow engine, making the simulation scheduler a wall-clock production scheduler, or collapsing Governance, runtime observations, and twin reconciliation into one generic evaluation framework.
-
-execution-context identity specifically does not implement actor authorization, target identity, deployment, commands, telemetry, reconciliation, a context registry, or public context-management APIs.
-
-## 17. ADR triggers
-
-[ADR-0013](decisions/0013-execution-context-identity.md) is the concrete **Proposed** execution-context identity identity decision required before implementation. It settles the proposed separation of kind and concrete identity, initial consequence-oriented taxonomy, UUIDv4 representation and establishment semantics, permanent ID-to-kind binding, checked same-ID comparison/conflict handling, explicit authority/resolution boundary, projection compatibility rules, and the no-registry requirement.
-
-execution-context identity implementation must not proceed as though those decisions were Accepted while ADR-0013 remains Proposed. If ADR-0013 is Accepted, the implementation slice should follow it; if review changes the proposal, the implementation must follow the accepted decision rather than stale planning prose.
-
-Later ADRs remain appropriate when implementation commits Arcogine to hard-to-reverse choices such as actor/capability/trust model, command correlation/idempotency, operational observation envelope/timestamps, deployment target/application provenance, reconciliation conflict authority, or production persistence/retention contracts.
-
-Creating planning prose alone is not an ADR trigger; ADR-0013 is the required execution-context identity decision record.
+Later ADRs are appropriate when implementation commits Arcogine to hard-to-reverse choices such as the durable operational identity lifecycle, shared operation/transition ownership, actor/capability/trust semantics, command correlation/idempotency, external observation/correspondence contracts, reconciliation authority/temporal semantics, or production persistence/retention.

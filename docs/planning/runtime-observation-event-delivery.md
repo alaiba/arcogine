@@ -533,17 +533,18 @@ Challenge evaluators should prefer final supported outcome facts/observations fo
 
 ### Operational Execution / Digital Twin
 
-Operational Execution remains the owner of real-world consequence:
+Operational Execution owns the additional relationships and safeguards required when independently existing systems and real consequence enter the picture:
 
-- production execution-context identity;
+- durable operational-history attribution/identity, whose exact referent remains under ADR-0013 review;
+- authoritative external-subject ↔ Arcogine-subject correspondence;
 - verified actor/source/target trust and authorization;
-- command/acknowledgement/result lifecycle;
+- semantic operation realization plus command/acknowledgement/result lifecycle for external targets;
 - deployment target/application/effective-artifact provenance;
 - external telemetry/observation ingestion;
 - reconciliation and drift/calibration;
 - operational resilience and live-adapter recovery.
 
-PLAN-ENG-4 runtime events are simulation events. They do not become production telemetry merely because an adapter can serialize them. An operational adapter may translate shared production semantics, but it must preserve the trust/provenance/reconciliation boundary of the Operational track.
+PLAN-ENG-4 runtime events are simulation events. They do not become external operational observations merely because an adapter can serialize them. An operational adapter may translate shared production semantics, but it must preserve the correspondence, trust, provenance, operation-realization, and reconciliation boundaries of the Operational track.
 
 ## 7. Important history distinctions
 
@@ -565,7 +566,7 @@ governance evidence/decision history
 challenge attempt history
     game-owned attempt/evaluation records
 
-production observation/command history
+external operational observation/operation history
     Operational Execution-owned records
 ```
 

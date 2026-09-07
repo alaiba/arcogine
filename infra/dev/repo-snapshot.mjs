@@ -15,7 +15,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const REPOMIX_VERSION = '1.18.0';
 export const REPOSITORY = 'alaiba/arcogine';
 export const REQUIRED_BRANCH = 'main';
-export const CANONICAL_REMOTE_PATTERN = /(?:^|[/:])alaiba\/arcogine(?:\.git)?$/i;
+// Anchors on the github.com host explicitly (SSH, HTTPS, and ssh:// forms) so a
+// non-GitHub remote whose path happens to end in alaiba/arcogine — a foreign
+// host or a local file:// clone — cannot be mistaken for the canonical origin.
+export const CANONICAL_REMOTE_PATTERN =
+  /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)alaiba\/arcogine(?:\.git)?\/?$/i;
 export const CANONICAL_MAIN_REF = 'refs/remotes/origin/main';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));

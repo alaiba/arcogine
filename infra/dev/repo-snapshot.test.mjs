@@ -59,6 +59,7 @@ test('clean main is accepted', () => {
 
 test('canonical remote urls are recognized regardless of protocol, case, or trailing slash', () => {
   ok(isCanonicalRemoteUrl('git@github.com:alaiba/arcogine.git'));
+  ok(isCanonicalRemoteUrl('ssh://git@github.com/alaiba/arcogine.git'));
   ok(isCanonicalRemoteUrl('https://github.com/alaiba/arcogine.git'));
   ok(isCanonicalRemoteUrl('https://github.com/alaiba/arcogine'));
   ok(isCanonicalRemoteUrl('https://github.com/Alaiba/Arcogine.git'));
@@ -67,6 +68,14 @@ test('canonical remote urls are recognized regardless of protocol, case, or trai
   ok(!isCanonicalRemoteUrl('https://github.com/alaiba/arcogine-fork.git'));
   ok(!isCanonicalRemoteUrl(''));
   ok(!isCanonicalRemoteUrl(undefined));
+});
+
+test('a foreign host or local path whose suffix matches alaiba/arcogine is not canonical', () => {
+  ok(!isCanonicalRemoteUrl('https://example.com/alaiba/arcogine.git'));
+  ok(!isCanonicalRemoteUrl('https://gitlab.com/alaiba/arcogine.git'));
+  ok(!isCanonicalRemoteUrl('file:///tmp/alaiba/arcogine'));
+  ok(!isCanonicalRemoteUrl('/tmp/mirrors/alaiba/arcogine'));
+  ok(!isCanonicalRemoteUrl('https://github.com.evil.example/alaiba/arcogine.git'));
 });
 
 test('canonical provenance is refused for a fork remote even on a branch named main', () => {

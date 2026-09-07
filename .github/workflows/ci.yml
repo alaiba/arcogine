@@ -79,6 +79,9 @@ jobs:
       - name: Validate PR watcher lifecycle resolver
         run: node --test infra/dev/pr-watch.test.mjs
 
+      - name: Validate PR base reconciliation helper
+        run: node --test infra/dev/pr-reconcile.test.mjs
+
       # infra/dev/repo-snapshot.mjs establishes the canonical-repository
       # provenance the ./arcogine snapshot artifact asserts. A regression here
       # could let the header claim canonical alaiba/arcogine state for a fork

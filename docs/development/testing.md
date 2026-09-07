@@ -82,6 +82,15 @@ CI and release certification continue to run their required jobs and fail on
 missing tools or findings. Local capability limitations justify omitting only
 the affected workflow; they do not turn required checks into silent passes.
 
+Repository tooling suites run in the always-on CI classifier and can be reproduced with:
+
+```bash
+node --test infra/dev/pr-reconcile.test.mjs
+node --test infra/dev/pr-watch.test.mjs
+node --test infra/dev/repo-snapshot.test.mjs
+bash .github/scripts/check-pr-disposition.test.sh
+```
+
 ### Running Java tests on the minimum JDK
 
 If you want to reproduce the Java compatibility floor locally without changing your host JDK, run the wrapper inside a JDK 21 Gradle image. The image supplies the JDK; the repository wrapper still controls the Gradle version:

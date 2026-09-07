@@ -235,7 +235,7 @@ See [`docs/development/repository-snapshot.md`](docs/development/repository-snap
 
 For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, `bootJar`, JMH, dependency audit), `cd product/interfaces/web && npm ...`/`npx ...` (lint, typecheck, build, Playwright), `docker compose ...` (containers), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
 
-`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. Use the dev container on Windows; it's the supported path.
+`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. Use the dev container on Windows; it's the supported path. Before running shell- or toolchain-dependent commands on Windows, inspect the running Docker containers first, identify the container that mounts this repository, and execute there rather than assuming a container name. If no suitable dev container is running, use the documented WSL/Git Bash fallback or report the missing environment.
 
 ### Backend test environment
 

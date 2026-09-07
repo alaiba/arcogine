@@ -501,9 +501,7 @@ consumes this provenance; it does not own Engine semantics.
 
 ### Operational — REQUIRED WHEN CONSUMER INTEGRATES
 
-Future twin/reconciliation analytics retain Engine interpretation provenance independently of
-`ExecutionContextId`. The two answer different questions: which Arcogine interpretation produced a
-result versus which operational consequence context an interpretation belongs to.
+Future twin/reconciliation analytics retain Engine interpretation provenance independently of any future durable operational-history identity and independently of subject correspondence. These answer different questions: which Engine interpretation produced a result; which independently continuing operational history/partition a record belongs to; and which external and Arcogine subjects are authoritatively related. ADR-0013 remains Proposed and does not yet define the durable operational identity's final referent or type.
 
 ### API/SSE PLAN-ENG-4 transport migration — REQUIRED BEFORE THAT MIGRATION, NOT BEFORE HEADLESS PLAN-GOV-5
 

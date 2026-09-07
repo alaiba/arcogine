@@ -70,7 +70,7 @@ Runtime state
 
 `ModelFingerprint` continues to identify the authored Factory design. `EngineSemanticsVersion` separately identifies Arcogine's result-affecting interpretation. A result-affecting Engine policy change therefore does not masquerade as a Factory design change.
 
-The sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track consumes published/governed semantics when real external systems are involved. It owns production execution context, verified operational trust/authority, deployment target/application, command/result lifecycle, independent external observations, reconciliation, and operational recovery.
+The sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track consumes published/governed semantics when independently existing external systems are involved. It owns the still-unresolved durable operational-history attribution identity, authoritative external-subject ↔ Arcogine-subject correspondence, verified operational trust/authority, deployment target/application, semantic operation realization and command/result lifecycle, independent external observations, reconciliation, and operational recovery.
 
 ```text
 Factory Design Capability
@@ -406,7 +406,7 @@ PLAN-FD-6 is scoped to shared *authoring* mechanics and does not include authori
 
 Controlled revision lineage, external change references, technical evidence packages for review, and authorization hand-off are cross-domain concerns owned by Governance, not factory-specific ones. Governance PLAN-GOV-1 already owns durable revision identity/history; PLAN-GOV-2 owns semantic `ChangeSet`/impact; PLAN-GOV-4/PLAN-GOV-5 own conformance/evidence semantics; PLAN-GOV-6 will own external workflow/change-control integration.
 
-Operational Execution owns what happens after authorization to a real execution target: execution-context identity, deployment application/provenance, command/result lifecycle, external observations and reconciliation.
+Operational Execution owns what happens after authorization when a semantic change is applied to or interpreted against independently existing systems: durable operational-history attribution (with the exact identity referent still under ADR-0013 review), subject correspondence, deployment application/provenance, semantic operation realization and command/result lifecycle, external observations, and reconciliation.
 
 PLAN-FD-7 remains only the factory-specific contribution of Factory semantics/evidence into those cross-domain capabilities. Building a factory-only revision repository, authorization workflow, production deployment runtime, telemetry ingestion or reconciliation layer would duplicate sibling ownership.
 
@@ -458,9 +458,11 @@ Performance
 Operational Execution owns:
 
 ```text
-Execution-context identity / verified trust / authority
+Durable operational-history attribution/identity (exact referent under ADR-0013 review)
+Authoritative external-subject ↔ Arcogine-subject correspondence
+Verified operational trust / authority
 Deployment target application and applied-artifact provenance
-External command/result lifecycle
+Semantic operation realization and external command/result lifecycle
 External operational observations
 Twin reconciliation and drift/calibration feedback
 ```

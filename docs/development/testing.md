@@ -76,6 +76,7 @@ All Java commands run through the Gradle wrapper under `product/`. Raising a min
 | Frontend dependency audit | Supported Node.js/npm and installed frontend dependencies | Required to query the npm registry advisory service |
 | Image vulnerability scan | Docker, built images, and Trivy | Needed for Trivy's vulnerability database |
 | Secret scan | Gitleaks | None after the scanner is installed |
+| GitHub Actions workflow validation | Bash, `curl`, `tar`, and `sha256sum` | Required to download the pinned actionlint release from GitHub Releases |
 
 CI and release certification continue to run their required jobs and fail on
 missing tools or findings. Local capability limitations justify omitting only
@@ -184,7 +185,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 
 | Job | Command | What it checks |
 |-----|---------|----------------|
-| Classify changes | `git diff --name-only` against the PR base (or the pushed range on `main`) | Buckets the diff into backend/frontend/docker/docs-only surfaces to drive the conditional jobs below |
+| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight tooling, PR lifecycle resolution, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/frontend/docker/docs-only surfaces for conditional jobs |
 | Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Frontend | separate steps: lint, typecheck, `test:coverage`, build, `npm audit --audit-level=high` | Node 22.22.2 floor, lint, typecheck, coverage, build, dependency audit — each step is separately attributable on failure, and the audit step always writes `npm-audit.json` (uploaded as an artifact only on failure) while still failing the job on any HIGH+ finding |
 | Playwright | `npx playwright test` (after `./gradlew :cli:bootJar`) | Browser E2E against the Java API at the Java/Node floors |
@@ -223,6 +224,22 @@ Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODUL
 
 ```bash
 node --test infra/dev/repo-snapshot.test.mjs
+```
+
+### PR disposition and workflow-definition validation
+
+The always-running `classify` job validates both layers of the PR disposition merge gate:
+
+- `.github/scripts/check-pr-disposition.test.sh` exercises the disposition evaluator semantics.
+- `.github/scripts/check-actions-workflows.sh` validates every `.github/workflows/*.yml` definition with the repository-pinned actionlint version.
+
+The workflow-definition check deliberately validates GitHub Actions syntax before merge so a workflow cannot reach `main` in a form that GitHub rejects before scheduling any jobs. The helper always downloads actionlint 1.7.12, verifies the pinned archive SHA-256, and executes that exact binary rather than substituting an arbitrary runner- or developer-provided `actionlint` from `PATH`. It therefore requires `curl`, `tar`, `sha256sum`, and network access to GitHub Releases whenever it runs.
+
+Run the two checks locally with:
+
+```bash
+bash .github/scripts/check-pr-disposition.test.sh
+bash .github/scripts/check-actions-workflows.sh
 ```
 
 ### Scheduled and manual security runs

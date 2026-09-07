@@ -24,11 +24,13 @@ Common shorthand should be interpreted in repository context:
 - “check repo state” means inspect the state of this repository;
 - references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
 
-Repository workflow shorthand has distinct meanings:
+Repository workflow shorthand has distinct meanings. Match these as exact tokens,
+using the longest matching token when symbols overlap; do not decompose a token
+into a shorter shorthand:
 
-- `.` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
+- `.?` = perform the Session-close Kaizen review before ending or deleting the current session;
+- `./` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
 - `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available;
-- `.?` = perform the Session-close Kaizen review before ending or deleting the current session.
 
 ### Session-close Kaizen
 

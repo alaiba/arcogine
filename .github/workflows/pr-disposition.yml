@@ -14,12 +14,7 @@ name: PR Disposition
 # not sufficient on its own: GitHub sources a `pull_request` or
 # `pull_request_review` triggered workflow's *definition* from the pull
 # request's own merge commit, not from `main`. A PR could therefore edit this
-# very file to skip the evaluator and fabricate a passing result. This is not
-# hypothetical -- it was caught live on this branch: `main` did not yet
-# contain this file at all, yet earlier revisions of this workflow (under
-# `pull_request`/`pull_request_review` triggers) were already executing on
-# this PR's own heads, proving the PR was supplying its own workflow
-# definition.
+# very file to skip the evaluator and fabricate a passing result.
 #
 # Three trusted-orchestration triggers, none of which ever checks out or
 # executes PR-supplied code:
@@ -44,13 +39,9 @@ name: PR Disposition
 #     unchanged head. `.github/CODEOWNERS` requires an independent owner to
 #     review any change under `.github/workflows/`, including that
 #     narrowing, before it can merge (see reviewing.md's listener-coverage
-#     mitigation) -- once the ruleset enforces it, this closes the
-#     candidate-controlled part of the gap; the schedule sweep is always
-#     read from the version of this file
-#     on the default branch regardless of any PR, and remains as
-#     defense-in-depth, re-checking every open PR against `main` on a fixed
-#     interval independent of whatever event coverage a candidate PR's own
-#     listener declares.
+#     mitigation). The schedule sweep is always read from the version of
+#     this file on the default branch and remains defense-in-depth,
+#     re-checking every open PR against `main` on a fixed interval.
 #
 # Neither `pull_request_target`, `workflow_run`, nor `schedule` implicitly
 # attaches a check result to the correct PR head SHA the way a
@@ -66,8 +57,7 @@ name: PR Disposition
 # running this evaluator. The same `.github/CODEOWNERS` entry mitigates
 # this: authoring such a workflow is itself a change under
 # `.github/workflows/`, so it requires an owner's independent review and
-# approval first -- see reviewing.md for the full required-activation
-# checklist, including enabling "Require review from Code Owners".
+# approval first.
 on:
   pull_request_target:
     branches: [main]
@@ -82,6 +72,7 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  actions: read
   checks: write
 
 jobs:
@@ -138,10 +129,6 @@ jobs:
               TARGETS=$(jq -nc --arg n "$PR_NUMBER" '[{pr_number: $n}]')
               ;;
             schedule)
-              # Trusted backstop: re-evaluate every open PR targeting main,
-              # independent of any PR-controlled event coverage. --repo is
-              # required here: this job has no checkout, so there is no local
-              # git context for gh to auto-detect the repository from.
               TARGETS=$(gh pr list --repo "${{ github.repository }}" --state open --base main --json number --jq 'map({pr_number: (.number | tostring)})')
               ;;
             *)
@@ -169,11 +156,6 @@ jobs:
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Read as data, not interpolated into the script text -- see the
-          # resolve-targets job above for why. matrix.target.pr_number is
-          # always produced upstream by jq/gh from an actual numeric PR
-          # number, but this job holds `checks: write`, so its inputs are
-          # validated as numeric here rather than trusted by construction.
           TARGET_PR_NUMBER: ${{ matrix.target.pr_number }}
         run: |
           set -euo pipefail
@@ -196,22 +178,6 @@ jobs:
         run: |
           set -euo pipefail
           PR_NUMBER="${{ steps.pr.outputs.pr_number }}"
-
-          # Fetch all reviews (paginated). `gh api` rejects --slurp combined
-          # with --jq in one invocation, so --slurp collects the raw page
-          # arrays here and a separate jq pipe does the rest of the work:
-          #
-          #  1. `add` flattens the page arrays into one ordered array.
-          #  2. Only reviews from a trusted repository authority
-          #     (author_association OWNER/MEMBER/COLLABORATOR) are kept.
-          #     This repository is public: any user with read access can
-          #     submit a review, so an unfiltered pass-through would let an
-          #     unrelated external account mint a canonical READY TO MERGE
-          #     block and satisfy the gate.
-          #  3. Each surviving body is base64-encoded and emitted one per
-          #     line -- a plain newline-separated list of opaque strings, not
-          #     a JSON array, so the evaluator needs no JSON re-parsing or
-          #     ad-hoc object-boundary splitting.
           BODIES=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews" \
             --paginate \
             --slurp \
@@ -222,8 +188,6 @@ jobs:
                 | .[]
               ')
 
-          # Multiline values must use the heredoc form of GITHUB_OUTPUT with a
-          # delimiter unlikely to collide with the (base64-only) payload.
           DELIM="REVIEW_BODIES_$(date +%s%N)_$RANDOM"
           {
             echo "review_bodies_b64<<$DELIM"
@@ -232,10 +196,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository at main (trusted base)
-        # A candidate PR must not be able to modify the evaluator used to
-        # authorize itself, so the evaluator always runs from main, never
-        # from the PR's own (possibly attacker-controlled) checkout. No
-        # PR-supplied ref is ever checked out or executed by this workflow.
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
@@ -263,11 +223,6 @@ jobs:
             CONCLUSION="failure"
           fi
 
-          # None of this workflow's triggers implicitly attach a check result
-          # to the correct PR head SHA (pull_request_target's default
-          # GITHUB_SHA is the base commit; workflow_run and schedule have no
-          # commit association at all), so the check is published explicitly
-          # against the resolved head SHA via the Checks API.
           gh api "repos/${{ github.repository }}/check-runs" \
             -f name="disposition" \
             -f head_sha="${{ steps.pr.outputs.head_sha }}" \

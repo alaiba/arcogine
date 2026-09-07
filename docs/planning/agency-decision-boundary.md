@@ -69,15 +69,9 @@ Operation
     the semantic requested change
 ```
 
-The investigation must not assume these collapse into one identity.
+Actor, decision source/controller, and subject/body must remain independently representable **semantic roles**. The investigation must not collapse them into one concept or assume identity equality between them. It also must not require their identities to be unequal: one entity may legitimately occupy more than one role in a concrete case.
 
-In particular:
-
-```text
-actor != decision source
-actor != subject
-subject != decision source
-```
+The proving cases therefore need to establish when separate identities and explicit relationships are required versus when one identity may occupy several roles without losing the semantic distinctions. A human acting directly may be both actor and decision source; an autonomous service may act for itself; an embodied simulated participant may combine some roles while still requiring the roles to be distinguishable for reasoning and provenance.
 
 A human supervisor, organization, autonomous controller, NPC, service, or external system may all be legitimate actors. A decision source may be a human, deterministic rule, process engine, optimizer, planner, behavior controller, learned policy, or another mechanism. One decision source may serve many actors; one actor may change controllers over time or combine several decision sources.
 
@@ -133,9 +127,10 @@ The investigation should test:
 - human -> automated -> human handoff;
 - delegation from one actor or principal to another;
 - an organization acting through several people and systems;
-- several decision mechanisms contributing to one attributable decision.
+- several decision mechanisms contributing to one attributable decision;
+- one identity legitimately occupying more than one semantic role without erasing the role distinctions.
 
-The outcome should clarify which identities belong in causal provenance when these relationships are not one-to-one.
+The outcome should clarify which identities belong in causal provenance when these relationships are not one-to-one and when role co-occupancy does or does not require separate identity concepts.
 
 ### H4. Replay of a decision is not the same as re-executing its source
 
@@ -208,7 +203,7 @@ Test whether the candidate semantics can describe:
 
 Use a planner or supervisor who receives a purpose-specific observation and may approve, reject, reschedule, stop, or otherwise request an operation.
 
-The model must not require Arcogine to represent the human's internal beliefs or reasoning.
+The model must not require Arcogine to represent the human's internal beliefs or reasoning. It should allow the same human identity to occupy actor and decision-source roles when that accurately describes the case, without collapsing those roles into one semantic concept.
 
 ### C. Organization or external-system participant
 
@@ -222,7 +217,7 @@ Use an actor with limited perception and an embodied modeled subject capable of 
 
 Its controller may use any game-AI technique internally. Navigation, animation, personality, memory, and controller-specific state must remain outside the common ontology unless the scenario proves otherwise.
 
-This case specifically tests whether actor, controller, and body/subject must remain distinct.
+This case specifically tests when actor, controller, and body/subject require separate identities and relationships versus when one entity may legitimately occupy multiple roles while those roles remain semantically distinguishable.
 
 ### E. Deterministic planner or optimizer
 
@@ -254,6 +249,7 @@ For every case, record answers to the same questions:
 12. Does communication require anything beyond normal domain/process interactions?
 13. Can the same actor change controllers without changing attributable identity?
 14. Can one controller serve several actors without conflating their identities?
+15. Can one identity occupy multiple semantic roles here, or do the roles require separate identities and explicit relationships?
 
 ## 6. Evaluation matrix
 
@@ -268,7 +264,7 @@ The final investigation result should compare the proving cases on at least thes
 | Capability | What may the actor do, to which subject, under which policy? |
 | Operation granularity | Primitive request or temporally extended procedure? |
 | Delegation | Can authority/controller responsibility move between actors? |
-| Cardinality | One actor per controller, many actors per controller, or many controllers per actor? |
+| Cardinality / role co-occupancy | Which relationships are one-to-one, one-to-many, or many-to-many, and may one identity occupy several roles? |
 | Determinism | Can the decision source be re-executed reproducibly? |
 | Replay | Re-run source, replay decision, replay operation, replay transition, or some combination? |
 | Provenance | What must survive for causal reconstruction and verification? |
@@ -292,6 +288,7 @@ This investigation does **not** authorize:
 - an agent message bus or conversation protocol;
 - a new authorization model competing with the actor/capability work already identified by Operational architecture;
 - assuming `actor == controller`, `actor == subject`, or `controller == subject`;
+- assuming actor, controller, and subject must always have different identities;
 - moving shared actor/capability concepts into Operational solely because Operational has an early concrete consumer;
 - production implementation of NPCs, learned agents, model-based agents, or external autonomous control.
 

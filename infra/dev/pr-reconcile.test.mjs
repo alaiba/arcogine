@@ -39,6 +39,7 @@ function harness({
 
     if (key === 'git status --porcelain') return workingTree;
     if (key === 'git branch --show-current') return branch;
+    if (key === 'git remote get-url --all origin') return `https://github.com/${REPO}.git/`;
     if (key === 'git remote get-url --push --all origin') return `https://github.com/${REPO}.git/`;
     if (key === 'git rev-parse HEAD') return rebased ? NEW : OLD;
     if (
@@ -207,6 +208,15 @@ test('a foreign pushurl is rejected even when the fetch origin is canonical', as
   const original = h.run;
   h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url --push --all origin'
     ? `https://github.com/${REPO}.git\ngit@github.com:someone/fork.git` : original(file, args, options);
-  await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /origin push remote/);
+  await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /origin fetch\/push remote/);
+  assert.equal(pushes(h.calls).length, 0);
+});
+
+test('a foreign fetch origin is rejected even when the pushurl is canonical', async () => {
+  const h = harness();
+  const original = h.run;
+  h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url --all origin'
+    ? 'git@github.com:someone/fork.git' : original(file, args, options);
+  await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /origin fetch\/push remote/);
   assert.equal(pushes(h.calls).length, 0);
 });

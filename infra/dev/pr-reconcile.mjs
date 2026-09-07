@@ -102,13 +102,15 @@ function remoteIdentity(remoteUrl) {
 }
 
 function requireCanonicalOrigin(run, pr, repo) {
-  const remoteUrls = run('git', ['remote', 'get-url', '--push', '--all', 'origin'])
+  const fetchUrls = run('git', ['remote', 'get-url', '--all', 'origin']).split(/\r?\n/).filter(Boolean);
+  const pushUrls = run('git', ['remote', 'get-url', '--push', '--all', 'origin'])
     .split(/\r?\n/).filter(Boolean);
   const candidates = [pr.head.repo?.html_url, pr.head.repo?.ssh_url, pr.head.repo?.clone_url]
     .map(remoteIdentity)
     .filter(Boolean);
-  if (!remoteUrls.length || remoteUrls.some((url) => !candidates.includes(remoteIdentity(url)))) {
-    throw new Error(`origin push remote ${remoteUrls.join(', ') || '(missing)'} is not the PR head repository ${repo}; refusing remote mutation`);
+  const allUrls = [...fetchUrls, ...pushUrls];
+  if (!allUrls.length || allUrls.some((url) => !candidates.includes(remoteIdentity(url)))) {
+    throw new Error(`origin fetch/push remote ${allUrls.join(', ') || '(missing)'} is not the PR head repository ${repo}; refusing remote mutation`);
   }
 }
 
@@ -172,6 +174,10 @@ async function reconcilePr({ number, repo = DEFAULT_REPO, run = commandRunner, l
   const fetchedHead = run('git', ['rev-parse', headRemote]);
   if (fetchedHead !== oldHead) {
     throw new Error(`PR head moved during reconciliation setup: expected ${oldHead}, fetched ${fetchedHead}`);
+  }
+  const fetchedBase = run('git', ['rev-parse', baseRemote]);
+  if (fetchedBase !== pr.base.sha) {
+    throw new Error(`PR base moved during reconciliation setup: expected ${pr.base.sha}, fetched ${fetchedBase}`);
   }
 
   const before = fetchComparison(run, repo, baseRef, oldHead);

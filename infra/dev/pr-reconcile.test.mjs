@@ -12,7 +12,7 @@ const BRANCH = 'feature/test';
 function pr(head = OLD, state = 'open') {
   return {
     state,
-    head: { ref: BRANCH, sha: head, repo: { full_name: REPO } },
+    head: { ref: BRANCH, sha: head, repo: { full_name: REPO, html_url: `https://github.com/${REPO}`, ssh_url: `git@github.com:${REPO}.git`, clone_url: `https://github.com/${REPO}.git` } },
     base: { ref: 'main', sha: BASE },
   };
 }
@@ -39,6 +39,7 @@ function harness({
 
     if (key === 'git status --porcelain') return workingTree;
     if (key === 'git branch --show-current') return branch;
+    if (key === 'git remote get-url origin') return `https://github.com/${REPO}.git`;
     if (key === 'git rev-parse HEAD') return rebased ? NEW : OLD;
     if (
       key ===
@@ -112,7 +113,7 @@ test('successful reconciliation constructs the new head before one leased remote
       (call) =>
         call.file === 'git' &&
         (call.args[0] === 'update-ref' ||
-          (call.args[0] === 'push' && call.args.some((arg) => arg.includes('main:refs/heads')))),
+          (call.args[0] === 'push' && call.args.some((arg) => arg.includes('main:refs/heads'))))),
     false,
     'the helper must never point the PR branch at the base as an intermediate state',
   );
@@ -189,4 +190,14 @@ test('post-push verification requires the PR to remain open', async () => {
     /is not open/,
   );
   assert.equal(pushes(h.calls).length, 1, 'verification occurs after the single atomic push');
+});
+
+test('a foreign origin is rejected before any remote mutation', async () => {
+  const h = harness();
+  const original = h.run;
+  h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url origin'
+    ? 'git@github.com:someone/fork.git' : original(file, args, options);
+  await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /not the PR head repository/);
+  assert.equal(pushes(h.calls).length, 0);
+  assert.equal(h.calls.some((call) => call.args[0] === 'fetch'), false);
 });

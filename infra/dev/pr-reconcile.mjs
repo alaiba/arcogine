@@ -89,6 +89,29 @@ function requireOpenSameRepoPr(pr, repo, number) {
   }
 }
 
+function remoteIdentity(remoteUrl) {
+  const value = String(remoteUrl ?? '').trim().replace(/\.git$/, '');
+  const scp = value.match(/^[^@]+@([^:]+):(.+)$/);
+  if (scp) return `${scp[1].toLowerCase()}/${scp[2]}`.replace(/\/+/g, '/');
+  try {
+    const url = new URL(value);
+    return `${url.hostname.toLowerCase()}${url.pathname.replace(/\/+/g, '/')}`;
+  } catch {
+    return null;
+  }
+}
+
+function requireCanonicalOrigin(run, pr, repo) {
+  const remoteUrl = run('git', ['remote', 'get-url', 'origin']);
+  const actual = remoteIdentity(remoteUrl);
+  const candidates = [pr.head.repo?.html_url, pr.head.repo?.ssh_url, pr.head.repo?.clone_url]
+    .map(remoteIdentity)
+    .filter(Boolean);
+  if (!actual || !candidates.includes(actual)) {
+    throw new Error(`origin remote ${remoteUrl || '(missing)'} is not the PR head repository ${repo}; refusing remote mutation`);
+  }
+}
+
 function fetchPr(run, repo, number) {
   return parseJson(run('gh', ['api', apiPath(repo, `pulls/${number}`)]), 'GitHub PR API');
 }
@@ -120,6 +143,7 @@ async function reconcilePr({ number, repo = DEFAULT_REPO, run = commandRunner, l
 
   const pr = fetchPr(run, repo, number);
   requireOpenSameRepoPr(pr, repo, number);
+  requireCanonicalOrigin(run, pr, repo);
 
   const headRef = pr.head.ref;
   const baseRef = pr.base.ref;
@@ -199,6 +223,7 @@ async function reconcilePr({ number, repo = DEFAULT_REPO, run = commandRunner, l
 
   const afterPr = fetchPr(run, repo, number);
   requireOpenSameRepoPr(afterPr, repo, number);
+  requireCanonicalOrigin(run, afterPr, repo);
   if (afterPr.head.sha !== newHead) {
     throw new Error(`post-push PR head mismatch: expected ${newHead}, GitHub reports ${afterPr.head.sha}`);
   }
@@ -250,4 +275,4 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   process.exitCode = await main();
 }
 
-export { DEFAULT_REPO, reconcilePr, requireOpenSameRepoPr, parseCli, usage };
+export { DEFAULT_REPO, reconcilePr, requireOpenSameRepoPr, requireCanonicalOrigin, parseCli, usage };

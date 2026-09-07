@@ -39,7 +39,7 @@ function harness({
 
     if (key === 'git status --porcelain') return workingTree;
     if (key === 'git branch --show-current') return branch;
-    if (key === 'git remote get-url --push --all origin') return `https://github.com/${REPO}.git`;
+    if (key === 'git remote get-url --push --all origin') return `https://github.com/${REPO}.git/`;
     if (key === 'git rev-parse HEAD') return rebased ? NEW : OLD;
     if (
       key ===

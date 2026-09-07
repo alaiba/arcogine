@@ -90,7 +90,7 @@ function requireOpenSameRepoPr(pr, repo, number) {
 }
 
 function remoteIdentity(remoteUrl) {
-  const value = String(remoteUrl ?? '').trim().replace(/\.git$/, '');
+  const value = String(remoteUrl ?? '').trim().replace(/\/+$/, '').replace(/\.git$/, '');
   const scp = value.match(/^[^@]+@([^:]+):(.+)$/);
   if (scp) return `${scp[1].toLowerCase()}/${scp[2]}`.replace(/\/+/g, '/');
   try {

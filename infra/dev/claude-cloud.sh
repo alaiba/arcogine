@@ -91,7 +91,12 @@ current_node_version() {
     echo ""
     return
   fi
-  node --version | sed -E 's/^v//'
+  local version_output
+  if ! version_output="$(node --version 2>&1)"; then
+    echo "__probe_failed__"
+    return
+  fi
+  printf '%s\n' "$version_output" | sed -E 's/^v//'
 }
 
 # Keep this deliberately small and explicit rather than installing a semver
@@ -191,6 +196,8 @@ fi
 ACTUAL_NODE_VERSION="$(current_node_version)"
 if [ -z "$ACTUAL_NODE_VERSION" ]; then
   echo "WARNING: Node.js is not available on PATH; Arcogine supports ${SUPPORTED_NODE_RANGE} for frontend work." >&2
+elif [ "$ACTUAL_NODE_VERSION" = "__probe_failed__" ]; then
+  echo "WARNING: Node.js could not report a version on PATH; Arcogine supports ${SUPPORTED_NODE_RANGE} for frontend work." >&2
 elif ! command -v npm >/dev/null 2>&1; then
   echo "WARNING: npm is not available on PATH; Arcogine's frontend setup requires npm." >&2
 else

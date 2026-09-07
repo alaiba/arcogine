@@ -293,6 +293,11 @@ run_cloud
 assert_result 'matching Node support contract has no drift warning' 0 'Node.js version OK: 22.22.2'
 assert_output_not_contains 'matching Node support contract stays aligned' 'Node support contract drift'
 
+start_case
+export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_NODE_VERSION=22.22.2 ARCOGINE_TEST_FAIL_VERSION_TOOL=node
+run_cloud
+assert_result 'failing Node version probe warns without blocking provisioning' 0 'Node.js could not report a version on PATH'
+
 start_case '^22.22.2 || ^24.15.0 || ^26.0.0' 'bash git curl java javac node npm npx docker trivy gitleaks'
 export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_NODE_VERSION=22.22.2
 printf '%s\n' '{"engines":{"node":"^24.15.0"}}' > "$TEST_REPO/product/interfaces/web/package.json"

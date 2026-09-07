@@ -62,8 +62,8 @@ if [[ "${ARCOGINE_TEST_NPM_FAIL_ON:-}" == "$*" ]]; then
   exit 19
 fi
 
-if [[ "$*" == 'run build' && "${ARCOGINE_TEST_OMIT_WEB:-0}" != 1 ]]; then
-  mkdir -p "${ARCOGINE_DIST_WEB:?}"
+if [[ "$*" == 'run build' && -n "${ARCOGINE_DIST_WEB:-}" && "${ARCOGINE_TEST_OMIT_WEB:-0}" != 1 ]]; then
+  mkdir -p "$ARCOGINE_DIST_WEB"
   : > "${ARCOGINE_DIST_WEB}/index.html"
 fi
 EOF
@@ -108,6 +108,18 @@ elif [[ "$last_arg" == 5173 ]]; then
   printf '0.0.0.0:5173\n'
 fi
 EOF
+
+  for tool in curl trivy gitleaks; do
+    cat > "$fake_bin/$tool" <<'EOF'
+#!/bin/bash
+set -euo pipefail
+log="${ARCOGINE_TEST_LOG:?}"
+printf '%s cwd=%s args=' "$(basename "$0")" "$PWD" >> "$log"
+for arg in "$@"; do printf '|%s' "$arg" >> "$log"; done
+printf '\n' >> "$log"
+EOF
+    chmod +x "$fake_bin/$tool"
+  done
 
   chmod +x "$fake_bin"/*
 }
@@ -280,6 +292,23 @@ assert_log_contains 'setup reaches the explicit Playwright install command' 'npx
 start_case test; run_script test; record_result 'test dispatch succeeds' 0
 assert_log_contains 'test runs Java through the repository wrapper' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=test"
 assert_log_contains 'test runs frontend tests from the web directory' "npm cwd=$TEST_REPO/product/interfaces/web args=|test"
+
+start_case check-fast; run_script check; record_result 'check dispatch succeeds' 0
+assert_log_contains 'check runs the complete Java quality gate through the wrapper' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=compileJava arg=compileTestJava arg=checkstyleMain arg=checkstyleTest arg=test arg=jacocoTestReport arg=jacocoTestCoverageVerification"
+assert_log_contains 'check runs frontend linting and coverage commands' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|lint"
+assert_log_contains 'check runs frontend typechecking through npx' "npx cwd=$TEST_REPO/product/interfaces/web args=|tsc|--noEmit"
+assert_log_contains 'check runs the frontend coverage suite' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|test:coverage"
+assert_log_contains 'check runs the frontend production build' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|build"
+
+start_case check-full; run_script check --full; record_result 'check --full dispatch succeeds' 0
+assert_log_contains 'full check builds the API jar for browser validation' "arg=:cli:bootJar"
+assert_log_contains 'full check reaches Playwright' "npx cwd=$TEST_REPO/product/interfaces/web args=|playwright|test"
+assert_log_contains 'full check refreshes canonical dist before packaging' "arg=:cli:stageDist"
+assert_log_contains 'full check packages both runtime images' 'args=|build|-f'
+assert_log_contains 'full check starts the Compose smoke sequence' '|up|-d|--wait|--wait-timeout|120'
+assert_log_contains 'full check performs health probes' 'curl cwd='
+assert_log_contains 'full check reaches the dependency and image scans' 'trivy cwd='
+assert_log_contains 'full check reaches the secret scan' 'gitleaks cwd='
 
 start_case snapshot; run_script snapshot; record_result 'snapshot dispatch succeeds' 0
 assert_log_contains 'snapshot reaches the repository snapshot tool' "node cwd=$TEST_REPO args=|$EXPECTED_REPO_ROOT/infra/dev/repo-snapshot.mjs"

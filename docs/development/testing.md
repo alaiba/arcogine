@@ -88,7 +88,7 @@ Repository tooling suites run in the always-on CI classifier and can be reproduc
 node --test infra/dev/pr-reconcile.test.mjs
 node --test infra/dev/pr-watch.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
-node --test infra/dev/pr-disposition.test.mjs
+bash .github/scripts/check-pr-disposition.test.sh
 ```
 
 ### Running Java tests on the minimum JDK

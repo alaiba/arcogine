@@ -39,7 +39,7 @@ function harness({
 
     if (key === 'git status --porcelain') return workingTree;
     if (key === 'git branch --show-current') return branch;
-    if (key === 'git remote get-url origin') return `https://github.com/${REPO}.git`;
+    if (key === 'git remote get-url --push --all origin') return `https://github.com/${REPO}.git`;
     if (key === 'git rev-parse HEAD') return rebased ? NEW : OLD;
     if (
       key ===
@@ -195,9 +195,18 @@ test('post-push verification requires the PR to remain open', async () => {
 test('a foreign origin is rejected before any remote mutation', async () => {
   const h = harness();
   const original = h.run;
-  h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url origin'
+  h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url --push --all origin'
     ? 'git@github.com:someone/fork.git' : original(file, args, options);
   await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /not the PR head repository/);
   assert.equal(pushes(h.calls).length, 0);
   assert.equal(h.calls.some((call) => call.args[0] === 'fetch'), false);
+});
+
+test('a foreign pushurl is rejected even when the fetch origin is canonical', async () => {
+  const h = harness();
+  const original = h.run;
+  h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url --push --all origin'
+    ? `https://github.com/${REPO}.git\ngit@github.com:someone/fork.git` : original(file, args, options);
+  await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /origin push remote/);
+  assert.equal(pushes(h.calls).length, 0);
 });

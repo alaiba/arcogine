@@ -102,13 +102,13 @@ function remoteIdentity(remoteUrl) {
 }
 
 function requireCanonicalOrigin(run, pr, repo) {
-  const remoteUrl = run('git', ['remote', 'get-url', 'origin']);
-  const actual = remoteIdentity(remoteUrl);
+  const remoteUrls = run('git', ['remote', 'get-url', '--push', '--all', 'origin'])
+    .split(/\r?\n/).filter(Boolean);
   const candidates = [pr.head.repo?.html_url, pr.head.repo?.ssh_url, pr.head.repo?.clone_url]
     .map(remoteIdentity)
     .filter(Boolean);
-  if (!actual || !candidates.includes(actual)) {
-    throw new Error(`origin remote ${remoteUrl || '(missing)'} is not the PR head repository ${repo}; refusing remote mutation`);
+  if (!remoteUrls.length || remoteUrls.some((url) => !candidates.includes(remoteIdentity(url)))) {
+    throw new Error(`origin push remote ${remoteUrls.join(', ') || '(missing)'} is not the PR head repository ${repo}; refusing remote mutation`);
   }
 }
 

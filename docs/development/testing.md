@@ -194,7 +194,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 
 | Job | Command | What it checks |
 |-----|---------|----------------|
-| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight tooling, PR lifecycle resolution, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/frontend/docker/docs-only surfaces for conditional jobs |
+| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight and provisioning tooling, PR lifecycle resolution, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/frontend/docker/docs-only surfaces for conditional jobs |
 | Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Frontend | separate steps: lint, typecheck, `test:coverage`, build, `npm audit --audit-level=high` | Node 22.22.2 floor, lint, typecheck, coverage, build, dependency audit — each step is separately attributable on failure, and the audit step always writes `npm-audit.json` (uploaded as an artifact only on failure) while still failing the job on any HIGH+ finding |
 | Playwright | `npx playwright test` (after `./gradlew :cli:bootJar`) | Browser E2E against the Java API at the Java/Node floors |
@@ -220,6 +220,24 @@ The `classify` job inspects the changed files (PR diff against its base, or the 
 - `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
 
 The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the four `key=true|false` outputs), separated from the git/GitHub-context plumbing that builds the file list in the workflow step. `.github/scripts/classify-changes.test.sh` is a small table-driven test over that script — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression in the classifier fails visibly instead of silently under-running checks. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
+
+### Repository-tooling suites
+
+The always-running `classify` job also runs these repository-tooling checks. Root `./arcogine` behavioral and safety suites live under `.github/scripts/`; direct `infra/dev` tools keep their tests beside the implementation. Run the same set locally with:
+
+```bash
+bash .github/scripts/classify-changes.test.sh
+bash .github/scripts/arcogine-preflight.test.sh
+bash .github/scripts/arcogine-env.test.sh
+bash .github/scripts/arcogine-cli.test.sh
+bash .github/scripts/check-pr-disposition.test.sh
+bash infra/dev/claude-cloud.test.sh
+node --test infra/dev/pr-reconcile.test.mjs
+node --test infra/dev/pr-watch.test.mjs
+node --test infra/dev/repo-snapshot.test.mjs
+```
+
+The disposition suite also validates the workflow definitions through the pinned `check-actions-workflows.sh` helper. The shell suites use temporary repositories and fake executables where they need to exercise constrained-environment behavior; they do not install project dependencies or require Docker.
 
 `infra/dev/pr-watch.test.mjs` covers the PR lifecycle resolver in `infra/dev/pr-watch.mjs`, which decides whether a pull request is `AWAITING`, `CHANGES REQUIRED`, or `READY TO MERGE` (see the PR monitoring section of [AGENTS.md](../../AGENTS.md)). The cases are synthetic — no network, no dependencies, only Node builtins — and concentrate on the paths where a wrong answer reports a PR merge-ready when it is not: required-check identity and success, base-branch movement invalidating an earlier review, per-author blocking-review lifetime, final-disposition parsing, and connection truncation. Like the classifier test it runs as a step in the always-running `classify` job, so it cannot be skipped by a docs-only or backend-only classification. Run it locally with:
 

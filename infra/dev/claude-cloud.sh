@@ -13,7 +13,7 @@
 # full-development convenience.
 set -euo pipefail
 
-REPO_DIR="/home/user/arcogine"
+REPO_DIR="${ARCOGINE_REPO_DIR:-/home/user/arcogine}"
 MIN_JAVA_MAJOR="21"
 SUPPORTED_NODE_RANGE="^22.22.2 || ^24.15.0 || ^26.0.0"
 
@@ -21,7 +21,7 @@ SUPPORTED_NODE_RANGE="^22.22.2 || ^24.15.0 || ^26.0.0"
 # before setting up logging (log path itself must not depend on the cwd).
 INVOKED_FROM="$(pwd -P)"
 
-LOG_DIR="${HOME}/logs"
+LOG_DIR="${ARCOGINE_LOG_DIR:-${HOME}/logs}"
 mkdir -p "$LOG_DIR"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 # Append $$ so two invocations within the same second (the timestamp's

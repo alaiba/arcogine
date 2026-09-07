@@ -94,19 +94,12 @@ jobs:
         id: resolve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Untrusted event fields (PR number, workflow_run.pull_requests,
-          # workflow_run.head_branch) are passed as data via environment
-          # variables rather than interpolated directly into the shell
-          # script text. GitHub explicitly documents ref/branch names and
-          # other `github.event.*` fields as attacker-controllable
-          # script-injection vectors when interpolated as `${{ ... }}` into
-          # an inline `run:` block; reading them through `$NAME` here means
-          # their content is never parsed as shell syntax, regardless of
-          # what characters they contain. This job also has no `checks:
-          # write`/no privileged output, but the same pattern is required in
-          # the privileged check-disposition job below.
+          # Event values are passed as data via environment variables rather
+          # than interpolated directly into shell script text. The workflow-run
+          # association is re-fetched from GitHub's API using the run ID instead
+          # of serializing the nested pull_requests object into an expression.
           EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
-          EVENT_WORKFLOW_RUN_PRS_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
+          EVENT_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
           EVENT_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           set -euo pipefail
@@ -116,28 +109,24 @@ jobs:
               TARGETS=$(jq -nc --arg n "$EVENT_PR_NUMBER" '[{pr_number: $n}]')
               ;;
             workflow_run)
-              # Resolve the associated PR from the TRUSTED job's own event
-              # context (github.event.workflow_run.pull_requests), computed by
-              # GitHub itself -- not from anything the untrusted listener run
-              # produced. This is the field GitHub docs describe as populated
-              # for same-repository PRs; for a pull_request_review-triggered
-              # listener run specifically, github.event.workflow_run.head_sha
-              # is the ephemeral refs/pull/<n>/merge commit, NOT a real commit
-              # in the PR's own history, so GET /commits/<sha>/pulls (which
-              # only recognizes actual commits) always returns an empty array
-              # for it -- confirmed live, this previously made PR resolution
-              # fail on every single review-triggered run.
-              PR_NUMBER=$(echo "$EVENT_WORKFLOW_RUN_PRS_JSON" | jq -r '.[0].number // empty')
+              case "$EVENT_WORKFLOW_RUN_ID" in
+                ''|*[!0-9]*)
+                  echo "::error::workflow_run id is not numeric: $EVENT_WORKFLOW_RUN_ID" >&2
+                  exit 1
+                  ;;
+              esac
+
+              # Re-fetch the trusted workflow-run object from GitHub and read
+              # its associated PRs there. For a pull_request_review-triggered
+              # listener run, head_sha is the ephemeral refs/pull/<n>/merge
+              # commit and cannot be resolved through /commits/<sha>/pulls.
+              PR_NUMBER=$(gh api \
+                "repos/${{ github.repository }}/actions/runs/$EVENT_WORKFLOW_RUN_ID" \
+                --jq '.pull_requests[0].number // empty')
 
               if [ -z "$PR_NUMBER" ]; then
-                # Fallback for the case GitHub's docs say pull_requests can be
-                # empty (a fork PR): resolve via the run's own head branch name,
-                # which (unlike head_sha) is the PR's real source branch, not
-                # the synthetic merge ref. Read as data ($EVENT_HEAD_BRANCH),
-                # never interpolated into the script text -- a branch name is
-                # attacker-controlled content and GitHub's script-injection
-                # guidance gives a concrete example of one breaking out of
-                # this exact `NAME="${{ ... }}"` shell-assignment style.
+                # GitHub documents pull_requests as possibly empty for fork
+                # cases. Fall back to the run's real source branch name.
                 PR_NUMBER=$(gh pr list --repo "${{ github.repository }}" --head "$EVENT_HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
               fi
 

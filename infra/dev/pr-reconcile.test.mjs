@@ -40,7 +40,12 @@ function harness({
     if (key === 'git status --porcelain') return workingTree;
     if (key === 'git branch --show-current') return branch;
     if (key === 'git rev-parse HEAD') return rebased ? NEW : OLD;
-    if (key === `git fetch origin main ${BRANCH}`) return '';
+    if (
+      key ===
+      `git fetch origin +refs/heads/main:refs/remotes/origin/main +refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}`
+    ) {
+      return '';
+    }
     if (key === `git rev-parse refs/remotes/origin/${BRANCH}`) return fetchedHead;
     if (key === 'git rev-parse refs/remotes/origin/main') return BASE;
     if (key === 'git diff --name-only refs/remotes/origin/main...HEAD') {

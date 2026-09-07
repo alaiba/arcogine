@@ -39,6 +39,7 @@ require container/security certification.
 ```text
 setup | test | check [--full] | build | image | up | down
 run api | run web | run scenario PATH
+snapshot
 ```
 
 It deliberately does not wrap every subsystem operation. Use the native tool for more specific work:
@@ -217,6 +218,12 @@ node --test infra/dev/pr-watch.test.mjs
 ```
 
 Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODULE_NOT_FOUND` rather than discovering the suite.
+
+`infra/dev/repo-snapshot.test.mjs` covers `infra/dev/repo-snapshot.mjs`, which backs `./arcogine snapshot` (see [`docs/development/repository-snapshot.md`](repository-snapshot.md)). It concentrates on the paths where a wrong answer could label non-canonical state as canonical `alaiba/arcogine` `main`: the clean-checkout precondition, the provenance header contents, and — the sharper case — that a fork remote or an unpushed local-only commit on a branch named `main` is refused even though the branch/dirty-tree precondition alone would accept it. Like the other Node tooling suites it runs as a step in the always-running `classify` job. Run it locally with:
+
+```bash
+node --test infra/dev/repo-snapshot.test.mjs
+```
 
 ### Scheduled and manual security runs
 

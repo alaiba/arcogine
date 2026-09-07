@@ -224,7 +224,10 @@ Run everything from the repo root via `./arcogine`, a thin wrapper that composes
 ./arcogine run api      # start the Spring Boot API on :3000
 ./arcogine run web      # start the Vite dev server on :5173 (`run ui` is a compatibility alias)
 ./arcogine run scenario docs/examples/basic.toml  # run a headless scenario via the native CLI
+./arcogine snapshot     # generate logs/arcogine-main-<sha>.xml, a whole-repo Repomix snapshot from a clean main checkout
 ```
+
+See [`docs/development/repository-snapshot.md`](docs/development/repository-snapshot.md) for the snapshot command's preconditions, canonical-provenance checks, and authority boundary.
 
 For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, `bootJar`, JMH, dependency audit), `cd product/interfaces/web && npm ...`/`npx ...` (lint, typecheck, build, Playwright), `docker compose ...` (containers), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
 

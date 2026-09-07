@@ -1,6 +1,6 @@
 # ADR-0013: Durable operational identity
 
-Status: Proposed — architecture review hold
+Status: Proposed
 Date: 2026-09-02
 
 ## Context

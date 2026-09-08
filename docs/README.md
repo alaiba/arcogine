@@ -17,13 +17,16 @@ Arcogine's documentation is layered, and each layer answers a different question
 - **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus the enduring architectural principles that follow from the Charter. Explains how the system is built today and which parts of that are expected to persist regardless of implementation.
 - **[`architecture/decisions/`](architecture/decisions/README.md)** (ADRs) — historical rationale for significant, hard-to-reverse decisions: *why* the system ended up the way it did, operating under the Charter and current architecture rather than setting product direction themselves.
 - **[`product/concepts.md`](product/concepts.md)**, **[`reference/api.md`](reference/api.md)**, [`../product/interfaces/web/README.md`](../product/interfaces/web/README.md) — current capability/reference documentation. Describe what exists now, honestly, without projecting future capability.
-- **[`planning/`](planning/)** — temporary analysis, proposals, sequencing, and assessments. Useful for delivery context; not authoritative for current or future direction.
+- **[`research/`](research/README.md)** — maintained research backlog and bounded investigations. Answers what Arcogine still needs to understand or decide. Research is evidence, not accepted architecture, roadmap commitment, or current capability.
+- **[`planning/`](planning/)** — executable delivery planning: implementation proposals, dependencies, sequencing, readiness criteria, and acceptance evidence. Answers what work should be performed given current decisions; not authoritative for current capability or enduring product/architecture direction.
 
-When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail. Proposed architecture references and Proposed ADRs describe a target or decision under consideration; they do not override current-state documentation. Accepted ADRs constrain intended architecture, but they likewise do not make unimplemented behavior current capability.
+When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail. Proposed architecture references and Proposed ADRs describe a target or decision under consideration; they do not override current-state documentation. Accepted ADRs constrain intended architecture, but they likewise do not make unimplemented behavior current capability. Research conclusions do not become authoritative merely by being recorded under `research/`; surviving conclusions must be promoted into the appropriate product, architecture, decision, or planning authority.
 
 ### Durable semantic vocabulary
 
 Planning documents use the reserved `PLAN-<TRACK>-<LOCAL-ID>` namespace for delivery coordinates, and PRs/reviews use the separate `REV-<NNN>` namespace for review/finding identifiers (see `AGENTS.md`), because those coordinates are useful while work is being sequenced or tracked. Durable semantic naming — current-state documentation, and non-Markdown durable artifacts such as code comments, workflow definitions, and test names — must instead name capabilities, contracts, identities, invariants, and behaviors directly rather than depend on a temporary delivery coordinate. Working/process documentation and delivery-history records (including commit messages) may mention a delivery coordinate when the coordinate itself is part of the process being explained or was actually used to track the work.
+
+Research documents deliberately do not use temporary delivery coordinates. When a research conclusion produces executable work, capture that work in `docs/planning/` under the repository's delivery-coordinate rules rather than turning the research artifact into a shadow roadmap.
 
 A durable document may link to a planning document for implementation sequencing, but it must remain understandable if the plan is later completed, condensed, renamed, or removed. When a planned outcome becomes architecture or current capability, translate the delivery label into semantic terminology rather than carrying the plan's coordinate into ADRs, architecture, product, reference, or durable development guidance. Planning filenames stay semantic rather than coordinate-derived for the same reason.
 
@@ -88,9 +91,18 @@ The root [README](../README.md#quick-start) owns environment setup and local-run
 |----------|-----------------|
 | [Examples README](examples/README.md) | Executable TOML scenario fixtures (educational, not runtime assets — never shipped in `dist/` or Docker images) |
 
+## Internal research (maintainers)
+
+Research artifacts preserve open questions, evidence, and bounded investigations without committing implementation. The maintained register owns research status and prioritization; durable conclusions must be reconciled into product, architecture, decisions, or executable planning rather than left authoritative here.
+
+| Document | What it covers |
+|----------|-----------------|
+| [Research register](research/README.md) | Maintained portfolio of candidate, ready, active, concluded, and superseded research questions, with priority, dependencies, evidence destinations, and research-to-planning promotion rules |
+| [Agency and decision boundary investigation](research/agency-decision-boundary.md) | Bounded cross-cutting research into actor vs. decision-source vs. subject semantics, agent-as-composition, provenance/replay for deterministic and nondeterministic decisions, temporally extended capabilities, and the evidence required before creating any generalized agent abstraction or delivery track |
+
 ## Internal planning (maintainers)
 
-These documents are internal planning artifacts, not user-facing guides. Planning filenames are semantic rather than coordinate-derived (see "Durable semantic vocabulary" above), so the link text below simply matches each document's subject.
+These documents are executable delivery-planning artifacts, not user-facing guides or research backlogs. Planning filenames are semantic rather than coordinate-derived (see "Durable semantic vocabulary" above), so the link text below simply matches each document's subject.
 
 | Document | What it covers |
 |----------|-----------------|
@@ -99,7 +111,6 @@ These documents are internal planning artifacts, not user-facing guides. Plannin
 | [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Runtime readiness after the model seam: explicit workload/work execution, deterministic dispatch, session control, observations/events, and spatial consequences |
 | [Runtime observation/event delivery plan](planning/runtime-observation-event-delivery.md) | Implementation companion for ADR-0011: work-decomposition benchmark prerequisite, headless observation/event slices, provenance, API/SSE migration, recovery boundary, and PR landing sequence |
 | [Operational execution and digital twin readiness](planning/operational-execution-digital-twin-readiness.md) | Sibling readiness track currently architecture-blocked on durable operational identity; covers verified trust/authority, semantic operation realization and command/deployment lifecycle, external observations, authoritative subject correspondence, reconciliation, drift/calibration, resilience, and a first live-system adapter proving ground with explicit Governance/Engine prerequisites |
-| [Agency and decision boundary investigation](planning/agency-decision-boundary.md) | Bounded cross-cutting research into actor vs. decision-source vs. subject semantics, agent-as-composition, provenance/replay for deterministic and nondeterministic decisions, temporally extended capabilities, and the evidence required before creating any generalized agent abstraction or delivery track |
 | [Factory-design game challenge readiness](planning/factory-design-game-challenge-readiness.md) | Game-owned parallel track for challenge identity/validation, candidate admissibility, catalogue and budget rules, deterministic evaluation, attempt provenance/comparison, and cross-track learning with governance |
 | [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Downstream consumer boundary between the game and Arcogine, including readiness entry criteria and ownership constraints |
 | [Factory-design game vertical slice](planning/factory-design-game-vertical-slice.md) | Product hypothesis for the first playable slice: fixed contract, capacity/layout/cost trade-offs, diagnosis, and deterministic redesign |

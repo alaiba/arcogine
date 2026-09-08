@@ -2,7 +2,7 @@
 
 > **Status:** Proposed bounded architecture investigation  
 > **Scope:** Determine the smallest durable semantic boundary between observation, decision production, actor attribution, capability, semantic operation, and resulting state change  
-> **Authority:** Planning/research only; this document does not establish a new platform abstraction, module owner, delivery track, or current product capability  
+> **Authority:** Research only; this document does not establish a new platform abstraction, module owner, delivery track, or current product capability  
 > **Related:** [Product Charter](../product/charter.md), [Architecture Overview](../architecture/overview.md), [Operational Execution and Digital Twin Architecture](../architecture/operational-execution-digital-twin.md), [Standards Alignment](../architecture/standards-alignment.md)
 
 ## 1. Why this investigation exists
@@ -281,7 +281,7 @@ The repository should not accumulate textbook summaries of those fields. Researc
 
 This investigation does **not** authorize:
 
-- a new `PLAN-*` track or track code;
+- a new delivery track or track code;
 - a generalized `Agent` framework or superclass;
 - BDI, GOAP, behavior-tree, RL, LLM, or game-AI concepts in the common domain model;
 - generic memory, belief, goal, plan, personality, prompt, or reasoning-trace semantics;

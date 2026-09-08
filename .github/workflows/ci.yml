@@ -66,6 +66,17 @@ jobs:
       - name: Validate arcogine env template handling
         run: bash .github/scripts/arcogine-env.test.sh
 
+      # The canonical root wrapper owns command parsing, dispatch, artifact,
+      # and lifecycle orchestration. Keep its black-box contract in this
+      # always-running tooling gate rather than behind a product path filter.
+      - name: Validate arcogine CLI contract
+        run: bash .github/scripts/arcogine-cli.test.sh
+
+      # Claude Cloud setup intentionally only inspects the supplied image and
+      # must remain dependency-free and non-fatal for unrelated tasks.
+      - name: Validate Claude Cloud provisioning
+        run: bash infra/dev/claude-cloud.test.sh
+
       # The PR lifecycle resolver in infra/dev/pr-watch.mjs decides whether an
       # implementation-owned transition exists, so a regression there can report a PR
       # merge-ready when it is not. Run its suite here, in the always-running job the

@@ -126,6 +126,15 @@ function fetchComparison(run, repo, baseRef, headSha) {
   );
 }
 
+function fetchRemoteRef(run, remote, ref) {
+  const output = run('git', ['ls-remote', remote, ref]);
+  const match = output.match(/^([0-9a-f]{40})\s+(.+)$/m);
+  if (!match || match[2] !== ref) {
+    throw new Error(`could not resolve ${remote} ${ref}`);
+  }
+  return match[1];
+}
+
 function ensureNonEmptyDiff(run, baseRemote, message) {
   const files = run('git', ['diff', '--name-only', `${baseRemote}...HEAD`]);
   if (!files.trim()) throw new Error(message);
@@ -176,8 +185,9 @@ async function reconcilePr({ number, repo = DEFAULT_REPO, run = commandRunner, l
     throw new Error(`PR head moved during reconciliation setup: expected ${oldHead}, fetched ${fetchedHead}`);
   }
   const fetchedBase = run('git', ['rev-parse', baseRemote]);
-  if (fetchedBase !== pr.base.sha) {
-    throw new Error(`PR base moved during reconciliation setup: expected ${pr.base.sha}, fetched ${fetchedBase}`);
+  const liveBase = fetchRemoteRef(run, 'origin', `refs/heads/${baseRef}`);
+  if (fetchedBase !== liveBase) {
+    throw new Error(`PR base moved during reconciliation setup: expected ${fetchedBase}, fetched ${liveBase}`);
   }
 
   const before = fetchComparison(run, repo, baseRef, oldHead);

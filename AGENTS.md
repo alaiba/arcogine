@@ -143,7 +143,7 @@ Resolve a PR's lifecycle state from its current head and metadata, base freshnes
 
 Base freshness is implementation-owned lifecycle state, not something the reviewer should normally have to discover. `infra/dev/pr-watch.mjs` must treat any behind-base head as **CHANGES REQUIRED**, making reconciliation with the current base the next implementation-owned transition. Independent review still verifies the current base and head as defense in depth.
 
-When an open PR is behind its base and a local checkout of that PR branch is available, reconcile it with `node infra/dev/pr-reconcile.mjs <pr-number>`. Do not improvise raw branch-ref manipulation for this transition. In particular, never point an open PR branch at the base commit as an intermediate step: GitHub may automatically close the PR when head and base become identical. The helper constructs the complete rebased head first, updates the remote branch exactly once with a lease bound to the inspected old head, and verifies that the PR remains open and level afterward. If the helper cannot run in the current harness because no local checkout/git/`gh` execution surface exists, preserve the same invariant explicitly: construct the final reconciled head before the single branch-ref update; never use the base commit itself as a temporary PR head.
+When an open PR is behind its base and a local checkout of that PR branch is available, reconcile it with `node infra/dev/pr-reconcile.mjs <pr-number>`. The helper reconciles against the live base branch ref; the PR API's historical `base.sha` is not evidence that the base is current. It refuses to proceed if the live base moves during setup, so retry that transition rather than treating stale PR metadata as a blocker. Do not improvise raw branch-ref manipulation for this transition. In particular, never point an open PR branch at the base commit as an intermediate step: GitHub may automatically close the PR when head and base become identical. The helper constructs the complete rebased head first, updates the remote branch exactly once with a lease bound to the inspected old head, and verifies that the PR remains open and level afterward. If the helper cannot run in the current harness because no local checkout/git/`gh` execution surface exists, preserve the same invariant explicitly: construct the final reconciled head before the single branch-ref update; never use the base commit itself as a temporary PR head. If a user explicitly requests GitHub's merge-style “Update branch” action, use `gh pr update-branch <pr-number>` rather than manual ref manipulation, then re-resolve lifecycle because the PR head and review evidence change.
 
 Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). CI is not a reviewer disposition and is never folded into it: required CI is enforced independently by GitHub branch protection. Only a current-head `READY TO MERGE` review, together with green required CI, produces the `READY TO MERGE` lifecycle state.
 
@@ -184,6 +184,17 @@ Two things that are easy to get wrong:
 **Other harnesses** (Codex and others) have their own primitives and generally no equivalent of `Monitor`. Use whatever background or streaming facility exists; if there is none, run the single-resolution form at each decision point, and if scheduled tasks are supported keep at most one recheck scheduled about 10 minutes out while the PR is **AWAITING**.
 
 A session-scoped watcher is expected and sufficient: its purpose is to let the session react to review and CI feedback on its own rather than the repository owner relaying state changes. It ends with the session, and that is fine — it is not intended as durable infrastructure.
+
+Treat monitoring startup as a delivery gate: immediately after opening a PR or pushing a new PR head, establish at most one session-scoped monitoring mechanism when the harness supports persistent monitoring and verify its initial-state evidence before reporting the transition complete. The selected mechanism must surface lifecycle-relevant changes and fail visibly if monitoring stops working. If persistent monitoring is unavailable, perform the single-resolution form at each lifecycle decision point and say that no persistent monitor is active.
+
+The repository-owned `pr-watch.mjs` is the default fallback when no native or harness-provided monitor exists. Stop and restart this fallback after every head push because it holds the script loaded at startup; for a devcontainer checkout, use the equivalent of:
+
+```bash
+cd /workspaces/arcogine
+exec node infra/dev/pr-watch.mjs <pr-number> --watch --interval 60
+```
+
+Do not claim that a PR is being monitored unless the selected mechanism has provided its startup/initial-state confirmation; for the `pr-watch` fallback, that means its emitted baseline line.
 
 ### Rules for any monitoring mechanism
 

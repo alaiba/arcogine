@@ -11,7 +11,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
@@ -38,8 +38,8 @@ class MultiResourceDispatchAcceptanceTest {
     private static FactoryModelVersion twoEligibleMachinesModel() {
         FactoryModel model = new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(1), "Mill A", 1, null, 0),
-                        new ResourceDefinition(new MachineId(2), "Mill B", 1, null, 0)),
+                        new ConfiguredResource(new MachineId(1), "Mill A", 1, null, 0),
+                        new ConfiguredResource(new MachineId(2), "Mill B", 1, null, 0)),
                 List.of(new OperationDefinition(
                         1,
                         "Widget Route",
@@ -64,10 +64,10 @@ class MultiResourceDispatchAcceptanceTest {
     private static FactoryModelVersion twoDisjointPoolsModel() {
         FactoryModel model = new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(1), "Mill A1", 1, null, 0),
-                        new ResourceDefinition(new MachineId(2), "Mill A2", 1, null, 0),
-                        new ResourceDefinition(new MachineId(3), "Mill B1", 1, null, 0),
-                        new ResourceDefinition(new MachineId(4), "Mill B2", 1, null, 0)),
+                        new ConfiguredResource(new MachineId(1), "Mill A1", 1, null, 0),
+                        new ConfiguredResource(new MachineId(2), "Mill A2", 1, null, 0),
+                        new ConfiguredResource(new MachineId(3), "Mill B1", 1, null, 0),
+                        new ConfiguredResource(new MachineId(4), "Mill B2", 1, null, 0)),
                 List.of(
                         new OperationDefinition(
                                 1,

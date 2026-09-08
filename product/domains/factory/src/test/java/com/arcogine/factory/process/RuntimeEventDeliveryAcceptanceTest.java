@@ -15,7 +15,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.MachineState;
 import com.arcogine.types.OrderId;
@@ -43,8 +43,8 @@ class RuntimeEventDeliveryAcceptanceTest {
     private static FactoryModelVersion twoMachineModel() {
         return FactoryModelPublisher.publish(new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(1), "Cutter A", 1, null, 0),
-                        new ResourceDefinition(new MachineId(2), "Cutter B", 1, null, 0)),
+                        new ConfiguredResource(new MachineId(1), "Cutter A", 1, null, 0),
+                        new ConfiguredResource(new MachineId(2), "Cutter B", 1, null, 0)),
                 List.of(new OperationDefinition(
                         1,
                         "Cut",
@@ -57,8 +57,8 @@ class RuntimeEventDeliveryAcceptanceTest {
     private static FactoryModelVersion twoIndependentSingleMachineRoutesModel() {
         FactoryModel model = new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(1), "M1", 1, null, 0),
-                        new ResourceDefinition(new MachineId(2), "M2", 1, null, 0)),
+                        new ConfiguredResource(new MachineId(1), "M1", 1, null, 0),
+                        new ConfiguredResource(new MachineId(2), "M2", 1, null, 0)),
                 List.of(
                         new OperationDefinition(
                                 1,

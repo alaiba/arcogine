@@ -20,8 +20,8 @@ class FactoryModelFingerprintV1Test {
     private static FactoryModel representativeModel() {
         return new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(-2), "M|ill", 3, -0.0, -7),
-                        new ResourceDefinition(new MachineId(5), "Second", 1, null, 0)),
+                        new ConfiguredResource(new MachineId(-2), "M|ill", 3, -0.0, -7),
+                        new ConfiguredResource(new MachineId(5), "Second", 1, null, 0)),
                 List.of(new OperationDefinition(
                         42,
                         "Op:🚀",
@@ -68,8 +68,8 @@ class FactoryModelFingerprintV1Test {
         FactoryModelVersion original = FactoryModelPublisher.publish(representativeModel());
         FactoryModel reordered = new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(5), "Second", 1, null, 0),
-                        new ResourceDefinition(new MachineId(-2), "M|ill", 3, -0.0, -7)),
+                        new ConfiguredResource(new MachineId(5), "Second", 1, null, 0),
+                        new ConfiguredResource(new MachineId(-2), "M|ill", 3, -0.0, -7)),
                 List.of(new OperationDefinition(
                         42, "Op:🚀", List.of(new OperationStepDefinition(
                                 9, "Step;é", Set.of(new MachineId(-2), new MachineId(5)), 11)))),
@@ -93,8 +93,8 @@ class FactoryModelFingerprintV1Test {
     @Test
     void listOrderAndFloatingPointPayloadArePartOfTheContract() {
         FactoryModel model = new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(1), "A", 1, 0.0, 0),
-                        new ResourceDefinition(new MachineId(2), "B", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(1), "A", 1, 0.0, 0),
+                        new ConfiguredResource(new MachineId(2), "B", 1, null, 0)),
                 List.of(new OperationDefinition(1, "One", List.of(
                                 new OperationStepDefinition(1, "First", Set.of(new MachineId(1)), 1),
                                 new OperationStepDefinition(2, "Second", Set.of(new MachineId(1)), 2))),
@@ -115,7 +115,7 @@ class FactoryModelFingerprintV1Test {
         FactoryModelVersion productReordered = FactoryModelPublisher.publish(new FactoryModel(
                 model.resources(), model.operations(), List.of(model.products().get(1), model.products().get(0))));
         FactoryModelVersion negativeZero = FactoryModelPublisher.publish(new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(1), "A", 1, -0.0, 0), model.resources().get(1)),
+                List.of(new ConfiguredResource(new MachineId(1), "A", 1, -0.0, 0), model.resources().get(1)),
                 model.operations(), model.products()));
 
         assertNotEquals(original.fingerprint(), resourceReordered.fingerprint());
@@ -158,7 +158,7 @@ class FactoryModelFingerprintV1Test {
 
         private static FactoryModel validLegacyFixture() {
                 return new FactoryModel(
-                                List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)),
+                                List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0)),
                                 List.of(new OperationDefinition(100, "Widget routing",
                                 List.of(new OperationStepDefinition(1, "Rough milling", Set.of(new MachineId(1)), 5)))),
                                 List.of(new ProductDefinition(new ProductId(10), "Widget", 100)));
@@ -166,7 +166,7 @@ class FactoryModelFingerprintV1Test {
 
         private static void assertMalformedResourceNameIsRejected() {
                 FactoryModel malformed = new FactoryModel(
-                                List.of(new ResourceDefinition(new MachineId(1), "bad\uD800", 1, null, 0)),
+                                List.of(new ConfiguredResource(new MachineId(1), "bad\uD800", 1, null, 0)),
                                 representativeModel().operations(), representativeModel().products());
                 assertThrows(FactoryModelValidationException.class, () -> FactoryModelPublisher.publish(malformed));
         }
@@ -200,8 +200,8 @@ class FactoryModelFingerprintV1Test {
 
     private static FactoryModel modelWithResourceName(String name) {
         return new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(-2), name, 3, -0.0, -7),
-                        new ResourceDefinition(new MachineId(5), "Second", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(-2), name, 3, -0.0, -7),
+                        new ConfiguredResource(new MachineId(5), "Second", 1, null, 0)),
                 representativeModel().operations(), representativeModel().products());
     }
 
@@ -228,8 +228,8 @@ class FactoryModelFingerprintV1Test {
     private static FactoryModel modelWithResourceId(long id) {
         OperationDefinition operation = representativeModel().operations().get(0);
         return new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(id), "M|ill", 3, -0.0, -7),
-                        new ResourceDefinition(new MachineId(5), "Second", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(id), "M|ill", 3, -0.0, -7),
+                        new ConfiguredResource(new MachineId(5), "Second", 1, null, 0)),
                 List.of(new OperationDefinition(operation.id(), operation.name(),
                         List.of(new OperationStepDefinition(operation.steps().get(0).stepId(),
                                 operation.steps().get(0).name(), Set.of(new MachineId(id), new MachineId(5)),
@@ -239,15 +239,15 @@ class FactoryModelFingerprintV1Test {
 
     private static FactoryModel modelWithCapacity(double capacity) {
         return new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(-2), "M|ill", 3, capacity, -7),
-                        new ResourceDefinition(new MachineId(5), "Second", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(-2), "M|ill", 3, capacity, -7),
+                        new ConfiguredResource(new MachineId(5), "Second", 1, null, 0)),
                 representativeModel().operations(), representativeModel().products());
     }
 
     @Test
     void malformedUnicodeIsRejectedAtPublication() {
         FactoryModel malformed = new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(1), "bad\uD800", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(1), "bad\uD800", 1, null, 0)),
                 List.of(),
                 List.of());
 

@@ -6,7 +6,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.governance.SemanticArtifact;
 import com.arcogine.governance.change.ChangedEntityRef;
 import com.arcogine.governance.change.SemanticChange;
@@ -66,18 +66,18 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
 
     private static void compareResources(
             FactoryModel base, FactoryModel candidate, List<SemanticChange> changes) {
-        Map<String, ResourceDefinition> baseById =
+        Map<String, ConfiguredResource> baseById =
                 indexBy(base.resources(), r -> Long.toString(r.id().value()));
-        Map<String, ResourceDefinition> candidateById =
+        Map<String, ConfiguredResource> candidateById =
                 indexBy(candidate.resources(), r -> Long.toString(r.id().value()));
 
         List<String> baseOrder = new ArrayList<>(baseById.keySet());
         List<String> candidateOrder = new ArrayList<>(candidateById.keySet());
 
-        for (Map.Entry<String, ResourceDefinition> entry : baseById.entrySet()) {
+        for (Map.Entry<String, ConfiguredResource> entry : baseById.entrySet()) {
             String id = entry.getKey();
-            ResourceDefinition baseResource = entry.getValue();
-            ResourceDefinition candidateResource = candidateById.get(id);
+            ConfiguredResource baseResource = entry.getValue();
+            ConfiguredResource candidateResource = candidateById.get(id);
             ChangedEntityRef ref = new ChangedEntityRef(RESOURCE_TYPE, id, baseResource.name());
             if (candidateResource == null) {
                 changes.add(
@@ -95,9 +95,9 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
                 }
             }
         }
-        for (Map.Entry<String, ResourceDefinition> entry : candidateById.entrySet()) {
+        for (Map.Entry<String, ConfiguredResource> entry : candidateById.entrySet()) {
             if (!baseById.containsKey(entry.getKey())) {
-                ResourceDefinition added = entry.getValue();
+                ConfiguredResource added = entry.getValue();
                 changes.add(
                         new SemanticChange(
                                 SemanticChangeKind.ENTITY_ADDED,
@@ -107,7 +107,7 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
         }
     }
 
-    private static String describeResourceChange(ResourceDefinition before, ResourceDefinition after) {
+    private static String describeResourceChange(ConfiguredResource before, ConfiguredResource after) {
         StringBuilder detail = new StringBuilder();
         if (!before.name().equals(after.name())) {
             appendField(detail, "name", before.name(), after.name());

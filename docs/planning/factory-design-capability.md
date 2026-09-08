@@ -2,8 +2,8 @@
 
 > **Status:** Active/partial; current implementation is complete for Factory Model v1, while the admitted Factory Model v2 work is delivered through the spatial-runtime implementation sequence  
 > **Scope:** Implementation-ready Factory Design work over the canonical production-system model  
-> **Authority:** Planning only; unresolved ontology, diagnostics, comparison, and authoring questions live in research  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/factory-design-evolution.md)
+> **Authority:** Planning only; unresolved diagnostics, comparison, authoring, and later resource/capability extensions live in research  
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md)
 
 ## 1. Implementation boundary
 
@@ -43,7 +43,7 @@ The following are implemented and must be preserved:
 - Governance-owned controlled revision identity/history independently of Factory fingerprint identity;
 - initial semantic comparison of factory resources, operations, and products through the Governance semantic-change seam.
 
-Current `ResourceDefinition` remains the supported concrete resource representation. This plan does not reinterpret it as a reusable equipment type.
+Current `ResourceDefinition` remains the supported complete configured-resource representation. [Factory Resource Semantics](../architecture/factory-resource-semantics.md) records the concluded interpretation and keeps the definition/installed-instance split **out of implementation**: repetition, catalogue reuse, or equal values are not sufficient triggers. Revisit only if an independently identified reusable technical specification must carry a checkable cross-consumer contract or dependency that complete configured-resource records cannot preserve.
 
 ## 3. Admitted Factory Model v2 work
 
@@ -164,14 +164,15 @@ No downstream consumer may create a second authored production model merely beca
 
 The game may own a mutable draft, catalogue/economics, score, attempt history, UI state, and other consumer-only data. It projects only supported canonical semantic facts before Arcogine validation/publication.
 
-The game must not force unresolved equipment-type, shared-editor, or comparison abstractions into Factory Design. Those questions remain in research until promoted.
+The game must not force unadmitted reusable-specification/capability, shared-editor, or comparison abstractions into Factory Design. Those questions remain in research until promoted.
 
 ## 7. Research boundary
 
-The following are intentionally **not implementation work** in this plan:
+The reusable definition versus installed-resource investigation is **concluded** with no implementation slice: keep one complete configured resource per designed participant unless a future technical-specification/dependency invariant proves a separate canonical identity necessary.
 
-- reusable equipment definition versus installed resource ontology;
-- generalized capability/resource-pool/work-center semantics;
+The following remain intentionally **not implementation work** in this plan:
+
+- generalized capability/qualification/resource-pool/work-center semantics;
 - richer stable validation findings/warnings/severity;
 - finer semantic comparison beyond the implemented slice;
 - shared draft lifecycle/collaboration;

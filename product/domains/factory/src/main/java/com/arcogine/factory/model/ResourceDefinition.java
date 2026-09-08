@@ -3,12 +3,14 @@ package com.arcogine.factory.model;
 import com.arcogine.types.MachineId;
 
 /**
- * A resource (piece of equipment) that can be installed in a factory design.
+ * A complete description of one identified productive resource in a factory design.
  *
- * <p>Current scenarios do not distinguish a reusable resource "type" from an installed
- * instance -- each configured resource is a single concrete, uniquely identified unit. This
- * type therefore represents both facts at once; splitting definition from instance is deferred
- * until a scenario/consumer actually needs a resource type installed more than once.
+ * <p>Despite the historical type name, this record is not a reusable equipment type. The
+ * canonical model currently represents each configured resource directly. Repeated
+ * catalogue/template origin, equal configured values, or installing the same authored item more
+ * than once do not imply a second reusable definition identity. Introduce such a specification
+ * only if it carries a checkable cross-consumer technical contract or dependency that complete
+ * configured-resource records cannot preserve.
  */
 public record ResourceDefinition(
         MachineId id, String name, int concurrency, Double capacityLiters, long setupTime) {

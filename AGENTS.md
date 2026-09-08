@@ -185,6 +185,15 @@ Two things that are easy to get wrong:
 
 A session-scoped watcher is expected and sufficient: its purpose is to let the session react to review and CI feedback on its own rather than the repository owner relaying state changes. It ends with the session, and that is fine — it is not intended as durable infrastructure.
 
+Treat watcher startup as a delivery gate: immediately after opening a PR or pushing a new PR head, start exactly one session-scoped watcher and verify its baseline line before reporting the transition complete. Stop and restart the watcher after every head push because it holds the script loaded at startup. If the current harness has no native subscription, a persistent terminal/exec session running the watcher is the default fallback; for a devcontainer checkout, use the equivalent of:
+
+```bash
+cd /workspaces/arcogine
+exec node infra/dev/pr-watch.mjs <pr-number> --watch --interval 60
+```
+
+Do not claim that a PR is being monitored unless the watcher has printed its baseline. If the harness cannot keep a persistent process, perform the single-resolution form at each lifecycle decision point and say that no persistent watcher is active.
+
 ### Rules for any monitoring mechanism
 
 A monitor must fail loudly: if it cannot reach GitHub it must say so, because a silent watcher is indistinguishable from a quiet PR. Do not report a PR as unchanged on the strength of a monitor that has not actually confirmed it.

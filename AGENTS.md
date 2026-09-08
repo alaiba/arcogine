@@ -194,6 +194,8 @@ exec node infra/dev/pr-watch.mjs <pr-number> --watch --interval 60
 
 Do not claim that a PR is being monitored unless the selected mechanism has provided its startup/initial-state confirmation; for the `pr-watch` fallback, that means its emitted baseline line. If the harness cannot keep a persistent process, perform the single-resolution form at each lifecycle decision point and say that no persistent monitor is active.
 
+When heartbeat automation is available, prefer it for the current task: immediately after opening a PR or pushing a new PR head, view/update the existing PR heartbeat or create exactly one if none exists, verify that it is `ACTIVE`, and keep it quiet while the lifecycle is unchanged. Reuse the stable PR-specific automation rather than creating duplicates. Pause the heartbeat when the PR reaches **READY TO MERGE**, **MERGED**, or **CLOSED**; if the head changes before that point, keep the heartbeat active and re-resolve the new lifecycle state.
+
 ### Rules for any monitoring mechanism
 
 A monitor must fail loudly: if it cannot reach GitHub it must say so, because a silent watcher is indistinguishable from a quiet PR. Do not report a PR as unchanged on the strength of a monitor that has not actually confirmed it.

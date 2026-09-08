@@ -6,14 +6,16 @@ import { reconcilePr } from './pr-reconcile.mjs';
 const OLD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const BASE = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 const NEW = 'cccccccccccccccccccccccccccccccccccccccc';
+const MOVED_BASE = 'dddddddddddddddddddddddddddddddddddddddd';
+const STALE_REPORTED_BASE = 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const REPO = 'alaiba/arcogine';
 const BRANCH = 'feature/test';
 
-function pr(head = OLD, state = 'open') {
+function pr(head = OLD, state = 'open', base = BASE) {
   return {
     state,
     head: { ref: BRANCH, sha: head, repo: { full_name: REPO, html_url: `https://github.com/${REPO}`, ssh_url: `git@github.com:${REPO}.git`, clone_url: `https://github.com/${REPO}.git` } },
-    base: { ref: 'main', sha: BASE },
+    base: { ref: 'main', sha: base },
   };
 }
 
@@ -23,6 +25,8 @@ function harness({
   preDiff = 'file.txt',
   postDiff = 'file.txt',
   fetchedHead = OLD,
+  reportedBase = BASE,
+  liveBase = BASE,
   rebaseFails = false,
   branch = BRANCH,
   workingTree = '',
@@ -50,6 +54,7 @@ function harness({
     }
     if (key === `git rev-parse refs/remotes/origin/${BRANCH}`) return fetchedHead;
     if (key === 'git rev-parse refs/remotes/origin/main') return BASE;
+    if (key === 'git ls-remote origin refs/heads/main') return `${liveBase}\trefs/heads/main`;
     if (key === 'git diff --name-only refs/remotes/origin/main...HEAD') {
       return rebased ? postDiff : preDiff;
     }
@@ -64,7 +69,7 @@ function harness({
 
     if (file === 'gh' && args[0] === 'api' && args[1] === `repos/${REPO}/pulls/277`) {
       prReads += 1;
-      return JSON.stringify(pr(prReads === 1 ? OLD : NEW, prReads === 1 ? 'open' : afterPrState));
+      return JSON.stringify(pr(prReads === 1 ? OLD : NEW, prReads === 1 ? 'open' : afterPrState, reportedBase));
     }
     if (file === 'gh' && args[0] === 'api' && args[1].startsWith(`repos/${REPO}/compare/`)) {
       compareReads += 1;
@@ -164,6 +169,24 @@ test('a concurrent remote head move is refused before rebase', async () => {
     /PR head moved during reconciliation setup/,
   );
   assert.equal(pushes(h.calls).length, 0);
+});
+
+test('stale PR base metadata does not block reconciliation against the live base ref', async () => {
+  const h = harness({ reportedBase: STALE_REPORTED_BASE });
+  const result = await reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} });
+
+  assert.equal(result.changed, true);
+  assert.equal(pushes(h.calls).length, 1);
+});
+
+test('a base ref that moves during setup is refused before rebase', async () => {
+  const h = harness({ liveBase: MOVED_BASE });
+  await assert.rejects(
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
+    /PR base moved during reconciliation setup/,
+  );
+  assert.equal(pushes(h.calls).length, 0);
+  assert.equal(h.calls.some((call) => call.args[0] === 'rebase'), false);
 });
 
 test('the helper refuses a different checked-out branch', async () => {

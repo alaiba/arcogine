@@ -328,10 +328,21 @@ case "$cmd" in
     fi
     ;;
   clean)
+    if [[ $# -ne 1 ]]; then
+      echo "Usage: ./arcogine clean" >&2
+      exit 1
+    fi
     echo "==> Removing dist/ ..."
     rm -rf "$DIST_DIR"
     ;;
-  ""|-h|--help)
+  "")
+    usage
+    ;;
+  -h|--help)
+    if [[ $# -ne 1 ]]; then
+      echo "Usage: ./arcogine $cmd" >&2
+      exit 1
+    fi
     usage
     ;;
   *)

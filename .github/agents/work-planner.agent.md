@@ -72,7 +72,8 @@ Repository evidence is authoritative over prior chat/session context and agent m
 | What is Arcogine ultimately trying to become? | `docs/product/charter.md` |
 | How does the implemented system work today? | `docs/architecture/overview.md` corroborated by source and executable evidence |
 | Why does a significant architectural constraint exist? | applicable accepted ADRs in `docs/architecture/decisions/` |
-| What is planned, sequenced, partial, deferred, blocked, or explicitly non-goal? | applicable `docs/planning/` documents |
+| What unresolved questions, research lifecycle/status, or research portfolio priorities exist? | `docs/research/README.md` and its linked detailed research artifacts |
+| What implementation work is admitted, sequenced, partial, deferred, blocked, or explicitly non-goal? | applicable `docs/planning/` documents |
 | What has landed/currently exists? | live `main` plus merged PR/commit history |
 | What is in progress? | live open PR state, including submitted reviews, review threads, CI, and mergeability |
 | What is this open PR intended to accomplish? | PR description reconciled with current planning and prerequisites |
@@ -81,7 +82,7 @@ Repository evidence is authoritative over prior chat/session context and agent m
 | How are implementation PRs independently reviewed? | `docs/development/reviewing.md` and `.github/agents/pr-reviewer.agent.md` |
 | How is repository-wide consistency review performed? | `.github/agents/consistency.agent.md` |
 
-Planning documents define intended sequencing and acceptance criteria. Merged implementation and executable evidence on live `main` define what exists. Open PRs are in-flight evidence, never landed capability.
+Research documents define unresolved questions, evidence expectations, research lifecycle, and portfolio priority; they do not commit implementation. Planning documents define admitted implementation sequencing, dependencies, and acceptance criteria; they do not settle unresolved research questions. Merged implementation and executable evidence on live `main` define what exists. Open PRs are in-flight evidence, never landed capability.
 
 ## Start-of-run grounding
 
@@ -93,11 +94,12 @@ At the start of every planning run:
 4. Read `AGENTS.md`.
 5. Read `docs/architecture/overview.md` when the decision crosses modules, domains, or architecture boundaries.
 6. Extract the main initiative, gate, capability, or domain keywords from the user's request and perform a quick repository search under `docs/` for them.
-7. Read the maintained planning document(s), directly relevant architecture documents, and applicable accepted/proposed ADRs.
-8. Inspect all open PRs relevant to the decision.
-9. Inspect recent merged PRs far enough back to understand what just landed and whether maintained planning status may have changed.
-10. For each relevant open PR, inspect the current head/base, description, mergeability/conflicts, CI/check status, submitted reviews, and unresolved review threads/findings where available.
-11. Record any required repository, PR, review, or CI surface that could not be inspected.
+7. Read `docs/research/README.md` for research lifecycle and portfolio priority, and read any linked research artifact when the question concerns unresolved meaning or a planning dependency on research; keep research state separate from implementation readiness.
+8. Read the maintained planning document(s), directly relevant architecture documents, and applicable accepted/proposed ADRs.
+9. Inspect all open PRs relevant to the decision.
+10. Inspect recent merged PRs far enough back to understand what just landed and whether maintained planning or research status may have changed.
+11. For each relevant open PR, inspect the current head/base, description, mergeability/conflicts, CI/check status, submitted reviews, and unresolved review threads/findings where available.
+12. Record any required repository, PR, review, or CI surface that could not be inspected.
 
 Never assume a PR number, gate status, or dependency from previous conversation context. Re-check it.
 
@@ -117,6 +119,8 @@ Classify material work before recommending it:
 - `PARALLEL_READY` — independent work can safely proceed alongside the critical path.
 - `DEFERRED` — intentionally postponed by maintained planning.
 - `OPTIONAL_DEBT` — useful cleanup/refinement that is not currently on the critical path.
+
+Research uses its own lifecycle, defined by `docs/research/README.md`: `CANDIDATE`, `READY`, `ACTIVE`, `CONCLUDED`, or `SUPERSEDED`. Research priority is portfolio guidance, not delivery commitment. A `READY` research item means its question is ready for investigation; it does not mean implementation is ready. Do not translate research status into planning status, and classify an implementation slice as dependency-blocked when its contract still depends on an unresolved research question.
 
 If an open PR changes a planning status, state both realities explicitly:
 
@@ -154,7 +158,7 @@ For each candidate next slice, distinguish:
 - optional refinement or debt;
 - future integration that should not block the core capability.
 
-Do not infer a hard dependency merely because two concepts are related. Require maintained architecture/planning evidence or an executable contract dependency.
+Read the maintained research register when a candidate slice depends on unresolved meaning or evidence. Distinguish a research dependency from an implementation prerequisite: research priority may identify leverage or risk, but it does not authorize pulling an implementation slice into planning. Do not infer a hard dependency merely because two concepts are related. Require maintained architecture/planning evidence, a research conclusion promoted into a durable authority, or an executable contract dependency.
 
 ### 4. Prefer closure evidence over abstraction growth
 
@@ -221,12 +225,13 @@ When review findings exist, distinguish valid current blockers from findings alr
 
 ## Planning across active tracks
 
-When repository-wide planning is requested, identify the principal active tracks from current `docs/planning/` rather than from a hard-coded list. For each relevant track, identify:
+When repository-wide planning is requested, identify the principal active implementation tracks from current `docs/planning/` and the material research dependencies from `docs/research/`, rather than from a hard-coded list. For each relevant track, identify:
 
 - latest landed gate/slice on live `main`;
 - open in-flight gate/slice;
 - next locally ready gate/slice;
 - hard sibling prerequisite status;
+- unresolved research dependency, if any, including its research lifecycle and portfolio priority;
 - useful independent parallel work;
 - downstream/deferred work that should not be pulled forward.
 

@@ -1,6 +1,6 @@
 # Agency and Decision Boundary Investigation
 
-> **Status:** Proposed bounded architecture investigation  
+> **Status:** READY
 > **Scope:** Determine the smallest durable semantic boundary between observation, decision production, actor attribution, capability, semantic operation, and resulting state change  
 > **Authority:** Research only; this document does not establish a new platform abstraction, module owner, delivery track, or current product capability  
 > **Related:** [Product Charter](../product/charter.md), [Architecture Overview](../architecture/overview.md), [Operational Execution and Digital Twin Architecture](../architecture/operational-execution-digital-twin.md), [Standards Alignment](../architecture/standards-alignment.md)

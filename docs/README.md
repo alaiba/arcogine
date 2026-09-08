@@ -3,114 +3,97 @@
 ## Start here
 
 | Document | Who it's for | What it covers |
-|----------|-------------|----------------|
-| [Product Charter](product/charter.md) | Everyone | Arcogine's enduring product vision, system thesis, and principles — read this first |
-| [Root README](../README.md) | Everyone | What Arcogine is today, canonical setup/local-run guide, first session |
-| [Concepts](product/concepts.md) | New users | How the current simulation works, KPIs, agents, scenarios |
-| [API Reference](reference/api.md) | Developers | Every HTTP endpoint with curl examples |
+|---|---|---|
+| [Product Charter](product/charter.md) | Everyone | Enduring product thesis and principles |
+| [Root README](../README.md) | Everyone | What Arcogine is today, setup, and local run |
+| [Concepts](product/concepts.md) | New users | Current simulation concepts and behavior |
+| [API Reference](reference/api.md) | Developers | Current HTTP API contract |
 
 ## Documentation hierarchy
 
-Arcogine's documentation is layered, and each layer answers a different question:
+Arcogine separates durable direction, current truth, research, and executable planning:
 
-- **[`product/charter.md`](product/charter.md)** — normative. What Arcogine is ultimately intended to become, and the principles future work is evaluated against. Not a roadmap, not a feature list.
-- **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus the enduring architectural principles that follow from the Charter. Explains how the system is built today and which parts of that are expected to persist regardless of implementation.
-- **[`architecture/decisions/`](architecture/decisions/README.md)** (ADRs) — historical rationale for significant, hard-to-reverse decisions: *why* the system ended up the way it did, operating under the Charter and current architecture rather than setting product direction themselves.
-- **[`product/concepts.md`](product/concepts.md)**, **[`reference/api.md`](reference/api.md)**, [`../product/interfaces/web/README.md`](../product/interfaces/web/README.md) — current capability/reference documentation. Describe what exists now, honestly, without projecting future capability.
-- **[`research/`](research/README.md)** — maintained research backlog and bounded investigations. Answers what Arcogine still needs to understand or decide. Research is evidence, not accepted architecture, roadmap commitment, or current capability.
-- **[`planning/`](planning/)** — executable delivery planning: implementation proposals, dependencies, sequencing, readiness criteria, and acceptance evidence. Answers what work should be performed given current decisions; not authoritative for current capability or enduring product/architecture direction.
+- **[`product/charter.md`](product/charter.md)** — normative product direction and enduring principles; not a roadmap.
+- **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus enduring architectural principles.
+- **[`architecture/decisions/`](architecture/decisions/README.md)** — rationale for significant hard-to-reverse choices.
+- **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md), [`reference/api.md`](reference/api.md), and consumer/component references describe what exists now.
+- **[`research/`](research/README.md)** — open questions, hypotheses, evidence, and decision-quality investigations. Research is not accepted architecture or implementation commitment.
+- **[`planning/`](planning/README.md)** — implementation-ready delivery planning only: admitted slices, dependencies, blockers on concrete prerequisites, acceptance evidence, and implementation status.
 
-When documents disagree, the higher layer governs product direction; the lower layer remains authoritative for current implementation detail. Proposed architecture references and Proposed ADRs describe a target or decision under consideration; they do not override current-state documentation. Accepted ADRs constrain intended architecture, but they likewise do not make unimplemented behavior current capability. Research conclusions do not become authoritative merely by being recorded under `research/`; surviving conclusions must be promoted into the appropriate product, architecture, decision, or planning authority.
+Research discovers. Product/architecture/ADRs establish durable meaning. Planning sequences concrete implementation. Landed code/tests and current-state docs establish what actually exists.
 
-### Durable semantic vocabulary
+A research conclusion does not become authoritative merely because it is recorded. An unresolved question that still determines implementation meaning must not be hidden inside a delivery plan.
 
-Planning documents use the reserved `PLAN-<TRACK>-<LOCAL-ID>` namespace for delivery coordinates, and PRs/reviews use the separate `REV-<NNN>` namespace for review/finding identifiers (see `AGENTS.md`), because those coordinates are useful while work is being sequenced or tracked. Durable semantic naming — current-state documentation, and non-Markdown durable artifacts such as code comments, workflow definitions, and test names — must instead name capabilities, contracts, identities, invariants, and behaviors directly rather than depend on a temporary delivery coordinate. Working/process documentation and delivery-history records (including commit messages) may mention a delivery coordinate when the coordinate itself is part of the process being explained or was actually used to track the work.
+### Delivery-coordinate boundary
 
-Research documents deliberately do not use temporary delivery coordinates. When a research conclusion produces executable work, capture that work in `docs/planning/` under the repository's delivery-coordinate rules rather than turning the research artifact into a shadow roadmap.
+Temporary delivery coordinates belong to executable planning/delivery context, not research or durable semantic naming. When research produces an implementable responsibility, promote the semantic conclusion first and then assign the delivery coordinate in `docs/planning/`.
 
-A durable document may link to a planning document for implementation sequencing, but it must remain understandable if the plan is later completed, condensed, renamed, or removed. When a planned outcome becomes architecture or current capability, translate the delivery label into semantic terminology rather than carrying the plan's coordinate into ADRs, architecture, product, reference, or durable development guidance. Planning filenames stay semantic rather than coordinate-derived for the same reason.
+## Cross-track ownership
 
-The mechanical checker (`.github/scripts/check-delivery-labels.py`) enforces this deterministically across every tracked repository file: a `PLAN-*`/`REV-<NNN>` coordinate outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the old ambiguous label forms this namespace replaced may not be reintroduced. PR review applies the broader semantic rule and catches context-dependent leakage no syntax pattern can recognize safely. ADR-specific semantics-preserving editorial amendments follow the policy in [`architecture/decisions/README.md`](architecture/decisions/README.md).
-
-## Cross-track ownership map
-
-The active architecture/readiness tracks are siblings with explicit ownership boundaries. They may progress in parallel using clearly scoped fixtures, but one track must not invent durable substitutes for another track's owned semantics.
-
-| Concern | Primary owner | Boundary |
+| Concern | Primary authority / delivery surface | Boundary |
 |---|---|---|
-| Canonical production-system semantics, validation, publication, deterministic instantiation | [Factory design architecture](architecture/factory-design.md) / [Factory design capability](planning/factory-design-capability.md) | Published semantic model is the shared source for downstream contexts |
-| Deterministic workload, dispatch, simulation session, runtime events/observations, spatial consequences | [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Owns simulation/runtime truth; does not become a production-control runtime by default |
-| Durable semantic fingerprint policy, controlled revision lineage, ChangeSets, requirements/assertions, conformance, evidence use, findings/exceptions | [Governance and conformance](architecture/governance-conformance.md) / [capability plan](planning/governance-conformance-capability.md) | Durable revision identity/history, semantic change/impact, requirements/assertions, and conformance evaluation/findings are implemented; evidence-use/authorization capabilities remain outstanding; operational facts may be consumed as evidence, but Governance does not ingest telemetry or reconcile the twin |
-| Durable operational-history attribution (identity under review), verified operational identity/trust, semantic operation realization and command/result lifecycle, deployment application, external observations, subject correspondence, reconciliation, drift/calibration feedback, adapter resilience | [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) / [readiness plan](planning/operational-execution-digital-twin-readiness.md) | Reality/consequence is relationship-level rather than a global execution kind; raw external observations keep independent provenance; operational work references Governance-owned revision, semantic-change, and evidence-use contracts when those exist |
-| Game challenge identity, admissibility, scoring, attempt provenance/comparison | [Factory-design game challenge readiness](planning/factory-design-game-challenge-readiness.md) | Sibling proving ground; no generic evaluation framework or domain-type unification |
-
-Two dependency rules are especially important:
-
-1. **Fixtures are not sibling completion.** Governance's durable revision identity/history, semantic `ChangeSet`/impact, generic `Requirement`/`Assertion`/`RequirementCatalogue`, and initial `ConformanceEvaluator`/`ConformanceEvaluation`/`Finding` capabilities are implemented and should be consumed rather than replaced by synthetic production substitutes. Clearly scoped synthetic fixtures remain appropriate only for still-outstanding evidence-use/authorization capabilities; likewise synthetic operational adapters do not satisfy Engine readiness criteria.
-2. **External observations are not Arcogine operational-history-, model-, or revision-bound at ingestion.** Their source/subject/time/trust provenance is independent. Arcogine-owned subject correspondence and later model/revision/operational-history interpretation belong to explicit correspondence, reconciliation, deployment correlation, or Governance `EvidenceUse` relationships when applicable.
+| Canonical production-system semantics, validation, publication, deterministic instantiation | [Factory design architecture](architecture/factory-design.md) / [Factory design plan](planning/factory-design-capability.md) | One published semantic model is the downstream source of truth |
+| Deterministic workload, work items, dispatch, session, supported observations/events, spatial consequences | [Engine readiness](planning/factory-simulation-engine-readiness.md) | Simulation runtime truth; not production-control semantics |
+| Durable semantic fingerprint/revision history, semantic change, requirements, conformance, evidence/governed change | [Governance architecture](architecture/governance-conformance.md) / [Governance plan](planning/governance-conformance-capability.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
+| Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
+| Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
+| Playable factory-design product hypothesis | [Game vertical-slice research](research/factory-design-game-vertical-slice.md) | Product evidence first; implementation only after promotion into the consumer plan |
 
 ## Development and contributing
 
-The root [README](../README.md#quick-start) owns environment setup and local-run instructions. Contributor and testing documents reference that setup rather than maintaining parallel startup procedures.
-
 | Document | What it covers |
-|----------|-----------------|
-| [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, code style, architecture constraints, required validation |
-| [reviewing.md](development/reviewing.md) | Independent PR review and re-review workflow, severity/disposition, AI-assisted session boundaries, CI language, and durable-knowledge rules |
-| [consistency-review.md](development/consistency-review.md) | Human operating model for recurring repository consistency reviews, finding persistence, baseline discipline, and the trigger for durable review-state storage |
-| [testing.md](development/testing.md) | Full test category reference, CI pipeline, quality gates, native test commands |
-| [repository-snapshot.md](development/repository-snapshot.md) | Generate the canonical whole-repository Repomix retrieval snapshot |
-| [codex-cloud.md](development/codex-cloud.md) | Observed Codex Cloud environment model, validated workflow, limitations, and recommended bounded-task usage |
-| [coding-agent-evaluation.md](development/coding-agent-evaluation.md) | Dated, non-normative evaluation of coding-agent/model cost-effectiveness, Arcogine task routing, and comparative experiment evidence |
-| [CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) | Community standards |
+|---|---|
+| [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, style, validation |
+| [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
+| [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
+| [testing.md](development/testing.md) | Test categories, CI, quality gates, native commands |
+| [repository-snapshot.md](development/repository-snapshot.md) | Canonical whole-repository retrieval snapshot |
+| [codex-cloud.md](development/codex-cloud.md) | Codex Cloud environment/workflow notes |
+| [coding-agent-evaluation.md](development/coding-agent-evaluation.md) | Non-normative coding-agent/model evaluation |
+| [SECURITY.md](../.github/SECURITY.md) | Security policy and mature operational security boundary |
 
 ## Architecture and design
 
 | Document | What it covers |
-|----------|-----------------|
-| [Architecture](architecture/overview.md) | Current design philosophy (including Events–State–Observations), module structure, determinism contract, event dispatch, technology stack |
-| [Factory design architecture](architecture/factory-design.md) | Proposed cross-consumer factory-design semantics, scenario/model/runtime separation, publication boundary, spatial ownership, and design-lifecycle principles |
-| [Governance and conformance architecture](architecture/governance-conformance.md) | Proposed cross-domain model lineage, semantic change, requirements, conformance, evidence, governed change, and compliance-as-projection architecture |
-| [Operational execution and digital twin architecture](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture covering hybrid synthetic/external realization, durable operational-history attribution, verified identity/trust, command/result facts, deployment, external observations, subject correspondence, reconciliation, drift/calibration, and industrial-adapter boundaries |
-| [Engine Semantics v1](architecture/engine-semantics-v1.md) | Normative `engine-semantics:v1` specification — result-affecting Engine interpretation, including deterministic dispatch/queue/decomposition rules, spatial transfer semantics, provenance, and limits |
-| [Factory Model v2 Canonicalization](architecture/factory-model-v2.md) | Normative `factory-model:v2` byte grammar — policy-domain prefix, field order, primitive encodings, placement/footprint encoding, collection ordering, digest rendering, and required golden vectors |
-| [ADR-0003: Canonical factory model boundary](architecture/decisions/0003-canonical-factory-model-boundary.md) | Accepted decision that `ScenarioConfig` remains a run envelope while immutable published factory-model versions bridge design and runtime |
-| [ADR-0004: Model identity, revision lineage, and external change control](architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) | Accepted decision separating semantic model fingerprint from controlled revision/change-management identity, with external change-management systems referenced, not depended on |
-| [ADR-0011: Runtime observation and event contract](architecture/decisions/0011-runtime-observation-and-event-contract.md) | Accepted semantics separating internal scheduler events, authoritative observations, ordered runtime events, transport adapters, and later recovery |
-| [ADR-0012: External interchange and serialization boundaries](architecture/decisions/0012-external-interchange-and-serialization-boundaries.md) | Accepted policy keeping Arcogine semantic contracts authoritative while JSON/OpenAPI, CloudEvents, Parquet, industrial standards, and other representations remain explicit projections/adapters |
-| [ADR-0013: Durable operational identity](architecture/decisions/0013-execution-context-identity.md) | Proposed decision on architecture-review hold: the original global `ExecutionContextKind` / `PRODUCTION-STAGING-SIMULATION` contract is withdrawn; the narrower durable operational-history identity problem remains unresolved pending a precise referent and lifecycle/equality rule |
-| [Standards alignment](architecture/standards-alignment.md) | Standards, format-selection, interchange, and conformance boundaries across manufacturing, runtime, analytics, governance, and operational integrations |
-| [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained Arcogine-to-ISA-95 concept mapping, deliberate divergences, structural gaps, and design-review policy |
-| [Vision (superseded)](product/vision.md) | Pointer to the Product Charter; retains naming/etymology history only |
-| [Decision records](architecture/decisions/README.md) | Architecture/design decision history — why significant choices were made |
-| [SECURITY.md](../.github/SECURITY.md) | Security policy, hardening posture, deployment constraints, and mature operational trust boundary |
+|---|---|
+| [Architecture overview](architecture/overview.md) | Current design, modules, determinism and Events-State-Observations principles |
+| [Factory design](architecture/factory-design.md) | Cross-consumer factory-model/design lifecycle semantics |
+| [Governance and conformance](architecture/governance-conformance.md) | Revision/change/requirements/conformance/evidence/governed-change architecture |
+| [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture |
+| [Engine Semantics v1](architecture/engine-semantics-v1.md) | Normative current result-affecting Engine interpretation |
+| [Factory Model v2](architecture/factory-model-v2.md) | Normative v2 canonicalization/fingerprint byte grammar |
+| [Standards alignment](architecture/standards-alignment.md) | Standards/interchange/conformance boundaries |
+| [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained manufacturing semantic mapping and deliberate divergences |
+| [Decision records](architecture/decisions/README.md) | ADR index and policy |
+
+## Internal research
+
+| Document | What it covers |
+|---|---|
+| [Research register](research/README.md) | Portfolio status, priority, promotion policy |
+| [Agency and decision boundary](research/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation |
+| [Factory Design evolution](research/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
+| [Factory-design game vertical slice](research/factory-design-game-vertical-slice.md) | Product loop, diagnostics, reference challenge, scoring/tutorial/technology evidence |
+| [Engine evolution](research/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy and unselected recovery/session extensions |
+| [Operational/Digital Twin boundaries](research/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |
+
+## Internal implementation planning
+
+See [planning/README.md](planning/README.md) for the admission rule.
+
+| Document | What it covers |
+|---|---|
+| [Factory Design capability](planning/factory-design-capability.md) | Current canonical-model baseline and admitted v2 implementation work |
+| [Factory Simulation Engine readiness](planning/factory-simulation-engine-readiness.md) | Completed runtime core plus current outward-convergence and spatial implementation queue |
+| [Runtime observation/event delivery](planning/runtime-observation-event-delivery.md) | Detailed remaining outward consumer convergence for supported observations/events |
+| [Spatial runtime consequences](planning/spatial-runtime-consequences.md) | Detailed accepted spatial/Engine-semantics implementation sequence |
+| [Governance/conformance capability](planning/governance-conformance-capability.md) | Landed Governance substrate plus admitted evidence/governed-change/exceptions/mapping/audit sequence |
+| [Governance identity/history compatibility guard](planning/governance-continuity.md) | Downstream implementation invariants over completed revision identity/history |
+| [Challenge delivery](planning/factory-design-game-challenge-readiness.md) | Closed headless challenge sequence and downstream invariants |
+| [Game consumer](planning/factory-design-game-consumer.md) | Settled ownership/integration boundary and playable implementation admission criteria |
+| [Game vertical-slice implementation gate](planning/factory-design-game-vertical-slice.md) | Explicit gate from product research into playable implementation |
+| [Operational implementation admission](planning/operational-execution-digital-twin-readiness.md) | Concrete conditions that must be met before an Operational delivery slice is created |
 
 ## Examples
 
-| Document | What it covers |
-|----------|-----------------|
-| [Examples README](examples/README.md) | Executable TOML scenario fixtures (educational, not runtime assets — never shipped in `dist/` or Docker images) |
-
-## Internal research (maintainers)
-
-Research artifacts preserve open questions, evidence, and bounded investigations without committing implementation. The maintained register owns research status and prioritization; durable conclusions must be reconciled into product, architecture, decisions, or executable planning rather than left authoritative here.
-
-| Document | What it covers |
-|----------|-----------------|
-| [Research register](research/README.md) | Maintained portfolio of candidate, ready, active, concluded, and superseded research questions, with priority, dependencies, evidence destinations, and research-to-planning promotion rules |
-| [Agency and decision boundary investigation](research/agency-decision-boundary.md) | Bounded cross-cutting research into actor vs. decision-source vs. subject semantics, agent-as-composition, provenance/replay for deterministic and nondeterministic decisions, temporally extended capabilities, and the evidence required before creating any generalized agent abstraction or delivery track |
-
-## Internal planning (maintainers)
-
-These documents are executable delivery-planning artifacts, not user-facing guides or research backlogs. Planning filenames are semantic rather than coordinate-derived (see "Durable semantic vocabulary" above), so the link text below simply matches each document's subject.
-
-| Document | What it covers |
-|----------|-----------------|
-| [Factory design capability plan](planning/factory-design-capability.md) | Immediate upstream work: canonical model seam, validation, publication/provenance, and behavior-preserving runtime instantiation |
-| [Governance and conformance capability plan](planning/governance-conformance-capability.md) | Cross-cutting sequence after the model seam: durable lineage, semantic ChangeSets, generic conformance, evidence, external-workflow governed change, framework mappings, and audit projections |
-| [Factory simulation engine readiness](planning/factory-simulation-engine-readiness.md) | Runtime readiness after the model seam: explicit workload/work execution, deterministic dispatch, session control, observations/events, and spatial consequences |
-| [Runtime observation/event delivery plan](planning/runtime-observation-event-delivery.md) | Implementation companion for ADR-0011: work-decomposition benchmark prerequisite, headless observation/event slices, provenance, API/SSE migration, recovery boundary, and PR landing sequence |
-| [Operational execution and digital twin readiness](planning/operational-execution-digital-twin-readiness.md) | Sibling readiness track currently architecture-blocked on durable operational identity; covers verified trust/authority, semantic operation realization and command/deployment lifecycle, external observations, authoritative subject correspondence, reconciliation, drift/calibration, resilience, and a first live-system adapter proving ground with explicit Governance/Engine prerequisites |
-| [Factory-design game challenge readiness](planning/factory-design-game-challenge-readiness.md) | Game-owned parallel track for challenge identity/validation, candidate admissibility, catalogue and budget rules, deterministic evaluation, attempt provenance/comparison, and cross-track learning with governance |
-| [Factory-design game consumer initiative](planning/factory-design-game-consumer.md) | Downstream consumer boundary between the game and Arcogine, including readiness entry criteria and ownership constraints |
-| [Factory-design game vertical slice](planning/factory-design-game-vertical-slice.md) | Product hypothesis for the first playable slice: fixed contract, capacity/layout/cost trade-offs, diagnosis, and deterministic redesign |
+[Examples](examples/README.md) are executable TOML scenario fixtures for education/testing; they are not runtime distribution assets.

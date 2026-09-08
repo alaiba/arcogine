@@ -114,7 +114,7 @@ PLAN-ENG-4-D closes when:
 6. behavior-changing slices update current-state docs in the same PR; and
 7. no protocol/broker/event-bus/interchange framework is introduced to accomplish convergence.
 
-D1 and D2 should normally be separate reviewable PRs when their code surfaces differ.
+PLAN-ENG-4-D1 and PLAN-ENG-4-D2 should normally be separate reviewable PRs when their code surfaces differ.
 
 ## 4. Provenance boundary
 

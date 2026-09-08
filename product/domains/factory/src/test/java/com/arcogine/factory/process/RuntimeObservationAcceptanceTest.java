@@ -12,7 +12,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
@@ -26,8 +26,8 @@ class RuntimeObservationAcceptanceTest {
     private static FactoryModelVersion model() {
         return FactoryModelPublisher.publish(new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(2), "Cutter B", 1, null, 0),
-                        new ResourceDefinition(new MachineId(1), "Cutter A", 1, null, 0)),
+                        new ConfiguredResource(new MachineId(2), "Cutter B", 1, null, 0),
+                        new ConfiguredResource(new MachineId(1), "Cutter A", 1, null, 0)),
                 List.of(new OperationDefinition(
                         1,
                         "Cut",

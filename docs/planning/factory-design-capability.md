@@ -43,7 +43,7 @@ The following are implemented and must be preserved:
 - Governance-owned controlled revision identity/history independently of Factory fingerprint identity;
 - initial semantic comparison of factory resources, operations, and products through the Governance semantic-change seam.
 
-Current `ResourceDefinition` remains the supported complete configured-resource representation. [Factory Resource Semantics](../architecture/factory-resource-semantics.md) records the concluded interpretation and keeps the definition/installed-instance split **out of implementation**: repetition, catalogue reuse, or equal values are not sufficient triggers. Revisit only if an independently identified reusable technical specification must carry a checkable cross-consumer contract or dependency that complete configured-resource records cannot preserve.
+Current `ConfiguredResource` remains the supported complete configured-resource representation. [Factory Resource Semantics](../architecture/factory-resource-semantics.md) records the concluded interpretation and keeps the definition/installed-instance split **out of implementation**: repetition, catalogue reuse, or equal values are not sufficient triggers. Revisit only if an independently identified reusable technical specification must carry a checkable cross-consumer contract or dependency that complete configured-resource records cannot preserve.
 
 ## 3. Admitted Factory Model v2 work
 

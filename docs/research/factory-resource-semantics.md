@@ -33,7 +33,7 @@ Repeated catalogue/template origin, equal configured values, a shared manufactur
 
 At the research baseline and the reconciliation head:
 
-- `ResourceDefinition` is one complete configured resource record: identity, name, concurrency, optional volumetric property, and setup time;
+- at the research baseline, the class was named `ResourceDefinition` and represented one complete configured resource record: identity, name, concurrency, optional volumetric property, and setup time;
 - `FactoryModel` contains immutable resources, operations, and products;
 - runtime assembly creates one fresh `Machine` state per configured resource;
 - `RoutingStep` contains explicit eligible `MachineId` values rather than a generalized capability requirement;
@@ -43,7 +43,7 @@ At the research baseline and the reconciliation head:
 - the Challenge catalogue has reusable offer identity and placed occurrences, but no production specification/capability contract; its reuse is consumer authoring/economics, not proof of a canonical Factory type;
 - Governance proving cases can scope requirements to concrete resource identity without equipment-class identity.
 
-The current class name `ResourceDefinition` therefore must not be interpreted as proof that the record is a reusable equipment type. Its semantic referent is the configured productive participant represented in the published design.
+At the research baseline, the class name `ResourceDefinition` therefore did not prove that the record was a reusable equipment type. Its semantic referent was the configured productive participant represented in the published design. The implementation was subsequently renamed to `ConfiguredResource` so the production type directly states that concluded referent; the semantic fields and behavior were unchanged.
 
 ## External evidence synthesis
 
@@ -159,7 +159,7 @@ This conclusion does **not** introduce a production-model migration or new Facto
 Durable reconciliation should preserve these rules:
 
 - [Factory Resource Semantics](../architecture/factory-resource-semantics.md) starts from configured productive-resource identity, not an assumed reusable definition plus installed instance, and treats specification/classification, configured identity, capability, hierarchy, location, physical asset, and runtime state as orthogonal concepts;
-- `ResourceDefinition` documentation states that its current semantic referent is one configured resource despite the historical type name;
+- `ConfiguredResource` documentation and current code state directly that the canonical record is one configured resource; the production rename from the research-baseline `ResourceDefinition` was terminology-only;
 - implementation planning records the split as **not admitted** and requires a future checkable technical-specification/dependency invariant before reopening it;
 - ADR-0011's resource `definition identity` wording does not imply two distinct identifiers under the current collapsed model: the same canonical `MachineId` identifies the configured model record and runtime correlation target.
 

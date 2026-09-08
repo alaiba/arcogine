@@ -10,7 +10,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.governance.SemanticArtifact;
 import com.arcogine.governance.change.SemanticChange;
 import com.arcogine.governance.change.SemanticChangeKind;
@@ -53,7 +53,7 @@ class FactoryModelSemanticComparatorTest {
         OperationStepDefinition step =
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
         OperationDefinition operation = new OperationDefinition(100, "Routing", List.of(step));
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
         ProductDefinition widget = new ProductDefinition(new ProductId(10), "Widget", operation.id());
         ProductDefinition gadget = new ProductDefinition(new ProductId(20), "Gadget", operation.id());
 
@@ -94,8 +94,8 @@ class FactoryModelSemanticComparatorTest {
         OperationDefinition baseOperation = new OperationDefinition(100, "Routing", List.of(baseStep));
         OperationDefinition candidateOperation =
                 new OperationDefinition(100, "Routing", List.of(candidateStep));
-        ResourceDefinition m1 = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
-        ResourceDefinition m2 = new ResourceDefinition(new MachineId(2), "Lathe", 1, 10.0, 1);
+        ConfiguredResource m1 = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource m2 = new ConfiguredResource(new MachineId(2), "Lathe", 1, 10.0, 1);
         ProductDefinition product =
                 new ProductDefinition(new ProductId(10), "Widget", baseOperation.id());
 
@@ -138,10 +138,10 @@ class FactoryModelSemanticComparatorTest {
 
     @Test
     void modifiedResourceCapacityIsClassifiedAsEntityModifiedByStableId() {
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 100.0, 2);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 100.0, 2);
         FactoryModelVersion base = model(List.of(machine));
-        ResourceDefinition changedMachine =
-                new ResourceDefinition(new MachineId(1), "Mill", 1, 150.0, 2);
+        ConfiguredResource changedMachine =
+                new ConfiguredResource(new MachineId(1), "Mill", 1, 150.0, 2);
         FactoryModelVersion candidate = model(List.of(changedMachine));
 
         List<SemanticChange> changes = comparator.compare(artifact(base), artifact(candidate));
@@ -158,9 +158,9 @@ class FactoryModelSemanticComparatorTest {
     void renamingAnEntityDoesNotChangeWhichEntityIsAffected() {
         // Reordering/relabeling must not be misread as add+remove of a different entity: same
         // stable MachineId, different display name, is one ENTITY_MODIFIED against that id.
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill A", 1, 10.0, 2);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill A", 1, 10.0, 2);
         FactoryModelVersion base = model(List.of(machine));
-        ResourceDefinition renamed = new ResourceDefinition(new MachineId(1), "Mill B", 1, 10.0, 2);
+        ConfiguredResource renamed = new ConfiguredResource(new MachineId(1), "Mill B", 1, 10.0, 2);
         FactoryModelVersion candidate = model(List.of(renamed));
 
         List<SemanticChange> changes = comparator.compare(artifact(base), artifact(candidate));
@@ -182,7 +182,7 @@ class FactoryModelSemanticComparatorTest {
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
         OperationDefinition op1 = new OperationDefinition(100, "Routing", List.of(step));
         OperationDefinition op2 = new OperationDefinition(200, "Packing", List.of(step));
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
         ProductDefinition product = new ProductDefinition(new ProductId(10), "Widget", op1.id());
 
         FactoryModelVersion base =
@@ -206,7 +206,7 @@ class FactoryModelSemanticComparatorTest {
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
         OperationDefinition op1 = new OperationDefinition(100, "Routing", List.of(step));
         OperationDefinition op2 = new OperationDefinition(200, "Packing", List.of(step));
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
         ProductDefinition product = new ProductDefinition(new ProductId(10), "Widget", op1.id());
 
         FactoryModelVersion base =
@@ -229,7 +229,7 @@ class FactoryModelSemanticComparatorTest {
         OperationStepDefinition step2 = new OperationStepDefinition(2, "Step2", Set.of(new MachineId(1)), 1);
         OperationDefinition baseOp = new OperationDefinition(100, "Routing", List.of(step1));
         OperationDefinition renamedOp = new OperationDefinition(100, "Routing2", List.of(step2));
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
         ProductDefinition product = new ProductDefinition(new ProductId(10), "Widget", baseOp.id());
 
         FactoryModelVersion base =
@@ -256,7 +256,7 @@ class FactoryModelSemanticComparatorTest {
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 5);
         OperationDefinition baseOp = new OperationDefinition(100, "Routing", List.of(beforeStep));
         OperationDefinition candidateOp = new OperationDefinition(100, "Routing", List.of(afterStep));
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
         ProductDefinition product = new ProductDefinition(new ProductId(10), "Widget", baseOp.id());
 
         FactoryModelVersion base =
@@ -277,7 +277,7 @@ class FactoryModelSemanticComparatorTest {
         OperationStepDefinition step =
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
         OperationDefinition operation = new OperationDefinition(100, "Routing", List.of(step));
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
         ProductDefinition product1 = new ProductDefinition(new ProductId(10), "Widget", operation.id());
         ProductDefinition product2 = new ProductDefinition(new ProductId(20), "Gadget", operation.id());
 
@@ -302,7 +302,7 @@ class FactoryModelSemanticComparatorTest {
         OperationStepDefinition step =
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
         OperationDefinition operation = new OperationDefinition(100, "Routing", List.of(step));
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
         ProductDefinition product1 = new ProductDefinition(new ProductId(10), "Widget", operation.id());
         ProductDefinition product2 = new ProductDefinition(new ProductId(20), "Gadget", operation.id());
 
@@ -327,7 +327,7 @@ class FactoryModelSemanticComparatorTest {
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
         OperationDefinition op1 = new OperationDefinition(100, "Routing", List.of(step));
         OperationDefinition op2 = new OperationDefinition(200, "Packing", List.of(step));
-        ResourceDefinition machine = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 1);
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
         ProductDefinition baseProduct = new ProductDefinition(new ProductId(10), "Widget", op1.id());
         ProductDefinition changedProduct = new ProductDefinition(new ProductId(10), "Widget2", op2.id());
 
@@ -349,8 +349,8 @@ class FactoryModelSemanticComparatorTest {
 
     @Test
     void resourceConcurrencyAndSetupTimeChangesAreDetected() {
-        ResourceDefinition before = new ResourceDefinition(new MachineId(1), "Mill", 1, 10.0, 2);
-        ResourceDefinition after = new ResourceDefinition(new MachineId(1), "Mill", 3, 10.0, 9);
+        ConfiguredResource before = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 2);
+        ConfiguredResource after = new ConfiguredResource(new MachineId(1), "Mill", 3, 10.0, 9);
         FactoryModelVersion base = model(List.of(before));
         FactoryModelVersion candidate = model(List.of(after));
 
@@ -363,14 +363,14 @@ class FactoryModelSemanticComparatorTest {
     }
 
     private static FactoryModelVersion twoResourceModel(List<Integer> resourceIds) {
-        List<ResourceDefinition> resources =
+        List<ConfiguredResource> resources =
                 resourceIds.stream()
-                        .map(id -> new ResourceDefinition(new MachineId(id), "Machine " + id, 1, 10.0, 1))
+                        .map(id -> new ConfiguredResource(new MachineId(id), "Machine " + id, 1, 10.0, 1))
                         .toList();
         return model(resources);
     }
 
-    private static FactoryModelVersion model(List<ResourceDefinition> resources) {
+    private static FactoryModelVersion model(List<ConfiguredResource> resources) {
         // Eligibility is pinned to machine 1 (present in every fixture variant below) so that
         // adding/removing/reordering *other* resources does not also perturb the operation's own
         // semantics -- keeping each test's expected change set attributable to one entity kind.

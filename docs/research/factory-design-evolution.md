@@ -27,7 +27,7 @@ This conclusion also preserves these orthogonal distinctions:
 - hierarchy/work-center/pool membership is not physical placement; and
 - runtime queues, availability, setup state, and observations remain outside the immutable design.
 
-No Factory implementation slice is promoted by this conclusion. Current `ResourceDefinition` remains the supported complete configured-resource record despite its historical type name.
+No Factory implementation slice is promoted by this conclusion. Current `ConfiguredResource` remains the supported complete configured-resource record.
 
 ## Qualified operation-resource applicability and performance — CANDIDATE
 

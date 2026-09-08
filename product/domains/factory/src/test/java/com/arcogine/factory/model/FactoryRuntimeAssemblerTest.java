@@ -15,7 +15,7 @@ class FactoryRuntimeAssemblerTest {
 
     @Test
     void assemblesFactoryHandlerMatchingThePublishedModel() {
-        ResourceDefinition mill = new ResourceDefinition(new MachineId(1), "Mill", 2, 100.0, 3);
+        ConfiguredResource mill = new ConfiguredResource(new MachineId(1), "Mill", 2, 100.0, 3);
         OperationDefinition routing = new OperationDefinition(
                 100,
                 "Widget routing",
@@ -43,7 +43,7 @@ class FactoryRuntimeAssemblerTest {
         // FactoryModelPublisher.publish -- so there is no construction path, direct or otherwise,
         // that lets assemble() ever see an invalid model.
         FactoryModel invalid = new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0)),
                 List.of(new OperationDefinition(100, "Empty", List.of())),
                 List.of());
 

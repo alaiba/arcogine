@@ -16,7 +16,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
@@ -56,7 +56,7 @@ class ProportionalQuantityWorkTest {
 
     private static FactoryModelVersion publishedModel() {
         FactoryModel model = new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0)),
                 List.of(new OperationDefinition(
                         1,
                         "Widget Route",

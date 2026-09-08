@@ -12,7 +12,7 @@ import java.util.List;
  * it has no dependency on Spring, scenario parsing, or any runtime/mutable state.
  */
 public record FactoryModel(
-        List<ResourceDefinition> resources,
+        List<ConfiguredResource> resources,
         List<OperationDefinition> operations,
         List<ProductDefinition> products) {
 

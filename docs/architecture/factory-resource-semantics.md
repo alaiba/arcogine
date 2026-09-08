@@ -9,7 +9,7 @@
 
 The canonical Factory resource is one independently identified **configured productive resource in a published factory design**.
 
-Current `ResourceDefinition` is the complete configured-resource record despite its historical type name. It is not a reusable equipment-type registry entry. Its `MachineId` identifies the designed productive participant and is the stable resource correlation identity used when runtime state is instantiated from that design.
+`ConfiguredResource` is the canonical complete configured-resource record. It is not a reusable equipment-type registry entry. Its `MachineId` identifies the designed productive participant and is the stable resource correlation identity used when runtime state is instantiated from that design.
 
 Repeated catalogue/template origin, equal configured values, a common manufacturer/model label, or installing the same authored item more than once do not create a second canonical reusable-definition identity. Those facts remain authoring/provenance data unless a cross-consumer production semantic requires them.
 

@@ -82,14 +82,7 @@ CI and release certification continue to run their required jobs and fail on
 missing tools or findings. Local capability limitations justify omitting only
 the affected workflow; they do not turn required checks into silent passes.
 
-Repository tooling suites run in the always-on CI classifier and can be reproduced with:
-
-```bash
-node --test infra/dev/pr-reconcile.test.mjs
-node --test infra/dev/pr-watch.test.mjs
-node --test infra/dev/repo-snapshot.test.mjs
-bash .github/scripts/check-pr-disposition.test.sh
-```
+Repository tooling suites run in the always-on CI classifier. See **[Repository-tooling suites](#repository-tooling-suites)** below for the complete list and how to run them locally.
 
 ### Running Java tests on the minimum JDK
 

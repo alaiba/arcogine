@@ -11,7 +11,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.governance.ControlledRevision;
 import com.arcogine.governance.FileControlledRevisionAuthority;
 import com.arcogine.governance.RevisionProvenance;
@@ -170,9 +170,9 @@ class PreChangeConformanceProvingCaseTest {
     }
 
     private static FactoryModelVersion model(List<Integer> resourceIds) {
-        List<ResourceDefinition> resources =
+        List<ConfiguredResource> resources =
                 resourceIds.stream()
-                        .map(id -> new ResourceDefinition(new MachineId(id), "Machine " + id, 1, 10.0, 1))
+                        .map(id -> new ConfiguredResource(new MachineId(id), "Machine " + id, 1, 10.0, 1))
                         .toList();
         OperationStepDefinition step =
                 new OperationStepDefinition(1, "Step", Set.of(resources.get(0).id()), 1);

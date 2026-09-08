@@ -13,7 +13,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
@@ -68,8 +68,8 @@ class HeadlessClosureAcceptanceTest {
     private static FactoryModelVersion unbalancedTwoStageModel() {
         return FactoryModelPublisher.publish(new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(1), "Prep", 1, null, 0),
-                        new ResourceDefinition(new MachineId(2), "Finish", 1, null, 0)),
+                        new ConfiguredResource(new MachineId(1), "Prep", 1, null, 0),
+                        new ConfiguredResource(new MachineId(2), "Finish", 1, null, 0)),
                 List.of(new OperationDefinition(
                         1,
                         "Make",
@@ -131,8 +131,8 @@ class HeadlessClosureAcceptanceTest {
     private static FactoryModelVersion twoInterchangeableMachinesModel() {
         return FactoryModelPublisher.publish(new FactoryModel(
                 List.of(
-                        new ResourceDefinition(new MachineId(1), "Cell A", 1, null, 0),
-                        new ResourceDefinition(new MachineId(2), "Cell B", 1, null, 0)),
+                        new ConfiguredResource(new MachineId(1), "Cell A", 1, null, 0),
+                        new ConfiguredResource(new MachineId(2), "Cell B", 1, null, 0)),
                 List.of(new OperationDefinition(
                         1,
                         "Make",

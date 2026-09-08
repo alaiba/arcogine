@@ -51,9 +51,9 @@ final class FactoryModelFingerprintV1 {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         bytes.writeBytes(PREFIX);
 
-        List<ResourceDefinition> resources = model.resources();
+        List<ConfiguredResource> resources = model.resources();
         writeU64(bytes, resources.size());
-        for (ResourceDefinition resource : resources) {
+        for (ConfiguredResource resource : resources) {
             writeI64(bytes, resource.id().value());
             writeText(bytes, resource.name());
             writeI64(bytes, resource.concurrency());
@@ -98,7 +98,7 @@ final class FactoryModelFingerprintV1 {
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(canonicalBytes))) {
             requirePrefix(input);
 
-            List<ResourceDefinition> resources = new ArrayList<>();
+            List<ConfiguredResource> resources = new ArrayList<>();
             for (int index = 0, count = readCount(input); index < count; index++) {
                 long id = input.readLong();
                 String name = readText(input);
@@ -108,7 +108,7 @@ final class FactoryModelFingerprintV1 {
                 }
                 Double capacityLiters = readOptionalF64(input);
                 long setupTime = input.readLong();
-                resources.add(new ResourceDefinition(
+                resources.add(new ConfiguredResource(
                         new MachineId(id), name, (int) concurrency, capacityLiters, setupTime));
             }
 

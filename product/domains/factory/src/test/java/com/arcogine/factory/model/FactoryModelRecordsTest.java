@@ -19,14 +19,14 @@ class FactoryModelRecordsTest {
     @Test
     void resourceDefinitionRejectsNullId() {
         assertThrows(
-                NullPointerException.class, () -> new ResourceDefinition(null, "Mill", 1, null, 0));
+                NullPointerException.class, () -> new ConfiguredResource(null, "Mill", 1, null, 0));
     }
 
     @Test
     void resourceDefinitionRejectsNullName() {
         assertThrows(
                 NullPointerException.class,
-                () -> new ResourceDefinition(new MachineId(1), null, 1, null, 0));
+                () -> new ConfiguredResource(new MachineId(1), null, 1, null, 0));
     }
 
     @Test

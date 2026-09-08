@@ -87,10 +87,10 @@ class FactoryModelArtifactV1Test {
     }
 
     private static FactoryModelVersion publishedModel() {
-        ResourceDefinition mill =
-                new ResourceDefinition(new MachineId(1), "Mill", 2, 125.5, 3);
-        ResourceDefinition packer =
-                new ResourceDefinition(new MachineId(2), "Packer", 1, null, 0);
+        ConfiguredResource mill =
+                new ConfiguredResource(new MachineId(1), "Mill", 2, 125.5, 3);
+        ConfiguredResource packer =
+                new ConfiguredResource(new MachineId(2), "Packer", 1, null, 0);
         OperationStepDefinition machine = new OperationStepDefinition(
                 1, "Machine", Set.of(new MachineId(2), new MachineId(1)), 5);
         OperationStepDefinition pack =

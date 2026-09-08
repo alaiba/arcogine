@@ -8,25 +8,32 @@
 
 The current Factory Design implementation has a usable canonical publication seam. This document keeps **unresolved extensions** out of executable planning until evidence establishes what they should mean.
 
-## Equipment/resource ontology — READY
+## Equipment/resource ontology — CONCLUDED
 
 Research question:
 
 > Does Factory Design need a reusable equipment/resource definition distinct from installed resource instances, and what semantic invariant would that distinction carry?
 
-Current implementation deliberately allows one resource record to represent one concrete installed unit. Reuse in a game catalogue or editor is not by itself sufficient reason to introduce canonical type/instance semantics.
+**Verdict: KEEP COLLAPSED FOR NOW.** The decision-quality evidence is preserved in the [Factory Resource Semantics Research Report](factory-resource-semantics.md), and the durable interpretation is recorded in [Factory Resource Semantics](../architecture/factory-resource-semantics.md).
 
-The investigation must compare at least:
+The canonical Factory model currently needs one independently identified **configured productive resource** per designed participant. Repeated catalogue/template origin, equal configured values, a manufacturer/model label, or installing the same authored item more than once do not by themselves justify a second reusable definition identity.
 
-- reusable equipment definition/class/model;
-- installed resource identity;
-- capability and operation requirement;
-- station/work-center/resource-pool semantics;
-- physical placement versus equipment hierarchy;
-- tool, worker, transport, and storage roles;
-- external physical-asset identity versus canonical design identity.
+A future reusable specification is justified only when its identity carries a checkable cross-consumer technical contract or dependency that complete configured-resource records cannot preserve—for example, conformance to an explicitly versioned specification, admitted configuration constraints/guarantees, or cross-model change-impact dependency on that specification. Equal values alone never establish shared specification identity.
 
-A split should be promoted only if sharing a definition implies a durable semantic invariant beyond authoring convenience.
+This conclusion also preserves these orthogonal distinctions:
+
+- configured resource identity is not external serialized physical-asset identity; Operational correspondence owns that future relationship;
+- capability/qualification is not equipment-type identity and remains deferred until Arcogine must infer or verify applicability;
+- hierarchy/work-center/pool membership is not physical placement; and
+- runtime queues, availability, setup state, and observations remain outside the immutable design.
+
+No Factory implementation slice is promoted by this conclusion. Current `ConfiguredResource` remains the supported complete configured-resource record.
+
+## Qualified operation-resource applicability and performance — CANDIDATE
+
+Current explicit eligible-resource IDs are sufficient for present execution. They do not, however, express engineering qualification or resource-dependent performance when heterogeneous resources can perform the same operation under different material, tooling, dimensional, quality, duration, consumption, or cost constraints.
+
+Research this only when a concrete optimizer, industrial authoring/verification workflow, game mechanic, MES import, or other consumer needs Arcogine to **discover or verify** applicability rather than accept explicitly authored eligibility. The investigation must keep qualification separate from runtime availability/selection and must test whether operation-resource performance needs its own relation rather than being hidden inside a reusable equipment type.
 
 ## Validation finding taxonomy — CANDIDATE
 
@@ -67,7 +74,7 @@ Research is needed only if a concrete workflow demonstrates a Factory-specific s
 
 A group deserves a canonical concept only if it owns real behavior or interpretation such as scheduling scope, aggregate capacity, responsibility, reporting, or capability aggregation. UI folders and physical proximity are insufficient.
 
-This research should remain coupled to the equipment ontology and Engine scheduling evidence rather than introducing an empty hierarchy abstraction.
+This research should remain coupled to qualified applicability/performance and Engine scheduling evidence rather than introducing an empty hierarchy abstraction.
 
 ## Spatial/material-flow evolution
 

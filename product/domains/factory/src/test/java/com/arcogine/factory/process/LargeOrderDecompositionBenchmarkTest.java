@@ -12,7 +12,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.factory.orders.OrderExecutionView;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
@@ -36,7 +36,7 @@ class LargeOrderDecompositionBenchmarkTest {
 
     private static FactoryRuntime runtime() {
         FactoryModel model = new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(1), "Machine", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(1), "Machine", 1, null, 0)),
                 List.of(new OperationDefinition(
                         1,
                         "Route",

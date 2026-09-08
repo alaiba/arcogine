@@ -29,7 +29,7 @@ public final class FactoryRuntimeAssembler {
         FactoryModel model = version.model();
 
         MachineStore machines = new MachineStore();
-        for (ResourceDefinition resource : model.resources()) {
+        for (ConfiguredResource resource : model.resources()) {
             machines.add(new Machine(
                     resource.id(),
                     resource.name(),

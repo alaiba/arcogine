@@ -4,7 +4,7 @@ import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.MachineId;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,7 +27,7 @@ public final class FactoryModelValidator {
         List<ModelValidationError> errors = new ArrayList<>();
 
         Set<MachineId> resourceIds = new HashSet<>();
-        for (ResourceDefinition resource : model.resources()) {
+        for (ConfiguredResource resource : model.resources()) {
             rejectMalformedUnicode(errors, "resources[" + resource.id() + "].name", resource.name());
             if (!resourceIds.add(resource.id())) {
                 errors.add(new ModelValidationError(

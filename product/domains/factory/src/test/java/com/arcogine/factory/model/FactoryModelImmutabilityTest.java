@@ -21,22 +21,22 @@ class FactoryModelImmutabilityTest {
     @Test
     void resourcesListRejectsMutationThroughTheAccessor() {
         FactoryModel model = new FactoryModel(
-                new ArrayList<>(List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0))),
+                new ArrayList<>(List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0))),
                 List.of(),
                 List.of());
 
         assertThrows(
                 UnsupportedOperationException.class,
-                () -> model.resources().add(new ResourceDefinition(new MachineId(2), "Lathe", 1, null, 0)));
+                () -> model.resources().add(new ConfiguredResource(new MachineId(2), "Lathe", 1, null, 0)));
     }
 
     @Test
     void constructorDefensivelyCopiesTheResourcesList() {
-        List<ResourceDefinition> mutableResources =
-                new ArrayList<>(List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)));
+        List<ConfiguredResource> mutableResources =
+                new ArrayList<>(List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0)));
         FactoryModel model = new FactoryModel(mutableResources, List.of(), List.of());
 
-        mutableResources.add(new ResourceDefinition(new MachineId(2), "Lathe", 1, null, 0));
+        mutableResources.add(new ConfiguredResource(new MachineId(2), "Lathe", 1, null, 0));
 
         assertEquals(1, model.resources().size(), "model must not observe mutation of the source list");
     }
@@ -69,8 +69,8 @@ class FactoryModelImmutabilityTest {
 
     @Test
     void mutatingTheSourceModelAfterPublicationDoesNotAffectThePublishedVersion() {
-        List<ResourceDefinition> mutableResources =
-                new ArrayList<>(List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)));
+        List<ConfiguredResource> mutableResources =
+                new ArrayList<>(List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0)));
         List<OperationDefinition> operations = List.of(new OperationDefinition(
                 100,
                 "Widget routing",

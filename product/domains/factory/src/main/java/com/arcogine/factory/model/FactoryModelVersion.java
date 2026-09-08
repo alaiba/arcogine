@@ -68,9 +68,9 @@ public record FactoryModelVersion(FactoryModel model) {
     private static String canonicalRepresentation(FactoryModel model) {
         StringBuilder sb = new StringBuilder();
 
-        List<ResourceDefinition> resources = model.resources();
+        List<ConfiguredResource> resources = model.resources();
         frame(sb, resources.size());
-        for (ResourceDefinition r : resources) {
+        for (ConfiguredResource r : resources) {
             frame(sb, r.id().value());
             frame(sb, r.name());
             frame(sb, r.concurrency());

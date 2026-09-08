@@ -22,7 +22,7 @@ import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.factory.model.validation.FactoryModelValidator;
 import com.arcogine.factory.model.validation.ModelValidationResult;
 import com.arcogine.types.MachineId;
@@ -103,10 +103,10 @@ class CanonicalExecutableButChallengeInadmissibleTest {
                         + "rule -- FactoryModelValidator has no concept of credits or budgets at all");
     }
 
-    private static List<ResourceDefinition> mills() {
-        List<ResourceDefinition> resources = new ArrayList<>();
+    private static List<ConfiguredResource> mills() {
+        List<ConfiguredResource> resources = new ArrayList<>();
         for (int i = 1; i <= CUTTER_COUNT; i++) {
-            resources.add(new ResourceDefinition(new MachineId(i), "Mill " + i, 1, null, 0));
+            resources.add(new ConfiguredResource(new MachineId(i), "Mill " + i, 1, null, 0));
         }
         return resources;
     }

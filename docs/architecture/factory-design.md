@@ -33,7 +33,8 @@ It is orthogonal because:
 
 It is semantically inseparable because:
 
-- design and runtime must share product, operation, resource, capability, policy, constraint, and behaviorally relevant layout semantics;
+- design and runtime must share product, operation, configured-resource, policy, constraint, and behaviorally relevant layout semantics;
+- any future capability or qualification semantics must be independently justified rather than inferred from the current resource record;
 - validation must reflect what runtime can actually execute;
 - consumers must not manually translate an editor-specific ontology into unrelated runtime semantics;
 - every runtime or verification context must identify the exact model version it instantiated.
@@ -98,9 +99,11 @@ A scenario may contain or reference a published model together with runtime inpu
 |---|---|
 | Product definitions | `FactoryModel` |
 | Operation definitions | `FactoryModel` |
-| Resource definitions and capabilities | `FactoryModel` |
-| Installed resource instances | `FactoryModel` |
-| Capability/eligibility requirements | `FactoryModel` |
+| Complete configured productive resources | `FactoryModel` |
+| Explicit eligible-resource IDs | `FactoryModel` |
+| Reusable technical specifications/classification | Separate future concept, only if an independent cross-consumer contract justifies it |
+| Capability/qualification relations | Separate future concept, only if behavior must discover or verify applicability |
+| Resource grouping or hierarchy | Separate future concept, only if it owns consequential scheduling, capacity, responsibility, or reporting semantics |
 | Semantic layout | `FactoryModel` |
 | Simulation seed/limits | Scenario/runtime context |
 | Production workload | Scenario/runtime input |
@@ -146,8 +149,8 @@ A fact belongs in the canonical model when changing it changes the executable me
 
 - product/material definitions;
 - operations/work definitions;
-- resource definitions and capabilities;
-- installed resource instances;
+- complete configured productive resources;
+- explicit eligible-resource IDs;
 - resource-pool/work-center membership when it has real scheduling, capacity, responsibility, or reporting semantics;
 - processing/setup/transfer/dispatch policies when part of the designed system;
 - executable constraints;
@@ -170,8 +173,8 @@ Consumer presentation and transient authoring state remain consumer-owned unless
 
 A runtime may compile or resolve immutable structures for efficiency:
 
-- resolved definition references;
-- capability/eligible-resource indexes;
+- resolved configured-resource references;
+- eligible-resource indexes;
 - operation/routing indexes;
 - geometry/spatial indexes;
 - validated transfer relationships;
@@ -239,8 +242,11 @@ Authorization may be owned externally: Arcogine can produce the technical assess
 | Concern | Ownership |
 |---|---|
 | Product and operation definitions | Arcogine canonical model |
-| Resource definitions and capabilities | Arcogine canonical model |
-| Installed resource instances | Arcogine canonical model |
+| Complete configured productive resources | Arcogine canonical model |
+| Explicit eligible-resource IDs | Arcogine canonical model |
+| Reusable technical specifications/classification | Future orthogonal concept; not part of the current implementation slice |
+| Capability/qualification relations | Future orthogonal concept; not inferred from explicit eligibility |
+| Resource grouping or hierarchy | Future orthogonal concept; admitted only when it owns consequential behavior |
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
 | Structured executability validation | Shared Arcogine model/design capability |
 | Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; durable fingerprint policy completed by Governance Governance identity/history capability |
@@ -260,7 +266,7 @@ Authorization may be owned externally: Arcogine can produce the technical assess
 
 ## 8. Spatial layout and resource hierarchy are independent
 
-Resource/organizational scope may eventually resemble:
+If a future grouping contract warrants it, resource/organizational scope may eventually resemble:
 
 ```text
 Factory
@@ -280,7 +286,7 @@ Factory Floor
   Transfer relationships
 ```
 
-Hierarchy supports containment, responsibility, capacity aggregation, scheduling scope, reporting, or authorization. Spatial layout supports physical placement and transport consequences.
+Hierarchy supports containment, responsibility, capacity aggregation, scheduling scope, reporting, or authorization. Spatial layout supports physical placement and transport consequences. This possible future scope model does not require splitting the current `ConfiguredResource` into a reusable definition and an installed instance.
 
 A resource may move without changing identity or hierarchy membership. A resource may change resource-pool membership without moving physically.
 
@@ -303,7 +309,7 @@ Every design rule should be classified before implementation.
 These answer whether the production system can be published/instantiated coherently:
 
 ```text
-Referenced definitions exist
+Referenced products, operations, and configured resources exist
 Identifiers are unique
 Operation graph is valid
 Each operation can resolve eligible capacity
@@ -415,12 +421,12 @@ This may initially be implemented inside existing modules/packages. A new Gradle
 
 When factory-design semantics change, ask:
 
-1. Is this production-system definition, design lifecycle, runtime state, verification state, operational deployment/reconciliation state, or one consumer's experience?
+1. Is this production-system design, design lifecycle, runtime state, verification state, operational deployment/reconciliation state, or one consumer's experience?
 2. Does changing it alter executable behavior across consumers?
 3. Is it part of the scenario/run context rather than the factory itself?
 4. Is the fact ordered by model revision or simulated time?
 5. Can a draft be invalid while a published model must reject that state?
-6. Is this resource hierarchy or spatial layout?
+6. Is this configured-resource identity, a future reusable specification/classification, resource hierarchy, or spatial layout?
 7. Is the rule executability, verification, or consumer-specific?
 8. Can a runtime result identify the exact published model version that produced it?
 9. Are runtime structures derived from that model, or are we creating a second authored representation?

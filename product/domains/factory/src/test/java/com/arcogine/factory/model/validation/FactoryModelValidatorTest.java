@@ -7,7 +7,7 @@ import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import java.util.List;
@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Test;
 
 class FactoryModelValidatorTest {
 
-    private static ResourceDefinition mill() {
-        return new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0);
+    private static ConfiguredResource mill() {
+        return new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0);
     }
 
     private static OperationDefinition routing() {
@@ -63,7 +63,7 @@ class FactoryModelValidatorTest {
 
     @Test
     void acceptsStepWithMoreThanOneEligibleResource() {
-        ResourceDefinition otherMill = new ResourceDefinition(new MachineId(2), "Mill B", 1, null, 0);
+        ConfiguredResource otherMill = new ConfiguredResource(new MachineId(2), "Mill B", 1, null, 0);
         OperationDefinition multiEligible = new OperationDefinition(
                 100,
                 "Widget routing",
@@ -93,7 +93,7 @@ class FactoryModelValidatorTest {
 
     @Test
     void rejectsResourceWithNonPositiveConcurrency() {
-        ResourceDefinition idleMill = new ResourceDefinition(new MachineId(1), "Mill", 0, null, 0);
+        ConfiguredResource idleMill = new ConfiguredResource(new MachineId(1), "Mill", 0, null, 0);
         FactoryModel model = new FactoryModel(List.of(idleMill), List.of(), List.of());
 
         ModelValidationResult result = FactoryModelValidator.validate(model);

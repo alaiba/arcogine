@@ -11,7 +11,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
@@ -24,10 +24,10 @@ import org.junit.jupiter.api.Test;
 class IntraOrderExecutionAcceptanceTest {
     private static FactoryRuntime runtime() {
         FactoryModel model = new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(1), "Cutter A", 1, null, 0),
-                        new ResourceDefinition(new MachineId(2), "Cutter B", 1, null, 0),
-                        new ResourceDefinition(new MachineId(3), "Assembler", 1, null, 0),
-                        new ResourceDefinition(new MachineId(4), "Inspector", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(1), "Cutter A", 1, null, 0),
+                        new ConfiguredResource(new MachineId(2), "Cutter B", 1, null, 0),
+                        new ConfiguredResource(new MachineId(3), "Assembler", 1, null, 0),
+                        new ConfiguredResource(new MachineId(4), "Inspector", 1, null, 0)),
                 List.of(new OperationDefinition(1, "Route", List.of(
                         new OperationStepDefinition(1, "CUT", Set.of(new MachineId(1), new MachineId(2)), 5),
                         new OperationStepDefinition(2, "ASSEMBLE", Set.of(new MachineId(3)), 3),

@@ -4,7 +4,7 @@ import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.scenario.EquipmentConfig;
@@ -34,9 +34,9 @@ public final class ScenarioFactoryModelAdapter {
     private ScenarioFactoryModelAdapter() {}
 
     public static FactoryModel adapt(ScenarioConfig config) {
-        List<ResourceDefinition> resources = new ArrayList<>();
+        List<ConfiguredResource> resources = new ArrayList<>();
         for (EquipmentConfig eq : config.equipment()) {
-            resources.add(new ResourceDefinition(
+            resources.add(new ConfiguredResource(
                     new MachineId(eq.id()),
                     eq.name(),
                     eq.effectiveConcurrency(),

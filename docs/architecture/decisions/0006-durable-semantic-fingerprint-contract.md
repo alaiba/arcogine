@@ -3,6 +3,7 @@
 Status: Accepted
 Date: 2026-08-27
 Amendment: 2026-09-03 — replaced transient Governance delivery terminology with semantic terminology; no semantic change
+Amendment: 2026-09-08 — renamed the configured-resource Java type from `ResourceDefinition` to `ConfiguredResource`; fingerprint field membership and canonical bytes are unchanged; no semantic change
 
 ## Context
 
@@ -54,11 +55,11 @@ The v1 fingerprint includes:
 ```text
 FactoryModel
     resources, in list order
-        ResourceDefinition.id
-        ResourceDefinition.name
-        ResourceDefinition.concurrency
-        ResourceDefinition.capacityLiters
-        ResourceDefinition.setupTime
+        ConfiguredResource.id
+        ConfiguredResource.name
+        ConfiguredResource.concurrency
+        ConfiguredResource.capacityLiters
+        ConfiguredResource.setupTime
 
     operations, in list order
         OperationDefinition.id

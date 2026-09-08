@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class FactoryModelPublisherTest {
 
     private static FactoryModel validModel() {
-        ResourceDefinition mill = new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0);
+        ConfiguredResource mill = new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0);
         OperationDefinition routing = new OperationDefinition(
                 100,
                 "Widget routing",
@@ -26,7 +26,7 @@ class FactoryModelPublisherTest {
     @Test
     void publishRejectsInvalidModel() {
         FactoryModel invalid = new FactoryModel(
-                List.of(new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0)),
+                List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0)),
                 List.of(new OperationDefinition(100, "Empty", List.of())),
                 List.of());
 
@@ -46,7 +46,7 @@ class FactoryModelPublisherTest {
     void differentModelsProduceDifferentContentHashes() {
         FactoryModelVersion a = FactoryModelPublisher.publish(validModel());
 
-        ResourceDefinition otherMill = new ResourceDefinition(new MachineId(1), "Other Mill", 1, null, 0);
+        ConfiguredResource otherMill = new ConfiguredResource(new MachineId(1), "Other Mill", 1, null, 0);
         OperationDefinition routing = new OperationDefinition(
                 100,
                 "Widget routing",
@@ -73,7 +73,7 @@ class FactoryModelPublisherTest {
         // characters could otherwise serialize to the identical string and hash identically, even
         // though they are different designs (different product counts, different operation
         // references). The canonical representation must use unambiguous length-framing instead.
-        ResourceDefinition mill = new ResourceDefinition(new MachineId(1), "Mill", 1, null, 0);
+        ConfiguredResource mill = new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0);
         OperationDefinition op10 = new OperationDefinition(
                 10, "Op10", List.of(new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 5)));
         OperationDefinition op20 = new OperationDefinition(

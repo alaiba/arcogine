@@ -19,7 +19,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.ResourceDefinition;
+import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
@@ -422,8 +422,8 @@ class FileControlledRevisionAuthorityTest {
     }
 
     private static FactoryModelVersion version(String productName, long duration) {
-        ResourceDefinition machine =
-                new ResourceDefinition(new MachineId(1), "Mill", 1, 125.5, 2);
+        ConfiguredResource machine =
+                new ConfiguredResource(new MachineId(1), "Mill", 1, 125.5, 2);
         OperationStepDefinition step = new OperationStepDefinition(
                 1, "Machine", Set.of(new MachineId(1)), duration);
         OperationDefinition operation =

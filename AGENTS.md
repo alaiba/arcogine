@@ -185,16 +185,16 @@ Two things that are easy to get wrong:
 
 A session-scoped watcher is expected and sufficient: its purpose is to let the session react to review and CI feedback on its own rather than the repository owner relaying state changes. It ends with the session, and that is fine — it is not intended as durable infrastructure.
 
-Treat monitoring startup as a delivery gate: immediately after opening a PR or pushing a new PR head, establish exactly one session-scoped monitor and verify its initial-state evidence before reporting the transition complete. A native subscription satisfies this with the harness's explicit registration or initial-lifecycle confirmation; it does not need to emit `pr-watch`'s baseline line. Stop and restart the `pr-watch` fallback after every head push because it holds the script loaded at startup. If the current harness has no native subscription, a persistent terminal/exec session running the watcher is the default fallback; for a devcontainer checkout, use the equivalent of:
+Treat monitoring startup as a delivery gate: immediately after opening a PR or pushing a new PR head, establish at most one session-scoped monitoring mechanism when the harness supports persistent monitoring and verify its initial-state evidence before reporting the transition complete. The selected mechanism must surface lifecycle-relevant changes and fail visibly if monitoring stops working. If persistent monitoring is unavailable, perform the single-resolution form at each lifecycle decision point and say that no persistent monitor is active.
+
+The repository-owned `pr-watch.mjs` is the default fallback when no native or harness-provided monitor exists. Stop and restart this fallback after every head push because it holds the script loaded at startup; for a devcontainer checkout, use the equivalent of:
 
 ```bash
 cd /workspaces/arcogine
 exec node infra/dev/pr-watch.mjs <pr-number> --watch --interval 60
 ```
 
-Do not claim that a PR is being monitored unless the selected mechanism has provided its startup/initial-state confirmation; for the `pr-watch` fallback, that means its emitted baseline line. If the harness cannot keep a persistent process, perform the single-resolution form at each lifecycle decision point and say that no persistent monitor is active.
-
-When heartbeat automation is available, prefer it for the current task: immediately after opening a PR or pushing a new PR head, view/update the existing PR heartbeat or create exactly one if none exists, verify that it is `ACTIVE`, and keep it quiet while the lifecycle is unchanged. Reuse the stable PR-specific automation rather than creating duplicates. Pause the heartbeat when the PR reaches **READY TO MERGE**, **MERGED**, or **CLOSED**; if the head changes before that point, keep the heartbeat active and re-resolve the new lifecycle state.
+Do not claim that a PR is being monitored unless the selected mechanism has provided its startup/initial-state confirmation; for the `pr-watch` fallback, that means its emitted baseline line.
 
 ### Rules for any monitoring mechanism
 

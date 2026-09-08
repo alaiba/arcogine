@@ -88,7 +88,7 @@ Arcogine's current position is:
 | Scenario vocabulary | Partial alignment: the schema uses `equipment`, `material`, `process_segment`, and `operations_definition` |
 | Runtime terminology | Deliberately Arcogine-specific: `Machine`, `Job`, `Routing`, and `RoutingStep` are approachable aliases or partial analogues |
 | Semantic alignment | Narrow production-execution concepts are mappable, but several mappings are approximate |
-| Structural alignment | Limited: resource definitions, requests, execution, and performance are not consistently separated |
+| Structural alignment | Limited: configured-resource design, requests, execution, and performance are intentionally narrower than the full ISA-95 separation |
 | Equipment hierarchy | Not implemented |
 | Material/resource models | Minimal and specialized |
 | ISA-95 transactions or interchange | Not implemented |
@@ -105,8 +105,8 @@ This table is the maintained working register. ADR-0010's unit-work decompositio
 | Arcogine concept | Current meaning | Closest ISA-95 semantic role | Mapping | Disposition | Current limitation or direction |
 |---|---|---|---|---|---|
 | Scenario `equipment` | Configured productive resource | Equipment | Strong vocabulary mapping | Adopt | The runtime object is still named `Machine` |
-| `EquipmentConfig` | Name, concurrency, capacity, and setup parameters for one configured resource | Equipment information / resource properties | Partial | Alias | Definition and instance concerns are not separated |
-| Runtime `Machine` | Operational resource instance with state, active jobs, queue, concurrency, capacity, setup time, and busy ticks | Equipment instance at approximately work-unit granularity | Approximate | Alias | No equipment class, capability, or hierarchy model |
+| `EquipmentConfig` | Scenario representation of one configured resource's name, concurrency, capacity, and setup parameters | Equipment information / resource properties | Partial | Alias | The canonical design uses one complete configured-resource identity; runtime `Machine` state remains separate |
+| Runtime `Machine` | Mutable operational state instantiated from one configured resource, with active jobs, queue, concurrency, capacity, setup time, and busy ticks | Equipment instance at approximately work-unit granularity | Approximate | Alias | No separate reusable equipment classification or generalized capability/qualification model is admitted today |
 | `MachineState` | `Idle`, `Busy`, or `Offline` | Equipment operational status / availability | Narrow | Alias | This is status, not equipment capability |
 | Machine queue | Ordered work waiting for one machine | Execution scheduling / job-list state | Approximate | Alias | Must not be described as equipment capability |
 | Machine concurrency | Number of simultaneously active jobs allowed | Resource capacity property | Partial | Alias | No generalized capability/capacity model |
@@ -141,7 +141,7 @@ The most useful ISA-95 contribution to Arcogine is not vocabulary; it is the dis
 
 ### 6.1 Definition
 
-Definition answers **what can be produced and how**:
+Definition answers **what can be produced and how** in the ISA-95 reference model:
 
 ```text
 Product or Material Definition
@@ -151,12 +151,17 @@ Machine / Resource Definition
 Resource capability and requirements
 ```
 
-Arcogine currently represents part of this through `MaterialConfig`, `OperationsDefinitionConfig`, `Routing`, and `RoutingStep`. The main limitations are:
+In Arcogine's current model, `ConfiguredResource` is the design-side expression of
+the complete configured productive participant. It is not a reusable type, and an
+explicit set of eligible `MachineId` values is the sufficient current applicability
+boundary.
+
+Arcogine currently represents part of this through `MaterialConfig`, `OperationsDefinitionConfig`, `Routing`, `RoutingStep`, and the canonical `ConfiguredResource` record. The current boundary is deliberate:
 
 - no first-class runtime `Product` or generalized material definition;
-- `RoutingStep` expresses explicit eligible resource instances rather than a generalized resource-capability requirement;
+- `RoutingStep` expresses explicit eligible `MachineId` values rather than a generalized resource-capability requirement;
 - no explicit definition version carried by in-flight work;
-- machine definition and machine instance properties are combined.
+- `ConfiguredResource` is one complete configured productive participant rather than an instance of a reusable equipment specification; a reusable specification/classification remains a separate future concept.
 
 ### 6.2 Request and schedule
 
@@ -269,34 +274,42 @@ order-level execution aggregate
 
 This strengthens the ISA-95-informed separation of request, execution, and performance: the request remains one immutable order, individual `Job`s are concrete work-item execution state, and aggregate production progress/completion remains an order-level fact. It does **not** imply ISA-95 conformance, generalized production-lot semantics, or a requirement to adopt ISA-95 type names internally.
 
-## 7. Resource definitions, instances, capabilities, and pools
+## 7. Resource specifications, configured resources, capabilities, and pools
 
-A durable resource model should distinguish:
+ISA-95 distinguishes reusable resource definitions from resource instances and from
+grouping scopes. Arcogine does not currently require that decomposition. Its canonical
+Factory resource is one independently identified, completely configured productive
+participant in a published design:
 
 ```text
-MachineDefinition
-    type identity
-    supported capabilities
-    nominal capacity
-    footprint or other static parameters
-    processing/setup parameters
+ConfiguredResource
+    MachineId identity
+    complete configured design parameters
 
-MachineInstance
-    stable instance identity
-    definition reference
-    availability and operational state
-    active work and queues
-    spatial position, when relevant
+Runtime Machine
+    mutable operational state instantiated from ConfiguredResource
+```
+
+The following remain orthogonal future concepts, admitted only when an independent
+cross-consumer contract or behavior makes them necessary:
+
+```text
+Reusable resource specification/classification
+    shared technical guarantees or classification identity
+
+Capability/qualification relation
+    discoverable or verifiable applicability to an operation
 
 ResourcePool / WorkCenter
-    eligible resource instances
-    aggregate capacity or reporting scope
-    dispatch policy or scheduling boundary
+    consequential dispatch, capacity, responsibility, or reporting scope
 ```
+
+These future concepts must not be inferred from equal configured values, explicit
+eligibility, or the fact that runtime state was instantiated from a configured resource.
 
 ### 7.1 Why the distinction matters
 
-Arcogine's runtime routing now supports an explicit set of eligible machine instances for an operation. That allows a second equivalent eligible machine to contribute capacity without rewriting the product operation for a different concrete machine. This is sufficient for the current deterministic dispatch contract, while generalized capability pools remain deferred.
+Arcogine's runtime routing now supports an explicit set of eligible `MachineId` values for an operation. That allows a second equivalent configured resource to contribute capacity without rewriting the product operation for a different concrete machine. This is sufficient for the current deterministic dispatch contract; generalized capability/qualification and pool semantics remain deferred.
 
 A future capability-oriented operation may instead express something like:
 
@@ -376,13 +389,13 @@ Arcogine currently models a narrow production-execution slice, not the complete 
 
 | Area | Current Arcogine coverage | Status |
 |---|---|---|
-| Production definition | Materials linked to routings and explicit eligible-resource steps | Partial |
+| Production definition | Materials linked to routings, complete configured resources, and explicit eligible-resource steps | Partial |
 | Production requests | Immutable `Order` intent accepted through explicit workload submission or economy-driven order creation | Partial |
 | Production scheduling | Deterministic event scheduler, explicit eligible-resource dispatch, per-machine FIFO queues, and cross-machine pending work | Simplified, simulation-specific |
 | Production execution | Machines, unit-quantity child jobs, task transitions, queues, order execution aggregates, and aggregate completion | Core current coverage |
 | Production performance | Internal events, order completion aggregates, jobs, and selected KPIs/observations | Partial |
-| Equipment management | Machine identity, state, concurrency, queue, capacity/setup properties | Partial |
-| Equipment capability | Explicit eligible-instance sets; no generalized capability taxonomy/pool model | Partial |
+| Equipment management | Configured-resource identity plus runtime machine state, concurrency, queue, and capacity/setup properties | Partial |
+| Equipment capability | Explicit eligible-`MachineId` sets; generalized qualification and pool semantics remain deferred | Deliberate current boundary |
 | Equipment hierarchy | None | Deferred |
 | Material management | Product-like material configuration and `ProductId` | Minimal |
 | Inventory operations | None | Deferred |
@@ -437,7 +450,7 @@ A future versioned consumer or integration model may expose mapping metadata or 
 For every new or materially changed manufacturing-domain concept, answer:
 
 1. Is this a **definition**, **request**, **schedule**, **execution state**, or **performance result**?
-2. Is it a resource **definition**, resource **instance**, hierarchy **scope**, or spatial **location**?
+2. Is it a **configured productive resource**, reusable specification/classification, qualification relation, hierarchy scope, or spatial location?
 3. Who owns its mutable state and invariants?
 4. Is its ISA-95 relationship exact, approximate, or absent?
 5. Should Arcogine **adopt**, **alias**, **diverge**, **extend**, **defer**, or **refactor**?
@@ -454,8 +467,8 @@ This checklist is a review aid, not a requirement to implement the ISA-95 ontolo
 Revisit this document whenever a change introduces or materially alters:
 
 - `Product`, `Material`, `ProductionOrder`, `WorkItem`, or structured performance records;
-- machine/resource definitions and instances;
-- resource capabilities, pools, or work centers;
+- reusable resource specifications/classification or independently versioned definition/instance semantics;
+- resource capabilities/qualification, pools, or work centers;
 - equipment hierarchy nodes;
 - material, inventory, personnel, quality, or maintenance domains;
 - schedule-versus-execution separation;

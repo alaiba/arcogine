@@ -157,18 +157,26 @@ Current architecture and enduring architectural principles
         ├── docs/product/concepts.md / docs/reference/api.md / UI docs
         │   Current capability/reference documentation
         │
-        └── docs/planning/ and historical plans
-            Temporary analysis, proposals, assessments, and past plans
+        ├── docs/research/
+        │   Non-authoritative investigations, hypotheses, evidence, and open questions
+        │
+        ├── docs/planning/
+        │   Admitted implementation work, sequencing, blockers, and acceptance evidence
+        │
+        └── historical ADRs and plans
+            Retained context that is no longer an active authority
 ```
 
-Repository documentation carries one of four statuses, applied where it materially helps a reader avoid confusing them:
+Repository documentation uses these status categories, applied where they materially help a reader avoid confusing them:
 
 - **Normative** — enduring direction and principles. This charter, and the enduring-principle portions of `docs/architecture/overview.md`.
 - **Current state** — what Arcogine implements now. `docs/product/concepts.md`, `docs/reference/api.md`, `/product/interfaces/web/README.md`, the current-implementation portions of `docs/architecture/overview.md`.
-- **Proposed** — under consideration; not established. Proposed ADRs, `docs/planning/` analyses.
+- **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
+- **Planned** — admitted implementation work with bounded ownership, prerequisites, sequencing, and acceptance evidence. `docs/planning/`.
+- **Proposed** — under consideration but not yet established as durable direction. Proposed ADRs and other explicitly proposed material outside the research and planning authorities.
 - **Historical** — retained for context but no longer authoritative. Superseded ADRs.
 
-A reader should never be left guessing whether a statement is mature product ambition, current implementation, an open proposal, or a historical artifact.
+A reader should never be left guessing whether a statement is mature product ambition, current implementation, an open research question, admitted implementation work, an open proposal, or a historical artifact.
 
 ## 11. Decision test
 

@@ -1,549 +1,191 @@
-# Factory Design Capability Plan
+# Factory Design Capability Implementation Plan
 
-> **Status:** Proposed  
-> **Scope:** Establish a cross-consumer factory-design capability over Arcogine's canonical production-system model  
-> **Authority:** Planning only; this document defines delivery slices and readiness criteria, not current capability or accepted architecture  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Engine Semantics v1](../architecture/engine-semantics-v1.md), [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md), [PLAN-ENG-5 Spatial Runtime Consequences](spatial-runtime-consequences.md), [Governance and Conformance Capability Plan](governance-conformance-capability.md), [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md), [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md), [ISA-95 Semantic Mapping](../architecture/isa-95-semantic-mapping.md)
+> **Status:** Active/partial; current implementation is complete for Factory Model v1, while the admitted Factory Model v2 work is delivered through the spatial-runtime implementation sequence  
+> **Scope:** Implementation-ready Factory Design work over the canonical production-system model  
+> **Authority:** Planning only; unresolved ontology, diagnostics, comparison, and authoring questions live in research  
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/factory-design-evolution.md)
 
-## 1. Purpose
+## 1. Implementation boundary
 
-Arcogine should treat factory design as a cross-consumer capability rather than a game-specific editor concern.
-
-The semantic output of design belongs to Arcogine because the same production-system model must remain continuous across design, simulation, verification, and future execution. The authoring experience remains consumer-specific unless multiple concrete consumers justify a shared design workspace.
-
-The delivery shape is:
+Factory Design owns the immutable semantic description that consumers publish and downstream contexts instantiate:
 
 ```text
-Consumer-specific draft authoring
-              |
-              v
-     Canonical model validation
-              |
-              v
-       Publish model version
-              |
-       +------+------+
-       |             |
-       v             v
-   Simulate        Verify
-```
-
-This plan establishes the minimal shared design substrate before a game, industrial UI, optimizer, CLI, or integration adapter treats Arcogine as the authority for a published factory design.
-
-## 2. Relationship to engine and operational readiness
-
-This capability is orthogonal to runtime execution, but downstream simulation and operational contexts share one canonical production-system model.
-
-This plan owns model-side semantics and lifecycle:
-
-- canonical factory model definition;
-- structured validation;
-- immutable publication/version boundary;
-- model identity and provenance;
-- deterministic runtime instantiation from a published model;
-- eventual semantic compare/diff and broader design lifecycle when justified.
-
-The [engine-readiness plan](factory-simulation-engine-readiness.md) starts after this boundary exists. It owns deterministic simulation execution semantics such as production orders, work items, resource dispatch, bounded advancement, simulation observations/events, and transfer progression.
-
-PLAN-ENG-5 now fixes the hard model/runtime split for spatial consequences:
-
-```text
-Factory model v2 (ADR-0014)
-    floor dimensions
-    resource position + anchored footprint
-    ticksPerCell
-    handlingTicks
+consumer-owned draft/input
         |
         v
-Engine interpretation (ADR-0015 / engine-semantics:v1)
-    destination binding
-    Manhattan reference-cell distance
-    transfer timing
-    admission reservation
-    availability/no-rerouting rules
+canonical FactoryModel
         |
         v
-Runtime state
-    transfer start / in-flight / completion
-    observations/events
-```
-
-`ModelFingerprint` continues to identify the authored Factory design. `EngineSemanticsVersion` separately identifies Arcogine's result-affecting interpretation. A result-affecting Engine policy change therefore does not masquerade as a Factory design change.
-
-The sibling [Operational Execution and Digital Twin Readiness](operational-execution-digital-twin-readiness.md) track consumes published/governed semantics when independently existing external systems are involved. It owns the still-unresolved durable operational-history attribution identity, authoritative external-subject ↔ Arcogine-subject correspondence, verified operational trust/authority, deployment target/application, semantic operation realization and command/result lifecycle, independent external observations, reconciliation, and operational recovery.
-
-```text
-Factory Design Capability
+validate / publish
         |
         v
-Published FactoryModelVersion
+FactoryModelVersion + ModelFingerprint
         |
-        +--------------------+
-        |                    |
-        v                    v
-Factory Simulation       Governance
-Engine Readiness              |
-                              v
-                    Operational Execution / Twin
+        v
+validated/resolved runtime instantiation
 ```
 
-The runtime must not mutate the published model in place. The design capability must not reproduce queues, assignments, transfers in progress, production deployment records, external telemetry, or twin reconciliation state.
+Runtime workload, queues, assignments, transfers in progress, operational observations, deployments, and twin reconciliation are not Factory Design state.
 
-## 3. Delivery policy
+The canonical model is not an editor state tree, a scenario envelope, a transport DTO, or a mutable runtime object graph.
 
-The first implementation target is deliberately narrow and behavior-preserving.
+## 2. Current landed baseline
 
-```text
-PLAN-FD-1  Canonical factory model contract
-    ↓
-PLAN-FD-2  Structured validation
-    ↓
-PLAN-FD-3  Publication, identity, and provenance
-    ↓
-PLAN-FD-4  Deterministic runtime instantiation
-    ↓
-PLAN-FD-5  Semantic comparison (after concrete need)
-    ↓
-PLAN-FD-6  Shared draft lifecycle (deferred until justified)
-    ↓
-PLAN-FD-7  Factory adoption of governed change (deferred until justified; owned cross-domain by Governance and Conformance PLAN-GOV-1/PLAN-GOV-2/PLAN-GOV-6, with Operational Execution owning deployment application)
-```
+The following are implemented and must be preserved:
 
-PLAN-FD-1 to PLAN-FD-4 form the immediate implementation sequence. PLAN-FD-5 has an implemented initial slice covering factory semantic comparison for resources, operations, and products through the Governance `SemanticChangeExtractor` seam (see §9); finer-grained PLAN-FD-5 comparison remains future work triggered by concrete consumer need. PLAN-FD-6 and PLAN-FD-7 remain deferred. PLAN-FD-5 is not a prerequisite for engine runtime work or a first game consumer unless a specific consumer requirement depends on its semantic-diff capability.
+- a canonical `FactoryModel` / immutable `FactoryModelVersion` seam;
+- product, operation, and concrete resource identities under the released v1 policy;
+- deterministic structural executability validation;
+- immutable publication;
+- durable `factory-model:v1` fingerprint semantics under ADR-0006;
+- runtime instantiation only from a published model;
+- runtime/result attribution to source model identity;
+- Governance-owned controlled revision identity/history independently of Factory fingerprint identity;
+- initial semantic comparison of factory resources, operations, and products through the Governance semantic-change seam.
 
-The initial spike established the model seam without simultaneously redesigning order execution, dispatch policy, spatial behavior, operational deployment, or the public HTTP contract. PLAN-ENG-5 now extends that model seam deliberately through a new immutable policy rather than changing `factory-model:v1` in place.
+Current `ResourceDefinition` remains the supported concrete resource representation. This plan does not reinterpret it as a reusable equipment type.
 
-### 3.1 Implementation status
+## 3. Admitted Factory Model v2 work
 
-The canonical `FactoryModel`/`FactoryModelVersion` seam has landed, so PLAN-FD-1 to PLAN-FD-4 are no longer wholly proposed, but they are not uniformly complete. PLAN-ENG-5 adds an **accepted but not yet implemented** Factory V2 contract:
+ADR-0014 establishes `factory-model:v2` as exactly v1 semantic content plus required authored spatial/handling facts:
 
-```text
-PLAN-FD-1 Canonical model                  PARTIAL
-    canonical semantic seam         implemented
-    product/operation/resources     implemented
-    definition-instance split       deferred
-    factory-model:v1 semantics      implemented/released
-    factory-model:v2 semantics      accepted by ADR-0014; implementation pending PLAN-ENG-5-A1/A2
+- floor width and height;
+- resource reference-cell position;
+- resource footprint width and height;
+- `ticksPerCell`;
+- `handlingTicks`.
 
-PLAN-FD-2 Executability validation         PARTIAL
-    deterministic structural errors implemented
-    stable finding taxonomy         deferred
-    warnings/severity/codes         deferred
-    V2 spatial validation           accepted by ADR-0014; implementation pending PLAN-ENG-5-A1
+Position/footprint containment, non-overlap, and the exact maximum-transfer-duration representability predicate are publication semantics. Orientation, aisle/path topology, conveyors, explicit transport resources, connection points, congestion, floor identity, and authoritative animation coordinates are not part of v2.
 
-PLAN-FD-3 Publication / semantic identity  PARTIAL
-    immutable publication           implemented
-    content hash                    implemented, legacy compatibility
-    durable fingerprint v1          implemented — see ADR-0006
-    durable fingerprint v2          accepted by ADR-0014, canonicalization fixed by
-                                    factory-model-v2.md; implementation pending PLAN-ENG-5-A2
-    multi-policy historical resolve accepted; implementation pending PLAN-ENG-5-A3
-    controlled revision identity    implemented cross-domain by Governance PLAN-GOV-1
+The implementation sequence is owned jointly with [Spatial Runtime Consequences](spatial-runtime-consequences.md):
 
-PLAN-FD-4 Runtime instantiation            PARTIAL
-    runtime from published model    implemented for current V1
-    handler provenance              implemented (IntegratedHandler)
-    result model provenance         implemented (SimResult.modelContentHash compatibility surface)
-    consumer-neutral runtime ID     implemented for FactoryRuntime / PLAN-ENG-4 PLAN-ENG-4-A
-    EngineSemanticsVersion          accepted by ADR-0015; implementation pending PLAN-ENG-5-B1/B2
-```
+### PLAN-ENG-5-A1 — V2 model and validation
 
-PLAN-FD-1's original acceptance criteria also call for resource definitions and installed instances to be distinguishable; today's `ResourceDefinition` still deliberately represents both a resource type and its installed instance, so that richer split remains deferred. PLAN-FD-2's original stable finding taxonomy is likewise broader than today's minimal `ModelValidationError`. Neither deferred enrichment is a prerequisite for the accepted PLAN-ENG-5 V2 contract.
+Implement the five authored additions and deterministic validation required by ADR-0014.
 
-Important current identity rules:
+Acceptance evidence must prove:
 
-- `factory-model:v1` remains permanently immutable under ADR-0006 and ADR-0014.
-- `factory-model:v2` is exactly V1 semantics plus the required PLAN-ENG-5 spatial/handling facts; it is not a sidecar fingerprint.
-- V2 implementation must preserve V1 golden vectors/fingerprints unchanged.
-- there is no automatic V1→V2 lift and no synthesized spatial defaults for historical V1 artifacts.
-- Governance PLAN-GOV-1 provides controlled revision authority/history independently of Factory fingerprint policy; lineage may cross V1/V2 without rewriting either artifact.
+- exact anchored footprint occupancy;
+- floor containment;
+- non-overlap;
+- accepted zero/boundary values where the ADR permits them;
+- overflow-safe maximum transfer-duration validation; and
+- no change to v1 behavior or identity.
 
-## 4. Current-model migration strategy
+### PLAN-ENG-5-A2 — V2 canonical identity
 
-The existing scenario factory semantics adapt into the canonical model and instantiate the runtime through that model boundary:
+Implement the exact V2 canonical bytes and fingerprint policy from [Factory Model v2](../architecture/factory-model-v2.md).
 
-```text
-Current ScenarioConfig / TOML
-            |
-            | extract/adapt factory semantics
-            v
-       FactoryModel
-            |
-         validate
-            v
-   FactoryModelVersion
-            |
-      resolve/compile
-            v
-       FactoryRuntime
-```
+Acceptance evidence must prove:
 
-`ScenarioConfig` remains a scenario/run input envelope rather than becoming the canonical factory model. Simulation parameters, economy configuration, agent configuration, and workload concerns remain outside the factory design.
+- required golden vectors;
+- deterministic equivalent-content fingerprints;
+- every authored V2 field participates in identity;
+- V1 vectors/fingerprints remain byte-for-byte unchanged;
+- no automatic v1-to-v2 lift or synthesized historical spatial defaults; and
+- malformed or semantically invalid V2 artifacts fail explicitly.
 
-For current features that are narrower than the intended future model, the adapter preserves existing semantics explicitly. A process step that targets concrete eligible resources remains explicit eligibility; the seam must not manufacture new runtime behavior merely to appear more general.
+### PLAN-ENG-5-A3 — V1/V2 historical coexistence
 
-V1 remains a truthful supported design policy after PLAN-ENG-5: because it authors no spatial facts, it receives no PLAN-ENG-5 transfer behavior. Spatial behavior requires explicit V2 publication and therefore a new `ModelFingerprint`.
+Use the landed Governance revision authority to keep both released policies historically resolvable and verifiable.
 
-### 4.1 Migration-spike acceptance criteria
+Acceptance evidence must prove:
 
-The original behavior-preserving model-seam spike established that:
+- historical v1 resolution remains intact after V2 registration;
+- v2 resolution is independent;
+- controlled revision lineage may cross policy versions without rewriting either artifact; and
+- the first cross-policy transition is not falsely represented as an ordinary same-policy empty/equivalent diff.
 
-1. an existing scenario can produce a canonical `FactoryModel`;
-2. simulation, economy, and agent configuration stay outside it;
-3. model validation is independent of mutable runtime construction;
-4. a valid model can publish with semantic identity/provenance;
-5. runtime instantiates from the published model;
-6. representative deterministic behavior remains covered;
-7. runtime observations/results can identify source model identity;
-8. no game UI or operational deployment semantics are needed to prove the seam.
+This slice implements only the first coexistence/migration seam actually required by V1/V2. It does not create a generic schema-migration framework.
 
-PLAN-ENG-5 builds on, rather than reopens, that seam through the focused PLAN-ENG-5-A1/A2/A3 implementation sequence.
+## 4. Existing Factory capabilities that remain closed
 
-## 5. PLAN-FD-1 — Canonical factory model contract
+### PLAN-FD-1 — Canonical model boundary
 
-### 5.1 Goal
+The behavior-preserving canonical seam is implemented for current semantics. V2 additions are admitted only through the concrete A1/A2/A3 work above.
 
-Define one semantic representation of a designed production system that can be authored by multiple consumers and instantiated by multiple lifecycle contexts.
+### PLAN-FD-2 — Executability validation
 
-The model covers behaviorally relevant facts needed by current and near-term factory work:
+Current deterministic validation remains the implementation contract for admitted semantics. V2 adds only the accepted spatial/arithmetic predicates required by ADR-0014.
+
+A richer cross-consumer finding taxonomy is **not** an admitted implementation slice; it is tracked in [Factory Design Evolution Research](../research/factory-design-evolution.md).
+
+### PLAN-FD-3 — Publication, identity, and provenance
+
+Immutable publication and v1 durable semantic identity are implemented. V2 identity/coexistence is admitted through A2/A3 above.
+
+`ModelFingerprint` remains semantic-content identity. `ControlledRevisionId` remains Governance-owned historical occurrence identity. Neither approval, deployment, external workflow identity, nor Engine interpretation belongs in the Factory fingerprint.
+
+### PLAN-FD-4 — Deterministic runtime instantiation
+
+Runtime continues to instantiate from one validated published model. Derived indexes/compiled structures are not independently authored models.
+
+Engine result-affecting interpretation is separately identified by `EngineSemanticsVersion` under ADR-0015.
+
+### PLAN-FD-5 — Semantic comparison
+
+The initial comparison slice for current resources, operations, and products is implemented. No additional comparison implementation is admitted now.
+
+Finer route/policy/spatial/capability comparison and cross-consumer explanatory depth are tracked in research. A future implementation slice must be promoted from a concrete consumer or Governance requirement rather than remaining as an open-ended extension here.
+
+## 5. Model/runtime ownership invariants
 
 ```text
-FactoryModel
-    product definitions
-    operation definitions
-    resources / installed identities
-    capability or explicit eligibility requirements
-    relevant canonical constraints
-    semantic spatial layout where behavior depends on it
-```
+Factory Design owns
+    published products / operations / concrete resources
+    authored behaviorally relevant constraints
+    authored V2 spatial/handling facts
+    validation / publication
+    ModelFingerprint
 
-The exact Java and wire types remain implementation details. The model must not be shaped around one editor state tree, TOML layout, transport format, or mutable runtime object graph.
-
-### 5.2 Required separations
-
-```text
-MODEL SIDE
-    definitions
-    installed structure
-    validated published model
-
-RUNTIME SIDE
-    production orders
-    work items
-    queues
-    assignments
+Engine owns
+    workload and work items
+    dispatch / queues / assignments
+    result-affecting interpretation policy
     transfers in progress
-    performance
+    runtime observations/events/performance
+
+Governance owns
+    ControlledRevisionId and authoritative revision history
+    semantic ChangeSet / impact
+    requirements / conformance / evidence-use / governed change
+
+Operational work, once admitted, owns
+    independently existing subject correspondence
+    consequential trust/authority
+    external realization / command-result facts
+    deployment application
+    external observations / reconciliation
 ```
 
-Runtime workload/state does not belong in a published factory design.
+No downstream consumer may create a second authored production model merely because it needs a convenient runtime/editor representation.
 
-### 5.3 PLAN-ENG-5 V2 addition
+## 6. Game integration boundary
 
-ADR-0014 establishes the next released Factory fingerprint policy. `factory-model:v2` is exactly V1 plus five required authored additions:
+The game may own a mutable draft, catalogue/economics, score, attempt history, UI state, and other consumer-only data. It projects only supported canonical semantic facts before Arcogine validation/publication.
 
-| Addition | Canonical meaning |
-|---|---|
-| floor width / height | plant extent in integer cells |
-| resource position `x` / `y` | minimum-coordinate reference cell of the footprint |
-| footprint width / height | exact occupied `w × h` cells extending from the reference cell |
-| `ticksPerCell` | authored material-handling rate magnitude |
-| `handlingTicks` | authored fixed overhead applied once per inter-resource transfer |
+The game must not force unresolved equipment-type, shared-editor, or comparison abstractions into Factory Design. Those questions remain in research until promoted.
 
-All are mandatory and fingerprinted in V2. The exact bytes those additions are digested through — the `arcogine.factory-model.v2\0` policy-domain prefix, the plant-scope header, the per-resource spatial suffix, collection ordering and digest rendering — are fixed normatively by [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md), because ADR-0006 makes a fingerprint-policy version a canonicalization contract rather than a field-membership label.
+## 7. Research boundary
 
-Position/footprint containment and non-overlap are publication semantics. V2 publication also proves with overflow-safe arithmetic that
+The following are intentionally **not implementation work** in this plan:
 
-```text
-maxManhattanDistance = (floorWidth - 1) + (floorHeight - 1)
-maxTransferDuration = handlingTicks + ticksPerCell * maxManhattanDistance
-```
+- reusable equipment definition versus installed resource ontology;
+- generalized capability/resource-pool/work-center semantics;
+- richer stable validation findings/warnings/severity;
+- finer semantic comparison beyond the implemented slice;
+- shared draft lifecycle/collaboration;
+- Factory-specific additions to governed-change workflow; and
+- spatial/material-flow concepts beyond accepted v2.
 
-is representable in the runtime duration type. That bounds the derived transfer duration, not arbitrary future addition to an extreme current `SimTime`.
+They are maintained in [Factory Design Evolution Research](../research/factory-design-evolution.md) and the research register. Do not assign new Factory delivery coordinates until the relevant question crosses the planning admission boundary.
 
-Orientation, path/aisle/conveyor topology, transport resources, connection points, congestion, floor identity and authoritative animation coordinates are not V2.
+## 8. Validation and documentation
 
-### 5.4 Acceptance criteria
+For every admitted Factory change:
 
-PLAN-FD-1 is satisfied incrementally when:
-
-1. a complete supported factory can be represented without frontend DTOs or mutable runtime classes;
-2. product/operation/resource concepts have stable semantic identities;
-3. operation requirements can express explicit eligible-resource semantics without mutable runtime objects;
-4. semantic layout facts are present only where they are authored behaviorally relevant content;
-5. consumer-only state such as selection, camera, undo, score, and artwork is absent;
-6. canonical content is normalized deterministically for identity/provenance;
-7. for V2, every `(position, footprint)` pair has one unambiguous occupied-cell set and invalid containment/overlap/arithmetic is rejected.
-
-The richer resource-definition/installed-instance split remains separately deferred; it is not silently claimed complete merely because V2 adds placement to current resource identities.
-
-## 6. PLAN-FD-2 — Structured validation
-
-### 6.1 Goal
-
-Make Arcogine authoritative for whether a factory design can be published and instantiated.
-
-Consumers may perform optimistic local checks, but publication/runtime instantiation relies on Arcogine validation.
-
-Validation should eventually distinguish at least errors from warnings through a stable structured finding shape. Today's implemented validation remains narrower, and PLAN-ENG-5 adds only the V2 executability predicates required by ADR-0014.
-
-### 6.2 Initial executability checks
-
-Examples include:
-
-- duplicate/missing identifiers;
-- dangling product/operation/resource references;
-- invalid operation order/graph;
-- operation with no resolvable eligible resource under represented semantics;
-- unsupported policy/configuration values;
-- V2 floor/position/footprint violations;
-- V2 unsafe maximum-transfer-duration arithmetic.
-
-Game budget, unlocks, scores, and tutorials are not Arcogine executability checks.
-
-### 6.3 Acceptance criteria
-
-PLAN-FD-2 is satisfied incrementally when invalid models return deterministic findings, validation does not mutate runtime state, publication/instantiation is atomic, and headless/consumer paths rely on the same authoritative validation. Stable codes/severity remain a separate planned enrichment where not yet implemented.
-
-## 7. PLAN-FD-3 — Publication, identity, and provenance
-
-### 7.1 Goal
-
-Create an explicit boundary between mutable authoring state and an immutable semantic snapshot that downstream contexts can instantiate.
-
-```text
-FactoryModel
-    ↓ validate/publish
-immutable semantic snapshot
-    ↓
-ModelFingerprint
-```
-
-### 7.2 Minimum identity
-
-Per ADR-0004, publication requires deterministic content-derived semantic identity and enough provenance to attribute downstream execution to the model. Governance PLAN-GOV-1 separately provides controlled historical revision identity and authoritative history.
-
-A model UUID, revision counter, Jira key, approval state or Engine semantics version is not part of the Factory model fingerprint.
-
-### 7.3 Immutable policy evolution
-
-ADR-0006 fixes the released V1 contract; ADR-0014 generalizes the evolution rule:
-
-- a released Factory fingerprint policy is immutable and never reinterpreted;
-- a new authored behaviorally relevant fact that cannot fit without changing a released policy creates `factory-model:vN+1`;
-- old policies remain permanently historically resolvable/verifiable;
-- controlled-revision lineage may cross policies;
-- a normal semantic `ChangeSet` must not silently span policies by inventing facts the older model never authored;
-- the first real V1→V2 controlled transition gets only the narrow migration classification/common-representation seam it actually needs, not a generic migration framework.
-
-PLAN-ENG-5-A2 implements the V2 policy; PLAN-ENG-5-A3 implements this first coexistence/evolution seam.
-
-### 7.4 Acceptance criteria
-
-PLAN-FD-3 requires immutable publication, stable deterministic fingerprints within each released policy, draft/editor metadata excluded from identity, downstream attribution to the exact model fingerprint, and permanent policy-aware historical resolution.
-
-## 8. PLAN-FD-4 — Deterministic runtime instantiation
-
-### 8.1 Goal
-
-Make the published model the only semantic bridge from design into runtime contexts.
-
-```text
-FactoryModelVersion
-       |
- validate/resolve
-       v
-ExecutableFactoryModel
-       |
- instantiate
-       v
-FactoryRuntime
-```
-
-### 8.2 Derived structures
-
-Runtime preparation may derive resolved references, eligibility indexes, immutable routing indexes, spatial indexes when supported, and scheduling metadata. These are derived from one published semantic model and are not independently authored truth.
-
-### 8.3 Runtime provenance
-
-Every run/session identifies the source `ModelFingerprint`. ADR-0015 adds a second, Engine-owned provenance dimension:
-
-```text
-RunId                     correlation/runtime epoch
-ModelFingerprint          which authored Factory design
-EngineSemanticsVersion    which result-affecting Engine interpretation
-```
-
-The current runtime has not implemented the last field yet; focused PLAN-ENG-5 slice PLAN-ENG-5-B1/B2 adds it. `ControlledRevisionId` remains additional optional provenance only when an authoritative revision binding exists; runtime code must not synthesize one from the fingerprint.
-
-Deterministic comparison across builds is therefore scoped to the same model fingerprint, Engine semantics version, workload, seed/random inputs and ordered commands rather than treating model identity alone as outcome identity.
-
-### 8.4 Acceptance criteria
-
-PLAN-FD-4 is satisfied incrementally when a published model version instantiates a fresh deterministic runtime, runtime cannot mutate the model, supported runtime facts retain source-model provenance, and no consumer draft representation is required. PLAN-ENG-5 extends the provenance surface additively without changing those ownership rules.
-
-## 9. PLAN-FD-5 — Semantic comparison and design alternatives
-
-**Status: initial slice implemented**, as the direct PLAN-FD-5 implementation feeding Governance PLAN-GOV-2:
-`com.arcogine.factory.change.FactoryModelSemanticComparator` compares resources, operations, and
-products by stable domain identity and classifies add/remove/modify through Governance's semantic-change seam.
-
-Finer route/policy/constraint/spatial change taxonomy remains consumer-pulled work. Moving a V2 resource is a real Factory design change because position is canonical content, but cross-policy V1→V2 comparison must obey ADR-0014 rather than pretending a V1 design authored missing spatial fields.
-
-A change-management workflow is one concrete future consumer: reviewers need a domain-level semantic diff between a candidate revision and its predecessor, not a generic text/JSON diff.
-
-Do not implement arbitrary text/JSON diff, generic patch/merge, or collaborative editing merely to satisfy PLAN-FD-5.
-
-## 10. PLAN-FD-6 — Shared draft lifecycle and collaboration
-
-Promote drafts into an Arcogine-owned shared lifecycle only when a second concrete workflow requires common persistence, branching, collaboration, or collaborative draft review/comments.
-
-Possible triggers include industrial design plus optimizer/game authoring, human/agent co-design, branching real production changes, or multi-user design sessions.
-
-PLAN-FD-6 is scoped to shared *authoring* mechanics and does not include authorization or organizational change-management workflow. Until a trigger applies, Arcogine does not need generic undo/redo, draft branching, merge, collaboration cursors, edit locks, comments, workspace permissions, or autosave semantics.
-
-## 11. PLAN-FD-7 — Factory adoption of governed change
-
-Controlled revision lineage, external change references, technical evidence packages for review, and authorization hand-off are cross-domain concerns owned by Governance, not factory-specific ones. Governance PLAN-GOV-1 already owns durable revision identity/history; PLAN-GOV-2 owns semantic `ChangeSet`/impact; PLAN-GOV-4/PLAN-GOV-5 own conformance/evidence semantics; PLAN-GOV-6 will own external workflow/change-control integration.
-
-Operational Execution owns what happens after authorization when a semantic change is applied to or interpreted against independently existing systems: durable operational-history attribution (with the exact identity referent still under ADR-0013 review), subject correspondence, deployment application/provenance, semantic operation realization and command/result lifecycle, external observations, and reconciliation.
-
-PLAN-FD-7 remains only the factory-specific contribution of Factory semantics/evidence into those cross-domain capabilities. Building a factory-only revision repository, authorization workflow, production deployment runtime, telemetry ingestion or reconciliation layer would duplicate sibling ownership.
-
-## 12. Constraint classification
-
-Every design rule must be classified before implementation.
-
-| Class | Meaning | Owner |
-|---|---|---|
-| Executability constraint | Required for the model to publish/instantiate coherently | Arcogine model/design boundary |
-| Verification objective/constraint | Tests whether an executable design meets a target | Shared verification capability when supported |
-| Consumer rule | Applies only to one experience/workflow | Consumer |
-
-Examples:
-
-```text
-Resource outside floor               -> executability
-Operation has no eligible resource   -> executability
-Throughput must exceed target        -> verification
-Player construction budget           -> game consumer
-Machine unlock level                 -> game consumer
-```
-
-## 13. Interaction with engine and operational readiness
-
-The design capability owns:
-
-```text
-Product/operation definitions
-Resource identities and authored structure
-Capability/eligibility requirements
-Factory V2 floor/position/footprint/ticksPerCell/handlingTicks
-Validation
-Publication/model provenance
-```
-
-Engine readiness owns:
-
-```text
-Production orders and work items
-Quantity execution semantics
-Dispatch and queues
-EngineSemanticsVersion and result-affecting interpretation
-Active operations/transfers
-Simulation runtime events and observations
-Performance
-```
-
-Operational Execution owns:
-
-```text
-Durable operational-history attribution/identity (exact referent under ADR-0013 review)
-Authoritative external-subject ↔ Arcogine-subject correspondence
-Verified operational trust / authority
-Deployment target application and applied-artifact provenance
-Semantic operation realization and external command/result lifecycle
-External operational observations
-Twin reconciliation and drift/calibration feedback
-```
-
-The Factory model owns authored input semantics; the Engine owns deterministic interpretation and mutable consequences. The same V2 `ModelFingerprint` may legitimately produce a different result under a future different `EngineSemanticsVersion` without redefining the authored plant.
-
-## 14. Factory-design game integration
-
-The game may own an editor-specific `FactoryDraft`, undo history, camera, palettes, previews, and game rules.
-
-```text
-Game-owned draft
-      |
- project canonical semantics
-      v
-Arcogine validate/publish
-      |
-      v
-FactoryModelVersion
-      |
-      v
-Arcogine runtime
-```
-
-The game must not implement a parallel scheduler, transfer rule, distance metric, or semantic-policy layer and must not treat its draft as the authoritative executable model.
-
-## 15. Headless acceptance path
-
-### 15.1 Behavior-preserving publication test
-
-1. Load an existing representative scenario.
-2. Adapt only its factory semantics into a canonical model.
-3. Validate the model.
-4. Publish a model version.
-5. Instantiate runtime through the model boundary.
-6. Run the same inputs/seed as the existing path.
-7. Assert deterministic behavior/results are unchanged.
-8. Assert results identify the source model's semantic fingerprint.
-
-### 15.2 Variant tests after richer semantics exist
-
-For a **Factory design variant**:
-
-1. publish model A;
-2. publish model B with one authored semantic design change;
-3. instantiate independent runtimes under the same `EngineSemanticsVersion`;
-4. apply the same seed/workload/commands;
-5. verify deterministic but appropriately different outcomes.
-
-PLAN-ENG-5 examples include moving one V2 resource or changing an authored handling magnitude. A comparison that keeps the same `ModelFingerprint` and changes only `EngineSemanticsVersion` is an Engine-semantics experiment, not a PLAN-FD-5 Factory design variant.
-
-## 16. First implementation milestone
-
-> **Take an existing Arcogine scenario, derive a validated immutable canonical factory model from it, instantiate the existing simulation from that model, and prove the simulation result has not changed.**
-
-That original milestone established the current model seam. PLAN-ENG-5 does not retroactively reopen it; it uses ADR-0014's explicit V2 policy and the focused PLAN-ENG-5-A1/A2/A3 slices to add spatial authored semantics without weakening V1.
-
-## 17. ADR triggers
-
-[ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md) establishes the model/run/runtime boundary. [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md) separates semantic fingerprint from controlled-revision/change-management identity. ADR-0006 fixes the durable V1 fingerprint contract.
-
-PLAN-ENG-5's hard-to-reverse decisions are now accepted rather than open triggers:
-
-- [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md) fixes Factory fingerprint-policy evolution and `factory-model:v2`;
-- [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md) fixes design-vs-Engine interpretation ownership and `EngineSemanticsVersion`;
-- [Engine Semantics v1](../architecture/engine-semantics-v1.md) fixes the first concrete result-affecting interpretation;
-- [Factory Model v2 Canonicalization](../architecture/factory-model-v2.md) fixes the durable `factory-model:v2` byte grammar that ADR-0014's policy version contractually implies.
-
-Future ADRs remain warranted for genuinely new hard-to-reverse model aggregate boundaries, work-center/resource-pool semantics, shared draft lifecycle, or a new released Factory/Engine semantics contract. Do not create ADRs for consumer-local editor gestures or temporary UI structure.
-
-## 18. Documentation lifecycle
-
-While this work is proposed, this file remains under `docs/planning/`.
-
-As capabilities are implemented:
-
-- reconcile established behavior into [`../architecture/overview.md`](../architecture/overview.md);
-- update [`../product/concepts.md`](../product/concepts.md) only for capabilities that actually ship;
-- update [`../reference/api.md`](../reference/api.md) only when a public contract exists;
-- update the ISA-95 mapping when implemented manufacturing concepts change;
-- keep migration/regression/golden fixtures executable and version-controlled;
-- keep governed-change integration aligned with Governance and real deployment/reconciliation aligned with Operational Execution.
-
-Once the initiative is complete or abandoned, reduce this file to a concise historical outcome or retire it after durable decisions and current behavior are represented in authoritative locations.
+1. preserve released v1 golden identity behavior;
+2. add deterministic boundary/golden tests for new semantic facts;
+3. keep runtime construction behind published-model validation;
+4. update durable architecture/ADR/reference only when actual semantics or shipped behavior changes; and
+5. keep this plan synchronized with landed implementation status rather than carrying untriggered future work.

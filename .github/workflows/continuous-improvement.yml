@@ -1,0 +1,73 @@
+name: Continuous improvement register
+
+# Bootstraps and updates Arcogine's continuous-improvement register issue and
+# derives recurring-obligation due state. See
+# docs/development/continuous-improvement.md for the operating model.
+#
+# This workflow is deliberately separate from ordinary product CI (ci.yml) and
+# never invokes the Consistency agent, a delivery-process retrospective, or any
+# other judgment-bearing improvement work. Its only job is to make missed
+# recurring obligations visible: bootstrap/find the register issue, derive
+# CURRENT/DUE/OVERDUE/CHECK_TRIGGER state, and update only the workflow-owned
+# marker region of the issue body.
+#
+# TRUST BOUNDARY: every trigger below is sourced from the default branch, never
+# from PR-supplied code.
+#   - `schedule` always loads the workflow definition from the default branch.
+#   - `workflow_dispatch` on a manual run of the default-branch workflow also
+#     loads from the default branch; there is no PR-forkable path here because
+#     this workflow has no `pull_request` trigger at all -- an arbitrary
+#     unreviewed branch cannot cause this workflow's write-capable job to run
+#     with its own (possibly modified) copy of the workflow or helper.
+#   - `push` is restricted to `branches: [main]`, so it only ever runs the
+#     version of this file and the helper script that just landed on main.
+#
+# Permissions are minimal: contents:read to check out the helper script,
+# issues:write to bootstrap/update the register issue, pull-requests:read for
+# merged-PR evidence used by the retrospective raw guard.
+
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC. The exact time is not semantically important;
+    # this is simply a stable, documented slot distinct from ci.yml's daily
+    # 05:00 UTC security re-scan.
+    - cron: '0 6 * * 1'
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/continuous-improvement.mjs'
+      - '.github/scripts/continuous-improvement-data.json'
+      - '.github/workflows/continuous-improvement.yml'
+      - 'docs/development/continuous-improvement.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: continuous-improvement-register
+  cancel-in-progress: false
+
+jobs:
+  update-register:
+    name: Bootstrap/update register
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js 22.22.2
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.22.2'
+
+      - name: Validate helper logic
+        run: node --test .github/scripts/continuous-improvement.test.mjs
+
+      - name: Bootstrap/update continuous improvement register
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/continuous-improvement.mjs

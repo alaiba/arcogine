@@ -76,11 +76,19 @@ test('completion evidence parsing', async (t) => {
     assert.equal(parseCompletionComment(null), null);
   });
 
+  const trusted = (body, createdAt) => ({ body, authorAssociation: 'OWNER', createdAt });
+
   await t.test('latestValidCompletion picks the newest valid entry and skips malformed ones', () => {
-    const older = `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-01T00:00:00Z`;
-    const newer = `Consistency review completed\nreviewed head: ${SHA_B}\ncompleted at: 2026-09-08T00:00:00Z`;
-    const malformed = 'Consistency review completed\nreviewed head: nope';
-    const best = latestValidCompletion([older, malformed, newer, 'unrelated']);
+    const older = trusted(
+      `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-01T00:00:00Z`,
+      '2026-09-01T00:00:00Z',
+    );
+    const newer = trusted(
+      `Consistency review completed\nreviewed head: ${SHA_B}\ncompleted at: 2026-09-08T00:00:00Z`,
+      '2026-09-08T00:00:00Z',
+    );
+    const malformed = trusted('Consistency review completed\nreviewed head: nope', '2026-09-08T00:00:00Z');
+    const best = latestValidCompletion([older, malformed, newer, trusted('unrelated', NOW)], NOW);
     assert.equal(best.reviewedHead, SHA_B);
   });
 
@@ -91,6 +99,37 @@ test('completion evidence parsing', async (t) => {
     const stale = `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-01-01T00:00:00Z`;
     const parsed = parseCompletionComment(stale);
     assert.equal(parsed.reviewedHead, SHA_A);
+  });
+
+  await t.test('an unauthorized commenter cannot fabricate completion evidence by matching the syntax', () => {
+    // Structured syntax alone must not confer completion authority.
+    // Anyone can comment on a public issue; only a trusted author association
+    // (OWNER/MEMBER/COLLABORATOR) counts.
+    const forged = {
+      body: `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-08T00:00:00Z`,
+      authorAssociation: 'NONE',
+      createdAt: '2026-09-08T00:00:00Z',
+    };
+    assert.equal(latestValidCompletion([forged], NOW), null);
+  });
+
+  await t.test('a future-dated completion claim is rejected even from a trusted author', () => {
+    // A fabricated future "completed at" would otherwise make daysBetween
+    // negative and keep the weekly obligation CURRENT indefinitely.
+    const future = trusted(
+      `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-12-31T00:00:00Z`,
+      '2026-12-31T00:00:00Z',
+    );
+    assert.equal(latestValidCompletion([future], NOW), null);
+  });
+
+  await t.test('an authorized, non-future completion is accepted', () => {
+    const valid = trusted(
+      `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-08T00:00:00Z`,
+      '2026-09-08T00:00:00Z',
+    );
+    const best = latestValidCompletion([valid], NOW);
+    assert.equal(best.reviewedHead, SHA_A);
   });
 });
 
@@ -155,7 +194,12 @@ test('register bootstrap and idempotent update', async (t) => {
     assert.match(managed, /Weekly Consistency review/);
   });
 
-  await t.test('repeated run with unchanged state is a no-op per obligationsChanged', () => {
+  await t.test('repeated run with unchanged state is a no-op per obligationsChanged, even across a clock change', () => {
+    // renderObligations always embeds "_Last updated: <nowISO>_", so this
+    // regression test must use two genuinely different `nowISO` values -- reusing
+    // the same NOW for both renders cannot expose a comparison that fails to
+    // exclude the volatile timestamp line.
+    const LATER = '2026-09-09T06:00:00.000Z';
     const obligations = renderObligations({
       weekly: { lastVerifiedAt: null, reviewedHead: null, nowISO: NOW, state: 'DUE' },
       retrospective: {
@@ -169,12 +213,8 @@ test('register bootstrap and idempotent update', async (t) => {
     });
     const body = buildInitialBody(obligations);
     const { managed } = splitMarkers(body);
-    // Re-render with a different "now" timestamp only -- the semantic state is
-    // identical, so a byte-diff on the "_Last updated_" line alone must not be
-    // treated as no-op by a naive strict-equality check, but a same-second rerun
-    // (same inputs) must compare equal.
     const rerendered = renderObligations({
-      weekly: { lastVerifiedAt: null, reviewedHead: null, nowISO: NOW, state: 'DUE' },
+      weekly: { lastVerifiedAt: null, reviewedHead: null, nowISO: LATER, state: 'DUE' },
       retrospective: {
         baselinePr: 260,
         baselineDate: '2026-09-05',
@@ -184,6 +224,7 @@ test('register bootstrap and idempotent update', async (t) => {
         state: 'CURRENT',
       },
     });
+    assert.notEqual(managed.trim(), rerendered.trim(), 'sanity check: the two renders must actually differ by clock alone');
     assert.equal(obligationsChanged(managed, rerendered), false);
   });
 

@@ -13,14 +13,18 @@ name: Continuous improvement register
 #
 # TRUST BOUNDARY: every trigger below is sourced from the default branch, never
 # from PR-supplied code.
-#   - `schedule` always loads the workflow definition from the default branch.
-#   - `workflow_dispatch` on a manual run of the default-branch workflow also
-#     loads from the default branch; there is no PR-forkable path here because
-#     this workflow has no `pull_request` trigger at all -- an arbitrary
-#     unreviewed branch cannot cause this workflow's write-capable job to run
-#     with its own (possibly modified) copy of the workflow or helper.
+#   - `schedule` always loads the workflow *definition* from the default branch.
 #   - `push` is restricted to `branches: [main]`, so it only ever runs the
 #     version of this file and the helper script that just landed on main.
+#   - `workflow_dispatch` on this workflow also loads the workflow *definition*
+#     from the default branch -- but GitHub's manual-run UI/API lets the
+#     invoker pick an arbitrary ref to run it against (a branch selector, or
+#     `--ref` on `gh workflow run`), and an unpinned `actions/checkout` would
+#     then check out *that* ref's copy of the helper script, not main's, while
+#     the job still holds `issues: write`. The checkout step below is
+#     therefore pinned to `ref: main` explicitly, on every trigger, so no
+#     dispatched ref selection can ever substitute branch-controlled helper
+#     code into this write-capable job.
 #
 # Permissions are minimal: contents:read to check out the helper script,
 # issues:write to bootstrap/update the register issue, pull-requests:read for
@@ -58,6 +62,11 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Always run main's copy of the helper, regardless of which ref a
+          # workflow_dispatch invocation selected. See the TRUST BOUNDARY note
+          # above.
+          ref: main
 
       - name: Setup Node.js 22.22.2
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0

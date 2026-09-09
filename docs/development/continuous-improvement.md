@@ -63,7 +63,7 @@ completed at: <UTC timestamp>
 mode: <incremental/full/etc.>
 ```
 
-The workflow derives the managed "last verified" summary from the latest comment matching this structure. A workflow run is never itself proof that a review happened — only a valid completion comment is. Malformed or missing evidence is ignored (treated as "never verified"), never fabricated; the workflow never manufactures a completion. Repeated runs with unchanged state update nothing, so recurring scheduled runs do not spam the issue with unchanged summaries.
+The workflow derives the managed "last verified" summary from the latest comment matching this structure, but structured syntax alone never confers completion authority: only a comment from a trusted GitHub author association (owner/member/collaborator) counts, and a future-dated `completed at` is rejected even from a trusted author. A workflow run is never itself proof that a review happened — only a valid, authorized, non-future completion comment is. Malformed, unauthorized, or missing evidence is ignored (treated as "never verified"), never fabricated; the workflow never manufactures a completion. Repeated runs with unchanged semantic state update nothing (the rendered "last updated" timestamp is excluded from that comparison), so recurring scheduled runs do not spam the issue with unchanged summaries.
 
 ### Retrospective baseline
 

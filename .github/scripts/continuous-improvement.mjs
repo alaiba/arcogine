@@ -53,6 +53,14 @@ export function deriveWeeklyState(lastVerifiedISO, nowISO) {
 const SHA_RE = /^[0-9a-f]{40}$/;
 
 /**
+ * GitHub author associations trusted to attest a completed Consistency review.
+ * Structured syntax alone must never confer completion authority -- an
+ * unauthorized commenter's identically-formatted text must not count as
+ * evidence, however well it parses.
+ */
+export const TRUSTED_COMPLETION_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+
+/**
  * Parse one completion-evidence comment. Returns null when the comment does not
  * match the required structured format (malformed/unrelated comments are ignored,
  * never treated as completion proof).
@@ -78,16 +86,21 @@ export function parseCompletionComment(body) {
 }
 
 /**
- * Pick the most recent valid completion-evidence comment out of a list of raw
- * comment bodies. Malformed comments are ignored rather than rejected as errors --
- * a stray or corrupted comment must never crash the run, only fail to count as
- * evidence.
+ * Pick the most recent valid, authorized, non-future completion-evidence comment
+ * out of a list of `{ body, authorAssociation, createdAt }` comment records.
+ * Malformed comments are ignored rather than rejected as errors -- a stray or
+ * corrupted comment must never crash the run, only fail to count as evidence.
+ * An unauthorized author's matching text and a future-dated `completed at` are
+ * rejected the same way: silently not evidence, never a thrown error.
  */
-export function latestValidCompletion(commentBodies) {
+export function latestValidCompletion(comments, nowISO) {
+  const now = new Date(nowISO).getTime();
   let best = null;
-  for (const body of commentBodies) {
-    const parsed = parseCompletionComment(body);
+  for (const comment of comments) {
+    const parsed = parseCompletionComment(comment.body);
     if (!parsed) continue;
+    if (!TRUSTED_COMPLETION_ASSOCIATIONS.has(comment.authorAssociation)) continue;
+    if (new Date(parsed.completedAt).getTime() > now) continue;
     if (!best || parsed.completedAt > best.completedAt) best = parsed;
   }
   return best;
@@ -230,13 +243,28 @@ export function findRegisterIssue(issues) {
   return matches[0] ?? null;
 }
 
+const LAST_UPDATED_LINE_RE = /^_Last updated:.*_$/m;
+
 /**
- * Decide whether an update actually changes the rendered obligations text, so the
- * caller can skip posting a body update / comment when nothing changed -- avoiding
- * weekly spam for unchanged state.
+ * Strip the volatile "_Last updated: <timestamp>_" line that renderObligations
+ * always appends. Every run has a different wall-clock timestamp, so that line
+ * must never participate in the no-op-detection comparison -- otherwise every
+ * run would look "changed" even when the actual obligation state (weekly review
+ * state, retrospective state, counts) is identical to the last update.
+ */
+function withoutVolatileTimestamp(text) {
+  return text.replace(LAST_UPDATED_LINE_RE, '').trim();
+}
+
+/**
+ * Decide whether an update actually changes the *semantic* obligations content,
+ * so the caller can skip posting a body update / comment when nothing changed --
+ * avoiding weekly spam for unchanged state. Deliberately ignores the volatile
+ * "_Last updated_" timestamp line, which differs on every run regardless of
+ * whether the underlying obligation state changed.
  */
 export function obligationsChanged(oldManagedText, newManagedText) {
-  return oldManagedText.trim() !== newManagedText.trim();
+  return withoutVolatileTimestamp(oldManagedText) !== withoutVolatileTimestamp(newManagedText);
 }
 
 // ------------------------------- GitHub I/O -------------------------------
@@ -280,9 +308,27 @@ async function listAllIssuesByTitleSearch(repo) {
   return (result.items || []).map((i) => ({ number: i.number, title: i.title, state: i.state, body: i.body }));
 }
 
+/**
+ * List every comment on the register issue as `{ body, authorAssociation, createdAt }`.
+ * Paginates to completion: the register is a single long-lived issue with
+ * append-only completion-evidence comments by design, so once it accumulates more
+ * than one page (100) of comments, a single-page fetch would silently stop seeing
+ * newer evidence and misreport a current obligation as DUE/OVERDUE.
+ */
 async function listIssueComments(repo, number) {
-  const comments = await ghRepo(`/issues/${number}/comments?per_page=100`, { repo });
-  return comments.map((c) => c.body);
+  const all = [];
+  let page = 1;
+  for (;;) {
+    const batch = await ghRepo(`/issues/${number}/comments?per_page=100&page=${page}`, { repo });
+    all.push(...batch);
+    if (batch.length < 100) break;
+    page += 1;
+  }
+  return all.map((c) => ({
+    body: c.body,
+    authorAssociation: c.author_association,
+    createdAt: c.created_at,
+  }));
 }
 
 async function createRegisterIssue(repo, body) {
@@ -345,7 +391,7 @@ async function main() {
   let reviewedHead = null;
   if (register) {
     const comments = await listIssueComments(repo, register.number);
-    const evidence = latestValidCompletion(comments);
+    const evidence = latestValidCompletion(comments, now);
     if (evidence) {
       lastVerifiedAt = evidence.completedAt;
       reviewedHead = evidence.reviewedHead;

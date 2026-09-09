@@ -66,6 +66,15 @@ Some repository tasks have additional repository-owned operating contracts.
   in addition to this file. This is the repository's dedicated **PR Reviewer**
   role; do not substitute a generic coding-agent review when the contract is
   available.
+- **Research:** when asked to investigate a bounded Arcogine research question,
+  execute a research brief from `docs/research/`, produce a decision-quality
+  research report, or perform an independent adversarial review of an existing
+  research report, read and follow
+  [`.github/agents/researcher.agent.md`](.github/agents/researcher.agent.md)
+  in addition to this file. That contract defers to
+  [`docs/development/researching.md`](docs/development/researching.md) for the
+  normative research method. Research investigation and adversarial research
+  review belong to this role, not to Work Planner or Consistency.
 
 Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable

@@ -4,6 +4,8 @@
 > **Scope:** Open, active, and concluded Arcogine questions that require evidence before product, architecture, or executable delivery planning should change  
 > **Authority:** Research only; this directory does not describe current capability, accepted architecture, or committed delivery work
 
+This document owns the research **portfolio, lifecycle, and promotion policy**: what questions are open, at what priority and status, and when a conclusion is durable enough to reconcile. It does not define how an individual investigation is conducted, what makes a report decision-quality, or what "independent" and "adversarial" review require — that normative method lives in [`docs/development/researching.md`](../development/researching.md), executed by the repository's [Researcher](../../.github/agents/researcher.agent.md) role. Use [`report-template.md`](report-template.md) as the reusable structure for a decision-quality report.
+
 ## Boundary
 
 `docs/research/` answers:
@@ -70,7 +72,7 @@ Priority is portfolio guidance, not delivery commitment.
 ## Maintenance
 
 - Add a material unknown instead of hiding it in an implementation plan.
-- Mark research `READY` only when an independent researcher can execute it from the stated evidence/exit criteria.
+- Mark research `READY` only when an independent researcher can execute it from the stated evidence/exit criteria — see `docs/development/researching.md` for what a sufficiently bounded brief and decision-quality report require.
 - When research concludes, record the verdict here and link the durable destination; do not duplicate the authoritative conclusion.
 - During planning/consistency review, flag exploratory content that has leaked back into `docs/planning/` and relocate it here.
 - Keep concluded research visible when it provides useful history, but prefer current architecture/reference for durable semantics.

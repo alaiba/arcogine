@@ -11,22 +11,35 @@ name: Continuous improvement register
 # CURRENT/DUE/OVERDUE/CHECK_TRIGGER state, and update only the workflow-owned
 # marker region of the issue body.
 #
-# TRUST BOUNDARY: `schedule` and `push` (restricted to `branches: [main]`)
-# always load this file's own definition from `main`, so those two triggers
-# only ever run reviewed content.
+# TRUST BOUNDARY (revised after two incorrect attempts -- see git history of
+# this file for the withdrawn claims):
 #
-# `workflow_dispatch` does not have that property, and no construct in this
-# file or continuous-improvement-impl.yml can give it that property: GitHub
-# always executes a dispatched ref's own copy of the workflow definition,
-# including whatever `uses:`/`permissions:` that copy declares, with whatever
-# permissions it requests up to the repository's allowed ceiling. A prior
-# revision of this file claimed that pinning the `uses:` reference below to
-# `@main` closed that gap; it does not, because this file's own `uses:` and
-# `permissions:` lines are themselves part of the dispatched ref's content and
-# can be rewritten by whoever dispatches it. See
-# continuous-improvement-impl.yml's header for the actual enforcement point
-# (a repository Environment with a branch-restricted deployment policy,
-# configured outside git content) and its current setup status.
+# `schedule` and `push` (restricted to `branches: [main]`) always execute this
+# file's own definition as it exists on `main`.
+#
+# The manual on-demand trigger is `repository_dispatch`, not
+# `workflow_dispatch`, and that choice is the actual fix, not a YAML
+# workaround. `workflow_dispatch` lets the invoker select an arbitrary ref,
+# and GitHub then executes *that ref's own copy* of this entire file --
+# including its `permissions:` block and job steps -- with whatever authority
+# that copy requests. No in-file construct (an inner `ref: main` checkout, a
+# `uses:` pinned to `owner/repo/path@main`, a job-level `environment:` gate)
+# can close that gap, because a rewritten branch copy of *this* file can
+# simply omit whichever construct enforced it and grant itself `issues: write`
+# directly. `repository_dispatch` does not have that failure mode: per
+# GitHub's documented behavior, a `repository_dispatch` event only triggers
+# workflow runs for the copy of the workflow file that exists on the
+# repository's default branch, regardless of who fires the event or what any
+# branch's own copy of this file says. That is an actual platform-enforced
+# invariant, not a repository-authored one.
+#
+# Triggering it: `POST /repos/alaiba/arcogine/dispatches` with
+# `{"event_type": "continuous-improvement-register"}`, using a token
+# belonging to someone with write access (e.g. `gh api
+# repos/alaiba/arcogine/dispatches -f event_type=continuous-improvement-register`).
+# This has no "Run workflow" UI button the way `workflow_dispatch` does; that
+# is the accepted cost of the trigger actually being safe to invoke from an
+# arbitrary state of any branch.
 
 on:
   schedule:
@@ -34,17 +47,18 @@ on:
     # this is simply a stable, documented slot distinct from ci.yml's daily
     # 05:00 UTC security re-scan.
     - cron: '0 6 * * 1'
-  workflow_dispatch: {} # see the TRUST BOUNDARY note above for this trigger's actual guarantees
+  repository_dispatch:
+    types: [continuous-improvement-register]
   push:
     branches: [main]
     paths:
       - '.github/scripts/continuous-improvement.mjs'
       - '.github/scripts/continuous-improvement-data.json'
       - '.github/workflows/continuous-improvement.yml'
-      - '.github/workflows/continuous-improvement-impl.yml'
       - 'docs/development/continuous-improvement.md'
 
-permissions: {}
+permissions:
+  contents: read
 
 concurrency:
   group: continuous-improvement-register
@@ -53,8 +67,23 @@ concurrency:
 jobs:
   update-register:
     name: Bootstrap/update register
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
       pull-requests: read
-    uses: alaiba/arcogine/.github/workflows/continuous-improvement-impl.yml@main
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js 22.22.2
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.22.2'
+
+      - name: Validate helper logic
+        run: node --test .github/scripts/continuous-improvement.test.mjs
+
+      - name: Bootstrap/update continuous improvement register
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/continuous-improvement.mjs

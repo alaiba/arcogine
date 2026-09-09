@@ -80,6 +80,31 @@ Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, ADR, contribution, documentation, or executable
 authorities.
 
+## Continuous improvement
+
+Arcogine's continuous-improvement operating model — Session-close Kaizen, the weekly
+Consistency review, and the evidence-based delivery-process retrospective — is defined
+in [`docs/development/continuous-improvement.md`](docs/development/continuous-improvement.md).
+Recurring-obligation due state lives in the GitHub issue titled exactly
+`Continuous improvement register`, maintained by
+[`.github/workflows/continuous-improvement.yml`](.github/workflows/continuous-improvement.yml).
+
+At the first normal repository grounding of a session, inspect that register's
+workflow-managed obligations section:
+
+- `CURRENT` only → say nothing.
+- `DUE` or `OVERDUE` → mention the obligation once during the session.
+- `CHECK_TRIGGER` → mention once that the retrospective trigger needs human/agent
+  evaluation; do not claim the retrospective is automatically due.
+- register state cannot be read/verified → say once that continuous-improvement
+  obligation state could not be verified; do not silently assume everything is
+  current.
+
+Never repeat the same reminder more than once per session, and never derail the
+user's requested task merely because an improvement obligation is due — this is
+defense in depth so scheduled work does not disappear unnoticed, not a gate on
+other work.
+
 ## Temporary delivery coordinates and durable documentation
 
 Arcogine planning coordinates use the reserved `PLAN-<TRACK>-<LOCAL-ID>` namespace (for example, a

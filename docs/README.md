@@ -46,6 +46,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, style, validation |
 | [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
 | [researching.md](development/researching.md) | Normative Arcogine research method: how research is conducted, decision-quality evidence, independent adversarial review |
+| [continuous-improvement.md](development/continuous-improvement.md) | Continuous-improvement operating model: Session-close Kaizen, weekly Consistency review, delivery-process retrospective, and the improvement register |
 | [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
 | [testing.md](development/testing.md) | Test categories, CI, quality gates, native commands |
 | [repository-snapshot.md](development/repository-snapshot.md) | Canonical whole-repository retrieval snapshot |

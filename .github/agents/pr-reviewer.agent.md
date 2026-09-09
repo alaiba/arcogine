@@ -159,7 +159,7 @@ When a surface changes, inspect maintained or executable surfaces that encode or
 | `./arcogine` commands | README, CONTRIBUTING, testing guide, AGENTS.md |
 | Gradle / Java / Node policy | executable configuration, CI, devcontainer/runtime policy, maintained development docs |
 | CI workflows/checks | testing guide, CONTRIBUTING, AGENTS.md where workflow depends on checks |
-| ADR added/changed | ADR index, current architecture, applicable planning, maintained product concepts/reference surfaces, implementation evidence where claimed |
+| ADR added/changed | ADR index, current architecture, applicable planning, maintained product concepts/reference surfaces, implementation evidence where claimed; if the ADR promotes a conclusion from a `docs/research/` report, also `docs/development/researching.md` and that report's adversarial-review status |
 | planning/readiness status changed | acceptance criteria, implementation, tests/evidence, architecture/current docs, maintained product concepts/reference surfaces affected by the status claim |
 
 A semantic neighbor is not automatically required to change. Inspect it and determine whether its existing statement remains correct.
@@ -188,6 +188,10 @@ Treat an authority-bearing transition as a mandatory propagation trigger. Exampl
 When such a transition occurs, explicitly inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
 
 This is bounded PR-impact review. It is not a substitute for the repository-wide Consistency agent.
+
+### Research-backed ADR/architecture promotion
+
+When a PR promotes a conclusion from a `docs/research/` report into an ADR or comparably durable architecture, treat the prerequisite in `docs/development/researching.md` as a review gate, not merely as a fact to note: identify the research report's risk tier and, if that tier requires a genuinely independent adversarial research review before the conclusion counts as decision-quality evidence, verify that such a review actually exists and states `ACCEPT` or `ACCEPT WITH QUALIFICATIONS`. Treat a missing, self-administered-only, `MORE EVIDENCE REQUIRED`, or `REOPEN` review as a blocking finding for a high-risk promotion. When the disposition is `ACCEPT WITH QUALIFICATIONS`, verify the PR's proposed ADR/architecture text actually carries those qualifications forward rather than silently dropping them. This does not make the reviewer perform research or adversarial review itself; it only enforces that the prerequisite was met before the promotion is accepted.
 
 ## Risk-proportionate depth
 

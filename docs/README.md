@@ -45,6 +45,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 |---|---|
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, style, validation |
 | [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
+| [researching.md](development/researching.md) | Normative Arcogine research method: how research is conducted, decision-quality evidence, independent adversarial review |
 | [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
 | [testing.md](development/testing.md) | Test categories, CI, quality gates, native commands |
 | [repository-snapshot.md](development/repository-snapshot.md) | Canonical whole-repository retrieval snapshot |
@@ -71,6 +72,8 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Document | What it covers |
 |---|---|
 | [Research register](research/README.md) | Portfolio status, priority, promotion policy |
+| [Research method](development/researching.md) | Normative method for conducting a research investigation and independent adversarial review |
+| [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |
 | [Agency and decision boundary](research/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation |
 | [Factory Design evolution](research/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
 | [Factory-design game vertical slice](research/factory-design-game-vertical-slice.md) | Product loop, diagnostics, reference challenge, scoring/tutorial/technology evidence |

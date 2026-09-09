@@ -69,6 +69,10 @@ The workflow derives the managed "last verified" summary from the latest comment
 
 The retrospective's baseline (currently PR #260, dated 2026-09-05) is operational data in `.github/scripts/continuous-improvement-data.json`, not control flow hardcoded into the workflow or helper. A future verified retrospective advances this file's `baselinePr`/`baselineDate` (and resets `escapeEvidenceCount`/`p1LifecycleEscape`) as an ordinary repository change; the state-derivation logic itself never changes.
 
+### `workflow_dispatch` trust boundary
+
+`schedule` and `push`-to-`main` always run `.github/workflows/continuous-improvement.yml`'s definition as it exists on `main`. `workflow_dispatch` does not have that property: GitHub always executes whichever ref a manual dispatch selects, including that ref's own copy of every `uses:` target and `permissions:` grant in the workflow file — no construct expressible in git-tracked workflow content can change this. The write-capable job (`.github/workflows/continuous-improvement-impl.yml`) therefore requires the `continuous-improvement-register` GitHub Environment, whose deployment branch policy must be configured (Settings → Environments, a one-time repository-admin action, not a git-tracked file) to allow only `main`. Until that environment protection is configured, `workflow_dispatch` on this workflow carries the same trust as any other repository push by a write-access collaborator — narrower than "arbitrary unreviewed code" (dispatch already requires write access), but not yet bounded to reviewed `main` content by anything this repository can enforce from committed files alone.
+
 ## Every-agent reminder
 
 Every Arcogine agent inspects the register once per session and mentions due/overdue work at most once — see the rule in `AGENTS.md`. This is defense in depth: a recurring obligation must not disappear simply because a scheduled notification was missed. It never derails the user's requested task, and it never grants any agent additional authority to act on the register beyond what its own governing contract already allows.

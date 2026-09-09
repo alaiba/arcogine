@@ -11,25 +11,22 @@ name: Continuous improvement register
 # CURRENT/DUE/OVERDUE/CHECK_TRIGGER state, and update only the workflow-owned
 # marker region of the issue body.
 #
-# TRUST BOUNDARY: this file is intentionally a thin, unprivileged dispatcher.
-# It holds no permissions of its own and contains no logic beyond a single
-# `uses:` call into .github/workflows/continuous-improvement-impl.yml, pinned
-# by a full `owner/repo/path@main` reusable-workflow reference rather than a
-# same-repo `./...` reference. GitHub always resolves that form of reference
-# against the content of the pinned ref (`main`), regardless of which ref
-# triggered *this* file -- so even a `workflow_dispatch` invocation against an
-# arbitrary branch still executes main's copy of the actual (issues:write)
-# logic, not a branch-controlled copy. See continuous-improvement-impl.yml's
-# own header for the precise mechanism and its residual-risk note (a
-# collaborator editing this file's own `uses:` line is bounded by requiring
-# independent review of `.github/workflows/` changes before that edit can land
-# on `main`, per `.github/CODEOWNERS`).
-#   - `schedule` and `push` (restricted to `branches: [main]`) always load this
-#     file's own definition from `main` in the first place.
-#   - `workflow_dispatch` may load this file's definition from an arbitrary
-#     dispatched ref, but that only controls which (trivial, no-permission)
-#     dispatcher body runs -- the pinned `uses:` reference below still always
-#     executes main's impl workflow.
+# TRUST BOUNDARY: `schedule` and `push` (restricted to `branches: [main]`)
+# always load this file's own definition from `main`, so those two triggers
+# only ever run reviewed content.
+#
+# `workflow_dispatch` does not have that property, and no construct in this
+# file or continuous-improvement-impl.yml can give it that property: GitHub
+# always executes a dispatched ref's own copy of the workflow definition,
+# including whatever `uses:`/`permissions:` that copy declares, with whatever
+# permissions it requests up to the repository's allowed ceiling. A prior
+# revision of this file claimed that pinning the `uses:` reference below to
+# `@main` closed that gap; it does not, because this file's own `uses:` and
+# `permissions:` lines are themselves part of the dispatched ref's content and
+# can be rewritten by whoever dispatches it. See
+# continuous-improvement-impl.yml's header for the actual enforcement point
+# (a repository Environment with a branch-restricted deployment policy,
+# configured outside git content) and its current setup status.
 
 on:
   schedule:
@@ -37,7 +34,7 @@ on:
     # this is simply a stable, documented slot distinct from ci.yml's daily
     # 05:00 UTC security re-scan.
     - cron: '0 6 * * 1'
-  workflow_dispatch: {}
+  workflow_dispatch: {} # see the TRUST BOUNDARY note above for this trigger's actual guarantees
   push:
     branches: [main]
     paths:

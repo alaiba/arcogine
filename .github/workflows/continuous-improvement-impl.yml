@@ -3,25 +3,38 @@ name: Continuous improvement register (impl)
 # The actual write-capable logic for the continuous-improvement register.
 # `workflow_call`-only by design: this file is never triggered directly by
 # schedule/workflow_dispatch/push. See .github/workflows/continuous-improvement.yml,
-# which invokes this workflow via a full owner/repo/path@main reference.
+# which invokes this workflow.
 #
-# TRUST BOUNDARY: GitHub always resolves a *remote* reusable-workflow reference
-# (`owner/repo/.github/workflows/file.yml@ref`, as opposed to a same-repo
-# `./...` reference) against the content of the given ref, regardless of which
-# ref or branch triggered the calling workflow. Pinning the caller's `uses:` to
-# `@main` therefore means this file's content is always taken from `main`, even
-# when the calling workflow itself was invoked via `workflow_dispatch` against
-# an arbitrary branch -- unlike an unpinned `actions/checkout`, which follows
-# whatever ref the run actually checked out, a ref-pinned reusable-workflow
-# call cannot be redirected to branch-controlled workflow content by a
-# workflow_dispatch ref selection alone.
+# TRUST BOUNDARY, CORRECTED: an earlier revision of this split claimed that
+# pinning the caller's `uses:` to a full `owner/repo/path@main` reusable-workflow
+# reference closed the workflow_dispatch gap. That claim was wrong and has been
+# withdrawn: the *caller* workflow's own file -- including that `uses:` target
+# and the `permissions:` it grants the called job -- is itself sourced from
+# whichever ref a workflow_dispatch invocation selects. A write-access
+# collaborator's own unmerged branch can freely rewrite the caller (or, for
+# that matter, skip this file entirely and inline an issues:write step) and
+# dispatch that branch directly. No workflow-YAML-only construct can prevent
+# this: GitHub always executes the dispatched ref's own workflow content with
+# whatever permissions that content requests, up to the repository's allowed
+# ceiling. This is a documented, unavoidable property of `workflow_dispatch`
+# (see docs/development/continuous-improvement.md's "Repository-owned
+# workflow" section), not something CODEOWNERS review of `main` can retroactively
+# fix, because the exposure is the manual dispatch of branch content itself,
+# before it ever reaches `main`.
 #
-# This does not by itself stop a write-access collaborator from editing the
-# *caller* file's `uses:` line on their own branch and dispatching that -- see
-# the caller's own trust-boundary note for why that residual risk is bounded by
-# requiring independent review of `.github/workflows/` changes (CODEOWNERS)
-# before such an edit could ever land on `main` and be dispatched safely by a
-# routine invocation.
+# The only enforcement point GitHub provides for this exact case is a
+# repository *Environment* with a deployment branch policy restricting it to
+# `main`, configured in repository settings (Settings -> Environments), not in
+# any git-tracked file -- the same category of infrastructure as branch
+# protection itself. This job requires the `continuous-improvement-register`
+# environment; a repository admin must configure that environment's deployment
+# branch policy to allow only `main` before this protection is actually
+# enforced. Until that one-time setup exists, treat `workflow_dispatch` on this
+# workflow as requiring the same trust as any other write-access repository
+# push -- narrower than "arbitrary unreviewed code" (it always requires
+# pre-existing write access to this repository), but not yet bounded to
+# reviewed `main` content by anything this repository can enforce from git
+# content alone.
 
 on:
   workflow_call: {}
@@ -33,6 +46,7 @@ jobs:
   update-register:
     name: Bootstrap/update register
     runs-on: ubuntu-latest
+    environment: continuous-improvement-register
     permissions:
       contents: read
       issues: write

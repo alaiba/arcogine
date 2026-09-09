@@ -11,7 +11,7 @@
 State at minimum:
 
 - **Title** — name the question, not the delivery coordinate that tracked it.
-- **Research status** — one of `docs/research/README.md`'s lifecycle values (`READY` while in progress is unusual but possible for an interim artifact; a finished write-up is normally attached to `ACTIVE` or `CONCLUDED`).
+- **Research status** — one of `docs/research/README.md`'s lifecycle values. `READY` means the question is bounded and ready to start, not that work is in progress: once evidence gathering or synthesis has begun (including drafting this report), the investigation is `ACTIVE`, and stays `ACTIVE` until the existing `CONCLUDED` conditions in `docs/research/README.md` are actually satisfied.
 - **Research baseline** — the exact live `main` SHA the investigation was grounded against.
 - **Later reconciliation baseline**, if this write-up is revisited against a newer `main` before durable reconciliation — state both explicitly rather than silently updating the original baseline.
 - **Authority statement** — this document is research evidence only; it is not accepted architecture, product direction, or implementation commitment until a separate reconciliation change promotes it.

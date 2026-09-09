@@ -11,24 +11,25 @@ name: Continuous improvement register
 # CURRENT/DUE/OVERDUE/CHECK_TRIGGER state, and update only the workflow-owned
 # marker region of the issue body.
 #
-# TRUST BOUNDARY: every trigger below is sourced from the default branch, never
-# from PR-supplied code.
-#   - `schedule` always loads the workflow *definition* from the default branch.
-#   - `push` is restricted to `branches: [main]`, so it only ever runs the
-#     version of this file and the helper script that just landed on main.
-#   - `workflow_dispatch` on this workflow also loads the workflow *definition*
-#     from the default branch -- but GitHub's manual-run UI/API lets the
-#     invoker pick an arbitrary ref to run it against (a branch selector, or
-#     `--ref` on `gh workflow run`), and an unpinned `actions/checkout` would
-#     then check out *that* ref's copy of the helper script, not main's, while
-#     the job still holds `issues: write`. The checkout step below is
-#     therefore pinned to `ref: main` explicitly, on every trigger, so no
-#     dispatched ref selection can ever substitute branch-controlled helper
-#     code into this write-capable job.
-#
-# Permissions are minimal: contents:read to check out the helper script,
-# issues:write to bootstrap/update the register issue, pull-requests:read for
-# merged-PR evidence used by the retrospective raw guard.
+# TRUST BOUNDARY: this file is intentionally a thin, unprivileged dispatcher.
+# It holds no permissions of its own and contains no logic beyond a single
+# `uses:` call into .github/workflows/continuous-improvement-impl.yml, pinned
+# by a full `owner/repo/path@main` reusable-workflow reference rather than a
+# same-repo `./...` reference. GitHub always resolves that form of reference
+# against the content of the pinned ref (`main`), regardless of which ref
+# triggered *this* file -- so even a `workflow_dispatch` invocation against an
+# arbitrary branch still executes main's copy of the actual (issues:write)
+# logic, not a branch-controlled copy. See continuous-improvement-impl.yml's
+# own header for the precise mechanism and its residual-risk note (a
+# collaborator editing this file's own `uses:` line is bounded by requiring
+# independent review of `.github/workflows/` changes before that edit can land
+# on `main`, per `.github/CODEOWNERS`).
+#   - `schedule` and `push` (restricted to `branches: [main]`) always load this
+#     file's own definition from `main` in the first place.
+#   - `workflow_dispatch` may load this file's definition from an arbitrary
+#     dispatched ref, but that only controls which (trivial, no-permission)
+#     dispatcher body runs -- the pinned `uses:` reference below still always
+#     executes main's impl workflow.
 
 on:
   schedule:
@@ -43,10 +44,10 @@ on:
       - '.github/scripts/continuous-improvement.mjs'
       - '.github/scripts/continuous-improvement-data.json'
       - '.github/workflows/continuous-improvement.yml'
+      - '.github/workflows/continuous-improvement-impl.yml'
       - 'docs/development/continuous-improvement.md'
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: continuous-improvement-register
@@ -55,28 +56,8 @@ concurrency:
 jobs:
   update-register:
     name: Bootstrap/update register
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
       pull-requests: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # Always run main's copy of the helper, regardless of which ref a
-          # workflow_dispatch invocation selected. See the TRUST BOUNDARY note
-          # above.
-          ref: main
-
-      - name: Setup Node.js 22.22.2
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '22.22.2'
-
-      - name: Validate helper logic
-        run: node --test .github/scripts/continuous-improvement.test.mjs
-
-      - name: Bootstrap/update continuous improvement register
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node .github/scripts/continuous-improvement.mjs
+    uses: alaiba/arcogine/.github/workflows/continuous-improvement-impl.yml@main

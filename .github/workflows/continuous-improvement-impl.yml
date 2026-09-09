@@ -1,0 +1,56 @@
+name: Continuous improvement register (impl)
+
+# The actual write-capable logic for the continuous-improvement register.
+# `workflow_call`-only by design: this file is never triggered directly by
+# schedule/workflow_dispatch/push. See .github/workflows/continuous-improvement.yml,
+# which invokes this workflow via a full owner/repo/path@main reference.
+#
+# TRUST BOUNDARY: GitHub always resolves a *remote* reusable-workflow reference
+# (`owner/repo/.github/workflows/file.yml@ref`, as opposed to a same-repo
+# `./...` reference) against the content of the given ref, regardless of which
+# ref or branch triggered the calling workflow. Pinning the caller's `uses:` to
+# `@main` therefore means this file's content is always taken from `main`, even
+# when the calling workflow itself was invoked via `workflow_dispatch` against
+# an arbitrary branch -- unlike an unpinned `actions/checkout`, which follows
+# whatever ref the run actually checked out, a ref-pinned reusable-workflow
+# call cannot be redirected to branch-controlled workflow content by a
+# workflow_dispatch ref selection alone.
+#
+# This does not by itself stop a write-access collaborator from editing the
+# *caller* file's `uses:` line on their own branch and dispatching that -- see
+# the caller's own trust-boundary note for why that residual risk is bounded by
+# requiring independent review of `.github/workflows/` changes (CODEOWNERS)
+# before such an edit could ever land on `main` and be dispatched safely by a
+# routine invocation.
+
+on:
+  workflow_call: {}
+
+permissions:
+  contents: read
+
+jobs:
+  update-register:
+    name: Bootstrap/update register
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+
+      - name: Setup Node.js 22.22.2
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.22.2'
+
+      - name: Validate helper logic
+        run: node --test .github/scripts/continuous-improvement.test.mjs
+
+      - name: Bootstrap/update continuous improvement register
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/continuous-improvement.mjs

@@ -12,7 +12,7 @@ GitHub Issues are the durable continuity mechanism for consistency findings. A l
 
 At the beginning of every review, the reviewer must re-read the current `.github/agents/consistency.agent.md` from `main`, resolve the current repository head, and load the open and closed consistency-finding issues before comparing current evidence. Repository and issue state override remembered session state.
 
-A recurring weekly review may be scheduled outside the repository. That schedule is maintainer automation, not repository authority: changing or removing the external schedule does not change the review contract in this repository.
+The weekly Consistency-review cadence is a repository-owned obligation, not maintainer automation outside this repository. Its scheduling, due-state tracking, and the continuous-improvement register that carries that state are defined in [`docs/development/continuous-improvement.md`](continuous-improvement.md); this document (and `.github/agents/consistency.agent.md`) continues to own how a review is actually performed once invoked.
 
 The normal review sequence is:
 

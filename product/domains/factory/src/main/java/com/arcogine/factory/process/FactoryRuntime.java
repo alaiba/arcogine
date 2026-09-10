@@ -209,35 +209,39 @@ public class FactoryRuntime {
                     modelVersion);
         }
 
-        // Machine#setAvailability is a no-op when the machine is already in the
-        // requested online/offline state (e.g. bringing an already-idle machine online again).
-        // Only genuinely applied transitions -- online while previously Offline, or offline while
-        // previously not Offline -- may emit MACHINE_AVAILABILITY_CHANGED and advance the
-        // sequence; see the wasOffline/transitioned computation below.
+        // Machine#setAvailability is a no-op when the machine is already in the requested
+        // online/offline state (e.g. bringing an already-idle machine online again). Only
+        // genuinely applied transitions -- online while previously Offline, or offline while
+        // previously not Offline -- may mutate authoritative state, run the dispatch/recovery
+        // cascade, emit MACHINE_AVAILABILITY_CHANGED, or advance the sequence. A redundant
+        // request must never even attempt the cascade below: FactoryHandler#handleMachineAvailability
+        // always attempts to dispatch queued/pending work whenever `online` is true, regardless of
+        // whether the machine actually changed state, so calling it for a non-transition would let a
+        // redundant command silently dispatch already-waiting work -- an authoritative mutation with
+        // no corresponding supported event or sequence advancement (ADR-0011).
         boolean wasOffline = machine.get().state() == MachineState.Offline;
         boolean transitioned = online == wasOffline;
+        EventPayload.MachineAvailabilityChange requested = new EventPayload.MachineAvailabilityChange(machineId, online);
+        if (!transitioned) {
+            return new CommandResult.Accepted<>(requested, modelVersion, List.of());
+        }
 
-        // Snapshot every not-yet-dispatched job before mutating, so a genuine dispatch
-        // cascade triggered by this transition can be reported as JOB_DISPATCHED events derived
-        // from the resulting authoritative state, not copied from internal scheduler machinery.
-        List<JobView> waitingBefore = transitioned
-                ? factory.jobsView().filter(j -> j.status() == JobStatus.Queued).toList()
-                : List.of();
+        // Snapshot every not-yet-dispatched job before mutating, so the genuine dispatch cascade
+        // this transition can trigger is reported as JOB_DISPATCHED events derived from the
+        // resulting authoritative state, not copied from internal scheduler machinery.
+        List<JobView> waitingBefore = factory.jobsView().filter(j -> j.status() == JobStatus.Queued).toList();
 
         List<Event> scheduled = new ArrayList<>();
         scheduler.startCapturing(scheduled);
-        EventPayload.MachineAvailabilityChange requested = new EventPayload.MachineAvailabilityChange(machineId, online);
         SimTime changedAt = scheduler.currentTime();
         try {
             factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
-            if (transitioned) {
-                emit(
-                        RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
-                        changedAt,
-                        new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
-                        List.of(new AffectedEntityRef.MachineRef(machineId)));
-                emitNewlyDispatchedJobs(waitingBefore, changedAt);
-            }
+            emit(
+                    RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
+                    changedAt,
+                    new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
+                    List.of(new AffectedEntityRef.MachineRef(machineId)));
+            emitNewlyDispatchedJobs(waitingBefore, changedAt);
             return new CommandResult.Accepted<>(requested, modelVersion, scheduled);
         } catch (SimError e) {
             // The availability change itself (Machine#setAvailability) is the first thing
@@ -245,17 +249,13 @@ public class FactoryRuntime {
             // passed -- only the subsequent dispatch cascade can fault. So `requested` genuinely
             // was applied by the time any SimError reaches here, and belongs on Faulted too; the
             // supported MACHINE_AVAILABILITY_CHANGED event is emitted for the same reason -- that
-            // authoritative change genuinely occurred even though the later cascade did not. Since
-            // `transitioned` was computed from pre-mutation state, it still accurately reports
-            // whether this genuinely was a transition.
-            if (transitioned) {
-                emit(
-                        RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
-                        changedAt,
-                        new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
-                        List.of(new AffectedEntityRef.MachineRef(machineId)));
-                emitNewlyDispatchedJobs(waitingBefore, changedAt);
-            }
+            // authoritative change genuinely occurred even though the later cascade did not.
+            emit(
+                    RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
+                    changedAt,
+                    new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
+                    List.of(new AffectedEntityRef.MachineRef(machineId)));
+            emitNewlyDispatchedJobs(waitingBefore, changedAt);
             return new CommandResult.Faulted<>(requested, e, modelVersion, scheduled);
         } finally {
             scheduler.stopCapturing();

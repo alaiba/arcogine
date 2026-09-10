@@ -16,6 +16,7 @@ import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ConfiguredResource;
+import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.MachineState;
 import com.arcogine.types.OrderId;
@@ -260,6 +261,70 @@ class RuntimeEventDeliveryAcceptanceTest {
 
         assertTrue(runtime.drainSupportedEvents().isEmpty());
         assertEquals(0, runtime.observe().metadata().latestEventSequence());
+    }
+
+    /** One machine, concurrency 2, so a redundant online request can be tested against a machine
+     * that still has a free concurrency slot alongside queued work. */
+    private static FactoryModelVersion singleMachineConcurrencyTwoModel() {
+        return FactoryModelPublisher.publish(new FactoryModel(
+                List.of(new ConfiguredResource(new MachineId(1), "M1", 2, null, 0)),
+                List.of(new OperationDefinition(
+                        1,
+                        "Op",
+                        List.of(new OperationStepDefinition(1, "STEP", Set.of(new MachineId(1)), 100)))),
+                List.of(new ProductDefinition(new ProductId(1), "Widget", 1))));
+    }
+
+    /**
+     * The discriminating case {@link #acceptedNoOpAvailabilityRequestEmitsNothing} does not cover:
+     * a machine that is already online, still has a free concurrency slot, and has work legitimately
+     * waiting in its own queue. {@code tryDispatchFromQueue} only ever dequeues one job per call, so
+     * bringing a concurrency-2 machine online from Offline with two jobs queued dispatches only the
+     * first, leaving the second genuinely {@link JobStatus#Queued} with one free slot still open --
+     * exactly the state a redundant {@code setMachineAvailability(machine, true)} must not be able to
+     * silently drain by dispatching the second job without any corresponding supported event or
+     * {@code latestEventSequence} advancement (ADR-0011).
+     */
+    @Test
+    void acceptedNoOpAvailabilityRequestWithWaitingWorkAndFreeCapacityStillEmitsNothing() {
+        FactoryRuntime runtime = FactoryRuntime.forModel(singleMachineConcurrencyTwoModel());
+
+        runtime.setMachineAvailability(new MachineId(1), false).orElseThrow();
+        runtime.submitWorkload(new ProductId(1), 2, UNIT_PRICE).orElseThrow();
+        runtime.setMachineAvailability(new MachineId(1), true).orElseThrow(); // dispatches only job 1
+        runtime.drainSupportedEvents();
+
+        RuntimeObservation before = runtime.observe();
+        MachineView machineBefore = runtime.machinesView().get(0);
+        assertEquals(1, machineBefore.activeJobs().size(), "only the first job should have dispatched");
+        assertEquals(1, machineBefore.queueDepth(), "the second job must still be genuinely waiting");
+
+        CommandResult<EventPayload.MachineAvailabilityChange> redundant =
+                runtime.setMachineAvailability(new MachineId(1), true);
+
+        assertInstanceOf(CommandResult.Accepted.class, redundant);
+        assertTrue(
+                redundant.scheduledEvents().isEmpty(),
+                "a redundant online request must not schedule any internal dispatch work either");
+        assertTrue(
+                runtime.drainSupportedEvents().isEmpty(),
+                "a redundant online request must not dispatch the still-queued job or emit any event");
+
+        RuntimeObservation after = runtime.observe();
+        assertEquals(
+                before.metadata().latestEventSequence(),
+                after.metadata().latestEventSequence(),
+                "the sequence must not advance for a request that changed no authoritative state");
+        MachineView machineAfter = runtime.machinesView().get(0);
+        assertEquals(1, machineAfter.activeJobs().size(), "the redundant request must not have dispatched anything");
+        assertEquals(1, machineAfter.queueDepth(), "the second job must remain genuinely waiting");
+        assertEquals(
+                JobStatus.Queued,
+                runtime.jobsView()
+                        .filter(j -> j.status() == JobStatus.Queued)
+                        .findFirst()
+                        .orElseThrow()
+                        .status());
     }
 
     @Test

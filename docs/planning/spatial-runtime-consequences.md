@@ -155,6 +155,16 @@ Engine-semantics identity types, Factory V2, transfer behavior, new scheduling p
 
 ### PLAN-ENG-5-A1 — Factory V2 spatial model and validation
 
+**Status:** Implemented. `FactoryModelV2` (`com.arcogine.factory.model.v2`) carries the five
+ADR-0014 authored additions as a distinct model type composed from existing V1 concepts
+(`ConfiguredResource`, `OperationDefinition`, `ProductDefinition`), and `FactoryModelV2Validator`
+implements every validation predicate below. `FactoryModelV2` shares no supertype with
+`FactoryModel`, so it cannot be passed to `FactoryModelPublisher.publish(FactoryModel)` or used to
+construct a `FactoryModelVersion` -- a compile-time property, not a runtime guard -- which is what
+keeps V2 semantic content from ever traveling through the `factory-model:v1` publication path.
+`factory-model:v2` canonical bytes, `ModelFingerprint` derivation, and policy registration are not
+yet implemented; that is PLAN-ENG-5-A2, the next V2 Factory-model slice.
+
 **Prerequisite:** ADR-0014 landed Accepted.
 
 **Responsibility**

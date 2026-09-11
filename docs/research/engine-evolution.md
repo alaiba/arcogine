@@ -8,12 +8,7 @@
 
 The Engine implementation must not silently evolve result-affecting policy under an existing semantics identity. This document holds candidate extensions and bounded follow-up questions until evidence and an explicit architecture decision justify a different implementation contract.
 
-The first Engine semantics version is still a normative design contract with implementation/conformance work pending. That creates an important boundary:
-
-- **before the first release**, evidence may justify an explicit pre-release reconsideration of a v1 rule without pretending the existing implementation was a bug or automatically creating `engine-semantics:v2`;
-- **after a semantics version is released**, an outcome-changing interpretation for identical explicit inputs requires a new `EngineSemanticsVersion` under ADR-0015.
-
-Neither case permits a silent implementation tweak.
+`engine-semantics:v1` is already a normative design contract even though its implementation/conformance work is pending. Under current ADR-0015 and v1 authority, an intentional change that can alter outcomes for identical explicit inputs requires a new `EngineSemanticsVersion`; unreleased or implementation-pending status does not create an in-place mutation exception. Research may still decide whether v1 is acceptable for the first supported release or whether evidence justifies architecture work for a different semantics version before implementation. Neither outcome permits a silent implementation tweak.
 
 ## Lot, batch, and material-lot semantics
 
@@ -47,13 +42,13 @@ The investigation did establish material weaknesses worth preserving as reopenin
 
 ### Version and history qualification
 
-The current one-local-job-per-trigger rule and `combinedQueueDepth` ranking are normative in the unreleased `engine-semantics:v1` design contract and production currently conforms to them. Historical review found that the one-job rule was inherited implementation behavior later captured by the normative wording, not evidence of an originally evaluated scheduling trade-off.
+The current one-local-job-per-trigger rule and `combinedQueueDepth` ranking are normative `engine-semantics:v1` rules and production currently conforms to them. Historical review found that the one-job rule was inherited implementation behavior later captured by the normative wording, not evidence of an originally evaluated scheduling trade-off.
 
-Therefore:
+That history is material motivation to re-evaluate the rule, but it does not weaken the existing semantics identity. Under current architecture:
 
-- changing either rule now would be an explicit **pre-release semantic decision**, not an ordinary bug fix;
-- retaining either rule also deserves an explicit decision before v1 is released because the investigation exposed discriminating counterevidence;
-- once v1 is released, an outcome-changing revision requires a new Engine semantics version.
+- retaining either rule leaves `engine-semantics:v1` unchanged and may be pinned by its conformance fixtures;
+- selecting an outcome-changing alternative is evidence for an architecture reconciliation that establishes a new `EngineSemanticsVersion`; it is not an ordinary bug fix or permission to rewrite v1 in place;
+- implementation must not adopt an alternative until that versioned architecture/specification exists.
 
 ### Durable discriminating evidence
 
@@ -69,21 +64,21 @@ Retain these cases as reusable research evidence:
 
 The exact diagnostic timings are evidence of a scaling shape, not a performance contract or universal benchmark target.
 
-## READY — pre-release local admission semantics
+## READY — local admission semantics before first Engine release
 
 ### Question
 
-Before `engine-semantics:v1` is released, should a cascade continue to admit at most one job from a machine's own local queue per trigger, or should a precisely bounded rule admit more local work when one trigger exposes several immediately usable concurrency slots?
+Should the first supported Engine release retain `engine-semantics:v1`'s at-most-one-local-job-per-cascade-trigger rule, or does the evidence justify defining a different Engine semantics version with a precisely bounded rule that admits more local work when one trigger exposes several immediately usable concurrency slots?
 
 ### Decision at stake
 
-Whether v1 deliberately retains the inherited one-local-job rule or adopts a bounded non-idling/recovery rule before conformance fixtures make the first release immutable.
+Whether Arcogine deliberately releases v1 with the current local-admission rule or promotes an alternative through a separately versioned Engine-semantics architecture/specification before changing implementation behavior.
 
 ### Candidates
 
-- **A — retain current rule:** one local queued job at most per cascade trigger, followed by the existing shared-pending fixpoint.
-- **B — recovery-specific fill:** after a genuine offline -> online transition, admit local FIFO work up to currently usable capacity before the shared-pending stage; ordinary completion retains one-local-job behavior because it normally releases one slot.
-- **C — trigger-independent bounded non-idling:** whenever the local-queue stage runs, admit local FIFO work until no immediately usable slot remains, then run the existing shared-pending fixpoint.
+- **A — retain v1:** one local queued job at most per cascade trigger, followed by the existing shared-pending fixpoint.
+- **B — recovery-specific fill:** after a genuine offline -> online transition, admit local FIFO work up to currently usable capacity before the shared-pending stage; ordinary completion retains one-local-job behavior because it normally releases one slot. Selecting this outcome requires a new `EngineSemanticsVersion` under current architecture.
+- **C — trigger-independent bounded non-idling:** whenever the local-queue stage runs, admit local FIFO work until no immediately usable slot remains, then run the existing shared-pending fixpoint. Selecting this outcome requires a new `EngineSemanticsVersion` under current architecture.
 
 Do not expand this question into queue reordering, policy menus, due-date scheduling, setup optimization, or a global scheduler.
 
@@ -100,23 +95,23 @@ Any conclusion must account for:
 
 ### Exit criteria
 
-Conclude only when the chosen rule has an explicit rationale independent of "more utilization is always better," exact deterministic ordering is specified, compatibility/version consequences are stated, and executable acceptance cases can distinguish the chosen rule from the rejected candidates. A result-affecting conclusion remains high risk and requires independent adversarial review before architecture promotion.
+Conclude only when the chosen rule has an explicit rationale independent of "more utilization is always better," exact deterministic ordering is specified, and executable acceptance cases distinguish the chosen rule from rejected candidates. The conclusion must state either that v1 is retained unchanged or that a different result-affecting rule is recommended for promotion through a new `EngineSemanticsVersion`; it must not authorize an in-place v1 edit. A result-affecting conclusion remains high risk and requires independent adversarial review before architecture promotion.
 
-## READY — shared flexible-backlog ranking semantics
+## READY — shared flexible-backlog ranking semantics before first Engine release
 
 ### Question
 
-Before v1 release, is exact `combinedQueueDepth` — local physical queue depth plus every compatible shared-pending entry — the right deterministic ranking input when one unbound flexible job contributes demand to several candidate machines simultaneously?
+Should the first supported Engine release retain v1's exact `combinedQueueDepth` — local physical queue depth plus every compatible shared-pending entry — when one unbound flexible job contributes demand to several candidate machines simultaneously, or does the evidence justify a different Engine semantics version with another ranking term?
 
 ### Decision at stake
 
-Whether v1 deliberately keeps the current resource-selection ranking or replaces only its queue-depth term with a better justified deterministic metric while preserving eligibility, online preference, immediate-acceptance ranking, unbound shared waiting/reselection, and final `MachineId` tie-breaking.
+Whether Arcogine deliberately releases v1 with the current resource-selection ranking or promotes a different queue-depth/ranking term through a separately versioned Engine-semantics architecture/specification while preserving eligibility, online preference, immediate-acceptance ranking, unbound shared waiting/reselection, and final `MachineId` tie-breaking.
 
 ### Candidates
 
-- **A — retain exact `combinedQueueDepth`** as currently specified.
-- **B — local physical queue depth only**, leaving shared work unbound and reconsidered at dispatch time rather than projecting it into every candidate's depth.
-- **C — another deterministic overlap-aware demand term**, only if a concrete candidate can be defined without early binding or invented future knowledge and can beat both A and B on discriminating cases.
+- **A — retain v1's exact `combinedQueueDepth`** as currently specified.
+- **B — local physical queue depth only**, leaving shared work unbound and reconsidered at dispatch time rather than projecting it into every candidate's depth. Selecting this outcome requires a new `EngineSemanticsVersion` under current architecture.
+- **C — another deterministic overlap-aware demand term**, only if a concrete candidate can be defined without early binding or invented future knowledge and can beat both A and B on discriminating cases. Selecting an outcome-changing term requires a new `EngineSemanticsVersion` under current architecture.
 
 ### Proving case
 
@@ -132,7 +127,7 @@ with all machines unary. Current `combinedQueueDepth` sends A's flexible middle 
 
 ### Exit criteria
 
-Conclude only when the selected ranking term has a stated invariant/objective boundary, survives overlap and tie cases, preserves deterministic reselection semantics, and can be pinned by executable fixtures. A result-affecting conclusion remains high risk and requires independent adversarial review before architecture promotion.
+Conclude only when the selected ranking term has a stated invariant/objective boundary, survives overlap and tie cases, preserves deterministic reselection semantics, and can be pinned by executable fixtures. The conclusion must state either that v1's ranking is retained unchanged or that a different result-affecting ranking is recommended for promotion through a new `EngineSemanticsVersion`; it must not authorize an in-place v1 edit. A result-affecting conclusion remains high risk and requires independent adversarial review before architecture promotion.
 
 ## CANDIDATE — queue sequencing and scheduling objective
 
@@ -144,7 +139,7 @@ Do not research a replacement sequencing rule merely because one benchmark impro
 
 The dispatch investigation established a concrete implementation-efficiency problem independent of policy choice: repeated scans of `pendingMultiEligible` make admission scale quadratically for a fixed eligible-set size, with additional scan-heavy dispatch costs.
 
-This concern is ready for implementation planning **only under an exact-semantics constraint**. Optimization must preserve selected resource assignments, local/shared waiting order, shared-backlog reselection behavior, supported events/observations, deterministic replay, and the final ranking rule chosen by the pre-release `combinedQueueDepth` research above. If an optimization requires changing those results, stop and return to research rather than hiding policy evolution inside a performance change.
+This concern is ready for implementation planning only under an exact-semantics constraint. Optimize the ranking semantics of the specific `EngineSemanticsVersion` being executed without changing selected resource assignments, local/shared waiting order, shared-backlog reselection behavior, supported events/observations, deterministic replay, or exact ranking arithmetic. If an optimization requires different results, stop and return to research rather than hiding policy evolution inside a performance change.
 
 ## Session/advancement evolution
 
@@ -158,7 +153,7 @@ Transport versioning, retained supported-event history, reconnect/resynchronizat
 
 Promote a question only when:
 
-- the concrete consumer/problem or pre-release semantic risk is identified;
+- the concrete consumer/problem or first-release semantic risk is identified;
 - result-affecting semantics are explicit;
 - compatibility/version consequences are understood;
 - ownership between Factory, Engine, and consumers is settled; and

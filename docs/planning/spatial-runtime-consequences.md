@@ -162,6 +162,11 @@ Use semantic names rather than research candidate/sample labels.
   mean is 6.33 versus 6.67 under local-depth-only even though the current comparator's decisive input
   projection is unchanged. This prevents the canonical case from being encoded as evidence that local
   depth is a generally superior ranking;
+- long-step mirror: `route-order: M1:5 -> {M1,M2}:100`, `clock-order: M3:1000`,
+  `shared-order: {M1,M3}:10`, all machines unary. V1 produces `[105,1000,15]`, mean 373.33,
+  makespan 1000; local-depth-only produces `[105,1000,115]`, mean 406.67, makespan 1000. Preserve this
+  independently shaped reversal alongside the tighter one-variable mirror rather than treating either
+  case as a substitute for the other;
 - scarce-machine protection: `route-order: M1:5 -> {M1,M2}:60`, `clock-order: M3:500`, and two
   `shared-order` instances each eligible on `{M1,M3}` for 20 ticks. V1 completes `[65,500,25,45]`,
   mean 158.75; local-depth-only completes `[65,500,85,105]`, mean 188.75;

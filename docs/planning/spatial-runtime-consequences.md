@@ -1,6 +1,8 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Proposed delivery plan; architecture fixed by ADR-0014 / ADR-0015, implementation not yet started
+Status: Proposed delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-A1 (Factory
+V2 spatial model and validation) is implemented; remaining slices (PLAN-ENG-5-A2 onward) are still
+proposed/pending.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 

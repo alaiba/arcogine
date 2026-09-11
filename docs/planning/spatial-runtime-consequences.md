@@ -1,8 +1,8 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Proposed delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-A1 (Factory
-V2 spatial model and validation) is implemented; remaining slices (PLAN-ENG-5-A2 onward) are still
-proposed/pending.
+Status: Proposed delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-0 is ready
+after joint first-release dispatch reconciliation, PLAN-ENG-5-A1 (Factory V2 spatial model and
+validation) is implemented, and the remaining slices are proposed/pending.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -19,13 +19,13 @@ The architecture is fixed by:
 - [Engine Semantics v1](../architecture/engine-semantics-v1.md), the normative first-version Engine interpretation;
 - Accepted ADR-0011 for supported observation/event state reconstruction and ordering.
 
-Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. In
-addition, PLAN-ENG-5-0 must not release v1 conformance fixtures until the READY local-admission and
-shared-backlog-ranking questions in [Engine Evolution Research](../research/engine-evolution.md) are
-concluded. If they retain v1, PLAN-ENG-5-0 pins the existing rules unchanged. If either recommends an
-outcome-changing alternative, that alternative requires a new `EngineSemanticsVersion` and this plan
-must be reconciled before dispatch-dependent implementation continues. Factory V2 model/canonicalization
-slices that do not depend on those rules may proceed independently.
+Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. The
+first-release local-admission and shared-backlog-ranking questions in
+[Engine Evolution Research](../research/engine-evolution.md) are now concluded after independent
+adversarial review, and both retain `engine-semantics:v1` unchanged. The research prerequisite for
+PLAN-ENG-5-0 is therefore satisfied: that slice pins the existing rules and their reviewed boundary
+cases rather than selecting a new policy. Factory V2 model/canonicalization slices remain independently
+sequenced where they do not depend on dispatch interpretation.
 
 ## 2. PLAN-ENG-5 semantic boundary
 
@@ -67,10 +67,9 @@ Today that branch already:
 5. otherwise routes the job into the existing single-machine queue or `pendingMultiEligible` path.
 
 PLAN-ENG-5 is v1-specific and preserves v1 selection/ranking and recovery semantics at that insertion
-point. The READY dispatch research may determine that Arcogine should not proceed with those rules for
-the first supported Engine release, but it cannot mutate them under the v1 identity. If an alternative
-is recommended, dispatch-dependent PLAN-ENG-5 work stops until a new semantics version and reconciled
-plan define the replacement interpretation.
+point. The concluded first-release research deliberately retains those rules with qualifications; it
+does not claim they are globally optimal. Any future outcome-changing alternative still requires a new
+Engine semantics identity and plan reconciliation rather than an in-place change to v1.
 
 ## 4. Delivery policy
 
@@ -97,11 +96,15 @@ coherent in the same landed change under ADR-0011.
 
 ### PLAN-ENG-5-0 — Pin existing Engine semantics
 
-**Prerequisites:** ADR-0015 landed Accepted, plus conclusion of the two READY first-release dispatch
-questions in [Engine Evolution Research](../research/engine-evolution.md) with `engine-semantics:v1`
-retained unchanged. If either question instead recommends an outcome-changing alternative, do not
-edit the bullets below or rewrite v1; establish the required new Engine semantics identity through
-architecture/specification reconciliation and re-plan this v1-specific slice first.
+**Status:** Ready. The first-release dispatch research gate is cleared: both reviewed questions retain
+`engine-semantics:v1` unchanged, with the qualifications recorded in
+[Engine Evolution Research](../research/engine-evolution.md).
+
+**Prerequisites:** ADR-0015 landed Accepted, plus conclusion of the two first-release dispatch
+questions with `engine-semantics:v1` retained unchanged. Those prerequisites are satisfied. A future
+reopening that recommends an outcome-changing alternative does not rewrite this slice or v1 in place;
+it requires a new Engine semantics identity through architecture/specification reconciliation and a
+new plan decision for the changed interpretation.
 
 **Responsibility**
 
@@ -128,6 +131,70 @@ Add characterization/conformance evidence for the result-affecting behavior that
 
 Pinned behavioral fixtures fail if any of those results change for identical explicit inputs. The
 slice does not freeze incidental DTO or implementation shape.
+
+The reconciled research adds these mandatory dispatch fixtures to the existing v1 conformance set.
+Use semantic names rather than research candidate/sample labels.
+
+**Local admission / recovery:**
+
+- one offline concurrency-4 machine with eight queued 10-tick single-eligible jobs completes after
+  80 ticks from recovery under v1; this pins the retained one-local-job recovery stage rather than a
+  fill-to-capacity interpretation;
+- a mixed recovery with M1 concurrency 4, M2 offline, two local M1-only 10-tick jobs and four shared
+  `{M1,M2}` 3-tick jobs proves the sequence is local stage first and then shared fixpoint, while also
+  proving that one local admission does not reserve all remaining recovery opportunity for local work;
+- the routed regression pins a valid case with order completions `[14,29,29]` / makespan 29 under v1,
+  against the rejected fill behavior's `[14,40,21]` / makespan 40;
+- the objective-conflict case pins v1 at makespan/mean-order completion `93 / 69.75`, against the
+  rejected fill behavior's `91 / 71.25`;
+- eight jobs routed through `M1 concurrency 4, duration 10 -> M2 unary, duration 100` complete at 810
+  under both interpretations, proving upstream capacity fill does not imply terminal improvement;
+- preserve same-machine continuation precedence, local-before-shared ordering, FIFO local start
+  order, queue-smaller-than-capacity recovery, repeated recovery, and equal-time completion ordering.
+
+**Shared flexible-backlog ranking:**
+
+- canonical overlap: `O1: M1:5 -> {M1,M2}:1 -> M1:1`, `O2: M3:6`,
+  `O3: {M1,M3}:100`, all machines unary. V1 produces `[106,6,105]`, mean 72.33, makespan 106; the
+  rejected local-depth-only interpretation produces `[7,6,106]`, mean 39.67, makespan 106. The shared
+  job must remain unbound and later reselect a different machine when the runtime state changes;
+- one-variable mirror: use the same case but change only `O3` duration from 100 to 1. V1 mean is 6.33
+  versus 6.67 under local-depth-only even though the current comparator's decisive input projection is
+  unchanged. This prevents the canonical case from being encoded as evidence that local depth is a
+  generally superior ranking;
+- scarce-machine protection: `O1: M1:5 -> {M1,M2}:60`, `O2: M3:500`,
+  `O3,O4: {M1,M3}:20`. V1 completes `[65,500,25,45]`, mean 158.75; local-depth-only completes
+  `[65,500,85,105]`, mean 188.75;
+- makespan non-neutrality: use the canonical routes with concurrency 2 on M1/M2 and quantities
+  `2 / 1 / 3`. V1 yields `[106,6,106]`, mean 72.67, makespan 106; local-depth-only yields
+  `[7,6,107]`, mean 40.00, makespan 107;
+- overlap multiplicity: one 100-tick shared job eligible on `{M1,M3,M4,M5}` while M3/M4/M5 are held
+  for 500 ticks; preserve unbound waiting and reselection while the shared entry contributes to every
+  compatible candidate's exact v1 key;
+- recovery magnitude-sensitive corner: construct a ranking call with a recovered concurrency-4
+  machine still accepting with local depth 3 under the retained one-local-job recovery stage,
+  competing with a just-freed unary machine carrying two compatible pending shared entries. Exact v1
+  keys are 3 versus 2 and choose the unary machine; a positive weight of 2 would produce 3 versus 4
+  and choose the recovered machine. This pins that exact shared-entry magnitude matters in the
+  retained recovery corner and prevents over-generalizing the usual binary-handover interpretation.
+
+**Interpretation boundary from reconciliation:**
+
+- conformance pins **behavior**, not a claim that the retained local-admission or ranking rules are
+  optimal;
+- one-local-job admission is an inherited asymmetry of the local queue stage, not a general
+  trigger-budget invariant: initial admission and the shared fixpoint already fill capacity;
+- `combinedQueueDepth` acts like a binary handover signal only on the sub-domain where competing
+  accepting candidates do not carry residual local queues; the recovery fixture above pins the
+  reachable magnitude-sensitive exception;
+- generated research win ratios are not workload probabilities and must not appear as conformance
+  requirements;
+- the partial-fault history where recovery-only fill and fill-on-every-local-stage diverge belongs to
+  the fault/recovery contract, not to healthy scheduling-policy selection. Preserve it only where the
+  existing partial-mutation fault contract is being pinned;
+- if implementation or later spatial admission mechanics create a new healthy state that violates the
+  reviewed enqueue/free-capacity/ranking assumptions, stop and reopen the bounded research question
+  instead of silently extending the rationale.
 
 `PLAN-ENG-5-0` is characterization work with **two deliberate production changes**, both required to make the
 normative arithmetic implementable at all:
@@ -350,6 +417,15 @@ Public reservation aggregate, transfer timing/state/events, transport capacity.
 
 **Prerequisites:** PLAN-ENG-5-A2, PLAN-ENG-5-B2, PLAN-ENG-5-C1 and PLAN-ENG-5-C2.
 
+**Research recheck before activation:** inbound reservation changes what "can accept" means and was a
+named reopening seam in both reviewed first-release dispatch questions. Before making the reservation
+substrate reachable, prove that reservation-aware admission does not create a new healthy state where
+an online machine has free processing capacity plus residual local work, or where more than one
+accepting candidate can carry shared-demand pressure in a way the retained conformance model did not
+cover. If it does, stop and reopen the bounded local-admission/ranking research instead of silently
+extending the first-release rationale. This check does not reopen the questions merely because V2
+model facts exist; it is triggered when reservation-aware runtime execution becomes reachable.
+
 **Responsibility**
 
 Activate the first coherent transfer path at the existing `handleTaskEnd` next-step seam:
@@ -473,32 +549,33 @@ The scenario demonstrates:
 ## 6. Dependency and parallelism map
 
 ```text
-READY dispatch research --retain v1--> PLAN-ENG-5-0 v1 fixtures ---> PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-B2 provenance ----+
-                                                                                                                   |          |
-PLAN-ENG-5-A1 V2 model/validation ---> PLAN-ENG-5-A2 V2 identity --------------------------------------------------------+-> PLAN-ENG-5-C3 activation
-       |                         |                                                                                   |
-       |                         +--> PLAN-ENG-5-A3 policy evolution ----------------------------------------------------+   v
-       |                                                                                                        | PLAN-ENG-5-C4 edges
-       +--> PLAN-ENG-5-C1 transfer arithmetic ------------------------------------------------------------------------+ |   |
-                                                                                                              | |   v
-PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-C2 admission reservation -----------------------------------------------+ | PLAN-ENG-5-D closure
-                                                                                                                |   |
-                                                                                                                +--> PLAN-ENG-5-E
+CONCLUDED dispatch research --retain v1--> PLAN-ENG-5-0 v1 fixtures ---> PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-B2 provenance ----+
+                                                                                                                        |          |
+PLAN-ENG-5-A1 V2 model/validation ---> PLAN-ENG-5-A2 V2 identity -------------------------------------------------------------+-> PLAN-ENG-5-C3 activation
+       |                         |                                                                                        |
+       |                         +--> PLAN-ENG-5-A3 policy evolution ---------------------------------------------------------+   v
+       |                                                                                                             | PLAN-ENG-5-C4 edges
+       +--> PLAN-ENG-5-C1 transfer arithmetic -----------------------------------------------------------------------------+ |   |
+                                                                                                                   | |   v
+PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-C2 admission reservation ----------------------------------------------------+ | PLAN-ENG-5-D closure
+                                                                                                                     |   |
+                                                                                                                     +--> PLAN-ENG-5-E
 ```
 
-If READY dispatch research recommends an outcome-changing alternative instead of retaining v1, the
-path above stops before PLAN-ENG-5-0 and resumes only after architecture establishes the new semantics
-identity and this plan is reconciled for it.
+The first-release research gate is cleared. A future reopened investigation that recommends an
+outcome-changing alternative does not retroactively mutate v1 or invalidate historical v1 fixtures;
+it requires a new `EngineSemanticsVersion` and a separately reconciled implementation path.
 
-Practical parallelism after the ADRs land:
+Practical parallelism now:
 
-- `PLAN-ENG-5-A1` may proceed while the two READY dispatch questions are resolved;
-- `PLAN-ENG-5-0` starts only after those questions conclude with v1 retained unchanged;
-- after `PLAN-ENG-5-0`, `PLAN-ENG-5-B1` can proceed while `PLAN-ENG-5-A1/A2` advances;
+- `PLAN-ENG-5-0` may start now; the reviewed research gate is satisfied;
+- `PLAN-ENG-5-A2` may proceed independently because `PLAN-ENG-5-A1` is already landed;
+- after `PLAN-ENG-5-0`, `PLAN-ENG-5-B1` can proceed while `PLAN-ENG-5-A2` advances;
 - after `PLAN-ENG-5-A1`/`PLAN-ENG-5-B1`, `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` can proceed independently;
 - `PLAN-ENG-5-A3` is compatibility/history work and need not block `PLAN-ENG-5-C3`, but it must close before
   `PLAN-ENG-5-E` and before a real V1→V2 controlled transition;
-- `PLAN-ENG-5-C3` is the deliberate convergence point and should receive correspondingly strong review.
+- `PLAN-ENG-5-C3` is the deliberate convergence point and must perform the reservation-aware dispatch
+  recheck above before activation, then receive correspondingly strong review.
 
 ## 7. KPI acceptance
 
@@ -542,11 +619,12 @@ outward. This avoids immediate wire-contract churn. PLAN-ENG-4-D is not a prereq
 
 PLAN-ENG-5 is architecture-ready at the Factory-V2/spatial boundary because ADR-0014 and ADR-0015 are
 Accepted and this focused plan is reconciled with the parent Engine/Factory plans. The v1 conformance
-path is not implementation-ready at PLAN-ENG-5-0 until the two READY dispatch questions are concluded
-with v1 retained unchanged. If either recommends an outcome-changing alternative, a new
-`EngineSemanticsVersion` and plan reconciliation are required before dispatch-dependent implementation.
+path is now implementation-ready at PLAN-ENG-5-0: both first-release dispatch questions concluded
+with v1 retained unchanged after adversarial review, and their binding qualifications/proving cases
+are transferred above.
 
-No additional architecture analysis is required for the independent Factory V2 model/canonicalization
-slices unless implementation evidence falsifies an accepted invariant. For dispatch-dependent slices,
-resolve the named research gate first. Any slice that encounters other contradictory evidence must
-stop at that boundary rather than silently revising the accepted contract in product code.
+No additional architecture analysis is required for PLAN-ENG-5-0 or the independent Factory V2
+model/canonicalization slices unless implementation evidence falsifies an accepted invariant. Before
+reservation-aware transfer activation, perform the explicit dispatch recheck in PLAN-ENG-5-C3. Any
+slice that encounters other contradictory evidence must stop at that boundary rather than silently
+revising the accepted contract in product code.

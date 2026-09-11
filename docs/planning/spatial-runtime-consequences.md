@@ -154,17 +154,17 @@ Use semantic names rather than research candidate/sample labels.
 
 **Shared flexible-backlog ranking:**
 
-- canonical overlap: `O1: M1:5 -> {M1,M2}:1 -> M1:1`, `O2: M3:6`,
-  `O3: {M1,M3}:100`, all machines unary. V1 produces `[106,6,105]`, mean 72.33, makespan 106; the
-  rejected local-depth-only interpretation produces `[7,6,106]`, mean 39.67, makespan 106. The shared
-  job must remain unbound and later reselect a different machine when the runtime state changes;
-- one-variable mirror: use the same case but change only `O3` duration from 100 to 1. V1 mean is 6.33
-  versus 6.67 under local-depth-only even though the current comparator's decisive input projection is
-  unchanged. This prevents the canonical case from being encoded as evidence that local depth is a
-  generally superior ranking;
-- scarce-machine protection: `O1: M1:5 -> {M1,M2}:60`, `O2: M3:500`,
-  `O3,O4: {M1,M3}:20`. V1 completes `[65,500,25,45]`, mean 158.75; local-depth-only completes
-  `[65,500,85,105]`, mean 188.75;
+- canonical overlap: `route-order: M1:5 -> {M1,M2}:1 -> M1:1`, `clock-order: M3:6`,
+  `shared-order: {M1,M3}:100`, all machines unary. V1 produces `[106,6,105]`, mean 72.33, makespan 106;
+  the rejected local-depth-only interpretation produces `[7,6,106]`, mean 39.67, makespan 106. The
+  shared job must remain unbound and later reselect a different machine when the runtime state changes;
+- one-variable mirror: use the same case but change only `shared-order` duration from 100 to 1. V1
+  mean is 6.33 versus 6.67 under local-depth-only even though the current comparator's decisive input
+  projection is unchanged. This prevents the canonical case from being encoded as evidence that local
+  depth is a generally superior ranking;
+- scarce-machine protection: `route-order: M1:5 -> {M1,M2}:60`, `clock-order: M3:500`, and two
+  `shared-order` instances each eligible on `{M1,M3}` for 20 ticks. V1 completes `[65,500,25,45]`,
+  mean 158.75; local-depth-only completes `[65,500,85,105]`, mean 188.75;
 - makespan non-neutrality: use the canonical routes with concurrency 2 on M1/M2 and quantities
   `2 / 1 / 3`. V1 yields `[106,6,106]`, mean 72.67, makespan 106; local-depth-only yields
   `[7,6,107]`, mean 40.00, makespan 107;

@@ -15,7 +15,7 @@ State at minimum:
 - **Research baseline** — the exact live `main` SHA the investigation was grounded against.
 - **Later reconciliation baseline**, if this write-up is revisited against a newer `main` before durable reconciliation — state both explicitly rather than silently updating the original baseline.
 - **Authority statement** — this document is research evidence only; it is not accepted architecture, product direction, or implementation commitment until a separate reconciliation change promotes it.
-- **Adversarial-review status**, if applicable — `not yet required` (low/medium risk), `required, not yet performed`, `self-administered only`, or a link to the independent adversarial review artifact and its disposition.
+- **Adversarial-review status**, if applicable — state the status that is true for this exact report revision when it is committed: `not yet required` (low/medium risk), `required, not yet performed`, or `self-administered only`. Do not amend an already reviewed report merely to add the later independent-review link or disposition; the adversarial-review artifact and any reconciliation PR must instead identify this report's exact commit SHA. A later report commit is a distinct evidence revision and does not inherit the prior disposition automatically.
 
 ## Question
 
@@ -55,7 +55,7 @@ The concrete scenarios used to discriminate between the candidate models, derive
 
 ## Adversarial analysis
 
-For a write-up still awaiting independent review, distinguish the author's own self-challenge from a later independent pass — do not present a self-administered check with the weight of independent review. Once an independent adversarial review exists, link it here and state its disposition (`ACCEPT`, `ACCEPT WITH QUALIFICATIONS`, `MORE EVIDENCE REQUIRED`, or `REOPEN` — see `docs/development/researching.md` §9) rather than duplicating its content.
+For a write-up still awaiting independent review, distinguish the author's own self-challenge from a later independent pass — do not present a self-administered check with the weight of independent review. Once an independent adversarial review exists, keep this reviewed report revision unchanged: the review artifact records this report's exact commit SHA and its disposition (`ACCEPT`, `ACCEPT WITH QUALIFICATIONS`, `MORE EVIDENCE REQUIRED`, or `REOPEN` — see `docs/development/researching.md` §9), and the later reconciliation references both exact evidence coordinates. If the report itself is revised after review, that new commit is a distinct report revision and, where independent review is required for promotion, must receive its own applicable adversarial review before its conclusions are promoted.
 
 ## Surviving invariants
 

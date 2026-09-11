@@ -53,11 +53,17 @@ A topic is ready for implementation planning only when semantic/product meaning,
 
 ## Evidence custody and retirement
 
-Completed research reports and independent adversarial-review artifacts must be persisted on temporary, semantically named research-evidence branches as defined by [`docs/development/researching.md`](../development/researching.md). Those branches provide reproducible cross-session custody for evidence; they are not current repository authority and are not merged to `main` merely because a report exists.
+Research that must survive a session uses a temporary, semantically named **research-evidence workspace branch** as defined by [`docs/development/researching.md`](../development/researching.md). The normal workspace unit is one bounded research question. An explicitly coupled set of questions may share one workspace only when they are intended to be reviewed/reconciled as one packet. Do not create a separate branch merely because a report and its adversarial review are different artifacts, and do not create one permanent repository-wide research branch.
 
-A temporary research-evidence branch may be retired only after its investigation is `CONCLUDED` or `SUPERSEDED` and the knowledge-transfer audit has accounted for every material result that should survive: accepted conclusions and qualifications in their durable authority, remaining unknowns/reopening triggers/new questions back in research, implementation responsibilities in admitted planning when ready, reusable proving cases/counterexamples/measurements/know-how in the surface that will need them, and explicit discard decisions for findings that no longer merit retention. If any material item remains unaccounted for, keep the evidence branch available.
+A workspace may contain checkpoints, drafts, diagnostic notes, completed reports, and adversarial-review artifacts. Branch-tip state is never the evidence identity: a completed report or review becomes a handoff artifact only when its exact commit SHA and path are explicitly returned. Those exact revisions are immutable inputs to later review/reconciliation even though later workspace commits may add other material.
 
-This custody rule does not add a lifecycle status or permanent report archive. The register continues to track the research question; the temporary branch preserves the report/review evidence until reconciliation is complete enough to retire it safely.
+Research workspaces provide reproducible cross-session custody only. Their contents are not current repository authority and are not merged to `main` merely because research exists.
+
+A temporary research-evidence workspace may be retired only after every research question it carries is `CONCLUDED` or `SUPERSEDED` and the knowledge-transfer audit has accounted for every material result that should survive: accepted conclusions and qualifications in their durable authority, remaining unknowns/reopening triggers/new questions back in research, implementation responsibilities in admitted planning when ready, reusable proving cases/counterexamples/measurements/know-how in the surface that will need them, and explicit discard decisions for findings that no longer merit retention. If any material item remains unaccounted for, keep the workspace available.
+
+The reconciliation that completes that audit owns the retirement decision. Once the reconciliation has landed, deleting the listed temporary workspace branch is immediate post-merge cleanup; branch deletion is not itself part of repository authority and must not happen before the reviewed transfer is durable.
+
+This custody rule does not add a lifecycle status, permanent report archive, or second research ledger. The register continues to track the research question; temporary workspaces only preserve in-progress and completed evidence until reconciliation is complete enough to retire them safely.
 
 ## Research register
 
@@ -86,6 +92,6 @@ Priority is portfolio guidance, not delivery commitment.
 - Add a material unknown instead of hiding it in an implementation plan.
 - Mark research `READY` only when an independent researcher can execute it from the stated evidence/exit criteria — see `docs/development/researching.md` for what a sufficiently bounded brief and decision-quality report require.
 - When research concludes, record the verdict here and link the durable destination; do not duplicate the authoritative conclusion.
-- Before retiring temporary research evidence, perform the knowledge-transfer audit above; branch deletion is not a substitute for deciding what should survive.
+- Before retiring a temporary research-evidence workspace, perform the knowledge-transfer audit above; branch deletion is not a substitute for deciding what should survive.
 - During planning/consistency review, flag exploratory content that has leaked back into `docs/planning/` and relocate it here.
 - Keep concluded research visible when it provides useful history, but prefer current architecture/reference for durable semantics.

@@ -61,6 +61,9 @@ The implementation sequence is owned jointly with [Spatial Runtime Consequences]
 
 ### PLAN-ENG-5-A1 — V2 model and validation
 
+**Status:** Implemented. `factory-model:v2` canonical bytes/fingerprint policy are not released by
+this slice; that is PLAN-ENG-5-A2, now the next V2 Factory-model slice.
+
 Implement the five authored additions and deterministic validation required by ADR-0014.
 
 Acceptance evidence must prove:

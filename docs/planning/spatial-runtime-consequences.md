@@ -17,7 +17,13 @@ The architecture is fixed by:
 - [Engine Semantics v1](../architecture/engine-semantics-v1.md), the normative first-version Engine interpretation;
 - Accepted ADR-0011 for supported observation/event state reconstruction and ordering.
 
-Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted.
+Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. In
+addition, PLAN-ENG-5-0 must not release v1 conformance fixtures until the READY local-admission and
+shared-backlog-ranking questions in [Engine Evolution Research](../research/engine-evolution.md) are
+concluded. If they retain v1, PLAN-ENG-5-0 pins the existing rules unchanged. If either recommends an
+outcome-changing alternative, that alternative requires a new `EngineSemanticsVersion` and this plan
+must be reconciled before dispatch-dependent implementation continues. Factory V2 model/canonicalization
+slices that do not depend on those rules may proceed independently.
 
 ## 2. PLAN-ENG-5 semantic boundary
 
@@ -58,8 +64,11 @@ Today that branch already:
 4. starts immediately only when the selected resource can accept the job;
 5. otherwise routes the job into the existing single-machine queue or `pendingMultiEligible` path.
 
-PLAN-ENG-5 preserves those selection/ranking and recovery semantics. It inserts a deterministic transfer
-interval only after a concrete destination is selected and currently admissible for binding.
+PLAN-ENG-5 is v1-specific and preserves v1 selection/ranking and recovery semantics at that insertion
+point. The READY dispatch research may determine that Arcogine should not proceed with those rules for
+the first supported Engine release, but it cannot mutate them under the v1 identity. If an alternative
+is recommended, dispatch-dependent PLAN-ENG-5 work stops until a new semantics version and reconciled
+plan define the replacement interpretation.
 
 ## 4. Delivery policy
 
@@ -86,7 +95,11 @@ coherent in the same landed change under ADR-0011.
 
 ### PLAN-ENG-5-0 — Pin existing Engine semantics
 
-**Prerequisite:** ADR-0015 landed Accepted.
+**Prerequisites:** ADR-0015 landed Accepted, plus conclusion of the two READY first-release dispatch
+questions in [Engine Evolution Research](../research/engine-evolution.md) with `engine-semantics:v1`
+retained unchanged. If either question instead recommends an outcome-changing alternative, do not
+edit the bullets below or rewrite v1; establish the required new Engine semantics identity through
+architecture/specification reconciliation and re-plan this v1-specific slice first.
 
 **Responsibility**
 
@@ -329,7 +342,7 @@ Public reservation aggregate, transfer timing/state/events, transport capacity.
 
 Activate the first coherent transfer path at the existing `handleTaskEnd` next-step seam:
 
-- preserve PLAN-ENG-2 selection timing/ranking and post-selection waiting paths;
+- preserve PLAN-ENG-2 v1 selection timing/ranking and post-selection waiting paths;
 - bind only when the selected destination is currently admissible;
 - for a distinct resource, reserve admission capacity, compute/fix duration once, enter
   `TRANSFERRING`, and schedule completion;
@@ -448,22 +461,27 @@ The scenario demonstrates:
 ## 6. Dependency and parallelism map
 
 ```text
-PLAN-ENG-5-0 existing-semantics fixtures ---> PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-B2 provenance ----+
-                                                                                |          |
-PLAN-ENG-5-A1 V2 model/validation ---> PLAN-ENG-5-A2 V2 identity -------------------------------+-> PLAN-ENG-5-C3 activation
-       |                         |                                                        |
-       |                         +--> PLAN-ENG-5-A3 policy evolution -------------------------+   v
-       |                                                                             | PLAN-ENG-5-C4 edges
-       +--> PLAN-ENG-5-C1 transfer arithmetic ---------------------------------------------+ |   |
-                                                                                   | |   v
-PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-C2 admission reservation ------------------------+ | PLAN-ENG-5-D closure
-                                                                                     |   |
-                                                                                     +--> PLAN-ENG-5-E
+READY dispatch research --retain v1--> PLAN-ENG-5-0 v1 fixtures ---> PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-B2 provenance ----+
+                                                                                                                   |          |
+PLAN-ENG-5-A1 V2 model/validation ---> PLAN-ENG-5-A2 V2 identity --------------------------------------------------------+-> PLAN-ENG-5-C3 activation
+       |                         |                                                                                   |
+       |                         +--> PLAN-ENG-5-A3 policy evolution ----------------------------------------------------+   v
+       |                                                                                                        | PLAN-ENG-5-C4 edges
+       +--> PLAN-ENG-5-C1 transfer arithmetic ------------------------------------------------------------------------+ |   |
+                                                                                                              | |   v
+PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-C2 admission reservation -----------------------------------------------+ | PLAN-ENG-5-D closure
+                                                                                                                |   |
+                                                                                                                +--> PLAN-ENG-5-E
 ```
+
+If READY dispatch research recommends an outcome-changing alternative instead of retaining v1, the
+path above stops before PLAN-ENG-5-0 and resumes only after architecture establishes the new semantics
+identity and this plan is reconciled for it.
 
 Practical parallelism after the ADRs land:
 
-- `PLAN-ENG-5-0` and `PLAN-ENG-5-A1` are independent first slices;
+- `PLAN-ENG-5-A1` may proceed while the two READY dispatch questions are resolved;
+- `PLAN-ENG-5-0` starts only after those questions conclude with v1 retained unchanged;
 - after `PLAN-ENG-5-0`, `PLAN-ENG-5-B1` can proceed while `PLAN-ENG-5-A1/A2` advances;
 - after `PLAN-ENG-5-A1`/`PLAN-ENG-5-B1`, `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` can proceed independently;
 - `PLAN-ENG-5-A3` is compatibility/history work and need not block `PLAN-ENG-5-C3`, but it must close before
@@ -510,10 +528,13 @@ outward. This avoids immediate wire-contract churn. PLAN-ENG-4-D is not a prereq
 
 ## 9. Acceptance / readiness
 
-PLAN-ENG-5 is architecture-ready once ADR-0014 and ADR-0015 are Accepted and this focused plan is
-reconciled with the parent Engine/Factory plans. Implementation remains pending until the slices
-above land with executable evidence.
+PLAN-ENG-5 is architecture-ready at the Factory-V2/spatial boundary because ADR-0014 and ADR-0015 are
+Accepted and this focused plan is reconciled with the parent Engine/Factory plans. The v1 conformance
+path is not implementation-ready at PLAN-ENG-5-0 until the two READY dispatch questions are concluded
+with v1 retained unchanged. If either recommends an outcome-changing alternative, a new
+`EngineSemanticsVersion` and plan reconciliation are required before dispatch-dependent implementation.
 
-No additional architecture analysis is required before these slices unless implementation evidence
-falsifies one of the accepted invariants. A slice that encounters such evidence must stop at that
-boundary rather than silently revising the accepted contract in product code.
+No additional architecture analysis is required for the independent Factory V2 model/canonicalization
+slices unless implementation evidence falsifies an accepted invariant. For dispatch-dependent slices,
+resolve the named research gate first. Any slice that encounters other contradictory evidence must
+stop at that boundary rather than silently revising the accepted contract in product code.

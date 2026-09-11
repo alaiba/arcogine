@@ -18,10 +18,12 @@ The architecture is fixed by:
 - Accepted ADR-0011 for supported observation/event state reconstruction and ordering.
 
 Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. In
-addition, PLAN-ENG-5-0 must not release conformance fixtures for the two contested pre-release
-dispatch rules until the READY local-admission and shared-backlog-ranking questions in
-[Engine Evolution Research](../research/engine-evolution.md) are concluded and reconciled. Factory V2
-model/canonicalization slices that do not depend on those rules may proceed independently.
+addition, PLAN-ENG-5-0 must not release v1 conformance fixtures until the READY local-admission and
+shared-backlog-ranking questions in [Engine Evolution Research](../research/engine-evolution.md) are
+concluded. If they retain v1, PLAN-ENG-5-0 pins the existing rules unchanged. If either recommends an
+outcome-changing alternative, that alternative requires a new `EngineSemanticsVersion` and this plan
+must be reconciled before dispatch-dependent implementation continues. Factory V2 model/canonicalization
+slices that do not depend on those rules may proceed independently.
 
 ## 2. PLAN-ENG-5 semantic boundary
 
@@ -62,12 +64,11 @@ Today that branch already:
 4. starts immediately only when the selected resource can accept the job;
 5. otherwise routes the job into the existing single-machine queue or `pendingMultiEligible` path.
 
-PLAN-ENG-5 preserves the finalized v1 selection/ranking and recovery semantics at that insertion
-point. Until the two READY pre-release dispatch questions are reconciled, today's exact
-`combinedQueueDepth` ranking and one-local-job-per-trigger rule are implementation/normative
-baselines under reconsideration, not rules this plan is authorized to freeze by assumption. Transfer
-work must consume the deliberately selected v1 interpretation rather than decide that interpretation
-incidentally.
+PLAN-ENG-5 is v1-specific and preserves v1 selection/ranking and recovery semantics at that insertion
+point. The READY dispatch research may determine that Arcogine should not proceed with those rules for
+the first supported Engine release, but it cannot mutate them under the v1 identity. If an alternative
+is recommended, dispatch-dependent PLAN-ENG-5 work stops until a new semantics version and reconciled
+plan define the replacement interpretation.
 
 ## 4. Delivery policy
 
@@ -94,29 +95,23 @@ coherent in the same landed change under ADR-0011.
 
 ### PLAN-ENG-5-0 — Pin existing Engine semantics
 
-**Prerequisites:** ADR-0015 landed Accepted, plus conclusion and durable reconciliation of the two
-READY pre-release dispatch questions in [Engine Evolution Research](../research/engine-evolution.md).
-
-The current implementation and normative v1 draft remain the baseline while those questions are
-open. The two bullets below concerning exact `combinedQueueDepth` and one local dispatch per trigger
-must be reconciled to the selected pre-release rules before this slice executes; they are not an
-authorization to bypass the research gate.
+**Prerequisites:** ADR-0015 landed Accepted, plus conclusion of the two READY first-release dispatch
+questions in [Engine Evolution Research](../research/engine-evolution.md) with `engine-semantics:v1`
+retained unchanged. If either question instead recommends an outcome-changing alternative, do not
+edit the bullets below or rewrite v1; establish the required new Engine semantics identity through
+architecture/specification reconciliation and re-plan this v1-specific slice first.
 
 **Responsibility**
 
 Add characterization/conformance evidence for the result-affecting behavior that
-`engine-semantics:v1` deliberately retains from the pre-Gate-5 Engine after the pre-release dispatch
-reconciliation:
+`engine-semantics:v1` inherits from the pre-Gate-5 Engine:
 
 - PLAN-ENG-2 offline filtering with all-offline fallback;
 - `canAcceptJob` as the primary ranking key rather than an eligibility filter;
-- `combinedQueueDepth`, including compatible `pendingMultiEligible` work, **if retained by the
-  pre-release ranking decision; otherwise pin the reconciled replacement term**;
+- `combinedQueueDepth`, including compatible `pendingMultiEligible` work;
 - deterministic `MachineId` tie-breaking;
 - queue-before-`pendingMultiEligible` recovery cascade ordering, including one dispatch per trigger
-  from a machine's own queue **if retained by the pre-release local-admission decision; otherwise pin
-  the reconciled bounded admission rule**, followed by the fixpoint rescan of the multi-eligible
-  backlog;
+  from a machine's own queue and the fixpoint rescan of the multi-eligible backlog;
 - per-machine queue FIFO arrival order, and waiting-path selection by eligible-set size;
 - multi-eligible backlog arrival order, captured eligible sets, and non-head-of-line-blocking;
 - PLAN-ENG-W1 child creation/release/dispatch ordering;
@@ -124,7 +119,7 @@ reconciliation:
 - the derived-result arithmetic: `busyTicks` overflow saturation, elapsed-time subtraction flooring
   at zero, and the zero-denominator throughput / empty-set mean-lead-time results;
 - the derived-result accumulators: exact completed-order counting, completion-ordered value
-  accumulation, and exact arithmetic for the reconciled resource-ranking term;
+  accumulation, and exact `combinedQueueDepth` ranking arithmetic;
 - scheduler equal-time insertion ordering where it is semantically observable.
 
 **Evidence**
@@ -132,35 +127,31 @@ reconciliation:
 Pinned behavioral fixtures fail if any of those results change for identical explicit inputs. The
 slice does not freeze incidental DTO or implementation shape.
 
-`PLAN-ENG-5-0` is characterization work with **two deliberate production corrections/obligations**,
-both required to make the normative arithmetic implementable at all after the pre-release dispatch
-reconciliation:
+`PLAN-ENG-5-0` is characterization work with **two deliberate production changes**, both required to make the
+normative arithmetic implementable at all:
 
 1. **Mean-lead-time accumulation** currently sums completed-order lead times without an overflow
    check, which `engine-semantics:v1` section 10.2 rule 1 requires to saturate rather than wrap.
-2. **Resource-ranking arithmetic** must not narrow a structurally valid backlog count before
-   comparison. Under today's `combinedQueueDepth`, the implementation narrows a 64-bit shared-backlog
-   count to 32 bits and adds it to a 32-bit queue depth, while the v1 exactness rule requires a wider
-   accumulator. If the pre-release ranking research retains `combinedQueueDepth`, widen that sum and
-   comparison as already specified. If the research selects another ranking term, reconcile this
-   obligation to the selected metric and preserve exact arithmetic rather than implementing a
-   correction for an abandoned term.
+2. **`combinedQueueDepth`** currently narrows a 64-bit backlog count to 32 bits and adds it to a
+   32-bit queue depth, which section 2 rule 3 forbids. Both terms are structurally bounded by their
+   backing collections, so their true sum can exceed the 32-bit range while fitting a 64-bit
+   accumulator with wide headroom: widen the sum and the ranking comparison rather than introducing
+   any session-wide envelope.
 
-The mean-lead correction and any retained ranking-arithmetic widening are not semantic changes in
-regimes where the existing arithmetic is already correct. Do not relax the specification to describe
-wrapping or truncation, which would freeze an arithmetic defect into a durable reproducibility
-contract and defeat the purpose of `EngineSemanticsVersion`.
+Neither is a semantics change in any regime reachable today — each preserves current results wherever
+the current arithmetic is already correct — and both are prerequisites for the exactness and
+saturation rules to be implementable. Make them in production code and pin them; do not relax the
+specification to describe wrapping or truncation, which would freeze an arithmetic defect into a
+durable reproducibility contract and defeat the purpose of `EngineSemanticsVersion`. Every other
+behavior in this slice is pinned as-is.
 
 The behaviors above are the ones `engine-semantics:v1` section 1.1 requires to be versioned rather
-than left as ambient implementation policy. `PLAN-ENG-5-0` is where that requirement becomes
-executable evidence, so a fixture gap here is a semantics gap, not a coverage preference. The
-pre-release research gate exists precisely so this slice pins deliberate rules rather than making
-historical implementation behavior immutable by default.
+than left as ambient implementation policy. `PLAN-ENG-5-0` is where that requirement becomes executable
+evidence, so a fixture gap here is a semantics gap, not a coverage preference.
 
 **Non-goals**
 
-Engine-semantics identity types, Factory V2, transfer behavior, a selectable scheduling-policy menu,
-or resolving the two pre-release dispatch questions inside implementation.
+Engine-semantics identity types, Factory V2, transfer behavior, new scheduling policy.
 
 ### PLAN-ENG-5-A1 — Factory V2 spatial model and validation
 
@@ -351,8 +342,7 @@ Public reservation aggregate, transfer timing/state/events, transport capacity.
 
 Activate the first coherent transfer path at the existing `handleTaskEnd` next-step seam:
 
-- preserve PLAN-ENG-2 selection timing/ranking and post-selection waiting paths as finalized by the
-  pre-release dispatch reconciliation;
+- preserve PLAN-ENG-2 v1 selection timing/ranking and post-selection waiting paths;
 - bind only when the selected destination is currently admissible;
 - for a distinct resource, reserve admission capacity, compute/fix duration once, enter
   `TRANSFERRING`, and schedule completion;
@@ -471,23 +461,27 @@ The scenario demonstrates:
 ## 6. Dependency and parallelism map
 
 ```text
-READY dispatch research ------------------> PLAN-ENG-5-0 finalized-v1 fixtures ---> PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-B2 provenance ----+
-                                                                                                                          |          |
-PLAN-ENG-5-A1 V2 model/validation ---> PLAN-ENG-5-A2 V2 identity ---------------------------------------------------------------+-> PLAN-ENG-5-C3 activation
-       |                         |                                                                                          |
-       |                         +--> PLAN-ENG-5-A3 policy evolution -----------------------------------------------------------+   v
-       |                                                                                                               | PLAN-ENG-5-C4 edges
-       +--> PLAN-ENG-5-C1 transfer arithmetic -------------------------------------------------------------------------------+ |   |
-                                                                                                                     | |   v
-PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-C2 admission reservation ------------------------------------------------------+ | PLAN-ENG-5-D closure
-                                                                                                                       |   |
-                                                                                                                       +--> PLAN-ENG-5-E
+READY dispatch research --retain v1--> PLAN-ENG-5-0 v1 fixtures ---> PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-B2 provenance ----+
+                                                                                                                   |          |
+PLAN-ENG-5-A1 V2 model/validation ---> PLAN-ENG-5-A2 V2 identity --------------------------------------------------------+-> PLAN-ENG-5-C3 activation
+       |                         |                                                                                   |
+       |                         +--> PLAN-ENG-5-A3 policy evolution ----------------------------------------------------+   v
+       |                                                                                                        | PLAN-ENG-5-C4 edges
+       +--> PLAN-ENG-5-C1 transfer arithmetic ------------------------------------------------------------------------+ |   |
+                                                                                                              | |   v
+PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-C2 admission reservation -----------------------------------------------+ | PLAN-ENG-5-D closure
+                                                                                                                |   |
+                                                                                                                +--> PLAN-ENG-5-E
 ```
+
+If READY dispatch research recommends an outcome-changing alternative instead of retaining v1, the
+path above stops before PLAN-ENG-5-0 and resumes only after architecture establishes the new semantics
+identity and this plan is reconciled for it.
 
 Practical parallelism after the ADRs land:
 
-- `PLAN-ENG-5-A1` may proceed while the two READY pre-release dispatch questions are resolved;
-- `PLAN-ENG-5-0` starts only after those questions are concluded and reconciled into the v1 contract;
+- `PLAN-ENG-5-A1` may proceed while the two READY dispatch questions are resolved;
+- `PLAN-ENG-5-0` starts only after those questions conclude with v1 retained unchanged;
 - after `PLAN-ENG-5-0`, `PLAN-ENG-5-B1` can proceed while `PLAN-ENG-5-A1/A2` advances;
 - after `PLAN-ENG-5-A1`/`PLAN-ENG-5-B1`, `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` can proceed independently;
 - `PLAN-ENG-5-A3` is compatibility/history work and need not block `PLAN-ENG-5-C3`, but it must close before
@@ -535,10 +529,10 @@ outward. This avoids immediate wire-contract churn. PLAN-ENG-4-D is not a prereq
 ## 9. Acceptance / readiness
 
 PLAN-ENG-5 is architecture-ready at the Factory-V2/spatial boundary because ADR-0014 and ADR-0015 are
-Accepted and this focused plan is reconciled with the parent Engine/Factory plans. The first Engine
-semantics release is **not yet implementation-ready at PLAN-ENG-5-0** until the two READY pre-release
-dispatch questions are concluded and reconciled; that gate exists because decision-quality evidence
-now challenges two rules the old plan would otherwise have pinned by inheritance.
+Accepted and this focused plan is reconciled with the parent Engine/Factory plans. The v1 conformance
+path is not implementation-ready at PLAN-ENG-5-0 until the two READY dispatch questions are concluded
+with v1 retained unchanged. If either recommends an outcome-changing alternative, a new
+`EngineSemanticsVersion` and plan reconciliation are required before dispatch-dependent implementation.
 
 No additional architecture analysis is required for the independent Factory V2 model/canonicalization
 slices unless implementation evidence falsifies an accepted invariant. For dispatch-dependent slices,

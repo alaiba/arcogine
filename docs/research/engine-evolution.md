@@ -1,6 +1,6 @@
 # Engine Evolution Research
 
-> **Status:** Maintained research brief  
+> **Lifecycle:** See the maintained research register; this artifact contains concluded dispatch history plus READY/CANDIDATE follow-up questions  
 > **Scope:** Result-affecting Engine questions that still require evidence before current deterministic runtime semantics change  
 > **Authority:** Research only; current Engine semantics remain fixed by accepted architecture and executable evidence until a separate reconciliation change says otherwise
 

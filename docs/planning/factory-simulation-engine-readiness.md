@@ -40,8 +40,10 @@ The following Engine capability is complete and must not be reopened by adjacent
 
 - explicit eligible resource instances define current eligibility;
 - operational availability/queue state remain distinct from eligibility;
-- deterministic ranking/tie-breaking is fixed by current Engine semantics;
+- deterministic selection, waiting, and queue behavior has a current implementation baseline and a normative `engine-semantics:v1` contract;
 - equivalent compatible resources can execute independent work.
+
+PLAN-ENG-2's **capability boundary** remains complete: independently dispatchable work is selected and queued deterministically. That does not mean every current ranking/admission heuristic is optimal. The two READY first-release questions in [Engine Evolution Research](../research/engine-evolution.md) must be resolved before PLAN-ENG-5-0 freezes v1 into executable conformance evidence. Under current architecture, those questions can either justify retaining v1 unchanged or justify separate architecture work for a new `EngineSemanticsVersion`; they do not authorize changing v1 in place. No adjacent implementation slice may change those results silently.
 
 ### PLAN-ENG-3 — Consumer-neutral simulation session
 
@@ -104,7 +106,30 @@ The admitted sequence includes:
 6. close availability/no-rerouting edge semantics and late-join diagnostics; and
 7. complete V1/V2 historical coexistence before final closure.
 
+**First-release dispatch gate:** PLAN-ENG-5-0 must not release v1 conformance fixtures until the two READY questions in [Engine Evolution Research](../research/engine-evolution.md) are concluded. Those questions do **not** block Factory V2 model/canonicalization work that does not depend on the contested dispatch interpretation. If the research retains current behavior, PLAN-ENG-5-0 pins the existing v1 rules deliberately. If research recommends an outcome-changing alternative, do not edit the v1 specification or implement the alternative under the v1 identity; first establish the required new `EngineSemanticsVersion` through architecture/specification reconciliation and then re-reconcile this delivery plan.
+
 No pathfinding, conveyor graph, transport-resource scheduling, congestion, rerouting, or orientation is part of this admitted work.
+
+### PLAN-ENG-6 — Same-semantics shared-backlog performance
+
+The dispatch-policy investigation established an implementation-efficiency problem independently of any scheduling-policy choice: per-submission resource ranking repeatedly scans `pendingMultiEligible`, producing quadratic admission work for a fixed eligible-set size and strongly superlinear diagnostic runtime as the shared backlog grows.
+
+**Prerequisites:**
+
+- the READY shared flexible-backlog ranking question in [Engine Evolution Research](../research/engine-evolution.md) is concluded;
+- the specific `EngineSemanticsVersion` targeted by the optimization has an authoritative ranking/waiting contract and executable conformance evidence. For v1, that means PLAN-ENG-5-0 has pinned the existing v1 behavior; if research instead leads to a new semantics version, its architecture/specification and equivalent conformance boundary must exist before PLAN-ENG-6 targets it.
+
+Required outcome:
+
+- reduce repeated full shared-backlog scans through indexing, cached compatible counts, or another bounded implementation technique without changing authoritative scheduling results for the targeted semantics version;
+- preserve exact selected-resource assignments, local FIFO order, shared-pending arrival/reselection behavior, same-time ordering, supported events/observations, and deterministic terminal state for identical explicit inputs;
+- maintain exact arithmetic for the targeted version's ranking term;
+- add a deterministic result-equivalence fixture that compares representative local/shared waiting workloads before and after the optimization;
+- add a reproducible non-functional benchmark over increasing flexible-backlog sizes and record the improvement without turning one machine/environment's elapsed milliseconds into a product contract.
+
+If achieving the performance target requires different assignments, queue order, backlog semantics, or observable results, stop and return to research: that is Engine-semantics evolution, not PLAN-ENG-6.
+
+PLAN-ENG-6 is admitted performance hardening, not a prerequisite for outward convergence or spatial semantics. Schedule it after its semantic/conformance prerequisites when it does not compete with higher-priority Engine work.
 
 ## 4. Dependency order
 
@@ -114,7 +139,7 @@ completed model seam
     v
 PLAN-ENG-1 complete
     |
-PLAN-ENG-2 complete
+PLAN-ENG-2 capability complete
     |
 PLAN-ENG-3 complete
     |
@@ -126,6 +151,8 @@ PLAN-ENG-4 A/B/C complete
     |
     +----> PLAN-ENG-5 spatial consequences
 ```
+
+Within PLAN-ENG-5, the two READY first-release dispatch questions gate **PLAN-ENG-5-0 and release of v1 conformance**, not unrelated Factory V2 authored/canonical model work. If they retain v1, PLAN-ENG-5-0 pins the existing rules and PLAN-ENG-6 may later optimize them without changing results. If they recommend an alternative, architecture must establish a new Engine semantics identity before changed implementation or performance work targets it.
 
 PLAN-ENG-4 core closure no longer blocks spatial work. Outward convergence should consume settled provenance from the spatial/Engine-semantics work where the detailed delivery plans require it rather than migrating an envelope that is immediately revised.
 
@@ -162,11 +189,14 @@ The following are not implementation items in this plan:
 
 - lot/batch/material-lot semantics;
 - generalized capability requirements or resource pools/work centers;
-- dispatch policy evolution beyond the accepted current Engine semantics;
+- the two READY first-release dispatch questions: local admission when one trigger exposes several free slots, and flexible-resource ranking under overlapping shared backlog;
+- queue sequencing/policy evolution without a concrete supported-consumer objective;
 - new advancement/session semantics without a concrete consumer failure case; and
 - unselected transport/recovery technology or protocol choices.
 
-Do not add delivery coordinates for these questions until research produces a concrete semantic contract and deterministic acceptance evidence.
+Current architecture already assigns the contested dispatch rules to `engine-semantics:v1` and requires a new `EngineSemanticsVersion` for an intentional outcome-changing revision. Research may justify retaining v1 or recommend a different versioned interpretation; planning must not create a pre-release exception to that architecture contract.
+
+Do not add delivery coordinates for unresolved semantic questions. PLAN-ENG-6 is admitted separately because its implementation contract is exact result equivalence for a specific already-authoritative Engine semantics version.
 
 ## 8. Validation policy
 

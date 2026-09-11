@@ -1,12 +1,14 @@
 # Engine Evolution Research
 
-> **Status:** CANDIDATE  
-> **Scope:** Result-affecting Engine questions intentionally outside the currently accepted deterministic runtime semantics  
-> **Authority:** Research only; current Engine semantics remain fixed by accepted architecture and executable evidence
+> **Lifecycle:** See the maintained research register; this artifact contains concluded dispatch history plus READY/CANDIDATE follow-up questions  
+> **Scope:** Result-affecting Engine questions that still require evidence before current deterministic runtime semantics change  
+> **Authority:** Research only; current Engine semantics remain fixed by accepted architecture and executable evidence until a separate reconciliation change says otherwise
 
 ## Purpose
 
-The Engine implementation must not silently evolve result-affecting policy under an existing semantics identity. This document holds candidate extensions until a concrete use case and architecture decision justify a new implementation contract.
+The Engine implementation must not silently evolve result-affecting policy under an existing semantics identity. This document holds candidate extensions and bounded follow-up questions until evidence and an explicit architecture decision justify a different implementation contract.
+
+`engine-semantics:v1` is already a normative design contract even though its implementation/conformance work is pending. Under current ADR-0015 and v1 authority, an intentional change that can alter outcomes for identical explicit inputs requires a new `EngineSemanticsVersion`; unreleased or implementation-pending status does not create an in-place mutation exception. Research may still decide whether v1 is acceptable for the first supported release or whether evidence justifies architecture work for a different semantics version before implementation. Neither outcome permits a silent implementation tweak.
 
 ## Lot, batch, and material-lot semantics
 
@@ -28,11 +30,116 @@ Research must answer:
 
 Do not introduce a capability taxonomy only to replace an explicit eligible-instance set that already works.
 
-## Dispatch-policy evolution
+## Dispatch-policy investigation — concluded umbrella question
 
-The current result-affecting dispatch ordering and tie-breaking policy is versioned Engine semantics. Candidate policies such as projected completion time, richer load balancing, priorities, setup-aware dispatch, or optimization-based assignment require evidence that the existing policy is insufficient.
+The 2026-09 dispatch-policy investigation asked when Arcogine's current deterministic resource-selection and queue-dispatch behavior becomes materially inadequate and whether a richer policy family should replace it. The high-risk investigation received an independent adversarial pass whose final disposition was **ACCEPT WITH QUALIFICATIONS**.
 
-Any accepted change that can alter assignments or outcomes for identical explicit inputs requires an explicit Engine-semantics evolution decision, not a silent implementation tweak.
+### Durable conclusion
+
+Do **not** add a selectable policy menu, global optimizer, or sophisticated scheduler now. The current deterministic policy remains the implementation baseline because Arcogine has no accepted consumer objective that makes makespan, order lead time, utilization, fairness, tardiness, or another scheduling objective authoritative.
+
+The investigation did establish material weaknesses worth preserving as reopening evidence. Those weaknesses do not select one replacement policy; several apparently beneficial changes regress other valid workloads or objectives.
+
+### Version and history qualification
+
+The current one-local-job-per-trigger rule and `combinedQueueDepth` ranking are normative `engine-semantics:v1` rules and production currently conforms to them. Historical review found that the one-job rule was inherited implementation behavior later captured by the normative wording, not evidence of an originally evaluated scheduling trade-off.
+
+That history is material motivation to re-evaluate the rule, but it does not weaken the existing semantics identity. Under current architecture:
+
+- retaining either rule leaves `engine-semantics:v1` unchanged and may be pinned by its conformance fixtures;
+- selecting an outcome-changing alternative is evidence for an architecture reconciliation that establishes a new `EngineSemanticsVersion`; it is not an ordinary bug fix or permission to rewrite v1 in place;
+- implementation must not adopt an alternative until that versioned architecture/specification exists.
+
+### Durable discriminating evidence
+
+Retain these cases as reusable research evidence:
+
+1. **Local recovery underfill.** With one offline machine, concurrency 4, eight already-queued single-eligible jobs, and 10-tick processing, one recovery completes at tick 80 under the current one-local-job-per-trigger cascade. A recovery-only capacity-fill counterfactual completes at tick 20. This is specifically a **local-queue stage** effect: the following shared `pendingMultiEligible` fixpoint can fill otherwise free slots when compatible shared work exists.
+2. **Capacity filling is not objective-independent.** A valid routed case produces makespan 29 under current behavior and 40 under recovery fill. Another case improves makespan 93 -> 91 while worsening aggregate-order mean lead time 69.75 -> 71.25. A downstream unary bottleneck can erase the local utilization gain entirely.
+3. **`combinedQueueDepth` has a reachable overlap failure.** In a workload that preserves unbound shared waiting and normal reselection, counting one shared pending job against every compatible candidate drives aggregate-order mean completion from a 39.67 local-depth counterfactual to 72.33 under current `combinedQueueDepth`, with makespan 106 in both cases. This is a ranking question, not a permanent-binding strawman.
+4. **FIFO is not universally optimal, but simple SPT is not adoption-ready.** On one all-ready unary machine with durations `[100,1,1]`, FIFO mean completion is 101 and current-step SPT is 35 at the same makespan. Multi-stage/order cases show SPT can worsen makespan or aggregate-order mean lead time, and unaged SPT can starve long work under repeated short arrivals.
+5. **Spatial-aware selection remains analytical future evidence.** Under the accepted Factory V2 Manhattan-transfer facts, selecting a nearer eligible destination can sharply reduce one transfer, but a nearest-next-step rule can also create a much longer downstream route (for example 296 versus 100 total transfer ticks in the reviewed construction). Spatial runtime is not yet implemented, so this is not executable evidence for changing current dispatch. Preserve it as a future ranking proving case only when spatial execution exists and the scheduling horizon/objective is explicit.
+6. **Shared-backlog scanning is an implementation-efficiency concern.** Actual Java admission measurements for 1,000/2,000/4,000/8,000/16,000 flexible waiting jobs were approximately 84/112/333/1,123/4,433 ms in the diagnostic environment. Source inspection explains the superlinear curve: per-submission candidate ranking repeatedly scans shared pending work, yielding quadratic admission for a fixed eligible-set size. Preserve exact semantics while optimizing; do not call an equivalent implementation change dispatch-policy evolution.
+7. **Redundant availability was a separate conformance defect.** A redundant online command previously could trigger dispatch without a supported event; current `main` now short-circuits the no-op. Keep its regression coverage, but do not treat it as open dispatch-policy evidence.
+
+The exact diagnostic timings are evidence of a scaling shape, not a performance contract or universal benchmark target.
+
+## READY — local admission semantics before first Engine release
+
+### Question
+
+Should the first supported Engine release retain `engine-semantics:v1`'s at-most-one-local-job-per-cascade-trigger rule, or does the evidence justify defining a different Engine semantics version with a precisely bounded rule that admits more local work when one trigger exposes several immediately usable concurrency slots?
+
+### Decision at stake
+
+Whether Arcogine deliberately releases v1 with the current local-admission rule or promotes an alternative through a separately versioned Engine-semantics architecture/specification before changing implementation behavior.
+
+### Candidates
+
+- **A — retain v1:** one local queued job at most per cascade trigger, followed by the existing shared-pending fixpoint.
+- **B — recovery-specific fill:** after a genuine offline -> online transition, admit local FIFO work up to currently usable capacity before the shared-pending stage; ordinary completion retains one-local-job behavior because it normally releases one slot. Selecting this outcome requires a new `EngineSemanticsVersion` under current architecture.
+- **C — trigger-independent bounded non-idling:** whenever the local-queue stage runs, admit local FIFO work until no immediately usable slot remains, then run the existing shared-pending fixpoint. Selecting this outcome requires a new `EngineSemanticsVersion` under current architecture.
+
+Do not expand this question into queue reordering, policy menus, due-date scheduling, setup optimization, or a global scheduler.
+
+### Proving cases
+
+Any conclusion must account for:
+
+- the isolated concurrency/queue-size recovery family, including concurrency 4 with eight 10-tick jobs;
+- mixed local plus shared backlog, where the shared fixpoint can fill slots left by the local stage;
+- the routed makespan regression 29 -> 40 under aggressive recovery fill;
+- the 93 -> 91 makespan / 69.75 -> 71.25 mean-order-lead trade-off;
+- the unary downstream bottleneck whose final completion remains 810 under both current and recovery-fill behavior;
+- same-machine continuation precedence and local-before-shared ordering.
+
+### Exit criteria
+
+Conclude only when the chosen rule has an explicit rationale independent of "more utilization is always better," exact deterministic ordering is specified, and executable acceptance cases distinguish the chosen rule from rejected candidates. The conclusion must state either that v1 is retained unchanged or that a different result-affecting rule is recommended for promotion through a new `EngineSemanticsVersion`; it must not authorize an in-place v1 edit. A result-affecting conclusion remains high risk and requires independent adversarial review before architecture promotion.
+
+## READY — shared flexible-backlog ranking semantics before first Engine release
+
+### Question
+
+Should the first supported Engine release retain v1's exact `combinedQueueDepth` — local physical queue depth plus every compatible shared-pending entry — when one unbound flexible job contributes demand to several candidate machines simultaneously, or does the evidence justify a different Engine semantics version with another ranking term?
+
+### Decision at stake
+
+Whether Arcogine deliberately releases v1 with the current resource-selection ranking or promotes a different queue-depth/ranking term through a separately versioned Engine-semantics architecture/specification while preserving eligibility, online preference, immediate-acceptance ranking, unbound shared waiting/reselection, and final `MachineId` tie-breaking.
+
+### Candidates
+
+- **A — retain v1's exact `combinedQueueDepth`** as currently specified.
+- **B — local physical queue depth only**, leaving shared work unbound and reconsidered at dispatch time rather than projecting it into every candidate's depth. Selecting this outcome requires a new `EngineSemanticsVersion` under current architecture.
+- **C — another deterministic overlap-aware demand term**, only if a concrete candidate can be defined without early binding or invented future knowledge and can beat both A and B on discriminating cases. Selecting an outcome-changing term requires a new `EngineSemanticsVersion` under current architecture.
+
+### Proving case
+
+At minimum preserve the reachable overlap discriminator:
+
+```text
+A: M1:5 -> {M1,M2}:1 -> M1:1
+D: M3:6
+J: {M1,M3}:100
+```
+
+with all machines unary. Current `combinedQueueDepth` sends A's flexible middle step to M2 and later J to M1, producing `[A=106,D=6,J=105]`, mean 72.33, makespan 106. Local-depth-only sends A to M1 and later J to M3, producing `[7,6,106]`, mean 39.67, makespan 106. Any alternative must preserve the real shared-pending reselection semantics rather than relying on permanent early binding.
+
+### Exit criteria
+
+Conclude only when the selected ranking term has a stated invariant/objective boundary, survives overlap and tie cases, preserves deterministic reselection semantics, and can be pinned by executable fixtures. The conclusion must state either that v1's ranking is retained unchanged or that a different result-affecting ranking is recommended for promotion through a new `EngineSemanticsVersion`; it must not authorize an in-place v1 edit. A result-affecting conclusion remains high risk and requires independent adversarial review before architecture promotion.
+
+## CANDIDATE — queue sequencing and scheduling objective
+
+Current per-machine local queues are FIFO. The investigation proves that FIFO is not universally optimal and that current-step SPT is representable with facts Arcogine already has, but it also proves that no simple sequencing rule is universally better across multi-stage routes, order aggregation, makespan, mean order lead time, and dynamic arrivals.
+
+Do not research a replacement sequencing rule merely because one benchmark improves. Reopen this question when a concrete supported consumer identifies the scheduling objective, fairness/starvation requirements, information horizon, and authoritative input facts that define what "better" means. Due dates/weights, setup matrices, resource-dependent duration, or full-horizon optimization remain separate semantic prerequisites when the chosen policy family needs them.
+
+## Same-semantics shared-backlog performance
+
+The dispatch investigation established a concrete implementation-efficiency problem independent of policy choice: repeated scans of `pendingMultiEligible` make admission scale quadratically for a fixed eligible-set size, with additional scan-heavy dispatch costs.
+
+This concern is ready for implementation planning only under an exact-semantics constraint. Optimize the ranking semantics of the specific `EngineSemanticsVersion` being executed without changing selected resource assignments, local/shared waiting order, shared-backlog reselection behavior, supported events/observations, deterministic replay, or exact ranking arithmetic. If an optimization requires different results, stop and return to research rather than hiding policy evolution inside a performance change.
 
 ## Session/advancement evolution
 
@@ -46,7 +153,7 @@ Transport versioning, retained supported-event history, reconnect/resynchronizat
 
 Promote a question only when:
 
-- the concrete consumer/problem is identified;
+- the concrete consumer/problem or first-release semantic risk is identified;
 - result-affecting semantics are explicit;
 - compatibility/version consequences are understood;
 - ownership between Factory, Engine, and consumers is settled; and

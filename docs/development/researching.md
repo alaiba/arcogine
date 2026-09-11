@@ -205,6 +205,12 @@ An adversarial reviewer specifically attempts to discover, as applicable:
 
 A clean adversarial review — one that finds nothing that survives scrutiny — is a valid and useful result. Do not optimize for producing findings, and do not establish a minimum finding count. An adversarial reviewer who manufactures a finding to justify the pass has failed the same way a PR reviewer who "optimizes for finding something wrong" has failed (`docs/development/reviewing.md`).
 
+### Report input integrity
+
+An adversarial review is a review of a specific report revision, not of a conversational summary of that report. Before substantive report-specific work, the reviewer must verify that the complete original report is available and record its evidence coordinate: temporary research branch, exact report commit SHA, report path, and the report's stated research-baseline SHA. This check may confirm file identity and completeness without deeply consuming the recommendation, preserving the anchoring-control sequence below.
+
+If the complete report cannot be resolved, stop the report-specific review and return `INPUT BLOCKED — ORIGINAL REPORT NOT AVAILABLE`, naming the missing coordinate or artifact. This is not one of the four adversarial-review dispositions because the report was not actually reviewed. Do not infer the report from the review prompt, reconstruct its claims from a summary, or issue `ACCEPT`, `ACCEPT WITH QUALIFICATIONS`, `MORE EVIDENCE REQUIRED`, or `REOPEN` against an unavailable report. Independent reconstruction performed in that situation may be useful new research evidence, but it must be labeled as such rather than presented as a disposition on the missing report.
+
 ### Independence and anchoring control
 
 For a **high-risk** adversarial review (§7), the reviewer must not simply be the same research run continuing to defend its own report.
@@ -250,7 +256,7 @@ bounded research question
 research execution
         |
         v
-research report
+research report committed to temporary evidence branch
         |
         v
 independent adversarial review (when required by risk, §7/§9)
@@ -268,6 +274,12 @@ separate durable reconciliation
                             |
                             v
                        docs/planning/
+        |
+        v
+knowledge-transfer audit
+        |
+        v
+temporary evidence may be retired
 ```
 
 A researcher may recommend durable consequences. A researcher does not make architecture authoritative merely by publishing a report — the same principle `docs/research/README.md` already states ("a research conclusion becomes durable only after it is reconciled into the appropriate product, architecture, ADR, reference, or implementation plan").
@@ -276,13 +288,29 @@ The report's author must not silently rewrite ADRs, current architecture, produc
 
 Research is never CONCLUDED (per `docs/research/README.md`'s lifecycle) merely because a report was written. `CONCLUDED` still requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result.
 
+### Evidence custody and retirement
+
+A completed research report must not exist only inside an agent session, local scratch space, or pasted conversation output. Before presenting a standard investigation as complete, the researcher must commit the report to a dedicated temporary, semantically named research-evidence branch and return the branch name, exact commit SHA, report path, and research-baseline SHA. Independent adversarial-review artifacts follow the same rule. The temporary branch is a custody and handoff surface only: its contents remain research evidence, are not repository authority, and are not merged to `main` merely because the investigation finished.
+
+The exact report commit is the immutable input to any adversarial review. If the report is revised after review begins, the revision receives a new commit and any subsequent report-specific review binds to that new SHA rather than silently treating the branch tip as equivalent.
+
+Temporary research evidence may be deleted only after the research is `CONCLUDED` or `SUPERSEDED` **and** a knowledge-transfer audit accounts for every material result that should survive the investigation. At minimum, classify and transfer:
+
+- accepted conclusions and invariants into the appropriate product, architecture, ADR, reference, or admitted planning authority;
+- qualifications that constrain an accepted conclusion into the same durable destination as that conclusion;
+- unresolved unknowns, reopening triggers, and newly exposed questions into `docs/research/` when they remain material;
+- reusable proving cases, counterexamples, failure modes, measurements, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;
+- findings that no longer merit retention as explicitly discarded rather than accidentally lost with branch deletion.
+
+If any material item still lacks a durable destination or explicit discard decision, the evidence branch remains available. This retirement rule does not create another lifecycle state, research issue ledger, or permanent report archive; it closes the custody gap between session-local research and durable reconciliation.
+
 ## 11. What this document intentionally does not decide
 
 This document defines method. It does not:
 
 - list Arcogine's current open research questions — see `docs/research/README.md`;
 - decide any live Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — those remain open exactly as the research register and any in-flight ADR record them;
-- create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, or a new issue ledger;
+- create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, or a new issue ledger;
 - change how `docs/research/README.md`'s lifecycle (`CANDIDATE`, `READY`, `ACTIVE`, `CONCLUDED`, `SUPERSEDED`) or promotion boundary work.
 
 Research documents remain research evidence only. They do not become accepted architecture simply because a report exists.

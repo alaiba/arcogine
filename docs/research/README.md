@@ -51,6 +51,14 @@ Decision-quality evidence
 
 A topic is ready for implementation planning only when semantic/product meaning, ownership, prerequisites, and acceptance evidence are sufficiently settled. A blocked implementation contract may live in planning; an unresolved question that still determines the contract stays here.
 
+## Evidence custody and retirement
+
+Completed research reports and independent adversarial-review artifacts must be persisted on temporary, semantically named research-evidence branches as defined by [`docs/development/researching.md`](../development/researching.md). Those branches provide reproducible cross-session custody for evidence; they are not current repository authority and are not merged to `main` merely because a report exists.
+
+A temporary research-evidence branch may be retired only after its investigation is `CONCLUDED` or `SUPERSEDED` and the knowledge-transfer audit has accounted for every material result that should survive: accepted conclusions and qualifications in their durable authority, remaining unknowns/reopening triggers/new questions back in research, implementation responsibilities in admitted planning when ready, reusable proving cases/counterexamples/measurements/know-how in the surface that will need them, and explicit discard decisions for findings that no longer merit retention. If any material item remains unaccounted for, keep the evidence branch available.
+
+This custody rule does not add a lifecycle status or permanent report archive. The register continues to track the research question; the temporary branch preserves the report/review evidence until reconciliation is complete enough to retire it safely.
+
 ## Research register
 
 Priority is portfolio guidance, not delivery commitment.
@@ -74,5 +82,6 @@ Priority is portfolio guidance, not delivery commitment.
 - Add a material unknown instead of hiding it in an implementation plan.
 - Mark research `READY` only when an independent researcher can execute it from the stated evidence/exit criteria — see `docs/development/researching.md` for what a sufficiently bounded brief and decision-quality report require.
 - When research concludes, record the verdict here and link the durable destination; do not duplicate the authoritative conclusion.
+- Before retiring temporary research evidence, perform the knowledge-transfer audit above; branch deletion is not a substitute for deciding what should survive.
 - During planning/consistency review, flag exploratory content that has leaked back into `docs/planning/` and relocate it here.
 - Keep concluded research visible when it provides useful history, but prefer current architecture/reference for durable semantics.

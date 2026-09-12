@@ -31,7 +31,7 @@ The original completed report is immutable evidence:
 - evidence workspace: `claude/arcogine-factory-diagnostics-px2bvb`
 - exact report commit: `dea3fe3b58ba319d9c11c2a527f2d601ccbff566`
 - exact report path: `docs/research/factory-design-game-diagnostic-evidence.md`
-- original report baseline: `56a876208a98dd570d384459f5d44ef35b85b6fd`
+- original report baseline: `56a876208a98dd570d384ed9d8e3535dd86f1335`
 - report's later verified baseline: `24b29418672eaeb74658e04994684bb9fe2e5db4`
 
 **Do not amend, rewrite, rebase away, squash away, or force-push away that report commit.** `docs/development/researching.md` makes exact commit SHA + path the evidence identity.

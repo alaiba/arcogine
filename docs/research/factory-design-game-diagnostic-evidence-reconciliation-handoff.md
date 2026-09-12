@@ -56,13 +56,7 @@ Required branch handling:
 
 Do not create a second branch merely to protect evidence. Artifact immutability is already provided by the exact commit coordinate.
 
-This workspace now also contains a narrow process clarification in:
-
-- `docs/development/researching.md`
-- `docs/research/README.md`
-- `.github/agents/researcher.agent.md`
-
-Those edits make the one-workspace-through-reconciliation rule explicit. Compare them with live `main`. If live `main` still lacks equivalent wording, keep the narrow clarification in the final reconciliation; if equivalent wording has since landed, avoid duplicate edits.
+The reusable process-policy clarification for this lifecycle is handled independently in PR #304, branch `docs/research-workspace-reconciliation-lifecycle`. **Do not carry or duplicate those process-policy edits in this diagnostics workspace or its reconciliation PR.** Re-ground against live `main`: if PR #304 has merged, follow the landed procedure; if it is still open, treat it only as an independent process change/reference and keep this reconciliation scoped to the diagnostic investigation.
 
 This handoff file is temporary workspace material and should not remain in the final tree unless there is a deliberate reason to promote it.
 
@@ -74,7 +68,7 @@ Before changing the substantive reconciliation:
 
 1. Read live `main`'s `AGENTS.md`.
 2. Read live `main`'s `docs/development/researching.md`, `docs/research/README.md`, and `.github/agents/researcher.agent.md`.
-3. Compare those process files with their workspace versions so you understand the one-workspace clarification carried here.
+3. Check whether PR #304 has landed. If it has, follow the process policy now on `main`; if it remains open, do not duplicate its process changes in this workspace.
 4. Read the exact report at `dea3fe3b58ba319d9c11c2a527f2d601ccbff566:docs/research/factory-design-game-diagnostic-evidence.md`.
 5. Re-resolve live `main` and record its exact SHA.
 6. Inspect open PRs and recent merged PRs. Do not assume the state recorded in this handoff is still current.
@@ -579,7 +573,7 @@ Before requesting review:
 
 - bring the workspace current with live `main` without rewriting handed-off evidence commits;
 - ensure temporary report/handoff artifacts not intended for main are absent from the final tree;
-- ensure the net PR diff contains the durable reconciliation and the narrow research-process clarification if live `main` still needs it;
+- ensure the net PR diff contains only the durable reconciliation for this diagnostics investigation; process-policy changes belong to PR #304 (or its landed successor), not this PR;
 - link the exact report commit/path;
 - explain why the old mixed question is SUPERSEDED;
 - summarize the new high-risk analytics research question;
@@ -597,6 +591,7 @@ If review finds that unresolved analytics hypotheses have been promoted into acc
 Do **not**:
 
 - create another reconciliation branch;
+- duplicate or absorb the process-policy change from PR #304 into this diagnostics reconciliation;
 - implement a simulation analytics module/library;
 - delete or migrate `com.arcogine.core.kpi` yet;
 - remove/change `RuntimePerformanceObservation` in code;
@@ -626,7 +621,7 @@ When the reconciliation PR is ready for owner merge:
 6. Engine/spatial planning isolates disputed reported-derived-result ownership without blocking unrelated authoritative semantics more than necessary;
 7. transport-neutral embedded/remote architecture remains unchanged;
 8. no runtime behavior is falsely claimed to have changed;
-9. the one-workspace research process is explicit and no unnecessary reconciliation branch was created;
+9. no unnecessary reconciliation branch was created, while reusable process-policy maintenance remained isolated in PR #304 or its landed successor;
 10. the PR contains a complete knowledge-transfer audit and workspace-retirement disposition.
 
 ---

@@ -92,6 +92,18 @@ The exact semantic runtime event type stays inside the envelope. Internal `Event
 
 If the legacy integrated API loop cannot consume `FactoryRuntime` directly because it legitimately orchestrates broader economy/finance/agent state, introduce the narrowest adapter/projection that preserves supported Engine semantics. Do not widen `FactoryRuntime` merely for concrete-type reuse.
 
+#### KPI surfaces are ownership-sensitive
+
+Outward convergence must not promote internal `EventLog` KPI computation into the supported contract. `com.arcogine.core.kpi` computes from internal `EventLog`/`SimTime`, and ADR-0011 §8 and ADR-0012 keep `EventLog` as implementation machinery rather than the supported history/analysis contract. Future supported analytical exports should derive from `RuntimeObservation`, `RuntimeEvent`, or another explicitly supported outward contract.
+
+Record as architectural debt, to be resolved rather than extended:
+
+> The existing generic KPI implementation is attached to the wrong observation substrate for future supported consumers and should be replaced/migrated rather than extended.
+
+Consequently, migrating `/api/kpis` and the snapshot KPI list is **ownership-sensitive** and must consume the outcome of [Simulation analytics consumer boundary](../research/simulation-analytics-consumer-boundary.md) rather than becoming another formula set defined at the transport layer.
+
+This does not block the rest of this work. Settled `RuntimeObservation`/`RuntimeEvent` transport migration may continue. Only pause where a concrete DTO or field would freeze disputed derived-performance semantics into the outward contract before that research resolves it.
+
 ### PLAN-ENG-4-D2 — CLI/reference consumer convergence
 
 For each current headless/CLI path:

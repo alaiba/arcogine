@@ -6,9 +6,11 @@
 
 ## Current blocker
 
-The product loop, reference challenge, diagnostics, scoring, tutorial, technology, and packaging choices remain under [Factory-Design Game Vertical-Slice Research](../research/factory-design-game-vertical-slice.md).
+The product loop, reference challenge, diagnostics presentation, scoring, tutorial, technology, and packaging choices remain under [Factory-Design Game Vertical-Slice Research](../research/factory-design-game-vertical-slice.md).
 
 No playable implementation should begin while those choices still determine what the slice is supposed to prove.
+
+If the promoted playable requirements need generic diagnostics — reusable utilization/occupancy measurement, longitudinal aggregation, bottleneck inference, or run-to-run comparison — those must consume a resolved shared analytics boundary ([Simulation analytics consumer boundary](../research/simulation-analytics-consumer-boundary.md)) rather than be implemented locally by the game. This is not a blanket blocker: it constrains only playable requirements that actually depend on reusable derived measurement, and does not gate unrelated headless Challenge work, which remains independently usable.
 
 ## Upstream prerequisites
 

@@ -67,7 +67,11 @@ The challenge should make at least two approaches credible, such as:
 
 Arcogine's accepted order/work-item semantics remain authoritative: one accepted quantity-bearing requirement is decomposed by Arcogine into independently dispatchable unit work while aggregate progress remains order-level. The game must not manufacture multiple production orders merely to create parallelism.
 
-## Player-facing evidence under test
+## Player-facing presentation under test
+
+This is now a **presentation and comprehension** question, not an ownership question. The bounded form is:
+
+> Given supported Arcogine simulation facts and analytics, which presentation lets players correctly identify bottlenecks, major delay sources, and the causal effect of a design change?
 
 The product research should determine which presentation lets a player answer:
 
@@ -79,6 +83,17 @@ The product research should determine which presentation lets a player answer:
 - What materially changed between this attempt and the previous attempt?
 
 Candidate techniques may include resource overlays, queue indicators, flow/transfer visualization, timeline summaries, bottleneck callouts, and attempt comparison. These are consumer presentation hypotheses. They do not become Engine semantics unless a concrete missing supported observation is proven.
+
+### Boundary with the analytics question
+
+Which *facts and reusable derivations* exist, and who owns them, is no longer decided here. That is [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md), an open High-risk investigation. Accordingly:
+
+- overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain game research;
+- **the game must not invent shared KPI or diagnostic formulas while analytics ownership is unresolved.** If a presentation needs a reusable measure, that measure's ownership is an input from the analytics question, not a game decision;
+- transfer-dependent presentation remains conditional on landed transfer semantics — there is currently no transfer time, `TRANSFERRING` state, or transfer event in runtime behavior, so the processing-versus-transfer question cannot be asked of the current runtime at all;
+- sidecar versus in-process is a packaging/integration question, not a competing runtime semantics choice (ADR-0007, ADR-0011 already establish transport-neutral semantics with sibling adapters).
+
+A prior investigation of the mixed player-facing-evidence question is recorded as **SUPERSEDED** in `docs/research/README.md`. Its player-comprehension half is the open work described here; its technical-ownership half moved to the analytics question.
 
 ## Product decisions to resolve before implementation
 

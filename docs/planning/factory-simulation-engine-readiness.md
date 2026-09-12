@@ -92,6 +92,8 @@ Required outcome:
 
 The API/SSE and CLI/reference changes may land separately when that keeps reviews narrow.
 
+The legacy KPI path is the one ownership-sensitive part of this convergence: `/api/kpis` and the snapshot KPI list currently derive from internal `EventLog`, which ADR-0011 §8 and ADR-0012 keep outside the supported contract. Migrating them must consume [Simulation analytics consumer boundary](../research/simulation-analytics-consumer-boundary.md) rather than define another formula set at the transport layer. Observation/event transport migration itself is unaffected and may proceed.
+
 ### PLAN-ENG-5 — Spatial runtime consequences
 
 Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. ADR-0014, ADR-0015, Factory Model v2 canonicalization, and Engine Semantics v1 define the accepted contract.

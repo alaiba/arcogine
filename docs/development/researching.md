@@ -68,7 +68,7 @@ A decision-quality report keeps at least these categories visibly distinct, so a
 
 A recommendation must never be phrased as though it is a repository fact. An analogy to an external system must never be phrased as though it establishes Arcogine semantics by itself — see §6 on analogy limits. Where evidence is uncertain or was not actually available, the report must say so rather than silently upgrading it into fact.
 
-Labeling every sentence is not required when the report's structure already makes the category obvious (for example, an entire "Repository evidence" section). Labeling is required wherever a reader could otherwise mistake one category for another — most importantly, wherever a recommendation or an analogy sits next to established fact.
+Labeling every sentence is not required when the report's structure already makes the category obvious (for example, an entire "Repository evidence" section). Labeling is required wherever a reader could otherwise mistake one category from another — most importantly, wherever a recommendation or an analogy sits next to established fact.
 
 ## 4. Internal evidence
 
@@ -207,7 +207,7 @@ A clean adversarial review — one that finds nothing that survives scrutiny —
 
 ### Report input integrity
 
-An adversarial review is a review of a specific report revision, not of a conversational summary of that report. Before substantive report-specific work, the reviewer must verify that the complete original report is available and record its evidence coordinate: temporary research branch, exact report commit SHA, report path, and the report's stated research-baseline SHA. This check may confirm file identity and completeness without deeply consuming the recommendation, preserving the anchoring-control sequence below.
+An adversarial review is a review of a specific report revision, not of a conversational summary of that report. Before substantive report-specific work, the reviewer must verify that the complete original report is available and record its evidence coordinate: temporary research-evidence workspace branch, exact report commit SHA, report path, and the report's stated research-baseline SHA. This check may confirm file identity and completeness without deeply consuming the recommendation, preserving the anchoring-control sequence below.
 
 If the complete report cannot be resolved, stop the report-specific review and return `INPUT BLOCKED — ORIGINAL REPORT NOT AVAILABLE`, naming the missing coordinate or artifact. This is not one of the four adversarial-review dispositions because the report was not actually reviewed. Do not infer the report from the review prompt, reconstruct its claims from a summary, or issue `ACCEPT`, `ACCEPT WITH QUALIFICATIONS`, `MORE EVIDENCE REQUIRED`, or `REOPEN` against an unavailable report. Independent reconstruction performed in that situation may be useful new research evidence, but it must be labeled as such rather than presented as a disposition on the missing report.
 
@@ -250,22 +250,27 @@ The review itself should state: what was challenged; what evidence was considere
 The full lifecycle is:
 
 ```text
-bounded research question
+bounded research question / explicitly coupled research packet
         |
         v
-research execution
+temporary research-evidence workspace
+        |
+        +--> checkpoints / drafts / diagnostic notes (optional, non-authoritative)
         |
         v
-research report committed to temporary evidence branch
+completed report revision handed off by exact commit + path
         |
         v
 independent adversarial review (when required by risk, §7/§9)
         |
         v
+completed review revision handed off by exact commit + path
+        |
+        v
 decision-quality evidence
         |
         v
-separate durable reconciliation
+separate durable reconciliation on the same workspace by default
         |
         +--> no action
         +--> product
@@ -279,22 +284,37 @@ separate durable reconciliation
 knowledge-transfer audit
         |
         v
-temporary evidence may be retired
+reconciliation lands
+        |
+        v
+workspace branch retired
 ```
 
 A researcher may recommend durable consequences. A researcher does not make architecture authoritative merely by publishing a report — the same principle `docs/research/README.md` already states ("a research conclusion becomes durable only after it is reconciled into the appropriate product, architecture, ADR, reference, or implementation plan").
 
 The report's author must not silently rewrite ADRs, current architecture, product semantics, production code, or implementation planning while "doing research." A separate reconciliation pass deliberately translates surviving research conclusions into the appropriate authoritative surface — an ADR PR, an architecture-doc PR, a planning admission — and that reconciliation change goes through normal independent PR review exactly as any other change would.
 
+**Separate reconciliation means a separate phase and authority transition, not a separate Git branch.** By default, the same finite research-evidence workspace continues through durable reconciliation. Do not create a fresh reconciliation branch solely because evidence gathering has ended. Completed report/review artifacts remain immutable by exact commit SHA + path while later workspace commits carry reconciliation edits and the knowledge-transfer audit.
+
 Research is never CONCLUDED (per `docs/research/README.md`'s lifecycle) merely because a report was written. `CONCLUDED` still requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result.
 
-### Evidence custody and retirement
+### Evidence workspaces, artifact identity, and retirement
 
-A completed research report must not exist only inside an agent session, local scratch space, or pasted conversation output. Before presenting a standard investigation as complete, the researcher must commit the report to a dedicated temporary, semantically named research-evidence branch and return the branch name, exact commit SHA, report path, and research-baseline SHA. Independent adversarial-review artifacts follow the same rule. The temporary branch is a custody and handoff surface only: its contents remain research evidence, are not repository authority, and are not merged to `main` merely because the investigation finished.
+A research artifact that matters beyond the current session must not exist only inside an agent session, local scratch space, or pasted conversation output. Use one temporary, semantically named **research-evidence workspace branch** per bounded research question by default. An explicitly coupled set of questions may share one workspace when they are intentionally intended to be reviewed and reconciled as one packet. Do not create one branch per artifact merely because a report and its adversarial review are different artifacts, do not create a new branch merely because the same workspace has entered reconciliation, and do not use one permanent repository-wide branch for unrelated investigations.
 
-The exact report commit is the immutable input to any adversarial review. If the report is revised after review begins, the revision receives a new commit and any subsequent report-specific review binds to that new SHA rather than silently treating the branch tip as equivalent.
+A workspace may be opened before the investigation is complete and may contain checkpoints, drafts, diagnostic notes, completed reports, adversarial-review artifacts, and later reconciliation work. Checkpoint or draft commits are continuity aids only; they do not become decision-quality evidence merely because they are persisted.
 
-Temporary research evidence may be deleted only after the research is `CONCLUDED` or `SUPERSEDED` **and** a knowledge-transfer audit accounts for every material result that should survive the investigation. At minimum, classify and transfer:
+Before presenting a standard investigation as complete, the researcher must commit the completed report in its workspace and return the workspace branch, exact report commit SHA, report path, and research-baseline SHA. Before presenting an adversarial review as complete, the reviewer must commit the completed review in the same workspace when practical, or in the same explicitly coupled packet workspace, and return the workspace branch, exact review commit SHA, review path, reviewed-report commit SHA, and live-main review baseline. A separate review branch is unnecessary unless isolation is operationally required; branch separation does not establish reviewer independence.
+
+The exact commit SHA + path is the artifact identity. Branch tip is never a substitute. Once a completed report revision has been handed off for review, do not amend, rewrite, force-push away, or otherwise mutate that revision. If the report changes, create a new commit; any report-specific adversarial disposition binds only to the exact revision it reviewed. The same rule applies to a completed review artifact once it has been handed off for reconciliation.
+
+When a workspace carrying handed-off evidence needs to incorporate a newer `main`, preserve those exact evidence commits. Do not rebase, force-push, or otherwise rewrite handed-off artifact history merely to satisfy branch freshness. Use a history-preserving merge-style update (or an equivalent repository-supported operation that preserves the handed-off SHAs), then verify the workspace is current with its base. If generic PR tooling would rewrite those commits, use the merge-style update path for this workspace instead. The invariant is immutable artifact identity, not linear branch history.
+
+Workspace sharing must not weaken anchoring control. An independent reviewer may use the same workspace for persistence but should begin from the research brief and live repository authorities, then reconstruct constraints/candidates/failure cases before deeply reading the handed-off report, as §9 requires. Unrelated investigations should not share a workspace because that increases accidental anchoring, couples retirement, and creates pressure for a parallel long-running research archive.
+
+The final reconciliation PR may use the same workspace branch. Before merge, temporary report/review/handoff files that are not deliberately promoted into durable repository authority should be absent from the branch's final tree, so the PR's net content is the durable reconciliation rather than an archive dump. Their exact historical commit + path coordinates remain the evidence identity until the workspace is retired.
+
+Temporary research evidence may be deleted only after every research question carried by the workspace is `CONCLUDED` or `SUPERSEDED` **and** a knowledge-transfer audit accounts for every material result that should survive the investigation. At minimum, classify and transfer:
 
 - accepted conclusions and invariants into the appropriate product, architecture, ADR, reference, or admitted planning authority;
 - qualifications that constrain an accepted conclusion into the same durable destination as that conclusion;
@@ -302,7 +322,9 @@ Temporary research evidence may be deleted only after the research is `CONCLUDED
 - reusable proving cases, counterexamples, failure modes, measurements, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;
 - findings that no longer merit retention as explicitly discarded rather than accidentally lost with branch deletion.
 
-If any material item still lacks a durable destination or explicit discard decision, the evidence branch remains available. This retirement rule does not create another lifecycle state, research issue ledger, or permanent report archive; it closes the custody gap between session-local research and durable reconciliation.
+The reconciliation must name the workspace(s) covered by its transfer audit and state whether each is retirement-eligible. If any material item still lacks a durable destination or explicit discard decision, keep the workspace available. Once the reconciliation has landed and its independent PR review has validated the transfer, deleting a retirement-eligible workspace branch is immediate post-merge cleanup. The reconciliation owns that retirement decision even though deleting the Git ref is an operational action after merge rather than part of repository content.
+
+This retirement rule does not create another lifecycle state, research issue ledger, or permanent report archive; it closes the custody gap between session-local research and durable reconciliation while keeping artifact-level integrity in immutable commit coordinates rather than branch proliferation.
 
 ## 11. What this document intentionally does not decide
 

@@ -97,7 +97,7 @@ Before recommending merge, re-resolve current `main` and the PR head. If the bra
 
 When the user requests only a specific concern, review that concern thoroughly but label the result targeted. Do not turn a targeted architecture, API, security, or test inspection into an implicit full-PR approval.
 
-A Dependabot PR whose current commit set remains exclusively GitHub-associated, verified Dependabot commits does not need a reviewer-authored `READY TO MERGE` to satisfy the repository's required `disposition` check. If the user explicitly asks you to review such a PR, still perform the requested review normally; the provenance exception removes a positive merge-gate requirement, not the ability to request independent analysis. If that review finds a blocker, a current-head canonical `CHANGES REQUIRED` revokes the default authorization.
+A Dependabot PR for which the trusted base-side workflow verifies both the exact GitHub Dependabot account as PR opener and as the actor of the `CI` pull-request workflow run for the exact current head does not need a reviewer-authored `READY TO MERGE` to satisfy the required `disposition` check. If the user explicitly asks you to review such a PR, still perform the requested review normally; the provenance exception removes a positive merge-gate requirement, not the ability to request independent analysis. If that review finds a blocker, a current-head canonical `CHANGES REQUIRED` revokes the default authorization.
 
 ## Continuation shorthand
 

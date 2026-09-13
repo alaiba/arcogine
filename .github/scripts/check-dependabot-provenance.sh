@@ -1,64 +1,76 @@
 #!/usr/bin/env bash
 # Trusted Dependabot provenance verifier for the PR disposition workflow.
 #
-# A Dependabot-authored PR is eligible for review-authorization bypass only
-# while its *current* PR commit set remains entirely Dependabot-created. GitHub
-# allows maintainers to push extra commits onto Dependabot branches, so PR
-# author identity alone is deliberately insufficient.
+# A Dependabot-authored PR is eligible for positive-review bypass only when
+# trusted GitHub API state proves that both the PR opener and the pull-request
+# event that produced CI for the exact current head are GitHub's Dependabot
+# bot. This matters because maintainers may push commits to Dependabot branches:
+# PR authorship alone would otherwise let later human-authored heads inherit the
+# bot's review exception.
 #
 # Inputs (all supplied by the trusted base-side workflow after GitHub API reads):
-#   PR_HEAD_SHA          - current pull_request.head.sha
-#   PR_AUTHOR_LOGIN      - current pull_request.user.login
-#   PR_AUTHOR_TYPE       - current pull_request.user.type
-#   PR_COMMITS_JSON_B64  - base64-encoded JSON array returned by
-#                          GET /repos/{owner}/{repo}/pulls/{number}/commits
+#   PR_NUMBER             - current pull request number
+#   PR_HEAD_SHA           - current pull_request.head.sha
+#   PR_AUTHOR_LOGIN       - current pull_request.user.login
+#   PR_AUTHOR_TYPE        - current pull_request.user.type
+#   PR_AUTHOR_ID          - current pull_request.user.id
+#   PR_HEAD_CI_RUN_B64    - base64-encoded GitHub Actions workflow-run object
+#                           for CI on the exact current PR head
 #
 # Exit 0 only when:
-#   - the PR author is GitHub's exact Dependabot bot account;
-#   - at least one PR commit exists;
-#   - the final listed PR commit is the exact current PR head; and
-#   - every PR commit is associated by GitHub with dependabot[bot], has account
-#     type Bot, and carries a GitHub-verified commit signature.
+#   - the PR opener is GitHub's exact Dependabot bot account; and
+#   - the supplied CI run is a pull_request run named CI for the exact head;
+#   - that run is associated with this PR; and
+#   - the run actor is the same exact Dependabot bot account.
 #
-# Any maintainer-authored reconciliation or compatibility commit intentionally
-# revokes this bypass and returns the PR to the ordinary review path. To keep a
-# stale Dependabot PR eligible, refresh it through Dependabot's own rebase/
-# recreate mechanism so the resulting current commit set remains bot-created.
+# The stable GitHub account id is checked in addition to login/type. Mutable PR
+# text, branch names, labels, commit author strings, and commit messages are not
+# provenance signals.
 
 set -euo pipefail
 
-if [ -z "${PR_HEAD_SHA:-}" ]; then
-  echo "Dependabot provenance failed: PR_HEAD_SHA is not set." >&2
+DEPENDABOT_LOGIN='dependabot[bot]'
+DEPENDABOT_TYPE='Bot'
+DEPENDABOT_ID='49699333'
+
+if [ -z "${PR_NUMBER:-}" ] || [ -z "${PR_HEAD_SHA:-}" ]; then
+  echo "Dependabot provenance failed: PR_NUMBER and PR_HEAD_SHA are required." >&2
   exit 1
 fi
 
-if [ "${PR_AUTHOR_LOGIN:-}" != "dependabot[bot]" ] || [ "${PR_AUTHOR_TYPE:-}" != "Bot" ]; then
-  echo "Dependabot provenance failed: PR author is not the trusted dependabot[bot] Bot account." >&2
+if [ "${PR_AUTHOR_LOGIN:-}" != "$DEPENDABOT_LOGIN" ] \
+  || [ "${PR_AUTHOR_TYPE:-}" != "$DEPENDABOT_TYPE" ] \
+  || [ "${PR_AUTHOR_ID:-}" != "$DEPENDABOT_ID" ]; then
+  echo "Dependabot provenance failed: PR opener is not GitHub's trusted Dependabot account." >&2
   exit 1
 fi
 
-if [ -z "${PR_COMMITS_JSON_B64:-}" ]; then
-  echo "Dependabot provenance failed: PR commit list is absent." >&2
+if [ -z "${PR_HEAD_CI_RUN_B64:-}" ]; then
+  echo "Dependabot provenance failed: exact-head CI run is absent." >&2
   exit 1
 fi
 
-commits_json=$(printf '%s' "$PR_COMMITS_JSON_B64" | base64 -d 2>/dev/null) || {
-  echo "Dependabot provenance failed: PR commit list is not valid base64." >&2
+run_json=$(printf '%s' "$PR_HEAD_CI_RUN_B64" | base64 -d 2>/dev/null) || {
+  echo "Dependabot provenance failed: CI run is not valid base64." >&2
   exit 1
 }
 
-if ! jq -e --arg head "$PR_HEAD_SHA" '
-  type == "array"
-  and length > 0
-  and .[-1].sha == $head
-  and all(.[];
-    .author.login == "dependabot[bot]"
-    and .author.type == "Bot"
-    and .commit.verification.verified == true
-  )
-' >/dev/null <<<"$commits_json"; then
-  echo "Dependabot provenance failed: current PR commits are not exclusively verified Dependabot commits bound to head $PR_HEAD_SHA." >&2
+if ! jq -e \
+  --arg head "$PR_HEAD_SHA" \
+  --argjson pr "$PR_NUMBER" \
+  --arg login "$DEPENDABOT_LOGIN" \
+  --arg type "$DEPENDABOT_TYPE" \
+  --argjson id "$DEPENDABOT_ID" '
+    .name == "CI"
+    and .event == "pull_request"
+    and .head_sha == $head
+    and .actor.login == $login
+    and .actor.type == $type
+    and .actor.id == $id
+    and any(.pull_requests[]?; .number == $pr)
+  ' >/dev/null <<<"$run_json"; then
+  echo "Dependabot provenance failed: exact-head CI was not initiated by the trusted Dependabot account for this PR." >&2
   exit 1
 fi
 
-echo "Dependabot provenance passed: current head $PR_HEAD_SHA contains only verified Dependabot-created PR commits."
+echo "Dependabot provenance passed: PR #$PR_NUMBER head $PR_HEAD_SHA was opened and current-head CI was initiated by GitHub Dependabot."

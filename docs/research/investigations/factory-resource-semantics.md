@@ -3,7 +3,7 @@
 > **Status:** CONCLUDED  
 > **Research baseline:** `2acee74723aad7a9ca384459f5d44ef35b85b6fd`  
 > **Reconciled:** 2026-09-08 against live `main` at `8d208707b808a9dfc41bb9666ee7c1ff4a14b4cc`; intervening changes did not alter Factory resource production semantics  
-> **Authority:** Research evidence only. Durable consequences are reconciled into the [Factory Resource Semantics](../architecture/factory-resource-semantics.md) architectural reference and implementation planning.
+> **Authority:** Research evidence only. Durable consequences are reconciled into the [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) architectural reference and implementation planning.
 
 ## Question
 
@@ -158,8 +158,8 @@ This conclusion does **not** introduce a production-model migration or new Facto
 
 Durable reconciliation should preserve these rules:
 
-- [Factory Resource Semantics](../architecture/factory-resource-semantics.md) starts from configured productive-resource identity, not an assumed reusable definition plus installed instance, and treats specification/classification, configured identity, capability, hierarchy, location, physical asset, and runtime state as orthogonal concepts;
-- `ConfiguredResource` documentation and current code state directly that the canonical record is one configured resource; the production rename from the research-baseline `ResourceDefinition` was terminology-only;
+- [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) starts from configured productive-resource identity, not an assumed reusable definition plus installed instance, and treats specification/classification, configured identity, capability, hierarchy, location, physical asset, and runtime state as orthogonal concepts;
+- `ConfiguredResource` documentation and current code state directly state that the canonical record is one configured resource; the production rename from the research-baseline `ResourceDefinition` was terminology-only;
 - implementation planning records the split as **not admitted** and requires a future checkable technical-specification/dependency invariant before reopening it;
 - ADR-0011's resource `definition identity` wording does not imply two distinct identifiers under the current collapsed model: the same canonical `MachineId` identifies the configured model record and runtime correlation target.
 

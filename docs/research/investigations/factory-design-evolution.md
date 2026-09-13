@@ -14,7 +14,7 @@ Research question:
 
 > Does Factory Design need a reusable equipment/resource definition distinct from installed resource instances, and what semantic invariant would that distinction carry?
 
-**Verdict: KEEP COLLAPSED FOR NOW.** The decision-quality evidence is preserved in the [Factory Resource Semantics Research Report](factory-resource-semantics.md), and the durable interpretation is recorded in [Factory Resource Semantics](../architecture/factory-resource-semantics.md).
+**Verdict: KEEP COLLAPSED FOR NOW.** The decision-quality evidence is preserved in the [Factory Resource Semantics Research Report](factory-resource-semantics.md), and the durable interpretation is recorded in [Factory Resource Semantics](../../architecture/factory-resource-semantics.md).
 
 The canonical Factory model currently needs one independently identified **configured productive resource** per designed participant. Repeated catalogue/template origin, equal configured values, a manufacturer/model label, or installing the same authored item more than once do not by themselves justify a second reusable definition identity.
 

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Operational notes for coding agents working in this repository. See [README.md](README.md) for what Arcogine is, and [.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) for human contributor workflow/style detail. Don't duplicate either here.
+Operational notes for coding agents working in this repository. See [README.md](README.md) for what Arcogine is, and [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for human contributor workflow/style detail. Don't duplicate either here.
 
 ## Repository identity and task shorthand
 
@@ -101,9 +101,7 @@ workflow-managed obligations section:
   current.
 
 Never repeat the same reminder more than once per session, and never derail the
-user's requested task merely because an improvement obligation is due — this is
-defense in depth so scheduled work does not disappear unnoticed, not a gate on
-other work.
+user's requested task merely because an improvement obligation is due — this is defense in depth so scheduled work does not disappear unnoticed, not a gate on other work.
 
 ## Temporary delivery coordinates and durable documentation
 

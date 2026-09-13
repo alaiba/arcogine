@@ -21,7 +21,7 @@ The architecture is fixed by:
 
 Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. The
 first-release local-admission and shared-backlog-ranking questions in
-[Engine Evolution Research](../research/engine-evolution.md) are now concluded after independent
+[Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded after independent
 adversarial review, and both retain `engine-semantics:v1` unchanged. The research prerequisite for
 PLAN-ENG-5-0 is therefore satisfied: that slice pins the existing rules and their reviewed boundary
 cases rather than selecting a new policy. Factory V2 model/canonicalization slices remain independently
@@ -98,7 +98,7 @@ coherent in the same landed change under ADR-0011.
 
 **Status:** Ready. The first-release dispatch research gate is cleared: both reviewed questions retain
 `engine-semantics:v1` unchanged, with the qualifications recorded in
-[Engine Evolution Research](../research/engine-evolution.md).
+[Engine Evolution Research](../research/investigations/engine-evolution.md).
 
 **Prerequisites:** ADR-0015 landed Accepted, plus conclusion of the two first-release dispatch
 questions with `engine-semantics:v1` retained unchanged. Those prerequisites are satisfied. A future

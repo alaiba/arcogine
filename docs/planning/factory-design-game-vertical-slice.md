@@ -6,7 +6,7 @@
 
 ## Current blocker
 
-The product loop, reference challenge, diagnostics, scoring, tutorial, technology, and packaging choices remain under [Factory-Design Game Vertical-Slice Research](../research/factory-design-game-vertical-slice.md).
+The product loop, reference challenge, diagnostics, scoring, tutorial, technology, and packaging choices remain under [Factory-Design Game Vertical-Slice Research](../research/investigations/factory-design-game-vertical-slice.md).
 
 No playable implementation should begin while those choices still determine what the slice is supposed to prove.
 

@@ -17,7 +17,7 @@ Arcogine separates durable direction, current truth, research, and executable pl
 - **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus enduring architectural principles.
 - **[`architecture/decisions/`](architecture/decisions/README.md)** — rationale for significant hard-to-reverse choices.
 - **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md), [`reference/api.md`](reference/api.md), and consumer/component references describe what exists now.
-- **[`research/`](research/README.md)** — open questions, hypotheses, evidence, and decision-quality investigations. Research is not accepted architecture or implementation commitment.
+- **[`research/`](research/README.md)** — research-area index linking the normative operating model, current research portfolio state, synthesis signals, investigation artifacts, and report structure. Research is not accepted architecture or implementation commitment.
 - **[`planning/`](planning/README.md)** — implementation-ready delivery planning only: admitted slices, dependencies, blockers on concrete prerequisites, acceptance evidence, and implementation status.
 
 Research discovers. Product/architecture/ADRs establish durable meaning. Planning sequences concrete implementation. Landed code/tests and current-state docs establish what actually exists.
@@ -35,9 +35,9 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Canonical production-system semantics, validation, publication, deterministic instantiation | [Factory design architecture](architecture/factory-design.md) / [Factory design plan](planning/factory-design-capability.md) | One published semantic model is the downstream source of truth |
 | Deterministic workload, work items, dispatch, session, supported observations/events, spatial consequences | [Engine readiness](planning/factory-simulation-engine-readiness.md) | Simulation runtime truth; not production-control semantics |
 | Durable semantic fingerprint/revision history, semantic change, requirements, conformance, evidence/governed change | [Governance architecture](architecture/governance-conformance.md) / [Governance plan](planning/governance-conformance-capability.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
-| Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
+| Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
 | Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
-| Playable factory-design product hypothesis | [Game vertical-slice research](research/factory-design-game-vertical-slice.md) | Product evidence first; implementation only after promotion into the consumer plan |
+| Playable factory-design product hypothesis | [Game vertical-slice research](research/investigations/factory-design-game-vertical-slice.md) | Product evidence first; implementation only after promotion into the consumer plan |
 
 ## Development and contributing
 
@@ -45,7 +45,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 |---|---|
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, style, validation |
 | [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
-| [researching.md](development/researching.md) | Normative Arcogine research method: how research is conducted, decision-quality evidence, independent adversarial review |
+| [researching.md](development/researching.md) | Normative Arcogine research operating model: lifecycle/priority semantics, promotion/reconciliation, investigation and adversarial review, evidence custody, synthesis-seed handling, and register maintenance |
 | [continuous-improvement.md](development/continuous-improvement.md) | Continuous-improvement operating model: Session-close Kaizen, weekly Consistency review, delivery-process retrospective, and the improvement register |
 | [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
 | [testing.md](development/testing.md) | Test categories, CI, quality gates, native commands |
@@ -72,14 +72,16 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 
 | Document | What it covers |
 |---|---|
-| [Research register](research/README.md) | Portfolio status, priority, promotion policy |
-| [Research method](development/researching.md) | Normative method for conducting a research investigation and independent adversarial review |
+| [Research area index](research/README.md) | Navigation and authority map for research surfaces |
+| [Research operating model](development/researching.md) | Normative research rules: lifecycle, priority, promotion/reconciliation, investigation/review, evidence custody, synthesis seeds, and register maintenance |
+| [Research register](research/research-register.md) | Current admitted research questions, priority, lifecycle state, evidence artifact, expected destination, and review date |
+| [Synthesis seeds](research/synthesis-seeds.md) | Current retained non-authoritative cross-investigation synthesis signals |
 | [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |
-| [Agency and decision boundary](research/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation |
-| [Factory Design evolution](research/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
-| [Factory-design game vertical slice](research/factory-design-game-vertical-slice.md) | Product loop, diagnostics, reference challenge, scoring/tutorial/technology evidence |
-| [Engine evolution](research/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy and unselected recovery/session extensions |
-| [Operational/Digital Twin boundaries](research/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |
+| [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation |
+| [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
+| [Factory-design game vertical slice](research/investigations/factory-design-game-vertical-slice.md) | Product loop, diagnostics, reference challenge, scoring/tutorial/technology evidence |
+| [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy and unselected recovery/session extensions |
+| [Operational/Digital Twin boundaries](research/investigations/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |
 
 ## Internal implementation planning
 

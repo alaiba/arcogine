@@ -352,9 +352,18 @@ test('blocking review aggregation', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
-  await t.test('a CHANGES REQUIRED disposition on a superseded head becomes AWAITING', () => {
+  await t.test('a stale CHANGES REQUIRED disposition is history once current-head authorization succeeds', () => {
     const reviews = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, body: 'Disposition: **CHANGES REQUIRED**.' })];
-    assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'AWAITING');
+    assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'READY TO MERGE');
+  });
+
+  await t.test('a stale CHANGES REQUIRED disposition cannot replace a missing current-head authorization', () => {
+    const reviews = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, body: 'Disposition: **CHANGES REQUIRED**.' })];
+    const checks = [
+      { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'FAILURE' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), { aheadBy: 1, behindBy: 0 }), 'AWAITING');
   });
 
   await t.test('a formal CHANGES_REQUESTED review still blocks after the head moves', () => {
@@ -427,6 +436,11 @@ test('remaining lifecycle inputs', async (t) => {
       { name: 'disposition', conclusion: 'FAILURE' },
     ];
     assert.equal(stateOf(pr({ reviews: stale, checks }), comparison), 'AWAITING');
+  });
+
+  await t.test('current-head CHANGES REQUIRED remains a blocker even while disposition check is stale-success', () => {
+    const blocked = [review({ at: '2026-01-01T00:00:00Z', body: 'Disposition: **CHANGES REQUIRED**.' })];
+    assert.equal(stateOf(pr({ reviews: blocked }), comparison), 'CHANGES REQUIRED');
   });
 
   await t.test('no review is acceptable only when trusted disposition authorization succeeds', () => {

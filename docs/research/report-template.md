@@ -2,7 +2,7 @@
 
 > This is a reusable structure, not a form to fill in mechanically. Omit any section that does not apply to the question rather than padding it — see [`docs/development/researching.md`](../development/researching.md)'s stopping rule and risk-proportionate depth guidance. A lower-risk local question may need only a fraction of these sections; a high-risk cross-domain question may need all of them plus an independent adversarial review before it counts as decision-quality evidence.
 >
-> Copy the structure below into the new report file under `docs/research/`; delete this note and any section headers that do not apply to the question at hand.
+> Copy the structure below into the new report file under `docs/research/investigations/`; delete this note and any section headers that do not apply to the question at hand.
 
 ---
 

@@ -1,23 +1,31 @@
 #!/usr/bin/env bash
 # PR disposition merge-gate evaluator.
 #
-# Enforces exactly one invariant: the latest applicable canonical reviewer
-# disposition for the current PR head must be READY TO MERGE.
+# Enforces Arcogine's review-authorization invariant for the current PR head:
+#
+#   - a PR opened by GitHub's trusted Dependabot bot is authorized directly;
+#   - every other PR requires the latest applicable canonical reviewer
+#     disposition for the current head to be READY TO MERGE.
 #
 # Reviewer disposition vocabulary (exactly two values):
 #   READY TO MERGE    - reviewer authorizes merge of this exact head
 #   CHANGES REQUIRED  - reviewer blocks merge; remediation required
 #
 # This evaluator does not reason about CI, mergeability, unresolved threads,
-# reviewer identity, review state (APPROVED/CHANGES_REQUESTED/COMMENTED/
-# DISMISSED), or approval/dismissal lifetime. Those richer lifecycle concerns
-# belong to infra/dev/pr-watch.mjs. This gate answers exactly one question:
-# does the latest applicable review body for the current PR head end in a
-# canonical READY TO MERGE disposition block? CI and other branch-protection
-# requirements are enforced independently by GitHub.
+# native GitHub review state (APPROVED/CHANGES_REQUESTED/COMMENTED/DISMISSED),
+# or approval/dismissal lifetime. Those richer lifecycle concerns belong to
+# infra/dev/pr-watch.mjs. CI and other branch-protection requirements are
+# enforced independently by GitHub.
+#
+# The Dependabot exception is safe only because PR_AUTHOR_LOGIN and
+# PR_AUTHOR_TYPE are supplied by the trusted base-side workflow after it
+# re-fetches the pull request from GitHub's API. Candidate PR content is never
+# allowed to supply those values.
 #
 # Input (environment variables):
 #   PR_HEAD_SHA        - current pull_request.head.sha
+#   PR_AUTHOR_LOGIN    - pull_request.user.login re-fetched from GitHub's API
+#   PR_AUTHOR_TYPE     - pull_request.user.type re-fetched from GitHub's API
 #   REVIEW_BODIES_B64  - newline-separated list of base64-encoded review
 #                        bodies, one per authoritative review, in
 #                        chronological order (oldest first) as returned by
@@ -29,7 +37,8 @@
 #                        structural delimiter.
 #
 # Output:
-#   Exit 0 if the latest applicable current-head disposition is READY TO MERGE.
+#   Exit 0 when the current head is authorized by trusted Dependabot
+#   provenance or by a current-head READY TO MERGE disposition.
 #   Exit 1 otherwise, with a diagnostic message on stderr.
 
 set -euo pipefail
@@ -39,8 +48,18 @@ if [ -z "${PR_HEAD_SHA:-}" ]; then
   exit 1
 fi
 
+# GitHub owns the `dependabot[bot]` account identity. Requiring both the exact
+# login and Bot account type prevents a user account or lookalike string from
+# taking the trusted automation path. The trusted workflow obtains both values
+# from the PR API; this script never trusts PR title, branch name, labels, body,
+# commit author text, or any other candidate-controlled provenance signal.
+if [ "${PR_AUTHOR_LOGIN:-}" = "dependabot[bot]" ] && [ "${PR_AUTHOR_TYPE:-}" = "Bot" ]; then
+  echo "PR disposition gate passed: current head $PR_HEAD_SHA belongs to a trusted Dependabot-authored PR."
+  exit 0
+fi
+
 if [ -z "${REVIEW_BODIES_B64:-}" ]; then
-  echo "error: REVIEW_BODIES_B64 not set" >&2
+  echo "PR disposition gate failed: no canonical reviewer disposition exists for current head $PR_HEAD_SHA." >&2
   exit 1
 fi
 

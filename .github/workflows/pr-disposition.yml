@@ -3,15 +3,18 @@ name: PR Disposition
 # PR review-authorization merge-gate workflow.
 #
 # Enforces one authorization invariant for the current PR head:
-#   - a genuine Dependabot PR whose current PR commit set is still entirely
-#     verified Dependabot-created is authorized without a positive review;
+#   - a genuine Dependabot PR whose exact current head was produced by a
+#     Dependabot-triggered pull-request event is authorized without a positive
+#     review;
 #   - every other PR requires the latest applicable canonical reviewer
 #     disposition for the current head to be READY TO MERGE;
 #   - an explicit current-head CHANGES REQUIRED disposition blocks either path.
 #
-# This workflow does not evaluate CI, mergeability, base freshness, or
+# This workflow does not evaluate CI outcome, mergeability, base freshness, or
 # unresolved threads — those remain independently enforced by GitHub branch
-# protection and infra/dev/pr-watch.mjs.
+# protection and infra/dev/pr-watch.mjs. The CI workflow run is consulted only
+# as trusted current-head provenance for Dependabot; `gate` remains the
+# independent validation result.
 #
 # TRUST BOUNDARY (this is why the triggers below look unusual):
 #
@@ -30,25 +33,22 @@ name: PR Disposition
 #     definition from the base branch (main), never from the PR.
 #   - `workflow_run`, sourced from main, for both the minimal review listener
 #     and CI. The review listener provides a fast path for reviewer disposition
-#     changes. CI completion provides a trusted wake for Dependabot-authored
-#     PRs, which need no positive reviewer event. In both cases this workflow
-#     re-fetches the workflow run and PR state from GitHub's API and trusts no
-#     code supplied by the candidate branch. CI also runs for pushes,
-#     schedules, and manual dispatch; those runs have no associated PR and are
-#     a clean no-op here rather than an error.
+#     changes. CI completion provides the trusted wake needed for a Dependabot
+#     PR whose positive authorization does not require a review event. In both
+#     cases this workflow re-fetches authoritative API state.
 #   - `schedule`, as a trusted backstop independent of candidate-controlled
-#     events. The review listener's own pull_request_review.types list is
-#     PR-editable content, so a PR could narrow it and leave a later revocation
-#     unable to reach the trusted evaluator via the fast path. The schedule is
-#     always read from the default branch and re-checks every open PR.
+#     events. The schedule re-evaluates every open PR from current GitHub API
+#     state, including the exact-head CI actor, so a stale passing result cannot
+#     be recreated from mutable PR text or branch naming.
 #
 # Dependabot provenance is stronger than PR author identity. GitHub allows
-# maintainers to push extra commits onto Dependabot branches, so the trusted
-# path requires BOTH an exact dependabot[bot] Bot PR author and a current PR
-# commit list in which every commit is GitHub-associated with dependabot[bot]
-# and has a verified signature. A maintainer-authored extra commit therefore
-# falls back to ordinary independent review. PR title, branch name, labels,
-# body, and commit-message text are never provenance signals.
+# maintainers to push extra commits onto Dependabot branches. Therefore the
+# positive path requires BOTH the exact GitHub Dependabot account as PR opener
+# and a `CI` pull_request workflow run for the exact current head whose GitHub
+# actor is that same Dependabot account. A maintainer-authored push produces a
+# new head and a CI run attributed to the maintainer, so it falls back to
+# ordinary independent review. PR title, branch name, labels, body, commit
+# author strings, and commit messages are never provenance signals.
 #
 # Neither `pull_request_target`, `workflow_run`, nor `schedule` implicitly
 # attaches a check result to the correct PR head SHA the way a
@@ -221,24 +221,33 @@ jobs:
 
           AUTHOR_LOGIN=$(jq -r '.user.login' <<<"$PR_JSON")
           AUTHOR_TYPE=$(jq -r '.user.type' <<<"$PR_JSON")
+          AUTHOR_ID=$(jq -r '.user.id' <<<"$PR_JSON")
           TRUSTED=false
 
-          if [ "$AUTHOR_LOGIN" = "dependabot[bot]" ] && [ "$AUTHOR_TYPE" = "Bot" ]; then
-            COMMITS_JSON=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/commits" \
-              --paginate \
-              --slurp \
-              | jq -c 'add')
-            COMMITS_B64=$(printf '%s' "$COMMITS_JSON" | base64 -w0)
+          if [ "$AUTHOR_LOGIN" = "dependabot[bot]" ] && [ "$AUTHOR_TYPE" = "Bot" ] && [ "$AUTHOR_ID" = "49699333" ]; then
+            # Query trusted Actions metadata for a pull_request CI run on the exact
+            # current head. The workflow result is not the provenance signal here;
+            # its server-side actor is. Required validation remains the separate gate.
+            CI_RUN=$(gh api \
+              "repos/${{ github.repository }}/actions/runs?head_sha=$EXPECTED_HEAD_SHA&event=pull_request&per_page=100" \
+              --jq '[.workflow_runs[] | select(.name == "CI")] | sort_by(.created_at) | last // empty')
 
-            if PR_HEAD_SHA="$EXPECTED_HEAD_SHA" \
-               PR_AUTHOR_LOGIN="$AUTHOR_LOGIN" \
-               PR_AUTHOR_TYPE="$AUTHOR_TYPE" \
-               PR_COMMITS_JSON_B64="$COMMITS_B64" \
-               bash .github/scripts/check-dependabot-provenance.sh; then
-              TRUSTED=true
+            if [ -n "$CI_RUN" ]; then
+              CI_RUN_B64=$(printf '%s' "$CI_RUN" | base64 -w0)
+              if PR_NUMBER="$PR_NUMBER" \
+                 PR_HEAD_SHA="$EXPECTED_HEAD_SHA" \
+                 PR_AUTHOR_LOGIN="$AUTHOR_LOGIN" \
+                 PR_AUTHOR_TYPE="$AUTHOR_TYPE" \
+                 PR_AUTHOR_ID="$AUTHOR_ID" \
+                 PR_HEAD_CI_RUN_B64="$CI_RUN_B64" \
+                 bash .github/scripts/check-dependabot-provenance.sh; then
+                TRUSTED=true
+              fi
+            else
+              echo "No pull_request CI run exists yet for Dependabot head $EXPECTED_HEAD_SHA; authorization remains pending."
             fi
           else
-            echo "PR is not authored by dependabot[bot]; ordinary reviewer authorization applies."
+            echo "PR was not opened by GitHub's exact Dependabot account; ordinary reviewer authorization applies."
           fi
 
           echo "trusted_dependabot=$TRUSTED" >> "$GITHUB_OUTPUT"

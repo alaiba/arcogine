@@ -3,9 +3,11 @@ name: PR Disposition
 # PR review-authorization merge-gate workflow.
 #
 # Enforces one authorization invariant for the current PR head:
-#   - a PR opened by GitHub's trusted Dependabot bot is authorized directly;
+#   - a genuine Dependabot PR whose current PR commit set is still entirely
+#     verified Dependabot-created is authorized without a positive review;
 #   - every other PR requires the latest applicable canonical reviewer
-#     disposition for the current head to be READY TO MERGE.
+#     disposition for the current head to be READY TO MERGE;
+#   - an explicit current-head CHANGES REQUIRED disposition blocks either path.
 #
 # This workflow does not evaluate CI, mergeability, base freshness, or
 # unresolved threads — those remain independently enforced by GitHub branch
@@ -29,21 +31,24 @@ name: PR Disposition
 #   - `workflow_run`, sourced from main, for both the minimal review listener
 #     and CI. The review listener provides a fast path for reviewer disposition
 #     changes. CI completion provides a trusted wake for Dependabot-authored
-#     PRs, which need no reviewer event. In both cases this workflow re-fetches
-#     the workflow run and the PR from GitHub's API and trusts no payload or
-#     code supplied by the candidate branch. CI also runs for pushes, schedules,
-#     and manual dispatch; those runs have no associated PR and are a clean
-#     no-op here rather than an error.
+#     PRs, which need no positive reviewer event. In both cases this workflow
+#     re-fetches the workflow run and PR state from GitHub's API and trusts no
+#     code supplied by the candidate branch. CI also runs for pushes,
+#     schedules, and manual dispatch; those runs have no associated PR and are
+#     a clean no-op here rather than an error.
 #   - `schedule`, as a trusted backstop independent of candidate-controlled
 #     events. The review listener's own pull_request_review.types list is
 #     PR-editable content, so a PR could narrow it and leave a later revocation
 #     unable to reach the trusted evaluator via the fast path. The schedule is
 #     always read from the default branch and re-checks every open PR.
 #
-# Dependabot provenance is derived only from the PR object re-fetched from the
-# GitHub API: exact login `dependabot[bot]` plus account type `Bot`. PR title,
-# branch name, labels, body, and commit author strings are candidate-controlled
-# and are never provenance signals.
+# Dependabot provenance is stronger than PR author identity. GitHub allows
+# maintainers to push extra commits onto Dependabot branches, so the trusted
+# path requires BOTH an exact dependabot[bot] Bot PR author and a current PR
+# commit list in which every commit is GitHub-associated with dependabot[bot]
+# and has a verified signature. A maintainer-authored extra commit therefore
+# falls back to ordinary independent review. PR title, branch name, labels,
+# body, and commit-message text are never provenance signals.
 #
 # Neither `pull_request_target`, `workflow_run`, nor `schedule` implicitly
 # attaches a check result to the correct PR head SHA the way a
@@ -67,7 +72,6 @@ on:
     workflows: ["PR Disposition Review Trigger", "CI"]
     types: [completed]
   schedule:
-    # Bounded staleness backstop, independent of any PR-controlled trigger.
     - cron: '*/10 * * * *'
 
 permissions:
@@ -86,10 +90,6 @@ jobs:
         id: resolve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Event values are passed as data via environment variables rather
-          # than interpolated directly into shell script text. The workflow-run
-          # association is re-fetched from GitHub's API using the run ID instead
-          # of serializing the nested pull_requests object into an expression.
           EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
           EVENT_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
           EVENT_WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
@@ -109,24 +109,16 @@ jobs:
                   ;;
               esac
 
-              # Re-fetch the trusted workflow-run object from GitHub and read
-              # its associated PRs there. For a pull_request_review-triggered
-              # listener run, head_sha is the ephemeral refs/pull/<n>/merge
-              # commit and cannot be resolved through /commits/<sha>/pulls.
               PR_NUMBER=$(gh api \
                 "repos/${{ github.repository }}/actions/runs/$EVENT_WORKFLOW_RUN_ID" \
                 --jq '.pull_requests[0].number // empty')
 
               if [ -z "$PR_NUMBER" ]; then
-                # GitHub documents pull_requests as possibly empty for fork
-                # cases. Fall back to the run's real source branch name.
                 PR_NUMBER=$(gh pr list --repo "${{ github.repository }}" --head "$EVENT_HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
               fi
 
               if [ -z "$PR_NUMBER" ]; then
                 if [ "$EVENT_WORKFLOW_NAME" = "CI" ]; then
-                  # CI also runs for pushes to main, schedules, and manual
-                  # dispatch. Those runs intentionally have no PR target.
                   TARGETS='[]'
                 else
                   echo "::error::could not resolve an associated pull request for this $EVENT_WORKFLOW_NAME workflow_run event"
@@ -160,7 +152,7 @@ jobs:
       cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve current PR identity and head SHA
+      - name: Resolve current PR head SHA
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -177,14 +169,10 @@ jobs:
 
           PR_JSON=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER")
           HEAD_SHA=$(jq -r '.head.sha' <<<"$PR_JSON")
-          AUTHOR_LOGIN=$(jq -r '.user.login' <<<"$PR_JSON")
-          AUTHOR_TYPE=$(jq -r '.user.type' <<<"$PR_JSON")
 
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-          echo "author_login=$AUTHOR_LOGIN" >> "$GITHUB_OUTPUT"
-          echo "author_type=$AUTHOR_TYPE" >> "$GITHUB_OUTPUT"
-          echo "Resolved PR #$PR_NUMBER, current head: $HEAD_SHA, author: $AUTHOR_LOGIN ($AUTHOR_TYPE)"
+          echo "Resolved PR #$PR_NUMBER, current head: $HEAD_SHA"
 
       - name: Fetch authoritative review bodies with pagination
         id: reviews
@@ -215,12 +203,52 @@ jobs:
         with:
           ref: main
 
+      - name: Verify trusted Dependabot provenance
+        id: dependabot
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+
+          PR_JSON=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER")
+          CURRENT_HEAD_SHA=$(jq -r '.head.sha' <<<"$PR_JSON")
+          if [ "$CURRENT_HEAD_SHA" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::PR head moved during trusted evaluation: expected $EXPECTED_HEAD_SHA, now $CURRENT_HEAD_SHA"
+            exit 1
+          fi
+
+          AUTHOR_LOGIN=$(jq -r '.user.login' <<<"$PR_JSON")
+          AUTHOR_TYPE=$(jq -r '.user.type' <<<"$PR_JSON")
+          TRUSTED=false
+
+          if [ "$AUTHOR_LOGIN" = "dependabot[bot]" ] && [ "$AUTHOR_TYPE" = "Bot" ]; then
+            COMMITS_JSON=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/commits" \
+              --paginate \
+              --slurp \
+              | jq -c 'add')
+            COMMITS_B64=$(printf '%s' "$COMMITS_JSON" | base64 -w0)
+
+            if PR_HEAD_SHA="$EXPECTED_HEAD_SHA" \
+               PR_AUTHOR_LOGIN="$AUTHOR_LOGIN" \
+               PR_AUTHOR_TYPE="$AUTHOR_TYPE" \
+               PR_COMMITS_JSON_B64="$COMMITS_B64" \
+               bash .github/scripts/check-dependabot-provenance.sh; then
+              TRUSTED=true
+            fi
+          else
+            echo "PR is not authored by dependabot[bot]; ordinary reviewer authorization applies."
+          fi
+
+          echo "trusted_dependabot=$TRUSTED" >> "$GITHUB_OUTPUT"
+          echo "Trusted Dependabot authorization path: $TRUSTED"
+
       - name: Run disposition check
         id: evaluate
         env:
           PR_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
-          PR_AUTHOR_LOGIN: ${{ steps.pr.outputs.author_login }}
-          PR_AUTHOR_TYPE: ${{ steps.pr.outputs.author_type }}
+          PR_TRUSTED_DEPENDABOT: ${{ steps.dependabot.outputs.trusted_dependabot }}
           REVIEW_BODIES_B64: ${{ steps.reviews.outputs.review_bodies_b64 }}
         run: |
           set +e

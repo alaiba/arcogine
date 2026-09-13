@@ -17,7 +17,7 @@ Arcogine separates durable direction, current truth, research, and executable pl
 - **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus enduring architectural principles.
 - **[`architecture/decisions/`](architecture/decisions/README.md)** — rationale for significant hard-to-reverse choices.
 - **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md), [`reference/api.md`](reference/api.md), and consumer/component references describe what exists now.
-- **[`research/`](research/README.md)** — research-area index linking the normative operating model, current research portfolio state, synthesis signals, investigation artifacts, and report structure. Research is not accepted architecture or implementation commitment.
+- **[`research/`](research/README.md)** — research-area index linking the normative operating model, current research portfolio state, synthesis signals, investigation artifacts, and reusable brief/report structures. Research is not accepted architecture or implementation commitment.
 - **[`planning/`](planning/README.md)** — implementation-ready delivery planning only: admitted slices, dependencies, blockers on concrete prerequisites, acceptance evidence, and implementation status.
 
 Research discovers. Product/architecture/ADRs establish durable meaning. Planning sequences concrete implementation. Landed code/tests and current-state docs establish what actually exists.
@@ -76,7 +76,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Research operating model](development/researching.md) | Normative research rules: lifecycle, priority, promotion/reconciliation, investigation/review, evidence custody, synthesis seeds, and register maintenance |
 | [Research register](research/research-register.md) | Current admitted research questions, priority, lifecycle state, evidence artifact, expected destination, and review date |
 | [Synthesis seeds](research/synthesis-seeds.md) | Current retained non-authoritative cross-investigation synthesis signals |
-| [Research brief template](research/brief-template.md) | Reusable failure-oriented planning structure for bounding research questions before they enter the maintained register as `READY` |
+| [Research brief template](research/brief-template.md) | Reusable advisory failure-oriented planning structure for bounding research questions; it does not add `READY` criteria |
 | [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |
 | [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation |
 | [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |

@@ -8,6 +8,12 @@ This file preserves the smallest amount of information needed to recognize poten
 
 `docs/research/README.md` remains the only research portfolio/lifecycle ledger. `docs/development/researching.md` defines when reconciliation may retain a synthesis seed and how later investigations may use this index without manufacturing recurrence through anchoring.
 
+## Strategic horizon
+
+The long-term reason to preserve synthesis seeds is to keep open a path from repeated Arcogine evidence to knowledge that may eventually prove useful beyond Arcogine. If a signal independently recurs, survives bounded cross-investigation synthesis, and later withstands external comparison, replication, criticism, or other validation at the broader scope, it may contribute to reusable methods, terminology, reference models, tooling, standards work, or other industry practice.
+
+This horizon does not change Arcogine research admission, create publication work, or make a seed a claim about the outside world. Research remains driven by material Arcogine decisions; seeds merely preserve enough evidence-bearing connective tissue that genuinely broader knowledge is not made impossible to recognize later by routine workspace retirement.
+
 ## Admission
 
 Create or extend a seed only when all of the following are true:

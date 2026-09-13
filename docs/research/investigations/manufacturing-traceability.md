@@ -29,6 +29,12 @@ Whether Arcogine needs first-class manufacturing-material identity and lineage s
 
 A positive answer could affect Factory semantics, Operational execution history, durable identity/lineage architecture, and later implementation. A negative or narrower answer could keep material genealogy outside Arcogine while preserving only explicit external correlations.
 
+### Risk posture
+
+This is a **high-risk** research question under the normative research method because a surviving canonical result would establish identity/equality and lineage/continuity semantics. Any surviving high-risk identity/lineage conclusion must receive a genuinely independent adversarial research review before it can be treated as decision-quality evidence for promotion into an ADR or comparably durable architecture.
+
+Whether a surviving conclusion actually requires an ADR remains a conclusion-specific architecture question; the independent adversarial-review gate is not optional.
+
 ### Current/simple candidate
 
 Introduce no Arcogine-owned material genealogy. Keep production request/work-item identity, external material identifiers, observations, and correspondence distinct until a concrete supported manufacturing use case proves a canonical lineage invariant is necessary.
@@ -81,8 +87,9 @@ This question is ready to conclude only when the evidence is sufficient to state
 - ownership across Factory, Operational Execution, Governance, and Engine boundaries;
 - how backward and forward genealogy are reconstructed;
 - what remains external or explicitly deferred;
-- what would reopen the decision; and
-- whether any hard-to-reverse identity/lineage conclusion requires an ADR and independent adversarial review before promotion.
+- what would reopen the decision;
+- whether any surviving material identity/lineage conclusion requires an ADR; and
+- that any surviving high-risk identity/lineage conclusion proposed for durable promotion has completed the required genuinely independent adversarial research review.
 
 ### Expected durable destination
 
@@ -97,6 +104,12 @@ No action, or Factory/Operational architecture with an ADR only if durable mater
 ### Decision at stake
 
 Where Arcogine canonical semantics end and standards/vendor-specific traceability mappings begin, including whether repeated interoperability pressure exposes a genuinely shared Arcogine invariant or only adapter-local translation.
+
+### Risk posture
+
+This is a **high-risk** research question under the normative research method because a surviving result would establish interoperability semantics and potentially persisted/public compatibility boundaries. Its Medium portfolio priority does not lower that semantic risk classification.
+
+Any surviving high-risk interoperability conclusion must receive a genuinely independent adversarial research review before it can be treated as decision-quality evidence for promotion into an ADR or comparably durable architecture.
 
 ### Current/simple candidate
 
@@ -139,8 +152,9 @@ Conclude only when Arcogine can state, for the supported traceability use cases:
 - which concepts it only maps;
 - which concepts it deliberately leaves external;
 - what information loss or unsupported round-trip behavior is acceptable and explicit;
-- what mapping/profile provenance must be preserved; and
-- which concrete integration, if any, is sufficiently bounded to become implementation planning.
+- what mapping/profile provenance must be preserved;
+- which concrete integration, if any, is sufficiently bounded to become implementation planning; and
+- that any surviving high-risk interoperability conclusion proposed for durable promotion has completed the required genuinely independent adversarial research review.
 
 ### Expected durable destination
 
@@ -169,5 +183,7 @@ This investigation does not by itself justify:
 ## Promotion boundary
 
 The material/genealogy question may promote only after its identity, lineage, ownership, and proving cases are decision-quality. The interoperability question may promote only after Arcogine's internal semantic boundary is sufficiently clear that adapters cannot silently define it.
+
+For either question, a surviving high-risk conclusion must complete the normative genuinely independent adversarial research review before it can become decision-quality evidence for promotion into an ADR or comparably durable architecture. This brief leaves the need for a particular ADR open; it does not leave the high-risk review gate open.
 
 Any later implementation responsibility belongs in `docs/planning/` only after the relevant conclusion has been reconciled into its durable architecture/product authority and has explicit prerequisites plus executable acceptance evidence.

@@ -148,7 +148,7 @@ cursor belongs to another run
 
 Silent truncation is never successful recovery.
 
-Retained supported-event history, durability across restart, exact checkpoint/restore, public contract versioning, and sidecar packaging are separate implementation responsibilities. Unselected policy/technology choices remain in [Engine Evolution Research](../research/engine-evolution.md) until promoted.
+Retained supported-event history, durability across restart, exact checkpoint/restore, public contract versioning, and sidecar packaging are separate implementation responsibilities. Unselected policy/technology choices remain in [Engine Evolution Research](../research/investigations/engine-evolution.md) until promoted.
 
 ## 6. Cross-track ownership
 

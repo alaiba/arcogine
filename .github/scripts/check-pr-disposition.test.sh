@@ -2,19 +2,10 @@
 # Tests for check-pr-disposition.sh evaluator.
 #
 # The evaluator answers one review-authorization question for the current PR
-# head: is the PR trusted Dependabot automation, or does the latest applicable
-# review body end in a canonical READY TO MERGE disposition block? These tests
-# exercise both authorization paths plus the parser's false-positive guards.
-# They deliberately do not exercise CI, mergeability, native review state, or
-# approval/dismissal semantics — those belong to infra/dev/pr-watch.mjs, not
-# this gate.
-#
-# Input format matches the workflow's actual output: REVIEW_BODIES_B64 is a
-# newline-separated list of base64-encoded review bodies, in chronological
-# order. Building it with base64 here (rather than hand-writing a JSON array)
-# is deliberate: it exercises the exact same encode/decode path production
-# uses, so a regression in that path (as opposed to a synthetic JSON fixture
-# that never touches it) fails these tests too.
+# head: is the PR independently verified as trusted Dependabot automation, or
+# does the latest applicable review body end in a canonical READY TO MERGE
+# disposition block? An explicit current-head CHANGES REQUIRED blocks either
+# path.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -71,10 +62,9 @@ test_case() {
 CURRENT="abc123def456"
 OLD="fed654cba321"
 
-# Ordinary PRs use reviewer authorization unless a test explicitly changes
-# these trusted API-derived identity inputs.
-export PR_AUTHOR_LOGIN="reviewer"
-export PR_AUTHOR_TYPE="User"
+# Ordinary PRs use reviewer authorization unless a test explicitly selects the
+# separately verified trusted-Dependabot path.
+export PR_TRUSTED_DEPENDABOT="false"
 
 # 1. No reviews -> FAIL
 test_count=$((test_count + 1))
@@ -91,180 +81,101 @@ else
 fi
 
 # 2. Current-head READY TO MERGE -> PASS
-test_case \
-  "current-head READY TO MERGE -> PASS" \
-  0 \
-  "$CURRENT" \
+test_case "current-head READY TO MERGE -> PASS" 0 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**"
 
 # 3. Current-head CHANGES REQUIRED -> FAIL
-test_case \
-  "current-head CHANGES REQUIRED -> FAIL" \
-  1 \
-  "$CURRENT" \
+test_case "current-head CHANGES REQUIRED -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **CHANGES REQUIRED**"
 
 # 4. Stale-head READY TO MERGE -> FAIL
-test_case \
-  "stale-head READY TO MERGE -> FAIL" \
-  1 \
-  "$CURRENT" \
+test_case "stale-head READY TO MERGE -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $OLD
 Disposition: **READY TO MERGE**"
 
 # 5. Current-head READY followed by current-head CHANGES REQUIRED -> FAIL
-test_case \
-  "current-head READY then CHANGES REQUIRED -> FAIL" \
-  1 \
-  "$CURRENT" \
+test_case "current-head READY then CHANGES REQUIRED -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**" \
   "Reviewed head: $CURRENT
 Disposition: **CHANGES REQUIRED**"
 
 # 6. Current-head CHANGES REQUIRED followed by current-head READY -> PASS
-test_case \
-  "current-head CHANGES REQUIRED then READY -> PASS" \
-  0 \
-  "$CURRENT" \
+test_case "current-head CHANGES REQUIRED then READY -> PASS" 0 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **CHANGES REQUIRED**" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**"
 
 # 7. Old-head blocker followed by current-head READY -> PASS
-test_case \
-  "old-head blocker + current-head READY -> PASS" \
-  0 \
-  "$CURRENT" \
+test_case "old-head blocker + current-head READY -> PASS" 0 "$CURRENT" \
   "Reviewed head: $OLD
 Disposition: **CHANGES REQUIRED**" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**"
 
-# 8. Removed disposition READY AFTER CI -> FAIL/unrecognized
-test_case \
-  "removed disposition READY AFTER CI -> FAIL" \
-  1 \
-  "$CURRENT" \
+# 8-9. Removed dispositions are unsupported.
+test_case "removed disposition READY AFTER CI -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **READY AFTER CI**"
-
-# 9. Removed disposition NON-BLOCKING FOLLOW-UPS ONLY -> FAIL/unrecognized
-test_case \
-  "removed disposition NON-BLOCKING FOLLOW-UPS ONLY -> FAIL" \
-  1 \
-  "$CURRENT" \
+test_case "removed disposition NON-BLOCKING FOLLOW-UPS ONLY -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **NON-BLOCKING FOLLOW-UPS ONLY**"
 
-# 10. Prose mentioning READY TO MERGE (no canonical block) -> FAIL
-test_case \
-  "prose mentioning READY TO MERGE, no canonical block -> FAIL" \
-  1 \
-  "$CURRENT" \
+# 10-13. Non-canonical prose/shapes cannot authorize.
+test_case "prose mentioning READY TO MERGE, no canonical block -> FAIL" 1 "$CURRENT" \
   "I think this is READY TO MERGE once CI passes."
-
-# 11. Quoted/example READY block (not this review's own final block) -> FAIL
-test_case \
-  "quoted canonical block inside prose -> FAIL" \
-  1 \
-  "$CURRENT" \
+test_case "quoted canonical block inside prose -> FAIL" 1 "$CURRENT" \
   "Prior review said:
 Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**
 But I now have new concerns."
-
-# 12. READY block followed by substantive text -> FAIL
-test_case \
-  "READY block followed by substantive text -> FAIL" \
-  1 \
-  "$CURRENT" \
+test_case "READY block followed by substantive text -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**
 Actually wait, one more thing to check."
-
-# 13. Malformed canonical block (missing head SHA) -> FAIL
-test_case \
-  "malformed canonical block (no head SHA) -> FAIL" \
-  1 \
-  "$CURRENT" \
+test_case "malformed canonical block (no head SHA) -> FAIL" 1 "$CURRENT" \
   "Disposition: **READY TO MERGE**"
 
-# 14. Any authoritative review carrying a canonical READY block is usable,
-#     regardless of formal GitHub review action type. The evaluator does not
-#     filter or reason about review state (APPROVED/CHANGES_REQUESTED/
-#     COMMENTED/DISMISSED) at all -- it only reads bodies. Author-association
-#     filtering happens upstream in the workflow, not here.
-test_case \
-  "canonical READY block is usable regardless of review action type -> PASS" \
-  0 \
-  "$CURRENT" \
+# 14. Evaluator reads bodies, not native GitHub review action type.
+test_case "canonical READY block is usable regardless of review action type -> PASS" 0 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**"
 
-# 15. Pagination preserves true review ordering: an aggregated multi-page
-#     review list must be evaluated in chronological order so the latest
-#     applicable disposition (not merely the first or a random one) wins.
-test_case \
-  "aggregated multi-page reviews evaluated in chronological order -> PASS" \
-  0 \
-  "$CURRENT" \
+# 15. Chronological ordering: latest applicable disposition wins.
+test_case "aggregated multi-page reviews evaluated in chronological order -> PASS" 0 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **CHANGES REQUIRED**" \
   "unrelated comment, no disposition" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**"
 
-# 16. Whitespace tolerance in the canonical block
-test_case \
-  "canonical block with extra whitespace -> PASS" \
-  0 \
-  "$CURRENT" \
+# 16. Whitespace tolerance.
+test_case "canonical block with extra whitespace -> PASS" 0 "$CURRENT" \
   "Some review text
 Reviewed head:   $CURRENT
 Disposition:   **READY TO MERGE**   "
 
-# 17. Unsupported disposition value entirely (not a legacy removed value)
-test_case \
-  "unsupported disposition value -> FAIL" \
-  1 \
-  "$CURRENT" \
+# 17. Unsupported value.
+test_case "unsupported disposition value -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **APPROVED**"
 
-# 18. Review-ingestion regression: a controlling current-head disposition followed by
-#     a later, unrelated review with no disposition must still authorize
-#     merge. This is the exact production-shaped scenario where naive
-#     object-boundary text splitting (rather than a decode that needs no
-#     re-parsing at all) previously hid the earlier disposition.
-test_case \
-  "review-ingestion: controlling disposition survives a later unrelated review -> PASS" \
-  0 \
-  "$CURRENT" \
+# 18. A later unrelated review does not erase a controlling disposition.
+test_case "review-ingestion: controlling disposition survives a later unrelated review -> PASS" 0 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**" \
   "unrelated later comment with no disposition"
 
-# 19. Canonical-block anchoring regression: "Reviewed head:" must be anchored to the start of
-#     its own line. A body where the marker is preceded by other text on the
-#     same line is not a canonical block, even though the two-line shape
-#     otherwise matches.
-test_case \
-  "canonical-block anchoring: Reviewed head: not anchored to line start -> FAIL" \
-  1 \
-  "$CURRENT" \
+# 19. Reviewed head marker must be anchored to its own line.
+test_case "canonical-block anchoring: Reviewed head not anchored to line start -> FAIL" 1 "$CURRENT" \
   "Example Reviewed head: $CURRENT
 Disposition: **READY TO MERGE**"
 
-# 20. Many reviews (exercises multi-line REVIEW_BODIES_B64 input beyond a
-#     trivial 2-3 line case, proving the newline-delimited decode scales).
-test_case \
-  "many reviews, controlling disposition in the middle -> PASS" \
-  0 \
-  "$CURRENT" \
+# 20. Many reviews preserve the controlling current-head disposition.
+test_case "many reviews, controlling disposition in the middle -> PASS" 0 "$CURRENT" \
   "first unrelated comment" \
   "Reviewed head: $OLD
 Disposition: **CHANGES REQUIRED**" \
@@ -273,79 +184,47 @@ Disposition: **READY TO MERGE**" \
   "later unrelated comment" \
   "another later unrelated comment"
 
-# 21. Canonical-block anchoring (second pass): indented "Reviewed head:" reads as a Markdown
-#     code block, not the live canonical block, and must not match. Bash's
-#     [[:space:]] class matches newline as well as horizontal whitespace, so
-#     an earlier fix that tolerated leading [[:space:]]* before "Reviewed"
-#     accidentally tolerated leading indentation too.
-test_case \
-  "canonical-block anchoring: indented Reviewed head: (code-block formatting) -> FAIL" \
-  1 \
-  "$CURRENT" \
+# 21. Indented marker is a Markdown code block, not canonical disposition.
+test_case "canonical-block anchoring: indented Reviewed head -> FAIL" 1 "$CURRENT" \
   "Example:
     Reviewed head: $CURRENT
     Disposition: **READY TO MERGE**"
 
-# 22. Canonical-block anchoring (second pass): a blank line between "Reviewed head:" and
-#     "Disposition:" violates the documented strict-adjacency requirement and
-#     must not match, even though both lines are otherwise well-formed.
-test_case \
-  "canonical-block anchoring: blank line between the two canonical lines -> FAIL" \
-  1 \
-  "$CURRENT" \
+# 22. Blank line breaks strict canonical adjacency.
+test_case "canonical-block anchoring: blank line between canonical lines -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $CURRENT
 
 Disposition: **READY TO MERGE**"
 
-# 23. Canonical-block whitespace parsing (third pass): a bracket expression like [\ \t] does not mean
-#     "space or tab" -- inside [...], backslash is an ordinary literal
-#     character in POSIX bracket expressions, so that construct actually
-#     matched a literal backslash, a literal space, or a literal letter "t".
-#     A malformed token using literal "t" in place of real whitespace must
-#     not be accepted as canonical.
-test_case \
-  "canonical-block whitespace parsing: literal letter t must not substitute for whitespace (word boundary) -> FAIL" \
-  1 \
-  "$CURRENT" \
+# 23-24. Literal letter t cannot substitute for whitespace.
+test_case "canonical whitespace: literal t at word boundary -> FAIL" 1 "$CURRENT" \
   "Reviewedthead:${CURRENT}
 Disposition: **READY TO MERGE**"
-
-# 24. Canonical-block whitespace parsing (third pass): the same malformed-token defect around "head:"
-#     and the disposition markers.
-test_case \
-  "canonical-block whitespace parsing: literal letter t must not substitute for whitespace (head/value) -> FAIL" \
-  1 \
-  "$CURRENT" \
+test_case "canonical whitespace: literal t around head/value -> FAIL" 1 "$CURRENT" \
   "Reviewed head:t${CURRENT}
 Disposition:t**READY TO MERGE**"
 
-# 25. Trusted Dependabot provenance is an independent authorization path. It
-#     must not require a synthetic review body.
-export PR_AUTHOR_LOGIN="dependabot[bot]"
-export PR_AUTHOR_TYPE="Bot"
-test_case \
-  "trusted Dependabot provenance without reviews -> PASS" \
-  0 \
-  "$CURRENT"
+# 25. Separately verified trusted Dependabot provenance needs no positive review.
+export PR_TRUSTED_DEPENDABOT="true"
+test_case "trusted Dependabot provenance without reviews -> PASS" 0 "$CURRENT"
 
-# 26. The login alone is not sufficient: require the API-reported Bot type too.
-export PR_AUTHOR_LOGIN="dependabot[bot]"
-export PR_AUTHOR_TYPE="User"
-test_case \
-  "Dependabot login with non-Bot account type -> FAIL" \
-  1 \
-  "$CURRENT"
+# 26. A current-head negative review revokes the default Dependabot authorization.
+test_case "trusted Dependabot with current-head CHANGES REQUIRED -> FAIL" 1 "$CURRENT" \
+  "Reviewed head: $CURRENT
+Disposition: **CHANGES REQUIRED**"
 
-# 27. A different bot account must not inherit Dependabot's authorization.
-export PR_AUTHOR_LOGIN="some-other-bot[bot]"
-export PR_AUTHOR_TYPE="Bot"
-test_case \
-  "unrelated bot account without reviews -> FAIL" \
-  1 \
-  "$CURRENT"
+# 27. A stale negative review does not revoke current trusted provenance.
+test_case "trusted Dependabot with stale-head CHANGES REQUIRED -> PASS" 0 "$CURRENT" \
+  "Reviewed head: $OLD
+Disposition: **CHANGES REQUIRED**"
 
-export PR_AUTHOR_LOGIN="reviewer"
-export PR_AUTHOR_TYPE="User"
+# 28. Without trusted provenance, no-review falls back to ordinary authorization.
+export PR_TRUSTED_DEPENDABOT="false"
+test_case "untrusted/no-review PR -> FAIL" 1 "$CURRENT"
+
+# Exercise the trusted provenance verifier independently; this proves that a
+# maintainer-authored extra commit cannot obtain PR_TRUSTED_DEPENDABOT=true.
+bash "$SCRIPT_DIR/check-dependabot-provenance.test.sh"
 
 # GitHub can reject an Actions workflow before scheduling any job, which makes
 # evaluator-only tests insufficient. Lint every workflow definition from the
@@ -353,7 +232,6 @@ export PR_AUTHOR_TYPE="User"
 # reach main while the required gate is green.
 bash "$SCRIPT_DIR/check-actions-workflows.sh"
 
-# Summary
 echo ""
 echo "Test Results: $pass_count/$test_count passed"
 if [ $fail_count -gt 0 ]; then

@@ -9,33 +9,43 @@ pass=0
 fail=0
 count=0
 
-commit_json() {
-  local sha="$1"
-  local login="$2"
-  local type="$3"
-  local verified="$4"
+ci_run_json() {
+  local head="$1"
+  local actor_login="$2"
+  local actor_type="$3"
+  local actor_id="$4"
+  local event="${5:-pull_request}"
+  local name="${6:-CI}"
+  local pr_number="${7:-303}"
   jq -nc \
-    --arg sha "$sha" \
-    --arg login "$login" \
-    --arg type "$type" \
-    --argjson verified "$verified" \
-    '{sha:$sha, author:{login:$login,type:$type}, commit:{verification:{verified:$verified}}}'
+    --arg head "$head" \
+    --arg login "$actor_login" \
+    --arg type "$actor_type" \
+    --argjson id "$actor_id" \
+    --arg event "$event" \
+    --arg name "$name" \
+    --argjson pr "$pr_number" \
+    '{name:$name,event:$event,head_sha:$head,actor:{login:$login,type:$type,id:$id},pull_requests:[{number:$pr}]}'
 }
 
 run_case() {
   local name="$1"
   local expected="$2"
-  local head="$3"
-  local author_login="$4"
-  local author_type="$5"
-  local commits_json="$6"
+  local author_login="$3"
+  local author_type="$4"
+  local author_id="$5"
+  local run_json="$6"
 
   count=$((count + 1))
-  export PR_HEAD_SHA="$head"
+  export PR_NUMBER=303
+  export PR_HEAD_SHA="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   export PR_AUTHOR_LOGIN="$author_login"
   export PR_AUTHOR_TYPE="$author_type"
-  export PR_COMMITS_JSON_B64
-  PR_COMMITS_JSON_B64=$(printf '%s' "$commits_json" | base64 -w0)
+  export PR_AUTHOR_ID="$author_id"
+  export PR_HEAD_CI_RUN_B64=""
+  if [ -n "$run_json" ]; then
+    PR_HEAD_CI_RUN_B64=$(printf '%s' "$run_json" | base64 -w0)
+  fi
 
   local code=0
   local output
@@ -53,52 +63,56 @@ run_case() {
 
 HEAD="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 OLD="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+BOT_ID=49699333
+USER_ID=17069361
 
-bot_head=$(commit_json "$HEAD" 'dependabot[bot]' 'Bot' true)
-bot_old=$(commit_json "$OLD" 'dependabot[bot]' 'Bot' true)
-user_head=$(commit_json "$HEAD" 'alaiba' 'User' true)
-unsigned_bot=$(commit_json "$HEAD" 'dependabot[bot]' 'Bot' false)
-other_bot=$(commit_json "$HEAD" 'other[bot]' 'Bot' true)
-
-run_case \
-  "single verified Dependabot commit -> PASS" \
-  0 "$HEAD" 'dependabot[bot]' 'Bot' \
-  "[$bot_head]"
-
-run_case \
-  "multiple verified Dependabot commits ending at current head -> PASS" \
-  0 "$HEAD" 'dependabot[bot]' 'Bot' \
-  "[$bot_old,$bot_head]"
+bot_run=$(ci_run_json "$HEAD" 'dependabot[bot]' 'Bot' "$BOT_ID")
+human_run=$(ci_run_json "$HEAD" 'alaiba' 'User' "$USER_ID")
+wrong_bot_id_run=$(ci_run_json "$HEAD" 'dependabot[bot]' 'Bot' 999)
+stale_run=$(ci_run_json "$OLD" 'dependabot[bot]' 'Bot' "$BOT_ID")
+manual_run=$(ci_run_json "$HEAD" 'dependabot[bot]' 'Bot' "$BOT_ID" 'workflow_dispatch')
+wrong_name_run=$(ci_run_json "$HEAD" 'dependabot[bot]' 'Bot' "$BOT_ID" 'pull_request' 'Other Workflow')
+wrong_pr_run=$(ci_run_json "$HEAD" 'dependabot[bot]' 'Bot' "$BOT_ID" 'pull_request' 'CI' 999)
 
 run_case \
-  "maintainer-authored extra commit revokes bypass -> FAIL" \
-  1 "$HEAD" 'dependabot[bot]' 'Bot' \
-  "[$bot_old,$user_head]"
+  "Dependabot opener + exact-head Dependabot CI actor -> PASS" \
+  0 'dependabot[bot]' 'Bot' "$BOT_ID" "$bot_run"
 
 run_case \
-  "unsigned Dependabot commit -> FAIL" \
-  1 "$HEAD" 'dependabot[bot]' 'Bot' \
-  "[$unsigned_bot]"
+  "human opener cannot borrow Dependabot CI provenance -> FAIL" \
+  1 'alaiba' 'User' "$USER_ID" "$bot_run"
 
 run_case \
-  "unrelated bot commit -> FAIL" \
-  1 "$HEAD" 'dependabot[bot]' 'Bot' \
-  "[$other_bot]"
+  "lookalike opener with wrong account id -> FAIL" \
+  1 'dependabot[bot]' 'Bot' 999 "$bot_run"
 
 run_case \
-  "Dependabot commits under non-Dependabot PR author -> FAIL" \
-  1 "$HEAD" 'alaiba' 'User' \
-  "[$bot_head]"
+  "human-authored current head revokes Dependabot bypass -> FAIL" \
+  1 'dependabot[bot]' 'Bot' "$BOT_ID" "$human_run"
 
 run_case \
-  "commit list not bound to current head -> FAIL" \
-  1 "$HEAD" 'dependabot[bot]' 'Bot' \
-  "[$bot_old]"
+  "lookalike CI actor with wrong account id -> FAIL" \
+  1 'dependabot[bot]' 'Bot' "$BOT_ID" "$wrong_bot_id_run"
 
 run_case \
-  "empty commit list -> FAIL" \
-  1 "$HEAD" 'dependabot[bot]' 'Bot' \
-  '[]'
+  "CI run for stale head cannot authorize current head -> FAIL" \
+  1 'dependabot[bot]' 'Bot' "$BOT_ID" "$stale_run"
+
+run_case \
+  "manual workflow run is not pull-request provenance -> FAIL" \
+  1 'dependabot[bot]' 'Bot' "$BOT_ID" "$manual_run"
+
+run_case \
+  "different workflow cannot stand in for CI -> FAIL" \
+  1 'dependabot[bot]' 'Bot' "$BOT_ID" "$wrong_name_run"
+
+run_case \
+  "CI run associated with another PR -> FAIL" \
+  1 'dependabot[bot]' 'Bot' "$BOT_ID" "$wrong_pr_run"
+
+run_case \
+  "missing exact-head CI run -> FAIL closed" \
+  1 'dependabot[bot]' 'Bot' "$BOT_ID" ''
 
 echo ""
 echo "Dependabot provenance test results: $pass/$count passed"

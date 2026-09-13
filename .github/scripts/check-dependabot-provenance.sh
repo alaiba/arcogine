@@ -51,7 +51,7 @@ if ! jq -e --arg head "$PR_HEAD_SHA" '
   type == "array"
   and length > 0
   and .[-1].sha == $head
-  and all(.[ ];
+  and all(.[];
     .author.login == "dependabot[bot]"
     and .author.type == "Bot"
     and .commit.verification.verified == true

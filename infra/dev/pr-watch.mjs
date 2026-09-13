@@ -39,8 +39,8 @@ const FAILURE_ALERT_THRESHOLD = 3;
 /**
  * The CI status branch protection requires. `.github/workflows/ci.yml` defines `gate` as
  * the always-running aggregate job for exactly this purpose. Naming it is what lets the
- * resolver tell "required validation passed" apart from "some unrelated context happens
- * to be green" -- any green context would otherwise stand in for the real gate.
+ * resolver tell "required validation passed" apart from "some unrelated context
+ * happens to be green" -- any green context would otherwise stand in for the real gate.
  */
 const DEFAULT_REQUIRED_CHECK = 'gate';
 
@@ -387,12 +387,9 @@ function resolveLifecycle(s) {
     waiting.push('review history exceeds the fetched window, so review state cannot be fully resolved');
   }
 
-  for (const b of s.staleBlockers ?? []) {
-    waiting.push(
-      `${b.author} required changes on ${b.commit.slice(0, 7)}; the head has since moved -- awaiting authorization re-evaluation`,
-    );
-  }
-
+  // Stale canonical dispositions are diagnostic history only. The trusted current-head
+  // `disposition` check owns Arcogine review authorization, so an old-head CHANGES
+  // REQUIRED comment must not create a second standing state machine here.
   if (!s.dispositionCheck) {
     waiting.push(`required review-authorization check "${s.dispositionCheckName}" is not present on the head commit`);
   } else if (s.dispositionCheck.verdict !== 'SUCCESS') {

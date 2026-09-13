@@ -3,9 +3,11 @@
 #
 # Enforces Arcogine's review-authorization invariant for the current PR head:
 #
-#   - a PR opened by GitHub's trusted Dependabot bot is authorized directly;
+#   - a PR with independently verified trusted Dependabot provenance is
+#     authorized without requiring a positive reviewer disposition;
 #   - every other PR requires the latest applicable canonical reviewer
-#     disposition for the current head to be READY TO MERGE.
+#     disposition for the current head to be READY TO MERGE;
+#   - an explicit current-head CHANGES REQUIRED disposition blocks either path.
 #
 # Reviewer disposition vocabulary (exactly two values):
 #   READY TO MERGE    - reviewer authorizes merge of this exact head
@@ -17,28 +19,22 @@
 # infra/dev/pr-watch.mjs. CI and other branch-protection requirements are
 # enforced independently by GitHub.
 #
-# The Dependabot exception is safe only because PR_AUTHOR_LOGIN and
-# PR_AUTHOR_TYPE are supplied by the trusted base-side workflow after it
-# re-fetches the pull request from GitHub's API. Candidate PR content is never
-# allowed to supply those values.
+# PR_TRUSTED_DEPENDABOT is supplied only by the trusted base-side workflow
+# after check-dependabot-provenance.sh verifies both GitHub PR identity and the
+# current PR commit set. Candidate PR content cannot set this value.
 #
 # Input (environment variables):
-#   PR_HEAD_SHA        - current pull_request.head.sha
-#   PR_AUTHOR_LOGIN    - pull_request.user.login re-fetched from GitHub's API
-#   PR_AUTHOR_TYPE     - pull_request.user.type re-fetched from GitHub's API
-#   REVIEW_BODIES_B64  - newline-separated list of base64-encoded review
-#                        bodies, one per authoritative review, in
-#                        chronological order (oldest first) as returned by
-#                        GitHub. Base64 encoding (rather than a JSON array)
-#                        is deliberate: it needs no JSON re-parsing and no
-#                        ad-hoc object-boundary splitting downstream, so a
-#                        review body's own content (quotes, braces, embedded
-#                        JSON-looking text) can never be misread as a
-#                        structural delimiter.
+#   PR_HEAD_SHA           - current pull_request.head.sha
+#   PR_TRUSTED_DEPENDABOT - "true" only after trusted provenance verification
+#   REVIEW_BODIES_B64     - newline-separated list of base64-encoded review
+#                           bodies, one per authoritative review, in
+#                           chronological order (oldest first) as returned by
+#                           GitHub.
 #
 # Output:
 #   Exit 0 when the current head is authorized by trusted Dependabot
-#   provenance or by a current-head READY TO MERGE disposition.
+#   provenance or by a current-head READY TO MERGE disposition, unless the
+#   latest current-head disposition is CHANGES REQUIRED.
 #   Exit 1 otherwise, with a diagnostic message on stderr.
 
 set -euo pipefail
@@ -48,61 +44,15 @@ if [ -z "${PR_HEAD_SHA:-}" ]; then
   exit 1
 fi
 
-# GitHub owns the `dependabot[bot]` account identity. Requiring both the exact
-# login and Bot account type prevents a user account or lookalike string from
-# taking the trusted automation path. The trusted workflow obtains both values
-# from the PR API; this script never trusts PR title, branch name, labels, body,
-# commit author text, or any other candidate-controlled provenance signal.
-if [ "${PR_AUTHOR_LOGIN:-}" = "dependabot[bot]" ] && [ "${PR_AUTHOR_TYPE:-}" = "Bot" ]; then
-  echo "PR disposition gate passed: current head $PR_HEAD_SHA belongs to a trusted Dependabot-authored PR."
-  exit 0
-fi
-
-if [ -z "${REVIEW_BODIES_B64:-}" ]; then
-  echo "PR disposition gate failed: no canonical reviewer disposition exists for current head $PR_HEAD_SHA." >&2
-  exit 1
-fi
-
 # Extract the canonical disposition block from a review body, if present.
-# Canonical format (strict: exactly these two lines, adjacent, at the end of
-# the body, with "Reviewed head:" anchored to the start of its own line --
-# no content between the lines, no blank line between the lines, no
-# indentation before "Reviewed" (which would read as a Markdown code block),
-# and no content after the disposition line):
-#   Reviewed head: <SHA>
-#   Disposition: **VALUE**
-# Prints "head_sha disposition" if found, else nothing.
-#
-# [:space:] deliberately does NOT appear in the line-start/adjacency portions
-# of this pattern: in Bash's regex engine it matches newline as well as
-# horizontal whitespace, so using it there would let a blank line between the
-# two canonical lines, or Markdown-code-block indentation before "Reviewed",
-# both match as if they were the strict adjacent block. [[:blank:]] (the
-# POSIX class for space and tab, and nothing else -- notably NOT newline) is
-# used for intentionally-tolerated in-line whitespace instead. A bracket
-# expression like [\ \t] does NOT mean "space or tab": inside [...], a
-# backslash is an ordinary literal character in POSIX bracket expressions, so
-# that construct actually matches a literal backslash, a literal space, or a
-# literal letter "t" -- meaning the token "Reviewedthead" would wrongly parse
-# as "Reviewed<tab>head". [[:blank:]] has no such trap. The line break
-# between the two canonical lines is a single literal newline with nothing
-# else permitted around it.
 extract_canonical_disposition() {
   local body="$1"
 
-  # Group 1 is the (start-of-string | newline) anchor; group 2 is the head
-  # SHA; group 3 is the disposition value. "Reviewed" must immediately follow
-  # that anchor with no leading whitespace of any kind, so a body like
-  # "Example Reviewed head: <sha>" (same-line prefix) or "    Reviewed head:
-  # <sha>" (code-block indentation) does not match. The exactly-one-newline
-  # between the SHA and "Disposition:" rejects a blank line between them.
   if [[ "$body" =~ (^|$'\n')Reviewed[[:blank:]]+head:[[:blank:]]*([a-f0-9]+)[[:blank:]]*$'\n'Disposition:[[:blank:]]*\*\*([A-Z][A-Z _-]*)\*\*[[:space:]]*$ ]]; then
     echo "${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
   fi
 }
 
-# Only two dispositions exist. Anything else (including removed legacy values
-# such as READY AFTER CI or NON-BLOCKING FOLLOW-UPS ONLY) is unsupported.
 is_valid_disposition() {
   case "$1" in
     "READY TO MERGE"|"CHANGES REQUIRED")
@@ -114,33 +64,43 @@ is_valid_disposition() {
   esac
 }
 
-# Latest applicable disposition for the current head. Reviews are processed in
-# the order given (chronological); the last one matching the current head wins.
-# Older-head canonical blocks are ignored entirely — this gate enforces
-# current-head binding only, not historical reviewer authority.
 latest_disp=""
 
-while IFS= read -r b64_line; do
-  [ -z "$b64_line" ] && continue
+# Trusted Dependabot PRs may legitimately have no reviews at all. Parse review
+# bodies when present so an explicit current-head CHANGES REQUIRED can revoke
+# the default provenance authorization.
+if [ -n "${REVIEW_BODIES_B64:-}" ]; then
+  while IFS= read -r b64_line; do
+    [ -z "$b64_line" ] && continue
 
-  body=$(printf '%s' "$b64_line" | base64 -d 2>/dev/null) || continue
+    body=$(printf '%s' "$b64_line" | base64 -d 2>/dev/null) || continue
 
-  canonical=$(extract_canonical_disposition "$body") || true
-  [ -z "$canonical" ] && continue
+    canonical=$(extract_canonical_disposition "$body") || true
+    [ -z "$canonical" ] && continue
 
-  head=$(echo "$canonical" | cut -d' ' -f1)
-  disp=$(echo "$canonical" | cut -d' ' -f2-)
+    head=$(echo "$canonical" | cut -d' ' -f1)
+    disp=$(echo "$canonical" | cut -d' ' -f2-)
 
-  # Ignore canonical blocks for any head other than the current one.
-  [ "$head" != "$PR_HEAD_SHA" ] && continue
+    [ "$head" != "$PR_HEAD_SHA" ] && continue
 
-  if ! is_valid_disposition "$disp"; then
-    echo "PR disposition gate failed: unsupported disposition '$disp' for current head $PR_HEAD_SHA." >&2
-    exit 1
-  fi
+    if ! is_valid_disposition "$disp"; then
+      echo "PR disposition gate failed: unsupported disposition '$disp' for current head $PR_HEAD_SHA." >&2
+      exit 1
+    fi
 
-  latest_disp="$disp"
-done <<<"$REVIEW_BODIES_B64"
+    latest_disp="$disp"
+  done <<<"$REVIEW_BODIES_B64"
+fi
+
+if [ "$latest_disp" = "CHANGES REQUIRED" ]; then
+  echo "PR disposition gate failed: latest current-head disposition is CHANGES REQUIRED." >&2
+  exit 1
+fi
+
+if [ "${PR_TRUSTED_DEPENDABOT:-false}" = "true" ]; then
+  echo "PR disposition gate passed: current head $PR_HEAD_SHA has trusted Dependabot provenance and no current-head CHANGES REQUIRED disposition."
+  exit 0
+fi
 
 if [ -z "$latest_disp" ]; then
   echo "PR disposition gate failed: no canonical reviewer disposition exists for current head $PR_HEAD_SHA." >&2

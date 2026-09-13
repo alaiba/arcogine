@@ -122,6 +122,25 @@ Research needs include observation selection, correspondence used, trust decisio
 
 Late/corrected evidence may justify valid/effective-time versus knowledge/recorded-time semantics, but no persistence technology should be selected before the required queries/history are concrete.
 
+## Manufacturing traceability proving pressure
+
+Manufacturing traceability is a cross-cutting proving case for the Operational boundaries above, not a separate Operational ontology. The material identity/genealogy question itself is owned by the [Manufacturing Traceability Research](manufacturing-traceability.md); Operational research must not invent lot, batch, serial, or material identity merely to make a trace query convenient.
+
+The command/result, deployment, observation/correspondence, and reconciliation candidates should be able to explain a production-history query without collapsing their distinctions. In particular, test histories where:
+
+- a production operation is requested, an external command is accepted, but the physical transition is not observed;
+- a command times out and later evidence shows either success, failure, or an outcome that remains ambiguous;
+- one production history spans a model/revision change or deployment/mapping/profile change;
+- telemetry arrives late or is corrected after a production step was previously reconciled;
+- an external material/asset identifier is unmapped at ingestion and becomes authoritatively correlated later;
+- a previously accepted subject correspondence is replaced while historical interpretation must remain attributable to the correspondence that was effective at the time;
+- restart, failover, or disaster recovery occurs without turning runtime identity into durable production-history identity; and
+- a backward/forward material trace, when material genealogy exists, can identify which requested operation, external realization, observations, correspondence, and reconciled interpretation support each material transformation claim.
+
+A successful Operational model must preserve uncertainty. Missing observation must not become implicit success; transport acknowledgement must not become physical completion; and later interpretation must not rewrite the provenance of the raw observation that originally arrived.
+
+These cases are evidence pressure on existing Operational questions. If they require a new canonical material identity or lineage relation rather than a new Operational fact, route that uncertainty back to the manufacturing-traceability investigation instead of duplicating the concept here.
+
 ## Drift and calibration — CANDIDATE
 
 Determine how reconciled discrepancies become governed candidate changes without mutating published semantics directly. Reuse Governance-owned semantic change, requirements, conformance/findings, and evidence-use contracts rather than duplicating them.
@@ -135,6 +154,8 @@ Unknown outcomes must remain unknown; observation loss must not become implicit 
 ## First live-system proving case — CANDIDATE
 
 Select one narrow integration only after the preceding boundaries are sufficiently settled. The proving case should demonstrate explicit external identity/correspondence, observation provenance, operation realization, trust where consequence requires it, command/result versus observed/reconciled truth, provenance, and recovery without allowing a protocol to define Arcogine's ontology.
+
+Manufacturing traceability may become such a proving case only if a concrete integration is bounded enough to exercise those contracts without requiring Arcogine to adopt a complete MES/MOM information model first.
 
 ## Exit and promotion
 

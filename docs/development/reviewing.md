@@ -67,10 +67,11 @@ Never assume the head reviewed previously is still current.
 
 If the PR is behind live `main`, synchronize it **before** spending substantive review effort:
 
-- for a normal PR, use the canonical reconciliation path from `AGENTS.md`, normally `node infra/dev/pr-reconcile.mjs <pr-number>` when a local checkout is available;
+- for an ordinary PR, use the canonical reconciliation path from `AGENTS.md`, normally `node infra/dev/pr-reconcile.mjs <pr-number>` when a local checkout is available;
 - for a research-evidence workspace carrying handed-off evidence coordinates, preserve those SHAs and use the history-preserving merge-style Update branch path required by `AGENTS.md`;
+- for a Dependabot PR that currently qualifies for the trusted no-positive-review path, prefer Dependabot's own supported rebase/recreate mechanism. GitHub permits maintainers to add commits to Dependabot branches, and any maintainer-authored synchronization commit intentionally revokes the trusted provenance exception. If a maintainer-authored sync is used anyway, the resulting PR follows the ordinary independent-review path;
 - if the operation produces a merge conflict, requires a semantic choice, lacks permission, or cannot be performed safely in the current harness, stop and return the PR to the author/implementation owner;
-- after successful synchronization, re-resolve live `main`, the resulting PR head, mergeability, reviews, and CI, then begin the review from that normalized head.
+- after successful synchronization, re-resolve live `main`, the resulting PR head, mergeability, reviews, trusted `disposition` state, and CI, then begin the review from that normalized head.
 
 A stale base is not itself a review finding. Do not file a `PR_RECONCILIATION` finding or post a disposition against the stale head merely to ask somebody else to perform a conflict-free mechanical synchronization.
 
@@ -303,7 +304,9 @@ Every ordinary PR review/re-review should end with a clear disposition. There ar
 
 CI is not a reviewer disposition, and review authorization is genuinely orthogonal to CI status — there is no third disposition for "review is clean but CI is still pending." A review may conclude `READY TO MERGE` based solely on the code/docs review, regardless of whether required CI has finished running for this head. That review disposition is necessary for ordinary PRs but is not sufficient for merge: required CI, base freshness, and other GitHub protections are enforced independently. A current-head `READY TO MERGE` review is not invalidated merely because CI later transitions from pending to green with the reviewed head and base unchanged — no second review is required solely for that reason. Do treat the head changing, new findings surfacing, or a new base reconciliation that changes the head as requiring a fresh disposition.
 
-A PR opened by GitHub's trusted `dependabot[bot]` account is the explicit review-authorization exception. The trusted base-side disposition workflow verifies the PR author directly from GitHub's API and may publish green `disposition` without any reviewer-authored `READY TO MERGE` review. Do not fabricate a synthetic review for such a PR merely to satisfy the ordinary path. Required CI, strict base freshness, mergeability, and Code Owner approval where applicable remain independent protections.
+A trusted Dependabot PR is the explicit positive-review exception. The base-side disposition workflow must verify all of the following from GitHub API state before granting it: the PR author is exactly `dependabot[bot]` with account type `Bot`; at least one PR commit exists; the final listed PR commit is the exact current head; and **every** current PR commit is associated by GitHub with `dependabot[bot]`, has account type `Bot`, and has a verified signature. This matters because GitHub permits maintainers to add commits to Dependabot branches. Any such maintainer-authored commit intentionally revokes the exception and sends the PR through ordinary independent review.
+
+Trusted Dependabot provenance removes only the need for a positive `READY TO MERGE` review. A current-head canonical `CHANGES REQUIRED` still blocks the PR and revokes the default authorization until it is superseded on that head or becomes stale on a later head. Required CI, strict base freshness, mergeability, and Code Owner approval where applicable remain independent protections.
 
 Optional, genuinely non-blocking observations belong in review prose or a follow-up issue, not in a formal disposition. If the only remaining items are non-blocking, the disposition is simply `READY TO MERGE`.
 
@@ -333,7 +336,7 @@ where the disposition value is `READY TO MERGE` or `CHANGES REQUIRED` (in `**...
 
 2. **Canonical final block only:** The disposition block is the authoritative reviewer verdict. Prose elsewhere in the review (discussion, examples, quoted prior reviews) that mentions disposition names is not authoritative and does not trigger merge-gate evaluation.
 
-3. **Staleness invalidation:** If a new commit is pushed, the PR head SHA changes, and any prior review's disposition (including `READY TO MERGE`) is no longer valid for the ordinary review path. Merge remains blocked until the current head receives a fresh `READY TO MERGE` disposition, unless the PR independently qualifies for the trusted Dependabot provenance exception.
+3. **Staleness invalidation:** If a new commit is pushed, the PR head SHA changes, and any prior review's disposition (including `READY TO MERGE`) is no longer valid for the ordinary review path. Merge remains blocked until the current head receives a fresh `READY TO MERGE` disposition, unless the PR independently qualifies for the trusted Dependabot provenance exception. A current-head `CHANGES REQUIRED` always blocks either path.
 
 **When updating or re-reviewing:**
 
@@ -342,22 +345,24 @@ where the disposition value is `READY TO MERGE` or `CHANGES REQUIRED` (in `**...
 
 ### PR disposition merge gate
 
-The required `disposition` check is a trusted **review-authorization** gate with two paths:
+The required `disposition` check is a trusted **review-authorization** gate with two positive paths and one common negative override:
 
-1. **Trusted Dependabot provenance:** the workflow re-fetches the PR from GitHub's API and, when `.user.login` is exactly `dependabot[bot]` and `.user.type` is `Bot`, authorizes that current head directly. It never trusts title, branch name, labels, body text, or commit-author strings for this decision.
+1. **Trusted Dependabot provenance:** the workflow re-fetches the PR and full current PR commit list from GitHub's API. The bypass applies only when the exact PR author is `dependabot[bot]`/`Bot`, the commit list ends at the exact current head, and every listed PR commit is GitHub-associated with `dependabot[bot]`/`Bot` and signature-verified.
 2. **Ordinary reviewer authorization:** every other PR must have an authoritative current-head canonical `READY TO MERGE` review from a trusted repository authority (`author_association` of `OWNER`, `MEMBER`, or `COLLABORATOR`).
+3. **Negative override:** the latest applicable current-head canonical `CHANGES REQUIRED` fails the gate even for a trusted Dependabot PR.
 
-`.github/workflows/pr-disposition.yml` plus the minimal companion listener `.github/workflows/pr-disposition-review-trigger.yml` implement those paths. The trusted workflow:
+`.github/workflows/pr-disposition.yml` plus the minimal companion listener `.github/workflows/pr-disposition-review-trigger.yml` implement those rules. The trusted workflow:
 
 - reacts to PR open/reopen/synchronize, review submission/edit/dismissal, **CI completion**, and a fixed scheduled backstop;
-- re-fetches the current PR head SHA and PR author identity directly from GitHub's API;
-- fetches authoritative review bodies across all pages for the ordinary path;
+- re-fetches the current PR head SHA directly from GitHub's API;
+- re-fetches PR author identity and the complete current PR commit list for Dependabot provenance verification;
+- fetches authoritative review bodies across all pages;
 - publishes the resulting `disposition` check explicitly against the resolved current head SHA;
-- fails closed for a non-Dependabot PR if no current-head disposition exists, the latest applicable disposition is `CHANGES REQUIRED`, or the canonical block is malformed/unsupported/stale.
+- fails closed for a non-trusted PR if no current-head disposition exists, the latest applicable disposition is `CHANGES REQUIRED`, or the canonical block is malformed/unsupported/stale.
 
-The gate does not evaluate CI, mergeability, base freshness, or unresolved threads. Those are independently enforced by GitHub branch protection and lifecycle tooling. A green `disposition` therefore means only that the current head is authorized by one of the two trusted paths above.
+The gate does not evaluate CI, mergeability, base freshness, or unresolved threads. Those are independently enforced by GitHub branch protection and lifecycle tooling. A green `disposition` therefore means only that the current head is authorized by one of the two positive paths and is not currently revoked by `CHANGES REQUIRED`.
 
-**Trust boundary:** a candidate PR must not be able to author the code that judges its own authorization or spoof its own Dependabot provenance. Checking out the evaluator from trusted `main` is not sufficient by itself, because GitHub sources an ordinary `pull_request`/`pull_request_review`-triggered workflow's *definition* from the PR's own merge commit. `pr-disposition.yml` therefore uses trusted orchestration sourced from `main`: `pull_request_target` for PR lifecycle events, `workflow_run` for both the inert review listener and CI completion, and a fixed `schedule` as a backstop. The workflow then independently re-fetches the PR number, head SHA, author login/type, and review bodies via GitHub's API. None of those paths executes PR-supplied code.
+**Trust boundary:** a candidate PR must not be able to author the code that judges its own authorization or spoof its own Dependabot provenance. Checking out the evaluator from trusted `main` is not sufficient by itself, because GitHub sources an ordinary `pull_request`/`pull_request_review`-triggered workflow's *definition* from the PR's own merge commit. `pr-disposition.yml` therefore uses trusted orchestration sourced from `main`: `pull_request_target` for PR lifecycle events, `workflow_run` for both the inert review listener and CI completion, and a fixed `schedule` as a backstop. The workflow then independently re-fetches the PR number, head SHA, author identity, PR commit list, and review bodies via GitHub's API. None of those paths executes PR-supplied code.
 
 The listener's own `pull_request_review.types` list is PR-editable content, so a PR could narrow it and leave a later review revocation unable to reach the trusted evaluator via that fast path. `.github/CODEOWNERS` requires independent owner approval for every change under `.github/workflows/`, including such narrowing, before it can merge. The scheduled sweep remains defense-in-depth. CI completion is an additional trusted wake path and is what makes Dependabot authorization promptly observable without requiring a synthetic reviewer event.
 
@@ -372,7 +377,7 @@ The `disposition` check is intended to be required on `main`. Enforcement is con
 3. Required checks enforce base freshness, for example by requiring branches to be up to date before merging. The disposition gate binds to the PR head SHA, so a base advance must not leave an otherwise-authorized stale head mergeable.
 4. The ruleset requires review from Code Owners, so `.github/CODEOWNERS` actually protects workflow and CODEOWNERS changes against candidate-controlled listener narrowing or same-named check spoofing.
 
-If the disposition infrastructure itself is broken such that GitHub cannot publish the `disposition` check, temporarily remove only `disposition` from the required-check list while repairing the trusted workflow. Keep the remaining protections active, including `gate`, base-freshness enforcement, Code Owner review, and the no-bypass posture. After the repair reaches `main`, verify end to end both authorization paths: a canonical current-head review must produce a green check for an ordinary PR, and a genuine Dependabot-authored PR must produce a green check from API-derived provenance without a review. Also verify that a subsequent head change invalidates old ordinary-review authorization. Restore `disposition` as a required status check only after those live checks succeed.
+If the disposition infrastructure itself is broken such that GitHub cannot publish the `disposition` check, temporarily remove only `disposition` from the required-check list while repairing the trusted workflow. Keep the remaining protections active, including `gate`, base-freshness enforcement, Code Owner review, and the no-bypass posture. After the repair reaches `main`, verify end to end both authorization paths: a canonical current-head review must produce a green check for an ordinary PR, and a genuine unmodified Dependabot-authored PR must produce a green check from API-derived verified provenance without a positive review. Also verify that a maintainer-authored extra commit revokes the Dependabot path and that a subsequent ordinary head change invalidates old reviewer authorization. Restore `disposition` as a required status check only after those live checks succeed.
 
 Until all four activation conditions are true, the workflow existing and passing does not mean the merge invariant is actually enforced.
 

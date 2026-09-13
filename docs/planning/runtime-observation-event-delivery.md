@@ -100,7 +100,7 @@ Record as architectural debt, to be resolved rather than extended:
 
 > The existing generic KPI implementation is attached to the wrong observation substrate for future supported consumers and should be replaced/migrated rather than extended.
 
-Consequently, migrating `/api/kpis` and the snapshot KPI list is **ownership-sensitive** and must consume the outcome of [Simulation analytics consumer boundary](../research/simulation-analytics-consumer-boundary.md) rather than becoming another formula set defined at the transport layer.
+Consequently, migrating `/api/kpis` and the snapshot KPI list is **ownership-sensitive** and must consume the outcome of [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md) rather than becoming another formula set defined at the transport layer.
 
 This does not block the rest of this work. Settled `RuntimeObservation`/`RuntimeEvent` transport migration may continue. Only pause where a concrete DTO or field would freeze disputed derived-performance semantics into the outward contract before that research resolves it.
 
@@ -160,7 +160,7 @@ cursor belongs to another run
 
 Silent truncation is never successful recovery.
 
-Retained supported-event history, durability across restart, exact checkpoint/restore, public contract versioning, and sidecar packaging are separate implementation responsibilities. Unselected policy/technology choices remain in [Engine Evolution Research](../research/engine-evolution.md) until promoted.
+Retained supported-event history, durability across restart, exact checkpoint/restore, public contract versioning, and sidecar packaging are separate implementation responsibilities. Unselected policy/technology choices remain in [Engine Evolution Research](../research/investigations/engine-evolution.md) until promoted.
 
 ## 6. Cross-track ownership
 

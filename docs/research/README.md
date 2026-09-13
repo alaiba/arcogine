@@ -1,122 +1,26 @@
 # Research
 
-> **Status:** Maintained research register  
-> **Scope:** Open, active, and concluded Arcogine questions that require evidence before product, architecture, or executable delivery planning should change  
-> **Authority:** Research only; this directory does not describe current capability, accepted architecture, or committed delivery work
+> **Status:** Maintained research-area index  
+> **Scope:** Navigation across Arcogine research policy, current research state, synthesis signals, investigations/reports, reusable brief/report structures, and the durable strategic rationale for retaining synthesis seeds  
+> **Authority:** Research-area context/index only; normative research rules and maintained research state live in the linked authorities below
 
-This document owns the research **portfolio, lifecycle, and promotion policy**: what questions are open, at what priority and status, and when a conclusion is durable enough to reconcile. It does not define how an individual investigation is conducted, what makes a report decision-quality, or what "independent" and "adversarial" review require — that normative method lives in [`docs/development/researching.md`](../development/researching.md), executed by the repository's [Researcher](../../.github/agents/researcher.agent.md) role. Use [`report-template.md`](report-template.md) as the reusable structure for a decision-quality report.
+Arcogine separates the **research operating model** from its **maintained state** and **investigation artifacts**:
 
-## Boundary
-
-`docs/research/` answers:
-
-> **What do we still need to understand or decide?**
-
-`docs/planning/` answers:
-
-> **Given what is already known or decided, what work can an implementer execute and validate?**
-
-Research may confirm, falsify, or narrow a hypothesis; conclude that no change is needed; justify an architecture/product decision; or create evidence for later implementation. A research conclusion becomes durable only after it is reconciled into the appropriate product, architecture, ADR, reference, or implementation plan.
-
-Research documents never receive temporary delivery coordinates.
-
-## Lifecycle
-
-| Status | Meaning |
+| Surface | Owns |
 |---|---|
-| **CANDIDATE** | Material uncertainty exists, but the investigation is not yet sufficiently bounded or timely to start |
-| **READY** | Question, scope, evidence expectations, and exit criteria are sufficiently clear to start |
-| **ACTIVE** | Evidence gathering or synthesis is in progress |
-| **CONCLUDED** | A decision-quality result exists and durable consequences have been reconciled, or the result was explicitly no action |
-| **SUPERSEDED** | Later evidence/question/decision replaced the investigation before normal conclusion |
+| [`docs/development/researching.md`](../development/researching.md) | Normative research operating model: question/lifecycle definitions, priority semantics, promotion and reconciliation, investigation/review method, evidence custody, synthesis-seed handling, and register maintenance |
+| [`research-register.md`](research-register.md) | Current admitted research questions, priority, lifecycle state, linked evidence artifact, expected destination, and review date |
+| [`synthesis-seeds.md`](synthesis-seeds.md) | Current non-authoritative cross-investigation synthesis signals retained under the research method |
+| [`investigations/`](investigations/) | Bounded research briefs, investigation write-ups, decision-quality reports, and retained research-history artifacts linked from the register |
+| [`brief-template.md`](brief-template.md) | Reusable advisory structure for bounding a research question; it does not add lifecycle or `READY` criteria beyond the normative operating model |
+| [`report-template.md`](report-template.md) | Reusable structure for a decision-quality research report |
 
-Do not use percentage completion. Track evidence, falsified hypotheses, and exit criteria instead.
+## Strategic horizon
 
-## Promotion rule
+The long-term reason to preserve synthesis seeds is to keep open a path from repeated Arcogine evidence to knowledge that may eventually prove useful beyond Arcogine. If a signal independently recurs, survives bounded cross-investigation synthesis, and later withstands external comparison, replication, criticism, or other validation at the broader scope, it may contribute to reusable methods, terminology, reference models, tooling, standards work, or other industry practice.
 
-```text
-Research
-   |
-   v
-Decision-quality evidence
-   |
-   +--> no action
-   +--> product clarification
-   +--> architecture / ADR
-   +--> concrete implementation responsibility
-                       |
-                       v
-                  docs/planning/
-```
+This horizon does not change Arcogine research admission, create publication work, or make a seed a claim about the outside world. Research remains driven by material Arcogine decisions; seeds merely preserve enough evidence-bearing connective tissue that genuinely broader knowledge is not made impossible to recognize later by routine workspace retirement.
 
-A topic is ready for implementation planning only when semantic/product meaning, ownership, prerequisites, and acceptance evidence are sufficiently settled. A blocked implementation contract may live in planning; an unresolved question that still determines the contract stays here.
+Investigation/report files belong under [`investigations/`](investigations/) rather than beside the maintained registers and reusable templates. They are research evidence or investigation framing, not accepted product/architecture semantics merely because they exist.
 
-## Evidence custody and retirement
-
-Research that must survive a session uses a temporary, semantically named **research-evidence workspace branch** as defined by [`docs/development/researching.md`](../development/researching.md). The normal workspace unit is one bounded research question. An explicitly coupled set of questions may share one workspace only when they are intended to be reviewed/reconciled as one packet. Do not create a separate branch merely because a report and its adversarial review are different artifacts, do not create a fresh branch merely because that workspace has entered durable reconciliation, and do not create one permanent repository-wide research branch.
-
-The same finite workspace normally carries the question from investigation through report/review artifacts and the final durable reconciliation. "Separate reconciliation" means a separate phase and authority transition, not separate Git topology. A new reconciliation branch is justified only by a concrete operational isolation requirement, not by the existence of an immutable report commit.
-
-A workspace may contain checkpoints, drafts, diagnostic notes, completed reports, adversarial-review artifacts, and later reconciliation work. Branch-tip state is never the evidence identity: a completed report or review becomes a handoff artifact only when its exact commit SHA and path are explicitly returned. Those exact revisions are immutable inputs to later review/reconciliation even though later workspace commits may add other material.
-
-Research workspaces provide reproducible cross-session custody only. Their contents are not current repository authority and are not merged to `main` merely because research exists.
-
-When a workspace with handed-off evidence must catch up to `main`, preserve the exact evidence SHAs. Use a history-preserving merge-style update rather than rebasing or force-pushing away completed artifact commits. Before the reconciliation PR lands, temporary evidence/handoff files that are not deliberately promoted should be absent from the final tree; the PR should carry the durable transfer rather than an evidence archive.
-
-A temporary research-evidence workspace may be retired only after every research question it carries is `CONCLUDED` or `SUPERSEDED` and the knowledge-transfer audit has accounted for every material result that should survive: accepted conclusions and qualifications in their durable authority, remaining unknowns/reopening triggers/new questions back in research, implementation responsibilities in admitted planning when ready, reusable proving cases/counterexamples/measurements/know-how in the surface that will need them, and explicit discard decisions for findings that no longer merit retention. If any material item remains unaccounted for, keep the workspace available.
-
-The reconciliation that completes that audit owns the retirement decision. Once the reconciliation has landed, deleting the listed temporary workspace branch is immediate post-merge cleanup; branch deletion is not itself part of repository authority and must not happen before the reviewed transfer is durable.
-
-This custody rule does not add a lifecycle status, permanent report archive, or second research ledger. The register continues to track the research question; temporary workspaces only preserve in-progress and completed evidence until reconciliation is complete enough to retire them safely.
-
-## Research register
-
-Priority is portfolio guidance, not delivery commitment.
-
-| Research question | Area | Priority | Status | Detailed artifact / authority | Expected destination | Last reviewed |
-|---|---|---:|---|---|---|---|
-| What is the minimum durable boundary among actor attribution, decision production, subject, capability, semantic operation, realization, and transition? | Cross-cutting | High | **READY** | [Agency and decision boundary](agency-decision-boundary.md) | Architecture/ADR if shared semantics survive; planning only for concrete implementation | 2026-09-08 |
-| What independently continuing operational history, if any, needs durable identity, and what equality/continuity/fork rules define it? | Operational / Digital Twin | **Critical-path** | **READY** | [Operational boundary research](operational-execution-digital-twin-boundaries.md) and ADR-0013 | Revised ADR/architecture, then the first narrow Operational implementation slice | 2026-09-08 |
-| What other Operational boundaries are required for actor/trust/authority, external operation realization, correspondence, reconciliation, drift, and resilience? | Operational / Cross-cutting | High | **CANDIDATE** | [Operational boundary research](operational-execution-digital-twin-boundaries.md) | Architecture and then implementation planning only as needed | 2026-09-08 |
-| Does Factory Design need a reusable equipment/resource definition distinct from installed resource instances, and what invariant would that distinction carry? | Factory Design | High | **CONCLUDED** | [Factory resource semantics report](factory-resource-semantics.md) | **Keep collapsed for now**; [Factory Resource Semantics](../architecture/factory-resource-semantics.md) records the durable interpretation, no implementation slice | 2026-09-08 |
-| When does Arcogine need qualified operation-resource applicability and resource-dependent performance beyond explicit eligible IDs and step-level duration? | Factory Design / Engine | High | **CANDIDATE** | [Factory Design evolution research](factory-design-evolution.md) | Factory/Engine architecture and implementation only after a concrete heterogeneous-resource consumer proves the gap | 2026-09-08 |
-| Which richer validation, comparison, resource-pool, shared-draft, or governed-change semantics are genuinely cross-consumer? | Factory Design | Medium | **CANDIDATE** | [Factory Design evolution research](factory-design-evolution.md) | Factory/Governance architecture or no shared abstraction | 2026-09-08 |
-| Does the proposed factory-design game loop make production-system optimization understandable, experimentally useful, and engaging? | Game / Challenge consumer | High | **READY** | [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) | Bounded product requirement set, then game consumer implementation planning | 2026-09-08 |
-| What player-facing evidence best exposes bottlenecks and causal performance differences? | Game / Engine consumer | High | **SUPERSEDED** | [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) | **Split**: the technical fact/derivation-ownership half is cross-consumer and moved to the simulation-analytics boundary question below; the player-comprehension half remains game product research in the vertical-slice brief. See § Superseded: player-facing diagnostic evidence | 2026-09-12 |
-| What scoring, challenge, and level structures create several understandable viable strategies without an opaque dominant meta? | Game | Medium | **CANDIDATE** | [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) | Product/content decision | 2026-09-08 |
-| What is Arcogine's supported boundary between authoritative simulation facts and consumer-neutral simulation analytics, including which currently exposed derived results belong to Engine semantics, which should instead be computed from supported observations/events, and what provenance/compatibility obligations analytics must preserve? | Engine / Cross-consumer | High | **READY** | [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md) | Architecture/ADR reconciliation if a shared boundary survives, then implementation planning for analytics/KPI migration; **High risk — independent adversarial review required before architecture promotion**; no implementation before that | 2026-09-12 |
-| Which spatial/material-flow semantics should follow current placement/footprint and deterministic transfer semantics? | Factory Design / Engine | High | **CANDIDATE** | [Factory Design evolution research](factory-design-evolution.md) plus current spatial architecture | Factory/Engine architecture | 2026-09-08 |
-| When should Arcogine evolve beyond its current deterministic dispatch policy? | Engine | Medium | **CONCLUDED** | [Engine evolution research](engine-evolution.md) | **Do not add a general policy menu/scheduler now**; keep current versioned behavior as the implementation baseline while narrower first-release questions and same-semantics performance work are separated | 2026-09-11 |
-| Should the first supported Engine release retain `engine-semantics:v1`'s at-most-one-local-job-per-cascade-trigger rule, or does the evidence justify a differently versioned bounded admission rule? | Engine | **Critical-path** | **CONCLUDED** | [Engine evolution research](engine-evolution.md) | **Retain v1 unchanged**; [Spatial Runtime Consequences](../planning/spatial-runtime-consequences.md) owns executable conformance for the retained recovery/local-admission behavior; reopen only at the documented recovery/spatial triggers | 2026-09-12 |
-| Should the first supported Engine release retain v1's exact `combinedQueueDepth` ranking when shared pending jobs overlap several candidate machines, or does the evidence justify a differently versioned ranking term? | Engine | **Critical-path** | **CONCLUDED** | [Engine evolution research](engine-evolution.md) | **Retain v1 unchanged**; [Spatial Runtime Consequences](../planning/spatial-runtime-consequences.md) owns executable conformance for exact ranking/reselection behavior; reopen only at the documented objective/spatial/local-admission triggers | 2026-09-12 |
-| What concrete supported-consumer objective would justify queue sequencing beyond FIFO, and what fairness/information-horizon constraints must accompany it? | Engine | Medium | **CANDIDATE** | [Engine evolution research](engine-evolution.md) | Engine semantics only after a consumer defines what "better" means | 2026-09-11 |
-| When are lot/batch/material-lot semantics or capability/resource-pool semantics justified beyond current unit-work decomposition and explicit eligible instances? | Engine | Medium | **CANDIDATE** | [Engine evolution research](engine-evolution.md) | Engine/Factory architecture and versioned implementation only after a concrete domain/consumer requirement | 2026-09-11 |
-
-## Superseded: player-facing diagnostic evidence
-
-The question *"What player-facing evidence best exposes bottlenecks and causal performance differences?"* was investigated and is **SUPERSEDED** rather than `CONCLUDED`: its conclusion did not become durable, because the question itself was mixed.
-
-It combined two decisions with different owners:
-
-1. **technical contract/ownership** — which facts and temporal evidence are required, which derivations are safe, and where reusable derivations belong;
-2. **product cognition** — what a player must see to form the correct causal model.
-
-The investigation made substantial progress on the first and explicitly did not validate the second, which needs participant evidence rather than repository reasoning.
-
-The first half is **not game-local**. Arcogine already carries generic KPI computation (`com.arcogine.core.kpi`), an outward KPI endpoint and snapshot projection, and a web consumer that retains KPI history and computes baseline-to-baseline metric deltas (`product/interfaces/web/src/stores/baselines.ts`). Those are already several consumers of reusable derived measurement. The superseded report's trigger — that Arcogine should wait for a *future* second product consumer before considering shared analytics ownership — was therefore already satisfied when the report was written, and does not survive.
-
-Consequently:
-
-- the reusable technical evidence, proving cases, and truthfulness constraints transfer to the simulation-analytics boundary question;
-- the provisional conclusion that reusable diagnostic derivations are **game-owned** is explicitly superseded, pending that investigation;
-- the open player-comprehension question remains in [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md);
-- the investigation's report remains historical evidence at its exact workspace `commit SHA + path` until the workspace is retired after this reconciliation lands.
-
-## Maintenance
-
-- Add a material unknown instead of hiding it in an implementation plan.
-- Mark research `READY` only when an independent researcher can execute it from the stated evidence/exit criteria — see `docs/development/researching.md` for what a sufficiently bounded brief and decision-quality report require.
-- When research concludes, record the verdict here and link the durable destination; do not duplicate the authoritative conclusion.
-- Before retiring a temporary research-evidence workspace, perform the knowledge-transfer audit above; branch deletion is not a substitute for deciding what should survive.
-- During planning/consistency review, flag exploratory content that has leaked back into `docs/planning/` and relocate it here.
-- Keep concluded research visible when it provides useful history, but prefer current architecture/reference for durable semantics.
+For AI execution, use the repository-owned [Researcher](../../.github/agents/researcher.agent.md) role together with the normative research operating model.

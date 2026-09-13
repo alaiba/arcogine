@@ -39,7 +39,7 @@ Challenge admissibility and Arcogine executability remain separate decisions. Pa
 
 ## 2. Product-research dependency
 
-The playable requirement set is not yet an implementation input. It is being tested in [Factory-Design Game Vertical-Slice Research](../research/factory-design-game-vertical-slice.md).
+The playable requirement set is not yet an implementation input. It is being tested in [Factory-Design Game Vertical-Slice Research](../research/investigations/factory-design-game-vertical-slice.md).
 
 Rendering/input technology, scoring, tutorial sequence, save-wrapper shape, interpolation policy, and other evidence-dependent consumer choices must not be selected in this plan before that research concludes.
 
@@ -88,7 +88,7 @@ That substrate may be consumed by the eventual game, but its completion is not e
 | Workload, work items, queues, dispatch, processing, transfers | Arcogine Engine/runtime |
 | Simulation clock and deterministic event ordering | Arcogine Engine/runtime |
 | Supported runtime observations/events and performance facts | Arcogine Engine/runtime |
-| Reusable derived measurement (longitudinal aggregation, utilization/occupancy intervals, diagnosis, run comparison) | **Unresolved — not game-owned by default.** Open High-risk research: [Simulation analytics consumer boundary](../research/simulation-analytics-consumer-boundary.md) |
+| Reusable derived measurement (longitudinal aggregation, utilization/occupancy intervals, diagnosis, run comparison) | **Unresolved — not game-owned by default.** Open High-risk research: [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md) |
 | Player-facing presentation, explanation, wording, and visualization of supported facts | Game |
 | Game save wrapper around any supported Arcogine checkpoint | Game |
 
@@ -110,7 +110,7 @@ The game consumes bounded advancement/reset semantics. Presentation speed change
 
 Render supported observations/events rather than internal Engine classes. Consumer summaries may make evidence easier to understand but must not become a competing authoritative computation.
 
-Reusable *diagnostic* computation — utilization or occupancy intervals, longitudinal aggregation, bottleneck inference, run-to-run comparison — is **not settled as game-owned**. Arcogine already has several consumers of reusable derived measurement (generic KPI computation, an outward KPI surface, and a web consumer retaining KPI history and computing baseline deltas), so that ownership is an open cross-consumer question under [Simulation analytics consumer boundary](../research/simulation-analytics-consumer-boundary.md).
+Reusable *diagnostic* computation — utilization or occupancy intervals, longitudinal aggregation, bottleneck inference, run-to-run comparison — is **not settled as game-owned**. Arcogine already has several consumers of reusable derived measurement (generic KPI computation, an outward KPI surface, and a web consumer retaining KPI history and computing baseline deltas), so that ownership is an open cross-consumer question under [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md).
 
 Until that question resolves, the game must not implement generic analytics locally as though it owned the semantics. Game-owned presentation of supported facts, and game/Challenge-owned scoring and evaluation, remain unaffected — scoring and challenge evaluation are deliberately separate from generic simulation analytics. Once the boundary is settled, the game may consume analytics through either an embedded or a remote adapter; that is a packaging choice, not a semantics choice.
 

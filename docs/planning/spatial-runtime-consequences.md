@@ -21,7 +21,7 @@ The architecture is fixed by:
 
 Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. The
 first-release local-admission and shared-backlog-ranking questions in
-[Engine Evolution Research](../research/engine-evolution.md) are now concluded after independent
+[Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded after independent
 adversarial review, and both retain `engine-semantics:v1` unchanged. The research prerequisite for
 PLAN-ENG-5-0 is therefore satisfied: that slice pins the existing rules and their reviewed boundary
 cases rather than selecting a new policy. Factory V2 model/canonicalization slices remain independently
@@ -98,7 +98,7 @@ coherent in the same landed change under ADR-0011.
 
 **Status:** Ready. The first-release dispatch research gate is cleared: both reviewed questions retain
 `engine-semantics:v1` unchanged, with the qualifications recorded in
-[Engine Evolution Research](../research/engine-evolution.md).
+[Engine Evolution Research](../research/investigations/engine-evolution.md).
 
 **Prerequisites:** ADR-0015 landed Accepted, plus conclusion of the two first-release dispatch
 questions with `engine-semantics:v1` retained unchanged. Those prerequisites are satisfied. A future
@@ -132,7 +132,7 @@ Add characterization/conformance evidence for the result-affecting behavior that
 **Ownership note — reported derived results.** The last two bullets pin *reported* derived results
 (`busyTicks`, throughput, mean lead time, completed-order counting and value accumulation) whose
 placement on the Engine/analytics boundary is an open question under
-[Simulation analytics consumer boundary](../research/simulation-analytics-consumer-boundary.md).
+[Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md).
 
 There is a genuine tension here, and it is recorded rather than worked around. Accepted architecture
 already makes those values part of `engine-semantics:v1`: §1.1's membership test covers derived-result

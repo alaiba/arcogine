@@ -93,7 +93,25 @@ Which *facts and reusable derivations* exist, and who owns them, is no longer de
 - transfer-dependent presentation remains conditional on landed transfer semantics — there is currently no transfer time, `TRANSFERRING` state, or transfer event in runtime behavior, so the processing-versus-transfer question cannot be asked of the current runtime at all;
 - sidecar versus in-process is a packaging/integration question, not a competing runtime semantics choice (ADR-0007, ADR-0011 already establish transport-neutral semantics with sibling adapters).
 
-A prior investigation of the mixed player-facing-evidence question is recorded as **SUPERSEDED** in `docs/research/README.md`. Its player-comprehension half is the open work described here; its technical-ownership half moved to the analytics question.
+### Superseded predecessor
+
+The register question *"What player-facing evidence best exposes bottlenecks and causal performance differences?"* is **SUPERSEDED** rather than `CONCLUDED`: it was investigated, but its conclusion did not become durable, because the question itself was mixed.
+
+It combined two decisions with different owners:
+
+1. **technical contract/ownership** — which facts and temporal evidence are required, which derivations are safe, and where reusable derivations belong;
+2. **product cognition** — what a player must see to form the correct causal model.
+
+The investigation made substantial progress on the first and explicitly did not validate the second, which needs participant evidence rather than repository reasoning.
+
+The first half is **not game-local**. Arcogine already carries generic KPI computation (`com.arcogine.core.kpi`), an outward KPI endpoint and snapshot projection, and a web consumer that retains KPI history and computes baseline-to-baseline metric deltas (`product/interfaces/web/src/stores/baselines.ts`). Those are already several consumers of reusable derived measurement. The superseded investigation's trigger — that Arcogine should wait for a *future* second product consumer before considering shared analytics ownership — was therefore already satisfied when it was written, and does not survive.
+
+Consequently:
+
+- reusable technical evidence, proving cases, and truthfulness constraints transferred to the simulation-analytics boundary question;
+- the provisional conclusion that reusable diagnostic derivations are **game-owned** is explicitly superseded, pending that investigation;
+- the open player-comprehension question is the work described in this brief;
+- the investigation's report remains historical evidence at its exact workspace `commit SHA + path` until the workspace is retired after its reconciliation lands.
 
 ## Product decisions to resolve before implementation
 

@@ -39,7 +39,7 @@ run_case() {
 
   local code=0
   local output
-  output=$("$PROVENANCE_SCRIPT" 2>&1) || code=$?
+  output=$(bash "$PROVENANCE_SCRIPT" 2>&1) || code=$?
   if [ "$code" -eq "$expected" ]; then
     echo "✓ Provenance $count: $name"
     pass=$((pass + 1))

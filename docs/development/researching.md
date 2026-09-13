@@ -12,6 +12,8 @@ For AI execution of this policy, the repository-owned **Researcher** procedure l
 
 This document must not become a second research backlog, roadmap, architecture authority, or implementation plan. It defines method, not content: it does not list Arcogine's open questions (`docs/research/README.md` does), does not decide any Arcogine semantic question (an ADR, architecture doc, or product doc does), and does not sequence implementation (`docs/planning/` does).
 
+Potentially transferable findings that do not themselves justify an Arcogine research question may survive reconciliation only through the narrow, non-authoritative synthesis-seed mechanism defined in §10 and [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md). A seed preserves recurrence-detection value; it does not create work or establish a broader claim.
+
 ## 1. What research is for
 
 Arcogine research exists to answer a **material bounded uncertainty that can change an Arcogine decision** — a question whose answer would plausibly change product direction, architecture, an ADR, or an implementation contract, and whose current uncertainty is real enough that guessing would be worse than investigating.
@@ -52,6 +54,8 @@ A researcher must:
 5. inspect the current product, architecture, ADR, planning, implementation, and test surfaces the question actually touches;
 6. search semantic neighbors rather than reading only the files named in the brief — a question about identity, ownership, or lifecycle usually has cousins elsewhere in `docs/architecture/`, `docs/planning/`, and the codebase that the brief's author did not anticipate;
 7. state any important surface that could not be inspected, rather than silently omitting it.
+
+Do **not** include `docs/research/synthesis-seeds.md` in routine start-of-run grounding for an investigation that is meant to provide independent evidence. First derive the bounded question's candidates, evidence needs, proving/failure cases, and result from its own brief and repository/external evidence. Compare against synthesis seeds only after reaching that result. If a seed is deliberately used as input to the question or materially shapes candidates, proving cases, or reasoning, label any later similarity as **reuse**, not independent recurrence.
 
 For a long-running investigation, perform a final current-state recheck before presenting repository-dependent conclusions. If `main` moved materially during the investigation, reconcile whether the conclusion still holds against the new head rather than silently reporting against a stale one.
 
@@ -203,6 +207,8 @@ An adversarial reviewer specifically attempts to discover, as applicable:
 - an unresolved question silently declared settled;
 - a conclusion stronger than its evidence.
 
+When a report proposes a potentially transferable result, challenge that scope explicitly as part of the same adversarial pass: seek Arcogine-specific causes, contrary contexts, design choices presented as necessities, and narrower claims that survive where the broader formulation does not.
+
 A clean adversarial review — one that finds nothing that survives scrutiny — is a valid and useful result. Do not optimize for producing findings, and do not establish a minimum finding count. An adversarial reviewer who manufactures a finding to justify the pass has failed the same way a PR reviewer who "optimizes for finding something wrong" has failed (`docs/development/reviewing.md`).
 
 ### Report input integrity
@@ -283,6 +289,10 @@ separate durable reconciliation on the same workspace by default
         v
 knowledge-transfer audit
         |
+        +--> reusable evidence / know-how
+        +--> qualifying synthesis seed (non-authoritative)
+        +--> explicit discard
+        |
         v
 reconciliation lands
         |
@@ -319,12 +329,29 @@ Temporary research evidence may be deleted only after every research question ca
 - accepted conclusions and invariants into the appropriate product, architecture, ADR, reference, or admitted planning authority;
 - qualifications that constrain an accepted conclusion into the same durable destination as that conclusion;
 - unresolved unknowns, reopening triggers, and newly exposed questions into `docs/research/` when they remain material;
-- reusable proving cases, counterexamples, failure modes, measurements, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;
+- reusable proving cases, counterexamples, failure modes, measurements, protocols, source maps, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;
+- qualifying cross-investigation signals into `docs/research/synthesis-seeds.md` when they are evidence-bearing, potentially transferable beyond the immediate Arcogine implementation context, and loss-sensitive enough that workspace retirement would materially reduce later recurrence detection;
 - findings that no longer merit retention as explicitly discarded rather than accidentally lost with branch deletion.
 
-The reconciliation must name the workspace(s) covered by its transfer audit and state whether each is retirement-eligible. If any material item still lacks a durable destination or explicit discard decision, keep the workspace available. Once the reconciliation has landed and its independent PR review has validated the transfer, deleting a retirement-eligible workspace branch is immediate post-merge cleanup. The reconciliation owns that retirement decision even though deleting the Git ref is an operational action after merge rather than part of repository content.
+### Synthesis-seed custody
 
-This retirement rule does not create another lifecycle state, research issue ledger, or permanent report archive; it closes the custody gap between session-local research and durable reconciliation while keeping artifact-level integrity in immutable commit coordinates rather than branch proliferation.
+A **synthesis seed** is a compact, non-authoritative record that preserves the ability to recognize a potentially generalizable signal across otherwise independent investigations. It is not an Arcogine research question, accepted product/architecture semantics, implementation commitment, publication candidate, or work item.
+
+Admit or extend a seed only during reconciliation or another explicit knowledge-transfer review, after the originating investigation has reached its own result. The candidate must satisfy all three conditions:
+
+1. **Evidence-bearing** — it arose from substantive evidence, discriminating proving cases, experiment, counterexample, implementation experience, or another actual investigation result rather than free-form speculation.
+2. **Potentially transferable** — after Arcogine-specific class names and implementation details are removed, an intelligible proposition, distinction, failure mode, method, or counterexample remains.
+3. **Loss-sensitive** — retiring the workspace without the compact signal would materially reduce the chance that a later independent investigation could recognize recurrence.
+
+The seed should preserve only what later synthesis needs: the narrow signal, origin/provenance, truthful evidence posture, known boundaries/counterevidence, links to durable reusable assets, later occurrences, and a concrete `Revisit when` condition. Do not copy the whole report or use the seed index as a shadow evidence archive.
+
+When reconciling a new candidate, search existing seeds for semantic neighbors **only after** the originating investigation has reached its own result. Extend an existing seed when the underlying signal is genuinely the same. Record a later result as an **independent occurrence** only if the seed was not used as a load-bearing premise or framing input to that investigation; otherwise record **reuse**. Recurrence may justify considering a bounded synthesis question, but it does not establish generality by itself.
+
+Every seed must state a concrete `Revisit when` condition such as independent recurrence in another domain, materially comparable external evidence, implementation experience that confirms or falsifies the signal, or reuse of the same proving method across distinct questions. When the condition fires, surface that fact for an explicit decision about whether a bounded cross-investigation synthesis question should be admitted to the normal research register. Do not automatically create research work, change priority, or promote the broader claim.
+
+The reconciliation must name the workspace(s) covered by its transfer audit and state whether each is retirement-eligible. If any material item still lacks a durable destination, qualifying synthesis-seed record, or explicit discard decision, keep the workspace available. Once the reconciliation has landed and its independent PR review has validated the transfer, deleting a retirement-eligible workspace branch is immediate post-merge cleanup. The reconciliation owns that retirement decision even though deleting the Git ref is an operational action after merge rather than part of repository content.
+
+This retirement rule does not create another lifecycle state, permanent report archive, research issue ledger, publication backlog, or second research roadmap. `docs/research/README.md` remains the sole research portfolio/lifecycle authority; `docs/research/synthesis-seeds.md` is only a low-authority recurrence index and cannot admit or prioritize work.
 
 ## 11. What this document intentionally does not decide
 
@@ -332,7 +359,7 @@ This document defines method. It does not:
 
 - list Arcogine's current open research questions — see `docs/research/README.md`;
 - decide any live Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — those remain open exactly as the research register and any in-flight ADR record them;
-- create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, or a new issue ledger;
+- create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, publication lifecycle/backlog, or new issue ledger;
 - change how `docs/research/README.md`'s lifecycle (`CANDIDATE`, `READY`, `ACTIVE`, `CONCLUDED`, `SUPERSEDED`) or promotion boundary work.
 
-Research documents remain research evidence only. They do not become accepted architecture simply because a report exists.
+Research documents remain research evidence only. Synthesis seeds remain non-authoritative recurrence signals only. Neither becomes accepted architecture simply because it exists.

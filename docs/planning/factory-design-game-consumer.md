@@ -39,7 +39,7 @@ Challenge admissibility and Arcogine executability remain separate decisions. Pa
 
 ## 2. Product-research dependency
 
-The playable requirement set is not yet an implementation input. It is being tested in [Factory-Design Game Vertical-Slice Research](../research/factory-design-game-vertical-slice.md).
+The playable requirement set is not yet an implementation input. It is being tested in [Factory-Design Game Vertical-Slice Research](../research/investigations/factory-design-game-vertical-slice.md).
 
 Rendering/input technology, scoring, tutorial sequence, save-wrapper shape, interpolation policy, and other evidence-dependent consumer choices must not be selected in this plan before that research concludes.
 

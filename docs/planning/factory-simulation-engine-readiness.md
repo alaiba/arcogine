@@ -3,7 +3,7 @@
 > **Status:** Active; workload/dispatch/session/work-decomposition and core observation/event semantics are complete, while outward consumer convergence and spatial runtime consequences remain admitted work  
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
-> **Related:** [Factory Design Capability](factory-design-capability.md), [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/engine-evolution.md)
+> **Related:** [Factory Design Capability](factory-design-capability.md), [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md)
 
 ## 1. Runtime boundary
 
@@ -106,7 +106,7 @@ The admitted sequence includes:
 6. close availability/no-rerouting edge semantics and late-join diagnostics; and
 7. complete V1/V2 historical coexistence before final closure.
 
-**First-release dispatch gate:** cleared. The two critical-path research questions in [Engine Evolution Research](../research/engine-evolution.md) are now concluded with `engine-semantics:v1` retained unchanged after adversarial review. PLAN-ENG-5-0 is therefore ready to pin the existing local-admission, shared-backlog-ranking, reselection, ordering, and exact-arithmetic rules together with the reviewed discriminating cases. The research conclusions do not authorize a policy change and do not claim the retained rules are globally optimal.
+**First-release dispatch gate:** cleared. The two critical-path research questions in [Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded with `engine-semantics:v1` retained unchanged after adversarial review. PLAN-ENG-5-0 is therefore ready to pin the existing local-admission, shared-backlog-ranking, reselection, ordering, and exact-arithmetic rules together with the reviewed discriminating cases. The research conclusions do not authorize a policy change and do not claim the retained rules are globally optimal.
 
 No pathfinding, conveyor graph, transport-resource scheduling, congestion, rerouting, or orientation is part of this admitted work.
 
@@ -181,7 +181,7 @@ The currently established recovery invariant is:
 - silent history truncation must never be reported as successful resume;
 - exact checkpoint/restore, when implemented, must preserve the source model, Engine semantics, simulated time, runtime state, scheduler/random state, and event position required for exact continuation.
 
-Candidate extensions whose contract is not yet selected remain in [Engine Evolution Research](../research/engine-evolution.md).
+Candidate extensions whose contract is not yet selected remain in [Engine Evolution Research](../research/investigations/engine-evolution.md).
 
 ## 7. Research boundary
 

@@ -55,7 +55,7 @@ Implemented:
 - deterministic admissibility for identity, resolution, availability, quantity, affordability, floor bounds, overlap, and duplicate occurrence identity;
 - fixed challenge workload cannot be silently replaced by a candidate.
 
-The catalogue is a game concept. It does not assert that Arcogine's current concrete resource representation is a reusable equipment type. The canonical equipment/resource ontology question is tracked in [Factory Design Evolution Research](../research/factory-design-evolution.md).
+The catalogue is a game concept. It does not assert that Arcogine's current concrete resource representation is a reusable equipment type. The canonical equipment/resource ontology question is tracked in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md).
 
 ### PLAN-CHAL-3 — Deterministic challenge evaluation — COMPLETE
 
@@ -101,7 +101,7 @@ The current Challenge delivery sequence is closed. New Challenge work requires a
 
 Examples such as campaign progression, leaderboard persistence, richer scoring, or shared Governance/Challenge evaluation abstractions are not roadmap placeholders. Track them in research/product work until a real requirement crosses the planning admission boundary.
 
-The current product investigation is [Factory-Design Game Vertical-Slice Research](../research/factory-design-game-vertical-slice.md).
+The current product investigation is [Factory-Design Game Vertical-Slice Research](../research/investigations/factory-design-game-vertical-slice.md).
 
 ## 5. Integration milestone
 

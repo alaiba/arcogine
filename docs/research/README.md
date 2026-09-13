@@ -113,4 +113,5 @@ Priority is portfolio guidance, not delivery commitment.
 - Before retiring a temporary research-evidence workspace, perform the knowledge-transfer audit above; branch deletion is not a substitute for deciding what should survive.
 - During reconciliation, admit a synthesis seed only under `docs/development/researching.md`'s evidence-bearing / transferable / loss-sensitive criteria; compare with existing seeds after the originating investigation has reached its own result, so similarity is not manufactured by anchoring.
 - During planning/consistency review, flag exploratory content that has leaked back into `docs/planning/` and relocate it here.
-- Keep concluded research visible when it provides useful history, but prefer current architecture/reference for durable semantics.
+- Terminal research questions (`CONCLUDED` or `SUPERSEDED`) normally remain in the register for lifecycle and provenance history. Compact or remove one only when its continued presence no longer helps explain a material conclusion, supersession chain, reopening trigger, or active decision context; any durable consequence must already be reconciled, and removal must never substitute for the knowledge-transfer audit.
+- Prefer current architecture/reference for durable semantics; the register records research lifecycle and provenance rather than duplicating authoritative conclusions.

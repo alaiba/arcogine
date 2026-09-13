@@ -76,6 +76,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Research operating model](development/researching.md) | Normative research rules: lifecycle, priority, promotion/reconciliation, investigation/review, evidence custody, synthesis seeds, and register maintenance |
 | [Research register](research/research-register.md) | Current admitted research questions, priority, lifecycle state, evidence artifact, expected destination, and review date |
 | [Synthesis seeds](research/synthesis-seeds.md) | Current retained non-authoritative cross-investigation synthesis signals |
+| [Research brief template](research/brief-template.md) | Reusable failure-oriented planning structure for bounding research questions before they enter the maintained register as `READY` |
 | [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |
 | [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation |
 | [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |

@@ -1,47 +1,47 @@
 name: PR Disposition
 
-# PR disposition merge-gate workflow.
+# PR review-authorization merge-gate workflow.
 #
-# Enforces exactly one invariant: the latest applicable canonical reviewer
-# disposition for the current PR head must be READY TO MERGE. This workflow
-# does not evaluate CI, mergeability, or unresolved threads — those remain
-# independently enforced by GitHub branch protection and infra/dev/pr-watch.mjs.
+# Enforces one authorization invariant for the current PR head:
+#   - a PR opened by GitHub's trusted Dependabot bot is authorized directly;
+#   - every other PR requires the latest applicable canonical reviewer
+#     disposition for the current head to be READY TO MERGE.
+#
+# This workflow does not evaluate CI, mergeability, base freshness, or
+# unresolved threads — those remain independently enforced by GitHub branch
+# protection and infra/dev/pr-watch.mjs.
 #
 # TRUST BOUNDARY (this is why the triggers below look unusual):
 #
 # A candidate PR must not be able to author the code that judges its own
-# disposition. Checking out the evaluator script from a trusted `main` ref is
-# not sufficient on its own: GitHub sources a `pull_request` or
-# `pull_request_review` triggered workflow's *definition* from the pull
-# request's own merge commit, not from `main`. A PR could therefore edit this
-# very file to skip the evaluator and fabricate a passing result.
+# authorization or spoof Dependabot provenance. Checking out the evaluator
+# script from a trusted `main` ref is not sufficient on its own: GitHub sources
+# a `pull_request` or `pull_request_review` triggered workflow's *definition*
+# from the pull request's own merge commit, not from `main`. A PR could
+# therefore edit this very file to skip the evaluator and fabricate a passing
+# result.
 #
-# Three trusted-orchestration triggers, none of which ever checks out or
-# executes PR-supplied code:
+# Three trusted-orchestration trigger families, none of which ever checks out
+# or executes PR-supplied code:
 #   - `pull_request_target` for PR lifecycle events (opened/reopened/
 #     synchronize). GitHub always loads a pull_request_target workflow's
 #     definition from the base branch (main), never from the PR.
-#   - `workflow_run`, chained from the minimal, unprivileged, no-checkout
-#     listener in pr-disposition-review-trigger.yml, as a fast path for
-#     review events. pull_request_review has no trusted "_target" variant,
-#     so the listener (sourced from the PR, but inert) reacts to the review;
-#     workflow_run (always sourced from main) reacts to the listener's
-#     completion and independently re-derives the PR number, head SHA, and
-#     review bodies via the API -- it never trusts anything the untrusted
-#     listener run produced.
-#   - `schedule`, as a trusted backstop that does NOT depend on the listener
-#     at all. The listener's own `pull_request_review.types` list is itself
-#     PR-editable content (this workflow file lives on the PR branch): a PR
-#     could narrow it to `[submitted]` only, so an initial READY review
-#     mints a green disposition but a later edit to CHANGES REQUIRED, or a
-#     dismissal of that review, produces no listener run and therefore no
-#     re-evaluation -- leaving a stale passing check attached to an
-#     unchanged head. `.github/CODEOWNERS` requires an independent owner to
-#     review any change under `.github/workflows/`, including that
-#     narrowing, before it can merge (see reviewing.md's listener-coverage
-#     mitigation). The schedule sweep is always read from the version of
-#     this file on the default branch and remains defense-in-depth,
-#     re-checking every open PR against `main` on a fixed interval.
+#   - `workflow_run`, sourced from main, for both the minimal review listener
+#     and CI. The review listener provides a fast path for reviewer disposition
+#     changes. CI completion provides a trusted wake for Dependabot-authored
+#     PRs, which need no reviewer event. In both cases this workflow re-fetches
+#     the workflow run and the PR from GitHub's API and trusts no payload or
+#     code supplied by the candidate branch.
+#   - `schedule`, as a trusted backstop independent of candidate-controlled
+#     events. The review listener's own pull_request_review.types list is
+#     PR-editable content, so a PR could narrow it and leave a later revocation
+#     unable to reach the trusted evaluator via the fast path. The schedule is
+#     always read from the default branch and re-checks every open PR.
+#
+# Dependabot provenance is derived only from the PR object re-fetched from the
+# GitHub API: exact login `dependabot[bot]` plus account type `Bot`. PR title,
+# branch name, labels, body, and commit author strings are candidate-controlled
+# and are never provenance signals.
 #
 # Neither `pull_request_target`, `workflow_run`, nor `schedule` implicitly
 # attaches a check result to the correct PR head SHA the way a
@@ -53,17 +53,16 @@ name: PR Disposition
 # GitHub branch-protection required status checks match by check NAME only,
 # not by which workflow produced them. A separate PR-authored workflow
 # (triggered by an ordinary, untrusted event) could create its own job named
-# "disposition" and satisfy the same required-check name without ever
-# running this evaluator. The same `.github/CODEOWNERS` entry mitigates
-# this: authoring such a workflow is itself a change under
-# `.github/workflows/`, so it requires an owner's independent review and
-# approval first.
+# "disposition" and satisfy the same required-check name without ever running
+# this evaluator. `.github/CODEOWNERS` mitigates this: authoring or changing a
+# workflow is itself a change under `.github/workflows/`, so it requires an
+# owner's independent approval before it can merge.
 on:
   pull_request_target:
     branches: [main]
     types: [opened, reopened, synchronize]
   workflow_run:
-    workflows: ["PR Disposition Review Trigger"]
+    workflows: ["PR Disposition Review Trigger", "CI"]
     types: [completed]
   schedule:
     # Bounded staleness backstop, independent of any PR-controlled trigger.
@@ -152,7 +151,7 @@ jobs:
       cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve current head SHA
+      - name: Resolve current PR identity and head SHA
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -166,10 +165,17 @@ jobs:
               exit 1
               ;;
           esac
-          HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER" --jq '.head.sha')
+
+          PR_JSON=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER")
+          HEAD_SHA=$(jq -r '.head.sha' <<<"$PR_JSON")
+          AUTHOR_LOGIN=$(jq -r '.user.login' <<<"$PR_JSON")
+          AUTHOR_TYPE=$(jq -r '.user.type' <<<"$PR_JSON")
+
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-          echo "Resolved PR #$PR_NUMBER, current head: $HEAD_SHA"
+          echo "author_login=$AUTHOR_LOGIN" >> "$GITHUB_OUTPUT"
+          echo "author_type=$AUTHOR_TYPE" >> "$GITHUB_OUTPUT"
+          echo "Resolved PR #$PR_NUMBER, current head: $HEAD_SHA, author: $AUTHOR_LOGIN ($AUTHOR_TYPE)"
 
       - name: Fetch authoritative review bodies with pagination
         id: reviews
@@ -204,6 +210,8 @@ jobs:
         id: evaluate
         env:
           PR_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          PR_AUTHOR_LOGIN: ${{ steps.pr.outputs.author_login }}
+          PR_AUTHOR_TYPE: ${{ steps.pr.outputs.author_type }}
           REVIEW_BODIES_B64: ${{ steps.reviews.outputs.review_bodies_b64 }}
         run: |
           set +e

@@ -31,7 +31,9 @@ name: PR Disposition
 #     changes. CI completion provides a trusted wake for Dependabot-authored
 #     PRs, which need no reviewer event. In both cases this workflow re-fetches
 #     the workflow run and the PR from GitHub's API and trusts no payload or
-#     code supplied by the candidate branch.
+#     code supplied by the candidate branch. CI also runs for pushes, schedules,
+#     and manual dispatch; those runs have no associated PR and are a clean
+#     no-op here rather than an error.
 #   - `schedule`, as a trusted backstop independent of candidate-controlled
 #     events. The review listener's own pull_request_review.types list is
 #     PR-editable content, so a PR could narrow it and leave a later revocation
@@ -90,6 +92,7 @@ jobs:
           # of serializing the nested pull_requests object into an expression.
           EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
           EVENT_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          EVENT_WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
           EVENT_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           set -euo pipefail
@@ -121,11 +124,17 @@ jobs:
               fi
 
               if [ -z "$PR_NUMBER" ]; then
-                echo "::error::could not resolve an associated pull request for this workflow_run event"
-                exit 1
+                if [ "$EVENT_WORKFLOW_NAME" = "CI" ]; then
+                  # CI also runs for pushes to main, schedules, and manual
+                  # dispatch. Those runs intentionally have no PR target.
+                  TARGETS='[]'
+                else
+                  echo "::error::could not resolve an associated pull request for this $EVENT_WORKFLOW_NAME workflow_run event"
+                  exit 1
+                fi
+              else
+                TARGETS=$(jq -nc --arg n "$PR_NUMBER" '[{pr_number: $n}]')
               fi
-
-              TARGETS=$(jq -nc --arg n "$PR_NUMBER" '[{pr_number: $n}]')
               ;;
             schedule)
               TARGETS=$(gh pr list --repo "${{ github.repository }}" --state open --base main --json number --jq 'map({pr_number: (.number | tostring)})')

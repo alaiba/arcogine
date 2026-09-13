@@ -60,8 +60,12 @@ At the beginning of every complete review or re-review:
 
 1. Resolve current `main` and record its SHA.
 2. Resolve the PR number, title, current base, current head SHA, mergeability, and live base distance where available.
-3. **Normalize a stale base before substantive review.** If the PR head is behind live `main`, use the canonical synchronization path from `AGENTS.md`: normally `node infra/dev/pr-reconcile.mjs <pr-number>` for an ordinary PR when the local execution surface exists; for a research-evidence workspace carrying handed-off evidence coordinates, use the required history-preserving merge-style Update branch path. If synchronization conflicts, requires semantic judgment, lacks permission, or cannot be performed safely in the current harness, stop and return the PR to its author/implementation owner. Do not file a reconciliation finding or post a disposition against the stale head merely to request a conflict-free sync.
-4. After any successful normalization, re-resolve current `main`, the resulting head SHA, mergeability/base distance, reviews, and CI. The resulting head is the only head to review.
+3. **Normalize a stale base before substantive review.**
+   - For an ordinary PR, use the canonical synchronization path from `AGENTS.md`, normally `node infra/dev/pr-reconcile.mjs <pr-number>` when the local execution surface exists.
+   - For a research-evidence workspace carrying handed-off evidence coordinates, use the required history-preserving merge-style Update branch path.
+   - For a Dependabot PR that currently qualifies for the trusted no-positive-review path, prefer Dependabot's own rebase/recreate mechanism. GitHub permits maintainers to add commits to Dependabot branches, and any maintainer-authored synchronization commit intentionally revokes the trusted provenance bypass. If you choose a maintainer-authored sync anyway, the resulting PR must follow ordinary independent review.
+   - If synchronization conflicts, requires semantic judgment, lacks permission, or cannot be performed safely in the current harness, stop and return the PR to its author/implementation owner. Do not file a reconciliation finding or post a disposition against the stale head merely to request a conflict-free sync.
+4. After any successful normalization, re-resolve current `main`, the resulting head SHA, mergeability/base distance, reviews, trusted `disposition` state, and CI. The resulting head is the only head to review.
 5. Inspect the PR description, changed files, and net `current main...current normalized PR head` diff.
 6. Inspect existing reviews, comments, unresolved threads, and prior findings when available. Treat any active native GitHub `CHANGES_REQUESTED` state as an anomalous platform blocker that must be cleared before merge; Arcogine reviewers do not create it.
 7. Inspect current-head CI/check status, including the trusted `disposition` authorization check.
@@ -93,7 +97,7 @@ Before recommending merge, re-resolve current `main` and the PR head. If the bra
 
 When the user requests only a specific concern, review that concern thoroughly but label the result targeted. Do not turn a targeted architecture, API, security, or test inspection into an implicit full-PR approval.
 
-A trusted Dependabot-authored PR does not need a reviewer-authored `READY TO MERGE` to satisfy the repository's required `disposition` check. If the user explicitly asks you to review such a PR, still perform the requested review normally; the provenance exception removes a merge-gate requirement, not the ability to request independent analysis.
+A Dependabot PR whose current commit set remains exclusively GitHub-associated, verified Dependabot commits does not need a reviewer-authored `READY TO MERGE` to satisfy the repository's required `disposition` check. If the user explicitly asks you to review such a PR, still perform the requested review normally; the provenance exception removes a positive merge-gate requirement, not the ability to request independent analysis. If that review finds a blocker, a current-head canonical `CHANGES REQUIRED` revokes the default authorization.
 
 ## Continuation shorthand
 
@@ -346,7 +350,7 @@ Every complete review/re-review that is actually performed must identify:
 
 The semantic-neighbor coverage note is evidence of review breadth, not proof of repository-wide consistency. Keep it compact and material; do not dump every search hit.
 
-A genuine Dependabot-authored PR may satisfy the required `disposition` check without any reviewer-authored disposition. If you are explicitly asked to review one, the review report still uses the normal format; do not claim that such a review was required merely to make the gate pass.
+A trusted Dependabot PR may satisfy the required `disposition` check without any reviewer-authored positive disposition. If you are explicitly asked to review one, the review report still uses the normal format; do not claim that such a review was required merely to make the gate pass. A current-head `CHANGES REQUIRED` from that requested review still blocks the trusted path until superseded by a later current-head `READY TO MERGE` or by a new head on which the blocker is no longer applicable.
 
 ## Canonical disposition format
 

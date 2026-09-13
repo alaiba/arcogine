@@ -101,9 +101,9 @@ jobs:
       - name: Validate repository snapshot tooling
         run: node --test infra/dev/repo-snapshot.test.mjs
 
-      # Validate PR disposition merge gate evaluator. This gate enforces the central
-      # merge invariant: current-head READY TO MERGE disposition required for merge.
-      # A regression in the evaluator would allow unintended merges.
+      # Validate the trusted PR review-authorization evaluator. Ordinary PRs need a
+      # current-head READY TO MERGE disposition; genuine Dependabot-authored PRs use
+      # the API-derived provenance exception. A regression could authorize the wrong PR.
       - name: Validate PR disposition gate evaluator
         run: bash .github/scripts/check-pr-disposition.test.sh
 

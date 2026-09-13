@@ -19,7 +19,7 @@ Operational Execution itself remains unimplemented.
 
 ADR-0013 still has no accepted equality/lifecycle rule for the durable operational-history identity. Other shared boundaries—actor/capability ownership, external operation realization, authoritative subject correspondence, and temporal reconciliation—must also be resolved only to the extent required to define a concrete safe slice.
 
-Those questions are tracked in [Operational Execution and Digital-Twin Boundary Research](../research/operational-execution-digital-twin-boundaries.md) and the [Agency and Decision Boundary investigation](../research/agency-decision-boundary.md), not here.
+Those questions are tracked in [Operational Execution and Digital-Twin Boundary Research](../research/investigations/operational-execution-digital-twin-boundaries.md) and the [Agency and Decision Boundary investigation](../research/investigations/agency-decision-boundary.md), not here.
 
 ## Constraints any future implementation must preserve
 

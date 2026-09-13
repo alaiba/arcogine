@@ -20,8 +20,9 @@
 # enforced independently by GitHub.
 #
 # PR_TRUSTED_DEPENDABOT is supplied only by the trusted base-side workflow
-# after check-dependabot-provenance.sh verifies both GitHub PR identity and the
-# current PR commit set. Candidate PR content cannot set this value.
+# after check-dependabot-provenance.sh verifies the exact GitHub Dependabot
+# account as PR opener and as the actor of the CI pull-request workflow run for
+# the exact current head. Candidate PR content cannot set this value.
 #
 # Input (environment variables):
 #   PR_HEAD_SHA           - current pull_request.head.sha

@@ -1,18 +1,67 @@
-# Research method
+# Research operating model
 
-This document is Arcogine's normative method for *conducting* a research investigation. It complements [`docs/research/README.md`](../research/README.md), which owns the research portfolio, lifecycle, and promotion boundary. That boundary does not change here:
+This document is Arcogine's single normative authority for the **research operating model**: what qualifies as research, research lifecycle and portfolio-priority semantics, promotion/reconciliation, investigation and adversarial-review method, evidence custody, synthesis-seed handling, and maintenance of the research state registers.
 
-```text
-research -> decision-quality evidence -> no action / product clarification / architecture or ADR / concrete implementation responsibility -> docs/planning/
-```
+Current maintained state is separate from these rules:
 
-This document exists because the portfolio register defines *what* research is open and *when* a topic is done; it does not define *how* one investigation is actually executed, what evidence a report must establish before it counts as decision-quality, or what "independent" and "adversarial" mean when a high-risk conclusion needs them. Those questions recurred across real Arcogine investigations without a shared answer, which is the gap this document closes.
+- [`docs/research/research-register.md`](../research/research-register.md) records current admitted research questions and their portfolio state;
+- [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md) records current non-authoritative synthesis-seed state.
 
 For AI execution of this policy, the repository-owned **Researcher** procedure lives in [`.github/agents/researcher.agent.md`](../../.github/agents/researcher.agent.md). This document remains the normative research policy; the agent file defines how the specialized researcher executes it — the same split `docs/development/reviewing.md` and `.github/agents/pr-reviewer.agent.md` already use.
 
-This document must not become a second research backlog, roadmap, architecture authority, or implementation plan. It defines method, not content: it does not list Arcogine's open questions (`docs/research/README.md` does), does not decide any Arcogine semantic question (an ADR, architecture doc, or product doc does), and does not sequence implementation (`docs/planning/` does).
+This document must not become a second research backlog, state ledger, architecture authority, or implementation plan. It defines the operating model, not current portfolio content: it does not list Arcogine's open questions (the research register does), does not decide any Arcogine semantic question (an ADR, architecture doc, or product doc does), and does not sequence implementation (`docs/planning/` does).
 
-Potentially transferable findings that do not themselves justify an Arcogine research question may survive reconciliation only through the narrow, non-authoritative synthesis-seed mechanism defined in §10 and [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md). A seed preserves recurrence-detection value; it does not create work or establish a broader claim.
+## Lifecycle, priority, promotion, and maintained state
+
+Arcogine research exists to resolve material uncertainty before product, architecture, or executable delivery planning silently commits to an answer.
+
+The research-question lifecycle is:
+
+| Status | Meaning |
+|---|---|
+| **CANDIDATE** | Material uncertainty exists, but the investigation is not yet sufficiently bounded or timely to start |
+| **READY** | Question, scope, evidence expectations, and exit criteria are sufficiently clear to start |
+| **ACTIVE** | Evidence gathering or synthesis is in progress |
+| **CONCLUDED** | A decision-quality result exists and durable consequences have been reconciled, or the result was explicitly no action |
+| **SUPERSEDED** | Later evidence, question, or decision replaced the investigation before normal conclusion |
+
+These lifecycle values apply only to research questions in the maintained research register. Synthesis seeds have no research lifecycle, priority, owner, delivery commitment, or percentage completion. Do not use percentage completion for research questions; track evidence, falsified hypotheses, and exit criteria instead.
+
+Research priority is **portfolio guidance, not delivery commitment**. A `READY` research question means an investigation can start; it does not mean implementation is ready or admitted.
+
+The promotion path is:
+
+```text
+Research
+   |
+   v
+Decision-quality evidence
+   |
+   +--> no action
+   +--> product clarification
+   +--> architecture / ADR
+   +--> concrete implementation responsibility
+                       |
+                       v
+                  docs/planning/
+```
+
+A topic is ready for implementation planning only when semantic/product meaning, ownership, prerequisites, and acceptance evidence are sufficiently settled. A blocked implementation contract may live in planning; an unresolved question that still determines the contract stays in research. Research may recommend a durable consequence, but the conclusion becomes authoritative only through reconciliation into the appropriate product, architecture, ADR, reference, research, or admitted planning surface.
+
+`docs/research/` therefore tracks what Arcogine still needs to understand or decide; `docs/planning/` tracks executable work given what is already known or decided. Research documents never receive temporary delivery coordinates.
+
+A synthesis seed is outside the promotion path. It preserves only recurrence-detection value under the rules in §10; if recurrence later justifies a bounded Arcogine research question, that question must be deliberately admitted to the normal research register and lifecycle.
+
+### Research-register maintenance
+
+Maintain [`docs/research/research-register.md`](../research/research-register.md) as state, not as another policy surface:
+
+- add a material unknown instead of hiding it in an implementation plan;
+- mark research `READY` only when an independent researcher can execute it from the stated evidence and exit criteria;
+- when research concludes, record the verdict and durable destination in the register without duplicating the authoritative conclusion;
+- during planning or consistency review, move unresolved exploratory content back to research rather than allowing planning to settle it implicitly;
+- terminal questions (`CONCLUDED` or `SUPERSEDED`) normally remain for lifecycle and provenance history; compact or remove a terminal row only when its continued presence no longer helps explain a material conclusion, supersession chain, reopening trigger, or active decision context, all durable consequences have already been reconciled, and removal is not being used as a substitute for the knowledge-transfer audit in §10;
+- prefer current architecture/reference for durable semantics; the register records portfolio state and provenance, not a duplicate semantic authority.
 
 ## 1. What research is for
 
@@ -20,11 +69,11 @@ Arcogine research exists to answer a **material bounded uncertainty that can cha
 
 A question that cannot change any decision is not a research question; it is either already answered by current architecture/product docs, or it is genuine curiosity that does not belong in `docs/research/`.
 
-A researcher must not turn an insufficiently bounded question into an encyclopedia. If a brief is too broad to falsify or too vague to exit, the correct action is to narrow the brief (or return it to `CANDIDATE` per `docs/research/README.md`), not to produce a sprawling survey.
+A researcher must not turn an insufficiently bounded question into an encyclopedia. If a brief is too broad to falsify or too vague to exit, the correct action is to narrow the brief (or return it to `CANDIDATE` under the lifecycle above), not to produce a sprawling survey.
 
 ### What a bounded research brief normally identifies
 
-A `READY` brief — see `docs/research/README.md`'s lifecycle — should normally state:
+A `READY` brief should normally state:
 
 - the exact question;
 - the decision at stake if the question is answered;
@@ -50,7 +99,7 @@ A researcher must:
 1. resolve live `main` and record its exact SHA as the research baseline;
 2. distinguish live `main` from any feature/research branch being inspected — a branch under investigation, or a branch carrying a prior draft report, is evidence to read, never landed repository truth;
 3. read `AGENTS.md`;
-4. read the relevant research brief and the surrounding entry in `docs/research/README.md`;
+4. read the relevant research brief and the surrounding entry in [`docs/research/research-register.md`](../research/research-register.md);
 5. inspect the current product, architecture, ADR, planning, implementation, and test surfaces the question actually touches;
 6. search semantic neighbors rather than reading only the files named in the brief — a question about identity, ownership, or lifecycle usually has cousins elsewhere in `docs/architecture/`, `docs/planning/`, and the codebase that the brief's author did not anticipate;
 7. state any important surface that could not be inspected, rather than silently omitting it.
@@ -81,7 +130,7 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 - the Product Charter;
 - current-state architecture (`docs/architecture/overview.md` and the relevant domain architecture doc);
 - Accepted and Proposed ADRs, with their status kept explicitly distinct — see `docs/architecture/decisions/README.md`;
-- the research register and the relevant brief(s);
+- the [research register](../research/research-register.md) and the relevant brief(s);
 - admitted implementation planning under `docs/planning/`;
 - implementation and tests;
 - reference contracts (`docs/reference/`) and examples;
@@ -300,13 +349,13 @@ reconciliation lands
 workspace branch retired
 ```
 
-A researcher may recommend durable consequences. A researcher does not make architecture authoritative merely by publishing a report — the same principle `docs/research/README.md` already states ("a research conclusion becomes durable only after it is reconciled into the appropriate product, architecture, ADR, reference, or implementation plan").
+A researcher may recommend durable consequences. A researcher does not make architecture authoritative merely by publishing a report; the promotion rule above requires deliberate reconciliation into the appropriate durable authority.
 
 The report's author must not silently rewrite ADRs, current architecture, product semantics, production code, or implementation planning while "doing research." A separate reconciliation pass deliberately translates surviving research conclusions into the appropriate authoritative surface — an ADR PR, an architecture-doc PR, a planning admission — and that reconciliation change goes through normal independent PR review exactly as any other change would.
 
 **Separate reconciliation means a separate phase and authority transition, not a separate Git branch.** By default, the same finite research-evidence workspace continues through durable reconciliation. Do not create a fresh reconciliation branch solely because evidence gathering has ended. Completed report/review artifacts remain immutable by exact commit SHA + path while later workspace commits carry reconciliation edits and the knowledge-transfer audit.
 
-Research is never CONCLUDED (per `docs/research/README.md`'s lifecycle) merely because a report was written. `CONCLUDED` still requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result.
+Research is never `CONCLUDED` merely because a report was written. `CONCLUDED` requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result.
 
 ### Evidence workspaces, artifact identity, and retirement
 
@@ -328,14 +377,16 @@ Temporary research evidence may be deleted only after every research question ca
 
 - accepted conclusions and invariants into the appropriate product, architecture, ADR, reference, or admitted planning authority;
 - qualifications that constrain an accepted conclusion into the same durable destination as that conclusion;
-- unresolved unknowns, reopening triggers, and newly exposed questions into `docs/research/` when they remain material;
+- unresolved unknowns, reopening triggers, and newly exposed questions into the [research register](../research/research-register.md) when they remain material;
 - reusable proving cases, counterexamples, failure modes, measurements, protocols, source maps, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;
-- qualifying cross-investigation signals into `docs/research/synthesis-seeds.md` when they are evidence-bearing, potentially transferable beyond the immediate Arcogine implementation context, and loss-sensitive enough that workspace retirement would materially reduce later recurrence detection;
+- qualifying cross-investigation signals into `docs/research/synthesis-seeds.md` when they satisfy the synthesis-seed rules below;
 - findings that no longer merit retention as explicitly discarded rather than accidentally lost with branch deletion.
 
 ### Synthesis-seed custody
 
 A **synthesis seed** is a compact, non-authoritative record that preserves the ability to recognize a potentially generalizable signal across otherwise independent investigations. It is not an Arcogine research question, accepted product/architecture semantics, implementation commitment, publication candidate, or work item.
+
+The purpose of the seed mechanism is to preserve enough evidence-bearing connective tissue that independently recurring knowledge can be recognized after temporary workspaces are retired. Recurrence can justify later synthesis; it does not itself establish that a result is general beyond Arcogine.
 
 Admit or extend a seed only during reconciliation or another explicit knowledge-transfer review, after the originating investigation has reached its own result. The candidate must satisfy all three conditions:
 
@@ -343,23 +394,36 @@ Admit or extend a seed only during reconciliation or another explicit knowledge-
 2. **Potentially transferable** — after Arcogine-specific class names and implementation details are removed, an intelligible proposition, distinction, failure mode, method, or counterexample remains.
 3. **Loss-sensitive** — retiring the workspace without the compact signal would materially reduce the chance that a later independent investigation could recognize recurrence.
 
-The seed should preserve only what later synthesis needs: the narrow signal, origin/provenance, truthful evidence posture, known boundaries/counterevidence, links to durable reusable assets, later occurrences, and a concrete `Revisit when` condition. Do not copy the whole report or use the seed index as a shadow evidence archive.
+Prefer preserving reusable proving cases, counterexamples, measurements, protocols, tests, or other research assets in the durable Arcogine surface that will actually use them. A seed is connective tissue: it points to those assets and evidence coordinates rather than duplicating whole reports.
+
+Do not create a seed merely because a finding is interesting, publication is imaginable, or a researcher wants to keep notes. If the item is an unresolved Arcogine decision, track it in the research register. If it has an accepted Arcogine semantic consequence, reconcile that consequence into its authoritative destination. If it is situational and not worth future recovery, discard it explicitly.
+
+Each maintained seed record in [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md) must contain:
+
+- **Signal** — the smallest potentially transferable observation, distinction, counterexample, method, or hypothesis;
+- **Origin** — the originating investigation, exact evidence coordinates where practical, and durable reconciliation destination when one exists;
+- **Evidence posture** — what is actually established, without upgrading an Arcogine-specific result into a broader claim;
+- **Boundaries / counterevidence** — known conditions where the signal may not hold, contrary examples, or material untested scope;
+- **Reusable assets** — durable proving cases, counterexamples, measurements, protocols, tests, source maps, or other research assets;
+- **Occurrences** — later independent-occurrence or reuse entries with evidence coordinates and the materially similar aspect;
+- **Revisit when** — a concrete evidence or recurrence condition that would justify considering a bounded synthesis investigation.
 
 When reconciling a new candidate, search existing seeds for semantic neighbors **only after** the originating investigation has reached its own result. Extend an existing seed when the underlying signal is genuinely the same. Record a later result as an **independent occurrence** only if the seed was not used as a load-bearing premise or framing input to that investigation; otherwise record **reuse**. Recurrence may justify considering a bounded synthesis question, but it does not establish generality by itself.
+
+Do not use the synthesis-seed state as routine start-of-run grounding for an independent Arcogine investigation. First derive that investigation's candidates, evidence needs, proving/failure cases, and result from its bounded question and current repository authorities. A deliberate seed-informed investigation is permitted, but any later similarity is reuse rather than independent recurrence.
 
 Every seed must state a concrete `Revisit when` condition such as independent recurrence in another domain, materially comparable external evidence, implementation experience that confirms or falsifies the signal, or reuse of the same proving method across distinct questions. When the condition fires, surface that fact for an explicit decision about whether a bounded cross-investigation synthesis question should be admitted to the normal research register. Do not automatically create research work, change priority, or promote the broader claim.
 
 The reconciliation must name the workspace(s) covered by its transfer audit and state whether each is retirement-eligible. If any material item still lacks a durable destination, qualifying synthesis-seed record, or explicit discard decision, keep the workspace available. Once the reconciliation has landed and its independent PR review has validated the transfer, deleting a retirement-eligible workspace branch is immediate post-merge cleanup. The reconciliation owns that retirement decision even though deleting the Git ref is an operational action after merge rather than part of repository content.
 
-This retirement rule does not create another lifecycle state, permanent report archive, research issue ledger, publication backlog, or second research roadmap. `docs/research/README.md` remains the sole research portfolio/lifecycle authority; `docs/research/synthesis-seeds.md` is only a low-authority recurrence index and cannot admit or prioritize work.
+This retirement rule does not create another lifecycle state, permanent report archive, research issue ledger, publication backlog, or second research roadmap. [`docs/research/research-register.md`](../research/research-register.md) is the maintained research portfolio state; [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md) is only maintained low-authority recurrence state. Neither state file defines the operating rules above or can make semantic or delivery decisions by itself.
 
-## 11. What this document intentionally does not decide
+## 11. What this operating model intentionally does not decide
 
-This document defines method. It does not:
+This document defines Arcogine's normative research operating model. It does not:
 
-- list Arcogine's current open research questions — see `docs/research/README.md`;
-- decide any live Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — those remain open exactly as the research register and any in-flight ADR record them;
-- create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, publication lifecycle/backlog, or new issue ledger;
-- change how `docs/research/README.md`'s lifecycle (`CANDIDATE`, `READY`, `ACTIVE`, `CONCLUDED`, `SUPERSEDED`) or promotion boundary work.
+- list Arcogine's current open research questions — see [`docs/research/research-register.md`](../research/research-register.md);
+- decide any live Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — those remain open exactly as the maintained register and any in-flight ADR record them;
+- create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, publication lifecycle/backlog, or new issue ledger.
 
 Research documents remain research evidence only. Synthesis seeds remain non-authoritative recurrence signals only. Neither becomes accepted architecture simply because it exists.

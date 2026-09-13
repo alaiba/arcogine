@@ -121,11 +121,44 @@ Add characterization/conformance evidence for the result-affecting behavior that
 - multi-eligible backlog arrival order, captured eligible sets, and non-head-of-line-blocking;
 - PLAN-ENG-W1 child creation/release/dispatch ordering;
 - the PLAN-ENG-W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
+- exact `combinedQueueDepth` ranking arithmetic (ranking semantics, not a reported result — see the
+  ownership note below);
 - the derived-result arithmetic: `busyTicks` overflow saturation, elapsed-time subtraction flooring
   at zero, and the zero-denominator throughput / empty-set mean-lead-time results;
-- the derived-result accumulators: exact completed-order counting, completion-ordered value
-  accumulation, and exact `combinedQueueDepth` ranking arithmetic;
+- the derived-result accumulators: exact completed-order counting and completion-ordered value
+  accumulation;
 - scheduler equal-time insertion ordering where it is semantically observable.
+
+**Ownership note — reported derived results.** The last two bullets pin *reported* derived results
+(`busyTicks`, throughput, mean lead time, completed-order counting and value accumulation) whose
+placement on the Engine/analytics boundary is an open question under
+[Simulation analytics consumer boundary](../research/simulation-analytics-consumer-boundary.md).
+
+There is a genuine tension here, and it is recorded rather than worked around. Accepted architecture
+already makes those values part of `engine-semantics:v1`: §1.1's membership test covers derived-result
+arithmetic, §10.1–§10.2 fix their edge cases *and* their accumulation, and §1.1 consequence 4 states
+that a rule satisfying the membership test but absent from the specification is a defect in the
+specification. Deferring these fixtures would therefore leave v1 knowingly under-specified, which the
+accepted contract forbids. Pinning them is the honest action.
+
+What pinning does **not** do is settle ownership. These fixtures characterize current behavior under
+the accepted contract; they are not evidence that these values permanently belong in the supported
+runtime observation. If the analytics research concludes they should move, that is a change to a
+supported contract — requiring supersession or a new `EngineSemanticsVersion` through architecture
+reconciliation — not a licence to edit v1 in place, and not something this slice pre-decides.
+
+Two constraints follow for implementers:
+
+1. do not cite these fixtures as evidence that the ownership question is closed;
+2. do not harden these specific values into *new* outward contracts or DTOs while the research is
+   open — see the KPI ownership note in
+   [Runtime Observation and Event Delivery](runtime-observation-event-delivery.md).
+
+`combinedQueueDepth` is deliberately listed separately and is **not** in this category: it is derived
+but result-affecting, because its exact arithmetic decides assignment. It remains Engine semantics
+regardless of the analytics outcome. Every other bullet in this slice — dispatch, acceptance,
+scheduler, ranking, materialization, and spatial behavior — is authoritative and unaffected by that
+research; none of it, nor Engine semantics identity, nor Factory V2 work, is gated on it.
 
 **Evidence**
 

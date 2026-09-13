@@ -111,7 +111,7 @@ if ! jq -e \
   --argjson id "$DEPENDABOT_ID" '
     length > 0
     and .[-1].sha == $head
-    and all(.[ ];
+    and all(.[];
       .author.login == $login
       and .author.type == $type
       and .author.id == $id

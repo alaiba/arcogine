@@ -1,8 +1,8 @@
 # Research brief template
 
-> Reusable planning structure for an Arcogine research question. This is a convenience template, not a second research authority: [`docs/development/researching.md`](../development/researching.md) controls the normative research operating model, while [`research-register.md`](research-register.md) records current question state.
+> Reusable advisory planning structure for an Arcogine research question. This is a convenience template, not a second research authority: [`docs/development/researching.md`](../development/researching.md) alone controls the normative research operating model and `READY` criteria, while [`research-register.md`](research-register.md) records current question state.
 >
-> Copy this structure into a semantically named file under [`investigations/`](investigations/) when a new bounded investigation needs a dedicated brief. Use only the sections that materially help bound the question. Lower-risk local questions may need little failure-oriented analysis. Medium- and high-risk questions should make the important failure/adversarial cases explicit before the question is marked `READY` in the research register.
+> Copy this structure into a semantically named file under [`investigations/`](investigations/) when a new bounded investigation needs a dedicated brief. Use only the sections that materially help bound the question. The failure-oriented sections below are an optional planning aid: using, omitting, or adapting their suggested treatment vocabulary does not independently change whether a question is `READY`.
 
 ---
 
@@ -36,7 +36,7 @@ State why the classification applies and what extra scrutiny it requires. Risk c
 
 ## Intended functions / invariants
 
-Before choosing a preferred answer, state what any acceptable answer must preserve.
+Before choosing a preferred answer, state what any acceptable answer must preserve when doing so helps sharpen the candidate set or proving cases.
 
 Examples of useful forms:
 
@@ -62,30 +62,32 @@ Include the current/simple/no-new-abstraction candidate wherever it plausibly su
 
 ## Failure-oriented analysis
 
-For medium/high-risk questions, and for lower-risk questions where failure behavior is decision-relevant, identify the smallest set of credible ways a candidate or assumption could fail.
+Where it materially sharpens the investigation — especially for medium/high-risk questions or lower-risk questions whose decision turns on failure behavior — consider identifying the smallest useful set of credible ways a candidate or assumption could fail.
 
-This is **failure-oriented research planning**, not a formal DFMEA/PFMEA artifact. Do not add numeric severity/occurrence/detection scores, RPNs, or standards-compliance claims unless a later, explicitly scoped research question actually requires that methodology.
+This is **failure-oriented research planning**, not a formal DFMEA/PFMEA artifact and not an additional lifecycle gate. Do not add numeric severity/occurrence/detection scores, RPNs, or standards-compliance claims unless a later, explicitly scoped research question actually requires that methodology.
 
-Use a compact table when it helps:
+A compact table can help:
 
-| Function / invariant | Failure or adversarial mode | Consequence if true | Why it discriminates | Research treatment |
+| Function / invariant | Failure or adversarial mode | Consequence if true | Why it discriminates | Optional research treatment |
 |---|---|---|---|---|
 | What must remain true | How a candidate/assumption could break | Semantic, safety, compatibility, ownership, or product consequence | Which candidates or assumptions this separates | `PROVING CASE`, `EVIDENCE GAP`, `BOUND / DEFER`, or `NOT MATERIAL` |
 
-Use the treatment column carefully:
+One useful optional treatment vocabulary is:
 
-- `PROVING CASE` — turn the failure mode into a concrete scenario every candidate must face.
-- `EVIDENCE GAP` — the failure mode cannot yet be resolved without additional repository/external evidence.
-- `BOUND / DEFER` — deliberately outside this question; state why, the consequence of deferral, and the trigger that should reopen or create follow-up research.
-- `NOT MATERIAL` — investigated enough to establish that it cannot change the decision; state the reason rather than silently dropping it.
+- `PROVING CASE` — turn the failure mode into a concrete scenario that helps discriminate candidates.
+- `EVIDENCE GAP` — note that additional repository/external evidence is needed before the mode can be resolved.
+- `BOUND / DEFER` — deliberately keep the mode outside this question; record why and the trigger that should reopen or create follow-up research when that information is useful.
+- `NOT MATERIAL` — record why the mode cannot change the decision when making that negative result explicit will prevent repeated analysis.
+
+This vocabulary is a planning aid, not required research state. A researcher may use different structure when it better fits the bounded question, provided the normative method's actual readiness, evidence, proving-case, falsification, exit, and review requirements remain satisfied.
 
 Do not use this table to make implementation/governance decisions such as "risk accepted" or "control implemented." Research identifies what must be understood and what survives evidence; later authority owns implementation, authorization, and operational risk treatment.
 
 ## Proving cases
 
-List the concrete scenarios that discriminate between the candidate models.
+List the concrete scenarios needed to discriminate between the candidate models under the normative research method.
 
-Each material `PROVING CASE` failure mode above should map to at least one proving case. A proving case should state:
+When the optional failure-oriented analysis marks a mode `PROVING CASE`, map it to a concrete scenario so the label carries actual evidentiary value. A useful proving-case description states:
 
 - the setup / relevant facts;
 - the distinction or failure mode being tested;
@@ -114,25 +116,19 @@ Prefer conditions that can actually be checked over broad statements such as "if
 
 ## Adversarial-review plan
 
-For medium risk, state the proportionate adversarial examination expected.
+Use the risk-proportionate review requirements in `docs/development/researching.md`.
 
-For high risk, state explicitly that genuinely independent adversarial review is required before the conclusion becomes decision-quality evidence for an ADR or comparably durable architecture.
+For medium risk, note the proportionate adversarial examination expected when it helps execution.
 
-Name the likely attack surface the adversarial reviewer should reconstruct independently before reading the recommendation in depth: omitted candidate, hidden assumption, failure case, ownership inversion, stale authority, misleading analogy, over-generalization, or conclusion stronger than the evidence.
+For high risk, the operating model requires genuinely independent adversarial review before the conclusion becomes decision-quality evidence for an ADR or comparably durable architecture.
+
+A brief may name likely attack surfaces the adversarial reviewer should reconstruct independently before reading the recommendation in depth: omitted candidate, hidden assumption, failure case, ownership inversion, stale authority, misleading analogy, over-generalization, or conclusion stronger than the evidence.
 
 ## Exit criteria
 
-State what must be true for the investigation to stop.
+State what must be true for the investigation to stop, following the normative research method.
 
-A useful exit condition normally requires:
-
-- all live candidates evaluated against the material proving cases;
-- material failure modes either resolved, converted into explicit remaining unknowns/follow-up triggers, or demonstrated not material to the decision;
-- load-bearing evidence verified to the required level;
-- surviving invariants stated without generalizing beyond the evidence;
-- confidence and remaining unknowns explicit;
-- the durable consequence identified without promoting it from inside research;
-- any required independent adversarial review completed before high-risk promotion.
+When the optional failure-oriented analysis is used, useful prompts for sharpening exit criteria include whether its material modes were resolved, converted into explicit remaining unknowns/follow-up triggers, or shown not to affect the bounded decision. These prompts do not replace or extend the operating model's actual exit and decision-quality requirements.
 
 ## Expected durable destination
 
@@ -152,10 +148,10 @@ Research does not perform that promotion itself.
 
 State what later evidence, consumer, implementation seam, operational observation, or changed assumption should reopen this question or create a narrower successor question.
 
-Where a material failure mode is deliberately deferred, its trigger belongs here and the register should retain enough state/provenance to make that follow-up discoverable.
+If the optional failure-oriented analysis deliberately defers a material mode, recording its trigger here can keep that follow-up discoverable without turning the treatment vocabulary into maintained lifecycle state.
 
-## READY check
+## READY alignment check
 
-Before marking the question `READY` in `research-register.md`, confirm that an independent researcher can start from the linked brief without having to re-derive the decision boundary.
+Only [`docs/development/researching.md`](../development/researching.md) determines whether a question is `READY`. Before proposing that state in `research-register.md`, compare the brief against the operating model's bounded-brief criteria: the exact question; decision at stake; scope/non-goals; current/simple candidate where applicable; alternative candidates; proving cases; evidence expectations; falsification conditions where applicable; exit criteria; and expected durable destination.
 
-The brief should make clear: the question, decision at stake, scope/non-goals, risk, candidate set, intended invariants, material failure/adversarial modes where applicable, proving cases, evidence expectations, falsification conditions, exit criteria, and expected durable destination.
+The risk-classification, intended-invariant, failure-oriented, treatment-vocabulary, and adversarial-planning prompts in this template are aids for producing a better brief. They are not additional `READY` criteria unless the normative operating model is separately changed to make them so.

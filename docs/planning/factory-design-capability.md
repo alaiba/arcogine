@@ -3,7 +3,7 @@
 > **Status:** Active/partial; current implementation is complete for Factory Model v1, while the admitted Factory Model v2 work is delivered through the spatial-runtime implementation sequence  
 > **Scope:** Implementation-ready Factory Design work over the canonical production-system model  
 > **Authority:** Planning only; unresolved diagnostics, comparison, authoring, and later resource/capability extensions live in research  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md)
 
 ## 1. Implementation boundary
 
@@ -61,6 +61,9 @@ The implementation sequence is owned jointly with [Spatial Runtime Consequences]
 
 ### PLAN-ENG-5-A1 — V2 model and validation
 
+**Status:** Implemented. `factory-model:v2` canonical bytes/fingerprint policy are not released by
+this slice; that is PLAN-ENG-5-A2, now the next V2 Factory-model slice.
+
 Implement the five authored additions and deterministic validation required by ADR-0014.
 
 Acceptance evidence must prove:
@@ -108,7 +111,7 @@ The behavior-preserving canonical seam is implemented for current semantics. V2 
 
 Current deterministic validation remains the implementation contract for admitted semantics. V2 adds only the accepted spatial/arithmetic predicates required by ADR-0014.
 
-A richer cross-consumer finding taxonomy is **not** an admitted implementation slice; it is tracked in [Factory Design Evolution Research](../research/factory-design-evolution.md).
+A richer cross-consumer finding taxonomy is **not** an admitted implementation slice; it is tracked in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md).
 
 ### PLAN-FD-3 — Publication, identity, and provenance
 
@@ -179,7 +182,7 @@ The following remain intentionally **not implementation work** in this plan:
 - Factory-specific additions to governed-change workflow; and
 - spatial/material-flow concepts beyond accepted v2.
 
-They are maintained in [Factory Design Evolution Research](../research/factory-design-evolution.md) and the research register. Do not assign new Factory delivery coordinates until the relevant question crosses the planning admission boundary.
+They are maintained in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md) and the research register. Do not assign new Factory delivery coordinates until the relevant question crosses the planning admission boundary.
 
 ## 8. Validation and documentation
 

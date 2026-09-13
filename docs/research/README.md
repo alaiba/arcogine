@@ -1,76 +1,26 @@
 # Research
 
-> **Status:** Maintained research register  
-> **Scope:** Open, active, and concluded Arcogine questions that require evidence before product, architecture, or executable delivery planning should change  
-> **Authority:** Research only; this directory does not describe current capability, accepted architecture, or committed delivery work
+> **Status:** Maintained research-area index  
+> **Scope:** Navigation across Arcogine research policy, current research state, synthesis signals, investigations/reports, reusable brief/report structures, and the durable strategic rationale for retaining synthesis seeds  
+> **Authority:** Research-area context/index only; normative research rules and maintained research state live in the linked authorities below
 
-## Boundary
+Arcogine separates the **research operating model** from its **maintained state** and **investigation artifacts**:
 
-`docs/research/` answers:
-
-> **What do we still need to understand or decide?**
-
-`docs/planning/` answers:
-
-> **Given what is already known or decided, what work can an implementer execute and validate?**
-
-Research may confirm, falsify, or narrow a hypothesis; conclude that no change is needed; justify an architecture/product decision; or create evidence for later implementation. A research conclusion becomes durable only after it is reconciled into the appropriate product, architecture, ADR, reference, or implementation plan.
-
-Research documents never receive temporary delivery coordinates.
-
-## Lifecycle
-
-| Status | Meaning |
+| Surface | Owns |
 |---|---|
-| **CANDIDATE** | Material uncertainty exists, but the investigation is not yet sufficiently bounded or timely to start |
-| **READY** | Question, scope, evidence expectations, and exit criteria are sufficiently clear to start |
-| **ACTIVE** | Evidence gathering or synthesis is in progress |
-| **CONCLUDED** | A decision-quality result exists and durable consequences have been reconciled, or the result was explicitly no action |
-| **SUPERSEDED** | Later evidence/question/decision replaced the investigation before normal conclusion |
+| [`docs/development/researching.md`](../development/researching.md) | Normative research operating model: question/lifecycle definitions, priority semantics, promotion and reconciliation, investigation/review method, evidence custody, synthesis-seed handling, and register maintenance |
+| [`research-register.md`](research-register.md) | Current admitted research questions, priority, lifecycle state, linked evidence artifact, expected destination, and review date |
+| [`synthesis-seeds.md`](synthesis-seeds.md) | Current non-authoritative cross-investigation synthesis signals retained under the research method |
+| [`investigations/`](investigations/) | Bounded research briefs, investigation write-ups, decision-quality reports, and retained research-history artifacts linked from the register |
+| [`brief-template.md`](brief-template.md) | Reusable advisory structure for bounding a research question; it does not add lifecycle or `READY` criteria beyond the normative operating model |
+| [`report-template.md`](report-template.md) | Reusable structure for a decision-quality research report |
 
-Do not use percentage completion. Track evidence, falsified hypotheses, and exit criteria instead.
+## Strategic horizon
 
-## Promotion rule
+The long-term reason to preserve synthesis seeds is to keep open a path from repeated Arcogine evidence to knowledge that may eventually prove useful beyond Arcogine. If a signal independently recurs, survives bounded cross-investigation synthesis, and later withstands external comparison, replication, criticism, or other validation at the broader scope, it may contribute to reusable methods, terminology, reference models, tooling, standards work, or other industry practice.
 
-```text
-Research
-   |
-   v
-Decision-quality evidence
-   |
-   +--> no action
-   +--> product clarification
-   +--> architecture / ADR
-   +--> concrete implementation responsibility
-                       |
-                       v
-                  docs/planning/
-```
+This horizon does not change Arcogine research admission, create publication work, or make a seed a claim about the outside world. Research remains driven by material Arcogine decisions; seeds merely preserve enough evidence-bearing connective tissue that genuinely broader knowledge is not made impossible to recognize later by routine workspace retirement.
 
-A topic is ready for implementation planning only when semantic/product meaning, ownership, prerequisites, and acceptance evidence are sufficiently settled. A blocked implementation contract may live in planning; an unresolved question that still determines the contract stays here.
+Investigation/report files belong under [`investigations/`](investigations/) rather than beside the maintained registers and reusable templates. They are research evidence or investigation framing, not accepted product/architecture semantics merely because they exist.
 
-## Research register
-
-Priority is portfolio guidance, not delivery commitment.
-
-| Research question | Area | Priority | Status | Detailed artifact / authority | Expected destination | Last reviewed |
-|---|---|---:|---|---|---|---|
-| What is the minimum durable boundary among actor attribution, decision production, subject, capability, semantic operation, realization, and transition? | Cross-cutting | High | **READY** | [Agency and decision boundary](agency-decision-boundary.md) | Architecture/ADR if shared semantics survive; planning only for concrete implementation | 2026-09-08 |
-| What independently continuing operational history, if any, needs durable identity, and what equality/continuity/fork rules define it? | Operational / Digital Twin | **Critical-path** | **READY** | [Operational boundary research](operational-execution-digital-twin-boundaries.md) and ADR-0013 | Revised ADR/architecture, then the first narrow Operational implementation slice | 2026-09-08 |
-| What other Operational boundaries are required for actor/trust/authority, external operation realization, correspondence, reconciliation, drift, and resilience? | Operational / Cross-cutting | High | **CANDIDATE** | [Operational boundary research](operational-execution-digital-twin-boundaries.md) | Architecture and then implementation planning only as needed | 2026-09-08 |
-| Does Factory Design need a reusable equipment/resource definition distinct from installed resource instances, and what invariant would that distinction carry? | Factory Design | High | **CONCLUDED** | [Factory resource semantics report](factory-resource-semantics.md) | **Keep collapsed for now**; [Factory Resource Semantics](../architecture/factory-resource-semantics.md) records the durable interpretation, no implementation slice | 2026-09-08 |
-| When does Arcogine need qualified operation-resource applicability and resource-dependent performance beyond explicit eligible IDs and step-level duration? | Factory Design / Engine | High | **CANDIDATE** | [Factory Design evolution research](factory-design-evolution.md) | Factory/Engine architecture and implementation only after a concrete heterogeneous-resource consumer proves the gap | 2026-09-08 |
-| Which richer validation, comparison, resource-pool, shared-draft, or governed-change semantics are genuinely cross-consumer? | Factory Design | Medium | **CANDIDATE** | [Factory Design evolution research](factory-design-evolution.md) | Factory/Governance architecture or no shared abstraction | 2026-09-08 |
-| Does the proposed factory-design game loop make production-system optimization understandable, experimentally useful, and engaging? | Game / Challenge consumer | High | **READY** | [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) | Bounded product requirement set, then game consumer implementation planning | 2026-09-08 |
-| What player-facing evidence best exposes bottlenecks and causal performance differences? | Game / Engine consumer | High | **READY** | [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) | Game UX; Engine change only if a real supported-observation gap is proven | 2026-09-08 |
-| What scoring, challenge, and level structures create several understandable viable strategies without an opaque dominant meta? | Game | Medium | **CANDIDATE** | [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) | Product/content decision | 2026-09-08 |
-| Which spatial/material-flow semantics should follow current placement/footprint and deterministic transfer semantics? | Factory Design / Engine | High | **CANDIDATE** | [Factory Design evolution research](factory-design-evolution.md) plus current spatial architecture | Factory/Engine architecture | 2026-09-08 |
-| When are lot/batch/material-lot semantics, capability/resource pools, or dispatch-policy evolution justified? | Engine | Medium | **CANDIDATE** | [Engine evolution research](engine-evolution.md) | Engine/Factory architecture and versioned implementation plan | 2026-09-08 |
-
-## Maintenance
-
-- Add a material unknown instead of hiding it in an implementation plan.
-- Mark research `READY` only when an independent researcher can execute it from the stated evidence/exit criteria.
-- When research concludes, record the verdict here and link the durable destination; do not duplicate the authoritative conclusion.
-- During planning/consistency review, flag exploratory content that has leaked back into `docs/planning/` and relocate it here.
-- Keep concluded research visible when it provides useful history, but prefer current architecture/reference for durable semantics.
+For AI execution, use the repository-owned [Researcher](../../.github/agents/researcher.agent.md) role together with the normative research operating model.

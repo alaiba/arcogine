@@ -23,9 +23,9 @@
  *     a check flipping back to green, or a review being withdrawn, into a blank event.
  *  3. Never key review detection on GraphQL `latestReviews` or `reviewDecision`.
  *     `latestReviews` omits reviews authored by the PR author, and `reviewDecision` is
- *     only set by APPROVED/CHANGES_REQUESTED -- never by COMMENTED. A watcher built on
- *     either field silently misses this repository's normal review traffic. Use
- *     `reviews` and read the disposition out of the body instead.
+ *     only set by APPROVED/CHANGES_REQUESTED -- never by COMMENTED. Native review state
+ *     is still inspected for accidental standing GitHub blockers, while Arcogine review
+ *     authorization itself is represented by the trusted `disposition` check.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -37,22 +37,24 @@ const DEFAULT_INTERVAL_SECONDS = 60;
 const FAILURE_ALERT_THRESHOLD = 3;
 
 /**
- * The one status branch protection needs to require. `.github/workflows/ci.yml` defines
- * `gate` as the always-running aggregate job for exactly this purpose. Naming it is what
- * lets the resolver tell "required validation passed" apart from "some unrelated context
- * happens to be green" -- any green context would otherwise stand in for the real gate.
+ * The CI status branch protection requires. `.github/workflows/ci.yml` defines `gate` as
+ * the always-running aggregate job for exactly this purpose. Naming it is what lets the
+ * resolver tell "required validation passed" apart from "some unrelated context happens
+ * to be green" -- any green context would otherwise stand in for the real gate.
  */
 const DEFAULT_REQUIRED_CHECK = 'gate';
 
 /**
- * Disposition vocabulary owned by .github/agents/pr-reviewer.agent.md. Exactly two
- * values: READY TO MERGE authorizes merge of the exact reviewed head; CHANGES REQUIRED
- * blocks it. CI is not a reviewer disposition and review authorization is independent of
- * it -- a current-head review may already be READY TO MERGE while CI is still pending.
- * required validation is enforced independently via requiredCheck below: AWAITING below
- * covers both "no current-head disposition yet" and "disposition is READY but the
- * independent CI condition is not yet green", without needing a second review solely
- * because CI transitions from pending to green.
+ * Review authorization is published by the trusted base-side disposition workflow. For
+ * ordinary PRs that check represents a canonical current-head READY TO MERGE review; for
+ * PRs opened by GitHub's trusted Dependabot bot it represents the repository's explicit
+ * provenance exception. Branch protection requires this check independently of CI.
+ */
+const DEFAULT_DISPOSITION_CHECK = 'disposition';
+
+/**
+ * Reviewer vocabulary remains useful for diagnostics and for identifying current-head
+ * CHANGES REQUIRED blockers before the asynchronous disposition check catches up.
  */
 const DISPOSITIONS = ['READY TO MERGE', 'CHANGES REQUIRED'];
 
@@ -173,9 +175,10 @@ async function fetchPullRequest({ repo, number, token }) {
 /**
  * How far the head is ahead of / behind the base branch.
  *
- * Needed because a review is only evidence about the base-to-head transition that existed
- * when it was written. GraphQL's mergeStateStatus does not reliably report BEHIND (it
- * depends on branch-protection settings), so ask the compare endpoint directly.
+ * GraphQL's mergeStateStatus does not reliably report BEHIND (it depends on branch-
+ * protection settings), so ask the compare endpoint directly. Reviewers may normalize a
+ * conflict-free stale branch before substantive review, while pr-watch still reports the
+ * stale state so implementation monitoring can act on it too.
  */
 async function fetchComparison({ repo, token }, pr) {
   const response = await fetch(
@@ -219,8 +222,7 @@ async function fetchComparison({ repo, token }, pr) {
  *    substantive blocker prose, where the reviewer plainly did not end on that verdict.
  *
  * Blockquoted lines are excluded outright -- quoted text is someone else's verdict, not
- * this review's. A body with no contract-shaped final disposition resolves to null, which
- * the lifecycle treats conservatively as AWAITING.
+ * this review's. A body with no contract-shaped final disposition resolves to null.
  */
 function dispositionOf(body) {
   if (!body) return null;
@@ -260,6 +262,7 @@ const PENDING = new Set(['PENDING', 'QUEUED', 'IN_PROGRESS', 'WAITING', 'EXPECTE
 function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck = DEFAULT_REQUIRED_CHECK) {
   const checks = normalizeChecks(pr);
   const required = checks.find((c) => c.name === requiredCheck) ?? null;
+  const dispositionCheck = checks.find((c) => c.name === DEFAULT_DISPOSITION_CHECK) ?? null;
   const reviews = (pr.reviews?.nodes ?? []).map((r) => ({
     author: r.author?.login ?? '(unknown)',
     state: r.state,
@@ -273,23 +276,16 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck =
   const openThreads = (pr.reviewThreads?.nodes ?? []).filter((t) => !t.isResolved).length;
 
   // Per author, not globally: a later review by someone else must not erase a standing
-  // blocker. Each author's own latest review supersedes only their own earlier ones.
+  // native GitHub blocker. Each author's own latest review supersedes only their own
+  // earlier ones.
   const latestByAuthor = new Map();
   for (const review of reviews) latestByAuthor.set(review.author, review);
 
-  // Two different kinds of "changes required", with different lifetimes:
-  //
-  //  - A formal GitHub CHANGES_REQUESTED review stands until its author submits a newer
-  //    review or it is dismissed. Pushing does not clear it, so it blocks on any head.
-  //  - A CHANGES REQUIRED *disposition* in a COMMENTED review attests to the commit it
-  //    reviewed. Once the head moves past it, remediation has happened and AGENTS.md puts
-  //    the PR back in AWAITING for re-evaluation -- so it becomes a stale blocker, not a
-  //    standing one. Treating it as standing would leave a PR permanently CHANGES REQUIRED
-  //    no matter how much remediation landed.
-  // A formal CHANGES_REQUESTED is cleared only by that same author later APPROVING or by
-  // the review being DISMISSED -- never by them merely commenting again. Collapsing to the
-  // author's chronologically latest review would let a follow-up COMMENT silently discard a
-  // block GitHub still enforces.
+  // Arcogine's reviewer protocol uses COMMENT reviews plus canonical dispositions and does
+  // not intentionally create native CHANGES_REQUESTED state. Still detect an accidental or
+  // human-created native blocker because GitHub will physically block the merge until that
+  // state is cleared. A COMMENTED CHANGES REQUIRED disposition, in contrast, is bound to
+  // the reviewed head and becomes stale when the head moves.
   const formalBlockers = [];
   for (const [author, _latest] of latestByAuthor) {
     const mine = reviews.filter((r) => r.author === author);
@@ -303,8 +299,6 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck =
     if (!clearedAfter) formalBlockers.push(lastRequested);
   }
 
-  // A CHANGES REQUIRED *disposition* in a COMMENTED review attests to the commit it
-  // reviewed, so once the head moves it becomes stale rather than standing.
   const latest = [...latestByAuthor.values()];
   const dispositionBlockers = latest.filter(
     (r) => r.state !== 'CHANGES_REQUESTED' && r.disposition === 'CHANGES REQUIRED' && r.commit === pr.headRefOid,
@@ -329,6 +323,8 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck =
     prState: pr.state ?? 'OPEN',
     requiredCheckName: requiredCheck,
     requiredCheck: required,
+    dispositionCheckName: DEFAULT_DISPOSITION_CHECK,
+    dispositionCheck,
     threadsTruncated,
     head: pr.headRefOid,
     baseRef: pr.baseRefName,
@@ -350,13 +346,7 @@ function summarize(pr, comparison = { aheadBy: 0, behindBy: 0 }, requiredCheck =
   };
 }
 
-/**
- * Map the observed facts onto the AGENTS.md PR lifecycle states.
- *
- * Deliberately conservative: a review that predates the current head cannot establish a
- * merge disposition for the head, so it resolves to AWAITING re-review rather than
- * carrying a stale verdict forward.
- */
+/** Map the observed facts onto the AGENTS.md PR lifecycle states. */
 function resolveLifecycle(s) {
   // A merged or closed PR has no open-PR lifecycle left to resolve. Report the terminal
   // fact instead of continuing to answer a question that no longer applies.
@@ -367,21 +357,27 @@ function resolveLifecycle(s) {
   if (s.isDraft) return { state: 'AWAITING', reasons: ['pull request is a draft'] };
 
   const blocking = [];
-  // Base freshness is implementation-owned. If the branch is behind its base, `..` has a
-  // concrete next transition: reconcile first, then validate and return for review. The
-  // reviewer still checks freshness independently, but should not be the normal detector.
+  // A stale branch is still a concrete transition, so monitoring reports CHANGES REQUIRED.
+  // The reviewer may perform the repository-approved conflict-free reconciliation as
+  // pre-review normalization; conflicts or semantic choices go back to the author.
   if (s.behindBy > 0) {
     blocking.push(
-      `head is ${s.behindBy} commit(s) behind ${s.baseRef}; reconcile with the current base before review`,
+      `head is ${s.behindBy} commit(s) behind ${s.baseRef}; reconcile with the current base before substantive review`,
     );
   }
   if (s.mergeable === 'CONFLICTING') blocking.push('merge conflict with the base branch');
-  if (s.checksFailing.length > 0) {
-    blocking.push(`failing checks: ${s.checksFailing.map((c) => `${c.name} (${c.verdict})`).join(', ')}`);
+
+  // The disposition check is an authorization result, not CI. A failed/absent disposition
+  // means AWAITING unless a current review explicitly says CHANGES REQUIRED. Other failed
+  // checks remain implementation-owned blockers.
+  const failingValidation = s.checksFailing.filter((c) => c.name !== s.dispositionCheckName);
+  if (failingValidation.length > 0) {
+    blocking.push(`failing checks: ${failingValidation.map((c) => `${c.name} (${c.verdict})`).join(', ')}`);
   }
+
   // Every author's standing blocker counts, not just the newest review overall.
   for (const b of s.blockers) {
-    const why = b.state === 'CHANGES_REQUESTED' ? 'CHANGES_REQUESTED' : 'disposition CHANGES REQUIRED';
+    const why = b.state === 'CHANGES_REQUESTED' ? 'native CHANGES_REQUESTED' : 'disposition CHANGES REQUIRED';
     blocking.push(`${b.author} has a standing ${why} review (${b.submittedAt} on ${b.commit.slice(0, 7)})`);
   }
   if (blocking.length > 0) return { state: 'CHANGES REQUIRED', reasons: blocking };
@@ -393,19 +389,16 @@ function resolveLifecycle(s) {
 
   for (const b of s.staleBlockers ?? []) {
     waiting.push(
-      `${b.author} required changes on ${b.commit.slice(0, 7)}; the head has since moved -- awaiting re-review`,
+      `${b.author} required changes on ${b.commit.slice(0, 7)}; the head has since moved -- awaiting authorization re-evaluation`,
     );
   }
 
-  const head = s.newestReviewOnHead;
-  if (!head) {
+  if (!s.dispositionCheck) {
+    waiting.push(`required review-authorization check "${s.dispositionCheckName}" is not present on the head commit`);
+  } else if (s.dispositionCheck.verdict !== 'SUCCESS') {
     waiting.push(
-      s.newestReview
-        ? `newest review is on ${s.newestReview.commit.slice(0, 7)}, not the current head -- awaiting re-review`
-        : 'no review has been submitted',
+      `required review-authorization check "${s.dispositionCheckName}" is ${s.dispositionCheck.verdict}; SUCCESS is required`,
     );
-  } else if (!head.disposition) {
-    waiting.push('review on current head states no explicit disposition');
   }
 
   // Absence of evidence is not green, and an unrelated green context is not the required
@@ -439,7 +432,7 @@ function resolveLifecycle(s) {
   return {
     state: 'READY TO MERGE',
     reasons: [
-      `review disposition on current head is ${head.disposition}`,
+      `review authorization check "${s.dispositionCheckName}" is ${s.dispositionCheck.verdict}`,
       `required check "${s.requiredCheckName}" is ${s.requiredCheck.verdict}`,
       `head is level with ${s.baseRef}`,
     ],
@@ -455,8 +448,10 @@ function stateLines(s) {
     // closed, would otherwise be invisible to --watch.
     `pr-state: ${s.prState}${s.isDraft ? ' (draft)' : ''}`,
     `required-check: ${s.requiredCheck ? s.requiredCheck.verdict : 'ABSENT'}`,
+    `disposition-check: ${s.dispositionCheck ? s.dispositionCheck.verdict : 'ABSENT'}`,
     // Base identity and distance are part of the watched state: a base advance can
-    // invalidate an existing review without the head changing at all.
+    // invalidate authorization without the head changing at all because strict branch
+    // protection requires the branch to be current with main.
     `base: ${s.baseRef}@${String(s.baseOid).slice(0, 7)} (behind ${s.behindBy}, ahead ${s.aheadBy})`,
     `merge: ${s.mergeStateStatus} (${s.mergeable})`,
     // Truncation flags are lifecycle inputs, so they belong in the projection too: crossing
@@ -486,7 +481,8 @@ function renderOnce(s, lifecycle) {
     `merge       ${s.mergeStateStatus} (${s.mergeable})`,
     `checks      ${s.checks.length - s.checksFailing.length - s.checksPending.length} green, ` +
       `${s.checksFailing.length} failing, ${s.checksPending.length} pending` +
-      `  [required "${s.requiredCheckName}": ${s.requiredCheck ? s.requiredCheck.verdict : 'ABSENT'}]`,
+      `  [required "${s.requiredCheckName}": ${s.requiredCheck ? s.requiredCheck.verdict : 'ABSENT'}; ` +
+      `authorization "${s.dispositionCheckName}": ${s.dispositionCheck ? s.dispositionCheck.verdict : 'ABSENT'}]`,
     `threads     ${s.openThreads} unresolved`,
   ];
   if (s.newestReview) {

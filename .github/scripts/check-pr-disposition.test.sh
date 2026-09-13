@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Tests for check-pr-disposition.sh evaluator.
 #
-# The evaluator answers exactly one question: does the latest applicable
-# review body for the current PR head end in a canonical READY TO MERGE
-# disposition block? These tests exercise that invariant plus the parser's
-# false-positive guards. They deliberately do not exercise CI, mergeability,
-# reviewer identity, or approval/dismissal semantics — those belong to
-# infra/dev/pr-watch.mjs, not this gate.
+# The evaluator answers one review-authorization question for the current PR
+# head: is the PR trusted Dependabot automation, or does the latest applicable
+# review body end in a canonical READY TO MERGE disposition block? These tests
+# exercise both authorization paths plus the parser's false-positive guards.
+# They deliberately do not exercise CI, mergeability, native review state, or
+# approval/dismissal semantics — those belong to infra/dev/pr-watch.mjs, not
+# this gate.
 #
 # Input format matches the workflow's actual output: REVIEW_BODIES_B64 is a
 # newline-separated list of base64-encoded review bodies, in chronological
@@ -69,6 +70,11 @@ test_case() {
 
 CURRENT="abc123def456"
 OLD="fed654cba321"
+
+# Ordinary PRs use reviewer authorization unless a test explicitly changes
+# these trusted API-derived identity inputs.
+export PR_AUTHOR_LOGIN="reviewer"
+export PR_AUTHOR_TYPE="User"
 
 # 1. No reviews -> FAIL
 test_count=$((test_count + 1))
@@ -312,6 +318,34 @@ test_case \
   "$CURRENT" \
   "Reviewed head:t${CURRENT}
 Disposition:t**READY TO MERGE**"
+
+# 25. Trusted Dependabot provenance is an independent authorization path. It
+#     must not require a synthetic review body.
+export PR_AUTHOR_LOGIN="dependabot[bot]"
+export PR_AUTHOR_TYPE="Bot"
+test_case \
+  "trusted Dependabot provenance without reviews -> PASS" \
+  0 \
+  "$CURRENT"
+
+# 26. The login alone is not sufficient: require the API-reported Bot type too.
+export PR_AUTHOR_LOGIN="dependabot[bot]"
+export PR_AUTHOR_TYPE="User"
+test_case \
+  "Dependabot login with non-Bot account type -> FAIL" \
+  1 \
+  "$CURRENT"
+
+# 27. A different bot account must not inherit Dependabot's authorization.
+export PR_AUTHOR_LOGIN="some-other-bot[bot]"
+export PR_AUTHOR_TYPE="Bot"
+test_case \
+  "unrelated bot account without reviews -> FAIL" \
+  1 \
+  "$CURRENT"
+
+export PR_AUTHOR_LOGIN="reviewer"
+export PR_AUTHOR_TYPE="User"
 
 # GitHub can reject an Actions workflow before scheduling any job, which makes
 # evaluator-only tests insufficient. Lint every workflow definition from the

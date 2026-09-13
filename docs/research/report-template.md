@@ -57,13 +57,31 @@ The concrete scenarios used to discriminate between the candidate models, derive
 
 For a write-up still awaiting independent review, distinguish the author's own self-challenge from a later independent pass — do not present a self-administered check with the weight of independent review. Once an independent adversarial review exists, keep this reviewed report revision unchanged: the review artifact records this report's exact commit SHA and its disposition (`ACCEPT`, `ACCEPT WITH QUALIFICATIONS`, `MORE EVIDENCE REQUIRED`, or `REOPEN` — see `docs/development/researching.md` §9), and the later reconciliation references both exact evidence coordinates. If the report itself is revised after review, that new commit is a distinct report revision and, where independent review is required for promotion, must receive its own applicable adversarial review before its conclusions are promoted.
 
+Where the report proposes that a result may transfer beyond its immediate Arcogine context, explicitly attack that generalization too: look for an Arcogine-specific assumption that actually causes the result, a plausible counter-context where the broader claim fails, evidence of a useful design choice being presented as a necessary property, or a claim whose scope is stronger than the evidence. Prefer narrowing a transferability claim to the smallest version that survives over defending a broader formulation.
+
 ## Surviving invariants
 
 The smallest cross-case semantic rules the investigation actually established — not a restatement of every proving case's outcome, and not generalized beyond what the cases actually cover.
 
+## Transferability and reuse
+
+Optional. Use this section only when the investigation produced a result or research asset that may be useful outside the immediate Arcogine question. Do not add it merely to make a report look broader or more publishable.
+
+For each material candidate for reuse, distinguish:
+
+- **Arcogine-specific dependency** — which repository architecture, assumptions, consumers, or constraints the result depends on;
+- **potentially transferable result** — the narrowest claim that might remain useful when those implementation details are removed;
+- **boundary conditions / counter-contexts** — where the broader claim should not be expected to hold, including contrary examples when known;
+- **evidence level** — whether the broader claim is established by this investigation, supported but not established by external evidence, or only a hypothesis suggested by the result;
+- **reusable research asset** — any proving case, counterexample, failure mode, benchmark/scenario, trace, experimental or playtest protocol, measurement method, falsification criterion, source map, or implementation know-how worth carrying forward;
+- **strengthening evidence** — what independent evidence, replication, second consumer/domain, or contrary-case testing would be needed before making a broader claim confidently;
+- **synthesis-seed candidate**, if applicable — the smallest evidence-bearing, potentially transferable, loss-sensitive signal that reconciliation should consider preserving in `synthesis-seeds.md`, plus a concrete `Revisit when` condition. Nomination here does not admit the seed automatically.
+
+Do not silently promote `works for Arcogine` into `general principle`. A potentially transferable result remains research evidence until independently supported at the broader scope. This section does not create a publication lifecycle, publication candidate status, or obligation to preserve the whole report. Do not read the synthesis-seed index merely to manufacture a match during the investigation; the reconciliation method defines the later comparison and anchoring controls.
+
 ## What did not survive
 
-Candidates, assumptions, or prior framings that the proving cases or evidence ruled out, and why. This is useful negative evidence for future researchers; do not omit it merely because the write-up already states a positive conclusion.
+Candidates, assumptions, or prior framings that the proving cases or evidence ruled out, and why. This is useful negative evidence for future researchers; do not omit it merely because the write-up already states a positive conclusion. When forgetting a failed hypothesis, broken analogy, misleading metric, or counterexample would plausibly cause future research to repeat the same mistake, identify the reusable negative knowledge explicitly so reconciliation can preserve it in the narrowest appropriate surface or, when it meets the stricter synthesis-seed admission test, retain the cross-context signal without retaining the whole report.
 
 ## Confidence and limitations
 
@@ -77,13 +95,15 @@ What remains genuinely open after this investigation, distinct from what the inv
 
 The smallest consequences that may deserve reconciliation into: no action; product; architecture; ADR; reference; implementation responsibility. State them — do not perform that promotion by writing this section; the actual ADR/architecture/planning change is a separate, independently reviewed change.
 
+Also identify any reusable research assets or negative knowledge from `Transferability and reuse` / `What did not survive` that would change future reasoning or validation if lost. The later knowledge-transfer audit should preserve such assets in the durable surface that will need them. If a potentially transferable signal is not a current Arcogine research question or accepted semantic consequence but meets the synthesis-seed admission criteria, reconciliation may preserve a compact non-authoritative seed instead. Otherwise make an explicit discard decision; do not retain the whole report merely because it contains potentially reusable material.
+
 ## Implementation implication
 
 What this means for implementation, including explicitly stating "no implementation" when that is the honest answer. Do not admit implementation planning from within a research write-up.
 
 ## Follow-up triggers
 
-What future evidence, consumer, or event should reopen or extend this question, and where that follow-up should be tracked (normally a new or updated entry in `docs/research/README.md`).
+What future evidence, consumer, or event should reopen or extend this question, and where that follow-up should be tracked (normally a new or updated entry in `docs/research/README.md`). A synthesis seed's `Revisit when` condition is different: it preserves a signal for possible cross-investigation synthesis and does not by itself reopen or admit Arcogine research.
 
 ## Sources
 

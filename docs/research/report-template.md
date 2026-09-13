@@ -103,7 +103,7 @@ What this means for implementation, including explicitly stating "no implementat
 
 ## Follow-up triggers
 
-What future evidence, consumer, or event should reopen or extend this question, and where that follow-up should be tracked (normally a new or updated entry in [`research-register.md`](research-register.md)). A synthesis seed's `Revisit when` condition is different: it preserves a signal for possible cross-investigation synthesis and does not by itself reopen or admit Arcogine research.
+What future evidence, consumer, or event should reopen or extend this question, and where that follow-up should be tracked (normally a new or updated entry in `docs/research/research-register.md`). A synthesis seed's `Revisit when` condition is different: it preserves a signal for possible cross-investigation synthesis and does not by itself reopen or admit Arcogine research.
 
 ## Sources
 

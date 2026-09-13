@@ -74,6 +74,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 |---|---|
 | [Research register](research/README.md) | Portfolio status, priority, promotion policy |
 | [Research method](development/researching.md) | Normative method for conducting a research investigation and independent adversarial review |
+| [Research brief template](research/brief-template.md) | Reusable failure-oriented planning structure for bounding research questions, candidates, proving cases, evidence, and exit criteria |
 | [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |
 | [Agency and decision boundary](research/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation |
 | [Factory Design evolution](research/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |

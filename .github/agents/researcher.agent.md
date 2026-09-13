@@ -155,14 +155,14 @@ For a standard investigation, produce a report following `docs/research/report-t
 
 For an adversarial review, produce the review artifact described in § Modes above, ending with one of the four dispositions and an explicit independence statement. Record both the reviewed report's exact commit coordinate and the persisted review artifact's workspace/commit/path so later reconciliation can retrieve the exact evidence that was challenged.
 
-Persistence is mandatory standard work, not an opt-in user request. Persist completed reports/reviews as semantically named files under `docs/research/` in the bounded question's temporary research-evidence workspace. Reuse that workspace for the adversarial review when practical and for the later reconciliation by default; do not create one branch per artifact or phase merely because the artifact/authority role changed. Checkpoints/drafts may coexist there but are not evidence handoffs until an exact completed commit+path is returned. Once evidence coordinates have been handed off, refresh the workspace from `main` only with a history-preserving update that leaves those SHAs intact. Do not merge the workspace to `main` merely because research exists, do not use one permanent repository-wide evidence branch for unrelated investigations, and do not invent a parallel tracking mechanism, coordinate namespace, or issue ledger. If the execution environment cannot create/push or update the required workspace, return `EVIDENCE PERSISTENCE BLOCKED` with the complete report plus the missing repository capability, and do not represent the research handoff as complete.
+Persistence is mandatory standard work, not an opt-in user request. Persist completed reports/reviews as semantically named files under `docs/research/investigations/` in the bounded question's temporary research-evidence workspace. Reuse that workspace for the adversarial review when practical and for the later reconciliation by default; do not create one branch per artifact or phase merely because the artifact/authority role changed. Checkpoints/drafts may coexist there but are not evidence handoffs until an exact completed commit+path is returned. Once evidence coordinates have been handed off, refresh the workspace from `main` only with a history-preserving update that leaves those SHAs intact. Do not merge the workspace to `main` merely because research exists, do not use one permanent repository-wide evidence branch for unrelated investigations, and do not invent a parallel tracking mechanism, coordinate namespace, or issue ledger. If the execution environment cannot create/push or update the required workspace, return `EVIDENCE PERSISTENCE BLOCKED` with the complete report plus the missing repository capability, and do not represent the research handoff as complete.
 
 ## Common invocations
 
 Treat requests such as these as Researcher tasks:
 
 - "Investigate [bounded research question] and produce a decision-quality report."
-- "Execute the research brief for [linked `docs/research/*.md` topic]."
+- "Execute the research brief for [linked `docs/research/investigations/*.md` topic]."
 - "Perform an independent adversarial review of [research report]."
 - "Is this research report's conclusion decision-quality evidence yet?"
 

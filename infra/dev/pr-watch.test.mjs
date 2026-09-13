@@ -14,8 +14,12 @@ import { dispositionOf, summarize, resolveLifecycle, stateLines, diff } from './
 
 const HEAD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const OLD = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+const AUTHORIZED_CHECKS = [
+  { name: 'gate', conclusion: 'SUCCESS' },
+  { name: 'disposition', conclusion: 'SUCCESS' },
+];
 
-function pr({ reviews = [], checks = [{ name: 'gate', conclusion: 'SUCCESS' }], threads = [], ...rest } = {}) {
+function pr({ reviews = [], checks = AUTHORIZED_CHECKS, threads = [], ...rest } = {}) {
   return {
     number: 1,
     title: 'test',
@@ -50,17 +54,12 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf('Disposition: CHANGES REQUIRED'), 'CHANGES REQUIRED');
   });
 
-  // Only two reviewer dispositions exist. CI is not a reviewer disposition, so a review
-  // that predates this simplification (or any other unrecognized vocabulary) must not be
-  // read as a verdict -- it resolves to null, which the lifecycle treats as AWAITING.
   await t.test('removed/unsupported disposition vocabulary is not recognized', () => {
     assert.equal(dispositionOf('Disposition: READY AFTER CI'), null);
     assert.equal(dispositionOf('Disposition: **NON-BLOCKING FOLLOW-UPS ONLY**'), null);
     assert.equal(dispositionOf('Disposition: APPROVED'), null);
   });
 
-  // Regression: a review whose prose quoted "Disposition: READY TO MERGE" as an example was
-  // read as merge-ready even though its closing disposition was CHANGES REQUIRED.
   await t.test('ignores a disposition quoted mid-sentence and takes the final one', () => {
     const body = [
       'Reviewer B can submit a later comment with `Disposition: READY TO MERGE`; the earlier',
@@ -82,8 +81,6 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf(null), null);
   });
 
-  // An inline or code-quoted marker is discussion, and must not manufacture the
-  // positive review authority needed to reach READY TO MERGE.
   await t.test('an inline or code-quoted marker is not a verdict when nothing is anchored', () => {
     assert.equal(dispositionOf('A reviewer may write `Disposition: READY TO MERGE` in prose.'), null);
     assert.equal(dispositionOf('For example, Disposition: READY TO MERGE would end the review.'), null);
@@ -91,12 +88,9 @@ test('disposition parsing', async (t) => {
 
   await t.test('a list-marked disposition still counts, a blockquoted one does not', () => {
     assert.equal(dispositionOf('- Disposition: READY TO MERGE'), 'READY TO MERGE');
-    // Quoted text is another review's verdict, not this one's.
     assert.equal(dispositionOf('> Disposition: **READY TO MERGE**'), null);
   });
 
-  // The marker must actually END the review. A verdict followed by substantive
-  // blocker prose is not the reviewer's final disposition.
   await t.test('a disposition followed by substantive prose is not final', () => {
     const body = [
       'Disposition: READY TO MERGE',
@@ -116,8 +110,6 @@ test('disposition parsing', async (t) => {
     assert.equal(dispositionOf(body), 'CHANGES REQUIRED');
   });
 
-  // The final line must BE the verdict. A prefix-only match accepts
-  // a negated or qualified sentence that merely starts with the vocabulary.
   await t.test('same-line trailing prose or negation is not a verdict', () => {
     assert.equal(dispositionOf('Disposition: READY TO MERGE? Actually no.'), null);
     assert.equal(dispositionOf('Disposition: READY TO MERGE once the resolver is fixed'), null);
@@ -131,12 +123,45 @@ test('disposition parsing', async (t) => {
   });
 });
 
+test('review-authorization check identity', async (t) => {
+  const comparison = { aheadBy: 1, behindBy: 0 };
+
+  await t.test('trusted disposition success can authorize a PR without a review', () => {
+    assert.equal(stateOf(pr({ reviews: [] }), comparison), 'READY TO MERGE');
+  });
+
+  await t.test('an absent disposition check leaves authorization unresolved', () => {
+    const checks = [{ name: 'gate', conclusion: 'SUCCESS' }];
+    assert.equal(stateOf(pr({ reviews: [], checks }), comparison), 'AWAITING');
+  });
+
+  await t.test('a failed disposition check is AWAITING when no explicit blocker exists', () => {
+    const checks = [
+      { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'FAILURE' },
+    ];
+    assert.equal(stateOf(pr({ reviews: [], checks }), comparison), 'AWAITING');
+  });
+
+  await t.test('a disposition check transition is part of the watched projection', () => {
+    const pending = stateLines(summarize(pr({ checks: [
+      { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'FAILURE' },
+    ] }), comparison));
+    const ready = stateLines(summarize(pr(), comparison));
+    assert.ok(diff(pending, ready).length > 0, 'authorization transition must be observable');
+  });
+});
+
 test('required check identity', async (t) => {
   const reviews = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
   const comparison = { aheadBy: 1, behindBy: 0 };
 
   await t.test('an unrelated green context cannot substitute for the required gate', () => {
-    const checks = [{ name: 'Secret scan', conclusion: 'SUCCESS' }];
+    const checks = [
+      { name: 'Secret scan', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ];
     assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
   });
 
@@ -144,22 +169,33 @@ test('required check identity', async (t) => {
     const checks = [
       { name: 'Secret scan', conclusion: 'SUCCESS' },
       { name: 'gate', conclusion: null, status: 'QUEUED' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
     ];
     assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
   });
 
   await t.test('a failing gate blocks', () => {
-    assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'FAILURE' }] }), comparison), 'CHANGES REQUIRED');
+    const checks = [
+      { name: 'gate', conclusion: 'FAILURE' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'CHANGES REQUIRED');
   });
 
-  // SKIPPED/NEUTRAL are green enough for an auxiliary context but prove nothing about the
-  // required one: a skipped gate ran no validation at all.
   await t.test('a skipped required gate is not validation evidence', () => {
-    assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'SKIPPED' }] }), comparison), 'AWAITING');
+    const checks = [
+      { name: 'gate', conclusion: 'SKIPPED' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
   });
 
   await t.test('a neutral required gate is not validation evidence', () => {
-    assert.equal(stateOf(pr({ reviews, checks: [{ name: 'gate', conclusion: 'NEUTRAL' }] }), comparison), 'AWAITING');
+    const checks = [
+      { name: 'gate', conclusion: 'NEUTRAL' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
   });
 
   await t.test('a skipped gate is not rescued by other green contexts', () => {
@@ -167,6 +203,7 @@ test('required check identity', async (t) => {
       { name: 'gate', conclusion: 'SKIPPED' },
       { name: 'Secret scan', conclusion: 'SUCCESS' },
       { name: 'Java checks', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
     ];
     assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
   });
@@ -176,12 +213,16 @@ test('required check identity', async (t) => {
       { name: 'gate', conclusion: 'SUCCESS' },
       { name: 'Secret scan', conclusion: 'SUCCESS' },
       { name: 'Java checks', conclusion: 'SKIPPED' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
     ];
     assert.equal(stateOf(pr({ reviews, checks }), comparison), 'READY TO MERGE');
   });
 
   await t.test('the required check name is configurable', () => {
-    const payload = pr({ reviews, checks: [{ name: 'ci/custom', conclusion: 'SUCCESS' }] });
+    const payload = pr({ reviews, checks: [
+      { name: 'ci/custom', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ] });
     assert.equal(resolveLifecycle(summarize(payload, comparison, 'ci/custom')).state, 'READY TO MERGE');
     assert.equal(resolveLifecycle(summarize(payload, comparison, 'gate')).state, 'AWAITING');
   });
@@ -217,7 +258,7 @@ test('terminal pull-request states', async (t) => {
 
   await t.test('required-check presence is part of the watched projection', () => {
     const withGate = stateLines(summarize(pr({ reviews }), comparison));
-    const without = stateLines(summarize(pr({ reviews, checks: [] }), comparison));
+    const without = stateLines(summarize(pr({ reviews, checks: [{ name: 'disposition', conclusion: 'SUCCESS' }] }), comparison));
     assert.ok(diff(withGate, without).length > 0, 'required-check absence must be observable');
   });
 });
@@ -232,8 +273,6 @@ test('review-thread truncation', async (t) => {
     assert.equal(stateOf(truncated, comparison), 'AWAITING');
   });
 
-  // The resolver's answer changes, so --watch must see it: every returned thread is
-  // resolved in both cases, so openThreads alone would show no difference at all.
   await t.test('crossing the truncation boundary produces a watch signal', () => {
     const whole = pr({ reviews, threads: [{ isResolved: true }] });
     const before = stateLines(summarize(whole, comparison));
@@ -243,19 +282,19 @@ test('review-thread truncation', async (t) => {
   });
 });
 
-test('base reconciliation ownership', async (t) => {
+test('base reconciliation normalization', async (t) => {
   const approved = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
 
   await t.test('ready when level with the base', () => {
     assert.equal(stateOf(pr({ reviews: approved }), { aheadBy: 1, behindBy: 0 }), 'READY TO MERGE');
   });
 
-  await t.test('a base advance is an implementation-owned reconciliation blocker', () => {
+  await t.test('a base advance requires reconciliation before substantive review', () => {
     const resolved = resolveLifecycle(
       summarize(pr({ reviews: approved }), { aheadBy: 1, behindBy: 1 }),
     );
     assert.equal(resolved.state, 'CHANGES REQUIRED');
-    assert.match(resolved.reasons.join('\n'), /reconcile with the current base before review/);
+    assert.match(resolved.reasons.join('\n'), /reconcile with the current base before substantive review/);
   });
 
   await t.test('base identity and distance are part of the watched state', () => {
@@ -267,7 +306,7 @@ test('base reconciliation ownership', async (t) => {
 });
 
 test('blocking review aggregation', async (t) => {
-  await t.test('a later positive review cannot mask another reviewer standing blocker', () => {
+  await t.test('a later positive review cannot mask another reviewer standing native blocker', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
       review({ author: 'bob', at: '2026-01-02T00:00:00Z', body: READY_BODY }),
@@ -275,9 +314,7 @@ test('blocking review aggregation', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
-  // GitHub clears requested changes only on an approving review by the same collaborator,
-  // or on dismissal. A later COMMENT does not, so neither may this.
-  await t.test('a later comment by the same author does NOT clear their CHANGES_REQUESTED', () => {
+  await t.test('a later comment by the same author does NOT clear accidental native CHANGES_REQUESTED', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
       review({ author: 'alice', at: '2026-01-02T00:00:00Z', body: READY_BODY }),
@@ -285,7 +322,7 @@ test('blocking review aggregation', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
-  await t.test('an approving review by the same author clears their CHANGES_REQUESTED', () => {
+  await t.test('an approving review by the same author clears native CHANGES_REQUESTED', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
       review({ author: 'alice', at: '2026-01-02T00:00:00Z', state: 'APPROVED', body: READY_BODY }),
@@ -293,7 +330,7 @@ test('blocking review aggregation', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'READY TO MERGE');
   });
 
-  await t.test('a dismissed review clears the block', () => {
+  await t.test('a dismissed review clears the native block', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'CHANGES_REQUESTED' }),
       review({ author: 'alice', at: '2026-01-02T00:00:00Z', state: 'DISMISSED' }),
@@ -302,7 +339,7 @@ test('blocking review aggregation', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'READY TO MERGE');
   });
 
-  await t.test('an approval before the block does not clear it', () => {
+  await t.test('an approval before the native block does not clear it', () => {
     const reviews = [
       review({ author: 'alice', at: '2026-01-01T00:00:00Z', state: 'APPROVED' }),
       review({ author: 'alice', at: '2026-01-02T00:00:00Z', state: 'CHANGES_REQUESTED' }),
@@ -310,20 +347,16 @@ test('blocking review aggregation', async (t) => {
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
-  await t.test('a CHANGES REQUIRED disposition blocks as firmly as CHANGES_REQUESTED', () => {
+  await t.test('a CHANGES REQUIRED disposition blocks as firmly as native CHANGES_REQUESTED', () => {
     const reviews = [review({ at: '2026-01-01T00:00:00Z', body: 'Disposition: **CHANGES REQUIRED**.' })];
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
   });
 
-  // A PR must be able to leave CHANGES REQUIRED. AGENTS.md's cycle is remediate -> AWAITING
-  // for re-evaluation, so a disposition attached to a superseded commit must not pin the PR
-  // in CHANGES REQUIRED forever.
   await t.test('a CHANGES REQUIRED disposition on a superseded head becomes AWAITING', () => {
     const reviews = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, body: 'Disposition: **CHANGES REQUIRED**.' })];
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'AWAITING');
   });
 
-  // ...but a formal GitHub CHANGES_REQUESTED review is not cleared by pushing.
   await t.test('a formal CHANGES_REQUESTED review still blocks after the head moves', () => {
     const reviews = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, state: 'CHANGES_REQUESTED' })];
     assert.equal(stateOf(pr({ reviews }), { aheadBy: 1, behindBy: 0 }), 'CHANGES REQUIRED');
@@ -345,18 +378,25 @@ test('validation presence', async (t) => {
   });
 
   await t.test('pending checks are not green', () => {
-    const checks = [{ name: 'gate', conclusion: null, status: 'IN_PROGRESS' }];
+    const checks = [
+      { name: 'gate', conclusion: null, status: 'IN_PROGRESS' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ];
     assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
   });
 
   await t.test('failing checks are CHANGES REQUIRED', () => {
-    const checks = [{ name: 'gate', conclusion: 'FAILURE' }];
+    const checks = [
+      { name: 'gate', conclusion: 'FAILURE' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ];
     assert.equal(stateOf(pr({ reviews, checks }), comparison), 'CHANGES REQUIRED');
   });
 
-  await t.test('skipped and neutral count as green', () => {
+  await t.test('skipped and neutral auxiliary checks count as green', () => {
     const checks = [
       { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
       { name: 'java', conclusion: 'SKIPPED' },
       { name: 'legacy', context: 'legacy', state: 'SUCCESS' },
     ];
@@ -380,43 +420,60 @@ test('remaining lifecycle inputs', async (t) => {
     assert.equal(stateOf(pr({ reviews, threads: [{ isResolved: false }] }), comparison), 'AWAITING');
   });
 
-  await t.test('a review on an older head awaits re-review', () => {
+  await t.test('a stale READY review does not matter when current-head authorization is absent', () => {
     const stale = [review({ at: '2026-01-01T00:00:00Z', commit: OLD, body: READY_BODY })];
-    assert.equal(stateOf(pr({ reviews: stale }), comparison), 'AWAITING');
+    const checks = [
+      { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'FAILURE' },
+    ];
+    assert.equal(stateOf(pr({ reviews: stale, checks }), comparison), 'AWAITING');
   });
 
-  await t.test('no review at all awaits review', () => {
-    assert.equal(stateOf(pr({ reviews: [] }), comparison), 'AWAITING');
+  await t.test('no review is acceptable only when trusted disposition authorization succeeds', () => {
+    assert.equal(stateOf(pr({ reviews: [] }), comparison), 'READY TO MERGE');
+    const checks = [
+      { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'FAILURE' },
+    ];
+    assert.equal(stateOf(pr({ reviews: [], checks }), comparison), 'AWAITING');
   });
 
-  await t.test('a review with no explicit disposition awaits', () => {
+  await t.test('a vague review cannot compensate for failed disposition authorization', () => {
     const vague = [review({ at: '2026-01-01T00:00:00Z', body: 'nice work' })];
-    assert.equal(stateOf(pr({ reviews: vague }), comparison), 'AWAITING');
+    const checks = [
+      { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'FAILURE' },
+    ];
+    assert.equal(stateOf(pr({ reviews: vague, checks }), comparison), 'AWAITING');
   });
 
-  // CI is not a reviewer disposition. A removed vocabulary value (or any other
-  // unrecognized text) must never authorize merge merely because required CI is green --
-  // only an explicit current-head READY TO MERGE disposition may.
-  await t.test('a removed disposition value never authorizes merge, even with green CI', () => {
+  await t.test('a removed disposition value never authorizes merge when the trusted check fails', () => {
     const stale = [review({ at: '2026-01-01T00:00:00Z', body: 'Disposition: **READY AFTER CI**' })];
-    assert.equal(stateOf(pr({ reviews: stale }), comparison), 'AWAITING');
+    const checks = [
+      { name: 'gate', conclusion: 'SUCCESS' },
+      { name: 'disposition', conclusion: 'FAILURE' },
+    ];
+    assert.equal(stateOf(pr({ reviews: stale, checks }), comparison), 'AWAITING');
   });
 
-  await t.test('current-head READY with required CI pending awaits, not a CI-specific verdict', () => {
-    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
-    const checks = [{ name: 'gate', conclusion: null, status: 'IN_PROGRESS' }];
-    assert.equal(stateOf(pr({ reviews: ready, checks }), comparison), 'AWAITING');
+  await t.test('authorization success with required CI pending awaits', () => {
+    const checks = [
+      { name: 'gate', conclusion: null, status: 'IN_PROGRESS' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'AWAITING');
   });
 
-  await t.test('current-head READY with required CI failure is CHANGES REQUIRED', () => {
-    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
-    const checks = [{ name: 'gate', conclusion: 'FAILURE' }];
-    assert.equal(stateOf(pr({ reviews: ready, checks }), comparison), 'CHANGES REQUIRED');
+  await t.test('authorization success with required CI failure is CHANGES REQUIRED', () => {
+    const checks = [
+      { name: 'gate', conclusion: 'FAILURE' },
+      { name: 'disposition', conclusion: 'SUCCESS' },
+    ];
+    assert.equal(stateOf(pr({ reviews, checks }), comparison), 'CHANGES REQUIRED');
   });
 
-  await t.test('current-head READY with required CI success and mergeable is READY TO MERGE', () => {
-    const ready = [review({ at: '2026-01-01T00:00:00Z', body: READY_BODY })];
-    assert.equal(stateOf(pr({ reviews: ready }), comparison), 'READY TO MERGE');
+  await t.test('authorization success with required CI success and mergeable is READY TO MERGE', () => {
+    assert.equal(stateOf(pr({ reviews }), comparison), 'READY TO MERGE');
   });
 });
 

@@ -81,7 +81,7 @@ Synthesis-seed retention is intentionally stricter than "interesting." The signa
 
 The reconciliation that completes that audit owns the retirement decision. Once the reconciliation has landed, deleting the listed temporary workspace branch is immediate post-merge cleanup; branch deletion is not itself part of repository authority and must not happen before the reviewed transfer is durable.
 
-This custody rule does not add a lifecycle status, permanent report archive, second research roadmap, or second research ledger. The research register continues to track questions and lifecycle; `synthesis-seeds.md` records only low-authority recurrence signals and cannot by itself create work.
+This custody rule does not add a lifecycle status, permanent report archive, second research roadmap, or second research ledger. The research register remains the lifecycle record for questions while they require portfolio tracking or retain useful historical context; terminal entries may later be compacted under the maintenance rule below. `synthesis-seeds.md` records only low-authority recurrence signals and cannot by itself create work.
 
 ## Research register
 

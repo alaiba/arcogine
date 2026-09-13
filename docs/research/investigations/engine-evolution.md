@@ -10,25 +10,19 @@ The Engine implementation must not silently evolve result-affecting policy under
 
 `engine-semantics:v1` is already a normative design contract even though its implementation/conformance work is pending. Under current ADR-0015 and v1 authority, an intentional change that can alter outcomes for identical explicit inputs requires a new `EngineSemanticsVersion`; unreleased or implementation-pending status does not create an in-place mutation exception. Research may still decide whether v1 is acceptable for the first supported release or whether evidence justifies architecture work for a different semantics version before implementation. Neither outcome permits a silent implementation tweak.
 
-## Lot, batch, and material-lot semantics
+## Material identity and genealogy boundary
 
-Current accepted quantity execution creates independently dispatchable unit work under one aggregate production request. That does not establish domain semantics for lots, batches, transfer batches, material lots, genealogy, or configurable work chunking.
+Current accepted quantity execution creates independently dispatchable unit work under one aggregate production request. That does not establish domain semantics for lots, batches, transfer batches, material lots, serials, genealogy, or configurable work chunking.
 
-Research these only when a concrete manufacturing or consumer requirement needs them. The result must distinguish physical/domain batch identity from an implementation optimization used merely to reduce object count.
+The admitted question for physical/material identity and production genealogy is owned by [Manufacturing Traceability Research](manufacturing-traceability.md) and the maintained [research register](../research-register.md). Engine evolution must not independently define or reopen that domain identity.
 
-## Capability requirements and resource pools
+Engine research contributes only where a proposed material model would require result-affecting Engine semantics or executable proving evidence. Any physical lot/batch/serial identity must remain distinct from `JobId`, order quantity decomposition, queue state, and runtime object count, and a physical/domain batch must remain distinct from an implementation optimization used merely to reduce object count.
 
-Current dispatch uses explicit eligible resource instances. A future capability requirement, work center, or resource pool may be justified when heterogeneous resources must satisfy the same operation through stable shared semantics or when scheduling/reporting requires a real group boundary.
+## Capability requirements and resource pools boundary
 
-Research must answer:
+Current dispatch uses explicit eligible resource instances. Qualified applicability, capability identity, work-center/resource-pool semantics, and resource-dependent performance are owned by [Factory Design Evolution Research](factory-design-evolution.md) and the maintained [research register](../research-register.md), not independently by this Engine investigation.
 
-- what capability identity means;
-- whether capability parameters are required;
-- how eligibility is derived;
-- whether a pool owns scheduling/capacity semantics or is merely grouping;
-- how the model-side concept relates to deterministic Engine selection.
-
-Do not introduce a capability taxonomy only to replace an explicit eligible-instance set that already works.
+Engine research contributes only where an admitted Factory-side concept changes deterministic resource selection, scheduling/capacity semantics, or another result-affecting Engine contract. Do not introduce an Engine-local capability taxonomy or pool identity merely to replace an explicit eligible-instance set that already works.
 
 ## Dispatch-policy investigation — concluded umbrella question
 

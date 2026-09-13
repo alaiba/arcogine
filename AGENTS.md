@@ -43,7 +43,7 @@ Classify each material candidate as one of:
 - **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being smuggled into the current PR or slice.
 - **Discard** — the observation is situational, transient, or otherwise not worth preserving.
 
-Prefer stronger forms of durable capture in this order when they fit the lesson: executable guard/test, canonical helper/tooling, agent/contributor standard work, maintained docs, ADR only for architectural/hard-to-reverse decisions. Generalize incidents into semantic rules, not PR/session coordinates. Prefer improving existing authoritative artifact.
+Prefer stronger forms of durable capture in this order when they fit the lesson: executable guard/test, canonical helper/tooling, agent/contributor standard work, maintained documentation, then an ADR only for genuinely architectural or hard-to-reverse decisions. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
 
 Do not manufacture a lesson merely to produce an output. Finish every Session-close Kaizen review with an explicit deletion verdict: either the session is safe to delete because nothing unique remains, or name exactly what still needs to be captured first.
 
@@ -101,7 +101,9 @@ workflow-managed obligations section:
   current.
 
 Never repeat the same reminder more than once per session, and never derail the
-user's requested task merely because an improvement obligation is due — this is defense in depth so scheduled work does not disappear unnoticed, not a gate on other work.
+user's requested task merely because an improvement obligation is due — this is
+defense in depth so scheduled work does not disappear unnoticed, not a gate on
+other work.
 
 ## Temporary delivery coordinates and durable documentation
 

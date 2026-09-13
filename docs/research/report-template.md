@@ -11,7 +11,7 @@
 State at minimum:
 
 - **Title** — name the question, not the delivery coordinate that tracked it.
-- **Research status** — one of `docs/research/README.md`'s lifecycle values. `READY` means the question is bounded and ready to start, not that work is in progress: once evidence gathering or synthesis has begun (including drafting this report), the investigation is `ACTIVE`, and stays `ACTIVE` until the existing `CONCLUDED` conditions in `docs/research/README.md` are actually satisfied.
+- **Research status** — one of `docs/development/researching.md`'s lifecycle values. `READY` means the question is bounded and ready to start, not that work is in progress: once evidence gathering or synthesis has begun (including drafting this report), the investigation is `ACTIVE`, and stays `ACTIVE` until the normative `CONCLUDED` conditions in `docs/development/researching.md` are actually satisfied.
 - **Research baseline** — the exact live `main` SHA the investigation was grounded against.
 - **Later reconciliation baseline**, if this write-up is revisited against a newer `main` before durable reconciliation — state both explicitly rather than silently updating the original baseline.
 - **Authority statement** — this document is research evidence only; it is not accepted architecture, product direction, or implementation commitment until a separate reconciliation change promotes it.
@@ -103,7 +103,7 @@ What this means for implementation, including explicitly stating "no implementat
 
 ## Follow-up triggers
 
-What future evidence, consumer, or event should reopen or extend this question, and where that follow-up should be tracked (normally a new or updated entry in `docs/research/README.md`). A synthesis seed's `Revisit when` condition is different: it preserves a signal for possible cross-investigation synthesis and does not by itself reopen or admit Arcogine research.
+What future evidence, consumer, or event should reopen or extend this question, and where that follow-up should be tracked (normally a new or updated entry in [`research-register.md`](research-register.md)). A synthesis seed's `Revisit when` condition is different: it preserves a signal for possible cross-investigation synthesis and does not by itself reopen or admit Arcogine research.
 
 ## Sources
 

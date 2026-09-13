@@ -74,7 +74,7 @@ This is a conservative compatibility decision, not a claim that either rule is g
 
 The decisions must nevertheless be carried together. The retained one-local-job recovery behavior can leave a recovered concurrency>1 machine both accepting and locally queued. That is the principal healthy regime where the magnitude of `combinedQueueDepth` can matter rather than acting only as a binary handover signal. Changing local admission later would therefore change part of the structural support for the ranking conclusion even if the ranking formula itself were untouched.
 
-The executable handoff belongs to the v1-conformance slice in [Spatial Runtime Consequences](../planning/spatial-runtime-consequences.md). That planning surface owns characterization fixtures and the already-identified arithmetic corrections; this research document owns only the decision, qualifications, and reopening triggers.
+The executable handoff belongs to the v1-conformance slice in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md). That planning surface owns characterization fixtures and the already-identified arithmetic corrections; this research document owns only the decision, qualifications, and reopening triggers.
 
 ## CONCLUDED — local admission semantics before first Engine release
 

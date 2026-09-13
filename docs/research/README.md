@@ -63,25 +63,13 @@ A topic is ready for implementation planning only when semantic/product meaning,
 
 A synthesis seed is outside this promotion path. If recurrence later justifies a bounded cross-investigation question, that question must be admitted into this register through the normal research lifecycle before investigation begins.
 
-## Evidence custody and retirement
+## Evidence custody and reconciliation
 
-Research that must survive a session uses a temporary, semantically named **research-evidence workspace branch** as defined by [`docs/development/researching.md`](../development/researching.md). The normal workspace unit is one bounded research question. An explicitly coupled set of questions may share one workspace only when they are intended to be reviewed/reconciled as one packet. Do not create a separate branch merely because a report and its adversarial review are different artifacts, do not create a fresh branch merely because that workspace has entered durable reconciliation, and do not create one permanent repository-wide research branch.
+Research evidence is temporary supporting material, not durable repository authority. A research conclusion becomes durable only through reconciliation into the appropriate product, architecture, ADR, reference, research, or implementation-planning surface.
 
-The same finite workspace normally carries the question from investigation through report/review artifacts and the final durable reconciliation. "Separate reconciliation" means a separate phase and authority transition, not separate Git topology. A new reconciliation branch is justified only by a concrete operational isolation requirement, not by the existence of an immutable report commit.
+Cross-session evidence custody, immutable handoff coordinates, reconciliation procedure, knowledge-transfer auditing, synthesis-seed custody, and temporary workspace retirement are governed by [`docs/development/researching.md`](../development/researching.md). Temporary evidence must not be retired before those knowledge-transfer requirements are satisfied.
 
-A workspace may contain checkpoints, drafts, diagnostic notes, completed reports, adversarial-review artifacts, and later reconciliation work. Branch-tip state is never the evidence identity: a completed report or review becomes a handoff artifact only when its exact commit SHA and path are explicitly returned. Those exact revisions are immutable inputs to later review/reconciliation even though later workspace commits may add other material.
-
-Research workspaces provide reproducible cross-session custody only. Their contents are not current repository authority and are not merged to `main` merely because research exists.
-
-When a workspace with handed-off evidence must catch up to `main`, preserve the exact evidence SHAs. Use a history-preserving merge-style update rather than rebasing or force-pushing away completed artifact commits. Before the reconciliation PR lands, temporary evidence/handoff files that are not deliberately promoted should be absent from the final tree; the PR should carry the durable transfer rather than an evidence archive.
-
-A temporary research-evidence workspace may be retired only after every research question it carries is `CONCLUDED` or `SUPERSEDED` and the knowledge-transfer audit has accounted for every material result that should survive: accepted conclusions and qualifications in their durable authority, remaining unknowns/reopening triggers/new questions back in research, implementation responsibilities in admitted planning when ready, reusable proving cases/counterexamples/measurements/know-how in the surface that will need them, qualifying cross-investigation synthesis seeds in [`synthesis-seeds.md`](synthesis-seeds.md), and explicit discard decisions for findings that no longer merit retention. If any material item remains unaccounted for, keep the workspace available.
-
-Synthesis-seed retention is intentionally stricter than "interesting." The signal must be evidence-bearing, remain intelligible outside its immediate Arcogine implementation context, and be loss-sensitive enough that retiring the workspace would materially reduce the chance of recognizing recurrence later. The seed carries only the compact signal, evidence posture, boundaries, durable reusable assets, provenance, and a concrete revisit trigger; it does not preserve the whole report.
-
-The reconciliation that completes that audit owns the retirement decision. Once the reconciliation has landed, deleting the listed temporary workspace branch is immediate post-merge cleanup; branch deletion is not itself part of repository authority and must not happen before the reviewed transfer is durable.
-
-This custody rule does not add a lifecycle status, permanent report archive, second research roadmap, or second research ledger. The research register remains the lifecycle record for questions while they require portfolio tracking or retain useful historical context; terminal entries may later be compacted under the maintenance rule below. `synthesis-seeds.md` records only low-authority recurrence signals and cannot by itself create work.
+Retiring temporary evidence is distinct from compacting a terminal question from this register; register compaction follows the maintenance rule below.
 
 ## Research register
 
@@ -110,8 +98,6 @@ Priority is portfolio guidance, not delivery commitment.
 - Add a material unknown instead of hiding it in an implementation plan.
 - Mark research `READY` only when an independent researcher can execute it from the stated evidence/exit criteria — see `docs/development/researching.md` for what a sufficiently bounded brief and decision-quality report require.
 - When research concludes, record the verdict here and link the durable destination; do not duplicate the authoritative conclusion.
-- Before retiring a temporary research-evidence workspace, perform the knowledge-transfer audit above; branch deletion is not a substitute for deciding what should survive.
-- During reconciliation, admit a synthesis seed only under `docs/development/researching.md`'s evidence-bearing / transferable / loss-sensitive criteria; compare with existing seeds after the originating investigation has reached its own result, so similarity is not manufactured by anchoring.
 - During planning/consistency review, flag exploratory content that has leaked back into `docs/planning/` and relocate it here.
-- Terminal research questions (`CONCLUDED` or `SUPERSEDED`) normally remain in the register for lifecycle and provenance history. Compact or remove one only when its continued presence no longer helps explain a material conclusion, supersession chain, reopening trigger, or active decision context; any durable consequence must already be reconciled, and removal must never substitute for the knowledge-transfer audit.
+- Terminal research questions (`CONCLUDED` or `SUPERSEDED`) normally remain in the register for lifecycle and provenance history. Compact or remove one only when its continued presence no longer helps explain a material conclusion, supersession chain, reopening trigger, or active decision context; any durable consequence must already be reconciled, and removal must never substitute for the knowledge-transfer audit required by `docs/development/researching.md`.
 - Prefer current architecture/reference for durable semantics; the register records research lifecycle and provenance rather than duplicating authoritative conclusions.

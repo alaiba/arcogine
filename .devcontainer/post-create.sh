@@ -13,6 +13,12 @@ if [[ "$REMOTE_URL" == git@github.com:* ]]; then
   echo "    Switched remote to HTTPS for credential forwarding"
 fi
 
+echo "==> Checking Git commit identity..."
+# Configure with explicit ARCOGINE_GIT_USER_* values when supplied; otherwise
+# inspect the existing identity and warn without blocking container creation.
+source infra/dev/git-identity.sh
+configure_arcogine_git_identity
+
 echo "==> Copying infra/docker/.env.example -> .env (if not present)..."
 [ -f .env ] || cp infra/docker/.env.example .env
 

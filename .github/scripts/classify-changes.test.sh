@@ -93,3 +93,9 @@ python3 "$dir/check-adr-immutability.py" --ci
 
 echo "Validating continuous-improvement register helper..."
 node --test "$dir/continuous-improvement.test.mjs"
+
+echo "Validating GitHub attribution hygiene helper..."
+node --test "$repo/infra/dev/github-attribution-hygiene.test.mjs"
+
+echo "Validating Git identity setup helper..."
+bash "$repo/infra/dev/git-identity.test.sh"

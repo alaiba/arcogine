@@ -394,19 +394,21 @@ Admit or extend a seed only during reconciliation or another explicit knowledge-
 2. **Potentially transferable** — after Arcogine-specific class names and implementation details are removed, an intelligible proposition, distinction, failure mode, method, or counterexample remains.
 3. **Loss-sensitive** — retiring the workspace without the compact signal would materially reduce the chance that a later independent investigation could recognize recurrence.
 
-Prefer preserving reusable proving cases, counterexamples, measurements, protocols, tests, or other research assets in the durable Arcogine surface that will actually use them. A seed is connective tissue: it points to those assets and evidence coordinates rather than duplicating whole reports.
+Prefer preserving reusable proving cases, counterexamples, measurements, protocols, tests, or other research assets in the durable Arcogine surface that will actually use them. A seed is connective tissue: it points to those assets and to a durable evidence reference rather than duplicating whole reports.
 
 Do not create a seed merely because a finding is interesting, publication is imaginable, or a researcher wants to keep notes. If the item is an unresolved Arcogine decision, track it in the research register. If it has an accepted Arcogine semantic consequence, reconcile that consequence into its authoritative destination. If it is situational and not worth future recovery, discard it explicitly.
 
 Each maintained seed record in [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md) must contain:
 
 - **Signal** — the smallest potentially transferable observation, distinction, counterexample, method, or hypothesis;
-- **Origin** — the originating investigation, exact evidence coordinates where practical, and durable reconciliation destination when one exists;
+- **Origin** — the originating investigation, a durable evidence reference, and the durable reconciliation destination when one exists;
 - **Evidence posture** — what is actually established, without upgrading an Arcogine-specific result into a broader claim;
 - **Boundaries / counterevidence** — known conditions where the signal may not hold, contrary examples, or material untested scope;
 - **Reusable assets** — durable proving cases, counterexamples, measurements, protocols, tests, source maps, or other research assets;
-- **Occurrences** — later independent-occurrence or reuse entries with evidence coordinates and the materially similar aspect;
+- **Occurrences** — later independent-occurrence or reuse entries with a durable evidence reference and the materially similar aspect;
 - **Revisit when** — a concrete evidence or recurrence condition that would justify considering a bounded synthesis investigation.
+
+A **durable evidence reference** is one that still resolves once the originating workspace is retired: normally the reconciliation pull request or an equivalent delivery-history record, which carries the exact report/review coordinates, named alongside the durable destination the conclusion landed in. Do not record a workspace `commit SHA + path` as a seed's evidence reference. That coordinate is the artifact identity only until the workspace is retired, and a seed is admitted during reconciliation — the same phase that retires the workspace — so it would be written into maintained state at the point its authority ends. Whether such a commit stays fetchable afterwards depends on Git-host retention behaviour rather than on any repository guarantee, and maintained state must not depend on that.
 
 When reconciling a new candidate, search existing seeds for semantic neighbors **only after** the originating investigation has reached its own result. Extend an existing seed when the underlying signal is genuinely the same. Record a later result as an **independent occurrence** only if the seed was not used as a load-bearing premise or framing input to that investigation; otherwise record **reuse**. Recurrence may justify considering a bounded synthesis question, but it does not establish generality by itself.
 
@@ -423,7 +425,7 @@ This retirement rule does not create another lifecycle state, permanent report a
 This document defines Arcogine's normative research operating model. It does not:
 
 - list Arcogine's current open research questions — see [`docs/research/research-register.md`](../research/research-register.md);
-- decide any live Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — those remain open exactly as the maintained register and any in-flight ADR record them;
+- decide any Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — each one's state is exactly what the maintained register and the applicable ADRs record, and this document neither settles nor reopens any of them;
 - create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, publication lifecycle/backlog, or new issue ledger.
 
 Research documents remain research evidence only. Synthesis seeds remain non-authoritative recurrence signals only. Neither becomes accepted architecture simply because it exists.

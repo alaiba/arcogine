@@ -124,6 +124,8 @@ R3 -> F1
 
 Controlled revision identity and lineage form the **configuration-history and evidence-addressability substrate**. They let later records point at an exact historical occurrence, but they do not themselves mean that the revision was approved, authorized, conformant, certified, deployed, or compliant with an external framework.
 
+`recorder` is **recording provenance, not attribution and not authorization**: it identifies what caused Arcogine to record the revision, and a recorder is not thereby an approver, reviewer, owner, or deployer. It is recorded as a whole. Its internal `source` / `subject` decomposition is deliberately **underspecified** — ADR-0008 permits a small source/subject value without fixing which slot carries a mechanism and which carries a party, so neither slot may be read as a canonical channel or a canonical actor identity. Because the recorder is persisted and participates in idempotency equality in immutable revision history, it must not be renamed, reinterpreted, or mechanically migrated into any future attribution capability; such a capability must be **additive**. The cross-cutting separation between attributable actor, recording provenance, decision provenance, and external data source is recorded in [Architecture Overview — Attribution and decision boundaries](overview.md#attribution-and-decision-boundaries).
+
 This creates two complementary dimensions:
 
 ```text

@@ -1,6 +1,6 @@
 # Operational Execution and Digital-Twin Boundary Research
 
-> **Status:** READY, with durable operational identity on the critical path  
+> **Status:** READY for the remaining boundaries; the durable operational identity question is CONCLUDED and reconciled into ADR-0013  
 > **Scope:** Resolve the semantic and safety boundaries required before Arcogine admits implementation that connects shared production semantics to independently existing operational systems  
 > **Authority:** Research only; this document defines no implementation queue or Operational module contract
 
@@ -49,17 +49,13 @@ Research must preserve these already-established boundaries:
 8. **Generic actor/capability semantics are not inherently Operational.** Consequential use adds verified identity, trust, safety, and authority requirements.
 9. **Seek, replay, checkpoint/restore, and fork are distinct capabilities.** None is an execution kind.
 
-## Durable operational identity — READY / critical path
+## Durable operational identity — CONCLUDED
 
-ADR-0013 must resolve:
+This question is closed. The referent is **one accountable operational continuation**, and the continuity, divergence/lineage, acceptance, divergence-evidence, and record-attachment rules are Accepted in [ADR-0013: Durable operational identity](../../architecture/decisions/0013-durable-operational-identity.md), with the dependent boundary summarized in [Operational Execution and Digital Twin Architecture](../../architecture/operational-execution-digital-twin.md) §2.2.
 
-> What independently continuing operational history or partition, if any, needs durable identity, and what makes two records belong to the same one versus different ones?
+Those documents are the authority; this brief does not restate the decision. Remaining research must consume it rather than reopening it, and must not introduce an operational identifier ahead of the first durable operational record capability — ADR-0013 deliberately defers the type name, representation, persistence, coordination, registry, closure/retirement, and module ownership.
 
-The candidate identity must be tested against restart, failover, disaster recovery, lifecycle changes, changing telemetry/control availability, hybrid composition, several independent twins/interpretations of one physical installation, historical inspection, stale restore, split brain, and deliberate divergent fork.
-
-It must remain distinct from runtime/run identity, model fingerprint, controlled revision, actor, target, deployment, and external subject identity.
-
-Do not introduce a renamed operational identifier until referent, equality, continuity, and divergence rules are explicit.
+Two follow-on questions were separated out rather than settled here, and are tracked in the [research register](../research-register.md): entitlement/authority to extend a continuation belongs to the actor/trust/authority boundary below, and closure/retirement semantics remain open in both directions pending a concrete consumer.
 
 ## Actor, trust, authority, and capability — CANDIDATE
 
@@ -68,12 +64,13 @@ Research the minimum shared semantics for who/what may perform which operation o
 Test:
 
 - claimed versus verified identity;
+- entitlement to extend an accountable operational continuation, which ADR-0013 deliberately leaves to this boundary: possession of the identifier confers no authority, and retained accepted history is continuity evidence rather than authorization;
 - delegation and accountable actor/principal;
 - capability versus authorization/policy;
 - source/peer/target authenticity;
 - least privilege and loss/revocation of authority;
 - physical-safety/fail-safe requirements;
-- interaction with the Agency and Decision Boundary research.
+- interaction with the concluded [Agency and decision boundary](agency-decision-boundary.md) result, whose durable rules in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries) are inputs to this question rather than open alongside it: the role, provenance, and attribution-versus-outcome rules are settled, while ownership of reusable actor/capability semantics is exactly what this boundary must resolve.
 
 The output must settle ownership so Operational does not duplicate a generic authorization model.
 

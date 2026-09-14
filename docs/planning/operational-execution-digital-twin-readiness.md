@@ -21,7 +21,7 @@ The durable operational identity is no longer a blocker: [ADR-0013](../architect
 
 That closes one critical-path semantic question; it does not admit a slice. The remaining shared boundaries — actor/capability ownership, external operation realization, authoritative subject correspondence, and temporal reconciliation — are still unresolved, and each must be settled at least to the extent required to define a concrete safe slice. Slice-specific safety/failure semantics, explicit prerequisites, and executable acceptance evidence remain independently required by the promotion criteria below.
 
-Those open questions are tracked in [Operational Execution and Digital-Twin Boundary Research](../research/investigations/operational-execution-digital-twin-boundaries.md) and the [Agency and Decision Boundary investigation](../research/investigations/agency-decision-boundary.md), not here.
+Those open questions are tracked in [Operational Execution and Digital-Twin Boundary Research](../research/investigations/operational-execution-digital-twin-boundaries.md), not here. The [Agency and decision boundary](../research/investigations/agency-decision-boundary.md) question is now concluded: its durable role, attribution, and provenance rules in [Architecture Overview — Attribution and decision boundaries](../architecture/overview.md#attribution-and-decision-boundaries) constrain any future slice, but they do not settle actor/capability ownership and do not admit one.
 
 ## Constraints any future implementation must preserve
 

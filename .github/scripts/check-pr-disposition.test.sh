@@ -204,21 +204,38 @@ test_case "canonical whitespace: literal t around head/value -> FAIL" 1 "$CURREN
   "Reviewed head:t${CURRENT}
 Disposition:t**READY TO MERGE**"
 
-# 25. Separately verified trusted Dependabot provenance needs no positive review.
+# 25. Reviewers commonly format the head SHA as inline code. Backticks are
+# cosmetic: the captured SHA is still compared for exact equality against the
+# PR head, so tolerating them cannot widen what authorizes.
+test_case "canonical block with backticked head SHA -> PASS" 0 "$CURRENT" \
+  "Reviewed head: \`$CURRENT\`
+Disposition: **READY TO MERGE**"
+
+# 26. The backticked form is equally binding when it blocks.
+test_case "backticked head SHA with CHANGES REQUIRED -> FAIL" 1 "$CURRENT" \
+  "Reviewed head: \`$CURRENT\`
+Disposition: **CHANGES REQUIRED**"
+
+# 27. Backtick tolerance must not relax head matching.
+test_case "backticked stale head does not authorize -> FAIL" 1 "$CURRENT" \
+  "Reviewed head: \`$OLD\`
+Disposition: **READY TO MERGE**"
+
+# 28. Separately verified trusted Dependabot provenance needs no positive review.
 export PR_TRUSTED_DEPENDABOT="true"
 test_case "trusted Dependabot provenance without reviews -> PASS" 0 "$CURRENT"
 
-# 26. A current-head negative review revokes the default Dependabot authorization.
+# 29. A current-head negative review revokes the default Dependabot authorization.
 test_case "trusted Dependabot with current-head CHANGES REQUIRED -> FAIL" 1 "$CURRENT" \
   "Reviewed head: $CURRENT
 Disposition: **CHANGES REQUIRED**"
 
-# 27. A stale negative review does not revoke current trusted provenance.
+# 30. A stale negative review does not revoke current trusted provenance.
 test_case "trusted Dependabot with stale-head CHANGES REQUIRED -> PASS" 0 "$CURRENT" \
   "Reviewed head: $OLD
 Disposition: **CHANGES REQUIRED**"
 
-# 28. Without trusted provenance, no-review falls back to ordinary authorization.
+# 31. Without trusted provenance, no-review falls back to ordinary authorization.
 export PR_TRUSTED_DEPENDABOT="false"
 test_case "untrusted/no-review PR -> FAIL" 1 "$CURRENT"
 

@@ -78,7 +78,7 @@ test('completion evidence parsing', async (t) => {
     assert.equal(isAccountedCompletion(parsed, FINDINGS), true);
   });
 
-  await t.test('INCREMENTAL + CLEAN + no finding issues qualifies', () => {
+  await t.test('INCREMENTAL + CLEAN + no finding issues is individually accounted', () => {
     const parsed = parseCompletionComment(cleanEvidence('INCREMENTAL'));
     assert.equal(parsed.mode, 'INCREMENTAL');
     assert.equal(isAccountedCompletion(parsed, FINDINGS), true);
@@ -138,6 +138,38 @@ test('completion evidence parsing', async (t) => {
     assert.equal(parsed, null);
     assert.equal(latestValidCompletion([trusted(stale, '2026-01-01T00:00:00Z')], NOW, FINDINGS), null);
     assert.equal(deriveWeeklyState(null, NOW), 'DUE');
+  });
+
+  await t.test('an isolated INCREMENTAL completion cannot establish the baseline', () => {
+    const incremental = trusted(
+      cleanEvidence('INCREMENTAL', SHA_A, '2026-09-08T00:00:00Z'),
+      '2026-09-08T00:00:00Z',
+    );
+    assert.equal(latestValidCompletion([incremental], NOW, FINDINGS), null);
+  });
+
+  await t.test('legacy-only history cannot authorize an INCREMENTAL baseline', () => {
+    const legacy = trusted(
+      `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-01T00:00:00Z\nmode: FULL`,
+      '2026-09-01T00:00:00Z',
+    );
+    const incremental = trusted(
+      cleanEvidence('INCREMENTAL', SHA_B, '2026-09-08T00:00:00Z'),
+      '2026-09-08T00:00:00Z',
+    );
+    assert.equal(latestValidCompletion([legacy, incremental], NOW, FINDINGS), null);
+  });
+
+  await t.test('an INCREMENTAL completion is accepted after an accounted FULL baseline', () => {
+    const full = trusted(
+      cleanEvidence('FULL', SHA_A, '2026-09-01T00:00:00Z'),
+      '2026-09-01T00:00:00Z',
+    );
+    const incremental = trusted(
+      cleanEvidence('INCREMENTAL', SHA_B, '2026-09-08T00:00:00Z'),
+      '2026-09-08T00:00:00Z',
+    );
+    assert.equal(latestValidCompletion([full, incremental], NOW, FINDINGS).reviewedHead, SHA_B);
   });
 
   await t.test('a later new-format qualifying completion supersedes legacy history', () => {

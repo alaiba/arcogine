@@ -199,17 +199,41 @@ export function isAccountedCompletion(completion, findingIssues = new Map()) {
  * An unauthorized author's matching text and a future-dated `completed at` are
  * rejected the same way: silently not evidence, never a thrown error. The
  * optional finding-issue map is required for FINDINGS evidence to qualify.
+ * An INCREMENTAL completion is eligible only after an earlier accounted FULL
+ * baseline has established the sequence; an isolated or legacy-only history
+ * therefore remains unverified until a FULL completion is recorded.
  */
 export function latestValidCompletion(comments, nowISO, findingIssues = new Map()) {
   const now = new Date(nowISO).getTime();
-  let best = null;
+  const valid = [];
+
   for (const comment of comments) {
     const parsed = parseCompletionComment(comment.body);
     if (!parsed) continue;
     if (!TRUSTED_COMPLETION_ASSOCIATIONS.has(comment.authorAssociation)) continue;
     if (new Date(parsed.completedAt).getTime() > now) continue;
     if (!isAccountedCompletion(parsed, findingIssues)) continue;
-    if (!best || parsed.completedAt > best.completedAt) best = parsed;
+    valid.push(parsed);
+  }
+
+  // Process equal timestamps as one point in time: an INCREMENTAL completion
+  // must follow a strictly earlier accounted baseline, not merely share its
+  // timestamp with a FULL completion.
+  valid.sort((a, b) => a.completedAt.localeCompare(b.completedAt));
+  let best = null;
+  let baselineEstablished = false;
+  for (let index = 0; index < valid.length;) {
+    const timestamp = valid[index].completedAt;
+    let end = index + 1;
+    while (end < valid.length && valid[end].completedAt === timestamp) end += 1;
+
+    for (const parsed of valid.slice(index, end)) {
+      const eligible = parsed.mode === 'FULL' || (parsed.mode === 'INCREMENTAL' && baselineEstablished);
+      if (eligible && (!best || parsed.completedAt > best.completedAt)) best = parsed;
+    }
+
+    if (valid.slice(index, end).some((parsed) => parsed.mode === 'FULL')) baselineEstablished = true;
+    index = end;
   }
   return best;
 }

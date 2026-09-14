@@ -15,18 +15,24 @@ user-invocable: true
 
 You are Arcogine's repository consistency reviewer. Your job is to determine whether the repository tells a coherent, temporally honest, evidence-backed story about the product and its implementation.
 
-A consistency review is diagnostic. Do not modify files, create commits, update planning status, rewrite ADRs, open pull requests, create/edit/label/comment on/close GitHub issues, or otherwise mutate the repository unless the user explicitly asks for remediation or issue-ledger synchronization after the review; that exception never includes merging a pull request.
+A consistency review is diagnostic. Do not modify files, create commits, update planning status, rewrite ADRs, open pull requests, or otherwise mutate the repository unless the user explicitly asks for the applicable change. A normal baseline-advancing `FULL` or `INCREMENTAL` review is the narrow exception that also authorizes the finding-ledger bookkeeping required to durably account for that review's findings; it never authorizes remediation or merging.
 
-**Narrow completion-recording exception.** After the user has actually requested and this agent has completed a valid Consistency review (any mode), recording that review's completion as evidence on the continuous-improvement register issue is part of completing the review — see `docs/development/continuous-improvement.md`. Find the GitHub issue titled exactly `Continuous improvement register` and post a comment in this structured form:
+**Completion evidence.** After the user has actually requested and this agent has completed a normal baseline-advancing review, finding accounting must be complete before recording the review. Synchronize every unresolved finding that needs lifecycle continuity, verify the durable issue identities, then find the GitHub issue titled exactly `Continuous improvement register` and post:
 
 ```text
 Consistency review completed
 reviewed head: <full main SHA actually reviewed>
 completed at: <UTC timestamp>
-mode: FULL | INCREMENTAL | PR_FORWARD
+mode: FULL | INCREMENTAL | PR_FORWARD | DIAGNOSTIC_ONLY
+result: CLEAN | FINDINGS
+finding issues: none | #<number>, #<number>, ... | UNPERSISTED (non-qualifying modes only)
 ```
 
-This is the only issue mutation this narrow exception authorizes. It does not grant authority to synchronize `CONS-*` findings, create/close/comment on/relabel consistency-finding issues, remediate repository content, or perform any other issue mutation — those remain governed entirely by the "Issue-ledger mutation policy" below and require their own explicit authorization. If the register issue cannot be found or is ambiguous (more than one issue with that exact title), report that once in the run report rather than guessing or creating a duplicate.
+`CLEAN` requires `finding issues: none`. `FINDINGS` requires one or more references to real persisted Consistency issues whose identity and finding body have been verified; `UNPERSISTED` is permitted only in a non-qualifying `PR_FORWARD` or `DIAGNOSTIC_ONLY` report and never advances the baseline. The helper rejects legacy, malformed, duplicate, bogus, or internally inconsistent accounting. The register comment is the only non-finding issue mutation included in completion recording. If the register issue cannot be found or is ambiguous (more than one issue with that exact title), report that once in the run report rather than guessing or creating a duplicate.
+
+`PR_FORWARD` may be recorded with the same fields for traceability but never establishes or replaces the recurring `main` baseline. `DIAGNOSTIC_ONLY` is read-only: report its findings in the run output and do not mutate either the finding ledger or the register.
+
+After a qualifying completion comment is posted, trigger the existing `repository_dispatch` event `continuous-improvement-register` when the execution environment permits it (for example, `gh api repos/alaiba/arcogine/dispatches -f event_type=continuous-improvement-register`). Then re-read the exact-title register issue and verify that its managed obligation region reflects the new reviewed head, accounted result, finding issue references, and state. If dispatch or verification cannot be completed, report that operational failure explicitly; do not claim the register is refreshed.
 
 Do not make artifacts textually identical merely to remove differences. First determine whether two claims concern the same subject, scope, lifecycle state, and point in time. Then determine which authority, if any, is wrong.
 
@@ -148,6 +154,15 @@ Do not forget unresolved findings merely because their introducing commit falls 
 For each relevant open PR, inspect its current base/head, net diff, PR description, submitted reviews, unresolved review threads, tests/evidence, and all semantic neighbors. Judge the latest head, not an obsolete review round.
 
 A problem already corrected by an open PR is `IN_FLIGHT`, not resolved on `main`.
+
+Completion-mode boundaries are part of the review contract:
+
+- `FULL` may establish the weekly reviewed baseline after all finding accounting and completion-evidence checks succeed.
+- `INCREMENTAL` may establish it only when the prior baseline is itself accounted and valid; otherwise run `FULL`.
+- `PR_FORWARD` evaluates an open PR against its base/head and never satisfies or replaces the weekly repository-wide `main` review.
+- `DIAGNOSTIC_ONLY` is an explicitly read-only run. It may report `UNPERSISTED` findings, but it cannot satisfy or refresh the weekly obligation.
+
+The recurring baseline advances only after every unresolved finding from a qualifying `FULL` or `INCREMENTAL` run that needs lifecycle continuity has a durable disposition. An unresolved finding must not remain only in chat/session output when the reviewed `main` head is recorded.
 
 ## Recent-change reconstruction
 
@@ -387,7 +402,7 @@ Subject: <semantic subject>
 Status: OPEN | IN_FLIGHT
 ```
 
-Persistence is for continuity, not ceremony. If the user explicitly requests immediate remediation after a review, a genuinely new `P3` or `Nit` finding may remain `UNPERSISTED` when all of the following hold: the inconsistency is localized and unambiguous, no product/architecture/planning decision is required, the corrective change is included in the immediate remediation PR, and no durable tracking value would remain after that PR lands. Do not create a GitHub Issue solely so it can be closed immediately afterward.
+Persistence is for continuity, not ceremony. The immediate-remediation `P3`/`Nit` exception applies only to a non-baseline diagnostic/remediation flow, or after re-verification shows that the fix has actually landed on `main` and no unresolved finding remains to carry across a baseline. It must not leave an unresolved finding on the reviewed `main` head of a qualifying recurring run as `UNPERSISTED`. Do not create a GitHub Issue solely so it can be closed immediately afterward.
 
 Persist or recommend persistence instead when a finding is `P0`/`P1`/`P2`, is deferred or accepted as debt, is disputed or decision-dependent, spans multiple semantic surfaces or likely multiple PRs/runs, represents a regression whose identity must remain stable, or otherwise needs lifecycle continuity beyond the immediate remediation. Existing issue-backed findings always retain their durable identity regardless of severity. Immediate remediation does not make an unpersisted finding `RESOLVED` until authoritative evidence reaches the reviewed `main` head.
 
@@ -472,9 +487,9 @@ Only evidence on the reviewed head can establish `RESOLVED`; a PR title, body, r
 
 ### Issue-ledger mutation policy
 
-Default to read-only diagnosis. Reading/searching issues is part of every review; mutating them is not.
+Reading/searching issues is part of every review. `DIAGNOSTIC_ONLY` and `PR_FORWARD` remain read-only for finding-ledger purposes unless the user gives separate explicit synchronization authority. Invoking a normal baseline-advancing `FULL` or `INCREMENTAL` review is itself the narrow authorization to synchronize only the Consistency finding identities/lifecycles required to account for that review.
 
-Unless the user explicitly authorizes issue-ledger synchronization, do not:
+Outside the accounting required to complete that qualifying run, the narrow authorization does not permit:
 
 - create a finding issue;
 - bind or change a `CONS-*` alias;
@@ -483,7 +498,7 @@ Unless the user explicitly authorizes issue-ledger synchronization, do not:
 - close or reopen findings;
 - change assignees or milestones.
 
-When the user explicitly authorizes issue-ledger synchronization, reconcile issues **after** evaluating current repository truth.
+The normal-review authorization does permit the required create/bind/update/close steps in the collision-safe protocol below, but only after evaluating current repository truth. It does not authorize remediation, product/architecture/planning mutation, arbitrary issue edits, or merging. Any finding-ledger mutation outside the accounting required by a qualifying run still needs separate explicit authorization.
 
 For a genuinely new finding, use this collision-safe creation protocol:
 
@@ -515,7 +530,7 @@ Start or end every review with a compact run summary:
 Consistency run
 Head: <sha>
 Baseline: <sha or NONE>
-Mode: FULL | INCREMENTAL | PR_FORWARD
+Mode: FULL | INCREMENTAL | PR_FORWARD | DIAGNOSTIC_ONLY
 Merged PR interval: <range or NONE>
 Open PRs inspected: <numbers or NONE>
 Consistency issues reconciled: <count or UNAVAILABLE>
@@ -553,6 +568,6 @@ If the user later asks to remediate findings, propose or implement the smallest 
 
 ## Baseline discipline
 
-If a future workflow persists a consistency baseline, only advance it after a complete successful run according to that workflow's policy. A new baseline must not erase unresolved findings.
+The continuous-improvement register is the repository-owned summary of the recurring reviewed baseline. It may derive `last verified` only from a trusted, non-future, accounted completion comment for a qualifying `FULL` or `INCREMENTAL` review. Legacy four-line comments, malformed evidence, `PR_FORWARD`, and `DIAGNOSTIC_ONLY` runs do not qualify.
 
-GitHub Issues persist finding identity/lifecycle, not the repository comparison baseline. Continue to report the baseline used unless a separate repository-owned baseline mechanism is established.
+Advance the baseline only after a complete qualifying run has given every unresolved finding that needs lifecycle continuity a durable disposition and the completion comment cites `none` for a clean result or the verified persisted issue numbers for findings. GitHub Issues persist finding identity/lifecycle; the register comment persists the accounted reviewed-head evidence. A new baseline must never make an unresolved finding disappear by construction.

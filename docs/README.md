@@ -78,7 +78,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Synthesis seeds](research/synthesis-seeds.md) | Current retained non-authoritative cross-investigation synthesis signals |
 | [Research brief template](research/brief-template.md) | Reusable advisory failure-oriented planning structure for bounding research questions; it does not add `READY` criteria |
 | [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |
-| [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation |
+| [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation — **concluded**; durable rules live in [Attribution and decision boundaries](architecture/overview.md#attribution-and-decision-boundaries) |
 | [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
 | [Factory-design game vertical slice](research/investigations/factory-design-game-vertical-slice.md) | Product loop, diagnostics, reference challenge, scoring/tutorial/technology evidence |
 | [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy and unselected recovery/session extensions |

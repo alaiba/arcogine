@@ -1,9 +1,55 @@
 # Agency and Decision Boundary Investigation
 
-> **Status:** READY
+> **Status:** CONCLUDED  
 > **Scope:** Determine the smallest durable semantic boundary between observation, decision production, actor attribution, capability, semantic operation, and resulting state change  
-> **Authority:** Research only; this document does not establish a new platform abstraction, module owner, delivery track, or current product capability  
-> **Related:** [Product Charter](../../product/charter.md), [Architecture Overview](../../architecture/overview.md), [Operational Execution and Digital Twin Architecture](../../architecture/operational-execution-digital-twin.md), [Standards Alignment](../../architecture/standards-alignment.md)
+> **Authority:** Research provenance only. The durable conclusion lives in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries); this document does not establish architecture, a platform abstraction, module owner, delivery track, or product capability  
+> **Related:** [Product Charter](../../product/charter.md), [Architecture Overview](../../architecture/overview.md), [Operational Execution and Digital Twin Architecture](../../architecture/operational-execution-digital-twin.md), [Standards Alignment](../../architecture/standards-alignment.md), [Research register](../research-register.md)
+
+## Conclusion
+
+**The boundary is a set of distinct semantic roles plus consumer-owned mechanisms — not a platform abstraction.** No platform-level `Agent` concept, shared actor/subject/decision-source/capability value type, agent-communication ontology, Agency module, delivery track, or Agency-specific ADR is justified by current evidence and current consumers. Attribution — not agency — is what Arcogine actually lacks, and it is not yet needed by any committed consumer.
+
+The durable rules are recorded once, in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries), with [Operational architecture](../../architecture/operational-execution-digital-twin.md) §5 and [Governance architecture](../../architecture/governance-conformance.md) §4 reconciled to them. They are not restated here.
+
+### Outcome against the original hypotheses
+
+| Hypothesis | Outcome |
+|---|---|
+| H1 — `Agent` may not be a platform primitive | **Supported, narrowed.** Designs that collapse or hard-bind actor, decision source, and subject fail the proving cases. This is a current-evidence conclusion, not a proof that no compositional `Agent` concept could exist |
+| H2 — decision-source internals are not common world semantics | **Supported, strengthened.** Recording a hidden reasoning trace as authoritative causal provenance would manufacture false provenance; a voluntarily recorded public rationale records only what a party *asserted* |
+| H3 — actor attribution survives controller replacement | **Supported, narrowed.** The actor *concept* survives; a shared actor *type* does not follow, and a delegator does not automatically retain responsibility |
+| H4 — replaying a decision is not re-executing its source | **Supported, refined.** The four replay operations stay distinct; the general move is converting the nondeterministic boundary into recorded input where a consumer's contract requires replayability |
+| H5 — a capability may be temporally extended | **Refined to no new type.** ADR-0010's aggregate/child pattern already supplies aggregate intent, child identity, correlation, and completion |
+| H6 — agent-specific communication is not assumed | **Supported decisively.** Typed operations, events, observations, results, and explicit public commitments suffice |
+
+The §10 track-creation test **failed correctly**: the result is cross-cutting semantic distinction, not a coherent implementation responsibility.
+
+### Claims that did not survive review
+
+The independent adversarial review falsified or narrowed several load-bearing sub-claims of the source report, and these must not be reintroduced: a shared actor value type with a fixed consumer-count trigger; an actor *kind* taxonomy; `AffectedEntityRef` as a universal subject reference; `(runId, latestEventSequence)` as a shared observation reference; "a decision and the operation it requests are universally one durable fact"; "authorization consults the current actor only"; a universally required decision-source version; and the categorical form of "actor identity must never affect deterministic outcome". A successor correction further narrowed the review itself, most importantly that `RevisionRecorder`'s internal `source` / `subject` decomposition is **underspecified by durable authority** and must not be read as mechanism-versus-actor.
+
+### What remains open
+
+- **Actor identity** — referent, equality, namespace, lifecycle, rename/merge/retirement, federation, and external-identity rules are unresolved. Admitted as a separate `CANDIDATE` question in the [research register](../research-register.md), deliberately **not** coupled to ADR-0013's accountable-operational-continuation identity.
+- **Stateful or online-learning decision sources** — identity plus version may not identify a source whose material behaviour changes without a version change. Recorded as an explicit reopening trigger in the durable architecture rather than as backlog, because no consumer exists.
+- **Ownership of reusable actor/capability semantics** — still open, and tracked by the Operational [actor, trust, authority, and capability](operational-execution-digital-twin-boundaries.md) question. It must not default to Operational.
+
+### Evidence coordinates
+
+Decision-quality evidence for this conclusion, by exact commit and path in the research-evidence workspace `docs/agency-and-operational-identity-research-reports`:
+
+| Artifact | Commit | Path |
+|---|---|---|
+| Source report | `bf744af171d5a42a3c578d33836e8e45bd33b0fe` | `docs/research/agency-decision-boundary-report.md` |
+| Independent adversarial review (`ACCEPT WITH QUALIFICATIONS`) | `18018d3dbdee4fb9e5cb739585634563a5c3ec94` | `docs/research/agency-decision-boundary-adversarial-review.md` |
+| Successor correction note | `115fe4465bda04690d5bd27cca47a74438c24d0a` | `docs/research/investigations/agency-decision-boundary-adversarial-review-corrections.md` |
+| Coupled synthesis (context only) | `bf744af171d5a42a3c578d33836e8e45bd33b0fe` | `docs/research/agency-and-operational-identity-synthesis.md` |
+
+Where the correction note and the original review conflict, the correction controls. The review's independence satisfied a fresh isolated run but not a different model family; a future author who considers that insufficient for promoting anything beyond the present refusals should obtain a different-model-family pass first.
+
+---
+
+Sections 1–10 below are the **original brief**, preserved unchanged as research provenance. They record what was asked and how it was bounded, not what was concluded; where they anticipate an open question, the conclusion above controls.
 
 ## 1. Why this investigation exists
 

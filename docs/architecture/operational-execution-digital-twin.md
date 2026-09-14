@@ -184,11 +184,15 @@ This distinction is substrate-independent and is more fundamental than an `obser
 
 Actor/action/capability semantics are not intrinsically operational. Synthetic execution may need humans, agents, NPCs, adversaries, delegated authority, protected resources, approvals, or forbidden actions.
 
+The cross-cutting role, attribution, and provenance rules this section depends on are recorded in [Architecture Overview — Attribution and decision boundaries](overview.md#attribution-and-decision-boundaries), which is their durable authority. In particular: actor, decision source, and subject are distinct roles whose identities need not differ; no shared actor type, actor kind, or actor equality/lifecycle contract exists; and **actor identity is a different question from the accountable operational continuation identity** [ADR-0013](decisions/0013-durable-operational-identity.md) accepts. Actor identity answers *who is the attributable party*; ADR-0013 answers *which independently continuing body of accountable conduct a fact belongs to*. They may correlate, and neither inherits the other's equality or lifecycle rules.
+
 The reusable semantic question is approximately:
 
 ```text
 May actor A perform operation X on subject S under the applicable policy?
 ```
+
+That is a **question shape** for locating where policy belongs, not a persisted or public input schema, and Arcogine asserts no rule that authorization consults only the current actor.
 
 Real external consequence adds further requirements rather than a second authorization ontology:
 
@@ -202,7 +206,7 @@ Real external consequence adds further requirements rather than a second authori
 
 Authentication mechanism, identity provider, certificate scheme, protocol security profile, and policy engine remain implementation choices.
 
-The exact module ownership of reusable actor/capability semantics is still open and must not be forced into Operational merely because the first real-world consumer needs it.
+The exact module ownership of reusable actor/capability semantics is still open and must not be forced into Operational merely because the first real-world consumer needs it. Consequential external execution adds verification, trust, safety, and fail-safe requirements to that ownership question; it does not make Operational the owner of generic actor semantics.
 
 ## 6. External commands are not facts about reality
 

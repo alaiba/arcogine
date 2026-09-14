@@ -70,7 +70,7 @@ Test:
 - source/peer/target authenticity;
 - least privilege and loss/revocation of authority;
 - physical-safety/fail-safe requirements;
-- interaction with the Agency and Decision Boundary research.
+- interaction with the concluded [Agency and decision boundary](agency-decision-boundary.md) result, whose durable rules in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries) are inputs to this question rather than open alongside it: the role, provenance, and attribution-versus-outcome rules are settled, while ownership of reusable actor/capability semantics is exactly what this boundary must resolve.
 
 The output must settle ownership so Operational does not duplicate a generic authorization model.
 

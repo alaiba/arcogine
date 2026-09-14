@@ -34,18 +34,13 @@ The independent adversarial review falsified or narrowed several load-bearing su
 - **Stateful or online-learning decision sources** — identity plus version may not identify a source whose material behaviour changes without a version change. Recorded as an explicit reopening trigger in the durable architecture rather than as backlog, because no consumer exists.
 - **Ownership of reusable actor/capability semantics** — still open, and tracked by the Operational [actor, trust, authority, and capability](operational-execution-digital-twin-boundaries.md) question. It must not default to Operational.
 
-### Evidence coordinates
+### Evidence behind this conclusion
 
-Decision-quality evidence for this conclusion, by exact commit and path in the research-evidence workspace `docs/agency-and-operational-identity-research-reports`:
+The conclusion rests on a decision-quality research report, an independent adversarial review of that exact report revision returning `ACCEPT WITH QUALIFICATIONS`, and a successor correction note narrowing claims in the review whose wording exceeded current repository authority. Where the correction and the original review conflict, the correction controls; all of its narrowed forms are carried in the durable destination above.
 
-| Artifact | Commit | Path |
-|---|---|---|
-| Source report | `bf744af171d5a42a3c578d33836e8e45bd33b0fe` | `docs/research/agency-decision-boundary-report.md` |
-| Independent adversarial review (`ACCEPT WITH QUALIFICATIONS`) | `18018d3dbdee4fb9e5cb739585634563a5c3ec94` | `docs/research/agency-decision-boundary-adversarial-review.md` |
-| Successor correction note | `115fe4465bda04690d5bd27cca47a74438c24d0a` | `docs/research/investigations/agency-decision-boundary-adversarial-review-corrections.md` |
-| Coupled synthesis (context only) | `bf744af171d5a42a3c578d33836e8e45bd33b0fe` | `docs/research/agency-and-operational-identity-synthesis.md` |
+The adversarial review's independence satisfied a fresh isolated run but **not** a different model family, which the research operating model prefers first for a high-risk question. A future author who considers that insufficient for promoting anything beyond the refusals recorded here should obtain a different-model-family pass first.
 
-Where the correction note and the original review conflict, the correction controls. The review's independence satisfied a fresh isolated run but not a different model family; a future author who considers that insufficient for promoting anything beyond the present refusals should obtain a different-model-family pass first.
+Those artifacts lived in a temporary research-evidence workspace that was retired once this reconciliation landed, which is what the research operating model intends: the knowledge-transfer audit moves everything material into durable authority, and the evidence itself is then expendable. Their exact commit-and-path coordinates are recorded in the reconciliation pull request, which is delivery history and outlives the workspace.
 
 ---
 

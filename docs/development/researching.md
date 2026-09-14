@@ -423,7 +423,7 @@ This retirement rule does not create another lifecycle state, permanent report a
 This document defines Arcogine's normative research operating model. It does not:
 
 - list Arcogine's current open research questions — see [`docs/research/research-register.md`](../research/research-register.md);
-- decide any live Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — those remain open exactly as the maintained register and any in-flight ADR record them;
+- decide any Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — each one's state is exactly what the maintained register and the applicable ADRs record, and this document neither settles nor reopens any of them;
 - create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, publication lifecycle/backlog, or new issue ledger.
 
 Research documents remain research evidence only. Synthesis seeds remain non-authoritative recurrence signals only. Neither becomes accepted architecture simply because it exists.

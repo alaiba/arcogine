@@ -61,8 +61,8 @@ At the beginning of every complete review or re-review:
 1. Resolve current `main` and record its SHA.
 2. Resolve the PR number, title, current base, current head SHA, mergeability, and live base distance where available.
 3. **Normalize a stale base before substantive review.**
-   - For an ordinary PR, use the canonical synchronization path from `AGENTS.md`, normally `node infra/dev/pr-reconcile.mjs <pr-number>` when the local execution surface exists.
-   - For a research-evidence workspace carrying handed-off evidence coordinates, use the required history-preserving merge-style Update branch path.
+   - For an ordinary PR, use the canonical merge-style Update branch synchronization path from `AGENTS.md`, normally `node infra/dev/pr-reconcile.mjs <pr-number>`; the helper uses GitHub's repository-scoped API and does not require a local checkout.
+   - For a research-evidence workspace carrying handed-off evidence coordinates, use the same history-preserving merge-style Update branch path and verify the handed-off SHAs remain reachable.
    - For a Dependabot PR that currently qualifies for the trusted no-positive-review path, prefer Dependabot's own rebase/recreate mechanism. GitHub permits maintainers to add commits to Dependabot branches, and any maintainer-authored synchronization commit intentionally revokes the trusted provenance bypass. If you choose a maintainer-authored sync anyway, the resulting PR must follow ordinary independent review.
    - If synchronization conflicts, requires semantic judgment, lacks permission, or cannot be performed safely in the current harness, stop and return the PR to its author/implementation owner. Do not file a reconciliation finding or post a disposition against the stale head merely to request a conflict-free sync.
 4. After any successful normalization, re-resolve current `main`, the resulting head SHA, mergeability/base distance, reviews, trusted `disposition` state, and CI. The resulting head is the only head to review.

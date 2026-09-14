@@ -17,9 +17,11 @@ Operational Execution itself remains unimplemented.
 
 ## Why no implementation slice is admitted
 
-ADR-0013 still has no accepted equality/lifecycle rule for the durable operational-history identity. Other shared boundaries—actor/capability ownership, external operation realization, authoritative subject correspondence, and temporal reconciliation—must also be resolved only to the extent required to define a concrete safe slice.
+The durable operational identity is no longer a blocker: [ADR-0013](../architecture/decisions/0013-durable-operational-identity.md) is Accepted and defines the accountable-continuation referent together with its continuity, divergence, lineage, acceptance, and record-attachment rules.
 
-Those questions are tracked in [Operational Execution and Digital-Twin Boundary Research](../research/investigations/operational-execution-digital-twin-boundaries.md) and the [Agency and Decision Boundary investigation](../research/investigations/agency-decision-boundary.md), not here.
+That closes one critical-path semantic question; it does not admit a slice. The remaining shared boundaries — actor/capability ownership, external operation realization, authoritative subject correspondence, and temporal reconciliation — are still unresolved, and each must be settled at least to the extent required to define a concrete safe slice. Slice-specific safety/failure semantics, explicit prerequisites, and executable acceptance evidence remain independently required by the promotion criteria below.
+
+Those open questions are tracked in [Operational Execution and Digital-Twin Boundary Research](../research/investigations/operational-execution-digital-twin-boundaries.md) and the [Agency and Decision Boundary investigation](../research/investigations/agency-decision-boundary.md), not here.
 
 ## Constraints any future implementation must preserve
 
@@ -27,6 +29,7 @@ Any promoted Operational slice must preserve:
 
 - one shared semantic production model rather than a simulation-only/production-only fork;
 - no global `PRODUCTION / STAGING / SIMULATION` or equivalent whole-execution taxonomy;
+- the accepted durable operational identity's referent, continuity, divergence, lineage, acceptance, and record-attachment rules, including its explicitly deferred representation, persistence, coordination, registry, closure, and ownership questions;
 - independently provenanced raw external observations;
 - explicit external-subject to Arcogine-subject correspondence rather than identity inference from names/endpoints/configuration;
 - requested operation, external command/result, actual transition, observation, and reconciled interpretation as distinct facts;

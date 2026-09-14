@@ -13,6 +13,15 @@
 # full-development convenience.
 set -euo pipefail
 
+# Resolve this script's directory using Bash parameter expansion rather than an
+# external `dirname` dependency; the hermetic provisioning test deliberately
+# exposes only the primitives the provisioning contract declares.
+SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+case "$SCRIPT_SOURCE" in
+  */*) SCRIPT_DIR="${SCRIPT_SOURCE%/*}" ;;
+  *) SCRIPT_DIR="." ;;
+esac
+SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd -P)"
 REPO_DIR="${ARCOGINE_REPO_DIR:-/home/user/arcogine}"
 MIN_JAVA_MAJOR="21"
 SUPPORTED_NODE_RANGE="^22.22.2 || ^24.15.0 || ^26.0.0"
@@ -55,6 +64,12 @@ fi
 
 echo "==> Changing to repository directory: $REPO_DIR"
 cd "$REPO_DIR"
+
+echo "==> Checking Git commit identity..."
+# The helper configures only explicit ARCOGINE_GIT_USER_* values and warns on
+# missing or agent-owned identities without making provisioning fail.
+source "$SCRIPT_DIR/git-identity.sh"
+configure_arcogine_git_identity
 
 # ---------------------------------------------------------------------------
 # Helpers

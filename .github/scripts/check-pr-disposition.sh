@@ -49,7 +49,7 @@ fi
 extract_canonical_disposition() {
   local body="$1"
 
-  if [[ "$body" =~ (^|$'\n')Reviewed[[:blank:]]+head:[[:blank:]]*([a-f0-9]+)[[:blank:]]*$'\n'Disposition:[[:blank:]]*\*\*([A-Z][A-Z _-]*)\*\*[[:space:]]*$ ]]; then
+  if [[ "$body" =~ (^|$'\n')Reviewed[[:blank:]]+head:[[:blank:]]*\`?([a-f0-9]+)\`?[[:blank:]]*$'\n'Disposition:[[:blank:]]*\*\*([A-Z][A-Z _-]*)\*\*[[:space:]]*$ ]]; then
     echo "${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
   fi
 }

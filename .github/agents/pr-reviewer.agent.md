@@ -370,6 +370,7 @@ There is no third disposition for "review is clean but CI is still pending." CI 
 **Important semantics:**
 
 - The `Reviewed head:` must be the exact current PR head SHA inspected in this review. When a new commit is pushed or pre-review/final normalization creates a new PR head, the prior review's disposition becomes stale and does not authorize the new head.
+- The head SHA may be written bare or wrapped in backticks as inline code; both are accepted, and the SHA itself must still match the current head exactly.
 - The disposition block must be the final block in the review body. Prose elsewhere (examples, quoted prior reviews, discussion) mentioning disposition names is not authoritative.
 - A targeted/incomplete review must not emit a merge-authorizing disposition unless you completed the full review procedure.
 - A new head or a new finding requires a fresh disposition; CI alone changing state on an otherwise-unchanged reviewed head does not.

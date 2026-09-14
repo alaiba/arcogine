@@ -230,12 +230,20 @@ test_case "trusted Dependabot with current-head CHANGES REQUIRED -> FAIL" 1 "$CU
   "Reviewed head: $CURRENT
 Disposition: **CHANGES REQUIRED**"
 
-# 30. A stale negative review does not revoke current trusted provenance.
+# 30. The negative override is what revokes trusted Dependabot authorization, so
+# it must survive the backticked form too. Before backticks were tolerated this
+# exact input parsed as no disposition at all and the gate PASSED, silently
+# ignoring a reviewer's blocker on a trusted-provenance PR.
+test_case "trusted Dependabot with backticked current-head CHANGES REQUIRED -> FAIL" 1 "$CURRENT" \
+  "Reviewed head: \`$CURRENT\`
+Disposition: **CHANGES REQUIRED**"
+
+# 31. A stale negative review does not revoke current trusted provenance.
 test_case "trusted Dependabot with stale-head CHANGES REQUIRED -> PASS" 0 "$CURRENT" \
   "Reviewed head: $OLD
 Disposition: **CHANGES REQUIRED**"
 
-# 31. Without trusted provenance, no-review falls back to ordinary authorization.
+# 32. Without trusted provenance, no-review falls back to ordinary authorization.
 export PR_TRUSTED_DEPENDABOT="false"
 test_case "untrusted/no-review PR -> FAIL" 1 "$CURRENT"
 

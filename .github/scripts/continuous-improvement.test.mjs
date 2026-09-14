@@ -16,6 +16,8 @@ import {
   deriveWeeklyState,
   parseCompletionComment,
   latestValidCompletion,
+  isAccountedCompletion,
+  isPersistedConsistencyFinding,
   deriveRetrospectiveState,
   renderObligations,
   buildInitialBody,
@@ -28,6 +30,20 @@ import {
 const NOW = '2026-09-09T00:00:00.000Z';
 const SHA_A = 'a'.repeat(40);
 const SHA_B = 'b'.repeat(40);
+const FINDING_123 = {
+  number: 123,
+  title: 'CONS-123: example finding',
+  body: '## Finding\n\nSeverity: P2\nCategory: PUBLIC_DOC_DRIFT\nStatus: OPEN',
+};
+const FINDING_204 = {
+  number: 204,
+  title: 'CONS-001: legacy finding',
+  body: '## Finding\n\nSeverity: P2\nCategory: ARCHITECTURE_STALENESS\nStatus: RESOLVED',
+};
+const FINDINGS = new Map([
+  [FINDING_123.number, FINDING_123],
+  [FINDING_204.number, FINDING_204],
+]);
 
 test('weekly Consistency review state', async (t) => {
   await t.test('never verified is DUE, not OVERDUE', () => {
@@ -48,26 +64,52 @@ test('weekly Consistency review state', async (t) => {
 });
 
 test('completion evidence parsing', async (t) => {
-  await t.test('valid evidence parses reviewedHead/completedAt/mode', () => {
-    const body = `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-08T12:00:00Z\nmode: incremental`;
-    const parsed = parseCompletionComment(body);
+  const cleanEvidence = (mode, sha = SHA_A, completedAt = '2026-09-08T12:00:00Z') =>
+    `Consistency review completed\nreviewed head: ${sha}\ncompleted at: ${completedAt}\nmode: ${mode}\nresult: CLEAN\nfinding issues: none`;
+  const findingsEvidence = (mode, issueList = '#123', sha = SHA_A, completedAt = '2026-09-08T12:00:00Z') =>
+    `Consistency review completed\nreviewed head: ${sha}\ncompleted at: ${completedAt}\nmode: ${mode}\nresult: FINDINGS\nfinding issues: ${issueList}`;
+  const trusted = (body, createdAt) => ({ body, authorAssociation: 'OWNER', createdAt });
+
+  await t.test('FULL + CLEAN + no finding issues qualifies', () => {
+    const parsed = parseCompletionComment(cleanEvidence('FULL'));
+    assert.equal(parsed.mode, 'FULL');
+    assert.equal(parsed.result, 'CLEAN');
+    assert.equal(parsed.findingIssueNumbers.length, 0);
+    assert.equal(isAccountedCompletion(parsed, FINDINGS), true);
+  });
+
+  await t.test('INCREMENTAL + CLEAN + no finding issues qualifies', () => {
+    const parsed = parseCompletionComment(cleanEvidence('INCREMENTAL'));
+    assert.equal(parsed.mode, 'INCREMENTAL');
+    assert.equal(isAccountedCompletion(parsed, FINDINGS), true);
+  });
+
+  await t.test('FINDINGS with a persisted Consistency issue qualifies', () => {
+    const parsed = parseCompletionComment(findingsEvidence('FULL'));
+    assert.deepEqual(parsed.findingIssueNumbers, [123]);
+    assert.equal(isAccountedCompletion(parsed, FINDINGS), true);
+  });
+
+  await t.test('valid evidence parses the complete accounted schema', () => {
+    const parsed = parseCompletionComment(cleanEvidence('incremental', SHA_A, '2026-09-08T12:00:00Z'));
     assert.equal(parsed.reviewedHead, SHA_A);
     assert.equal(parsed.completedAt, '2026-09-08T12:00:00.000Z');
-    assert.equal(parsed.mode, 'incremental');
+    assert.equal(parsed.mode, 'INCREMENTAL');
+    assert.equal(parsed.result, 'CLEAN');
   });
 
   await t.test('missing reviewed head is malformed and ignored', () => {
-    const body = 'Consistency review completed\ncompleted at: 2026-09-08T12:00:00Z';
+    const body = 'Consistency review completed\ncompleted at: 2026-09-08T12:00:00Z\nmode: FULL\nresult: CLEAN\nfinding issues: none';
     assert.equal(parseCompletionComment(body), null);
   });
 
   await t.test('non-sha reviewed head is malformed and ignored', () => {
-    const body = 'Consistency review completed\nreviewed head: not-a-sha\ncompleted at: 2026-09-08T12:00:00Z';
+    const body = 'Consistency review completed\nreviewed head: not-a-sha\ncompleted at: 2026-09-08T12:00:00Z\nmode: FULL\nresult: CLEAN\nfinding issues: none';
     assert.equal(parseCompletionComment(body), null);
   });
 
   await t.test('invalid completed-at timestamp is malformed and ignored', () => {
-    const body = `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: not-a-date`;
+    const body = `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: not-a-date\nmode: FULL\nresult: CLEAN\nfinding issues: none`;
     assert.equal(parseCompletionComment(body), null);
   });
 
@@ -76,29 +118,35 @@ test('completion evidence parsing', async (t) => {
     assert.equal(parseCompletionComment(null), null);
   });
 
-  const trusted = (body, createdAt) => ({ body, authorAssociation: 'OWNER', createdAt });
-
   await t.test('latestValidCompletion picks the newest valid entry and skips malformed ones', () => {
     const older = trusted(
-      `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-01T00:00:00Z`,
+      cleanEvidence('FULL', SHA_A, '2026-09-01T00:00:00Z'),
       '2026-09-01T00:00:00Z',
     );
     const newer = trusted(
-      `Consistency review completed\nreviewed head: ${SHA_B}\ncompleted at: 2026-09-08T00:00:00Z`,
+      cleanEvidence('INCREMENTAL', SHA_B, '2026-09-08T00:00:00Z'),
       '2026-09-08T00:00:00Z',
     );
     const malformed = trusted('Consistency review completed\nreviewed head: nope', '2026-09-08T00:00:00Z');
-    const best = latestValidCompletion([older, malformed, newer, trusted('unrelated', NOW)], NOW);
+    const best = latestValidCompletion([older, malformed, newer, trusted('unrelated', NOW)], NOW, FINDINGS);
     assert.equal(best.reviewedHead, SHA_B);
   });
 
-  await t.test('a stale comment that predates a later reconciled head is still usable evidence of its own claim', () => {
-    // The helper trusts the structured claim; it is the reviewer's job to only post
-    // evidence for a head it actually reviewed. Staleness relative to the *current*
-    // main is a due-state question (age), not a malformed-evidence question.
-    const stale = `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-01-01T00:00:00Z`;
+  await t.test('legacy four-line evidence is not an accounted baseline', () => {
+    const stale = `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-01-01T00:00:00Z\nmode: FULL`;
     const parsed = parseCompletionComment(stale);
-    assert.equal(parsed.reviewedHead, SHA_A);
+    assert.equal(parsed, null);
+    assert.equal(latestValidCompletion([trusted(stale, '2026-01-01T00:00:00Z')], NOW, FINDINGS), null);
+    assert.equal(deriveWeeklyState(null, NOW), 'DUE');
+  });
+
+  await t.test('a later new-format qualifying completion supersedes legacy history', () => {
+    const legacy = trusted(
+      'Consistency review completed\nreviewed head: ' + SHA_A + '\ncompleted at: 2026-09-01T00:00:00Z\nmode: FULL',
+      '2026-09-01T00:00:00Z',
+    );
+    const fresh = trusted(cleanEvidence('FULL', SHA_B, '2026-09-08T00:00:00Z'), '2026-09-08T00:00:00Z');
+    assert.equal(latestValidCompletion([legacy, fresh], NOW, FINDINGS).reviewedHead, SHA_B);
   });
 
   await t.test('an unauthorized commenter cannot fabricate completion evidence by matching the syntax', () => {
@@ -106,7 +154,7 @@ test('completion evidence parsing', async (t) => {
     // Anyone can comment on a public issue; only a trusted author association
     // (OWNER/MEMBER/COLLABORATOR) counts.
     const forged = {
-      body: `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-08T00:00:00Z`,
+      body: cleanEvidence('FULL'),
       authorAssociation: 'NONE',
       createdAt: '2026-09-08T00:00:00Z',
     };
@@ -117,7 +165,7 @@ test('completion evidence parsing', async (t) => {
     // A fabricated future "completed at" would otherwise make daysBetween
     // negative and keep the weekly obligation CURRENT indefinitely.
     const future = trusted(
-      `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-12-31T00:00:00Z`,
+      cleanEvidence('FULL', SHA_A, '2026-12-31T00:00:00Z'),
       '2026-12-31T00:00:00Z',
     );
     assert.equal(latestValidCompletion([future], NOW), null);
@@ -125,11 +173,57 @@ test('completion evidence parsing', async (t) => {
 
   await t.test('an authorized, non-future completion is accepted', () => {
     const valid = trusted(
-      `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-08T00:00:00Z`,
+      cleanEvidence('FULL'),
       '2026-09-08T00:00:00Z',
     );
-    const best = latestValidCompletion([valid], NOW);
+    const best = latestValidCompletion([valid], NOW, FINDINGS);
     assert.equal(best.reviewedHead, SHA_A);
+  });
+
+  await t.test('FINDINGS with no issue identities cannot advance the baseline', () => {
+    const invalid = trusted(
+      `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-08T00:00:00Z\nmode: FULL\nresult: FINDINGS\nfinding issues: none`,
+      '2026-09-08T00:00:00Z',
+    );
+    assert.equal(parseCompletionComment(invalid.body), null);
+    assert.equal(latestValidCompletion([invalid], NOW, FINDINGS), null);
+  });
+
+  await t.test('CLEAN with issue identities is internally inconsistent', () => {
+    const invalid = `Consistency review completed\nreviewed head: ${SHA_A}\ncompleted at: 2026-09-08T00:00:00Z\nmode: FULL\nresult: CLEAN\nfinding issues: #123`;
+    assert.equal(parseCompletionComment(invalid), null);
+  });
+
+  await t.test('duplicate and malformed issue references are rejected', () => {
+    const duplicate = findingsEvidence('FULL', '#123, #123');
+    const malformed = findingsEvidence('FULL', '#123, issue-124');
+    assert.equal(parseCompletionComment(duplicate), null);
+    assert.equal(parseCompletionComment(malformed), null);
+  });
+
+  await t.test('bogus or non-Consistency issue references do not qualify', () => {
+    const bogusIssue = { number: 123, title: 'ordinary issue', body: 'not a Consistency finding' };
+    const parsed = parseCompletionComment(findingsEvidence('FULL'));
+    assert.equal(isAccountedCompletion(parsed, new Map([[123, bogusIssue]])), false);
+    assert.equal(isPersistedConsistencyFinding(bogusIssue, 123), false);
+    assert.equal(isPersistedConsistencyFinding(FINDING_204, 204), true);
+  });
+
+  await t.test('UNPERSISTED diagnostic findings are explicit but never qualify', () => {
+    const parsed = parseCompletionComment(findingsEvidence('DIAGNOSTIC_ONLY', 'UNPERSISTED'));
+    assert.equal(parsed.findingIssuesKind, 'UNPERSISTED');
+    assert.equal(isAccountedCompletion(parsed, FINDINGS), false);
+    assert.equal(latestValidCompletion([trusted(findingsEvidence('DIAGNOSTIC_ONLY', 'UNPERSISTED'), '2026-09-08T00:00:00Z')], NOW, FINDINGS), null);
+  });
+
+  await t.test('PR_FORWARD completion never qualifies or refreshes the weekly baseline', () => {
+    const parsed = parseCompletionComment(cleanEvidence('PR_FORWARD'));
+    assert.equal(isAccountedCompletion(parsed, FINDINGS), false);
+    assert.equal(latestValidCompletion([trusted(cleanEvidence('PR_FORWARD'), '2026-09-08T00:00:00Z')], NOW, FINDINGS), null);
+  });
+
+  await t.test('unknown mode fails closed', () => {
+    assert.equal(parseCompletionComment(cleanEvidence('WEEKLY')), null);
   });
 });
 

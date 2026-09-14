@@ -274,10 +274,10 @@ decision provenance     which mechanism(s) produced the choice
 external data source    where an observation came from
 ```
 
-These must not collapse into one `source` or `actor` field merely because several current records happen to be strings. On current `main`, attribution-shaped names already carry four different meanings — and not all of them are even strings — so **no field below may be renamed, reinterpreted, or mechanically migrated** into a future attribution capability:
+These must not collapse into one `source` or `actor` field merely because several current records happen to be strings. On current `main`, attribution-shaped names already mean different things, two of them are not pinned down by durable authority at all, and not all of them are even strings. **No field below may be renamed, reinterpreted, or mechanically migrated** into a future attribution capability:
 
 - `RevisionRecorder` is, **as a whole**, persisted recording provenance identifying what caused Arcogine to record a controlled revision. Its internal `source` / `subject` decomposition is **underspecified by durable authority** — [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) permits representing the recorder with a small source/subject value without fixing which slot means what, and the implementation says only that the pair identifies "the source and subject that caused a revision to be recorded". Do not read `source` as a canonical mechanism/channel or `subject` as a canonical actor/principal. It is persisted and participates in idempotency equality in immutable governance history, so any future attribution must be **additive**.
-- `ChangeProvenance.source` holds a role label, not a party identity.
+- `ChangeProvenance.source` is *producer* provenance for a change set: its contract states plainly that **none of its fields are identity**. What the slot carries beyond that is **not established** — current call sites use both role-like and mechanism-like values — so it is neither a party identity nor, on current authority, a role label. It must not be migrated into a shared actor identity.
 - `RequirementSource` is a requirement's *governing publication* provenance, and is a sealed domain type rather than a free-form string. Its sense of "authority" is **publishing body**, not authorization authority — a direct collision with the authorization sense of the word used elsewhere in this section.
 - `EventPayload.AgentDecision` is a narrative string. It is not attribution at all.
 

@@ -25,7 +25,7 @@ The investigation must decide or explicitly classify:
 
 ## Why this question exists
 
-This question was extracted from a superseded mixed investigation into player-facing diagnostic evidence (see `docs/research/README.md` § Superseded: player-facing diagnostic evidence). That investigation concluded, provisionally, that reusable diagnostic derivations were game-owned, on the trigger that a *future* second consumer would be needed to justify shared ownership.
+This question was extracted from a superseded mixed investigation into player-facing diagnostic evidence. The supersession narrative is maintained in [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) § Superseded predecessor, and its lifecycle state in [the research register](../research-register.md). That investigation concluded, provisionally, that reusable diagnostic derivations were game-owned, on the trigger that a *future* second consumer would be needed to justify shared ownership.
 
 That trigger was already satisfied. Arcogine currently has:
 

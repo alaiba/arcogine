@@ -13,7 +13,8 @@
  * Preconditions:
  *   - PR is open;
  *   - PR head branch lives in the canonical repository;
- *   - the authenticated GitHub user is the repository owner and matches the configured human Git identity;
+ *   - the authenticated GitHub user is the repository owner;
+ *   - explicit ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL values configure the owner Git identity;
  *   - an authenticated gh CLI and Git with push access are available.
  *
  * The user's checkout is never used or changed. The observed base is the target for
@@ -45,9 +46,10 @@ OPTIONS
   --help               Show this help
 
 REQUIRES
-  An authenticated gh CLI as the human repository owner, with matching user.name and
-  user.email, plus Git with push access. The user's local checkout is not changed; rebase
-  work is performed in a temporary repository.
+  An authenticated gh CLI as the repository owner, explicit ARCOGINE_GIT_USER_NAME and
+  ARCOGINE_GIT_USER_EMAIL values matching local user.name and user.email, plus Git with
+  push access. The user's local checkout is not changed; rebase work is performed in a
+  temporary repository.
 
 SAFETY
   The helper captures the PR head and live base, performs one automatic Git rebase, then
@@ -186,42 +188,28 @@ function resolveToken(run) {
   );
 }
 
-function requireHumanIdentity(identity, ownerIdentity) {
+function requireHumanIdentity(identity) {
   const name = identity?.name?.trim();
   const email = identity?.email?.trim();
   if (!name || !email) throw new Error('human Git identity (user.name and user.email) is required for rebase');
   if (/\b(bot|dependabot|github actions|codex|claude|openai)\b/i.test(`${name} ${email}`)) {
     throw new Error('configured Git identity appears agent- or bot-owned; refusing rebase');
   }
-  if (ownerIdentity && (name !== ownerIdentity.name || email.toLowerCase() !== ownerIdentity.email.toLowerCase())) {
-    throw new Error(
-      'configured Git identity does not match the authenticated human repository owner; refusing rebase',
-    );
-  }
   return { name, email };
 }
 
-function resolveHumanIdentity(run, repo, configuredIdentity) {
-  const owner = repo.split('/', 1)[0];
-  const authenticatedUser = parseJson(run('gh', ['api', 'user']), 'GitHub authenticated-user API');
-  if (authenticatedUser.login?.toLowerCase() !== owner.toLowerCase()) {
+function explicitOwnerIdentity(environment) {
+  const name = environment.ARCOGINE_GIT_USER_NAME?.trim();
+  const email = environment.ARCOGINE_GIT_USER_EMAIL?.trim();
+  if (!name || !email) {
     throw new Error(
-      `authenticated GitHub user ${authenticatedUser.login ?? '(unknown)'} is not repository owner ${owner}; ` +
-        'refusing rebase',
+      'explicit ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL values are required for rebase identity',
     );
   }
-  const ownerIdentity = {
-    name: authenticatedUser.name?.trim(),
-    email: authenticatedUser.email?.trim(),
-  };
-  if (!ownerIdentity.name || !ownerIdentity.email) {
-    throw new Error(
-      'authenticated human repository owner profile must expose name and email for rebase identity validation',
-    );
-  }
+  return requireHumanIdentity({ name, email });
+}
 
-  if (configuredIdentity) return requireHumanIdentity(configuredIdentity, ownerIdentity);
-
+function configuredGitIdentity(run) {
   let name;
   let email;
   try {
@@ -230,7 +218,30 @@ function resolveHumanIdentity(run, repo, configuredIdentity) {
   } catch {
     throw new Error('human Git identity (user.name and user.email) is required for rebase');
   }
-  return requireHumanIdentity({ name, email }, ownerIdentity);
+  return requireHumanIdentity({ name, email });
+}
+
+function requireConfiguredOwnerIdentity(configured, owner) {
+  if (configured.name !== owner.name || configured.email.toLowerCase() !== owner.email.toLowerCase()) {
+    throw new Error(
+      'configured Git identity does not match the explicit repository owner identity; refusing rebase',
+    );
+  }
+  return configured;
+}
+
+function resolveHumanIdentity(run, repo, configuredIdentity, identityEnvironment = process.env) {
+  const owner = repo.split('/', 1)[0];
+  const authenticatedUser = parseJson(run('gh', ['api', 'user']), 'GitHub authenticated-user API');
+  if (authenticatedUser.login?.toLowerCase() !== owner.toLowerCase()) {
+    throw new Error(
+      `authenticated GitHub user ${authenticatedUser.login ?? '(unknown)'} is not repository owner ${owner}; ` +
+        'refusing rebase',
+    );
+  }
+  const ownerIdentity = requireHumanIdentity(configuredIdentity ?? explicitOwnerIdentity(identityEnvironment));
+  if (configuredIdentity) return ownerIdentity;
+  return requireConfiguredOwnerIdentity(configuredGitIdentity(run), ownerIdentity);
 }
 
 function gitAuthEnvironment(token) {
@@ -383,6 +394,7 @@ async function reconcilePr({
   delayMs = DEFAULT_PUBLISH_DELAY_MS,
   token,
   humanIdentity,
+  identityEnvironment = process.env,
   workspaceFactory = createWorkspace,
   cleanup = cleanupWorkspace,
 }) {
@@ -414,7 +426,7 @@ async function reconcilePr({
   );
 
   const gitToken = token ?? resolveToken(run);
-  const identity = resolveHumanIdentity(run, repo, humanIdentity);
+  const identity = resolveHumanIdentity(run, repo, humanIdentity, identityEnvironment);
   const env = gitAuthEnvironment(gitToken);
   const workspace = workspaceFactory();
   try {

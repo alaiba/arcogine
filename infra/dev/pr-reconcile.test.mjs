@@ -40,6 +40,8 @@ function harness({
   afterPrState = 'open',
   headRef = BRANCH,
   foreignHeadRepo = REPO,
+  configuredIdentity = HUMAN_IDENTITY,
+  githubUser = { login: 'alaiba', name: HUMAN_IDENTITY.name, email: HUMAN_IDENTITY.email },
   rebaseFailure = null,
   pushFailure = null,
   changedPaths = 'file.txt',
@@ -59,7 +61,7 @@ function harness({
     if (file === 'gh' && args[0] === 'api') {
       const endpoint = args[1];
       if (endpoint === 'user') {
-        return JSON.stringify({ login: 'alaiba', name: HUMAN_IDENTITY.name, email: HUMAN_IDENTITY.email });
+        return JSON.stringify(githubUser);
       }
       if (endpoint === `repos/${REPO}/pulls/277`) {
         prReads += 1;
@@ -82,6 +84,8 @@ function harness({
 
     if (file !== 'git') throw new Error(`unexpected command: ${file} ${args.join(' ')}`);
 
+    if (args[0] === 'config' && args[1] === '--get' && args[2] === 'user.name') return configuredIdentity.name;
+    if (args[0] === 'config' && args[1] === '--get' && args[2] === 'user.email') return configuredIdentity.email;
     if (args[0] === 'init' || args[0] === 'config' || args[0] === 'remote' || args[0] === 'fetch' || args[0] === 'checkout') {
       return '';
     }
@@ -333,8 +337,33 @@ test('main movement after B is observed does not trigger an immediate retry or s
   ]);
 });
 
-test('a different human Git identity is rejected before rebase work begins', async () => {
-  const h = harness();
+test('a private or display-different GitHub profile does not override explicit owner Git identity', async () => {
+  const h = harness({
+    githubUser: { login: 'alaiba', name: 'Mutable Profile Display Name', email: null },
+  });
+
+  const result = await reconcilePr({
+    number: 277,
+    repo: REPO,
+    run: h.run,
+    log: () => {},
+    sleep: noWait,
+    token: TOKEN,
+    identityEnvironment: {
+      ARCOGINE_GIT_USER_NAME: HUMAN_IDENTITY.name,
+      ARCOGINE_GIT_USER_EMAIL: HUMAN_IDENTITY.email,
+    },
+    workspaceFactory: h.workspaceFactory,
+    cleanup: h.cleanup,
+  });
+
+  assert.equal(result.changed, true);
+  assert.equal(callsFor(h, 'git', 'rebase').length, 1);
+  assert.equal(callsFor(h, 'git', 'config').some((call) => call.args.includes(HUMAN_IDENTITY.name)), true);
+});
+
+test('a different configured human Git identity is rejected before rebase work begins', async () => {
+  const h = harness({ configuredIdentity: { name: 'Different Human', email: 'different@example.com' } });
 
   await assert.rejects(
     reconcilePr({
@@ -344,9 +373,14 @@ test('a different human Git identity is rejected before rebase work begins', asy
       log: () => {},
       sleep: noWait,
       token: TOKEN,
-      humanIdentity: { name: 'Different Human', email: 'different@example.com' },
+      identityEnvironment: {
+        ARCOGINE_GIT_USER_NAME: HUMAN_IDENTITY.name,
+        ARCOGINE_GIT_USER_EMAIL: HUMAN_IDENTITY.email,
+      },
+      workspaceFactory: h.workspaceFactory,
+      cleanup: h.cleanup,
     }),
-    /does not match the authenticated human repository owner/,
+    /does not match the explicit repository owner identity/,
   );
 
   assert.equal(callsFor(h, 'git', 'rebase').length, 0);

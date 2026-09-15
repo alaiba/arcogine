@@ -13,6 +13,7 @@
  * Preconditions:
  *   - PR is open;
  *   - PR head branch lives in the canonical repository;
+ *   - the authenticated GitHub user is the repository owner and matches the configured human Git identity;
  *   - an authenticated gh CLI and Git with push access are available.
  *
  * The user's checkout is never used or changed. The observed base is the target for
@@ -44,8 +45,9 @@ OPTIONS
   --help               Show this help
 
 REQUIRES
-  An authenticated gh CLI and Git with push access. The user's local checkout is not
-  changed; rebase work is performed in a temporary repository.
+  An authenticated gh CLI as the human repository owner, with matching user.name and
+  user.email, plus Git with push access. The user's local checkout is not changed; rebase
+  work is performed in a temporary repository.
 
 SAFETY
   The helper captures the PR head and live base, performs one automatic Git rebase, then
@@ -184,17 +186,42 @@ function resolveToken(run) {
   );
 }
 
-function requireHumanIdentity(identity) {
+function requireHumanIdentity(identity, ownerIdentity) {
   const name = identity?.name?.trim();
   const email = identity?.email?.trim();
   if (!name || !email) throw new Error('human Git identity (user.name and user.email) is required for rebase');
   if (/\b(bot|dependabot|github actions|codex|claude|openai)\b/i.test(`${name} ${email}`)) {
     throw new Error('configured Git identity appears agent- or bot-owned; refusing rebase');
   }
+  if (ownerIdentity && (name !== ownerIdentity.name || email.toLowerCase() !== ownerIdentity.email.toLowerCase())) {
+    throw new Error(
+      'configured Git identity does not match the authenticated human repository owner; refusing rebase',
+    );
+  }
   return { name, email };
 }
 
-function resolveHumanIdentity(run) {
+function resolveHumanIdentity(run, repo, configuredIdentity) {
+  const owner = repo.split('/', 1)[0];
+  const authenticatedUser = parseJson(run('gh', ['api', 'user']), 'GitHub authenticated-user API');
+  if (authenticatedUser.login?.toLowerCase() !== owner.toLowerCase()) {
+    throw new Error(
+      `authenticated GitHub user ${authenticatedUser.login ?? '(unknown)'} is not repository owner ${owner}; ` +
+        'refusing rebase',
+    );
+  }
+  const ownerIdentity = {
+    name: authenticatedUser.name?.trim(),
+    email: authenticatedUser.email?.trim(),
+  };
+  if (!ownerIdentity.name || !ownerIdentity.email) {
+    throw new Error(
+      'authenticated human repository owner profile must expose name and email for rebase identity validation',
+    );
+  }
+
+  if (configuredIdentity) return requireHumanIdentity(configuredIdentity, ownerIdentity);
+
   let name;
   let email;
   try {
@@ -203,7 +230,7 @@ function resolveHumanIdentity(run) {
   } catch {
     throw new Error('human Git identity (user.name and user.email) is required for rebase');
   }
-  return requireHumanIdentity({ name, email });
+  return requireHumanIdentity({ name, email }, ownerIdentity);
 }
 
 function gitAuthEnvironment(token) {
@@ -243,7 +270,7 @@ function requireSameSha(actual, expected, label) {
   }
 }
 
-function prepareRepository({ run, workspace, repo, baseRef, headRef, observedBase, observedHead, identity, env }) {
+function prepareRepository({ run, workspace, repo, observedBase, observedHead, identity, env }) {
   git(run, workspace, ['init', '--quiet'], { env });
   git(run, workspace, ['config', 'user.name', identity.name], { env });
   git(run, workspace, ['config', 'user.email', identity.email], { env });
@@ -255,11 +282,13 @@ function prepareRepository({ run, workspace, repo, baseRef, headRef, observedBas
       'fetch',
       '--no-tags',
       'origin',
-      `refs/heads/${baseRef}:${BASE_TRACKING_REF}`,
-      `refs/heads/${headRef}:${HEAD_TRACKING_REF}`,
+      observedBase,
+      observedHead,
     ],
     { env },
   );
+  git(run, workspace, ['update-ref', BASE_TRACKING_REF, observedBase], { env });
+  git(run, workspace, ['update-ref', HEAD_TRACKING_REF, observedHead], { env });
 
   const fetchedBase = git(run, workspace, ['rev-parse', BASE_TRACKING_REF], { env });
   const fetchedHead = git(run, workspace, ['rev-parse', HEAD_TRACKING_REF], { env });
@@ -385,7 +414,7 @@ async function reconcilePr({
   );
 
   const gitToken = token ?? resolveToken(run);
-  const identity = humanIdentity ? requireHumanIdentity(humanIdentity) : resolveHumanIdentity(run);
+  const identity = resolveHumanIdentity(run, repo, humanIdentity);
   const env = gitAuthEnvironment(gitToken);
   const workspace = workspaceFactory();
   try {
@@ -393,8 +422,6 @@ async function reconcilePr({
       run,
       workspace,
       repo,
-      baseRef,
-      headRef: pr.head.ref,
       observedBase,
       observedHead: oldHead,
       identity,

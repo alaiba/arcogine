@@ -50,12 +50,17 @@ function harness({
   let rebased = false;
   let pushed = false;
   let cleaned = false;
+  let trackedBase = fetchedBase;
+  let trackedHead = fetchedHead;
 
   function run(file, args, options = {}) {
     calls.push({ file, args: [...args], options });
 
     if (file === 'gh' && args[0] === 'api') {
       const endpoint = args[1];
+      if (endpoint === 'user') {
+        return JSON.stringify({ login: 'alaiba', name: HUMAN_IDENTITY.name, email: HUMAN_IDENTITY.email });
+      }
       if (endpoint === `repos/${REPO}/pulls/277`) {
         prReads += 1;
         const head = pushed ? NEW : prReads === 1 ? OLD : beforePublishHead;
@@ -80,11 +85,19 @@ function harness({
     if (args[0] === 'init' || args[0] === 'config' || args[0] === 'remote' || args[0] === 'fetch' || args[0] === 'checkout') {
       return '';
     }
-    if (args[0] === 'rev-parse' && args[1] === BASE_TRACKING_REF) return fetchedBase;
-    if (args[0] === 'rev-parse' && args[1] === HEAD_TRACKING_REF) return fetchedHead;
+    if (args[0] === 'update-ref' && args[1] === BASE_TRACKING_REF) {
+      trackedBase = args[2];
+      return '';
+    }
+    if (args[0] === 'update-ref' && args[1] === HEAD_TRACKING_REF) {
+      trackedHead = args[2];
+      return '';
+    }
+    if (args[0] === 'rev-parse' && args[1] === BASE_TRACKING_REF) return trackedBase;
+    if (args[0] === 'rev-parse' && args[1] === HEAD_TRACKING_REF) return trackedHead;
     if (args[0] === 'rev-parse' && args[1] === 'HEAD') return rebased ? NEW : OLD;
     if (args[0] === 'merge-base' && args[1] === HEAD_TRACKING_REF) return MERGE_BASE;
-    if (args[0] === 'merge-base' && args[1] === BASE_TRACKING_REF) return fetchedBase;
+    if (args[0] === 'merge-base' && args[1] === BASE_TRACKING_REF) return trackedBase;
     if (args[0] === 'diff') return changedPaths;
     if (args[0] === 'rebase' && args[1] === '--abort') return '';
     if (args[0] === 'rebase') {
@@ -296,7 +309,7 @@ test('an agent-owned Git identity is rejected before rebase work begins', async 
 });
 
 test('main movement after B is observed does not trigger an immediate retry or second rebase', async () => {
-  const h = harness({ liveBases: [BASE, MOVED_BASE] });
+  const h = harness({ liveBases: [BASE], fetchedBase: MOVED_BASE });
   const result = await reconcilePr({
     number: 277,
     repo: REPO,
@@ -313,6 +326,31 @@ test('main movement after B is observed does not trigger an immediate retry or s
   assert.equal(h.baseReads, 1, 'the attempt must not chase a base that moved after B was captured');
   assert.equal(callsFor(h, 'git', 'rebase').length, 1);
   assert.equal(callsFor(h, 'git', 'push').length, 1);
+  assert.deepEqual(callsFor(h, 'git', 'fetch')[0].args, ['fetch', '--no-tags', 'origin', BASE, OLD]);
+  assert.deepEqual(callsFor(h, 'git', 'update-ref').map((call) => call.args), [
+    ['update-ref', BASE_TRACKING_REF, BASE],
+    ['update-ref', HEAD_TRACKING_REF, OLD],
+  ]);
+});
+
+test('a different human Git identity is rejected before rebase work begins', async () => {
+  const h = harness();
+
+  await assert.rejects(
+    reconcilePr({
+      number: 277,
+      repo: REPO,
+      run: h.run,
+      log: () => {},
+      sleep: noWait,
+      token: TOKEN,
+      humanIdentity: { name: 'Different Human', email: 'different@example.com' },
+    }),
+    /does not match the authenticated human repository owner/,
+  );
+
+  assert.equal(callsFor(h, 'git', 'rebase').length, 0);
+  assert.equal(callsFor(h, 'git', 'push').length, 0);
 });
 
 test('successful rebase returns a new head for current-head lifecycle handling', async () => {

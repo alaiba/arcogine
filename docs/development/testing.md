@@ -333,6 +333,6 @@ These are the maintained criteria those tests verify. Each is stated as the beha
 | Economy/price input validation | Out-of-range economy/price input is rejected with `400` instead of being applied to simulation state. | `extremePriceReturnsBadRequest` |
 | Default bind address | The native CLI/API binds `127.0.0.1` by default, so exposure beyond localhost is an explicit choice. | `ArcogineCommandTest.defaultBindAddressIsLocalhost` |
 
-**Configured but not verified.** CORS is configured in `WebConfig` (restricted by `CORS_ALLOWED_ORIGIN`, permissive when unset) and has no executable check. Treat it as a deployment setting, not a verified control, until one exists.
+**Configured but not verified.** CORS is configured in `WebConfig` (restricted by `CORS_ALLOWED_ORIGIN`, permissive when unset), and the nginx image configures `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. Neither has an executable check. Treat them as deployment settings, not verified controls, until those checks exist.
 
 This list covers the controls that exist today at the current local/single-user exposure. It is not a claim that the API is safe to expose to untrusted principals — see [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits that no amount of hardening removes, and for the readiness criteria that must be met before hosted or multi-user exposure.

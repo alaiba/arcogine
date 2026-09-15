@@ -41,7 +41,7 @@ Arcogine is local-first by default. Understanding the current posture means sepa
 
 ### Implemented controls
 
-These exist in the current software today. The maintained criteria and the tests that verify them are in [`docs/development/testing.md`](../docs/development/testing.md#security-verification-tests).
+These exist in the current software today. Where executable verification exists, the maintained criteria and the tests that verify them are in [`docs/development/testing.md`](../docs/development/testing.md#security-verification-tests). Rows explicitly marked as unverified describe configuration, not observed enforcement.
 
 | Control | Behavior |
 |---|---|
@@ -50,7 +50,7 @@ These exist in the current software today. The maintained criteria and the tests
 | SSE connection limit | Concurrent `/api/events/stream` connections are capped at 64; further connections get `503` rather than exhausting server resources. |
 | Scenario input validation | Referential and range validation rejects invalid scenarios with `400` rather than partially applying them. |
 | Economy value bounds | Out-of-range price/economy input is rejected rather than applied to simulation state. |
-| Web image response headers | The nginx image sets `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. |
+| Web image response headers | The nginx image configures `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. Configured, but with no executable response-header check — treat these as deployment settings rather than verified controls. |
 | CORS | Restricted when `CORS_ALLOWED_ORIGIN` is set; permissive (`*`) when unset. Configured, but with no executable check — treat it as a deployment setting rather than a verified control. |
 
 ### Structural limits that hardening does not remove

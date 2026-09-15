@@ -214,9 +214,13 @@ The protocol applies only to ordinary open same-repository PRs; research-evidenc
 in the research workspace lifecycle rather than this normalization path.
 
 Use repository-scoped GitHub Git-data operations for the reads, blob/tree construction, and merge
-commit creation. Advance the PR branch from `H` to `M` with a non-forced ref update (`force=false`).
-The first-parent relationship makes a concurrent incompatible head update fail naturally as a
-non-fast-forward update; do not add a separate force/CAS/lease protocol, require a local `gh`
+commit creation. Immediately before publication, re-read the PR head. If it is no longer `H`,
+abandon the attempt without mutation; otherwise advance the PR branch from `H` to `M` with a
+non-forced ref update (`force=false`). The first-parent relationship makes a concurrent
+incompatible head update fail naturally as a non-fast-forward update. This final head check is
+best-effort, not exact-head atomicity: a branch reset to an ancestor such as `B` in the tiny
+interval between the check and update can still fast-forward to `M`, and that residual race is an
+accepted design trade-off. Do not add a separate force/CAS/lease protocol, require a local `gh`
 checkout, or manually resolve conflicts. If construction or publication fails, make no remote
 branch mutation and return the PR to the implementation/author side.
 

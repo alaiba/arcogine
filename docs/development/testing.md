@@ -245,7 +245,9 @@ Stale-PR normalization is intentionally not a local CLI helper. The approved mec
 merge-style protocol is defined in [AGENTS.md](../../AGENTS.md) and this review policy, and uses
 repository-scoped GitHub Git-data operations with a non-forced ref update. It therefore has no
 local helper test suite or authenticated `gh` prerequisite; connector-side execution must preserve
-the captured-head, parent-order, no-mutation-on-conflict, and `force=false` invariants.
+the captured-head check, parent-order, no-mutation-on-conflict, and `force=false` invariants. The
+head check is best-effort rather than exact-head atomicity: a reset to an ancestor such as `B` in
+the tiny interval after the check is an accepted residual race.
 
 `infra/dev/repo-snapshot.test.mjs` covers `infra/dev/repo-snapshot.mjs`, which backs `./arcogine snapshot` (see [`docs/development/repository-snapshot.md`](repository-snapshot.md)). It concentrates on the paths where a wrong answer could label non-canonical state as canonical `alaiba/arcogine` `main`: the clean-checkout precondition, the provenance header contents, and — the sharper case — that a fork remote or an unpushed local-only commit on a branch named `main` is refused even though the branch/dirty-tree precondition alone would accept it. Like the other Node tooling suites it runs as a step in the always-running `classify` job. Run it locally with:
 

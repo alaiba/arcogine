@@ -77,7 +77,7 @@ jobs:
       - name: Validate Claude Cloud provisioning
         run: bash infra/dev/claude-cloud.test.sh
 
-      # The PR lifecycle resolver in infra/dev/pr-watch.mjs decides whether an
+      # The PR lifecycle resolver in infra/dev/pr-lifecycle.mjs decides whether an
       # implementation-owned transition exists, so a regression there can report a PR
       # merge-ready when it is not. Run its suite here, in the always-running job the
       # aggregate gate accounts for, rather than in a path-filtered job that a
@@ -87,11 +87,8 @@ jobs:
         with:
           node-version: '22.22.2'
 
-      - name: Validate PR watcher lifecycle resolver
-        run: node --test infra/dev/pr-watch.test.mjs
-
-      - name: Validate PR base reconciliation helper
-        run: node --test infra/dev/pr-reconcile.test.mjs
+      - name: Validate PR lifecycle resolver
+        run: node --test infra/dev/pr-lifecycle.test.mjs
 
       # infra/dev/repo-snapshot.mjs establishes the canonical-repository
       # provenance the ./arcogine snapshot artifact asserts. A regression here

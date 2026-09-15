@@ -11,7 +11,8 @@ configure_arcogine_git_identity() {
   if [[ -n "$requested_name" || -n "$requested_email" ]]; then
     if [[ -z "$requested_name" || -z "$requested_email" ]]; then
       echo "WARNING: set both ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL to configure the commit identity; leaving Git configuration unchanged." >&2
-    elif git config --local user.name "$requested_name" && git config --local user.email "$requested_email"; then
+    elif git config --local user.name "$requested_name" &&
+      git config --local user.email "$requested_email"; then
       echo "    Configured Git commit identity from ARCOGINE_GIT_USER_NAME/ARCOGINE_GIT_USER_EMAIL."
     else
       echo "WARNING: could not configure the requested local Git identity; continuing with the existing configuration." >&2

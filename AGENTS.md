@@ -179,7 +179,8 @@ When creating or editing GitHub pull requests, issues, comments, reviews, or rel
   identify the human repository owner. Never create commits with an agent, model, provider,
   or bot as author or committer. Container setup accepts explicit
   `ARCOGINE_GIT_USER_NAME` and `ARCOGINE_GIT_USER_EMAIL` values and warns, without blocking
-  setup, when the identity is missing or appears agent-owned.
+  setup, when the identity is missing or appears agent-owned. Actual commits must use the human
+  repository owner's Git identity.
 
 ## Commit message footer
 
@@ -193,75 +194,60 @@ via an explicit user request.
 Resolve a PR's lifecycle state from its current head and metadata, base freshness, submitted reviews, unresolved findings/threads, the trusted `disposition` authorization check, required CI, and mergeability. Do not infer authorization from comments or CI alone.
 
 - **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for review authorization, re-review, or required CI to finish. For ordinary PRs, authorization comes from a current-head `READY TO MERGE` reviewer disposition. A Dependabot PR is the explicit positive-review exception only while the trusted base-side workflow verifies both the exact GitHub Dependabot account as PR opener and as the actor of the `CI` pull-request workflow run for the exact current head. CI outcome remains independent; this Actions metadata is used only as trusted provenance.
-- **CHANGES REQUIRED** — a pre-merge transition remains, such as the head being behind its current base, a valid blocking review finding, failed required CI, or a merge conflict. Semantic remediation and conflict resolution belong to the implementation/author side. A reviewer may perform only the conflict-free base synchronization described below as pre-review normalization.
+- **CHANGES REQUIRED** — a pre-merge transition remains, such as the head being behind its current base, a valid blocking review finding, failed required CI, or a merge conflict. Semantic remediation and conflict resolution belong to the implementation/author side. A reviewer may perform only the mechanical merge-style base synchronization described below as pre-review normalization.
 - **READY TO MERGE** — the trusted `disposition` check is green on the current head, required validation is green, the head is level with its current base, and the PR is mergeable. The implementation/reviewer agent stops; the repository owner merges manually. For ordinary PRs, green `disposition` represents a current-head `READY TO MERGE` review. For a trusted Dependabot PR, it represents verified bot provenance with no current-head canonical `CHANGES REQUIRED` override.
 
-Base freshness is a pre-review normalization requirement as well as lifecycle state. `infra/dev/pr-watch.mjs` must still treat any behind-base head as **CHANGES REQUIRED**, so implementation monitoring can reconcile it before review. If an independent reviewer instead discovers a stale branch at review start, the reviewer should attempt the repository-approved conflict-free synchronization before doing substantive review. A successful mechanical synchronization is reviewer-side normalization, not implementation remediation: re-resolve live `main`, the new head, CI, and the net diff, then review only that reconciled head. If synchronization produces a merge conflict, requires a semantic choice, lacks permission, or otherwise cannot complete mechanically, stop before substantive review and return the PR to the author/implementation owner; do not spend review effort or file a reconciliation finding against the stale head.
+Base freshness is a pre-review normalization requirement as well as lifecycle state. `infra/dev/pr-lifecycle.mjs` must still treat a behind-base head as **CHANGES REQUIRED**, so a later implementation lifecycle iteration can reconcile it before review. That base-freshness result is a merge-readiness condition, not a review finding: a current-head review disposition remains bound to that head when `main` advances, although repository rules may prevent the owner from merging until a later normalization iteration. If an independent reviewer discovers a stale branch at review start, the reviewer may perform the mechanical merge-style synchronization below before substantive review. A successful synchronization creates a new candidate head; the reviewer reviews that head, while CI, disposition, and final mergeability remain lifecycle/gate responsibilities. If construction encounters a conflict or unsupported case requiring a semantic choice, stop before substantive review and return the PR to the author/implementation owner without mutating the remote branch. Pending CI does not delay substantive review or reviewer disposition; review authorization and required CI are independent, and overall merge readiness waits for both.
 
-For a stale Dependabot PR that currently qualifies for trusted provenance and otherwise needs no maintainer-authored change, prefer Dependabot's own supported rebase/recreate mechanism. GitHub permits maintainers to add commits to Dependabot branches, so a maintainer-authored merge/rebase commit intentionally revokes the no-positive-review exception. If such a commit is necessary or deliberately added, the resulting PR follows the ordinary review path.
+### Base-normalization protocol
 
-When an ordinary open PR is behind its base and a local checkout of that PR branch is available, reconcile it with `node infra/dev/pr-reconcile.mjs <pr-number>` by default. The helper reconciles against the live base branch ref; the PR API's historical `base.sha` is not evidence that the base is current. It refuses to proceed if the live base moves during setup, so retry that transition rather than treating stale PR metadata as a blocker. Do not improvise raw branch-ref manipulation for this transition. In particular, never point an open PR branch at the base commit as an intermediate step: GitHub may automatically close the PR when head and base become identical. The helper constructs the complete rebased head first, updates the remote branch exactly once with a lease bound to the inspected old head, and verifies that the PR remains open and level afterward. This helper is the normal conflict-free synchronization path whether invoked by implementation monitoring or by the reviewer during pre-review normalization, except where the research-evidence or trusted-Dependabot rules above require preserving a different invariant. If the helper cannot run in the current harness because no local checkout/git/`gh` execution surface exists, preserve the same invariant explicitly: construct the final reconciled head before the single branch-ref update; never use the base commit itself as a temporary PR head. If that cannot be done safely in the available harness, return the stale PR to the author/implementation owner instead of improvising.
+The **base-normalization protocol** is a mechanical, history-preserving merge for an open
+same-repository PR that is behind its live base. Capture the current PR head `H`, live base `B`,
+and merge base `A` when needed. If the PR already contains `B`, do nothing. Otherwise construct
+exactly one merge commit `M` with first parent `H`, second parent `B`, and a tree formed from the
+current base tree plus the PR-side `A -> H` delta. Use ordinary deterministic three-way text
+merges only for supported overlapping text files. Reject conflicts and unsupported structural
+cases (such as ambiguous renames/copies, file/directory conflicts, submodules, symlinks,
+incompatible modes, or unsupported binary content) without making a branch change.
 
-A research-evidence workspace carrying handed-off report or adversarial-review coordinates is the other exception to the normal rebase path. Once an exact evidence `commit SHA + path` has been handed off under `docs/development/researching.md` §10, those commits must remain reachable by the same SHA while the workspace advances. If an open reconciliation PR from that workspace falls behind its base, use GitHub's history-preserving Update branch operation — `gh pr update-branch <pr-number>` **without** `--rebase`, or the platform-equivalent merge-style action when `gh` is unavailable — instead of `pr-reconcile.mjs`, raw rebase, or force-push. Re-resolve lifecycle afterward and verify that the pre-update PR head remains an ancestor of the new head and that the live base is incorporated. The same rule applies when the reviewer performs pre-review normalization. Do not require a separate branch merely to preserve those evidence coordinates.
+The protocol applies only to ordinary open same-repository PRs; research-evidence custody remains
+in the research workspace lifecycle rather than this normalization path.
 
-If a user explicitly requests GitHub's merge-style “Update branch” action for another PR, use `gh pr update-branch <pr-number>` rather than manual ref manipulation, then re-resolve lifecycle because the PR head and review evidence change.
+Use repository-scoped GitHub Git-data operations for the reads, blob/tree construction, and merge
+commit creation. Immediately before publication, re-read the PR head. If it is no longer `H`,
+abandon the attempt without mutation; otherwise advance the PR branch from `H` to `M` with a
+non-forced ref update (`force=false`). The first-parent relationship makes a concurrent
+incompatible head update fail naturally as a non-fast-forward update. This final head check is
+best-effort, not exact-head atomicity: a branch reset to an ancestor such as `B` in the tiny
+interval between the check and update can still fast-forward to `M`, and that residual race is an
+accepted design trade-off. Do not add a separate force/CAS/lease protocol, require a local `gh`
+checkout, or manually resolve conflicts. If construction or publication fails, make no remote
+branch mutation and return the PR to the implementation/author side.
+
+Use the captured `B` for that one attempt. Do not re-read and chase `main` after capture. A later
+lifecycle iteration may synchronize again if the PR remains behind. A successful merge creates a
+new head that requires review as the current candidate; CI, trusted `disposition`, and final
+mergeability remain independent lifecycle/gate responsibilities. Base-head churn is separate from
+current-head review integrity, and GitHub owns the final merge into `main` through the owner's
+manual **Squash and merge** action.
+
+Research-evidence custody remains a separate research-workspace lifecycle in
+`docs/development/researching.md`; it is not a route or exception in ordinary PR normalization.
+
+For a stale Dependabot PR that currently qualifies for trusted provenance and otherwise
+needs no maintainer-authored change, preserve the trusted provenance rules enforced by the
+base-side workflow. A maintainer-authored synchronization commit changes the PR's provenance and
+the resulting current head follows the ordinary review path.
 
 Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). Arcogine reviewers publish both as `COMMENT` reviews; they do not use native GitHub `REQUEST_CHANGES` as a second blocking state machine. An accidental or human-created native `CHANGES_REQUESTED` review still physically blocks GitHub merge and must be cleared through GitHub before the PR can merge, but it is not part of Arcogine's intended reviewer protocol. CI is not a reviewer disposition and is enforced independently by GitHub branch protection. The required `disposition` check is the repository's review-authorization gate: ordinary PRs require a current-head `READY TO MERGE`; trusted Dependabot provenance removes only that positive-review requirement; and a latest applicable current-head canonical `CHANGES REQUIRED` blocks either path.
 
-## PR monitoring
+## Implementation continuation
 
-For any open PR associated with the current branch, start monitoring it without asking for confirmation. On any signal, re-resolve the PR lifecycle state and perform any available implementation-owned transition.
+After creating an implementation PR or updating its head, report the current transition and stop. Standard implementation work does not start autonomous PR activity handling or schedule a delayed recheck.
 
-Use `infra/dev/pr-watch.mjs` rather than rediscovering how to query GitHub:
+When the user sends `..`, identify the current implementation PR and run one live lifecycle resolution with `infra/dev/pr-lifecycle.mjs <pr-number>`. If the result is **CHANGES REQUIRED**, complete the coherent implementation-owned transition that is actually available. After any resulting head update, stop again. If the result is **AWAITING**, report that no implementation-owned transition is currently available and stop. If it is **READY TO MERGE**, report that state and stop; merging remains the repository owner's responsibility.
 
-```bash
-node infra/dev/pr-watch.mjs <pr-number>            # resolve lifecycle state once, then exit
-node infra/dev/pr-watch.mjs <pr-number> --watch    # emit one line per change, for a background watcher
-```
-
-It is dependency-free Node (builtins only, no install step) and reads `GH_TOKEN`/`GITHUB_TOKEN`, falling back to `gh auth token` once at startup. `--json` gives machine-readable output and `--exit-code` maps the lifecycle state onto the exit status; see `--help`.
-
-### Keeping a watcher running
-
-The script is harness-neutral. How you keep it running is not — each agent harness has different primitives, so use whichever of these applies.
-
-**Prefer a native PR-activity subscription when the current session actually exposes one** — webhook-driven wake beats polling and costs no API traffic. Otherwise use `pr-watch.mjs`, which depends on nothing but Node and the GitHub API and is therefore always available.
-
-This section deliberately names no subscription tool. It previously named one that did not resolve, and agents improvised a poller per session instead; naming a replacement would pin repository guidance to an external detail this file cannot keep accurate. Check the tools the session actually exposes rather than expecting this file to tell you what exists.
-
-**Claude Code** — run `--watch` under the `Monitor` tool with `persistent: true`, so each emitted line arrives as a notification:
-
-```bash
-export PATH="/c/Program Files/nodejs:/c/Program Files/Git/cmd:/c/Program Files/GitHub CLI:$PATH"
-cd <repo-root>
-exec node infra/dev/pr-watch.mjs <pr-number> --watch --interval 60
-```
-
-Two things that are easy to get wrong:
-
-- The harness shell may not share your interactive shell's `PATH`. On Windows/Git Bash, `node`, `git` and `gh` are all commonly missing from it, and `gh` fails without `git`. Set `PATH` explicitly, as above, rather than assuming. Verify the invocation once directly before trusting a background watcher.
-- A running watcher holds the script it loaded at startup. Editing `pr-watch.mjs` does **not** affect it — stop and restart the watcher after changing the script, or it will keep running the old logic.
-
-**Other harnesses** (Codex and others) have their own primitives and generally no equivalent of `Monitor`. Use whatever background or streaming facility exists; if there is none, run the single-resolution form at each decision point, and if scheduled tasks are supported keep at most one recheck scheduled about 10 minutes out while the PR is **AWAITING**.
-
-A session-scoped watcher is expected and sufficient: its purpose is to let the session react to review and CI feedback on its own rather than the repository owner relaying state changes. It ends with the session, and that is fine — it is not intended as durable infrastructure.
-
-Treat monitoring startup as a delivery gate: immediately after opening a PR or pushing a new PR head, establish at most one session-scoped monitoring mechanism when the harness supports persistent monitoring and verify its initial-state evidence before reporting the transition complete. The selected mechanism must surface lifecycle-relevant changes and fail visibly if monitoring stops working. If persistent monitoring is unavailable, perform the single-resolution form at each lifecycle decision point and say that no persistent monitor is active.
-
-The repository-owned `pr-watch.mjs` is the default fallback when no native or harness-provided monitor exists. Stop and restart this fallback after every head push because it holds the script loaded at startup; for a devcontainer checkout, use the equivalent of:
-
-```bash
-cd /workspaces/arcogine
-exec node infra/dev/pr-watch.mjs <pr-number> --watch --interval 60
-```
-
-Do not claim that a PR is being monitored unless the selected mechanism has provided its startup/initial-state confirmation; for the `pr-watch` fallback, that means its emitted baseline line.
-
-### Rules for any monitoring mechanism
-
-A monitor must fail loudly: if it cannot reach GitHub it must say so, because a silent watcher is indistinguishable from a quiet PR. Do not report a PR as unchanged on the strength of a monitor that has not actually confirmed it.
-
-`..` remains the immediate manual continuation mechanism, and works regardless of whether a watcher is running.
+Each `..` invocation re-resolves current GitHub evidence once. The resolver is dependency-free Node tooling and supports `--json` for machine-readable output and `--exit-code` for lifecycle-state exit codes; see `--help` for the single-resolution interface.
 
 ## PR merging
 

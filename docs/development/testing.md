@@ -214,7 +214,7 @@ The `classify` job inspects the changed files (PR diff against its base, or the 
 
 The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the four `key=true|false` outputs), separated from the git/GitHub-context plumbing that builds the file list in the workflow step. `.github/scripts/classify-changes.test.sh` is a small table-driven test over that script — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression in the classifier fails visibly instead of silently under-running checks. It also invokes the repository's other always-required, non-path-filtered tooling suites (Markdown links, delivery labels, ADR immutability, and the continuous-improvement register helper below) so they cannot be skipped by a docs-only or backend-only classification. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
 
-`.github/scripts/continuous-improvement.test.mjs` covers the pure state-derivation and register-body logic in `.github/scripts/continuous-improvement.mjs`, which backs `.github/workflows/continuous-improvement.yml` (see [`docs/development/continuous-improvement.md`](continuous-improvement.md)). It concentrates on the paths where a wrong answer would misrepresent or corrupt recurring-obligation state: weekly Consistency review `CURRENT`/`DUE`/`OVERDUE` thresholds, malformed/valid completion-evidence comment parsing, the retrospective raw-count guard producing `CHECK_TRIGGER` rather than a false automatic `DUE`, marker-region parsing failing loudly on missing/duplicated markers, byte-preservation of the agent/human intervention section across an update, and register discovery refusing to silently pick one of multiple exact-title matches. It runs as part of `classify-changes.test.sh` in the always-running `classify` job. Run it locally with `node --test .github/scripts/continuous-improvement.test.mjs`.
+`.github/scripts/continuous-improvement.test.mjs` covers the pure state-derivation and register-body logic in `.github/scripts/continuous-improvement.mjs`, which backs `.github/workflows/continuous-improvement.yml` (see [`docs/development/continuous-improvement.md`](continuous-improvement.md)). It concentrates on the paths where a wrong answer would misrepresent or corrupt recurring-obligation state: weekly Consistency review `CURRENT`/`DUE`/`OVERDUE` thresholds; accounted `FULL`/`INCREMENTAL` clean and finding evidence; persisted-issue identity validation; rejection of unpersisted, malformed, duplicate, bogus, legacy, unauthorized, future-dated, PR-forward, diagnostic-only, and internally inconsistent evidence; the retrospective raw-count guard producing `CHECK_TRIGGER` rather than a false automatic `DUE`; marker-region parsing failing loudly on missing/duplicated markers; byte-preservation of the agent/human intervention section across an update; and register discovery refusing to silently pick one of multiple exact-title matches. It runs as part of `classify-changes.test.sh` in the always-running `classify` job. Run it locally with `node --test .github/scripts/continuous-improvement.test.mjs`.
 
 ### Repository-tooling suites
 
@@ -227,20 +227,27 @@ bash .github/scripts/arcogine-env.test.sh
 bash .github/scripts/arcogine-cli.test.sh
 bash .github/scripts/check-pr-disposition.test.sh
 bash infra/dev/claude-cloud.test.sh
-node --test infra/dev/pr-reconcile.test.mjs
-node --test infra/dev/pr-watch.test.mjs
+node --test infra/dev/pr-lifecycle.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
 ```
 
 The disposition suite also validates the workflow definitions through the pinned `check-actions-workflows.sh` helper. The shell suites use temporary repositories and fake executables where they need to exercise constrained-environment behavior; they do not install project dependencies or require Docker.
 
-`infra/dev/pr-watch.test.mjs` covers the PR lifecycle resolver in `infra/dev/pr-watch.mjs`, which decides whether a pull request is `AWAITING`, `CHANGES REQUIRED`, or `READY TO MERGE` (see the PR monitoring section of [AGENTS.md](../../AGENTS.md)). The cases are synthetic — no network, no dependencies, only Node builtins — and concentrate on the paths where a wrong answer reports a PR merge-ready when it is not: required-check identity and success, base-branch movement invalidating an earlier review, per-author blocking-review lifetime, final-disposition parsing, and connection truncation. Like the classifier test it runs as a step in the always-running `classify` job, so it cannot be skipped by a docs-only or backend-only classification. Run it locally with:
+`infra/dev/pr-lifecycle.test.mjs` covers the PR lifecycle resolver in `infra/dev/pr-lifecycle.mjs`, which decides whether a pull request is `AWAITING`, `CHANGES REQUIRED`, or `READY TO MERGE` (see the PR lifecycle and implementation-continuation sections of [AGENTS.md](../../AGENTS.md)). The cases are synthetic — no network, no dependencies, only Node builtins — and concentrate on the paths where a wrong answer reports a PR merge-ready when it is not: required-check identity and success, base-freshness movement, per-author blocking-review lifetime, final-disposition parsing, and connection truncation. Like the classifier test it runs as a step in the always-running `classify` job, so it cannot be skipped by a docs-only or backend-only classification. Run it locally with:
 
 ```bash
-node --test infra/dev/pr-watch.test.mjs
+node --test infra/dev/pr-lifecycle.test.mjs
 ```
 
 Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODULE_NOT_FOUND` rather than discovering the suite.
+
+Stale-PR normalization is intentionally not a local CLI helper. The approved mechanical
+merge-style protocol is defined in [AGENTS.md](../../AGENTS.md) and this review policy, and uses
+repository-scoped GitHub Git-data operations with a non-forced ref update. It therefore has no
+local helper test suite or authenticated `gh` prerequisite; connector-side execution must preserve
+the captured-head check, parent-order, no-mutation-on-conflict, and `force=false` invariants. The
+head check is best-effort rather than exact-head atomicity: a reset to an ancestor such as `B` in
+the tiny interval after the check is an accepted residual race.
 
 `infra/dev/repo-snapshot.test.mjs` covers `infra/dev/repo-snapshot.mjs`, which backs `./arcogine snapshot` (see [`docs/development/repository-snapshot.md`](repository-snapshot.md)). It concentrates on the paths where a wrong answer could label non-canonical state as canonical `alaiba/arcogine` `main`: the clean-checkout precondition, the provenance header contents, and — the sharper case — that a fork remote or an unpushed local-only commit on a branch named `main` is refused even though the branch/dirty-tree precondition alone would accept it. Like the other Node tooling suites it runs as a step in the always-running `classify` job. Run it locally with:
 
@@ -312,4 +319,19 @@ The `/api/events/stream` endpoint is a servlet `SseEmitter`. The controller send
 
 ### Security verification tests
 
-The hardening checks live in the regular `interfaces/api` suite (`ApiSmokeTest`), not a separate pipeline: body-size limits, scenario validation, error propagation, CORS restrictions, SSE connection limits, economy value bounds, and CLI bind-address behavior are all exercised there.
+The hardening checks live in the regular `interfaces/api` suite (`ApiSmokeTest`) and the `interfaces/cli` suite, not a separate pipeline.
+
+These are the maintained criteria those tests verify. Each is stated as the behavior that must hold, so a test and the requirement it exercises name the same thing; the `// --- Security: … ---` comment groups in `ApiSmokeTest` correspond to the entries below. When a criterion changes, change it here and in the test together — a criterion with no executable check, or a check tracing to a requirement that is not recorded here, is the decay this list exists to prevent.
+
+| Criterion | Must hold | Exercised by |
+|---|---|---|
+| Request body size limit | A request body over 1 MiB to `/api/*` is rejected with `413`, **including** when it arrives with no `Content-Length` (chunked transfer encoding). Bodies under the limit are unaffected, whether or not their length is declared. | `oversizedBodyReturnsPayloadTooLarge`, `oversizedBodyWithoutContentLengthReturnsPayloadTooLarge`, `bodyUnderLimitIsAccepted`, `bodyUnderLimitWithoutContentLengthIsAccepted` |
+| Scenario load error propagation | An invalid scenario is rejected with `400` and an error naming the offending input, rather than being partially applied. | `loadInvalidTomlReturnsBadRequest`, `loadScenarioWithZeroMaxTicksReturnsBadRequest`, `loadScenarioWithMissingEquipmentReturnsBadRequest` |
+| Handler error surfaces in snapshot | A handler error is observable in the snapshot rather than being silently swallowed. | `handlerErrorSurfacesInSnapshot` |
+| SSE connection limit | Concurrent `/api/events/stream` connections are capped at 64; the next connection is rejected with `503` rather than exhausting server resources. | `sseConnectionLimitReturns503` |
+| Economy/price input validation | Out-of-range economy/price input is rejected with `400` instead of being applied to simulation state. | `extremePriceReturnsBadRequest` |
+| Default bind address | The native CLI/API binds `127.0.0.1` by default, so exposure beyond localhost is an explicit choice. | `ArcogineCommandTest.defaultBindAddressIsLocalhost` |
+
+**Configured but not verified.** CORS is configured in `WebConfig` (restricted by `CORS_ALLOWED_ORIGIN`, permissive when unset), and the nginx image configures `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. Neither has an executable check. Treat them as deployment settings, not verified controls, until those checks exist.
+
+This list covers the controls that exist today at the current local/single-user exposure. It is not a claim that the API is safe to expose to untrusted principals — see [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits that no amount of hardening removes, and for the readiness criteria that must be met before hosted or multi-user exposure.

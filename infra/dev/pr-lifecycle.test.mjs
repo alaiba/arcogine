@@ -1,7 +1,7 @@
 /**
- * Deterministic evidence for pr-watch lifecycle resolution.
+ * Deterministic evidence for pr-lifecycle resolution.
  *
- *   node --test infra/dev/
+ *   node --test infra/dev/pr-lifecycle.test.mjs
  *
  * No network access and no dependencies: every case builds a synthetic pull-request payload
  * and asserts the resolved lifecycle state. Each block names the defect it pins.
@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { dispositionOf, summarize, resolveLifecycle, stateLines, diff } from './pr-watch.mjs';
+import { dispositionOf, summarize, resolveLifecycle } from './pr-lifecycle.mjs';
 
 const HEAD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const OLD = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
@@ -143,14 +143,6 @@ test('review-authorization check identity', async (t) => {
     assert.equal(stateOf(pr({ reviews: [], checks }), comparison), 'AWAITING');
   });
 
-  await t.test('a disposition check transition is part of the watched projection', () => {
-    const pending = stateLines(summarize(pr({ checks: [
-      { name: 'gate', conclusion: 'SUCCESS' },
-      { name: 'disposition', conclusion: 'FAILURE' },
-    ] }), comparison));
-    const ready = stateLines(summarize(pr(), comparison));
-    assert.ok(diff(pending, ready).length > 0, 'authorization transition must be observable');
-  });
 });
 
 test('required check identity', async (t) => {
@@ -244,23 +236,6 @@ test('terminal pull-request states', async (t) => {
     assert.equal(resolved.terminal, true);
   });
 
-  await t.test('a draft-to-ready transition produces a watch signal', () => {
-    const draft = stateLines(summarize(pr({ reviews, isDraft: true }), comparison));
-    const ready = stateLines(summarize(pr({ reviews, isDraft: false }), comparison));
-    assert.ok(diff(draft, ready).length > 0, 'readiness change must be observable');
-  });
-
-  await t.test('a merge produces a watch signal', () => {
-    const open = stateLines(summarize(pr({ reviews }), comparison));
-    const merged = stateLines(summarize(pr({ reviews, state: 'MERGED' }), comparison));
-    assert.ok(diff(open, merged).length > 0, 'merge must be observable');
-  });
-
-  await t.test('required-check presence is part of the watched projection', () => {
-    const withGate = stateLines(summarize(pr({ reviews }), comparison));
-    const without = stateLines(summarize(pr({ reviews, checks: [{ name: 'disposition', conclusion: 'SUCCESS' }] }), comparison));
-    assert.ok(diff(withGate, without).length > 0, 'required-check absence must be observable');
-  });
 });
 
 test('review-thread truncation', async (t) => {
@@ -273,13 +248,6 @@ test('review-thread truncation', async (t) => {
     assert.equal(stateOf(truncated, comparison), 'AWAITING');
   });
 
-  await t.test('crossing the truncation boundary produces a watch signal', () => {
-    const whole = pr({ reviews, threads: [{ isResolved: true }] });
-    const before = stateLines(summarize(whole, comparison));
-    const after = stateLines(summarize(truncated, comparison));
-    assert.notDeepEqual(before, after);
-    assert.ok(diff(before, after).length > 0, 'thread truncation must be observable');
-  });
 });
 
 test('base reconciliation normalization', async (t) => {
@@ -297,12 +265,6 @@ test('base reconciliation normalization', async (t) => {
     assert.match(resolved.reasons.join('\n'), /reconcile with the current base before substantive review/);
   });
 
-  await t.test('base identity and distance are part of the watched state', () => {
-    const level = stateLines(summarize(pr({ reviews: approved }), { aheadBy: 1, behindBy: 0 }));
-    const behind = stateLines(summarize(pr({ reviews: approved }), { aheadBy: 1, behindBy: 1 }));
-    assert.notDeepEqual(level, behind);
-    assert.ok(diff(level, behind).length > 0, 'base movement must produce a detectable change');
-  });
 });
 
 test('blocking review aggregation', async (t) => {
@@ -489,11 +451,4 @@ test('remaining lifecycle inputs', async (t) => {
   await t.test('authorization success with required CI success and mergeable is READY TO MERGE', () => {
     assert.equal(stateOf(pr({ reviews }), comparison), 'READY TO MERGE');
   });
-});
-
-test('watch diffing reports removals as well as additions', () => {
-  assert.deepEqual(diff(['a', 'b'], ['b', 'c']), ['- a', '+ c']);
-  assert.deepEqual(diff(['a'], []), ['- a']);
-  assert.deepEqual(diff([], ['a']), ['+ a']);
-  assert.deepEqual(diff(['a'], ['a']), []);
 });

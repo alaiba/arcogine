@@ -18,6 +18,12 @@ ARCOGINE_GIT_USER_EMAIL='owner@example.com' \
 [[ "$(git config --local user.email)" == 'owner@example.com' ]]
 grep -qF 'Git commit identity: Arcogine Owner <owner@example.com>' configured.log
 
+git config --local user.name 'Configured Owner'
+git config --local user.email configured@example.com
+ARCOGINE_GIT_USER_NAME= ARCOGINE_GIT_USER_EMAIL= \
+  bash -c 'source "$1"; configure_arcogine_git_identity' bash "$SCRIPT_DIR/git-identity.sh" >existing.log 2>&1
+grep -qF 'Git commit identity: Configured Owner <configured@example.com>' existing.log
+
 git config --local user.name Claude
 git config --local user.email noreply@anthropic.com
 if ARCOGINE_GIT_USER_NAME= ARCOGINE_GIT_USER_EMAIL= bash -c 'source "$1"; configure_arcogine_git_identity' bash "$SCRIPT_DIR/git-identity.sh" >bot.log 2>&1; then

@@ -237,6 +237,7 @@ Do not equate "comprehensive" with "collect every available source." A decision-
 ## 9. What "adversarial" means
 
 Do not use "adversarial" as a synonym for "be critical" or "think of some objections." Arcogine defines it operationally:
+
 > An **adversarial review** is an independent attempt to falsify the report's load-bearing conclusions, performed without responsibility for defending the original recommendation.
 
 An adversarial reviewer specifically attempts to discover, as applicable:
@@ -357,6 +358,7 @@ The report's author must not silently rewrite ADRs, current architecture, produc
 Research is never `CONCLUDED` merely because a report was written. `CONCLUDED` requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result.
 
 ### Evidence workspaces, artifact identity, and retirement
+
 A research artifact that matters beyond the current session must not exist only inside an agent session, local scratch space, or pasted conversation output. Use one temporary, semantically named **research-evidence workspace branch** per bounded research question by default. An explicitly coupled set of questions may share one workspace when they are intentionally intended to be reviewed and reconciled as one packet. Do not create one branch per artifact merely because a report and its adversarial review are different artifacts, do not create a new branch merely because the same workspace has entered reconciliation, and do not use one permanent repository-wide branch for unrelated investigations.
 
 A workspace may be opened before the investigation is complete and may contain checkpoints, drafts, diagnostic notes, completed reports, adversarial-review artifacts, and later reconciliation work. Checkpoint or draft commits are continuity aids only; they do not become decision-quality evidence merely because they are persisted.

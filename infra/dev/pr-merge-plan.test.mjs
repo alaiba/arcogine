@@ -20,8 +20,8 @@ function blob(path, sha, mode = '100644') {
   return { path, sha, mode, type: 'blob' };
 }
 
-function snapshot(sha, tree) {
-  return { sha, tree };
+function snapshot(sha, tree, truncated = false) {
+  return { sha, tree, truncated };
 }
 
 function disjointPlan() {
@@ -152,6 +152,7 @@ function successfulObservation(plan) {
     headSha: M,
     parents: [H, B],
     tree: plan.finalTree,
+    treeTruncated: false,
     oldHeadAncestor: true,
     baseAncestor: true,
     currentBaseSha: B,
@@ -192,4 +193,25 @@ test('unexpected tree content or lost evidence fails closed', () => {
   assert.equal(result.ok, false);
   assert.equal(result.retry, false);
   assert.match(result.reasons.join('\n'), /tree|evidence/);
+});
+
+test('incomplete Git tree snapshots fail closed before planning or verification', () => {
+  assert.throws(
+    () =>
+      createMechanicalMergePlan({
+        mergeBase: snapshot(A, [blob('base.txt', A)], true),
+        base: snapshot(B, [blob('base.txt', B)]),
+        head: snapshot(H, [blob('base.txt', A), blob('pr.txt', H)]),
+      }),
+    /complete|truncated/,
+  );
+
+  const plan = disjointPlan();
+  const observed = successfulObservation(plan);
+  delete observed.treeTruncated;
+  const result = verifyFastForwardResult({ plan, mergeCommitSha: M, observed });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.retry, false);
+  assert.match(result.reasons.join('\n'), /complete|truncated/);
 });

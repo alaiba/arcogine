@@ -241,8 +241,11 @@ available only when all of the following are proven from repository-scoped Git d
    case-folded/path-normalization ambiguity.
 3. No rename/copy interpretation, delete/modify resolution, symlink, submodule, unsupported
    mode, or other semantic merge choice is required. The current pure planner
-   (`infra/dev/pr-merge-plan.mjs`) accepts only regular blob leaves with exact `100644` or
-   `100755` modes and refuses unsupported shapes.
+   (`infra/dev/pr-merge-plan.mjs`) accepts only complete, non-truncated recursive tree
+   snapshots whose regular blob leaves have exact `100644` or `100755` modes, and refuses
+   unsupported shapes. A recursive Git tree response with `truncated: true` — or without
+   an explicit `truncated: false` proof — is incomplete; recursively expand its subtrees
+   through the connector or return the PR to the implementation/author.
 4. `T` is constructed completely before any ref mutation by starting from `B` and applying
    the PR-side blob states exactly, including exact modes and deletions where their intent is
    mechanically unambiguous. The resulting tree must retain a non-empty net PR diff.
@@ -262,7 +265,7 @@ Immediately before the one ref mutation, require the PR head still equals `H` an
    for true history rewrites is unchanged.
 
 Post-update verification must additionally confirm that the resulting head is `M`, its
-parents are `[H, B]`, its tree is exactly `T`, the current live base is still an ancestor,
+parents are `[H, B]`, its complete non-truncated tree is exactly `T`, the current live base is still an ancestor,
 and the live-base diff is exactly the intended non-empty PR change. If `main` advances to
 `B2`, do not roll back the successful merge; report the branch stale and repeat the same
 normalization against `B2`. Research-evidence workspaces must also verify every handed-off

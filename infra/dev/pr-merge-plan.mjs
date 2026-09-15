@@ -5,9 +5,10 @@
  * This module deliberately does not call GitHub or perform a ref mutation. A connector
  * (or another repository-scoped adapter) supplies Git tree/commit data and applies the
  * returned commit/ref specifications. The narrow accepted tree shape is intentional:
- * regular-file leaf entries only, with exact blob SHA and mode preservation. Directory
- * entries from a recursive Git tree are ignored; symlinks, submodules, renames/copies,
- * and path-shape ambiguity fail closed.
+ * complete, non-truncated recursive Git tree snapshots with regular-file leaf entries
+ * only, exact blob SHA and mode preservation. Directory entries from a complete
+ * recursive Git tree are ignored; symlinks, submodules, renames/copies, and path-shape
+ * ambiguity fail closed.
  */
 
 const SHA_PATTERN = /^[0-9a-f]{40}$/i;
@@ -118,6 +119,19 @@ function normalizeTree(entries, label) {
   return byPath;
 }
 
+function requireCompleteTreeSnapshot(snapshot, label) {
+  if (!snapshot || typeof snapshot !== 'object') {
+    throw new Error(`${label} snapshot is required`);
+  }
+  if (snapshot.truncated !== false) {
+    throw new Error(`${label} snapshot must explicitly prove complete tree data with truncated=false`);
+  }
+  return {
+    sha: requireSha(snapshot.sha, `${label} SHA`),
+    tree: normalizeTree(snapshot.tree, `${label} tree`),
+  };
+}
+
 function sortedEntries(byPath) {
   return [...byPath.values()]
     .sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0))
@@ -184,13 +198,16 @@ function sameChanges(left, right) {
  */
 function createMechanicalMergePlan({ mergeBase, base, head }) {
   if (!mergeBase || !base || !head) throw new Error('merge base, live base, and PR head are required');
-  const mergeBaseSha = requireSha(mergeBase.sha, 'merge base SHA');
-  const baseSha = requireSha(base.sha, 'live base SHA');
-  const headSha = requireSha(head.sha, 'PR head SHA');
+  const mergeBaseSnapshot = requireCompleteTreeSnapshot(mergeBase, 'merge base');
+  const baseSnapshot = requireCompleteTreeSnapshot(base, 'live base');
+  const headSnapshot = requireCompleteTreeSnapshot(head, 'PR head');
+  const mergeBaseSha = mergeBaseSnapshot.sha;
+  const baseSha = baseSnapshot.sha;
+  const headSha = headSnapshot.sha;
 
-  const mergeBaseTree = normalizeTree(mergeBase.tree, 'merge base tree');
-  const baseTree = normalizeTree(base.tree, 'live base tree');
-  const headTree = normalizeTree(head.tree, 'PR head tree');
+  const mergeBaseTree = mergeBaseSnapshot.tree;
+  const baseTree = baseSnapshot.tree;
+  const headTree = headSnapshot.tree;
   const baseChanges = changedEntries(mergeBaseTree, baseTree);
   const headChanges = changedEntries(mergeBaseTree, headTree);
 
@@ -314,6 +331,9 @@ function verifyFastForwardResult({ plan, mergeCommitSha, observed, requiredEvide
   }
 
   try {
+    if (observed.treeTruncated !== false) {
+      throw new Error('post-update tree must explicitly prove complete tree data with truncated=false');
+    }
     const observedTree = normalizeTree(observed.tree, 'post-update tree');
     const expectedTree = plan.finalTree;
     if (!sameEntries(sortedEntries(observedTree), expectedTree)) reasons.push('resulting merge tree differs from the verified mechanical tree');

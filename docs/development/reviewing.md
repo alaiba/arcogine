@@ -67,8 +67,8 @@ Never assume the head reviewed previously is still current.
 
 If the PR is behind live `main`, synchronize it **before** spending substantive review effort:
 
-- for an ordinary PR, use the canonical reconciliation path from `AGENTS.md`, normally `node infra/dev/pr-reconcile.mjs <pr-number>` when a local checkout is available;
-- for a research-evidence workspace carrying handed-off evidence coordinates, preserve those SHAs and use the history-preserving merge-style Update branch path required by `AGENTS.md`;
+- for an ordinary PR, use the canonical merge-style Update branch reconciliation path from `AGENTS.md`, normally `node infra/dev/pr-reconcile.mjs <pr-number>`; a local checkout is not required;
+- for a research-evidence workspace carrying handed-off evidence coordinates, use the same history-preserving Update branch path and additionally verify those SHAs and the pre-update head remain ancestors as required by `AGENTS.md`;
 - for a Dependabot PR that currently qualifies for the trusted no-positive-review path, prefer Dependabot's own supported rebase/recreate mechanism. GitHub permits maintainers to add commits to Dependabot branches, and any maintainer-authored synchronization commit intentionally revokes the trusted provenance exception. If a maintainer-authored sync is used anyway, the resulting PR follows the ordinary independent-review path;
 - if the operation produces a merge conflict, requires a semantic choice, lacks permission, or cannot be performed safely in the current harness, stop and return the PR to the author/implementation owner;
 - after successful synchronization, re-resolve live `main`, the resulting PR head, mergeability, reviews, trusted `disposition` state, and CI, then begin the review from that normalized head.

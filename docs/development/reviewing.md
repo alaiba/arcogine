@@ -35,7 +35,7 @@ A good review:
 - does not pull later roadmap work into the current PR without a concrete dependency;
 - says explicitly when no blocking issues remain.
 
-Review is diagnostic with one narrow pre-review exception: a reviewer may perform the repository-approved **conflict-free rebase** needed to make the PR a current candidate against live `main`. That normalization must not include conflict resolution, semantic choices, compatibility fixes, or any other implementation work. If the rebase cannot complete and publish safely, return the PR to the author/implementation owner before substantive review.
+Review is diagnostic with one narrow pre-review exception: a reviewer may perform the repository-approved **mechanical merge-style synchronization** needed to make a stale PR a current candidate against live `main`. That normalization must not include conflict resolution, semantic choices, compatibility fixes, or any other implementation work. If construction or publication cannot complete mechanically, return the PR to the author/implementation owner before substantive review.
 
 Normal review work therefore follows:
 
@@ -67,14 +67,13 @@ Never assume the head reviewed previously is still current.
 
 If the PR is behind live `main`, synchronize it **before** spending substantive review effort:
 
-- for an ordinary implementation PR, run the canonical conflict-free rebase path from `AGENTS.md`, normally `node infra/dev/pr-reconcile.mjs <pr-number>`; it uses temporary local work and may rewrite the unmerged PR branch;
-- capture `H` (the PR head) and `B` (the live base) before rebasing. Before publication, verify the remote PR branch still equals `H`, then publish the rebased result exactly once with an exact-old-head `--force-with-lease` or equivalent compare-and-swap guard;
-- if the rebase conflicts, the head changes, the lease fails, or the replacement cannot be guarded safely, do not resolve or overwrite anything as reviewer. Abandon the attempt and return the PR to the author/implementation owner for lifecycle re-resolution;
-- research-evidence workspace custody is a separate research lifecycle in `docs/development/researching.md`; its evidence reachability rules are not part of ordinary implementation-PR normalization;
-- for a Dependabot PR that currently qualifies for the trusted no-positive-review path, prefer Dependabot's own supported rebase/recreate mechanism. GitHub permits maintainers to add commits to Dependabot branches, and any maintainer-authored synchronization commit intentionally revokes the trusted provenance exception. If a maintainer-authored sync is used anyway, the resulting PR follows the ordinary independent-review path;
-- after successful synchronization, re-resolve the resulting PR head, mergeability, reviews, trusted `disposition` state, and current CI status, then begin the review from that new head. Do not immediately rebase again solely because `main` advanced after `B` was observed; a later lifecycle iteration may do so if GitHub's merge rules require it. **Do not wait for pending CI to finish before substantive review or reviewer disposition**; review authorization and CI are independent, and final merge readiness remains blocked until required CI is green.
+- for an ordinary open same-repository PR, capture `H` (the PR head), `B` (the live base), and `A` (the merge base when needed); construct exactly one merge commit `M` with first parent `H`, second parent `B`, and a tree formed from the base tree plus the PR-side delta, using ordinary three-way text merges only for supported overlapping text files;
+- use repository-scoped GitHub Git-data operations. Immediately before publication, re-read the PR head; if it is no longer `H`, abandon without mutation. Otherwise publish `H -> M` with a non-forced ref update (`force=false`). This is a best-effort check, not exact-head atomicity: a reset to an ancestor such as `B` in the tiny post-check interval can still fast-forward to `M`, and that residual race is accepted. Do not use a local `gh` prerequisite, rebase, force push, lease, or separate compare-and-swap protocol;
+- if construction encounters a real conflict or unsupported structural case, make no remote branch mutation and return the PR to the author/implementation owner. The reviewer does not resolve conflicts or make semantic choices;
+- after successful synchronization, resolve the resulting PR head and begin review from that candidate. Do not immediately synchronize again solely because `main` advanced after `B` was observed; a later lifecycle iteration may do so if required. CI, trusted `disposition`, and final mergeability remain lifecycle/gate responsibilities rather than reviewer-owned orchestration;
+- **do not wait for pending CI to finish before substantive review or reviewer disposition**; review authorization and CI are independent, and final merge readiness remains blocked until required CI is green.
 
-A stale base is not itself a review finding. Do not file a `PR_RECONCILIATION` finding or post a disposition against the stale head merely to ask somebody else to perform a conflict-free rebase.
+A stale base is not itself a review finding. Do not file a `PR_RECONCILIATION` finding or post a disposition against the stale head merely to ask somebody else to perform mechanical synchronization.
 
 ### 2. Re-ground from repository context
 
@@ -114,7 +113,7 @@ current normalized PR head
 
 not merely individual commits. This catches stale carry-over, merged work accidentally retained on the branch, and documentation that was correct at branch creation but is wrong against current `main`.
 
-If `main` advances again before final disposition, normalize the branch again before final review. A successful synchronization changes the head and therefore invalidates any earlier head-bound disposition; inspect the resulting net change and current validation before posting a new one.
+If `main` advances again before final disposition, normalize the branch again before final review. A successful synchronization changes the head and therefore invalidates any earlier head-bound disposition; inspect the resulting net change before posting a new reviewer disposition, while leaving CI, gate, and final-mergeability re-resolution to their lifecycle owners.
 
 ### 5. Evaluate the change
 
@@ -303,7 +302,7 @@ Every ordinary PR review/re-review should end with a clear disposition. There ar
 - **READY TO MERGE** — independent review of the code/docs is complete and finds no blocking issue on this exact PR head.
 - **CHANGES REQUIRED** — at least one blocking/pre-merge finding remains.
 
-CI is not a reviewer disposition, and review authorization is genuinely orthogonal to CI status — there is no third disposition for "review is clean but CI is still pending." A review may conclude `READY TO MERGE` based solely on the code/docs review, regardless of whether required CI has finished running for this head. That review disposition is necessary for ordinary PRs but is not sufficient for merge: required CI, base freshness, and other GitHub protections are enforced independently. A current-head `READY TO MERGE` review is not invalidated merely because `main` later advances; that base-head change may still block the owner's merge under repository rules and can require a later normalization iteration. Do treat the PR head changing, new findings surfacing, or a rebase that creates a new head as requiring a fresh disposition.
+CI is not a reviewer disposition, and review authorization is genuinely orthogonal to CI status — there is no third disposition for "review is clean but CI is still pending." A review may conclude `READY TO MERGE` based solely on the code/docs review, regardless of whether required CI has finished running for this head. That review disposition is necessary for ordinary PRs but is not sufficient for merge: required CI, base freshness, and other GitHub protections are enforced independently. A current-head `READY TO MERGE` review is not invalidated merely because `main` later advances; that base-head change may still block the owner's merge under repository rules and can require a later normalization iteration. Do treat the PR head changing, new findings surfacing, or a synchronization that creates a new head as requiring a fresh disposition.
 
 A trusted Dependabot PR is the explicit positive-review exception. The base-side disposition workflow must verify from GitHub API state that the PR opener is the exact `dependabot[bot]` Bot account and that the `CI` workflow run triggered by `pull_request` for the exact current head is associated with this PR and has that same exact Dependabot account as its GitHub actor. The workflow checks the stable account id as well as login/type. This matters because GitHub permits maintainers to push extra commits to Dependabot branches: a maintainer-authored current head produces CI attributed to that maintainer and therefore falls back to ordinary independent review. Candidate-controlled branch names, PR text, labels, commit messages, and commit author strings are not provenance signals.
 

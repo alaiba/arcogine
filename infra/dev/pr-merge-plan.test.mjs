@@ -33,6 +33,16 @@ function disjointPlan() {
   });
 }
 
+function defaultTextAttributeProof(overrides = {}) {
+  return {
+    sourceSha: H,
+    text: 'auto',
+    merge: 'unspecified',
+    mergeDefault: 'unspecified',
+    ...overrides,
+  };
+}
+
 function cleanTextMergeResolution(overrides = {}) {
   return {
     path: 'shared.md',
@@ -42,6 +52,7 @@ function cleanTextMergeResolution(overrides = {}) {
     baseBlobSha: B,
     headBlobSha: H,
     resultBlobSha: C,
+    attributeProof: defaultTextAttributeProof(),
     ...overrides,
   };
 }
@@ -92,7 +103,7 @@ test('same-path modify/modify fails closed without a clean text merge resolution
   );
 });
 
-test('text merge resolution is bound to the exact A/B/H blobs and unchanged mode', () => {
+test('text merge resolution is bound to the exact A/B/H blobs, head attributes, and unchanged mode', () => {
   assert.throws(
     () =>
       createMechanicalMergePlan({
@@ -108,12 +119,87 @@ test('text merge resolution is bound to the exact A/B/H blobs and unchanged mode
     () =>
       createMechanicalMergePlan({
         mergeBase: snapshot(A, [blob('shared.md', A)]),
+        base: snapshot(B, [blob('shared.md', B)]),
+        head: snapshot(H, [blob('shared.md', H)]),
+        textMergeResolutions: [
+          cleanTextMergeResolution({ attributeProof: defaultTextAttributeProof({ sourceSha: H2 }) }),
+        ],
+      }),
+    /exact inspected PR head/,
+  );
+
+  assert.throws(
+    () =>
+      createMechanicalMergePlan({
+        mergeBase: snapshot(A, [blob('shared.md', A)]),
         base: snapshot(B, [blob('shared.md', B, '100755')]),
         head: snapshot(H, [blob('shared.md', H)]),
         textMergeResolutions: [cleanTextMergeResolution()],
       }),
     /mode/,
   );
+});
+
+test('text merge eligibility fails closed for missing, binary, or custom Git attribute semantics', () => {
+  const args = {
+    mergeBase: snapshot(A, [blob('shared.md', A)]),
+    base: snapshot(B, [blob('shared.md', B)]),
+    head: snapshot(H, [blob('shared.md', H)]),
+  };
+
+  assert.throws(
+    () => createMechanicalMergePlan({ ...args, textMergeResolutions: [cleanTextMergeResolution({ attributeProof: undefined })] }),
+    /attribute eligibility proof/,
+  );
+
+  assert.throws(
+    () =>
+      createMechanicalMergePlan({
+        ...args,
+        textMergeResolutions: [
+          cleanTextMergeResolution({
+            attributeProof: defaultTextAttributeProof({ text: 'unset', merge: 'unset' }),
+          }),
+        ],
+      }),
+    /text attribute is unset/,
+  );
+
+  assert.throws(
+    () =>
+      createMechanicalMergePlan({
+        ...args,
+        textMergeResolutions: [
+          cleanTextMergeResolution({ attributeProof: defaultTextAttributeProof({ merge: 'union' }) }),
+        ],
+      }),
+    /merge attribute is union/,
+  );
+
+  assert.throws(
+    () =>
+      createMechanicalMergePlan({
+        ...args,
+        textMergeResolutions: [
+          cleanTextMergeResolution({ attributeProof: defaultTextAttributeProof({ mergeDefault: 'custom-driver' }) }),
+        ],
+      }),
+    /merge\.default is custom-driver/,
+  );
+});
+
+test('explicit built-in text merge attribute remains eligible', () => {
+  const resolution = cleanTextMergeResolution({
+    attributeProof: defaultTextAttributeProof({ text: 'set', merge: 'text', mergeDefault: 'custom-driver' }),
+  });
+  const plan = createMechanicalMergePlan({
+    mergeBase: snapshot(A, [blob('shared.md', A)]),
+    base: snapshot(B, [blob('shared.md', B)]),
+    head: snapshot(H, [blob('shared.md', H)]),
+    textMergeResolutions: [resolution],
+  });
+
+  assert.deepEqual(plan.finalTree, [blob('shared.md', C)]);
 });
 
 test('ancestor-descendant and case-folded overlaps still refuse semantic resolution', () => {

@@ -4,7 +4,7 @@
 
 Arcogine uses a dedicated consistency-review role to detect evidence-backed drift between implementation, architecture, ADRs, planning, public documentation, examples, configuration, tests, CI, recent pull requests, and prior consistency findings.
 
-The consistency reviewer is diagnostic by default. It identifies and explains inconsistencies; it does not silently remediate them or mutate the finding ledger. Confirmed findings are fixed through the normal implementation and pull-request review workflow, then re-verified against a later `main` head.
+The consistency reviewer is diagnostic by default. It identifies and explains inconsistencies; it does not silently remediate them or mutate the finding ledger. A normal baseline-advancing `FULL` or `INCREMENTAL` run has the narrow accounting authority described below so its unresolved findings cannot be lost. Confirmed findings are fixed through the normal implementation and pull-request review workflow, then re-verified against a later `main` head.
 
 ## Current operating model
 
@@ -33,7 +33,7 @@ new evidence-backed findings
       v
 triage
       |
-      +--> optional explicitly authorized issue-ledger synchronization
+      +--> required finding-ledger accounting for a qualifying FULL/INCREMENTAL run
       |
       v
 normal remediation PRs
@@ -61,7 +61,7 @@ Accepted and Superseded ADRs may be clarified under the semantics-preserving ame
 
 ## Finding persistence
 
-GitHub Issues persist **finding identity and lifecycle**, not product/architecture truth and not the repository comparison baseline.
+GitHub Issues persist **finding identity and lifecycle**, not product/architecture truth. The continuous-improvement register carries the accounted reviewed-head evidence for the recurring baseline.
 
 Persisted findings use the identity rules in the consistency-agent contract:
 
@@ -71,17 +71,18 @@ Persisted findings use the identity rules in the consistency-agent contract:
 - new persisted findings derive their alias from the GitHub issue number (for example, issue `#211` becomes `CONS-211`), so no independent counter or reservation protocol is required;
 - a diagnostic-only finding that has not been persisted has no durable `CONS-*` identity yet.
 
-The review itself remains read-only by default. Reading/searching the issue ledger is mandatory grounding; creating, editing, commenting on, closing, reopening, assigning, or relabeling finding issues requires explicit authorization for issue-ledger synchronization.
+The review remains read-only for `DIAGNOSTIC_ONLY` and `PR_FORWARD` runs unless separate synchronization authority is given. Invoking a normal baseline-advancing `FULL` or `INCREMENTAL` review authorizes only the finding-ledger bookkeeping required to account for that review; it does not authorize remediation, arbitrary issue edits, or merging.
 
 When synchronization is authorized, it follows repository truth rather than issue state:
 
 - create an issue only for a genuinely new durable finding after duplicate/regression matching;
+- complete that accounting before posting recurring completion evidence;
 - keep `OPEN` and `IN_FLIGHT` findings open;
 - close a finding only after current `main` verifies it as `RESOLVED`, or when it is explicitly `SUPERSEDED` or `WITHDRAWN`;
 - never close a finding merely because a remediation PR exists or merged;
 - retain closed issues so regression detection can reuse the same semantic finding identity.
 
-This deliberately does **not** mean that every raw observation or exploratory suspicion becomes an issue. A finding must meet the evidence rules in the reviewer contract before it qualifies for persistence.
+This deliberately does **not** mean that every raw observation or exploratory suspicion becomes an issue. A finding must meet the evidence rules in the reviewer contract before it qualifies for persistence. For a qualifying recurring run, however, every unresolved finding that needs lifecycle continuity must have a durable disposition before the reviewed head can advance the baseline; the old immediate-remediation P3/Nit exception cannot leave such a finding only in session output.
 
 ## Finding attribution
 
@@ -117,27 +118,19 @@ Those aliases are grandfathered; new findings use the issue-number-derived alias
 
 ## Baseline discipline
 
-Finding persistence and comparison-baseline persistence are separate problems.
+Finding persistence and comparison-baseline persistence remain separate concerns, but the recurring baseline now has an explicit accounting contract. The continuous-improvement register may treat a completion as a reviewed baseline only when the comment is trusted, non-future, structurally complete, and accounted:
 
-Until Arcogine implements repository-owned baseline persistence, a recurring review should use the last reliable reviewed head available to the review workflow. If that baseline cannot be established confidently, perform a full review rather than pretending an incremental interval is complete.
+- `FULL` or `INCREMENTAL` is the mode;
+- `CLEAN` cites `finding issues: none`;
+- `FINDINGS` cites one or more verified persisted Consistency issue numbers;
+- every unresolved finding needing lifecycle continuity has been durably identified before the comment is posted.
 
-The reviewer must carry unresolved findings forward even when the commit that introduced them predates the chosen incremental baseline. Advancing a baseline must never make an unresolved finding disappear by construction.
+`PR_FORWARD`, `DIAGNOSTIC_ONLY`, legacy four-line comments, malformed comments, and completion claims containing `UNPERSISTED` findings never establish or advance the weekly `main` baseline. If no accounted baseline exists, the obligation is `DUE` and the next qualifying run must be `FULL`; do not pretend an incremental interval is complete.
 
-The GitHub Issue ledger therefore solves cross-session finding continuity but does not claim to answer "what was the last fully reviewed `main` SHA?" A future baseline mechanism may be added separately if recurring review needs one.
+The reviewer must carry unresolved findings forward even when the commit that introduced them predates the chosen incremental baseline. Advancing a baseline must never make an unresolved finding disappear by construction. After posting a qualifying completion comment, trigger the existing `repository_dispatch` register refresh when possible and verify the managed register state; report dispatch or verification failure explicitly.
 
-## Remaining operational question
+The old September 11 completion marker remains visible as historical evidence, but its missing result and finding-accounting fields mean it is not an accounted baseline. Until a new qualifying completion is recorded, the register must therefore show `DUE` (or an equally explicit not-accounted state).
 
-The finding-ledger question is now decided: durable findings live in GitHub Issues.
-
-The remaining persistence question is narrower: whether Arcogine needs repository-owned **review-baseline** state in addition to the issue ledger and whatever trusted reviewed-head context the recurring workflow already maintains.
-
-Evidence that would justify baseline persistence includes:
-
-- uncertainty about the last fully reviewed `main` head;
-- scheduled runs being unable to establish a trustworthy incremental range;
-- multiple maintainers or review environments repeatedly falling back to full scans solely because the reviewed-head baseline is unavailable.
-
-If those problems appear in practice, define the baseline contract separately. Do not overload finding issues with baseline semantics.
 
 ## Ownership boundaries
 

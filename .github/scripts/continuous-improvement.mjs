@@ -28,6 +28,19 @@ export const MARKER_END = '<!-- continuous-improvement:obligations:end -->';
 export const WEEKLY_INTERVAL_DAYS = 7;
 export const WEEKLY_OVERDUE_DAYS = 14;
 export const RETROSPECTIVE_GUARD_THRESHOLD = 25;
+export const COMPLETION_MODES = new Set(['FULL', 'INCREMENTAL', 'PR_FORWARD', 'DIAGNOSTIC_ONLY']);
+export const QUALIFYING_COMPLETION_MODES = new Set(['FULL', 'INCREMENTAL']);
+
+// These aliases predate the issue-number-derived identity rule and are the only
+// intentional exceptions to alias number == GitHub issue number.
+export const LEGACY_CONSISTENCY_ALIASES = new Map([
+  [204, 'CONS-001'],
+  [205, 'CONS-002'],
+  [206, 'CONS-003'],
+  [207, 'CONS-004'],
+  [208, 'CONS-005'],
+  [209, 'CONS-006'],
+]);
 
 // ------------------------------- pure logic -------------------------------
 
@@ -60,29 +73,122 @@ const SHA_RE = /^[0-9a-f]{40}$/;
  */
 export const TRUSTED_COMPLETION_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
 
+function readCompletionField(body, label) {
+  const pattern = new RegExp(`^\\s*${escapeRegex(label)}:\\s*(.*?)\\s*$`, 'gim');
+  const matches = [...body.matchAll(pattern)];
+  if (matches.length !== 1 || !matches[0][1]) return null;
+  return matches[0][1].trim();
+}
+
+function parseFindingIssueList(raw, mode, result) {
+  if (/^none$/i.test(raw)) {
+    return result === 'CLEAN' ? { kind: 'NONE', numbers: [] } : null;
+  }
+
+  if (/^unpersisted$/i.test(raw)) {
+    return result === 'FINDINGS' && !QUALIFYING_COMPLETION_MODES.has(mode)
+      ? { kind: 'UNPERSISTED', numbers: [] }
+      : null;
+  }
+
+  const parts = raw.split(',').map((part) => part.trim());
+  if (parts.length === 0 || parts.some((part) => !/^#[1-9][0-9]*$/.test(part))) return null;
+
+  const numbers = parts.map((part) => Number(part.slice(1)));
+  if (numbers.some((number) => !Number.isSafeInteger(number))) return null;
+  if (new Set(numbers).size !== numbers.length) return null;
+  return result === 'FINDINGS' ? { kind: 'PERSISTED', numbers } : null;
+}
+
 /**
- * Parse one completion-evidence comment. Returns null when the comment does not
- * match the required structured format (malformed/unrelated comments are ignored,
- * never treated as completion proof).
+ * Parse one accounted-review completion comment. Returns null when the comment
+ * does not match the repaired structured format (including legacy evidence).
+ * Non-qualifying modes may explicitly report `UNPERSISTED` findings, but such
+ * evidence can never qualify as the recurring reviewed baseline.
  */
 export function parseCompletionComment(body) {
   if (typeof body !== 'string') return null;
   if (!/^\s*Consistency review completed\s*$/m.test(body)) return null;
 
-  const head = /reviewed head:\s*(\S+)/i.exec(body);
-  const at = /completed at:\s*(\S+)/i.exec(body);
-  const mode = /mode:\s*(\S+)/i.exec(body);
+  const head = readCompletionField(body, 'reviewed head');
+  const at = readCompletionField(body, 'completed at');
+  const mode = readCompletionField(body, 'mode')?.toUpperCase();
+  const result = readCompletionField(body, 'result')?.toUpperCase();
+  const findingIssuesRaw = readCompletionField(body, 'finding issues');
 
-  if (!head || !SHA_RE.test(head[1])) return null;
-  if (!at) return null;
-  const parsed = new Date(at[1]);
-  if (Number.isNaN(parsed.getTime())) return null;
+  if (!head || !SHA_RE.test(head)) return null;
+  if (!at || !mode || !COMPLETION_MODES.has(mode)) return null;
+  if (!result || !['CLEAN', 'FINDINGS'].includes(result)) return null;
+
+  const parsedAt = new Date(at);
+  if (Number.isNaN(parsedAt.getTime())) return null;
+
+  const findingIssues = findingIssuesRaw && parseFindingIssueList(findingIssuesRaw, mode, result);
+  if (!findingIssues) return null;
 
   return {
-    reviewedHead: head[1],
-    completedAt: parsed.toISOString(),
-    mode: mode ? mode[1] : 'unspecified',
+    reviewedHead: head,
+    completedAt: parsedAt.toISOString(),
+    mode,
+    result,
+    findingIssueNumbers: findingIssues.numbers,
+    findingIssuesKind: findingIssues.kind,
   };
+}
+
+/** Return whether a parsed completion mode may advance the weekly baseline. */
+export function isQualifyingCompletionMode(mode) {
+  return QUALIFYING_COMPLETION_MODES.has(mode);
+}
+
+/**
+ * Verify that a referenced GitHub issue is a persisted Consistency finding.
+ * The issue number is the canonical storage identity. Legacy aliases #204-#209
+ * are accepted only through their fixed migration mapping; later aliases must
+ * be derived from the issue number.
+ */
+export function isPersistedConsistencyFinding(issue, expectedNumber) {
+  if (!issue || issue.number !== expectedNumber || issue.pull_request) return false;
+
+  const titleMatch = /^CONS-([0-9]+):\s+\S/.exec(issue.title ?? '');
+  if (!titleMatch) return false;
+
+  const alias = `CONS-${titleMatch[1]}`;
+  const expectedLegacyAlias = LEGACY_CONSISTENCY_ALIASES.get(expectedNumber);
+  if (expectedLegacyAlias ? alias !== expectedLegacyAlias : Number(titleMatch[1]) !== expectedNumber) {
+    return false;
+  }
+
+  const body = issue.body ?? '';
+  return (
+    /^Severity:\s*(?:P0|P1|P2|P3|Nit)\s*$/m.test(body) &&
+    /^Category:\s*\S.+$/m.test(body) &&
+    /^Status:\s*(?:OPEN|IN_FLIGHT|RESOLVED|SUPERSEDED|WITHDRAWN)\s*$/m.test(body)
+  );
+}
+
+function findingIssueMap(findingIssues) {
+  if (findingIssues instanceof Map) return findingIssues;
+  return new Map((findingIssues ?? []).map((issue) => [issue.number, issue]));
+}
+
+/**
+ * Check the accounting invariant for one parsed completion. A qualifying
+ * FINDINGS completion is valid only when every cited issue is a real persisted
+ * Consistency finding; a clean completion must cite none.
+ */
+export function isAccountedCompletion(completion, findingIssues = new Map()) {
+  if (!completion || !isQualifyingCompletionMode(completion.mode)) return false;
+  if (completion.result === 'CLEAN') {
+    return completion.findingIssuesKind === 'NONE' && completion.findingIssueNumbers.length === 0;
+  }
+  if (completion.result !== 'FINDINGS' || completion.findingIssuesKind !== 'PERSISTED') return false;
+
+  const issues = findingIssueMap(findingIssues);
+  return (
+    completion.findingIssueNumbers.length > 0 &&
+    completion.findingIssueNumbers.every((number) => isPersistedConsistencyFinding(issues.get(number), number))
+  );
 }
 
 /**
@@ -91,17 +197,43 @@ export function parseCompletionComment(body) {
  * Malformed comments are ignored rather than rejected as errors -- a stray or
  * corrupted comment must never crash the run, only fail to count as evidence.
  * An unauthorized author's matching text and a future-dated `completed at` are
- * rejected the same way: silently not evidence, never a thrown error.
+ * rejected the same way: silently not evidence, never a thrown error. The
+ * optional finding-issue map is required for FINDINGS evidence to qualify.
+ * An INCREMENTAL completion is eligible only after an earlier accounted FULL
+ * baseline has established the sequence; an isolated or legacy-only history
+ * therefore remains unverified until a FULL completion is recorded.
  */
-export function latestValidCompletion(comments, nowISO) {
+export function latestValidCompletion(comments, nowISO, findingIssues = new Map()) {
   const now = new Date(nowISO).getTime();
-  let best = null;
+  const valid = [];
+
   for (const comment of comments) {
     const parsed = parseCompletionComment(comment.body);
     if (!parsed) continue;
     if (!TRUSTED_COMPLETION_ASSOCIATIONS.has(comment.authorAssociation)) continue;
     if (new Date(parsed.completedAt).getTime() > now) continue;
-    if (!best || parsed.completedAt > best.completedAt) best = parsed;
+    if (!isAccountedCompletion(parsed, findingIssues)) continue;
+    valid.push(parsed);
+  }
+
+  // Process equal timestamps as one point in time: an INCREMENTAL completion
+  // must follow a strictly earlier accounted baseline, not merely share its
+  // timestamp with a FULL completion.
+  valid.sort((a, b) => a.completedAt.localeCompare(b.completedAt));
+  let best = null;
+  let baselineEstablished = false;
+  for (let index = 0; index < valid.length;) {
+    const timestamp = valid[index].completedAt;
+    let end = index + 1;
+    while (end < valid.length && valid[end].completedAt === timestamp) end += 1;
+
+    for (const parsed of valid.slice(index, end)) {
+      const eligible = parsed.mode === 'FULL' || (parsed.mode === 'INCREMENTAL' && baselineEstablished);
+      if (eligible && (!best || parsed.completedAt > best.completedAt)) best = parsed;
+    }
+
+    if (valid.slice(index, end).some((parsed) => parsed.mode === 'FULL')) baselineEstablished = true;
+    index = end;
   }
   return best;
 }
@@ -138,6 +270,8 @@ export function renderObligations({ weekly, retrospective }) {
   lines.push('');
   lines.push(`- last verified: ${weekly.lastVerifiedAt ?? 'never'}`);
   lines.push(`- reviewed head: ${weekly.reviewedHead ?? 'n/a'}`);
+  lines.push(`- accounted result: ${weekly.result ?? 'n/a'}`);
+  lines.push(`- finding issues: ${weekly.findingIssueNumbers?.length ? weekly.findingIssueNumbers.map((number) => `#${number}`).join(', ') : weekly.result ? 'none' : 'n/a'}`);
   lines.push(`- next due / interval: every ${WEEKLY_INTERVAL_DAYS} days`);
   lines.push(`- state: **${weekly.state}**`);
   lines.push('');
@@ -331,6 +465,33 @@ async function listIssueComments(repo, number) {
   }));
 }
 
+function candidateFindingNumbers(comments, nowISO) {
+  const now = new Date(nowISO).getTime();
+  const numbers = new Set();
+  for (const comment of comments) {
+    if (!TRUSTED_COMPLETION_ASSOCIATIONS.has(comment.authorAssociation)) continue;
+    const parsed = parseCompletionComment(comment.body);
+    if (!parsed || !isQualifyingCompletionMode(parsed.mode)) continue;
+    if (new Date(parsed.completedAt).getTime() > now) continue;
+    for (const number of parsed.findingIssueNumbers) numbers.add(number);
+  }
+  return [...numbers];
+}
+
+async function loadFindingIssues(repo, comments, nowISO) {
+  const entries = await Promise.all(
+    candidateFindingNumbers(comments, nowISO).map(async (number) => {
+      try {
+        return [number, await ghRepo(`/issues/${number}`, { repo })];
+      } catch (error) {
+        if (/failed: 404\b/.test(error.message)) return [number, null];
+        throw error;
+      }
+    }),
+  );
+  return new Map(entries);
+}
+
 async function createRegisterIssue(repo, body) {
   return ghRepo('/issues', { repo, method: 'POST', body: { title: REGISTER_TITLE, body } });
 }
@@ -389,18 +550,25 @@ async function main() {
 
   let lastVerifiedAt = null;
   let reviewedHead = null;
+  let result = null;
+  let findingIssueNumbers = [];
   if (register) {
     const comments = await listIssueComments(repo, register.number);
-    const evidence = latestValidCompletion(comments, now);
+    const findingIssues = await loadFindingIssues(repo, comments, now);
+    const evidence = latestValidCompletion(comments, now, findingIssues);
     if (evidence) {
       lastVerifiedAt = evidence.completedAt;
       reviewedHead = evidence.reviewedHead;
+      result = evidence.result;
+      findingIssueNumbers = evidence.findingIssueNumbers;
     }
   }
 
   const weekly = {
     lastVerifiedAt,
     reviewedHead,
+    result,
+    findingIssueNumbers,
     nowISO: now,
     state: deriveWeeklyState(lastVerifiedAt, now),
   };

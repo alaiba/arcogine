@@ -18,7 +18,7 @@ Arcogine runs three distinct continuous-improvement loops. They differ in trigge
 - **Trigger/cadence:** a real, repository-owned weekly obligation, plus additional high-scrutiny review when a major architecture/status transition justifies one (see `docs/development/consistency-review.md`).
 - **Purpose:** repository semantic coherence — the diagnostic sweep across implementation, architecture, ADRs, planning, docs, examples, config, tests, CI, and prior findings.
 - **Owner:** the Consistency agent (`.github/agents/consistency.agent.md`), invoked explicitly by a user/agent. **Execution is manual.** `.github/workflows/continuous-improvement.yml` never invokes the Consistency agent — it only makes the obligation's due state visible in the register (see below) so a missed review does not silently disappear.
-- **Recording completion:** after a user has actually requested and the agent has completed a valid Consistency review, `.github/agents/consistency.agent.md` requires recording that completion as structured evidence in the continuous-improvement register issue (see "Completion evidence" below). That is the sole additional authority this document grants the Consistency agent; it does not extend to synchronizing `CONS-*` findings, remediating content, or any other issue mutation, which remain governed entirely by the existing authorization rules in `consistency-review.md` and `consistency.agent.md`.
+- **Recording completion:** a normal baseline-advancing `FULL` or `INCREMENTAL` review records completion only after the finding ledger has been durably accounted. Invoking that review authorizes the narrow finding-ledger bookkeeping needed for its own accounting; it does not authorize remediation, arbitrary issue edits, or merging. `PR_FORWARD` never replaces the weekly `main` baseline, and `DIAGNOSTIC_ONLY` is read-only and does not mutate the register or finding ledger.
 
 ### Delivery-process retrospective
 
@@ -47,7 +47,7 @@ A single long-lived GitHub issue titled exactly **`Continuous improvement regist
 
 The register has two ownership regions, separated by explicit HTML marker comments (`<!-- continuous-improvement:obligations:start -->` / `...:end -->`) so automation can prove it only ever touches its own region:
 
-- **Workflow-managed recurring obligations** (inside the markers) — mechanically derived: the weekly Consistency review's last-verified evidence and `CURRENT`/`DUE`/`OVERDUE` state, and the delivery-process retrospective's raw merged-PR count since baseline and `CURRENT`/`CHECK_TRIGGER` state. Only `.github/workflows/continuous-improvement.yml` (via `.github/scripts/continuous-improvement.mjs`) writes here.
+- **Workflow-managed recurring obligations** (inside the markers) — mechanically derived: the weekly Consistency review's latest accounted qualifying completion, reviewed head, finding result/issue identities, and `CURRENT`/`DUE`/`OVERDUE` state, plus the delivery-process retrospective's raw merged-PR count since baseline and `CURRENT`/`CHECK_TRIGGER` state. Only `.github/workflows/continuous-improvement.yml` (via `.github/scripts/continuous-improvement.mjs`) writes here.
 - **Active improvement interventions** (everything outside the markers) — agent/human-owned. Judgment-bearing improvement interventions — proposing one, closing it out, or declaring it verified effective — are never invented, closed, or dispositioned by the scheduled workflow. It preserves this region byte-for-byte (or semantically equivalently) on every update.
 
 The register is **work-in-progress state, not historical storage**. Once an intervention is dispositioned `RETAIN`, `ADJUST`, or `REMOVE`, the detailed evidence belongs in the corresponding retrospective/PR/issue history, not in an ever-growing table on this issue. On initial bootstrap the register is seeded only with the controls/experiments from the 2026-09-05 retrospective that are genuinely still awaiting later verification, with provenance preserved back to that document — not a full history of every past process change.
@@ -60,10 +60,14 @@ Because the scheduled workflow and agent/human edits must never race over the sa
 Consistency review completed
 reviewed head: <full main SHA>
 completed at: <UTC timestamp>
-mode: <incremental/full/etc.>
+mode: FULL | INCREMENTAL | PR_FORWARD | DIAGNOSTIC_ONLY
+result: CLEAN | FINDINGS
+finding issues: none | #<number>, #<number>, ... | UNPERSISTED
 ```
 
-The workflow derives the managed "last verified" summary from the latest comment matching this structure, but structured syntax alone never confers completion authority: only a comment from a trusted GitHub author association (owner/member/collaborator) counts, and a future-dated `completed at` is rejected even from a trusted author. A workflow run is never itself proof that a review happened — only a valid, authorized, non-future completion comment is. Malformed, unauthorized, or missing evidence is ignored (treated as "never verified"), never fabricated; the workflow never manufactures a completion. Repeated runs with unchanged semantic state update nothing (the rendered "last updated" timestamp is excluded from that comparison), so recurring scheduled runs do not spam the issue with unchanged summaries.
+The workflow derives the managed `last verified` summary only from the latest comment that is structurally valid, trusted (owner/member/collaborator), non-future, and fully accounted for a `FULL` or `INCREMENTAL` review. `CLEAN` must cite `finding issues: none`; `FINDINGS` must cite one or more verified persisted Consistency issues. The helper checks the referenced issue title/body and accepts the grandfathered `CONS-001`–`CONS-006` mappings, so a trusted commenter cannot make an arbitrary issue count as finding accounting. `UNPERSISTED` is an explicit non-qualifying result for `PR_FORWARD` or `DIAGNOSTIC_ONLY` only.
+
+Legacy four-line comments (including the September 11 marker) remain historical comments but do not count as accounted baseline evidence. Malformed, inconsistent, duplicate, unauthorized, future-dated, or missing evidence is ignored and leaves the recurring obligation `DUE` when no newer qualifying completion exists. `PR_FORWARD` and `DIAGNOSTIC_ONLY` comments never refresh the weekly baseline. A workflow run is never itself proof that a review happened, and the workflow never manufactures completion evidence. Repeated runs with unchanged semantic state update nothing (the rendered `last updated` timestamp is excluded from that comparison).
 
 ### Retrospective baseline
 

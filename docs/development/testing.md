@@ -227,7 +227,6 @@ bash .github/scripts/arcogine-env.test.sh
 bash .github/scripts/arcogine-cli.test.sh
 bash .github/scripts/check-pr-disposition.test.sh
 bash infra/dev/claude-cloud.test.sh
-node --test infra/dev/pr-reconcile.test.mjs
 node --test infra/dev/pr-watch.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
 ```
@@ -242,13 +241,11 @@ node --test infra/dev/pr-watch.test.mjs
 
 Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODULE_NOT_FOUND` rather than discovering the suite.
 
-`infra/dev/pr-reconcile.test.mjs` covers the ordinary implementation-PR normalization
-protocol: already-current no-op behavior; one conflict-free rebase onto the observed base;
-conflict and empty-diff refusal without remote mutation; exact-head verification before
-publication; `--force-with-lease` argument construction; lease rejection; no retry when
-`main` advances after the observed base; cleanup of temporary work; and re-resolution of
-the current-head lifecycle after a successful rewrite. It does not claim live GitHub
-integration; that requires a disposable PR and repository-scoped push permissions.
+Stale-PR normalization is intentionally not a local CLI helper. The approved mechanical
+merge-style protocol is defined in [AGENTS.md](../../AGENTS.md) and this review policy, and uses
+repository-scoped GitHub Git-data operations with a non-forced ref update. It therefore has no
+local helper test suite or authenticated `gh` prerequisite; connector-side execution must preserve
+the captured-head, parent-order, no-mutation-on-conflict, and `force=false` invariants.
 
 `infra/dev/repo-snapshot.test.mjs` covers `infra/dev/repo-snapshot.mjs`, which backs `./arcogine snapshot` (see [`docs/development/repository-snapshot.md`](repository-snapshot.md)). It concentrates on the paths where a wrong answer could label non-canonical state as canonical `alaiba/arcogine` `main`: the clean-checkout precondition, the provenance header contents, and — the sharper case — that a fork remote or an unpushed local-only commit on a branch named `main` is refused even though the branch/dirty-tree precondition alone would accept it. Like the other Node tooling suites it runs as a step in the always-running `classify` job. Run it locally with:
 

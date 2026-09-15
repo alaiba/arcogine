@@ -7,239 +7,267 @@ const OLD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const BASE = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 const NEW = 'cccccccccccccccccccccccccccccccccccccccc';
 const MOVED_BASE = 'dddddddddddddddddddddddddddddddddddddddd';
-const STALE_REPORTED_BASE = 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+const MOVED_HEAD = 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+const CONCURRENT_HEAD = 'ffffffffffffffffffffffffffffffffffffffff';
 const REPO = 'alaiba/arcogine';
 const BRANCH = 'feature/test';
 
-function pr(head = OLD, state = 'open', base = BASE) {
+function pr({ head = OLD, state = 'open', base = 'main', baseSha = 'historical', headRepo = REPO } = {}) {
   return {
     state,
-    head: { ref: BRANCH, sha: head, repo: { full_name: REPO, html_url: `https://github.com/${REPO}`, ssh_url: `git@github.com:${REPO}.git`, clone_url: `https://github.com/${REPO}.git` } },
-    base: { ref: 'main', sha: base },
+    head: {
+      ref: BRANCH,
+      sha: head,
+      repo: {
+        full_name: headRepo,
+        html_url: `https://github.com/${headRepo}`,
+        ssh_url: `git@github.com:${headRepo}.git`,
+        clone_url: `https://github.com/${headRepo}.git`,
+      },
+    },
+    base: { ref: base, sha: baseSha },
   };
 }
 
 function harness({
   behind = 1,
   ahead = 1,
-  preDiff = 'file.txt',
-  postDiff = 'file.txt',
-  fetchedHead = OLD,
-  reportedBase = BASE,
-  liveBase = BASE,
-  rebaseFails = false,
-  branch = BRANCH,
-  workingTree = '',
+  preFiles = ['file.txt'],
+  postFiles = ['file.txt'],
+  liveBases = [BASE, BASE, BASE],
+  setupHead = OLD,
+  afterHead = NEW,
   afterPrState = 'open',
+  afterOldHeadBehind = 0,
+  afterBehind = 0,
+  afterAhead = 1,
+  afterFiles = postFiles,
+  updateFailure = null,
+  foreignHeadRepo = REPO,
+  baseMetadata = 'historical',
+  initialPrState = 'open',
 } = {}) {
   const calls = [];
-  let rebased = false;
   let prReads = 0;
-  let compareReads = 0;
+  let baseReads = 0;
+  let updateCalls = 0;
+  let updateApplied = false;
 
   function run(file, args, options = {}) {
     calls.push({ file, args: [...args], options });
-    const key = `${file} ${args.join(' ')}`;
+    const endpoint = args[0] === 'api' ? args[1] : null;
 
-    if (key === 'git status --porcelain') return workingTree;
-    if (key === 'git branch --show-current') return branch;
-    if (key === 'git remote get-url --all origin') return `https://github.com/${REPO}.git/`;
-    if (key === 'git remote get-url --push --all origin') return `https://github.com/${REPO}.git/`;
-    if (key === 'git rev-parse HEAD') return rebased ? NEW : OLD;
-    if (
-      key ===
-      `git fetch origin +refs/heads/main:refs/remotes/origin/main +refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}`
-    ) {
-      return '';
+    if (file !== 'gh' || args[0] !== 'api') {
+      if (options.allowFailure) return null;
+      throw new Error(`unexpected command: ${file} ${args.join(' ')}`);
     }
-    if (key === `git rev-parse refs/remotes/origin/${BRANCH}`) return fetchedHead;
-    if (key === 'git rev-parse refs/remotes/origin/main') return BASE;
-    if (key === 'git ls-remote origin refs/heads/main') return `${liveBase}\trefs/heads/main`;
-    if (key === 'git diff --name-only refs/remotes/origin/main...HEAD') {
-      return rebased ? postDiff : preDiff;
-    }
-    if (key === 'git rebase refs/remotes/origin/main') {
-      if (rebaseFails) throw new Error('synthetic conflict');
-      rebased = true;
-      return '';
-    }
-    if (key === 'git rebase --abort') return '';
-    if (key === 'git merge-base --is-ancestor refs/remotes/origin/main HEAD') return '';
-    if (file === 'git' && args[0] === 'push') return '';
 
-    if (file === 'gh' && args[0] === 'api' && args[1] === `repos/${REPO}/pulls/277`) {
+    if (endpoint === `repos/${REPO}/pulls/277`) {
       prReads += 1;
-      return JSON.stringify(pr(prReads === 1 ? OLD : NEW, prReads === 1 ? 'open' : afterPrState, reportedBase));
-    }
-    if (file === 'gh' && args[0] === 'api' && args[1].startsWith(`repos/${REPO}/compare/`)) {
-      compareReads += 1;
+      const head = prReads === 1 ? OLD : setupHead;
+      const state = updateApplied && prReads > 2 ? afterPrState : prReads === 1 ? initialPrState : 'open';
       return JSON.stringify(
-        compareReads === 1
-          ? { behind_by: behind, ahead_by: ahead }
-          : { behind_by: 0, ahead_by: 1 },
+        pr({
+          head: updateApplied && prReads > 2 ? afterHead : head,
+          state,
+          baseSha: baseMetadata,
+          headRepo: foreignHeadRepo,
+        }),
       );
     }
 
-    if (options.allowFailure) return null;
-    throw new Error(`unexpected command: ${key}`);
+    if (endpoint === `repos/${REPO}/branches/main`) {
+      const index = Math.min(baseReads, liveBases.length - 1);
+      baseReads += 1;
+      return JSON.stringify({ commit: { sha: liveBases[index] } });
+    }
+
+    if (endpoint?.startsWith(`repos/${REPO}/compare/`)) {
+      const comparison = endpoint.split('/compare/')[1];
+      if (comparison === `${OLD}...${NEW}`) {
+        return JSON.stringify({ behind_by: afterOldHeadBehind, ahead_by: 1, files: ['file.txt'] });
+      }
+      if (comparison.endsWith(`...${OLD}`)) {
+        return JSON.stringify({ behind_by: behind, ahead_by: ahead, files: preFiles });
+      }
+      return JSON.stringify({ behind_by: afterBehind, ahead_by: afterAhead, files: afterFiles });
+    }
+
+    if (endpoint === `repos/${REPO}/pulls/277/update-branch`) {
+      updateCalls += 1;
+      if (updateFailure) throw new Error(updateFailure);
+      updateApplied = true;
+      return '{}';
+    }
+
+    throw new Error(`unexpected command: ${file} ${args.join(' ')}`);
   }
 
-  return { run, calls };
+  return { run, calls, get updateCalls() { return updateCalls; } };
 }
 
-function pushes(calls) {
-  return calls.filter((call) => call.file === 'git' && call.args[0] === 'push');
+function updateCalls(calls) {
+  return calls.filter(
+    (call) => call.file === 'gh' && call.args[0] === 'api' && call.args[1].endsWith('/update-branch'),
+  );
 }
 
-test('successful reconciliation constructs the new head before one leased remote update', async () => {
+function assertNoRewriteCommands(calls) {
+  assert.equal(
+    calls.some(
+      (call) =>
+        call.file === 'git' ||
+        call.args.includes('rebase') ||
+        call.args.some((arg) => arg.includes('--force')),
+    ),
+    false,
+    'normal reconciliation must not use local rebase or force-push machinery',
+  );
+}
+
+const noWait = async () => {};
+
+test('stale ordinary PR requests one expected-head-bound merge-style Update branch', async () => {
   const h = harness();
-  const result = await reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} });
+  const result = await reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait });
 
   assert.equal(result.changed, true);
   assert.equal(result.oldHead, OLD);
   assert.equal(result.newHead, NEW);
-
-  const pushCalls = pushes(h.calls);
-  assert.equal(pushCalls.length, 1, 'the remote PR branch must be mutated exactly once');
-  assert.deepEqual(pushCalls[0].args, [
-    'push',
-    'origin',
-    `HEAD:refs/heads/${BRANCH}`,
-    `--force-with-lease=refs/heads/${BRANCH}:${OLD}`,
+  assert.equal(h.updateCalls, 1);
+  assert.deepEqual(updateCalls(h.calls)[0].args, [
+    'api',
+    `repos/${REPO}/pulls/277/update-branch`,
+    '--method',
+    'PUT',
+    '-H',
+    'Accept: application/vnd.github+json',
+    '-f',
+    `expected_head_sha=${OLD}`,
   ]);
-
-  const rebaseIndex = h.calls.findIndex(
-    (call) => call.file === 'git' && call.args.join(' ') === 'rebase refs/remotes/origin/main',
-  );
-  const pushIndex = h.calls.findIndex((call) => call.file === 'git' && call.args[0] === 'push');
-  assert.ok(rebaseIndex >= 0 && pushIndex > rebaseIndex, 'push must happen only after rebase completes');
-
-  assert.equal(
-    h.calls.some(
-      (call) =>
-        call.file === 'git' &&
-        (call.args[0] === 'update-ref' ||
-          (call.args[0] === 'push' && call.args.some((arg) => arg.includes('main:refs/heads'))))),
-    false,
-    'the helper must never point the PR branch at the base as an intermediate state',
-  );
+  assertNoRewriteCommands(h.calls);
 });
 
 test('an already-current PR is a no-op', async () => {
   const h = harness({ behind: 0 });
-  const result = await reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} });
+  const result = await reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait });
+
   assert.equal(result.changed, false);
-  assert.equal(pushes(h.calls).length, 0);
-  assert.equal(h.calls.some((call) => call.args[0] === 'rebase'), false);
+  assert.equal(h.updateCalls, 0);
+  assertNoRewriteCommands(h.calls);
 });
 
-test('a rebase conflict aborts locally and never mutates the remote branch', async () => {
-  const h = harness({ rebaseFails: true });
+test('an empty or collapsed PR is refused before synchronization', async () => {
+  for (const options of [{ preFiles: [] }, { ahead: 0 }]) {
+    const h = harness(options);
+    await assert.rejects(
+      reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
+      /no diff against main/,
+    );
+    assert.equal(h.updateCalls, 0);
+    assertNoRewriteCommands(h.calls);
+  }
+});
+
+test('a merge-style update conflict fails without implementation-side resolution', async () => {
+  const h = harness({ updateFailure: 'synthetic conflict' });
   await assert.rejects(
-    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
-    /remote PR branch was not changed/,
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
+    /merge-style Update branch failed; remote PR branch was not changed: synthetic conflict/,
   );
-  assert.equal(pushes(h.calls).length, 0);
-  assert.ok(h.calls.some((call) => call.file === 'git' && call.args.join(' ') === 'rebase --abort'));
+  assert.equal(h.updateCalls, 1);
+  assertNoRewriteCommands(h.calls);
 });
 
-test('an empty PR diff is refused before rebase or push', async () => {
-  const h = harness({ preDiff: '' });
+test('a concurrent head movement is bound by expected_head_sha and is not overwritten', async () => {
+  const h = harness({ updateFailure: 'expected head does not match current head' });
   await assert.rejects(
-    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
-    /no diff against main/,
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
+    /merge-style Update branch failed/,
   );
-  assert.equal(pushes(h.calls).length, 0);
-  assert.equal(h.calls.some((call) => call.args[0] === 'rebase'), false);
+  assert.equal(h.updateCalls, 1);
+  assert.equal(updateCalls(h.calls)[0].args.at(-1), `expected_head_sha=${OLD}`);
+  assertNoRewriteCommands(h.calls);
+  assert.equal(updateCalls(h.calls).length, 1, 'a failed expected-head request must not be retried blindly');
 });
 
-test('a rebase that collapses the PR diff is refused before push', async () => {
-  const h = harness({ postDiff: '' });
+test('a concurrent head move during setup is refused before Update branch', async () => {
+  const h = harness({ setupHead: MOVED_HEAD });
   await assert.rejects(
-    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
-    /rebased PR #277 has no diff/,
-  );
-  assert.equal(pushes(h.calls).length, 0);
-});
-
-test('a concurrent remote head move is refused before rebase', async () => {
-  const h = harness({ fetchedHead: 'dddddddddddddddddddddddddddddddddddddddd' });
-  await assert.rejects(
-    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
     /PR head moved during reconciliation setup/,
   );
-  assert.equal(pushes(h.calls).length, 0);
+  assert.equal(h.updateCalls, 0);
+  assertNoRewriteCommands(h.calls);
+});
+
+test('a base ref move during setup is refused before Update branch', async () => {
+  const h = harness({ liveBases: [BASE, MOVED_BASE] });
+  await assert.rejects(
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
+    /PR base moved during reconciliation setup/,
+  );
+  assert.equal(h.updateCalls, 0);
+  assertNoRewriteCommands(h.calls);
 });
 
 test('stale PR base metadata does not block reconciliation against the live base ref', async () => {
-  const h = harness({ reportedBase: STALE_REPORTED_BASE });
-  const result = await reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} });
+  const h = harness({ baseMetadata: 'stale-pr-metadata' });
+  const result = await reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait });
 
   assert.equal(result.changed, true);
-  assert.equal(pushes(h.calls).length, 1);
+  assert.equal(h.updateCalls, 1);
+  assertNoRewriteCommands(h.calls);
 });
 
-test('a base ref that moves during setup is refused before rebase', async () => {
-  const h = harness({ liveBase: MOVED_BASE });
+test('post-update verification requires the old head to remain an ancestor', async () => {
+  const h = harness({ afterOldHeadBehind: 1 });
   await assert.rejects(
-    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
-    /PR base moved during reconciliation setup/,
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
+    /old PR head .* is not an ancestor/,
   );
-  assert.equal(pushes(h.calls).length, 0);
-  assert.equal(h.calls.some((call) => call.args[0] === 'rebase'), false);
+  assert.equal(h.updateCalls, 1);
+  assertNoRewriteCommands(h.calls);
 });
 
-test('the helper refuses a different checked-out branch', async () => {
-  const h = harness({ branch: 'other' });
-  await assert.rejects(
-    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
-    /current branch is other/,
-  );
-  assert.equal(pushes(h.calls).length, 0);
+test('post-update verification requires the live base to be incorporated and the PR to remain non-empty', async () => {
+  for (const options of [{ afterBehind: 1 }, { afterAhead: 0 }, { afterFiles: [] }]) {
+    const h = harness(options);
+    await assert.rejects(
+      reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
+      /post-update verification failed|no longer has a non-empty diff/,
+    );
+    assert.equal(h.updateCalls, 1);
+    assertNoRewriteCommands(h.calls);
+  }
 });
 
-test('the helper refuses a dirty working tree', async () => {
-  const h = harness({ workingTree: ' M file.txt' });
-  await assert.rejects(
-    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
-    /working tree is not clean/,
-  );
-  assert.equal(pushes(h.calls).length, 0);
-});
-
-test('post-push verification requires the PR to remain open', async () => {
+test('post-update verification requires the PR to remain open', async () => {
   const h = harness({ afterPrState: 'closed' });
   await assert.rejects(
-    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }),
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
     /is not open/,
   );
-  assert.equal(pushes(h.calls).length, 1, 'verification occurs after the single atomic push');
+  assert.equal(h.updateCalls, 1);
+  assertNoRewriteCommands(h.calls);
 });
 
-test('a foreign origin is rejected before any remote mutation', async () => {
-  const h = harness();
-  const original = h.run;
-  h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url --push --all origin'
-    ? 'git@github.com:someone/fork.git' : original(file, args, options);
-  await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /not the PR head repository/);
-  assert.equal(pushes(h.calls).length, 0);
-  assert.equal(h.calls.some((call) => call.args[0] === 'fetch'), false);
+test('cross-repository PRs are rejected before any update', async () => {
+  const h = harness({ foreignHeadRepo: 'someone/fork' });
+  await assert.rejects(
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
+    /cross-repository PR reconciliation is not supported/,
+  );
+  assert.equal(h.updateCalls, 0);
+  assertNoRewriteCommands(h.calls);
 });
 
-test('a foreign pushurl is rejected even when the fetch origin is canonical', async () => {
-  const h = harness();
-  const original = h.run;
-  h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url --push --all origin'
-    ? `https://github.com/${REPO}.git\ngit@github.com:someone/fork.git` : original(file, args, options);
-  await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /origin fetch\/push remote/);
-  assert.equal(pushes(h.calls).length, 0);
-});
-
-test('a foreign fetch origin is rejected even when the pushurl is canonical', async () => {
-  const h = harness();
-  const original = h.run;
-  h.run = (file, args, options = {}) => file === 'git' && args.join(' ') === 'remote get-url --all origin'
-    ? 'git@github.com:someone/fork.git' : original(file, args, options);
-  await assert.rejects(reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {} }), /origin fetch\/push remote/);
-  assert.equal(pushes(h.calls).length, 0);
+test('closed PRs are rejected before any update', async () => {
+  const h = harness({ initialPrState: 'closed' });
+  await assert.rejects(
+    reconcilePr({ number: 277, repo: REPO, run: h.run, log: () => {}, sleep: noWait }),
+    /pull request .* is not open/,
+  );
+  assert.equal(h.updateCalls, 0);
+  assertNoRewriteCommands(h.calls);
 });

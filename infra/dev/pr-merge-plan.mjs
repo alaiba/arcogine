@@ -9,11 +9,15 @@
  * only, exact blob SHA and mode preservation. Directory entries from a complete
  * recursive Git tree are ignored; symlinks, submodules, renames/copies, and path-shape
  * ambiguity fail closed. Same-path regular-text modify/modify overlaps may be supplied
- * as clean git-merge-file resolutions over the exact A/B/H blobs.
+ * as clean git-merge-file resolutions over the exact A/B/H blobs only when the exact
+ * PR-head Git attributes/config prove the built-in text merge driver is applicable.
  */
 
 const SHA_PATTERN = /^[0-9a-f]{40}$/i;
 const REGULAR_FILE_MODES = new Set(['100644', '100755']);
+const TEXT_ATTRIBUTE_VALUES = new Set(['set', 'auto', 'unspecified']);
+const MERGE_ATTRIBUTE_TEXT_VALUES = new Set(['set', 'text']);
+const MERGE_DEFAULT_TEXT_VALUES = new Set(['unspecified', 'text']);
 
 function requireSha(value, label) {
   if (!SHA_PATTERN.test(String(value ?? ''))) {
@@ -176,6 +180,41 @@ function assertNoCrossPathOverlap(headChanges, baseChanges) {
   }
 }
 
+function requireAttributeValue(value, label) {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`${label} must be a git-check-attr/config value`);
+  }
+  return value;
+}
+
+function normalizeTextMergeAttributeProof(raw, path) {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error(`text merge resolution for ${path} must include Git attribute eligibility proof`);
+  }
+
+  const sourceSha = requireSha(raw.sourceSha, `text merge ${path} attribute source SHA`);
+  const text = requireAttributeValue(raw.text, `text merge ${path} text attribute`);
+  const merge = requireAttributeValue(raw.merge, `text merge ${path} merge attribute`);
+  const mergeDefault = requireAttributeValue(raw.mergeDefault, `text merge ${path} merge.default value`);
+
+  if (!TEXT_ATTRIBUTE_VALUES.has(text)) {
+    throw new Error(`text merge resolution for ${path} is not eligible for text merge: text attribute is ${text}`);
+  }
+  if (merge === 'unspecified') {
+    if (!MERGE_DEFAULT_TEXT_VALUES.has(mergeDefault)) {
+      throw new Error(
+        `text merge resolution for ${path} is not eligible for the built-in text merge: merge.default is ${mergeDefault}`,
+      );
+    }
+  } else if (!MERGE_ATTRIBUTE_TEXT_VALUES.has(merge)) {
+    throw new Error(
+      `text merge resolution for ${path} is not eligible for the built-in text merge: merge attribute is ${merge}`,
+    );
+  }
+
+  return { sourceSha, text, merge, mergeDefault };
+}
+
 function normalizeTextMergeResolutions(resolutions) {
   if (!Array.isArray(resolutions)) throw new Error('textMergeResolutions must be an array');
   const byPath = new Map();
@@ -197,12 +236,13 @@ function normalizeTextMergeResolutions(resolutions) {
       baseBlobSha: requireSha(raw.baseBlobSha, `text merge ${path} live-base blob SHA`),
       headBlobSha: requireSha(raw.headBlobSha, `text merge ${path} PR-head blob SHA`),
       resultBlobSha: requireSha(raw.resultBlobSha, `text merge ${path} result blob SHA`),
+      attributeProof: normalizeTextMergeAttributeProof(raw.attributeProof, path),
     });
   }
   return byPath;
 }
 
-function requireTextModifyModifyResolution({ path, mergeBaseTree, baseTree, headTree, resolution }) {
+function requireTextModifyModifyResolution({ path, mergeBaseTree, baseTree, headTree, headSha, resolution }) {
   if (!resolution) {
     throw new Error(
       `PR and base both modify ${path}; a clean three-way text merge resolution is required before the merge tree is mechanically provable`,
@@ -226,6 +266,9 @@ function requireTextModifyModifyResolution({ path, mergeBaseTree, baseTree, head
     resolution.headBlobSha !== headAfter.sha
   ) {
     throw new Error(`text merge resolution for ${path} does not match the exact A/B/H blob inputs`);
+  }
+  if (resolution.attributeProof.sourceSha !== headSha) {
+    throw new Error(`text merge attribute proof for ${path} is not bound to the exact inspected PR head`);
   }
 
   return {
@@ -257,8 +300,10 @@ function sameChanges(left, right) {
  * The caller resolves A (the merge base) and supplies recursive Git tree entries for A,
  * B (the live base), and H (the inspected PR head). Disjoint supported changes replay
  * exactly. A same-path regular-file modify/modify overlap is accepted only when the
- * caller also supplies a clean git-merge-file result over the exact A/B/H blob bytes.
- * The result is a plan only; it does not create a Git object or mutate a branch.
+ * caller supplies both a clean git-merge-file result over the exact A/B/H blob bytes and
+ * Git attribute/config evidence from the exact H tree proving the built-in text merge
+ * driver is applicable. The result is a plan only; it does not create a Git object or
+ * mutate a branch.
  */
 function createMechanicalMergePlan({ mergeBase, base, head, textMergeResolutions = [] }) {
   if (!mergeBase || !base || !head) throw new Error('merge base, live base, and PR head are required');
@@ -304,6 +349,7 @@ function createMechanicalMergePlan({ mergeBase, base, head, textMergeResolutions
       mergeBaseTree,
       baseTree,
       headTree,
+      headSha,
       resolution,
     });
     finalTree.set(change.path, mergedEntry);

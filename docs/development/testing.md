@@ -245,12 +245,12 @@ Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODUL
 
 `infra/dev/pr-merge-plan.test.mjs` covers the connector-only freshness fallback's pure
 mechanical boundary: exact regular-file tree replay, supported modes and deletions,
-clean same-path regular-text modify/modify results bound to the exact merge-base/live-base/PR-head
-blob SHAs, conflicting or unsupported overlap refusal, ancestor/case-fold and rename/special-entry
+clean same-path regular-text merges only when the exact PR-head Git attributes/config
+select the built-in text merge driver, binary/custom-driver and structural overlap
 refusal, merge-parent ordering, non-forced ref-update planning, concurrent-head rejection,
-post-update freshness/diff verification, and handed-off research-evidence ancestry. It does not claim live connector
-integration; that requires a connector-capable disposable PR and repository-scoped write
-permissions.
+post-update freshness/diff verification, and handed-off research-evidence ancestry. It
+does not claim live connector integration; that requires a connector-capable disposable
+PR and repository-scoped write permissions.
 
 `infra/dev/repo-snapshot.test.mjs` covers `infra/dev/repo-snapshot.mjs`, which backs `./arcogine snapshot` (see [`docs/development/repository-snapshot.md`](repository-snapshot.md)). It concentrates on the paths where a wrong answer could label non-canonical state as canonical `alaiba/arcogine` `main`: the clean-checkout precondition, the provenance header contents, and — the sharper case — that a fork remote or an unpushed local-only commit on a branch named `main` is refused even though the branch/dirty-tree precondition alone would accept it. Like the other Node tooling suites it runs as a step in the always-running `classify` job. Run it locally with:
 

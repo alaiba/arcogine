@@ -1,27 +1,21 @@
 #!/usr/bin/env node
 /**
- * pr-watch.mjs -- resolve or watch an Arcogine pull request's lifecycle state.
+ * pr-lifecycle.mjs -- resolve an Arcogine pull request's lifecycle state.
  *
  * Portable agent tooling for the PR lifecycle contract in AGENTS.md. Dependency-free:
  * uses only Node builtins, so it runs anywhere Node runs with no install step and no
  * shell-specific setup.
  *
- *   node infra/dev/pr-watch.mjs 252              # resolve once, print state, exit
- *   node infra/dev/pr-watch.mjs 252 --watch      # poll and emit one line per change
- *   node infra/dev/pr-watch.mjs 252 --json       # machine-readable single resolution
+ *   node infra/dev/pr-lifecycle.mjs 252          # resolve once, print state, exit
+ *   node infra/dev/pr-lifecycle.mjs 252 --json   # machine-readable single resolution
  *
- * Auth: GH_TOKEN or GITHUB_TOKEN if set; otherwise `gh auth token` is invoked ONCE at
- * startup to obtain a token. After that only fetch() is used, so `gh` is never required
- * per poll and never needs to be on PATH if a token is supplied by environment.
+ * Auth: GH_TOKEN or GITHUB_TOKEN if set; otherwise `gh auth token` is invoked at startup
+ * to obtain a token. After that only fetch() is used, so `gh` is never needed if a token
+ * is supplied by environment.
  *
- * Three deliberate design rules, each earned from a real failure:
+ * Review resolution follows one deliberate design rule, earned from an observed failure:
  *
- *  1. Silence must mean "no activity", never "broken". Consecutive failures emit an
- *     explicit POLL FAILED line rather than going quiet, because a quiet broken watcher
- *     is indistinguishable from a quiet PR.
- *  2. Both additions and removals are reported. A diff that prints only additions turns
- *     a check flipping back to green, or a review being withdrawn, into a blank event.
- *  3. Never key review detection on GraphQL `latestReviews` or `reviewDecision`.
+ *  Never key review detection on GraphQL `latestReviews` or `reviewDecision`.
  *     `latestReviews` omits reviews authored by the PR author, and `reviewDecision` is
  *     only set by APPROVED/CHANGES_REQUESTED -- never by COMMENTED. Native review state
  *     is still inspected for accidental standing GitHub blockers, while Arcogine review
@@ -33,8 +27,6 @@ import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 
 const DEFAULT_REPO = 'alaiba/arcogine';
-const DEFAULT_INTERVAL_SECONDS = 60;
-const FAILURE_ALERT_THRESHOLD = 3;
 
 /**
  * The CI status branch protection requires. `.github/workflows/ci.yml` defines `gate` as
@@ -92,18 +84,15 @@ query($owner:String!, $name:String!, $number:Int!) {
 }`;
 
 function usage() {
-  return `pr-watch -- resolve or watch an Arcogine pull request's lifecycle state
+  return `pr-lifecycle -- resolve an Arcogine pull request's lifecycle state
 
 USAGE
-  node infra/dev/pr-watch.mjs <pr-number> [options]
+  node infra/dev/pr-lifecycle.mjs <pr-number> [options]
 
-  Exactly one pull request per invocation. Run it once per PR to follow several.
+  Exactly one pull request per invocation.
 
 OPTIONS
   --repo <owner/name>   Repository (default: ${DEFAULT_REPO})
-  --watch               Poll continuously, emitting one line per change.
-                        Without it, the state is resolved once and printed.
-  --interval <seconds>  Poll interval for --watch (default: ${DEFAULT_INTERVAL_SECONDS}, minimum: 10)
   --json                Emit a single JSON object instead of text (single resolution only)
   --required-check <n>  Status that proves required validation ran (default: ${DEFAULT_REQUIRED_CHECK})
   --exit-code           Exit 0 READY TO MERGE, 2 CHANGES REQUIRED, 3 AWAITING
@@ -121,9 +110,8 @@ EXIT CODES
   3  AWAITING           (only with --exit-code)
 
 EXAMPLES
-  node infra/dev/pr-watch.mjs 252
-  node infra/dev/pr-watch.mjs 252 --json
-  node infra/dev/pr-watch.mjs 252 --watch --interval 120
+  node infra/dev/pr-lifecycle.mjs 252
+  node infra/dev/pr-lifecycle.mjs 252 --json
 `;
 }
 
@@ -151,7 +139,7 @@ async function fetchPullRequest({ repo, number, token }) {
     headers: {
       authorization: `bearer ${token}`,
       'content-type': 'application/json',
-      'user-agent': 'arcogine-pr-watch',
+      'user-agent': 'arcogine-pr-lifecycle',
       // Do not pool the socket. A pooled keep-alive connection outlives the response and
       // delays process exit (and, on Windows, trips a libuv assertion if the process is
       // torn down while it is still closing).
@@ -177,8 +165,8 @@ async function fetchPullRequest({ repo, number, token }) {
  *
  * GraphQL's mergeStateStatus does not reliably report BEHIND (it depends on branch-
  * protection settings), so ask the compare endpoint directly. Reviewers may normalize a
- * conflict-free stale branch before substantive review, while pr-watch still reports the
- * stale state so implementation monitoring can act on it too.
+ * conflict-free stale branch before substantive review, while the lifecycle resolver still
+ * reports the stale state so a later implementation lifecycle iteration can act on it too.
  */
 async function fetchComparison({ repo, token }, pr) {
   const response = await fetch(
@@ -187,7 +175,7 @@ async function fetchComparison({ repo, token }, pr) {
       headers: {
         authorization: `bearer ${token}`,
         accept: 'application/vnd.github+json',
-        'user-agent': 'arcogine-pr-watch',
+        'user-agent': 'arcogine-pr-lifecycle',
         connection: 'close',
       },
     },
@@ -357,9 +345,9 @@ function resolveLifecycle(s) {
   if (s.isDraft) return { state: 'AWAITING', reasons: ['pull request is a draft'] };
 
   const blocking = [];
-  // A stale branch is still a concrete transition, so monitoring reports CHANGES REQUIRED.
-  // The reviewer may perform the repository-approved conflict-free reconciliation as
-  // pre-review normalization; conflicts or semantic choices go back to the author.
+  // A stale branch is still a concrete implementation-owned transition, so the resolver
+  // reports CHANGES REQUIRED. The reviewer may perform the repository-approved conflict-free
+  // reconciliation as pre-review normalization; conflicts or semantic choices go back to the author.
   if (s.behindBy > 0) {
     blocking.push(
       `head is ${s.behindBy} commit(s) behind ${s.baseRef}; reconcile with the current base before substantive review`,
@@ -436,40 +424,6 @@ function resolveLifecycle(s) {
   };
 }
 
-/** Stable, sorted, line-oriented projection used for change detection in --watch. */
-function stateLines(s) {
-  const lines = [
-    `head: ${s.head.slice(0, 7)}`,
-    // Every field the resolver reads must appear here, or a change that moves the lifecycle
-    // can produce no signal at all: a draft being marked ready, or the PR being merged or
-    // closed, would otherwise be invisible to --watch.
-    `pr-state: ${s.prState}${s.isDraft ? ' (draft)' : ''}`,
-    `required-check: ${s.requiredCheck ? s.requiredCheck.verdict : 'ABSENT'}`,
-    `disposition-check: ${s.dispositionCheck ? s.dispositionCheck.verdict : 'ABSENT'}`,
-    // Base identity and distance are part of the watched state: a base advance can
-    // change merge-readiness without changing current-head review authorization because
-    // strict branch protection may require the branch to be current with main.
-    `base: ${s.baseRef}@${String(s.baseOid).slice(0, 7)} (behind ${s.behindBy}, ahead ${s.aheadBy})`,
-    `merge: ${s.mergeStateStatus} (${s.mergeable})`,
-    // Truncation flags are lifecycle inputs, so they belong in the projection too: crossing
-    // a connection boundary can flip the resolver to AWAITING while every returned item
-    // still looks resolved, which would otherwise change the answer with no watch signal.
-    `open-threads: ${s.openThreads}${s.threadsTruncated ? ' (truncated)' : ''}`,
-    `reviews-truncated: ${s.reviewsTruncated ? 'yes' : 'no'}`,
-    `checks-present: ${s.checks.length}`,
-  ];
-  for (const r of s.reviews) {
-    lines.push(
-      `review ${r.submittedAt} by ${r.author} [${r.state}]` +
-        `${r.disposition ? ` {${r.disposition}}` : ''} on ${r.commit.slice(0, 7)}`,
-    );
-  }
-  for (const c of s.checks) {
-    if (!GREEN.has(c.verdict)) lines.push(`check ${c.name}: ${c.verdict}`);
-  }
-  return lines.sort();
-}
-
 function renderOnce(s, lifecycle) {
   const out = [
     `PR #${s.number}  ${s.title}`,
@@ -495,67 +449,6 @@ function renderOnce(s, lifecycle) {
   return out.join('\n');
 }
 
-function diff(prev, next) {
-  const before = new Set(prev);
-  const after = new Set(next);
-  const added = next.filter((l) => !before.has(l)).map((l) => `+ ${l}`);
-  const removed = prev.filter((l) => !after.has(l)).map((l) => `- ${l}`);
-  return [...removed, ...added];
-}
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function watch(options) {
-  const intervalMs = options.interval * 1000;
-  let previous = null;
-  let consecutiveFailures = 0;
-  let alerted = false;
-
-  console.log(`watching ${options.repo}#${options.number} every ${options.interval}s`);
-
-  for (;;) {
-    try {
-      const pr = await fetchPullRequest(options);
-      const summary = summarize(pr, await fetchComparison(options, pr), options.requiredCheck);
-      const lines = stateLines(summary);
-
-      if (consecutiveFailures > 0 && alerted) {
-        console.log(`POLL RECOVERED after ${consecutiveFailures} consecutive failure(s)`);
-      }
-      consecutiveFailures = 0;
-      alerted = false;
-
-      const lifecycle = resolveLifecycle(summary);
-
-      if (previous === null) {
-        console.log(`baseline ${summary.head.slice(0, 7)} -- ${lifecycle.state}`);
-      } else {
-        const changes = diff(previous, lines);
-        if (changes.length > 0) {
-          console.log(`CHANGED -- ${lifecycle.state}`);
-          for (const change of changes) console.log(change);
-        }
-      }
-      previous = lines;
-
-      // Stop on a terminal state rather than polling a merged or closed PR forever while
-      // pretending to resolve an open-PR lifecycle.
-      if (lifecycle.terminal) {
-        console.log(`TERMINAL -- ${lifecycle.state}; stopping watch`);
-        return;
-      }
-    } catch (error) {
-      consecutiveFailures += 1;
-      // Rule 1: never let a broken watcher look like a quiet PR.
-      if (consecutiveFailures >= FAILURE_ALERT_THRESHOLD && !alerted) {
-        console.log(`POLL FAILED (${consecutiveFailures} consecutive): ${error.message}`);
-        alerted = true;
-      }
-    }
-    await sleep(intervalMs);
-  }
-}
-
 async function main() {
   let parsed;
   try {
@@ -563,8 +456,6 @@ async function main() {
       allowPositionals: true,
       options: {
         repo: { type: 'string', default: DEFAULT_REPO },
-        watch: { type: 'boolean', default: false },
-        interval: { type: 'string', default: String(DEFAULT_INTERVAL_SECONDS) },
         json: { type: 'boolean', default: false },
         'exit-code': { type: 'boolean', default: false },
         'required-check': { type: 'string', default: DEFAULT_REQUIRED_CHECK },
@@ -587,7 +478,7 @@ async function main() {
   if (positionals.length > 1) {
     process.stderr.write(
       `expected exactly one pr-number, got ${positionals.length}: ${positionals.join(' ')}\n` +
-        'pr-watch handles one pull request per invocation; run it once per PR.\n',
+        'pr-lifecycle handles one pull request per invocation.\n',
     );
     return 1;
   }
@@ -597,8 +488,6 @@ async function main() {
     process.stderr.write(`pr-number must be a positive integer, got "${positionals[0]}"\n`);
     return 1;
   }
-  const interval = Math.max(10, Number(values.interval) || DEFAULT_INTERVAL_SECONDS);
-
   let token;
   try {
     token = resolveToken();
@@ -607,12 +496,7 @@ async function main() {
     return 1;
   }
 
-  const options = { repo: values.repo, number, token, interval, requiredCheck: values['required-check'] };
-
-  if (values.watch) {
-    await watch(options);
-    return 0; // unreachable; watch loops until the process is stopped
-  }
+  const options = { repo: values.repo, number, token, requiredCheck: values['required-check'] };
 
   let summary;
   try {
@@ -636,9 +520,9 @@ async function main() {
   return 3;
 }
 
-// Pure resolution logic is exported so pr-watch.test.mjs can exercise the lifecycle states
-// deterministically, without network access.
-export { dispositionOf, summarize, resolveLifecycle, stateLines, diff };
+// Pure resolution logic is exported so pr-lifecycle.test.mjs can exercise the lifecycle
+// states deterministically, without network access.
+export { dispositionOf, summarize, resolveLifecycle };
 
 const invokedDirectly =
   process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
@@ -652,7 +536,7 @@ if (invokedDirectly) {
       process.exitCode = code;
     },
     (error) => {
-      process.stderr.write(`pr-watch: ${error?.stack ?? error}\n`);
+      process.stderr.write(`pr-lifecycle: ${error?.stack ?? error}\n`);
       process.exitCode = 1;
     },
   );

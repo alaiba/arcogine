@@ -16,7 +16,7 @@
 # This evaluator does not reason about CI, mergeability, unresolved threads,
 # native GitHub review state (APPROVED/CHANGES_REQUESTED/COMMENTED/DISMISSED),
 # or approval/dismissal lifetime. Those richer lifecycle concerns belong to
-# infra/dev/pr-watch.mjs. CI and other branch-protection requirements are
+# infra/dev/pr-lifecycle.mjs. CI and other branch-protection requirements are
 # enforced independently by GitHub.
 #
 # PR_TRUSTED_DEPENDABOT is supplied only by the trusted base-side workflow

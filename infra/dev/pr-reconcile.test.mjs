@@ -349,10 +349,7 @@ test('a private or display-different GitHub profile does not override explicit o
     log: () => {},
     sleep: noWait,
     token: TOKEN,
-    identityEnvironment: {
-      ARCOGINE_GIT_USER_NAME: HUMAN_IDENTITY.name,
-      ARCOGINE_GIT_USER_EMAIL: HUMAN_IDENTITY.email,
-    },
+    identityEnvironment: {},
     workspaceFactory: h.workspaceFactory,
     cleanup: h.cleanup,
   });

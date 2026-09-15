@@ -14,7 +14,8 @@
  *   - PR is open;
  *   - PR head branch lives in the canonical repository;
  *   - the authenticated GitHub user is the repository owner;
- *   - explicit ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL values configure the owner Git identity;
+ *   - the configured local Git identity is the owner identity, optionally validated by explicit
+ *     ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL values;
  *   - an authenticated gh CLI and Git with push access are available.
  *
  * The user's checkout is never used or changed. The observed base is the target for
@@ -46,10 +47,10 @@ OPTIONS
   --help               Show this help
 
 REQUIRES
-  An authenticated gh CLI as the repository owner, explicit ARCOGINE_GIT_USER_NAME and
-  ARCOGINE_GIT_USER_EMAIL values matching local user.name and user.email, plus Git with
-  push access. The user's local checkout is not changed; rebase work is performed in a
-  temporary repository.
+  An authenticated gh CLI as the repository owner and a valid local user.name/user.email.
+  If ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL are present, they must match the
+  local identity. Git push access is also required. The user's local checkout is not
+  changed; rebase work is performed in a temporary repository.
 
 SAFETY
   The helper captures the PR head and live base, performs one automatic Git rebase, then
@@ -199,6 +200,10 @@ function requireHumanIdentity(identity) {
 }
 
 function explicitOwnerIdentity(environment) {
+  const hasName = Boolean(environment.ARCOGINE_GIT_USER_NAME?.trim());
+  const hasEmail = Boolean(environment.ARCOGINE_GIT_USER_EMAIL?.trim());
+  if (!hasName && !hasEmail) return null;
+
   const name = environment.ARCOGINE_GIT_USER_NAME?.trim();
   const email = environment.ARCOGINE_GIT_USER_EMAIL?.trim();
   if (!name || !email) {
@@ -239,9 +244,11 @@ function resolveHumanIdentity(run, repo, configuredIdentity, identityEnvironment
         'refusing rebase',
     );
   }
-  const ownerIdentity = requireHumanIdentity(configuredIdentity ?? explicitOwnerIdentity(identityEnvironment));
-  if (configuredIdentity) return ownerIdentity;
-  return requireConfiguredOwnerIdentity(configuredGitIdentity(run), ownerIdentity);
+  const ownerIdentity = configuredIdentity ?? explicitOwnerIdentity(identityEnvironment);
+  if (ownerIdentity) {
+    return configuredIdentity ? requireHumanIdentity(ownerIdentity) : requireConfiguredOwnerIdentity(configuredGitIdentity(run), ownerIdentity);
+  }
+  return configuredGitIdentity(run);
 }
 
 function gitAuthEnvironment(token) {

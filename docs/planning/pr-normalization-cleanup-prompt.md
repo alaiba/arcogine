@@ -67,7 +67,7 @@ Correct the role boundary introduced by the recent iterations.
 
 The reviewer may perform this **mechanical stale-base normalization before substantive review**. After successful normalization, the reviewer needs only to resolve the resulting current head and review that candidate.
 
-The reviewer is **not** responsible for globally re-resolving CI, trusted disposition, or final mergeability after normalization. Those are lifecycle / repository-gate responsibilities. `pr-watch`, GitHub required checks, and the disposition workflow own merge readiness.
+The reviewer is **not** responsible for globally re-resolving CI, trusted disposition, or final mergeability after normalization. Those are lifecycle / repository-gate responsibilities. `pr-lifecycle`, GitHub required checks, and the disposition workflow own merge readiness.
 
 A reviewer must still never review an obsolete head knowingly, and a new head requires review judgment for that new head. But do not turn the reviewer into the overall PR lifecycle orchestrator.
 
@@ -100,7 +100,7 @@ At minimum evaluate and update these surfaces:
 
 Do **not** modify the disposition authorization design unless required to remove a false dependency on the deleted helper. `check-pr-disposition.sh` / `pr-disposition.yml` are a separate concern and should remain the trusted review-authorization gate.
 
-Do **not** remove base freshness from `pr-watch`; a behind PR remains a lifecycle state that needs normalization before final merge readiness. Keep lifecycle classification separate from the normalization mechanism.
+Do **not** remove base freshness from `pr-lifecycle`; a behind PR remains a lifecycle state that needs normalization before final merge readiness. Keep lifecycle classification separate from the normalization mechanism.
 
 ## Replacement implementation guidance
 
@@ -134,7 +134,7 @@ Preserve these and no more than necessary:
 
 Use only focused validation of repository-owned behavior and documentation:
 
-- `pr-watch` still reports a behind head as needing a pre-merge transition;
+- `pr-lifecycle` still reports a behind head as needing a pre-merge transition;
 - reviewer documentation/contract no longer assigns CI, disposition, or final mergeability orchestration to the reviewer;
 - research-workspace evidence rules remain intact in the research lifecycle while disappearing from ordinary PR-normalization instructions;
 - the repository's documentation, workflow, and delivery-policy checks pass.

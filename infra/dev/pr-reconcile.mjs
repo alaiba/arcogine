@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 /**
- * pr-reconcile.mjs -- safely bring an open Arcogine PR current with its base.
+ * pr-reconcile.mjs -- safely rebase an open Arcogine PR onto its observed base.
  *
- * This is the native Update branch adapter; the normal path asks GitHub to merge the
- * current base branch into the PR branch. Connector-only runtimes use the separate pure
- * planning/verification contract in pr-merge-plan.mjs when its narrower fallback applies.
- * GitHub owns conflict detection and the branch update, while expected_head_sha makes
- * the request conditional on the exact head that this helper inspected.
+ * The reviewer captures the PR head H and live base B, rebases the PR commits in a
+ * temporary local repository, and publishes the result only with an exact-head
+ * --force-with-lease. Git performs conflict detection; a conflict stops the attempt
+ * without any remote mutation and belongs to the implementation/author.
  *
  * Usage:
  *   node infra/dev/pr-reconcile.mjs <pr-number>
@@ -14,24 +13,31 @@
  * Preconditions:
  *   - PR is open;
  *   - PR head branch lives in the canonical repository;
- *   - an authenticated gh CLI with pull-request write access is available.
+ *   - the authenticated GitHub user is the repository owner;
+ *   - the configured local Git identity matches the durable repository owner identity, optionally
+ *     validated by explicit ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL values;
+ *   - an authenticated gh CLI and Git with push access are available.
  *
- * A local checkout is not mutated or required. Reconciliation is history-preserving:
- * the old PR head remains an ancestor of the resulting head. Any conflict, head/base
- * movement during setup, or failed post-update invariant leaves semantic resolution to
- * the implementation/author rather than attempting it here.
+ * The user's checkout is never used or changed. The observed base is the target for
+ * this one attempt. The helper does not rebase again merely because main advances while
+ * the local rebase or publication is in progress.
  */
 
 import { execFileSync } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 
 const DEFAULT_REPO = 'alaiba/arcogine';
-const DEFAULT_UPDATE_ATTEMPTS = 10;
-const DEFAULT_UPDATE_DELAY_MS = 1000;
+const DEFAULT_PUBLISH_ATTEMPTS = 10;
+const DEFAULT_PUBLISH_DELAY_MS = 1000;
+const BASE_TRACKING_REF = 'refs/remotes/pr-reconcile/base';
+const HEAD_TRACKING_REF = 'refs/remotes/pr-reconcile/head';
 
 function usage() {
-  return `pr-reconcile -- safely bring an open PR current with its base
+  return `pr-reconcile -- safely rebase an open PR onto its observed base
 
 USAGE
   node infra/dev/pr-reconcile.mjs <pr-number> [--repo owner/name]
@@ -41,22 +47,27 @@ OPTIONS
   --help               Show this help
 
 REQUIRES
-  An authenticated gh CLI with pull-request write access. The local checkout, if any,
-  is not changed.
+  An authenticated gh CLI as the repository owner and a valid local user.name/user.email
+  matching the durable arcogine.owner.name/arcogine.owner.email configuration. If
+  ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL are present, they must match that
+  durable identity. Git push access is also required. The user's local checkout is not
+  changed; rebase work is performed in a temporary repository.
 
 SAFETY
-  The helper asks GitHub to perform its merge-style Update branch operation, bound to the
-  exact inspected PR head with expected_head_sha. It never rebases or force-pushes for
-  ordinary freshness, and it verifies that the old head and live base are ancestors of
-  the resulting non-empty PR head before returning success.
+  The helper captures the PR head and live base, performs one automatic Git rebase, then
+  verifies the remote PR head still equals the captured SHA before publishing. Publication
+  uses --force-with-lease bound to that exact old head. It never uses an unguarded force
+  push, resolves conflicts, or retries merely because main moved after the base snapshot.
 `;
 }
 
-function commandRunner(file, args, { allowFailure = false } = {}) {
+function commandRunner(file, args, { allowFailure = false, cwd, env } = {}) {
   try {
     return execFileSync(file, args, {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      ...(cwd ? { cwd } : {}),
+      ...(env ? { env } : {}),
     }).trim();
   } catch (error) {
     if (allowFailure) return null;
@@ -95,6 +106,12 @@ function requireOpenSameRepoPr(pr, repo, number) {
   }
   if (!pr.head?.ref || !pr.head?.sha || !pr.base?.ref) {
     throw new Error(`pull request ${repo}#${number} is missing head/base metadata`);
+  }
+  if (pr.head.ref === 'main') {
+    throw new Error(`pull request ${repo}#${number} head is main; refusing to rewrite the base branch`);
+  }
+  if (pr.head.ref === pr.base.ref) {
+    throw new Error(`pull request ${repo}#${number} head and base branches are identical; refusing branch replacement`);
   }
 }
 
@@ -137,60 +154,255 @@ function requireNonEmptyChange(comparison, message) {
   }
 }
 
-function requireStableSetup(initialPr, initialBase, currentPr, currentBase, repo, number) {
+function requireStablePublishHead(initialPr, currentPr, repo, number, expectedHead) {
   requireOpenSameRepoPr(currentPr, repo, number);
   if (currentPr.base.ref !== initialPr.base.ref) {
     throw new Error(
-      `PR base ref moved during reconciliation setup: expected ${initialPr.base.ref}, fetched ${currentPr.base.ref}`,
+      `PR base ref moved during rebase: expected ${initialPr.base.ref}, fetched ${currentPr.base.ref}; ` +
+        'discard the rebased result and re-resolve lifecycle state',
     );
   }
-  if (currentPr.head.ref !== initialPr.head.ref || currentPr.head.sha !== initialPr.head.sha) {
+  if (currentPr.head.ref !== initialPr.head.ref) {
     throw new Error(
-      `PR head moved during reconciliation setup: expected ${initialPr.head.sha}, fetched ${currentPr.head.sha}`,
+      `PR head ref moved during rebase: expected ${initialPr.head.ref}, fetched ${currentPr.head.ref}; ` +
+        'no remote branch was changed; re-resolve lifecycle state',
     );
   }
-  if (currentBase !== initialBase) {
+  if (currentPr.head.sha !== expectedHead) {
     throw new Error(
-      `PR base moved during reconciliation setup: expected ${initialBase}, fetched ${currentBase}`,
+      `PR head moved during rebase: expected ${expectedHead}, fetched ${currentPr.head.sha}; ` +
+        'no remote branch was changed; re-resolve lifecycle state',
     );
   }
 }
 
-function updateBranch(run, repo, number, expectedHead) {
+function resolveToken(run) {
+  const fromEnv = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  if (fromEnv?.trim()) return fromEnv.trim();
   try {
-    run('gh', [
-      'api',
-      apiPath(repo, `pulls/${number}/update-branch`),
-      '--method',
-      'PUT',
-      '-H',
-      'Accept: application/vnd.github+json',
-      '-f',
-      `expected_head_sha=${expectedHead}`,
-    ]);
+    const token = run('gh', ['auth', 'token']);
+    if (token?.trim()) return token.trim();
+  } catch {
+    // Fall through to the actionable error below.
+  }
+  throw new Error(
+    'no GitHub token: set GH_TOKEN or GITHUB_TOKEN, or install and authenticate the gh CLI',
+  );
+}
+
+function requireHumanIdentity(identity) {
+  const name = identity?.name?.trim();
+  const email = identity?.email?.trim();
+  if (!name || !email) throw new Error('human Git identity (user.name and user.email) is required for rebase');
+  if (/\b(bot|dependabot|github actions|codex|claude|openai)\b/i.test(`${name} ${email}`)) {
+    throw new Error('configured Git identity appears agent- or bot-owned; refusing rebase');
+  }
+  return { name, email };
+}
+
+function explicitOwnerIdentity(environment) {
+  const hasName = Boolean(environment.ARCOGINE_GIT_USER_NAME?.trim());
+  const hasEmail = Boolean(environment.ARCOGINE_GIT_USER_EMAIL?.trim());
+  if (!hasName && !hasEmail) return null;
+
+  const name = environment.ARCOGINE_GIT_USER_NAME?.trim();
+  const email = environment.ARCOGINE_GIT_USER_EMAIL?.trim();
+  if (!name || !email) {
+    throw new Error(
+      'explicit ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL values are required for rebase identity',
+    );
+  }
+  return requireHumanIdentity({ name, email });
+}
+
+function durableOwnerIdentity(run) {
+  let name;
+  let email;
+  try {
+    name = run('git', ['config', '--get', 'arcogine.owner.name']);
+    email = run('git', ['config', '--get', 'arcogine.owner.email']);
+  } catch {
+    throw new Error(
+      'durable Arcogine owner identity is required; run infra/dev/git-identity.sh in the configured owner checkout',
+    );
+  }
+  return requireHumanIdentity({ name, email });
+}
+
+function configuredGitIdentity(run) {
+  let name;
+  let email;
+  try {
+    name = run('git', ['config', '--get', 'user.name']);
+    email = run('git', ['config', '--get', 'user.email']);
+  } catch {
+    throw new Error('human Git identity (user.name and user.email) is required for rebase');
+  }
+  return requireHumanIdentity({ name, email });
+}
+
+function requireConfiguredOwnerIdentity(configured, owner) {
+  if (configured.name !== owner.name || configured.email.toLowerCase() !== owner.email.toLowerCase()) {
+    throw new Error(
+      'configured Git identity does not match the explicit repository owner identity; refusing rebase',
+    );
+  }
+  return configured;
+}
+
+function resolveHumanIdentity(run, repo, configuredIdentity, identityEnvironment = process.env) {
+  const owner = repo.split('/', 1)[0];
+  const authenticatedUser = parseJson(run('gh', ['api', 'user']), 'GitHub authenticated-user API');
+  if (authenticatedUser.login?.toLowerCase() !== owner.toLowerCase()) {
+    throw new Error(
+      `authenticated GitHub user ${authenticatedUser.login ?? '(unknown)'} is not repository owner ${owner}; ` +
+        'refusing rebase',
+    );
+  }
+  const ownerIdentity = configuredIdentity ?? explicitOwnerIdentity(identityEnvironment) ?? durableOwnerIdentity(run);
+  return configuredIdentity
+    ? requireHumanIdentity(ownerIdentity)
+    : requireConfiguredOwnerIdentity(configuredGitIdentity(run), ownerIdentity);
+}
+
+function gitAuthEnvironment(token) {
+  if (!token?.trim()) throw new Error('a GitHub token is required for the guarded branch publication');
+  const authorization = Buffer.from(`x-access-token:${token.trim()}`).toString('base64');
+  return {
+    ...process.env,
+    GIT_CONFIG_COUNT: '1',
+    GIT_CONFIG_KEY_0: 'http.extraHeader',
+    GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${authorization}`,
+    GIT_TERMINAL_PROMPT: '0',
+  };
+}
+
+function createWorkspace() {
+  return mkdtempSync(join(tmpdir(), 'arcogine-pr-reconcile-'));
+}
+
+function cleanupWorkspace(workspace) {
+  rmSync(workspace, { recursive: true, force: true });
+}
+
+function git(run, workspace, args, options = {}) {
+  return run('git', args, { cwd: workspace, ...options });
+}
+
+function remoteUrl(repo) {
+  return `https://github.com/${repo}.git`;
+}
+
+function requireSameSha(actual, expected, label) {
+  if (String(actual).toLowerCase() !== String(expected).toLowerCase()) {
+    throw new Error(
+      `${label} moved while preparing the rebase: expected ${expected}, fetched ${actual}; ` +
+        'no remote branch was changed; re-resolve lifecycle state',
+    );
+  }
+}
+
+function prepareRepository({ run, workspace, repo, observedBase, observedHead, identity, env }) {
+  git(run, workspace, ['init', '--quiet'], { env });
+  git(run, workspace, ['config', 'user.name', identity.name], { env });
+  git(run, workspace, ['config', 'user.email', identity.email], { env });
+  git(run, workspace, ['remote', 'add', 'origin', remoteUrl(repo)], { env });
+  git(
+    run,
+    workspace,
+    [
+      'fetch',
+      '--no-tags',
+      'origin',
+      observedBase,
+      observedHead,
+    ],
+    { env },
+  );
+  git(run, workspace, ['update-ref', BASE_TRACKING_REF, observedBase], { env });
+  git(run, workspace, ['update-ref', HEAD_TRACKING_REF, observedHead], { env });
+
+  const fetchedBase = git(run, workspace, ['rev-parse', BASE_TRACKING_REF], { env });
+  const fetchedHead = git(run, workspace, ['rev-parse', HEAD_TRACKING_REF], { env });
+  requireSameSha(fetchedBase, observedBase, 'observed base');
+  requireSameSha(fetchedHead, observedHead, 'observed PR head');
+}
+
+function rebaseOnce({ run, workspace, observedBase, observedHead, env, number }) {
+  const mergeBase = git(run, workspace, ['merge-base', HEAD_TRACKING_REF, BASE_TRACKING_REF], { env });
+  if (!mergeBase) throw new Error(`could not resolve a merge base for PR #${number}`);
+
+  git(run, workspace, ['checkout', '--detach', HEAD_TRACKING_REF], { env });
+  try {
+    git(
+      run,
+      workspace,
+      ['rebase', '--onto', BASE_TRACKING_REF, mergeBase, HEAD_TRACKING_REF],
+      { env },
+    );
+  } catch (error) {
+    git(run, workspace, ['rebase', '--abort'], { env, allowFailure: true });
+    throw new Error(
+      `conflict-free rebase failed for PR #${number}; no remote branch was changed; ` +
+        `rebase conflicts require implementation/author reconciliation: ${error.message}`,
+    );
+  }
+
+  const newHead = git(run, workspace, ['rev-parse', 'HEAD'], { env });
+  if (!newHead) throw new Error(`rebase for PR #${number} produced no commit`);
+  if (newHead.toLowerCase() === observedHead.toLowerCase()) {
+    throw new Error(
+      `rebase for PR #${number} did not create a new head; refusing to publish an unverified result`,
+    );
+  }
+
+  const rebasedBase = git(run, workspace, ['merge-base', BASE_TRACKING_REF, 'HEAD'], { env });
+  requireSameSha(rebasedBase, observedBase, 'rebased base');
+  const changedPaths = git(run, workspace, ['diff', '--name-only', BASE_TRACKING_REF, 'HEAD'], { env });
+  if (!changedPaths) {
+    throw new Error(`rebase for PR #${number} would collapse the PR to an empty diff; refusing publication`);
+  }
+
+  return { oldHead: observedHead, newHead };
+}
+
+function exactHeadLeasePushArgs(headRef, expectedHead, newHead) {
+  return [
+    'push',
+    `--force-with-lease=refs/heads/${headRef}:${expectedHead}`,
+    'origin',
+    `${newHead}:refs/heads/${headRef}`,
+  ];
+}
+
+function publishRebasedHead({ run, workspace, headRef, oldHead, newHead, env }) {
+  try {
+    git(run, workspace, exactHeadLeasePushArgs(headRef, oldHead, newHead), { env });
   } catch (error) {
     throw new Error(
-      `merge-style Update branch failed; remote PR branch was not changed: ${error.message}`,
+      `exact-head guarded rebase publication failed or was not confirmed; do not retry blindly; ` +
+        `re-resolve lifecycle state: ${error.message}`,
     );
   }
 }
 
-async function waitForUpdatedPr({
-  run,
-  repo,
-  number,
-  oldHead,
-  attempts,
-  delayMs,
-  sleep,
-}) {
+async function waitForPublishedPr({ run, repo, number, oldHead, newHead, baseRef, attempts, delayMs, sleep }) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const pr = fetchPr(run, repo, number);
     requireOpenSameRepoPr(pr, repo, number);
-    if (pr.head.sha !== oldHead) return pr;
+    if (pr.base.ref !== baseRef) {
+      throw new Error(`PR base ref changed from ${baseRef} after rebase publication; re-resolve lifecycle state`);
+    }
+    if (pr.head.sha === newHead) return pr;
+    if (pr.head.sha !== oldHead) {
+      throw new Error(
+        `PR head changed after rebase publication: expected ${newHead}, fetched ${pr.head.sha}; ` +
+          're-resolve lifecycle state',
+      );
+    }
     if (attempt + 1 < attempts) await sleep(delayMs);
   }
-  throw new Error(`merge-style Update branch did not advance PR #${number} from ${oldHead}`);
+  throw new Error(`rebased PR #${number} was not visible at its new head ${newHead}`);
 }
 
 async function reconcilePr({
@@ -199,20 +411,25 @@ async function reconcilePr({
   run = commandRunner,
   log = console.log,
   sleep = (delayMs) => new Promise((resolve) => setTimeout(resolve, delayMs)),
-  attempts = DEFAULT_UPDATE_ATTEMPTS,
-  delayMs = DEFAULT_UPDATE_DELAY_MS,
+  attempts = DEFAULT_PUBLISH_ATTEMPTS,
+  delayMs = DEFAULT_PUBLISH_DELAY_MS,
+  token,
+  humanIdentity,
+  identityEnvironment = process.env,
+  workspaceFactory = createWorkspace,
+  cleanup = cleanupWorkspace,
 }) {
   if (!Number.isInteger(number) || number <= 0) throw new Error(`invalid PR number: ${number}`);
   if (!/^[^/]+\/[^/]+$/.test(repo)) throw new Error(`--repo must be owner/name, got "${repo}"`);
-  if (!Number.isInteger(attempts) || attempts <= 0) throw new Error(`invalid update attempts: ${attempts}`);
-  if (!Number.isInteger(delayMs) || delayMs < 0) throw new Error(`invalid update delay: ${delayMs}`);
+  if (!Number.isInteger(attempts) || attempts <= 0) throw new Error(`invalid publish attempts: ${attempts}`);
+  if (!Number.isInteger(delayMs) || delayMs < 0) throw new Error(`invalid publish delay: ${delayMs}`);
 
   const pr = fetchPr(run, repo, number);
   requireOpenSameRepoPr(pr, repo, number);
   const oldHead = pr.head.sha;
   const baseRef = pr.base.ref;
-  const liveBase = fetchBranchHead(run, repo, baseRef);
-  const before = fetchComparison(run, repo, liveBase, oldHead);
+  const observedBase = fetchBranchHead(run, repo, baseRef);
+  const before = fetchComparison(run, repo, observedBase, oldHead);
   const behindBy = comparisonDistance(before, 'behind_by');
 
   if (behindBy === 0) {
@@ -220,54 +437,79 @@ async function reconcilePr({
       before,
       `PR #${number} has no diff against ${baseRef}; refusing to treat an empty PR as current`,
     );
-    log(`PR #${number} is already level with ${baseRef}; nothing to do.`);
-    return { changed: false, oldHead, newHead: oldHead, baseRef };
+    log(`PR #${number} already contains observed ${baseRef}@${observedBase}; nothing to rebase.`);
+    return { changed: false, oldHead, newHead: oldHead, baseRef, baseSha: observedBase };
   }
 
   requireNonEmptyChange(
     before,
-    `PR #${number} has no diff against ${baseRef}; refusing reconciliation that could collapse the PR`,
+    `PR #${number} has no diff against ${baseRef}; refusing rebase that could collapse the PR`,
   );
 
-  // Re-resolve the snapshot immediately before the platform mutation. The API's
-  // expected_head_sha remains the atomic guard for a race after this check.
-  const setupPr = fetchPr(run, repo, number);
-  const setupBase = fetchBranchHead(run, repo, baseRef);
-  requireStableSetup(pr, liveBase, setupPr, setupBase, repo, number);
+  const gitToken = token ?? resolveToken(run);
+  const identity = resolveHumanIdentity(run, repo, humanIdentity, identityEnvironment);
+  const env = gitAuthEnvironment(gitToken);
+  const workspace = workspaceFactory();
+  try {
+    prepareRepository({
+      run,
+      workspace,
+      repo,
+      observedBase,
+      observedHead: oldHead,
+      identity,
+      env,
+    });
 
-  updateBranch(run, repo, number, oldHead);
+    const rebased = rebaseOnce({
+      run,
+      workspace,
+      observedBase,
+      observedHead: oldHead,
+      env,
+      number,
+    });
 
-  const afterPr = await waitForUpdatedPr({
-    run,
-    repo,
-    number,
-    oldHead,
-    attempts,
-    delayMs,
-    sleep,
-  });
-  if (afterPr.base.ref !== baseRef) {
-    throw new Error(`post-update PR base ref changed from ${baseRef} to ${afterPr.base.ref}`);
+    // This read is the non-negotiable precondition check. The lease below is the atomic
+    // guard for a race after this read; main is deliberately not re-read or chased here.
+    const beforePublish = fetchPr(run, repo, number);
+    requireStablePublishHead(pr, beforePublish, repo, number, oldHead);
+
+    publishRebasedHead({
+      run,
+      workspace,
+      headRef: pr.head.ref,
+      oldHead,
+      newHead: rebased.newHead,
+      env,
+    });
+
+    const after = await waitForPublishedPr({
+      run,
+      repo,
+      number,
+      oldHead,
+      newHead: rebased.newHead,
+      baseRef,
+      attempts,
+      delayMs,
+      sleep,
+    });
+
+    log(
+      `Rebased PR #${number}: ${oldHead} -> ${after.head.sha} onto observed ${baseRef}@${observedBase}. ` +
+        'Re-resolve the normal current-head lifecycle; later base drift is not chased by this attempt.',
+    );
+    return {
+      changed: true,
+      oldHead,
+      newHead: after.head.sha,
+      baseRef,
+      baseSha: observedBase,
+    };
+  } finally {
+    cleanup(workspace);
   }
-  const newHead = afterPr.head.sha;
-  const afterBase = fetchBranchHead(run, repo, baseRef);
-
-  const oldHeadRelation = fetchComparison(run, repo, oldHead, newHead);
-  if (comparisonDistance(oldHeadRelation, 'behind_by') !== 0) {
-    throw new Error(`post-update verification failed: old PR head ${oldHead} is not an ancestor of ${newHead}`);
-  }
-
-  const after = fetchComparison(run, repo, afterBase, newHead);
-  if (comparisonDistance(after, 'behind_by') !== 0) {
-    throw new Error(`post-update verification failed: PR is still behind ${baseRef}`);
-  }
-  requireNonEmptyChange(
-    after,
-    `post-update verification failed: PR #${number} no longer has a non-empty diff against ${baseRef}`,
-  );
-
-  log(`Reconciled PR #${number}: ${oldHead} -> ${newHead}; ${baseRef} is now current.`);
-  return { changed: true, oldHead, newHead, baseRef };
 }
 
 function parseCli(argv) {
@@ -301,7 +543,7 @@ async function main(argv = process.argv.slice(2)) {
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   process.exitCode = await main();
 }
 
@@ -309,6 +551,7 @@ export {
   DEFAULT_REPO,
   reconcilePr,
   requireOpenSameRepoPr,
+  exactHeadLeasePushArgs,
   parseCli,
   usage,
 };

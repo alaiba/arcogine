@@ -16,7 +16,19 @@ ARCOGINE_GIT_USER_EMAIL='owner@example.com' \
 
 [[ "$(git config --local user.name)" == 'Arcogine Owner' ]]
 [[ "$(git config --local user.email)" == 'owner@example.com' ]]
+[[ "$(git config --local arcogine.owner.name)" == 'Arcogine Owner' ]]
+[[ "$(git config --local arcogine.owner.email)" == 'owner@example.com' ]]
 grep -qF 'Git commit identity: Arcogine Owner <owner@example.com>' configured.log
+
+git config --local --unset-all arcogine.owner.name
+git config --local --unset-all arcogine.owner.email
+git config --local user.name 'Configured Owner'
+git config --local user.email configured@example.com
+ARCOGINE_GIT_USER_NAME= ARCOGINE_GIT_USER_EMAIL= \
+  bash -c 'source "$1"; configure_arcogine_git_identity' bash "$SCRIPT_DIR/git-identity.sh" >existing.log 2>&1
+[[ "$(git config --local arcogine.owner.name)" == 'Configured Owner' ]]
+[[ "$(git config --local arcogine.owner.email)" == 'configured@example.com' ]]
+grep -qF 'Persisted the validated Arcogine owner identity' existing.log
 
 git config --local user.name Claude
 git config --local user.email noreply@anthropic.com

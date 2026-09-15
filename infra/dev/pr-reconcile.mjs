@@ -2,7 +2,9 @@
 /**
  * pr-reconcile.mjs -- safely bring an open Arcogine PR current with its base.
  *
- * The normal path asks GitHub to merge the current base branch into the PR branch.
+ * This is the native Update branch adapter; the normal path asks GitHub to merge the
+ * current base branch into the PR branch. Connector-only runtimes use the separate pure
+ * planning/verification contract in pr-merge-plan.mjs when its narrower fallback applies.
  * GitHub owns conflict detection and the branch update, while expected_head_sha makes
  * the request conditional on the exact head that this helper inspected.
  *

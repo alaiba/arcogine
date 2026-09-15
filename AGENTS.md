@@ -196,7 +196,7 @@ Resolve a PR's lifecycle state from its current head and metadata, base freshnes
 - **CHANGES REQUIRED** — a pre-merge transition remains, such as the head being behind its current base, a valid blocking review finding, failed required CI, or a merge conflict. Semantic remediation and conflict resolution belong to the implementation/author side. A reviewer may perform only the conflict-free base synchronization described below as pre-review normalization.
 - **READY TO MERGE** — the trusted `disposition` check is green on the current head, required validation is green, the head is level with its current base, and the PR is mergeable. The implementation/reviewer agent stops; the repository owner merges manually. For ordinary PRs, green `disposition` represents a current-head `READY TO MERGE` review. For a trusted Dependabot PR, it represents verified bot provenance with no current-head canonical `CHANGES REQUIRED` override.
 
-Base freshness is a pre-review normalization requirement as well as lifecycle state. `infra/dev/pr-watch.mjs` must still treat any behind-base head as **CHANGES REQUIRED**, so implementation monitoring can reconcile it before review. If an independent reviewer instead discovers a stale branch at review start, the reviewer should attempt the repository-approved conflict-free synchronization before doing substantive review. A successful mechanical synchronization is reviewer-side normalization, not implementation remediation: re-resolve live `main`, the new head, CI, and the net diff, then review only that reconciled head. If synchronization produces a merge conflict, requires a semantic choice, lacks permission, or otherwise cannot complete mechanically, stop before substantive review and return the PR to the author/implementation owner; do not spend review effort or file a reconciliation finding against the stale head.
+Base freshness is a pre-review normalization requirement as well as lifecycle state. `infra/dev/pr-watch.mjs` must still treat any behind-base head as **CHANGES REQUIRED**, so implementation monitoring can reconcile it before review. If an independent reviewer instead discovers a stale branch at review start, the reviewer should attempt the repository-approved conflict-free synchronization before doing substantive review. A successful mechanical synchronization is reviewer-side normalization, not implementation remediation: re-resolve live `main`, the new head, CI, and the net diff, then review only that reconciled head. Pending CI does not delay substantive review or reviewer disposition; review authorization and required CI are independent, and overall merge readiness waits for both. If synchronization produces a merge conflict, requires a semantic choice, lacks permission, or otherwise cannot complete mechanically, stop before substantive review and return the PR to the author/implementation owner; do not spend review effort or file a reconciliation finding against the stale head.
 
 ### Base-normalization protocol
 
@@ -221,8 +221,10 @@ mutation, re-read the PR head and live base and stop if either moved. Afterward,
 PR remains open, the old head and the live base are ancestors of the resulting head,
 `behind_by == 0`, `ahead_by > 0`, and the net live-base→new-head diff remains non-empty.
 Re-resolve CI, reviews, trusted `disposition`, and mergeability because the resulting head
-is new. Explicit rewrite and Dependabot routes retain their own identity/provenance checks
-below rather than claiming old-head ancestry.
+is new. Pending CI does not delay substantive review or reviewer disposition: review
+authorization and required CI are independent, and overall merge readiness waits for both.
+Explicit rewrite and Dependabot routes retain their own identity/provenance checks below
+rather than claiming old-head ancestry.
 
 The native route is preferred. `node infra/dev/pr-reconcile.mjs <pr-number>` and
 `gh pr update-branch <pr-number>` without `--rebase` are native merge-style adapters where
@@ -237,18 +239,27 @@ and `M` is a merge commit with first parent `H`, second parent `B`, and tree `T`
 available only when all of the following are proven from repository-scoped Git data:
 
 1. `A -> H` and `A -> B` can be represented as exact tree-entry changes.
-2. The two change sets have no overlapping path, file/directory ancestor collision, or
-   case-folded/path-normalization ambiguity.
-3. No rename/copy interpretation, delete/modify resolution, symlink, submodule, unsupported
-   mode, or other semantic merge choice is required. The current pure planner
-   (`infra/dev/pr-merge-plan.mjs`) accepts only complete, non-truncated recursive tree
-   snapshots whose regular blob leaves have exact `100644` or `100755` modes, and refuses
-   unsupported shapes. A recursive Git tree response with `truncated: true` — or without
-   an explicit `truncated: false` proof — is incomplete; recursively expand its subtrees
-   through the connector or return the PR to the implementation/author.
-4. `T` is constructed completely before any ref mutation by starting from `B` and applying
-   the PR-side blob states exactly, including exact modes and deletions where their intent is
-   mechanically unambiguous. The resulting tree must retain a non-empty net PR diff.
+2. Cross-path changes have no file/directory ancestor collision or case-folded/path-normalization
+   ambiguity. Exact same-path regular-file modify/modify is not automatically a conflict: fetch
+   the exact blob bytes from `A`, `B`, and `H` and run Git's deterministic three-way text merge
+   (`git merge-file -p <H-file> <A-file> <B-file>` or an equivalent invocation of the same Git
+   merge algorithm). Accept that path only when the merge reports cleanly with no conflict
+   markers; create the result blob from those exact output bytes and bind the planner input to
+   the exact `A`/`B`/`H` blob SHAs plus the resulting blob SHA. A real text conflict stops
+   normalization rather than inviting reviewer judgment.
+3. No rename/copy interpretation, add/delete or delete/modify resolution, binary-content merge,
+   file-mode choice, symlink, submodule, unsupported mode, or other semantic merge choice is
+   required. The current pure planner (`infra/dev/pr-merge-plan.mjs`) accepts only complete,
+   non-truncated recursive tree snapshots whose regular blob leaves have exact `100644` or
+   `100755` modes. Same-path text merging is limited to ordinary regular files whose mode is
+   unchanged across `A`, `B`, and `H`; unsupported shapes fail closed. A recursive Git tree
+   response with `truncated: true` — or without an explicit `truncated: false` proof — is
+   incomplete; recursively expand its subtrees through the connector or return the PR to the
+   implementation/author.
+4. `T` is constructed completely before any ref mutation by starting from `B`, applying disjoint
+   PR-side blob states exactly, and substituting only verified clean text-merge result blobs for
+   supported same-path modify/modify cases. Preserve exact modes and mechanically unambiguous
+   deletions. The resulting tree must retain a non-empty net PR diff.
 5. `M` is created with repository-compliant human author/committer identity, no bot/session
    attribution, and the exact parents/tree above. If identity cannot be established and
    verified, the fallback is unavailable.

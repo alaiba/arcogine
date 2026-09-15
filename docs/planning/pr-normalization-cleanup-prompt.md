@@ -104,9 +104,12 @@ Do **not** remove base freshness from `pr-watch`; a behind PR remains a lifecycl
 
 ## Replacement implementation guidance
 
-Prefer the smallest implementation that makes connector-driven synchronization fast.
-
-Do not restore the previous `pr-merge-plan.mjs` architecture wholesale. If a pure helper is useful, it must be substantially smaller and should only encode the minimal mechanical merge-commit plan needed by connector primitives. It must not require agents to prove complete repository-tree equivalence, model arbitrary Git merge drivers, or perform broad post-update lifecycle orchestration.
+Normalization is an agent/connector operation, not Arcogine repository tooling. Do not add a
+repository merge planner, pure helper, connector simulator, or dedicated synchronization
+implementation. The connector operation must remain bounded to the minimal Git-data reads and
+writes needed for one mechanical attempt; it must not require agents to prove complete
+repository-tree equivalence, model arbitrary Git merge drivers, or perform broad post-update
+lifecycle orchestration.
 
 The common successful path should require only the minimum GitHub reads needed to determine `A/H/B` changes, the minimum blob reads needed for overlapping text files, one tree creation, one merge-commit creation, and one `force=false` ref update.
 

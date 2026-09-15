@@ -36,6 +36,11 @@ import tools.jackson.databind.JsonNode;
  * {@code SimThread} bean is a context singleton, so {@link DirtiesContext}
  * rebuilds the context (and its sim thread) after every test to preserve the
  * same isolation — important for the "without scenario" conflict cases.
+ *
+ * <p>The {@code // --- Security: … ---} groups below exercise the maintained
+ * security verification criteria in {@code docs/development/testing.md}
+ * (§ Security verification tests). Keep the two in step: changing one of these
+ * controls means updating the criterion it verifies, and vice versa.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -594,7 +599,7 @@ class ApiSmokeTest {
         client.post().uri("/api/sim/reset").exchange().expectStatus().isEqualTo(HttpStatus.CONFLICT);
     }
 
-    // --- §3.3 Handler error surfaces in snapshot ---
+    // --- Security: handler error surfaces in snapshot ---
 
     @Test
     void handlerErrorSurfacesInSnapshot() {
@@ -619,7 +624,7 @@ class ApiSmokeTest {
         fail("snapshot should contain last_error after handler error");
     }
 
-    // --- §3.2 Scenario load error propagation ---
+    // --- Security: scenario load error propagation ---
 
     @Test
     void loadInvalidTomlReturnsBadRequest() {
@@ -688,7 +693,7 @@ class ApiSmokeTest {
                 "error should mention equipment, got: " + body.path("error"));
     }
 
-    // --- §3.1 Body-size limit ---
+    // --- Security: request body size limit ---
 
     @Test
     void oversizedBodyReturnsPayloadTooLarge() {
@@ -706,7 +711,46 @@ class ApiSmokeTest {
                 "body under 1MB should not be rejected for size");
     }
 
-    // --- §3.9 SSE connection limit ---
+    @Test
+    void oversizedBodyWithoutContentLengthReturnsPayloadTooLarge() {
+        // A streamed body is sent with chunked transfer encoding and no Content-Length,
+        // so the declared length reports -1 and cannot bound the request. The limit must
+        // still be enforced as the body is read, or the cap is trivially bypassed.
+        //
+        // The payload is well-formed JSON so that size is the only ground on which it can
+        // be rejected: without enforcement on this path the request is admitted and fails
+        // later on scenario content (400) instead of being capped here.
+        Flux<String> streamed = Flux.concat(
+                Flux.just("{\"toml\":\""),
+                Flux.range(0, 17).map(chunk -> "x".repeat(64 * 1024)),
+                Flux.just("\"}"));
+
+        client.post()
+                .uri("/api/scenario")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(streamed, String.class)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONTENT_TOO_LARGE);
+    }
+
+    @Test
+    void bodyUnderLimitWithoutContentLengthIsAccepted() {
+        // The enforcement path for an unknown-length body buffers and replays it, so a
+        // legitimate streamed request must still reach the handler intact.
+        Flux<String> streamed =
+                Flux.just("{\"toml\":", jsonString(BASIC_SCENARIO_TOML), "}");
+
+        client.post()
+                .uri("/api/scenario")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(streamed, String.class)
+                .exchange()
+                .expectStatus()
+                .isOk();
+    }
+
+    // --- Security: SSE connection limit ---
 
     @Test
     void sseConnectionLimitReturns503() {
@@ -737,7 +781,7 @@ class ApiSmokeTest {
         }
     }
 
-    // --- §3.11 Economy/price input validation ---
+    // --- Security: economy/price input validation ---
 
     @Test
     void extremePriceReturnsBadRequest() {

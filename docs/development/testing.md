@@ -312,4 +312,19 @@ The `/api/events/stream` endpoint is a servlet `SseEmitter`. The controller send
 
 ### Security verification tests
 
-The hardening checks live in the regular `interfaces/api` suite (`ApiSmokeTest`), not a separate pipeline: body-size limits, scenario validation, error propagation, CORS restrictions, SSE connection limits, economy value bounds, and CLI bind-address behavior are all exercised there.
+The hardening checks live in the regular `interfaces/api` suite (`ApiSmokeTest`) and the `interfaces/cli` suite, not a separate pipeline.
+
+These are the maintained criteria those tests verify. Each is stated as the behavior that must hold, so a test and the requirement it exercises name the same thing; the `// --- Security: … ---` comment groups in `ApiSmokeTest` correspond to the entries below. When a criterion changes, change it here and in the test together — a criterion with no executable check, or a check tracing to a requirement that is not recorded here, is the decay this list exists to prevent.
+
+| Criterion | Must hold | Exercised by |
+|---|---|---|
+| Request body size limit | A request body over 1 MiB to `/api/*` is rejected with `413`, **including** when it arrives with no `Content-Length` (chunked transfer encoding). Bodies under the limit are unaffected, whether or not their length is declared. | `oversizedBodyReturnsPayloadTooLarge`, `oversizedBodyWithoutContentLengthReturnsPayloadTooLarge`, `bodyUnderLimitIsAccepted`, `bodyUnderLimitWithoutContentLengthIsAccepted` |
+| Scenario load error propagation | An invalid scenario is rejected with `400` and an error naming the offending input, rather than being partially applied. | `loadInvalidTomlReturnsBadRequest`, `loadScenarioWithZeroMaxTicksReturnsBadRequest`, `loadScenarioWithMissingEquipmentReturnsBadRequest` |
+| Handler error surfaces in snapshot | A handler error is observable in the snapshot rather than being silently swallowed. | `handlerErrorSurfacesInSnapshot` |
+| SSE connection limit | Concurrent `/api/events/stream` connections are capped at 64; the next connection is rejected with `503` rather than exhausting server resources. | `sseConnectionLimitReturns503` |
+| Economy/price input validation | Out-of-range economy/price input is rejected with `400` instead of being applied to simulation state. | `extremePriceReturnsBadRequest` |
+| Default bind address | The native CLI/API binds `127.0.0.1` by default, so exposure beyond localhost is an explicit choice. | `ArcogineCommandTest.defaultBindAddressIsLocalhost` |
+
+**Configured but not verified.** CORS is configured in `WebConfig` (restricted by `CORS_ALLOWED_ORIGIN`, permissive when unset) and has no executable check. Treat it as a deployment setting, not a verified control, until one exists.
+
+This list covers the controls that exist today at the current local/single-user exposure. It is not a claim that the API is safe to expose to untrusted principals — see [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits that no amount of hardening removes, and for the readiness criteria that must be met before hosted or multi-user exposure.

@@ -2,7 +2,7 @@
 
 > **Status:** READY
 > **Risk:** **High** — this question fixes hard-to-reverse identity, history, applicability, provenance, and cross-version semantics for a future shared Governance contract. Independent adversarial review is required before any conclusion is promoted into an ADR or equivalent durable architecture.
-> **Scope:** The minimum semantic contract required for Governance `Evidence` and `EvidenceUse` before PLAN-GOV-5 can be admitted
+> **Scope:** The minimum semantic contract required for Governance `Evidence` and `EvidenceUse` before their first implementation can be admitted
 > **Authority:** Research only. This brief decides nothing; ADR-0016, current Governance architecture, and the landed conformance implementation remain authoritative at their existing statuses until a separate reconciliation.
 
 ## Question
@@ -54,7 +54,7 @@ The investigation should compare, at minimum:
 1. **Source-record identity with contextual uses.** An immutable evidence record identifies one attributable fact/result, while separate uses carry evaluation-specific subject/revision, requirement/assertion, applicability, and interpretation context.
 2. **Context-bound evidence identity.** Evidence is identified primarily by the evaluation/revision context in which it is used, with reuse represented by repeated or linked context records.
 3. **Artifact/fact identity with an interpretation layer.** Identity points to an immutable external artifact or semantic fact, while Governance uses and later interpretations provide the contextual binding.
-4. **No new shared evidence contract yet.** Existing requirement/conformance records and producer/Operational facts remain separate until a concrete consumer demonstrates a narrower boundary, with PLAN-GOV-5 staying blocked.
+4. **No new shared evidence contract yet.** Existing requirement/conformance records and producer/Operational facts remain separate until a concrete consumer demonstrates a narrower boundary, with the first Governance evidence implementation staying blocked.
 
 The researcher must test whether these are genuinely distinct under the required proving cases and must retain the simplest model that satisfies them. The list is a starting candidate set, not a preferred design or Java shape.
 

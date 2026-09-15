@@ -86,7 +86,7 @@ Use this hierarchy by question:
 | How is repository consistency review performed? | this file |
 | What stable identity/lifecycle does a persisted consistency finding have? | its immutable GitHub Issue number, plus the immutable `CONS-*` alias bound to that issue |
 
-GitHub Issues are authoritative for **finding identity and lifecycle continuity only**. They are not architectural, product, planning, or implementation authority. If an issue says a problem is open but current authoritative evidence proves it is fixed, the reviewer should report the finding as resolved on the reviewed head and, when issue synchronization is explicitly authorized, reconcile the issue afterward.
+GitHub Issues are authoritative for **finding identity and lifecycle continuity only**. They are not architectural, product, planning, or implementation authority. If an issue says a problem is open but current authoritative evidence proves it is fixed, the reviewer should report the finding as resolved on the reviewed head. In a baseline-advancing `FULL` or `INCREMENTAL` review, reconcile the issue as part of that review's authorized finding-ledger bookkeeping; in `PR_FORWARD` or `DIAGNOSTIC_ONLY`, do not mutate the issue ledger unless the user gives separate explicit synchronization authority.
 
 The GitHub issue number is the canonical collision-safe storage identity. `CONS-*` is a human-readable alias, not a second independently allocated identity source. Once an alias is bound to an issue, its numeric portion is immutable even if descriptive title wording changes.
 
@@ -430,7 +430,7 @@ Why inconsistent:
 Authority analysis:
 <which artifact owns this question and why>
 
-Likely resolution: CODE | CURRENT DOCS | PLANNING | ADR | TEST/EVIDENCE | MULTIPLE
+Likely resolution: CODE | CURRENT_DOCS | PLANNING | ADR | TEST/EVIDENCE | MULTIPLE
 Suggested action:
 <smallest coherent corrective action; do not perform it during a diagnostic run>
 

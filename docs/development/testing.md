@@ -245,9 +245,10 @@ Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODUL
 
 `infra/dev/pr-merge-plan.test.mjs` covers the connector-only freshness fallback's pure
 mechanical boundary: exact regular-file tree replay, supported modes and deletions,
-overlap/ancestor/case-fold and rename/special-entry refusal, merge-parent ordering,
-non-forced ref-update planning, concurrent-head rejection, post-update freshness/diff
-verification, and handed-off research-evidence ancestry. It does not claim live connector
+clean same-path regular-text modify/modify results bound to the exact merge-base/live-base/PR-head
+blob SHAs, conflicting or unsupported overlap refusal, ancestor/case-fold and rename/special-entry
+refusal, merge-parent ordering, non-forced ref-update planning, concurrent-head rejection,
+post-update freshness/diff verification, and handed-off research-evidence ancestry. It does not claim live connector
 integration; that requires a connector-capable disposable PR and repository-scoped write
 permissions.
 

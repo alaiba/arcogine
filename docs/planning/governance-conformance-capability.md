@@ -1,9 +1,9 @@
 # Governance and Conformance Capability Implementation Plan
 
-> **Status:** Active; PLAN-GOV-1 complete, PLAN-GOV-2 initial slice complete, PLAN-GOV-3 complete, PLAN-GOV-4 initial slice complete; PLAN-GOV-5 is the next admitted Governance slice  
-> **Scope:** Implementation-ready sequence for evidence, governed change, exceptions, mappings, and audit projections over the landed identity/change/conformance substrate  
+> **Status:** Active; PLAN-GOV-1 complete, PLAN-GOV-2 initial slice complete, PLAN-GOV-3 complete, PLAN-GOV-4 initial slice complete; PLAN-GOV-5 is `DEPENDENCY_BLOCKED`
+> **Scope:** Implementation admission and sequencing for evidence, governed change, exceptions, mappings, and audit projections over the landed identity/change/conformance substrate
 > **Authority:** Planning only; durable semantics remain owned by Governance architecture and accepted ADRs  
-> **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md)
+> **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [Governance evidence identity/applicability research](../research/investigations/governance-evidence-identity-applicability.md), [ADR-0016](../architecture/decisions/0016-governance-evidence-provenance.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md)
 
 ## 1. Boundary
 
@@ -58,10 +58,10 @@ The initial slice does not claim durable historical persistence of every evaluat
 ## 3. Current implementation queue
 
 ```text
-PLAN-GOV-5  Evidence and EvidenceUse
+PLAN-GOV-5  Evidence and EvidenceUse                         DEPENDENCY_BLOCKED
     |
     v
-PLAN-GOV-6  Governed change / authorization / external workflow association
+PLAN-GOV-6  Governed change / authorization / external workflow association  downstream
     |
     v
 PLAN-GOV-7  Exceptions and risk acceptance
@@ -73,38 +73,46 @@ PLAN-GOV-8  Framework/control mappings
 PLAN-GOV-9  Audit snapshots / compliance projections
 ```
 
-## 4. PLAN-GOV-5 — Evidence and EvidenceUse
+## 4. PLAN-GOV-5 — Evidence and EvidenceUse — `DEPENDENCY_BLOCKED`
 
-### Responsibility
+PLAN-GOV-5 is not currently admitted for implementation. The landed Governance substrate proves
+requirements/assertions and conformance/finding evaluation, but the durable contract needed to bind
+evidence to those evaluations is not yet authoritative. [ADR-0016](../architecture/decisions/0016-governance-evidence-provenance.md)
+is still Proposed and the related [bounded research question](../research/investigations/governance-evidence-identity-applicability.md)
+has not yet produced a reconciled architecture decision.
 
-Represent independently attributable evidence and the explicit act of using that evidence for a particular requirement/assertion/evaluation context.
+The existing architecture's ownership direction remains a constraint: evidence provenance and its
+use in a requirement/assertion/evaluation are distinct concerns; Operational observations retain
+their source-owned provenance; and producer-specific analytical semantics remain producer-owned.
+This plan does not select the missing identity, equality, history, applicability, or persistence
+semantics.
 
-The implementation must distinguish:
+Do not add Governance production types, fields, persistence, or boundary-test exceptions for
+`Evidence` / `EvidenceUse` while this blocker remains. Do not resolve the blocker by changing
+`EvidenceRequirement` or by accepting ADR-0016 without decision-quality evidence and the required
+review.
 
-```text
-Evidence
-    independent source fact/artifact/provenance
+### Promotion criteria for `READY_NEXT`
 
-EvidenceUse
-    interpretation/application of that evidence
-    to a subject/revision/requirement/assertion/evaluation
-```
+PLAN-GOV-5 may return to `READY_NEXT` only after all of the following have landed on live `main`:
 
-Raw Operational observations, when they later exist, remain Operational facts with their own source/subject/time/trust provenance. Governance may reference them as evidence without rebinding them at ingestion to a model/revision.
+- the research question is answered with decision-quality evidence, including explicit treatment of
+  the minimum identity, reuse/equality, immutability/history, provenance ownership, applicability,
+  and cross-version semantics required by the first implementation;
+- where the research is high risk, a genuinely independent adversarial review has completed before
+  the conclusion is used for durable architecture;
+- the surviving semantic contract is reconciled into an Accepted ADR or equivalent authoritative
+  Governance architecture surface, without selecting storage or transport mechanisms incidentally;
+  and
+- this plan and the current-state architecture are reconciled so a fresh implementer can derive
+  behavior and acceptance evidence without inventing evidence identity or lifecycle rules.
 
-### Acceptance criteria
+The eventual implementation slice must remain a small, headless, Governance-owned contract and must
+prove reuse, exact contextual attribution, explicit non-success handling for unusable evidence, and
+historical attribution. Its exact types and fields, plus any fixture adapter, must be derived from
+the authoritative semantic decision at that time.
 
-PLAN-GOV-5 is ready to close when:
-
-1. evidence has stable identity and source/provenance appropriate to its type;
-2. one evidence item can be reused in several explicit EvidenceUse records without rewriting the evidence;
-3. EvidenceUse identifies the exact semantic subject/revision and requirement/assertion/evaluation context it supports;
-4. time/applicability and source version are explicit when material;
-5. missing/stale/inapplicable evidence produces explicit unknown/failure semantics rather than implicit pass;
-6. external observations can be fixture-backed without inventing duplicate Operational telemetry types; and
-7. historical evaluation remains attributable after later semantic or evidence changes.
-
-### Non-goals
+### Readiness non-goals
 
 No telemetry ingestion, connector trust/authentication, document-management system, vector search, generic evidence lake, or production adapter belongs in this slice.
 

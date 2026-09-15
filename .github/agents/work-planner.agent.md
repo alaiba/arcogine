@@ -300,7 +300,7 @@ A strong handoff prompt normally includes:
 9. ADR decision rule for hard-to-reverse identity/taxonomy/persistence/public-contract choices;
 10. documentation reconciliation requirements, including translating plan-local coordinates into semantic vocabulary in durable docs;
 11. narrowest applicable validation commands from `AGENTS.md`;
-12. PR creation/monitoring requirements;
+12. PR creation/continuation requirements;
 13. final-report checklist.
 
 If the requested slice depends on an open PR, say so explicitly and instruct the implementation session not to treat that dependency as landed until it actually merges. If the slice is independent, say that explicitly.

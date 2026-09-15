@@ -12,7 +12,7 @@ name: PR Disposition
 #
 # This workflow does not evaluate CI outcome, mergeability, base freshness, or
 # unresolved threads — those remain independently enforced by GitHub branch
-# protection and infra/dev/pr-watch.mjs. The CI workflow run is consulted only
+# protection and infra/dev/pr-lifecycle.mjs. The CI workflow run is consulted only
 # as trusted current-head provenance for Dependabot; `gate` remains the
 # independent validation result.
 #

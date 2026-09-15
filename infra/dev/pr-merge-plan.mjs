@@ -16,8 +16,6 @@
 const SHA_PATTERN = /^[0-9a-f]{40}$/i;
 const REGULAR_FILE_MODES = new Set(['100644', '100755']);
 const TEXT_ATTRIBUTE_VALUES = new Set(['set', 'auto', 'unspecified']);
-const MERGE_ATTRIBUTE_TEXT_VALUES = new Set(['set', 'text']);
-const MERGE_DEFAULT_TEXT_VALUES = new Set(['unspecified', 'text']);
 
 function requireSha(value, label) {
   if (!SHA_PATTERN.test(String(value ?? ''))) {
@@ -200,13 +198,20 @@ function normalizeTextMergeAttributeProof(raw, path) {
   if (!TEXT_ATTRIBUTE_VALUES.has(text)) {
     throw new Error(`text merge resolution for ${path} is not eligible for text merge: text attribute is ${text}`);
   }
+
+  // A named low-level merge driver remains configurable through merge.<name>.driver,
+  // including a driver literally named "text". Therefore merge=text and
+  // merge.default=text do not prove Git will use its built-in text algorithm. The
+  // fallback accepts only the two forms that select the built-in algorithm without a
+  // configurable driver name: boolean `merge` set, or `merge` unspecified with no
+  // merge.default configured.
   if (merge === 'unspecified') {
-    if (!MERGE_DEFAULT_TEXT_VALUES.has(mergeDefault)) {
+    if (mergeDefault !== 'unspecified') {
       throw new Error(
         `text merge resolution for ${path} is not eligible for the built-in text merge: merge.default is ${mergeDefault}`,
       );
     }
-  } else if (!MERGE_ATTRIBUTE_TEXT_VALUES.has(merge)) {
+  } else if (merge !== 'set') {
     throw new Error(
       `text merge resolution for ${path} is not eligible for the built-in text merge: merge attribute is ${merge}`,
     );

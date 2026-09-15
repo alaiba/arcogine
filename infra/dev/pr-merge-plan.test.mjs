@@ -188,9 +188,39 @@ test('text merge eligibility fails closed for missing, binary, or custom Git att
   );
 });
 
-test('explicit built-in text merge attribute remains eligible', () => {
+test('named text merge driver routes fail closed because the driver can be overridden', () => {
+  const args = {
+    mergeBase: snapshot(A, [blob('shared.md', A)]),
+    base: snapshot(B, [blob('shared.md', B)]),
+    head: snapshot(H, [blob('shared.md', H)]),
+  };
+
+  assert.throws(
+    () =>
+      createMechanicalMergePlan({
+        ...args,
+        textMergeResolutions: [
+          cleanTextMergeResolution({ attributeProof: defaultTextAttributeProof({ merge: 'text' }) }),
+        ],
+      }),
+    /merge attribute is text/,
+  );
+
+  assert.throws(
+    () =>
+      createMechanicalMergePlan({
+        ...args,
+        textMergeResolutions: [
+          cleanTextMergeResolution({ attributeProof: defaultTextAttributeProof({ mergeDefault: 'text' }) }),
+        ],
+      }),
+    /merge\.default is text/,
+  );
+});
+
+test('boolean-set merge attribute remains eligible without consulting merge.default', () => {
   const resolution = cleanTextMergeResolution({
-    attributeProof: defaultTextAttributeProof({ text: 'set', merge: 'text', mergeDefault: 'custom-driver' }),
+    attributeProof: defaultTextAttributeProof({ text: 'set', merge: 'set', mergeDefault: 'custom-driver' }),
   });
   const plan = createMechanicalMergePlan({
     mergeBase: snapshot(A, [blob('shared.md', A)]),

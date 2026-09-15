@@ -447,8 +447,8 @@ function stateLines(s) {
     `required-check: ${s.requiredCheck ? s.requiredCheck.verdict : 'ABSENT'}`,
     `disposition-check: ${s.dispositionCheck ? s.dispositionCheck.verdict : 'ABSENT'}`,
     // Base identity and distance are part of the watched state: a base advance can
-    // invalidate authorization without the head changing at all because strict branch
-    // protection requires the branch to be current with main.
+    // change merge-readiness without changing current-head review authorization because
+    // strict branch protection may require the branch to be current with main.
     `base: ${s.baseRef}@${String(s.baseOid).slice(0, 7)} (behind ${s.behindBy}, ahead ${s.aheadBy})`,
     `merge: ${s.mergeStateStatus} (${s.mergeable})`,
     // Truncation flags are lifecycle inputs, so they belong in the projection too: crossing

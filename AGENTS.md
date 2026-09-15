@@ -196,93 +196,47 @@ Resolve a PR's lifecycle state from its current head and metadata, base freshnes
 - **CHANGES REQUIRED** — a pre-merge transition remains, such as the head being behind its current base, a valid blocking review finding, failed required CI, or a merge conflict. Semantic remediation and conflict resolution belong to the implementation/author side. A reviewer may perform only the conflict-free base synchronization described below as pre-review normalization.
 - **READY TO MERGE** — the trusted `disposition` check is green on the current head, required validation is green, the head is level with its current base, and the PR is mergeable. The implementation/reviewer agent stops; the repository owner merges manually. For ordinary PRs, green `disposition` represents a current-head `READY TO MERGE` review. For a trusted Dependabot PR, it represents verified bot provenance with no current-head canonical `CHANGES REQUIRED` override.
 
-Base freshness is a pre-review normalization requirement as well as lifecycle state. `infra/dev/pr-watch.mjs` must still treat any behind-base head as **CHANGES REQUIRED**, so implementation monitoring can reconcile it before review. If an independent reviewer instead discovers a stale branch at review start, the reviewer should attempt the repository-approved conflict-free synchronization before doing substantive review. A successful mechanical synchronization is reviewer-side normalization, not implementation remediation: re-resolve live `main`, the new head, CI, and the net diff, then review only that reconciled head. Pending CI does not delay substantive review or reviewer disposition; review authorization and required CI are independent, and overall merge readiness waits for both. If synchronization produces a merge conflict, requires a semantic choice, lacks permission, or otherwise cannot complete mechanically, stop before substantive review and return the PR to the author/implementation owner; do not spend review effort or file a reconciliation finding against the stale head.
+Base freshness is a pre-review normalization requirement as well as lifecycle state. `infra/dev/pr-watch.mjs` must still treat a behind-base head as **CHANGES REQUIRED**, so implementation monitoring can reconcile it before review. That base-freshness result is a merge-readiness condition, not a review finding: a current-head review disposition remains bound to that head when `main` advances, although repository rules may prevent the owner from merging until a later normalization iteration. If an independent reviewer discovers a stale branch at review start, the reviewer should attempt the conflict-free rebase below before doing substantive review. A successful rebase is reviewer-side normalization, not implementation remediation: re-resolve the resulting head, CI, reviews, and mergeability, then begin review from that new head. If the rebase conflicts, requires a semantic choice, lacks permission, or cannot be published safely, stop before substantive review and return the PR to the author/implementation owner; do not spend review effort or file a reconciliation finding against the stale head. Pending CI does not delay substantive review or reviewer disposition; review authorization and required CI are independent, and overall merge readiness waits for both.
 
 ### Base-normalization protocol
 
 The **base-normalization protocol** is canonical; `infra/dev/pr-reconcile.mjs` is the
-preferred native GitHub adapter for ordinary PRs, not the protocol itself. Normal freshness
-is history-preserving: incorporate the live base into the PR branch without replacing the
-existing PR history. Route by capability and keep the invariants below independent of the
-adapter or harness:
+repository's adapter for ordinary PRs, not the protocol itself. Conflict-free rebase is the
+normal pre-review operation. It may rewrite the unmerged PR branch; it never rewrites accepted
+history on `main`.
 
 | Route | When available | Branch operation | Required safety boundary |
 | --- | --- | --- | --- |
-| Native Update branch | GitHub's merge-style Update branch operation is exposed | Ask GitHub to merge the live base into the PR branch; use `expected_head_sha` or equivalent atomic expected-head protection when supported | GitHub owns merge computation and conflict detection; verify the normalized head afterward |
-| Mechanical Git-data fallback | Native Update branch is unavailable, but repository-scoped commit/tree/blob reads, commit/tree creation, and ref movement with `force=false` are available | Construct merge commit `M`, then advance `H -> M` with a non-forced fast-forward ref update | Use only the exact-tree protocol below; never turn a rejected fast-forward into a forced update |
-| Research-evidence workspace | Handed-off evidence SHA+path coordinates must remain reachable | Use the native route or the mechanical fallback, whichever is available and safe | Preserve every evidence SHA and the pre-update head as ancestors; do not rebase or force-push evidence history |
-| Trusted Dependabot | The base-side workflow verifies the exact Dependabot opener and exact-head CI actor | Prefer Dependabot's supported rebase/recreate mechanism | Do not silently add a maintainer-authored connector merge while the provenance exception applies |
-| Explicit history rewrite | A user or documented special workflow explicitly requires replacement history | Construct the complete replacement before mutation and update through force-with-lease/CAS/atomic expected-head protection | This is exceptional; the exact inspected old head remains mandatory |
+| Ordinary implementation PR | PR is open, same-repository, and behind the observed base | Rebase the PR commits once onto the observed base in temporary local work, then replace the remote branch | Verify the remote branch still equals captured `H`; publish only with an exact `--force-with-lease`/CAS guard |
+| Research-evidence workspace | Handed-off evidence SHA+path coordinates must remain reachable | Follow the separate research-workspace custody protocol in `docs/development/researching.md` | Evidence identity and reachability rules do not apply to ordinary implementation-PR normalization |
+| Trusted Dependabot | The base-side workflow verifies the exact Dependabot opener and exact-head CI actor | Prefer Dependabot's supported rebase/recreate mechanism | Do not silently add a maintainer-authored synchronization while the provenance exception applies |
+| Explicit history rewrite | A user or documented special workflow explicitly requires replacement history | Construct the complete replacement before mutation and update through force-with-lease/CAS/atomic expected-head protection | This remains exceptional; the exact inspected old head is mandatory |
 
-For the native and mechanical history-preserving routes, first re-resolve the live base ref,
-current PR head, PR state, and head repository. Require an open same-repository PR; the PR
-API's historical `base.sha` is not evidence that the base is current. Immediately before
-mutation, re-read the PR head and live base and stop if either moved. Afterward, verify the
-PR remains open, the old head and the live base are ancestors of the resulting head,
-`behind_by == 0`, `ahead_by > 0`, and the net live-base→new-head diff remains non-empty.
-Re-resolve CI, reviews, trusted `disposition`, and mergeability because the resulting head
-is new. Pending CI does not delay substantive review or reviewer disposition: review
-authorization and required CI are independent, and overall merge readiness waits for both.
-Explicit rewrite and Dependabot routes retain their own identity/provenance checks below
-rather than claiming old-head ancestry.
+For an ordinary PR, first capture the current PR head `H`, live base `B`, PR state, base ref,
+and head repository. Require an open same-repository PR. The PR API's historical `base.sha` is
+not evidence that the base is current. If the comparison already contains `B`, do not rebase.
+If it is behind, perform one normal automatic Git rebase of the PR commits onto `B` in a
+temporary repository. A conflict aborts the attempt without remote mutation and belongs to the
+implementation/author; the reviewer never performs manual file-level conflict resolution or
+chooses a semantic resolution.
 
-The native route is preferred. `node infra/dev/pr-reconcile.mjs <pr-number>` and
-`gh pr update-branch <pr-number>` without `--rebase` are native merge-style adapters where
-available. They must bind the update to the inspected head with `expected_head_sha` or an
-equivalent atomic expected-head precondition. If the native operation conflicts, requires a
-semantic choice, lacks permission, or otherwise cannot complete safely, return the PR to
-the implementation/author unless the mechanical fallback below is available.
+Before publishing the rebased result, re-read the open PR and require its branch still points
+to `H`. Publish the complete replacement exactly once with an exact-old-head lease, for example
+`git push --force-with-lease=refs/heads/<head-ref>:<H> <new-head>:refs/heads/<head-ref>`.
+An equivalent compare-and-swap is acceptable only when it is bound to the exact captured `H`;
+an unguarded force push is never acceptable. If the head changed, the lease is rejected, or the
+branch cannot be verified, abandon this attempt without overwriting the author and re-resolve
+the lifecycle state.
 
-The mechanical fallback uses these symbols: `H` is the inspected PR head, `B` is the live
-base head, `A` is their resolved merge base, `T` is the mechanically proven merged tree,
-and `M` is a merge commit with first parent `H`, second parent `B`, and tree `T`. It is
-available only when all of the following are proven from repository-scoped Git data:
-
-1. `A -> H` and `A -> B` can be represented as exact tree-entry changes.
-2. Cross-path changes have no file/directory ancestor collision or case-folded/path-normalization
-   ambiguity. Exact same-path regular-file modify/modify is not automatically a conflict: fetch
-   the exact blob bytes from `A`, `B`, and `H` and run Git's deterministic three-way text merge
-   (`git merge-file -p <H-file> <A-file> <B-file>` or an equivalent invocation of the same Git
-   merge algorithm). Accept that path only when the merge reports cleanly with no conflict
-   markers; create the result blob from those exact output bytes and bind the planner input to
-   the exact `A`/`B`/`H` blob SHAs plus the resulting blob SHA. A real text conflict stops
-   normalization rather than inviting reviewer judgment.
-3. No rename/copy interpretation, add/delete or delete/modify resolution, binary-content merge,
-   file-mode choice, symlink, submodule, unsupported mode, or other semantic merge choice is
-   required. The current pure planner (`infra/dev/pr-merge-plan.mjs`) accepts only complete,
-   non-truncated recursive tree snapshots whose regular blob leaves have exact `100644` or
-   `100755` modes. Same-path text merging is limited to ordinary regular files whose mode is
-   unchanged across `A`, `B`, and `H`; unsupported shapes fail closed. A recursive Git tree
-   response with `truncated: true` — or without an explicit `truncated: false` proof — is
-   incomplete; recursively expand its subtrees through the connector or return the PR to the
-   implementation/author.
-4. `T` is constructed completely before any ref mutation by starting from `B`, applying disjoint
-   PR-side blob states exactly, and substituting only verified clean text-merge result blobs for
-   supported same-path modify/modify cases. Preserve exact modes and mechanically unambiguous
-   deletions. The resulting tree must retain a non-empty net PR diff.
-5. `M` is created with repository-compliant human author/committer identity, no bot/session
-   attribution, and the exact parents/tree above. If identity cannot be established and
-   verified, the fallback is unavailable.
-
-Immediately before the one ref mutation, require the PR head still equals `H` and live base
-   still equals `B`; otherwise discard `M` and recompute. Move the branch exactly once with
-   `force=false`. The server's non-forced update is the concurrency guard for this
-   history-preserving route: a concurrent forward or divergent/rebased head that is not an
-   ancestor of `M` must be rejected, and that rejection means retry from the new state,
-   never `force=true`. This is not identical to exact-head CAS: a deliberate backward reset
-   to an ancestor of `M` can remain fast-forwardable during the narrow race after the final
-   read. That residual race is accepted only for this non-forced fallback; native Update
-   branch with `expected_head_sha` remains stronger and preferred. The CAS/lease requirement
-   for true history rewrites is unchanged.
-
-Post-update verification must additionally confirm that the resulting head is `M`, its
-parents are `[H, B]`, its complete non-truncated tree is exactly `T`, the current live base is still an ancestor,
-and the live-base diff is exactly the intended non-empty PR change. If `main` advances to
-`B2`, do not roll back the successful merge; report the branch stale and repeat the same
-normalization against `B2`. Research-evidence workspaces must also verify every handed-off
-evidence SHA remains reachable. A conflict, unsupported tree shape, identity failure,
-failed verification, or unavailable safe route returns the stale PR to the
-implementation/author before substantive review.
+The rebase target is the observed `B` for that one attempt. Do not re-read and chase `main`
+until it stops moving, and do not immediately retry solely because `main` advanced after `B`
+was captured. A later lifecycle iteration may rebase again if GitHub's mergeability or branch
+rules require it. A successful rebase creates a new PR head, so previous-head review
+authorization does not authorize it automatically; re-resolve current-head CI, reviews,
+`disposition`, and mergeability. Base-head churn is separate from current-head review integrity;
+it does not by itself revoke an already-issued current-head review disposition.
+GitHub owns the final merge into `main`; agents never merge PRs, and the repository owner
+performs the manual **Squash and merge** action.
 
 For a stale Dependabot PR that currently qualifies for trusted provenance and otherwise
 needs no maintainer-authored change, prefer Dependabot's own supported rebase/recreate

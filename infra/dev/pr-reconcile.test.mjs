@@ -41,6 +41,7 @@ function harness({
   headRef = BRANCH,
   foreignHeadRepo = REPO,
   configuredIdentity = HUMAN_IDENTITY,
+  ownerIdentity = HUMAN_IDENTITY,
   githubUser = { login: 'alaiba', name: HUMAN_IDENTITY.name, email: HUMAN_IDENTITY.email },
   rebaseFailure = null,
   pushFailure = null,
@@ -86,6 +87,8 @@ function harness({
 
     if (args[0] === 'config' && args[1] === '--get' && args[2] === 'user.name') return configuredIdentity.name;
     if (args[0] === 'config' && args[1] === '--get' && args[2] === 'user.email') return configuredIdentity.email;
+    if (args[0] === 'config' && args[1] === '--get' && args[2] === 'arcogine.owner.name') return ownerIdentity.name;
+    if (args[0] === 'config' && args[1] === '--get' && args[2] === 'arcogine.owner.email') return ownerIdentity.email;
     if (args[0] === 'init' || args[0] === 'config' || args[0] === 'remote' || args[0] === 'fetch' || args[0] === 'checkout') {
       return '';
     }
@@ -370,10 +373,7 @@ test('a different configured human Git identity is rejected before rebase work b
       log: () => {},
       sleep: noWait,
       token: TOKEN,
-      identityEnvironment: {
-        ARCOGINE_GIT_USER_NAME: HUMAN_IDENTITY.name,
-        ARCOGINE_GIT_USER_EMAIL: HUMAN_IDENTITY.email,
-      },
+      identityEnvironment: {},
       workspaceFactory: h.workspaceFactory,
       cleanup: h.cleanup,
     }),

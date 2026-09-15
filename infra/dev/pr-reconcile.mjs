@@ -14,8 +14,8 @@
  *   - PR is open;
  *   - PR head branch lives in the canonical repository;
  *   - the authenticated GitHub user is the repository owner;
- *   - the configured local Git identity is the owner identity, optionally validated by explicit
- *     ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL values;
+ *   - the configured local Git identity matches the durable repository owner identity, optionally
+ *     validated by explicit ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL values;
  *   - an authenticated gh CLI and Git with push access are available.
  *
  * The user's checkout is never used or changed. The observed base is the target for
@@ -47,9 +47,10 @@ OPTIONS
   --help               Show this help
 
 REQUIRES
-  An authenticated gh CLI as the repository owner and a valid local user.name/user.email.
-  If ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL are present, they must match the
-  local identity. Git push access is also required. The user's local checkout is not
+  An authenticated gh CLI as the repository owner and a valid local user.name/user.email
+  matching the durable arcogine.owner.name/arcogine.owner.email configuration. If
+  ARCOGINE_GIT_USER_NAME and ARCOGINE_GIT_USER_EMAIL are present, they must match that
+  durable identity. Git push access is also required. The user's local checkout is not
   changed; rebase work is performed in a temporary repository.
 
 SAFETY
@@ -214,6 +215,20 @@ function explicitOwnerIdentity(environment) {
   return requireHumanIdentity({ name, email });
 }
 
+function durableOwnerIdentity(run) {
+  let name;
+  let email;
+  try {
+    name = run('git', ['config', '--get', 'arcogine.owner.name']);
+    email = run('git', ['config', '--get', 'arcogine.owner.email']);
+  } catch {
+    throw new Error(
+      'durable Arcogine owner identity is required; run infra/dev/git-identity.sh in the configured owner checkout',
+    );
+  }
+  return requireHumanIdentity({ name, email });
+}
+
 function configuredGitIdentity(run) {
   let name;
   let email;
@@ -244,11 +259,10 @@ function resolveHumanIdentity(run, repo, configuredIdentity, identityEnvironment
         'refusing rebase',
     );
   }
-  const ownerIdentity = configuredIdentity ?? explicitOwnerIdentity(identityEnvironment);
-  if (ownerIdentity) {
-    return configuredIdentity ? requireHumanIdentity(ownerIdentity) : requireConfiguredOwnerIdentity(configuredGitIdentity(run), ownerIdentity);
-  }
-  return configuredGitIdentity(run);
+  const ownerIdentity = configuredIdentity ?? explicitOwnerIdentity(identityEnvironment) ?? durableOwnerIdentity(run);
+  return configuredIdentity
+    ? requireHumanIdentity(ownerIdentity)
+    : requireConfiguredOwnerIdentity(configuredGitIdentity(run), ownerIdentity);
 }
 
 function gitAuthEnvironment(token) {

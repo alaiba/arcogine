@@ -179,7 +179,9 @@ When creating or editing GitHub pull requests, issues, comments, reviews, or rel
   identify the human repository owner. Never create commits with an agent, model, provider,
   or bot as author or committer. Container setup accepts explicit
   `ARCOGINE_GIT_USER_NAME` and `ARCOGINE_GIT_USER_EMAIL` values and warns, without blocking
-  setup, when the identity is missing or appears agent-owned.
+  setup, when the identity is missing or appears agent-owned. The identity helper persists a
+  validated owner identity in local `arcogine.owner.name` and `arcogine.owner.email` config;
+  guarded PR rebases require the active Git identity to match that durable record.
 
 ## Commit message footer
 

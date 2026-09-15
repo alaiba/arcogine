@@ -81,11 +81,10 @@ evidence to those evaluations is not yet authoritative. [ADR-0016](../architectu
 is still Proposed and the related [bounded research question](../research/investigations/governance-evidence-identity-applicability.md)
 has not yet produced a reconciled architecture decision.
 
-The existing architecture's ownership direction remains a constraint: evidence provenance and its
-use in a requirement/assertion/evaluation are distinct concerns; Operational observations retain
-their source-owned provenance; and producer-specific analytical semantics remain producer-owned.
-This plan does not select the missing identity, equality, history, applicability, or persistence
-semantics.
+The current implementation deliberately stops short of this capability: `EvidenceRequirement` is
+only a declaration, and `ConformanceEvaluation` omits evidence fields. Those are current-state
+facts, not a future evidence design. This plan does not select the missing identity, equality,
+history, applicability, provenance, or persistence semantics.
 
 Do not add Governance production types, fields, persistence, or boundary-test exceptions for
 `Evidence` / `EvidenceUse` while this blocker remains. Do not resolve the blocker by changing
@@ -107,10 +106,9 @@ PLAN-GOV-5 may return to `READY_NEXT` only after all of the following have lande
 - this plan and the current-state architecture are reconciled so a fresh implementer can derive
   behavior and acceptance evidence without inventing evidence identity or lifecycle rules.
 
-The eventual implementation slice must remain a small, headless, Governance-owned contract and must
-prove reuse, exact contextual attribution, explicit non-success handling for unusable evidence, and
-historical attribution. Its exact types and fields, plus any fixture adapter, must be derived from
-the authoritative semantic decision at that time.
+When promoted, the implementation scope and acceptance evidence must be derived from the
+authoritative semantic decision; this blocked guard does not prescribe the future type or field
+shape.
 
 ### Readiness non-goals
 

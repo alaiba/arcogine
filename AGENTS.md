@@ -294,13 +294,15 @@ See [`docs/development/repository-snapshot.md`](docs/development/repository-snap
 
 For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, `bootJar`, JMH, dependency audit), `cd product/interfaces/web && npm ...`/`npx ...` (lint, typecheck, build, Playwright), `docker compose ...` (containers), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
 
-`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. Use the dev container on Windows; it's the supported path. Before running shell- or toolchain-dependent commands on Windows, inspect the running Docker containers first, identify the container that mounts this repository, and execute there rather than assuming a container name. If no suitable dev container is running, use the documented WSL/Git Bash fallback or report the missing environment.
+`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. On a Windows host, prefer execution environments in this order when available: (1) the devcontainer, (2) a generic ad hoc Docker container, (3) WSL/Git Bash, and (4) native Windows tooling. Before running shell- or toolchain-dependent commands on Windows, inspect the running Docker containers first and identify the container that mounts this repository; do not assume a container name. If no suitable devcontainer is running, try the documented generic Docker workflow, then WSL/Git Bash, and finally native Windows tooling when the command supports it.
 
 ### Backend test environment
 
-Backend validation requires a JDK 21+ runtime and the repository Gradle wrapper. On Windows, use
-the dev container when practical. If the current host exposes only a pre-21 JDK or otherwise cannot
-run the wrapper, do not use it for backend validation; use the dev container or the documented
+Backend validation requires a JDK 21+ runtime and the repository Gradle wrapper. On Windows, prefer
+the devcontainer, then a generic ad hoc Docker container, then WSL/Git Bash, and finally native
+Windows tooling. If the current host exposes only a pre-21 JDK or otherwise cannot run the wrapper,
+do not use it for backend validation; use the first available supported environment from that order,
+including the documented
 `gradle:9-jdk21` Docker workflow in
 [`docs/development/testing.md`](docs/development/testing.md#running-java-tests-on-the-minimum-jdk),
 for example `docker exec arcogine-build ./gradlew test`. Classify a host Gradle failure as
@@ -316,6 +318,8 @@ Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dock
 ## Validating changes
 
 Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching only Java (`product/{types,simulation,domains,agents,consumer,interfaces/api,interfaces/cli}`) needs only the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a change touching only the frontend (`product/interfaces/web/`) needs only its gates (`cd product/interfaces/web && npm run lint && npx tsc --noEmit && npm run test:coverage && npm run build`); a documentation-only change needs neither. When a change spans both, or you can't tell whether it's narrow, run `./arcogine check`, which runs both unconditionally. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
+
+When finishing an implementation task, report the validation commands and tools used, the outcome of each, and any validation that was unavailable, skipped, or only partially completed. Do not summarize a partially completed validation as a full pass.
 
 ## Do not edit
 

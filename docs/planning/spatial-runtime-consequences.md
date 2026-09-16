@@ -1,8 +1,8 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Proposed delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-0 is ready
-after joint first-release dispatch reconciliation, PLAN-ENG-5-A1 (Factory V2 spatial model and
-validation) is implemented, and the remaining slices are proposed/pending.
+Status: Proposed delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-0 is
+implemented after joint first-release dispatch reconciliation, PLAN-ENG-5-A1 (Factory V2 spatial
+model and validation) is implemented, and the remaining slices are proposed/pending.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -96,8 +96,8 @@ coherent in the same landed change under ADR-0011.
 
 ### PLAN-ENG-5-0 — Pin existing Engine semantics
 
-**Status:** Ready. The first-release dispatch research gate is cleared: both reviewed questions retain
-`engine-semantics:v1` unchanged, with the qualifications recorded in
+**Status:** Implemented. The first-release dispatch research gate is cleared: both reviewed questions
+retain `engine-semantics:v1` unchanged, with the qualifications recorded in
 [Engine Evolution Research](../research/investigations/engine-evolution.md).
 
 **Prerequisites:** ADR-0015 landed Accepted, plus conclusion of the two first-release dispatch
@@ -251,6 +251,12 @@ saturation rules to be implementable. Make them in production code and pin them;
 specification to describe wrapping or truncation, which would freeze an arithmetic defect into a
 durable reproducibility contract and defeat the purpose of `EngineSemanticsVersion`. Every other
 behavior in this slice is pinned as-is.
+
+The executable evidence is maintained in `EngineSemanticsV1DispatchConformanceTest`,
+`EngineSemanticsV1DerivedResultConformanceTest`, the existing session-control acceptance suite, and
+the existing child-materialization acceptance/benchmark tests. These tests preserve retained v1
+behavior as compatibility evidence; they do not claim that the dispatch policy is optimal or settle
+the Engine-versus-analytics ownership question.
 
 The behaviors above are the ones `engine-semantics:v1` section 1.1 requires to be versioned rather
 than left as ambient implementation policy. `PLAN-ENG-5-0` is where that requirement becomes executable
@@ -606,9 +612,9 @@ it requires a new `EngineSemanticsVersion` and a separately reconciled implement
 
 Practical parallelism now:
 
-- `PLAN-ENG-5-0` may start now; the reviewed research gate is satisfied;
+- `PLAN-ENG-5-0` is implemented; the reviewed research gate is satisfied;
+- `PLAN-ENG-5-B1` is unblocked and may proceed while `PLAN-ENG-5-A2` advances;
 - `PLAN-ENG-5-A2` may proceed independently because `PLAN-ENG-5-A1` is already landed;
-- after `PLAN-ENG-5-0`, `PLAN-ENG-5-B1` can proceed while `PLAN-ENG-5-A2` advances;
 - after `PLAN-ENG-5-A1`/`PLAN-ENG-5-B1`, `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` can proceed independently;
 - `PLAN-ENG-5-A3` is compatibility/history work and need not block `PLAN-ENG-5-C3`, but it must close before
   `PLAN-ENG-5-E` and before a real V1→V2 controlled transition;

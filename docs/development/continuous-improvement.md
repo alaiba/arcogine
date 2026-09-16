@@ -15,10 +15,10 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 
 - **Trigger/cadence:** weekly, plus additional review after major architecture/status transitions when useful.
 - **Purpose:** deep repository semantic review across implementation, architecture, ADRs, planning, docs, examples, config, tests, CI, and prior findings.
-- **Owner/runtime:** the Consistency reviewer in a ChatGPT chat session using the GitHub connector. The detailed algorithm is `.github/agents/consistency.agent.md`.
-- **Execution:** manual/user-invoked. The scheduled workflow tracks derived state but never performs the judgment-bearing review.
-- **Review strategy:** the previous reviewed head is a recency anchor only. New and changed content gets first attention, but the review is not bounded to that change range and may uncover older inconsistencies on any run.
-- **Finding accounting:** invoking a formal review authorizes only the GitHub issue operations needed to account for that review's findings and the final update of the weekly register section. It does not authorize remediation or merging.
+- **Owner/runtime:** the Consistency reviewer in a ChatGPT chat session using a mandatory exact-current-main Repomix corpus plus the GitHub connector for mutable state. See `.github/agents/consistency.agent.md` and `docs/development/repository-snapshot.md`.
+- **Execution:** manual/user-invoked. A stale/missing Repomix makes the review `INCOMPLETE`; it is updated and retried rather than reconstructed through GitHub file reads.
+- **Review strategy:** the previous reviewed head is a recency anchor only. New and changed content gets first attention, but scope is not bounded to that change range and later reviews may uncover older inconsistencies.
+- **Finding accounting:** invoking a formal review authorizes only the GitHub issue operations needed to account for that review's findings and the final weekly-register update. It does not authorize remediation or merging.
 
 ## Delivery-process retrospective
 
@@ -33,6 +33,7 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 | --- | --- |
 | Session-close Kaizen | `AGENTS.md` |
 | Consistency review algorithm | `.github/agents/consistency.agent.md` |
+| Consistency corpus generation | `infra/dev/repo-snapshot.mjs` + `infra/dev/repomix.config.json` |
 | Consistency operating guidance | `docs/development/consistency-review.md` |
 | Retrospective method/evidence | dated retrospective documents |
 | Current recurring-obligation state | GitHub issue #295 |
@@ -42,25 +43,24 @@ PR review remains governed by `docs/development/reviewing.md`; it is evidence fo
 
 ## Continuous improvement register
 
-GitHub issue **#295**, titled `Continuous improvement register`, is mandatory operational state for this repository. It already exists; automation and reviewers do not discover, bootstrap, recreate, or replace it. If issue #295 is unavailable or no longer has that title, the operation fails rather than writing elsewhere.
+GitHub issue **#295**, titled `Continuous improvement register`, is mandatory operational state. Automation and reviewers do not discover, bootstrap, recreate, or replace it. If #295 is unavailable or no longer has that title, the operation fails rather than writing elsewhere.
 
-The register body has two regions separated by HTML markers:
+The body contains recurring obligations inside `<!-- continuous-improvement:obligations:start -->` / `...:end -->` and agent/human-managed active interventions outside those markers.
 
-- **Recurring obligations** inside `<!-- continuous-improvement:obligations:start -->` / `...:end -->`.
-- **Agent/human-managed active interventions** outside those markers.
+Within recurring obligations:
 
-Inside the recurring-obligations region, ownership is split by subsection:
-
-- the Consistency reviewer writes the accounting fields in `### Weekly Consistency review` when a review completes;
+- the Consistency reviewer writes accounting fields in `### Weekly Consistency review` after a fresh-current-main review;
 - the scheduled workflow may update the weekly derived `state` as time passes;
-- the scheduled workflow writes the mechanically derived `### Delivery-process retrospective` count/state;
-- the workflow preserves the reviewer's weekly date/head/result/finding identities.
+- the scheduled workflow writes the mechanically derived delivery-retrospective count/state;
+- the workflow preserves reviewer-owned weekly date/head/result/finding identities.
 
 The register is active state, not an append-only process database. Historical evidence belongs in issues, PRs, commits, and dated retrospective documents.
 
 ### Recording a Consistency review
 
-A completed formal review directly edits the weekly section of issue #295:
+Immediately before finding/register mutations, the reviewer rechecks that live `main` still equals the Repomix commit. A mismatch aborts accounting and requires a fresh snapshot/retry.
+
+A completed review directly edits the weekly section:
 
 ```text
 ### Weekly Consistency review
@@ -75,18 +75,11 @@ A completed formal review directly edits the weekly section of issue #295:
 
 `CLEAN` requires `finding issues: none`; `FINDINGS` cites every unresolved consistency issue applicable to the reviewed head. The GitHub issue number is the finding identity.
 
-The recorded head is used by the next review to prioritize content created or changed since that point. It does not narrow the next review's scope or certify older content as consistent.
-
-This body edit is the whole completion protocol. There is no completion-comment ledger, comment parser, `issue_comment` trigger, `repository_dispatch`, `workflow_dispatch`, `gh api` call, or synchronous refresh requirement.
+The recorded head is used to bias the next review toward newer material; it never narrows that review's scope or certifies older content as consistent. This body edit is the whole completion protocol: no completion-comment ledger, parser, event-driven completion trigger, manual dispatch, `gh api`, or synchronous refresh.
 
 ### Scheduled derived-state refresh
 
-`.github/workflows/continuous-improvement.yml` is maintenance, not completion plumbing. On its schedule it:
-
-1. reads the current weekly review accounting directly from issue #295's body;
-2. derives `CURRENT`, `DUE`, or `OVERDUE` from `last verified`;
-3. recomputes the retrospective raw merged-PR guard and `CHECK_TRIGGER` state;
-4. updates the recurring-obligations region while preserving weekly review accounting and all intervention content.
+`.github/workflows/continuous-improvement.yml` is maintenance, not review completion plumbing. On schedule it reads #295, derives `CURRENT`/`DUE`/`OVERDUE` from `last verified`, recomputes the retrospective raw-merge guard/`CHECK_TRIGGER`, and preserves reviewer-owned weekly accounting plus intervention content.
 
 The weekly states are:
 
@@ -94,30 +87,20 @@ The weekly states are:
 - `DUE` when there is no verified review or it is more than 7 but at most 14 days old;
 - `OVERDUE` when it is more than 14 days old.
 
-The workflow runs daily so the derived display state does not lag the recorded review date by several days. A workflow run is never evidence that a review occurred; only the weekly accounting fields written by the reviewer establish that.
+A workflow run is never evidence that a Consistency review occurred.
 
 ## Consistency finding identities
 
-All consistency findings use the title prefix:
-
-```text
-CONS: <semantic title>
-```
-
-The GitHub issue number is the sole durable identity. Earlier numeric `CONS-*` issue titles were normalized instead of being carried as a compatibility scheme.
-
-A formal review loads open `CONS:` findings up front because unresolved findings must be carried forward. Closed findings are searched only when a candidate new finding is identified, using the candidate's semantic subject/terminology/evidence to detect duplicates or regressions. The cost of historical lookup therefore grows with new candidates, not with the total lifetime ledger size.
+All findings use `CONS: <semantic title>`. GitHub issue number is the sole durable identity. Open findings load at review start; closed findings are searched only when a candidate needs duplicate/regression matching.
 
 ## Retrospective baseline
 
-The retrospective baseline and explicit escape evidence live in `.github/scripts/continuous-improvement-data.json`. A later verified retrospective advances that data as an ordinary repository change; the helper's state-derivation logic does not need to change.
-
-Raw merged-PR count reaching the configured guard threshold produces `CHECK_TRIGGER`, not an automatic `DUE`. Judgment about whether the substantive retrospective trigger fired remains outside the workflow.
+The retrospective baseline and explicit escape evidence live in `.github/scripts/continuous-improvement-data.json`. A later verified retrospective advances that data as an ordinary repository change. Raw merge count reaching the guard threshold produces `CHECK_TRIGGER`, not an automatic retrospective decision.
 
 ## Every-agent reminder
 
-On the first normal repository grounding of a session, Arcogine agents inspect issue #295's recurring-obligations state as described in `AGENTS.md`. `CURRENT` is silent; `DUE`/`OVERDUE` and `CHECK_TRIGGER` are mentioned at most once and never derail the requested task.
+On the first normal repository grounding of a session, Arcogine agents inspect issue #295 as described in `AGENTS.md`. `CURRENT` is silent; `DUE`/`OVERDUE` and `CHECK_TRIGGER` are mentioned at most once and never derail the requested task.
 
 ## Non-goals
 
-This system does not automatically execute a Consistency review or retrospective, require local coding-agent compatibility for the Consistency reviewer, become a general process database, or preserve redundant compatibility machinery for old finding-title formats. Its job is to preserve current recurring-obligation state and durable finding identities while leaving semantic judgment in the ChatGPT review session.
+This system does not automatically execute a Consistency review or retrospective, require local coding-agent compatibility for the reviewer, become a general process database, preserve compatibility machinery for old finding-title formats, or use GitHub as a slow substitute for the required Repomix content corpus.

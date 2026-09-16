@@ -1,11 +1,5 @@
 #!/usr/bin/env node
-/**
- * Generate Arcogine's canonical whole-repository Repomix snapshot.
- *
- * This utility intentionally owns only Arcogine's preconditions, provenance,
- * output location, and Repomix invocation. Repomix remains an ephemeral npx
- * dependency rather than a product or web-application dependency.
- */
+/** Generate Arcogine's exact-current-main Repomix corpus. */
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -15,42 +9,31 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const REPOMIX_VERSION = '1.18.0';
 export const REPOSITORY = 'alaiba/arcogine';
 export const REQUIRED_BRANCH = 'main';
-// Anchors on the github.com host explicitly (SSH, HTTPS, and ssh:// forms) so a
-// non-GitHub remote whose path happens to end in alaiba/arcogine — a foreign
-// host or a local file:// clone — cannot be mistaken for the canonical origin.
+export const CANONICAL_MAIN_REF = 'refs/heads/main';
 export const CANONICAL_REMOTE_PATTERN =
   /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)alaiba\/arcogine(?:\.git)?\/?$/i;
-export const CANONICAL_MAIN_REF = 'refs/remotes/origin/main';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 export const REPOSITORY_ROOT = resolve(scriptDirectory, '..', '..');
 export const CONFIG_PATH = join(scriptDirectory, 'repomix.config.json');
 export const LOG_DIRECTORY = join(REPOSITORY_ROOT, 'logs');
 
-export const AUTHORITY_TEXT = `This artifact is a point-in-time cache of repository contents.
+export const AUTHORITY_TEXT = `Purpose: Consistency review corpus
 
-It is suitable for repository-content retrieval and for claims about the
-repository at the commit recorded above.
+This artifact represents canonical alaiba/arcogine main at exactly the commit recorded above.
+A Consistency review must verify that Commit equals live main before using repository content.
+If it does not, stop, update the project Repomix from current main, and retry.
 
-It is not live authority for:
-- later changes to main;
-- open pull requests or PR heads;
-- submitted reviews or unresolved review threads;
-- CI/check status;
-- mergeability;
-- issues;
-- other mutable GitHub state.
+The tracked-file manifest enumerates every git-tracked path at this commit. Repomix content follows
+for reviewable repository text. Generated/dependency material is excluded by repository ignore
+rules; secret-like files are excluded explicitly; binary contents may be omitted while their paths
+remain visible in the manifest.
 
-Query live repository/GitHub evidence when freshness matters.`;
+This artifact is not live authority for issues, pull requests, reviews, CI/check status,
+mergeability, or other mutable GitHub state.`;
 
 export function buildHeader({ commit, generatedAt, branch = REQUIRED_BRANCH }) {
-  return `Repository: ${REPOSITORY}
-Branch: ${branch}
-Commit: ${commit}
-Generated: ${generatedAt}
-Generator: Repomix ${REPOMIX_VERSION}
-
-${AUTHORITY_TEXT}`;
+  return `Repository: ${REPOSITORY}\nBranch: ${branch}\nCommit: ${commit}\nGenerated: ${generatedAt}\nGenerator: Repomix ${REPOMIX_VERSION}\n\n${AUTHORITY_TEXT}`;
 }
 
 export function snapshotPath({ root = REPOSITORY_ROOT, commit }) {
@@ -76,28 +59,41 @@ export function isCanonicalRemoteUrl(url) {
   return CANONICAL_REMOTE_PATTERN.test((url || '').trim().replace(/\/$/, ''));
 }
 
-export function validateCanonicalProvenance({ remoteUrl, commit, isAncestorOfMain }) {
+export function parseRemoteMainCommit(output) {
+  const line = (output || '').trim();
+  const match = /^([0-9a-f]{40})\s+refs\/heads\/main$/.exec(line);
+  if (!match) {
+    throw new Error(`could not resolve canonical ${REPOSITORY} ${CANONICAL_MAIN_REF} from origin`);
+  }
+  return match[1];
+}
+
+export function validateCanonicalProvenance({ remoteUrl, commit, remoteMainCommit }) {
   if (!isCanonicalRemoteUrl(remoteUrl)) {
     throw new Error(
       `snapshot requires the 'origin' remote to point at the canonical ${REPOSITORY} repository, but it resolved to ` +
-        `${remoteUrl || '(no origin remote)'}. Canonical provenance cannot be established from a fork or unrelated remote.`,
+        `${remoteUrl || '(no origin remote)'}.`,
     );
   }
-  if (!isAncestorOfMain) {
+  if (!/^[0-9a-f]{40}$/.test(remoteMainCommit || '')) {
+    throw new Error(`could not establish the current canonical ${REPOSITORY} main commit`);
+  }
+  if (commit !== remoteMainCommit) {
     throw new Error(
-      `snapshot requires HEAD (${commit}) to be reachable from the canonical ${REPOSITORY} history at ${CANONICAL_MAIN_REF}, ` +
-        `but it is not. Push or fetch so the local ${REQUIRED_BRANCH} branch reflects canonical history, then run './arcogine snapshot' again.`,
+      `snapshot requires HEAD (${commit}) to equal current canonical main (${remoteMainCommit}). ` +
+        `Update local main and retry './arcogine snapshot'.`,
     );
   }
 }
 
-function git(args, { allowFailure = false } = {}) {
+function git(args, { allowFailure = false, trim = true } = {}) {
   try {
-    return execFileSync('git', args, {
+    const output = execFileSync('git', args, {
       cwd: REPOSITORY_ROOT,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
-    }).trimEnd();
+    });
+    return trim ? output.trimEnd() : output;
   } catch (error) {
     if (allowFailure) return '';
     const detail = error?.stderr?.toString().trim();
@@ -105,12 +101,29 @@ function git(args, { allowFailure = false } = {}) {
   }
 }
 
-function isAncestor(commit, ref) {
-  const result = spawnSync('git', ['merge-base', '--is-ancestor', commit, ref], {
-    cwd: REPOSITORY_ROOT,
-    stdio: 'ignore',
-  });
-  return result.status === 0;
+function resolveCanonicalMainCommit() {
+  return parseRemoteMainCommit(git(['ls-remote', '--exit-code', 'origin', CANONICAL_MAIN_REF]));
+}
+
+function trackedFiles() {
+  return git(['ls-files', '-z'], { trim: false }).split('\0').filter(Boolean);
+}
+
+function escapeXml(value) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
+}
+
+export function buildTrackedFilesManifest(paths) {
+  return [
+    `<tracked_files count="${paths.length}">`,
+    ...paths.map((path) => `  <path>${escapeXml(path)}</path>`),
+    '</tracked_files>',
+  ].join('\n');
 }
 
 function invokeRepomix({ temporaryOutputPath }) {
@@ -138,14 +151,10 @@ function invokeRepomix({ temporaryOutputPath }) {
             .join(' '),
         ]
       : args;
-  const result = spawnSync(
-    command,
-    commandArgs,
-    {
-      cwd: REPOSITORY_ROOT,
-      stdio: 'inherit',
-    },
-  );
+  const result = spawnSync(command, commandArgs, {
+    cwd: REPOSITORY_ROOT,
+    stdio: 'inherit',
+  });
 
   if (result.error) {
     throw new Error(`could not start pinned Repomix ${REPOMIX_VERSION}: ${result.error.message}`);
@@ -180,10 +189,12 @@ export function generateSnapshot() {
   }
 
   const remoteUrl = git(['remote', 'get-url', 'origin'], { allowFailure: true });
-  const isAncestorOfMain = isAncestor(commit, CANONICAL_MAIN_REF);
-  validateCanonicalProvenance({ remoteUrl, commit, isAncestorOfMain });
+  const remoteMainCommit = resolveCanonicalMainCommit();
+  validateCanonicalProvenance({ remoteUrl, commit, remoteMainCommit });
 
   const generatedAt = new Date().toISOString();
+  const paths = trackedFiles();
+  const manifest = buildTrackedFilesManifest(paths);
   const outputPath = snapshotPath({ commit });
   const temporaryOutputPath = join(LOG_DIRECTORY, `.arcogine-main-${commit.slice(0, 7)}.repomix.xml`);
 
@@ -197,12 +208,12 @@ export function generateSnapshot() {
     }
     const repomixContent = readFileSync(temporaryOutputPath, 'utf8');
     const header = buildHeader({ branch, commit, generatedAt });
-    const content = `${header}\n\n${repomixContent}`;
+    const content = `${header}\n\n${manifest}\n\n${repomixContent}`;
     assertHeaderPresent(content, header);
     writeFileSync(outputPath, content, 'utf8');
 
     const bytes = statSync(outputPath).size;
-    return { outputPath, commit, generatedAt, branch, bytes };
+    return { outputPath, commit, generatedAt, branch, bytes, trackedFileCount: paths.length };
   } finally {
     rmSync(temporaryOutputPath, { force: true });
   }
@@ -215,6 +226,7 @@ export function main() {
     console.log(`Commit: ${result.commit}`);
     console.log(`Timestamp: ${result.generatedAt} (UTC)`);
     console.log(`Repomix: ${REPOMIX_VERSION}`);
+    console.log(`Tracked files: ${result.trackedFileCount.toLocaleString('en-US')}`);
     console.log(`Size: ${result.bytes.toLocaleString('en-US')} bytes`);
   } catch (error) {
     console.error(`FATAL: ${error.message}`);

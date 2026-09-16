@@ -1,18 +1,33 @@
 # Arcogine consistency review
 
-This contract defines Arcogine's repository consistency review. It is built for a ChatGPT chat session using the GitHub connector against `alaiba/arcogine`.
+This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with a current-main Repomix project attachment for repository content and the GitHub connector for live/mutable repository state.
 
-Do not require a local checkout, `git`, `gh`, shell commands, or local execution of repository scripts. Read repository state, files, issues, pull requests, commits, reviews, and CI evidence through the GitHub connector.
-
-A formal Consistency review is diagnostic plus the narrow finding-ledger and register accounting described below. It does not authorize source/doc remediation, planning changes, ADR changes, pull-request creation, or merging. Ad-hoc consistency questions in chat are read-only analyses; they are not formal recurring reviews and do not record completion.
+A formal review is diagnostic plus the narrow finding-ledger/register accounting described below. It does not authorize source/doc remediation, planning changes, ADR changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
 
 ## Goal
 
-Deeply inspect the repository for semantic inconsistency. Determine whether implementation, architecture, ADRs, planning, public/reference documentation, examples, configuration, tests, CI, and prior findings tell a coherent, temporally honest, evidence-backed story.
+Deeply inspect the repository for semantic inconsistency across implementation, architecture, ADRs, planning, public/reference documentation, examples, configuration, tests, CI, and prior findings.
 
-A previous clean review is not evidence that older content is correct. Every review remains free to uncover an older inconsistency. Recency guides attention; it never bounds scope.
+A previous clean review is not evidence that older content is correct. New material gets first attention when a previous reviewed head exists, but recency never bounds scope. Follow suspicious evidence wherever it leads.
 
-Do not force artifacts to use identical wording. Compare semantic claims about the same subject, lifecycle state, authority, and point in time.
+## Required review corpus
+
+A formal review requires an Arcogine Repomix attachment generated from the exact current canonical `main` commit.
+
+At review start:
+
+1. Resolve live `main` through GitHub.
+2. Read the Repomix provenance header and require:
+   - `Repository: alaiba/arcogine`;
+   - `Branch: main`;
+   - a full `Commit` SHA exactly equal to live `main`.
+3. If the attachment is missing or malformed, stop `INCOMPLETE`: a current-main Repomix is required; generate/upload it and retry.
+4. If its commit differs from live `main`, stop `INCOMPLETE`: report both SHAs, say the Repomix is stale, and tell the user to update it from current `main` and retry.
+5. After equality is established, use Repomix as the primary repository-content corpus. Read `AGENTS.md`, this contract, docs, source, tests, configuration, workflows, and other tracked repository content from it rather than refetching files through GitHub.
+
+Do not compensate for a stale/missing corpus by reconstructing repository content through GitHub file/search calls. The point of the prerequisite is to make the deep scan fast, local, and complete at one known head.
+
+GitHub remains authoritative for mutable state and history: live `main`, issue #295, finding issues, pull requests, reviews, CI/checks, commit/compare history, and all mutations.
 
 ## Authority and time
 
@@ -29,76 +44,61 @@ Use the authority that owns the question:
 | Commands, versions, modules, CI behavior | executable configuration and workflow definitions |
 | Development/review process | `.github/CONTRIBUTING.md` and `docs/development/` |
 | Consistency-review procedure | this file |
-| Persisted finding identity | the GitHub issue number |
+| Persisted finding identity | GitHub issue number |
 
-GitHub consistency issues preserve finding identity and lifecycle continuity; they are not product, architecture, planning, or implementation authority.
+Consistency issues preserve finding identity/lifecycle continuity; they are not product, architecture, planning, or implementation authority.
 
-Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles such as research statuses remain their own vocabulary and are not additional generic review states. If this taxonomy later proves insufficient, change this contract explicitly rather than inventing a new state during a run.
+Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles remain their own vocabulary. If this taxonomy proves insufficient, change this contract explicitly rather than inventing another generic state during a run.
 
-Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is.
+Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is. Accepted ADRs preserve decision history and are superseded rather than rewritten to match later implementation.
 
-Accepted ADRs preserve decision history. Do not call historical wording/path context stale merely because implementation later moved. A changed architectural decision requires the repository's ADR supersession process, not retrospective rewriting of history.
+## Live grounding
 
-## Start of every formal review
+After Repomix freshness is proven:
 
-Re-ground from live repository state rather than conversation memory or uploaded snapshots:
+1. Read GitHub issue `#295`, titled exactly `Continuous improvement register`.
+2. Load currently open consistency findings whose titles begin `CONS:`.
+3. If #295 records a resolvable previous reviewed head, compare it with current `main` and use changed/new material as the first attention priority.
 
-1. Resolve the current `main` SHA and read this file from that head.
-2. Read `AGENTS.md`.
-3. Read GitHub issue `#295`, titled `Continuous improvement register`.
-4. Load the currently open consistency findings whose titles begin `CONS:`.
-5. If #295 records a resolvable previous reviewed head, compare that head to current `main` and use new/changed material as the first attention priority.
+Issue #295 is mandatory. If it is missing, inaccessible, has the wrong title, or its weekly Consistency section is malformed, stop `INCOMPLETE`; do not recreate, replace, or guess it.
 
-Issue #295 is mandatory repository state. If it is missing, inaccessible, has the wrong title, or its weekly Consistency section is malformed, stop with `INCOMPLETE`. Do not recreate, replace, or guess the register.
-
-If no previous reviewed head is recorded, perform the same deep review without a recency anchor.
+Closed findings are not preloaded. Search closed `CONS:` issues only when a candidate finding needs duplicate/regression matching.
 
 ## Review strategy
 
-The review is repository-wide in intent. Start with newness when a previous reviewed head exists, then follow semantic evidence wherever it leads. Do not stop at the comparison range, and do not treat content predating the previous review as cleared.
+Search and slice the Repomix corpus aggressively. For each material concept investigated:
 
-For each material concept investigated:
-
-1. Identify the claim and its lifecycle state.
-2. Search the repository for the concept, important symbols, and terminology.
-3. Read the authoritative current/planning/ADR/test/interface surfaces returned by that search.
-4. Inspect source/config/tests or existing GitHub CI/check evidence when they materially prove or contradict the claim.
-5. Inspect recent/open pull requests only when history is needed to understand a transition or determine whether an existing finding is in flight.
+1. Identify the claim and lifecycle state.
+2. Search for the concept, symbols, terminology, and nearby assumptions across the corpus.
+3. Read the authoritative current/planning/ADR/test/interface surfaces that encode the same semantics.
+4. Inspect source/config/tests as executable evidence; inspect live GitHub CI/check evidence only when it materially proves or contradicts a claim.
+5. Use PR/commit history only when needed to explain a transition, attribute evidence, or determine whether a finding is in flight.
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
-7. If something appears even mildly inconsistent, follow the thread far enough to classify it rather than dismissing it because it is old or outside the recent-change set.
+7. If something appears even mildly inconsistent, follow the thread far enough to classify it regardless of file age or the previous reviewed head.
 
-Prefer repository search over a permanently duplicated neighbor matrix. Examples: a `FactoryModel` semantic change should lead to factory architecture/ADRs/planning and Engine assumptions; an API/DTO change should lead to reference docs and consumers; a CI/toolchain change should lead to testing/contribution policy. These examples are not exhaustive.
+Prefer evidence-driven repository search over a duplicated architecture matrix. Newness is a search-order heuristic, not a stopping rule.
 
-Carry every open issue-backed finding forward on every review.
-
-When a new candidate finding is identified, search closed `CONS:` issues using its semantic subject, terminology, and evidence before creating anything. Reopen the matching issue for a regression; otherwise create a new finding. Closed history is queried on demand rather than preloaded.
+Carry every open issue-backed finding forward on every review. A merged PR, closed issue, review comment, or green CI result is not proof of resolution; only authoritative evidence on the reviewed `main` head establishes that a finding is fixed.
 
 ## Findings
 
-A material finding requires both:
+A material finding requires both the artifact making the claim and contradictory authoritative/executable evidence, or a clear demonstration that required evidence is absent.
 
-1. the artifact making the claim; and
-2. contradictory authoritative/executable evidence, or a clear demonstration that required evidence is absent.
+Use exact paths, symbols, criteria, ADRs, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green. Use the current P0/P1/P2/P3/Nit severity definitions from `docs/development/reviewing.md`.
 
-Use exact paths, symbols, criteria, ADRs, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green.
+Useful categories are `PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `PLANNING_STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `ADR_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
 
-Useful categories are:
-
-`PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `PLANNING_STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `ADR_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
-
-Use the current P0/P1/P2/P3/Nit severity definitions from `docs/development/reviewing.md`; do not invent another severity model.
-
-Do not report an inconsistency solely because two artifacts use different wording, a proposal differs from current implementation, a compatibility alias is intentionally retained, an internal symbol is undocumented, or an open PR contains behavior not yet on `main`.
+Do not report inconsistency solely because wording differs, a proposal differs from implementation, an intentional compatibility alias exists, an internal symbol is undocumented, or an open PR contains behavior not yet on `main`.
 
 ## GitHub finding ledger
 
-The GitHub issue number is the sole canonical durable identity for a finding. All consistency findings use:
+The GitHub issue number is the sole durable finding identity. All findings use:
 
 ```text
 CONS: <concise semantic title>
 ```
 
-A new finding issue body needs only durable diagnostic evidence, for example:
+A new finding body needs durable diagnostic evidence only:
 
 ```text
 Severity: P0 | P1 | P2 | P3 | Nit
@@ -118,44 +118,30 @@ Authority:
 <owning authority and why>
 ```
 
-Do not duplicate mutable lifecycle state in the body.
+Do not duplicate mutable lifecycle state in the body. Unresolved findings stay open; plausible corrective PRs remain open and are reported `IN_FLIGHT`; verified fixes on reviewed `main` close completed; false positives/duplicates/superseded findings close with explanation; regressions reopen the same issue.
 
-Lifecycle uses GitHub state plus current review evidence:
+Invoking a formal review authorizes only the issue operations required to account for that review's findings and the final weekly-register update. It does not authorize remediation or unrelated issue changes.
 
-- unresolved -> issue open;
-- plausible corrective PR -> issue remains open and is reported `IN_FLIGHT`;
-- verified fixed on reviewed `main` -> close the issue as completed;
-- false positive/duplicate/superseded -> close with the appropriate reason/explanation;
-- regression of a closed finding -> reopen the same issue.
+## Freshness gate and completion
 
-A merged PR, closed issue, review comment, or green CI result is not proof of resolution. Only authoritative evidence on the reviewed `main` head establishes that a finding is fixed.
+Do not mutate findings while analyzing. Immediately before any finding/register mutation, resolve live `main` again. It must still equal the Repomix commit; otherwise stop `INCOMPLETE` with no review-accounting mutations and require a fresh Repomix/retry.
 
-Invoking a formal Consistency review authorizes only the issue creation/update/reopen/close operations required to account for that review's findings and the final update of the weekly Consistency section in register issue #295. It does not authorize remediation or unrelated issue changes.
-
-## Completion
-
-After the review is complete and every unresolved finding has a durable issue identity, update only the `### Weekly Consistency review` section of register issue `#295`, preserving the rest of the issue body:
+After every unresolved finding has a durable issue identity, update only `### Weekly Consistency review` in issue #295:
 
 ```text
 ### Weekly Consistency review
 
 - last verified: <UTC YYYY-MM-DD>
-- reviewed head: <full main SHA actually reviewed>
+- reviewed head: <Repomix/current-main full SHA>
 - accounted result: CLEAN | FINDINGS
 - finding issues: none | #<number>, #<number>, ...
 - next due / interval: every 7 days
 - state: **CURRENT**
 ```
 
-`CLEAN` requires `finding issues: none`. `FINDINGS` lists every unresolved finding applicable to the reviewed head.
+`CLEAN` requires `finding issues: none`; `FINDINGS` lists every unresolved finding applicable to the reviewed head. That body edit is the complete recording operation. Do not create a completion comment, trigger another workflow, invoke `gh`, or wait for a derived refresh.
 
-That body update is the complete review-recording operation. Do not create a completion comment, trigger another workflow, invoke `gh`, or wait for a derived refresh. The scheduled continuous-improvement workflow may later age `CURRENT` to `DUE`/`OVERDUE` and refresh retrospective counters independently; that maintenance is not part of review completion.
-
-Do not update the register if finding accounting is incomplete or required repository evidence was unavailable.
-
-## Report to the user
-
-Use a compact summary:
+## Report
 
 ```text
 Consistency review
@@ -167,4 +153,4 @@ Limitations: none | <specific limitation>
 Overall: CLEAN | FINDINGS | INCOMPLETE
 ```
 
-Then present each material finding with its issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. `CLEAN` means no evidence-backed inconsistency was found during this review; it is never a claim that the repository has been exhaustively proven consistent.
+Present each material finding with issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. `CLEAN` means no evidence-backed inconsistency was found during this review; it never claims exhaustive proof of consistency.

@@ -2,7 +2,7 @@
 
 > **Status:** maintainer guidance around the review contract in [`.github/agents/consistency.agent.md`](../../.github/agents/consistency.agent.md).
 
-Arcogine's formal Consistency review runs in a ChatGPT chat session using the GitHub connector. It is not required to run in a local checkout or remain compatible with local coding-agent runtimes. Repository reads and finding/register writes therefore happen through GitHub; the review does not depend on `git`, `gh`, shell commands, or locally executing repository scripts.
+Arcogine's formal Consistency review runs in a ChatGPT chat session using the GitHub connector. It is not required to run in a local checkout or remain compatible with local coding-agent runtimes. Repository reads and finding/register writes happen through GitHub; the review does not depend on `git`, `gh`, shell commands, or locally executing repository scripts.
 
 ## Operating loop
 
@@ -10,12 +10,12 @@ Arcogine's formal Consistency review runs in a ChatGPT chat session using the Gi
 read live main + register #295 + open CONS findings
         |
         v
-choose scope automatically
-  no baseline -> FULL
-     baseline -> INCREMENTAL
+use previous reviewed head as a recency anchor, if present
         |
         v
-inspect semantic changes + repository-search neighbors
+deep repository review
+  start with new/changed material
+  follow semantic evidence anywhere
         |
         v
 reconcile open findings
@@ -33,23 +33,23 @@ update the weekly Consistency section of #295
 done
 ```
 
+The previous reviewed head is an attention aid, not a scope boundary. A clean earlier review does not establish that older repository content is correct, and later reviews may discover inconsistencies that were already present before that head.
+
 The reviewer does not run a second PR-review mode. Open PRs are inspected only when they explain history or show that an existing finding is plausibly `IN_FLIGHT`; independent PR acceptance remains owned by the PR Reviewer.
 
-Ad-hoc questions such as “is this architecture claim consistent with the implementation?” are ordinary read-only chat analysis. They do not need a formal diagnostic mode and do not advance the weekly baseline.
+Ad-hoc questions such as “is this architecture claim consistent with the implementation?” are ordinary read-only chat analysis. They do not advance the weekly review record.
 
-## Grounding and scope
+## Grounding and review depth
 
 Every formal review re-reads current `main`, `AGENTS.md`, the live consistency contract, register issue #295, and the currently open `CONS:` findings. Uploaded snapshots and conversation memory are not current repository authority.
 
+Issue #295 is mandatory repository state. It already exists and is not bootstrapped by the reviewer. If it is missing, inaccessible, has the wrong title, or its weekly Consistency section is malformed, the review is `INCOMPLETE`; do not recreate or substitute another register.
+
 Closed findings are **not** preloaded. When a new candidate finding appears, search closed `CONS:` issues using its semantic subject/terminology/evidence to determine whether it is a regression or duplicate. This makes history lookup proportional to actual candidates rather than to the lifetime size of the ledger.
 
-The reviewer selects scope from the register rather than asking the user:
+If #295 contains a resolvable previous reviewed head, compare that head to current `main` and use the new/changed material as the first inspection priority. That comparison does not define the review's scope. The reviewer remains expected to inspect older maintained content whenever semantic neighbors, authority relationships, suspicious wording, stale assumptions, or other evidence make it relevant.
 
-- no accounted reviewed head -> `FULL`;
-- accounted reviewed head -> `INCREMENTAL` from that head to current `main`;
-- unusable/missing baseline -> fall back to `FULL`.
-
-A `FULL` review broadly samples all maintained semantic families and executable evidence needed to establish a repository-wide baseline. An `INCREMENTAL` review reconstructs the semantic changes since the baseline and follows their neighboring authorities. Open findings are always carried forward even when they predate the incremental range.
+If no previous reviewed head is recorded, perform the same deep review without a recency anchor.
 
 ## Claim-state taxonomy
 
@@ -70,7 +70,7 @@ Typical examples:
 - toolchain/CI changes -> workflow/config plus testing/contribution policy;
 - planning status changes -> acceptance criteria plus executable evidence.
 
-These are examples, not a fixed matrix. Repository evidence determines the actual neighbor set.
+These are examples, not a fixed matrix. Repository evidence determines the actual neighbor set. The reviewer should follow mildly suspicious evidence rather than dismissing it because it predates the previous reviewed head.
 
 When a consistency claim depends on executable evidence, inspect source, tests, configuration, and existing GitHub CI/check evidence through the connector. The review runtime has no local-check requirement.
 
@@ -96,7 +96,7 @@ A merged PR, closed issue, or green CI result is not itself proof of resolution.
 
 Invoking a formal recurring review gives the narrow issue authority required to account for its findings. It does not authorize remediation, unrelated issue edits, or merging.
 
-## Completion and baseline
+## Completion and reviewed head
 
 Completion is recorded directly in issue #295. The reviewer replaces only the `### Weekly Consistency review` section and preserves the rest of the issue body:
 
@@ -112,6 +112,8 @@ Completion is recorded directly in issue #295. The reviewer replaces only the `#
 ```
 
 That edit is the complete recording operation. There is no completion-comment ledger, comment parser, event-driven completion workflow, manual dispatch, or synchronous refresh check.
+
+The recorded head is useful on the next run as a recency anchor. It is not a certificate that all content at or before that head has been exhaustively cleared.
 
 The scheduled continuous-improvement workflow is independent maintenance. It reads the current weekly record from the body, ages `CURRENT` to `DUE`/`OVERDUE` as time passes, refreshes retrospective counters, and preserves the reviewer-owned accounting fields. If the workflow is delayed, the recorded review head/date/result remain authoritative; only the derived display state may be stale until the next maintenance run.
 
@@ -130,9 +132,9 @@ Use `REVIEW_ESCAPE` only when the reviewed PR's proposed post-merge state alread
 
 - `.github/agents/consistency.agent.md` owns the review algorithm, evidence rules, issue accounting, and completion protocol.
 - GitHub issues own durable finding identity/lifecycle continuity.
-- Register issue #295 owns current recurring review state.
+- Register issue #295 owns current recurring review state and the previous reviewed head used for recency bias.
 - `.github/workflows/continuous-improvement.yml` only refreshes time/count-derived display state; it is not part of review completion.
 - This document records maintainer operating guidance and audit attribution conventions.
 - Architecture, ADRs, planning, source, tests, config, and public/reference docs remain authoritative for their respective semantic questions.
 
-The intended loop is: diagnose from live evidence, durably account real findings, record the reviewed baseline directly, remediate through ordinary change control, then verify against a later `main` head.
+The intended loop is: inspect deeply from live evidence, bias attention toward what is new without bounding curiosity, durably account real findings, record the reviewed head directly, remediate through ordinary change control, then inspect again later.

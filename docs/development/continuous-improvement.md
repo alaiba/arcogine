@@ -1,88 +1,123 @@
 # Continuous-improvement operating model
 
-> **Status:** canonical operating model for when and why Arcogine's improvement loops run and how their active state is tracked. This document does not restate the detailed procedure owned elsewhere — see the ownership boundaries below.
+> **Status:** canonical operating model for when Arcogine's improvement loops run and how their active state is tracked.
 
-Arcogine runs three distinct continuous-improvement loops. They differ in trigger, purpose, and who executes them. Conflating them was itself a repeated failure mode this document exists to prevent: none of the loops below may substitute for another.
+Arcogine has three distinct improvement loops. None substitutes for another.
 
-## The three loops
+## Session-close Kaizen
 
-### Session-close Kaizen
+- **Trigger:** `.?` at the close of a meaningful coding-agent session; see `AGENTS.md`.
+- **Purpose:** preserve durable lessons as executable safeguards, standard work, or maintained knowledge.
+- **Owner:** the coding agent.
+- **Cadence:** event-driven only; no recurring due state.
 
-- **Trigger:** event-driven only, via `.?` at the close of a meaningful coding-agent session. See `AGENTS.md`.
-- **Purpose:** capture durable lessons — a safeguard, standard-work change, or documentation update — while session context is fresh, before it is lost with the session.
-- **Owner:** the coding agent, per `AGENTS.md`.
-- **Not scheduled.** No workflow triggers this loop. A missed session close simply means that session's lessons were not captured; there is no recurring due state to track.
+## Weekly Consistency review
 
-### Weekly Consistency review
+- **Trigger/cadence:** weekly, plus additional review after major architecture/status transitions when useful.
+- **Purpose:** repository semantic coherence across implementation, architecture, ADRs, planning, docs, examples, config, tests, CI, and prior findings.
+- **Owner/runtime:** the Consistency reviewer in a ChatGPT chat session using the GitHub connector. The detailed algorithm is `.github/agents/consistency.agent.md`.
+- **Execution:** manual/user-invoked. The workflow tracks due state but never performs the judgment-bearing review.
+- **Scope:** selected automatically. With no valid baseline the review is `FULL`; otherwise it is `INCREMENTAL` from the recorded head to current `main`.
+- **Finding accounting:** invoking a formal review authorizes only the GitHub issue operations needed to account for that review's consistency findings. It does not authorize remediation or merging.
 
-- **Trigger/cadence:** a real, repository-owned weekly obligation, plus additional high-scrutiny review when a major architecture/status transition justifies one (see `docs/development/consistency-review.md`).
-- **Purpose:** repository semantic coherence — the diagnostic sweep across implementation, architecture, ADRs, planning, docs, examples, config, tests, CI, and prior findings.
-- **Owner:** the Consistency agent (`.github/agents/consistency.agent.md`), invoked explicitly by a user/agent. **Execution is manual.** `.github/workflows/continuous-improvement.yml` never invokes the Consistency agent — it only makes the obligation's due state visible in the register (see below) so a missed review does not silently disappear.
-- **Recording completion:** a normal baseline-advancing `FULL` or `INCREMENTAL` review records completion only after the finding ledger has been durably accounted. Invoking that review authorizes the narrow finding-ledger bookkeeping needed for its own accounting; it does not authorize remediation, arbitrary issue edits, or merging. `PR_FORWARD` never replaces the weekly `main` baseline, and `DIAGNOSTIC_ONLY` is read-only and does not mutate the register or finding ledger.
+## Delivery-process retrospective
 
-### Delivery-process retrospective
-
-- **Trigger:** evidence-based, not calendar-driven — about 25 additional substantive merges since the last retrospective's baseline, or 2 high-confidence post-merge process escapes, or 1 P1 lifecycle/process escape. See the dated retrospective documents (for example `delivery-process-retrospective-2026-09-05.md`) for the method and the exact rerun-trigger language.
-- **Purpose:** empirical, dated evidence about the delivery process itself — remediation-round distribution, finding taxonomy, waste classification.
-- **Owner:** a human/agent who judges whether the substantive trigger has actually fired. **"Substantive" is not mechanically reducible to an exact count.** The workflow may compute a *raw* merged-PR count since the recorded baseline as a mechanical guard; reaching that raw threshold produces `CHECK_TRIGGER` in the register, not an automatic `DUE` — a human/agent must still determine whether the substantive threshold in the linked retrospective actually fired. The same applies to escape-based triggers: they are judgment-bearing unless explicit, repository-recorded evidence (see `.github/scripts/continuous-improvement-data.json`) identifies a qualifying escape.
+- **Trigger:** evidence-based, not calendar-driven — about 25 additional substantive merges since the recorded baseline, or 2 high-confidence post-merge process escapes, or 1 P1 lifecycle/process escape. See the latest dated `delivery-process-retrospective-YYYY-MM-DD.md` for the full method.
+- **Purpose:** empirical evidence about delivery-process performance and waste.
+- **Owner:** a human/agent who judges whether the substantive trigger actually fired.
+- **Mechanical guard:** the workflow may count raw merged PRs and surface `CHECK_TRIGGER`; it never turns that raw count into an automatic retrospective decision.
 
 ## Authority boundaries
 
-Each surface below owns exactly what it says and nothing else. This document is the index; it does not duplicate any of their content.
-
 | Concern | Owning authority |
 | --- | --- |
-| Session-close Kaizen behavior | `AGENTS.md` |
-| How a Consistency review is performed | `.github/agents/consistency.agent.md` |
-| Consistency-review operating procedure (human/maintainer side) | `docs/development/consistency-review.md` |
-| Empirical, dated process evidence | dated `delivery-process-retrospective-YYYY-MM-DD.md` documents |
+| Session-close Kaizen | `AGENTS.md` |
+| Consistency review algorithm | `.github/agents/consistency.agent.md` |
+| Consistency operating guidance | `docs/development/consistency-review.md` |
+| Retrospective method/evidence | dated retrospective documents |
+| Current recurring-obligation state | GitHub issue #295 |
 | Raw delivery evidence | GitHub PR/review/CI/issue history |
-| Current recurring-obligation state and still-unverified interventions | the continuous-improvement register issue (below) |
 
-PR review is a continuous evidence/input loop — every review is a data point the retrospective can later draw on — but it is **not** a fourth scheduled continuous-improvement ceremony. It remains governed entirely by `docs/development/reviewing.md`.
+PR review remains governed by `docs/development/reviewing.md`; it is evidence for retrospectives, not a fourth improvement ceremony.
 
-## The continuous-improvement register
+## Continuous improvement register
 
-A single long-lived GitHub issue titled exactly **`Continuous improvement register`** is the active operational state for these obligations. It is discovered by exact title match (never by a hardcoded issue number, and never confused with a `CONS-*` consistency-finding issue), bootstrapped automatically the first time `.github/workflows/continuous-improvement.yml` runs if it does not already exist, and updated idempotently on every run after that. Finding more than one issue with that exact title is treated as ledger corruption: the workflow fails loudly rather than picking one or creating a duplicate.
+GitHub issue **#295**, titled `Continuous improvement register`, is the fixed operational register for this repository. It already exists; the workflow does not discover, bootstrap, or replace it. If issue #295 is unavailable or no longer has that title, the workflow fails rather than writing elsewhere.
 
-The register has two ownership regions, separated by explicit HTML marker comments (`<!-- continuous-improvement:obligations:start -->` / `...:end -->`) so automation can prove it only ever touches its own region:
+The register body has two ownership regions separated by HTML markers:
 
-- **Workflow-managed recurring obligations** (inside the markers) — mechanically derived: the weekly Consistency review's latest accounted qualifying completion, reviewed head, finding result/issue identities, and `CURRENT`/`DUE`/`OVERDUE` state, plus the delivery-process retrospective's raw merged-PR count since baseline and `CURRENT`/`CHECK_TRIGGER` state. Only `.github/workflows/continuous-improvement.yml` (via `.github/scripts/continuous-improvement.mjs`) writes here.
-- **Active improvement interventions** (everything outside the markers) — agent/human-owned. Judgment-bearing improvement interventions — proposing one, closing it out, or declaring it verified effective — are never invented, closed, or dispositioned by the scheduled workflow. It preserves this region byte-for-byte (or semantically equivalently) on every update.
+- **Workflow-managed recurring obligations** inside `<!-- continuous-improvement:obligations:start -->` / `...:end -->`.
+- **Agent/human-managed active interventions** outside those markers.
 
-The register is **work-in-progress state, not historical storage**. Once an intervention is dispositioned `RETAIN`, `ADJUST`, or `REMOVE`, the detailed evidence belongs in the corresponding retrospective/PR/issue history, not in an ever-growing table on this issue. On initial bootstrap the register is seeded only with the controls/experiments from the 2026-09-05 retrospective that are genuinely still awaiting later verification, with provenance preserved back to that document — not a full history of every past process change.
+The workflow changes only its marker region and preserves the intervention region. The register is active state, not an append-only process database; detailed historical evidence belongs in PRs, issues, commits, and dated retrospectives.
 
-### Completion evidence
+### Consistency completion evidence
 
-Because the scheduled workflow and agent/human edits must never race over the same state, recurring-obligation *completion* is recorded as append-only structured evidence — a comment on the register issue — rather than a body edit:
+A completed formal Consistency review posts one comment to issue #295:
 
 ```text
 Consistency review completed
-reviewed head: <full main SHA>
-completed at: <UTC timestamp>
-mode: FULL | INCREMENTAL | PR_FORWARD | DIAGNOSTIC_ONLY
-result: CLEAN | FINDINGS
-finding issues: none | #<number>, #<number>, ... | UNPERSISTED
+head: <full main SHA>
+scope: FULL | INCREMENTAL
+findings: none | #<number>, #<number>, ...
 ```
 
-The workflow derives the managed `last verified` summary only from the latest comment that is structurally valid, trusted (owner/member/collaborator), non-future, and fully accounted for a `FULL` or `INCREMENTAL` review. `CLEAN` must cite `finding issues: none`; `FINDINGS` must cite one or more verified persisted Consistency issues. The helper checks the referenced issue title/body and accepts the grandfathered `CONS-001`–`CONS-006` mappings, so a trusted commenter cannot make an arbitrary issue count as finding accounting. `UNPERSISTED` is an explicit non-qualifying result for `PR_FORWARD` or `DIAGNOSTIC_ONLY` only.
+The workflow accepts a comment only when:
 
-Legacy four-line comments (including the September 11 marker) remain historical comments but do not count as accounted baseline evidence. Malformed, inconsistent, duplicate, unauthorized, future-dated, or missing evidence is ignored and leaves the recurring obligation `DUE` when no newer qualifying completion exists. `PR_FORWARD` and `DIAGNOSTIC_ONLY` comments never refresh the weekly baseline. A workflow run is never itself proof that a review happened, and the workflow never manufactures completion evidence. Repeated runs with unchanged semantic state update nothing (the rendered `last updated` timestamp is excluded from that comparison).
+- the commenter has trusted GitHub author association (`OWNER`, `MEMBER`, or `COLLABORATOR`);
+- `head` is a 40-character SHA;
+- `scope` is `FULL` or `INCREMENTAL`;
+- `findings` is either `none` or a unique comma-separated list of GitHub issue numbers;
+- every cited issue is a persisted Consistency finding.
 
-### Retrospective baseline
+GitHub's comment `created_at` is the completion timestamp; the comment does not supply its own clock. `findings: none` means clean; a non-empty issue list means findings. An `INCREMENTAL` completion is eligible only after an earlier valid `FULL` completion established the baseline.
 
-The retrospective's baseline (currently PR #260, dated 2026-09-05) is operational data in `.github/scripts/continuous-improvement-data.json`, not control flow hardcoded into the workflow or helper. A future verified retrospective advances this file's `baselinePr`/`baselineDate` (and resets `escapeEvidenceCount`/`p1LifecycleEscape`) as an ordinary repository change; the state-derivation logic itself never changes.
+Historical completion-comment formats remain ordinary issue history but no longer establish the baseline under this schema. Until a valid current-schema `FULL` completion exists, the weekly obligation remains `DUE` and the next formal review is `FULL`.
 
-### Manual trigger: `repository_dispatch`, not `workflow_dispatch`
+### Finding identities
 
-`schedule` and `push`-to-`main` always run `.github/workflows/continuous-improvement.yml`'s definition as it exists on `main`. `workflow_dispatch` does not have that property: GitHub always executes whichever ref a manual dispatch selects, including that ref's own copy of every job, `permissions:` grant, and step in the workflow file. No construct expressible in git-tracked workflow content can close that gap — an `actions/checkout` pin, a `uses:` reference pinned to `@main`, or a job-level `environment:` gate can all simply be omitted or rewritten in a branch's own copy of the same file, since that branch copy is exactly what a `workflow_dispatch` invocation against it executes.
+The GitHub issue number is the canonical finding identity.
 
-The manual on-demand trigger is therefore `repository_dispatch` instead: per GitHub's documented behavior, a `repository_dispatch` event only ever triggers the copy of the workflow file that exists on the repository's default branch, regardless of which branch's state anyone might otherwise want to test against. That is a platform-enforced invariant, not a repository-authored one, and it is the property this workflow actually needs. The trade-off is that there is no "Run workflow" UI button; triggering it requires `POST /repos/alaiba/arcogine/dispatches` with `{"event_type": "continuous-improvement-register"}` from a token belonging to someone with write access (for example `gh api repos/alaiba/arcogine/dispatches -f event_type=continuous-improvement-register`).
+Historical numeric `CONS-*` titles remain accepted. New findings use `CONS: <semantic title>`. The workflow validates both forms and requires durable diagnostic metadata (`Severity:` and `Category:`) in the issue body; it does not require or parse a duplicated lifecycle `Status:` field.
+
+### Automatic refresh
+
+The register refresh workflow reacts directly to a new completion comment through GitHub's `issue_comment` event. This is the normal post-review path:
+
+```text
+ChatGPT reviewer posts completion comment to #295
+                    |
+                    v
+GitHub issue_comment event
+                    |
+                    v
+workflow recomputes and updates register state
+```
+
+The reviewer does not invoke `repository_dispatch`, `workflow_dispatch`, `gh api`, or another command, and does not need to wait for or synchronously verify the derived register-body refresh before completing the chat response.
+
+The scheduled workflow remains a backstop and periodic due-state refresh. Pushes to the helper/workflow/operating-model files also refresh the derived state.
+
+## Weekly due state
+
+The workflow derives:
+
+- `CURRENT` when the latest valid completion is at most 7 days old;
+- `DUE` when there is no valid completion or it is more than 7 but at most 14 days old;
+- `OVERDUE` when it is more than 14 days old.
+
+The register records the latest reviewed head, clean/findings result, cited finding issue numbers, and the due state.
+
+## Retrospective baseline
+
+The retrospective baseline and explicit escape evidence live in `.github/scripts/continuous-improvement-data.json`. A later verified retrospective advances that data as an ordinary repository change; the helper's state-derivation logic does not need to change.
+
+Raw merged-PR count reaching the configured guard threshold produces `CHECK_TRIGGER`, not an automatic `DUE`. Judgment about whether the substantive retrospective trigger fired remains outside the workflow.
 
 ## Every-agent reminder
 
-Every Arcogine agent inspects the register once per session and mentions due/overdue work at most once — see the rule in `AGENTS.md`. This is defense in depth: a recurring obligation must not disappear simply because a scheduled notification was missed. It never derails the user's requested task, and it never grants any agent additional authority to act on the register beyond what its own governing contract already allows.
+On the first normal repository grounding of a session, Arcogine agents inspect issue #295's workflow-managed obligation state as described in `AGENTS.md`. `CURRENT` is silent; `DUE`/`OVERDUE` and `CHECK_TRIGGER` are mentioned at most once and never derail the requested task.
 
 ## Non-goals
 
-This model deliberately does not: automatically run the Consistency agent or a formal retrospective; introduce a separate Kaizen agent; become a general process database; track one issue per improvement; require a retrospective after every PR; or depend on any scheduler/service outside `alaiba/arcogine`. Everything required to remember these obligations lives in this repository.
+This system does not automatically execute a Consistency review or retrospective, require local coding-agent compatibility for the Consistency reviewer, become a general process database, or create one issue per improvement intervention. Its job is to preserve recurring obligation state and durable Consistency finding identities while leaving semantic judgment in the ChatGPT review session.

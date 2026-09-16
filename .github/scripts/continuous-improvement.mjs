@@ -11,121 +11,110 @@ export const MARKER_END = '<!-- continuous-improvement:obligations:end -->';
 export const WEEKLY_INTERVAL_DAYS = 7;
 export const WEEKLY_OVERDUE_DAYS = 14;
 export const RETROSPECTIVE_GUARD_THRESHOLD = 25;
-export const TRUSTED_COMPLETION_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
 
 const SHA_RE = /^[0-9a-f]{40}$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function daysBetween(aISO, bISO) {
   return (new Date(bISO).getTime() - new Date(aISO).getTime()) / (1000 * 60 * 60 * 24);
 }
 
-export function deriveWeeklyState(lastVerifiedISO, nowISO) {
-  if (!lastVerifiedISO) return 'DUE';
-  const age = daysBetween(lastVerifiedISO, nowISO);
+export function deriveWeeklyState(lastVerifiedDate, nowISO) {
+  if (!lastVerifiedDate) return 'DUE';
+  const age = daysBetween(`${lastVerifiedDate}T00:00:00Z`, nowISO);
   if (age <= WEEKLY_INTERVAL_DAYS) return 'CURRENT';
   if (age <= WEEKLY_OVERDUE_DAYS) return 'DUE';
   return 'OVERDUE';
 }
 
-function parseFindingIssueList(raw) {
-  if (/^none$/i.test(raw)) return [];
+function parseIssueList(raw) {
+  if (raw === 'none') return [];
+  if (raw === 'n/a') return null;
   const parts = raw.split(',').map((part) => part.trim());
-  if (parts.length === 0 || parts.some((part) => !/^#[1-9][0-9]*$/.test(part))) return null;
+  if (!parts.length || parts.some((part) => !/^#[1-9][0-9]*$/.test(part))) {
+    throw new Error('malformed weekly Consistency finding issue list');
+  }
   const numbers = parts.map((part) => Number(part.slice(1)));
-  if (numbers.some((number) => !Number.isSafeInteger(number))) return null;
-  if (new Set(numbers).size !== numbers.length) return null;
+  if (new Set(numbers).size !== numbers.length) {
+    throw new Error('duplicate weekly Consistency finding issue reference');
+  }
   return numbers;
 }
 
-export function parseCompletionComment(body) {
-  if (typeof body !== 'string') return null;
-  const lines = body.trim().split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (lines.length !== 4 || lines[0] !== 'Consistency review completed') return null;
+function sectionBetween(text, startHeading, endHeading) {
+  const start = text.indexOf(startHeading);
+  const end = text.indexOf(endHeading);
+  if (start < 0 || end < 0 || end <= start) {
+    throw new Error(`missing or malformed section: ${startHeading}`);
+  }
+  return text.slice(start + startHeading.length, end);
+}
 
-  const head = /^head:\s*([0-9a-f]{40})$/i.exec(lines[1])?.[1]?.toLowerCase();
-  const scope = /^scope:\s*(FULL|INCREMENTAL)$/i.exec(lines[2])?.[1]?.toUpperCase();
-  const findingsRaw = /^findings:\s*(.+)$/i.exec(lines[3])?.[1]?.trim();
-  if (!head || !SHA_RE.test(head) || !scope || !findingsRaw) return null;
+function bulletValue(section, label) {
+  const prefix = `- ${label}: `;
+  const matches = section
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith(prefix));
+  if (matches.length !== 1) throw new Error(`expected exactly one weekly Consistency field: ${label}`);
+  return matches[0].slice(prefix.length).trim();
+}
 
-  const findingIssueNumbers = parseFindingIssueList(findingsRaw);
-  if (!findingIssueNumbers) return null;
+export function splitMarkers(body) {
+  const firstStart = body.indexOf(MARKER_START);
+  const firstEnd = body.indexOf(MARKER_END);
+  if (firstStart < 0 || firstEnd < 0 || firstEnd <= firstStart) {
+    throw new Error('register markers are missing or malformed');
+  }
+  if (body.indexOf(MARKER_START, firstStart + MARKER_START.length) >= 0) {
+    throw new Error('register start marker is duplicated');
+  }
+  if (body.indexOf(MARKER_END, firstEnd + MARKER_END.length) >= 0) {
+    throw new Error('register end marker is duplicated');
+  }
   return {
-    reviewedHead: head,
-    scope,
-    findingIssueNumbers,
-    result: findingIssueNumbers.length ? 'FINDINGS' : 'CLEAN',
+    before: body.slice(0, firstStart),
+    current: body.slice(firstStart + MARKER_START.length, firstEnd).replace(/^\n+|\n+$/g, ''),
+    after: body.slice(firstEnd + MARKER_END.length),
   };
 }
 
-const LEGACY_CONSISTENCY_ALIASES = new Map([
-  [204, 'CONS-001'],
-  [205, 'CONS-002'],
-  [206, 'CONS-003'],
-  [207, 'CONS-004'],
-  [208, 'CONS-005'],
-  [209, 'CONS-006'],
-]);
+export function parseWeeklyRecord(body) {
+  const { current } = splitMarkers(body);
+  const section = sectionBetween(current, '### Weekly Consistency review', '### Delivery-process retrospective');
+  const lastVerifiedRaw = bulletValue(section, 'last verified');
+  const reviewedHeadRaw = bulletValue(section, 'reviewed head');
+  const resultRaw = bulletValue(section, 'accounted result');
+  const issuesRaw = bulletValue(section, 'finding issues');
 
-export function isPersistedConsistencyFinding(issue, expectedNumber) {
-  if (!issue || issue.number !== expectedNumber || issue.pull_request) return false;
-
-  const title = issue.title ?? '';
-  const currentTitle = /^CONS:\s+\S/.test(title);
-  const historical = /^CONS-([0-9]+):\s+\S/.exec(title);
-  if (!currentTitle && !historical) return false;
-  if (historical) {
-    const alias = `CONS-${historical[1]}`;
-    const legacy = LEGACY_CONSISTENCY_ALIASES.get(expectedNumber);
-    if (legacy ? alias !== legacy : Number(historical[1]) !== expectedNumber) return false;
-  }
-
-  const body = issue.body ?? '';
-  return /^Severity:\s*(?:P0|P1|P2|P3|Nit)\s*$/m.test(body) && /^Category:\s*\S.+$/m.test(body);
-}
-
-function findingIssueMap(findingIssues) {
-  if (findingIssues instanceof Map) return findingIssues;
-  return new Map((findingIssues ?? []).map((issue) => [issue.number, issue]));
-}
-
-export function isAccountedCompletion(completion, findingIssues = new Map()) {
-  if (!completion) return false;
-  if (completion.findingIssueNumbers.length === 0) return true;
-  const issues = findingIssueMap(findingIssues);
-  return completion.findingIssueNumbers.every((number) => {
-    const issue = issues.get(number);
-    return issue?.state === 'open' && isPersistedConsistencyFinding(issue, number);
-  });
-}
-
-export function latestValidCompletion(comments, nowISO, findingIssues = new Map()) {
-  const now = new Date(nowISO).getTime();
-  const valid = [];
-
-  for (const comment of comments ?? []) {
-    const parsed = parseCompletionComment(comment.body);
-    if (!parsed) continue;
-    const association = comment.authorAssociation ?? comment.author_association;
-    if (!TRUSTED_COMPLETION_ASSOCIATIONS.has(association)) continue;
-    const createdAtRaw = comment.createdAt ?? comment.created_at;
-    const createdAt = new Date(createdAtRaw);
-    if (Number.isNaN(createdAt.getTime()) || createdAt.getTime() > now) continue;
-    if (!isAccountedCompletion(parsed, findingIssues)) continue;
-    valid.push({ ...parsed, completedAt: createdAt.toISOString() });
-  }
-
-  valid.sort((a, b) => a.completedAt.localeCompare(b.completedAt));
-  let baselineEstablished = false;
-  let latest = null;
-  for (const completion of valid) {
-    if (completion.scope === 'FULL') {
-      baselineEstablished = true;
-      latest = completion;
-    } else if (baselineEstablished) {
-      latest = completion;
+  if (lastVerifiedRaw === 'never') {
+    if (reviewedHeadRaw !== 'n/a' || resultRaw !== 'n/a' || issuesRaw !== 'n/a') {
+      throw new Error('unverified weekly Consistency record has contradictory accounted fields');
     }
+    return { lastVerified: null, reviewedHead: null, result: null, findingIssueNumbers: [] };
   }
-  return latest;
+
+  if (!DATE_RE.test(lastVerifiedRaw) || Number.isNaN(new Date(`${lastVerifiedRaw}T00:00:00Z`).getTime())) {
+    throw new Error('weekly Consistency last verified must be UTC YYYY-MM-DD');
+  }
+  if (!SHA_RE.test(reviewedHeadRaw)) throw new Error('weekly Consistency reviewed head must be a full SHA');
+  if (!['CLEAN', 'FINDINGS'].includes(resultRaw)) throw new Error('weekly Consistency accounted result must be CLEAN or FINDINGS');
+
+  const findingIssueNumbers = parseIssueList(issuesRaw);
+  if (findingIssueNumbers === null) throw new Error('verified weekly Consistency record cannot use n/a finding issues');
+  if (resultRaw === 'CLEAN' && findingIssueNumbers.length !== 0) {
+    throw new Error('CLEAN weekly Consistency record must have finding issues: none');
+  }
+  if (resultRaw === 'FINDINGS' && findingIssueNumbers.length === 0) {
+    throw new Error('FINDINGS weekly Consistency record must cite at least one issue');
+  }
+
+  return {
+    lastVerified: lastVerifiedRaw,
+    reviewedHead: reviewedHeadRaw,
+    result: resultRaw,
+    findingIssueNumbers,
+  };
 }
 
 export function deriveRetrospectiveState({
@@ -140,19 +129,18 @@ export function deriveRetrospectiveState({
   return 'CURRENT';
 }
 
-export function renderObligations({ weekly, retrospective }) {
-  const findingIssues = weekly.result
+export function renderObligations({ weekly, retrospective, nowISO }) {
+  const findingIssues = weekly.lastVerified
     ? (weekly.findingIssueNumbers.length ? weekly.findingIssueNumbers.map((n) => `#${n}`).join(', ') : 'none')
     : 'n/a';
   return [
     '## Recurring obligations',
     '',
-    'Derived by `.github/workflows/continuous-improvement.yml` via `.github/scripts/continuous-improvement.mjs`.',
     'See [docs/development/continuous-improvement.md](../blob/main/docs/development/continuous-improvement.md) for semantics and ownership.',
     '',
     '### Weekly Consistency review',
     '',
-    `- last verified: ${weekly.lastVerifiedAt ?? 'never'}`,
+    `- last verified: ${weekly.lastVerified ?? 'never'}`,
     `- reviewed head: ${weekly.reviewedHead ?? 'n/a'}`,
     `- accounted result: ${weekly.result ?? 'n/a'}`,
     `- finding issues: ${findingIssues}`,
@@ -166,21 +154,8 @@ export function renderObligations({ weekly, retrospective }) {
     `- escape evidence recorded: ${retrospective.escapeEvidenceCount} post-merge escape(s), P1 lifecycle escape: ${retrospective.p1LifecycleEscape}`,
     `- state: **${retrospective.state}**`,
     '',
-    `_Last updated: ${weekly.nowISO}_`,
+    `_Last updated: ${nowISO}_`,
   ].join('\n');
-}
-
-export function splitMarkers(body) {
-  const firstStart = body.indexOf(MARKER_START);
-  const firstEnd = body.indexOf(MARKER_END);
-  if (firstStart < 0 || firstEnd < 0 || firstEnd <= firstStart) throw new Error('register markers are missing or malformed');
-  if (body.indexOf(MARKER_START, firstStart + MARKER_START.length) >= 0) throw new Error('register start marker is duplicated');
-  if (body.indexOf(MARKER_END, firstEnd + MARKER_END.length) >= 0) throw new Error('register end marker is duplicated');
-  return {
-    before: body.slice(0, firstStart),
-    current: body.slice(firstStart + MARKER_START.length, firstEnd).replace(/^\n+|\n+$/g, ''),
-    after: body.slice(firstEnd + MARKER_END.length),
-  };
 }
 
 export function mergeRegisterBody(body, obligationsText) {
@@ -236,24 +211,6 @@ async function fetchRegister(repo, token) {
   return issue;
 }
 
-async function fetchFindingIssues(repo, token, comments) {
-  const numbers = new Set();
-  for (const comment of comments) {
-    const parsed = parseCompletionComment(comment.body);
-    for (const number of parsed?.findingIssueNumbers ?? []) numbers.add(number);
-  }
-  const issues = new Map();
-  for (const number of numbers) {
-    try {
-      const issue = await githubJson(`https://api.github.com/repos/${repo}/issues/${number}`, { token });
-      issues.set(number, issue);
-    } catch (error) {
-      console.warn(`Could not load finding issue #${number}: ${error.message}`);
-    }
-  }
-  return issues;
-}
-
 async function countMergedPullsSince(repo, token, baselinePr) {
   const pulls = await fetchAllPages(`https://api.github.com/repos/${repo}/pulls?state=closed&sort=created&direction=asc`, token);
   return pulls.filter((pr) => pr.number > baselinePr && pr.merged_at).length;
@@ -268,25 +225,19 @@ export async function main() {
   const data = await loadData();
 
   const register = await fetchRegister(repo, token);
-  const comments = await fetchAllPages(`https://api.github.com/repos/${repo}/issues/${REGISTER_ISSUE_NUMBER}/comments`, token);
-  const findingIssues = await fetchFindingIssues(repo, token, comments);
-  const completion = latestValidCompletion(comments, nowISO, findingIssues);
+  const weeklyRecord = parseWeeklyRecord(register.body ?? '');
   const rawMergedSinceBaseline = await countMergedPullsSince(repo, token, data.baselinePr);
 
   const weekly = {
-    nowISO,
-    lastVerifiedAt: completion?.completedAt ?? null,
-    reviewedHead: completion?.reviewedHead ?? null,
-    result: completion?.result ?? null,
-    findingIssueNumbers: completion?.findingIssueNumbers ?? [],
-    state: deriveWeeklyState(completion?.completedAt ?? null, nowISO),
+    ...weeklyRecord,
+    state: deriveWeeklyState(weeklyRecord.lastVerified, nowISO),
   };
   const retrospective = {
     ...data,
     rawMergedSinceBaseline,
     state: deriveRetrospectiveState({ rawMergedSinceBaseline, ...data }),
   };
-  const obligations = renderObligations({ weekly, retrospective });
+  const obligations = renderObligations({ weekly, retrospective, nowISO });
 
   if (values['dry-run']) {
     console.log(obligations);
@@ -294,11 +245,10 @@ export async function main() {
   }
   if (!obligationsChanged(register.body ?? '', obligations)) return;
 
-  const body = mergeRegisterBody(register.body ?? '', obligations);
   await githubJson(`https://api.github.com/repos/${repo}/issues/${REGISTER_ISSUE_NUMBER}`, {
     token,
     method: 'PATCH',
-    body: { body },
+    body: { body: mergeRegisterBody(register.body ?? '', obligations) },
   });
 }
 

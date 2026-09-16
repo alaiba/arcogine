@@ -8,9 +8,11 @@ A formal Consistency review is diagnostic plus the narrow finding-ledger and reg
 
 ## Goal
 
-Determine whether the repository tells a coherent, temporally honest, evidence-backed story across implementation, architecture, ADRs, planning, public/reference documentation, examples, configuration, tests, CI, and prior consistency findings.
+Deeply inspect the repository for semantic inconsistency. Determine whether implementation, architecture, ADRs, planning, public/reference documentation, examples, configuration, tests, CI, and prior findings tell a coherent, temporally honest, evidence-backed story.
 
-Do not force artifacts to use identical wording. Compare semantic claims about the same subject, scope, lifecycle state, and point in time.
+A previous clean review is not evidence that older content is correct. Every review remains free to uncover an older inconsistency. Recency guides attention; it never bounds scope.
+
+Do not force artifacts to use identical wording. Compare semantic claims about the same subject, lifecycle state, authority, and point in time.
 
 ## Authority and time
 
@@ -31,7 +33,7 @@ Use the authority that owns the question:
 
 GitHub consistency issues preserve finding identity and lifecycle continuity; they are not product, architecture, planning, or implementation authority.
 
-Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles such as research statuses remain their own vocabulary and are not additional generic review states. If the generic taxonomy later proves insufficient, change this contract explicitly rather than inventing a new state during a run.
+Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles such as research statuses remain their own vocabulary and are not additional generic review states. If this taxonomy later proves insufficient, change this contract explicitly rather than inventing a new state during a run.
 
 Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is.
 
@@ -43,33 +45,33 @@ Re-ground from live repository state rather than conversation memory or uploaded
 
 1. Resolve the current `main` SHA and read this file from that head.
 2. Read `AGENTS.md`.
-3. Read the continuous-improvement register at GitHub issue `#295`.
+3. Read GitHub issue `#295`, titled `Continuous improvement register`.
 4. Load the currently open consistency findings whose titles begin `CONS:`.
-5. Determine scope automatically from the register:
-   - no accounted reviewed head -> `FULL`;
-   - accounted reviewed head present -> `INCREMENTAL` from that head to current `main`.
-6. For `INCREMENTAL`, compare baseline to head and reconstruct the material semantic changes in that interval. For `FULL`, inspect the maintained documentation/architecture/planning families plus representative executable evidence broadly enough to establish a repository-wide baseline.
+5. If #295 records a resolvable previous reviewed head, compare that head to current `main` and use new/changed material as the first attention priority.
 
-If the registered baseline cannot be resolved, fall back to `FULL`. The user does not need to choose a mode.
+Issue #295 is mandatory repository state. If it is missing, inaccessible, has the wrong title, or its weekly Consistency section is malformed, stop with `INCOMPLETE`. Do not recreate, replace, or guess the register.
 
-If required repository state or the open finding ledger cannot be read, report `INCOMPLETE` and do not record completion.
+If no previous reviewed head is recorded, perform the same deep review without a recency anchor.
 
-## Review method
+## Review strategy
 
-For each material changed or reviewed concept:
+The review is repository-wide in intent. Start with newness when a previous reviewed head exists, then follow semantic evidence wherever it leads. Do not stop at the comparison range, and do not treat content predating the previous review as cleared.
+
+For each material concept investigated:
 
 1. Identify the claim and its lifecycle state.
 2. Search the repository for the concept, important symbols, and terminology.
 3. Read the authoritative current/planning/ADR/test/interface surfaces returned by that search.
 4. Inspect source/config/tests or existing GitHub CI/check evidence when they materially prove or contradict the claim.
-5. Inspect recent/open pull requests only when history is needed to understand the transition or determine whether an existing finding is in flight.
+5. Inspect recent/open pull requests only when history is needed to understand a transition or determine whether an existing finding is in flight.
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
+7. If something appears even mildly inconsistent, follow the thread far enough to classify it rather than dismissing it because it is old or outside the recent-change set.
 
-Prefer repository search over a permanently duplicated neighbor matrix. Examples: a `FactoryModel` semantic change should lead to factory architecture/ADRs/planning and Engine assumptions; an API/DTO change should lead to reference docs and consumers; a CI/toolchain change should lead to testing/contribution policy. Expand from evidence rather than treating these examples as an exhaustive graph.
+Prefer repository search over a permanently duplicated neighbor matrix. Examples: a `FactoryModel` semantic change should lead to factory architecture/ADRs/planning and Engine assumptions; an API/DTO change should lead to reference docs and consumers; a CI/toolchain change should lead to testing/contribution policy. These examples are not exhaustive.
 
-Carry every open issue-backed finding forward even if it predates the incremental baseline.
+Carry every open issue-backed finding forward on every review.
 
-When a new candidate finding is identified, search closed `CONS:` issues using its semantic subject, terminology, and evidence before creating anything. Reopen the matching issue for a regression; otherwise create a new finding. This keeps closed-history lookup bounded to candidates instead of preloading the entire closed ledger on every run.
+When a new candidate finding is identified, search closed `CONS:` issues using its semantic subject, terminology, and evidence before creating anything. Reopen the matching issue for a regression; otherwise create a new finding. Closed history is queried on demand rather than preloaded.
 
 ## Findings
 
@@ -128,7 +130,7 @@ Lifecycle uses GitHub state plus current review evidence:
 
 A merged PR, closed issue, review comment, or green CI result is not proof of resolution. Only authoritative evidence on the reviewed `main` head establishes that a finding is fixed.
 
-Invoking a formal `FULL` or `INCREMENTAL` review authorizes only the issue creation/update/reopen/close operations required to account for that review's consistency findings and the final update of the weekly Consistency section in register issue #295. It does not authorize remediation or unrelated issue changes.
+Invoking a formal Consistency review authorizes only the issue creation/update/reopen/close operations required to account for that review's findings and the final update of the weekly Consistency section in register issue #295. It does not authorize remediation or unrelated issue changes.
 
 ## Completion
 
@@ -158,12 +160,11 @@ Use a compact summary:
 ```text
 Consistency review
 Head: <sha>
-Baseline: <sha | NONE>
-Scope: FULL | INCREMENTAL
+Previous reviewed head: <sha | NONE>
 Findings: none | #<number>, #<number>, ...
 Coverage: <short description>
 Limitations: none | <specific limitation>
 Overall: CLEAN | FINDINGS | INCOMPLETE
 ```
 
-Then present each material finding with its issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. `CLEAN` means the inspected scope produced no evidence-backed inconsistency; it is not a mathematical proof that no inconsistency exists anywhere.
+Then present each material finding with its issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. `CLEAN` means no evidence-backed inconsistency was found during this review; it is never a claim that the repository has been exhaustively proven consistent.

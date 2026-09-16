@@ -1,60 +1,24 @@
 #!/usr/bin/env node
-/**
- * continuous-improvement.mjs -- bootstrap/update Arcogine's continuous-improvement
- * register issue and derive recurring-obligation state.
- *
- * This script is the executable half of docs/development/continuous-improvement.md.
- * It never runs the Consistency agent, a delivery-process retrospective, or any other
- * judgment-bearing improvement work: it only makes recurring obligations and their due
- * state visible, and preserves the agent/human-managed intervention section untouched.
- *
- * Pure logic (state derivation, marker parsing/rendering, body merging) is exported
- * and covered by continuous-improvement.test.mjs without any network access. GitHub
- * I/O lives only in the functions below `--- GitHub I/O ---` and in main().
- *
- *   node .github/scripts/continuous-improvement.mjs           # bootstrap/update the register
- *   node .github/scripts/continuous-improvement.mjs --dry-run # compute state, print, no writes
- *
- * Auth: GH_TOKEN or GITHUB_TOKEN must be set (the workflow provides GITHUB_TOKEN).
- */
-
+import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 
 export const DEFAULT_REPO = 'alaiba/arcogine';
+export const REGISTER_ISSUE_NUMBER = 295;
 export const REGISTER_TITLE = 'Continuous improvement register';
 export const MARKER_START = '<!-- continuous-improvement:obligations:start -->';
 export const MARKER_END = '<!-- continuous-improvement:obligations:end -->';
 export const WEEKLY_INTERVAL_DAYS = 7;
 export const WEEKLY_OVERDUE_DAYS = 14;
 export const RETROSPECTIVE_GUARD_THRESHOLD = 25;
-export const COMPLETION_MODES = new Set(['FULL', 'INCREMENTAL', 'PR_FORWARD', 'DIAGNOSTIC_ONLY']);
-export const QUALIFYING_COMPLETION_MODES = new Set(['FULL', 'INCREMENTAL']);
+export const TRUSTED_COMPLETION_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
 
-// These aliases predate the issue-number-derived identity rule and are the only
-// intentional exceptions to alias number == GitHub issue number.
-export const LEGACY_CONSISTENCY_ALIASES = new Map([
-  [204, 'CONS-001'],
-  [205, 'CONS-002'],
-  [206, 'CONS-003'],
-  [207, 'CONS-004'],
-  [208, 'CONS-005'],
-  [209, 'CONS-006'],
-]);
+const SHA_RE = /^[0-9a-f]{40}$/;
 
-// ------------------------------- pure logic -------------------------------
-
-/** Days between two ISO-8601 timestamps (b - a), fractional. */
 export function daysBetween(aISO, bISO) {
   return (new Date(bISO).getTime() - new Date(aISO).getTime()) / (1000 * 60 * 60 * 24);
 }
 
-/**
- * Derive weekly Consistency-review obligation state from the last valid completion
- * evidence. `lastVerifiedISO` is null when no valid completion evidence exists yet
- * (register just bootstrapped) -- treated as DUE, not OVERDUE, so a brand-new
- * register does not immediately read as overdue.
- */
 export function deriveWeeklyState(lastVerifiedISO, nowISO) {
   if (!lastVerifiedISO) return 'DUE';
   const age = daysBetween(lastVerifiedISO, nowISO);
@@ -63,108 +27,60 @@ export function deriveWeeklyState(lastVerifiedISO, nowISO) {
   return 'OVERDUE';
 }
 
-const SHA_RE = /^[0-9a-f]{40}$/;
-
-/**
- * GitHub author associations trusted to attest a completed Consistency review.
- * Structured syntax alone must never confer completion authority -- an
- * unauthorized commenter's identically-formatted text must not count as
- * evidence, however well it parses.
- */
-export const TRUSTED_COMPLETION_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
-
-function readCompletionField(body, label) {
-  const pattern = new RegExp(`^\\s*${escapeRegex(label)}:\\s*(.*?)\\s*$`, 'gim');
-  const matches = [...body.matchAll(pattern)];
-  if (matches.length !== 1 || !matches[0][1]) return null;
-  return matches[0][1].trim();
-}
-
-function parseFindingIssueList(raw, mode, result) {
-  if (/^none$/i.test(raw)) {
-    return result === 'CLEAN' ? { kind: 'NONE', numbers: [] } : null;
-  }
-
-  if (/^unpersisted$/i.test(raw)) {
-    return result === 'FINDINGS' && !QUALIFYING_COMPLETION_MODES.has(mode)
-      ? { kind: 'UNPERSISTED', numbers: [] }
-      : null;
-  }
-
+function parseFindingIssueList(raw) {
+  if (/^none$/i.test(raw)) return [];
   const parts = raw.split(',').map((part) => part.trim());
   if (parts.length === 0 || parts.some((part) => !/^#[1-9][0-9]*$/.test(part))) return null;
-
   const numbers = parts.map((part) => Number(part.slice(1)));
   if (numbers.some((number) => !Number.isSafeInteger(number))) return null;
   if (new Set(numbers).size !== numbers.length) return null;
-  return result === 'FINDINGS' ? { kind: 'PERSISTED', numbers } : null;
+  return numbers;
 }
 
-/**
- * Parse one accounted-review completion comment. Returns null when the comment
- * does not match the repaired structured format (including legacy evidence).
- * Non-qualifying modes may explicitly report `UNPERSISTED` findings, but such
- * evidence can never qualify as the recurring reviewed baseline.
- */
 export function parseCompletionComment(body) {
   if (typeof body !== 'string') return null;
-  if (!/^\s*Consistency review completed\s*$/m.test(body)) return null;
+  const lines = body.trim().split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length !== 4 || lines[0] !== 'Consistency review completed') return null;
 
-  const head = readCompletionField(body, 'reviewed head');
-  const at = readCompletionField(body, 'completed at');
-  const mode = readCompletionField(body, 'mode')?.toUpperCase();
-  const result = readCompletionField(body, 'result')?.toUpperCase();
-  const findingIssuesRaw = readCompletionField(body, 'finding issues');
+  const head = /^head:\s*([0-9a-f]{40})$/i.exec(lines[1])?.[1]?.toLowerCase();
+  const scope = /^scope:\s*(FULL|INCREMENTAL)$/i.exec(lines[2])?.[1]?.toUpperCase();
+  const findingsRaw = /^findings:\s*(.+)$/i.exec(lines[3])?.[1]?.trim();
+  if (!head || !SHA_RE.test(head) || !scope || !findingsRaw) return null;
 
-  if (!head || !SHA_RE.test(head)) return null;
-  if (!at || !mode || !COMPLETION_MODES.has(mode)) return null;
-  if (!result || !['CLEAN', 'FINDINGS'].includes(result)) return null;
-
-  const parsedAt = new Date(at);
-  if (Number.isNaN(parsedAt.getTime())) return null;
-
-  const findingIssues = findingIssuesRaw && parseFindingIssueList(findingIssuesRaw, mode, result);
-  if (!findingIssues) return null;
-
+  const findingIssueNumbers = parseFindingIssueList(findingsRaw);
+  if (!findingIssueNumbers) return null;
   return {
     reviewedHead: head,
-    completedAt: parsedAt.toISOString(),
-    mode,
-    result,
-    findingIssueNumbers: findingIssues.numbers,
-    findingIssuesKind: findingIssues.kind,
+    scope,
+    findingIssueNumbers,
+    result: findingIssueNumbers.length ? 'FINDINGS' : 'CLEAN',
   };
 }
 
-/** Return whether a parsed completion mode may advance the weekly baseline. */
-export function isQualifyingCompletionMode(mode) {
-  return QUALIFYING_COMPLETION_MODES.has(mode);
-}
+const LEGACY_CONSISTENCY_ALIASES = new Map([
+  [204, 'CONS-001'],
+  [205, 'CONS-002'],
+  [206, 'CONS-003'],
+  [207, 'CONS-004'],
+  [208, 'CONS-005'],
+  [209, 'CONS-006'],
+]);
 
-/**
- * Verify that a referenced GitHub issue is a persisted Consistency finding.
- * The issue number is the canonical storage identity. Legacy aliases #204-#209
- * are accepted only through their fixed migration mapping; later aliases must
- * be derived from the issue number.
- */
 export function isPersistedConsistencyFinding(issue, expectedNumber) {
   if (!issue || issue.number !== expectedNumber || issue.pull_request) return false;
 
-  const titleMatch = /^CONS-([0-9]+):\s+\S/.exec(issue.title ?? '');
-  if (!titleMatch) return false;
-
-  const alias = `CONS-${titleMatch[1]}`;
-  const expectedLegacyAlias = LEGACY_CONSISTENCY_ALIASES.get(expectedNumber);
-  if (expectedLegacyAlias ? alias !== expectedLegacyAlias : Number(titleMatch[1]) !== expectedNumber) {
-    return false;
+  const title = issue.title ?? '';
+  const currentTitle = /^CONS:\s+\S/.test(title);
+  const historical = /^CONS-([0-9]+):\s+\S/.exec(title);
+  if (!currentTitle && !historical) return false;
+  if (historical) {
+    const alias = `CONS-${historical[1]}`;
+    const legacy = LEGACY_CONSISTENCY_ALIASES.get(expectedNumber);
+    if (legacy ? alias !== legacy : Number(historical[1]) !== expectedNumber) return false;
   }
 
   const body = issue.body ?? '';
-  return (
-    /^Severity:\s*(?:P0|P1|P2|P3|Nit)\s*$/m.test(body) &&
-    /^Category:\s*\S.+$/m.test(body) &&
-    /^Status:\s*(?:OPEN|IN_FLIGHT|RESOLVED|SUPERSEDED|WITHDRAWN)\s*$/m.test(body)
-  );
+  return /^Severity:\s*(?:P0|P1|P2|P3|Nit)\s*$/m.test(body) && /^Category:\s*\S.+$/m.test(body);
 }
 
 function findingIssueMap(findingIssues) {
@@ -172,80 +88,46 @@ function findingIssueMap(findingIssues) {
   return new Map((findingIssues ?? []).map((issue) => [issue.number, issue]));
 }
 
-/**
- * Check the accounting invariant for one parsed completion. A qualifying
- * FINDINGS completion is valid only when every cited issue is a real persisted
- * Consistency finding; a clean completion must cite none.
- */
 export function isAccountedCompletion(completion, findingIssues = new Map()) {
-  if (!completion || !isQualifyingCompletionMode(completion.mode)) return false;
-  if (completion.result === 'CLEAN') {
-    return completion.findingIssuesKind === 'NONE' && completion.findingIssueNumbers.length === 0;
-  }
-  if (completion.result !== 'FINDINGS' || completion.findingIssuesKind !== 'PERSISTED') return false;
-
+  if (!completion) return false;
+  if (completion.findingIssueNumbers.length === 0) return true;
   const issues = findingIssueMap(findingIssues);
-  return (
-    completion.findingIssueNumbers.length > 0 &&
-    completion.findingIssueNumbers.every((number) => isPersistedConsistencyFinding(issues.get(number), number))
-  );
+  return completion.findingIssueNumbers.every((number) => {
+    const issue = issues.get(number);
+    return issue?.state === 'open' && isPersistedConsistencyFinding(issue, number);
+  });
 }
 
-/**
- * Pick the most recent valid, authorized, non-future completion-evidence comment
- * out of a list of `{ body, authorAssociation, createdAt }` comment records.
- * Malformed comments are ignored rather than rejected as errors -- a stray or
- * corrupted comment must never crash the run, only fail to count as evidence.
- * An unauthorized author's matching text and a future-dated `completed at` are
- * rejected the same way: silently not evidence, never a thrown error. The
- * optional finding-issue map is required for FINDINGS evidence to qualify.
- * An INCREMENTAL completion is eligible only after an earlier accounted FULL
- * baseline has established the sequence; an isolated or legacy-only history
- * therefore remains unverified until a FULL completion is recorded.
- */
 export function latestValidCompletion(comments, nowISO, findingIssues = new Map()) {
   const now = new Date(nowISO).getTime();
   const valid = [];
 
-  for (const comment of comments) {
+  for (const comment of comments ?? []) {
     const parsed = parseCompletionComment(comment.body);
     if (!parsed) continue;
-    if (!TRUSTED_COMPLETION_ASSOCIATIONS.has(comment.authorAssociation)) continue;
-    if (new Date(parsed.completedAt).getTime() > now) continue;
+    const association = comment.authorAssociation ?? comment.author_association;
+    if (!TRUSTED_COMPLETION_ASSOCIATIONS.has(association)) continue;
+    const createdAtRaw = comment.createdAt ?? comment.created_at;
+    const createdAt = new Date(createdAtRaw);
+    if (Number.isNaN(createdAt.getTime()) || createdAt.getTime() > now) continue;
     if (!isAccountedCompletion(parsed, findingIssues)) continue;
-    valid.push(parsed);
+    valid.push({ ...parsed, completedAt: createdAt.toISOString() });
   }
 
-  // Process equal timestamps as one point in time: an INCREMENTAL completion
-  // must follow a strictly earlier accounted baseline, not merely share its
-  // timestamp with a FULL completion.
   valid.sort((a, b) => a.completedAt.localeCompare(b.completedAt));
-  let best = null;
   let baselineEstablished = false;
-  for (let index = 0; index < valid.length;) {
-    const timestamp = valid[index].completedAt;
-    let end = index + 1;
-    while (end < valid.length && valid[end].completedAt === timestamp) end += 1;
-
-    for (const parsed of valid.slice(index, end)) {
-      const eligible = parsed.mode === 'FULL' || (parsed.mode === 'INCREMENTAL' && baselineEstablished);
-      if (eligible && (!best || parsed.completedAt > best.completedAt)) best = parsed;
+  let latest = null;
+  for (const completion of valid) {
+    if (completion.scope === 'FULL') {
+      baselineEstablished = true;
+      latest = completion;
+    } else if (baselineEstablished) {
+      latest = completion;
     }
-
-    if (valid.slice(index, end).some((parsed) => parsed.mode === 'FULL')) baselineEstablished = true;
-    index = end;
   }
-  return best;
+  return latest;
 }
 
-/**
- * Derive the delivery-process-retrospective trigger state. Raw merged-PR count is a
- * mechanical guard only: reaching it produces CHECK_TRIGGER (a human/agent must judge
- * whether the *substantive* threshold in docs/development/continuous-improvement.md
- * actually fired), never an automatic DUE for the retrospective itself. Explicit
- * repository-recorded escape evidence (see data file) can also surface CHECK_TRIGGER,
- * but this function never classifies PR history itself.
- */
 export function deriveRetrospectiveState({
   rawMergedSinceBaseline,
   escapeEvidenceCount = 0,
@@ -258,365 +140,172 @@ export function deriveRetrospectiveState({
   return 'CURRENT';
 }
 
-/** Render the workflow-owned obligations block (without the marker comments). */
 export function renderObligations({ weekly, retrospective }) {
-  const lines = [];
-  lines.push('## Recurring obligations');
-  lines.push('');
-  lines.push('Derived by `.github/workflows/continuous-improvement.yml` via `.github/scripts/continuous-improvement.mjs`.');
-  lines.push('See [docs/development/continuous-improvement.md](../blob/main/docs/development/continuous-improvement.md) for what these states mean and who acts on them.');
-  lines.push('');
-  lines.push('### Weekly Consistency review');
-  lines.push('');
-  lines.push(`- last verified: ${weekly.lastVerifiedAt ?? 'never'}`);
-  lines.push(`- reviewed head: ${weekly.reviewedHead ?? 'n/a'}`);
-  lines.push(`- accounted result: ${weekly.result ?? 'n/a'}`);
-  lines.push(`- finding issues: ${weekly.findingIssueNumbers?.length ? weekly.findingIssueNumbers.map((number) => `#${number}`).join(', ') : weekly.result ? 'none' : 'n/a'}`);
-  lines.push(`- next due / interval: every ${WEEKLY_INTERVAL_DAYS} days`);
-  lines.push(`- state: **${weekly.state}**`);
-  lines.push('');
-  lines.push('### Delivery-process retrospective');
-  lines.push('');
-  lines.push(`- last baseline: PR #${retrospective.baselinePr} (${retrospective.baselineDate})`);
-  lines.push(`- raw merged PRs since baseline: ${retrospective.rawMergedSinceBaseline}`);
-  lines.push(`- escape evidence recorded: ${retrospective.escapeEvidenceCount} post-merge escape(s), P1 lifecycle escape: ${retrospective.p1LifecycleEscape}`);
-  lines.push(`- state: **${retrospective.state}**`);
-  lines.push('');
-  lines.push(`_Last updated: ${weekly.nowISO}_`);
-  return lines.join('\n');
-}
-
-const DEFAULT_INTERVENTIONS_SECTION = `## Active improvement interventions
-
-Agent/human-managed. The workflow above never adds, closes, or dispositions rows here -- see
-[docs/development/continuous-improvement.md](../blob/main/docs/development/continuous-improvement.md).
-
-| Improvement | Source/evidence | Verification condition | State |
-| --- | --- | --- | --- |
-| Executable PR lifecycle enforcement (\`infra/dev/pr-lifecycle.mjs\`, \`check-pr-disposition.sh\`, \`pr-disposition.yml\`) | [2026-09-05 retrospective](../blob/main/docs/development/delivery-process-retrospective-2026-09-05.md), highest-leverage improvement #1 | Reconciliation-finding share (39/79 baseline) measurably lower at next retrospective | IMPLEMENTED -- awaiting retrospective verification |
-| Required validation for repository workflow tooling wired into the always-running CI classify job | [2026-09-05 retrospective](../blob/main/docs/development/delivery-process-retrospective-2026-09-05.md), highest-leverage improvement #2 | Lifecycle/tooling-finding share (6/79 baseline) does not recur from an untested helper at next retrospective | IMPLEMENTED -- awaiting retrospective verification |
-| Earlier closure of high-risk semantic-neighbor and acceptance-evidence state in planning/implementation for authority/status-sensitive work | [2026-09-05 retrospective](../blob/main/docs/development/delivery-process-retrospective-2026-09-05.md), highest-leverage improvement #3 | Semantic-propagation + baseline-reconciliation finding share (39/79 baseline) trends down at next retrospective | AWAITING VERIFICATION |
-| Trial: small closure-set handoff on the next architecture/status-sensitive slices | [2026-09-05 retrospective](../blob/main/docs/development/delivery-process-retrospective-2026-09-05.md), proposed experiment | Recurrence of propagation/base findings on trialed slices; retain only if it decreases | TRIAL -- awaiting verification |
-| Trial: final PR closeout summary after substantial remediation | [2026-09-05 retrospective](../blob/main/docs/development/delivery-process-retrospective-2026-09-05.md), proposed experiment | PR-description drift (6/79 baseline) decreases without becoming another approval ritual | TRIAL -- awaiting verification |
-`;
-
-/** Build the full initial register body on first bootstrap. */
-export function buildInitialBody(obligationsText) {
+  const findingIssues = weekly.result
+    ? (weekly.findingIssueNumbers.length ? weekly.findingIssueNumbers.map((n) => `#${n}`).join(', ') : 'none')
+    : 'n/a';
   return [
-    `# ${REGISTER_TITLE}`,
+    '## Recurring obligations',
     '',
-    'This issue is the active continuous-improvement register for Arcogine: current recurring-obligation',
-    'state plus still-unverified improvement interventions. See',
-    '[docs/development/continuous-improvement.md](../blob/main/docs/development/continuous-improvement.md) for the',
-    'operating model this issue implements. Detailed evidence lives in repository history, PRs, reviews, issues,',
-    'and dated retrospectives -- this issue is operational state, not a process database.',
+    'Derived by `.github/workflows/continuous-improvement.yml` via `.github/scripts/continuous-improvement.mjs`.',
+    'See [docs/development/continuous-improvement.md](../blob/main/docs/development/continuous-improvement.md) for semantics and ownership.',
     '',
-    MARKER_START,
+    '### Weekly Consistency review',
     '',
-    obligationsText,
+    `- last verified: ${weekly.lastVerifiedAt ?? 'never'}`,
+    `- reviewed head: ${weekly.reviewedHead ?? 'n/a'}`,
+    `- accounted result: ${weekly.result ?? 'n/a'}`,
+    `- finding issues: ${findingIssues}`,
+    `- next due / interval: every ${WEEKLY_INTERVAL_DAYS} days`,
+    `- state: **${weekly.state}**`,
     '',
-    MARKER_END,
+    '### Delivery-process retrospective',
     '',
-    DEFAULT_INTERVENTIONS_SECTION,
+    `- last baseline: PR #${retrospective.baselinePr} (${retrospective.baselineDate})`,
+    `- raw merged PRs since baseline: ${retrospective.rawMergedSinceBaseline}`,
+    `- escape evidence recorded: ${retrospective.escapeEvidenceCount} post-merge escape(s), P1 lifecycle escape: ${retrospective.p1LifecycleEscape}`,
+    `- state: **${retrospective.state}**`,
+    '',
+    `_Last updated: ${weekly.nowISO}_`,
   ].join('\n');
 }
 
-/**
- * Split a register body into (before, managed, after) around the marker pair.
- * Throws when the markers are missing, duplicated, or out of order -- malformed
- * marker state must fail loudly rather than silently overwriting the wrong region
- * or the whole issue.
- */
 export function splitMarkers(body) {
-  const startIdx = [...body.matchAll(new RegExp(escapeRegex(MARKER_START), 'g'))].map((m) => m.index);
-  const endIdx = [...body.matchAll(new RegExp(escapeRegex(MARKER_END), 'g'))].map((m) => m.index);
-
-  if (startIdx.length !== 1 || endIdx.length !== 1) {
-    throw new Error(
-      `malformed continuous-improvement register markers: found ${startIdx.length} start marker(s) and ` +
-        `${endIdx.length} end marker(s), expected exactly one of each`,
-    );
-  }
-  if (endIdx[0] <= startIdx[0]) {
-    throw new Error('malformed continuous-improvement register markers: end marker precedes start marker');
-  }
-
-  const before = body.slice(0, startIdx[0]);
-  const managed = body.slice(startIdx[0] + MARKER_START.length, endIdx[0]);
-  const after = body.slice(endIdx[0] + MARKER_END.length);
-  return { before, managed, after };
+  const firstStart = body.indexOf(MARKER_START);
+  const firstEnd = body.indexOf(MARKER_END);
+  if (firstStart < 0 || firstEnd < 0 || firstEnd <= firstStart) throw new Error('register markers are missing or malformed');
+  if (body.indexOf(MARKER_START, firstStart + MARKER_START.length) >= 0) throw new Error('register start marker is duplicated');
+  if (body.indexOf(MARKER_END, firstEnd + MARKER_END.length) >= 0) throw new Error('register end marker is duplicated');
+  return {
+    before: body.slice(0, firstStart),
+    current: body.slice(firstStart + MARKER_START.length, firstEnd).replace(/^\n+|\n+$/g, ''),
+    after: body.slice(firstEnd + MARKER_END.length),
+  };
 }
 
-function escapeRegex(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/**
- * Replace only the workflow-owned region of an existing register body, preserving
- * everything else -- including the agent/human-managed intervention section --
- * byte for byte.
- */
-export function mergeRegisterBody(oldBody, obligationsText) {
-  const { before, after } = splitMarkers(oldBody);
+export function mergeRegisterBody(body, obligationsText) {
+  const { before, after } = splitMarkers(body);
   return `${before}${MARKER_START}\n\n${obligationsText}\n\n${MARKER_END}${after}`;
 }
 
-/**
- * Find the register issue by exact title among candidate issues (open + closed).
- * Never creates a duplicate silently: more than one exact-title match is ledger
- * corruption and must fail loudly rather than picking one arbitrarily.
- */
-export function findRegisterIssue(issues) {
-  const matches = issues.filter((i) => i.title === REGISTER_TITLE);
-  if (matches.length > 1) {
-    throw new Error(
-      `ambiguous continuous-improvement register state: found ${matches.length} issues titled ` +
-        `"${REGISTER_TITLE}" (#${matches.map((i) => i.number).join(', #')}); refusing to guess which is canonical`,
-    );
-  }
-  return matches[0] ?? null;
+function semanticObligations(text) {
+  return text.split('\n').filter((line) => !/^_Last updated: .*_$/.test(line)).join('\n').trim();
 }
 
-const LAST_UPDATED_LINE_RE = /^_Last updated:.*_$/m;
-
-/**
- * Strip the volatile "_Last updated: <timestamp>_" line that renderObligations
- * always appends. Every run has a different wall-clock timestamp, so that line
- * must never participate in the no-op-detection comparison -- otherwise every
- * run would look "changed" even when the actual obligation state (weekly review
- * state, retrospective state, counts) is identical to the last update.
- */
-function withoutVolatileTimestamp(text) {
-  return text.replace(LAST_UPDATED_LINE_RE, '').trim();
+export function obligationsChanged(body, obligationsText) {
+  return semanticObligations(splitMarkers(body).current) !== semanticObligations(obligationsText);
 }
 
-/**
- * Decide whether an update actually changes the *semantic* obligations content,
- * so the caller can skip posting a body update / comment when nothing changed --
- * avoiding weekly spam for unchanged state. Deliberately ignores the volatile
- * "_Last updated_" timestamp line, which differs on every run regardless of
- * whether the underlying obligation state changed.
- */
-export function obligationsChanged(oldManagedText, newManagedText) {
-  return withoutVolatileTimestamp(oldManagedText) !== withoutVolatileTimestamp(newManagedText);
-}
-
-// ------------------------------- GitHub I/O -------------------------------
-
-function authToken() {
-  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
-  if (!token) throw new Error('no GitHub token: set GH_TOKEN or GITHUB_TOKEN');
-  return token;
-}
-
-async function ghRepo(path, { method = 'GET', body, repo = DEFAULT_REPO } = {}) {
-  return ghFetch(`https://api.github.com/repos/${repo}${path}`, { method, body });
-}
-
-async function ghSearch(query) {
-  return ghFetch(`https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=100`, {});
-}
-
-async function ghFetch(url, { method = 'GET', body } = {}) {
+async function githubJson(url, { token, method = 'GET', body } = {}) {
   const response = await fetch(url, {
     method,
     headers: {
-      Authorization: `Bearer ${authToken()}`,
       Accept: 'application/vnd.github+json',
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
       'User-Agent': 'arcogine-continuous-improvement',
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
     },
-    body: body ? JSON.stringify(body) : undefined,
+    ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new Error(`GitHub API ${method} ${url} failed: ${response.status} ${response.statusText} ${text}`);
-  }
+  if (!response.ok) throw new Error(`${method} ${url} failed: ${response.status} ${await response.text()}`);
+  if (response.status === 204) return null;
   return response.json();
 }
 
-async function listAllIssuesByTitleSearch(repo) {
-  // search_issues covers open + closed in one call; we still verify exact title
-  // equality afterward since the search query only narrows candidates.
-  const result = await ghSearch(`repo:${repo} in:title "${REGISTER_TITLE}" type:issue`);
-  return (result.items || []).map((i) => ({ number: i.number, title: i.title, state: i.state, body: i.body }));
-}
-
-/**
- * List every comment on the register issue as `{ body, authorAssociation, createdAt }`.
- * Paginates to completion: the register is a single long-lived issue with
- * append-only completion-evidence comments by design, so once it accumulates more
- * than one page (100) of comments, a single-page fetch would silently stop seeing
- * newer evidence and misreport a current obligation as DUE/OVERDUE.
- */
-async function listIssueComments(repo, number) {
-  const all = [];
-  let page = 1;
-  for (;;) {
-    const batch = await ghRepo(`/issues/${number}/comments?per_page=100&page=${page}`, { repo });
-    all.push(...batch);
-    if (batch.length < 100) break;
-    page += 1;
+async function fetchAllPages(url, token) {
+  const out = [];
+  for (let page = 1; ; page += 1) {
+    const separator = url.includes('?') ? '&' : '?';
+    const batch = await githubJson(`${url}${separator}per_page=100&page=${page}`, { token });
+    out.push(...batch);
+    if (batch.length < 100) return out;
   }
-  return all.map((c) => ({
-    body: c.body,
-    authorAssociation: c.author_association,
-    createdAt: c.created_at,
-  }));
 }
 
-function candidateFindingNumbers(comments, nowISO) {
-  const now = new Date(nowISO).getTime();
+async function loadData() {
+  const raw = await readFile(new URL('./continuous-improvement-data.json', import.meta.url), 'utf8');
+  return JSON.parse(raw);
+}
+
+async function fetchRegister(repo, token) {
+  const issue = await githubJson(`https://api.github.com/repos/${repo}/issues/${REGISTER_ISSUE_NUMBER}`, { token });
+  if (issue.pull_request || issue.title !== REGISTER_TITLE) {
+    throw new Error(`issue #${REGISTER_ISSUE_NUMBER} is not the expected ${REGISTER_TITLE}`);
+  }
+  return issue;
+}
+
+async function fetchFindingIssues(repo, token, comments) {
   const numbers = new Set();
   for (const comment of comments) {
-    if (!TRUSTED_COMPLETION_ASSOCIATIONS.has(comment.authorAssociation)) continue;
     const parsed = parseCompletionComment(comment.body);
-    if (!parsed || !isQualifyingCompletionMode(parsed.mode)) continue;
-    if (new Date(parsed.completedAt).getTime() > now) continue;
-    for (const number of parsed.findingIssueNumbers) numbers.add(number);
+    for (const number of parsed?.findingIssueNumbers ?? []) numbers.add(number);
   }
-  return [...numbers];
-}
-
-async function loadFindingIssues(repo, comments, nowISO) {
-  const entries = await Promise.all(
-    candidateFindingNumbers(comments, nowISO).map(async (number) => {
-      try {
-        return [number, await ghRepo(`/issues/${number}`, { repo })];
-      } catch (error) {
-        if (/failed: 404\b/.test(error.message)) return [number, null];
-        throw error;
-      }
-    }),
-  );
-  return new Map(entries);
-}
-
-async function createRegisterIssue(repo, body) {
-  return ghRepo('/issues', { repo, method: 'POST', body: { title: REGISTER_TITLE, body } });
-}
-
-async function updateIssueBody(repo, number, body) {
-  return ghRepo(`/issues/${number}`, { repo, method: 'PATCH', body: { body } });
-}
-
-/**
- * Raw merged-PR count with number > baselinePr. Walks closed PRs newest-first via
- * the REST list endpoint (not search, whose numeric range qualifiers are unreliable
- * for issue/PR numbers) and stops once PR numbers drop to/below the baseline.
- */
-async function countMergedPRsSince(repo, baselinePr) {
-  let count = 0;
-  let page = 1;
-  for (;;) {
-    const batch = await ghRepo(`/pulls?state=closed&sort=created&direction=desc&per_page=100&page=${page}`, { repo });
-    if (batch.length === 0) break;
-    let sawBelowBaseline = false;
-    for (const pr of batch) {
-      if (pr.number <= baselinePr) {
-        sawBelowBaseline = true;
-        continue;
-      }
-      if (pr.merged_at) count += 1;
-    }
-    if (sawBelowBaseline || batch.length < 100) break;
-    page += 1;
-  }
-  return count;
-}
-
-function loadRetrospectiveBaseline() {
-  return import('./continuous-improvement-data.json', { with: { type: 'json' } }).then((m) => m.default);
-}
-
-// ------------------------------- entrypoint -------------------------------
-
-async function main() {
-  const { values } = parseArgs({
-    options: {
-      'dry-run': { type: 'boolean', default: false },
-      repo: { type: 'string', default: DEFAULT_REPO },
-    },
-  });
-
-  const repo = values.repo;
-  const now = new Date().toISOString();
-
-  const issues = await listAllIssuesByTitleSearch(repo);
-  let register = findRegisterIssue(issues);
-
-  const baseline = await loadRetrospectiveBaseline();
-  const rawMergedSinceBaseline = await countMergedPRsSince(repo, baseline.baselinePr);
-
-  let lastVerifiedAt = null;
-  let reviewedHead = null;
-  let result = null;
-  let findingIssueNumbers = [];
-  if (register) {
-    const comments = await listIssueComments(repo, register.number);
-    const findingIssues = await loadFindingIssues(repo, comments, now);
-    const evidence = latestValidCompletion(comments, now, findingIssues);
-    if (evidence) {
-      lastVerifiedAt = evidence.completedAt;
-      reviewedHead = evidence.reviewedHead;
-      result = evidence.result;
-      findingIssueNumbers = evidence.findingIssueNumbers;
+  const issues = new Map();
+  for (const number of numbers) {
+    try {
+      const issue = await githubJson(`https://api.github.com/repos/${repo}/issues/${number}`, { token });
+      issues.set(number, issue);
+    } catch (error) {
+      console.warn(`Could not load finding issue #${number}: ${error.message}`);
     }
   }
+  return issues;
+}
+
+async function countMergedPullsSince(repo, token, baselinePr) {
+  const pulls = await fetchAllPages(`https://api.github.com/repos/${repo}/pulls?state=closed&sort=created&direction=asc`, token);
+  return pulls.filter((pr) => pr.number > baselinePr && pr.merged_at).length;
+}
+
+export async function main() {
+  const { values } = parseArgs({ options: { 'dry-run': { type: 'boolean', default: false } } });
+  const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+  if (!token) throw new Error('GH_TOKEN or GITHUB_TOKEN is required');
+  const repo = process.env.GITHUB_REPOSITORY ?? DEFAULT_REPO;
+  const nowISO = new Date().toISOString();
+  const data = await loadData();
+
+  const register = await fetchRegister(repo, token);
+  const comments = await fetchAllPages(`https://api.github.com/repos/${repo}/issues/${REGISTER_ISSUE_NUMBER}/comments`, token);
+  const findingIssues = await fetchFindingIssues(repo, token, comments);
+  const completion = latestValidCompletion(comments, nowISO, findingIssues);
+  const rawMergedSinceBaseline = await countMergedPullsSince(repo, token, data.baselinePr);
 
   const weekly = {
-    lastVerifiedAt,
-    reviewedHead,
-    result,
-    findingIssueNumbers,
-    nowISO: now,
-    state: deriveWeeklyState(lastVerifiedAt, now),
+    nowISO,
+    lastVerifiedAt: completion?.completedAt ?? null,
+    reviewedHead: completion?.reviewedHead ?? null,
+    result: completion?.result ?? null,
+    findingIssueNumbers: completion?.findingIssueNumbers ?? [],
+    state: deriveWeeklyState(completion?.completedAt ?? null, nowISO),
   };
   const retrospective = {
-    ...baseline,
+    ...data,
     rawMergedSinceBaseline,
-    state: deriveRetrospectiveState({
-      rawMergedSinceBaseline,
-      escapeEvidenceCount: baseline.escapeEvidenceCount,
-      p1LifecycleEscape: baseline.p1LifecycleEscape,
-    }),
+    state: deriveRetrospectiveState({ rawMergedSinceBaseline, ...data }),
   };
-
-  const obligationsText = renderObligations({ weekly, retrospective });
-
-  console.log(`Weekly Consistency review: ${weekly.state} (last verified: ${weekly.lastVerifiedAt ?? 'never'})`);
-  console.log(`Delivery-process retrospective: ${retrospective.state} (raw merged since baseline: ${rawMergedSinceBaseline})`);
+  const obligations = renderObligations({ weekly, retrospective });
 
   if (values['dry-run']) {
-    console.log('--dry-run: no writes performed');
-    console.log(obligationsText);
+    console.log(obligations);
     return;
   }
+  if (!obligationsChanged(register.body ?? '', obligations)) return;
 
-  if (!register) {
-    const body = buildInitialBody(obligationsText);
-    const created = await createRegisterIssue(repo, body);
-    console.log(`Bootstrapped continuous improvement register: #${created.number}`);
-    return;
-  }
-
-  const { managed: oldManaged } = splitMarkers(register.body ?? '');
-  if (!obligationsChanged(oldManaged, obligationsText)) {
-    console.log(`No change to recurring-obligation state on #${register.number}; skipping update.`);
-    return;
-  }
-
-  const newBody = mergeRegisterBody(register.body ?? '', obligationsText);
-  await updateIssueBody(repo, register.number, newBody);
-  console.log(`Updated continuous improvement register #${register.number}.`);
+  const body = mergeRegisterBody(register.body ?? '', obligations);
+  await githubJson(`https://api.github.com/repos/${repo}/issues/${REGISTER_ISSUE_NUMBER}`, {
+    token,
+    method: 'PATCH',
+    body: { body },
+  });
 }
 
-const isMain =
-  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
-
-if (isMain) {
-  main().catch((err) => {
-    console.error(err.stack || err.message || String(err));
+const invokedPath = process.argv[1] && pathToFileURL(process.argv[1]).href;
+if (invokedPath === import.meta.url) {
+  main().catch((error) => {
+    console.error(error);
     process.exitCode = 1;
   });
 }

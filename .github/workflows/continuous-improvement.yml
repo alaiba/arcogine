@@ -1,29 +1,20 @@
 name: Continuous improvement register
 
-# Derives recurring-obligation state for the fixed Arcogine register issue #295.
-# Judgment-bearing work remains outside this workflow: it never runs a Consistency
-# review or delivery-process retrospective.
-#
-# A ChatGPT Consistency review records completion by posting the structured comment
-# defined in docs/development/continuous-improvement.md to issue #295. GitHub's
-# issue_comment event then refreshes the derived register body automatically; no
-# repository_dispatch, workflow_dispatch, gh command, or local agent runtime is
-# part of the completion path.
+# Maintains time/count-derived status in register issue #295.
+# It never performs a Consistency review or delivery-process retrospective.
+# A Consistency review records its own completion directly in the register body;
+# this workflow is not part of that completion path.
 
 on:
   schedule:
-    - cron: '0 6 * * 1'
-  issue_comment:
-    types: [created]
+    - cron: '0 6 * * *'
   push:
     branches: [main]
     paths:
-      - '.github/agents/consistency.agent.md'
       - '.github/scripts/continuous-improvement.mjs'
       - '.github/scripts/continuous-improvement.test.mjs'
       - '.github/scripts/continuous-improvement-data.json'
       - '.github/workflows/continuous-improvement.yml'
-      - 'docs/development/consistency-review.md'
       - 'docs/development/continuous-improvement.md'
 
 permissions:
@@ -35,28 +26,28 @@ concurrency:
 
 jobs:
   update-register:
-    if: >-
-      github.event_name != 'issue_comment' ||
-      (github.event.issue.number == 295 &&
-       startsWith(github.event.comment.body, 'Consistency review completed'))
-    name: Update register
+    name: Refresh derived register state
     runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
       pull-requests: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Node.js 22.22.2
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+    steps:
+      - name: Check out trusted main
+        uses: actions/checkout@v4
         with:
-          node-version: '22.22.2'
+          ref: main
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Validate helper logic
         run: node --test .github/scripts/continuous-improvement.test.mjs
 
-      - name: Update continuous improvement register
+      - name: Refresh continuous improvement register
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node .github/scripts/continuous-improvement.mjs

@@ -75,11 +75,26 @@ class IntraOrderExecutionAcceptanceTest {
         FactoryRuntime runtime = runtime();
         var result = runtime.submitWorkload(new ProductId(1), 100_001, 1.0);
         assertTrue(result instanceof CommandResult.Rejected<?>);
+        assertTrue(result.scheduledEvents().isEmpty());
         assertEquals(0, runtime.ordersView().count());
         assertEquals(0, runtime.orderExecutionsView().count());
         assertEquals(0, runtime.jobsView().count());
         assertEquals(0, runtime.machinesView().stream().mapToInt(machine -> machine.queueDepth()).sum());
         assertEquals(0, runtime.pendingWorkView().size());
+        assertTrue(runtime.advance().isEmpty());
+    }
+
+    @Test
+    void zeroQuantityIsRejectedBeforeAnyRuntimeMutation() {
+        FactoryRuntime runtime = runtime();
+        var result = runtime.submitWorkload(new ProductId(1), 0, 1.0);
+
+        assertTrue(result instanceof CommandResult.Rejected<?>);
+        assertTrue(result.scheduledEvents().isEmpty());
+        assertEquals(0, runtime.ordersView().count());
+        assertEquals(0, runtime.jobsView().count());
+        assertEquals(0, runtime.machinesView().stream().mapToInt(machine -> machine.queueDepth()).sum());
+        assertTrue(runtime.pendingWorkView().isEmpty());
         assertTrue(runtime.advance().isEmpty());
     }
 }

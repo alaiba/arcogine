@@ -1,148 +1,132 @@
 # Consistency review operations
 
-> **Status:** maintainer operating guidance as of 2026-09-01. The repository-owned review contract is [`.github/agents/consistency.agent.md`](../../.github/agents/consistency.agent.md); this document records how recurring reviews are operated around that contract.
+> **Status:** maintainer guidance around the executable review contract in [`.github/agents/consistency.agent.md`](../../.github/agents/consistency.agent.md).
 
-Arcogine uses a dedicated consistency-review role to detect evidence-backed drift between implementation, architecture, ADRs, planning, public documentation, examples, configuration, tests, CI, recent pull requests, and prior consistency findings.
+Arcogine's formal Consistency review runs in a ChatGPT chat session using the GitHub connector. It is not required to run in a local checkout or remain compatible with local coding-agent runtimes. The review contract therefore assumes repository reads/writes happen through GitHub and must not depend on `git`, `gh`, shell commands, or locally executing repository scripts.
 
-The consistency reviewer is diagnostic by default. It identifies and explains inconsistencies; it does not silently remediate them or mutate the finding ledger. A normal baseline-advancing `FULL` or `INCREMENTAL` run has the narrow accounting authority described below so its unresolved findings cannot be lost. Confirmed findings are fixed through the normal implementation and pull-request review workflow, then re-verified against a later `main` head.
+## Operating loop
 
-## Current operating model
-
-GitHub Issues are the durable continuity mechanism for consistency findings. A long-lived Consistency project session may still be useful for working context, but deleting or replacing that session must not erase the durable identity or lifecycle of a persisted finding.
-
-At the beginning of every review, the reviewer must re-read the current `.github/agents/consistency.agent.md` from `main`, resolve the current repository head, and load the open and closed consistency-finding issues before comparing current evidence. Repository and issue state override remembered session state.
-
-The weekly Consistency-review cadence is a repository-owned obligation, not maintainer automation outside this repository. Its scheduling, due-state tracking, and the continuous-improvement register that carries that state are defined in [`docs/development/continuous-improvement.md`](continuous-improvement.md); this document (and `.github/agents/consistency.agent.md`) continues to own how a review is actually performed once invoked.
-
-The normal review sequence is:
+The recurring review is deliberately small:
 
 ```text
-GitHub consistency issues
-      |
-      v
-verify current main
-      |
-      +--> RESOLVED / OPEN / IN_FLIGHT / SUPERSEDED / WITHDRAWN
-      |
-      v
-incremental or full consistency scan
-      |
-      v
-new evidence-backed findings
-      |
-      v
-triage
-      |
-      +--> required finding-ledger accounting for a qualifying FULL/INCREMENTAL run
-      |
-      v
-normal remediation PRs
-      |
-      v
-later consistency verification on main
+read live main + register #295
+        |
+        v
+choose scope automatically
+  no baseline -> FULL
+     baseline -> INCREMENTAL
+        |
+        v
+inspect semantic changes + repository-search neighbors
+        |
+        v
+reconcile open/closed consistency findings
+        |
+        v
+create/reopen/close finding issues as required
+        |
+        v
+post one completion comment to #295
+        |
+        v
+workflow refreshes the derived register state
 ```
 
-A merged PR, closed issue, or green CI result is not itself evidence that a finding is resolved. Resolution is established by re-evaluating authoritative evidence on the reviewed `main` head.
+The reviewer does not run a second PR-review mode. Open PRs are inspected only when they explain history or show that an existing finding is plausibly `IN_FLIGHT`; independent PR acceptance remains owned by the PR Reviewer.
 
-For routine recurring runs, use the normal high-scrutiny reasoning setting available in the review environment. Reserve the highest available scrutiny for calibration runs, major architecture transitions, or periods where several capability tracks have changed in parallel. This is operating advice, not a repository requirement, and may need reinterpretation as external tooling evolves.
+Ad-hoc questions such as “is this architecture claim consistent with the implementation?” are ordinary read-only chat analysis. They do not need a formal `DIAGNOSTIC_ONLY` mode and do not advance the weekly baseline.
 
-## Documentation-lifetime consistency
+## Grounding and scope
 
-Recurring consistency review must treat documentation lifetime as a first-class consistency boundary. Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (see `AGENTS.md`), are useful in `docs/planning/`, PRs/reviews, and delivery history (including commit messages) while work is active, but durable semantic naming — Markdown outside `docs/planning/`, and non-Markdown durable artifacts such as code comments, workflow definitions, and test names — must name the semantic capability, contract, identity, invariant, or behavior directly.
+Every formal review re-reads current `main`, `AGENTS.md`, the live consistency contract, register issue #295, and the open/closed consistency-finding ledger. Uploaded snapshots and conversation memory are not current repository authority.
 
-A full or incremental consistency scan should therefore check two things:
+The reviewer selects scope from the register rather than asking the user:
 
-- whether temporary delivery coordinates have leaked into durable filenames, prose, comments, or test/workflow names; and
-- whether a durable document still depends on an obsolete planning artifact for its meaning even when no machine-detectable coordinate remains.
+- no accounted reviewed head -> `FULL`;
+- accounted reviewed head -> `INCREMENTAL` from that head to current `main`;
+- unusable/missing baseline -> fall back to `FULL`.
 
-The repository vocabulary checker provides a fail-closed syntactic baseline. It is not sufficient evidence of semantic self-containment: reviewers still need to recognize prose such as “the next stage” or “the previous slice” when those phrases only make sense in a plan that may later disappear.
+A `FULL` review broadly samples all maintained semantic families and executable evidence needed to establish a repository-wide baseline. An `INCREMENTAL` review reconstructs the semantic changes since the baseline and follows their neighboring authorities. Unresolved findings are always carried forward even when they predate the incremental range.
 
-Accepted and Superseded ADRs may be clarified under the semantics-preserving amendment policy in [`../architecture/decisions/README.md`](../architecture/decisions/README.md). During consistency review, such an amendment is valid only when the historical decision, applicability, constraints, alternatives, consequences, and impact remain unchanged. If an edit changed the architecture rather than its presentation, the inconsistency is the use of an editorial amendment where a superseding ADR was required.
+## Search-driven semantic neighbors
+
+The reviewer should not maintain a second architecture map inside its own instructions. For each material concept, symbol, status, or contract, search the repository and inspect the authoritative current/planning/ADR/test/interface surfaces that encode the same semantics.
+
+Typical examples:
+
+- model semantics -> factory architecture, ADRs, planning, Engine assumptions;
+- controllers/DTOs -> API/reference docs, consumers, integration tests;
+- toolchain/CI changes -> workflow/config plus testing/contribution policy;
+- planning status changes -> acceptance criteria plus executable evidence.
+
+These are examples, not a fixed matrix. Repository evidence determines the actual neighbor set.
 
 ## Finding persistence
 
-GitHub Issues persist **finding identity and lifecycle**, not product/architecture truth. The continuous-improvement register carries the accounted reviewed-head evidence for the recurring baseline.
+GitHub Issues are the durable finding ledger. The GitHub issue number is the sole canonical identity.
 
-Persisted findings use the identity rules in the consistency-agent contract:
+Historical findings with `CONS-001`, `CONS-002`, and later numeric `CONS-*` titles remain valid and searchable. New findings use:
 
-- the GitHub issue number is the canonical, immutable storage identity;
-- the human-readable `CONS-*` alias in the issue title is immutable once bound to that issue;
-- the six calibration findings migrated as `CONS-001` through `CONS-006` retain those aliases for continuity;
-- new persisted findings derive their alias from the GitHub issue number (for example, issue `#211` becomes `CONS-211`), so no independent counter or reservation protocol is required;
-- a diagnostic-only finding that has not been persisted has no durable `CONS-*` identity yet.
+```text
+CONS: <concise semantic title>
+```
 
-The review remains read-only for `DIAGNOSTIC_ONLY` and `PR_FORWARD` runs unless separate synchronization authority is given. Invoking a normal baseline-advancing `FULL` or `INCREMENTAL` review authorizes only the finding-ledger bookkeeping required to account for that review; it does not authorize remediation, arbitrary issue edits, or merging.
+No new alias counter, issue-number-derived alias, reservation protocol, or `[CONSISTENCY-UNBOUND]` staging issue is needed.
 
-When synchronization is authorized, it follows repository truth rather than issue state:
+Before creating a finding, search open and closed current/historical consistency issues by semantic subject and evidence. Regressions reuse and reopen the original issue.
 
-- create an issue only for a genuinely new durable finding after duplicate/regression matching;
-- complete that accounting before posting recurring completion evidence;
-- keep `OPEN` and `IN_FLIGHT` findings open;
-- close a finding only after current `main` verifies it as `RESOLVED`, or when it is explicitly `SUPERSEDED` or `WITHDRAWN`;
-- never close a finding merely because a remediation PR exists or merged;
-- retain closed issues so regression detection can reuse the same semantic finding identity.
+Finding bodies persist durable diagnostic evidence (severity/category/confidence, conflicting claims/evidence, and authority analysis). Mutable lifecycle state is not duplicated in the body:
 
-This deliberately does **not** mean that every raw observation or exploratory suspicion becomes an issue. A finding must meet the evidence rules in the reviewer contract before it qualifies for persistence. For a qualifying recurring run, however, every unresolved finding that needs lifecycle continuity must have a durable disposition before the reviewed head can advance the baseline; the old immediate-remediation P3/Nit exception cannot leave such a finding only in session output.
+- unresolved -> issue open;
+- plausible corrective PR -> still open, reported as `IN_FLIGHT`;
+- verified fixed on `main` -> close completed;
+- duplicate/false positive/superseded -> close with explanation;
+- regression -> reopen the same issue.
 
-## Finding attribution
+A merged PR, closed issue, or green CI result is not itself proof of resolution. Current authoritative evidence on the reviewed `main` head is.
 
-Consistency findings may later be used as evidence in a separate review-quality audit. Attribution for that audit must be evidence-backed so the audit distinguishes a PR-review escape from unrelated or inherited repository drift.
+Invoking a formal recurring review gives the narrow issue authority required to account for its findings. It does not authorize remediation, unrelated issue edits, or merging.
 
-This section is **maintainer audit/post-processing guidance**, not an extension of the executable Consistency agent's required finding or run-report schema. Ordinary Consistency-agent runs remain governed by `.github/agents/consistency.agent.md` and are not required to populate the attribution fields below. If Arcogine later wants every consistency run to produce this metadata automatically, the executable agent contract must be changed explicitly in a separate coherent update.
+## Completion and baseline
 
-When conducting a review-quality audit, derive or preserve the following attribution facts from repository history where they can be established:
+Completion evidence is an append-only comment on register issue #295:
 
-- **first known bad commit** — earliest verified commit in the inspected history where the inconsistency is present;
-- **likely introducing PR** — PR whose merged semantic transition introduced or should have reconciled the stale neighbor;
-- **attribution confidence** — `HIGH`, `MEDIUM`, or `LOW` based on how directly history establishes causation;
-- **origin class** — `REVIEW_ESCAPE`, `LEGACY_DRIFT`, `UNRELATED_DRIFT`, `REGRESSION`, or `UNKNOWN`.
+```text
+Consistency review completed
+head: <full main SHA>
+scope: FULL | INCREMENTAL
+findings: none | #<number>, #<number>, ...
+```
 
-Use `REVIEW_ESCAPE` only when the evidence supports all of these: the relevant semantic change was in a reviewed PR, the stale or contradictory neighbor already existed in that PR's proposed post-merge state, and the PR review did not identify it before merge. A later consistency finding is not automatically a reviewer failure merely because it was discovered after a PR.
+GitHub supplies the comment author association and creation timestamp, so the comment does not restate them. `findings: none` is the clean result; otherwise every cited number must resolve to a persisted consistency-finding issue.
 
-Use `LEGACY_DRIFT` when the inconsistency predates the inspected review window or cannot reasonably be tied to the semantic transition under review. Use `UNRELATED_DRIFT` when a recent PR is nearby in time but did not change the concept or authority involved. Use `REGRESSION` when a previously resolved semantic inconsistency reappears.
+The register workflow reacts to the completion comment through GitHub's `issue_comment` event and updates its derived state. The reviewer does not need `repository_dispatch`, `workflow_dispatch`, `gh api`, or a synchronous post-comment refresh check. The scheduled workflow remains a backstop if an event-driven refresh is delayed or fails.
 
-Do not manufacture attribution to improve metrics. If the introducing point cannot be established from repository history, record `UNKNOWN`. Attribution is diagnostic audit metadata, not product/architecture authority, not part of the finding's durable semantic identity, and not required to be persisted in a consistency issue.
+The weekly baseline advances only from a trusted, structurally valid, fully accounted `FULL` or `INCREMENTAL` completion. An isolated `INCREMENTAL` comment cannot establish the first baseline.
 
-## Calibration migration
+## Mechanical evidence
 
-The original calibration findings were migrated to GitHub Issues #204-#209. Their legacy aliases remain stable:
+The ChatGPT reviewer does not execute repository checks locally. When a consistency claim depends on CI or a repository-owned checker, inspect its source/tests and existing GitHub check/workflow evidence. Lack of a local shell is not an `INCOMPLETE` condition.
 
-- `CONS-001` -> #204
-- `CONS-002` -> #205
-- `CONS-003` -> #206
-- `CONS-004` -> #207
-- `CONS-005` -> #208
-- `CONS-006` -> #209
+`INCOMPLETE` is reserved for missing repository/ledger evidence necessary to judge the requested scope or for failure to durably account for findings.
 
-Those aliases are grandfathered; new findings use the issue-number-derived alias rule instead of continuing a separate sequential counter.
+## Review-quality audit attribution
 
-## Baseline discipline
+Finding attribution for a later delivery/review-quality retrospective remains separate post-processing guidance. When evidence establishes it, an audit may record:
 
-Finding persistence and comparison-baseline persistence remain separate concerns, but the recurring baseline now has an explicit accounting contract. The continuous-improvement register may treat a completion as a reviewed baseline only when the comment is trusted, non-future, structurally complete, and accounted:
+- first known bad commit;
+- likely introducing PR;
+- attribution confidence (`HIGH`, `MEDIUM`, `LOW`);
+- origin class (`REVIEW_ESCAPE`, `LEGACY_DRIFT`, `UNRELATED_DRIFT`, `REGRESSION`, `UNKNOWN`).
 
-- `FULL` or `INCREMENTAL` is the mode;
-- `CLEAN` cites `finding issues: none`;
-- `FINDINGS` cites one or more verified persisted Consistency issue numbers;
-- every unresolved finding needing lifecycle continuity has been durably identified before the comment is posted.
+Use `REVIEW_ESCAPE` only when the reviewed PR's proposed post-merge state already contained the inconsistency and the PR review did not identify it. Do not manufacture attribution to improve process metrics. This audit metadata is not part of the normal Consistency finding schema or identity.
 
-`PR_FORWARD`, `DIAGNOSTIC_ONLY`, legacy four-line comments, malformed comments, and completion claims containing `UNPERSISTED` findings never establish or advance the weekly `main` baseline. If no accounted baseline exists, the obligation is `DUE` and the next qualifying run must be `FULL`; do not pretend an incremental interval is complete.
+## Ownership
 
-The reviewer must carry unresolved findings forward even when the commit that introduced them predates the chosen incremental baseline. Advancing a baseline must never make an unresolved finding disappear by construction. After posting a qualifying completion comment, trigger the existing `repository_dispatch` register refresh when possible and verify the managed register state; report dispatch or verification failure explicitly.
+- `.github/agents/consistency.agent.md` owns the review algorithm, evidence rules, issue accounting, and completion protocol.
+- GitHub issues own durable finding identity/lifecycle continuity.
+- Register issue #295 plus `.github/workflows/continuous-improvement.yml` own recurring due-state display.
+- This document records maintainer operating guidance and audit attribution conventions.
+- Architecture, ADRs, planning, source, tests, config, and public/reference docs remain authoritative for their respective semantic questions.
 
-The old September 11 completion marker remains visible as historical evidence, but its missing result and finding-accounting fields mean it is not an accounted baseline. Until a new qualifying completion is recorded, the register must therefore show `DUE` (or an equally explicit not-accounted state).
-
-
-## Ownership boundaries
-
-Keep these concerns separate:
-
-- `.github/agents/consistency.agent.md` owns the consistency review procedure, evidence rules, finding format, identity/lifecycle rules, and resolution policy.
-- GitHub Issues own durable finding identity and lifecycle continuity only.
-- This document owns human/maintainer operating guidance for recurring reviews and separate review-quality audit attribution conventions; it does not add fields to the executable Consistency agent's finding/report contract.
-- Normal implementation sessions own remediation once a finding has been accepted.
-- Independent PR review owns acceptance of remediation changes.
-- Architecture, ADR, planning, source, tests, and executable configuration remain authoritative for their respective semantic questions; consistency issues do not replace them.
-
-The intended loop is therefore:
-
-> diagnose independently, persist durable findings deliberately, triage deliberately, remediate through normal change control, then verify against the resulting repository state.
+The intended loop is: diagnose from live evidence, durably account real findings, remediate through ordinary change control, then verify against a later `main` head.

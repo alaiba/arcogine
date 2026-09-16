@@ -294,13 +294,15 @@ See [`docs/development/repository-snapshot.md`](docs/development/repository-snap
 
 For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, `bootJar`, JMH, dependency audit), `cd product/interfaces/web && npm ...`/`npx ...` (lint, typecheck, build, Playwright), `docker compose ...` (containers), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
 
-`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. Use the dev container on Windows; it's the supported path. Before running shell- or toolchain-dependent commands on Windows, inspect the running Docker containers first, identify the container that mounts this repository, and execute there rather than assuming a container name. If no suitable dev container is running, use the documented WSL/Git Bash fallback or report the missing environment.
+`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. On a Windows host, prefer execution environments in this order when available: (1) the devcontainer, (2) a generic ad hoc Docker container, (3) WSL/Git Bash, and (4) native Windows tooling. Before running shell- or toolchain-dependent commands on Windows, inspect the running Docker containers first and identify the container that mounts this repository; do not assume a container name. If no suitable devcontainer is running, try the documented generic Docker workflow, then WSL/Git Bash, and finally native Windows tooling when the command supports it.
 
 ### Backend test environment
 
-Backend validation requires a JDK 21+ runtime and the repository Gradle wrapper. On Windows, use
-the dev container when practical. If the current host exposes only a pre-21 JDK or otherwise cannot
-run the wrapper, do not use it for backend validation; use the dev container or the documented
+Backend validation requires a JDK 21+ runtime and the repository Gradle wrapper. On Windows, prefer
+the devcontainer, then a generic ad hoc Docker container, then WSL/Git Bash, and finally native
+Windows tooling. If the current host exposes only a pre-21 JDK or otherwise cannot run the wrapper,
+do not use it for backend validation; use the first available supported environment from that order,
+including the documented
 `gradle:9-jdk21` Docker workflow in
 [`docs/development/testing.md`](docs/development/testing.md#running-java-tests-on-the-minimum-jdk),
 for example `docker exec arcogine-build ./gradlew test`. Classify a host Gradle failure as

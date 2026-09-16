@@ -41,6 +41,7 @@ public class FactoryHandler implements EventHandler {
     public final List<ProductId> productIds;
     private double completedSalesValue;
     private long completedSales;
+    private long completedLeadTimeTicks;
 
     /**
      * Work waiting for one of more than one eligible machine to free up. Unlike {@link
@@ -65,6 +66,7 @@ public class FactoryHandler implements EventHandler {
         this.productIds = List.copyOf(productIds);
         this.completedSalesValue = 0.0;
         this.completedSales = 0;
+        this.completedLeadTimeTicks = 0;
     }
 
     @Override
@@ -138,14 +140,10 @@ public class FactoryHandler implements EventHandler {
     }
 
     public double avgLeadTime() {
-        List<OrderExecutionView> completed = orderExecutionsView().filter(OrderExecutionView::complete).toList();
-        if (completed.isEmpty()) {
+        if (completedSales == 0) {
             return 0.0;
         }
-        long total = completed.stream()
-                .mapToLong(view -> view.completedAt().minus(orders.get(view.orderId()).createdAt()))
-                .sum();
-        return (double) total / completed.size();
+        return (double) completedLeadTimeTicks / completedSales;
     }
 
     public double throughput(long elapsedTicks) {
@@ -170,7 +168,7 @@ public class FactoryHandler implements EventHandler {
         return candidates.stream()
                 .min(Comparator
                         .<MachineId>comparingInt(id -> machines.get(id).canAcceptJob() ? 0 : 1)
-                        .thenComparingInt(this::combinedQueueDepth)
+                        .thenComparingLong(this::combinedQueueDepth)
                         .thenComparing(MachineId::value))
                 .orElseThrow();
     }
@@ -180,9 +178,9 @@ public class FactoryHandler implements EventHandler {
      * could also land on it, so the "shallowest queue" tie-break accounts for shared multi-machine
      * backlog, not just work already pinned to this one machine.
      */
-    private int combinedQueueDepth(MachineId id) {
+    private long combinedQueueDepth(MachineId id) {
         return machines.get(id).queueDepth()
-                + (int) pendingMultiEligible.stream()
+                + pendingMultiEligible.stream()
                         .filter(pending -> pending.eligibleMachines().contains(id))
                         .count();
     }
@@ -373,6 +371,12 @@ public class FactoryHandler implements EventHandler {
             if (orders.completeChild(order.id(), currentTime)) {
                 completedSalesValue += order.orderValue();
                 completedSales += 1;
+                long leadTime = currentTime.minus(order.createdAt());
+                if (leadTime > Long.MAX_VALUE - completedLeadTimeTicks) {
+                    completedLeadTimeTicks = Long.MAX_VALUE;
+                } else {
+                    completedLeadTimeTicks += leadTime;
+                }
                 scheduler.schedule(Event.of(currentTime, new EventPayload.OrderCompleted(order.id(), job.id(), order.productId(), order.quantity(), order.unitPrice())));
             }
         } else {

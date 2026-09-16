@@ -1,6 +1,6 @@
 # Factory Simulation Engine Readiness Implementation Plan
 
-> **Status:** Active; workload/dispatch/session/work-decomposition and core observation/event semantics are complete, while outward consumer convergence and spatial runtime consequences remain admitted work  
+> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, and PLAN-ENG-5-0 Engine-semantics:v1 conformance are complete, while outward consumer convergence and the remaining spatial runtime consequences remain admitted work
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
 > **Related:** [Factory Design Capability](factory-design-capability.md), [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md)
@@ -74,6 +74,15 @@ The consumer-neutral runtime now provides:
 - stable order/work correlation;
 - a fresh observation sufficient to reconstruct supported consumer state without replay.
 
+### PLAN-ENG-5-0 — Engine-semantics:v1 conformance
+
+The retained pre-spatial Engine interpretation is now explicitly pinned by deterministic factory
+conformance evidence. This includes resource selection, local/shared waiting and recovery ordering,
+shared-backlog ranking and reselection, child materialization boundaries, scheduler ordering, and
+the accepted derived-result arithmetic. The implementation also uses a wide exact
+`combinedQueueDepth` ranking quantity and saturating mean-lead-time accumulation as required by
+`engine-semantics:v1`.
+
 ## 3. Current implementation queue
 
 Only the following Engine work is currently admitted.
@@ -100,7 +109,7 @@ Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detai
 
 The admitted sequence includes:
 
-1. pin pre-existing result-affecting Engine semantics and required arithmetic corrections;
+1. pin pre-existing result-affecting Engine semantics and required arithmetic corrections — complete;
 2. implement Factory Model v2 spatial facts/validation and canonical identity;
 3. establish `EngineSemanticsVersion` and propagate required runtime provenance;
 4. implement deterministic transfer arithmetic and inbound admission reservation;
@@ -154,7 +163,11 @@ PLAN-ENG-4 A/B/C complete
     +----> PLAN-ENG-5 spatial consequences
 ```
 
-Within PLAN-ENG-5, the first-release dispatch research gate is now cleared: both reviewed questions retain v1, so PLAN-ENG-5-0 may pin the existing rules and their coupled recovery/ranking corner. PLAN-ENG-6 may target v1 only after that conformance evidence lands. Factory V2 authored/canonical model work remains independently sequenced as described in the detailed plan.
+Within PLAN-ENG-5, the first-release dispatch research gate is now cleared and PLAN-ENG-5-0 is
+implemented: both reviewed questions retain v1, and the existing rules plus their coupled
+recovery/ranking corner are pinned executably. PLAN-ENG-5-B1 is therefore unblocked and may proceed
+while Factory V2 authored/canonical model work remains independently sequenced as described in the
+detailed plan. PLAN-ENG-6 may target v1 after this conformance evidence lands.
 
 PLAN-ENG-4 core closure no longer blocks spatial work. Outward convergence should consume settled provenance from the spatial/Engine-semantics work where the detailed delivery plans require it rather than migrating an envelope that is immediately revised.
 

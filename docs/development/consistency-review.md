@@ -1,15 +1,13 @@
 # Consistency review operations
 
-> **Status:** maintainer guidance around the executable review contract in [`.github/agents/consistency.agent.md`](../../.github/agents/consistency.agent.md).
+> **Status:** maintainer guidance around the review contract in [`.github/agents/consistency.agent.md`](../../.github/agents/consistency.agent.md).
 
-Arcogine's formal Consistency review runs in a ChatGPT chat session using the GitHub connector. It is not required to run in a local checkout or remain compatible with local coding-agent runtimes. The review contract therefore assumes repository reads/writes happen through GitHub and must not depend on `git`, `gh`, shell commands, or locally executing repository scripts.
+Arcogine's formal Consistency review runs in a ChatGPT chat session using the GitHub connector. It is not required to run in a local checkout or remain compatible with local coding-agent runtimes. Repository reads and finding/register writes therefore happen through GitHub; the review does not depend on `git`, `gh`, shell commands, or locally executing repository scripts.
 
 ## Operating loop
 
-The recurring review is deliberately small:
-
 ```text
-read live main + register #295
+read live main + register #295 + open CONS findings
         |
         v
 choose scope automatically
@@ -20,25 +18,30 @@ choose scope automatically
 inspect semantic changes + repository-search neighbors
         |
         v
-reconcile open/closed consistency findings
+reconcile open findings
+        |
+        +--> candidate new/regression finding
+        |       -> search relevant closed CONS findings on demand
         |
         v
 create/reopen/close finding issues as required
         |
         v
-post one completion comment to #295
+update the weekly Consistency section of #295
         |
         v
-workflow refreshes the derived register state
+done
 ```
 
 The reviewer does not run a second PR-review mode. Open PRs are inspected only when they explain history or show that an existing finding is plausibly `IN_FLIGHT`; independent PR acceptance remains owned by the PR Reviewer.
 
-Ad-hoc questions such as “is this architecture claim consistent with the implementation?” are ordinary read-only chat analysis. They do not need a formal `DIAGNOSTIC_ONLY` mode and do not advance the weekly baseline.
+Ad-hoc questions such as “is this architecture claim consistent with the implementation?” are ordinary read-only chat analysis. They do not need a formal diagnostic mode and do not advance the weekly baseline.
 
 ## Grounding and scope
 
-Every formal review re-reads current `main`, `AGENTS.md`, the live consistency contract, register issue #295, and the open/closed consistency-finding ledger. Uploaded snapshots and conversation memory are not current repository authority.
+Every formal review re-reads current `main`, `AGENTS.md`, the live consistency contract, register issue #295, and the currently open `CONS:` findings. Uploaded snapshots and conversation memory are not current repository authority.
+
+Closed findings are **not** preloaded. When a new candidate finding appears, search closed `CONS:` issues using its semantic subject/terminology/evidence to determine whether it is a regression or duplicate. This makes history lookup proportional to actual candidates rather than to the lifetime size of the ledger.
 
 The reviewer selects scope from the register rather than asking the user:
 
@@ -46,7 +49,15 @@ The reviewer selects scope from the register rather than asking the user:
 - accounted reviewed head -> `INCREMENTAL` from that head to current `main`;
 - unusable/missing baseline -> fall back to `FULL`.
 
-A `FULL` review broadly samples all maintained semantic families and executable evidence needed to establish a repository-wide baseline. An `INCREMENTAL` review reconstructs the semantic changes since the baseline and follows their neighboring authorities. Unresolved findings are always carried forward even when they predate the incremental range.
+A `FULL` review broadly samples all maintained semantic families and executable evidence needed to establish a repository-wide baseline. An `INCREMENTAL` review reconstructs the semantic changes since the baseline and follows their neighboring authorities. Open findings are always carried forward even when they predate the incremental range.
+
+## Claim-state taxonomy
+
+The generic Consistency-review taxonomy is closed and explicit:
+
+`CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, `COMPATIBILITY_DEBT`.
+
+A reviewer does not invent another generic state during a run. If the taxonomy proves insufficient, change the contract explicitly. Domain-owned lifecycles such as research statuses remain their own vocabulary and are interpreted through their owning documents rather than being folded into this list.
 
 ## Search-driven semantic neighbors
 
@@ -61,21 +72,19 @@ Typical examples:
 
 These are examples, not a fixed matrix. Repository evidence determines the actual neighbor set.
 
+When a consistency claim depends on executable evidence, inspect source, tests, configuration, and existing GitHub CI/check evidence through the connector. The review runtime has no local-check requirement.
+
 ## Finding persistence
 
-GitHub Issues are the durable finding ledger. The GitHub issue number is the sole canonical identity.
-
-Historical findings with `CONS-001`, `CONS-002`, and later numeric `CONS-*` titles remain valid and searchable. New findings use:
+GitHub Issues are the durable finding ledger. The GitHub issue number is the canonical identity; all findings use one title convention:
 
 ```text
 CONS: <concise semantic title>
 ```
 
-No new alias counter, issue-number-derived alias, reservation protocol, or `[CONSISTENCY-UNBOUND]` staging issue is needed.
+The earlier numeric `CONS-*` titles were normalized to this form rather than preserved as a compatibility branch.
 
-Before creating a finding, search open and closed current/historical consistency issues by semantic subject and evidence. Regressions reuse and reopen the original issue.
-
-Finding bodies persist durable diagnostic evidence (severity/category/confidence, conflicting claims/evidence, and authority analysis). Mutable lifecycle state is not duplicated in the body:
+Finding bodies persist durable diagnostic evidence: severity/category/confidence, conflicting claims/evidence, and authority analysis. Mutable lifecycle state is not duplicated in the body:
 
 - unresolved -> issue open;
 - plausible corrective PR -> still open, reported as `IN_FLIGHT`;
@@ -89,26 +98,22 @@ Invoking a formal recurring review gives the narrow issue authority required to 
 
 ## Completion and baseline
 
-Completion evidence is an append-only comment on register issue #295:
+Completion is recorded directly in issue #295. The reviewer replaces only the `### Weekly Consistency review` section and preserves the rest of the issue body:
 
 ```text
-Consistency review completed
-head: <full main SHA>
-scope: FULL | INCREMENTAL
-findings: none | #<number>, #<number>, ...
+### Weekly Consistency review
+
+- last verified: <UTC YYYY-MM-DD>
+- reviewed head: <full main SHA>
+- accounted result: CLEAN | FINDINGS
+- finding issues: none | #<number>, #<number>, ...
+- next due / interval: every 7 days
+- state: **CURRENT**
 ```
 
-GitHub supplies the comment author association and creation timestamp, so the comment does not restate them. `findings: none` is the clean result; otherwise every cited number must resolve to a persisted consistency-finding issue.
+That edit is the complete recording operation. There is no completion-comment ledger, comment parser, event-driven completion workflow, manual dispatch, or synchronous refresh check.
 
-The register workflow reacts to the completion comment through GitHub's `issue_comment` event and updates its derived state. The reviewer does not need `repository_dispatch`, `workflow_dispatch`, `gh api`, or a synchronous post-comment refresh check. The scheduled workflow remains a backstop if an event-driven refresh is delayed or fails.
-
-The weekly baseline advances only from a trusted, structurally valid, fully accounted `FULL` or `INCREMENTAL` completion. An isolated `INCREMENTAL` comment cannot establish the first baseline.
-
-## Mechanical evidence
-
-The ChatGPT reviewer does not execute repository checks locally. When a consistency claim depends on CI or a repository-owned checker, inspect its source/tests and existing GitHub check/workflow evidence. Lack of a local shell is not an `INCOMPLETE` condition.
-
-`INCOMPLETE` is reserved for missing repository/ledger evidence necessary to judge the requested scope or for failure to durably account for findings.
+The scheduled continuous-improvement workflow is independent maintenance. It reads the current weekly record from the body, ages `CURRENT` to `DUE`/`OVERDUE` as time passes, refreshes retrospective counters, and preserves the reviewer-owned accounting fields. If the workflow is delayed, the recorded review head/date/result remain authoritative; only the derived display state may be stale until the next maintenance run.
 
 ## Review-quality audit attribution
 
@@ -125,8 +130,9 @@ Use `REVIEW_ESCAPE` only when the reviewed PR's proposed post-merge state alread
 
 - `.github/agents/consistency.agent.md` owns the review algorithm, evidence rules, issue accounting, and completion protocol.
 - GitHub issues own durable finding identity/lifecycle continuity.
-- Register issue #295 plus `.github/workflows/continuous-improvement.yml` own recurring due-state display.
+- Register issue #295 owns current recurring review state.
+- `.github/workflows/continuous-improvement.yml` only refreshes time/count-derived display state; it is not part of review completion.
 - This document records maintainer operating guidance and audit attribution conventions.
 - Architecture, ADRs, planning, source, tests, config, and public/reference docs remain authoritative for their respective semantic questions.
 
-The intended loop is: diagnose from live evidence, durably account real findings, remediate through ordinary change control, then verify against a later `main` head.
+The intended loop is: diagnose from live evidence, durably account real findings, record the reviewed baseline directly, remediate through ordinary change control, then verify against a later `main` head.

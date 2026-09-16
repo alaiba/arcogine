@@ -1,10 +1,10 @@
 # Arcogine consistency review
 
-This contract defines Arcogine's repository consistency review. It is intentionally built for a ChatGPT chat session using the GitHub connector against `alaiba/arcogine`.
+This contract defines Arcogine's repository consistency review. It is built for a ChatGPT chat session using the GitHub connector against `alaiba/arcogine`.
 
-Do not require a local checkout, `git`, `gh`, shell commands, or local execution of repository scripts. Read repository state, files, issues, pull requests, commits, reviews, and CI evidence through the GitHub connector. A missing local command is never by itself a review limitation.
+Do not require a local checkout, `git`, `gh`, shell commands, or local execution of repository scripts. Read repository state, files, issues, pull requests, commits, reviews, and CI evidence through the GitHub connector.
 
-A formal Consistency review is diagnostic plus the narrow finding-ledger accounting described below. It does not authorize source/doc remediation, planning changes, ADR changes, pull-request creation, or merging. Ad-hoc consistency questions in chat are read-only analyses; they are not formal recurring reviews and do not record completion.
+A formal Consistency review is diagnostic plus the narrow finding-ledger and register accounting described below. It does not authorize source/doc remediation, planning changes, ADR changes, pull-request creation, or merging. Ad-hoc consistency questions in chat are read-only analyses; they are not formal recurring reviews and do not record completion.
 
 ## Goal
 
@@ -31,7 +31,9 @@ Use the authority that owns the question:
 
 GitHub consistency issues preserve finding identity and lifecycle continuity; they are not product, architecture, planning, or implementation authority.
 
-Classify claims before comparing them. Distinguish at least `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, and `COMPATIBILITY_DEBT`. Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is.
+Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles such as research statuses remain their own vocabulary and are not additional generic review states. If the generic taxonomy later proves insufficient, change this contract explicitly rather than inventing a new state during a run.
+
+Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is.
 
 Accepted ADRs preserve decision history. Do not call historical wording/path context stale merely because implementation later moved. A changed architectural decision requires the repository's ADR supersession process, not retrospective rewriting of history.
 
@@ -41,8 +43,8 @@ Re-ground from live repository state rather than conversation memory or uploaded
 
 1. Resolve the current `main` SHA and read this file from that head.
 2. Read `AGENTS.md`.
-3. Read the continuous-improvement register, fixed at GitHub issue `#295`.
-4. Load open and closed consistency findings: issues whose titles begin `CONS:` (current form) or `CONS-` (historical form).
+3. Read the continuous-improvement register at GitHub issue `#295`.
+4. Load the currently open consistency findings whose titles begin `CONS:`.
 5. Determine scope automatically from the register:
    - no accounted reviewed head -> `FULL`;
    - accounted reviewed head present -> `INCREMENTAL` from that head to current `main`.
@@ -50,7 +52,7 @@ Re-ground from live repository state rather than conversation memory or uploaded
 
 If the registered baseline cannot be resolved, fall back to `FULL`. The user does not need to choose a mode.
 
-If required repository state or the finding ledger cannot be read, report `INCOMPLETE` and do not record completion.
+If required repository state or the open finding ledger cannot be read, report `INCOMPLETE` and do not record completion.
 
 ## Review method
 
@@ -59,15 +61,15 @@ For each material changed or reviewed concept:
 1. Identify the claim and its lifecycle state.
 2. Search the repository for the concept, important symbols, and terminology.
 3. Read the authoritative current/planning/ADR/test/interface surfaces returned by that search.
-4. Inspect source/config/tests or existing CI evidence when they materially prove or contradict the claim.
+4. Inspect source/config/tests or existing GitHub CI/check evidence when they materially prove or contradict the claim.
 5. Inspect recent/open pull requests only when history is needed to understand the transition or determine whether an existing finding is in flight.
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
 
 Prefer repository search over a permanently duplicated neighbor matrix. Examples: a `FactoryModel` semantic change should lead to factory architecture/ADRs/planning and Engine assumptions; an API/DTO change should lead to reference docs and consumers; a CI/toolchain change should lead to testing/contribution policy. Expand from evidence rather than treating these examples as an exhaustive graph.
 
-Do not execute repository checks locally. Existing workflow/check results may be inspected through GitHub, but green CI or the existence of a test/class is not by itself proof that an acceptance criterion is satisfied. Read the actual evidence.
+Carry every open issue-backed finding forward even if it predates the incremental baseline.
 
-Carry every unresolved issue-backed finding forward even if it predates the incremental baseline. Search relevant closed findings when current evidence resembles their semantic subject so regressions reuse the same GitHub issue rather than creating duplicates.
+When a new candidate finding is identified, search closed `CONS:` issues using its semantic subject, terminology, and evidence before creating anything. Reopen the matching issue for a regression; otherwise create a new finding. This keeps closed-history lookup bounded to candidates instead of preloading the entire closed ledger on every run.
 
 ## Findings
 
@@ -88,15 +90,11 @@ Do not report an inconsistency solely because two artifacts use different wordin
 
 ## GitHub finding ledger
 
-The GitHub issue number is the sole canonical durable identity for a finding.
-
-Historical `CONS-001` through `CONS-006` and later numeric `CONS-*` titles remain valid history and must not be renamed merely to adopt this contract. New findings use the simpler title form:
+The GitHub issue number is the sole canonical durable identity for a finding. All consistency findings use:
 
 ```text
 CONS: <concise semantic title>
 ```
-
-Before creating a finding, search all open and closed current/historical consistency issues and match by semantic subject and evidence. Reuse the existing issue for the same inconsistency, including a regression.
 
 A new finding issue body needs only durable diagnostic evidence, for example:
 
@@ -130,24 +128,28 @@ Lifecycle uses GitHub state plus current review evidence:
 
 A merged PR, closed issue, review comment, or green CI result is not proof of resolution. Only authoritative evidence on the reviewed `main` head establishes that a finding is fixed.
 
-Invoking a formal `FULL` or `INCREMENTAL` review authorizes only the issue creation/update/reopen/close/comment operations required to account for that review's consistency findings. It does not authorize remediation or unrelated issue changes.
+Invoking a formal `FULL` or `INCREMENTAL` review authorizes only the issue creation/update/reopen/close operations required to account for that review's consistency findings and the final update of the weekly Consistency section in register issue #295. It does not authorize remediation or unrelated issue changes.
 
 ## Completion
 
-After the review is complete and every unresolved finding has a durable issue identity, post exactly one completion comment to register issue `#295`:
+After the review is complete and every unresolved finding has a durable issue identity, update only the `### Weekly Consistency review` section of register issue `#295`, preserving the rest of the issue body:
 
 ```text
-Consistency review completed
-head: <full main SHA actually reviewed>
-scope: FULL | INCREMENTAL
-findings: none | #<number>, #<number>, ...
+### Weekly Consistency review
+
+- last verified: <UTC YYYY-MM-DD>
+- reviewed head: <full main SHA actually reviewed>
+- accounted result: CLEAN | FINDINGS
+- finding issues: none | #<number>, #<number>, ...
+- next due / interval: every 7 days
+- state: **CURRENT**
 ```
 
-`findings: none` means the reviewed scope is clean. Otherwise list every unresolved finding applicable to the reviewed head. GitHub supplies the trusted commenter identity and comment timestamp; do not duplicate either in the body.
+`CLEAN` requires `finding issues: none`. `FINDINGS` lists every unresolved finding applicable to the reviewed head.
 
-Posting this comment is the end of the review's completion protocol. The register workflow reacts to the comment and refreshes its derived state. Do not require `repository_dispatch`, `workflow_dispatch`, `gh`, another command, or synchronous verification that the derived register body has already refreshed.
+That body update is the complete review-recording operation. Do not create a completion comment, trigger another workflow, invoke `gh`, or wait for a derived refresh. The scheduled continuous-improvement workflow may later age `CURRENT` to `DUE`/`OVERDUE` and refresh retrospective counters independently; that maintenance is not part of review completion.
 
-Do not post completion if finding accounting is incomplete or required repository evidence was unavailable.
+Do not update the register if finding accounting is incomplete or required repository evidence was unavailable.
 
 ## Report to the user
 

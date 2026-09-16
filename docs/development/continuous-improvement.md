@@ -14,10 +14,10 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 ## Weekly Consistency review
 
 - **Trigger/cadence:** weekly, plus additional review after major architecture/status transitions when useful.
-- **Purpose:** repository semantic coherence across implementation, architecture, ADRs, planning, docs, examples, config, tests, CI, and prior findings.
+- **Purpose:** deep repository semantic review across implementation, architecture, ADRs, planning, docs, examples, config, tests, CI, and prior findings.
 - **Owner/runtime:** the Consistency reviewer in a ChatGPT chat session using the GitHub connector. The detailed algorithm is `.github/agents/consistency.agent.md`.
 - **Execution:** manual/user-invoked. The scheduled workflow tracks derived state but never performs the judgment-bearing review.
-- **Scope:** selected automatically. With no valid baseline the review is `FULL`; otherwise it is `INCREMENTAL` from the recorded head to current `main`.
+- **Review strategy:** the previous reviewed head is a recency anchor only. New and changed content gets first attention, but the review is not bounded to that change range and may uncover older inconsistencies on any run.
 - **Finding accounting:** invoking a formal review authorizes only the GitHub issue operations needed to account for that review's findings and the final update of the weekly register section. It does not authorize remediation or merging.
 
 ## Delivery-process retrospective
@@ -42,7 +42,7 @@ PR review remains governed by `docs/development/reviewing.md`; it is evidence fo
 
 ## Continuous improvement register
 
-GitHub issue **#295**, titled `Continuous improvement register`, is the fixed operational register for this repository. It already exists; automation does not discover, bootstrap, or replace it. If issue #295 is unavailable or no longer has that title, automation fails rather than writing elsewhere.
+GitHub issue **#295**, titled `Continuous improvement register`, is mandatory operational state for this repository. It already exists; automation and reviewers do not discover, bootstrap, recreate, or replace it. If issue #295 is unavailable or no longer has that title, the operation fails rather than writing elsewhere.
 
 The register body has two regions separated by HTML markers:
 
@@ -74,6 +74,8 @@ A completed formal review directly edits the weekly section of issue #295:
 ```
 
 `CLEAN` requires `finding issues: none`; `FINDINGS` cites every unresolved consistency issue applicable to the reviewed head. The GitHub issue number is the finding identity.
+
+The recorded head is used by the next review to prioritize content created or changed since that point. It does not narrow the next review's scope or certify older content as consistent.
 
 This body edit is the whole completion protocol. There is no completion-comment ledger, comment parser, `issue_comment` trigger, `repository_dispatch`, `workflow_dispatch`, `gh api` call, or synchronous refresh requirement.
 

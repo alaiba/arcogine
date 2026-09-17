@@ -9,6 +9,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.FactoryRuntimeAssembler;
 import com.arcogine.factory.orders.Order;
 import com.arcogine.factory.orders.OrderExecutionView;
+import com.arcogine.types.EngineSemanticsVersion;
 import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
@@ -73,6 +74,7 @@ public class FactoryRuntime {
     private final RecordingScheduler scheduler;
     private final FactoryModelVersion modelVersion;
     private final RunId runId;
+    private final EngineSemanticsVersion semanticsVersion;
     private final List<RuntimeEventEnvelope> pendingSupportedEvents = new ArrayList<>();
     private long eventSequence;
 
@@ -95,6 +97,7 @@ public class FactoryRuntime {
         this.scheduler = new RecordingScheduler();
         this.modelVersion = modelVersion;
         this.runId = RunId.create();
+        this.semanticsVersion = EngineSemanticsVersion.requireSupported(EngineSemanticsVersion.CURRENT);
     }
 
     /**
@@ -118,6 +121,11 @@ public class FactoryRuntime {
     /** Opaque correlation identity for this fresh runtime session. */
     public RunId runId() {
         return runId;
+    }
+
+    /** The fixed Engine semantics interpretation used for this runtime's entire lifetime. */
+    public EngineSemanticsVersion semanticsVersion() {
+        return semanticsVersion;
     }
 
     /**

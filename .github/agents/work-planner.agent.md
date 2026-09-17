@@ -307,6 +307,12 @@ If the requested slice depends on an open PR, say so explicitly and instruct the
 
 Keep prompts closure-oriented. Reuse landed contracts, avoid duplicate abstractions, and only introduce production changes that the acceptance evidence actually requires.
 
+### Transient implementation handoffs
+
+When repository persistence is available, a complete implementation or fresh-session prompt must be written to a semantically named path under `workspace/implementation/` and committed before handoff. Return only the branch, exact prompt commit SHA, and path (plus an issue/PR/planning identifier only when it materially helps locate the work); do not paste the complete prompt into chat after the artifact exists. Branch tip alone is not an immutable identity. If the artifact cannot be persisted, report the handoff as blocked rather than falling back to chat-only prompt custody. A changed prompt requires a new commit and new coordinates.
+
+The prompt is delivery scaffolding, not maintained planning authority. The implementation branch must remove it before independent PR review and merge readiness; durable implementation state belongs in maintained planning, code/tests, architecture/ADRs/reference, and PR history. The final candidate must contain no tracked `workspace/` files and must also be checked for temporary material that was accidentally placed in a durable directory.
+
 ## Interaction with other specialized agents
 
 - **PR Reviewer:** planning may recommend reviewing a PR, but independent merge-readiness assessment belongs to `.github/agents/pr-reviewer.agent.md`.

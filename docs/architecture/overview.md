@@ -622,6 +622,12 @@ This determinism contract is scoped to simulation, replay, and verification cont
 
 ## Factory Model Identity (current state)
 
+The supported runtime establishes one fixed `EngineSemanticsVersion` (`engine-semantics:v1`)
+alongside the authored `ModelFingerprint` and opaque per-runtime `RunId`. These identities answer
+different provenance questions: the semantics identity describes the result-affecting Engine
+interpretation, while `RunId` is correlation only. Runtime observation/event field propagation
+remains follow-up work.
+
 Scenario factory semantics are instantiated through an implemented canonical-model seam: `FactoryModel` (validated) → `FactoryModelVersion` (immutable, published) → `FactoryRuntimeAssembler` (deterministic runtime instantiation). See [ADR-0003](decisions/0003-canonical-factory-model-boundary.md) for the accepted boundary this implements.
 
 `FactoryModelVersion.fingerprint()` implements the durable `factory-model:v1` semantic fingerprint contract accepted by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). The contract uses the typed `ModelFingerprint` value and a language-independent canonical binary encoding with explicit policy versioning and compatibility vectors. Equal canonical semantic content therefore has a durable identity that is independent of process memory and implementation language under the v1 policy.

@@ -21,13 +21,18 @@ export const LOG_DIRECTORY = join(REPOSITORY_ROOT, 'logs');
 export const AUTHORITY_TEXT = `Purpose: project-source repository-content baseline
 
 This artifact represents canonical alaiba/arcogine main at exactly the commit recorded above (S).
-For ordinary retrieval, identify the target repository ref from task context and compare S directly
-to that ref with one live GitHub compare. Do not separately resolve the target SHA unless the exact
-SHA is independently required; reuse a target SHA already supplied by task-specific GitHub state.
+For ordinary retrieval, identify the target repository ref from task context and use one live GitHub
+compare from S to that ref through a compare surface that also exposes the exact resolved target
+commit SHA (T). If a task-specific GitHub call already supplied the exact target SHA, reuse it as T
+and compare S directly to T. If the chosen compare surface does not expose exact T, do not use its
+changed-path set for delta-mode live reads; prefer a compare surface that returns T and the delta
+together, or resolve T separately and repeat the compare as S..T.
+
 If the compare shows no repository-content difference, use this artifact directly. If S is an
-ancestor of the target and the compare provides a complete changed-path delta, keep this artifact
-as the primary corpus for unaffected paths and use live target content only for affected paths,
-including additions, modifications, deletions, renames, and copies. If ancestry or a complete
+ancestor of T, exact T is known, and the compare provides a complete changed-path delta, keep this
+artifact as the primary corpus for unaffected paths and use live target content only for affected
+paths, fetched at immutable ref=T rather than the mutable branch ref. Treat additions,
+modifications, deletions, renames, and copies as affected. If ancestry, exact T, or a complete
 usable delta cannot be established, use live repository evidence for the target or refresh the
 snapshot.
 

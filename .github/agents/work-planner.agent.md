@@ -38,7 +38,7 @@ Do not optimize for maximum concurrency or maximum roadmap breadth. Prefer coher
 
 For normal planning, live `main` is the authoritative baseline for claims about what is currently landed, implemented, available, or ready as a repository capability.
 
-A current checkout, feature branch, PR head, or implementation branch is not current repository truth merely because the session is operating on it. `AGENTS.md`'s branch-to-work rule controls where implementation work should happen; it does not redefine the planner's landed/current capability baseline.
+A current checkout, feature branch, PR head, or implementation branch is not current repository truth merely because the session is operating on it.
 
 Keep these states separate:
 

@@ -19,17 +19,21 @@ const commit = '0123456789abcdef0123456789abcdef01234567';
 const otherCommit = '89abcdef0123456789abcdef0123456789abcdef';
 const generatedAt = '2026-09-16T00:00:00.000Z';
 
-test('provenance header identifies exact-current-main project-source corpus', () => {
+test('provenance header identifies reusable project-source baseline', () => {
   const header = buildHeader({ commit, generatedAt });
   match(header, new RegExp(`^Repository: alaiba/arcogine$`, 'm'));
   match(header, new RegExp(`^Branch: main$`, 'm'));
   match(header, new RegExp(`^Commit: ${commit}$`, 'm'));
   match(header, new RegExp(`^Generated: ${generatedAt}$`, 'm'));
   match(header, new RegExp(`^Generator: Repomix ${REPOMIX_VERSION}$`, 'm'));
-  ok(header.includes('Purpose: ChatGPT/project-source repository-content corpus'));
-  ok(header.includes('treat this artifact as stale and use live repository evidence instead'));
+  ok(header.includes('Purpose: ChatGPT/project-source repository-content baseline'));
+  ok(header.includes('If S equals T, use this artifact directly'));
+  ok(header.includes('If S is an ancestor of T'));
+  ok(header.includes('complete S..T changed-path delta'));
+  ok(header.includes('current main or another descendant branch head'));
   ok(header.includes('A formal Consistency review is stricter'));
-  ok(header.includes('stop, update the project Repomix from current main, and retry'));
+  ok(header.includes('S must equal live main exactly'));
+  ok(header.includes('do not rebuild the formal review corpus through baseline-plus-delta reconciliation'));
   ok(header.includes(AUTHORITY_TEXT));
   assertHeaderPresent(`${header}\n\n<tracked_files count="0">\n</tracked_files>`, header);
 });

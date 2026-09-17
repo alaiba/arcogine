@@ -18,15 +18,18 @@ export const REPOSITORY_ROOT = resolve(scriptDirectory, '..', '..');
 export const CONFIG_PATH = join(scriptDirectory, 'repomix.config.json');
 export const LOG_DIRECTORY = join(REPOSITORY_ROOT, 'logs');
 
-export const AUTHORITY_TEXT = `Purpose: ChatGPT/project-source repository-content baseline
+export const AUTHORITY_TEXT = `Purpose: project-source repository-content baseline
 
 This artifact represents canonical alaiba/arcogine main at exactly the commit recorded above (S).
-For ordinary ChatGPT/project-source use, resolve the repository revision the task needs as target T.
-If S equals T, use this artifact directly. If S is an ancestor of T and live GitHub can establish a
-complete S..T changed-path delta, keep this artifact as the primary corpus for unchanged paths and
-use live target content only for affected paths. If ancestry or a complete usable delta cannot be
-established, use live repository evidence for T or refresh the snapshot. This baseline-plus-delta
-rule may be used for current main or another descendant branch head.
+For ordinary retrieval, identify the target repository ref from task context and compare S directly
+to that ref with one live GitHub compare. Do not separately resolve the target SHA unless the exact
+SHA is independently required; reuse a target SHA already supplied by task-specific GitHub state.
+If the compare shows no repository-content difference, use this artifact directly. If S is an
+ancestor of the target and the compare provides a complete changed-path delta, keep this artifact
+as the primary corpus for unaffected paths and use live target content only for affected paths,
+including additions, modifications, deletions, renames, and copies. If ancestry or a complete
+usable delta cannot be established, use live repository evidence for the target or refresh the
+snapshot.
 
 A formal Consistency review is stricter: S must equal live main exactly before repository content is
 used. If it does not, stop, update the project Repomix from current main, and retry; do not rebuild

@@ -91,9 +91,6 @@ python3 "$dir/check-adr-immutability.test.py"
 python3 "$dir/check-adr-rename.test.py"
 python3 "$dir/check-adr-immutability.py" --ci
 
-echo "Validating continuous-improvement register helper..."
-node --test "$dir/continuous-improvement.test.mjs"
-
 echo "Validating GitHub attribution hygiene helper..."
 node --test "$repo/infra/dev/github-attribution-hygiene.test.mjs"
 

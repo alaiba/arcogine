@@ -224,12 +224,21 @@ bash .github/scripts/arcogine-preflight.test.sh
 bash .github/scripts/arcogine-env.test.sh
 bash .github/scripts/arcogine-cli.test.sh
 bash .github/scripts/check-pr-disposition.test.sh
+python3 .github/scripts/check-transient-workspace.test.py
+python3 .github/scripts/check-transient-workspace.py
 bash infra/dev/claude-cloud.test.sh
 node --test infra/dev/pr-lifecycle.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
 ```
 
 The disposition suite also validates the workflow definitions through the pinned `check-actions-workflows.sh` helper. The shell suites use temporary repositories and fake executables where they need to exercise constrained-environment behavior; they do not install project dependencies or require Docker.
+
+The transient-workspace suite covers `.github/scripts/check-transient-workspace.py`, which rejects any tracked file under the branch-local `workspace/` custody root while allowing similarly named paths elsewhere. Run it locally with:
+
+```bash
+python3 .github/scripts/check-transient-workspace.test.py
+python3 .github/scripts/check-transient-workspace.py
+```
 
 `infra/dev/pr-lifecycle.test.mjs` covers the PR lifecycle resolver in `infra/dev/pr-lifecycle.mjs`, which decides whether a pull request is `AWAITING`, `CHANGES REQUIRED`, or `READY TO MERGE` (see the PR lifecycle and implementation-continuation sections of [AGENTS.md](../../AGENTS.md)). The cases are synthetic — no network, no dependencies, only Node builtins — and concentrate on the paths where a wrong answer reports a PR merge-ready when it is not: required-check identity and success, base-freshness movement, per-author blocking-review lifetime, final-disposition parsing, and connection truncation. Like the classifier test it runs as a step in the always-running `classify` job, so it cannot be skipped by a docs-only or backend-only classification. Run it locally with:
 

@@ -1,6 +1,6 @@
 # Repository snapshot
 
-Arcogine's Repomix snapshot is a whole-repository, point-in-time corpus for project-source retrieval. It can serve either as the exact repository-content view for its recorded commit or as a reusable baseline for a later descendant revision when live GitHub can establish the complete changed-path delta. This avoids discarding an otherwise-current repository corpus merely because a small number of paths changed after the snapshot was generated.
+Arcogine's Repomix snapshot is a whole-repository, point-in-time corpus for project-source retrieval. It can serve either as the exact repository-content view for its recorded commit or as a reusable baseline for a later descendant revision when live GitHub can establish the complete changed-path delta and the exact target commit. This avoids discarding an otherwise-current repository corpus merely because a small number of paths changed after the snapshot was generated.
 
 The snapshot is also the **required** repository-content corpus for formal Consistency reviews. That stricter workflow remains fail-closed unless the snapshot is exact current canonical `main`; see the exact-current-main rules below.
 
@@ -17,13 +17,14 @@ The command writes `logs/arcogine-main-<short-sha>.xml`. Upload that file to the
 For ordinary retrieval, treat the snapshot commit as baseline `S` and identify the target repository ref from task context: normally `main`, or the relevant branch when the task concerns another branch.
 
 1. Read the full commit SHA recorded in the snapshot header (`S`).
-2. Use a single live GitHub compare from `S` to the target ref. Do not separately resolve the target SHA first unless that exact SHA is independently required. If a prior task-specific GitHub call already supplied the target SHA, reuse it.
-3. When the compare shows no repository-content difference, use the snapshot directly for repository-content reads and searches. Do not redundantly fetch individual files through GitHub merely to re-establish identical content.
-4. When `S` is an ancestor of the target and the compare provides a complete, usable changed-path delta, keep the snapshot as the primary corpus for unaffected paths. Use live target content only for affected paths. Treat additions, modifications, deletions, renames, and copies as affected; stale snapshot content for an affected path must not be treated as target-revision content.
-5. For repository-wide or semantic searches under delta mode, search the snapshot as the baseline and reconcile the result with the affected-path set. Inspect live affected content where necessary so added or modified material is not missed and removed or replaced snapshot material cannot produce false conclusions.
-6. When ancestry cannot be established, the compare is incomplete/too large/unavailable, or the delta cannot safely identify all affected paths, do not synthesize a target view from the snapshot. Use live repository evidence for that target or refresh the snapshot.
-7. Use live GitHub separately when the task requires mutable state or history, including pull requests, reviews, unresolved threads, CI/checks, issues, mergeability, branch heads, commit/compare history, and repository writes. Do not make those calls merely to reconfirm repository content already established by the snapshot and delta.
-8. For a long-running task whose conclusion materially depends on the latest repository state, repeat the `S`-to-target compare before finalizing and reconcile any additional delta.
+2. Use one live GitHub compare from `S` to the target ref, using a compare surface that also exposes the exact resolved target commit SHA (`T`). If a prior task-specific GitHub call already supplied the exact target SHA, reuse it as `T` and compare `S` directly to `T` instead of resolving the ref again.
+3. If the chosen compare surface does not expose the exact resolved target SHA, do not use its changed-path set for delta-mode live reads. Prefer a compare surface that returns both `T` and the delta in one call; otherwise resolve `T` separately and repeat the compare as `S..T` before reading affected content.
+4. When the compare shows no repository-content difference, use the snapshot directly for repository-content reads and searches. Do not redundantly fetch individual files through GitHub merely to re-establish identical content.
+5. When `S` is an ancestor of `T`, the compare provides a complete usable changed-path delta, and exact `T` is known, keep the snapshot as the primary corpus for unaffected paths. Use live content only for affected paths and fetch it at immutable `ref=T`, never through the mutable branch ref used to initiate the compare. Treat additions, modifications, deletions, renames, and copies as affected; stale snapshot content for an affected path must not be treated as target-revision content.
+6. For repository-wide or semantic searches under delta mode, search the snapshot as the baseline and reconcile the result with the affected-path set. Inspect affected content at `T` where necessary so added or modified material is not missed and removed or replaced snapshot material cannot produce false conclusions.
+7. When ancestry cannot be established, the compare is incomplete/too large/unavailable, exact `T` cannot be established, or the delta cannot safely identify all affected paths, do not synthesize a target view from the snapshot. Use live repository evidence for that target or refresh the snapshot.
+8. Use live GitHub separately when the task requires mutable state or history, including pull requests, reviews, unresolved threads, CI/checks, issues, mergeability, branch heads, commit/compare history, and repository writes. Do not make those calls merely to reconfirm repository content already established by the snapshot and revision-bound delta.
+9. For a long-running task whose conclusion materially depends on the latest repository state, repeat the `S`-to-target compare before finalizing. If the target moved, establish the new exact `T` and reconcile the new delta before reporting a latest-state conclusion.
 
 The decision is:
 
@@ -34,13 +35,13 @@ one compare to target ref
         |
         +-- no content difference --------> snapshot is the target content corpus
         |
-        +-- S is ancestor of target
+        +-- descendant target, exact T known
         |      + complete delta ----------> snapshot for unaffected paths
-        |      |                           live target content for affected paths
+        |      |                           affected paths read at ref=T
         |      |
         |      + unsafe/incomplete delta -> use live target evidence or refresh
         |
-        +-- ancestry not established -----> use live target evidence or refresh
+        +-- exact T / ancestry unavailable -> use live target evidence or refresh
 
 formal Consistency review: S must equal live main exactly, otherwise INCOMPLETE
 ```
@@ -58,17 +59,18 @@ At the first repository grounding of a task/session:
 
 1. Read the snapshot's recorded full commit SHA as `S`.
 2. Identify the target repository ref from task context: normally `main`, or the relevant branch when the task concerns another branch.
-3. Use a single live GitHub compare from `S` to that target ref. Do not separately resolve the target SHA first unless the exact SHA is independently required. If a prior task-specific GitHub call already supplied the target SHA, reuse it.
-4. If the compare shows no repository-content difference, use the snapshot as the repository-content source and search corpus. Do not redundantly fetch the same files through GitHub.
-5. If `S` is an ancestor of the target and the compare provides a complete usable changed-path delta:
+3. Use one live GitHub compare from `S` to that target ref, using a compare surface that also exposes the exact resolved target commit SHA as `T`. If a prior task-specific GitHub call already supplied the exact target SHA, reuse it as `T` and compare `S` directly to `T`.
+4. If the chosen compare surface does not expose exact `T`, do not use its changed-path set for delta-mode live reads. Prefer a compare surface that returns `T` and the delta together; otherwise resolve `T` separately and repeat the compare as `S..T`.
+5. If the compare shows no repository-content difference, use the snapshot as the repository-content source and search corpus. Do not redundantly fetch the same files through GitHub.
+6. If `S` is an ancestor of `T`, exact `T` is known, and the compare provides a complete usable changed-path delta:
    - keep the snapshot as the primary corpus for unaffected paths;
-   - use live target content only for affected paths;
+   - use live target content only for affected paths, fetched at immutable `ref=T` rather than the mutable branch ref;
    - treat additions, modifications, deletions, renames, and copies as affected;
-   - never use snapshot content from an affected path as evidence about the target revision.
-6. For repository-wide or semantic searches under delta mode, search the snapshot as the baseline and reconcile the result with the affected-path set. Inspect live affected content where necessary so added or modified material is not missed and removed or replaced snapshot material cannot produce false conclusions.
-7. If ancestry or a complete usable delta cannot be established, use live repository evidence for the target or obtain a fresh snapshot.
-8. Use live GitHub separately when the task requires mutable state or history, including pull requests, reviews, unresolved threads, CI/checks, issues, mergeability, branch heads, commit/compare history, and repository writes. Do not make those calls merely to reconfirm repository content already established by the snapshot and delta.
-9. For a long-running task whose conclusion materially depends on the latest repository state, repeat the `S`-to-target compare before finalizing and reconcile any new delta.
+   - never use snapshot content from an affected path as evidence about `T`.
+7. For repository-wide or semantic searches under delta mode, search the snapshot as the baseline and reconcile the result with the affected-path set. Inspect affected content at `T` where necessary so added or modified material is not missed and removed or replaced snapshot material cannot produce false conclusions.
+8. If ancestry, exact `T`, or a complete usable delta cannot be established, use live repository evidence for the target or obtain a fresh snapshot.
+9. Use live GitHub separately when the task requires mutable state or history, including pull requests, reviews, unresolved threads, CI/checks, issues, mergeability, branch heads, commit/compare history, and repository writes. Do not make those calls merely to reconfirm repository content already established by the snapshot and revision-bound delta.
+10. For a long-running task whose conclusion materially depends on the latest repository state, repeat the `S`-to-target compare before finalizing. If the target moved, establish the new exact `T` and reconcile the new delta.
 
 Formal Consistency review is the exception: its snapshot commit must exactly equal current live `main`. A missing, malformed, or stale snapshot makes the review `INCOMPLETE`; do not reconstruct that review corpus through delta reconciliation.
 ```
@@ -106,7 +108,7 @@ The snapshot intentionally does not include Git history/diffs. Formal Consistenc
 
 ## Authority boundary
 
-For the exact recorded commit `S`, the snapshot is authoritative for repository content. When one live compare from `S` to the target ref establishes a complete descendant delta, unaffected paths remain exactly represented by the snapshot while affected paths must be taken from the live target. The snapshot alone is not authority for the later target revision.
+For the exact recorded commit `S`, the snapshot is authoritative for repository content. When one live compare from `S` to the target ref establishes a complete descendant delta and exact target commit `T`, unaffected paths remain exactly represented by the snapshot while affected paths must be read from immutable `T`. The snapshot alone is not authority for the later target revision, and affected-path reads through a mutable branch ref must not be mixed with a delta derived from an earlier target revision.
 
 The snapshot is not live authority for issues, pull requests, submitted reviews, unresolved review threads, CI/check status, mergeability, branch heads, or other mutable GitHub state; those remain GitHub-connector concerns.
 

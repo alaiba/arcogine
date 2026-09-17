@@ -47,6 +47,32 @@ formal Consistency review: S must equal live main exactly, otherwise INCOMPLETE
 
 This protocol is specifically about attached project-source retrieval; it does not change Arcogine's ordinary repository workflows.
 
+## Reusable Project instruction block
+
+The following block is the maintained copy-paste form of the retrieval strategy for a ChatGPT Project that has an Arcogine snapshot attached. Keep it aligned with the protocol above when that protocol changes.
+
+```text
+Prefer the project-attached `arcogine-main-<sha>.xml` snapshot as the baseline for repository-content retrieval.
+
+At the first repository grounding of a task/session:
+
+1. Read the snapshot's recorded full commit SHA as `S`.
+2. Identify the target repository ref from task context: normally `main`, or the relevant branch when the task concerns another branch.
+3. Use a single live GitHub compare from `S` to that target ref. Do not separately resolve the target SHA first unless the exact SHA is independently required. If a prior task-specific GitHub call already supplied the target SHA, reuse it.
+4. If the compare shows no repository-content difference, use the snapshot as the repository-content source and search corpus. Do not redundantly fetch the same files through GitHub.
+5. If `S` is an ancestor of the target and the compare provides a complete usable changed-path delta:
+   - keep the snapshot as the primary corpus for unaffected paths;
+   - use live target content only for affected paths;
+   - treat additions, modifications, deletions, renames, and copies as affected;
+   - never use snapshot content from an affected path as evidence about the target revision.
+6. For repository-wide or semantic searches under delta mode, search the snapshot as the baseline and reconcile the result with the affected-path set. Inspect live affected content where necessary so added or modified material is not missed and removed or replaced snapshot material cannot produce false conclusions.
+7. If ancestry or a complete usable delta cannot be established, use live repository evidence for the target or obtain a fresh snapshot.
+8. Use live GitHub separately when the task requires mutable state or history, including pull requests, reviews, unresolved threads, CI/checks, issues, mergeability, branch heads, commit/compare history, and repository writes. Do not make those calls merely to reconfirm repository content already established by the snapshot and delta.
+9. For a long-running task whose conclusion materially depends on the latest repository state, repeat the `S`-to-target compare before finalizing and reconcile any new delta.
+
+Formal Consistency review is the exception: its snapshot commit must exactly equal current live `main`. A missing, malformed, or stale snapshot makes the review `INCOMPLETE`; do not reconstruct that review corpus through delta reconciliation.
+```
+
 ## Exact-current-main requirement
 
 Generation is fail-closed. It requires:

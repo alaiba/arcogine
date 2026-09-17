@@ -19,23 +19,24 @@ const commit = '0123456789abcdef0123456789abcdef01234567';
 const otherCommit = '89abcdef0123456789abcdef0123456789abcdef';
 const generatedAt = '2026-09-16T00:00:00.000Z';
 
-test('provenance header identifies reusable project-source baseline', () => {
+test('provenance header identifies reusable revision-bound project-source baseline', () => {
   const header = buildHeader({ commit, generatedAt });
+  const normalizedHeader = header.replace(/\s+/g, ' ');
   match(header, new RegExp(`^Repository: alaiba/arcogine$`, 'm'));
   match(header, new RegExp(`^Branch: main$`, 'm'));
   match(header, new RegExp(`^Commit: ${commit}$`, 'm'));
   match(header, new RegExp(`^Generated: ${generatedAt}$`, 'm'));
   match(header, new RegExp(`^Generator: Repomix ${REPOMIX_VERSION}$`, 'm'));
-  ok(header.includes('Purpose: project-source repository-content baseline'));
-  ok(header.includes('compare S directly to that ref with one live GitHub compare'));
-  ok(header.includes('Do not separately resolve the target SHA'));
-  ok(header.includes('reuse a target SHA already supplied by task-specific GitHub state'));
-  ok(header.includes('If the compare shows no repository-content difference'));
-  ok(header.includes('If S is an ancestor of the target'));
-  ok(header.includes('additions, modifications, deletions, renames, and copies'));
-  ok(header.includes('A formal Consistency review is stricter'));
-  ok(header.includes('S must equal live main exactly'));
-  ok(header.includes('do not rebuild the formal review corpus through baseline-plus-delta reconciliation'));
+  ok(normalizedHeader.includes('Purpose: project-source repository-content baseline'));
+  ok(normalizedHeader.includes('use one live GitHub compare from S to that ref'));
+  ok(normalizedHeader.includes('exact resolved target commit SHA (T)'));
+  ok(normalizedHeader.includes('reuse it as T and compare S directly to T'));
+  ok(normalizedHeader.includes('does not expose exact T, do not use its changed-path set for delta-mode live reads'));
+  ok(normalizedHeader.includes('fetched at immutable ref=T rather than the mutable branch ref'));
+  ok(normalizedHeader.includes('additions, modifications, deletions, renames, and copies'));
+  ok(normalizedHeader.includes('A formal Consistency review is stricter'));
+  ok(normalizedHeader.includes('S must equal live main exactly'));
+  ok(normalizedHeader.includes('do not rebuild the formal review corpus through baseline-plus-delta reconciliation'));
   ok(header.includes(AUTHORITY_TEXT));
   assertHeaderPresent(`${header}\n\n<tracked_files count="0">\n</tracked_files>`, header);
 });

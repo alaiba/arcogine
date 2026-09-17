@@ -26,11 +26,13 @@ test('provenance header identifies reusable project-source baseline', () => {
   match(header, new RegExp(`^Commit: ${commit}$`, 'm'));
   match(header, new RegExp(`^Generated: ${generatedAt}$`, 'm'));
   match(header, new RegExp(`^Generator: Repomix ${REPOMIX_VERSION}$`, 'm'));
-  ok(header.includes('Purpose: ChatGPT/project-source repository-content baseline'));
-  ok(header.includes('If S equals T, use this artifact directly'));
-  ok(header.includes('If S is an ancestor of T'));
-  ok(header.includes('complete S..T changed-path delta'));
-  ok(header.includes('current main or another descendant branch head'));
+  ok(header.includes('Purpose: project-source repository-content baseline'));
+  ok(header.includes('compare S directly to that ref with one live GitHub compare'));
+  ok(header.includes('Do not separately resolve the target SHA'));
+  ok(header.includes('reuse a target SHA already supplied by task-specific GitHub state'));
+  ok(header.includes('If the compare shows no repository-content difference'));
+  ok(header.includes('If S is an ancestor of the target'));
+  ok(header.includes('additions, modifications, deletions, renames, and copies'));
   ok(header.includes('A formal Consistency review is stricter'));
   ok(header.includes('S must equal live main exactly'));
   ok(header.includes('do not rebuild the formal review corpus through baseline-plus-delta reconciliation'));

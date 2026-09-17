@@ -18,19 +18,35 @@ export const REPOSITORY_ROOT = resolve(scriptDirectory, '..', '..');
 export const CONFIG_PATH = join(scriptDirectory, 'repomix.config.json');
 export const LOG_DIRECTORY = join(REPOSITORY_ROOT, 'logs');
 
-export const AUTHORITY_TEXT = `Purpose: Consistency review corpus
+export const AUTHORITY_TEXT = `Purpose: project-source repository-content baseline
 
-This artifact represents canonical alaiba/arcogine main at exactly the commit recorded above.
-A Consistency review must verify that Commit equals live main before using repository content.
-If it does not, stop, update the project Repomix from current main, and retry.
+This artifact represents canonical alaiba/arcogine main at exactly the commit recorded above (S).
+For ordinary retrieval, identify the target repository ref from task context and use one live GitHub
+compare from S to that ref through a compare surface that also exposes the exact resolved target
+commit SHA (T). If a task-specific GitHub call already supplied the exact target SHA, reuse it as T
+and compare S directly to T. If the chosen compare surface does not expose exact T, do not use its
+changed-path set for delta-mode live reads; prefer a compare surface that returns T and the delta
+together, or resolve T separately and repeat the compare as S..T.
 
-The tracked-file manifest enumerates every git-tracked path at this commit. Repomix content follows
-for reviewable repository text. Generated/dependency material is excluded by repository ignore
-rules; secret-like files are excluded explicitly; binary contents may be omitted while their paths
-remain visible in the manifest.
+If the compare shows no repository-content difference, use this artifact directly. If S is an
+ancestor of T, exact T is known, and the compare provides a complete changed-path delta, keep this
+artifact as the primary corpus for unaffected paths and use live target content only for affected
+paths, fetched at immutable ref=T rather than the mutable branch ref. Treat additions,
+modifications, deletions, renames, and copies as affected. If ancestry, exact T, or a complete
+usable delta cannot be established, use live repository evidence for the target or refresh the
+snapshot.
+
+A formal Consistency review is stricter: S must equal live main exactly before repository content is
+used. If it does not, stop, update the project Repomix from current main, and retry; do not rebuild
+the formal review corpus through baseline-plus-delta reconciliation.
+
+The tracked-file manifest enumerates every git-tracked path at S. Repomix content follows for
+reviewable repository text. Generated/dependency material is excluded by repository ignore rules;
+secret-like files are excluded explicitly; binary contents may be omitted while their paths remain
+visible in the manifest.
 
 This artifact is not live authority for issues, pull requests, reviews, CI/check status,
-mergeability, or other mutable GitHub state.`;
+mergeability, branch heads, or other mutable GitHub state.`;
 
 export function buildHeader({ commit, generatedAt, branch = REQUIRED_BRANCH }) {
   return `Repository: ${REPOSITORY}\nBranch: ${branch}\nCommit: ${commit}\nGenerated: ${generatedAt}\nGenerator: Repomix ${REPOMIX_VERSION}\n\n${AUTHORITY_TEXT}`;

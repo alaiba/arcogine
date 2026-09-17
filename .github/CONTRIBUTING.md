@@ -44,7 +44,7 @@ Use `./arcogine check` before pushing. Use `./arcogine check --full` when the ch
 
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
-**Temporary artifacts:** ad hoc diagnostic reports and one-off session artifacts (that would otherwise litter the root) should go to a dedicated `logs/` directory at the repository root (gitignored as a whole). This keeps the root directory clean. Do not redirect canonical tool outputs — Gradle, npm/Vitest coverage, Playwright reports, and `dist/` continue to use their configured locations.
+**Temporary artifacts:** use `logs/` for local diagnostics, captures, and session scratch that should never be committed; it is gitignored as a whole. Branch-local material that must be committed for continuity or handoff but must not land on `main` belongs under the unignored `workspace/` root. `workspace/` is transient storage, not an archive: remove its files before final review and do not add a marker file. The repository check rejects any tracked `workspace/` path. Do not redirect canonical tool outputs — Gradle, npm/Vitest coverage, Playwright reports, and `dist/` continue to use their configured locations.
 
 For independent PR review, re-review, severity/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).
 

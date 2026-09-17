@@ -139,6 +139,10 @@ Before judging implementation, identify:
 
 A handoff prompt or implementation explanation is useful evidence of intent but is never authority over the live repository.
 
+### Artifact-lifecycle pass
+
+For every newly added artifact, determine its owning authority and intended post-merge lifetime, whether it is durable state or delivery/research/session scaffolding, whether its containing directory has admission/maintenance/retirement rules, whether its durable meaning is already captured elsewhere, and whether retention would create a stale duplicate, archive dump, frozen prompt, or historical note with no active downstream role. Any tracked `workspace/` file is an immediate merge-blocking `CHANGES REQUIRED` finding, independent of its name or contents. Temporary material accidentally placed outside `workspace/` is also a review defect when its post-merge lifetime is unjustified. Handoff prompts and implementation explanations are intent evidence only and do not override live repository state.
+
 Do not convert an explicit non-goal into a review requirement unless the PR cannot satisfy its actual contract without it.
 
 ## Classify semantic impact

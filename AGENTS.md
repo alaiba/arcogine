@@ -165,9 +165,19 @@ When editing an Accepted or Superseded ADR only to improve durable terminology o
 recorded as an editorial amendment, and independently reviewed for semantic equivalence. A semantic
 decision change still requires supersession.
 
-## Temporary artifacts
+## Artifact lifetime and transient workspace
 
-Ad hoc diagnostic reports, one-off log captures, and transient session artifacts that would otherwise be written at repository root should go to the `logs/` directory at the repository root. The `logs/` directory is gitignored as a whole. Keep the root and working directory clean; use `logs/coverage.txt`, `logs/test-output.log`, etc. instead of root-level files.
+Classify temporary material by its intended lifetime:
+
+- **Local ephemeral material:** use `logs/` for ad hoc diagnostics, local captures, and session scratch that should never be committed. The `logs/` directory is gitignored as a whole. Keep the root and working directory clean; use `logs/coverage.txt`, `logs/test-output.log`, etc. instead of root-level files.
+- **Transient committed material:** use the reserved `workspace/` root for branch-local artifacts that must survive the current session or be handed to another actor, but are not intended to survive on `main`. This includes implementation and fresh-session prompts, research reports/revisions, adversarial reviews, checkpoints, diagnostic notes, and intentionally branch-transient review packets. A useful semantic structure is `workspace/implementation/`, `workspace/research/`, and `workspace/review/`.
+- **Durable material:** keep maintained repository state in its existing canonical locations (`docs/`, product code/tests, scripts, workflows, and related maintained surfaces). A transient artifact can inform durable reconciliation without becoming durable itself.
+
+`workspace/` is not an archive. It must not be gitignored, must not contain a permanent marker file such as `.gitkeep` or a README, and must be absent from `main` and every merge candidate as tracked content. The repository-owned check `.github/scripts/check-transient-workspace.py` enforces this final-tree invariant. Git therefore normally shows no `workspace/` directory at all on `main`.
+
+When repository persistence is available, any agent producing a complete prompt for a fresh session, coding agent, reviewer, researcher, or other execution context must write it to a semantic path under `workspace/`, commit it with the repository owner's human Git identity, and hand it off only as `branch + exact commit SHA + path` (with an issue/PR/planning identifier only when useful for locating the work). Do not duplicate the complete prompt in chat after persistence succeeds, and never use branch tip alone as its identity. If persistence is required but unavailable, report the handoff as blocked; do not fall back to pasting the complete prompt into chat. If the prompt changes, commit a new revision and return its new coordinates.
+
+Before handing an implementation branch to independent PR review, inspect branch-added files, remove transient execution and handoff artifacts that are not maintained repository state, and run the tracked-workspace check. The implementation branch must delete its prompt before final review/merge readiness; temporary material accidentally placed outside `workspace/` still requires semantic cleanup.
 
 Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`), npm/Vitest (`product/interfaces/web/coverage/`, `test-results/`), Playwright (`playwright-report/`), and `dist/` continue to write to their configured locations per the canonical build commands.
 

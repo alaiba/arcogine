@@ -18,11 +18,16 @@ export const REPOSITORY_ROOT = resolve(scriptDirectory, '..', '..');
 export const CONFIG_PATH = join(scriptDirectory, 'repomix.config.json');
 export const LOG_DIRECTORY = join(REPOSITORY_ROOT, 'logs');
 
-export const AUTHORITY_TEXT = `Purpose: Consistency review corpus
+export const AUTHORITY_TEXT = `Purpose: ChatGPT/project-source repository-content corpus
 
 This artifact represents canonical alaiba/arcogine main at exactly the commit recorded above.
-A Consistency review must verify that Commit equals live main before using repository content.
-If it does not, stop, update the project Repomix from current main, and retry.
+For ordinary ChatGPT/project-source use, compare Commit with live main before using this artifact as
+current main repository content. If they match, use this artifact as the primary main content/search
+corpus while live GitHub remains authoritative for mutable state. If they do not match, treat this
+artifact as stale and use live repository evidence instead.
+
+A formal Consistency review is stricter: it must verify that Commit equals live main before using
+repository content. If it does not, stop, update the project Repomix from current main, and retry.
 
 The tracked-file manifest enumerates every git-tracked path at this commit. Repomix content follows
 for reviewable repository text. Generated/dependency material is excluded by repository ignore
@@ -30,7 +35,8 @@ rules; secret-like files are excluded explicitly; binary contents may be omitted
 remain visible in the manifest.
 
 This artifact is not live authority for issues, pull requests, reviews, CI/check status,
-mergeability, or other mutable GitHub state.`;
+mergeability, branch heads, or other mutable GitHub state, and it does not represent non-main
+branches created after the recorded commit.`;
 
 export function buildHeader({ commit, generatedAt, branch = REQUIRED_BRANCH }) {
   return `Repository: ${REPOSITORY}\nBranch: ${branch}\nCommit: ${commit}\nGenerated: ${generatedAt}\nGenerator: Repomix ${REPOMIX_VERSION}\n\n${AUTHORITY_TEXT}`;

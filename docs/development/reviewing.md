@@ -101,6 +101,12 @@ Identify the PR's:
 
 If a handoff prompt exists, use it as review input, not as authority over the code or maintained docs.
 
+### Artifact-lifecycle pass
+
+For every newly added repository artifact, review its lifetime as well as its contents, proportionate to risk. Identify the owning authority, whether the artifact is intended to remain on `main`, whether it is durable repository state or delivery/research/session scaffolding, whether its containing directory has admission and retirement rules, whether its durable meaning is already captured in maintained authorities, and whether retaining it would create a stale duplicate, archive dump, frozen prompt, or historical note with no active downstream role.
+
+Any tracked file under the reserved `workspace/` root is merge-blocking `CHANGES REQUIRED`, regardless of filename or content. Independently, temporary material placed outside `workspace/` remains a review defect when its post-merge lifetime is unjustified. Handoff prompts and implementation explanations establish intent only; they never override live repository state. Before handing an implementation candidate to independent review, the implementation owner must remove transient execution/handoff artifacts and confirm that the candidate has no tracked `workspace/` paths.
+
 ### 4. Review the net change
 
 Review:

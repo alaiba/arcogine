@@ -104,6 +104,15 @@ jobs:
       - name: Validate PR disposition gate evaluator
         run: bash .github/scripts/check-pr-disposition.test.sh
 
+      # Transient workspace files are branch-local custody artifacts, never
+      # mergeable repository state. Test the checker and apply it to this exact
+      # candidate tree in the always-running tooling job.
+      - name: Validate transient workspace checker
+        run: python3 .github/scripts/check-transient-workspace.test.py
+
+      - name: Reject tracked transient workspace files
+        run: python3 .github/scripts/check-transient-workspace.py
+
       - name: Determine changed-file surfaces
         id: filter
         run: |

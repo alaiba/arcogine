@@ -18,25 +18,27 @@ export const REPOSITORY_ROOT = resolve(scriptDirectory, '..', '..');
 export const CONFIG_PATH = join(scriptDirectory, 'repomix.config.json');
 export const LOG_DIRECTORY = join(REPOSITORY_ROOT, 'logs');
 
-export const AUTHORITY_TEXT = `Purpose: ChatGPT/project-source repository-content corpus
+export const AUTHORITY_TEXT = `Purpose: ChatGPT/project-source repository-content baseline
 
-This artifact represents canonical alaiba/arcogine main at exactly the commit recorded above.
-For ordinary ChatGPT/project-source use, compare Commit with live main before using this artifact as
-current main repository content. If they match, use this artifact as the primary main content/search
-corpus while live GitHub remains authoritative for mutable state. If they do not match, treat this
-artifact as stale and use live repository evidence instead.
+This artifact represents canonical alaiba/arcogine main at exactly the commit recorded above (S).
+For ordinary ChatGPT/project-source use, resolve the repository revision the task needs as target T.
+If S equals T, use this artifact directly. If S is an ancestor of T and live GitHub can establish a
+complete S..T changed-path delta, keep this artifact as the primary corpus for unchanged paths and
+use live target content only for affected paths. If ancestry or a complete usable delta cannot be
+established, use live repository evidence for T or refresh the snapshot. This baseline-plus-delta
+rule may be used for current main or another descendant branch head.
 
-A formal Consistency review is stricter: it must verify that Commit equals live main before using
-repository content. If it does not, stop, update the project Repomix from current main, and retry.
+A formal Consistency review is stricter: S must equal live main exactly before repository content is
+used. If it does not, stop, update the project Repomix from current main, and retry; do not rebuild
+the formal review corpus through baseline-plus-delta reconciliation.
 
-The tracked-file manifest enumerates every git-tracked path at this commit. Repomix content follows
-for reviewable repository text. Generated/dependency material is excluded by repository ignore
-rules; secret-like files are excluded explicitly; binary contents may be omitted while their paths
-remain visible in the manifest.
+The tracked-file manifest enumerates every git-tracked path at S. Repomix content follows for
+reviewable repository text. Generated/dependency material is excluded by repository ignore rules;
+secret-like files are excluded explicitly; binary contents may be omitted while their paths remain
+visible in the manifest.
 
 This artifact is not live authority for issues, pull requests, reviews, CI/check status,
-mergeability, branch heads, or other mutable GitHub state, and it does not represent non-main
-branches created after the recorded commit.`;
+mergeability, branch heads, or other mutable GitHub state.`;
 
 export function buildHeader({ commit, generatedAt, branch = REQUIRED_BRANCH }) {
   return `Repository: ${REPOSITORY}\nBranch: ${branch}\nCommit: ${commit}\nGenerated: ${generatedAt}\nGenerator: Repomix ${REPOMIX_VERSION}\n\n${AUTHORITY_TEXT}`;

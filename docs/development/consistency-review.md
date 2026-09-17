@@ -2,7 +2,7 @@
 
 > **Status:** maintainer guidance around [`.github/agents/consistency.agent.md`](../../.github/agents/consistency.agent.md).
 
-Arcogine's formal Consistency review runs in a ChatGPT chat session. Repository content comes from a mandatory Repomix attachment generated from the exact current canonical `main`; the GitHub connector is reserved for mutable state, history when needed, and issue/register writes.
+Arcogine's formal Consistency review runs in a ChatGPT chat session. Repository content comes from a mandatory Repomix attachment generated from the exact current canonical `main`; the GitHub connector is reserved for mutable state, history when needed, and finding/register accounting.
 
 ## Operating loop
 
@@ -33,7 +33,13 @@ reconcile findings
 recheck live main == Repomix commit
       |
       v
-mutate finding ledger as required + update #295
+mutate finding ledger as required
+      |
+      v
+recheck live main == Repomix commit
+      |
+      v
+re-read #295 and replace only the weekly review subsection
 ```
 
 The previous reviewed head is an attention aid, never a scope boundary. A clean earlier review does not establish that older content is correct.
@@ -46,7 +52,7 @@ GitHub remains authority for live `main`, issue #295, finding issue state, PR/re
 
 There is no stale-snapshot fallback. Missing, malformed, or non-current Repomix means the formal review is `INCOMPLETE`; generate/upload the current-main snapshot and retry.
 
-The reviewer rechecks `main` immediately before accounting mutations. If `main` moved during a long review, do not record completion against the old corpus.
+The reviewer rechecks `main` before finding accounting and again before recording completion. If `main` moved during a long review, do not attest completion against the old corpus.
 
 ## Review depth
 
@@ -70,13 +76,13 @@ CONS: <concise semantic title>
 
 Open issues represent unresolved findings. A corrective PR may make a finding `IN_FLIGHT` but not resolved; only authoritative evidence on reviewed `main` establishes resolution. Regression reopens the same issue. Mutable lifecycle state is not duplicated in issue bodies.
 
-A formal review has narrow authority to reconcile its finding issues and update the weekly section of #295. Remediation and merge remain separate workflows.
+A formal review has narrow authority to reconcile its finding issues and update the weekly review subsection of #295. Remediation and merge remain separate workflows.
 
 ## Completion
 
-Issue #295 is fixed mandatory repository state. It is never discovered, bootstrapped, recreated, or substituted. If it is missing, inaccessible, wrongly titled, or malformed, the review is `INCOMPLETE`.
+Issue #295 is fixed mandatory repository state. It is never discovered, bootstrapped, recreated, or substituted. If it is missing, inaccessible, wrongly titled, or its weekly review subsection is malformed, the review is `INCOMPLETE`.
 
-A completed review directly writes the weekly section:
+A completed review writes factual state only:
 
 ```text
 ### Weekly Consistency review
@@ -85,10 +91,9 @@ A completed review directly writes the weekly section:
 - reviewed head: <full main SHA>
 - accounted result: CLEAN | FINDINGS
 - finding issues: none | #<number>, #<number>, ...
-- next due / interval: every 7 days
-- state: **CURRENT**
+- interval: every 7 days
 ```
 
-The recorded head is a recency anchor for the next review, not a certificate that older content was exhaustively cleared. There is no completion-comment ledger or event-driven completion workflow.
+Immediately before this write, re-fetch #295 and replace only that subsection in the latest body. There is no completion comment, event trigger, scheduled register writer, manual dispatch, or synchronous refresh step.
 
-The scheduled continuous-improvement workflow independently ages due state and refreshes retrospective counters; it is not part of review completion.
+The recorded head is a recency anchor for the next review, not a certificate that older content was exhaustively cleared. Weekly due state is derived from `last verified` when an agent grounds rather than being stored as a second mutable value.

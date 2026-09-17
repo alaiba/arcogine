@@ -1,6 +1,6 @@
 # Arcogine consistency review
 
-This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with a current-main Repomix project attachment for repository content and the GitHub connector for live/mutable repository state.
+This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with a mandatory current-main Repomix attachment for repository content and the GitHub connector for live/mutable repository state.
 
 A formal review is diagnostic plus the narrow finding-ledger/register accounting described below. It does not authorize source/doc remediation, planning changes, ADR changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
 
@@ -21,11 +21,11 @@ At review start:
    - `Repository: alaiba/arcogine`;
    - `Branch: main`;
    - a full `Commit` SHA exactly equal to live `main`.
-3. If the attachment is missing or malformed, stop `INCOMPLETE`: a current-main Repomix is required; generate/upload it and retry.
+3. If the attachment is missing or malformed, stop `INCOMPLETE`: generate/upload a current-main Repomix and retry.
 4. If its commit differs from live `main`, stop `INCOMPLETE`: report both SHAs, say the Repomix is stale, and tell the user to update it from current `main` and retry.
 5. After equality is established, use Repomix as the primary repository-content corpus. Read `AGENTS.md`, this contract, docs, source, tests, configuration, workflows, and other tracked repository content from it rather than refetching files through GitHub.
 
-Do not compensate for a stale/missing corpus by reconstructing repository content through GitHub file/search calls. The point of the prerequisite is to make the deep scan fast, local, and complete at one known head.
+Do not compensate for a stale/missing corpus by reconstructing repository content through GitHub file/search calls. The prerequisite exists so the deep scan is fast, local, and complete at one known head.
 
 GitHub remains authoritative for mutable state and history: live `main`, issue #295, finding issues, pull requests, reviews, CI/checks, commit/compare history, and all mutations.
 
@@ -122,11 +122,16 @@ Do not duplicate mutable lifecycle state in the body. Unresolved findings stay o
 
 Invoking a formal review authorizes only the issue operations required to account for that review's findings and the final weekly-register update. It does not authorize remediation or unrelated issue changes.
 
-## Freshness gate and completion
+## Completion
 
-Do not mutate findings while analyzing. Immediately before any finding/register mutation, resolve live `main` again. It must still equal the Repomix commit; otherwise stop `INCOMPLETE` with no review-accounting mutations and require a fresh Repomix/retry.
+Do not mutate findings while analyzing.
 
-After every unresolved finding has a durable issue identity, update only `### Weekly Consistency review` in issue #295:
+1. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal the Repomix commit; otherwise stop `INCOMPLETE` with no review-accounting mutations and require a fresh Repomix/retry.
+2. Reconcile finding issues.
+3. Resolve live `main` again. It must still equal the Repomix commit.
+4. Re-fetch issue #295 immediately before writing, require the exact title, and replace only its `### Weekly Consistency review` subsection in the latest body while preserving all other content.
+
+Write factual review state only:
 
 ```text
 ### Weekly Consistency review
@@ -135,11 +140,12 @@ After every unresolved finding has a durable issue identity, update only `### We
 - reviewed head: <Repomix/current-main full SHA>
 - accounted result: CLEAN | FINDINGS
 - finding issues: none | #<number>, #<number>, ...
-- next due / interval: every 7 days
-- state: **CURRENT**
+- interval: every 7 days
 ```
 
-`CLEAN` requires `finding issues: none`; `FINDINGS` lists every unresolved finding applicable to the reviewed head. That body edit is the complete recording operation. Do not create a completion comment, trigger another workflow, invoke `gh`, or wait for a derived refresh.
+`CLEAN` requires `finding issues: none`; `FINDINGS` lists every unresolved finding applicable to the reviewed head. The body edit is the complete recording operation. Do not create a completion comment, trigger a workflow, invoke `gh`, or maintain a second completion ledger.
+
+The register stores facts, not derived due-state cache. Weekly `CURRENT`/`DUE`/`OVERDUE` is derived from `last verified` when an agent grounds; see `AGENTS.md` and `docs/development/continuous-improvement.md`.
 
 ## Report
 

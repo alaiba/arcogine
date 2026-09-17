@@ -12,7 +12,7 @@ Arcogine separates the **research operating model** from its **maintained state*
 | [`research-register.md`](research-register.md) | Current admitted research questions, priority, lifecycle state, linked evidence artifact, expected destination, and review date |
 | [`synthesis-seeds.md`](synthesis-seeds.md) | Current non-authoritative cross-investigation synthesis signals retained under the research method |
 | [`investigations/`](investigations/) | Bounded research briefs, durable investigation write-ups, and deliberately retained or reconciled research-history artifacts linked from the register |
-| `workspace/research/` | Temporary branch-local reports, report revisions, adversarial reviews, checkpoints, diagnostic notes, and handoff artifacts; this custody surface must be retired before merge and is not an archive |
+| `workspace/research/` | Temporary branch-local reports, report revisions, adversarial reviews, checkpoints, diagnostic notes, and handoff artifacts; its files must be absent from the final merge candidate, while the custody branch retires only after reconciliation lands and independent review validates the transfer |
 | [`brief-template.md`](brief-template.md) | Reusable advisory structure for bounding a research question; it does not add lifecycle or `READY` criteria beyond the normative operating model |
 | [`report-template.md`](report-template.md) | Reusable structure for a decision-quality research report |
 

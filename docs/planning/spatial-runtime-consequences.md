@@ -1,8 +1,9 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Proposed delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-0 is
+Status: Active delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-0 is
 implemented after joint first-release dispatch reconciliation, PLAN-ENG-5-A1 (Factory V2 spatial
-model and validation) is implemented, and the remaining slices are proposed/pending.
+model and validation) and the fixed Engine semantics identity are implemented, and the remaining
+slices are proposed/pending.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -361,6 +362,11 @@ closure.
 
 ### PLAN-ENG-5-B1 — Engine semantics identity and runtime establishment
 
+**Status:** Implemented. `EngineSemanticsVersion` is a shared immutable Engine identity with one
+supported current value, `engine-semantics:v1`. `FactoryRuntime` establishes and exposes that value
+for its lifetime; fresh/reset runtimes receive new `RunId` values without changing the semantics
+identity. Unsupported identities fail explicitly through the narrow support check.
+
 **Prerequisites:** ADR-0015 landed Accepted and PLAN-ENG-5-0.
 
 **Responsibility**
@@ -593,7 +599,7 @@ The scenario demonstrates:
 ## 6. Dependency and parallelism map
 
 ```text
-CONCLUDED dispatch research --retain v1--> PLAN-ENG-5-0 v1 fixtures ---> PLAN-ENG-5-B1 semantics identity ---> PLAN-ENG-5-B2 provenance ----+
+CONCLUDED dispatch research --retain v1--> PLAN-ENG-5-0 v1 fixtures ---> PLAN-ENG-5-B1 semantics identity (implemented) ---> PLAN-ENG-5-B2 provenance ----+
                                                                                                                         |          |
 PLAN-ENG-5-A1 V2 model/validation ---> PLAN-ENG-5-A2 V2 identity -------------------------------------------------------------+-> PLAN-ENG-5-C3 activation
        |                         |                                                                                        |
@@ -613,7 +619,8 @@ it requires a new `EngineSemanticsVersion` and a separately reconciled implement
 Practical parallelism now:
 
 - `PLAN-ENG-5-0` is implemented; the reviewed research gate is satisfied;
-- `PLAN-ENG-5-B1` is unblocked and may proceed while `PLAN-ENG-5-A2` advances;
+- `PLAN-ENG-5-B1` is implemented; its stable identity contract unblocks provenance propagation and
+  semantics-dependent runtime work while `PLAN-ENG-5-A2` advances;
 - `PLAN-ENG-5-A2` may proceed independently because `PLAN-ENG-5-A1` is already landed;
 - after `PLAN-ENG-5-A1`/`PLAN-ENG-5-B1`, `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` can proceed independently;
 - `PLAN-ENG-5-A3` is compatibility/history work and need not block `PLAN-ENG-5-C3`, but it must close before

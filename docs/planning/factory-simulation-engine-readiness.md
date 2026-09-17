@@ -1,6 +1,6 @@
 # Factory Simulation Engine Readiness Implementation Plan
 
-> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, and PLAN-ENG-5-0 Engine-semantics:v1 conformance are complete, while outward consumer convergence and the remaining spatial runtime consequences remain admitted work
+> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete, while runtime provenance propagation, outward consumer convergence, and the remaining spatial runtime consequences remain admitted work
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
 > **Related:** [Factory Design Capability](factory-design-capability.md), [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md)
@@ -82,6 +82,13 @@ shared-backlog ranking and reselection, child materialization boundaries, schedu
 the accepted derived-result arithmetic. The implementation also uses a wide exact
 `combinedQueueDepth` ranking quantity and saturating mean-lead-time accumulation as required by
 `engine-semantics:v1`.
+
+### Fixed Engine semantics identity
+
+The runtime now establishes one immutable `EngineSemanticsVersion` for every fresh and reset
+session. The supported value is `engine-semantics:v1`; it is distinct from `ModelFingerprint`,
+`RunId`, and build identity, and unsupported identities fail explicitly. Runtime observation/event
+provenance propagation remains separate admitted work and is not implied by this capability.
 
 ## 3. Current implementation queue
 
@@ -165,9 +172,10 @@ PLAN-ENG-4 A/B/C complete
 
 Within PLAN-ENG-5, the first-release dispatch research gate is now cleared and PLAN-ENG-5-0 is
 implemented: both reviewed questions retain v1, and the existing rules plus their coupled
-recovery/ranking corner are pinned executably. PLAN-ENG-5-B1 is therefore unblocked and may proceed
-while Factory V2 authored/canonical model work remains independently sequenced as described in the
-detailed plan. PLAN-ENG-6 may target v1 after this conformance evidence lands.
+recovery/ranking corner are pinned executably. Fixed Engine semantics identity is also implemented,
+so runtime provenance propagation and semantics-dependent runtime work may proceed while Factory V2
+authored/canonical model work remains independently sequenced as described in the detailed plan.
+PLAN-ENG-6 may target v1 after this conformance evidence lands.
 
 PLAN-ENG-4 core closure no longer blocks spatial work. Outward convergence should consume settled provenance from the spatial/Engine-semantics work where the detailed delivery plans require it rather than migrating an envelope that is immediately revised.
 

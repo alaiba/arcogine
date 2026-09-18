@@ -39,7 +39,7 @@ For such an exercise:
 2. Use the **current live-`main` version of this contract** as the review procedure. The historical copy of this file inside the target corpus is evidence about that historical repository state, not the procedure under test.
 3. Verify that the historical Repomix provenance names `alaiba/arcogine`, `main`, and the requested full commit SHA. The target SHA does not need to equal live `main`.
 4. Treat the historical Repomix as the complete repository-content corpus for the exercise. Do not substitute current repository files when judging the historical target.
-5. Do not preload current/open/closed `CONS:` issues, the current register state, or a known finding oracle as discovery input. If an oracle exists, compare it only **after** the independent diagnostic output is frozen.
+5. Do not preload current/open/closed `CONS:` issues, the current register state, or a known finding oracle as discovery input. If an oracle exists, compare it only **after** the independent diagnostic output is frozen. Prefer a fresh chat/session that has not been shown the oracle; a session that already knows the expected findings is not a blinded coverage-regression run.
 6. Do not create, update, close, reopen, or comment on finding issues; do not edit issue #295; do not record a completion; and do not claim that the weekly obligation was satisfied.
 7. Report the target SHA, the current procedure SHA/ref, independently discovered candidate findings, required breadth-pass coverage, and limitations. Candidate findings in this exercise have no durable `CONS:` identity unless a later formal review independently accounts for them.
 
@@ -190,4 +190,4 @@ Limitations: none | <specific incomplete pass or other limitation>
 Overall: CLEAN | FINDINGS | INCOMPLETE
 ```
 
-Present each material finding with issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. `CLEAN` means no evidence-backed inconsistency was found during this review; it never claims exhaustive proof of consistency.
+For a formal review, present each material finding with issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. For a historical coverage-regression exercise, present independently discovered candidates without inventing issue numbers, then freeze that output before any oracle comparison. `CLEAN` means no evidence-backed inconsistency was found during a formal review; it never claims exhaustive proof of consistency.

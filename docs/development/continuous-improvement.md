@@ -70,13 +70,13 @@ The recorded head biases the next review toward newer material; it never narrows
 
 ### Weekly due-state derivation
 
-Weekly state is derived when an agent grounds from the factual `last verified` date; it is not persisted separately:
+Weekly state is derived when reminder state is evaluated from the factual `last verified` date; it is not persisted separately:
 
 - `CURRENT` when the last verified date is at most 7 days old;
 - `DUE` when no review is recorded, or it is more than 7 but at most 14 days old;
 - `OVERDUE` when it is more than 14 days old.
 
-A malformed or future `last verified` value is not `CURRENT`; treat the weekly state as unverifiable and surface that once during grounding.
+A malformed or future `last verified` value is not `CURRENT`; treat the weekly state as unverifiable and surface that once during reminder evaluation.
 
 ## Consistency finding identities
 

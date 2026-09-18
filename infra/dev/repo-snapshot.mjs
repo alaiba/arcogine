@@ -36,9 +36,10 @@ modifications, deletions, renames, and copies as affected. If ancestry, exact T,
 usable delta cannot be established, use live repository evidence for the target or refresh the
 snapshot.
 
-A formal Consistency review is stricter: S must equal live main exactly before repository content is
-used. If it does not, stop, update the project Repomix from current main, and retry; do not rebuild
-the formal review corpus through baseline-plus-delta reconciliation.
+Formal Consistency review follows this same protocol. It must establish one exact target T and a
+complete target corpus before recording completion. If provenance, ancestry, exact T, or a complete
+usable delta cannot be established, refresh the project Repomix rather than attesting from a partial
+or ambiguous corpus.
 
 The tracked-file manifest enumerates every git-tracked path at S. Repomix content follows for
 reviewable repository text. Generated/dependency material is excluded by repository ignore rules;

@@ -1,9 +1,9 @@
 # Factory Simulation Engine Readiness Implementation Plan
 
-> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete, while runtime provenance propagation, outward consumer convergence, and the remaining spatial runtime consequences remain admitted work
+> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete. Outward convergence and independent same-semantics work remain admitted; remaining spatial runtime consequences are dependency-blocked where they harden the current durability or Factory V1/V2 model pending READY research and reconciliation.
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
-> **Related:** [Factory Design Capability](factory-design-capability.md), [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md)
+> **Related:** [Factory Design Capability](factory-design-capability.md), [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
 
 ## 1. Runtime boundary
 
@@ -112,13 +112,13 @@ The legacy KPI path is the one ownership-sensitive part of this convergence: `/a
 
 ### PLAN-ENG-5 — Spatial runtime consequences
 
-Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. ADR-0014, ADR-0015, Factory Model v2 canonicalization, and Engine Semantics v1 define the accepted contract.
+Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. ADR-0014, ADR-0015, Factory Model v2 canonicalization, and Engine Semantics v1 remain the accepted contract until superseded. **Planning execution is nevertheless on research hold** for unimplemented work that would release V2 identity/coexistence or activate spatial semantics on the assumption that those durability/composition boundaries are final.
 
 The admitted sequence includes:
 
 1. pin pre-existing result-affecting Engine semantics and required arithmetic corrections — complete;
-2. implement Factory Model v2 spatial facts/validation and canonical identity;
-3. establish `EngineSemanticsVersion` and propagate required runtime provenance;
+2. implement Factory spatial facts/validation — shape/validation proving slice complete; V2 canonical identity now dependency-blocked by research;
+3. establish `EngineSemanticsVersion` — fixed identity complete; additional propagation may proceed only where independent of the research questions;
 4. implement deterministic transfer arithmetic and inbound admission reservation;
 5. activate coherent transfer state/events/observations;
 6. close availability/no-rerouting edge semantics and late-join diagnostics; and
@@ -170,12 +170,7 @@ PLAN-ENG-4 A/B/C complete
     +----> PLAN-ENG-5 spatial consequences
 ```
 
-Within PLAN-ENG-5, the first-release dispatch research gate is now cleared and PLAN-ENG-5-0 is
-implemented: both reviewed questions retain v1, and the existing rules plus their coupled
-recovery/ranking corner are pinned executably. Fixed Engine semantics identity is also implemented,
-so runtime provenance propagation and semantics-dependent runtime work may proceed while Factory V2
-authored/canonical model work remains independently sequenced as described in the detailed plan.
-PLAN-ENG-6 may target v1 after this conformance evidence lands.
+Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and fixed Engine semantics identity is implemented. Those landed facts remain current evidence, not a reason to bypass the new durability/composition investigations. Unimplemented V2 canonical identity/coexistence and dependent spatial-runtime slices are now dependency-blocked as described in the detailed plan. PLAN-ENG-4-D and PLAN-ENG-6 may proceed when their own contracts are independent of the held questions.
 
 PLAN-ENG-4 core closure no longer blocks spatial work. Outward convergence should consume settled provenance from the spatial/Engine-semantics work where the detailed delivery plans require it rather than migrating an envelope that is immediately revised.
 
@@ -217,7 +212,7 @@ The following are not implementation items in this plan:
 - new advancement/session semantics without a concrete consumer failure case; and
 - unselected transport/recovery technology or protocol choices.
 
-Current architecture assigns the retained dispatch rules to `engine-semantics:v1`. The concluded first-release research authorizes only deliberate conformance to those rules. A future outcome-changing revision still requires a new `EngineSemanticsVersion`; planning must not create a pre-release or optimization exception to that architecture contract.
+Current architecture assigns the retained dispatch rules to `engine-semantics:v1`. The concluded first-release research authorizes deliberate conformance to those rules, and no implementation task may silently change them while that architecture remains Accepted. The READY semantic-contract maturity investigation separately asks whether Arcogine declared permanent durability too early; only a later reconciliation may change that lifecycle rule. Planning itself must not create an exception in either direction.
 
 PLAN-ENG-6 is admitted separately because its implementation contract is exact result equivalence for the already-authoritative v1 semantics after PLAN-ENG-5-0 closes the conformance gap.
 

@@ -1,9 +1,6 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Active delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-0 is
-implemented after joint first-release dispatch reconciliation, PLAN-ENG-5-A1 (Factory V2 spatial
-model and validation) and the fixed Engine semantics identity are implemented, and the remaining
-slices are proposed/pending.
+Status: Active delivery plan with a research hold. PLAN-ENG-5-0, PLAN-ENG-5-A1 (Factory spatial model/validation proving evidence), and fixed Engine semantics identity are implemented. All remaining PLAN-ENG-5 slices are dependency-blocked where they would harden the current eager-durability or linear Factory V1/V2 assumptions, pending READY semantic-contract maturity and Factory composition research plus any required reconciliation.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -19,6 +16,17 @@ The architecture is fixed by:
 - [ADR-0015 — Engine Semantics Identity and Reproducibility](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md);
 - [Engine Semantics v1](../architecture/engine-semantics-v1.md), the normative first-version Engine interpretation;
 - Accepted ADR-0011 for supported observation/event state reconstruction and ordering.
+
+### Research hold — durability and Factory composition
+
+Accepted ADR-0014/ADR-0015 and Engine Semantics v1 remain current architecture until superseded. The new research therefore does **not** authorize implementation to reinterpret existing behavior or identifiers in place.
+
+However, do not start any still-unimplemented PLAN-ENG-5 slice that commits Arcogine further to permanent Factory V1/V2 coexistence, releases the V2 fingerprint policy, or activates spatial runtime semantics on the assumption that the current whole-model/version boundary is final. Those slices are dependency-blocked on:
+
+- [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md); and
+- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md).
+
+The landed V2 shape/validation and Engine-v1 conformance/identity work are retained as proving evidence. Independent Engine or outward-contract work may continue only where it does not depend on resolving these two questions or make their current candidate answers harder to change.
 
 Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. The
 first-release local-admission and shared-backlog-ranking questions in
@@ -94,6 +102,8 @@ observation PRs. Once `TRANSFERRING` becomes reachable, supported state and supp
 coherent in the same landed change under ADR-0011.
 
 ## 5. Delivery slices
+
+**Research-hold rule:** All unimplemented slices below are dependency-blocked if they rely on releasing `factory-model:v2`, permanent V1/V2 coexistence, or treating the current Factory/Engine durability boundary as final. A slice becomes executable again only after the two READY investigations conclude, receive required adversarial review, and any necessary architecture/planning reconciliation lands.
 
 ### PLAN-ENG-5-0 — Pin existing Engine semantics
 
@@ -307,7 +317,9 @@ Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine 
 
 ### PLAN-ENG-5-A2 — Factory V2 canonical identity
 
-**Prerequisite:** PLAN-ENG-5-A1.
+**Status:** Dependency-blocked by the research hold.
+
+**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the semantic-contract maturity and Factory composition investigations.
 
 **Responsibility**
 
@@ -335,7 +347,9 @@ Cross-policy controlled-revision migration/comparison, runtime transfers.
 
 ### PLAN-ENG-5-A3 — Multi-policy historical resolution and evolution seam
 
-**Prerequisite:** PLAN-ENG-5-A2. Governance PLAN-GOV-1 historical revision authority is already landed.
+**Status:** Dependency-blocked by the research hold.
+
+**Prerequisite:** PLAN-ENG-5-A2 plus reconciliation of the semantic-contract maturity and Factory composition investigations. Governance PLAN-GOV-1 historical revision authority is already landed.
 
 **Responsibility**
 

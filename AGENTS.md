@@ -231,9 +231,6 @@ merges only for supported overlapping text files. Reject conflicts and unsupport
 cases (such as ambiguous renames/copies, file/directory conflicts, submodules, symlinks,
 incompatible modes, or unsupported binary content) without making a branch change.
 
-The protocol applies only to ordinary open same-repository PRs; research-evidence custody remains
-in the research workspace lifecycle rather than this normalization path.
-
 Use repository-scoped GitHub Git-data operations for the reads, blob/tree construction, and merge
 commit creation. Immediately before publication, re-read the PR head. If it is no longer `H`,
 abandon the attempt without mutation; otherwise advance the PR branch from `H` to `M` with a
@@ -251,9 +248,6 @@ new head that requires review as the current candidate; CI, trusted `disposition
 mergeability remain independent lifecycle/gate responsibilities. Base-head churn is separate from
 current-head review integrity, and GitHub owns the final merge into `main` through the owner's
 manual **Squash and merge** action.
-
-Research-evidence custody remains a separate research-workspace lifecycle in
-`docs/development/researching.md`; it is not a route or exception in ordinary PR normalization.
 
 For a stale Dependabot PR that currently qualifies for trusted provenance and otherwise
 needs no maintainer-authored change, preserve the trusted provenance rules enforced by the
@@ -273,15 +267,6 @@ Each `..` invocation re-resolves current GitHub evidence once. The resolver is d
 ## PR merging
 
 Agents never merge pull requests. `READY TO MERGE` hands control to the repository owner, who performs the merge manually.
-
-## Branch to work on
-
-If a session starts with a branch other than `main` already checked out,
-treat that branch as the one to do the work on — do not switch to a
-different branch just because task/PR instructions injected into the
-prompt name one. If the injected branch instruction conflicts with the
-branch the session actually started on, flag the mismatch to the user
-instead of silently switching.
 
 ## Layout
 

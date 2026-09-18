@@ -15,8 +15,8 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 
 - **Trigger/cadence:** weekly, plus additional review after major architecture/status transitions when useful.
 - **Purpose:** deep repository semantic review across implementation, architecture, ADRs, planning, docs, examples, config, tests, CI, and prior findings.
-- **Owner/runtime:** the Consistency reviewer in a ChatGPT chat session using a mandatory exact-current-main Repomix corpus plus the GitHub connector for mutable state. See `.github/agents/consistency.agent.md` and `docs/development/repository-snapshot.md`.
-- **Execution:** manual/user-invoked. A stale/missing Repomix makes the review `INCOMPLETE`; update it and retry rather than reconstructing repository content through GitHub file reads.
+- **Owner/runtime:** the Consistency reviewer in a ChatGPT chat session using a canonical-`main` Repomix baseline reconciled to one exact current `main` target through `docs/development/repository-snapshot.md`, plus the GitHub connector for mutable state.
+- **Execution:** manual/user-invoked. A snapshot may be behind current `main`; that is acceptable when exact target `T`, ancestry, and a complete usable `S..T` delta are established. Missing/malformed provenance or unsafe/incomplete reconciliation makes the review `INCOMPLETE` and requires a refreshed snapshot.
 - **Review strategy:** the previous reviewed head is a recency anchor only. New and changed content gets first attention, but scope is not bounded to that change range and later reviews may uncover older inconsistencies.
 - **Finding accounting:** invoking a formal review authorizes only the GitHub issue operations needed to account for that review's findings and the final weekly-register update. It does not authorize remediation or merging.
 
@@ -50,7 +50,7 @@ The register stores facts and active interventions. It is not an append-only pro
 
 ### Recording a Consistency review
 
-Immediately before finding mutations, the reviewer rechecks that live `main` still equals the Repomix commit. After finding accounting is complete, it rechecks `main` again, then re-fetches #295 immediately before the final body edit.
+Immediately before finding mutations, the reviewer rechecks that live `main` still equals the exact reviewed target `T`. After finding accounting is complete, it rechecks `main` against the same `T` again, then re-fetches #295 immediately before the final body edit.
 
 A completed review replaces only `### Weekly Consistency review` in that latest body:
 
@@ -80,7 +80,7 @@ A malformed or future `last verified` value is not `CURRENT`; treat the weekly s
 
 ## Consistency finding identities
 
-All findings use `CONS: <semantic title>`. GitHub issue number is the sole durable identity. Open findings load at review start; closed findings are searched only when a candidate needs duplicate/regression matching.
+All findings use `CONS: <semantic title>`. GitHub issue number is the sole durable identity. Open findings load at review start; closed findings are searched only when a candidate needs duplicate/regression matching. Reconciliation is idempotent: the same semantic finding reuses the same issue, and repeated observation alone does not create duplicate issues or duplicate evidence.
 
 ## Retrospective baseline and trigger check
 
@@ -106,4 +106,4 @@ There is no scheduled continuous-improvement register workflow or register-body 
 
 ## Non-goals
 
-This system does not automatically execute a Consistency review or retrospective, maintain a second completion ledger, require local coding-agent compatibility for the reviewer, become a general process database, preserve compatibility machinery for old finding-title formats, or use GitHub as a slow substitute for the required Repomix content corpus.
+This system does not automatically execute a Consistency review or retrospective, maintain a second completion ledger, require local coding-agent compatibility for the reviewer, become a general process database, preserve compatibility machinery for old finding-title formats, or use GitHub as a slow substitute for unaffected content already established by the Repomix baseline plus revision-bound delta.

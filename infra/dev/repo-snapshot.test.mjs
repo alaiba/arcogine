@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import {
-  AUTHORITY_TEXT,
+  PROJECT_INSTRUCTIONS_TEXT,
   REPOMIX_VERSION,
   assertHeaderPresent,
   buildHeader,
@@ -27,17 +27,24 @@ test('provenance header identifies reusable revision-bound project-source baseli
   match(header, new RegExp(`^Commit: ${commit}$`, 'm'));
   match(header, new RegExp(`^Generated: ${generatedAt}$`, 'm'));
   match(header, new RegExp(`^Generator: Repomix ${REPOMIX_VERSION}$`, 'm'));
-  ok(normalizedHeader.includes('Purpose: project-source repository-content baseline'));
-  ok(normalizedHeader.includes('use one live GitHub compare from S to that ref'));
+  ok(normalizedHeader.includes('Always read AGENTS.md and do a quick search in the docs for the main key words of the request.'));
+  ok(normalizedHeader.includes('The repo is https://github.com/alaiba/arcogine'));
+  ok(header.includes('<project_instructions>'));
+  ok(header.includes('</project_instructions>'));
+  ok(normalizedHeader.includes('Use one live GitHub compare from S to that target ref'));
   ok(normalizedHeader.includes('exact resolved target commit SHA (T)'));
   ok(normalizedHeader.includes('reuse it as T and compare S directly to T'));
   ok(normalizedHeader.includes('does not expose exact T, do not use its changed-path set for delta-mode live reads'));
   ok(normalizedHeader.includes('fetched at immutable ref=T rather than the mutable branch ref'));
   ok(normalizedHeader.includes('additions, modifications, deletions, renames, and copies'));
-  ok(normalizedHeader.includes('A formal Consistency review is stricter'));
-  ok(normalizedHeader.includes('S must equal live main exactly'));
-  ok(normalizedHeader.includes('do not rebuild the formal review corpus through baseline-plus-delta reconciliation'));
-  ok(header.includes(AUTHORITY_TEXT));
+  ok(normalizedHeader.includes('fewer than 300 entries'));
+  ok(normalizedHeader.includes('GitHub Compare caps the list at 300'));
+  ok(normalizedHeader.includes('Formal Consistency review follows this same retrieval protocol'));
+  ok(normalizedHeader.includes('establish one exact target T and a complete target corpus'));
+  ok(normalizedHeader.includes('refresh the project Repomix rather than attesting from a partial or ambiguous corpus'));
+  ok(normalizedHeader.includes('target content/evidence'));
+  ok(normalizedHeader.includes('do not replace or override this embedded Project instruction block'));
+  ok(header.includes(PROJECT_INSTRUCTIONS_TEXT));
   assertHeaderPresent(`${header}\n\n<tracked_files count="0">\n</tracked_files>`, header);
 });
 

@@ -172,7 +172,7 @@ PLAN-ENG-4 A/B/C complete
 
 Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and fixed Engine semantics identity is implemented. Those landed facts remain current evidence, not a reason to bypass the new durability/composition investigations. Unimplemented V2 canonical identity/coexistence and dependent spatial-runtime slices are now dependency-blocked as described in the detailed plan. PLAN-ENG-4-D and PLAN-ENG-6 may proceed when their own contracts are independent of the held questions.
 
-PLAN-ENG-4 core closure no longer blocks spatial work. Outward convergence should consume settled provenance from the spatial/Engine-semantics work where the detailed delivery plans require it rather than migrating an envelope that is immediately revised.
+PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right. The current blocker for the held spatial slices is the semantic-contract maturity and Factory composition research above. Outward convergence should consume only provenance that is already settled independently of those questions rather than introducing a transport contract that immediately depends on a disputed semantic boundary.
 
 ## 5. Determinism and provenance invariants
 

@@ -1,9 +1,6 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Active delivery plan; architecture fixed by ADR-0014 / ADR-0015. PLAN-ENG-5-0 is
-implemented after joint first-release dispatch reconciliation, PLAN-ENG-5-A1 (Factory V2 spatial
-model and validation) and the fixed Engine semantics identity are implemented, and the remaining
-slices are proposed/pending.
+Status: Active delivery plan with a research hold. PLAN-ENG-5-0, PLAN-ENG-5-A1 (Factory spatial model/validation proving evidence), and fixed Engine semantics identity are implemented. All remaining PLAN-ENG-5 slices are dependency-blocked where they would harden the current eager-durability or linear Factory V1/V2 assumptions, pending READY semantic-contract maturity and Factory composition research plus any required reconciliation.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -20,13 +17,25 @@ The architecture is fixed by:
 - [Engine Semantics v1](../architecture/engine-semantics-v1.md), the normative first-version Engine interpretation;
 - Accepted ADR-0011 for supported observation/event state reconstruction and ordering.
 
+### Research hold — durability and Factory composition
+
+Accepted ADR-0014/ADR-0015 and Engine Semantics v1 remain current architecture until superseded. The new research therefore does **not** authorize implementation to reinterpret existing behavior or identifiers in place.
+
+However, do not start any still-unimplemented PLAN-ENG-5 slice that commits Arcogine further to permanent Factory V1/V2 coexistence, releases the V2 fingerprint policy, or activates spatial runtime semantics on the assumption that the current whole-model/version boundary is final. Those slices are dependency-blocked on:
+
+- [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md); and
+- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md).
+
+The landed V2 shape/validation and Engine-v1 conformance/identity work are retained as proving evidence. Independent Engine or outward-contract work may continue only where it does not depend on resolving these two questions or make their current candidate answers harder to change.
+
 Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. The
 first-release local-admission and shared-backlog-ranking questions in
 [Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded after independent
 adversarial review, and both retain `engine-semantics:v1` unchanged. The research prerequisite for
 PLAN-ENG-5-0 is therefore satisfied: that slice pins the existing rules and their reviewed boundary
-cases rather than selecting a new policy. Factory V2 model/canonicalization slices remain independently
-sequenced where they do not depend on dispatch interpretation.
+cases rather than selecting a new policy. That earlier dispatch gate does not make Factory V2
+canonicalization or spatial activation executable while the semantic-contract maturity and Factory
+composition research hold is open.
 
 ## 2. PLAN-ENG-5 semantic boundary
 
@@ -94,6 +103,8 @@ observation PRs. Once `TRANSFERRING` becomes reachable, supported state and supp
 coherent in the same landed change under ADR-0011.
 
 ## 5. Delivery slices
+
+**Research-hold rule:** All unimplemented slices below are dependency-blocked if they rely on releasing `factory-model:v2`, permanent V1/V2 coexistence, or treating the current Factory/Engine durability boundary as final. A slice becomes executable again only after the two READY investigations conclude, receive required adversarial review, and any necessary architecture/planning reconciliation lands.
 
 ### PLAN-ENG-5-0 — Pin existing Engine semantics
 
@@ -277,7 +288,7 @@ implements every validation predicate below. `FactoryModelV2` shares no supertyp
 construct a `FactoryModelVersion` -- a compile-time property, not a runtime guard -- which is what
 keeps V2 semantic content from ever traveling through the `factory-model:v1` publication path.
 `factory-model:v2` canonical bytes, `ModelFingerprint` derivation, and policy registration are not
-yet implemented; that is PLAN-ENG-5-A2, the next V2 Factory-model slice.
+yet implemented; PLAN-ENG-5-A2 owns that work but is dependency-blocked by the research hold.
 
 **Prerequisite:** ADR-0014 landed Accepted.
 
@@ -307,7 +318,9 @@ Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine 
 
 ### PLAN-ENG-5-A2 — Factory V2 canonical identity
 
-**Prerequisite:** PLAN-ENG-5-A1.
+**Status:** Dependency-blocked by the research hold.
+
+**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the semantic-contract maturity and Factory composition investigations.
 
 **Responsibility**
 
@@ -335,7 +348,9 @@ Cross-policy controlled-revision migration/comparison, runtime transfers.
 
 ### PLAN-ENG-5-A3 — Multi-policy historical resolution and evolution seam
 
-**Prerequisite:** PLAN-ENG-5-A2. Governance PLAN-GOV-1 historical revision authority is already landed.
+**Status:** Dependency-blocked by the research hold.
+
+**Prerequisite:** PLAN-ENG-5-A2 plus reconciliation of the semantic-contract maturity and Factory composition investigations. Governance PLAN-GOV-1 historical revision authority is already landed.
 
 **Responsibility**
 
@@ -616,17 +631,22 @@ The first-release research gate is cleared. A future reopened investigation that
 outcome-changing alternative does not retroactively mutate v1 or invalidate historical v1 fixtures;
 it requires a new `EngineSemanticsVersion` and a separately reconciled implementation path.
 
-Practical parallelism now:
+Practical parallelism while the research hold is open:
 
-- `PLAN-ENG-5-0` is implemented; the reviewed research gate is satisfied;
-- `PLAN-ENG-5-B1` is implemented; its stable identity contract unblocks provenance propagation and
-  semantics-dependent runtime work while `PLAN-ENG-5-A2` advances;
-- `PLAN-ENG-5-A2` may proceed independently because `PLAN-ENG-5-A1` is already landed;
-- after `PLAN-ENG-5-A1`/`PLAN-ENG-5-B1`, `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` can proceed independently;
-- `PLAN-ENG-5-A3` is compatibility/history work and need not block `PLAN-ENG-5-C3`, but it must close before
-  `PLAN-ENG-5-E` and before a real V1→V2 controlled transition;
-- `PLAN-ENG-5-C3` is the deliberate convergence point and must perform the reservation-aware dispatch
-  recheck above before activation, then receive correspondingly strong review.
+- `PLAN-ENG-5-0`, `PLAN-ENG-5-A1`, and `PLAN-ENG-5-B1` are implemented and remain proving evidence;
+- `PLAN-ENG-5-A2` and `PLAN-ENG-5-A3` are dependency-blocked; do not release V2 canonical identity or
+  V1/V2 coexistence while the semantic-contract maturity and Factory composition questions are unresolved;
+- `PLAN-ENG-5-C1` through `PLAN-ENG-5-E` are not implementation-ready where they activate or close
+  spatial behavior against the disputed Factory/version boundary, even when their older local prerequisites
+  are already satisfied;
+- `PLAN-ENG-5-B2` may proceed only if its provenance propagation remains truthful under either research
+  outcome and does not create a new outward compatibility promise around the disputed durability boundary;
+- work outside this held dependency chain may proceed under its own plan when it does not assume the
+  current Factory V1/V2 or semantic-durability model is final.
+
+After both READY investigations conclude, receive the required independent adversarial review, and any
+necessary architecture/planning reconciliation lands, this dependency map must be re-resolved before
+selecting the next PLAN-ENG-5 implementation slice.
 
 ## 7. KPI acceptance
 
@@ -668,14 +688,18 @@ outward. This avoids immediate wire-contract churn. PLAN-ENG-4-D is not a prereq
 
 ## 9. Acceptance / readiness
 
-PLAN-ENG-5 is architecture-ready at the Factory-V2/spatial boundary because ADR-0014 and ADR-0015 are
-Accepted and this focused plan is reconciled with the parent Engine/Factory plans. The v1 conformance
-path is now implementation-ready at PLAN-ENG-5-0: both first-release dispatch questions concluded
-with v1 retained unchanged after adversarial review, and their binding qualifications/proving cases
-are transferred above.
+The landed PLAN-ENG-5 conformance, Factory spatial model/validation, and fixed Engine-semantics identity
+work remain valid evidence under the currently Accepted ADRs. The earlier first-release dispatch gate
+is closed for those already-landed v1 semantics.
 
-No additional architecture analysis is required for PLAN-ENG-5-0 or the independent Factory V2
-model/canonicalization slices unless implementation evidence falsifies an accepted invariant. Before
-reservation-aware transfer activation, perform the explicit dispatch recheck in PLAN-ENG-5-C3. Any
-slice that encounters other contradictory evidence must stop at that boundary rather than silently
-revising the accepted contract in product code.
+The remaining Factory-V2 identity/coexistence and spatial-runtime path is **not implementation-ready**
+while the semantic-contract maturity and Factory composition investigations are READY. Accepted
+ADR-0014/ADR-0015 remain authoritative during the hold, but their acceptance is not permission to deepen
+the exact durability/composition commitments now under research.
+
+Before any held slice resumes, both investigations must reach decision-quality conclusions, receive
+their required independent adversarial review, and any necessary architecture/ADR/planning
+reconciliation must land. The plan must then be re-resolved against that result. If later activation
+still reaches PLAN-ENG-5-C3, perform the explicit reservation-aware dispatch recheck there. Any slice
+that encounters contradictory evidence must stop at that boundary rather than silently revising the
+accepted contract in product code.

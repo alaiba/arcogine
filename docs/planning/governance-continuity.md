@@ -39,6 +39,7 @@ Constructing a value in memory does not create authoritative history. Authority 
 6. Historical resolution uses the recorded immutable artifact, never whichever model happens to be current in memory.
 7. A named parent must already be authoritative under the current lineage capability.
 8. Revision acceptance must never expose a partially authoritative record.
+9. Custody is declared by the authority and retained is the default ([ADR-0017](../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md) §4). Registering a verifier for a **proving** policy (the first candidate is `factory-model:v2`) is not admitted until the authority can record, with each accepted artifact under that policy, the exact definition revision and the custody declaration/support horizon it was accepted under, and rejects the artifact explicitly otherwise. The slice that registers such a verifier owns that enforcement; no change is required while only the promoted `factory-model:v1` verifier exists.
 
 ## Current adapter boundary
 

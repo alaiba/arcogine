@@ -29,6 +29,10 @@ for example:
 - resource/scheduling abstractions;
 - persistence or replay semantics;
 - public API compatibility policy;
+- promotion of a semantic contract to a scoped support promise, unless the
+  contract's authority is a normative specification carrying its own dated
+  promotion section (see
+  [ADR-0017](0017-semantic-contract-maturity-and-support-promotion.md) §6);
 - architectural technology choices.
 
 Don't write one for routine refactoring, ordinary bug fixes, dependency

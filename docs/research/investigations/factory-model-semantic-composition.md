@@ -350,7 +350,7 @@ This investigation does **not**:
 
 This investigation may run in parallel with [Semantic Contract Maturity and Durability](semantic-contract-maturity-durability.md).
 
-Its structural conclusions can be developed independently, but any recommendation that says a core/aspect/profile/component is **durable**, assigns a permanent version identity, or commits Arcogine to historical support must wait for or explicitly incorporate the sibling lifecycle conclusion.
+Its structural conclusions can be developed independently, but any recommendation that says a core/aspect/profile/component is **durable**, assigns a permanent version identity, or commits Arcogine to historical support must wait for or explicitly incorporate the sibling lifecycle conclusion. That conclusion is now reconciled in [ADR-0017](../../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md): a new Factory definition revision is proving until an explicit promotion record exists, and `factory-model:v2`'s exit condition ([Factory Model v2](../../architecture/factory-model-v2.md) §10.3) waits on this investigation's result.
 
 ## Expected durable destination
 

@@ -1,9 +1,33 @@
 # Semantic Contract Maturity and Durability Research
 
-> **Lifecycle:** READY — see the maintained [research register](../research-register.md)  
+> **Lifecycle:** CONCLUDED — see the maintained [research register](../research-register.md)  
 > **Scope:** Repository-wide lifecycle for promoting currently authoritative semantic contracts into durable immutable compatibility/provenance contracts  
-> **Authority:** Research framing only. Current Accepted ADRs and current implementation remain authoritative until a separate reconciliation change says otherwise.  
-> **Risk:** High. Independent adversarial review is required before any conclusion is promoted into architecture, ADR, development policy, or implementation planning.
+> **Authority:** Research provenance only. The durable conclusion lives in [ADR-0017](../../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md) (Accepted), [Factory Model v2 Canonicalization](../../architecture/factory-model-v2.md) §10, [Engine Semantics v1](../../architecture/engine-semantics-v1.md) §15, the [Architecture Overview](../../architecture/overview.md#semantic-contract-support-status) support-status table, and [Governance architecture](../../architecture/governance-conformance.md) §4; this brief decides nothing and is retained as the investigation's framing.  
+> **Risk:** High. The conclusion was independently adversarially reviewed before promotion.
+
+## Conclusion
+
+**Boundary-specific evidence-gated semantic-contract commitments with shared minimum rules.** The decision-quality report and its independent adversarial review (disposition `ACCEPT WITH QUALIFICATIONS`, fresh isolated session in a different model family) are reconciled into [ADR-0017](../../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md), now Accepted and superseding ADR-0014's automatic permanent-resolution and `vN+1` triggers while carrying every other ADR-0014 Factory rule forward. Those documents are the authority; this brief does not restate the decision. The exact report and review coordinates are recorded in the delivery history of the reconciliation pull request named by the [research register](../research-register.md) row.
+
+### Outcome against the candidate models
+
+- **Candidate A (eager durability):** rejected as the repository-wide automatic rule; retained as a valid local choice and as `factory-model:v1`'s grandfathered obligation. Everything provenance needs from it — exact revisions immutable, identifiers never reused — survives as ADR-0017 §2.
+- **Candidate B (mandatory separate promotion):** rejected in its universal form; its forcing-function value is kept by the promotion-record content (ADR-0017 §6) and independent review for high-risk promises, without a mandatory second date.
+- **Candidate C (boundary-specific triggers with shared minimums):** **adopted.**
+- **Candidate D (release-bound):** rejected as the trigger; a release may enact a promotion but cannot substitute for its record.
+- **Candidate E:** no narrower model materially changed the question; the variants examined collapse into C, into D, or into the sibling composition question.
+
+### Proving cases
+
+All six required cases were applied to every candidate; the discriminating cases are retained in ADR-0017's consequences as reusable proving cases for future promotion assessments.
+
+### Qualifications carried into the authority
+
+The review's seven mandatory qualifications — default for silence; declared custody; proving exit condition; the `engine-semantics:v1` release definition and section-level freeze; explicit enumeration and retention of the grandfathered promises; naming the superseded automatic-support clauses; and the promotion-record location, fields, and per-contract support statement — are each encoded in ADR-0017 and the owning specification/architecture surfaces named above. A post-review repository-owner statement that this repository is the complete constituency of every Arcogine contract is recorded as a maintained current constraint in the Architecture Overview and was used to re-examine, and retain, every grandfathered promise.
+
+### Open remainder
+
+[Factory model semantic composition](factory-model-semantic-composition.md) remains a separate register question and is not decided by this result. Storage, codec, retention-horizon, and custody-declaration implementations; any future external-consumer, deployment, release, or package support decision; and implementation sequencing are deferred in ADR-0017 §12 and owned by planning when admitted. The text below is the brief as it was executed.
 
 ## Question
 

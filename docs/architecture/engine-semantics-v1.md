@@ -1,10 +1,13 @@
 # Engine Semantics v1
 
-Status: Normative design contract; implementation pending
+Status: Normative specification; **proving toward release** — attributed runs already exist, so the sections they exercise are frozen (section 15)
 Semantic identity: `engine-semantics:v1`
 Decision authority: [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md)
-Model-side counterpart: [ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md) and
-[Factory Model v2 Canonicalization](factory-model-v2.md)
+Lifecycle authority: [ADR-0017](decisions/0017-semantic-contract-maturity-and-support-promotion.md) §7
+Model-side counterpart: [ADR-0017](decisions/0017-semantic-contract-maturity-and-support-promotion.md) §8
+(carrying forward the Factory policy rules of the superseded
+[ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md), referenced below by their
+original numbering) and [Factory Model v2 Canonicalization](factory-model-v2.md)
 
 ## 1. Purpose
 
@@ -628,3 +631,63 @@ normative semantics above using representative explicit inputs. The fixtures mus
 
 Fixtures pin semantic outcomes, not DTO/JSON bytes, transport representation, or unrelated
 non-behavioral observation fields.
+
+## 15. Release status, support statement, and pre-release correction rule
+
+This section applies [ADR-0017](decisions/0017-semantic-contract-maturity-and-support-promotion.md)
+§7 to `engine-semantics:v1`. It changes no Engine behavior and no ADR-0015 decision.
+
+### 15.1 Support statement
+
+| | `engine-semantics:v1` |
+|---|---|
+| State | attribution and definition **promoted** under ADR-0015; the complete specification is **proving toward release** (15.2) |
+| Exact definition revision | this document; every rule an attributed run has exercised is frozen at the meaning it had when first exercised (15.3) |
+| Historical decoding / resolution | every attributed run resolves to this identifier, this specification, and the section 14 fixtures; ADR-0015 decisions 14 and 16 |
+| Execution support | the current runtime executes this version for V1 models; permanent exact re-execution is not promised (ADR-0015 decision 14) |
+| Outward compatibility | none; the identity is exposed on `FactoryRuntime` only, and observation/event propagation remains follow-up work |
+| Retention / retirement | identifier, specification, and fixtures survive retirement; retirement removes executability only (ADR-0015 decision 16) |
+
+### 15.2 What "released" means
+
+`engine-semantics:v1` is **fully released** when every section 14 fixture family is pinned by
+executable conformance evidence. Families 7–11 and 13 describe transfer behavior that only a
+spatial (V2) model can reach; no current run can exercise them because no runtime executes a V2
+model. Full release therefore requires the spatial runtime proving path and cannot be declared from
+the non-spatial conformance suites alone.
+
+The runtime nevertheless reports `engine-semantics:v1` for every run today, and that report is
+truthful: a V1 model authors no spatial facts, so under this specification it has no transfers, and
+every rule such a run can reach is one the non-spatial conformance suites pin. What the report
+does **not** claim is that the transfer sections have been proven or that the whole specified
+capability is mature.
+
+### 15.3 Section-level freeze before full release
+
+Until full release:
+
+1. **Every rule or section exercised by an attributed run is frozen exactly**, under ADR-0015
+   decision 12, at the meaning it had when first exercised. Because every run so far has reported
+   this identity and executed a V1 model, the exercised set is everything reachable without
+   spatial facts: sections 1.2, 3, and 4; the non-transfer rules of 2 (everything except rule 10
+   and the post-binding clauses of rule 7); the non-transfer rules of 10, including 10.1 and 10.2;
+   and the non-transfer observation metadata of 11. A change to any of them that can alter outcome
+   for identical explicit inputs requires a new Engine semantics version; recording a previously
+   unwritten rule whose behavior is unchanged remains a correction under section 1.1 consequence 3.
+2. **Only sections no attributed run has exercised may be corrected**: 5, 6, 7, 8, 9, 12, 13, the
+   transfer-specific clauses of 2, 10, and 11, and fixture families 7–11 and 13. A correction here is
+   a semantic decision about not-yet-executed behavior, not a reinterpretation of any recorded
+   result.
+3. **Each pre-release correction must be recorded** in 15.4 with its date, the section, and what
+   changed, before or in the same change as the correction.
+4. **Once an attributed run exercises a section**, that section joins the frozen set and any later
+   semantic correction to it requires a new semantics identity rather than reinterpretation. The
+   first attributed run of a V2 model therefore freezes the transfer sections it reaches.
+
+A run's interpretation never changes mid-run, and no historical run is ever re-attributed to a
+corrected section; both follow from ADR-0015 decisions 7 and 12 and ADR-0017 §2.
+
+### 15.4 Recorded pre-release corrections
+
+None yet. Record each correction to an unexercised section here as `YYYY-MM-DD — section — what
+changed`.

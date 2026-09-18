@@ -1,8 +1,9 @@
 # Factory Model v2 Canonicalization
 
-Status: Normative canonicalization contract; implementation pending
+Status: Normative canonicalization contract; **proving** — no fingerprint policy released (§10)
 Fingerprint policy: `factory-model:v2`
-Semantic authority: [ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md)
+Semantic authority: [ADR-0017](decisions/0017-semantic-contract-maturity-and-support-promotion.md) §8, which carries forward the Factory policy rules of the superseded [ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md)
+Lifecycle authority: [ADR-0017](decisions/0017-semantic-contract-maturity-and-support-promotion.md)
 Fingerprint-contract authority: [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md)
 
 ## 1. Purpose
@@ -13,9 +14,12 @@ semantic/canonicalization contract, not merely the cryptographic algorithm. Any 
 alter semantic field membership, ordering, normalization, binary encoding, or digest semantics
 requires a new policy version.
 
-[ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md) fixes *which* authored facts
-`factory-model:v2` adds, their validation predicates, and their compatibility rules. It does not fix
-the durable byte grammar those facts are digested through.
+[ADR-0017](decisions/0017-semantic-contract-maturity-and-support-promotion.md) §8 fixes *which*
+authored facts `factory-model:v2` adds, their validation predicates, and their compatibility rules,
+carrying those rules forward from the superseded ADR-0014 with the same numbering. It does not fix
+the durable byte grammar those facts are digested through. References below to an "ADR-0014
+decision" name the historical record; the current authority for each is the same-numbered rule in
+ADR-0017 §8.
 
 This document is the normative source of `factory-model:v2` canonical bytes, in exactly the sense
 that ADR-0006's v1 byte-grammar section is the normative source of `factory-model:v1` bytes. Where
@@ -23,7 +27,8 @@ this document and any implementation disagree, this document is authoritative.
 
 It deliberately does **not** restate or modify:
 
-- V2 semantic field membership, validation predicates, or compatibility rules — those are ADR-0014;
+- V2 semantic field membership, validation predicates, or compatibility rules — those are
+  ADR-0017 §8;
 - result-affecting Engine interpretation of V2 facts — that is
   [Engine Semantics v1](engine-semantics-v1.md);
 - controlled-revision identity or lineage — that is
@@ -31,8 +36,9 @@ It deliberately does **not** restate or modify:
 
 ## 2. Relationship to `factory-model:v1`
 
-V2 is a separate released policy, not a revision of V1. V1's grammar, digests, golden vectors, and
-historical fingerprints are permanently unchanged by V2's existence.
+V2 is a separate policy, not a revision of V1. It is **proving** and has not been released or
+promoted (§10). V1's grammar, digests, golden vectors, and historical fingerprints are permanently
+unchanged by V2's existence.
 
 Structurally, the V2 stream is the V1 stream with exactly three differences:
 
@@ -46,8 +52,8 @@ retyped, or renormalized.
 Because the policy-domain prefixes differ in their final component, **V1 bytes are never a prefix of
 V2 bytes, no V1 artifact decodes under a V2 verifier, and no V2 artifact decodes under a V1
 verifier.** Cross-policy artifact confusion is structurally impossible rather than a runtime check.
-This is what makes ADR-0014's policy-aware historical resolution (decision 8) and its prohibition on
-automatic V1-to-V2 lift (decision 10) mechanically enforceable at the artifact boundary.
+This is what makes policy-aware historical resolution (ADR-0017 §8 rule 8) and the prohibition on
+automatic V1-to-V2 lift (rule 10) mechanically enforceable at the artifact boundary.
 
 ## 3. Fingerprint identity and digest rendering
 
@@ -294,9 +300,9 @@ Additionally, and unlike a purely syntactic decoder, a V2 verifier must apply AD
 predicates (§7.6) during decode. A byte string that satisfies the §6 grammar but violates a V2
 publication predicate is **not a valid `factory-model:v2` artifact** and must be rejected.
 
-This is required by ADR-0014 decision 8: historical artifact resolution must remain permanent and
-policy-aware, which means resolving a stored V2 artifact must never yield a model that could not
-have been published in the first place. A stored artifact that fails a predicate indicates
+This is required by policy-aware historical resolution (ADR-0017 §8 rule 8): resolving a stored V2
+artifact, for whatever horizon V2's custody declaration or promotion record promises, must never
+yield a model that could not have been published in the first place. A stored artifact that fails a predicate indicates
 corruption or forgery and must fail loudly rather than resolve into an unpublishable model.
 
 ### 9.4 Fingerprint derivation from stored artifacts
@@ -307,13 +313,55 @@ malformed or non-canonical artifact acquire a well-formed-looking V2 identity.
 
 ## 10. Immutability and lifecycle
 
-Until the `factory-model:v2` implementation ships, this grammar is a normative design contract and
-may be corrected by amending this document.
+### 10.1 Support statement
 
-Once a V2 fingerprint is produced by a shipped implementation or recorded against a controlled
-revision, the grammar is frozen permanently. From that point, every supported implementation must
-produce the same fingerprint for the same V2 semantic content across processes, software versions,
-and implementation languages.
+| | `factory-model:v2` |
+|---|---|
+| State | **proving** — not released, not promoted ([ADR-0017](decisions/0017-semantic-contract-maturity-and-support-promotion.md) §3, §10) |
+| Exact definition revision | this document at the revision a reader holds; no fingerprint has ever been produced under it, so no artifact is bound to any revision of it yet |
+| Historical decoding / resolution | none promised; no V2 verifier or decoder is registered, and the controlled-revision authority rejects V2 artifacts as an unsupported policy |
+| Execution support | none; no runtime executes a V2 model |
+| Outward compatibility | none |
+| Custody / exit condition | see §10.3 |
+
+### 10.2 Proving corrections
+
+While proving, this grammar is a normative design contract and may be corrected by amending this
+document. Each correction must be recorded in §10.5 with its date and the rule changed. Because no
+V2 fingerprint has been produced under any revision of this grammar, no section of it has yet been
+exercised in the sense of ADR-0017 §7; the first fingerprint produced under a supported
+implementation, recorded against a controlled revision, or accepted into retained custody makes
+the grammar that produced it non-rebinding for that artifact, and such an artifact may exist only
+under §10.3.
+
+### 10.3 Exit condition
+
+The proving state ends by exactly one of:
+
+- **promotion** — a dated promotion section added to this document, or an ADR, that meets
+  ADR-0017 §6 (exact grammar revision, scoped promises, supported scope, evidence, affected
+  consumers/artifacts, evolution obligations, retention/retirement obligations). Promotion requires
+  the Factory composition research to have been reconciled, so that the whole-model shape this
+  grammar encodes is the deliberately chosen successor to V1, and the §11 golden vectors to be
+  implemented as executable evidence; or
+- **retirement or supersession** — the Factory composition result replaces this design, in which
+  case this document is retained as the historical record of an unreleased grammar and no artifact
+  ever depended on it.
+
+Until promotion, no V2 fingerprint may be produced by a supported implementation, recorded against
+a controlled revision, or accepted into retained custody. A proving-custody use (for example a
+conformance harness or a temporary authority declared ephemeral) may produce V2 fingerprints only
+under an explicit custody declaration per ADR-0017 §4, and a retained authority may accept a
+V2 artifact before promotion only if its record preserves the exact grammar revision together with
+that custody declaration and horizon.
+
+Recording this exit condition is not a release of a V2 fingerprint policy.
+
+### 10.4 After promotion
+
+Once promoted, the grammar is frozen for the horizon the promotion record states. Every supported
+implementation must then produce the same fingerprint for the same V2 semantic content across
+processes, software versions, and implementation languages.
 
 Changing any identity-affecting rule while still calling the policy v2 is then forbidden, including:
 
@@ -328,8 +376,16 @@ Changing any identity-affecting rule while still calling the policy v2 is then f
 - the policy-domain prefix;
 - hash algorithm or digest rendering.
 
-Such a change requires `factory-model:v3` under ADR-0014's general evolution invariant (decision
-12). V1 and V2 both remain immutable and historically resolvable.
+Such a change requires a new exact definition revision under ADR-0017 §8 rule 12, which is proving
+until promoted; whether that revision is a linear `factory-model:v3` or another structure is decided
+by the Factory composition result, not by this document. A promoted V2 would remain immutable and
+resolvable exactly as its promotion record promises; V1 remains permanently immutable and
+resolvable regardless.
+
+### 10.5 Recorded proving corrections
+
+None yet. Record each pre-promotion grammar correction here as `YYYY-MM-DD — section — what
+changed`.
 
 ## 11. Golden compatibility vectors
 
@@ -396,12 +452,12 @@ At minimum, V2 tests must cover:
 
 This document does not define:
 
-- V2 semantic field membership, validation predicates, or compatibility rules (ADR-0014);
+- V2 semantic field membership, validation predicates, or compatibility rules (ADR-0017 §8);
 - result-affecting interpretation of V2 facts, including the distance metric, handling application,
   destination binding, or transfer lifecycle ([Engine Semantics v1](engine-semantics-v1.md));
 - controlled-revision identity, lineage, or repository authority (ADR-0008);
 - cross-policy `ChangeSet` or migration-classification representation, beyond requiring that V1 and
-  V2 artifacts remain structurally distinguishable (ADR-0014 decision 11);
+  V2 artifacts remain structurally distinguishable (ADR-0017 §8 rule 11);
 - the external interchange/serialization formats a consumer authors a design in
   ([ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md));
 - a universal canonicalization scheme for non-Factory Arcogine domains.

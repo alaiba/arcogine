@@ -132,6 +132,8 @@ PLAN-ENG-4-D1 and PLAN-ENG-4-D2 should normally be separate reviewable PRs when 
 
 `ModelFingerprint` is required supported provenance and comes from the published model's durable fingerprint, never legacy content hash.
 
+The legacy `FactoryModelVersion.contentHash()` carried by `IntegratedHandler`/`SimResult.modelContentHash` is classified by [ADR-0017](../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md) §10 as a proving surface in ephemeral in-process custody whose exit condition is retirement. PLAN-ENG-4-D owns that retirement: when API/CLI result provenance converges on the supported contract, replace the legacy hash with `ModelFingerprint` in `IntegratedHandler`, `ModelProvenanceSource`, and `SimResult`, then remove `contentHash()` and its compatibility pin in the same or an immediately following slice. Until that slice lands, the legacy hash's behavior stays unchanged and ADR-0006's rule that bare content hashes are never reinterpreted as `factory-model:v1` digests remains in force.
+
 `ControlledRevisionId` is optional and appears only when the runtime has an authoritative upstream revision binding. Governance completion does not imply that every runtime has such a binding, and Engine must not generate/infer one.
 
 The completed Governance identity/history substrate is summarized by [Governance Identity/History Downstream Compatibility Guard](governance-continuity.md).

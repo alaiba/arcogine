@@ -1,9 +1,9 @@
 # Factory Design Capability Implementation Plan
 
-> **Status:** Active/partial; current Factory Model v1 capability and the V2 shape/validation proving slice are landed, while unimplemented V2 identity/coexistence work is dependency-blocked on READY semantic-contract maturity and Factory composition research  
+> **Status:** Active/partial; current Factory Model v1 capability and the V2 shape/validation proving slice are landed. The semantic-contract maturity question is reconciled in ADR-0017; unimplemented V2 identity/coexistence work remains dependency-blocked on the Factory composition research  
 > **Scope:** Implementation-ready Factory Design work over the canonical production-system model  
-> **Authority:** Planning only. Accepted Factory ADRs remain current architecture until superseded; this plan deliberately pauses work that would deepen the questioned durability/linear-version commitments while the new research is open.  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
+> **Authority:** Planning only. Accepted Factory ADRs remain current architecture until superseded; this plan deliberately pauses work that would deepen the questioned linear-version commitment while the composition research is open.  
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0017](../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md) (superseding [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md)), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
 
 ## 1. Implementation boundary
 
@@ -47,14 +47,14 @@ Current `ConfiguredResource` remains the supported complete configured-resource 
 
 ## 3. Factory spatial-model work under research hold
 
-ADR-0014 remains the current accepted architecture and therefore still defines `factory-model:v2` as exactly v1 semantic content plus required authored spatial/handling facts. However, two READY high-risk investigations now challenge whether durability was declared too early and whether spatial semantics are an orthogonal Factory concern rather than a linear generation of the whole model:
+[ADR-0017](../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md) §8 carries forward the Factory policy rules of the superseded ADR-0014 and therefore still defines `factory-model:v2` as exactly v1 semantic content plus required authored spatial/handling facts. Two high-risk investigations questioned that estate:
 
-- [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md); and
-- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md).
+- [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md) — **concluded and reconciled** in ADR-0017: `factory-model:v2` is a proving contract with an explicit exit condition ([Factory Model v2](../architecture/factory-model-v2.md) §10), the automatic permanent-resolution and automatic `vN+1` triggers are replaced, `factory-model:v1`'s promises are retained, and a V2 fingerprint may not be produced or accepted into retained custody before a promotion record or custody declaration exists; and
+- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md) — **still open**, and still the prerequisite for the slices below, because it decides whether the whole-model V2 shape is the successor V1 should have at all.
 
-This is an **implementation hold, not an architectural supersession**. The already-landed V2 model/validation slice remains useful proving evidence. Do not start V2 canonical identity, V1/V2 coexistence, or another unimplemented Factory slice whose purpose is to harden the current linear-policy/durability assumptions until both research questions have decision-quality results, required adversarial review, and any necessary architecture/planning reconciliation has landed.
+This remains an **implementation hold, not an architectural supersession**. The already-landed V2 model/validation slice remains useful proving evidence. Do not start V2 canonical identity, V1/V2 coexistence, or another unimplemented Factory slice whose purpose is to harden the current linear-policy assumption until the composition question has a decision-quality result, its required adversarial review, and any necessary architecture/planning reconciliation has landed. The maturity reconciliation alone does not restart any held slice.
 
-Under the still-current ADR-0014 baseline, V2 consists of:
+Under the current ADR-0017 §8 rules, V2 consists of:
 
 - floor width and height;
 - resource reference-cell position;
@@ -70,7 +70,7 @@ The implementation sequence is owned jointly with [Spatial Runtime Consequences]
 
 **Status:** Implemented as proving evidence. `factory-model:v2` canonical bytes/fingerprint policy are not released by this slice. PLAN-ENG-5-A2 was the next V2 Factory-model slice and is now dependency-blocked by the research hold above.
 
-Implement the five authored additions and deterministic validation required by ADR-0014.
+Implement the five authored additions and deterministic validation required by ADR-0017 §8 rule 3.
 
 Acceptance evidence must prove:
 
@@ -83,7 +83,7 @@ Acceptance evidence must prove:
 
 ### PLAN-ENG-5-A2 — V2 canonical identity
 
-**Status:** Dependency-blocked. Do not implement while the semantic-contract maturity and Factory composition investigations are open.
+**Status:** Dependency-blocked. Do not implement while the Factory composition investigation is open.
 
 Implement the exact V2 canonical bytes and fingerprint policy from [Factory Model v2](../architecture/factory-model-v2.md).
 
@@ -96,20 +96,23 @@ Acceptance evidence must prove:
 - no automatic v1-to-v2 lift or synthesized historical spatial defaults; and
 - malformed or semantically invalid V2 artifacts fail explicitly.
 
+Under ADR-0017 this slice implements a **proving** policy, not a released one: it must not register a V2 verifier with a retained authority unless that authority records the exact grammar revision and custody declaration with each accepted V2 artifact (invariant 9 of the [Identity/History Compatibility Guard](governance-continuity.md)), and it must either deliver V2's promotion record per ADR-0017 §6 and [Factory Model v2](../architecture/factory-model-v2.md) §10.3 or leave V2 explicitly proving with that record as a named later step.
+
 ### PLAN-ENG-5-A3 — V1/V2 historical coexistence
 
-**Status:** Dependency-blocked. Do not implement while the semantic-contract maturity and Factory composition investigations are open.
+**Status:** Dependency-blocked. Do not implement while the Factory composition investigation is open.
 
-Use the landed Governance revision authority to keep both released policies historically resolvable and verifiable.
+Use the landed Governance revision authority to keep both policies historically resolvable and verifiable for the horizon each one promises: permanently for `factory-model:v1`, and for V2 per its custody declaration or promotion record (ADR-0017 §8 rule 8).
 
 Acceptance evidence must prove:
 
 - historical v1 resolution remains intact after V2 registration;
 - v2 resolution is independent;
-- controlled revision lineage may cross policy versions without rewriting either artifact; and
-- the first cross-policy transition is not falsely represented as an ordinary same-policy empty/equivalent diff.
+- controlled revision lineage may cross policy versions without rewriting either artifact;
+- the first cross-policy transition is not falsely represented as an ordinary same-policy empty/equivalent diff; and
+- a V2 artifact accepted while V2 is proving carries its exact grammar revision and custody declaration, and is rejected explicitly when the authority cannot record them.
 
-This slice implements only the first coexistence/migration seam actually required by V1/V2. It does not create a generic schema-migration framework.
+This slice implements only the first coexistence/migration seam actually required by V1/V2. It does not create a generic schema-migration framework, and it does not make V2's resolution permanent unless V2's promotion record says so.
 
 ## 4. Existing Factory capabilities that remain closed
 
@@ -119,7 +122,7 @@ The behavior-preserving canonical seam is implemented for current semantics. A1 
 
 ### PLAN-FD-2 — Executability validation
 
-Current deterministic validation remains the implementation contract for admitted semantics. V2 adds only the accepted spatial/arithmetic predicates required by ADR-0014.
+Current deterministic validation remains the implementation contract for admitted semantics. V2 adds only the accepted spatial/arithmetic predicates required by ADR-0017 §8 rule 3.
 
 A richer cross-consumer finding taxonomy is **not** an admitted implementation slice; it is tracked in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md).
 

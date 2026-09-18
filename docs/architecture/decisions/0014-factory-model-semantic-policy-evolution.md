@@ -1,7 +1,8 @@
 # ADR-0014: Factory Model Semantic-Policy Evolution
 
-Status: Accepted
+Status: Superseded
 Date: 2026-09-03
+Superseded by: ADR-0017
 Amendment: 2026-09-04 — replace delivery-coordinate terminology with semantic implementation wording; no semantic change
 
 ## Context

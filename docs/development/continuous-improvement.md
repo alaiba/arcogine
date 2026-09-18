@@ -25,7 +25,7 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 - **Trigger:** evidence-based, not calendar-driven — about 25 additional substantive merges since the recorded baseline, or 2 high-confidence post-merge process escapes, or 1 P1 lifecycle/process escape. See the latest dated `delivery-process-retrospective-YYYY-MM-DD.md` for the full method.
 - **Purpose:** empirical evidence about delivery-process performance and waste.
 - **Owner:** a human/agent who judges whether the substantive trigger actually fired.
-- **Mechanical guard:** agents can count merged PRs since the baseline to surface `CHECK_TRIGGER`; that raw count never turns itself into an automatic retrospective decision.
+- **Mechanical guard:** agents can count merged PRs since the baseline to detect that the retrospective threshold should be evaluated; that raw count never turns itself into an automatic retrospective decision.
 
 ## Authority boundaries
 
@@ -70,13 +70,13 @@ The recorded head biases the next review toward newer material; it never narrows
 
 ### Weekly due-state derivation
 
-Weekly state is derived when an agent grounds from the factual `last verified` date; it is not persisted separately:
+Weekly state is derived when reminder state is evaluated from the factual `last verified` date; it is not persisted separately:
 
 - `CURRENT` when the last verified date is at most 7 days old;
 - `DUE` when no review is recorded, or it is more than 7 but at most 14 days old;
 - `OVERDUE` when it is more than 14 days old.
 
-A malformed or future `last verified` value is not `CURRENT`; treat the weekly state as unverifiable and surface that once during grounding.
+A malformed or future `last verified` value is not `CURRENT`; treat the weekly state as unverifiable and surface that once during reminder evaluation.
 
 ## Consistency finding identities
 
@@ -86,19 +86,24 @@ All findings use `CONS: <semantic title>`. GitHub issue number is the sole durab
 
 The retrospective baseline and explicit escape evidence live in `.github/scripts/continuous-improvement-data.json`. A later verified retrospective advances that file as an ordinary repository change.
 
-When evaluating the trigger, count merged PRs newer than `baselinePr` from newest to oldest and stop as soon as the baseline is reached. Do not scan older PR history. Surface `CHECK_TRIGGER` when any mechanical condition holds:
+When evaluating the trigger, count merged PRs newer than `baselinePr` from newest to oldest and stop as soon as the baseline is reached. Do not scan older PR history. The retrospective threshold needs evaluation when any mechanical condition holds:
 
 - raw merged PRs since baseline >= 25;
 - `escapeEvidenceCount >= 2`;
 - `p1LifecycleEscape == true`.
 
-`CHECK_TRIGGER` means evaluate the retrospective method; it is not itself a conclusion that the retrospective is due.
+Crossing that threshold means evaluate the retrospective method; it is not itself a conclusion that the retrospective is due.
 
-## Every-agent reminder
+## Reminder boundaries and wording
 
-On the first normal repository grounding of a session, Arcogine agents derive weekly state from #295 and evaluate the retrospective mechanical guard from the baseline data plus bounded live GitHub history, as described in `AGENTS.md`.
+Do not evaluate recurring continuous-improvement obligations during ordinary repository grounding. Evaluate them only at the natural process boundaries defined in `AGENTS.md`: Session-close Kaizen and tasks that explicitly concern continuous improvement, Consistency cadence, delivery-process health, or repository-wide planning/next-work.
 
-`CURRENT` alone is silent. `DUE`/`OVERDUE`, `CHECK_TRIGGER`, or unverifiable state is mentioned at most once and never derails the requested task.
+User-facing reminders state the action plainly and include the minimal fresh-session prompt:
+
+- weekly Consistency review due or overdue → `The weekly Consistency review is due. Start a fresh session with: "Run the consistency review."`
+- delivery-process retrospective threshold reached → `The delivery-process retrospective threshold has been reached. Start a fresh session with: "Run the delivery-process retrospective."`
+
+These sentences are interaction guidance, not persisted state. Internal derivation labels such as `CURRENT`, `DUE`, or `OVERDUE` may remain useful while computing the reminder, but they are not the reminder itself. If no action is warranted, say nothing. If state cannot be verified, say so once without inventing a status. A reminder is mentioned at most once per session and never derails the requested task.
 
 ## Removed automation
 

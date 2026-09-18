@@ -1,6 +1,6 @@
 # Arcogine consistency review
 
-This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with a mandatory current-main Repomix attachment for repository content and the GitHub connector for live/mutable repository state.
+This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with an Arcogine Repomix attachment as the repository-content baseline and the GitHub connector for revision reconciliation plus live/mutable repository state.
 
 A formal review is diagnostic plus the narrow finding-ledger/register accounting described below. It does not authorize source/doc remediation, planning changes, ADR changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
 
@@ -12,38 +12,30 @@ A previous clean review is not evidence that older content is correct. New mater
 
 ## Required review corpus
 
-A formal review requires an Arcogine Repomix attachment generated from the exact current canonical `main` commit.
+A formal review requires an Arcogine Repomix attachment with valid provenance for canonical `alaiba/arcogine` `main`. The attachment need not be generated from the latest `main` if its recorded revision can be reconciled safely to one exact current target revision.
 
 At review start:
 
-1. Resolve live `main` through GitHub.
-2. Read the Repomix provenance header and require:
+1. Read the Repomix provenance header as baseline `S` and require:
    - `Repository: alaiba/arcogine`;
    - `Branch: main`;
-   - a full `Commit` SHA exactly equal to live `main`.
-3. If the attachment is missing or malformed, stop `INCOMPLETE`: generate/upload a current-main Repomix and retry.
-4. If its commit differs from live `main`, stop `INCOMPLETE`: report both SHAs, say the Repomix is stale, and tell the user to update it from current `main` and retry.
-5. After equality is established, use Repomix as the primary repository-content corpus. Read `AGENTS.md`, this contract, docs, source, tests, configuration, workflows, and other tracked repository content from it rather than refetching files through GitHub.
+   - a valid full `Commit` SHA.
+   Missing or malformed provenance makes the review `INCOMPLETE`.
+2. Resolve current live `main` through one GitHub compare from `S` to `main` using a compare surface that exposes the exact resolved target SHA `T` and the changed-path delta together.
+3. If the compare shows no repository-content difference, use the Repomix directly as the repository-content corpus for `T`.
+4. If `S` is an ancestor of `T` and the compare provides a complete usable delta:
+   - keep the Repomix as the primary corpus for unaffected paths;
+   - read every added, modified, renamed, copied, or otherwise affected target path from immutable `ref=T`;
+   - treat deleted/replaced snapshot paths as unavailable at `T`;
+   - never use snapshot content from an affected path as evidence about `T`;
+   - for repository-wide or semantic searches, search the Repomix baseline and reconcile results with the affected-path set, inspecting affected content at `T` so additions/modifications are not missed and removed/replaced text cannot create false conclusions.
+5. If ancestry, exact `T`, or a complete usable delta cannot be established, stop `INCOMPLETE` and require a refreshed snapshot. Do not attest a repository-wide review from a partial or ambiguous target corpus.
+6. The resulting exact target view — snapshot content for unaffected paths plus revision-bound live content for affected paths — is the review corpus. If `AGENTS.md` or this contract is affected, read its `T` version before continuing and follow the target-revision instructions.
+7. Use `T`, not the snapshot baseline `S`, as the reviewed head for all evidence, finding reconciliation, and completion recording.
 
-Do not compensate for a stale/missing corpus by reconstructing repository content through GitHub file/search calls. The prerequisite exists so the deep scan is fast, local, and complete at one known head.
+Do not redundantly refetch unaffected static content through GitHub. The snapshot is a cache, not authority for changed target paths.
 
 GitHub remains authoritative for mutable state and history: live `main`, issue #295, finding issues, pull requests, reviews, CI/checks, commit/compare history, and all mutations.
-
-### Historical coverage-regression exercise
-
-A reviewer-instruction change may need to be tested against a frozen historical corpus after live `main` has advanced. That is a **read-only coverage-regression exercise**, not a formal Consistency review.
-
-For such an exercise:
-
-1. The user must explicitly request regression/diagnostic evaluation of a named historical Repomix commit.
-2. Use the **current live-`main` version of this contract** as the review procedure. The historical copy of this file inside the target corpus is evidence about that historical repository state, not the procedure under test.
-3. Verify that the historical Repomix provenance names `alaiba/arcogine`, `main`, and the requested full commit SHA. The target SHA does not need to equal live `main`.
-4. Treat the historical Repomix as the complete repository-content corpus for the exercise. Do not substitute current repository files when judging the historical target.
-5. Do not preload current/open/closed `CONS:` issues, the current register state, or a known finding oracle as discovery input. If an oracle exists, compare it only **after** the independent diagnostic output is frozen. Prefer a fresh chat/session that has not been shown the oracle; a session that already knows the expected findings is not a blinded coverage-regression run.
-6. Do not create, update, close, reopen, or comment on finding issues; do not edit issue #295; do not record a completion; and do not claim that the weekly obligation was satisfied.
-7. Report the target SHA, the current procedure SHA/ref, independently discovered candidate findings, required breadth-pass coverage, and limitations. Candidate findings in this exercise have no durable `CONS:` identity unless a later formal review independently accounts for them.
-
-This exception exists only to evaluate reviewer coverage reproducibly. It must never be used to establish or advance the recurring reviewed baseline.
 
 ## Authority and time
 
@@ -70,7 +62,7 @@ Proposed/planned behavior differing from current source is not drift by itself; 
 
 ## Live grounding
 
-After Repomix freshness is proven:
+After the exact target corpus at `T` is established:
 
 1. Read GitHub issue `#295`, titled exactly `Continuous improvement register`.
 2. Load currently open consistency findings whose titles begin `CONS:`.
@@ -92,14 +84,14 @@ Search and slice the Repomix corpus aggressively. For each material concept inve
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
 7. If something appears even mildly inconsistent, follow the thread far enough to classify it regardless of file age or the previous reviewed head.
 
-After that concept-driven work, every formal repository-wide review and every historical coverage-regression exercise must run these independent breadth passes over the complete target corpus. These passes are candidate-discovery mechanisms, not automatic findings:
+After that concept-driven work, every formal repository-wide review must run these independent breadth passes over the complete target corpus. These passes are candidate-discovery mechanisms, not automatic findings:
 
 1. **Lifecycle/status prose sweep.** Search claim-bearing maintained prose — including architecture, planning, product/reference/development docs, README material, and durable source/test comments or Javadocs — for assertions about lifecycle or delivery state such as current/implemented/complete/partial, future/later/not-yet, ready-to, being-established, remaining, deferred, blocked, temporary, legacy, or equivalent wording. Reconcile suspicious matches with the authority that owns current status. Obvious lexical anomalies such as accidentally repeated adjacent words are candidate selectors too, but wording defects alone are not semantic findings.
 2. **Volatile duplicated-fact sweep.** Search maintained prose for copied exact facts whose executable owner can move independently: dependency/tool/runtime versions, module/test/component counts, commands, configuration keys or assignments, workflow/job names, ports, limits, paths, and similarly change-prone literals. Locate the executable/configuration authority and verify the copied claim instead of assuming an exact value in prose is still current. Do not turn ordinary domain numbers into noise; focus on facts presented as current operational/configuration truth.
 3. **Cross-authority current-state sweep.** For capabilities described as current, implemented, complete, partial, deferred, or blocked in architecture/planning authorities, search semantic neighbors across architecture, planning, product/reference/development docs, examples, and claim-bearing source comments for incompatible lifecycle state or ownership claims. This sweep must include older unchanged text; the changed-file range is not evidence that neighboring claims are current.
 4. **Candidate closure check.** When a candidate exposes drift in a maintained current-state surface, inspect the smallest neighboring closure set governed by the same authority before finalizing it. Examples include sibling API examples/schema claims for the same surface, neighboring status claims for the same capability, or sibling comments carrying the same delivery assumption. Keep unrelated subjects separate, but do not stop at the first contradictory line when adjacent claims share the same authority.
 
-A formal review may not record completion unless all four breadth passes were performed. If a required pass cannot be completed, stop `INCOMPLETE` before finding/register mutations and state which pass was not completed. A coverage-regression exercise remains read-only but must likewise report any incomplete breadth pass explicitly.
+A formal review may not record completion unless all four breadth passes were performed. If a required pass cannot be completed, stop `INCOMPLETE` before finding/register mutations and state which pass was not completed.
 
 Prefer evidence-driven repository search over a duplicated architecture matrix. The required breadth passes define minimum discovery coverage; they do not require maintaining a static architecture matrix or treating every search hit as a finding. Newness is a search-order heuristic, not a stopping rule.
 
@@ -143,7 +135,7 @@ Authority:
 <owning authority and why>
 ```
 
-Do not duplicate mutable lifecycle state in the body. Unresolved findings stay open; plausible corrective PRs remain open and are reported `IN_FLIGHT`; verified fixes on reviewed `main` close completed; false positives/duplicates/superseded findings close with explanation; regressions reopen the same issue.
+Do not duplicate mutable lifecycle state in the body. Finding reconciliation is idempotent: before creating a new issue, match the candidate against loaded open findings and, when needed, closed `CONS:` findings. A semantic match reuses the existing issue identity. Re-running a review must not create a duplicate issue or append duplicate evidence merely because the same inconsistency was observed again. If materially stronger or newly relevant diagnostic evidence clarifies the same unresolved finding, update that issue narrowly while preserving its identity. Unresolved findings stay open; plausible corrective PRs remain open and are reported `IN_FLIGHT`; verified fixes on reviewed `main` close completed; false positives/duplicates/superseded findings close with explanation; regressions reopen the same issue.
 
 Invoking a formal review authorizes only the issue operations required to account for that review's findings and the final weekly-register update. It does not authorize remediation or unrelated issue changes.
 
@@ -151,9 +143,9 @@ Invoking a formal review authorizes only the issue operations required to accoun
 
 Do not mutate findings while analyzing.
 
-1. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal the Repomix commit; otherwise stop `INCOMPLETE` with no review-accounting mutations and require a fresh Repomix/retry.
-2. Reconcile finding issues.
-3. Resolve live `main` again. It must still equal the Repomix commit.
+1. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal reviewed target `T`; otherwise stop `INCOMPLETE` with no review-accounting mutations and restart against the new exact target.
+2. Reconcile finding issues idempotently.
+3. Resolve live `main` again. It must still equal reviewed target `T`.
 4. Re-fetch issue #295 immediately before writing, require the exact title, and replace only its `### Weekly Consistency review` subsection in the latest body while preserving all other content.
 
 Write factual review state only:
@@ -162,7 +154,7 @@ Write factual review state only:
 ### Weekly Consistency review
 
 - last verified: <UTC YYYY-MM-DD>
-- reviewed head: <Repomix/current-main full SHA>
+- reviewed head: <reviewed target T full SHA>
 - accounted result: CLEAN | FINDINGS
 - finding issues: none | #<number>, #<number>, ...
 - interval: every 7 days
@@ -190,4 +182,4 @@ Limitations: none | <specific incomplete pass or other limitation>
 Overall: CLEAN | FINDINGS | INCOMPLETE
 ```
 
-For a formal review, present each material finding with issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. For a historical coverage-regression exercise, present independently discovered candidates without inventing issue numbers, then freeze that output before any oracle comparison. `CLEAN` means no evidence-backed inconsistency was found during a formal review; it never claims exhaustive proof of consistency.
+Present each material finding with issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. `CLEAN` means no evidence-backed inconsistency was found during this review; it never claims exhaustive proof of consistency.

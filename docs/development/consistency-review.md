@@ -52,11 +52,11 @@ The previous reviewed head is an attention aid, never a scope boundary. A clean 
 
 ## Repomix/GitHub boundary
 
-The project Repomix is the reviewer's repository-content baseline. Establish exact target `T` with the protocol in `docs/development/repository-snapshot.md`: use the snapshot directly when identical; otherwise use it for unaffected paths and immutable live `T` content for every affected path only when the compare file list is present, has fewer than 300 entries, has no explicit too-large/truncation signal, and therefore qualifies as a complete descendant delta. Repository-wide searches must reconcile snapshot matches with affected target paths. Do not spend connector calls refetching unaffected static content.
+The project Repomix is the reviewer's repository-content baseline. Follow `docs/development/repository-snapshot.md` as the sole authority for reconciling that baseline to exact target `T`; Consistency does not duplicate that protocol here. Do not spend connector calls refetching unaffected static content.
 
 GitHub remains authority for live `main`, issue #295, finding issue state, PR/review/CI state, commit/compare history, and mutations. PR/history queries are evidence-driven, not routine bulk loading.
 
-A snapshot may be older than live `main`; age alone is not a failure. Missing/malformed provenance or inability to establish exact `T`, ancestry, and a complete usable delta — including an ambiguous 300-file Compare result — makes the review `INCOMPLETE`; refresh the snapshot rather than claiming completeness from an ambiguous corpus.
+A snapshot may be older than live `main`; age alone is not a failure. If the canonical snapshot protocol cannot establish a complete exact target view, the review is `INCOMPLETE` and the snapshot must be refreshed.
 
 The reviewer rechecks `main` before finding accounting and again before recording completion. Both checks must still equal reviewed target `T`. If `main` moved during a long review, do not attest completion against the old target.
 

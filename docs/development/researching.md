@@ -373,7 +373,15 @@ When a workspace carrying handed-off evidence needs to incorporate a newer `main
 
 Workspace sharing must not weaken anchoring control. An independent reviewer may use the same workspace for persistence but should begin from the research brief and live repository authorities, then reconstruct constraints/candidates/failure cases before deeply reading the handed-off report, as §9 requires. Unrelated investigations should not share a workspace because that increases accidental anchoring, couples retirement, and creates pressure for a parallel long-running research archive.
 
-The final reconciliation PR may use the same workspace branch. Before merge, temporary report/review/handoff files that are not deliberately promoted into durable repository authority should be absent from the branch's final tree, so the PR's net content is the durable reconciliation rather than an archive dump. Their exact historical commit + path coordinates remain the evidence identity until the workspace is retired. Because that identity ends there, maintained research state expected to outlive the workspace — a concluded investigation, a register entry, a synthesis seed — must cite a **durable evidence reference** rather than a workspace `commit SHA + path`. Before retirement, copy the exact report/review coordinates into the reconciliation pull request or another delivery-history record that is guaranteed to survive workspace retirement; workspace-branch commit messages and conversational handoff prompts are not durable evidence references unless those coordinates are themselves persisted in such a record.
+The final reconciliation PR may use the same workspace branch. Before merge, temporary report/review/handoff files that are not deliberately promoted into durable repository authority should be absent from the branch's final tree, so the PR's net content is the durable reconciliation rather than an archive dump.
+
+Exact workspace `commit SHA + path` coordinates are **active-custody artifact identity**. They must remain resolvable while the workspace is active so an adversarial review can bind to the exact report revision and a reconciliation reviewer can inspect the exact report/review pair rather than a conversational summary. That requirement ends when reconciliation has landed, the knowledge-transfer audit is complete, and the workspace is retirement-eligible.
+
+A copied coordinate is not preservation of its target. Recording a workspace SHA in a pull request, issue, commit message, or maintained document preserves the coordinate text, but it does not create a repository guarantee that the underlying Git object will remain fetchable after squash merge, branch deletion, mirroring/export, or Git-host retention changes. Do not copy temporary artifact coordinates into maintained state merely to make them appear durable.
+
+After retirement, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product/architecture/ADR/reference or admitted planning authority, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
+
+If the exact report, adversarial review, source map, or other research artifact must itself remain readable after workspace retirement, deliberately promote that artifact to a durable repository location or another retention surface with an explicit persistence contract before retiring the workspace. Otherwise the knowledge-transfer audit is the preservation mechanism and the temporary evidence is intentionally expendable.
 
 Temporary research evidence may be deleted only after every research question carried by the workspace is `CONCLUDED` or `SUPERSEDED` **and** a knowledge-transfer audit accounts for every material result that should survive the investigation. At minimum, classify and transfer:
 
@@ -382,6 +390,7 @@ Temporary research evidence may be deleted only after every research question ca
 - unresolved unknowns, reopening triggers, and newly exposed questions into the [research register](../research/research-register.md) when they remain material;
 - reusable proving cases, counterexamples, failure modes, measurements, protocols, source maps, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;
 - qualifying cross-investigation signals into `docs/research/synthesis-seeds.md` when they satisfy the synthesis-seed rules below;
+- any exact report/review/source artifact whose future readability is itself material into a deliberate durable repository location or another retention surface with an explicit persistence contract;
 - findings that no longer merit retention as explicitly discarded rather than accidentally lost with branch deletion.
 
 ### Synthesis-seed custody
@@ -396,21 +405,21 @@ Admit or extend a seed only during reconciliation or another explicit knowledge-
 2. **Potentially transferable** — after Arcogine-specific class names and implementation details are removed, an intelligible proposition, distinction, failure mode, method, or counterexample remains.
 3. **Loss-sensitive** — retiring the workspace without the compact signal would materially reduce the chance that a later independent investigation could recognize recurrence.
 
-Prefer preserving reusable proving cases, counterexamples, measurements, protocols, tests, or other research assets in the durable Arcogine surface that will actually use them. A seed is connective tissue: it points to those assets and to a durable evidence reference rather than duplicating whole reports.
+Prefer preserving reusable proving cases, counterexamples, measurements, protocols, tests, or other research assets in the durable Arcogine surface that will actually use them. A seed is connective tissue: it points to those assets and, when useful, to reconciliation delivery history rather than duplicating whole reports.
 
 Do not create a seed merely because a finding is interesting, publication is imaginable, or a researcher wants to keep notes. If the item is an unresolved Arcogine decision, track it in the research register. If it has an accepted Arcogine semantic consequence, reconcile that consequence into its authoritative destination. If it is situational and not worth future recovery, discard it explicitly.
 
 Each maintained seed record in [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md) must contain:
 
 - **Signal** — the smallest potentially transferable observation, distinction, counterexample, method, or hypothesis;
-- **Origin** — the originating investigation, a durable evidence reference, and the durable reconciliation destination when one exists;
+- **Origin** — the originating investigation, the durable reconciliation destination when one exists, and optionally a delivery-history provenance reference for where reconciliation occurred;
 - **Evidence posture** — what is actually established, without upgrading an Arcogine-specific result into a broader claim;
 - **Boundaries / counterevidence** — known conditions where the signal may not hold, contrary examples, or material untested scope;
 - **Reusable assets** — durable proving cases, counterexamples, measurements, protocols, tests, source maps, or other research assets;
-- **Occurrences** — later independent-occurrence or reuse entries with a durable evidence reference and the materially similar aspect;
+- **Occurrences** — later independent-occurrence or reuse entries with the materially similar aspect, durable destination where one exists, and an optional delivery-history provenance reference;
 - **Revisit when** — a concrete evidence or recurrence condition that would justify considering a bounded synthesis investigation.
 
-A **durable evidence reference** is one that still resolves once the originating workspace is retired: normally the reconciliation pull request or an equivalent delivery-history record, which carries the exact report/review coordinates, named alongside the durable destination the conclusion landed in. Do not record a workspace `commit SHA + path` as an evidence reference in any maintained research state, seeds included. That coordinate is the artifact identity only until the workspace is retired, and a seed in particular is admitted during reconciliation — the same phase that retires the workspace — so it would be written into maintained state at the point its authority ends. Whether such a commit stays fetchable afterwards depends on Git-host retention behaviour rather than on any repository guarantee, and maintained state must not depend on that.
+A **delivery-history provenance reference** identifies where reconciliation, review, or another relevant delivery event occurred — normally a merged pull request or equivalent record. It may preserve useful historical metadata, but it is not a storage guarantee for temporary workspace commits. Maintained research state must remain intelligible and useful if those temporary report/review commits are no longer fetchable; anything whose exact future readability matters must have been promoted deliberately before retirement.
 
 When reconciling a new candidate, search existing seeds for semantic neighbors **only after** the originating investigation has reached its own result. Extend an existing seed when the underlying signal is genuinely the same. Record a later result as an **independent occurrence** only if the seed was not used as a load-bearing premise or framing input to that investigation; otherwise record **reuse**. Recurrence may justify considering a bounded synthesis question, but it does not establish generality by itself.
 

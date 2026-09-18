@@ -40,7 +40,7 @@ The conclusion rests on a decision-quality research report, an independent adver
 
 The adversarial review's independence satisfied a fresh isolated run but **not** a different model family, which the research operating model prefers first for a high-risk question. A future author who considers that insufficient for promoting anything beyond the refusals recorded here should obtain a different-model-family pass first.
 
-Those artifacts lived in a temporary research-evidence workspace that was retired once this reconciliation landed, which is what the research operating model intends: the knowledge-transfer audit moves everything material into durable authority, and the evidence itself is then expendable. Their exact commit-and-path coordinates are recorded in the reconciliation pull request, which is delivery history and outlives the workspace.
+Those artifacts lived in a temporary research-evidence workspace that was retired once this reconciliation landed, which is what the research operating model intends: the knowledge-transfer audit moves everything material into durable authority, and the evidence itself is then expendable. Their exact commit-and-path coordinates were recorded in the reconciliation pull request for in-flight traceability, but the maintained conclusion does not depend on those temporary commits remaining fetchable after workspace retirement.
 
 ---
 

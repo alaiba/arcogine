@@ -100,8 +100,8 @@ Do not evaluate recurring continuous-improvement obligations during ordinary rep
 
 User-facing reminders state the action plainly and include the minimal fresh-session prompt:
 
-- weekly Consistency review due or overdue → `The weekly Consistency review is due. Start a fresh session with: "Run the Arcogine consistency review."`
-- delivery-process retrospective threshold reached → `The delivery-process retrospective threshold has been reached. Start a fresh session with: "Run the Arcogine delivery-process retrospective."`
+- weekly Consistency review due or overdue → `The weekly Consistency review is due. Start a fresh session with: "Run the consistency review."`
+- delivery-process retrospective threshold reached → `The delivery-process retrospective threshold has been reached. Start a fresh session with: "Run the delivery-process retrospective."`
 
 These sentences are interaction guidance, not persisted state. Internal derivation labels such as `CURRENT`, `DUE`, or `OVERDUE` may remain useful while computing the reminder, but they are not the reminder itself. If no action is warranted, say nothing. If state cannot be verified, say so once without inventing a status. A reminder is mentioned at most once per session and never derails the requested task.
 

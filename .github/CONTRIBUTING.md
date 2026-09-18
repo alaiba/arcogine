@@ -44,6 +44,8 @@ Use `./arcogine check` before pushing. Use `./arcogine check --full` when the ch
 
 5. **Open a pull request** against `main` with a clear description of what changed and why.
 
+Keep PR descriptions stable under normal branch evolution. Describe semantic scope, rationale, non-goals, and validation actually performed. Do not present mutable Git/GitHub topology or gate state — such as the current `main`/head SHA, ahead/behind or commit counts, base freshness, mergeability, or current CI/check state — as validation facts that the body must stay synchronized with. GitHub and repository lifecycle tooling resolve those facts live. Exact SHAs may still appear when they intentionally identify immutable evidence/artifacts or are clearly labeled as historical provenance. Validation text should name reproducible commands, checks, or review performed rather than temporary branch shape.
+
 **Temporary artifacts:** use `logs/` for local diagnostics, captures, and session scratch that should never be committed; it is gitignored as a whole. Branch-local material that must be committed for continuity or handoff but must not land on `main` belongs under the unignored `workspace/` root. `workspace/` is transient storage, not an archive: remove its files before final review and do not add a marker file. The repository check rejects any tracked `workspace/` path. Do not redirect canonical tool outputs — Gradle, npm/Vitest coverage, Playwright reports, and `dist/` continue to use their configured locations.
 
 For independent PR review, re-review, severity/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).

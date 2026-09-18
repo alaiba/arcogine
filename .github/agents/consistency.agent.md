@@ -22,16 +22,17 @@ At review start:
    - a valid full `Commit` SHA.
    Missing or malformed provenance makes the review `INCOMPLETE`.
 2. Resolve current live `main` through one GitHub compare from `S` to `main` using a compare surface that exposes the exact resolved target SHA `T` and the changed-path delta together.
-3. If the compare shows no repository-content difference, use the Repomix directly as the repository-content corpus for `T`.
-4. If `S` is an ancestor of `T` and the compare provides a complete usable delta:
+3. Prove the changed-path set is complete before using delta mode. GitHub's Compare API exposes at most 300 changed files for one comparison, so a returned file list with **300 or more entries is ambiguous and must be treated as incomplete**. Also reject a missing file list or any explicit too-large/truncation signal. Only a present list with fewer than 300 entries and no incompleteness signal may establish a complete usable delta.
+4. If the compare shows no repository-content difference, use the Repomix directly as the repository-content corpus for `T`.
+5. If `S` is an ancestor of `T` and the compare provides a complete usable delta under that predicate:
    - keep the Repomix as the primary corpus for unaffected paths;
    - read every added, modified, renamed, copied, or otherwise affected target path from immutable `ref=T`;
    - treat deleted/replaced snapshot paths as unavailable at `T`;
    - never use snapshot content from an affected path as evidence about `T`;
    - for repository-wide or semantic searches, search the Repomix baseline and reconcile results with the affected-path set, inspecting affected content at `T` so additions/modifications are not missed and removed/replaced text cannot create false conclusions.
-5. If ancestry, exact `T`, or a complete usable delta cannot be established, stop `INCOMPLETE` and require a refreshed snapshot. Do not attest a repository-wide review from a partial or ambiguous target corpus.
-6. The resulting exact target view — snapshot content for unaffected paths plus revision-bound live content for affected paths — is the review corpus. If `AGENTS.md` or this contract is affected, read its `T` version before continuing and follow the target-revision instructions.
-7. Use `T`, not the snapshot baseline `S`, as the reviewed head for all evidence, finding reconciliation, and completion recording.
+6. If ancestry, exact `T`, or a complete usable delta cannot be established — including an ambiguous 300-file Compare result — stop `INCOMPLETE` and require a refreshed snapshot. Do not attest a repository-wide review from a partial or ambiguous target corpus.
+7. The resulting exact target view — snapshot content for unaffected paths plus revision-bound live content for affected paths — is the review corpus. If `AGENTS.md` or this contract is affected, read its `T` version before continuing and follow the target-revision instructions.
+8. Use `T`, not the snapshot baseline `S`, as the reviewed head for all evidence, finding reconciliation, and completion recording.
 
 Do not redundantly refetch unaffected static content through GitHub. The snapshot is a cache, not authority for changed target paths.
 

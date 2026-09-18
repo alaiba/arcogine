@@ -29,6 +29,22 @@ Do not compensate for a stale/missing corpus by reconstructing repository conten
 
 GitHub remains authoritative for mutable state and history: live `main`, issue #295, finding issues, pull requests, reviews, CI/checks, commit/compare history, and all mutations.
 
+### Historical coverage-regression exercise
+
+A reviewer-instruction change may need to be tested against a frozen historical corpus after live `main` has advanced. That is a **read-only coverage-regression exercise**, not a formal Consistency review.
+
+For such an exercise:
+
+1. The user must explicitly request regression/diagnostic evaluation of a named historical Repomix commit.
+2. Use the **current live-`main` version of this contract** as the review procedure. The historical copy of this file inside the target corpus is evidence about that historical repository state, not the procedure under test.
+3. Verify that the historical Repomix provenance names `alaiba/arcogine`, `main`, and the requested full commit SHA. The target SHA does not need to equal live `main`.
+4. Treat the historical Repomix as the complete repository-content corpus for the exercise. Do not substitute current repository files when judging the historical target.
+5. Do not preload current/open/closed `CONS:` issues, the current register state, or a known finding oracle as discovery input. If an oracle exists, compare it only **after** the independent diagnostic output is frozen.
+6. Do not create, update, close, reopen, or comment on finding issues; do not edit issue #295; do not record a completion; and do not claim that the weekly obligation was satisfied.
+7. Report the target SHA, the current procedure SHA/ref, independently discovered candidate findings, required breadth-pass coverage, and limitations. Candidate findings in this exercise have no durable `CONS:` identity unless a later formal review independently accounts for them.
+
+This exception exists only to evaluate reviewer coverage reproducibly. It must never be used to establish or advance the recurring reviewed baseline.
+
 ## Authority and time
 
 Use the authority that owns the question:
@@ -76,7 +92,16 @@ Search and slice the Repomix corpus aggressively. For each material concept inve
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
 7. If something appears even mildly inconsistent, follow the thread far enough to classify it regardless of file age or the previous reviewed head.
 
-Prefer evidence-driven repository search over a duplicated architecture matrix. Newness is a search-order heuristic, not a stopping rule.
+After that concept-driven work, every formal repository-wide review and every historical coverage-regression exercise must run these independent breadth passes over the complete target corpus. These passes are candidate-discovery mechanisms, not automatic findings:
+
+1. **Lifecycle/status prose sweep.** Search claim-bearing maintained prose — including architecture, planning, product/reference/development docs, README material, and durable source/test comments or Javadocs — for assertions about lifecycle or delivery state such as current/implemented/complete/partial, future/later/not-yet, ready-to, being-established, remaining, deferred, blocked, temporary, legacy, or equivalent wording. Reconcile suspicious matches with the authority that owns current status. Obvious lexical anomalies such as accidentally repeated adjacent words are candidate selectors too, but wording defects alone are not semantic findings.
+2. **Volatile duplicated-fact sweep.** Search maintained prose for copied exact facts whose executable owner can move independently: dependency/tool/runtime versions, module/test/component counts, commands, configuration keys or assignments, workflow/job names, ports, limits, paths, and similarly change-prone literals. Locate the executable/configuration authority and verify the copied claim instead of assuming an exact value in prose is still current. Do not turn ordinary domain numbers into noise; focus on facts presented as current operational/configuration truth.
+3. **Cross-authority current-state sweep.** For capabilities described as current, implemented, complete, partial, deferred, or blocked in architecture/planning authorities, search semantic neighbors across architecture, planning, product/reference/development docs, examples, and claim-bearing source comments for incompatible lifecycle state or ownership claims. This sweep must include older unchanged text; the changed-file range is not evidence that neighboring claims are current.
+4. **Candidate closure check.** When a candidate exposes drift in a maintained current-state surface, inspect the smallest neighboring closure set governed by the same authority before finalizing it. Examples include sibling API examples/schema claims for the same surface, neighboring status claims for the same capability, or sibling comments carrying the same delivery assumption. Keep unrelated subjects separate, but do not stop at the first contradictory line when adjacent claims share the same authority.
+
+A formal review may not record completion unless all four breadth passes were performed. If a required pass cannot be completed, stop `INCOMPLETE` before finding/register mutations and state which pass was not completed. A coverage-regression exercise remains read-only but must likewise report any incomplete breadth pass explicitly.
+
+Prefer evidence-driven repository search over a duplicated architecture matrix. The required breadth passes define minimum discovery coverage; they do not require maintaining a static architecture matrix or treating every search hit as a finding. Newness is a search-order heuristic, not a stopping rule.
 
 Carry every open issue-backed finding forward on every review. A merged PR, closed issue, review comment, or green CI result is not proof of resolution; only authoritative evidence on the reviewed `main` head establishes that a finding is fixed.
 
@@ -154,8 +179,14 @@ Consistency review
 Head: <sha>
 Previous reviewed head: <sha | NONE>
 Findings: none | #<number>, #<number>, ...
-Coverage: <short description>
-Limitations: none | <specific limitation>
+Coverage:
+- recency/concept pass: COMPLETE | NOT_APPLICABLE | INCOMPLETE
+- lifecycle/status prose sweep: COMPLETE | INCOMPLETE
+- volatile duplicated-fact sweep: COMPLETE | INCOMPLETE
+- cross-authority current-state sweep: COMPLETE | INCOMPLETE
+- candidate closure checks: COMPLETE | INCOMPLETE
+- open finding carry-forward: COMPLETE | NOT_APPLICABLE | INCOMPLETE
+Limitations: none | <specific incomplete pass or other limitation>
 Overall: CLEAN | FINDINGS | INCOMPLETE
 ```
 

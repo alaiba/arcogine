@@ -20,6 +20,7 @@ These describe today's implementation choices. They are not claims about Arcogin
 4. Support native and containerized local execution.
 5. The current UI is a single-user experiment console — one current mode of engaging with Arcogine (see the Charter's [modes of engagement](/docs/product/charter.md#5-modes-of-engagement-not-personas)), not "the Arcogine UX" in the mature-product sense, and not a game client.
 6. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls (see [SECURITY.md](/.github/SECURITY.md)).
+7. **This repository is the complete constituency of every Arcogine contract.** There are no external deployments, no consumers outside this repository, no externally retained revision stores or result histories, and no published releases, packages, or images. Every consumer of a semantic identity (`ModelFingerprint`, `ControlledRevisionId`, `EngineSemanticsVersion`), fingerprint policy, Engine semantics version, or supported runtime/HTTP contract is in-repository code, tests, or documentation, or does not yet exist. This is a maintained repository-owner statement, not an inference from public GitHub state: research, review, and compatibility decisions may rely on it instead of treating unseen consumers as a possibility. It must be updated in the same change that creates the first external deployment, release, published artifact, or external consumer, before that artifact exists.
 
 ## Architectural implications of the Product Charter
 

@@ -271,3 +271,16 @@ Unchanged in substance. The qualifications convert four principle-level answers 
 - **External evidence:** RFC 6410, Kubernetes Deprecation Policy, Rust stabilization guide — fetched 2026-09-18, verified as summarized in §3.1.
 - **Inference:** §2 reconstruction; challenge results in §4; robustness of the V2 classification to the inventory gap (§6).
 - **Uninspected:** GitHub Packages registry (403); any private deployment/consumer inventory.
+
+## 10. Addendum — owner-supplied constituency inventory (2026-09-18)
+
+**Repository-owner statement, supplied after the review disposition above was handed off:** there is nothing outside the repository; the project is at an early stage; every consumer of Arcogine's contracts is either already in the repository or does not exist. This supplies the inventory that §6 named as the minimum missing evidence.
+
+Effect on the review:
+
+- The **disposition is unchanged**: `ACCEPT WITH QUALIFICATIONS`. The prospective rule and the V2/Engine classifications never depended on the inventory.
+- **Q5's precondition for narrowing an existing promise is now satisfiable by that statement.** Reconciliation *may* therefore decide, on the report's own evidence rather than on caution about unknown users, whether any grandfathered `factory-model:v1` / `engine-semantics:v1` promise (for example ADR-0014 decision 8's permanent decoder retention, or the cross-language reproducibility claim) should be narrowed to what in-repository dependents actually need. The review does not prescribe that outcome; it records that the "no inventory" reason for refusing to consider it no longer applies. Any narrowing still requires supersession of the Accepted clauses (Q6), never editorial amendment.
+- The report's fallback "broader internal rebaseline" section is no longer blocked on inventory, only on the reconstruction/refusal demonstrations it lists.
+- The residual public-source-build risk is retired: the owner's statement, not a GitHub search, is the authority.
+
+Durable registration: the statement is recorded as a maintained current-state constraint in `docs/architecture/overview.md` ("Current implementation constraints (MVP)", item 7), with the rule that it is updated in the same change that creates the first external deployment, release, published artifact, or consumer. That edit is a reconciliation-phase change committed on this workspace after the review handoff; it is not part of the reviewed research evidence.

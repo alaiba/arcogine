@@ -34,6 +34,8 @@ test('provenance header identifies reusable revision-bound project-source baseli
   ok(normalizedHeader.includes('does not expose exact T, do not use its changed-path set for delta-mode live reads'));
   ok(normalizedHeader.includes('fetched at immutable ref=T rather than the mutable branch ref'));
   ok(normalizedHeader.includes('additions, modifications, deletions, renames, and copies'));
+  ok(normalizedHeader.includes('fewer than 300 entries'));
+  ok(normalizedHeader.includes('GitHub Compare caps the list at 300'));
   ok(normalizedHeader.includes('Formal Consistency review follows this same protocol'));
   ok(normalizedHeader.includes('establish one exact target T and a complete target corpus'));
   ok(normalizedHeader.includes('refresh the project Repomix rather than attesting from a partial or ambiguous corpus'));

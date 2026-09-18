@@ -10,7 +10,7 @@ From a clean checkout of current `main`, run:
 ./arcogine snapshot
 ```
 
-The command writes `logs/arcogine-main-<short-sha>.xml`. Upload that file to the Arcogine ChatGPT project before using it as project-source repository content or running a formal Consistency review.
+The command writes `logs/arcogine-main-<short-sha>.xml`. The snapshot begins with a trusted `<project_instructions>` block generated from the same exact canonical `main` commit as the Repomix corpus. Upload that file to the Arcogine ChatGPT project before using it as project-source repository content or running a formal Consistency review.
 
 ## Project-source retrieval protocol
 
@@ -47,19 +47,19 @@ one compare to target ref
 
 This protocol is specifically about attached project-source retrieval; it does not change Arcogine's ordinary repository workflows.
 
-## Reusable Project instruction block
+## ChatGPT Project configuration
 
-The following is the maintained copy-paste bootstrap for a ChatGPT Project that has an Arcogine snapshot attached. It intentionally does **not** duplicate the retrieval algorithm above; `docs/development/repository-snapshot.md` is the sole authority for that protocol.
+The snapshot itself carries the detailed trusted repository-grounding instructions in a `<project_instructions>` block generated from the same exact `main` commit as the Repomix corpus. ChatGPT Project configuration therefore only needs a small bootstrap that tells the agent where to start.
+
+To recreate the Arcogine ChatGPT Project, attach the generated `arcogine-main-<short-sha>.xml` as a Project source, connect GitHub for live repository access, and use these Project instructions:
 
 ```text
-Prefer the project-attached `arcogine-main-<sha>.xml` snapshot as a repository-content baseline/cache.
-
-At the first repository grounding of a task/session:
-
-1. Identify the target repository ref from task context: normally `main`, or the relevant branch when the task concerns another branch.
-2. Fetch `docs/development/repository-snapshot.md` from that target ref through GitHub before using snapshot content.
-3. Follow that file's current `Project-source retrieval protocol` as the sole authority for reconciling the attached snapshot to the exact target revision. Do not duplicate or override that protocol in ChatGPT Project instructions.
+Always read AGENTS.md and do a quick search in the docs for the main key words of the request.
+The repo is https://github.com/alaiba/arcogine
+At the first repository grounding of a task/session, read and follow the `<project_instructions>` embedded in the attached `arcogine-main-<sha>.xml` snapshot before using repository content.
 ```
+
+These few lines are the human-recreatable Project bootstrap. The detailed retrieval and authority rules live inside the generated snapshot, so Project configuration does not duplicate the algorithm and cannot drift independently from the attached corpus.
 
 ## Snapshot generation requirement
 

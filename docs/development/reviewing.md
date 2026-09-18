@@ -247,6 +247,8 @@ Use these calibration examples when the boundary is unclear:
 - a stale PR title/body or validation description after remediation is normally **P2** when it materially misstates the proposed head;
 - optional extra coverage, cleanup, or future hardening that does not affect the current invariant is **P3** or **Nit**.
 
+Do not require PR bodies to restate live Git/GitHub topology such as current head/base SHAs, ahead/behind or commit counts, base freshness, mergeability, or CI/check state; resolve those facts from live metadata. Historical provenance and exact immutable evidence coordinates are fine when clearly labeled. A stale-description P2 applies when prose that is present materially misstates the candidate or its validation, not because the PR body omits live topology.
+
 Each actionable finding should state:
 
 1. what is wrong;

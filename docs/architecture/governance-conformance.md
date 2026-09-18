@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Cross-domain model history, semantic change, requirements, conformance, evidence, and governance over Arcogine's canonical business semantics  
 > **Authority:** Proposed architecture; this document does not claim current compliance, audit, or certification capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md), [Standards Alignment](standards-alignment.md), [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md), [ADR-0013](decisions/0013-durable-operational-identity.md), [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md), [ADR-0016](decisions/0016-governance-evidence-provenance.md), [Standards Alignment](standards-alignment.md), [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md)
 
 ## 1. Architectural position
 
@@ -250,14 +250,16 @@ Assertion
     expression/evaluator
     evidence requirements
 
-Evaluation
-    requirement identity/version
-    assertion identity/version
+Evaluation occurrence
+    occurrence identity, once accepted
+    exact requirement definition used
+    exact assertion definition used
     model fingerprint
     controlled revision ID, when available
-    observed-at / applicable period
-    result
-    evidence set
+    temporal frame / knowledge boundary
+    evidence basis: uses relied on, material considered but excluded, known gaps
+    applicability and interpretation rules applied
+    result and explanation
 
 Finding
     affected entities
@@ -271,6 +273,8 @@ A requirement's provenance must identify the exact normative or governing source
 External source identity is separate from Arcogine's own requirement and assertion identities and versions. The same external clause or policy source may support multiple Arcogine requirement versions as scope, interpretation, or executable semantics evolve; source provenance therefore augments rather than replaces Arcogine versioning.
 
 A structural requirement can be evaluated solely from authoritative model state; an operational requirement may need external observation. `UNKNOWN` is important: absence of evidence must not silently become success or failure when the underlying fact is genuinely unobserved.
+
+[ADR-0016](decisions/0016-governance-evidence-provenance.md) is **Accepted** and fixes what a completed evaluation is once evidence is involved: an identifiable, immutable **evaluation occurrence** whose basis — the exact requirement/assertion definitions used, the subject fingerprint and optional verified revision, the evidence uses relied on, material excluded or missing, the temporal frame, the applicability rules applied, and the outcome — is fixed when the occurrence is accepted. Two evaluations with equal inputs and equal outcomes remain distinct occurrences. Identity plus version labels are not by themselves proof that the historical definitions remain resolvable: the landed `Requirement`/`Assertion` equality deliberately excludes wording, source, and rule, so an evidence-capable evaluation must preserve or authoritatively resolve the exact definitions it used. The landed `ConformanceEvaluation` is a deterministic value without occurrence identity or an acceptance boundary; occurrence identity is an additive obligation on the first evidence-capable slice, not a change to the existing value contract.
 
 ## 8. Controls and frameworks are mappings, not business truth
 
@@ -298,32 +302,41 @@ One control may map to multiple requirements across multiple frameworks. Framewo
 
 ## 9. Evidence must be attributable and temporal
 
-An external observation does not intrinsically belong to one Arcogine model fingerprint or controlled revision. An AWS configuration snapshot, an IdP login log, a PLC measurement, or a Jira approval artifact has its own authority, its own observation time, and often its own applicable period, independent of which Arcogine model version or revision happens to exist when it is captured or used. Binding the observation itself to one fingerprint/revision either forces duplicating identical evidence across every subsequent version or misrepresents the observation's actual provenance. Arcogine must therefore separate the evidence itself from any particular evaluation's use of it:
+The evidence contract is fixed by [ADR-0016](decisions/0016-governance-evidence-provenance.md), which is **Accepted**. This section summarizes it and the rest of this document does not extend it.
+
+An external observation does not intrinsically belong to one Arcogine model fingerprint or controlled revision. An AWS configuration snapshot, an IdP login log, a PLC measurement, or a Jira approval artifact has its own authority, its own observation time, and often its own applicable period, independent of which Arcogine model version or revision happens to exist when it is captured or used. Binding the observation itself to one fingerprint/revision either forces duplicating identical evidence across every subsequent version or misrepresents the observation's actual provenance. Arcogine therefore separates the evidence itself from any particular evaluation's use of it:
 
 ```text
 Evidence
-    evidenceId
-    source
-    provenance
-    observedAt
-    applicableFrom / applicableUntil
-    external identity or artifact reference
+    evidence reference: one attributable recorded source/result revision
+    source / producer
+    intrinsic provenance
+    described subject, fact/result, units
+    source or production time, or explicit uncertainty
+    applicable period, where the source establishes one
     integrity metadata where required
 
 EvidenceUse (a.k.a. EvaluationEvidence)
-    evidenceId
-    evaluation / assertion / control relationship
-    model fingerprint
-    controlled revision ID, when applicable
-    scope at time of use
-    applicability determination
+    evidence reference
+    evaluation occurrence / assertion / control relationship
+    role: relied on, considered but not relied on, comparator, ...
+    target model fingerprint
+    target controlled revision ID, when applicable
+    scope and temporal frame at time of use
+    applicability / reliance determination
 ```
 
-`Evidence` is the source-level fact: what was observed, by what authority, when, and over what period it applies. It does not carry a model fingerprint or revision. `EvidenceUse` is the binding: which evaluation consumed that evidence, against which fingerprint/revision, and why it was judged applicable to that scope at that time. One `Evidence` record may be referenced by many `EvidenceUse` records across multiple model versions, as long as each use's scope/applicability determination independently holds.
+**Reference and equality.** An evidence reference identifies one particular attributable recorded assertion, observation, artifact revision, or analytical result revision — not the external subject, the value, an artifact name, the evaluation, or the truth of the claim. Equality means the same referenced source/result revision, never byte equality, logical equivalence, common subject, corroboration, trust, or applicability. A producer-owned immutable or versioned handle can be the reference; Governance allocates no second global identifier where the producer identity already suffices. A bare digest is content identity, not source-occurrence identity, and a source's stable logical ID participates only while the exact relied-on revision or capture stays identifiable. The same complete reference never later resolves to different identity-bearing content; correction, retraction, supersession, or reinterpretation creates a distinguishable attributable relationship rather than rebinding the reference or rewriting an earlier evaluation's basis. Redelivery of one source record is the same evidence, not a second corroborating observation.
 
-Structural evidence derived directly from Arcogine's own authoritative model state is the one case where binding to a fingerprint/revision at the source is natural — the model version *is* the evidence's provenance, so `Evidence` and `EvidenceUse` may collapse into one record for that case. External evidence should generally be bound to fingerprint/revision identity at evaluation/use time (`EvidenceUse`), not at source-observation time (`Evidence`).
+**Intrinsic provenance versus use target.** `Evidence` carries whatever provenance is intrinsic to how it was produced; `EvidenceUse` carries the target it was later used against. A raw external observation is independent of Arcogine model/revision identity at ingestion unless its source intrinsically owns such provenance, and correspondence to an Arcogine subject is a later use or reconciliation determination that is never fabricated at ingestion. An Arcogine-derived analytical or verification result may, and where its producer's contract establishes it must, retain producer-intrinsic `ModelFingerprint`, controlled revision, `EngineSemanticsVersion`, run/result identity, explicit result-affecting inputs, and analytical definition/version. The use target may differ from the source model — a `baseline` result used as a comparator for `changed` is an explicit use role, not proof about `changed`. Missing producer provenance is recorded as missing, never inferred or stamped on. One `Evidence` item may be referenced by many `EvidenceUse` records across multiple model versions and evaluations, as long as each use's scope/applicability determination independently holds; equal fingerprints or a rollback never copy one use's applicability to another target.
 
-Operational observations retain the identity and provenance assigned by the Operational Execution capability. Governance must reference them; it must not rewrite them into revision-bound telemetry records in order to use them as evidence.
+**Roles, not necessarily records.** Evidence and use are distinct semantic roles. A representation may embed them together, reference one from the other, or copy source material into an evaluation-local record, provided the independent source identity, intrinsic provenance, and use context remain distinguishable and copies never masquerade as independent corroboration. For a fact intrinsic to immutable Arcogine semantic state, the model version is the evidence's own provenance and the two may collapse into one record; that collapse cannot erase the evaluation occurrence, the exact definitions used, or later distinct uses.
+
+**Applicability is three determinations.** Evidence applicability/reliance (source and subject correspondence, period/freshness, provenance and trust adequacy, meaning and units, compatibility) is a use-owned, attributable, recoverable determination. Requirement applicability is scope, and `NOT_APPLICABLE` arises only from scope. Outcome is the assertion's own judgement over an adequate basis. Stale, out-of-period, wrong-subject, untrusted, incompatible, or incomplete evidence never silently produces `PASS` and never alone makes an applicable requirement `NOT_APPLICABLE`; missing evidence ordinarily supports `UNKNOWN` unless the assertion's own semantics establish a violation from adequate evidence of absence. A single unusable item does not poison an otherwise sufficient basis; considered-but-excluded material, unresolved conflicts, and known gaps stay part of the evaluation basis rather than being manufactured as evidence. Cross-version compatibility is explicit, claim-specific, and owned by the consuming use per [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md); equal or different Engine semantics versions alone never establish comparability. Consumer-specific freshness, admissibility, coverage, conflict, and compatibility policies remain open.
+
+**Point targets only.** A use binds evidence to exact point-in-time subjects — fingerprint, verified revision, semantic scope, evaluation occurrence. Evidence about an accountable operational continuation over time is the accumulating-identity limit [ADR-0013](decisions/0013-durable-operational-identity.md) §11 records; it is outside this contract and must not be obtained by reinterpreting the point-identity rule.
+
+Operational observations retain the identity and provenance assigned by the Operational Execution capability. Governance must reference them; it must not rewrite them into revision-bound telemetry records in order to use them as evidence, and it does not take ownership of Operational acquisition, correspondence, or trust semantics, or of Engine/analytics calculation semantics, by consuming their attributable results.
 
 Evidence generated from Arcogine's authoritative state must remain distinguishable from evidence observed externally. Reuse is valid only when scope, applicable period, provenance, and semantic meaning remain compatible.
 
@@ -386,20 +399,22 @@ An audit view should be reconstructible from versioned inputs rather than stored
 AuditSnapshot
     model fingerprint
     controlled revision ID
-    requirement identity / version
-    assertion identity / version
+    exact requirement definition used (identity / version resolved)
+    exact assertion definition used (identity / version resolved)
     requirement source identity / version
     framework / mapping version, when applicable
     control mappings
-    evaluation results
-    evidence set
+    evaluation occurrences and results
+    evidence basis: uses relied on, material excluded, known gaps
     exceptions / risk acceptances
     generated at
 ```
 
 The desired invariant is:
 
-> Given the relevant semantic fingerprint, controlled revision, Arcogine requirement and assertion identities/versions, exact external requirement source identity/version when applicable, framework/mapping versions, observations, evidence, and governance decisions, Arcogine can explain how a historical conformance result was derived.
+> Given the relevant semantic fingerprint, controlled revision, the exact Arcogine requirement and assertion definitions actually used, exact external requirement source identity/version when applicable, framework/mapping versions, the accepted evaluation occurrences with their fixed evidence basis, and governance decisions, Arcogine can explain how a historical conformance result was derived.
+
+An audit view is a projection over accepted occurrences and their fixed basis, not a fresh evaluation: it never substitutes current definitions, a current evidence query, a current source revision, or re-execution under current semantics for the historical basis. Where necessary historical material is missing or corrupt, the projection discloses the gap rather than reconstructing around it. A historical `PASS` is the recorded outcome of that occurrence, not a current assurance that the claim remains true.
 
 ## 13. Relationship to current factory-model and operational work
 
@@ -418,7 +433,7 @@ runtime instantiation from a published model
 runtime/result provenance work in progress
 ```
 
-ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes controlled revision identity/lineage, and Governance Governance identity/history capability is complete: controlled-revision identity and lineage supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while authoritative controlled-revision persistence and historical resolution supplies the authoritative acceptance/repository boundary, repository-level parent integrity, restart-durable storage, and exact revision-to-semantic-artifact resolution. The current proving adapter is filesystem-backed and factory artifacts reuse canonical `factory-model:v1` bytes; neither choice changes the durable identity semantics. Governance semantic ChangeSet/impact capability is now implemented for its initial slice: the generic `ChangeSet`/`ImpactScope`/`SemanticChange` value contracts in `:governance`, the domain-owned `SemanticChangeExtractor` seam, and the factory-domain `FactoryModelSemanticComparator` (Factory semantic-comparison capability) that compares `factory-model:v1` artifacts by stable domain identity while still honoring the ADR-0006 order-significance of `resources`, `operations`, and `products`. Governance requirements/assertions capability is now implemented: the generic, domain-neutral `Requirement`/`RequirementScope`/`RequirementSource` and `Assertion`/`EvidenceRequirement`/`AssertionRule` value contracts in `:governance`, plus an immutable `RequirementCatalogue` that resolves requirements by identity/version and selects those whose `RequirementScope` intersects a real semantic ChangeSet/impact capability `ImpactScope`. Governance conformance evaluation/findings capability is now implemented for its initial slice: the generic `ConformanceResult` (`PASS`/`FAIL`/`UNKNOWN`/`NOT_APPLICABLE`) taxonomy, the deterministic `ConformanceEvaluator` that turns one requirements/assertions capability `Requirement`/`Assertion` pair and a model fingerprint (with an optional, never-synthesized `ControlledRevisionId`) into a `ConformanceEvaluation`, and the immutable `Finding` type produced only for `FAIL`. Arcogine still does **not** have the evidence/evidence-use capability evidence, authorization, deployment, or framework-mapping capabilities described later in this architecture.
+ADR-0006 and its implementation establish the durable factory-model fingerprint contract. ADR-0008 establishes controlled revision identity/lineage, and Governance Governance identity/history capability is complete: controlled-revision identity and lineage supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while authoritative controlled-revision persistence and historical resolution supplies the authoritative acceptance/repository boundary, repository-level parent integrity, restart-durable storage, and exact revision-to-semantic-artifact resolution. The current proving adapter is filesystem-backed and factory artifacts reuse canonical `factory-model:v1` bytes; neither choice changes the durable identity semantics. Governance semantic ChangeSet/impact capability is now implemented for its initial slice: the generic `ChangeSet`/`ImpactScope`/`SemanticChange` value contracts in `:governance`, the domain-owned `SemanticChangeExtractor` seam, and the factory-domain `FactoryModelSemanticComparator` (Factory semantic-comparison capability) that compares `factory-model:v1` artifacts by stable domain identity while still honoring the ADR-0006 order-significance of `resources`, `operations`, and `products`. Governance requirements/assertions capability is now implemented: the generic, domain-neutral `Requirement`/`RequirementScope`/`RequirementSource` and `Assertion`/`EvidenceRequirement`/`AssertionRule` value contracts in `:governance`, plus an immutable `RequirementCatalogue` that resolves requirements by identity/version and selects those whose `RequirementScope` intersects a real semantic ChangeSet/impact capability `ImpactScope`. Governance conformance evaluation/findings capability is now implemented for its initial slice: the generic `ConformanceResult` (`PASS`/`FAIL`/`UNKNOWN`/`NOT_APPLICABLE`) taxonomy, the deterministic `ConformanceEvaluator` that turns one requirements/assertions capability `Requirement`/`Assertion` pair and a model fingerprint (with an optional, never-synthesized `ControlledRevisionId`) into a `ConformanceEvaluation`, and the immutable `Finding` type produced only for `FAIL`. Arcogine still does **not** have the evidence/evidence-use capability evidence, authorization, deployment, or framework-mapping capabilities described later in this architecture. The evidence/evidence-use semantic contract is now Accepted in [ADR-0016](decisions/0016-governance-evidence-provenance.md) — reference/equality/non-rebinding, evidence versus use roles, producer-intrinsic versus use-target provenance, the three applicability/outcome determinations, evaluation-occurrence identity, exact definition resolution, and the point-identity limit — while its representation, storage, identifier scheme, and first-implementation admission remain planning and implementation responsibilities. ADR-0016 also bounds what a first implementation may claim: structural facts have a landed producer identity, but Engine result identity and observation/event provenance propagation, Operational observation/correspondence/trust identity, analytical-definition ownership, and durable requirement-definition/evaluation-history storage do not yet exist, so a fixture that carries explicitly attributed material proves the seam and not the integration.
 
 The Governance dependency is now:
 
@@ -466,7 +481,7 @@ When governance or compliance work is proposed, ask:
 
 1. Is the underlying fact authoritative Arcogine model state, external observed state, or a governance decision?
 2. Are framework-specific fields being added to business objects instead of deriving compliance through requirements and controls?
-3. Can the result identify the exact semantic fingerprint, controlled revision, requirement/assertion versions, and evidence that produced it?
+3. Can the result identify the exact semantic fingerprint, controlled revision, the exact requirement/assertion definitions actually used, the evaluation occurrence, and the evidence basis (relied on, excluded, missing) that produced it?
 4. If a requirement comes from an external source, can it identify the exact authority, designation, edition/version, locator, and applicable adoption/profile rather than only a standards-family name?
 5. Is semantic identity being confused with historical revision identity?
 6. Is the change represented semantically enough to perform impact analysis?
@@ -475,14 +490,14 @@ When governance or compliance work is proposed, ask:
 9. If a revision is deployed through a transformation/adapter, can the operational deployment record identify the effective applied artifact/profile rather than only the source revision?
 10. Are failures, exceptions, and risk acceptances distinguishable rather than collapsed into one status?
 11. Are modeled intent and observed reality explicit and independently attributable?
-12. Is an external observation kept revision-independent until an `EvidenceUse`/interpretation binds it when appropriate?
-13. Are historical results reproducible rather than dependent on today's mutable mappings?
+12. Is an external observation kept revision-independent until an `EvidenceUse`/interpretation binds it when appropriate, and is producer-intrinsic provenance on an Arcogine-derived result kept distinct from the target it is later used against?
+13. Are historical results reproducible rather than dependent on today's mutable mappings, definitions, or evidence lookups, and does evidence unusable for a use stay explainable rather than becoming `PASS` or `NOT_APPLICABLE`?
 14. Is a workflow/change reference being treated as an association rather than an immutable identity field of the revision?
 15. Does a proposed lineage extension preserve the distinction between semantic identity and historical occurrence identity?
 
 ## 16. ADR triggers
 
-[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) fixes the semantic-identity versus controlled-revision distinction and the external change-control boundary. [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md) fixes the first durable fingerprint contract. [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) fixes controlled revision identity, current lineage cardinality, rollback semantics, immutable recording provenance, and the persistence boundary.
+[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) fixes the semantic-identity versus controlled-revision distinction and the external change-control boundary. [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md) fixes the first durable fingerprint contract. [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md) fixes controlled revision identity, current lineage cardinality, rollback semantics, immutable recording provenance, and the persistence boundary. [ADR-0016](decisions/0016-governance-evidence-provenance.md) fixes evidence reference identity, equality and non-rebinding, evidence versus use, producer-intrinsic versus use-target provenance, applicability versus requirement scope versus outcome, evaluation-occurrence identity, exact definition resolution, and the point-identity limit, while deferring representation, storage, and policy mechanisms.
 
 Create or revise ADRs when implementation commits to hard-to-reverse choices about:
 
@@ -493,6 +508,7 @@ Create or revise ADRs when implementation commits to hard-to-reverse choices abo
 - canonical semantic `ChangeSet` representation;
 - temporal semantics for modeled facts and observations;
 - requirement/assertion evaluation contracts;
+- evidence-reference representation, evaluation-occurrence acceptance/persistence, or durable requirement-definition resolution mechanisms beyond the semantic obligations ADR-0016 fixes;
 - requirement source-identity and versioning semantics;
 - control and framework versioning;
 - evidence integrity/retention semantics;

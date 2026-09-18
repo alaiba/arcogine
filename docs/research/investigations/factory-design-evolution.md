@@ -76,9 +76,13 @@ A group deserves a canonical concept only if it owns real behavior or interpreta
 
 This research should remain coupled to qualified applicability/performance and Engine scheduling evidence rather than introducing an empty hierarchy abstraction.
 
-## Spatial/material-flow evolution
+## Factory semantic composition and spatial/material-flow evolution
 
-Questions such as orientation, paths/aisles, conveyors, connection points, explicit transport resources, buffers, or congestion are tracked separately in the research register because current Factory Model v2 and Engine Semantics v1 deliberately stop before those capabilities.
+The repository now has a READY high-risk investigation for the more fundamental boundary question: [Factory Model Semantic Composition](factory-model-semantic-composition.md). It asks whether production structure, spatial/layout facts, storage, material-flow topology, qualification/capability, hierarchy, and similar authored concerns should evolve as one linear whole-model policy, as composable concerns under one Factory identity, or through another evidence-supported model.
+
+That investigation does **not** implement the future concerns listed here. Questions such as orientation, paths/aisles, conveyors, connection points, explicit transport resources, buffers, or congestion remain separate capability questions in the research register because current Factory spatial and Engine transfer semantics deliberately stop before them. When those questions are later investigated, they must consume the reconciled Factory-composition boundary rather than implicitly selecting a new whole-model version or aspect framework themselves.
+
+Any durability/version conclusion from the composition investigation must also incorporate [Semantic Contract Maturity and Durability](semantic-contract-maturity-durability.md).
 
 ## Promotion rule
 

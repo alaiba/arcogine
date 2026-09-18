@@ -122,8 +122,8 @@ Confidence: HIGH | MEDIUM | LOW
 Claim:
 <path/symbol/criterion and claim>
 
-Contradictory evidence:
-<path/symbol/test/config and evidence>
+Evidence:
+<contradictory authority/executable evidence, missing required evidence, or authority-placement evidence>
 
 Why inconsistent:
 <semantic conflict>

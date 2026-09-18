@@ -49,6 +49,14 @@ Classify each material claim using this complete generic review taxonomy: `CURRE
 
 Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is. Accepted ADRs preserve decision history and are superseded rather than rewritten to match later implementation.
 
+Authority placement is itself part of consistency. A maintained artifact should own only facts appropriate to its role:
+
+- source comments and Javadocs explain current code behavior, local invariants, and current limitations; future delivery state, sequencing, and roadmap claims belong in planning authorities rather than being maintained inside code comments;
+- explanatory documentation should avoid copying volatile executable/configuration values when the exact value is not itself part of that document's contract. Prefer the purpose/invariant plus a pointer to the executable owner for the current value;
+- exact values remain appropriate where the artifact intentionally owns them, such as public compatibility/support contracts, normative semantic/version identifiers, historical evidence, or reproducibility records.
+
+A misplaced claim can therefore be inconsistent even before its copied value or planning statement becomes stale: unnecessary duplicated authority is itself a maintainability defect when the artifact has no independent reason to own that fact.
+
 ## Live grounding
 
 After the exact target corpus at `T` is established:
@@ -75,8 +83,8 @@ Search and slice the Repomix corpus aggressively. For each material concept inve
 
 After that concept-driven work, every formal repository-wide review must run these independent breadth passes over the complete target corpus. These passes are candidate-discovery mechanisms, not automatic findings:
 
-1. **Lifecycle/status prose sweep.** Search claim-bearing maintained prose — including architecture, planning, product/reference/development docs, README material, and durable source/test comments or Javadocs — for assertions about lifecycle or delivery state such as current/implemented/complete/partial, future/later/not-yet, ready-to, being-established, remaining, deferred, blocked, temporary, legacy, or equivalent wording. Reconcile suspicious matches with the authority that owns current status. Obvious lexical anomalies such as accidentally repeated adjacent words are candidate selectors too, but wording defects alone are not semantic findings.
-2. **Volatile duplicated-fact sweep.** Search maintained prose for copied exact facts whose executable owner can move independently: dependency/tool/runtime versions, module/test/component counts, commands, configuration keys or assignments, workflow/job names, ports, limits, paths, and similarly change-prone literals. Locate the executable/configuration authority and verify the copied claim instead of assuming an exact value in prose is still current. Do not turn ordinary domain numbers into noise; focus on facts presented as current operational/configuration truth.
+1. **Lifecycle/status prose sweep.** Search claim-bearing maintained prose — including architecture, planning, product/reference/development docs, README material, and durable source/test comments or Javadocs — for assertions about lifecycle or delivery state such as current/implemented/complete/partial, future/later/not-yet, ready-to, being-established, remaining, deferred, blocked, temporary, legacy, or equivalent wording. Reconcile suspicious matches with the authority that owns current status **and** ask whether the artifact should own that lifecycle claim at all. Source comments/Javadocs should describe current behavior, invariants, and current limitations; future sequencing or “later slice” claims are misplaced planning authority even if they happen to be accurate today. Prefer moving such future-state information to the owning planning document while leaving the code comment truthful about the present. Obvious lexical anomalies such as accidentally repeated adjacent words are candidate selectors too, but wording defects alone are not semantic findings.
+2. **Volatile duplicated-fact sweep.** Search maintained prose for copied exact facts whose executable owner can move independently: dependency/tool/runtime versions, module/test/component counts, commands, configuration keys or assignments, workflow/job names, ports, limits, paths, and similarly change-prone literals. For each candidate, first decide whether the prose has an independent reason to own the exact value. If not, the duplication itself is the finding candidate even when the value still matches: replace brittle copied truth with the purpose/invariant and a pointer to the executable/configuration owner. If the document legitimately owns the exact value — for example a public support contract, normative semantic/version identifier, historical record, or reproducibility evidence — then verify it against the appropriate authority. Do not turn ordinary domain numbers into noise; focus on current operational/configuration facts whose owner can change independently.
 3. **Cross-authority current-state sweep.** For capabilities described as current, implemented, complete, partial, deferred, or blocked in architecture/planning authorities, search semantic neighbors across architecture, planning, product/reference/development docs, examples, and claim-bearing source comments for incompatible lifecycle state or ownership claims. This sweep must include older unchanged text; the changed-file range is not evidence that neighboring claims are current.
 4. **Candidate closure check.** When a candidate exposes drift in a maintained current-state surface, inspect the smallest neighboring closure set governed by the same authority before finalizing it. Examples include sibling API examples/schema claims for the same surface, neighboring status claims for the same capability, or sibling comments carrying the same delivery assumption. Keep unrelated subjects separate, but do not stop at the first contradictory line when adjacent claims share the same authority.
 
@@ -88,7 +96,7 @@ Carry every open issue-backed finding forward on every review. A merged PR, clos
 
 ## Findings
 
-A material finding requires both the artifact making the claim and contradictory authoritative/executable evidence, or a clear demonstration that required evidence is absent.
+A material finding requires the artifact making the claim plus either contradictory authoritative/executable evidence, a clear demonstration that required evidence is absent, or a demonstrated authority-placement defect where the artifact redundantly owns volatile or future-state information without an independent contract/history/reproducibility reason to do so.
 
 Use exact paths, symbols, criteria, ADRs, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green. Use the current P0/P1/P2/P3/Nit severity definitions from `docs/development/reviewing.md`.
 
@@ -114,8 +122,8 @@ Confidence: HIGH | MEDIUM | LOW
 Claim:
 <path/symbol/criterion and claim>
 
-Contradictory evidence:
-<path/symbol/test/config and evidence>
+Evidence:
+<contradictory authority/executable evidence, missing required evidence, or authority-placement evidence>
 
 Why inconsistent:
 <semantic conflict>

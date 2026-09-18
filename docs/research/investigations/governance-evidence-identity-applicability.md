@@ -1,9 +1,32 @@
 # Governance evidence identity and applicability
 
-> **Status:** READY
-> **Risk:** **High** — this question fixes hard-to-reverse identity, history, applicability, provenance, and cross-version semantics for a future shared Governance contract. Independent adversarial review is required before any conclusion is promoted into an ADR or equivalent durable architecture.
+> **Status:** CONCLUDED
+> **Risk:** **High** — this question fixed hard-to-reverse identity, history, applicability, provenance, and cross-version semantics for a shared Governance contract, so its conclusion was independently adversarially reviewed before promotion.
 > **Scope:** The minimum semantic contract required for Governance `Evidence` and `EvidenceUse` before their first implementation can be admitted
-> **Authority:** Research only. This brief decides nothing; ADR-0016, current Governance architecture, and the landed conformance implementation remain authoritative at their existing statuses until a separate reconciliation.
+> **Authority:** Research provenance only. The durable conclusion lives in [ADR-0016](../../architecture/decisions/0016-governance-evidence-provenance.md) (Accepted) and [Governance architecture](../../architecture/governance-conformance.md) §7, §9, and §12; this brief decides nothing and is retained as the investigation's framing.
+
+## Conclusion
+
+**A minimum shared contract survives: an immutable, source-qualified evidence reference plus contextual, attributable use.** The decision-quality report and its independent adversarial review (disposition `ACCEPT WITH QUALIFICATIONS`, fresh isolated-run independence tier) are reconciled into [ADR-0016](../../architecture/decisions/0016-governance-evidence-provenance.md), now Accepted, and summarized in [Governance architecture](../../architecture/governance-conformance.md) §7, §9, and §12. Those documents are the authority; this brief does not restate the decision. The exact report and review coordinates are recorded in the [research register](../research-register.md) row's durable evidence reference.
+
+### Outcome against the candidate models
+
+| Candidate | Outcome |
+|---|---|
+| Source-record identity with contextual uses | **Adopted.** The only candidate that preserved independent attribution across equal-fingerprint revisions, survived correction without rewriting earlier basis, and separated duplicate delivery from independent corroboration |
+| Context-bound evidence identity | **Rejected in pure form; permitted as packaging.** Copies without a stable independent source reference lose same-source correlation; a linked form that retains source identity implements the same obligations |
+| Artifact/fact identity with an interpretation layer | **Adopted only in the strong form.** An exact producer/source revision with attributable provenance can be the reference; a bare digest is content identity, not source-occurrence identity |
+| No new shared contract yet | **Rejected as the answer, retained as the fallback.** Operationally safe, but it answers neither cross-revision reuse nor historical attribution; preferable only if the product drops that need |
+
+### Qualifications carried into the decision
+
+The report's three qualifications (producer-intrinsic versus use-target provenance; evidence applicability distinct from requirement applicability and outcome; identity-plus-version labels insufficient without exact definition resolution) and the review's three (evaluation-occurrence identity decided explicitly; use targets are point identities, accumulating operational continuations out of scope; first-implementation acceptance bounded by producer identities that actually exist) are all encoded in ADR-0016 §5–§6, §8–§10, and §12. None was deferred.
+
+### What remains open
+
+Representation, alias/deduplication mechanics, consumer-specific freshness/admissibility/conflict/compatibility policies, Operational correspondence/trust identity, Engine result identity and provenance propagation, analytical-definition ownership, the occurrence/definition persistence mechanism, and retention limits are deliberately deferred in ADR-0016 §13. The analytical-definition ownership half is the separate [simulation-analytics boundary](simulation-analytics-consumer-boundary.md) question; the Operational halves belong to the [Operational boundary research](operational-execution-digital-twin-boundaries.md). Reopening triggers are recorded in ADR-0016's consequences.
+
+The original brief follows as the investigation's framing.
 
 ## Question
 
@@ -105,7 +128,7 @@ Stop only when the report identifies the surviving semantic contract (or conclud
 
 ## Expected durable destination
 
-Focused architecture/ADR reconciliation if a minimum contract survives; otherwise an explicit no-action or narrower research destination. Only after that reconciliation may the Governance plan be promoted to `READY_NEXT` and admit a concrete implementation responsibility.
+Focused architecture/ADR reconciliation if a minimum contract survives; otherwise an explicit no-action or narrower research destination. Only after that reconciliation may the Governance plan be promoted to `READY_NEXT` and admit a concrete implementation responsibility. *(Outcome: ADR-0016 Accepted; the plan was promoted in the same reconciliation.)*
 
 ## Follow-up / reopening triggers
 

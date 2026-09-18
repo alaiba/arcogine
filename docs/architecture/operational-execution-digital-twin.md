@@ -383,7 +383,7 @@ The invariant is:
 
 > **An external observation is not created as evidence for one Arcogine model, revision, or operational history. It is an operational fact with independent provenance; later authoritative relationships may interpret it, and Governance may reference it through evidence use.**
 
-Operational Execution must consume Governance-owned fingerprint, revision, semantic change, requirement/assertion, conformance/finding, and evidence-use contracts when they exist rather than introducing duplicates.
+Operational Execution must consume Governance-owned fingerprint, revision, semantic change, requirement/assertion, conformance/finding, and evidence-use contracts when they exist rather than introducing duplicates. The evidence/evidence-use contract Governance applies is fixed by [ADR-0016](decisions/0016-governance-evidence-provenance.md): a raw observation keeps its source provenance and acquires an Arcogine subject only through a later use or reconciliation determination, and a use binds to point identities only — evidence about an accountable operational continuation over time remains the accumulating-identity limit ADR-0013 §11 records, owned here rather than by that contract.
 
 ## 13. Boundary with Factory Design and Engine Readiness
 

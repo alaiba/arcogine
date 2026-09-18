@@ -2,7 +2,7 @@
 
 Arcogine's Repomix snapshot is a whole-repository, point-in-time corpus for project-source retrieval. It can serve either as the exact repository-content view for its recorded commit or as a reusable baseline for a later descendant revision when live GitHub can establish the complete changed-path delta and the exact target commit. This avoids discarding an otherwise-current repository corpus merely because a small number of paths changed after the snapshot was generated.
 
-The snapshot is also the **required** repository-content corpus for formal Consistency reviews. That stricter workflow remains fail-closed unless the snapshot is exact current canonical `main`; see the exact-current-main rules below.
+The snapshot is also the **required baseline** for formal Consistency reviews. Consistency uses the same revision-bound retrieval protocol below: an older snapshot remains usable when one compare establishes an exact descendant target and a complete changed-path delta.
 
 From a clean checkout of current `main`, run:
 
@@ -42,8 +42,6 @@ one compare to target ref
         |      + unsafe/incomplete delta -> use live target evidence or refresh
         |
         +-- exact T / ancestry unavailable -> use live target evidence or refresh
-
-formal Consistency review: S must equal live main exactly, otherwise INCOMPLETE
 ```
 
 This protocol is specifically about attached project-source retrieval; it does not change Arcogine's ordinary repository workflows.
@@ -72,10 +70,10 @@ At the first repository grounding of a task/session:
 9. Use live GitHub separately when the task requires mutable state or history, including pull requests, reviews, unresolved threads, CI/checks, issues, mergeability, branch heads, commit/compare history, and repository writes. Do not make those calls merely to reconfirm repository content already established by the snapshot and revision-bound delta.
 10. For a long-running task whose conclusion materially depends on the latest repository state, repeat the `S`-to-target compare before finalizing. If the target moved, establish the new exact `T` and reconcile the new delta.
 
-Formal Consistency review is the exception: its snapshot commit must exactly equal current live `main`. A missing, malformed, or stale snapshot makes the review `INCOMPLETE`; do not reconstruct that review corpus through delta reconciliation.
+Formal Consistency review follows this same protocol. Because its conclusion is repository-wide, it must establish one exact target `T` and a complete target corpus; if provenance is missing/malformed or ancestry/exact `T`/a complete usable delta cannot be established, refresh the snapshot rather than recording an incomplete review.
 ```
 
-## Exact-current-main requirement
+## Snapshot generation requirement
 
 Generation is fail-closed. It requires:
 
@@ -86,7 +84,7 @@ Generation is fail-closed. It requires:
 
 Being merely an ancestor of canonical `main` is not sufficient for **generating** a new snapshot. If local `main` is behind, ahead/unpushed, or otherwise different, update it and retry. The direct remote lookup avoids captioning a stale locally cached state as a newly generated current-main corpus. Once generated and uploaded, however, the recorded commit may later remain useful as baseline `S` under the ordinary retrieval protocol above.
 
-The generated header records repository, branch, full commit SHA, UTC generation time, pinned Repomix version, and the authority boundary. A formal Consistency review independently resolves live GitHub `main` and requires exact equality with that recorded commit. A missing, malformed, or stale snapshot makes the review `INCOMPLETE`; the reviewer does not reconstruct repository content through a baseline-plus-delta fallback.
+The generated header records repository, branch, full commit SHA, UTC generation time, pinned Repomix version, and the authority boundary. Consumers independently resolve their exact target revision and apply the retrieval protocol above. For a formal Consistency review, a behind snapshot is valid only when it can be reconciled to exact current `main` through a complete safe delta; otherwise the review is `INCOMPLETE` and the snapshot must be refreshed.
 
 ## Corpus shape
 
@@ -104,7 +102,7 @@ The snapshot is optimized for semantic review and retrieval rather than minimum 
 
 The wrapper also prepends a `<tracked_files>` manifest generated from `git ls-files`. It enumerates every tracked path even when Repomix does not include a file's contents (for example, binary assets). This lets a retrieval-oriented agent reason about path existence, links, packaging, and repository shape without requiring binary contents in the prompt.
 
-The snapshot intentionally does not include Git history/diffs. Formal Consistency review gets recency from one live GitHub compare between the previous reviewed head and the snapshot/current-main head, then searches the current corpus without a historical scope boundary. Other tasks use live GitHub compare/history when they need to reconcile a descendant target or inspect repository evolution.
+The snapshot intentionally does not include Git history/diffs. A Consistency review may use two compares for different purposes: `S..T` establishes the exact target corpus when the snapshot baseline is behind, while the previous reviewed head to `T` supplies recency bias. It then searches the complete target corpus without a historical scope boundary. Other tasks use live GitHub compare/history when they need to reconcile a descendant target or inspect repository evolution.
 
 ## Authority boundary
 

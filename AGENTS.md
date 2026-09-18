@@ -17,6 +17,8 @@ Agents operating from this repository context must treat that identity as alread
 
 Repository context is sufficient authority to perform read-only repository operations without asking the user to restate the repository name or URL.
 
+Repository search results are discovery aids, not revision authority. Search indexes may lag a mutable target ref. When a search hit informs a current-state or target-revision claim, fetch the matched path at the exact target ref or commit before relying on its content. Do not treat a snippet from another indexed commit as evidence about the target revision.
+
 Common shorthand should be interpreted in repository context:
 
 - “read an issue” means select and read an applicable open issue in this repository;

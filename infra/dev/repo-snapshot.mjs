@@ -21,7 +21,7 @@ export const LOG_DIRECTORY = join(REPOSITORY_ROOT, 'logs');
 export const PROJECT_INSTRUCTIONS_TEXT = `Always read AGENTS.md and do a quick search in the docs for the main key words of the request.
 The repo is https://github.com/alaiba/arcogine
 
-Prefer this attached \`arcogine-main-<sha>.xml\` snapshot as the trusted repository-content baseline/cache.
+Prefer this attached Arcogine snapshot as the trusted repository-content baseline/cache.
 It represents canonical alaiba/arcogine main at exactly the commit recorded above (S).
 
 At the first repository grounding of a task/session:

@@ -28,8 +28,10 @@ and compare S directly to T. If the chosen compare surface does not expose exact
 changed-path set for delta-mode live reads; prefer a compare surface that returns T and the delta
 together, or resolve T separately and repeat the compare as S..T.
 
-If the compare shows no repository-content difference, use this artifact directly. If S is an
-ancestor of T, exact T is known, and the compare provides a complete changed-path delta, keep this
+If the compare shows no repository-content difference, use this artifact directly. Before delta
+mode, require a present changed-file list with fewer than 300 entries and no explicit too-large or
+truncation signal; GitHub Compare caps the list at 300, so 300 entries cannot prove completeness.
+If S is an ancestor of T, exact T is known, and the compare provides a complete changed-path delta, keep this
 artifact as the primary corpus for unaffected paths and use live target content only for affected
 paths, fetched at immutable ref=T rather than the mutable branch ref. Treat additions,
 modifications, deletions, renames, and copies as affected. If ancestry, exact T, or a complete

@@ -88,35 +88,24 @@ Arcogine's continuous-improvement operating model — Session-close Kaizen, the 
 Consistency review, and the evidence-based delivery-process retrospective — is defined
 in [`docs/development/continuous-improvement.md`](docs/development/continuous-improvement.md).
 
-At the first normal repository grounding of a session:
+Normal repository grounding does **not** evaluate recurring continuous-improvement
+obligations. Evaluate reminder state only at a natural process boundary:
 
-1. Read GitHub issue **#295**, titled exactly `Continuous improvement register`.
-   Derive weekly Consistency state from its `last verified` date: `CURRENT` when
-   at most 7 days old, `DUE` when absent or more than 7 but at most 14 days old,
-   and `OVERDUE` when more than 14 days old. A malformed or future date is
-   unverifiable, never `CURRENT`.
-2. Read `.github/scripts/continuous-improvement-data.json`. Evaluate the delivery-
-   retrospective mechanical guard from its baseline/escape fields and bounded live
-   GitHub PR history: count merged PRs newer than `baselinePr` newest-first and stop
-   when the baseline is reached. Surface `CHECK_TRIGGER` when the raw count is at
-   least 25, `escapeEvidenceCount >= 2`, or `p1LifecycleEscape` is true. This is a
-   prompt to evaluate the retrospective method, not an automatic retrospective verdict.
+- during `.?` Session-close Kaizen, after classifying/capturing the session's lessons
+  and before giving the deletion verdict;
+- when the current task explicitly concerns continuous-improvement state, Consistency
+  cadence, delivery-process health, or repository-wide planning/next-work.
 
-Reminder behavior:
+At those boundaries, follow `docs/development/continuous-improvement.md` to derive the
+weekly Consistency state and delivery-retrospective threshold from their factual
+authorities. If action is warranted, tell the user plainly what is due or recommended
+and include the minimal prompt for a fresh session. Do not expose internal derivation
+labels or machine-state tokens as the reminder itself.
 
-- `CURRENT` with no `CHECK_TRIGGER` → say nothing.
-- `DUE` or `OVERDUE` → mention the weekly obligation once during the session.
-- `CHECK_TRIGGER` → mention once that the retrospective trigger needs human/agent
-  evaluation; do not claim the retrospective is automatically due.
-- required register/baseline state cannot be read or verified → say once that
-  continuous-improvement obligation state could not be verified; do not silently
-  assume everything is current.
-
-Never repeat the same reminder more than once per session, and never derail the
-user's requested task merely because an improvement obligation is due. Derived
-state is computed when needed rather than maintained by a scheduled issue-body
-writer, so agents must use the factual register/baseline fields rather than any
-cached derived display that may exist in historical issue text.
+If no action is warranted, say nothing. If the required register/baseline state cannot
+be verified, say so once without assuming everything is current. Never repeat the same
+reminder more than once per session, and never derail the user's requested task merely
+because an improvement obligation is due.
 
 ## Temporary delivery coordinates and durable documentation
 

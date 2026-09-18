@@ -245,9 +245,9 @@ Use these calibration examples when the boundary is unclear:
 - a PR whose central claimed behavior is still defeated by another maintained execution path is normally **P1**;
 - a false completion/status claim or missing completion evidence that can be corrected without changing otherwise safe runtime behavior is normally **P2**, unless that false status itself unlocks a dependent architectural boundary;
 - a stale PR title/body or validation description after remediation is normally **P2** when it materially misstates the proposed head;
+- optional extra coverage, cleanup, or future hardening that does not affect the current invariant is **P3** or **Nit**.
 
 Do not require PR bodies to restate live Git/GitHub topology such as current head/base SHAs, ahead/behind or commit counts, base freshness, mergeability, or CI/check state; resolve those facts from live metadata. Historical provenance and exact immutable evidence coordinates are fine when clearly labeled. A stale-description P2 applies when prose that is present materially misstates the candidate or its validation, not because the PR body omits live topology.
-- optional extra coverage, cleanup, or future hardening that does not affect the current invariant is **P3** or **Nit**.
 
 Each actionable finding should state:
 

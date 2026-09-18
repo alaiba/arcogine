@@ -64,6 +64,8 @@ The reviewer rechecks `main` before finding accounting and again before recordin
 
 A formal review is repository-wide in intent. If #295 has a previous reviewed head, a GitHub comparison from that head to target `T` supplies the recency bias independently of the snapshot `S..T` compare used to establish the corpus. New semantic changes are useful starting points, but the reviewer is expected to search broadly across the exact target corpus and chase mildly suspicious evidence into older content. The lifecycle/status, volatile duplicated-fact, cross-authority current-state, and candidate-closure passes in the agent contract are mandatory minimum discovery coverage.
 
+Those breadth passes also test **authority placement**, not only factual equality. Source comments/Javadocs should own current code behavior and limitations, not future delivery sequencing. Maintained explanatory docs should not copy change-prone executable/configuration values merely to restate them; when the exact value is not itself a contract, historical fact, or reproducibility datum, document the purpose/invariant and point to the executable owner instead. A copied claim can therefore be a consistency finding before it becomes stale.
+
 Closed consistency findings are not preloaded. Search them on demand only when a candidate new finding needs duplicate/regression matching.
 
 The generic claim-state taxonomy is closed:

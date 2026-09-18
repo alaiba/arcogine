@@ -49,30 +49,16 @@ This protocol is specifically about attached project-source retrieval; it does n
 
 ## Reusable Project instruction block
 
-The following block is the maintained copy-paste form of the retrieval strategy for a ChatGPT Project that has an Arcogine snapshot attached. Keep it aligned with the protocol above when that protocol changes.
+The following is the maintained copy-paste bootstrap for a ChatGPT Project that has an Arcogine snapshot attached. It intentionally does **not** duplicate the retrieval algorithm above; `docs/development/repository-snapshot.md` is the sole authority for that protocol.
 
 ```text
-Prefer the project-attached `arcogine-main-<sha>.xml` snapshot as the baseline for repository-content retrieval.
+Prefer the project-attached `arcogine-main-<sha>.xml` snapshot as a repository-content baseline/cache.
 
 At the first repository grounding of a task/session:
 
-1. Read the snapshot's recorded full commit SHA as `S`.
-2. Identify the target repository ref from task context: normally `main`, or the relevant branch when the task concerns another branch.
-3. Use one live GitHub compare from `S` to that target ref, using a compare surface that also exposes the exact resolved target commit SHA as `T`. If a prior task-specific GitHub call already supplied the exact target SHA, reuse it as `T` and compare `S` directly to `T`.
-4. If the chosen compare surface does not expose exact `T`, do not use its changed-path set for delta-mode live reads. Prefer a compare surface that returns `T` and the delta together; otherwise resolve `T` separately and repeat the compare as `S..T`.
-5. If the compare shows no repository-content difference, use the snapshot as the repository-content source and search corpus. Do not redundantly fetch the same files through GitHub.
-6. Require the compare file list to be present and contain fewer than 300 entries, with no explicit too-large/truncation signal; a 300-file result is ambiguous under GitHub Compare's cap and is not a complete usable delta.
-7. If `S` is an ancestor of `T`, exact `T` is known, and the compare provides a complete usable changed-path delta:
-   - keep the snapshot as the primary corpus for unaffected paths;
-   - use live target content only for affected paths, fetched at immutable `ref=T` rather than the mutable branch ref;
-   - treat additions, modifications, deletions, renames, and copies as affected;
-   - never use snapshot content from an affected path as evidence about `T`.
-8. For repository-wide or semantic searches under delta mode, search the snapshot as the baseline and reconcile the result with the affected-path set. Inspect affected content at `T` where necessary so added or modified material is not missed and removed or replaced snapshot material cannot produce false conclusions.
-9. If ancestry, exact `T`, or a complete usable delta cannot be established, use live repository evidence for the target or obtain a fresh snapshot.
-10. Use live GitHub separately when the task requires mutable state or history, including pull requests, reviews, unresolved threads, CI/checks, issues, mergeability, branch heads, commit/compare history, and repository writes. Do not make those calls merely to reconfirm repository content already established by the snapshot and revision-bound delta.
-11. For a long-running task whose conclusion materially depends on the latest repository state, repeat the `S`-to-target compare before finalizing. If the target moved, establish the new exact `T` and reconcile the new delta.
-
-Formal Consistency review follows this same protocol. Because its conclusion is repository-wide, it must establish one exact target `T` and a complete target corpus; if provenance is missing/malformed or ancestry/exact `T`/a complete usable delta cannot be established, refresh the snapshot rather than recording an incomplete review.
+1. Identify the target repository ref from task context: normally `main`, or the relevant branch when the task concerns another branch.
+2. Fetch `docs/development/repository-snapshot.md` from that target ref through GitHub before using snapshot content.
+3. Follow that file's current `Project-source retrieval protocol` as the sole authority for reconciling the attached snapshot to the exact target revision. Do not duplicate or override that protocol in ChatGPT Project instructions.
 ```
 
 ## Snapshot generation requirement

@@ -7,7 +7,7 @@
 
 ## Conclusion
 
-**Boundary-specific evidence-gated semantic-contract commitments with shared minimum rules.** The decision-quality report and its independent adversarial review (disposition `ACCEPT WITH QUALIFICATIONS`, fresh isolated session in a different model family) are reconciled into [ADR-0017](../../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md), now Accepted and superseding ADR-0014's automatic permanent-resolution and `vN+1` triggers while carrying every other ADR-0014 Factory rule forward. Those documents are the authority; this brief does not restate the decision. The exact report and review coordinates are recorded in the delivery history of the reconciliation pull request named by the [research register](../research-register.md) row.
+**Boundary-specific evidence-gated semantic-contract commitments with shared minimum rules.** The decision-quality report and its independent adversarial review (disposition `ACCEPT WITH QUALIFICATIONS`, fresh isolated session in a different model family) are reconciled into [ADR-0017](../../architecture/decisions/0017-semantic-contract-maturity-and-support-promotion.md), now Accepted and superseding ADR-0014's automatic permanent-resolution and `vN+1` triggers while carrying every other ADR-0014 Factory rule forward. Those documents are the authority; this brief does not restate the decision. The exact report and review coordinates are recorded in the [research register](../research-register.md) row's durable evidence reference.
 
 ### Outcome against the candidate models
 

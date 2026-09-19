@@ -1,9 +1,71 @@
 # Semantic Contract Maturity and Durability Research
 
-> **Lifecycle:** READY — see the maintained [research register](../research-register.md)  
-> **Scope:** Repository-wide lifecycle for promoting currently authoritative semantic contracts into durable immutable compatibility/provenance contracts  
-> **Authority:** Research framing only. Current Accepted ADRs and current implementation remain authoritative until a separate reconciliation change says otherwise.  
-> **Risk:** High. Independent adversarial review is required before any conclusion is promoted into architecture, ADR, development policy, or implementation planning.
+> **Lifecycle:** CONCLUDED — see the maintained [research register](../research-register.md)
+> **Scope:** Semantic identity, support commitments and the ground-zero transition
+> **Authority:** Research provenance only; the Accepted decisions below own the result.
+> **Risk:** High; independent adversarial review concluded ACCEPT WITH QUALIFICATIONS before reconciliation.
+
+## Conclusion and durable destinations
+
+The qualified result is reconciled into
+[ADR-0017](../../architecture/decisions/0017-ground-zero-semantic-evolution.md)
+(reset/evolution, superseding ADR-0006),
+[ADR-0018](../../architecture/decisions/0018-factory-semantics-after-support-reset.md)
+(Factory consequences, superseding ADR-0014), the
+[Architecture Overview](../../architecture/overview.md#semantic-evolution-and-support)
+and [support policy](../../development/semantic-contract-support.md).
+Those authorities carry the decision; this brief preserves framing and transfer history.
+
+Universal whole-contract promotion and exercised-section freezing were not adopted.
+The result instead separates non-rebinding identity from scoped support, with a
+whole-definition attribution boundary and an explicit owner-directed support reset.
+The reviewed qualifications are all carried: dated complete-estate declaration and
+reopening condition; strict label non-reuse; enduring doctrine separated from the
+checklist; enumerable acceptance/custody and defect handling; definition-retention
+floor; whole-definition freeze; seven-contract withdrawal/invariant/cleanup/open-question
+classification; distinct authority placement; and supersession of both Factory ADRs.
+
+### Remaining questions and reopening triggers
+
+Factory composition remains [its own investigation](factory-model-semantic-composition.md).
+[Engine evolution](engine-evolution.md) owns possible post-attribution same-label
+amendment; [simulation analytics](simulation-analytics-consumer-boundary.md) owns
+analytical provenance; [Operational boundaries](operational-execution-digital-twin-boundaries.md)
+and the register retain closure/retirement, audit horizon, trust and correspondence.
+Concrete retained-custody mechanics are bounded implementation design unless new
+equality/acceptance/accountability uncertainty requires research. ADR-0016 retains
+its separate representation/retention deferrals. None is settled by the reset.
+
+An excluded pre-reset use surfacing invokes ADR-0017's stop/inventory/explicit-decision
+rule. Reopen the general model only if a concrete accepted use cannot satisfy its
+accountability through scoped support, or an evolving identity cannot preserve its
+declared fixed aspects. A proven Engine amendment need could reopen the bounded
+Engine question; process cost alone calls for simplifying the support checklist.
+
+### Knowledge transfer
+
+The finite semantic-evolution reconciliation covers the reviewed ground-zero result
+and the earlier maturity candidate it replaces. Accepted principles, every review
+qualification and current-contract consequences have the authorities above as their
+destinations. Reusable proving/failure cases, declaration information, the
+obligation-versus-fulfilment distinction, and the limits of in-tree absence evidence
+live in the support policy. ADR-0017 retains the rejected whole-contract lifecycle,
+section-freeze and unnecessary epoch-service alternatives. Existing Engine dispatch
+evidence remains in its owning brief.
+
+No exact report, review or source artifact requires post-retirement readability:
+their decision-relevant knowledge has been transferred. No synthesis seed is admitted;
+the candidate signals are evidence-bearing and potentially transferable, but none
+is loss-sensitive once the direct destinations above exist. Existing seeds are not
+new independent observations merely because this work reuses their distinctions.
+Draft/search chronology, prior superseded recommendations, prompts and temporary
+report/review files are explicitly discarded after transfer. The reconciliation PR
+records the workspace coverage and exact active-custody evidence coordinates for
+independent review; maintained semantics do not depend on their future fetchability.
+Workspace retirement requires the reconciliation to land and independent PR review
+to validate the transfer. No research artifact is promoted wholesale into `docs/`.
+
+The original brief follows as historical investigation framing, not current authority.
 
 ## Question
 

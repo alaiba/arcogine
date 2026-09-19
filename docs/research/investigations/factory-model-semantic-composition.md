@@ -2,7 +2,7 @@
 
 > **Lifecycle:** READY — see the maintained [research register](../research-register.md)  
 > **Scope:** Canonical Factory-model structure, optional semantic concerns, identity, validation, and Engine applicability when not every modeled factory needs every behaviorally relevant concern  
-> **Authority:** Research framing only. ADR-0006/ADR-0014 and current Factory v1/V2 implementation remain authoritative until a separate reconciliation change says otherwise.  
+> **Authority:** Research framing only. ADR-0017/ADR-0018 own the reset and surviving Factory constraints; the current V1/V2 implementation is evidence, not a post-reset support commitment.
 > **Risk:** High. Independent adversarial review is required before any conclusion is promoted into Factory architecture, fingerprint policy, Engine applicability, or implementation planning.
 
 ## Question
@@ -14,6 +14,12 @@ The investigation must determine whether the current v1/v2 shape is genuine whol
 It must also determine what **absence** of such a concern means. In particular, a model that does not author spatial semantics must not acquire invented coordinates, zero handling time, or another synthesized default merely to satisfy one monolithic schema.
 
 ## Decision at stake
+
+The V1/V2 description below records the pre-reset design baseline being tested.
+Its support obligations have been withdrawn by ADR-0017/ADR-0018; the retained
+authored semantics and validation constraints remain binding until explicitly
+changed by an owning decision. The investigation must re-ground against those
+successors, not treat ADR-0006/ADR-0014 as still Accepted.
 
 Current `factory-model:v1` is primarily the production-structure substrate:
 
@@ -348,9 +354,18 @@ This investigation does **not**:
 
 ## Coordination with semantic-contract maturity research
 
-This investigation may run in parallel with [Semantic Contract Maturity and Durability](semantic-contract-maturity-durability.md).
+The [maturity question](semantic-contract-maturity-durability.md) is concluded through
+[ADR-0017](../../architecture/decisions/0017-ground-zero-semantic-evolution.md) and
+[ADR-0018](../../architecture/decisions/0018-factory-semantics-after-support-reset.md).
+This investigation must incorporate their reset, non-reuse, accepted-use,
+definition-retention and whole-definition freeze constraints. It chooses no support
+estate merely by selecting a composition; owning declarations must specify that scope.
 
-Its structural conclusions can be developed independently, but any recommendation that says a core/aspect/profile/component is **durable**, assigns a permanent version identity, or commits Arcogine to historical support must wait for or explicitly incorporate the sibling lifecycle conclusion.
+The V1/V2 descriptions and linear-policy candidates above remain baseline evidence.
+ADR-0006 and ADR-0014 are now superseded: preserving their pre-reset support estate
+is no longer required. Authored facts, validation, no-lift, explicit comparison and
+domain ownership survive through ADR-0018. The composition question remains READY;
+no core/aspect/profile answer is selected here.
 
 ## Expected durable destination
 
@@ -359,8 +374,8 @@ No durable destination is preselected.
 Depending on evidence, reconciliation may:
 
 - retain the current linear Factory policy;
-- supersede ADR-0014 with a compositional Factory-model rule;
-- supersede or narrow parts of ADR-0006's whole-policy evolution assumptions;
+- supersede ADR-0018 if a compositional result changes its retained Factory decisions;
+- define a fresh Factory identity contract within ADR-0017's evolution/support rules;
 - retain one `ModelFingerprint` while changing canonical model composition;
 - introduce a narrowly justified independent semantic component only where evidence proves it;
 - reframe Engine applicability away from whole-model policy numbers;

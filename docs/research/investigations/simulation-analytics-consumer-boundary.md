@@ -3,7 +3,7 @@
 > **Status:** READY
 > **Risk:** **High** — touches major ownership, supported/public semantics, reproducibility, compatibility, and several existing consumers. Independent adversarial review is required before any architecture promotion (`docs/development/researching.md` §7, §9).
 > **Scope:** Where the boundary sits between authoritative simulation/runtime facts and reusable derived analytics, and how that boundary replaces the legacy `EventLog` KPI substrate
-> **Authority:** Research only. This brief decides nothing. Current Engine semantics, ADR-0011, ADR-0015, and `engine-semantics:v1` remain exactly as accepted until a separate, independently reviewed reconciliation says otherwise.
+> **Authority:** Research only. This brief decides nothing. ADR-0011/ADR-0015 retain the Engine boundaries; ADR-0017 withdraws pre-reset support without settling analytics ownership. The V1 definition remains current implementation evidence, not a post-reset support promise.
 
 ## Research question
 

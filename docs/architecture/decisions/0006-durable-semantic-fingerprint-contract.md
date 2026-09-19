@@ -1,6 +1,7 @@
 # ADR-0006: Durable semantic fingerprint contract
 
-Status: Accepted
+Status: Superseded
+Superseded by: ADR-0017
 Date: 2026-08-27
 Amendment: 2026-09-03 — replaced transient Governance delivery terminology with semantic terminology; no semantic change
 Amendment: 2026-09-08 — renamed the configured-resource Java type from `ResourceDefinition` to `ConfiguredResource`; fingerprint field membership and canonical bytes are unchanged; no semantic change

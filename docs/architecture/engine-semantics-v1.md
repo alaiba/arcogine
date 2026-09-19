@@ -1,12 +1,33 @@
 # Engine Semantics v1
 
-Status: Normative design contract; implementation pending
+Status: Pre-reset definition and current implementation reference; post-reset support withdrawn
 Semantic identity: `engine-semantics:v1`
 Decision authority: [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md)
+Reset/support authority: [ADR-0017](decisions/0017-ground-zero-semantic-evolution.md)
 Model-side counterpart: [ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md) and
 [Factory Model v2 Canonicalization](factory-model-v2.md)
 
 ## 1. Purpose
+
+ADR-0017 withdraws V1 as a supported post-reset semantics label. The rules below
+remain the definition of that label and describe the current implementation target;
+they do not prove complete implementation or release. ADR-0015's identity contract
+and other Accepted Engine decisions remain binding. A post-reset contract may use
+`engine-semantics:v1` only if this definition is unchanged rule-for-rule; Engine has
+no Factory-style policy-prefix/artifact discriminator to make changed reuse safe.
+Otherwise it must use a fresh distinguishable semantic identity.
+
+For a fresh normative Engine contract, correction in place ends at the first
+accepted/retained record attributed to the definition. The whole definition then
+freezes, including unexercised rules and rejection behavior. Records stamped before
+that boundary must be explicitly disposable/non-retained, or the stamping itself
+must freeze the exact definition. Exact definition resolution lasts while records
+remain retained; ADR-0015's stronger released-definition/fixture obligations also
+remain. No section-level amendment exception is adopted. A post-attribution
+same-label amendment would need separate bounded research and an owning decision.
+
+The [support declaration policy](../development/semantic-contract-support.md)
+governs new reliance/custody; retaining this document creates no executor promise.
 
 `engine-semantics:v1` defines the complete result-affecting Engine interpretation that Arcogine
 must attribute to a simulation run using this version. It records semantic rules, not Java class
@@ -571,8 +592,10 @@ actual ownership and result-affecting meaning become concrete.
 
 ## 14. Conformance fixtures
 
-Before `engine-semantics:v1` is considered released, pinned behavioral fixtures must prove the
-normative semantics above using representative explicit inputs. The fixtures must cover at least:
+Any future decision to support this unchanged definition would require pinned
+behavioral fixtures proving its semantics with representative inputs. The cases
+below remain reusable conformance evidence; they do not admit a V1 release after
+the reset. The fixtures must cover at least:
 
 1. current deterministic resource-selection behavior, including offline filtering/all-offline
    fallback, `canAcceptJob` ranking, `combinedQueueDepth`, `MachineId` tie-breaking, and the

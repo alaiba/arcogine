@@ -10,8 +10,8 @@ import java.util.Set;
  * up, not pinned to (and therefore not reflected in the queue depth of) any single {@link
  * com.arcogine.factory.machines.MachineView}.
  *
- * <p>ADR-0005
- * (docs/architecture/decisions/0005-explicit-eligibility-deterministic-dispatch-policy.md)
+ * <p>The dispatch semantics
+ * (docs/architecture/engine-semantics-v1.md section 2)
  * established this backlog as the runtime's second authoritative waiting-work structure alongside
  * each machine's own queue. The consumer-neutral runtime inspection contract requires it to be
  * observable through the supported runtime boundary, not only inferable from a machine's queue

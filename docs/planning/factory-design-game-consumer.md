@@ -64,7 +64,7 @@ Before playable integration is admitted, the required Engine capabilities for th
 - consumer-neutral bounded advancement;
 - stable supported observations and ordered runtime events;
 - deterministic spatial transfer consequences;
-- the accepted order/work-item decomposition contract from ADR-0010.
+- the accepted order/work-item decomposition contract from the unit-work decomposition semantics.
 
 Use the current [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) and its implementation companions as the authority for which of those gates are actually complete.
 

@@ -7,7 +7,10 @@ import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 
-/** Immutable current projection of one independently dispatchable child job (ADR-0010). */
+/**
+ * Immutable current projection of one independently dispatchable child job
+ * (docs/architecture/engine-semantics-v1.md section 3).
+ */
 public record JobObservation(
         JobId jobId,
         OrderId orderId,

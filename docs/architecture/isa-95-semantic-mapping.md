@@ -3,7 +3,7 @@
 > **Status:** Maintained architectural reference  
 > **Scope:** Mapping between Arcogine manufacturing-domain semantics and ISA-95 / IEC 62264 concepts  
 > **Authority:** Describes current mappings, deliberate divergences, and design constraints; it does not establish ISA-95 conformance  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Standards Alignment](standards-alignment.md), [Factory-Design Game Consumer Initiative](../planning/factory-design-game-consumer.md), [ADR-0010](decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Standards Alignment](standards-alignment.md), [Factory-Design Game Consumer Initiative](../planning/factory-design-game-consumer.md), [unit-work decomposition semantics](engine-semantics-v1.md#3-unit-work-decomposition-semantics)
 
 ## 1. Purpose
 
@@ -100,7 +100,7 @@ The correct characterization is therefore:
 
 ## 5. Current concept mapping register
 
-This table is the maintained working register. ADR-0010's unit-work decomposition order/work-item decomposition is implemented, so rows below state that behavior as current runtime fact rather than future direction.
+This table is the maintained working register. Unit-work decomposition is implemented, so rows below state that behavior as current runtime fact rather than future direction.
 
 | Arcogine concept | Current meaning | Closest ISA-95 semantic role | Mapping | Disposition | Current limitation or direction |
 |---|---|---|---|---|---|
@@ -433,7 +433,7 @@ Machine
 
 is preferable to renaming the class `WorkUnit` without adding actual hierarchy or work-unit semantics.
 
-Likewise, ADR-0010 keeps the established Arcogine term `Job` for an independently dispatchable work item instead of adding a standards-sounding type whose semantics would not be clearer.
+Likewise, Engine Semantics v1 keeps the established Arcogine term `Job` for an independently dispatchable work item instead of adding a standards-sounding type whose semantics would not be clearer.
 
 ### 10.3 Do not use a standard term when
 
@@ -477,7 +477,7 @@ Revisit this document whenever a change introduces or materially alters:
 
 This mapping document records current relationships and accepted design constraints. Create an ADR when a decision becomes accepted and hard to reverse, for example:
 
-- aggregate boundaries between product, order, work item, and performance — ADR-0010 records the implemented unit-work decomposition `Order`/aggregate/`Job` boundary;
+- aggregate boundaries between product, order, work item, and performance — Engine Semantics v1 §3 records the implemented unit-work decomposition `Order`/aggregate/`Job` boundary;
 - capability-pool and deterministic dispatch semantics;
 - hierarchy and spatial-model separation;
 - the canonical public model contract;
@@ -527,7 +527,7 @@ This semantic mapping does not commit Arcogine to:
 - personnel, maintenance, quality, or inventory modules without concrete requirements;
 - standards certification or conformance testing;
 - treating spatial factory layout as equipment hierarchy;
-- treating ADR-0010's unit work-item decomposition as material-lot genealogy or generalized batch semantics.
+- treating the unit work-item decomposition as material-lot genealogy or generalized batch semantics.
 
 ## 15. Maintenance rule
 

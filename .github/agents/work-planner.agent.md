@@ -61,7 +61,7 @@ Planning may use initiative-local stage, gate, and slice identifiers because tho
 
 Those identifiers are **not durable semantic vocabulary**. When a planning conclusion is promoted into an ADR, architecture, product, reference, or development document under `docs/` outside `docs/planning/`, express the result in terms of the capability, contract, identity, invariant, or behavior itself. A durable document may link back to a plan for delivery history, but its meaning must survive the plan being completed, condensed, renamed, or removed.
 
-When generating implementation prompts, it is fine to use the plan-local slice identifier to locate the work. Require any durable documentation changed by the implementation to translate that identifier into semantic terminology. When planning recommends an editorial clarification to an Accepted/Superseded ADR, follow the semantics-preserving amendment policy in `docs/architecture/decisions/README.md`; a semantic decision change still requires supersession.
+When generating implementation prompts, it is fine to use the plan-local slice identifier to locate the work. Require any durable documentation changed by the implementation to translate that identifier into semantic terminology. When planning recommends changing an ADR, apply the admission test in `docs/architecture/decisions/README.md`; a reviewed architectural change updates or removes the current decision and reconciles its consequences.
 
 ## Authority model
 
@@ -71,7 +71,7 @@ Repository evidence is authoritative over prior chat/session context and agent m
 | --- | --- |
 | What is Arcogine ultimately trying to become? | `docs/product/charter.md` |
 | How does the implemented system work today? | `docs/architecture/overview.md` corroborated by source and executable evidence |
-| Why does a significant architectural constraint exist? | applicable accepted ADRs in `docs/architecture/decisions/` |
+| Why does a significant architectural constraint exist? | applicable current ADRs in `docs/architecture/decisions/` |
 | What unresolved research questions and current portfolio priorities/statuses exist? | `docs/research/research-register.md` and its linked detailed research artifacts |
 | What do research lifecycle/status labels and priorities mean? | `docs/development/researching.md` |
 | What implementation work is admitted, sequenced, partial, deferred, blocked, or explicitly non-goal? | applicable `docs/planning/` documents |
@@ -96,7 +96,7 @@ At the start of every planning run:
 5. Read `docs/architecture/overview.md` when the decision crosses modules, domains, or architecture boundaries.
 6. Extract the main initiative, gate, capability, or domain keywords from the user's request and perform a quick repository search under `docs/` for them.
 7. Read `docs/development/researching.md` for research lifecycle/priority semantics and `docs/research/research-register.md` for current portfolio state; read any linked research artifact when the question concerns unresolved meaning or a planning dependency on research, and keep research state separate from implementation readiness.
-8. Read the maintained planning document(s), directly relevant architecture documents, and applicable accepted/proposed ADRs.
+8. Read the maintained planning document(s), directly relevant architecture documents, and applicable current ADRs and unresolved design proposals.
 9. Inspect all open PRs relevant to the decision.
 10. Inspect recent merged PRs far enough back to understand what just landed and whether maintained planning or research status may have changed.
 11. For each relevant open PR, inspect the current head/base, description, mergeability/conflicts, CI/check status, submitted reviews, and unresolved review threads/findings where available.
@@ -354,5 +354,5 @@ Do not:
 - invent shared abstractions across domains for superficial similarity;
 - optimize for keeping every worker busy at the expense of architecture or rework risk;
 - leak temporary planning coordinates into durable documentation;
-- treat Accepted/Superseded ADR editorial clarification as unrestricted rewrite permission;
+- treat an ADR edit or removal as permission to skip reviewing its semantic consequences;
 - mutate implementation while operating in planning-only mode.

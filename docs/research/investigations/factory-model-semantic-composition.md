@@ -2,7 +2,7 @@
 
 > **Lifecycle:** READY — see the maintained [research register](../research-register.md)  
 > **Scope:** Canonical Factory-model structure, optional semantic concerns, identity, validation, and Engine applicability when not every modeled factory needs every behaviorally relevant concern  
-> **Authority:** Research framing only. ADR-0017/ADR-0018 own the reset and surviving Factory constraints; the current V1/V2 implementation is evidence, not a post-reset support commitment.
+> **Authority:** Research framing only. The Factory Model v1 specification/the Factory semantic-evolution contract and current Factory v1/V2 implementation remain authoritative until a separate reconciliation change says otherwise.  
 > **Risk:** High. Independent adversarial review is required before any conclusion is promoted into Factory architecture, fingerprint policy, Engine applicability, or implementation planning.
 
 ## Question
@@ -15,12 +15,6 @@ It must also determine what **absence** of such a concern means. In particular, 
 
 ## Decision at stake
 
-The V1/V2 description below records the pre-reset design baseline being tested.
-Its support obligations have been withdrawn by ADR-0017/ADR-0018; the retained
-authored semantics and validation constraints remain binding until explicitly
-changed by an owning decision. The investigation must re-ground against those
-successors, not treat ADR-0006/ADR-0014 as still Accepted.
-
 Current `factory-model:v1` is primarily the production-structure substrate:
 
 - products;
@@ -29,7 +23,7 @@ Current `factory-model:v1` is primarily the production-structure substrate:
 - explicit eligible-resource references; and
 - the existing canonical ordering/equality semantics.
 
-[ADR-0014](../../architecture/decisions/0014-factory-model-semantic-policy-evolution.md) defines `factory-model:v2` as V1 plus five mandatory authored additions:
+The [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) defines `factory-model:v2` as V1 plus five mandatory authored additions:
 
 - floor width/height;
 - resource reference-cell position;
@@ -238,9 +232,9 @@ The final report must resolve:
 14. Can storage exist without spatial layout? Can spatial layout exist without storage? What evidence decides?
 15. How do controlled revisions and semantic comparison cross changes in represented concerns?
 16. When, if ever, should one concern become an independently durable/versioned semantic contract?
-17. How does the sibling [Semantic Contract Maturity and Durability](semantic-contract-maturity-durability.md) result constrain any version/durability decision?
+17. How do the concluded [semantic identity decision](../../architecture/decisions/semantic-identity-and-evolution.md) and the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) constrain any version/durability decision?
 18. What should happen to the already implemented `FactoryModelV2`/validator if the surviving semantic boundary differs from current V2?
-19. What exact accepted ADRs/specifications/plans would need supersession or reconciliation?
+19. What exact current decisions/specifications/plans would need revision or reconciliation?
 20. What evidence would falsify the surviving composition model?
 
 ## Identity hypotheses to test explicitly
@@ -293,7 +287,7 @@ At minimum inspect:
 - Product Charter "one model, many views" and semantic-continuity principles;
 - Factory Design architecture;
 - Factory Resource Semantics;
-- ADR-0003, ADR-0004, ADR-0006, ADR-0014, ADR-0015;
+- the canonical model boundary, the Factory publication identity contract, the Factory Model v1 specification, the Factory semantic-evolution contract, the deterministic simulation decision;
 - Factory Model v1 implementation/canonicalization and V2 specification/implementation/validator;
 - Governance semantic comparison and controlled-revision resolution;
 - current Engine spatial plan and Engine Semantics v1;
@@ -349,23 +343,21 @@ This investigation does **not**:
 - introduce independently versioned subcontracts merely because code can be modularized;
 - automatically preserve or discard current `factory-model:v1/v2`;
 - invent defaults for a concern the authored design did not represent;
-- decide semantic-contract durability independently of the sibling maturity investigation; or
-- rewrite Accepted ADRs in place.
+- contradict the adopted semantic identity decision or the Factory semantic-evolution contract; or
+- change adopted architecture inside a research report.
 
-## Coordination with semantic-contract maturity research
+## Coordination with the concluded semantic-contract maturity research
 
-The [maturity question](semantic-contract-maturity-durability.md) is concluded through
-[ADR-0017](../../architecture/decisions/0017-ground-zero-semantic-evolution.md) and
-[ADR-0018](../../architecture/decisions/0018-factory-semantics-after-support-reset.md).
-This investigation must incorporate their reset, non-reuse, accepted-use,
-definition-retention and whole-definition freeze constraints. It chooses no support
-estate merely by selecting a composition; owning declarations must specify that scope.
+The sibling [Semantic Contract Maturity and Durability](semantic-contract-maturity-durability.md)
+question is concluded: the [semantic identity decision](../../architecture/decisions/semantic-identity-and-evolution.md)
+and the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution)
+own non-rebinding identity, whole-definition fixation at first retained attribution, resolvable
+definitions for retained records, explicit cross-policy comparison and contract-scoped support.
 
-The V1/V2 descriptions and linear-policy candidates above remain baseline evidence.
-ADR-0006 and ADR-0014 are now superseded: preserving their pre-reset support estate
-is no longer required. Authored facts, validation, no-lift, explicit comparison and
-domain ownership survive through ADR-0018. The composition question remains READY;
-no core/aspect/profile answer is selected here.
+This investigation consumes those results rather than reopening them. Selecting a composition
+does not itself create a support promise; any recommendation that a core/aspect/profile/component
+is durable, assigns a permanent identity, or commits Arcogine to historical support must be
+expressed as a scoped declaration under [Semantic contract support](../../development/semantic-contract-support.md).
 
 ## Expected durable destination
 
@@ -374,8 +366,8 @@ No durable destination is preselected.
 Depending on evidence, reconciliation may:
 
 - retain the current linear Factory policy;
-- supersede ADR-0018 if a compositional result changes its retained Factory decisions;
-- define a fresh Factory identity contract within ADR-0017's evolution/support rules;
+- revise the Factory semantic-evolution contract with a compositional Factory-model rule;
+- narrow parts of the Factory Model v1 specification's whole-policy evolution assumptions;
 - retain one `ModelFingerprint` while changing canonical model composition;
 - introduce a narrowly justified independent semantic component only where evidence proves it;
 - reframe Engine applicability away from whole-model policy numbers;

@@ -14,14 +14,16 @@ import java.util.List;
  *
  * <p>{@link #fingerprint()} is the durable semantic identity contract for published factory
  * models. It implements the policy-versioned {@code factory-model:v1} canonical encoding from
- * ADR-0006 and returns a typed {@link ModelFingerprint} suitable for cross-process and
+ * docs/architecture/factory-model-v1.md and returns a typed {@link ModelFingerprint} suitable for
+ * cross-process and
  * cross-language identity under that released policy.
  *
  * <p>{@link #contentHash()} remains the legacy Java-derived digest retained for compatibility with
  * existing runtime/result provenance. It is deterministic for the current model but is not the
  * durable fingerprint contract and must not be reinterpreted as a {@code factory-model:v1}
  * fingerprint. Controlled revision identity, lineage, and persistence are separate concerns from
- * both values; see ADR-0004, ADR-0006, and ADR-0008.
+ * both values; see docs/architecture/factory-design.md section 11,
+ * docs/architecture/factory-model-v1.md, and docs/architecture/controlled-revisions.md.
  *
  * <p>{@link FactoryModelPublisher#publish(FactoryModel)} is the intended way to obtain an
  * instance, but the invariant that an invalid model can never be published or instantiated

@@ -1,37 +1,24 @@
-# ADR-0013: Durable operational identity
+# Operational continuity
 
-Status: Accepted
-Date: 2026-09-14
+Status: Adopted semantic contract; no implementation type, module, or persistence exists yet
+Owning architecture: [Operational Execution and Digital Twin](operational-execution-digital-twin.md)
+Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md)
 
-## Context
+## Purpose
 
-Operational Execution needs durable attribution that is not reducible to an Engine runtime epoch, semantic model fingerprint, governed revision, actor identity, or external target identity.
+Operational Execution needs durable attribution that is not reducible to an Engine runtime epoch,
+semantic model fingerprint, governed revision, actor identity, or external target identity.
+Mixed synthetic/physical execution, digital twins, virtual commissioning, software- and
+hardware-in-the-loop, predictive forks, agentic/multi-user simulations and commissioning all show
+that one global consequence/environment kind is not a durable property of an execution. What needs
+durable identity is instead one independently continuing operational history: what makes two
+records belong to the same one versus different ones, and what preserves or breaks that identity.
 
-The original proposal attempted to solve that problem with three concepts:
+This contract answers that question. The [Operational architecture](operational-execution-digital-twin.md)
+summarizes it and records the surrounding proposed architecture; the semantics below are adopted
+and constrain any future durable operational record capability as design inputs.
 
-```text
-ExecutionContextKind = PRODUCTION | STAGING | SIMULATION
-ExecutionContextId
-ExecutionContext = { id, kind }
-```
-
-and permanently bound one ID to one consequence/environment kind.
-
-Architecture review tested that model against mixed synthetic/physical execution, digital twins, virtual commissioning, software-in-the-loop, hardware-in-the-loop, predictive forks, agentic/multi-user simulations, commissioning, and externally observed or controlled subjects.
-
-Those scenarios invalidate the premise that one global consequence/environment kind is a durable property of an execution. A single Arcogine execution may contain synthetic subjects, externally observed subjects, physically controllable subjects, historical inputs, real actors, and synthetic agents at the same time. Lifecycle state, trust, authority, external consequence, historical processing mode, and relationship to reality vary independently.
-
-That review withdrew the kind-bound model but could not yet say what the surviving identity actually refers to. It left one blocking question:
-
-> **What exactly is the independently continuing operational history/partition that needs durable identity, and what makes two records belong to the same one versus different ones?**
-
-Bounded investigation and an independent adversarial review have since answered that question. This ADR records the answer and lifts the hold.
-
-The broader operational reasoning is recorded in [Operational Execution and Digital Twin Architecture](../operational-execution-digital-twin.md), which remains **Proposed** as a whole; this ADR is the Accepted authority for the identity decision it contains.
-
-## Decision
-
-### 1. The referent is an accountable operational continuation
+## 1. The referent is an accountable operational continuation
 
 The durable operational identity identifies **one accountable operational continuation**: one independently continuing body of Arcogine's own operational conduct and conclusions, maintained as one account for which Arcogine is answerable and which may be extended over time.
 
@@ -47,9 +34,9 @@ It is **not**:
 - a digital-twin object or category;
 - a global simulation/staging/production classification.
 
-The withdrawn `ExecutionContextKind` and the `PRODUCTION / STAGING / SIMULATION` taxonomy stay withdrawn. No replacement enum, simulation/operational binary, or equivalent whole-execution consequence classification is introduced by this decision, under this or any other name.
+There is no `ExecutionContextKind`, no `PRODUCTION / STAGING / SIMULATION` taxonomy, and no replacement enum, simulation/operational binary, or equivalent whole-execution consequence classification: a single execution may contain synthetic subjects, externally observed subjects and physically controllable subjects at once, so no global consequence/environment kind is a durable property of an execution. This holds under this or any other name.
 
-### 2. Neighbouring identities remain distinct
+## 2. Neighbouring identities remain distinct
 
 The durable operational identity must not be derived from, inferred from, or collapsed into:
 
@@ -67,14 +54,14 @@ a physical installation
 
 Those values may be correlated by operational records without becoming substitutes for one another. In particular, a run is a runtime incarnation: one continuation may span many runs, and many runs belong to no continuation at all.
 
-### 3. Identity is established explicitly, never inferred from infrastructure
+## 3. Identity is established explicitly, never inferred from infrastructure
 
 Identity is established by one explicit authoritative act, of exactly one of two forms:
 
 - **genesis** — an account begins with no predecessor;
 - **fork** — an account begins by naming a parent identity and a divergence boundary in it, adopting the parent's state as of that boundary and becoming separately answerable thereafter.
 
-The identity becomes authoritative when the establishing record is accepted into durable operational history, mirroring [ADR-0008](0008-controlled-revision-identity-and-lineage.md)'s rule that authoritative historical identity begins at persistence acceptance.
+The identity becomes authoritative when the establishing record is accepted into durable operational history, mirroring the [controlled revision contract](controlled-revisions.md)'s rule that authoritative historical identity begins at persistence acceptance.
 
 It must never be inferred from:
 
@@ -92,7 +79,7 @@ It must never be inferred from:
 
 Configuration may carry an already-established identity. Configuration location or syntax is not semantic identity or authority.
 
-### 4. Continuity is stated representation-independently
+## 4. Continuity is stated representation-independently
 
 > **Identity is preserved for as long as the continuation remains able to answer for accountable facts it has already accepted.**
 
@@ -101,10 +88,10 @@ Continuity is broken when the account can no longer answer for an already-accept
 Three consequences follow:
 
 - **silent loss is a fork**;
-- **declared loss is a fork carrying a recorded gap**, consistent with [ADR-0011](0011-runtime-observation-and-event-contract.md)'s rule that recovery must detect a gap rather than pretend completeness;
+- **declared loss is a fork carrying a recorded gap**, consistent with the [runtime observation/event contract](runtime-contract.md)'s rule that recovery must detect a gap rather than pretend completeness;
 - **a lossy summarisation is not a fork only when its lossiness is itself an accepted record.**
 
-This grounds continuity in attributability rather than in permanent byte retention, consistent with [ADR-0015](0015-engine-semantics-identity-and-reproducibility.md)'s guarantee of attribution plus a verifiable definition rather than permanent exact re-execution.
+This grounds continuity in attributability rather than in permanent byte retention, consistent with the [deterministic simulation decision](decisions/deterministic-simulation.md)'s guarantee of attribution plus a verifiable definition rather than permanent exact re-execution.
 
 The condition is **set-based, not sequence-based**: it asks whether anything accepted became unanswerable, not whether a log prefix was preserved. Operational records are heterogeneous and concurrently produced, so the rule must not presuppose a total order.
 
@@ -112,7 +99,7 @@ Nothing else bears on continuity. Storage, encoding, location, deployment, runti
 
 Where continuity cannot be established, it is **not proven**, and the safe resolution is a new identity with lineage and a recorded discontinuity. Absence of demonstrated continuity is not evidence of continuity.
 
-### 5. Minimum semantics of acceptance
+## 5. Minimum semantics of acceptance
 
 The continuity rule turns on what has been *accepted*, so the smallest semantics of acceptance are decided here even though the concrete acceptance mechanics are not:
 
@@ -124,7 +111,7 @@ The continuity rule turns on what has been *accepted*, so the smallest semantics
 
 This is a semantic contract on any future durable operational record capability. It selects no storage model, arrival model, or transaction semantics.
 
-### 6. Divergence, fork, and lineage
+## 6. Divergence, fork, and lineage
 
 One rule covers deliberate fork, stale restore, and accidental divergence:
 
@@ -140,19 +127,19 @@ Deliberate fork and stale restore share one identity rule; only the annotation d
 - a **determinate, referenceable divergence boundary** — precise enough that "what the child adopted" is answerable later;
 - whether the parent continues, where that distinction is meaningful.
 
-Ancestry is carried by these links alone: no branch objects and no second super-identity, following ADR-0008's choice for revisions. Parent cardinality is `0..1` in this contract, structurally extensible; multi-parent lineage is reserved as a later extension rather than importing merge semantics now.
+Ancestry is carried by these links alone: no branch objects and no second super-identity, following the controlled revision contract's choice for revisions. Parent cardinality is `0..1` in this contract, structurally extensible; multi-parent lineage is reserved as a later extension rather than importing merge semantics now.
 
 A fork whose parent was never recorded is indistinguishable from a genesis, which is exactly the distinction this rule exists to preserve.
 
-### 7. Divergence must remain provable, in whatever representation
+## 7. Divergence must remain provable, in whatever representation
 
 > **Every accepted fact must remain durably relatable to the accepted continuation state or frontier it extended, with sufficient surviving evidence to establish common ancestry and incompatible extension later, including the divergence boundary or material the chosen semantic model requires.**
 
-This obligation is semantic, not structural. The evidence may be carried per record, per batch, per segment, per checkpoint, or by an authoritative correlated lineage/frontier structure. This decision constrains **what must remain provable, not where a field is physically stored**, and it deliberately does not copy any external system's storage layout into Arcogine's semantic contract.
+This obligation is semantic, not structural. The evidence may be carried per record, per batch, per segment, per checkpoint, or by an authoritative correlated lineage/frontier structure. This contract constrains **what must remain provable, not where a field is physically stored**, and it deliberately does not copy any external system's storage layout into Arcogine's semantic contract.
 
 The obligation is load-bearing and cannot be deferred merely because its representation can. Ancestry links written only when a fork is *declared* cannot detect an **undeclared** divergence; a record capability that discards every durable relation between accepted facts and the continuation state they extended makes later divergence permanently unprovable, and no later decision can repair records already written without it.
 
-### 8. Exclusive extension is an obligation, not a truth-condition
+## 8. Exclusive extension is an obligation, not a truth-condition
 
 Sole legitimate extension of a continuation is a **normative obligation**, not a metaphysical condition that would retroactively invalidate records written before an accidental split was discovered.
 
@@ -162,23 +149,23 @@ The obligation is claimable and detectable, never provable at write time, and st
 - what is guaranteed is that divergence is **representable and detectable**, and that anyone reading a continuation can learn that a divergence finding exists against it;
 - a violation is recorded as a divergence finding naming both continuations and the divergence boundary, and remediated **forward**: entitlement to extend the identity from that decision onward is assigned to at most one continuation, and the other establishes a new identity going forward.
 
-### 9. Convergence is never identity equality
+## 9. Convergence is never identity equality
 
 Two continuations that separately recorded conduct never become one account. Independently arrived-at identical state, content equivalence, a shared deployment, selection of one branch as authoritative, and a shared external subject are all insufficient.
 
 What is available instead is a correlation between them, or a new account whose lineage names its parent.
 
-### 10. Historical bindings are immutable and identities are not reused
+## 10. Historical bindings are immutable and identities are not reused
 
 - Already-written records keep the identity they were written under. Late-discovered divergence is represented by additional findings and lineage, **never** by retroactively relabelling recorded identity.
 - The record-to-identity binding never changes.
 - A retired or superseded identity is never reissued.
 
-Records may already have been exported as external projections under [ADR-0012](0012-external-interchange-and-serialization-boundaries.md); relabelling them would be identity mutation, which every other Arcogine identity forbids. History is added to, never rewritten.
+Records may already have been exported as external projections under the [external representation policy](external-representations.md); relabelling them would be identity mutation, which every other Arcogine identity forbids. History is added to, never rewritten.
 
 Non-reuse does **not** imply an endless lifecycle. Whether an accountable operational continuation may close, retire, or become non-extendable is deliberately **left open** — see §14.
 
-### 11. The identity attaches to conduct and conclusions, not to what Arcogine was told
+## 11. The identity attaches to conduct and conclusions, not to what Arcogine was told
 
 > The identity attaches to what Arcogine did or concluded — never to what Arcogine was told.
 
@@ -207,25 +194,25 @@ Two proving cases motivate this and should survive with the decision:
 
 The Governance `Evidence`/`EvidenceUse` separation is the recommended shape for that later binding. Its known limit is recorded here rather than glossed: `EvidenceUse` binds evidence to a **point** identity, whereas an accountable operational continuation is an **accumulating** identity, so the precedent transfers for *where the binding lives* but not for *what a binding to an accumulating identity means over time*.
 
-### 12. Possession of the identifier confers no authority
+## 12. Possession of the identifier confers no authority
 
 Holding the identifier is not entitlement to extend the continuation, and is not authorization to act.
 
-Evidence that a continuation retains the required accepted history is **continuity evidence**, and evidence for a later decision. It is not by itself authority. Actor identity, trust, capability, and authorization remain a separate semantic boundary that this decision does not settle and must not be used to settle.
+Evidence that a continuation retains the required accepted history is **continuity evidence**, and evidence for a later decision. It is not by itself authority. Actor identity, trust, capability, and authorization remain a separate semantic boundary that this contract does not settle and must not be used to settle.
 
-### 13. One identity level now; a second is not foreclosed
+## 13. One identity level now; a second is not foreclosed
 
-This decision defines only the **accountable-continuation identity**, because no current proving case or concrete consumer requires a second grouping or account identity above it.
+This contract defines only the **accountable-continuation identity**, because no current proving case or concrete consumer requires a second grouping or account identity above it.
 
-That is a scope-minimisation decision for this ADR, not a durable claim that operational identity is permanently one-level. ADR-0008 is cited here as a **useful lineage precedent** — it shows that divergent historical lineage can be represented without a separate branch object — and not as authority over operational identity cardinality, which it does not decide.
+That is a scope-minimisation choice, not a durable claim that operational identity is permanently one-level. The [controlled revision contract](controlled-revisions.md) is cited here as a **useful lineage precedent** — it shows that divergent historical lineage can be represented without a separate branch object — and not as authority over operational identity cardinality, which it does not decide.
 
 A future stable higher-level grouping or account identity remains permissible if a concrete consumer later proves a distinct equality, lifecycle, lookup, policy, or aggregation contract that accountable-continuation identity cannot satisfy. Two-level identity was **not falsified**; mature external systems commonly use it. It is simply not justified by current evidence.
 
-### 14. What this decision deliberately defers
+## 14. What remains deliberately open
 
-The following remain open on the record, and this ADR must not be read as having settled them:
+The following remain open on the record, and this contract must not be read as having settled them:
 
-- the final production type name, and any identifier representation, encoding, textual canonicalization, or parsing rule — external representations remain projections under ADR-0012;
+- the final production type name, and any identifier representation, encoding, textual canonicalization, or parsing rule — external representations remain projections under the external representation policy;
 - storage schema, persistence mechanics, and the concrete acceptance boundary: arrival ordering, late arrival, and multi-writer commit semantics;
 - whether divergence evidence is carried per record, per batch, per segment, per checkpoint, or by a correlated lineage/frontier structure;
 - the representation of the divergence boundary;
@@ -240,44 +227,3 @@ The following remain open on the record, and this ADR must not be read as having
 - Operational implementation sequencing.
 
 The semantic core above is settled now because a future durable operational record capability needs the acceptance and divergence-evidence obligations as design inputs. The value type waits for its first real durable-record consumer: until such a capability exists, an identifier would have nothing to label, no acceptance boundary, and no way to test the continuity rule.
-
-## Alternatives considered
-
-**A global execution kind (`ExecutionContextKind`, the original proposal).** Rejected and withdrawn. Lifecycle state, trust, authority, external consequence, historical processing mode, and relationship to reality vary independently and per subject within one execution, so no single label durably describes the whole graph. Reviving it under another name is explicitly out of bounds.
-
-**No new identity — a per-continuation `continues:` relation only.** The strongest challenger, and semantically equivalent: it declines to name the equivalence class rather than denying it. Rejected on three practical grounds. Membership must be stateable at write time: a record has to name the continuation it belongs to as it is written, and a relation-only model makes that an inference over the ancestry graph rather than a direct reference. That is an attribution and lookup concern only — who may extend a continuation is not decided here, and §12 leaves it to the separate actor/trust/authority boundary. Concurrent heterogeneous records have no single predecessor chain to belong to, because succession relates *continuations*, not records. And ADR-0012 makes exported records projections of semantic contracts, so a traversal-only model would force an exported record to carry its whole ancestry graph to state which account it belongs to.
-
-**A two-level model: a stable account identity plus a per-incarnation continuation identity.** Survives the proving cases and is **not falsified**. Set aside because no current consumer proves a distinct equality, lifecycle, lookup, policy, or aggregation contract that the single accountable-continuation identity cannot satisfy. Explicitly preserved as a permissible future extension (§13).
-
-**Deriving identity from a deployment, run, installation, or external subject.** Rejected. Every one of these is many-to-many with a continuation in at least one direction: many deployments may extend one continuation and one deployment may host many; a continuation spans many runs and most runs belong to none; several independent continuations may model one physical installation. Derivation in either direction would be false.
-
-**Defining continuity as preservation of an accepted log prefix.** Rejected. It presupposes a total order that heterogeneous, concurrently produced operational records do not have, and it would classify legitimate compaction, archival, and storage migration as identity forks (§4).
-
-**Requiring every accepted record to physically embed its divergence evidence.** Rejected as a semantic requirement. It is a valid implementation shape, and external recovery systems demonstrate it works, but promoting one storage layout into the semantic contract would over-constrain representation while adding nothing to what must remain provable (§7).
-
-## Consequences
-
-- ADR-0013's architecture-review hold is lifted. The withdrawals it recorded remain in force; the unresolved equality/lifecycle question it named is answered by §4–§10.
-- Future durable operational record contracts must satisfy the acceptance semantics (§5) and the divergence-evidence obligation (§7) as design inputs, not as later additions.
-- Recovery, checkpoint, and restore capabilities must implement the loss test and the fail-safe-to-fork rule, must not silently truncate, and must be able to record an abandoned branch. Discarding the records of what the system actually did is falsification, not repair.
-- External command, deployment, correspondence, and reconciliation contracts must carry the identity on Arcogine's own request, submission, and interpretation records, and must keep target acknowledgements, external accept/reject facts, physical transitions, and telemetry independently provenanced.
-- Raw external observation ingestion is unaffected and must stay so.
-- Actor, trust, authority, and capability semantics are not settled here and must not be placed in Operational Execution on the strength of this decision.
-- No production type, module, persistence format, registry, coordination mechanism, or implementation slice follows from accepting this ADR. In particular, no `:operational` module or public/persisted schema should be introduced merely to materialise an identity type.
-- Operational implementation admission remains governed independently by [Operational Execution and Digital-Twin Implementation Admission](../../planning/operational-execution-digital-twin-readiness.md); closing this semantic blocker does not admit a slice.
-
-## Charter alignment
-
-This decision serves the Charter's **Reality is explicit** principle without reviving a global taxonomy. The Charter's architectural-implications parenthetical "(simulation, replay, staging, production)" states a conceptual consequence: that execution contexts must remain **distinguishable**. Distinguishability is satisfied relationally — per subject, per realization, per authority, per correspondence — and is not a mandate for the withdrawn global enum. That parenthetical is the most likely route by which the withdrawn taxonomy would return, so it is read here explicitly and once.
-
-The fork rule actively serves the Charter's requirement that hypothetical branches never be ambiguously presented: a divergent continuation is a distinct identity with mandatory lineage, so a user or agent can always tell which continuation they are looking at.
-
-The decision also serves **Causality and provenance** — what happened, under which model, based on which observations, by whose decision — by making Arcogine answerable for its own conduct as one account while keeping externally sourced facts independently provenanced.
-
-## Related decisions
-
-- [ADR-0004: Model identity, revision lineage, and external change control](0004-model-identity-revision-lineage-and-external-change-control.md)
-- [ADR-0008: Controlled revision identity and lineage](0008-controlled-revision-identity-and-lineage.md)
-- [ADR-0011: Runtime observation and event contract](0011-runtime-observation-and-event-contract.md)
-- [ADR-0012: External interchange and serialization boundaries](0012-external-interchange-and-serialization-boundaries.md)
-- [ADR-0015: Engine semantics identity and reproducibility](0015-engine-semantics-identity-and-reproducibility.md)

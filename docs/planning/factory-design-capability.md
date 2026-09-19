@@ -1,9 +1,9 @@
 # Factory Design Capability Implementation Plan
 
-> **Status:** Active/partial; Factory V1 and V2 shape/validation code is landed. Fresh Factory identity is held for composition/reconciliation; mandatory pre-reset coexistence is superseded.
+> **Status:** Active/partial; current Factory Model v1 capability and the V2 shape/validation proving slice are landed, while unimplemented V2 identity/coexistence work is dependency-blocked on the READY Factory composition research  
 > **Scope:** Implementation-ready Factory Design work over the canonical production-system model  
-> **Authority:** Planning only. ADR-0017/ADR-0018 withdraw pre-reset support; remaining Factory composition work must be reconciled before a fresh identity contract is admitted.
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [ADR-0003](../architecture/decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0014](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
+> **Authority:** Planning only. Current Factory architecture and specifications govern; this plan deliberately pauses work that would deepen linear whole-model version commitments while the Factory composition research is open.  
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [canonical model boundary](../architecture/factory-design.md#4-canonical-model-boundary), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution), [deterministic simulation decision](../architecture/decisions/deterministic-simulation.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
 
 ## 1. Implementation boundary
 
@@ -31,13 +31,13 @@ The canonical model is not an editor state tree, a scenario envelope, a transpor
 
 ## 2. Current landed baseline
 
-The following are implemented. Preserve their intrinsic boundaries; pre-reset policy-specific code and compatibility fixtures are removable only in a later bounded cleanup under ADR-0017/ADR-0018:
+The following are implemented and must be preserved:
 
 - a canonical `FactoryModel` / immutable `FactoryModelVersion` seam;
-- product, operation, and concrete resource identities under the pre-reset v1 policy;
+- product, operation, and concrete resource identities under the released v1 policy;
 - deterministic structural executability validation;
 - immutable publication;
-- the pre-reset `factory-model:v1` fingerprint implementation;
+- durable `factory-model:v1` fingerprint semantics under the Factory Model v1 specification;
 - runtime instantiation only from a published model;
 - runtime/result attribution to source model identity;
 - Governance-owned controlled revision identity/history independently of Factory fingerprint identity;
@@ -47,14 +47,13 @@ Current `ConfiguredResource` remains the supported complete configured-resource 
 
 ## 3. Factory spatial-model work under research hold
 
-[ADR-0017](../architecture/decisions/0017-ground-zero-semantic-evolution.md) resolves the universal maturity question and [ADR-0018](../architecture/decisions/0018-factory-semantics-after-support-reset.md) supersedes
-ADR-0014. The remaining hold belongs to
-[Factory semantic composition](../research/investigations/factory-model-semantic-composition.md)
-and reconciliation of its independently reviewed result into a fresh owning contract.
-The landed V2 shape/validation slice remains proving evidence. No V2 release or
-permanent V1/V2 coexistence follows from retaining that evidence.
+The Factory semantic-evolution contract remains the current accepted architecture and therefore still defines `factory-model:v2` as exactly v1 semantic content plus required authored spatial/handling facts. However, two READY high-risk investigations now challenge whether durability was declared too early and whether spatial semantics are an orthogonal Factory concern rather than a linear generation of the whole model:
 
-The retained authored spatial design constraints under ADR-0018 consist of:
+- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md); the sibling [semantic-contract maturity](../research/investigations/semantic-contract-maturity-durability.md) question is concluded and its result is carried by the [semantic identity decision](../architecture/decisions/semantic-identity-and-evolution.md) and the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution).
+
+This is an **implementation hold, not an architectural supersession**. The already-landed V2 model/validation slice remains useful proving evidence. Do not start V2 canonical identity, V1/V2 coexistence, or another unimplemented Factory slice whose purpose is to harden the current linear-policy/durability assumptions until both research questions have decision-quality results, required adversarial review, and any necessary architecture/planning reconciliation has landed.
+
+Under the still-current the Factory semantic-evolution contract baseline, V2 consists of:
 
 - floor width and height;
 - resource reference-cell position;
@@ -70,7 +69,7 @@ The implementation sequence is owned jointly with [Spatial Runtime Consequences]
 
 **Status:** Implemented as proving evidence. `factory-model:v2` canonical bytes/fingerprint policy are not released by this slice. PLAN-ENG-5-A2 was the next V2 Factory-model slice and is now dependency-blocked by the research hold above.
 
-Implement the five authored additions and deterministic validation required by ADR-0014.
+Implement the five authored additions and deterministic validation required by the Factory semantic-evolution contract.
 
 Acceptance evidence must prove:
 
@@ -81,22 +80,35 @@ Acceptance evidence must prove:
 - overflow-safe maximum transfer-duration validation; and
 - no change to v1 behavior or identity.
 
-### PLAN-ENG-5-A2 — Factory canonical identity after composition
+### PLAN-ENG-5-A2 — V2 canonical identity
 
-**Status:** Dependency-blocked pending Factory composition and its reconciliation.
-The previous V2 release mandate is superseded. Re-scope this slice against the
-resulting owning Factory contract before execution; do not implement the retained
-V2 grammar simply because this coordinate exists. Required evidence will include
-total canonicalization, strict rejection, exact definition attribution, no invented
-historical facts, and the declared support/custody scope.
+**Status:** Dependency-blocked. Do not implement while the Factory composition investigation is open.
 
-### PLAN-ENG-5-A3 — Historical policy transition
+Implement the exact V2 canonical bytes and fingerprint policy from [Factory Model v2](../architecture/factory-model-v2.md).
 
-**Status:** Previous mandatory V1/V2 coexistence scope superseded by the reset;
-no implementation currently admitted. A real post-reset cross-policy controlled
-transition may justify a newly bounded slice under ADR-0018, with verifiers for the
-policies in scope and an explicit migration/comparison contract. No pre-reset reader
-or migration is owed merely to complete this former sequence.
+Acceptance evidence must prove:
+
+- required golden vectors;
+- deterministic equivalent-content fingerprints;
+- every authored V2 field participates in identity;
+- V1 vectors/fingerprints remain byte-for-byte unchanged;
+- no automatic v1-to-v2 lift or synthesized historical spatial defaults; and
+- malformed or semantically invalid V2 artifacts fail explicitly.
+
+### PLAN-ENG-5-A3 — V1/V2 historical coexistence
+
+**Status:** Dependency-blocked. Do not implement while the Factory composition investigation is open.
+
+Use the landed Governance revision authority to keep both released policies historically resolvable and verifiable.
+
+Acceptance evidence must prove:
+
+- historical v1 resolution remains intact after V2 registration;
+- v2 resolution is independent;
+- controlled revision lineage may cross policy versions without rewriting either artifact; and
+- the first cross-policy transition is not falsely represented as an ordinary same-policy empty/equivalent diff.
+
+This slice implements only the first coexistence/migration seam actually required by V1/V2. It does not create a generic schema-migration framework.
 
 ## 4. Existing Factory capabilities that remain closed
 
@@ -106,13 +118,13 @@ The behavior-preserving canonical seam is implemented for current semantics. A1 
 
 ### PLAN-FD-2 — Executability validation
 
-Current deterministic validation remains the implementation contract for admitted semantics. ADR-0018 preserves V2 authored spatial/arithmetic constraints without admitting V2 support.
+Current deterministic validation remains the implementation contract for admitted semantics. V2 adds only the accepted spatial/arithmetic predicates required by the Factory semantic-evolution contract.
 
 A richer cross-consumer finding taxonomy is **not** an admitted implementation slice; it is tracked in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md).
 
 ### PLAN-FD-3 — Publication, identity, and provenance
 
-Immutable publication and the pre-reset v1 implementation are present. V2 identity requires Factory composition reconciliation; the old V1/V2 coexistence requirement is superseded by the reset.
+Immutable publication and the currently accepted v1 semantic-identity contract are implemented. V2 identity/coexistence was previously admitted through A2/A3 and is now dependency-blocked pending research and reconciliation.
 
 `ModelFingerprint` remains semantic-content identity. `ControlledRevisionId` remains Governance-owned historical occurrence identity. Neither approval, deployment, external workflow identity, nor Engine interpretation belongs in the Factory fingerprint.
 
@@ -120,7 +132,7 @@ Immutable publication and the pre-reset v1 implementation are present. V2 identi
 
 Runtime continues to instantiate from one validated published model. Derived indexes/compiled structures are not independently authored models.
 
-Engine result-affecting interpretation is separately identified by `EngineSemanticsVersion` under ADR-0015.
+Engine result-affecting interpretation is separately identified by `EngineSemanticsVersion` under the deterministic simulation decision.
 
 ### PLAN-FD-5 — Semantic comparison
 
@@ -177,7 +189,7 @@ The following remain intentionally **not implementation work** in this plan:
 - finer semantic comparison beyond the implemented slice;
 - shared draft lifecycle/collaboration;
 - Factory-specific additions to governed-change workflow; and
-- spatial/material-flow concepts beyond the retained authored constraints.
+- spatial/material-flow concepts beyond accepted v2.
 
 They are maintained in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md) and the research register. Do not assign new Factory delivery coordinates until the relevant question crosses the planning admission boundary.
 
@@ -185,7 +197,7 @@ They are maintained in [Factory Design Evolution Research](../research/investiga
 
 For every admitted Factory change:
 
-1. preserve truthful identities and the support scope actually declared under ADR-0017; old-label reuse must preserve exact meaning/bytes;
+1. preserve released v1 golden identity behavior;
 2. add deterministic boundary/golden tests for new semantic facts;
 3. keep runtime construction behind published-model validation;
 4. update durable architecture/ADR/reference only when actual semantics or shipped behavior changes; and

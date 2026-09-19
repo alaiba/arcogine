@@ -17,7 +17,7 @@ Operational Execution itself remains unimplemented.
 
 ## Why no implementation slice is admitted
 
-The durable operational identity is no longer a blocker: [ADR-0013](../architecture/decisions/0013-durable-operational-identity.md) is Accepted and defines the accountable-continuation referent together with its continuity, divergence, lineage, acceptance, and record-attachment rules.
+The durable operational identity is no longer a blocker: [Operational continuity contract](../architecture/operational-continuity.md) is Accepted and defines the accountable-continuation referent together with its continuity, divergence, lineage, acceptance, and record-attachment rules.
 
 That closes one critical-path semantic question; it does not admit a slice. The remaining shared boundaries — actor/capability ownership, external operation realization, authoritative subject correspondence, and temporal reconciliation — are still unresolved, and each must be settled at least to the extent required to define a concrete safe slice. Slice-specific safety/failure semantics, explicit prerequisites, and executable acceptance evidence remain independently required by the promotion criteria below.
 

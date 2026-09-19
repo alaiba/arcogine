@@ -23,7 +23,8 @@ import java.util.Optional;
  *       may not yet correspond to an authoritative controlled revision;
  *   <li>the resulting controlled revision, once the candidate has actually been persisted through
  *       the persistence-acceptance boundary ({@link #resultingRevisionId()} -- absent for a
- *       not-yet-accepted candidate snapshot, per ADR-0008: a {@code ChangeSet} never
+ *       not-yet-accepted candidate snapshot, per docs/architecture/controlled-revisions.md: a
+ * {@code ChangeSet} never
  *       fabricates a synthetic {@link ControlledRevisionId} for an unaccepted candidate);
  *   <li>the classified {@link SemanticChange}s and the derived {@link ImpactScope};
  *   <li>{@link ChangeProvenance} (source, reason, optional external change-request reference).

@@ -1,9 +1,9 @@
 # Factory Design Architecture
 
-> **Status:** Proposed architectural reference  
+> **Status:** Architectural reference; adopted boundaries marked below, remaining capabilities proposed  
 > **Scope:** Cross-consumer factory-design semantics and their boundary with scenario configuration and runtime behavior  
-> **Authority:** Proposed architecture; current implementation remains documented by the architecture overview and product/reference docs until this direction is accepted and implemented  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Authority:** The canonical model/publication/runtime boundary (§3–§6), the publication identity contract (§11) and the semantic-evolution contract (§11.1) are adopted architecture. Broader draft/workspace capabilities remain proposed; the Overview and product/reference docs describe the current implementation  
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Model v1](factory-model-v1.md), [Factory Model v2](factory-model-v2.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
 ## 1. Architectural position
 
@@ -13,7 +13,7 @@ Factory design is a cross-consumer Arcogine concern, but "factory design" covers
 2. **Design lifecycle** — drafting, validation, publication, versioning, comparison, provenance, and eventual deployment of changes.
 3. **Design experience** — UI, interaction model, visualization, undo gestures, camera, palettes, game tutorials, forms, import tools, or agent workflows.
 
-The proposed architectural rule is:
+The architectural rule is:
 
 > **Arcogine owns the semantics and publication of production-system designs. Consumers may own how drafts are authored. Runtime contexts instantiate immutable published model versions and never double as the design workspace.**
 
@@ -59,7 +59,7 @@ Consumer-specific design experience
 
 ## 3. Scenario, model, and runtime are different things
 
-The proposed model boundary distinguishes an experiment from the production system being experimented on and from mutable execution state.
+The model boundary distinguishes an experiment from the production system being experimented on and from mutable execution state.
 
 ```text
 Scenario
@@ -95,7 +95,7 @@ A scenario may contain or reference a published model together with runtime inpu
 
 ### 3.1 Concern classification
 
-| Concern | Proposed ownership |
+| Concern | Ownership |
 |---|---|
 | Product definitions | `FactoryModel` |
 | Operation definitions | `FactoryModel` |
@@ -141,7 +141,7 @@ FactoryRuntime
 
 These need not all become separate persistence entities or modules initially.
 
-Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it the durable `factory-model:v1` `ModelFingerprint` defined by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). It is still not itself a **controlled revision** entity. Governance Governance identity/history capability now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
+Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it the durable `factory-model:v1` `ModelFingerprint` defined by the [Factory Model v1 specification](factory-model-v1.md). It is still not itself a **controlled revision** entity. Governance identity/history capability now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. Section 11 draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
 
 ### 4.1 What belongs in the canonical model
 
@@ -235,7 +235,7 @@ The revision is persisted before authorization, not after: an unauthorized revis
 
 Factory Design owns the semantic design and publication boundary. Governance owns controlled revision/change-control and authorization interpretation. [Operational Execution and Digital Twin](operational-execution-digital-twin.md) owns deployment targeting/application, effective transformed/applied-artifact provenance, resulting operational facts, and reconciliation. That bridge preserves provenance and authority; it does not turn editor operations into simulation or production-control events.
 
-Authorization may be owned externally: Arcogine can produce the technical assessment evidence a candidate needs (validation results, semantic diff, simulation/verification outcomes) without itself hosting the request/review/approval workflow. See [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), section 11.1 below, and the operational architecture.
+Authorization may be owned externally: Arcogine can produce the technical assessment evidence a candidate needs (validation results, semantic diff, simulation/verification outcomes) without itself hosting the request/review/approval workflow. See section 11.2 below and the operational architecture.
 
 ## 7. Cross-consumer ownership
 
@@ -249,8 +249,8 @@ Authorization may be owned externally: Arcogine can produce the technical assess
 | Resource grouping or hierarchy | Future orthogonal concept; admitted only when it owns consequential behavior |
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
 | Structured executability validation | Shared Arcogine model/design capability |
-| Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; durable fingerprint policy completed by Governance Governance identity/history capability |
-| Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
+| Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; durable fingerprint policy completed by Governance identity/history capability |
+| Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see the [controlled revision contract](controlled-revisions.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
 | Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (governed-change and external-workflow integration), or an external change-management system referenced not depended on |
 | Operational deployment target/application and effective applied-artifact provenance | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
 | External operational observations and modeled-versus-observed reconciliation | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
@@ -347,10 +347,10 @@ Aesthetic preference
 
 A published model version is the bridge between design and downstream contexts.
 
-[ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md) separates two concepts that publication identity must not bundle together:
+Publication identity must not bundle two concepts together:
 
-- **Semantic fingerprint** — a deterministic identity derived from canonical model content under the durable versioned policy in ADR-0006. Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the publication identity carried by `FactoryModelVersion`.
-- **Controlled revision** — a persisted, controlled historical configuration occurrence with separate identity, semantic-fingerprint binding, lineage, and recording provenance. Governance Governance identity/history capability now implements this capability through `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`. Authorization, external workflow linkage, conformance, and deployment remain separate records that may reference a revision; a revision need not be authorized or deployed to exist.
+- **Semantic fingerprint** — a deterministic identity derived from canonical model content under a durable versioned canonicalization policy ([Factory Model v1](factory-model-v1.md) today). Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the publication identity carried by `FactoryModelVersion`.
+- **Controlled revision** — a persisted, controlled historical configuration occurrence with separate identity, semantic-fingerprint binding, lineage, and recording provenance. [controlled revision contract](controlled-revisions.md) defines it, implemented through `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`. Authorization, external workflow linkage, conformance, and deployment remain separate records that may reference a revision; a revision need not be authorized or deployed to exist.
 
 Every runtime or verification result must retain the semantic fingerprint of the model version it instantiated. A `ControlledRevisionId` is additional historical provenance only when an authoritative revision binding actually exists; it must not be synthesized from the fingerprint.
 
@@ -358,13 +358,58 @@ The desired invariant is:
 
 > Given a published model version, the relevant runtime inputs (including the seed for simulation), and ordered commands, Arcogine can identify exactly which semantic design produced the resulting events and observations.
 
-Persistent controlled-revision lineage is now available through Governance Governance identity/history capability, and semantic `ChangeSet`/impact comparison (Governance semantic ChangeSet/impact capability's initial slice) is now available through the Governance-owned `ChangeSet`/`ImpactScope` contracts and the factory-domain `FactoryModelSemanticComparator`. Authorship beyond recording provenance, approvals/authorization, external workflow relationships, and branch/ref semantics remain separate, unimplemented capabilities. Semantic ChangeSets remain a separate capability owned by Governance and must not be folded into Factory Design publication identity even though they are now implemented.
+Persistent controlled-revision lineage is available through the Governance revision authority, and semantic `ChangeSet`/impact comparison (Governance semantic ChangeSet/impact capability's initial slice) is now available through the Governance-owned `ChangeSet`/`ImpactScope` contracts and the factory-domain `FactoryModelSemanticComparator`. Authorship beyond recording provenance, approvals/authorization, external workflow relationships, and branch/ref semantics remain separate, unimplemented capabilities. Semantic ChangeSets remain a separate capability owned by Governance and must not be folded into Factory Design publication identity even though they are now implemented.
 
-### 11.1 External change-management and deployment integration
+Fingerprint equality is a content-derived fact Arcogine computes unilaterally under a named policy;
+it never requires an external system to establish. Equal semantic content may occur in distinct
+controlled revisions; a later revision may be semantically identical to an earlier one (a revert or
+no-op edit) without the two collapsing into one. A human-facing label such as "v3" is presentation
+convenience for a controlled revision, not semantic identity. Arcogine is authoritative for the
+model, the fingerprint, semantic diff between versions, and the technical assessment/simulation/
+verification evidence about a candidate change; none of that requires an external system to exist.
+
+### 11.1 Semantic evolution
+
+Factory owns authored production-system facts; Engine owns the rules that interpret them
+(distance, rounding, destination binding, reservation, transfer lifecycle). Changing Engine
+interpretation alone never changes a model's fingerprint, and authored facts are never synthesized
+to make an interpretation applicable. [Factory Model v1](factory-model-v1.md) and
+[Factory Model v2](factory-model-v2.md) own their field membership, validation predicates and
+canonical bytes; this section owns how policies relate.
+
+A fingerprint policy identifies the complete semantic/canonicalization contract, not merely a hash
+algorithm. Ordinary serializer bytes never define identity, and publication rejects inputs for
+which canonicalization is undefined, so fingerprinting is total over published models. Once a
+policy has attributed records, its definition is fixed as a whole under the
+[semantic identity decision](decisions/semantic-identity-and-evolution.md): a behaviorally relevant
+authored fact that cannot be represented without changing a policy's meaning requires a
+distinguishable policy identity, old fingerprints are never rewritten or rederived, and a
+controlled revision still binds exactly one fingerprint while lineage may cross policies without
+rewriting either artifact.
+
+There is no automatic lift between policies. A V1 model has no spatial facts and therefore no
+spatial behavior — the truthful execution of a design that never authored spatial semantics, not
+a degraded mode. Position, footprint and handling values must be explicitly authored and
+published; historical facts are never invented as defaults. Cross-policy comparison is explicit: a
+semantic `ChangeSet` must not silently span policies by inventing facts one model never declared.
+Before an actual cross-policy controlled transition, Arcogine provides artifact resolution with a
+registered verifier/decoder for each policy in scope and either an explicit migration
+classification or an explicitly chosen common semantic representation for any fine-grained
+comparison that claims equivalence, implementing only the seam that transition requires.
+
+Retained attribution requires the exact definition of every referenced policy to remain
+resolvable; continuing decoding, execution, migration and interoperability are separately scoped
+support obligations declared by the owning contract, not consequences of a policy existing. The
+current V1/V2 code and specifications mandate neither eternal readers for every policy, a V2
+release, permanent V1/V2 coexistence, nor a linear whole-model version scheme; the composition of
+future Factory policies remains the open
+[Factory semantic-composition investigation](../research/investigations/factory-model-semantic-composition.md).
+
+### 11.2 External change-management and deployment integration
 
 Arcogine does not require organizational change-management workflow to live inside the factory domain.
 
-A controlled model revision may reference an external change record, such as a Jira issue. Arcogine remains authoritative for the model and its domain-specific semantic facts; Governance owns the durable revision/change interpretation, while the external system remains authoritative for request/review/authorization workflow unless that responsibility is explicitly brought into Arcogine.
+A controlled model revision may reference an external change record, such as an issue-tracker key. Arcogine remains authoritative for the model and its domain-specific semantic facts; Governance owns the durable revision/change interpretation, while the external system remains authoritative for request/review/authorization workflow unless that responsibility is explicitly brought into Arcogine. That reference is metadata attached to the revision: it is never consulted to determine model content, fingerprint, or semantic behavior, and Arcogine adopts no external system's schema, workflow states, or terminology into its own domain model to support it. What authorization a deployment requires is a matter of the applicable change-control policy, which Arcogine does not own; the invariant is narrower — a deployment must be attributable to the authorization that policy required for it.
 
 Conformance/verification assessments, authorization decisions, simulation runs, and operational deployments remain separate artifacts from the model and from each other. They may reference a fingerprint and authoritative controlled revision when applicable, but none of them is the model. The operational deployment record additionally owns target, execution context, adapter/profile/transformation, effective applied-artifact/version, apply/verification result, and reconciliation provenance; Factory Design must not duplicate those mechanics.
 
@@ -450,4 +495,4 @@ Revisit this document when Arcogine introduces or materially changes:
 - another independent design consumer;
 - ISA-95/AAS/other model import/export.
 
-Hard-to-reverse decisions should be recorded as ADRs. Once this architecture is implemented and accepted, authoritative current-state portions should move into or be reconciled with [`overview.md`](overview.md) rather than leaving proposed behavior presented as current fact.
+Apply the [ADR admission test](decisions/README.md#admission) to consequential decisions. As further capabilities are implemented and accepted, authoritative current-state portions should move into or be reconciled with [`overview.md`](overview.md) rather than leaving proposed behavior presented as current fact.

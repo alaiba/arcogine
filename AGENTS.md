@@ -151,10 +151,11 @@ unrelated identifiers elsewhere in the codebase — which is exactly why the res
 namespaces exist: catching identifier leakage no syntax pattern can safely recognize (prose like
 "the next stage" with no literal coordinate) remains a human review responsibility.
 
-When editing an Accepted or Superseded ADR only to improve durable terminology or legibility, follow
-`docs/architecture/decisions/README.md`: the amendment must be semantics-preserving, explicitly
-recorded as an editorial amendment, and independently reviewed for semantic equivalence. A semantic
-decision change still requires supersession.
+`docs/architecture/decisions/` holds only the current durable decision set. Follow its
+`README.md`: apply the admission test, update or remove a decision in the same reviewed
+architectural change that changes its consequences, and reconcile affected specifications and
+consumers. Git history is the record of replaced decisions; no supersession chain or amendment
+metadata is kept.
 
 ## Artifact lifetime and transient workspace
 

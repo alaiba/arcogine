@@ -2,12 +2,12 @@
 
 > **Status:** Active implementation companion; PLAN-ENG-4-A/B/C are complete, PLAN-ENG-4-D outward consumer convergence remains outstanding  
 > **Owner:** Factory Simulation Engine Readiness / PLAN-ENG-4  
-> **Architecture authority:** [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md)  
+> **Architecture authority:** [runtime observation/event contract](../architecture/runtime-contract.md)  
 > **Parent plan:** [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md)
 
 ## 1. Purpose
 
-Implement ADR-0011 through a consumer-neutral Engine contract, then converge outward consumers on that contract without turning internal scheduler events or transport DTOs into domain semantics.
+Implement the runtime observation/event contract through a consumer-neutral Engine contract, then converge outward consumers on that contract without turning internal scheduler events or transport DTOs into domain semantics.
 
 The core rule remains:
 
@@ -48,7 +48,7 @@ semantic payload
 
 Sequence is allocated only for supported post-authoritative change. Rejected/no-op transitions do not emit successful state-change events. Faults report only authoritative changes that actually occurred.
 
-Work-item events preserve child `JobId` and parent `OrderId`; aggregate order completion preserves both aggregate and completing-child correlation where required by ADR-0010.
+Work-item events preserve child `JobId` and parent `OrderId`; aggregate order completion preserves both aggregate and completing-child correlation where required by the unit-work decomposition semantics.
 
 ### PLAN-ENG-4-C — Headless acceptance closure — COMPLETE
 
@@ -94,7 +94,7 @@ If the legacy integrated API loop cannot consume `FactoryRuntime` directly becau
 
 #### KPI surfaces are ownership-sensitive
 
-Outward convergence must not promote internal `EventLog` KPI computation into the supported contract. `com.arcogine.core.kpi` computes from internal `EventLog`/`SimTime`, and ADR-0011 §8 and ADR-0012 keep `EventLog` as implementation machinery rather than the supported history/analysis contract. Future supported analytical exports should derive from `RuntimeObservation`, `RuntimeEvent`, or another explicitly supported outward contract.
+Outward convergence must not promote internal `EventLog` KPI computation into the supported contract. `com.arcogine.core.kpi` computes from internal `EventLog`/`SimTime`, and the runtime observation/event contract §8 and the external representation policy keep `EventLog` as implementation machinery rather than the supported history/analysis contract. Future supported analytical exports should derive from `RuntimeObservation`, `RuntimeEvent`, or another explicitly supported outward contract.
 
 Record as architectural debt, to be resolved rather than extended:
 
@@ -130,23 +130,13 @@ PLAN-ENG-4-D1 and PLAN-ENG-4-D2 should normally be separate reviewable PRs when 
 
 ## 4. Provenance boundary
 
-ADR-0017 withdraws pre-reset interface/hash compatibility. Within outward convergence,
-admit a bounded later cleanup of `FactoryModelVersion.contentHash()` and
-`SimResult.modelContentHash`: inventory all callers, fixtures and outward surfaces;
-remove the legacy dependency without reinterpreting bare hashes; establish truthful
-replacement provenance only under a settled owning Factory contract. No pre-reset
-migration is required. This reconciliation removes no code and does not select that
-future Factory contract. New retained/outward reliance requires the owning support
-and custody declaration; API existence alone is not a compatibility promise.
-
-
 `ModelFingerprint` is required supported provenance and comes from the published model's durable fingerprint, never legacy content hash.
 
 `ControlledRevisionId` is optional and appears only when the runtime has an authoritative upstream revision binding. Governance completion does not imply that every runtime has such a binding, and Engine must not generate/infer one.
 
 The completed Governance identity/history substrate is summarized by [Governance Identity/History Downstream Compatibility Guard](governance-continuity.md).
 
-ADR-0015/PLAN-ENG-5 adds mandatory `EngineSemanticsVersion` provenance. Outward convergence should consume the settled runtime provenance shape rather than publish an immediately obsolete envelope.
+The deterministic simulation decision/PLAN-ENG-5 adds mandatory `EngineSemanticsVersion` provenance. Outward convergence should consume the settled runtime provenance shape rather than publish an immediately obsolete envelope.
 
 ## 5. Recovery/resynchronization hardening
 

@@ -35,7 +35,7 @@ The answer, stated plainly, before the supporting analysis. State confidence her
 
 ## Repository evidence
 
-What the current repository actually establishes, labeled `Repository fact` where useful for clarity. Distinguish Accepted ADRs from Proposed ones, landed capability from planned/deferred, and current architecture from aspirational direction.
+What the current repository actually establishes, labeled `Repository fact` where useful for clarity. Distinguish current adopted decisions from unresolved proposals, landed capability from planned/deferred, and current architecture from aspirational direction.
 
 ## Candidate models / hypotheses
 

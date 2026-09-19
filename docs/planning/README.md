@@ -2,7 +2,7 @@
 
 > **Status:** Maintained delivery-policy index  
 > **Scope:** Work that is sufficiently decided and bounded to be implemented, validated, sequenced, or explicitly blocked on a concrete prerequisite  
-> **Authority:** Planning only; current capability remains defined by landed code/tests and current-state documentation, while durable semantics remain owned by product, architecture, and accepted ADRs
+> **Authority:** Planning only; current capability remains defined by landed code/tests and current-state documentation, while durable semantics remain owned by product, architecture, and current ADRs
 
 ## Admission rule
 

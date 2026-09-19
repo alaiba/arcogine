@@ -45,7 +45,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 |---|---|
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, style, validation |
 | [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
-| [semantic-contract-support.md](development/semantic-contract-support.md) | Owning support declarations, retained admission and promise-specific validation |
+| [semantic-contract-support.md](development/semantic-contract-support.md) | Owning support declarations, retained admission and promise-specific review evidence |
 | [researching.md](development/researching.md) | Normative Arcogine research operating model: lifecycle/priority semantics, promotion/reconciliation, investigation and adversarial review, evidence custody, synthesis-seed handling, and register maintenance |
 | [continuous-improvement.md](development/continuous-improvement.md) | Continuous-improvement operating model: Session-close Kaizen, weekly Consistency review, delivery-process retrospective, and the improvement register |
 | [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
@@ -63,11 +63,17 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Factory design](architecture/factory-design.md) | Cross-consumer factory-model/design lifecycle semantics |
 | [Governance and conformance](architecture/governance-conformance.md) | Revision/change/requirements/conformance/evidence/governed-change architecture |
 | [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture |
-| [Engine Semantics v1](architecture/engine-semantics-v1.md) | Pre-reset Engine definition and current implementation reference; support withdrawn |
-| [Factory Model v2](architecture/factory-model-v2.md) | Retained V2 byte definition and authored constraints; no post-reset support commitment |
+| [Engine Semantics v1](architecture/engine-semantics-v1.md) | Normative current result-affecting Engine interpretation |
+| [Factory Model v2](architecture/factory-model-v2.md) | Normative v2 canonicalization/fingerprint byte grammar |
 | [Standards alignment](architecture/standards-alignment.md) | Standards/interchange/conformance boundaries |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained manufacturing semantic mapping and deliberate divergences |
-| [Decision records](architecture/decisions/README.md) | ADR index and policy |
+| [Factory Model v1](architecture/factory-model-v1.md) | Normative v1 canonicalization/fingerprint byte grammar (implemented) |
+| [Runtime contract](architecture/runtime-contract.md) | Supported observations, ordered authoritative runtime events, provenance and transport boundary |
+| [Controlled revisions](architecture/controlled-revisions.md) | Historical occurrence identity, lineage, provenance and acceptance |
+| [Governance evidence](architecture/governance-evidence.md) | Evidence reference/use, applicability and immutable evaluation-basis contract |
+| [Operational continuity](architecture/operational-continuity.md) | Accountable operational continuation identity and continuity rules |
+| [External representations](architecture/external-representations.md) | Serialization, transport and industrial-interchange boundaries |
+| [Decision records](architecture/decisions/README.md) | Current durable decisions and admission policy |
 
 ## Internal research
 
@@ -91,10 +97,10 @@ See [planning/README.md](planning/README.md) for the admission rule.
 
 | Document | What it covers |
 |---|---|
-| [Factory Design capability](planning/factory-design-capability.md) | Current canonical-model baseline and held post-reset Factory work |
+| [Factory Design capability](planning/factory-design-capability.md) | Current canonical-model baseline and admitted v2 implementation work |
 | [Factory Simulation Engine readiness](planning/factory-simulation-engine-readiness.md) | Completed runtime core plus current outward-convergence and spatial implementation queue |
 | [Runtime observation/event delivery](planning/runtime-observation-event-delivery.md) | Detailed remaining outward consumer convergence for supported observations/events |
-| [Spatial runtime consequences](planning/spatial-runtime-consequences.md) | Spatial implementation evidence and held candidate sequence pending Factory reconciliation |
+| [Spatial runtime consequences](planning/spatial-runtime-consequences.md) | Detailed accepted spatial/Engine-semantics implementation sequence |
 | [Governance/conformance capability](planning/governance-conformance-capability.md) | Landed Governance substrate; evidence admission remains blocked pending its identity/applicability architecture prerequisite |
 | [Governance identity/history compatibility guard](planning/governance-continuity.md) | Downstream implementation invariants over completed revision identity/history |
 | [Challenge delivery](planning/factory-design-game-challenge-readiness.md) | Closed headless challenge sequence and downstream invariants |

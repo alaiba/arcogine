@@ -1,64 +1,85 @@
 # Factory Model v2 Canonicalization
 
-Status: Pre-reset canonical definition retained for reference; no post-reset support commitment
+Status: Normative canonicalization contract; shape/validation implemented, canonical publication not implemented
 Fingerprint policy: `factory-model:v2`
-Semantic authority: [ADR-0018](decisions/0018-factory-semantics-after-support-reset.md)
-Evolution/support authority: [ADR-0017](decisions/0017-ground-zero-semantic-evolution.md)
+Sibling policy: [Factory Model v1 Canonicalization](factory-model-v1.md)
+Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md) and the [Factory semantic-evolution contract](factory-design.md#111-semantic-evolution)
 
 ## 1. Purpose
 
-[ADR-0017](decisions/0017-ground-zero-semantic-evolution.md) preserves the rule from
-[ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md) that a Factory
-fingerprint-policy version **is** a canonicalization contract: the policy version identifies the
-semantic/canonicalization contract, not merely the cryptographic algorithm. Any change that can
-alter semantic field membership, ordering, normalization, binary encoding, or digest semantics
-requires a new policy version.
+A Factory fingerprint-policy version **is** a canonicalization contract: the policy version
+identifies the semantic/canonicalization contract, not merely the cryptographic algorithm. Any
+change that can alter semantic field membership, ordering, normalization, binary encoding, or
+digest semantics requires a new policy version.
 
-[ADR-0018](decisions/0018-factory-semantics-after-support-reset.md) preserves the authored
-facts and validation constraints below from superseded ADR-0014. It withdraws the
-pre-reset release/coexistence commitments without changing the historical byte definition.
-
-This document remains the exact definition of `factory-model:v2` canonical bytes;
-an implementation claiming that identity must match it. It is not a supported
-post-reset contract or permission to release V2. Future Factory composition remains
-open. References below to ADR-0006/ADR-0014 identify historical definitions;
-ADR-0017/ADR-0018 govern current support and evolution.
+This document is the normative source of `factory-model:v2`: the authored facts it adds to V1
+(§1.1), their validation predicates, and the durable byte grammar those facts are digested through,
+in exactly the sense that [Factory Model v1](factory-model-v1.md) is the normative source of
+`factory-model:v1` bytes. Where this document and any implementation disagree, this document is
+authoritative. Its implemented shape/validation slice does not by itself establish a published
+fingerprint/artifact path or continuing support; those follow the owning
+[support declarations](../development/semantic-contract-support.md).
 
 It deliberately does **not** restate or modify:
 
+- cross-policy compatibility, lift and comparison rules — those are the
+  [Factory semantic-evolution contract](factory-design.md#111-semantic-evolution);
 - result-affecting Engine interpretation of V2 facts — that is
   [Engine Semantics v1](engine-semantics-v1.md);
-- controlled-revision identity or lineage — that is
-  [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md).
+- controlled-revision identity or lineage — that is the
+  [controlled revision contract](controlled-revisions.md).
 
-### Authored facts and publication constraints
+### 1.1 Authored facts and publication predicates
 
-The retained V2 design consists of V1 authored semantics plus mandatory floor width
-and height, resource reference-cell position, resource footprint width and height,
-`ticksPerCell`, and `handlingTicks`. Every addition participates in identity. Floor
-and footprint extents are positive integer cells; coordinates and handling magnitudes
-are nonnegative, with zero valid. A footprint at `(x,y)` with extents `(w,h)` occupies
-`x..x+w-1` by `y..y+h-1`; it must fit in floor `(W,H)` and not overlap another footprint.
+V2 is exactly V1 semantics plus these five required authored additions:
 
-Publication checks, with overflow-safe arithmetic in the runtime tick-duration type:
+| Addition | Meaning | Validation | Zero legal? | Fingerprinted? |
+|---|---|---|---|---|
+| floor width / height | plant extent in integer cells | each `>= 1`; the exact maximum-transfer predicate below must hold | no | yes |
+| resource position `x` / `y` | minimum-coordinate reference cell of the resource footprint | `x >= 0`, `y >= 0`; footprint occupies the exact cells defined below and must fit inside the floor | yes (`0,0` is valid) | yes |
+| footprint width / height | integer cells occupied by the resource from its reference cell | each `>= 1`; distinct resource footprints must not overlap | no | yes |
+| `ticksPerCell` | authored material-handling rate magnitude | integer `>= 0`; the exact maximum-transfer predicate below must hold | yes | yes |
+| `handlingTicks` | authored fixed overhead applied once per inter-resource transfer | integer `>= 0`; the exact maximum-transfer predicate below must hold | yes | yes |
+
+The position anchor is part of V2 model semantics: for a resource at `(x,y)` with footprint width
+`w` and height `h`, the footprint occupies exactly the integer cells `x..x+w-1` by `y..y+h-1`. A
+footprint fits inside a floor of width `W` and height `H` iff `x >= 0`, `y >= 0`, `w >= 1`,
+`h >= 1`, `x + w <= W`, and `y + h <= H`, evaluated with overflow-safe arithmetic. Two resources
+overlap iff those occupied-cell sets intersect.
+
+V2 publication must also prove the spatial transfer-duration magnitude is representable for the
+farthest possible pair of reference cells in the authored floor. With floor dimensions `W` and `H`:
 
 ```text
 maxManhattanDistance = (W - 1) + (H - 1)
-maxTransferDuration = handlingTicks + ticksPerCell * maxManhattanDistance
+maxTransferDuration  = handlingTicks + ticksPerCell * maxManhattanDistance
 ```
 
-Every operation and the resulting duration must be representable. This does not
-guarantee addition to arbitrary current `SimTime`; runtime time-addition validation
-remains separate. Footprint is canonical even where Engine ignores it for distance.
-Orientation, paths, aisles, conveyors, transport resources, obstacles, congestion,
-floor identity, connection points and authoritative animation coordinates are outside
-this definition. Factory owns authored facts; Engine owns their interpretation.
+Publication accepts the artifact only when every subtraction, addition, and multiplication in that
+predicate is representable in the runtime tick-duration type and `maxTransferDuration` is
+representable there. This bounds the derived transfer duration itself; it does **not** claim that
+adding an otherwise valid duration to an arbitrarily extreme current `SimTime` can never overflow —
+the runtime time-addition validation remains responsible for that condition.
+
+All five additions are mandatory in a V2 artifact. Changing any of them changes the authored
+Factory design and therefore changes `ModelFingerprint`. They are model facts, not Engine policy:
+floor extent, placement, footprint, material-handling rate and fixed handling overhead describe the
+production system the designer authored, while Arcogine's choice of distance metric, rounding,
+zero-distance behavior, destination binding, reservation and transfer lifecycle belongs to
+[Engine Semantics](engine-semantics-v1.md). Footprint remains canonical even though Engine
+Semantics v1 does not use it in transfer distance: it is required for publication/layout validation
+and future spatial capability, and a later Engine version may interpret the same V2 footprint
+differently without re-fingerprinting any V2 design.
+
+Orientation is not part of V2. Neither are paths, graph edges, aisles, conveyors, transport
+resources, obstacles, congestion, floor identity, connection points, authoritative animation
+coordinates, or route topology. They require a later model policy only when a concrete capability
+makes them authored behaviorally relevant semantics.
 
 ## 2. Relationship to `factory-model:v1`
 
-V2 is a distinct pre-reset definition, never released by the implemented shape/validation
-slice. V1's historical grammar, digests and fingerprints are unchanged by V2's existence;
-neither definition carries a post-reset compatibility promise.
+V2 is a separate released policy, not a revision of V1. V1's grammar, digests, golden vectors, and
+historical fingerprints are permanently unchanged by V2's existence.
 
 Structurally, the V2 stream is the V1 stream with exactly three differences:
 
@@ -72,9 +93,8 @@ retyped, or renormalized.
 Because the policy-domain prefixes differ in their final component, **V1 bytes are never a prefix of
 V2 bytes, no V1 artifact decodes under a V2 verifier, and no V2 artifact decodes under a V1
 verifier.** Cross-policy artifact confusion is structurally impossible rather than a runtime check.
-Together with decode/re-encode/fingerprint verification, this discriminates Factory
-policies at the artifact boundary. It supports ADR-0018's no-lift rule without
-requiring permanent V1/V2 reader support.
+This is what makes the Factory evolution contract's policy-aware historical resolution and its
+prohibition on automatic V1-to-V2 lift mechanically enforceable at the artifact boundary.
 
 ## 3. Fingerprint identity and digest rendering
 
@@ -100,7 +120,7 @@ Digest hex is rendered in lowercase. An uppercase or mixed-case rendering is not
 
 Arcogine treats equality of correctly formed `factory-model:v2` fingerprints as equality of V2
 semantic content for operational identity purposes, on the same SHA-256 collision-resistance basis
-as ADR-0006. This is not a mathematical claim of injectivity.
+as V1. This is not a mathematical claim of injectivity.
 
 ## 4. Policy-domain prefix
 
@@ -143,7 +163,7 @@ field.
 : `U64(byteLength)` followed by exactly `byteLength` UTF-8 bytes. `byteLength` counts UTF-8 bytes,
 not UTF-16 code units or Unicode code points. No Unicode normalization, case folding, trimming,
 locale transformation, or presentation cleanup is applied. Every `TEXT` value participating in V2
-must be a valid Unicode scalar-value sequence before publication, on the same terms ADR-0006
+must be a valid Unicode scalar-value sequence before publication, on the same terms V1
 requires for V1: ill-formed text is a publication validation error, so fingerprinting is total over
 published V2 models.
 
@@ -208,14 +228,14 @@ This grammar is the normative source of `factory-model:v2` fingerprint bytes.
 `floor.width`, `floor.height`, `ticksPerCell`, and `handlingTicks` are plant-scope authored facts:
 one value each per Factory model, not per resource. [Engine Semantics v1](engine-semantics-v1.md)
 consumes them as plant scalars — `handlingTicks + (ticksPerCell * manhattanDistance)`, with no
-per-resource subscript — and ADR-0014's maximum-transfer predicate is likewise stated over single
+per-resource subscript — and the §1.1 maximum-transfer predicate is likewise stated over single
 `W`, `H`, `ticksPerCell`, and `handlingTicks` values.
 
-They are encoded as one contiguous block immediately after the prefix, preserving ADR-0014's
+They are encoded as one contiguous block immediately after the prefix, preserving the §1.1
 relative table order among plant-scope fields (floor width, floor height, `ticksPerCell`,
 `handlingTicks`). The header is fixed-arity, so it carries no count prefix.
 
-Header-first placement is a deliberate ordering choice, not an arbitrary one. ADR-0014's publication
+Header-first placement is a deliberate ordering choice, not an arbitrary one. The §1.1 publication
 predicate
 
 ```text
@@ -231,7 +251,7 @@ record.
 ### 6.2 Per-resource spatial suffix
 
 `position.x`, `position.y`, `footprint.width`, and `footprint.height` are appended after the five V1
-resource fields, in ADR-0014's table order (position `x`, position `y`, footprint width, footprint
+resource fields, in the §1.1 table order (position `x`, position `y`, footprint width, footprint
 height).
 
 Appending rather than interleaving keeps the V2 resource record a strict extension of the V1 record.
@@ -245,18 +265,18 @@ correct for both policies. It does not create any byte-level compatibility betwe
    resource — never as a derived occupied-cell set, cell list, bitmap, bounding box, or region
    identifier.
 
-2. ADR-0014 derives the occupied cells of a resource at `(x,y)` with footprint `w` by `h` as exactly
+2. §1.1 derives the occupied cells of a resource at `(x,y)` with footprint `w` by `h` as exactly
    `x..x+w-1` by `y..y+h-1`. That derivation is a **validation-time and Engine-time** concept. It is
    never part of the canonical stream. For every publishable footprint (`w >= 1`, `h >= 1`) the
    anchor-plus-extent encoding is bijective with the occupied-cell set, so encoding the anchor loses
    no authored information while keeping the stream fixed-width.
 
 3. Footprint participates in the digest even though Engine Semantics v1 does not use it in transfer
-   distance. This follows ADR-0014 decision 6: footprint is canonical authored content required for
+   distance. Per §1.1, footprint is canonical authored content required for
    publication/layout validation and future spatial capability. Two designs differing only in a
    footprint extent are different authored designs and therefore have different V2 fingerprints.
 
-4. The reference cell is the minimum-coordinate cell of the footprint, per ADR-0014. V2 encodes the
+4. The reference cell is the minimum-coordinate cell of the footprint, per §1.1. V2 encodes the
    authored anchor directly; it does not recompute, infer, or normalize it from any other field.
 
 5. Positions are encoded **exactly as authored**. V2 defines no translation invariance, no origin
@@ -266,19 +286,19 @@ correct for both policies. It does not create any byte-level compatibility betwe
    an implementation optimization.
 
 6. Every V2 spatial field is encoded as `I64` and the grammar is total over the full signed 64-bit
-   range. ADR-0014's range and layout predicates — `floor.width >= 1`, `floor.height >= 1`,
+   range. The §1.1 range and layout predicates — `floor.width >= 1`, `floor.height >= 1`,
    `x >= 0`, `y >= 0`, `w >= 1`, `h >= 1`, `x + w <= W`, `y + h <= H`, non-overlap of distinct
    footprints, `ticksPerCell >= 0`, `handlingTicks >= 0`, and the maximum-transfer predicate — are
    **publication validation**, not encoding constraints. Keeping the grammar total is what lets a
    verifier reject a violating artifact explicitly (§9.3) instead of failing to parse it ambiguously.
 
 7. Orientation, rotation, connection points, anchors other than the minimum-coordinate cell, and
-   route topology are not encoded, because ADR-0014 decision 5 keeps them out of V2 entirely.
+   route topology are not encoded, because §1.1 keeps them out of V2 entirely.
 
 ## 8. Collection ordering
 
 1. `resources`, `operations`, `products`, and operation `steps` are encoded in **list order**. Order
-   remains semantic under ADR-0006, and V2 does not weaken that.
+   remains semantic under V1, and V2 does not weaken that.
 
 2. `eligibleResources` is set-shaped and is sorted by ascending signed `MachineId` value before
    collection encoding, exactly as in V1.
@@ -288,7 +308,7 @@ correct for both policies. It does not create any byte-level compatibility betwe
 
 4. **V2 introduces no spatial ordering of `resources`.** Row-major, raster, distance-from-origin,
    and any other position-derived ordering are rejected. Sorting resources by position would discard
-   the authored list order that ADR-0006 keeps semantic, would collapse two authored models with
+   the authored list order that V1 keeps semantic, would collapse two authored models with
    different declared resource order into one identity, and would make list order unrecoverable from
    the canonical artifact.
 
@@ -317,12 +337,13 @@ from bytes the artifact does not actually contain.
 
 ### 9.3 Publication-predicate rejection
 
-Additionally, and unlike a purely syntactic decoder, a V2 verifier must apply ADR-0014's publication
-predicates (§7.6) during decode. A byte string that satisfies the §6 grammar but violates a V2
+Additionally, and unlike a purely syntactic decoder, a V2 verifier must apply the publication
+predicates (§1.1, §7.6) during decode. A byte string that satisfies the §6 grammar but violates a V2
 publication predicate is **not a valid `factory-model:v2` artifact** and must be rejected.
 
-Policy-aware resolution under a declared support/custody contract must never yield a
-model that could not have been published in the first place. An artifact that fails a predicate indicates
+This is required by the [Factory evolution contract](factory-design.md#111-semantic-evolution): historical artifact
+resolution must remain policy-aware, which means resolving a stored V2 artifact must never yield a model that could not
+have been published in the first place. A stored artifact that fails a predicate indicates
 corruption or forgery and must fail loudly rather than resolve into an unpublishable model.
 
 ### 9.4 Fingerprint derivation from stored artifacts
@@ -331,23 +352,16 @@ Deriving a fingerprint from stored canonical bytes must proceed by decode-then-r
 under §9.1–§9.3, not by digesting untrusted bytes directly. Digesting unvalidated input would let a
 malformed or non-canonical artifact acquire a well-formed-looking V2 identity.
 
-## 10. Immutability and lifecycle
+## 10. Identity and evolution
 
-ADR-0017 withdraws pre-reset support and requires a fresh identity for any changed
-post-reset definition. The `factory-model:v2` label may be reused only with its
-unchanged historical definition and canonical bytes; its policy-domain prefix and
-verification must agree. No post-reset support declaration is made here.
+No V2 fingerprint has yet been produced by a shipped publication path or recorded against a
+controlled revision, so this grammar may still be corrected by amending this document. Under the
+[semantic identity decision](decisions/semantic-identity-and-evolution.md), the first retained
+attribution freezes the whole definition: from that point every implementation claiming the policy
+must produce the same fingerprint for the same V2 semantic content across processes, software
+versions, and implementation languages.
 
-For a fresh normative Factory definition, in-place correction is permitted only
-before the first accepted/retained attribution. That attribution freezes the whole
-definition, not merely exercised sections. Exact definition resolution lasts at
-least as long as every retained record bearing the identity; decoding, execution
-and interoperability have separately declared scopes. The
-[support policy](../development/semantic-contract-support.md) governs declaration
-and admission. Disposable testing does not itself constitute retained acceptance.
-
-Changing any identity-affecting rule while still calling the policy v2 is forbidden
-across the reset regardless of prior attribution, including:
+Changing any identity-affecting rule while still calling the policy v2 is then forbidden, including:
 
 - semantic field membership or field order;
 - placement/footprint field order or anchor interpretation;
@@ -360,16 +374,15 @@ across the reset regardless of prior attribution, including:
 - the policy-domain prefix;
 - hash algorithm or digest rendering.
 
-Such a change needs a fresh distinguishable identity under ADR-0017/ADR-0018;
-this document does not choose its composition or label. Support expiry does not
-permit rebinding the old definition, and no perpetual V1/V2 decoder is promised.
+Such a change requires a distinguishable policy identity under the
+[Factory evolution contract](factory-design.md#111-semantic-evolution). V1 remains unchanged by
+V2's existence, and neither policy's continued decoding, execution or coexistence support follows
+from this byte specification; support is scoped by the owning declarations.
 
 ## 11. Golden compatibility vectors
 
-A future implementation explicitly supporting this unchanged definition would need
-literal expected canonical bytes and digest/fingerprint outputs. The cases below
-are retained validation knowledge, not admission of V2 implementation or support.
-Golden vectors supplement the grammar; they do not replace it.
+The V2 implementation must pin literal expected canonical bytes and expected digest/fingerprint
+outputs. Golden vectors supplement this normative grammar; they do not replace it.
 
 At minimum, V2 tests must cover:
 
@@ -407,8 +420,8 @@ At minimum, V2 tests must cover:
 13. the same authored non-spatial content fingerprinted under V1 and under V2 producing different
     fingerprints, with neither derivable from the other;
 14. a V2 artifact rejected by the V1 verifier and a V1 artifact rejected by the V2 verifier;
-15. if a future declaration supports both policies, every V1 golden vector remains
-    unchanged after V2 registration; coexistence is not required by the reset.
+15. every existing `factory-model:v1` golden vector and fingerprint unchanged after V2 is
+    registered, as an explicit regression pin.
 
 **Carried-over V1 coverage re-proven under V2**
 
@@ -431,12 +444,12 @@ At minimum, V2 tests must cover:
 
 This document does not define:
 
-- future Factory composition or a post-reset support declaration (ADR-0017/ADR-0018);
+- cross-policy compatibility rules (the [Factory evolution contract](factory-design.md#111-semantic-evolution));
 - result-affecting interpretation of V2 facts, including the distance metric, handling application,
   destination binding, or transfer lifecycle ([Engine Semantics v1](engine-semantics-v1.md));
-- controlled-revision identity, lineage, or repository authority (ADR-0008);
+- controlled-revision identity, lineage, or repository authority ([controlled revisions](controlled-revisions.md));
 - cross-policy `ChangeSet` or migration-classification representation, beyond requiring that V1 and
-  V2 artifacts remain structurally distinguishable (ADR-0014 decision 11);
+  V2 artifacts remain structurally distinguishable;
 - the external interchange/serialization formats a consumer authors a design in
-  ([ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md));
+  ([external representations](external-representations.md));
 - a universal canonicalization scheme for non-Factory Arcogine domains.

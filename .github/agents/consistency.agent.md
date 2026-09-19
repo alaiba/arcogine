@@ -34,7 +34,7 @@ Use the authority that owns the question:
 | --- | --- |
 | Product destination | `docs/product/charter.md` |
 | Implemented architecture today | `docs/architecture/overview.md`, corroborated by source/tests/config |
-| Architectural rationale | accepted ADRs in `docs/architecture/decisions/` |
+| Architectural rationale | current ADRs in `docs/architecture/decisions/` |
 | Research state | `docs/development/researching.md` and `docs/research/research-register.md` |
 | Planned/gated/partial/deferred work | applicable `docs/planning/` documents |
 | Public interface | implementation/tests reconciled with `docs/reference/` and consumers |
@@ -47,7 +47,7 @@ Consistency issues preserve finding identity/lifecycle continuity; they are not 
 
 Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles remain their own vocabulary. If this taxonomy proves insufficient, change this contract explicitly rather than inventing another generic state during a run.
 
-Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is. Accepted ADRs preserve decision history and are superseded rather than rewritten to match later implementation.
+Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is. ADRs hold current durable decisions; a reviewed architectural change updates or removes them together with the authorities that depend on them, and Git history preserves what was replaced.
 
 Authority placement is itself part of consistency. A maintained artifact should own only facts appropriate to its role:
 

@@ -43,7 +43,7 @@ The repository is authoritative over prior chat/session context and implementati
 | --- | --- |
 | What is Arcogine ultimately trying to become? | `docs/product/charter.md` |
 | How does the implemented system work today? | `docs/architecture/overview.md` corroborated by source and executable evidence |
-| Why does a significant architectural constraint exist? | applicable accepted ADRs in `docs/architecture/decisions/` |
+| Why does a significant architectural constraint exist? | applicable current ADRs in `docs/architecture/decisions/` |
 | What is planned, gated, partial, deferred, or blocked? | applicable `docs/planning/` documents |
 | What is this PR intended to accomplish? | PR description and applicable slice/acceptance criteria, reconciled with current planning and prerequisites |
 | What public API/interface exists today? | implementation and tests, reconciled with `docs/reference/` and consumers |
@@ -221,7 +221,7 @@ When a PR promotes a conclusion from a `docs/research/` report into an ADR or co
 
 For a high-risk promotion, verify that a genuinely independent adversarial-review artifact exists, states `ACCEPT` or `ACCEPT WITH QUALIFICATIONS`, and explicitly identifies that same report commit SHA as the reviewed report. A branch name, branch tip, report path, conversational summary, or review link without the reviewed-report SHA is not enough. If the report file was committed again after the reviewed revision, treat the later commit as a distinct report revision: either the promotion must bind to the already-reviewed report SHA, or the later revision must receive its own required adversarial review before its conclusions may be promoted. Do not infer that a prior disposition automatically transfers across a later report commit, including a metadata-only edit that adds review status or a link.
 
-Treat a missing, self-administered-only, `MORE EVIDENCE REQUIRED`, `REOPEN`, or report-SHA-mismatched review as a blocking finding for a high-risk promotion. When the disposition is `ACCEPT WITH QUALIFICATIONS`, verify the PR's proposed ADR/architecture text actually carries those qualifications forward rather than silently dropping them. This does not make the reviewer perform research or adversarial review itself; it only enforces that the prerequisite was met for the exact evidence revision being promoted.
+Treat a missing, self-administered-only, `MORE EVIDENCE REQUIRED`, `REOPEN`, or report-SHA-mismatched review as a blocking finding for a high-risk promotion. When the disposition is `ACCEPT WITH QUALIFICATIONS`, verify the PR's proposed architecture/ADR text actually carries those qualifications forward rather than silently dropping them. This does not make the reviewer perform research or adversarial review itself; it only enforces that the prerequisite was met for the exact evidence revision being promoted.
 
 ## Risk-proportionate depth
 
@@ -267,7 +267,7 @@ Every actionable finding must establish:
 3. why that matters to correctness or merge readiness;
 4. the outcome/invariant remediation must restore.
 
-Prefer exact paths, symbols, test names, plan criteria, ADR numbers, PR numbers, and commit/head SHAs.
+Prefer exact paths, symbols, test names, plan criteria, ADR filenames, PR numbers, and commit/head SHAs.
 
 Use confidence `HIGH`, `MEDIUM`, or `LOW`. Do not inflate confidence because CI is green.
 
@@ -284,7 +284,7 @@ Do not report a finding solely because:
 - an abstraction could theoretically be more generic;
 - Challenge and Governance contain similar concepts without sharing types/frameworks;
 - intentionally documented compatibility debt remains;
-- an accepted ADR preserves historical terminology, paths, or migration context;
+- Git history, rather than current documentation, preserves historical terminology, paths, or migration context;
 - a test could be more exhaustive when existing evidence already proves the required invariant;
 - unrelated code could be cleaner;
 - an internal symbol is not publicly documented;

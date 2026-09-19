@@ -2,8 +2,8 @@
 
 > **Status:** Active; PLAN-GOV-1 complete, PLAN-GOV-2 initial slice complete, PLAN-GOV-3 complete, PLAN-GOV-4 initial slice complete; PLAN-GOV-5 is `READY_NEXT`
 > **Scope:** Implementation admission and sequencing for evidence, governed change, exceptions, mappings, and audit projections over the landed identity/change/conformance substrate
-> **Authority:** Planning only; durable semantics remain owned by Governance architecture and accepted ADRs  
-> **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [ADR-0016](../architecture/decisions/0016-governance-evidence-provenance.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [ADR-0013](../architecture/decisions/0013-durable-operational-identity.md), [ADR-0004](../architecture/decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0006](../architecture/decisions/0006-durable-semantic-fingerprint-contract.md), [ADR-0008](../architecture/decisions/0008-controlled-revision-identity-and-lineage.md)
+> **Authority:** Planning only; durable semantics remain owned by Governance architecture and its adopted contracts  
+> **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [Governance evidence contract](../architecture/governance-evidence.md), [deterministic simulation decision](../architecture/decisions/deterministic-simulation.md), [Operational continuity contract](../architecture/operational-continuity.md), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [controlled revision contract](../architecture/controlled-revisions.md)
 
 ## 1. Boundary
 
@@ -53,7 +53,7 @@ Provides versioned requirements/assertions, scopes, catalogue selection against 
 
 Provides deterministic pre-change evaluation over explicit subject/revision/requirement/assertion inputs with attributable evaluation result and findings.
 
-The initial slice does not claim durable historical persistence of every evaluation/evidence record, and its `ConformanceEvaluation` is a deterministic value without occurrence identity; evaluation-occurrence identity and its acceptance boundary are PLAN-GOV-5 work under ADR-0016.
+The initial slice does not claim durable historical persistence of every evaluation/evidence record, and its `ConformanceEvaluation` is a deterministic value without occurrence identity; evaluation-occurrence identity and its acceptance boundary are PLAN-GOV-5 work under the Governance evidence contract.
 
 ## 3. Current implementation queue
 
@@ -76,14 +76,14 @@ PLAN-GOV-9  Audit snapshots / compliance projections
 ## 4. PLAN-GOV-5 — Evidence and EvidenceUse — `READY_NEXT`
 
 PLAN-GOV-5 is admitted for implementation. Its semantic contract is fixed by
-[ADR-0016](../architecture/decisions/0016-governance-evidence-provenance.md), which is **Accepted**
+the [Governance evidence contract](../architecture/governance-evidence.md)
 after decision-quality research and an independent adversarial review, and is summarized in
 [Governance architecture](../architecture/governance-conformance.md) §7, §9, and §12. Every one of
 the earlier promotion criteria has landed on `main`: the research question is concluded, the
 high-risk conclusion was independently reviewed, the surviving contract is Accepted durable
 authority, and this plan and the current-state architecture are reconciled to it. This section
 derives the implementation responsibility and acceptance evidence from that decision; it does not
-restate or extend the decision, and ADR-0016 remains the authority wherever the two could be read
+restate or extend the decision, and the Governance evidence contract remains the authority wherever the two could be read
 differently.
 
 ### Responsibility
@@ -95,20 +95,20 @@ landed `Requirement`/`Assertion`/`ConformanceEvaluation` values.
 The slice must provide, in whatever representation it chooses:
 
 - an **evidence reference** whose equality is same-source/result-revision identity and which is
-  never rebound (ADR-0016 §2–§3), able to be satisfied by a producer-owned handle without a second
+  never rebound (the Governance evidence contract §2–§3), able to be satisfied by a producer-owned handle without a second
   Governance-allocated identifier;
 - an **evidence use** relationship carrying the target subject (fingerprint, optional verified
   revision, scope), the exact requirement/assertion definitions, the role (relied on, considered but
   not relied on, comparator), the temporal frame where material, and an attributable
-  applicability/reliance determination (ADR-0016 §4, §6);
+  applicability/reliance determination (the Governance evidence contract §4, §6);
 - an **evaluation occurrence** with its own identity and a fixed basis — exact definitions, subject,
   relied-on uses, material exclusions and known gaps, temporal frame, applicability rules, outcome
   — that becomes authoritative at an acceptance boundary and is never mutated afterwards
-  (ADR-0016 §8–§9);
+  (the Governance evidence contract §8–§9);
 - the conformance composition: an applicable assertion with an adequate, applicable basis may
   `PASS`; unusable or missing evidence never yields `PASS` and never alone yields `NOT_APPLICABLE`;
   absence supports `FAIL` only where the assertion's own semantics establish a violation from
-  adequate evidence of absence (ADR-0016 §6).
+  adequate evidence of absence (the Governance evidence contract §6).
 
 The `Evidence`/`EvidenceUse` entries in `GovernanceModuleBoundaryTest`'s forbidden-declaration guard
 protected the blocked state and are retired by this slice; its authorization, deployment, severity,
@@ -117,7 +117,7 @@ still depend only on `:types`.
 
 ### Scope of the first slice
 
-Bounded by ADR-0016 §12: prove the contract with producer identities and provenance that actually
+Bounded by the Governance evidence contract §12: prove the contract with producer identities and provenance that actually
 exist, or with explicit fixtures at the owning seam, and state which provenance class is proved.
 
 - **Structural facts** are the production-backed class: authoritative controlled revision plus
@@ -142,7 +142,7 @@ exist, or with explicit fixtures at the owning seam, and state which provenance 
 
 ### Acceptance evidence
 
-Executable acceptance must demonstrate at least the discriminating cases ADR-0016 was tested
+Executable acceptance must demonstrate at least the discriminating cases the Governance evidence contract was tested
 against, distinguishing fixture-proved seams from production integrations:
 
 1. **Revision reuse / rollback** — one evidence item used against two controlled revisions with equal

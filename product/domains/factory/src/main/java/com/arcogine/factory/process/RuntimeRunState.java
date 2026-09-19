@@ -6,7 +6,8 @@ package com.arcogine.factory.process;
  * <p>{@link #ACTIVE} means the runtime has pending authoritative work and can advance. {@link
  * #QUIESCENT} means no pending work remains that could authoritatively change state.
  *
- * <p>"Authoritative" is load-bearing (ADR-0011): the internal scheduler queue can still
+ * <p>"Authoritative" is load-bearing (docs/architecture/runtime-contract.md): the internal
+ * scheduler queue can still
  * hold no-op markers ({@code TaskStart}, or the {@code OrderCompleted} a terminal {@code TaskEnd}
  * schedules for other internal handlers) that {@code FactoryHandler} ignores. Those change nothing
  * a consumer can observe and produce no supported event, so they never make a runtime {@code

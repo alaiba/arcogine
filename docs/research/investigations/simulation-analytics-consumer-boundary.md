@@ -3,7 +3,7 @@
 > **Status:** READY
 > **Risk:** **High** — touches major ownership, supported/public semantics, reproducibility, compatibility, and several existing consumers. Independent adversarial review is required before any architecture promotion (`docs/development/researching.md` §7, §9).
 > **Scope:** Where the boundary sits between authoritative simulation/runtime facts and reusable derived analytics, and how that boundary replaces the legacy `EventLog` KPI substrate
-> **Authority:** Research only. This brief decides nothing. ADR-0011/ADR-0015 retain the Engine boundaries; ADR-0017 withdraws pre-reset support without settling analytics ownership. The V1 definition remains current implementation evidence, not a post-reset support promise.
+> **Authority:** Research only. This brief decides nothing. Current Engine semantics, the runtime observation/event contract, the deterministic simulation decision, and `engine-semantics:v1` remain exactly as accepted until a separate, independently reviewed reconciliation says otherwise.
 
 ## Research question
 
@@ -33,13 +33,13 @@ That trigger was already satisfied. Arcogine currently has:
 - an outward KPI endpoint (`GET /api/kpis`) and a KPI list inside the API snapshot projection (`SnapshotBuilder`, `SimSnapshot`);
 - a web consumer retaining KPI history and computing baseline-to-baseline metric deltas (`stores/baselines.ts`, `MetricDelta`), plus KPI cards, time-series charting, and export;
 - headless/CLI and reference consumers of the same runtime;
-- an Accepted transport-neutral runtime contract (ADR-0011) explicitly intended for HTTP/SSE, CLI, embedded Java, and future adapters.
+- an adopted transport-neutral runtime contract (the [runtime observation/event contract](../../architecture/runtime-contract.md)) explicitly intended for HTTP/SSE, CLI, embedded Java, and future adapters.
 
 Reusable measurement, longitudinal retention, and comparison are therefore already multi-consumer concerns, not a hypothetical future need.
 
 ## Non-goals
 
-This investigation does not implement an analytics module, migrate or delete `com.arcogine.core.kpi`, change KPI formulas, alter `RuntimePerformanceObservation` in code, implement event retention/journaling, build a Java SDK, force consumers through HTTP/SSE, or reopen transport architecture. It does not edit Accepted ADRs or `engine-semantics:v1`.
+This investigation does not implement an analytics module, migrate or delete `com.arcogine.core.kpi`, change KPI formulas, alter `RuntimePerformanceObservation` in code, implement event retention/journaling, build a Java SDK, force consumers through HTTP/SSE, or reopen transport architecture. It does not change adopted architecture or `engine-semantics:v1`.
 
 It also does not decide game presentation. Which visualization produces correct player understanding remains product research in [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md).
 
@@ -81,7 +81,7 @@ Deriving occupancy duration from supported events is safe. Reimplementing candid
 
 **Deterministic comparison is useful but bounded.** Deterministic re-execution supports strong controlled single-variable comparison; comparable explicit inputs plus one changed input can support causal explanation. Multi-variable changes are not uniquely attributable merely because execution is deterministic.
 
-**Embedded and remote consumption are sibling adapters.** ADR-0007 and ADR-0011 already establish transport-neutral semantics with multiple possible adapters. Do not reopen "HTTP/SSE versus embedded Java" as an either/or. The narrower open question — what stable public Java client/package boundary should exist if one is supported — may be noted but is not this investigation's to settle.
+**Embedded and remote consumption are sibling adapters.** the session-control semantics and the runtime observation/event contract already establish transport-neutral semantics with multiple possible adapters. Do not reopen "HTTP/SSE versus embedded Java" as an either/or. The narrower open question — what stable public Java client/package boundary should exist if one is supported — may be noted but is not this investigation's to settle.
 
 ## The high-risk conflict
 
@@ -142,7 +142,7 @@ Conclude only with a report that:
 - prevents analytics from reimplementing scheduling decisions;
 - defines compatibility expectations across embedded and remote adapters;
 - determines the disposition and migration path for the legacy KPI substrate and the current performance fields;
-- states explicitly whether ADR-0011, ADR-0015, or `engine-semantics:v1` require supersession, a new ADR, a semantics-version change, or only implementation reorganization;
+- states explicitly whether the runtime observation/event contract, the deterministic simulation decision, or `engine-semantics:v1` require revision, a new ADR, a semantics-version change, or only implementation reorganization;
 - receives genuinely independent adversarial review before any architecture promotion.
 
 ## Inherited evidence
@@ -151,6 +151,6 @@ Reusable evidence transferred from the superseded diagnostic-evidence investigat
 
 - the landed non-transfer diagnostic questions were derivable from supported observation plus supported events plus published model facts, with no proven new Engine fact gap — evidence about landed behavior, not a permanent theorem;
 - transfer-dependent diagnostics remain conditional and must be re-evaluated when transfer semantics land;
-- the legacy `EventLog` KPI substrate is not the future supported analytics substrate (ADR-0011 §8, ADR-0012);
+- the legacy `EventLog` KPI substrate is not the future supported analytics substrate (the runtime observation/event contract §8, the external representation policy);
 - current legacy HTTP/SSE internal-event surfaces are not the semantic compatibility boundary;
 - external bottleneck-detection evidence that remains load-bearing: Skoogh, Thürer, Subramaniyan, Matta & Roser (2023), *Throughput bottleneck detection in manufacturing: a systematic review of the literature on methods and operationalization modes*, Production & Manufacturing Research 11(1) 2283031, DOI 10.1080/21693277.2023.2283031 — utilization is not sufficient for bottleneck identification and, being period-averaged, detects only an average constraint; queue-state methods suffer transient fluctuation; shifting bottlenecks are a first-class contingency; no single method is universally recommended. Roser, Nakano & Tanaka's active period method (WSC 2001/2002, ISS 2002, ESM 2004) defines the bottleneck as the process with the longest uninterrupted non-waiting period, which is computable from supported dispatch/completion events without re-deciding any assignment.

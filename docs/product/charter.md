@@ -173,8 +173,8 @@ Repository documentation uses these status categories, applied where they materi
 - **Current state** — what Arcogine implements now. `docs/product/concepts.md`, `docs/reference/api.md`, `/product/interfaces/web/README.md`, the current-implementation portions of `docs/architecture/overview.md`.
 - **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
 - **Planned** — admitted implementation work with bounded ownership, prerequisites, sequencing, and acceptance evidence. `docs/planning/`.
-- **Proposed** — under consideration but not yet established as durable direction. Proposed ADRs and other explicitly proposed material outside the research and planning authorities.
-- **Historical** — retained for context but no longer authoritative. Superseded ADRs.
+- **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research and planning authorities, such as a design proposal under review in a branch or pull request.
+- **Historical** — retained for context but no longer authoritative. Replaced or removed decisions and plans, preserved in Git history.
 
 A reader should never be left guessing whether a statement is mature product ambition, current implementation, an open research question, admitted implementation work, an open proposal, or a historical artifact.
 

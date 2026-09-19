@@ -82,7 +82,7 @@ Read the relevant current material rather than relying only on the PR descriptio
 - `docs/product/charter.md` for significant product/architecture changes;
 - `docs/architecture/overview.md`;
 - the relevant planning document, such as `docs/planning/factory-simulation-engine-readiness.md`;
-- applicable accepted ADRs;
+- applicable current ADRs;
 - affected domain code and tests;
 - `.github/CONTRIBUTING.md`;
 - prerequisite/recent PRs when they materially define the current seam.
@@ -173,7 +173,7 @@ Keep immutable accepted production/commercial intent distinct from mutable execu
 
 #### Canonical model and provenance
 
-Runtime behavior should continue to derive from a published canonical factory model where that boundary applies. Do not weaken provenance or silently promote the current provisional model content hash into a durable cross-process identity guarantee contrary to ADR-0004.
+Runtime behavior should continue to derive from a published canonical factory model where that boundary applies. Do not weaken provenance or silently promote the current provisional model content hash into a durable cross-process identity guarantee contrary to the Factory publication identity contract.
 
 #### Compatibility
 
@@ -215,7 +215,7 @@ The required CI check catches known coordinate-shaped vocabulary mechanically; r
 
 For medium- and high-semantic-risk changes, review by concept as well as by changed file. Identify the small set of concepts whose meaning changed, then search maintained docs, tests, examples, interfaces, and configuration for both the new vocabulary and plausible old assumptions. This is especially important when a semantic change can leave syntactically unrelated prose or tests behind.
 
-When an accepted ADR, readiness criterion, capability status, or other authority-bearing artifact changes state — for example `unresolved -> accepted`, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
+When a current ADR, readiness criterion, capability status, or other authority-bearing artifact changes state — for example `unresolved -> accepted`, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
 
 This is bounded change-impact review. It does not require a repository-wide consistency sweep for every PR.
 
@@ -225,7 +225,7 @@ Request an ADR only for a genuinely hard-to-reverse decision, for example durabl
 
 Do not require ADRs for ordinary local refactors.
 
-Accepted and Superseded ADRs are semantically immutable. If a PR amends one in place under the editorial-amendment policy in `docs/architecture/decisions/README.md`, the reviewer must compare the pre-amendment and post-amendment record and independently establish that the decision, constraints, applicability, alternatives, and consequences have not changed. The required `Amendment: ...; no semantic change` metadata is process evidence, not proof. If semantic equivalence is uncertain or false, require a superseding ADR instead.
+ADRs are the current durable decision set, not an append-only archive; apply the admission test in `docs/architecture/decisions/README.md`. When a PR edits or removes an ADR, compare the before and after records, establish the actual semantic consequences of the change, and require that the specifications, executable invariants, plans, and consumers that depended on the old decision are reconciled in the same PR. Git history preserves the replaced record; do not require amendment metadata or supersession chains.
 
 ## Finding severity
 
@@ -325,7 +325,7 @@ Do not leave merge readiness implicit when a review is actually performed.
 Before `READY TO MERGE`, explicitly verify two documentation-lifetime conditions when applicable:
 
 1. durable documentation touched or semantically affected by the PR does not depend on temporary planning coordinates; and
-2. every in-place Accepted/Superseded ADR amendment is independently proven semantics-preserving, otherwise supersession is required.
+2. every ADR edit or removal has its semantic consequences independently reviewed and reconciled with the current architecture, and every retained decision still passes the admission test.
 
 ### Canonical disposition format
 

@@ -1,6 +1,6 @@
 # Operational Execution and Digital-Twin Boundary Research
 
-> **Status:** READY for the remaining boundaries; the durable operational identity question is CONCLUDED and reconciled into ADR-0013  
+> **Status:** READY for the remaining boundaries; the durable operational identity question is CONCLUDED and reconciled into the Operational continuity contract  
 > **Scope:** Resolve the semantic and safety boundaries required before Arcogine admits implementation that connects shared production semantics to independently existing operational systems  
 > **Authority:** Research only; this document defines no implementation queue or Operational module contract
 
@@ -51,9 +51,9 @@ Research must preserve these already-established boundaries:
 
 ## Durable operational identity — CONCLUDED
 
-This question is closed. The referent is **one accountable operational continuation**, and the continuity, divergence/lineage, acceptance, divergence-evidence, and record-attachment rules are Accepted in [ADR-0013: Durable operational identity](../../architecture/decisions/0013-durable-operational-identity.md), with the dependent boundary summarized in [Operational Execution and Digital Twin Architecture](../../architecture/operational-execution-digital-twin.md) §2.2.
+This question is closed. The referent is **one accountable operational continuation**, and the continuity, divergence/lineage, acceptance, divergence-evidence, and record-attachment rules are adopted in the [Operational continuity contract](../../architecture/operational-continuity.md), with the dependent boundary summarized in [Operational Execution and Digital Twin Architecture](../../architecture/operational-execution-digital-twin.md) §2.2.
 
-Those documents are the authority; this brief does not restate the decision. Remaining research must consume it rather than reopening it, and must not introduce an operational identifier ahead of the first durable operational record capability — ADR-0013 deliberately defers the type name, representation, persistence, coordination, registry, closure/retirement, and module ownership.
+Those documents are the authority; this brief does not restate the decision. Remaining research must consume it rather than reopening it, and must not introduce an operational identifier ahead of the first durable operational record capability — the Operational continuity contract deliberately defers the type name, representation, persistence, coordination, registry, closure/retirement, and module ownership.
 
 Two follow-on questions were separated out rather than settled here, and are tracked in the [research register](../research-register.md): entitlement/authority to extend a continuation belongs to the actor/trust/authority boundary below, and closure/retirement semantics remain open in both directions pending a concrete consumer.
 
@@ -64,7 +64,7 @@ Research the minimum shared semantics for who/what may perform which operation o
 Test:
 
 - claimed versus verified identity;
-- entitlement to extend an accountable operational continuation, which ADR-0013 deliberately leaves to this boundary: possession of the identifier confers no authority, and retained accepted history is continuity evidence rather than authorization;
+- entitlement to extend an accountable operational continuation, which the Operational continuity contract deliberately leaves to this boundary: possession of the identifier confers no authority, and retained accepted history is continuity evidence rather than authorization;
 - delegation and accountable actor/principal;
 - capability versus authorization/policy;
 - source/peer/target authenticity;
@@ -159,7 +159,7 @@ Manufacturing traceability may become such a proving case only if a concrete int
 Operational implementation is admitted to `docs/planning/` only when the relevant research has produced:
 
 1. decision-quality semantics and ownership;
-2. required ADR/architecture updates;
+2. required architecture updates (an ADR only if the admission test is met);
 3. a bounded implementation responsibility;
 4. explicit prerequisites; and
 5. executable safety/correctness acceptance evidence.

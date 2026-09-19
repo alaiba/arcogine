@@ -114,7 +114,7 @@ A historical research baseline is evidence about what was examined at that point
 
 A decision-quality report keeps at least these categories visibly distinct, so a reader (and later reconciliation) can tell what kind of claim they are looking at:
 
-- **Repository fact** — something the current (or explicitly labeled historical) repository state actually says: code, tests, an Accepted ADR, current architecture prose, an executable check.
+- **Repository fact** — something the current (or explicitly labeled historical) repository state actually says: code, tests, a current ADR, current architecture prose, an executable check.
 - **External evidence** — a claim sourced from outside the repository: a standard, a paper, product documentation, an established engineering pattern.
 - **Inference** — a conclusion the researcher draws by combining repository facts and/or external evidence; not itself directly observed in either.
 - **Recommendation / proposed decision** — what the researcher thinks Arcogine should do about the question.
@@ -129,7 +129,7 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 
 - the Product Charter;
 - current-state architecture (`docs/architecture/overview.md` and the relevant domain architecture doc);
-- Accepted and Proposed ADRs, with their status kept explicitly distinct — see `docs/architecture/decisions/README.md`;
+- current ADRs (`docs/architecture/decisions/`), kept explicitly distinct from unresolved proposals in research, planning, or branch discussion;
 - the [research register](../research/research-register.md) and the relevant brief(s);
 - admitted implementation planning under `docs/planning/`;
 - implementation and tests;
@@ -138,7 +138,7 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 - open PRs, where they materially affect the question;
 - review findings, where they exposed a relevant semantic failure mode.
 
-Do not assume code always overrides architecture, or the reverse — use the repository's existing authority-by-subject model (the same table structure `docs/development/reviewing.md`, `.github/agents/work-planner.agent.md`, and `.github/agents/consistency.agent.md` each use: Charter for product direction, `docs/architecture/overview.md` for current behavior, Accepted ADRs for why a constraint exists, `docs/planning/` for what is admitted, live `main` for what exists).
+Do not assume code always overrides architecture, or the reverse — use the repository's existing authority-by-subject model (the same table structure `docs/development/reviewing.md`, `.github/agents/work-planner.agent.md`, and `.github/agents/consistency.agent.md` each use: Charter for product direction, `docs/architecture/overview.md` for current behavior, current ADRs for why a constraint exists, `docs/planning/` for what is admitted, live `main` for what exists).
 
 In particular:
 

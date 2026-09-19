@@ -152,7 +152,8 @@ class RuntimeEventDeliveryAcceptanceTest {
 
         // Two JOB_STEP_COMPLETED events share simulationTime=5 (the two immediately-dispatched
         // units both finish their single step at the same instant), as does the JOB_DISPATCHED for
-        // the third unit that the first of those completions frees a machine for (ADR-0011: the
+        // the third unit that the first of those completions frees a machine for
+        // (docs/architecture/runtime-contract.md: the
         // whole TaskEnd placement cascade is reported through the supported event stream); a
         // JOB_STEP_COMPLETED and the ORDER_COMPLETED it triggers share simulationTime=10.
         for (int i = 1; i < events.size(); i++) {
@@ -277,13 +278,16 @@ class RuntimeEventDeliveryAcceptanceTest {
 
     /**
      * The discriminating case {@link #acceptedNoOpAvailabilityRequestEmitsNothing} does not cover:
-     * a machine that is already online, still has a free concurrency slot, and has work legitimately
-     * waiting in its own queue. {@code tryDispatchFromQueue} only ever dequeues one job per call, so
+     * a machine that is already online, still has a free concurrency slot, and has work
+     * legitimately
+     * waiting in its own queue. {@code tryDispatchFromQueue} only ever dequeues one job per call,
+     * so
      * bringing a concurrency-2 machine online from Offline with two jobs queued dispatches only the
      * first, leaving the second genuinely {@link JobStatus#Queued} with one free slot still open --
-     * exactly the state a redundant {@code setMachineAvailability(machine, true)} must not be able to
+     * exactly the state a redundant {@code setMachineAvailability(machine, true)} must not be able
+     * to
      * silently drain by dispatching the second job without any corresponding supported event or
-     * {@code latestEventSequence} advancement (ADR-0011).
+     * {@code latestEventSequence} advancement (docs/architecture/runtime-contract.md).
      */
     @Test
     void acceptedNoOpAvailabilityRequestWithWaitingWorkAndFreeCapacityStillEmitsNothing() {

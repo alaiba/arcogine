@@ -8,7 +8,26 @@
 
 The Engine implementation must not silently evolve result-affecting policy under an existing semantics identity. This document holds candidate extensions and bounded follow-up questions until evidence and an explicit architecture decision justify a different implementation contract.
 
-`engine-semantics:v1` is already a normative design contract even though its implementation/conformance work is pending. Under current ADR-0015 and v1 authority, an intentional change that can alter outcomes for identical explicit inputs requires a new `EngineSemanticsVersion`; unreleased or implementation-pending status does not create an in-place mutation exception. Research may still decide whether v1 is acceptable for the first supported release or whether evidence justifies architecture work for a different semantics version before implementation. Neither outcome permits a silent implementation tweak.
+[ADR-0017](../../architecture/decisions/0017-ground-zero-semantic-evolution.md)
+withdraws pre-reset V1 support without changing its historical definition or
+ADR-0015's Engine identity contract. A fresh normative definition may be corrected
+in place only before its first accepted/retained attribution; afterwards the whole
+definition freezes and any behavioral/identity-affecting change requires a new
+distinguishable identity. Unreleased status and unexercised sections create no
+post-attribution exception. A changed post-reset interpretation may not reuse
+`engine-semantics:v1`, even before release. The concluded dispatch cases below remain
+current implementation evidence and reopening triggers, not an obligation to ship
+the withdrawn label or authority to override other Accepted dispatch decisions.
+
+### Same-label amendment after attribution — CANDIDATE
+
+Investigate only if a concrete consumer needs a normative Engine amendment after
+retained attribution without a new semantic identity. The question would have to
+define what that identity denotes over supported and unsupported inputs, exact old
+definition selection, rejection and interaction effects, and consumer inference.
+Exit evidence must discriminate full-definition equivalence from merely unchanged
+observed runs. Until a separate owning decision adopts an exception, use a new
+identity; this question is not a gate on the reset or a section-freezing permission.
 
 ## Material identity and genealogy boundary
 

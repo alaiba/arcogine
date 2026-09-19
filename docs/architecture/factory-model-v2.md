@@ -1,38 +1,64 @@
 # Factory Model v2 Canonicalization
 
-Status: Normative canonicalization contract; implementation pending
+Status: Pre-reset canonical definition retained for reference; no post-reset support commitment
 Fingerprint policy: `factory-model:v2`
-Semantic authority: [ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md)
-Fingerprint-contract authority: [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md)
+Semantic authority: [ADR-0018](decisions/0018-factory-semantics-after-support-reset.md)
+Evolution/support authority: [ADR-0017](decisions/0017-ground-zero-semantic-evolution.md)
 
 ## 1. Purpose
 
-[ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md) establishes that a Factory
+[ADR-0017](decisions/0017-ground-zero-semantic-evolution.md) preserves the rule from
+[ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md) that a Factory
 fingerprint-policy version **is** a canonicalization contract: the policy version identifies the
 semantic/canonicalization contract, not merely the cryptographic algorithm. Any change that can
 alter semantic field membership, ordering, normalization, binary encoding, or digest semantics
 requires a new policy version.
 
-[ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md) fixes *which* authored facts
-`factory-model:v2` adds, their validation predicates, and their compatibility rules. It does not fix
-the durable byte grammar those facts are digested through.
+[ADR-0018](decisions/0018-factory-semantics-after-support-reset.md) preserves the authored
+facts and validation constraints below from superseded ADR-0014. It withdraws the
+pre-reset release/coexistence commitments without changing the historical byte definition.
 
-This document is the normative source of `factory-model:v2` canonical bytes, in exactly the sense
-that ADR-0006's v1 byte-grammar section is the normative source of `factory-model:v1` bytes. Where
-this document and any implementation disagree, this document is authoritative.
+This document remains the exact definition of `factory-model:v2` canonical bytes;
+an implementation claiming that identity must match it. It is not a supported
+post-reset contract or permission to release V2. Future Factory composition remains
+open. References below to ADR-0006/ADR-0014 identify historical definitions;
+ADR-0017/ADR-0018 govern current support and evolution.
 
 It deliberately does **not** restate or modify:
 
-- V2 semantic field membership, validation predicates, or compatibility rules — those are ADR-0014;
 - result-affecting Engine interpretation of V2 facts — that is
   [Engine Semantics v1](engine-semantics-v1.md);
 - controlled-revision identity or lineage — that is
   [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md).
 
+### Authored facts and publication constraints
+
+The retained V2 design consists of V1 authored semantics plus mandatory floor width
+and height, resource reference-cell position, resource footprint width and height,
+`ticksPerCell`, and `handlingTicks`. Every addition participates in identity. Floor
+and footprint extents are positive integer cells; coordinates and handling magnitudes
+are nonnegative, with zero valid. A footprint at `(x,y)` with extents `(w,h)` occupies
+`x..x+w-1` by `y..y+h-1`; it must fit in floor `(W,H)` and not overlap another footprint.
+
+Publication checks, with overflow-safe arithmetic in the runtime tick-duration type:
+
+```text
+maxManhattanDistance = (W - 1) + (H - 1)
+maxTransferDuration = handlingTicks + ticksPerCell * maxManhattanDistance
+```
+
+Every operation and the resulting duration must be representable. This does not
+guarantee addition to arbitrary current `SimTime`; runtime time-addition validation
+remains separate. Footprint is canonical even where Engine ignores it for distance.
+Orientation, paths, aisles, conveyors, transport resources, obstacles, congestion,
+floor identity, connection points and authoritative animation coordinates are outside
+this definition. Factory owns authored facts; Engine owns their interpretation.
+
 ## 2. Relationship to `factory-model:v1`
 
-V2 is a separate released policy, not a revision of V1. V1's grammar, digests, golden vectors, and
-historical fingerprints are permanently unchanged by V2's existence.
+V2 is a distinct pre-reset definition, never released by the implemented shape/validation
+slice. V1's historical grammar, digests and fingerprints are unchanged by V2's existence;
+neither definition carries a post-reset compatibility promise.
 
 Structurally, the V2 stream is the V1 stream with exactly three differences:
 
@@ -46,8 +72,9 @@ retyped, or renormalized.
 Because the policy-domain prefixes differ in their final component, **V1 bytes are never a prefix of
 V2 bytes, no V1 artifact decodes under a V2 verifier, and no V2 artifact decodes under a V1
 verifier.** Cross-policy artifact confusion is structurally impossible rather than a runtime check.
-This is what makes ADR-0014's policy-aware historical resolution (decision 8) and its prohibition on
-automatic V1-to-V2 lift (decision 10) mechanically enforceable at the artifact boundary.
+Together with decode/re-encode/fingerprint verification, this discriminates Factory
+policies at the artifact boundary. It supports ADR-0018's no-lift rule without
+requiring permanent V1/V2 reader support.
 
 ## 3. Fingerprint identity and digest rendering
 
@@ -294,9 +321,8 @@ Additionally, and unlike a purely syntactic decoder, a V2 verifier must apply AD
 predicates (§7.6) during decode. A byte string that satisfies the §6 grammar but violates a V2
 publication predicate is **not a valid `factory-model:v2` artifact** and must be rejected.
 
-This is required by ADR-0014 decision 8: historical artifact resolution must remain permanent and
-policy-aware, which means resolving a stored V2 artifact must never yield a model that could not
-have been published in the first place. A stored artifact that fails a predicate indicates
+Policy-aware resolution under a declared support/custody contract must never yield a
+model that could not have been published in the first place. An artifact that fails a predicate indicates
 corruption or forgery and must fail loudly rather than resolve into an unpublishable model.
 
 ### 9.4 Fingerprint derivation from stored artifacts
@@ -307,15 +333,21 @@ malformed or non-canonical artifact acquire a well-formed-looking V2 identity.
 
 ## 10. Immutability and lifecycle
 
-Until the `factory-model:v2` implementation ships, this grammar is a normative design contract and
-may be corrected by amending this document.
+ADR-0017 withdraws pre-reset support and requires a fresh identity for any changed
+post-reset definition. The `factory-model:v2` label may be reused only with its
+unchanged historical definition and canonical bytes; its policy-domain prefix and
+verification must agree. No post-reset support declaration is made here.
 
-Once a V2 fingerprint is produced by a shipped implementation or recorded against a controlled
-revision, the grammar is frozen permanently. From that point, every supported implementation must
-produce the same fingerprint for the same V2 semantic content across processes, software versions,
-and implementation languages.
+For a fresh normative Factory definition, in-place correction is permitted only
+before the first accepted/retained attribution. That attribution freezes the whole
+definition, not merely exercised sections. Exact definition resolution lasts at
+least as long as every retained record bearing the identity; decoding, execution
+and interoperability have separately declared scopes. The
+[support policy](../development/semantic-contract-support.md) governs declaration
+and admission. Disposable testing does not itself constitute retained acceptance.
 
-Changing any identity-affecting rule while still calling the policy v2 is then forbidden, including:
+Changing any identity-affecting rule while still calling the policy v2 is forbidden
+across the reset regardless of prior attribution, including:
 
 - semantic field membership or field order;
 - placement/footprint field order or anchor interpretation;
@@ -328,13 +360,16 @@ Changing any identity-affecting rule while still calling the policy v2 is then f
 - the policy-domain prefix;
 - hash algorithm or digest rendering.
 
-Such a change requires `factory-model:v3` under ADR-0014's general evolution invariant (decision
-12). V1 and V2 both remain immutable and historically resolvable.
+Such a change needs a fresh distinguishable identity under ADR-0017/ADR-0018;
+this document does not choose its composition or label. Support expiry does not
+permit rebinding the old definition, and no perpetual V1/V2 decoder is promised.
 
 ## 11. Golden compatibility vectors
 
-The V2 implementation must pin literal expected canonical bytes and expected digest/fingerprint
-outputs. Golden vectors supplement this normative grammar; they do not replace it.
+A future implementation explicitly supporting this unchanged definition would need
+literal expected canonical bytes and digest/fingerprint outputs. The cases below
+are retained validation knowledge, not admission of V2 implementation or support.
+Golden vectors supplement the grammar; they do not replace it.
 
 At minimum, V2 tests must cover:
 
@@ -372,8 +407,8 @@ At minimum, V2 tests must cover:
 13. the same authored non-spatial content fingerprinted under V1 and under V2 producing different
     fingerprints, with neither derivable from the other;
 14. a V2 artifact rejected by the V1 verifier and a V1 artifact rejected by the V2 verifier;
-15. every existing `factory-model:v1` golden vector and fingerprint unchanged after V2 is
-    registered, as an explicit regression pin.
+15. if a future declaration supports both policies, every V1 golden vector remains
+    unchanged after V2 registration; coexistence is not required by the reset.
 
 **Carried-over V1 coverage re-proven under V2**
 
@@ -396,7 +431,7 @@ At minimum, V2 tests must cover:
 
 This document does not define:
 
-- V2 semantic field membership, validation predicates, or compatibility rules (ADR-0014);
+- future Factory composition or a post-reset support declaration (ADR-0017/ADR-0018);
 - result-affecting interpretation of V2 facts, including the distance metric, handling application,
   destination binding, or transfer lifecycle ([Engine Semantics v1](engine-semantics-v1.md));
 - controlled-revision identity, lineage, or repository authority (ADR-0008);

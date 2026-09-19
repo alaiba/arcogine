@@ -145,6 +145,19 @@ The horizontal dimension is immutable revision lineage. The attached records are
 
 A controlled revision becomes an authoritative historical fact only when its immutable record is accepted by Arcogine's authoritative revision store. ADR-0008 defines the identity, immutability, lineage, and provenance semantics; Governance authoritative controlled-revision persistence and historical resolution now implements the corresponding authority boundary and exact historical resolution. `ControlledRevisionAuthority` accepts candidate revision content, the authority establishes the accepted record's `recordedAt` at its commit boundary, and the current filesystem adapter durably binds the accepted revision to its immutable semantic artifact. Historical resolution re-verifies the artifact against the recorded `ModelFingerprint`; missing or corrupt history fails explicitly rather than falling back to current state. The filesystem record layout and locking mechanics remain replaceable adapter details rather than a permanent production persistence contract.
 
+For post-reset retained admission, [ADR-0017](decisions/0017-ground-zero-semantic-evolution.md)
+adds an explicit support/custody declaration at that authority's commit boundary.
+The declaration must identify the exact definition and retained basis, horizon and
+failure/refusal behavior under the [support policy](../development/semantic-contract-support.md).
+The current file adapter proves artifact verification and atomic acceptance; it does
+not yet enforce this declaration mechanism. Before enabling post-reset retained
+use, the owning admission adapter must establish those checks and refuse admission
+it cannot fulfil. Undeclared retained acceptance is a defect: account for existing
+obligations, block new admissions until declared, and never erase the accepted fact.
+An injected `SemanticArtifactVerifier` is an extension seam, not a central policy
+registry. Tests and scratch stores do not establish retained authority merely by
+calling the adapter. ADR-0008 and ADR-0016 remain unchanged in full.
+
 The system should eventually answer:
 
 ```text

@@ -130,6 +130,16 @@ PLAN-ENG-4-D1 and PLAN-ENG-4-D2 should normally be separate reviewable PRs when 
 
 ## 4. Provenance boundary
 
+ADR-0017 withdraws pre-reset interface/hash compatibility. Within outward convergence,
+admit a bounded later cleanup of `FactoryModelVersion.contentHash()` and
+`SimResult.modelContentHash`: inventory all callers, fixtures and outward surfaces;
+remove the legacy dependency without reinterpreting bare hashes; establish truthful
+replacement provenance only under a settled owning Factory contract. No pre-reset
+migration is required. This reconciliation removes no code and does not select that
+future Factory contract. New retained/outward reliance requires the owning support
+and custody declaration; API existence alone is not a compatibility promise.
+
+
 `ModelFingerprint` is required supported provenance and comes from the published model's durable fingerprint, never legacy content hash.
 
 `ControlledRevisionId` is optional and appears only when the runtime has an authoritative upstream revision binding. Governance completion does not imply that every runtime has such a binding, and Engine must not generate/infer one.

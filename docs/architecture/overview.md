@@ -10,6 +10,32 @@ These are expected to hold regardless of how the implementation evolves, because
 2. Deterministic acceptance tests and scenario-level validation are mandatory for simulation, replay, and verification contexts (see the [Determinism Contract](#determinism-contract) below for scope).
 3. Agents only use approved command interfaces and never mutate simulation state directly — this is the same governance boundary the Charter asks of human and autonomous decision-makers alike.
 
+### Semantic evolution and support
+
+Exact semantic references preserve their original accepted bindings and declared
+fixed aspects; corrections and changed interpretations are distinguishable.
+Accumulating identities preserve their owning domain's continuity rules rather
+than becoming frozen snapshots (see
+[ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md),
+[ADR-0013](decisions/0013-durable-operational-identity.md) and ADR-0016).
+
+Support obligations follow published reliance and accepted retained use at an
+authority boundary. Historical meaning, retained basis, decoding, execution and
+interoperability are distinct obligations: every identity on an accepted or retained
+record keeps its exact identity-defining definition resolvable while that record is
+retained, without automatically requiring perpetual content, decoding or execution.
+[ADR-0017](decisions/0017-ground-zero-semantic-evolution.md) owns these rules;
+[ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md) and
+[ADR-0016](decisions/0016-governance-evidence-provenance.md) own stronger domain promises.
+
+Evolution preserves original bindings and domain ownership. Narrowing an in-scope
+promise requires an explicit authorized transition. A reset or support expiry never
+permits changed meaning under a reused identity; cross-boundary label reuse requires
+an unchanged definition. See ADR-0017 for the reset and
+[ADR-0018](decisions/0018-factory-semantics-after-support-reset.md) for Factory's
+surviving invariants. Declaration mechanics live in
+[Semantic contract support](../development/semantic-contract-support.md).
+
 ## Current implementation constraints (MVP)
 
 These describe today's implementation choices. They are not claims about Arcogine's permanent identity — see the Product Charter's [product boundaries](/docs/product/charter.md#9-what-arcogine-is-not) for why Java, the current UI, and the current deployment model are implementation choices rather than product identity, subject to change as the product grows toward the full lifecycle described there.
@@ -129,7 +155,7 @@ Concretely: `FinanceObservation` (cash, sales balance, as `BigDecimal`) is what 
 
 The practical rule: if you find yourself passing a `SimSnapshot`/`JobInfo`/other DTO into a handler or agent to make a simulation decision, that's the DTO being used as an ad hoc internal read model — introduce or extend a domain observation instead. `SnapshotBuilder` is the one place allowed to read domain state broadly, precisely because its output never re-enters the simulation.
 
-**Known compatibility debt**: `JobInfo.revenue` (JSON field `revenue`) and `SimSnapshot.totalRevenue`/`currentPrice` (JSON fields `total_revenue`/`current_price`) still use pre-rename vocabulary — `revenue`/`totalRevenue` instead of `CompletedSalesValue`, `currentPrice` instead of `OfferPrice` — even though the domain model has since converged on the latter (see the Terminology table above). These are left unrenamed deliberately, as an external wire-contract boundary, not an oversight — renaming a public JSON field is a breaking API change, out of scope for an internal vocabulary cleanup. They are explicitly flagged, in code and here, as debt to resolve in a future API-versioning change, not a naming decision anyone should treat as settled or extend by adding more `revenue`-named fields.
+**Legacy projection vocabulary**: `JobInfo.revenue` (JSON field `revenue`) and `SimSnapshot.totalRevenue`/`currentPrice` (JSON fields `total_revenue`/`current_price`) still use pre-rename vocabulary — `revenue`/`totalRevenue` instead of `CompletedSalesValue`, `currentPrice` instead of `OfferPrice` — even though the domain model has since converged on the latter (see the Terminology table above). They remain unchanged implementation behavior in this documentation reconciliation. ADR-0017 withdraws the pre-reset compatibility obligation; a later bounded outward-contract change must inventory and update consumers together under ADR-0012. These names are not a new supported vocabulary.
 
 ### Query dependencies between domains
 
@@ -622,17 +648,19 @@ This determinism contract is scoped to simulation, replay, and verification cont
 
 ## Factory Model Identity (current state)
 
-The supported runtime establishes one fixed `EngineSemanticsVersion` (`engine-semantics:v1`)
+The current runtime implementation establishes one fixed `EngineSemanticsVersion` (`engine-semantics:v1`)
 alongside the authored `ModelFingerprint` and opaque per-runtime `RunId`. These identities answer
 different provenance questions: the semantics identity describes the result-affecting Engine
 interpretation, while `RunId` is correlation only. Runtime observation/event field propagation
-remains follow-up work.
+remains follow-up work. ADR-0017 withdraws pre-reset support for this label; retaining
+the implementation does not establish post-reset support. ADR-0015 still owns the
+Engine identity/provenance contract.
 
 Scenario factory semantics are instantiated through an implemented canonical-model seam: `FactoryModel` (validated) → `FactoryModelVersion` (immutable, published) → `FactoryRuntimeAssembler` (deterministic runtime instantiation). See [ADR-0003](decisions/0003-canonical-factory-model-boundary.md) for the accepted boundary this implements.
 
-`FactoryModelVersion.fingerprint()` implements the durable `factory-model:v1` semantic fingerprint contract accepted by [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). The contract uses the typed `ModelFingerprint` value and a language-independent canonical binary encoding with explicit policy versioning and compatibility vectors. Equal canonical semantic content therefore has a durable identity that is independent of process memory and implementation language under the v1 policy.
+`FactoryModelVersion.fingerprint()` implements the pre-reset `factory-model:v1` semantic fingerprint definition recorded in [ADR-0006](decisions/0006-durable-semantic-fingerprint-contract.md). The contract uses the typed `ModelFingerprint` value and a language-independent canonical binary encoding with explicit policy versioning and compatibility vectors. Equal canonical semantic content therefore has a durable identity that is independent of process memory and implementation language under the v1 policy.
 
-`FactoryModelVersion.contentHash()` remains a separate legacy compatibility surface. It is deterministic for the current Java model but is not the durable fingerprint contract and historical bare content hashes must not be reinterpreted as `factory-model:v1` fingerprints. Existing `IntegratedHandler`/`SimResult.modelContentHash` provenance still carries that legacy hash; broader provenance migration for scenario/input fingerprint and engine build remains follow-up work. the supported runtime observation/event contract now supplies opaque per-runtime `RunId` on `RuntimeObservation`; that run identity is implemented and is distinct from the remaining broader provenance migration.
+`FactoryModelVersion.contentHash()` remains legacy implementation material, removable in a later bounded cleanup under ADR-0017; its pre-reset compatibility promise is withdrawn. It is deterministic for the current Java model but is not the durable fingerprint contract and historical bare content hashes must not be reinterpreted as `factory-model:v1` fingerprints. Existing `IntegratedHandler`/`SimResult.modelContentHash` provenance still carries that legacy hash; broader provenance migration for scenario/input fingerprint and engine build remains follow-up work. the supported runtime observation/event contract now supplies opaque per-runtime `RunId` on `RuntimeObservation`; that run identity is implemented and is distinct from the remaining broader provenance migration.
 
 `:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by [ADR-0008](decisions/0008-controlled-revision-identity-and-lineage.md). Governance Governance identity/history capability is complete: `ControlledRevisionAuthority` defines the authoritative acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` adapter persists append-only revision records and immutable semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-authoritative parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Historical resolution returns the accepted immutable revision together with its exact semantic artifact; missing/corrupt metadata or artifacts and fingerprint mismatches fail explicitly rather than falling back to current model state.
 

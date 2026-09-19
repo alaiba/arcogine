@@ -80,7 +80,7 @@ the [Governance evidence contract](../architecture/governance-evidence.md)
 after decision-quality research and an independent adversarial review, and is summarized in
 [Governance architecture](../architecture/governance-conformance.md) §7, §9, and §12. Every one of
 the earlier promotion criteria has landed on `main`: the research question is concluded, the
-high-risk conclusion was independently reviewed, the surviving contract is Accepted durable
+high-risk conclusion was independently reviewed, the surviving contract is adopted durable
 authority, and this plan and the current-state architecture are reconciled to it. This section
 derives the implementation responsibility and acceptance evidence from that decision; it does not
 restate or extend the decision, and the Governance evidence contract remains the authority wherever the two could be read

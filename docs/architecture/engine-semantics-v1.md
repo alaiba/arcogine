@@ -2,8 +2,8 @@
 
 Status: Normative interpretation contract; implementation partial (spatial execution and provenance propagation outstanding)
 Semantic identity: `engine-semantics:v1`
-Rationale: [Deterministic simulation](decisions/deterministic-simulation.md)
-Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md)
+Rationale: [Determinism Contract](overview.md#determinism-contract)
+Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 Model-side counterpart: [Factory Model v2 Canonicalization](factory-model-v2.md)
 
 ## 1. Purpose
@@ -14,9 +14,13 @@ shape, DTO serialization, build identity, or replaceable implementation algorith
 
 `EngineSemanticsVersion` is the semantic identity of Arcogine's complete result-affecting
 simulation interpretation for a run. It is distinct from `ModelFingerprint` (which authored Factory
-design was executed), from `RunId` (which runtime epoch produced the facts, correlation only), and
-from software/build/release identity (which implementation artifact happened to execute them, kept
-as diagnostic provenance only). A fact describing the production system the designer authored
+design was executed), from `RunId` (which runtime epoch produced the facts, correlation only, and
+never an input to any result), and from software/build/release identity (which implementation
+artifact happened to execute them, kept as diagnostic provenance only). None of those substitutes
+for it: the same design legitimately produces different outcomes under different accepted
+interpretations, so `ModelFingerprint` alone would attribute a result to a design that did not
+determine it, while builds change for many semantics-preserving reasons and carry no stable
+meaning. A fact describing the production system the designer authored
 belongs to the canonical model and its fingerprint; a rule describing how Arcogine interprets any
 such design belongs here when changing it can change semantic outcome for identical explicit
 inputs; a replaceable algorithm that preserves observable semantics is an implementation detail.
@@ -92,6 +96,11 @@ Four consequences follow.
 4. **A rule that satisfies the membership test but is absent here is a defect in this document**,
    not a licence to treat the behavior as unversioned. The correct response is to record it, or to
    promote it to an explicitly identified reproducibility input — not to leave it ambient.
+5. **Incidental implementation ordering is never a semantic tie-breaker.** Hash iteration order,
+   set or map traversal order, thread scheduling, and comparable artefacts of the runtime are not
+   rules two conforming implementations could agree on, so they may not decide a result. Where
+   ordering can change an outcome, an explicit rule recorded in this specification decides it —
+   sections 2, 3 and 4 own the current ones.
 
 ### 1.2 Session and control semantics
 

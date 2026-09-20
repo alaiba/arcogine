@@ -136,7 +136,7 @@ PLAN-ENG-4-D1 and PLAN-ENG-4-D2 should normally be separate reviewable PRs when 
 
 The completed Governance identity/history substrate is summarized by [Governance Identity/History Downstream Compatibility Guard](governance-continuity.md).
 
-The deterministic simulation decision/PLAN-ENG-5 adds mandatory `EngineSemanticsVersion` provenance. Outward convergence should consume the settled runtime provenance shape rather than publish an immediately obsolete envelope.
+The Determinism Contract/PLAN-ENG-5 adds mandatory `EngineSemanticsVersion` provenance. Outward convergence should consume the settled runtime provenance shape rather than publish an immediately obsolete envelope.
 
 ## 5. Recovery/resynchronization hardening
 

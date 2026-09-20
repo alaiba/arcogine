@@ -1,6 +1,6 @@
 # Arcogine — Architectural Overview
 
-This document sits under the [Product Charter](/docs/product/charter.md), which defines Arcogine's enduring product direction and principles. This document describes the design philosophy and architectural principles that guide Arcogine's implementation *today*, and distinguishes principles expected to persist regardless of implementation from constraints specific to the current MVP. For the rationale behind specific significant decisions and their history, see [Architecture Decision Records](decisions/README.md).
+This document sits under the [Product Charter](/docs/product/charter.md), which defines Arcogine's enduring product direction and principles. This document describes the design philosophy and architectural principles that guide Arcogine's implementation *today*, and distinguishes principles expected to persist regardless of implementation from constraints specific to the current MVP. This document and the focused architecture/specification documents it links are the current architectural authority; Git and pull-request history hold the historical rationale for how they reached their present form.
 
 ## Enduring architectural principles
 
@@ -19,7 +19,7 @@ ownership:
   publication and content identity ([Factory Design](factory-design.md)).
 - **Engine** owns deterministic simulation interpretation and authoritative runtime state: dispatch,
   decomposition, scheduling, transfer and derived-result rules under one identified interpretation
-  ([Engine Semantics](engine-semantics-v1.md), [Deterministic simulation](decisions/deterministic-simulation.md)).
+  ([Engine Semantics](engine-semantics-v1.md), [Determinism Contract](#determinism-contract)).
 - **Governance** owns controlled history, requirements/assertions, evidence use, conformance
   findings and governed change ([Governance and Conformance](governance-conformance.md)).
 - **Operational** owns real-operation integration, accountable continuation and the relationship
@@ -30,16 +30,71 @@ ownership:
 
 ### Semantic evolution and support
 
-[Semantic identity and evolution](decisions/semantic-identity-and-evolution.md) keeps every exact
-semantic binding non-rebinding and separates historical meaning from scoped support: a definition
-with attributed records is fixed as a whole, its exact definition stays resolvable for as long as
-those records are retained, and continuing decoding, execution, migration and interoperability are
-separately declared obligations of the owning contract. Support withdrawal never frees an identity
-for changed meaning. The owning contracts apply the rule to [fingerprints](factory-model-v1.md),
+Arcogine attributes durable facts to named semantic definitions: a fingerprint under a named
+canonicalization policy, a controlled revision bound to one historical occurrence, a run attributed
+to one Engine interpretation, evidence referencing one exact source revision, an operational
+continuation answering for the facts it accepted. Replay, historical explanation, conformance
+evaluation, comparison and audit all depend on those references keeping the meaning they had when
+they were made — while the definitions themselves still have to be correctable and extensible, and
+while decoding, executing, migrating or interoperating with every definition ever named is an
+open-ended cost no consumer has asked Arcogine to pay. These cross-domain rules reconcile the two
+forces:
+
+1. **Semantic identity never rebinds.** An identity denotes exactly one definition and one
+   intrinsic provenance. A materially changed definition — changed field membership, canonical
+   bytes, result-affecting interpretation, or the referent of a historical record — requires a
+   distinguishable identity. Corrections, changed interpretations and later occurrences are new
+   distinguishable things; they never rewrite what an existing identity denotes. This holds for
+   content identities, historical occurrence identities, evidence references and accountable
+   continuations alike, each under the equality rule its owning contract defines.
+2. **Attribution fixes the whole definition.** A definition may be corrected in place only until
+   the first retained or accepted record is attributed to it. From that point the whole definition
+   is fixed, including rules no fixture has exercised and rejection behavior no consumer has yet
+   observed.
+3. **Historical meaning and continuing support are different obligations.** Retaining the exact
+   definition an identity denotes, retaining content, decoding, executing, migrating and
+   interoperating are separately scoped promises with their own dependencies. Naming an identity
+   creates none of them automatically — treating every named definition as permanently supported
+   would manufacture a compatibility estate no consumer requires and make ordinary correction
+   impossible — and a digest or identifier alone never substitutes for an explanation whose basis
+   was not retained.
+4. **Retained attribution requires resolvable definitions.** Every identity stamped on a retained
+   or accepted record keeps its exact identity-defining definition resolvable for as long as that
+   record is retained. An owning contract may promise more — for example retained conformance
+   fixtures for released Engine interpretations.
+5. **Support obligations arise from accepted use and are scoped by the owning contract.** An
+   obligation exists when the owning contract publishes reliance, or when an authority that has
+   declared its custody accepts a record at its commit boundary. Disposable activity — tests,
+   scratch stores, drained events, local runs — creates no obligation by existing; admitting such
+   material into retained authority is a new decision. Acceptance by an authority that never
+   declared custody is a defect to account for, not a waiver: the accepted fact is never disposed
+   of to escape the obligation it created.
+6. **Withdrawing support never frees an identity for changed meaning.** Retiring execution,
+   decoding or compatibility for a definition removes a capability, not the meaning of the records
+   attributed to it. Narrowing an in-scope promise requires an explicit, authorized transition
+   under the owning contract, and that transition must neither rewrite history nor silently
+   discharge obligations already created.
+7. **There is no universal lifecycle.** Arcogine adopts no repository-wide maturity state such as
+   `proving`/`promoted` for whole contracts, no single retention horizon and no single version
+   scheme: retained attribution, executed behavior and outward compatibility are independent
+   promises that do not share one state, so a contract can carry enduring attribution obligations
+   while only part of its behavior is executed or supported. Nor does Arcogine freeze only the
+   exercised sections of a definition — specification sections are editorial units, the rules
+   interact, and rejection behavior matters without a happy-path fixture exercising it.
+
+Each owning contract therefore states its identity's equality rule, its fixed aspects, and the
+support it actually promises; silence offers no support but waives no obligation an actual accepted
+use created. Evolving a fingerprint policy, Engine interpretation, evidence reference scheme or
+continuation rule means introducing a distinguishable identity and reconciling the consumers in
+scope, never editing an attributed definition in place — which is what lets historical
+reconstruction stay truthful without permanent executors or eternal readers. The owning contracts
+apply these rules to [fingerprints](factory-model-v1.md),
 [controlled revisions](controlled-revisions.md), [Engine interpretation](engine-semantics-v1.md),
 [evidence](governance-evidence.md) and [operational continuity](operational-continuity.md);
 declaration and review mechanics live in
-[Semantic contract support](../development/semantic-contract-support.md).
+[Semantic contract support](../development/semantic-contract-support.md). Same-identity amendment
+of an attributed Engine definition, custody mechanics for retained proving artifacts, and closure
+of an operational continuation remain open questions for those owning contracts.
 
 ## Current implementation constraints (MVP)
 
@@ -342,7 +397,7 @@ re-execute the decision source
 != replay the resulting transition
 ```
 
-The general move for nondeterministic behaviour is to **convert the relevant nondeterministic boundary into durable recorded input** where a consumer's contract requires replayability — the [deterministic simulation decision](decisions/deterministic-simulation.md)'s ordered external commands already work this way. Hidden source internals never become replay state.
+The general move for nondeterministic behaviour is to **convert the relevant nondeterministic boundary into durable recorded input** where a consumer's contract requires replayability — the [Determinism Contract](#determinism-contract)'s ordered external commands already work this way. Hidden source internals never become replay state.
 
 Attribution and outcome have a two-part rule:
 
@@ -361,7 +416,7 @@ This preserves the boundary between provenance and explicit policy input; it doe
 | Agency module, subsystem, or delivery track | The result is cross-cutting semantic distinctions, not a coherent implementation responsibility | A surviving shared contract acquires an owner that no existing module can hold |
 | A universal `Decision` record, subject reference, or observation reference | Each is domain-owned today for reasons that differ per domain | A cross-domain consumer needs one contract, not merely one shape |
 
-Each row is a refusal justified by *current* evidence and current consumers, not a permanent prohibition, which is why each states what would reopen it. None of them commits Arcogine to persisted or public identity equality, a shared namespace or lifecycle contract, a permanent closed taxonomy, or cross-module equality semantics — which is why this result is recorded as architecture prose rather than an ADR. A future change that would introduce any of those, or another hard-to-reverse public or persisted semantic commitment, must be re-evaluated against the [ADR admission test](decisions/README.md#admission) rather than absorbed into this section.
+Each row is a refusal justified by *current* evidence and current consumers, not a permanent prohibition, which is why each states what would reopen it. None of them commits Arcogine to persisted or public identity equality, a shared namespace or lifecycle contract, a permanent closed taxonomy, or cross-module equality semantics, which is why they belong in this section at all. A future change that would introduce any of those, or another hard-to-reverse public or persisted semantic commitment, is a change to Arcogine's architecture: it must be reconciled into the architecture or specification document that would own the new semantics, with its consumers and executable invariants updated in the same change, rather than absorbed into this section as another refusal.
 
 W3C PROV and comparable external models remain **vocabulary donors and outward projection targets**, consistent with the [external representation policy](external-representations.md) and [Standards Alignment](standards-alignment.md). They are not Arcogine's domain model, and adopting their vocabulary never imports their ontology.
 
@@ -487,7 +542,7 @@ Adding Finance must not become an excuse to introduce a universal `WorldState` o
 
 ### Non-goal: sophisticated accounting
 
-Out of scope: GAAP/IFRS compliance, configurable revenue-recognition frameworks, accounts receivable/payable unless a scenario needs them, tax, depreciation, multi-currency, debt/equity financing, inventory accounting, budgeting, forecasting, or fiscal periods. A minimal double-entry ledger with an immediate-settlement policy is not that — it's the intentional current architecture, sized to establish ownership rather than sophistication. Further finance capability should be introduced through an explicit planning and decision record when requirements justify it, rather than inferred from removed migration notes.
+Out of scope: GAAP/IFRS compliance, configurable revenue-recognition frameworks, accounts receivable/payable unless a scenario needs them, tax, depreciation, multi-currency, debt/equity financing, inventory accounting, budgeting, forecasting, or fiscal periods. A minimal double-entry ledger with an immediate-settlement policy is not that — it's the intentional current architecture, sized to establish ownership rather than sophistication. Further finance capability should be introduced through explicit planning and a reconciled architecture change when requirements justify it, rather than inferred from removed migration notes.
 
 ## Discrete-Event Simulation (DES)
 
@@ -640,14 +695,56 @@ Java features available within the **Java 21 compatibility baseline** map cleanl
 
 ## Determinism Contract
 
-The simulation guarantees deterministic execution:
+Deterministic simulation is architectural, not an implementation convenience: acceptance tests,
+comparison of design candidates, historical explanation of a run, and challenge evaluation are all
+meaningless if two executions of the same explicit inputs can legitimately disagree. At the same
+time Arcogine must be able to change how it interprets a design — dispatch ranking, work
+decomposition, scheduling, transfer timing — without pretending the designer authored a different
+production system, and without claiming that historical results were produced under rules they were
+not. Five rules hold that line:
+
+1. **A simulation outcome is a function of explicit inputs and one identified Engine
+   interpretation.** The reproducibility inputs are the authored model identity, the Engine
+   interpretation identity, the explicit workload, the seed and other random inputs, the ordered
+   external commands, and any other explicitly identified result-affecting input. Nothing else may
+   influence acceptance, rejection, assignment, ordering, simulated time, terminal state or derived
+   results; run identity is correlation metadata and never affects an outcome.
+2. **No result-affecting rule may remain ambient.** Any limit, ordering rule, tie-break, rounding or
+   accumulation rule that two implementations could choose differently is part of the identified
+   interpretation or is an explicitly identified input. One interpretation identity covers a run's
+   complete result-affecting interpretation and is fixed when the run is established.
+   [Engine Semantics v1](engine-semantics-v1.md) owns the exact rules, their membership test and
+   the conformance fixtures that pin them.
+3. **Authored facts and interpretation have different owners.** Facts describing the production
+   system the designer authored belong to the canonical model and its fingerprint; rules describing
+   how Arcogine interprets any such design belong to the Engine interpretation identity. Changing
+   interpretation alone never changes the authored model's identity, and authored facts are never
+   synthesized to make an interpretation applicable.
+4. **An intentional change to result-affecting behavior is a new interpretation identity**, a
+   bug fix that observably changes outcomes included. Repairing an implementation so that it
+   conforms to the identified interpretation is not such a change. Implementations declare which
+   interpretations they execute and refuse unsupported ones rather than silently substituting
+   current behavior.
+5. **The durability guarantee is attribution plus a verifiable definition, not permanent
+   re-execution.** A retired interpretation keeps its identifier, normative specification and
+   conformance fixtures, so historical results stay attributable and interpretable after execution
+   support ends. Cross-interpretation comparison is explicit and owned by the consumer making the
+   claim; identity never authorizes guessing that results are comparable.
+
+Nondeterministic boundaries a consumer needs to replay — clocks, external inputs, human or agent
+decisions — are converted into recorded explicit inputs rather than admitted into the
+interpretation. Runtime provenance carries the authored model identity and the Engine
+interpretation identity, so a consumer can state exactly what produced a result
+([runtime contract](runtime-contract.md)).
+
+The current implementation realizes this contract with:
 
 - `java.util.Random` seeded with `rng_seed` from scenario config
 - Priority queue orders events by time, with FIFO tie-breaking
 - Java strict floating-point semantics; compilation targets the Java 21 compatibility baseline
 - No concurrent mutation of simulation state
 
-Given identical scenario TOML and the same seed, the simulation produces identical event logs, KPIs, and final state.
+Given identical scenario TOML and the same seed, the simulation produces identical event logs, KPIs, and final state. Tests comparing semantic outcomes normalize or inject run identity and compare the deterministic stream; a test that depends on run identity is wrong.
 
 This determinism contract is scoped to simulation, replay, and verification contexts, where it is a critical property. It is not a claim that real-world execution itself must be, or will be made, deterministic — production operates in a non-deterministic world of real machines, people, and failures. See the Product Charter's [continuity with current architecture](/docs/product/charter.md#8-continuity-with-current-architecture) section for this distinction.
 
@@ -668,7 +765,7 @@ Scenario factory semantics are instantiated through an implemented canonical-mod
 
 `:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by the [controlled revision contract](controlled-revisions.md). Governance identity/history capability is complete: `ControlledRevisionAuthority` defines the authoritative acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` adapter persists append-only revision records and immutable semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-authoritative parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Historical resolution returns the accepted immutable revision together with its exact semantic artifact; missing/corrupt metadata or artifacts and fingerprint mismatches fail explicitly rather than falling back to current model state.
 
-The factory proving ground reuses the exact `factory-model:v1` canonical bytes as its historical semantic artifact. `FactoryModelArtifactV1` strictly decodes and canonical-reencodes those bytes to reconstruct the exact historical `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one immutable artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The current filesystem record layout and locking mechanics are replaceable adapter details, not a selected permanent production persistence architecture; no separate persistence decision record was required. Governance semantic ChangeSet/impact capability's initial slice adds the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance` and the factory-domain `FactoryModelSemanticComparator` (Factory semantic-comparison capability) that implements `SemanticChangeExtractor` against `factory-model:v1` artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under [Factory Model v1](factory-model-v1.md)) as a real change. Governance requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the semantic ChangeSet/impact capability `ImpactScope` seam. Governance conformance evaluation/findings capability's initial slice adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a requirements/assertions capability `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing evidence, authorization, or deployment concepts. Approval/authorization, evidence, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain separate evidence/evidence-use capability+ concerns rather than revision identity.
+The factory proving ground reuses the exact `factory-model:v1` canonical bytes as its historical semantic artifact. `FactoryModelArtifactV1` strictly decodes and canonical-reencodes those bytes to reconstruct the exact historical `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one immutable artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The current filesystem record layout and locking mechanics are replaceable adapter details, not a selected permanent production persistence architecture. Governance semantic ChangeSet/impact capability's initial slice adds the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance` and the factory-domain `FactoryModelSemanticComparator` (Factory semantic-comparison capability) that implements `SemanticChangeExtractor` against `factory-model:v1` artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under [Factory Model v1](factory-model-v1.md)) as a real change. Governance requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the semantic ChangeSet/impact capability `ImpactScope` seam. Governance conformance evaluation/findings capability's initial slice adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a requirements/assertions capability `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing evidence, authorization, or deployment concepts. Approval/authorization, evidence, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain separate evidence/evidence-use capability+ concerns rather than revision identity.
 
 ## API Layer
 

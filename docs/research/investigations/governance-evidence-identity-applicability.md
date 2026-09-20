@@ -90,7 +90,7 @@ The researcher must test whether these are genuinely distinct under the required
 | Applicability | Evidence is missing, stale, outside its effective period, or produced under incompatible semantics | Unusable evidence becomes an implicit pass or an unexplained failure | Tests whether applicability is explicit and use-owned where appropriate | `PROVING CASE` |
 | Ownership | Governance labels an Engine result as an external observation or recomputes its meaning | Producer provenance and ownership are falsified | Tests provenance separation across domains | `PROVING CASE` |
 | Ingestion independence | An external observation arrives before correspondence to an Arcogine revision exists | Ingestion must guess or duplicate source facts | Tests revision-independent observation ownership | `PROVING CASE` |
-| Mechanism scope | A candidate requires a database/signature/retention system to state its semantics | Implementation detail becomes an accidental ADR | Keeps mechanism choices deferred unless indispensable | `BOUND / DEFER` |
+| Mechanism scope | A candidate requires a database/signature/retention system to state its semantics | Implementation detail becomes an accidental architectural commitment | Keeps mechanism choices deferred unless indispensable | `BOUND / DEFER` |
 
 ## Proving cases
 
@@ -107,7 +107,7 @@ For each case, state what evidence would make the result decision-quality and wh
 
 ## Evidence expectations
 
-Ground first in live `main`, the Governance architecture, the controlled revision contract, the Operational continuity contract, the deterministic simulation decision, Proposed the Governance evidence contract, the research operating model/register, the planning admission rule, and the current Governance implementation and boundary tests. Search semantic neighbors across Operational observations, runtime provenance, controlled revision history, conformance results, and existing research.
+Ground first in live `main`, the Governance architecture, the controlled revision contract, the Operational continuity contract, the Determinism Contract, the Governance evidence contract, the research operating model/register, the planning admission rule, and the current Governance implementation and boundary tests. Search semantic neighbors across Operational observations, runtime provenance, controlled revision history, conformance results, and existing research.
 
 External evidence is required only if it discriminates a candidate, exposes a failure mode, or establishes a material interoperability/consequence constraint. Any such source must be verified and cited with precise provenance; unverified background must be labeled as such. Absence claims must state the repository search scope.
 
@@ -120,7 +120,7 @@ External evidence is required only if it discriminates a candidate, exposes a fa
 
 ## Adversarial-review plan
 
-This is a high-risk question. Before any ADR or equivalent durable architecture is accepted, an independent reviewer must reconstruct the constraints and candidate set before reading the report recommendation, then challenge omitted candidates, hidden assumptions, ownership inversion, stale repository authority, possibility-treated-as-necessity, over-generalization, and conclusions stronger than the evidence.
+This is a high-risk question. Before any durable architecture or specification change is accepted, an independent reviewer must reconstruct the constraints and candidate set before reading the report recommendation, then challenge omitted candidates, hidden assumptions, ownership inversion, stale repository authority, possibility-treated-as-necessity, over-generalization, and conclusions stronger than the evidence.
 
 ## Exit criteria
 
@@ -128,7 +128,7 @@ Stop only when the report identifies the surviving semantic contract (or conclud
 
 ## Expected durable destination
 
-Focused architecture/ADR reconciliation if a minimum contract survives; otherwise an explicit no-action or narrower research destination. Only after that reconciliation may the Governance plan be promoted to `READY_NEXT` and admit a concrete implementation responsibility. *(Outcome: the Governance evidence contract Accepted; the plan was promoted in the same reconciliation.)*
+Focused architecture/specification reconciliation if a minimum contract survives; otherwise an explicit no-action or narrower research destination. Only after that reconciliation may the Governance plan be promoted to `READY_NEXT` and admit a concrete implementation responsibility. *(Outcome: the Governance evidence contract was adopted; the plan was promoted in the same reconciliation.)*
 
 ## Follow-up / reopening triggers
 

@@ -14,7 +14,7 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 ## Weekly Consistency review
 
 - **Trigger/cadence:** weekly, plus additional review after major architecture/status transitions when useful.
-- **Purpose:** deep repository semantic review across implementation, architecture, ADRs, planning, docs, examples, config, tests, CI, and prior findings.
+- **Purpose:** deep repository semantic review across implementation, architecture and specifications, planning, docs, examples, config, tests, CI, and prior findings.
 - **Owner/runtime:** the Consistency reviewer in a ChatGPT chat session using a canonical-`main` Repomix baseline reconciled to one exact current `main` target through `docs/development/repository-snapshot.md`, plus the GitHub connector for mutable state.
 - **Execution:** manual/user-invoked. A snapshot may be behind current `main`; that is acceptable when exact target `T`, ancestry, and a complete usable `S..T` delta are established. Missing/malformed provenance or unsafe/incomplete reconciliation makes the review `INCOMPLETE` and requires a refreshed snapshot.
 - **Review strategy:** the previous reviewed head is a recency anchor only. New and changed content gets first attention, but scope is not bounded to that change range and later reviews may uncover older inconsistencies.

@@ -45,7 +45,7 @@ Classify each material candidate as one of:
 - **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being smuggled into the current PR or slice.
 - **Discard** — the observation is situational, transient, or otherwise not worth preserving.
 
-Prefer stronger forms of durable capture in this order when they fit the lesson: executable guard/test, canonical helper/tooling, agent/contributor standard work, maintained documentation, then an ADR only for genuinely architectural or hard-to-reverse decisions. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
+Prefer stronger forms of durable capture in this order when they fit the lesson: executable guard/test, canonical helper/tooling, agent/contributor standard work, maintained documentation, then canonical architecture or specification for genuinely architectural or hard-to-reverse constraints. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
 
 Do not manufacture a lesson merely to produce an output. Finish every Session-close Kaizen review with an explicit deletion verdict: either the session is safe to delete because nothing unique remains, or name exactly what still needs to be captured first.
 
@@ -79,7 +79,7 @@ Some repository tasks have additional repository-owned operating contracts.
   review belong to this role, not to Work Planner or Consistency.
 
 Specialized agent contracts supplement `AGENTS.md`; they do not override
-repository architecture, ADR, contribution, documentation, or executable
+repository architecture, contribution, documentation, or executable
 authorities.
 
 ## Continuous improvement
@@ -126,7 +126,7 @@ and other active/delivery-history context where the coordinate helps sequence or
 does not change.
 
 Do not carry those identifiers into durable semantic naming — content whose meaning is expected to
-outlive the delivery context that produced it. This includes ADR, architecture, product, reference, or
+outlive the delivery context that produced it. This includes architecture, product, reference, or
 development documents; code comments; workflow definitions; and test/class/file names introduced
 alongside the change. It does not include commit messages or other delivery-history records, which
 may keep the coordinate that was actually used to track the work. When a planned result, a review
@@ -151,11 +151,14 @@ unrelated identifiers elsewhere in the codebase — which is exactly why the res
 namespaces exist: catching identifier leakage no syntax pattern can safely recognize (prose like
 "the next stage" with no literal coordinate) remains a human review responsibility.
 
-`docs/architecture/decisions/` holds only the current durable decision set. Follow its
-`README.md`: apply the admission test, update or remove a decision in the same reviewed
-architectural change that changes its consequences, and reconcile affected specifications and
-consumers. Git history is the record of replaced decisions; no supersession chain or amendment
-metadata is kept.
+`docs/architecture/` holds Arcogine's current architecture. The
+[Architecture Overview](docs/architecture/overview.md) owns cross-cutting principles and domain
+boundaries; focused architecture and specification documents own exact contracts, identities,
+semantics, algorithms and supported boundaries. Together they must be sufficient to answer what
+Arcogine's architecture is now, without reading history. Arcogine keeps no separate
+decision-record layer: a significant architectural change is reconciled into the architecture or
+specification that owns the affected semantics, with code, tests, and dependent planning updated
+in the same reviewed change. Git and pull-request history preserve what changed and why.
 
 ## Artifact lifetime and transient workspace
 

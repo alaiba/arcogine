@@ -93,7 +93,7 @@ What remains genuinely open after this investigation, distinct from what the inv
 
 ## Durable consequences
 
-The smallest consequences that may deserve reconciliation into: no action; product; architecture; ADR; reference; implementation responsibility. State them — do not perform that promotion by writing this section; the actual ADR/architecture/planning change is a separate, independently reviewed change.
+The smallest consequences that may deserve reconciliation into: no action; product; the architecture or specification that owns the affected semantics; process policy; reference; implementation responsibility. State them — do not perform that reconciliation by writing this section; the actual architecture, specification, or planning change is a separate, independently reviewed change.
 
 Also identify any reusable research assets or negative knowledge from `Transferability and reuse` / `What did not survive` that would change future reasoning or validation if lost. The later knowledge-transfer audit should preserve such assets in the durable surface that will need them. If the exact report/review/source artifact itself must remain readable after reconciliation, say so explicitly so reconciliation can promote it to a retention surface with a real persistence contract; a workspace SHA or PR description is not such a contract. If a potentially transferable signal is not a current Arcogine research question or accepted semantic consequence but meets the synthesis-seed admission criteria, reconciliation may preserve a compact non-authoritative seed instead. Otherwise make an explicit discard decision; do not retain the whole report merely because it contains potentially reusable material.
 

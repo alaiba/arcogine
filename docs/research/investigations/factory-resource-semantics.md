@@ -163,7 +163,7 @@ Durable reconciliation should preserve these rules:
 - implementation planning records the split as **not admitted** and requires a future checkable technical-specification/dependency invariant before reopening it;
 - the runtime observation/event contract's resource `definition identity` wording does not imply two distinct identifiers under the current collapsed model: the same canonical `MachineId` identifies the configured model record and runtime correlation target.
 
-No new ADR is needed for keeping the existing model. An ADR passing the admission test becomes appropriate only when Arcogine actually accepts an independently versioned specification identity, generalized qualification/allocation rules with hard compatibility impact, consequential pool/work-center aggregation, physical-asset correspondence semantics, or another hard-to-reverse resource contract.
+Keeping the existing model needs no architecture change. Reconciling the owning architecture or specification becomes appropriate only when Arcogine actually accepts an independently versioned specification identity, generalized qualification/allocation rules with hard compatibility impact, consequential pool/work-center aggregation, physical-asset correspondence semantics, or another hard-to-reverse resource contract.
 
 ## Follow-up research
 

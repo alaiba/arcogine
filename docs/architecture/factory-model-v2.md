@@ -3,7 +3,7 @@
 Status: Normative canonicalization contract; shape/validation implemented, canonical publication not implemented
 Fingerprint policy: `factory-model:v2`
 Sibling policy: [Factory Model v1 Canonicalization](factory-model-v1.md)
-Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md) and the [Factory semantic-evolution contract](factory-design.md#111-semantic-evolution)
+Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support) and the [Factory semantic-evolution contract](factory-design.md#111-semantic-evolution)
 
 ## 1. Purpose
 
@@ -356,7 +356,7 @@ malformed or non-canonical artifact acquire a well-formed-looking V2 identity.
 
 No V2 fingerprint has yet been produced by a shipped publication path or recorded against a
 controlled revision, so this grammar may still be corrected by amending this document. Under the
-[semantic identity decision](decisions/semantic-identity-and-evolution.md), the first retained
+[semantic evolution rules](overview.md#semantic-evolution-and-support), the first retained
 attribution freezes the whole definition: from that point every implementation claiming the policy
 must produce the same fingerprint for the same V2 semantic content across processes, software
 versions, and implementation languages.

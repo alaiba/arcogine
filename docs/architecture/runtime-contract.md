@@ -3,7 +3,7 @@
 Status: Adopted semantic contract; headless `FactoryRuntime` implementation complete, legacy API/SSE projection migration outstanding
 Owning architecture: [Architecture Overview](overview.md#core-architecture-philosophy-events-state-observations)
 Engine interpretation: [Engine Semantics v1](engine-semantics-v1.md)
-Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md)
+Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 
 ## Purpose
 
@@ -180,7 +180,7 @@ API/UI DTOs may project these supported observations, but DTO types never become
 
 ## Model fingerprint and Engine semantics are mandatory provenance; controlled revision is conditional provenance
 
-Every supported runtime observation and runtime event carries the durable `ModelFingerprint` of the published `FactoryModelVersion` that instantiated the runtime and the `EngineSemanticsVersion` fixed for the run (see the [deterministic simulation decision](decisions/deterministic-simulation.md)). `FactoryRuntime` also exposes its fixed semantics version directly so headless callers can read it without first observing or draining events. Propagating `EngineSemanticsVersion` into the observation/event metadata types is a known implementation gap; the runtime already fixes and reports one version.
+Every supported runtime observation and runtime event carries the durable `ModelFingerprint` of the published `FactoryModelVersion` that instantiated the runtime and the `EngineSemanticsVersion` fixed for the run (see the [Determinism Contract](overview.md#determinism-contract)). `FactoryRuntime` also exposes its fixed semantics version directly so headless callers can read it without first observing or draining events. Propagating `EngineSemanticsVersion` into the observation/event metadata types is a known implementation gap; the runtime already fixes and reports one version.
 
 A `ControlledRevisionId` is carried only when the runtime was actually instantiated with an authoritative controlled-revision binding supplied by the owning revision/repository boundary.
 

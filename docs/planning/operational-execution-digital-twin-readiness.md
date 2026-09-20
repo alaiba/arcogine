@@ -2,7 +2,7 @@
 
 > **Status:** NOT ADMITTED — no Operational implementation slice is currently safe to execute  
 > **Scope:** Record the concrete admission conditions for future Operational work without embedding unresolved architecture in delivery planning  
-> **Authority:** Planning only; unresolved semantics live in research and Proposed architecture/ADRs
+> **Authority:** Planning only; unresolved semantics live in research, not in this plan, and adopted semantics live in canonical architecture/specifications
 
 ## Current landed dependencies
 

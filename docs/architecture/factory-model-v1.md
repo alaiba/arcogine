@@ -2,7 +2,7 @@
 
 Status: Normative canonicalization contract; implemented by `FactoryModelVersion.fingerprint()`
 Fingerprint policy: `factory-model:v1`
-Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md) and the [Factory semantic-evolution contract](factory-design.md#111-semantic-evolution)
+Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support) and the [Factory semantic-evolution contract](factory-design.md#111-semantic-evolution)
 Spatial successor: [Factory Model v2 Canonicalization](factory-model-v2.md)
 
 ## Purpose
@@ -206,7 +206,7 @@ Bare `modelContentHash` values must never be reinterpreted as v1 digests.
 
 ## The policy is immutable
 
-`factory-model:v1` has attributed records: published fingerprints, controlled revisions and stored canonical artifacts reference it. Under the [semantic identity decision](decisions/semantic-identity-and-evolution.md) its definition is therefore fixed as a whole, and every implementation claiming the policy must produce the same fingerprint for the same v1 semantic content across processes, software versions, and implementation languages.
+`factory-model:v1` has attributed records: published fingerprints, controlled revisions and stored canonical artifacts reference it. Under the [semantic evolution rules](overview.md#semantic-evolution-and-support) its definition is therefore fixed as a whole, and every implementation claiming the policy must produce the same fingerprint for the same v1 semantic content across processes, software versions, and implementation languages.
 
 Changing any identity-affecting rule while still calling the policy v1 is forbidden, including:
 

@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Execution/reality relationships, external observations, digital-twin reconciliation, and design-to-reality continuity  
 > **Authority:** The [Operational continuity contract](operational-continuity.md) is adopted; the remaining boundaries are proposed architecture. This document does not describe current production capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [Factory publication identity contract](factory-design.md#11-publication-identity-and-provenance), [runtime observation/event contract](runtime-contract.md), [external representation policy](external-representations.md), [Operational continuity contract](operational-continuity.md), [deterministic simulation decision](decisions/deterministic-simulation.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [Factory publication identity contract](factory-design.md#11-publication-identity-and-provenance), [runtime observation/event contract](runtime-contract.md), [external representation policy](external-representations.md), [Operational continuity contract](operational-continuity.md), [Determinism Contract](overview.md#determinism-contract), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
 ## 1. Architectural position
 
@@ -345,7 +345,7 @@ These capabilities have different retention and reproducibility requirements. Fo
 
 The physical world does not replay. Arcogine may replay or reinterpret records about it, and may fork synthetic futures from historical reconciled state.
 
-The runtime observation/event contract does not currently promise an unbounded cursor-addressable durable event history, and the deterministic simulation decision does not promise permanent exact executability of every historical Engine version. Those remain separate design concerns.
+The runtime observation/event contract does not currently promise an unbounded cursor-addressable durable event history, and the Determinism Contract does not promise permanent exact executability of every historical Engine version. Those remain separate design concerns.
 
 None of these capabilities is an execution kind, and none of them is the durable operational identity. The Operational continuity contract settles how they interact with it: historical inspection and seek/reconstitution accept no record and establish nothing; replay by itself establishes nothing, and derived results belong to whatever account retains them; a checkpoint restore that loses no accepted material preserves the identity, while a stale restore establishes a new identity with lineage and an abandoned-tail annotation; and a fork from a selected historical state always establishes a new identity with mandatory lineage, at the child's first accepted record.
 
@@ -451,7 +451,7 @@ Where an operation can have external consequence:
 
 These are architecture requirements, not claims that current Arcogine implements production-grade safety controls.
 
-## 17. Current open questions, non-goals, and ADR triggers
+## 17. Current open questions, non-goals, and architecture triggers
 
 The next architecture work is deliberately bounded to these unresolved questions:
 
@@ -464,4 +464,4 @@ Do not spend this architecture round selecting OPC UA/MQTT schemas, authenticati
 
 The [Operational continuity contract](operational-continuity.md) resolves the durable operational identity referent, continuity, divergence, and record-attachment rules summarized in §2.2. Its identity-separation, non-inference, and raw-observation constraints are adopted architecture. No kind-bound `ExecutionContextKind` model exists, and the representation, persistence, coordination, registry, closure, and ownership questions it defers must not be settled by this document.
 
-Later ADRs are appropriate when implementation commits Arcogine to hard-to-reverse choices such as shared operation/transition ownership, actor/capability/trust semantics, command correlation/idempotency, external observation/correspondence contracts, reconciliation authority/temporal semantics, or production persistence/retention.
+Later architecture or specification work is appropriate when implementation commits Arcogine to hard-to-reverse choices such as shared operation/transition ownership, actor/capability/trust semantics, command correlation/idempotency, external observation/correspondence contracts, reconciliation authority/temporal semantics, or production persistence/retention; the durable result of such a choice is the changed contract, reconciled with its consumers.

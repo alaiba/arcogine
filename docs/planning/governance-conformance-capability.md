@@ -3,7 +3,7 @@
 > **Status:** Active; PLAN-GOV-1 complete, PLAN-GOV-2 initial slice complete, PLAN-GOV-3 complete, PLAN-GOV-4 initial slice complete; PLAN-GOV-5 is `READY_NEXT`
 > **Scope:** Implementation admission and sequencing for evidence, governed change, exceptions, mappings, and audit projections over the landed identity/change/conformance substrate
 > **Authority:** Planning only; durable semantics remain owned by Governance architecture and its adopted contracts  
-> **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [Governance evidence contract](../architecture/governance-evidence.md), [deterministic simulation decision](../architecture/decisions/deterministic-simulation.md), [Operational continuity contract](../architecture/operational-continuity.md), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [controlled revision contract](../architecture/controlled-revisions.md)
+> **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [Governance evidence contract](../architecture/governance-evidence.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Operational continuity contract](../architecture/operational-continuity.md), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [controlled revision contract](../architecture/controlled-revisions.md)
 
 ## 1. Boundary
 
@@ -186,8 +186,8 @@ generic evidence lake, production adapter, signature/PKI infrastructure, databas
 selection, generic verification framework, Engine analytics redesign, universal source taxonomy or
 subject reference, or invented producer provenance belongs in this slice. Storage, identifier
 scheme, serialization, and API field shapes are implementation choices for this slice only insofar
-as they do not become persisted or public contracts; a hard-to-reverse choice among them needs its
-own ADR per §12.
+as they do not become persisted or public contracts; a hard-to-reverse choice among them needs
+architecture reconciliation per §12.
 
 ## 5. PLAN-GOV-6 — Governed change and external workflow integration
 
@@ -275,8 +275,8 @@ Deployment is not required to prove this milestone; future Operational applicati
 
 Do not build broad framework libraries, auditor marketplaces, questionnaire automation, generic policy generation, trust-center surfaces, a monolithic business-object graph, a replacement for Jira/change-management systems, generic Git branch/merge semantics, telemetry ingestion, production commands, or digital-twin reconciliation merely to advance this plan.
 
-## 12. Documentation/ADR rule
+## 12. Documentation reconciliation rule
 
-Update architecture/current-state docs only when capabilities land. Add an ADR only when implementation commits to a durable hard-to-reverse semantic/protocol/persistence contract not already governed by existing ADRs.
+Update architecture/current-state docs only when capabilities land. Reconcile the owning architecture or specification when implementation commits to a durable hard-to-reverse semantic/protocol/persistence contract that the current contracts do not already fix.
 
 Untriggered lineage/source-control extensions and Operational ontology questions remain outside this implementation plan until concrete research/architecture work promotes them.

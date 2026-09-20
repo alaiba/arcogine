@@ -2,7 +2,7 @@
 
 Status: Adopted semantic contract; evidence identification, storage, reuse and explanation are not yet implemented
 Owning architecture: [Governance and Conformance](governance-conformance.md)
-Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md)
+Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 
 ## Purpose
 
@@ -33,7 +33,7 @@ observations never acquire Arcogine identity at ingestion and corrections are ne
 about earlier ones ([Operational continuity](operational-continuity.md)); and Engine-produced
 results carry `ModelFingerprint`, `EngineSemanticsVersion` and explicit result-affecting inputs,
 with retirement removing executability, not provenance, and cross-version comparison explicit and
-consumer-owned ([deterministic simulation](decisions/deterministic-simulation.md)).
+consumer-owned ([Determinism Contract](overview.md#determinism-contract)).
 
 ## 1. Evidence need, evidence provenance, and evidence use stay separate dimensions
 
@@ -135,7 +135,7 @@ Evidence does not categorically lack a model fingerprint or revision. The durabl
   establishes it must, retain producer-intrinsic provenance**: the subject `ModelFingerprint`, the
   controlled revision when the producer was bound to one, the `EngineSemanticsVersion` when Engine
   behaviour was involved, run/result or result-boundary identity, the explicit result-affecting
-  inputs the deterministic simulation decision names, and the analytical definition/version needed to interpret the result. A run
+  inputs the Determinism Contract names, and the analytical definition/version needed to interpret the result. A run
   identifier alone does not identify a time-varying result; model plus Engine version alone omits
   workload, random inputs, ordered commands, and other material inputs.
 - The target model/revision/claim of a later use is a separate relationship and may differ from the
@@ -189,8 +189,8 @@ Cross-version compatibility is a determination about a particular claim, metric,
 assumptions, made by the consuming use. Equal `EngineSemanticsVersion` values do not establish equal
 workload, units, scope, or experimental conditions; different values do not by themselves make
 results incomparable for a fact the changed semantics cannot affect. Without adequate compatibility
-evidence, comparison stays unsupported — identity never authorizes guessing. This applies the deterministic simulation decision
-decision 17 to Governance use and does not modify it.
+evidence, comparison stays unsupported — identity never authorizes guessing. This applies the [Determinism Contract](overview.md#determinism-contract)'s
+consumer-owned comparison rule to Governance use and does not modify it.
 
 ## 8. A completed evaluation is an identifiable immutable occurrence with a fixed basis
 
@@ -241,7 +241,7 @@ occurrence**; this is an explicit rule, not a side effect of the evidence contra
   definition, a current source revision, or re-execution under current semantics. A retained digest
   with missing content proves neither readability nor meaning.
 - Retirement of a producer's executability does not erase attribution or automatically invalidate a
-  historical result (the deterministic simulation decision decision 16). Whether the result still serves a new claim is a new
+  historical result (the [Determinism Contract](overview.md#determinism-contract): the durability guarantee is attribution plus a verifiable definition, not permanent re-execution). Whether the result still serves a new claim is a new
   use determination.
 
 ## 10. Use targets are point identities; accumulating continuations are out of scope

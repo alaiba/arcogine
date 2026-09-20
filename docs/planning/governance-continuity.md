@@ -46,7 +46,7 @@ Constructing a value in memory does not create authoritative history. Authority 
 
 Its directory layout, binary record format, lock mechanics, and physical artifact key are replaceable implementation details. They are not a selected production database/storage architecture.
 
-A hard-to-reverse production persistence/migration/retention/integrity choice requires its own architecture decision when such a concrete implementation is admitted.
+A hard-to-reverse production persistence/migration/retention/integrity choice must be reconciled into the architecture or specification that owns the affected semantics when such a concrete implementation is admitted.
 
 ## Downstream use
 

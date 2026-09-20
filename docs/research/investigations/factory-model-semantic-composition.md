@@ -31,7 +31,7 @@ The [Factory semantic-evolution contract](../../architecture/factory-design.md#1
 - `ticksPerCell`; and
 - `handlingTicks`.
 
-The same ADR deliberately excludes orientation, paths, graph edges, aisles, conveyors, transport resources, obstacles, congestion, floor identity, connection points, and route topology until later capabilities make them behaviorally relevant.
+The same [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) deliberately excludes orientation, paths, graph edges, aisles, conveyors, transport resources, obstacles, congestion, floor identity, connection points, and route topology until later capabilities make them behaviorally relevant.
 
 Meanwhile, [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) already treats configured identity, reusable specification, capability/qualification, hierarchy, spatial placement, external asset identity, and runtime state as orthogonal semantic concerns whose independent meaning must be proved rather than collapsed.
 
@@ -232,7 +232,7 @@ The final report must resolve:
 14. Can storage exist without spatial layout? Can spatial layout exist without storage? What evidence decides?
 15. How do controlled revisions and semantic comparison cross changes in represented concerns?
 16. When, if ever, should one concern become an independently durable/versioned semantic contract?
-17. How do the concluded [semantic identity decision](../../architecture/decisions/semantic-identity-and-evolution.md) and the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) constrain any version/durability decision?
+17. How do the concluded [semantic evolution and support rules](../../architecture/overview.md#semantic-evolution-and-support) and the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) constrain any version/durability decision?
 18. What should happen to the already implemented `FactoryModelV2`/validator if the surviving semantic boundary differs from current V2?
 19. What exact current decisions/specifications/plans would need revision or reconciliation?
 20. What evidence would falsify the surviving composition model?
@@ -287,7 +287,7 @@ At minimum inspect:
 - Product Charter "one model, many views" and semantic-continuity principles;
 - Factory Design architecture;
 - Factory Resource Semantics;
-- the canonical model boundary, the Factory publication identity contract, the Factory Model v1 specification, the Factory semantic-evolution contract, the deterministic simulation decision;
+- the canonical model boundary, the Factory publication identity contract, the Factory Model v1 specification, the Factory semantic-evolution contract, the Determinism Contract;
 - Factory Model v1 implementation/canonicalization and V2 specification/implementation/validator;
 - Governance semantic comparison and controlled-revision resolution;
 - current Engine spatial plan and Engine Semantics v1;
@@ -329,7 +329,7 @@ The investigation is complete only when it:
 7. explains cross-concern validation and controlled-revision comparison;
 8. tests geometry/storage/topology/qualification/hierarchy evolution without implementing those future capabilities;
 9. states how current V1/V2 artifacts and the landed V2 model/validator would be treated under the surviving model;
-10. states the smallest ADR/architecture/planning consequences without performing them;
+10. states the smallest architecture/specification/planning consequences without performing them;
 11. records unresolved questions and reopening triggers; and
 12. receives independent adversarial review before any conclusion is promoted.
 
@@ -343,13 +343,13 @@ This investigation does **not**:
 - introduce independently versioned subcontracts merely because code can be modularized;
 - automatically preserve or discard current `factory-model:v1/v2`;
 - invent defaults for a concern the authored design did not represent;
-- contradict the adopted semantic identity decision or the Factory semantic-evolution contract; or
+- contradict the adopted semantic evolution and support rules or the Factory semantic-evolution contract; or
 - change adopted architecture inside a research report.
 
 ## Coordination with the concluded semantic-contract maturity research
 
 The sibling [Semantic Contract Maturity and Durability](semantic-contract-maturity-durability.md)
-question is concluded: the [semantic identity decision](../../architecture/decisions/semantic-identity-and-evolution.md)
+question is concluded: the [semantic evolution and support rules](../../architecture/overview.md#semantic-evolution-and-support)
 and the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution)
 own non-rebinding identity, whole-definition fixation at first retained attribution, resolvable
 definitions for retained records, explicit cross-policy comparison and contract-scoped support.

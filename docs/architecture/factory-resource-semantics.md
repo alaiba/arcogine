@@ -72,10 +72,10 @@ A designed resource can remain the same while its serialized physical realizatio
 
 Therefore designed resource identity and external physical-asset identity/correspondence are distinct. The latter belongs to Operational Execution / Digital Twin semantics once that track is admitted.
 
-## Existing ADR interpretation
+## Relationship to adopted architecture
 
-The [canonical model boundary](factory-design.md#4-canonical-model-boundary) establishes the canonical design/runtime boundary and lists resource definitions/instances as examples while explicitly leaving concrete type decomposition to implementation. The current collapsed configured-resource representation satisfies that decision.
+The [canonical model boundary](factory-design.md#4-canonical-model-boundary) establishes the canonical design/runtime boundary and lists resource definitions/instances as examples while explicitly leaving concrete type decomposition to implementation. The current collapsed configured-resource representation satisfies that boundary.
 
 The [runtime observation/event contract](runtime-contract.md) requires stable resource-instance identity and definition identity in supported observations. Under the current collapsed model those roles do not require two distinct identifiers: the canonical `MachineId` identifies the configured model resource and the runtime observation correlation target. A future independently versioned reusable specification would be a separate semantic decision rather than something implied by the runtime observation/event contract wording.
 
-Keeping the current model changes no adopted architecture. An ADR becomes appropriate only when a resource decision passes the [admission test](decisions/README.md#admission), for example independently versioned reusable specifications, generalized qualification/allocation semantics with compatibility consequences, consequential pool/work-center aggregation, or Operational physical-asset correspondence identity.
+Keeping the current model changes no adopted architecture. A resource change becomes architectural — reconciled into [Factory Design](factory-design.md) or the specification that would own the new semantics, together with its consumers and executable invariants — when it commits Arcogine to independently versioned reusable specifications, generalized qualification/allocation semantics with compatibility consequences, consequential pool/work-center aggregation, or Operational physical-asset correspondence identity.

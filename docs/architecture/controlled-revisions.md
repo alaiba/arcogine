@@ -2,7 +2,7 @@
 
 Status: Adopted semantic contract; implemented by `:types`/`:governance` value types and `ControlledRevisionAuthority`
 Owning architecture: [Governance and Conformance](governance-conformance.md)
-Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md)
+Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 
 ## Purpose
 

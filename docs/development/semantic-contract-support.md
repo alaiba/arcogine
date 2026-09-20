@@ -1,9 +1,9 @@
 # Semantic contract support
 
 This policy is the review mechanism behind the
-[semantic identity and evolution](../architecture/decisions/semantic-identity-and-evolution.md)
-decision. The [Architecture Overview](../architecture/overview.md#semantic-evolution-and-support)
-locates the rule; owning specifications define domain meaning. This document owns how support is
+[semantic evolution and support](../architecture/overview.md#semantic-evolution-and-support) rules
+in the Architecture Overview, which own the architectural constraint; owning specifications define
+domain meaning. This document owns how support is
 declared and reviewed, not a support registry or a research backlog.
 
 ## Declare support where the contract is owned

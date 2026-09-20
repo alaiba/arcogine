@@ -3,7 +3,7 @@
 > **Status:** Active/partial; current Factory Model v1 capability and the V2 shape/validation proving slice are landed, while unimplemented V2 identity/coexistence work is dependency-blocked on the READY Factory composition research  
 > **Scope:** Implementation-ready Factory Design work over the canonical production-system model  
 > **Authority:** Planning only. Current Factory architecture and specifications govern; this plan deliberately pauses work that would deepen linear whole-model version commitments while the Factory composition research is open.  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [canonical model boundary](../architecture/factory-design.md#4-canonical-model-boundary), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution), [deterministic simulation decision](../architecture/decisions/deterministic-simulation.md), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [canonical model boundary](../architecture/factory-design.md#4-canonical-model-boundary), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution), [Determinism Contract](../architecture/overview.md#determinism-contract), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
 
 ## 1. Implementation boundary
 
@@ -49,7 +49,7 @@ Current `ConfiguredResource` remains the supported complete configured-resource 
 
 The Factory semantic-evolution contract remains the current accepted architecture and therefore still defines `factory-model:v2` as exactly v1 semantic content plus required authored spatial/handling facts. However, two READY high-risk investigations now challenge whether durability was declared too early and whether spatial semantics are an orthogonal Factory concern rather than a linear generation of the whole model:
 
-- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md); the sibling [semantic-contract maturity](../research/investigations/semantic-contract-maturity-durability.md) question is concluded and its result is carried by the [semantic identity decision](../architecture/decisions/semantic-identity-and-evolution.md) and the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution).
+- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md); the sibling [semantic-contract maturity](../research/investigations/semantic-contract-maturity-durability.md) question is concluded and its result is carried by the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support) and the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution).
 
 This is an **implementation hold, not an architectural supersession**. The already-landed V2 model/validation slice remains useful proving evidence. Do not start V2 canonical identity, V1/V2 coexistence, or another unimplemented Factory slice whose purpose is to harden the current linear-policy/durability assumptions until both research questions have decision-quality results, required adversarial review, and any necessary architecture/planning reconciliation has landed.
 
@@ -76,7 +76,7 @@ Acceptance evidence must prove:
 - exact anchored footprint occupancy;
 - floor containment;
 - non-overlap;
-- accepted zero/boundary values where the ADR permits them;
+- accepted zero/boundary values where [Factory Model v2](../architecture/factory-model-v2.md) permits them;
 - overflow-safe maximum transfer-duration validation; and
 - no change to v1 behavior or identity.
 
@@ -132,7 +132,7 @@ Immutable publication and the currently accepted v1 semantic-identity contract a
 
 Runtime continues to instantiate from one validated published model. Derived indexes/compiled structures are not independently authored models.
 
-Engine result-affecting interpretation is separately identified by `EngineSemanticsVersion` under the deterministic simulation decision.
+Engine result-affecting interpretation is separately identified by `EngineSemanticsVersion` under the Determinism Contract.
 
 ### PLAN-FD-5 — Semantic comparison
 
@@ -200,5 +200,5 @@ For every admitted Factory change:
 1. preserve released v1 golden identity behavior;
 2. add deterministic boundary/golden tests for new semantic facts;
 3. keep runtime construction behind published-model validation;
-4. update durable architecture/ADR/reference only when actual semantics or shipped behavior changes; and
+4. update durable architecture/specification/reference only when actual semantics or shipped behavior changes; and
 5. keep this plan synchronized with landed implementation status rather than carrying untriggered future work.

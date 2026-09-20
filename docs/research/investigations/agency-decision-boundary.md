@@ -7,7 +7,7 @@
 
 ## Conclusion
 
-**The boundary is a set of distinct semantic roles plus consumer-owned mechanisms — not a platform abstraction.** No platform-level `Agent` concept, shared actor/subject/decision-source/capability value type, agent-communication ontology, Agency module, delivery track, or Agency-specific ADR is justified by current evidence and current consumers. Attribution — not agency — is what Arcogine actually lacks, and it is not yet needed by any committed consumer.
+**The boundary is a set of distinct semantic roles plus consumer-owned mechanisms — not a platform abstraction.** No platform-level `Agent` concept, shared actor/subject/decision-source/capability value type, agent-communication ontology, Agency module, delivery track, or Agency-specific architecture is justified by current evidence and current consumers. Attribution — not agency — is what Arcogine actually lacks, and it is not yet needed by any committed consumer.
 
 The durable rules are recorded once, in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries), with [Operational architecture](../../architecture/operational-execution-digital-twin.md) §5 and [Governance architecture](../../architecture/governance-conformance.md) §4 reconciled to them. They are not restated here.
 
@@ -346,7 +346,7 @@ The investigation is complete when it produces a concise recommendation that:
 7. identifies the narrowest appropriate ownership for any surviving shared concepts;
 8. states whether the result warrants a distinct delivery track, belongs to existing owners, or requires no new implementation work.
 
-Only surviving, cross-case invariants should be promoted into maintained architecture. Use an ADR only if the result introduces a genuinely architectural or hard-to-reverse decision.
+Only surviving, cross-case invariants should be reconciled into maintained architecture, and then into the document that owns the affected semantics.
 
 ## 10. Track-creation test
 

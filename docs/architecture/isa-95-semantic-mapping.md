@@ -462,7 +462,7 @@ For every new or materially changed manufacturing-domain concept, answer:
 
 This checklist is a review aid, not a requirement to implement the ISA-95 ontology.
 
-## 12. Design triggers and ADR boundaries
+## 12. Design triggers and architecture boundaries
 
 Revisit this document whenever a change introduces or materially alters:
 
@@ -475,7 +475,7 @@ Revisit this document whenever a change introduces or materially alters:
 - ISA-95/B2MML import, export, transactions, or exchange profiles;
 - public claims of ISA-95 compatibility or conformance.
 
-This mapping document records current relationships and accepted design constraints. Create an ADR when a decision becomes accepted and hard to reverse, for example:
+This mapping document records current relationships and accepted design constraints. Reconcile the owning architecture or specification when a hard-to-reverse choice is actually made, for example:
 
 - aggregate boundaries between product, order, work item, and performance — Engine Semantics v1 §3 records the implemented unit-work decomposition `Order`/aggregate/`Job` boundary;
 - capability-pool and deterministic dispatch semantics;
@@ -483,7 +483,7 @@ This mapping document records current relationships and accepted design constrai
 - the canonical public model contract;
 - compatibility guarantees for an industrial interchange surface.
 
-Do not create an ADR merely to state that `Machine` is an alias for an equipment instance.
+Do not change architecture merely to state that `Machine` is an alias for an equipment instance.
 
 ## 13. Future interoperability path
 
@@ -535,9 +535,9 @@ Keep this document current rather than chronological, while clearly distinguishi
 
 - update the mapping register when the implementation changes;
 - state implemented semantics as present fact;
-- identify accepted target semantics explicitly when an ADR precedes implementation;
+- identify accepted target semantics explicitly when architecture precedes implementation;
 - remove resolved gaps from current-gap descriptions once implementation lands;
-- use Git history and ADRs to preserve decision chronology;
+- leave decision chronology to Git and pull-request history rather than narrating it here;
 - track implementation work in issues or plans, not in this reference;
 - re-check official standard publication metadata before making version-specific claims.
 

@@ -2,7 +2,7 @@
 
 > **Status:** CONCLUDED
 > **Scope:** When a currently authoritative semantic contract becomes durable, what evidence precedes that, and which compatibility/provenance obligations apply before and after
-> **Authority:** Research provenance only. The durable conclusion lives in the [semantic identity and evolution](../../architecture/decisions/semantic-identity-and-evolution.md) decision and the owning contracts it names; this brief decides nothing.
+> **Authority:** Research provenance only. The durable conclusion lives in the [semantic evolution and support rules](../../architecture/overview.md#semantic-evolution-and-support) and the owning contracts they name; this brief decides nothing.
 
 ## Conclusion
 

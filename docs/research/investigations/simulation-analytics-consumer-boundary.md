@@ -3,7 +3,7 @@
 > **Status:** READY
 > **Risk:** **High** — touches major ownership, supported/public semantics, reproducibility, compatibility, and several existing consumers. Independent adversarial review is required before any architecture promotion (`docs/development/researching.md` §7, §9).
 > **Scope:** Where the boundary sits between authoritative simulation/runtime facts and reusable derived analytics, and how that boundary replaces the legacy `EventLog` KPI substrate
-> **Authority:** Research only. This brief decides nothing. Current Engine semantics, the runtime observation/event contract, the deterministic simulation decision, and `engine-semantics:v1` remain exactly as accepted until a separate, independently reviewed reconciliation says otherwise.
+> **Authority:** Research only. This brief decides nothing. Current Engine semantics, the runtime observation/event contract, the Determinism Contract, and `engine-semantics:v1` remain exactly as accepted until a separate, independently reviewed reconciliation says otherwise.
 
 ## Research question
 
@@ -142,7 +142,7 @@ Conclude only with a report that:
 - prevents analytics from reimplementing scheduling decisions;
 - defines compatibility expectations across embedded and remote adapters;
 - determines the disposition and migration path for the legacy KPI substrate and the current performance fields;
-- states explicitly whether the runtime observation/event contract, the deterministic simulation decision, or `engine-semantics:v1` require revision, a new ADR, a semantics-version change, or only implementation reorganization;
+- states explicitly whether the runtime observation/event contract, the Determinism Contract, or `engine-semantics:v1` require revision, a semantics-version change, or only implementation reorganization;
 - receives genuinely independent adversarial review before any architecture promotion.
 
 ## Inherited evidence

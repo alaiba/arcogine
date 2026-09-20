@@ -159,7 +159,7 @@ Manufacturing traceability may become such a proving case only if a concrete int
 Operational implementation is admitted to `docs/planning/` only when the relevant research has produced:
 
 1. decision-quality semantics and ownership;
-2. required architecture updates (an ADR only if the admission test is met);
+2. required architecture or specification updates, reconciled into the document that owns the affected semantics;
 3. a bounded implementation responsibility;
 4. explicit prerequisites; and
 5. executable safety/correctness acceptance evidence.

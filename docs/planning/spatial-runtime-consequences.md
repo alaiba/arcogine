@@ -13,21 +13,21 @@ network capability.
 The architecture is fixed by:
 
 - [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution);
-- [deterministic simulation decision](../architecture/decisions/deterministic-simulation.md);
+- [Determinism Contract](../architecture/overview.md#determinism-contract);
 - [Engine Semantics v1](../architecture/engine-semantics-v1.md), the normative first-version Engine interpretation;
 - Accepted the runtime observation/event contract for supported observation/event state reconstruction and ordering.
 
 ### Research hold — Factory composition
 
-The Factory semantic-evolution contract, the deterministic simulation decision and Engine Semantics v1 are current architecture. The open research therefore does **not** authorize implementation to reinterpret existing behavior or identifiers in place.
+The Factory semantic-evolution contract, the Determinism Contract and Engine Semantics v1 are current architecture. The open research therefore does **not** authorize implementation to reinterpret existing behavior or identifiers in place.
 
 However, do not start any still-unimplemented PLAN-ENG-5 slice that commits Arcogine further to permanent Factory V1/V2 coexistence, releases the V2 fingerprint policy, or activates spatial runtime semantics on the assumption that the current whole-model/version boundary is final. Those slices are dependency-blocked on:
 
-- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md); the sibling [semantic-contract maturity](../research/investigations/semantic-contract-maturity-durability.md) question is concluded and its result is carried by the [semantic identity decision](../architecture/decisions/semantic-identity-and-evolution.md) and the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution).
+- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md); the sibling [semantic-contract maturity](../research/investigations/semantic-contract-maturity-durability.md) question is concluded and its result is carried by the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support) and the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution).
 
 The landed V2 shape/validation and Engine-v1 conformance/identity work are retained as proving evidence. Independent Engine or outward-contract work may continue only where it does not depend on resolving these two questions or make their current candidate answers harder to change.
 
-The Factory semantic-evolution contract and the deterministic simulation decision are adopted. The
+The Factory semantic-evolution contract and the Determinism Contract are adopted. The
 first-release local-admission and shared-backlog-ranking questions in
 [Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded after independent
 adversarial review, and both retain `engine-semantics:v1` unchanged. The research prerequisite for
@@ -89,7 +89,7 @@ Every slice should have:
 - one dominant semantic invariant;
 - explicit executable evidence that closes that invariant;
 - narrow production ownership and explicit non-goals;
-- an escalation rule: if implementation evidence conflicts with the Factory semantic-evolution contract, the deterministic simulation decision, or
+- an escalation rule: if implementation evidence conflicts with the Factory semantic-evolution contract, the Determinism Contract, or
   `engine-semantics:v1`, stop and surface the contradiction rather than inventing new semantics.
 
 This decomposition is provider-neutral. Repository architecture and acceptance evidence determine
@@ -110,7 +110,7 @@ coherent in the same landed change under the runtime observation/event contract.
 retain `engine-semantics:v1` unchanged, with the qualifications recorded in
 [Engine Evolution Research](../research/investigations/engine-evolution.md).
 
-**Prerequisites:** the deterministic simulation decision landed Accepted, plus conclusion of the two first-release dispatch
+**Prerequisites:** the Determinism Contract is adopted architecture, plus conclusion of the two first-release dispatch
 questions with `engine-semantics:v1` retained unchanged. Those prerequisites are satisfied. A future
 reopening that recommends an outcome-changing alternative does not rewrite this slice or v1 in place;
 it requires a new Engine semantics identity through architecture/specification reconciliation and a
@@ -144,7 +144,7 @@ Add characterization/conformance evidence for the result-affecting behavior that
 placement on the Engine/analytics boundary is an open question under
 [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md).
 
-There is a genuine tension here, and it is recorded rather than worked around. Accepted architecture
+There is a genuine tension here, and it is recorded rather than worked around. Adopted architecture
 already makes those values part of `engine-semantics:v1`: §1.1's membership test covers derived-result
 arithmetic, §10.1–§10.2 fix their edge cases *and* their accumulation, and §1.1 consequence 4 states
 that a rule satisfying the membership test but absent from the specification is a defect in the
@@ -288,7 +288,7 @@ keeps V2 semantic content from ever traveling through the `factory-model:v1` pub
 `factory-model:v2` canonical bytes, `ModelFingerprint` derivation, and policy registration are not
 yet implemented; PLAN-ENG-5-A2 owns that work but is dependency-blocked by the research hold.
 
-**Prerequisite:** the Factory semantic-evolution contract landed Accepted.
+**Prerequisite:** the Factory semantic-evolution contract is adopted architecture.
 
 **Responsibility**
 
@@ -380,7 +380,7 @@ supported current value, `engine-semantics:v1`. `FactoryRuntime` establishes and
 for its lifetime; fresh/reset runtimes receive new `RunId` values without changing the semantics
 identity. Unsupported identities fail explicitly through the narrow support check.
 
-**Prerequisites:** the deterministic simulation decision landed Accepted and PLAN-ENG-5-0.
+**Prerequisites:** the Determinism Contract is adopted architecture and PLAN-ENG-5-0.
 
 **Responsibility**
 
@@ -677,7 +677,7 @@ consumes this provenance; it does not own Engine semantics.
 
 ### Operational — REQUIRED WHEN CONSUMER INTEGRATES
 
-Future twin/reconciliation analytics retain Engine interpretation provenance independently of the durable operational identity and independently of subject correspondence. These answer different questions: which Engine interpretation produced a result; which accountable operational continuation a record belongs to; and which external and Arcogine subjects are authoritatively related. The Operational continuity contract is Accepted and defines that identity's referent and rules, while deliberately deferring its final type name and representation; `EngineSemanticsVersion` and `RunId` remain Engine-owned and must never be derived from it, or it from them.
+Future twin/reconciliation analytics retain Engine interpretation provenance independently of the durable operational identity and independently of subject correspondence. These answer different questions: which Engine interpretation produced a result; which accountable operational continuation a record belongs to; and which external and Arcogine subjects are authoritatively related. The Operational continuity contract is adopted and defines that identity's referent and rules, while deliberately deferring its final type name and representation; `EngineSemanticsVersion` and `RunId` remain Engine-owned and must never be derived from it, or it from them.
 
 ### API/SSE PLAN-ENG-4 transport migration — REQUIRED BEFORE THAT MIGRATION, NOT BEFORE HEADLESS PLAN-GOV-5
 
@@ -691,12 +691,13 @@ work remain valid evidence under the current architecture. The earlier first-rel
 is closed for those already-landed v1 semantics.
 
 The remaining Factory-V2 identity/coexistence and spatial-runtime path is **not implementation-ready**
-while the Factory composition investigation is READY. Accepted
-The Factory semantic-evolution contract/the deterministic simulation decision remain authoritative during the hold, but their acceptance is not permission to deepen
-the exact durability/composition commitments now under research.
+while the Factory composition investigation is READY.
+The Factory semantic-evolution contract and the Determinism Contract remain authoritative during the
+hold, but their being adopted is not permission to deepen the exact durability/composition
+commitments now under research.
 
 Before any held slice resumes, both investigations must reach decision-quality conclusions, receive
-their required independent adversarial review, and any necessary architecture/ADR/planning
+their required independent adversarial review, and any necessary architecture/specification/planning
 reconciliation must land. The plan must then be re-resolved against that result. If later activation
 still reaches PLAN-ENG-5-C3, perform the explicit reservation-aware dispatch recheck there. Any slice
 that encounters contradictory evidence must stop at that boundary rather than silently revising the

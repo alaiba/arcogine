@@ -9,7 +9,7 @@ Current maintained state is separate from these rules:
 
 For AI execution of this policy, the repository-owned **Researcher** procedure lives in [`.github/agents/researcher.agent.md`](../../.github/agents/researcher.agent.md). This document remains the normative research policy; the agent file defines how the specialized researcher executes it — the same split `docs/development/reviewing.md` and `.github/agents/pr-reviewer.agent.md` already use.
 
-This document must not become a second research backlog, state ledger, architecture authority, or implementation plan. It defines the operating model, not current portfolio content: it does not list Arcogine's open questions (the research register does), does not decide any Arcogine semantic question (an ADR, architecture doc, or product doc does), and does not sequence implementation (`docs/planning/` does).
+This document must not become a second research backlog, state ledger, architecture authority, or implementation plan. It defines the operating model, not current portfolio content: it does not list Arcogine's open questions (the research register does), does not decide any Arcogine semantic question (the architecture, specification, or product document that owns it does), and does not sequence implementation (`docs/planning/` does).
 
 ## Lifecycle, priority, promotion, and maintained state
 
@@ -39,14 +39,14 @@ Decision-quality evidence
    |
    +--> no action
    +--> product clarification
-   +--> architecture / ADR
+   +--> architecture / specification
    +--> concrete implementation responsibility
                        |
                        v
                   docs/planning/
 ```
 
-A topic is ready for implementation planning only when semantic/product meaning, ownership, prerequisites, and acceptance evidence are sufficiently settled. A blocked implementation contract may live in planning; an unresolved question that still determines the contract stays in research. Research may recommend a durable consequence, but the conclusion becomes authoritative only through reconciliation into the appropriate product, architecture, ADR, reference, research, or admitted planning surface.
+A topic is ready for implementation planning only when semantic/product meaning, ownership, prerequisites, and acceptance evidence are sufficiently settled. A blocked implementation contract may live in planning; an unresolved question that still determines the contract stays in research. Research may recommend a durable consequence, but the conclusion becomes authoritative only through reconciliation into the appropriate product, architecture, specification, reference, research, or admitted planning surface.
 
 `docs/research/` therefore tracks what Arcogine still needs to understand or decide; `docs/planning/` tracks executable work given what is already known or decided. Research documents never receive temporary delivery coordinates.
 
@@ -65,7 +65,7 @@ Maintain [`docs/research/research-register.md`](../research/research-register.md
 
 ## 1. What research is for
 
-Arcogine research exists to answer a **material bounded uncertainty that can change an Arcogine decision** — a question whose answer would plausibly change product direction, architecture, an ADR, or an implementation contract, and whose current uncertainty is real enough that guessing would be worse than investigating.
+Arcogine research exists to answer a **material bounded uncertainty that can change an Arcogine decision** — a question whose answer would plausibly change product direction, architecture, a specification, or an implementation contract, and whose current uncertainty is real enough that guessing would be worse than investigating.
 
 A question that cannot change any decision is not a research question; it is either already answered by current architecture/product docs, or it is genuine curiosity that does not belong in `docs/research/`.
 
@@ -84,7 +84,7 @@ A `READY` brief should normally state:
 - evidence expectations (what would make the answer decision-quality);
 - falsification conditions, where the question is the kind that can be falsified;
 - exit criteria;
-- the expected durable destination if the question is settled (no action, product, architecture/ADR, or implementation responsibility).
+- the expected durable destination if the question is settled (no action, product, architecture/specification, process policy, planning, or implementation responsibility).
 
 A brief missing one of these because it genuinely does not apply to that question is fine. A brief missing several of these is not yet `READY`: an independent researcher should be able to execute it from the brief's stated evidence and exit criteria without first re-deriving the question.
 
@@ -100,7 +100,7 @@ A researcher must:
 2. distinguish live `main` from any feature/research branch being inspected — a branch under investigation, or a branch carrying a prior draft report, is evidence to read, never landed repository truth;
 3. read `AGENTS.md`;
 4. read the relevant research brief and the surrounding entry in [`docs/research/research-register.md`](../research/research-register.md);
-5. inspect the current product, architecture, ADR, planning, implementation, and test surfaces the question actually touches;
+5. inspect the current product, architecture, specification, planning, implementation, and test surfaces the question actually touches;
 6. search semantic neighbors rather than reading only the files named in the brief — a question about identity, ownership, or lifecycle usually has cousins elsewhere in `docs/architecture/`, `docs/planning/`, and the codebase that the brief's author did not anticipate;
 7. state any important surface that could not be inspected, rather than silently omitting it.
 
@@ -114,7 +114,7 @@ A historical research baseline is evidence about what was examined at that point
 
 A decision-quality report keeps at least these categories visibly distinct, so a reader (and later reconciliation) can tell what kind of claim they are looking at:
 
-- **Repository fact** — something the current (or explicitly labeled historical) repository state actually says: code, tests, a current ADR, current architecture prose, an executable check.
+- **Repository fact** — something the current (or explicitly labeled historical) repository state actually says: code, tests, current architecture or specification prose, an executable check.
 - **External evidence** — a claim sourced from outside the repository: a standard, a paper, product documentation, an established engineering pattern.
 - **Inference** — a conclusion the researcher draws by combining repository facts and/or external evidence; not itself directly observed in either.
 - **Recommendation / proposed decision** — what the researcher thinks Arcogine should do about the question.
@@ -129,7 +129,7 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 
 - the Product Charter;
 - current-state architecture (`docs/architecture/overview.md` and the relevant domain architecture doc);
-- current ADRs (`docs/architecture/decisions/`), kept explicitly distinct from unresolved proposals in research, planning, or branch discussion;
+- current architecture and specifications (`docs/architecture/`), kept explicitly distinct from unresolved proposals in research, planning, or branch discussion;
 - the [research register](../research/research-register.md) and the relevant brief(s);
 - admitted implementation planning under `docs/planning/`;
 - implementation and tests;
@@ -138,11 +138,11 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 - open PRs, where they materially affect the question;
 - review findings, where they exposed a relevant semantic failure mode.
 
-Do not assume code always overrides architecture, or the reverse — use the repository's existing authority-by-subject model (the same table structure `docs/development/reviewing.md`, `.github/agents/work-planner.agent.md`, and `.github/agents/consistency.agent.md` each use: Charter for product direction, `docs/architecture/overview.md` for current behavior, current ADRs for why a constraint exists, `docs/planning/` for what is admitted, live `main` for what exists).
+Do not assume code always overrides architecture, or the reverse — use the repository's existing authority-by-subject model (the same table structure `docs/development/reviewing.md`, `.github/agents/work-planner.agent.md`, and `.github/agents/consistency.agent.md` each use: Charter for product direction, `docs/architecture/overview.md` for current behavior, the owning architecture or specification for why a constraint exists, `docs/planning/` for what is admitted, live `main` for what exists).
 
 In particular:
 
-- a **Proposed** ADR is not established architecture — treat it as a candidate under discussion, not as ground truth the report can lean on;
+- a proposal in research, planning, or branch discussion is not established architecture — treat it as a candidate, not as ground truth the report can lean on;
 - **research priority is not implementation commitment** — a `High`-priority `CANDIDATE` question is not evidence that implementation is admitted;
 - an **open branch is not landed capability** — a branch under investigation (including a prior research branch) is evidence to read, not architecture to cite as current.
 
@@ -217,7 +217,7 @@ Research depth should scale with semantic consequence, not with document size. T
 
 - **Medium risk** — shared cross-module/domain semantics; ownership boundaries; reusable domain abstractions; a conclusion likely to influence architecture. Expect broader semantic-neighbor inspection, explicit alternative/falsification analysis, relevant external evidence where it can actually discriminate between candidates, and adversarial examination proportionate to the decision (which may be self-administered — see §9).
 
-- **High risk** — hard-to-reverse questions involving identity/equality; lineage/continuity/fork; persistence; replay/history; determinism; security/authority; safety/consequence; public or persisted compatibility; interoperability semantics; major domain ownership; foundational architecture. Before such a conclusion is treated as decision-quality evidence for promotion into an ADR or comparably durable architecture, a genuinely independent adversarial research review is required — see §9–§11.
+- **High risk** — hard-to-reverse questions involving identity/equality; lineage/continuity/fork; persistence; replay/history; determinism; security/authority; safety/consequence; public or persisted compatibility; interoperability semantics; major domain ownership; foundational architecture. Before such a conclusion is treated as decision-quality evidence for reconciliation into canonical architecture or a specification, a genuinely independent adversarial research review is required — see §9–§11.
 
 Risk changes how much scrutiny a question receives. It must never predetermine the answer.
 
@@ -329,7 +329,7 @@ separate durable reconciliation on the same workspace by default
         |
         +--> no action
         +--> product
-        +--> architecture / ADR
+        +--> architecture / specification
         +--> concrete implementation responsibility
                             |
                             v
@@ -351,7 +351,7 @@ workspace branch retired
 
 A researcher may recommend durable consequences. A researcher does not make architecture authoritative merely by publishing a report; the promotion rule above requires deliberate reconciliation into the appropriate durable authority.
 
-The report's author must not silently rewrite ADRs, current architecture, product semantics, production code, or implementation planning while "doing research." A separate reconciliation pass deliberately translates surviving research conclusions into the appropriate authoritative surface — an ADR PR, an architecture-doc PR, a planning admission — and that reconciliation change goes through normal independent PR review exactly as any other change would.
+The report's author must not silently rewrite current architecture, specifications, product semantics, production code, or implementation planning while "doing research." A separate reconciliation pass deliberately translates surviving research conclusions into the appropriate authoritative surface — an architecture or specification PR, a planning admission — and that reconciliation change goes through normal independent PR review exactly as any other change would.
 
 **Separate reconciliation means a separate phase and authority transition, not a separate Git branch.** By default, the same finite research-evidence workspace continues through durable reconciliation. Do not create a fresh reconciliation branch solely because evidence gathering has ended. Completed report/review artifacts remain immutable by exact commit SHA + path while later workspace commits carry reconciliation edits and the knowledge-transfer audit.
 
@@ -379,13 +379,13 @@ Exact workspace `commit SHA + path` coordinates are **active-custody artifact id
 
 A copied coordinate is not preservation of its target. Recording a workspace SHA in a pull request, issue, commit message, or maintained document preserves the coordinate text, but it does not create a repository guarantee that the underlying Git object will remain fetchable after squash merge, branch deletion, mirroring/export, or Git-host retention changes. Do not copy temporary artifact coordinates into maintained state merely to make them appear durable.
 
-After retirement, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product/architecture/ADR/reference or admitted planning authority, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
+After retirement, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product, architecture/specification, or reference authority, admitted planning authority, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
 
 If the exact report, adversarial review, source map, or other research artifact must itself remain readable after workspace retirement, deliberately promote that artifact to a durable repository location or another retention surface with an explicit persistence contract before retiring the workspace. Otherwise the knowledge-transfer audit is the preservation mechanism and the temporary evidence is intentionally expendable.
 
 Temporary research evidence may be deleted only after every research question carried by the workspace is `CONCLUDED` or `SUPERSEDED` **and** a knowledge-transfer audit accounts for every material result that should survive the investigation. At minimum, classify and transfer:
 
-- accepted conclusions and invariants into the appropriate product, architecture, ADR, reference, or admitted planning authority;
+- accepted conclusions and invariants into the appropriate product, architecture, specification, reference, or admitted planning authority;
 - qualifications that constrain an accepted conclusion into the same durable destination as that conclusion;
 - unresolved unknowns, reopening triggers, and newly exposed questions into the [research register](../research/research-register.md) when they remain material;
 - reusable proving cases, counterexamples, failure modes, measurements, protocols, source maps, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;
@@ -436,7 +436,7 @@ This retirement rule does not create another lifecycle state, permanent report a
 This document defines Arcogine's normative research operating model. It does not:
 
 - list Arcogine's current open research questions — see [`docs/research/research-register.md`](../research/research-register.md);
-- decide any Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — each one's state is exactly what the maintained register and the applicable ADRs record, and this document neither settles nor reopens any of them;
+- decide any Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — each one's state is exactly what the maintained register and the applicable architecture or specification record, and this document neither settles nor reopens any of them;
 - create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, publication lifecycle/backlog, or new issue ledger.
 
 Research documents remain research evidence only. Synthesis seeds remain non-authoritative recurrence signals only. Neither becomes accepted architecture simply because it exists.

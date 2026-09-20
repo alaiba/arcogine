@@ -4,7 +4,7 @@ This document defines Arcogine's review discipline for implementation pull reque
 
 For AI execution of this policy, the repository-owned **PR Reviewer** procedure lives in [`.github/agents/pr-reviewer.agent.md`](../../.github/agents/pr-reviewer.agent.md). This document remains the normative review policy; the agent file defines how the specialized reviewer executes it.
 
-The repository is the source of truth. Prior chat/session context, branch descriptions, and implementation-agent explanations are useful leads, but they are never authoritative over current `main`, the live PR head, maintained documentation, ADRs, tests, and CI.
+The repository is the source of truth. Prior chat/session context, branch descriptions, and implementation-agent explanations are useful leads, but they are never authoritative over current `main`, the live PR head, maintained documentation, architecture and specifications, tests, and CI.
 
 ## Role separation for larger initiatives
 
@@ -82,7 +82,7 @@ Read the relevant current material rather than relying only on the PR descriptio
 - `docs/product/charter.md` for significant product/architecture changes;
 - `docs/architecture/overview.md`;
 - the relevant planning document, such as `docs/planning/factory-simulation-engine-readiness.md`;
-- applicable current ADRs;
+- the architecture or specification that owns the affected semantics;
 - affected domain code and tests;
 - `.github/CONTRIBUTING.md`;
 - prerequisite/recent PRs when they materially define the current seam.
@@ -215,17 +215,17 @@ The required CI check catches known coordinate-shaped vocabulary mechanically; r
 
 For medium- and high-semantic-risk changes, review by concept as well as by changed file. Identify the small set of concepts whose meaning changed, then search maintained docs, tests, examples, interfaces, and configuration for both the new vocabulary and plausible old assumptions. This is especially important when a semantic change can leave syntactically unrelated prose or tests behind.
 
-When a current ADR, readiness criterion, capability status, or other authority-bearing artifact changes state — for example `unresolved -> accepted`, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
+When an architectural constraint, readiness criterion, capability status, or other authority-bearing artifact changes state — for example a constraint moving from proposal into current architecture, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
 
 This is bounded change-impact review. It does not require a repository-wide consistency sweep for every PR.
 
-#### ADR discipline
+#### Architectural reconciliation discipline
 
-Request an ADR only for a genuinely hard-to-reverse decision, for example durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind.
+Arcogine keeps no separate decision-record layer. A significant architectural change — durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind — must be reconciled into the architecture or specification that owns the affected semantics, with code, tests, and dependent planning updated in the same PR.
 
-Do not require ADRs for ordinary local refactors.
+Do not demand an architecture change for ordinary local refactors.
 
-ADRs are the current durable decision set, not an append-only archive; apply the admission test in `docs/architecture/decisions/README.md`. When a PR edits or removes an ADR, compare the before and after records, establish the actual semantic consequences of the change, and require that the specifications, executable invariants, plans, and consumers that depended on the old decision are reconciled in the same PR. Git history preserves the replaced record; do not require amendment metadata or supersession chains.
+When a PR edits current architecture or a specification, compare the before and after text, establish the actual semantic consequences of the change, and require that the executable invariants, plans, and consumers that depended on the previous constraint are reconciled in the same PR. Where rationale is needed to understand or not accidentally undo a constraint, expect it concisely next to the rule; do not expect the document to narrate what it replaced, and do not require status fields, amendment metadata, or supersession chains. Git and pull-request history preserve the previous state and why it changed.
 
 ## Finding severity
 
@@ -273,7 +273,7 @@ Arcogine's reviewer protocol uses the custom canonical disposition as its only r
 
 An accidental or externally created native `CHANGES_REQUESTED` review still physically blocks GitHub merge and must be cleared through GitHub before merge, but it is an anomalous platform blocker, not part of the intended Arcogine review protocol.
 
-PR comments are useful execution history, but any architectural conclusion that must outlive the PR belongs in maintained docs or an ADR as appropriate.
+PR comments are useful execution history, but any architectural conclusion that must outlive the PR belongs in the maintained architecture or specification that owns it.
 
 ## Re-review
 
@@ -325,7 +325,7 @@ Do not leave merge readiness implicit when a review is actually performed.
 Before `READY TO MERGE`, explicitly verify two documentation-lifetime conditions when applicable:
 
 1. durable documentation touched or semantically affected by the PR does not depend on temporary planning coordinates; and
-2. every ADR edit or removal has its semantic consequences independently reviewed and reconciled with the current architecture, and every retained decision still passes the admission test.
+2. every architecture or specification edit has its semantic consequences independently reviewed and reconciled across the documents, invariants, plans, and consumers that depended on the previous statement.
 
 ### Canonical disposition format
 
@@ -418,4 +418,4 @@ Before considering an initiative slice complete, ask whether deleting the implem
 - what remains intentionally deferred;
 - how the change is validated.
 
-If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation, planning, an ADR, or the PR record. When promoting knowledge out of planning into a durable document, translate temporary delivery coordinates into semantic terminology.
+If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation or the owning specification, planning, or the PR record. When promoting knowledge out of planning into a durable document, translate temporary delivery coordinates into semantic terminology.

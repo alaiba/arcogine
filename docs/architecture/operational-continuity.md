@@ -2,7 +2,7 @@
 
 Status: Adopted semantic contract; no implementation type, module, or persistence exists yet
 Owning architecture: [Operational Execution and Digital Twin](operational-execution-digital-twin.md)
-Evolution rule: [Semantic identity and evolution](decisions/semantic-identity-and-evolution.md)
+Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 
 ## Purpose
 
@@ -91,7 +91,7 @@ Three consequences follow:
 - **declared loss is a fork carrying a recorded gap**, consistent with the [runtime observation/event contract](runtime-contract.md)'s rule that recovery must detect a gap rather than pretend completeness;
 - **a lossy summarisation is not a fork only when its lossiness is itself an accepted record.**
 
-This grounds continuity in attributability rather than in permanent byte retention, consistent with the [deterministic simulation decision](decisions/deterministic-simulation.md)'s guarantee of attribution plus a verifiable definition rather than permanent exact re-execution.
+This grounds continuity in attributability rather than in permanent byte retention, consistent with the [Determinism Contract](overview.md#determinism-contract)'s guarantee of attribution plus a verifiable definition rather than permanent exact re-execution.
 
 The condition is **set-based, not sequence-based**: it asks whether anything accepted became unanswerable, not whether a log prefix was preserved. Operational records are heterogeneous and concurrently produced, so the rule must not presuppose a total order.
 

@@ -381,7 +381,7 @@ A fingerprint policy identifies the complete semantic/canonicalization contract,
 algorithm. Ordinary serializer bytes never define identity, and publication rejects inputs for
 which canonicalization is undefined, so fingerprinting is total over published models. Once a
 policy has attributed records, its definition is fixed as a whole under the
-[semantic identity decision](decisions/semantic-identity-and-evolution.md): a behaviorally relevant
+[semantic evolution rules](overview.md#semantic-evolution-and-support): a behaviorally relevant
 authored fact that cannot be represented without changing a policy's meaning requires a
 distinguishable policy identity, old fingerprints are never rewritten or rederived, and a
 controlled revision still binds exactly one fingerprint while lineage may cross policies without
@@ -495,4 +495,4 @@ Revisit this document when Arcogine introduces or materially changes:
 - another independent design consumer;
 - ISA-95/AAS/other model import/export.
 
-Apply the [ADR admission test](decisions/README.md#admission) to consequential decisions. As further capabilities are implemented and accepted, authoritative current-state portions should move into or be reconciled with [`overview.md`](overview.md) rather than leaving proposed behavior presented as current fact.
+As further capabilities are implemented and accepted, authoritative current-state portions should move into or be reconciled with [`overview.md`](overview.md) rather than leaving proposed behavior presented as current fact.

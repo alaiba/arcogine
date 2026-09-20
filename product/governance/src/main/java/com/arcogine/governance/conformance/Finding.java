@@ -22,7 +22,8 @@ import java.util.Optional;
  * minimal evaluation/findings slice.
  *
  * <p>{@code controlledRevisionId} is {@code null}/empty when the evaluated candidate has not been
- * accepted through the persistence-acceptance boundary. Per ADR-0008 and the {@code ChangeSet}
+ * accepted through the persistence-acceptance boundary. Per
+ * docs/architecture/controlled-revisions.md and the {@code ChangeSet}
  * precedent, a {@code Finding} never synthesizes a {@link ControlledRevisionId} for an unpersisted
  * candidate -- it records the {@link ModelFingerprint} it evaluated either way.
  */

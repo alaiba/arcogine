@@ -3,7 +3,7 @@
 > **Status:** Dated, non-normative delivery-process evidence  
 > **Scope:** Retrospective of 30 merged pull requests from #221 through #260  
 > **Baseline:** Live `main` at `9e4cc84ac825d7714ef5f89a3007bf40b614a8f9` on 2026-09-05  
-> **Purpose:** Preserve an empirical baseline for later verification of Arcogine's development standard work. This document does not override `AGENTS.md`, contributor/review guidance, architecture, ADRs, planning documents, tests, CI, or current GitHub state.
+> **Purpose:** Preserve an empirical baseline for later verification of Arcogine's development standard work. This document does not override `AGENTS.md`, contributor/review guidance, architecture and specifications, planning documents, tests, CI, or current GitHub state. It describes the repository as it was in the sampled window; where it names controls or mechanisms that have since been retired, read those as historical facts about that window, not as current repository state.
 
 ## Executive finding
 

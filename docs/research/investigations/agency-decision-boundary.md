@@ -7,7 +7,7 @@
 
 ## Conclusion
 
-**The boundary is a set of distinct semantic roles plus consumer-owned mechanisms — not a platform abstraction.** No platform-level `Agent` concept, shared actor/subject/decision-source/capability value type, agent-communication ontology, Agency module, delivery track, or Agency-specific ADR is justified by current evidence and current consumers. Attribution — not agency — is what Arcogine actually lacks, and it is not yet needed by any committed consumer.
+**The boundary is a set of distinct semantic roles plus consumer-owned mechanisms — not a platform abstraction.** No platform-level `Agent` concept, shared actor/subject/decision-source/capability value type, agent-communication ontology, Agency module, delivery track, or Agency-specific architecture is justified by current evidence and current consumers. Attribution — not agency — is what Arcogine actually lacks, and it is not yet needed by any committed consumer.
 
 The durable rules are recorded once, in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries), with [Operational architecture](../../architecture/operational-execution-digital-twin.md) §5 and [Governance architecture](../../architecture/governance-conformance.md) §4 reconciled to them. They are not restated here.
 
@@ -19,7 +19,7 @@ The durable rules are recorded once, in [Architecture Overview — Attribution a
 | H2 — decision-source internals are not common world semantics | **Supported, strengthened.** Recording a hidden reasoning trace as authoritative causal provenance would manufacture false provenance; a voluntarily recorded public rationale records only what a party *asserted* |
 | H3 — actor attribution survives controller replacement | **Supported, narrowed.** The actor *concept* survives; a shared actor *type* does not follow, and a delegator does not automatically retain responsibility |
 | H4 — replaying a decision is not re-executing its source | **Supported, refined.** The four replay operations stay distinct; the general move is converting the nondeterministic boundary into recorded input where a consumer's contract requires replayability |
-| H5 — a capability may be temporally extended | **Refined to no new type.** ADR-0010's aggregate/child pattern already supplies aggregate intent, child identity, correlation, and completion |
+| H5 — a capability may be temporally extended | **Refined to no new type.** The unit-work decomposition aggregate/child pattern already supplies aggregate intent, child identity, correlation, and completion |
 | H6 — agent-specific communication is not assumed | **Supported decisively.** Typed operations, events, observations, results, and explicit public commitments suffice |
 
 The §10 track-creation test **failed correctly**: the result is cross-cutting semantic distinction, not a coherent implementation responsibility.
@@ -30,7 +30,7 @@ The independent adversarial review falsified or narrowed several load-bearing su
 
 ### What remains open
 
-- **Actor identity** — referent, equality, namespace, lifecycle, rename/merge/retirement, federation, and external-identity rules are unresolved. Admitted as a separate `CANDIDATE` question in the [research register](../research-register.md), deliberately **not** coupled to ADR-0013's accountable-operational-continuation identity.
+- **Actor identity** — referent, equality, namespace, lifecycle, rename/merge/retirement, federation, and external-identity rules are unresolved. Admitted as a separate `CANDIDATE` question in the [research register](../research-register.md), deliberately **not** coupled to the Operational continuity contract's accountable-operational-continuation identity.
 - **Stateful or online-learning decision sources** — identity plus version may not identify a source whose material behaviour changes without a version change. Recorded as an explicit reopening trigger in the durable architecture rather than as backlog, because no consumer exists.
 - **Ownership of reusable actor/capability semantics** — still open, and tracked by the Operational [actor, trust, authority, and capability](operational-execution-digital-twin-boundaries.md) question. It must not default to Operational.
 
@@ -346,7 +346,7 @@ The investigation is complete when it produces a concise recommendation that:
 7. identifies the narrowest appropriate ownership for any surviving shared concepts;
 8. states whether the result warrants a distinct delivery track, belongs to existing owners, or requires no new implementation work.
 
-Only surviving, cross-case invariants should be promoted into maintained architecture. Use an ADR only if the result introduces a genuinely architectural or hard-to-reverse decision.
+Only surviving, cross-case invariants should be reconciled into maintained architecture, and then into the document that owns the affected semantics.
 
 ## 10. Track-creation test
 

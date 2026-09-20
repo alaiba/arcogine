@@ -91,7 +91,7 @@ Which *facts and reusable derivations* exist, and who owns them, is no longer de
 - overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain game research;
 - **the game must not invent shared KPI or diagnostic formulas while analytics ownership is unresolved.** If a presentation needs a reusable measure, that measure's ownership is an input from the analytics question, not a game decision;
 - transfer-dependent presentation remains conditional on landed transfer semantics — there is currently no transfer time, `TRANSFERRING` state, or transfer event in runtime behavior, so the processing-versus-transfer question cannot be asked of the current runtime at all;
-- sidecar versus in-process is a packaging/integration question, not a competing runtime semantics choice (ADR-0007, ADR-0011 already establish transport-neutral semantics with sibling adapters).
+- sidecar versus in-process is a packaging/integration question, not a competing runtime semantics choice (the session-control semantics, the runtime observation/event contract already establish transport-neutral semantics with sibling adapters).
 
 ### Superseded predecessor
 

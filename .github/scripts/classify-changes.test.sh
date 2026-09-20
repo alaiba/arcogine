@@ -5,8 +5,8 @@
 # loudly here instead of silently letting a real change skip its checks.
 #
 # The classify job is also the always-running dependency of the repository's
-# single required `gate` status, so repository-wide documentation-link, delivery-label, and ADR
-# history checks are invoked here as part of the same fail-closed path rather
+# single required `gate` status, so repository-wide documentation-link and delivery-label
+# checks are invoked here as part of the same fail-closed path rather
 # than through separate, non-required workflows.
 set -euo pipefail
 
@@ -87,9 +87,6 @@ python3 "$dir/check-markdown-links.test.py"
 python3 "$dir/check-markdown-links.py" "$repo"
 python3 "$dir/check-delivery-labels.test.py"
 python3 "$dir/check-delivery-labels.py"
-python3 "$dir/check-adr-immutability.test.py"
-python3 "$dir/check-adr-rename.test.py"
-python3 "$dir/check-adr-immutability.py" --ci
 
 echo "Validating GitHub attribution hygiene helper..."
 node --test "$repo/infra/dev/github-attribution-hygiene.test.mjs"

@@ -1,16 +1,29 @@
 # Engine Semantics v1
 
-Status: Normative design contract; implementation pending
+Status: Normative interpretation contract; implementation partial (spatial execution and provenance propagation outstanding)
 Semantic identity: `engine-semantics:v1`
-Decision authority: [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md)
-Model-side counterpart: [ADR-0014](decisions/0014-factory-model-semantic-policy-evolution.md) and
-[Factory Model v2 Canonicalization](factory-model-v2.md)
+Rationale: [Determinism Contract](overview.md#determinism-contract)
+Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
+Model-side counterpart: [Factory Model v2 Canonicalization](factory-model-v2.md)
 
 ## 1. Purpose
 
 `engine-semantics:v1` defines the complete result-affecting Engine interpretation that Arcogine
 must attribute to a simulation run using this version. It records semantic rules, not Java class
 shape, DTO serialization, build identity, or replaceable implementation algorithms.
+
+`EngineSemanticsVersion` is the semantic identity of Arcogine's complete result-affecting
+simulation interpretation for a run. It is distinct from `ModelFingerprint` (which authored Factory
+design was executed), from `RunId` (which runtime epoch produced the facts, correlation only, and
+never an input to any result), and from software/build/release identity (which implementation
+artifact happened to execute them, kept as diagnostic provenance only). None of those substitutes
+for it: the same design legitimately produces different outcomes under different accepted
+interpretations, so `ModelFingerprint` alone would attribute a result to a design that did not
+determine it, while builds change for many semantics-preserving reasons and carry no stable
+meaning. A fact describing the production system the designer authored
+belongs to the canonical model and its fingerprint; a rule describing how Arcogine interprets any
+such design belongs here when changing it can change semantic outcome for identical explicit
+inputs; a replaceable algorithm that preserves observable semantics is an implementation detail.
 
 The durable result inputs are:
 
@@ -20,9 +33,31 @@ ModelFingerprint
 + explicit workload
 + seed/random inputs
 + ordered external commands
++ any other explicitly identified result-affecting input
 ```
 
-A run fixes its Engine semantics version at establishment. The version never changes mid-run.
+A run fixes its Engine semantics version at establishment. The version never changes mid-run, and
+a new runtime always gets a fresh `RunId` regardless of which version it uses. One version covers
+dispatch, decomposition, scheduling, transfer and derived-result interpretation together, because
+those rules interact to produce one outcome; independently versioned sub-policies would need a
+concrete independent-evolution requirement.
+
+The runtime supports exactly one version, reports it through `FactoryRuntime`, and must refuse an
+unsupported version rather than silently executing a record under different semantics. Carrying
+the version in every supported observation and event envelope is required by the
+[runtime contract](runtime-contract.md); propagation into the metadata types is a known
+implementation gap. An intentional change that can alter outcome for identical explicit inputs —
+including a bug fix that observably changes interpretation — is a new version; repairing an
+implementation to conform to this specification is not. Performance work, dependency upgrades,
+refactors, logging and projection-only changes keep the version only while they preserve the
+normative behavior. When a version is retired from execution, its identifier, this specification
+and the conformance fixtures of section 14 remain, so historical results stay attributable and
+interpretable; cross-version comparison is explicit and owned by the consumer making the claim.
+
+Complete conformance to this specification requires the result-affecting rules and the behavioral
+fixtures, not merely a reported constant. Retaining this document creates no execution or
+compatibility promise beyond what the [support policy](../development/semantic-contract-support.md)
+declares for it.
 
 ### 1.1 Completeness rule
 
@@ -61,17 +96,21 @@ Four consequences follow.
 4. **A rule that satisfies the membership test but is absent here is a defect in this document**,
    not a licence to treat the behavior as unversioned. The correct response is to record it, or to
    promote it to an explicitly identified reproducibility input — not to leave it ambient.
+5. **Incidental implementation ordering is never a semantic tie-breaker.** Hash iteration order,
+   set or map traversal order, thread scheduling, and comparable artefacts of the runtime are not
+   rules two conforming implementations could agree on, so they may not decide a result. Where
+   ordering can change an outcome, an explicit rule recorded in this specification decides it —
+   sections 2, 3 and 4 own the current ones.
 
-### 1.2 Session and control semantics, in scope by reference
+### 1.2 Session and control semantics
 
 The consumer-neutral session/control behavior satisfies the section 1.1 membership test: it decides
 how far a session advances and whether an externally initiated change is applied, for an identical
 ordered command sequence. It is therefore part of the `engine-semantics:v1` interpretation, and two
 implementations may not claim this version while differing on it.
 
-[ADR-0007](decisions/0007-consumer-neutral-session-control-primitives.md) is Accepted and is the
-normative authority for those rules. This specification adopts them **by reference** rather than
-restating them. In scope:
+This section owns those rules; `SessionControlAcceptanceTest` and `RecordingSchedulerTest` prove
+them. In scope:
 
 - `advance()` as the unchanged one-event primitive, and `advanceUntil(targetTime, maxEvents)`
   defined in terms of it — processing events one at a time in `advance()` order and stopping as soon
@@ -87,11 +126,26 @@ restating them. In scope:
   genuinely applied before the runtime failed while carrying out the resulting work. Acceptance and
   execution outcome are independent facts, so `Faulted` is not a variant of `Rejected`.
 
-Adoption by reference is deliberate. ADR-0007 is already normative and its rules are proven by
-`SessionControlAcceptanceTest`; restating them here would create two independently editable
-statements of one contract, which is exactly the drift this document exists to prevent. The
-consequence is unchanged: a change to any rule above is a change to `engine-semantics:v1` and
-requires a new Engine semantics version, even though its text lives in ADR-0007.
+Further session rules in scope:
+
+- `FactoryRuntime` retains the exact `FactoryModelVersion` it was instantiated from for the
+  session lifetime and exposes it through `modelVersion()`; `reset()` reuses that retained value.
+- Every externally initiated command returns a definite result rather than throwing: `Accepted`
+  and `Faulted` both carry the accepted value/affected entity, the model provenance and the events
+  scheduled as a direct effect of the command; `Rejected` carries the structured `SimError` and
+  model provenance with no scheduled events. Rejection is verified before any mutation; a fault
+  that surfaces after an applied change must be reported as `Faulted`, never disguised as
+  rejection and never allowed to escape as an exception. Full two-phase preflight of the
+  machine-availability dispatch cascade is deliberately not required; `Faulted` exists for
+  that residual post-mutation case.
+- Command-effect capture is command-scoped: events scheduled by ordinary advancement are never
+  retained for a session's lifetime merely to serve a later command result.
+- Waiting work that is not queued on any single machine (`pendingWorkView()`) is observable
+  separately from per-machine queue depth, so a consumer never sees every queue empty while
+  real work is still waiting.
+
+A change to any rule in this section is a change to `engine-semantics:v1` and requires a new
+Engine semantics version.
 
 ## 2. Resource-selection and dispatch semantics
 
@@ -163,21 +217,42 @@ Changing any of those result-affecting rules requires a new Engine semantics ver
 
 ## 3. Unit-work decomposition semantics
 
-The existing unit-work decomposition rules remain part of v1:
+Work decomposition (which independently dispatchable execution units exist) is a different
+question from resource dispatch (which eligible resource executes one such unit). One accepted
+`Order` is immutable production intent identified by `OrderId`; the same `OrderId` identifies the
+order-level execution aggregate (requested, released and completed quantity, completion time).
+`JobId` identifies one independently dispatchable work item within an order and is the identity
+machine queues, active-machine state, pending multi-eligible work and `TaskStart`/`TaskEnd` use;
+no separate `ExecutionUnitId`, `LotId` or `BatchId` exists. A consumer must never have to infer
+aggregate completion by counting child states itself, and the game/challenge layer never splits
+one production requirement into several orders merely to obtain parallelism — Arcogine owns that
+decomposition.
+
+The unit-work decomposition rules are part of v1:
 
 1. Workload quantity `N` decomposes into `N` independently dispatchable `JobId` children.
 2. Child creation/release and initial dispatch use deterministic ordinal ordering.
 3. Aggregate completion continues to correlate explicit `OrderId` with the completing child
    `JobId`.
-4. **The supported child-materialization envelope is part of `engine-semantics:v1`.** Workload
+4. Each child has execution quantity one and traverses its routing exactly once; its immutable
+   zero-based `ordinalWithinOrder` orders creation, `JobId` allocation and initial dispatch
+   attempts and is ordering metadata, not identity. A job cannot start step `k + 1` before its own
+   step `k` completes; sibling jobs have no additional precedence. All children are released
+   atomically with order acceptance, so `releasedQuantity == requestedQuantity` immediately after
+   acceptance. `completedQuantity` increments exactly once per child final completion, and only
+   the transition to `requestedQuantity` emits the single `OrderCompleted` event, which carries
+   the `OrderId` and the completing child `JobId`. Backlog, completed sales and value, lead time
+   and order-throughput remain order-level facts; child count never multiplies a sale. Material
+   lots, arbitrary batch sizes and split/merge semantics are separate future contracts.
+5. **The supported child-materialization envelope is part of `engine-semantics:v1`.** Workload
    submission accepts `1 <= N <= 100000` and rejects anything outside that closed interval as an
    out-of-range explicit input. The bound is a flat count of children; it does not vary with routing
    step count, resource count, or any other model content.
-5. Rejection under rule 4 is total and occurs **before any runtime mutation**: no `Order`, no child
+6. Rejection under rule 5 is total and occurs **before any runtime mutation**: no `Order`, no child
    `Job`, no queue entry, and no scheduled event exists after a rejected submission. A rejected
    submission is therefore not a partial run with a smaller workload.
 
-Rule 4 is recorded here rather than left as an implementation guard because it satisfies the section
+Rule 5 is recorded here rather than left as an implementation guard because it satisfies the section
 1.1 membership test directly: for an identical model, seed, and command sequence, a workload of
 `100001` is deterministically rejected and a workload of `100000` is deterministically accepted and
 executed. Two implementations choosing different envelopes would disagree about whether a run
@@ -196,7 +271,7 @@ requires a new Engine semantics version.
 3. Internal scheduler markers that do not represent authoritative Factory state changes do not gain
    semantic significance merely because they are present in the implementation.
 4. Supported runtime-event ordering at the same `SimTime` is represented only by the monotonic
-   supported-event sequence established by ADR-0011; spatial transfer semantics introduce no second
+   supported-event sequence established by the [runtime contract](runtime-contract.md); spatial transfer semantics introduce no second
    event-ordering mechanism.
 5. The intra-handler recovery cascade is also semantic ordering where it changes assignment:
    after a completed step releases a machine, the Engine first attempts to dispatch that machine's
@@ -232,7 +307,7 @@ Spatial transfer semantics apply this boundary:
 - replaceable mechanisms preserving the same semantic outcomes are implementation details.
 
 The V2 model facts consumed by this specification are floor dimensions, resource position,
-resource footprint, `ticksPerCell`, and `handlingTicks`, as fixed by ADR-0014 and canonicalized by
+resource footprint, `ticksPerCell`, and `handlingTicks`, as fixed and canonicalized by
 [Factory Model v2 Canonicalization](factory-model-v2.md). This specification consumes those facts;
 it never defines their canonical encoding or identity.
 
@@ -283,7 +358,7 @@ transferDuration = handlingTicks + (ticksPerCell * manhattanDistance)
 
 Semantic rules:
 
-1. Resource positions are integer reference cells defined by ADR-0014 as the minimum-coordinate
+1. Resource positions are integer reference cells defined by Factory Model v2 as the minimum-coordinate
    cells of their footprints.
 2. Distance is Manhattan distance between those reference cells.
 3. Resource footprint does **not** affect v1 transfer distance. Footprint remains canonical Factory
@@ -292,14 +367,14 @@ Semantic rules:
 5. Arithmetic is integer throughout. V1 has no floating-point distance and no rounding rule because
    none is required by the chosen metric.
 6. Factory V2 publication validation must prove the exact maximum-duration predicate defined by
-   ADR-0014: `(W - 1) + (H - 1)` and
+   Factory Model v2 §1.1: `(W - 1) + (H - 1)` and
    `handlingTicks + ticksPerCell * maxManhattanDistance` must be representable with overflow-safe
    arithmetic in the runtime duration type. This guarantees representability of the derived
    transfer duration; it does not guarantee that `currentSimTime + transferDuration` is
    representable at an arbitrarily extreme current time. The existing runtime time-addition guard
    remains responsible for that condition.
 7. Distinct resource footprints may not overlap. Because each reference cell lies inside its own
-   footprint under ADR-0014, distinct valid resources cannot share the same reference cell, so a
+   footprint under Factory Model v2, distinct valid resources cannot share the same reference cell, so a
    zero-distance inter-resource transfer is not a supported v1 state.
 8. Consecutive operations on the **same resource** perform no transfer at all: no transfer state,
    no duration, and no transfer events.
@@ -429,8 +504,8 @@ identical model, workload, seed and ordered command sequence. These rules are pa
    not a NaN from a zero denominator.
 5. Simulated-time **addition is not saturating.** It is unchecked, and the pre-existing runtime
    time-addition guard rejects an overflowing schedule at the command boundary instead of silently
-   producing a wrapped time — see section 7 rule 6 and ADR-0007's zero-mutation rejection contract
-   adopted by section 1.2.
+   producing a wrapped time — see section 7 rule 6 and the zero-mutation rejection contract of
+   section 1.2.
 
 Rules 1 to 4 are deliberate total-function choices at domain edges, not incidental defensive coding:
 each replaces an undefined, wrapped, or non-finite value with a defined one a consumer can interpret.
@@ -605,9 +680,9 @@ normative semantics above using representative explicit inputs. The fixtures mus
     is still bound to the same destination after another eligible machine becomes free and the
     recovery cascade runs, counts in that destination's queue depth, and no longer counts as
     reserved admission capacity;
-12. session/control rules adopted by section 1.2: `advanceUntil` converging with looping `advance()`
+12. session/control rules of section 1.2: `advanceUntil` converging with looping `advance()`
     under both bounds, reset-session reproduction, and the `Accepted`/`Rejected`/`Faulted` outcome
-    shapes with `Rejected`'s zero-mutation guarantee — satisfied by ADR-0007's existing
+    shapes with `Rejected`'s zero-mutation guarantee — satisfied by the existing
     `SessionControlAcceptanceTest` rather than duplicated here;
 13. agreement between job transfer observation and destination resource admission-load observation;
 14. deterministic event-type/entity-reference ordering and simulated times;

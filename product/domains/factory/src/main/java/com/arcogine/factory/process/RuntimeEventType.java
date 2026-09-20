@@ -2,7 +2,8 @@ package com.arcogine.factory.process;
 
 /**
  * The minimum supported, consumer-facing runtime event taxonomy for {@link FactoryRuntime}
- * (the supported runtime-event contract). This is deliberately narrower than the internal scheduler's {@code EventType}: it
+ * (the supported runtime-event contract). This is deliberately narrower than the internal
+ * scheduler's {@code EventType}: it
  * represents meaningful authoritative state change a consumer-neutral caller can act on, not
  * scheduler implementation detail (e.g. the internal {@code TaskStart} marker event, which never
  * itself changes authoritative state, has no supported counterpart).
@@ -14,7 +15,8 @@ public enum RuntimeEventType {
      * A job was dispatched to (started on) a machine -- either immediately on creation or as a
      * result of a later dispatch cascade (e.g. a machine coming back online or finishing other
      * work). Together with {@link #JOB_WAITING}, lets a consumer reconstruct the
-     * assignment/pending-work deltas a supported command can cause (ADR-0011).
+     * assignment/pending-work deltas a supported command can cause
+     * (docs/architecture/runtime-contract.md).
      */
     JOB_DISPATCHED,
     /**

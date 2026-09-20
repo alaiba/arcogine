@@ -9,7 +9,8 @@ import java.util.Optional;
 /**
  * A {@link Scheduler} that can, for the duration of one command call, additionally capture every
  * {@link Event} it schedules into a caller-supplied sink, so {@link FactoryRuntime} can report
- * exactly which events a specific command scheduled (docs/planning/factory-simulation-engine-readiness.md
+ * exactly which events a specific command scheduled
+ * (docs/planning/factory-simulation-engine-readiness.md
  * §7.2's "events produced by the accepted command" field on {@link CommandResult}) without changing
  * {@link Scheduler}'s own public contract or touching any other consumer of it.
  *
@@ -51,7 +52,8 @@ final class RecordingScheduler extends Scheduler {
 
     /**
      * Whether any queued event can still authoritatively change factory state -- the sense in which
-     * {@link RuntimeRunState#ACTIVE} means "pending authoritative work" (ADR-0011).
+     * {@link RuntimeRunState#ACTIVE} means "pending authoritative work"
+     * (docs/architecture/runtime-contract.md).
      *
      * <p>Deliberately not {@link #isEmpty()}: the queue can still hold internal markers ({@code
      * TaskStart}, the {@code OrderCompleted} a terminal {@code TaskEnd} schedules purely so other

@@ -24,7 +24,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * ADR-0010 closure evidence for the supported child-materialization ceiling.
+ * Unit-work decomposition (docs/architecture/engine-semantics-v1.md section 3) closure evidence for
+ * the supported child-materialization ceiling.
  *
  * <p>This is intentionally an acceptance benchmark rather than a wall-clock performance contract:
  * it executes the maximum supported 100,000-unit order, records host-dependent timing/heap

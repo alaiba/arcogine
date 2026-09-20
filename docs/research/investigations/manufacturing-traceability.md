@@ -31,9 +31,9 @@ A positive answer could affect Factory semantics, Operational execution history,
 
 ### Risk posture
 
-This is a **high-risk** research question under the normative research method because a surviving canonical result would establish identity/equality and lineage/continuity semantics. Any surviving high-risk identity/lineage conclusion must receive a genuinely independent adversarial research review before it can be treated as decision-quality evidence for promotion into an ADR or comparably durable architecture.
+This is a **high-risk** research question under the normative research method because a surviving canonical result would establish identity/equality and lineage/continuity semantics. Any surviving high-risk identity/lineage conclusion must receive a genuinely independent adversarial research review before it can be treated as decision-quality evidence for reconciliation into durable architecture or a specification.
 
-Whether a surviving conclusion actually requires an ADR remains a conclusion-specific architecture question; the independent adversarial-review gate is not optional.
+Whether a surviving conclusion actually requires an architecture change remains a conclusion-specific question; the independent adversarial-review gate is not optional.
 
 ### Current/simple candidate
 
@@ -88,12 +88,12 @@ This question is ready to conclude only when the evidence is sufficient to state
 - how backward and forward genealogy are reconstructed;
 - what remains external or explicitly deferred;
 - what would reopen the decision;
-- whether any surviving material identity/lineage conclusion requires an ADR; and
+- whether any surviving material identity/lineage conclusion requires an architecture or specification change; and
 - that any surviving high-risk identity/lineage conclusion proposed for durable promotion has completed the required genuinely independent adversarial research review.
 
 ### Expected durable destination
 
-No action, or Factory/Operational architecture with an ADR only if durable material identity/lineage semantics survive. Engine implementation must not change merely because manufacturing genealogy exists.
+No action, or Factory/Operational architecture reconciliation only if durable material identity/lineage semantics survive. Engine implementation must not change merely because manufacturing genealogy exists.
 
 ## MES/MOM traceability interoperability boundary — CANDIDATE
 
@@ -109,7 +109,7 @@ Where Arcogine canonical semantics end and standards/vendor-specific traceabilit
 
 This is a **high-risk** research question under the normative research method because a surviving result would establish interoperability semantics and potentially persisted/public compatibility boundaries. Its Medium portfolio priority does not lower that semantic risk classification.
 
-Any surviving high-risk interoperability conclusion must receive a genuinely independent adversarial research review before it can be treated as decision-quality evidence for promotion into an ADR or comparably durable architecture.
+Any surviving high-risk interoperability conclusion must receive a genuinely independent adversarial research review before it can be treated as decision-quality evidence for reconciliation into durable architecture or a specification.
 
 ### Current/simple candidate
 
@@ -184,6 +184,6 @@ This investigation does not by itself justify:
 
 The material/genealogy question may promote only after its identity, lineage, ownership, and proving cases are decision-quality. The interoperability question may promote only after Arcogine's internal semantic boundary is sufficiently clear that adapters cannot silently define it.
 
-For either question, a surviving high-risk conclusion must complete the normative genuinely independent adversarial research review before it can become decision-quality evidence for promotion into an ADR or comparably durable architecture. This brief leaves the need for a particular ADR open; it does not leave the high-risk review gate open.
+For either question, a surviving high-risk conclusion must complete the normative genuinely independent adversarial research review before it can become decision-quality evidence for reconciliation into durable architecture or a specification. This brief leaves open which architecture or specification, if any, would have to change; it does not leave the high-risk review gate open.
 
 Any later implementation responsibility belongs in `docs/planning/` only after the relevant conclusion has been reconciled into its durable architecture/product authority and has explicit prerequisites plus executable acceptance evidence.

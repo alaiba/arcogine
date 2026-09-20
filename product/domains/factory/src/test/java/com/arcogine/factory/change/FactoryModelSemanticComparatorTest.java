@@ -27,7 +27,8 @@ class FactoryModelSemanticComparatorTest {
 
     @Test
     void reorderingTopLevelResourcesIsAttributedAsEntityModifiedPerAdr0006() {
-        // ADR-0006 ("Current list ordering remains semantic in v1") makes resources, operations,
+        // docs/architecture/factory-model-v1.md ("List ordering is semantic") makes resources,
+        // operations,
         // and products order-significant in factory-model:v1 -- product order specifically can
         // affect deterministic demand generation. A pure top-level reorder must therefore surface
         // as a real, attributable semantic change, not be absorbed by ID-keyed comparison.
@@ -48,7 +49,8 @@ class FactoryModelSemanticComparatorTest {
 
     @Test
     void reorderingProductsIsAttributedAsEntityModified() {
-        // Product order can affect deterministic demand generation (ADR-0006), so it must never be
+        // Product order can affect deterministic demand generation
+        // (docs/architecture/factory-model-v1.md), so it must never be
         // treated as a no-op.
         OperationStepDefinition step =
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
@@ -85,7 +87,8 @@ class FactoryModelSemanticComparatorTest {
 
     @Test
     void reorderingEligibleResourcesWithinAStepDoesNotProduceASemanticChange() {
-        // eligibleResources is set-shaped and explicitly order-insignificant under ADR-0006
+        // eligibleResources is set-shaped and explicitly order-insignificant under
+        // docs/architecture/factory-model-v1.md
         // (canonicalized by ascending MachineId), unlike the top-level collections above.
         OperationStepDefinition baseStep =
                 new OperationStepDefinition(1, "Step", Set.of(new MachineId(1), new MachineId(2)), 1);

@@ -3,7 +3,7 @@
 > **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete. Outward convergence and independent same-semantics work remain admitted; remaining spatial runtime consequences are dependency-blocked where they harden the current durability or Factory V1/V2 model pending READY research and reconciliation.
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
-> **Related:** [Factory Design Capability](factory-design-capability.md), [ADR-0007](../architecture/decisions/0007-consumer-neutral-session-control-primitives.md), [ADR-0010](../architecture/decisions/0010-intra-order-execution-decomposition-and-work-item-identity.md), [ADR-0011](../architecture/decisions/0011-runtime-observation-and-event-contract.md), [ADR-0015](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
+> **Related:** [Factory Design Capability](factory-design-capability.md), [session-control semantics](../architecture/engine-semantics-v1.md#12-session-and-control-semantics), [unit-work decomposition semantics](../architecture/engine-semantics-v1.md#3-unit-work-decomposition-semantics), [runtime observation/event contract](../architecture/runtime-contract.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
 
 ## 1. Runtime boundary
 
@@ -53,7 +53,7 @@ PLAN-ENG-2's **capability boundary** remains complete: independently dispatchabl
 
 ### PLAN-ENG-W1 — Intra-order work decomposition
 
-ADR-0010 is implemented:
+The unit-work decomposition semantics is implemented:
 
 - one quantity-bearing accepted `Order` remains aggregate intent/correlation;
 - quantity creates deterministic unit-quantity sibling `Job`s;
@@ -108,11 +108,11 @@ Required outcome:
 
 The API/SSE and CLI/reference changes may land separately when that keeps reviews narrow.
 
-The legacy KPI path is the one ownership-sensitive part of this convergence: `/api/kpis` and the snapshot KPI list currently derive from internal `EventLog`, which ADR-0011 §8 and ADR-0012 keep outside the supported contract. Migrating them must consume [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md) rather than define another formula set at the transport layer. Observation/event transport migration itself is unaffected and may proceed.
+The legacy KPI path is the one ownership-sensitive part of this convergence: `/api/kpis` and the snapshot KPI list currently derive from internal `EventLog`, which the runtime observation/event contract §8 and the external representation policy keep outside the supported contract. Migrating them must consume [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md) rather than define another formula set at the transport layer. Observation/event transport migration itself is unaffected and may proceed.
 
 ### PLAN-ENG-5 — Spatial runtime consequences
 
-Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. ADR-0014, ADR-0015, Factory Model v2 canonicalization, and Engine Semantics v1 remain the accepted contract until superseded. **Planning execution is nevertheless on research hold** for unimplemented work that would release V2 identity/coexistence or activate spatial semantics on the assumption that those durability/composition boundaries are final.
+Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, Factory Model v2 canonicalization, and Engine Semantics v1 are the governing contracts. **Planning execution is nevertheless on research hold** for unimplemented work that would release V2 identity/coexistence or activate spatial semantics on the assumption that those durability/composition boundaries are final.
 
 The admitted sequence includes:
 
@@ -212,7 +212,7 @@ The following are not implementation items in this plan:
 - new advancement/session semantics without a concrete consumer failure case; and
 - unselected transport/recovery technology or protocol choices.
 
-Current architecture assigns the retained dispatch rules to `engine-semantics:v1`. The concluded first-release research authorizes deliberate conformance to those rules, and no implementation task may silently change them while that architecture remains Accepted. The READY semantic-contract maturity investigation separately asks whether Arcogine declared permanent durability too early; only a later reconciliation may change that lifecycle rule. Planning itself must not create an exception in either direction.
+Current architecture assigns the retained dispatch rules to `engine-semantics:v1`. The concluded first-release research authorizes deliberate conformance to those rules, and no implementation task may silently change them while that architecture stands. The READY semantic-contract maturity investigation separately asks whether Arcogine declared permanent durability too early; only a later reconciliation may change that lifecycle rule. Planning itself must not create an exception in either direction.
 
 PLAN-ENG-6 is admitted separately because its implementation contract is exact result equivalence for the already-authoritative v1 semantics after PLAN-ENG-5-0 closes the conformance gap.
 

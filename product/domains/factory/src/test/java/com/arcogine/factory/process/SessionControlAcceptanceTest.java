@@ -303,7 +303,8 @@ class SessionControlAcceptanceTest {
      * {@code TaskStart}/{@code TaskEnd} scheduling call discovers, deep in that same dispatch
      * attempt, that simulated time has grown large enough (via an unrelated {@code Long.MAX_VALUE}
      * duration job on a different machine) to overflow {@code SimTime}. Full preflight safety for
-     * this cascade was judged out of proportion for this slice (see ADR-0007); instead the command
+     * this cascade is deliberately not required (docs/architecture/engine-semantics-v1.md section
+     * 1.2); instead the command
      * must still return a definite result rather than let the failure escape as a bare exception --
      * proven here as {@link CommandResult.Faulted}, distinct from {@link CommandResult.Rejected}
      * precisely because mutation has already happened by the time it's returned.

@@ -4,7 +4,7 @@ Arcogine sits at the intersection of manufacturing systems, digital twins, simul
 
 Per the [Product Charter](../product/charter.md), Arcogine's mature product direction spans design, understanding, simulation, verification, operation, monitoring, and improvement over one executable business model. Standards matter where they improve semantic continuity, interoperability, verification, or operational trust. They do not define Arcogine's product identity or require speculative implementation.
 
-[ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md) establishes the repository-wide representation rule: Arcogine-owned semantic contracts are authoritative by default; file formats, wire formats, broker envelopes, and industrial schemas are projections or adapters unless a later Accepted ADR explicitly assigns them authority.
+The [external representation policy](external-representations.md) establishes the repository-wide representation rule: Arcogine-owned semantic contracts are authoritative by default; file formats, wire formats, broker envelopes, and industrial schemas are projections or adapters unless a reviewed architectural decision explicitly assigns them authority.
 
 The proposed [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md) owns the future semantic integration boundary for real operational systems: execution context, verified identity/trust, authority, command/result lifecycle, deployment provenance, independent operational observations, reconciliation, and adapter transformation provenance. Protocol and interchange standards sit behind that boundary rather than defining Arcogine's canonical ontology.
 
@@ -71,7 +71,7 @@ Industrial interchange
 
 Two rules are especially important:
 
-1. **Representation is not identity.** `factory-model:v1` is defined by ADR-0006's normative binary grammar, not TOML, JSON, a serializer library, or canonical JSON.
+1. **Representation is not identity.** `factory-model:v1` is defined by the Factory Model v1 specification's normative binary grammar, not TOML, JSON, a serializer library, or canonical JSON.
 2. **Projection is not ontology.** OpenAPI, CloudEvents, B2MML, AutomationML, AASX, FMI, Parquet, IFC, glTF, STEP, OPC UA, MQTT, and similar formats map around Arcogine-owned semantic contracts rather than becoming those contracts automatically.
 
 ## Regional adoption context
@@ -138,7 +138,7 @@ Discrete-event simulation is Arcogine's core execution methodology.
 - seeded randomness and deterministic acceptance tests protect repeatability;
 - the simulation layer remains independent of rendering and wall-clock pacing.
 
-Internal scheduler `Event` types remain simulation machinery. [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md) establishes separate supported `RuntimeObservation` and `RuntimeEvent` semantics for outward consumers.
+Internal scheduler `Event` types remain simulation machinery. The [runtime observation/event contract](runtime-contract.md) establishes separate supported `RuntimeObservation` and `RuntimeEvent` semantics for outward consumers.
 
 ### Queueing theory and Little's Law
 
@@ -175,7 +175,7 @@ OpenAPI is the intended standard description format for stable HTTP contracts.
 
 JSON is the default structured representation for ordinary external HTTP/API projections where no stronger domain-specific format is required.
 
-JSON is **not** Arcogine's semantic identity representation. `factory-model:v1` remains the durable model identity contract from ADR-0006 and must not be redefined through JSON canonicalization or serializer defaults.
+JSON is **not** Arcogine's semantic identity representation. `factory-model:v1` remains the durable model identity contract from the Factory Model v1 specification and must not be redefined through JSON canonicalization or serializer defaults.
 
 ---
 

@@ -11,7 +11,8 @@ import java.util.List;
 /**
  * The canonical {@code factory-model:v2} semantic definition of a designed production system:
  * exactly the {@code factory-model:v1} semantic content (operations, products, and each
- * resource's V1 fields) plus the five authored spatial/handling facts ADR-0014 requires -- floor
+ * resource's V1 fields) plus the five authored spatial/handling facts
+ * docs/architecture/factory-model-v2.md requires -- floor
  * extent, per-resource reference-cell position, per-resource footprint, {@code ticksPerCell}, and
  * {@code handlingTicks}.
  *

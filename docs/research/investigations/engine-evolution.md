@@ -2,13 +2,13 @@
 
 > **Lifecycle:** See the maintained research register; this artifact contains concluded dispatch history, concluded first-release dispatch decisions, and CANDIDATE follow-up questions  
 > **Scope:** Result-affecting Engine questions that still require evidence before current deterministic runtime semantics change  
-> **Authority:** Research only; current Engine semantics remain fixed by accepted architecture and executable evidence until a separate reconciliation change says otherwise
+> **Authority:** Research only; current Engine semantics remain fixed by adopted architecture and executable evidence until a separate reconciliation change says otherwise
 
 ## Purpose
 
-The Engine implementation must not silently evolve result-affecting policy under an existing semantics identity. This document holds candidate extensions and bounded follow-up questions until evidence and an explicit architecture decision justify a different implementation contract.
+The Engine implementation must not silently evolve result-affecting policy under an existing semantics identity. This document holds candidate extensions and bounded follow-up questions until evidence and an explicit reconciled architecture change justify a different implementation contract.
 
-`engine-semantics:v1` is already a normative design contract even though its implementation/conformance work is pending. Under current ADR-0015 and v1 authority, an intentional change that can alter outcomes for identical explicit inputs requires a new `EngineSemanticsVersion`; unreleased or implementation-pending status does not create an in-place mutation exception. Research may still decide whether v1 is acceptable for the first supported release or whether evidence justifies architecture work for a different semantics version before implementation. Neither outcome permits a silent implementation tweak.
+`engine-semantics:v1` is a normative contract even though its implementation is partial. Under the [Determinism Contract](../../architecture/overview.md#determinism-contract) and the [semantic evolution and support rules](../../architecture/overview.md#semantic-evolution-and-support), an intentional change that can alter outcomes for identical explicit inputs requires a new `EngineSemanticsVersion` once records are attributed to the definition; unreleased status and unexercised sections create no in-place mutation exception. Same-label amendment after attribution remains a separate open question. Research may still decide whether v1 is acceptable for the first supported release or whether evidence justifies architecture work for a different semantics version before implementation. Neither outcome permits a silent implementation tweak.
 
 ## Material identity and genealogy boundary
 
@@ -64,7 +64,7 @@ The exact diagnostic timings are evidence of a scaling shape, not a performance 
 
 The two bounded first-release questions were investigated separately so that one experiment could hold the other rule fixed. Their reviewed conclusions converge on one release decision: **retain `engine-semantics:v1` unchanged for both local admission and shared flexible-backlog ranking**.
 
-This is a conservative compatibility decision, not a claim that either rule is globally optimal or historically well-motivated. No accepted Arcogine objective selects a better result-affecting alternative, while each tested alternative has valid workloads where it regresses another outcome. Because both retained rules are already normative v1 semantics, this reconciliation requires no ADR or specification rewrite and creates no new `EngineSemanticsVersion`.
+This is a conservative compatibility decision, not a claim that either rule is globally optimal or historically well-motivated. No accepted Arcogine objective selects a better result-affecting alternative, while each tested alternative has valid workloads where it regresses another outcome. Because both retained rules are already normative v1 semantics, this reconciliation requires no specification rewrite and creates no new `EngineSemanticsVersion`.
 
 The decisions must nevertheless be carried together. The retained one-local-job recovery behavior can leave a recovered concurrency>1 machine both accepting and locally queued. That is the principal healthy regime where the magnitude of `combinedQueueDepth` can matter rather than acting only as a binary handover signal. Changing local admission later would therefore change part of the structural support for the ranking conclusion even if the ranking formula itself were untouched.
 

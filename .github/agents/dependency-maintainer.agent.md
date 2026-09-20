@@ -65,7 +65,7 @@ A Dependabot security PR may retain the trusted provenance authorization path, b
 
 Treat a major version as an isolated migration. Read migration/breaking-change guidance and inspect affected consumers, configuration, tests, and compatibility contracts.
 
-A major version number does not by itself require an ADR. Escalate to normal architecture/decision handling only when the update forces a genuinely hard-to-reverse Arcogine decision such as a public compatibility change, durable identity/persistence choice, domain ownership change, or equivalent architectural commitment.
+A major version number does not by itself make an update architectural. Escalate to normal architecture handling only when the update forces a genuinely hard-to-reverse Arcogine choice such as a public compatibility change, durable identity/persistence choice, domain ownership change, or equivalent architectural commitment.
 
 A genuine unmodified Dependabot-authored major PR may be review-authorized by provenance, but the Dependency Maintainer must still perform the migration analysis and compatibility work required by this contract when asked to process it. The `disposition` exception does not convert a major migration into routine work.
 

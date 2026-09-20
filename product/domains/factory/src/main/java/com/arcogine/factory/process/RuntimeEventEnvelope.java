@@ -9,7 +9,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * The supported, consumer-neutral runtime event envelope (ADR-0011). This is the
+ * The supported, consumer-neutral runtime event envelope (docs/architecture/runtime-contract.md).
+ * This is the
  * externally observable contract a {@link FactoryRuntime} caller correlates against -- distinct
  * from, and never a wrapper around, the internal scheduler's {@code Event}.
  *
@@ -24,7 +25,8 @@ import java.util.Optional;
  *     {@code RuntimeObservationMetadata#latestEventSequence()} once applied); always positive
  * @param simulationTime the simulated time at which the described authoritative change occurred
  * @param eventType the supported taxonomy member this event belongs to
- * @param modelFingerprint the durable semantic fingerprint ({@code FactoryModelVersion#fingerprint()})
+ * @param modelFingerprint the durable semantic fingerprint ({@code
+ * FactoryModelVersion#fingerprint()})
  *     of the model this run was instantiated from
  * @param controlledRevisionId present only when the runtime is actually authoritatively bound to a
  *     controlled revision through an established contract; this envelope never synthesizes one

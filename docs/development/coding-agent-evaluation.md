@@ -15,7 +15,7 @@ Useful measurements are:
 - cost per accepted or mergeable PR;
 - number of human interventions;
 - first-pass test and quality-gate success;
-- semantic correctness under Arcogine's architecture and ADRs;
+- semantic correctness under Arcogine's architecture and specifications;
 - number and severity of independent-review findings;
 - wall-clock time;
 - reliability of Git/PR iteration and remediation;
@@ -68,7 +68,7 @@ A useful starting rule is to route by **semantic risk**, not by provider prestig
 | Mechanical refactor / documentation reconciliation | Luna / Haiku | The change alters compatibility, architecture status, or normative semantics |
 | Medium cross-module feature | Mid/frontier model as needed | Use repository evidence to decide whether the cheaper worker is still converging |
 | Difficult debugging / ambiguous remediation | Stronger reasoning model | — |
-| ADR, identity/provenance, compatibility, persistence, cross-domain ownership | Strong reasoning model plus independent review | Do not optimize primarily for inference cost |
+| Architecture/specification change, identity/provenance, compatibility, persistence, cross-domain ownership | Strong reasoning model plus independent review | Do not optimize primarily for inference cost |
 | Architecture/freeze review | Strong reasoning model plus a different-model second opinion | — |
 
 A particularly attractive pattern is **cheap-model implementation plus independent model-family review**: for example, Luna implements and Claude reviews, or Haiku implements and GPT reviews. This reduces the chance that the implementer and reviewer reproduce the same model-family blind spot.
@@ -77,7 +77,7 @@ The core economic hypothesis is therefore:
 
 > Use stronger reasoning to define and freeze the contract; use Luna or Haiku to execute sufficiently explicit implementation slices; escalate only when evidence shows that the cheaper worker is no longer converging safely.
 
-Gate-style Arcogine work is a good proving ground for this pattern: once an ADR, normative semantics, acceptance criteria, and executable validation are settled, implementation is materially different from inventing those semantics in the first place.
+Gate-style Arcogine work is a good proving ground for this pattern: once the owning architecture or specification, normative semantics, acceptance criteria, and executable validation are settled, implementation is materially different from inventing those semantics in the first place.
 
 ## Additional free and low-cost capacity worth testing
 
@@ -119,7 +119,7 @@ The repository should not prescribe a provider. For experiments, route work by t
 | Arcogine work | Economical first choice | Escalation principle |
 |---|---|---|
 | Architecture/readiness synthesis | Strong reasoning environment already available | Use an independent second opinion before freezing hard-to-reverse semantics |
-| ADR adjudication | Strong Claude/GPT reasoning plus repository authority | Do not optimize for inference cost when a wrong decision creates downstream rework |
+| Architectural adjudication | Strong Claude/GPT reasoning plus repository authority | Do not optimize for inference cost when a wrong decision creates downstream rework |
 | Straight Java implementation | Luna / Haiku / Cursor Free / Copilot Free / free external-agent pool | Escalate only after concrete failure or semantic ambiguity |
 | Straight React/TypeScript implementation | Luna / Haiku / Cursor Free / Copilot Free / free external-agent pool | Escalate on cross-boundary/API semantics rather than routine UI code |
 | Tests and coverage | Luna / Haiku / cheapest capable free agent | Strong models are usually unnecessary unless tests expose a semantic defect |
@@ -134,14 +134,14 @@ Arcogine deliberately keeps important correctness constraints in durable reposit
 
 - `AGENTS.md` defines repository identity, branch handling, validation, and PR lifecycle-continuation rules;
 - specialized Work Planner, PR Reviewer, and Consistency contracts define repository-specific operating procedures;
-- architecture and ADRs define semantic boundaries;
+- architecture and specifications define semantic boundaries;
 - maintained planning documents define acceptance criteria and sequencing;
 - tests and quality gates provide executable evidence;
 - CI provides an independent repository-level validation surface.
 
 This lowers the amount of project knowledge that must be inferred correctly from scratch by every coding model.
 
-It does **not** eliminate the need for strong reasoning on high-semantic-risk changes. In particular, identity, provenance, compatibility, persistence, runtime semantics, cross-domain ownership, and accepted-ADR transitions should not be delegated solely because a model is inexpensive.
+It does **not** eliminate the need for strong reasoning on high-semantic-risk changes. In particular, identity, provenance, compatibility, persistence, runtime semantics, cross-domain ownership, and changes to adopted architecture should not be delegated solely because a model is inexpensive.
 
 ## Public-repository and data-use considerations
 

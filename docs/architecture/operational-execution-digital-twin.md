@@ -2,8 +2,8 @@
 
 > **Status:** Proposed architectural reference  
 > **Scope:** Execution/reality relationships, external observations, digital-twin reconciliation, and design-to-reality continuity  
-> **Authority:** Proposed architecture; this document does not describe current production capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [ADR-0004](decisions/0004-model-identity-revision-lineage-and-external-change-control.md), [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md), [ADR-0012](decisions/0012-external-interchange-and-serialization-boundaries.md), [ADR-0013](decisions/0013-durable-operational-identity.md), [ADR-0015](decisions/0015-engine-semantics-identity-and-reproducibility.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Authority:** The [Operational continuity contract](operational-continuity.md) is adopted; the remaining boundaries are proposed architecture. This document does not describe current production capability  
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [Factory publication identity contract](factory-design.md#11-publication-identity-and-provenance), [runtime observation/event contract](runtime-contract.md), [external representation policy](external-representations.md), [Operational continuity contract](operational-continuity.md), [Determinism Contract](overview.md#determinism-contract), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
 ## 1. Architectural position
 
@@ -42,7 +42,7 @@ Plant dynamics   simulated
 
 No single `SIMULATION`, `STAGING`, `PRODUCTION`, or `OPERATIONAL` label adequately describes that whole graph.
 
-The architecture therefore does **not** treat `PRODUCTION / STAGING / SIMULATION` as a durable global execution taxonomy. ADR-0013 withdrew the earlier consequence-oriented `ExecutionContextKind` proposal, and that withdrawal stands in the Accepted decision: no replacement enum, simulation/operational binary, or equivalent whole-execution consequence classification may be reintroduced under another name.
+The architecture therefore does **not** treat `PRODUCTION / STAGING / SIMULATION` as a durable global execution taxonomy. The [Operational continuity contract](operational-continuity.md) admits no `ExecutionContextKind`: no replacement enum, simulation/operational binary, or equivalent whole-execution consequence classification may be reintroduced under another name.
 
 Several concerns that were previously candidates for one context kind are orthogonal:
 
@@ -66,7 +66,7 @@ A twin can also use simulation internally for prediction or hypothetical continu
 
 ### 2.2 Durable operational identity is an accountable operational continuation
 
-[ADR-0013](decisions/0013-durable-operational-identity.md) is **Accepted** and is the authority for this boundary. Its decision is summarized here; it is not restated in full, and this document does not extend it.
+The [Operational continuity contract](operational-continuity.md) is the adopted authority for this boundary. It is summarized here, not restated in full, and this document does not extend it.
 
 The durable operational identity identifies **one accountable operational continuation**: one independently continuing body of Arcogine's own operational conduct and conclusions, maintained as one account for which Arcogine is answerable. It is a reference to the record that established that account, not a new category of thing.
 
@@ -93,7 +93,7 @@ The accepted rules this document depends on are:
 - **The identity attaches to Arcogine's conduct and conclusions**, never to what Arcogine was told. Raw external observations do not carry it at ingestion.
 - **Possession of the identifier confers no authority.** Continuity evidence is not authorization.
 
-The final type name, identifier representation, persistence and acceptance mechanics, divergence-evidence representation, registry question, coordination mechanism, closure/retirement semantics, and module ownership remain deliberately deferred by ADR-0013 until a concrete consumer proves them. `ExecutionContextId` is not the name of this identity; the withdrawn `ExecutionContext` concept is not revived.
+The final type name, identifier representation, persistence and acceptance mechanics, divergence-evidence representation, registry question, coordination mechanism, closure/retirement semantics, and module ownership remain deliberately deferred by the Operational continuity contract until a concrete consumer proves them. No production type name is selected, and no `ExecutionContext` concept exists.
 
 Other boundaries in this document — subject correspondence, operation realization, actor/trust/authority, reconciliation, and temporal semantics — remain **Proposed** and unresolved. Accepting the identity decision resolves one contained question, not this document's status.
 
@@ -184,7 +184,7 @@ This distinction is substrate-independent and is more fundamental than an `obser
 
 Actor/action/capability semantics are not intrinsically operational. Synthetic execution may need humans, agents, NPCs, adversaries, delegated authority, protected resources, approvals, or forbidden actions.
 
-The cross-cutting role, attribution, and provenance rules this section depends on are recorded in [Architecture Overview — Attribution and decision boundaries](overview.md#attribution-and-decision-boundaries), which is their durable authority. In particular: actor, decision source, and subject are distinct roles whose identities need not differ; no shared actor type, actor kind, or actor equality/lifecycle contract exists; and **actor identity is a different question from the accountable operational continuation identity** [ADR-0013](decisions/0013-durable-operational-identity.md) accepts. Actor identity answers *who is the attributable party*; ADR-0013 answers *which independently continuing body of accountable conduct a fact belongs to*. They may correlate, and neither inherits the other's equality or lifecycle rules.
+The cross-cutting role, attribution, and provenance rules this section depends on are recorded in [Architecture Overview — Attribution and decision boundaries](overview.md#attribution-and-decision-boundaries), which is their durable authority. In particular: actor, decision source, and subject are distinct roles whose identities need not differ; no shared actor type, actor kind, or actor equality/lifecycle contract exists; and **actor identity is a different question from the accountable operational continuation identity** [Operational continuity contract](operational-continuity.md) accepts. Actor identity answers *who is the attributable party*; the Operational continuity contract answers *which independently continuing body of accountable conduct a fact belongs to*. They may correlate, and neither inherits the other's equality or lifecycle rules.
 
 The reusable semantic question is approximately:
 
@@ -345,9 +345,9 @@ These capabilities have different retention and reproducibility requirements. Fo
 
 The physical world does not replay. Arcogine may replay or reinterpret records about it, and may fork synthetic futures from historical reconciled state.
 
-ADR-0011 does not currently promise an unbounded cursor-addressable durable event history, and ADR-0015 does not promise permanent exact executability of every historical Engine version. Those remain separate design concerns.
+The runtime observation/event contract does not currently promise an unbounded cursor-addressable durable event history, and the Determinism Contract does not promise permanent exact executability of every historical Engine version. Those remain separate design concerns.
 
-None of these capabilities is an execution kind, and none of them is the durable operational identity. ADR-0013 settles how they interact with it: historical inspection and seek/reconstitution accept no record and establish nothing; replay by itself establishes nothing, and derived results belong to whatever account retains them; a checkpoint restore that loses no accepted material preserves the identity, while a stale restore establishes a new identity with lineage and an abandoned-tail annotation; and a fork from a selected historical state always establishes a new identity with mandatory lineage, at the child's first accepted record.
+None of these capabilities is an execution kind, and none of them is the durable operational identity. The Operational continuity contract settles how they interact with it: historical inspection and seek/reconstitution accept no record and establish nothing; replay by itself establishes nothing, and derived results belong to whatever account retains them; a checkpoint restore that loses no accepted material preserves the identity, while a stale restore establishes a new identity with lineage and an abandoned-tail annotation; and a fork from a selected historical state always establishes a new identity with mandatory lineage, at the child's first accepted record.
 
 No *additional* durable identity above `RunId` should be introduced beyond the accepted accountable-continuation identity until a concrete capability proves a distinct lifecycle/equality contract.
 
@@ -383,7 +383,7 @@ The invariant is:
 
 > **An external observation is not created as evidence for one Arcogine model, revision, or operational history. It is an operational fact with independent provenance; later authoritative relationships may interpret it, and Governance may reference it through evidence use.**
 
-Operational Execution must consume Governance-owned fingerprint, revision, semantic change, requirement/assertion, conformance/finding, and evidence-use contracts when they exist rather than introducing duplicates. The evidence/evidence-use contract Governance applies is fixed by [ADR-0016](decisions/0016-governance-evidence-provenance.md): a raw observation keeps its source provenance and acquires an Arcogine subject only through a later use or reconciliation determination, and a use binds to point identities only — evidence about an accountable operational continuation over time remains the accumulating-identity limit ADR-0013 §11 records, owned here rather than by that contract.
+Operational Execution must consume Governance-owned fingerprint, revision, semantic change, requirement/assertion, conformance/finding, and evidence-use contracts when they exist rather than introducing duplicates. The evidence/evidence-use contract Governance applies is fixed by the [Governance evidence contract](governance-evidence.md): a raw observation keeps its source provenance and acquires an Arcogine subject only through a later use or reconciliation determination, and a use binds to point identities only — evidence about an accountable operational continuation over time remains the accumulating-identity limit the Operational continuity contract §11 records, owned here rather than by that contract.
 
 ## 13. Boundary with Factory Design and Engine Readiness
 
@@ -424,11 +424,11 @@ Candidate protocols and standards include OPC UA, MQTT, Asset Administration She
 
 Operational execution will eventually create durable artifacts whose historical identity matters: commands/results, observations, subject correspondences, deployment records and effective applied-artifact provenance, reconciliation records, and drift/calibration proposals.
 
-The durable operational identity these artifacts carry is settled by ADR-0013 and summarized in §2.2. What remains unspecified here is representation, not meaning:
+The durable operational identity these artifacts carry is settled by the Operational continuity contract and summarized in §2.2. What remains unspecified here is representation, not meaning:
 
-- Arcogine's own acts and conclusions carry the accepted accountable-continuation identity; raw observations do not (§2.2, ADR-0013 §11);
+- Arcogine's own acts and conclusions carry the accepted accountable-continuation identity; raw observations do not (§2.2, the Operational continuity contract §11);
 - the acceptance semantics and the divergence-evidence obligation are design inputs any durable operational record capability must satisfy, not later additions;
-- the architecture does **not** define a registry, alias service, lifecycle administration model, identifier representation, or storage layout, and ADR-0013 deliberately defers all of them.
+- the architecture does **not** define a registry, alias service, lifecycle administration model, identifier representation, or storage layout, and the Operational continuity contract deliberately defers all of them.
 
 Storage technology remains unspecified. Future durable operational records require explicit retention, compatibility, migration, and temporal semantics appropriate to their own responsibilities.
 
@@ -451,7 +451,7 @@ Where an operation can have external consequence:
 
 These are architecture requirements, not claims that current Arcogine implements production-grade safety controls.
 
-## 17. Current open questions, non-goals, and ADR triggers
+## 17. Current open questions, non-goals, and architecture triggers
 
 The next architecture work is deliberately bounded to these unresolved questions:
 
@@ -462,6 +462,6 @@ The next architecture work is deliberately bounded to these unresolved questions
 
 Do not spend this architecture round selecting OPC UA/MQTT schemas, authentication providers, database technology, a central context registry, exact checkpoint/replay storage, distributed execution, autonomous physical control, or a generic cross-domain policy framework. Those are proving cases or future implementation choices, not current prerequisites.
 
-[ADR-0013](decisions/0013-durable-operational-identity.md) is **Accepted** and resolves the durable operational identity referent, continuity, divergence, and record-attachment rules summarized in §2.2. Its identity-separation, non-inference, and raw-observation constraints are now accepted architecture. Its withdrawal of the kind-bound `ExecutionContextKind` model stands, and the representation, persistence, coordination, registry, closure, and ownership questions it defers must not be settled by this document.
+The [Operational continuity contract](operational-continuity.md) resolves the durable operational identity referent, continuity, divergence, and record-attachment rules summarized in §2.2. Its identity-separation, non-inference, and raw-observation constraints are adopted architecture. No kind-bound `ExecutionContextKind` model exists, and the representation, persistence, coordination, registry, closure, and ownership questions it defers must not be settled by this document.
 
-Later ADRs are appropriate when implementation commits Arcogine to hard-to-reverse choices such as shared operation/transition ownership, actor/capability/trust semantics, command correlation/idempotency, external observation/correspondence contracts, reconciliation authority/temporal semantics, or production persistence/retention.
+Later architecture or specification work is appropriate when implementation commits Arcogine to hard-to-reverse choices such as shared operation/transition ownership, actor/capability/trust semantics, command correlation/idempotency, external observation/correspondence contracts, reconciliation authority/temporal semantics, or production persistence/retention; the durable result of such a choice is the changed contract, reconciled with its consumers.

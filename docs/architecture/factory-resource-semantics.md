@@ -2,8 +2,8 @@
 
 > **Status:** Maintained architectural reference  
 > **Scope:** Current canonical meaning of Factory productive-resource identity and the admission rules for reusable specifications, qualification, grouping, and external-asset correspondence  
-> **Authority:** Architectural interpretation of current Factory resource semantics. It does not change released Factory Model fingerprint policy, runtime behavior, or Accepted ADR decisions.  
-> **Related:** [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [ADR-0003](decisions/0003-canonical-factory-model-boundary.md), [ADR-0011](decisions/0011-runtime-observation-and-event-contract.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Resource Semantics Research Conclusion](../research/investigations/factory-resource-semantics.md)
+> **Authority:** Architectural interpretation of current Factory resource semantics. It does not change released Factory Model fingerprint policy, runtime behavior, or adopted architecture.  
+> **Related:** [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [canonical model boundary](factory-design.md#4-canonical-model-boundary), [runtime observation/event contract](runtime-contract.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Resource Semantics Research Conclusion](../research/investigations/factory-resource-semantics.md)
 
 ## Current resource referent
 
@@ -72,10 +72,10 @@ A designed resource can remain the same while its serialized physical realizatio
 
 Therefore designed resource identity and external physical-asset identity/correspondence are distinct. The latter belongs to Operational Execution / Digital Twin semantics once that track is admitted.
 
-## Existing ADR interpretation
+## Relationship to adopted architecture
 
-[ADR-0003](decisions/0003-canonical-factory-model-boundary.md) establishes the canonical design/runtime boundary and lists resource definitions/instances as examples while explicitly leaving concrete type decomposition to implementation. The current collapsed configured-resource representation satisfies that decision.
+The [canonical model boundary](factory-design.md#4-canonical-model-boundary) establishes the canonical design/runtime boundary and lists resource definitions/instances as examples while explicitly leaving concrete type decomposition to implementation. The current collapsed configured-resource representation satisfies that boundary.
 
-[ADR-0011](decisions/0011-runtime-observation-and-event-contract.md) requires stable resource-instance identity and definition identity in supported observations. Under the current collapsed model those roles do not require two distinct identifiers: the canonical `MachineId` identifies the configured model resource and the runtime observation correlation target. A future independently versioned reusable specification would be a separate semantic decision rather than something implied by ADR-0011 wording.
+The [runtime observation/event contract](runtime-contract.md) requires stable resource-instance identity and definition identity in supported observations. Under the current collapsed model those roles do not require two distinct identifiers: the canonical `MachineId` identifies the configured model resource and the runtime observation correlation target. A future independently versioned reusable specification would be a separate semantic decision rather than something implied by the runtime observation/event contract wording.
 
-No Accepted ADR is changed by keeping the current model. A new or superseding ADR becomes appropriate only when Arcogine accepts a hard-to-reverse resource contract such as independently versioned reusable specifications, generalized qualification/allocation semantics with compatibility consequences, consequential pool/work-center aggregation, or Operational physical-asset correspondence identity.
+Keeping the current model changes no adopted architecture. A resource change becomes architectural — reconciled into [Factory Design](factory-design.md) or the specification that would own the new semantics, together with its consumers and executable invariants — when it commits Arcogine to independently versioned reusable specifications, generalized qualification/allocation semantics with compatibility consequences, consequential pool/work-center aggregation, or Operational physical-asset correspondence identity.

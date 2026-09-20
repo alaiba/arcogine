@@ -4,7 +4,7 @@
 
 ## What this document is
 
-This is the highest-level normative source for Arcogine's product direction. It sits above UX decisions, domain design, architecture, ADRs, API and UI design, implementation plans, and current-state documentation. Product, architecture, domain, and UX decisions should align with it unless the charter itself is deliberately amended through an explicit product-level decision (see [Changing this charter](#12-changing-this-charter)) — an ordinary feature, implementation convenience, or architecture proposal must not silently override it. The charter is durable, not immutable: when the conflict is real, it is the charter that should be revisited on purpose, not quietly worked around.
+This is the highest-level normative source for Arcogine's product direction. It sits above UX decisions, domain design, architecture and specifications, API and UI design, implementation plans, and current-state documentation. Product, architecture, domain, and UX decisions should align with it unless the charter itself is deliberately amended through an explicit product-level decision (see [Changing this charter](#12-changing-this-charter)) — an ordinary feature, implementation convenience, or architecture proposal must not silently override it. The charter is durable, not immutable: when the conflict is real, it is the charter that should be revisited on purpose, not quietly worked around.
 
 This document is **not**:
 
@@ -15,7 +15,7 @@ This document is **not**:
 - marketing copy;
 - an architecture specification.
 
-It defines what Arcogine is ultimately intended to become and the principles against which future initiatives — features, refactors, architecture proposals, ADRs — should be evaluated. It does not promise dates, phases, or that any specific capability will ship. For what Arcogine implements today, see [`docs/architecture/overview.md`](../architecture/overview.md), [`docs/product/concepts.md`](concepts.md), and [`docs/reference/api.md`](../reference/api.md).
+It defines what Arcogine is ultimately intended to become and the principles against which future initiatives — features, refactors, architecture proposals — should be evaluated. It does not promise dates, phases, or that any specific capability will ship. For what Arcogine implements today, see [`docs/architecture/overview.md`](../architecture/overview.md), [`docs/product/concepts.md`](concepts.md), and [`docs/reference/api.md`](../reference/api.md).
 
 ## 1. Purpose
 
@@ -151,8 +151,8 @@ Normative product destination and enduring principles
 docs/architecture/overview.md
 Current architecture and enduring architectural principles
         │
-        ├── docs/architecture/decisions/
-        │   Historical rationale for significant decisions
+        ├── docs/architecture/*.md
+        │   Focused specifications owning exact contracts, identities, and semantics
         │
         ├── docs/product/concepts.md / docs/reference/api.md / UI docs
         │   Current capability/reference documentation
@@ -163,8 +163,8 @@ Current architecture and enduring architectural principles
         ├── docs/planning/
         │   Admitted implementation work, sequencing, blockers, and acceptance evidence
         │
-        └── historical ADRs and plans
-            Retained context that is no longer an active authority
+        └── Git and pull-request history
+            Historical rationale and superseded states; evidence, not current authority
 ```
 
 Repository documentation uses these status categories, applied where they materially help a reader avoid confusing them:
@@ -173,14 +173,14 @@ Repository documentation uses these status categories, applied where they materi
 - **Current state** — what Arcogine implements now. `docs/product/concepts.md`, `docs/reference/api.md`, `/product/interfaces/web/README.md`, the current-implementation portions of `docs/architecture/overview.md`.
 - **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
 - **Planned** — admitted implementation work with bounded ownership, prerequisites, sequencing, and acceptance evidence. `docs/planning/`.
-- **Proposed** — under consideration but not yet established as durable direction. Proposed ADRs and other explicitly proposed material outside the research and planning authorities.
-- **Historical** — retained for context but no longer authoritative. Superseded ADRs.
+- **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research and planning authorities, such as a design proposal under review in a branch or pull request.
+- **Historical** — retained for context but no longer authoritative. Replaced or removed decisions and plans, preserved in Git history.
 
 A reader should never be left guessing whether a statement is mature product ambition, current implementation, an open research question, admitted implementation work, an open proposal, or a historical artifact.
 
 ## 11. Decision test
 
-A significant initiative — a feature proposal, an architecture change, an ADR — can be evaluated against this charter by asking:
+A significant initiative — a feature proposal, an architecture change — can be evaluated against this charter by asking:
 
 1. Does this strengthen or fragment the common executable model?
 2. Does it preserve continuity between design, simulation, verification, and execution?

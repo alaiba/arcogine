@@ -63,7 +63,8 @@ import java.util.stream.Stream;
  * #drainSupportedEvents()} -- published only after the authoritative transition each event
  * describes has already succeeded, with {@link RuntimeObservationMetadata#latestEventSequence()}
  * advancing in lockstep. Retained, cursor-replayable supported-event history is deliberately not
- * this type's responsibility (ADR-0011 §8): {@link #drainSupportedEvents()} returns and
+ * this type's responsibility (docs/architecture/runtime-contract.md §8): {@link
+ * #drainSupportedEvents()} returns and
  * clears only the events accumulated since it was last called, so a caller wanting durable replay
  * owns that retention itself. Persistence/recovery/checkpoint/replay semantics and consumer
  * (SSE/frontend) migration remain later work on this supported boundary.
@@ -81,7 +82,8 @@ public class FactoryRuntime {
     /**
      * The simulated time {@link #observe()} reports: the time as of the most recent supported
      * boundary (session construction, or the last emitted {@link RuntimeEventEnvelope}), not
-     * whatever the internal scheduler's cursor currently says (ADR-0011).
+     * whatever the internal scheduler's cursor currently says
+     * (docs/architecture/runtime-contract.md).
      *
      * <p>{@link Scheduler#nextEvent()} advances its cursor for every event it hands out, including
      * internal markers {@link FactoryHandler#handleEvent} ignores. Reading it directly would let a
@@ -130,7 +132,8 @@ public class FactoryRuntime {
 
     /**
      * Constructs a fresh {@link FactoryRuntime} over the same {@link #modelVersion()}, with none of
-     * this session's submitted workload or dispatch state carried over (reset and reproduce the same
+     * this session's submitted workload or dispatch state carried over (reset and reproduce the
+     * same
      * result from the same published model). This session itself is left untouched -- reset is
      * fresh construction, not in-place mutation, matching {@code FactoryRuntime}'s existing
      * immutable-identity/exclusive-ownership shape: replaying the same command sequence against the
@@ -222,11 +225,15 @@ public class FactoryRuntime {
         // genuinely applied transitions -- online while previously Offline, or offline while
         // previously not Offline -- may mutate authoritative state, run the dispatch/recovery
         // cascade, emit MACHINE_AVAILABILITY_CHANGED, or advance the sequence. A redundant
-        // request must never even attempt the cascade below: FactoryHandler#handleMachineAvailability
+        // request must never even attempt the cascade below:
+        // FactoryHandler#handleMachineAvailability
         // always attempts to dispatch queued/pending work whenever `online` is true, regardless of
-        // whether the machine actually changed state, so calling it for a non-transition would let a
-        // redundant command silently dispatch already-waiting work -- an authoritative mutation with
-        // no corresponding supported event or sequence advancement (ADR-0011).
+        // whether the machine actually changed state, so calling it for a non-transition would let
+        // a
+        // redundant command silently dispatch already-waiting work -- an authoritative mutation
+        // with
+        // no corresponding supported event or sequence advancement
+        // (docs/architecture/runtime-contract.md).
         boolean wasOffline = machine.get().state() == MachineState.Offline;
         boolean transitioned = online == wasOffline;
         EventPayload.MachineAvailabilityChange requested = new EventPayload.MachineAvailabilityChange(machineId, online);
@@ -274,7 +281,8 @@ public class FactoryRuntime {
      * Emits {@link RuntimeEventType#JOB_DISPATCHED} for every job in {@code waitingBefore} that
      * has since transitioned to {@link JobStatus#InProgress} -- the genuine dispatch-cascade
      * outcome of a machine coming online, derived by diffing authoritative job state rather than
-     * inspecting internal scheduler machinery (ADR-0011). Ordered deterministically by
+     * inspecting internal scheduler machinery (docs/architecture/runtime-contract.md). Ordered
+     * deterministically by
      * order id then ordinal so repeated runs of the same scenario produce identical event streams.
      */
     private void emitNewlyDispatchedJobs(List<JobView> waitingBefore, SimTime time) {
@@ -300,7 +308,7 @@ public class FactoryRuntime {
      * more than one machine is eligible for its current step, or the single eligible machine's own
      * queue otherwise. Together with the enriched {@link RuntimeEventPayload.OrderAccepted}, this
      * lets a consumer reconstruct the job creation/assignment/pending-work deltas {@link
-     * FactoryHandler#submitOrder} can produce (ADR-0011).
+     * FactoryHandler#submitOrder} can produce (docs/architecture/runtime-contract.md).
      */
     private void emitJobPlacementEvents(OrderId orderId, List<JobId> jobIds, SimTime time) {
         Map<JobId, Set<MachineId>> pendingEligibility = pendingWorkView().stream()
@@ -342,7 +350,8 @@ public class FactoryRuntime {
     /**
      * The authoritative placement of one job: what it is doing, where, and for which step. Any
      * difference between two snapshots of this triple is an authoritative placement change a
-     * consumer must be told about through the supported event stream (ADR-0011) -- the step
+     * consumer must be told about through the supported event stream
+     * (docs/architecture/runtime-contract.md) -- the step
      * index is part of it because a job can legitimately be re-dispatched onto the same machine for
      * its next routing step.
      */
@@ -375,7 +384,8 @@ public class FactoryRuntime {
      * snapshot/diff derivation {@link #emitNewlyDispatchedJobs} already uses for the
      * machine-availability cascade, widened to cover both directions of placement change.
      *
-     * <p>This is what closes the {@code TaskEnd} path (ADR-0011). Completing a step frees
+     * <p>This is what closes the {@code TaskEnd} path (docs/architecture/runtime-contract.md).
+     * Completing a step frees
      * capacity, and {@code FactoryHandler} re-places not only the completing job onto its next
      * routing step but also whatever queued or multi-eligible backlog work that freed machine can
      * now accept; reporting only {@code JOB_STEP_COMPLETED} would leave a consumer unable to derive
@@ -436,7 +446,8 @@ public class FactoryRuntime {
             List<Event> triggered = new ArrayList<>();
             // Placement is snapshotted before the mutation, so the dispatch cascade a TaskEnd can
             // trigger (next-step placement plus whatever the freed machine picks up from its queue
-            // or the multi-eligible backlog) is derivable by diffing authoritative state afterwards.
+            // or the multi-eligible backlog) is derivable by diffing authoritative state
+            // afterwards.
             Map<JobId, JobPlacement> activeBefore =
                     event.payload() instanceof EventPayload.TaskEnd ? activePlacements() : Map.of();
             scheduler.startCapturing(triggered);
@@ -457,14 +468,17 @@ public class FactoryRuntime {
 
     /**
      * Derives and appends the supported runtime event(s) implied by having just processed {@code
-     * trigger}, if any -- never before {@link FactoryHandler#handleEvent} has returned (successfully
+     * trigger}, if any -- never before {@link FactoryHandler#handleEvent} has returned
+     * (successfully
      * or not) for it, since a supported event must never claim a transition occurred before the
      * authoritative state actually reflects it. {@code triggeredInternalEvents} is whatever the
-     * internal scheduler additionally scheduled while processing {@code trigger}, inspected only for
+     * internal scheduler additionally scheduled while processing {@code trigger}, inspected only
+     * for
      * evidence of a further authoritative fact (order completion) that already happened -- never
      * itself re-exposed as the supported payload. {@code activeBefore} is the pre-mutation
-     * machine-assignment snapshot {@link #advance()} took, diffed here so every placement change the
-     * transition authoritatively caused is reported too (ADR-0011).
+     * machine-assignment snapshot {@link #advance()} took, diffed here so every placement change
+     * the
+     * transition authoritatively caused is reported too (docs/architecture/runtime-contract.md).
      */
     private void recordSupportedEventsFor(
             Event trigger, List<Event> triggeredInternalEvents, Map<JobId, JobPlacement> activeBefore) {
@@ -510,7 +524,7 @@ public class FactoryRuntime {
         eventSequence++;
         // The supported boundary moves as one: sequence and observed time advance together, so
         // every observation-visible metadata/performance fact stays coherent with the sequence a
-        // consumer cursors from (ADR-0011).
+        // consumer cursors from (docs/architecture/runtime-contract.md).
         observedTime = time;
         pendingSupportedEvents.add(new RuntimeEventEnvelope(
                 runId, eventSequence, time, eventType, modelVersion.fingerprint(), Optional.empty(), refs, payload));
@@ -527,7 +541,8 @@ public class FactoryRuntime {
      * still advances monotonically and independently of draining (so {@link
      * RuntimeObservationMetadata#latestEventSequence()} is unaffected by when a caller drains), but
      * this type does not itself keep an unbounded, cursor-addressable event history -- that is a
-     * separately-named responsibility for later distribution hardening (ADR-0011 §8), not
+     * separately-named responsibility for later distribution hardening
+     * (docs/architecture/runtime-contract.md §8), not
      * part of this supported-boundary contract. A caller that needs durable replay must retain the
      * drained events itself.
      */
@@ -619,7 +634,8 @@ public class FactoryRuntime {
      * This does not expose internal scheduler events; see {@link #drainSupportedEvents()} for the
      * supported runtime events this observation's {@code latestEventSequence} cursors.
      *
-     * <p>Every fact reported here is coherent with one supported boundary (ADR-0011):
+     * <p>Every fact reported here is coherent with one supported boundary
+     * (docs/architecture/runtime-contract.md):
      * metadata time and the time-derived throughput come from {@link #observedTime}, and {@link
      * RuntimeRunState} from pending <em>authoritative</em> work, so processing an internal no-op
      * marker cannot produce a second, different observation at the same {@code

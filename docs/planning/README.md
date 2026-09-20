@@ -2,7 +2,7 @@
 
 > **Status:** Maintained delivery-policy index  
 > **Scope:** Work that is sufficiently decided and bounded to be implemented, validated, sequenced, or explicitly blocked on a concrete prerequisite  
-> **Authority:** Planning only; current capability remains defined by landed code/tests and current-state documentation, while durable semantics remain owned by product, architecture, and accepted ADRs
+> **Authority:** Planning only; current capability remains defined by landed code/tests and current-state documentation, while durable semantics remain owned by product direction and canonical architecture/specifications
 
 ## Admission rule
 
@@ -19,7 +19,7 @@ A topic belongs here only when all of the following are true:
 5. acceptance evidence can be stated before coding begins; and
 6. non-goals are explicit enough to prevent adjacent speculative work from entering the slice.
 
-A blocked plan may remain when the implementation contract itself is settled and the blocker is a concrete prerequisite. When research must still decide **what the implementation should mean**, the exploratory material belongs in [`../research/`](../research/README.md). A small implementation-admission guard may remain at an established planning path only to state that no work is admitted, name the research/ADR blockers, and define promotion criteria; it must contain no candidate semantics or speculative delivery sequence.
+A blocked plan may remain when the implementation contract itself is settled and the blocker is a concrete prerequisite. When research must still decide **what the implementation should mean**, the exploratory material belongs in [`../research/`](../research/README.md). A small implementation-admission guard may remain at an established planning path only to state that no work is admitted, name the research or architecture blockers, and define promotion criteria; it must contain no candidate semantics or speculative delivery sequence.
 
 ## What does not belong here
 
@@ -44,7 +44,7 @@ Research question
 Evidence + conclusion
       |
       v
-Product / architecture / ADR decision where required
+Product / architecture / specification reconciliation where required
       |
       v
 Concrete implementation responsibility + acceptance evidence
@@ -64,6 +64,6 @@ When a plan is reviewed:
 
 - remove or relocate exploratory sections instead of letting them accumulate beside executable work;
 - keep implementation status synchronized with landed evidence;
-- retire completed historical notes once their durable meaning exists in current architecture/reference/ADRs and they no longer protect an active downstream implementation;
+- retire completed historical notes once their durable meaning exists in current architecture/specifications/reference and they no longer protect an active downstream implementation;
 - link to research for unresolved adjacent questions rather than describing those questions inline;
 - do not reopen accepted architecture inside an implementation plan unless implementation evidence demonstrates a contradiction that must be escalated.

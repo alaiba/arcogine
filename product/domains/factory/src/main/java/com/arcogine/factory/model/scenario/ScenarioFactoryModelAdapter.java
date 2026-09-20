@@ -27,7 +27,8 @@ import java.util.Set;
  *
  * <p>Only factory-design concerns are read from the scenario: equipment, material, process
  * segments, and operations definitions. Simulation, economy, and agent configuration are
- * execution/run concerns and are never mapped into the model (see ADR-0003).
+ * execution/run concerns and are never mapped into the model (see the canonical model boundary in
+ * docs/architecture/factory-design.md).
  */
 public final class ScenarioFactoryModelAdapter {
 

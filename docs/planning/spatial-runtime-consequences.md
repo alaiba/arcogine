@@ -12,30 +12,28 @@ network capability.
 
 The architecture is fixed by:
 
-- [ADR-0014 — Factory Model Semantic-Policy Evolution](../architecture/decisions/0014-factory-model-semantic-policy-evolution.md);
-- [ADR-0015 — Engine Semantics Identity and Reproducibility](../architecture/decisions/0015-engine-semantics-identity-and-reproducibility.md);
+- [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution);
+- [Determinism Contract](../architecture/overview.md#determinism-contract);
 - [Engine Semantics v1](../architecture/engine-semantics-v1.md), the normative first-version Engine interpretation;
-- Accepted ADR-0011 for supported observation/event state reconstruction and ordering.
+- Accepted the runtime observation/event contract for supported observation/event state reconstruction and ordering.
 
-### Research hold — durability and Factory composition
+### Research hold — Factory composition
 
-Accepted ADR-0014/ADR-0015 and Engine Semantics v1 remain current architecture until superseded. The new research therefore does **not** authorize implementation to reinterpret existing behavior or identifiers in place.
+The Factory semantic-evolution contract, the Determinism Contract and Engine Semantics v1 are current architecture. The open research therefore does **not** authorize implementation to reinterpret existing behavior or identifiers in place.
 
 However, do not start any still-unimplemented PLAN-ENG-5 slice that commits Arcogine further to permanent Factory V1/V2 coexistence, releases the V2 fingerprint policy, or activates spatial runtime semantics on the assumption that the current whole-model/version boundary is final. Those slices are dependency-blocked on:
 
-- [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md); and
-- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md).
+- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md); the sibling [semantic-contract maturity](../research/investigations/semantic-contract-maturity-durability.md) question is concluded and its result is carried by the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support) and the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution).
 
 The landed V2 shape/validation and Engine-v1 conformance/identity work are retained as proving evidence. Independent Engine or outward-contract work may continue only where it does not depend on resolving these two questions or make their current candidate answers harder to change.
 
-Implementation must not begin from this plan until ADR-0014 and ADR-0015 are landed as Accepted. The
+The Factory semantic-evolution contract and the Determinism Contract are adopted. The
 first-release local-admission and shared-backlog-ranking questions in
 [Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded after independent
 adversarial review, and both retain `engine-semantics:v1` unchanged. The research prerequisite for
 PLAN-ENG-5-0 is therefore satisfied: that slice pins the existing rules and their reviewed boundary
 cases rather than selecting a new policy. That earlier dispatch gate does not make Factory V2
-canonicalization or spatial activation executable while the semantic-contract maturity and Factory
-composition research hold is open.
+canonicalization or spatial activation executable while the Factory composition research hold is open.
 
 ## 2. PLAN-ENG-5 semantic boundary
 
@@ -91,7 +89,7 @@ Every slice should have:
 - one dominant semantic invariant;
 - explicit executable evidence that closes that invariant;
 - narrow production ownership and explicit non-goals;
-- an escalation rule: if implementation evidence conflicts with ADR-0014, ADR-0015, or
+- an escalation rule: if implementation evidence conflicts with the Factory semantic-evolution contract, the Determinism Contract, or
   `engine-semantics:v1`, stop and surface the contradiction rather than inventing new semantics.
 
 This decomposition is provider-neutral. Repository architecture and acceptance evidence determine
@@ -100,7 +98,7 @@ implementation dependency.
 
 The vertical transfer-activation slice is intentionally not decomposed into separate state/event/
 observation PRs. Once `TRANSFERRING` becomes reachable, supported state and supported deltas must be
-coherent in the same landed change under ADR-0011.
+coherent in the same landed change under the runtime observation/event contract.
 
 ## 5. Delivery slices
 
@@ -112,7 +110,7 @@ coherent in the same landed change under ADR-0011.
 retain `engine-semantics:v1` unchanged, with the qualifications recorded in
 [Engine Evolution Research](../research/investigations/engine-evolution.md).
 
-**Prerequisites:** ADR-0015 landed Accepted, plus conclusion of the two first-release dispatch
+**Prerequisites:** the Determinism Contract is adopted architecture, plus conclusion of the two first-release dispatch
 questions with `engine-semantics:v1` retained unchanged. Those prerequisites are satisfied. A future
 reopening that recommends an outcome-changing alternative does not rewrite this slice or v1 in place;
 it requires a new Engine semantics identity through architecture/specification reconciliation and a
@@ -146,7 +144,7 @@ Add characterization/conformance evidence for the result-affecting behavior that
 placement on the Engine/analytics boundary is an open question under
 [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md).
 
-There is a genuine tension here, and it is recorded rather than worked around. Accepted architecture
+There is a genuine tension here, and it is recorded rather than worked around. Adopted architecture
 already makes those values part of `engine-semantics:v1`: §1.1's membership test covers derived-result
 arithmetic, §10.1–§10.2 fix their edge cases *and* their accumulation, and §1.1 consequence 4 states
 that a rule satisfying the membership test but absent from the specification is a defect in the
@@ -281,7 +279,7 @@ Engine-semantics identity types, Factory V2, transfer behavior, new scheduling p
 ### PLAN-ENG-5-A1 — Factory V2 spatial model and validation
 
 **Status:** Implemented. `FactoryModelV2` (`com.arcogine.factory.model.v2`) carries the five
-ADR-0014 authored additions as a distinct model type composed from existing V1 concepts
+The Factory semantic-evolution contract authored additions as a distinct model type composed from existing V1 concepts
 (`ConfiguredResource`, `OperationDefinition`, `ProductDefinition`), and `FactoryModelV2Validator`
 implements every validation predicate below. `FactoryModelV2` shares no supertype with
 `FactoryModel`, so it cannot be passed to `FactoryModelPublisher.publish(FactoryModel)` or used to
@@ -290,7 +288,7 @@ keeps V2 semantic content from ever traveling through the `factory-model:v1` pub
 `factory-model:v2` canonical bytes, `ModelFingerprint` derivation, and policy registration are not
 yet implemented; PLAN-ENG-5-A2 owns that work but is dependency-blocked by the research hold.
 
-**Prerequisite:** ADR-0014 landed Accepted.
+**Prerequisite:** the Factory semantic-evolution contract is adopted architecture.
 
 **Responsibility**
 
@@ -302,7 +300,7 @@ Add the five V2 authored facts and their validation, without yet releasing a V2 
 - `ticksPerCell`;
 - `handlingTicks`;
 - floor containment/non-overlap;
-- the exact maximum-transfer-duration representability predicate from ADR-0014.
+- the exact maximum-transfer-duration representability predicate from the Factory semantic-evolution contract.
 
 Do not claim that the publication predicate eliminates the pre-existing extreme-`SimTime.plus(...)`
 overflow condition.
@@ -320,7 +318,7 @@ Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine 
 
 **Status:** Dependency-blocked by the research hold.
 
-**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the semantic-contract maturity and Factory composition investigations.
+**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the Factory composition investigation.
 
 **Responsibility**
 
@@ -350,7 +348,7 @@ Cross-policy controlled-revision migration/comparison, runtime transfers.
 
 **Status:** Dependency-blocked by the research hold.
 
-**Prerequisite:** PLAN-ENG-5-A2 plus reconciliation of the semantic-contract maturity and Factory composition investigations. Governance PLAN-GOV-1 historical revision authority is already landed.
+**Prerequisite:** PLAN-ENG-5-A2 plus reconciliation of the Factory composition investigation. Governance PLAN-GOV-1 historical revision authority is already landed.
 
 **Responsibility**
 
@@ -382,7 +380,7 @@ supported current value, `engine-semantics:v1`. `FactoryRuntime` establishes and
 for its lifetime; fresh/reset runtimes receive new `RunId` values without changing the semantics
 identity. Unsupported identities fail explicitly through the narrow support check.
 
-**Prerequisites:** ADR-0015 landed Accepted and PLAN-ENG-5-0.
+**Prerequisites:** the Determinism Contract is adopted architecture and PLAN-ENG-5-0.
 
 **Responsibility**
 
@@ -447,7 +445,7 @@ in v1 distance.
 **Evidence**
 
 Boundary/property cases cover reference-cell Manhattan distance, handling applied exactly once,
-zero authored magnitudes, and overflow-safe behavior consistent with ADR-0014.
+zero authored magnitudes, and overflow-safe behavior consistent with the Factory semantic-evolution contract.
 
 **Non-goals**
 
@@ -635,7 +633,7 @@ Practical parallelism while the research hold is open:
 
 - `PLAN-ENG-5-0`, `PLAN-ENG-5-A1`, and `PLAN-ENG-5-B1` are implemented and remain proving evidence;
 - `PLAN-ENG-5-A2` and `PLAN-ENG-5-A3` are dependency-blocked; do not release V2 canonical identity or
-  V1/V2 coexistence while the semantic-contract maturity and Factory composition questions are unresolved;
+  V1/V2 coexistence while the Factory composition question is unresolved;
 - `PLAN-ENG-5-C1` through `PLAN-ENG-5-E` are not implementation-ready where they activate or close
   spatial behavior against the disputed Factory/version boundary, even when their older local prerequisites
   are already satisfied;
@@ -674,12 +672,12 @@ Challenge-only attempts do not block PLAN-ENG-5.
 ### Governance — REQUIRED WHEN CONSUMER INTEGRATES
 
 Future Arcogine analytical evidence produced from simulation must retain `ModelFingerprint`,
-`EngineSemanticsVersion`, and the explicit producing inputs/results required by ADR-0016. Governance
+`EngineSemanticsVersion`, and the explicit producing inputs/results required by the Governance evidence contract. Governance
 consumes this provenance; it does not own Engine semantics.
 
 ### Operational — REQUIRED WHEN CONSUMER INTEGRATES
 
-Future twin/reconciliation analytics retain Engine interpretation provenance independently of the durable operational identity and independently of subject correspondence. These answer different questions: which Engine interpretation produced a result; which accountable operational continuation a record belongs to; and which external and Arcogine subjects are authoritatively related. ADR-0013 is Accepted and defines that identity's referent and rules, while deliberately deferring its final type name and representation; `EngineSemanticsVersion` and `RunId` remain Engine-owned and must never be derived from it, or it from them.
+Future twin/reconciliation analytics retain Engine interpretation provenance independently of the durable operational identity and independently of subject correspondence. These answer different questions: which Engine interpretation produced a result; which accountable operational continuation a record belongs to; and which external and Arcogine subjects are authoritatively related. The Operational continuity contract is adopted and defines that identity's referent and rules, while deliberately deferring its final type name and representation; `EngineSemanticsVersion` and `RunId` remain Engine-owned and must never be derived from it, or it from them.
 
 ### API/SSE PLAN-ENG-4 transport migration — REQUIRED BEFORE THAT MIGRATION, NOT BEFORE HEADLESS PLAN-GOV-5
 
@@ -689,16 +687,17 @@ outward. This avoids immediate wire-contract churn. PLAN-ENG-4-D is not a prereq
 ## 9. Acceptance / readiness
 
 The landed PLAN-ENG-5 conformance, Factory spatial model/validation, and fixed Engine-semantics identity
-work remain valid evidence under the currently Accepted ADRs. The earlier first-release dispatch gate
+work remain valid evidence under the current architecture. The earlier first-release dispatch gate
 is closed for those already-landed v1 semantics.
 
 The remaining Factory-V2 identity/coexistence and spatial-runtime path is **not implementation-ready**
-while the semantic-contract maturity and Factory composition investigations are READY. Accepted
-ADR-0014/ADR-0015 remain authoritative during the hold, but their acceptance is not permission to deepen
-the exact durability/composition commitments now under research.
+while the Factory composition investigation is READY.
+The Factory semantic-evolution contract and the Determinism Contract remain authoritative during the
+hold, but their being adopted is not permission to deepen the exact durability/composition
+commitments now under research.
 
 Before any held slice resumes, both investigations must reach decision-quality conclusions, receive
-their required independent adversarial review, and any necessary architecture/ADR/planning
+their required independent adversarial review, and any necessary architecture/specification/planning
 reconciliation must land. The plan must then be re-resolved against that result. If later activation
 still reaches PLAN-ENG-5-C3, perform the explicit reservation-aware dispatch recheck there. Any slice
 that encounters contradictory evidence must stop at that boundary rather than silently revising the

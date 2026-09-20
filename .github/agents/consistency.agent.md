@@ -2,11 +2,11 @@
 
 This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with an Arcogine Repomix attachment as the repository-content baseline and the GitHub connector for revision reconciliation plus live/mutable repository state.
 
-A formal review is diagnostic plus the narrow finding-ledger/register accounting described below. It does not authorize source/doc remediation, planning changes, ADR changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
+A formal review is diagnostic plus the narrow finding-ledger/register accounting described below. It does not authorize source/doc remediation, planning changes, architecture changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
 
 ## Goal
 
-Deeply inspect the repository for semantic inconsistency across implementation, architecture, ADRs, planning, public/reference documentation, examples, configuration, tests, CI, and prior findings.
+Deeply inspect the repository for semantic inconsistency across implementation, architecture and specifications, planning, public/reference documentation, examples, configuration, tests, CI, and prior findings.
 
 A previous clean review is not evidence that older content is correct. New material gets first attention when a previous reviewed head exists, but recency never bounds scope. Follow suspicious evidence wherever it leads.
 
@@ -34,7 +34,7 @@ Use the authority that owns the question:
 | --- | --- |
 | Product destination | `docs/product/charter.md` |
 | Implemented architecture today | `docs/architecture/overview.md`, corroborated by source/tests/config |
-| Architectural rationale | accepted ADRs in `docs/architecture/decisions/` |
+| Architectural rationale | the architecture or specification in `docs/architecture/` that owns the affected semantics |
 | Research state | `docs/development/researching.md` and `docs/research/research-register.md` |
 | Planned/gated/partial/deferred work | applicable `docs/planning/` documents |
 | Public interface | implementation/tests reconciled with `docs/reference/` and consumers |
@@ -47,7 +47,7 @@ Consistency issues preserve finding identity/lifecycle continuity; they are not 
 
 Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles remain their own vocabulary. If this taxonomy proves insufficient, change this contract explicitly rather than inventing another generic state during a run.
 
-Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is. Accepted ADRs preserve decision history and are superseded rather than rewritten to match later implementation.
+Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is. Canonical architecture and specifications hold Arcogine's current durable constraints; a reviewed architectural change updates them together with the authorities that depend on them, and Git history preserves what was replaced.
 
 Authority placement is itself part of consistency. A maintained artifact should own only facts appropriate to its role:
 
@@ -75,7 +75,7 @@ Search and slice the Repomix corpus aggressively. For each material concept inve
 
 1. Identify the claim and lifecycle state.
 2. Search for the concept, symbols, terminology, and nearby assumptions across the corpus.
-3. Read the authoritative current/planning/ADR/test/interface surfaces that encode the same semantics.
+3. Read the authoritative current/planning/specification/test/interface surfaces that encode the same semantics.
 4. Inspect source/config/tests as executable evidence; inspect live GitHub CI/check evidence only when it materially proves or contradicts a claim.
 5. Use PR/commit history only when needed to explain a transition, attribute evidence, or determine whether a finding is in flight.
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
@@ -98,9 +98,9 @@ Carry every open issue-backed finding forward on every review. A merged PR, clos
 
 A material finding requires the artifact making the claim plus either contradictory authoritative/executable evidence, a clear demonstration that required evidence is absent, or a demonstrated authority-placement defect where the artifact redundantly owns volatile or future-state information without an independent contract/history/reproducibility reason to do so.
 
-Use exact paths, symbols, criteria, ADRs, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green. Use the current P0/P1/P2/P3/Nit severity definitions from `docs/development/reviewing.md`.
+Use exact paths, symbols, criteria, specification sections, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green. Use the current P0/P1/P2/P3/Nit severity definitions from `docs/development/reviewing.md`.
 
-Useful categories are `PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `PLANNING_STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `ADR_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
+Useful categories are `PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `PLANNING_STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `SPECIFICATION_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
 
 Do not report inconsistency solely because wording differs, a proposal differs from implementation, an intentional compatibility alias exists, an internal symbol is undocumented, or an open PR contains behavior not yet on `main`.
 

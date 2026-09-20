@@ -3,11 +3,11 @@
 > **Status:** CONCLUDED
 > **Risk:** **High** — this question fixed hard-to-reverse identity, history, applicability, provenance, and cross-version semantics for a shared Governance contract, so its conclusion was independently adversarially reviewed before promotion.
 > **Scope:** The minimum semantic contract required for Governance `Evidence` and `EvidenceUse` before their first implementation can be admitted
-> **Authority:** Research provenance only. The durable conclusion lives in [ADR-0016](../../architecture/decisions/0016-governance-evidence-provenance.md) (Accepted) and [Governance architecture](../../architecture/governance-conformance.md) §7, §9, and §12; this brief decides nothing and is retained as the investigation's framing.
+> **Authority:** Research provenance only. The durable conclusion lives in the [Governance evidence contract](../../architecture/governance-evidence.md) and [Governance architecture](../../architecture/governance-conformance.md) §7, §9, and §12; this brief decides nothing and is retained as the investigation's framing.
 
 ## Conclusion
 
-**A minimum shared contract survives: an immutable, source-qualified evidence reference plus contextual, attributable use.** The decision-quality report and its independent adversarial review (disposition `ACCEPT WITH QUALIFICATIONS`, fresh isolated-run independence tier) are reconciled into [ADR-0016](../../architecture/decisions/0016-governance-evidence-provenance.md), now Accepted, and summarized in [Governance architecture](../../architecture/governance-conformance.md) §7, §9, and §12. Those documents are the authority; this brief does not restate the decision. The exact report and review coordinates are recorded in the [research register](../research-register.md) row's durable evidence reference.
+**A minimum shared contract survives: an immutable, source-qualified evidence reference plus contextual, attributable use.** The decision-quality report and its independent adversarial review (disposition `ACCEPT WITH QUALIFICATIONS`, fresh isolated-run independence tier) are reconciled into the [Governance evidence contract](../../architecture/governance-evidence.md) and summarized in [Governance architecture](../../architecture/governance-conformance.md) §7, §9, and §12. Those documents are the authority; this brief does not restate the decision. The exact report and review coordinates are recorded in the [research register](../research-register.md) row's durable evidence reference.
 
 ### Outcome against the candidate models
 
@@ -20,11 +20,11 @@
 
 ### Qualifications carried into the decision
 
-The report's three qualifications (producer-intrinsic versus use-target provenance; evidence applicability distinct from requirement applicability and outcome; identity-plus-version labels insufficient without exact definition resolution) and the review's three (evaluation-occurrence identity decided explicitly; use targets are point identities, accumulating operational continuations out of scope; first-implementation acceptance bounded by producer identities that actually exist) are all encoded in ADR-0016 §5–§6, §8–§10, and §12. None was deferred.
+The report's three qualifications (producer-intrinsic versus use-target provenance; evidence applicability distinct from requirement applicability and outcome; identity-plus-version labels insufficient without exact definition resolution) and the review's three (evaluation-occurrence identity decided explicitly; use targets are point identities, accumulating operational continuations out of scope; first-implementation acceptance bounded by producer identities that actually exist) are all encoded in the Governance evidence contract §5–§6, §8–§10, and §12. None was deferred.
 
 ### What remains open
 
-Representation, alias/deduplication mechanics, consumer-specific freshness/admissibility/conflict/compatibility policies, Operational correspondence/trust identity, Engine result identity and provenance propagation, analytical-definition ownership, the occurrence/definition persistence mechanism, and retention limits are deliberately deferred in ADR-0016 §13. The analytical-definition ownership half is the separate [simulation-analytics boundary](simulation-analytics-consumer-boundary.md) question; the Operational halves belong to the [Operational boundary research](operational-execution-digital-twin-boundaries.md). Reopening triggers are recorded in ADR-0016's consequences.
+Representation, alias/deduplication mechanics, consumer-specific freshness/admissibility/conflict/compatibility policies, Operational correspondence/trust identity, Engine result identity and provenance propagation, analytical-definition ownership, the occurrence/definition persistence mechanism, and retention limits are deliberately deferred in the Governance evidence contract §13. The analytical-definition ownership half is the separate [simulation-analytics boundary](simulation-analytics-consumer-boundary.md) question; the Operational halves belong to the [Operational boundary research](operational-execution-digital-twin-boundaries.md). Reopening triggers are recorded in the Governance evidence contract's consequences.
 
 The original brief follows as the investigation's framing.
 
@@ -36,7 +36,7 @@ The original brief follows as the investigation's framing.
 
 Whether the proposed Governance evidence capability has a sufficiently settled semantic contract to admit its first headless implementation, and which durable architecture surface must be accepted or revised before implementation begins.
 
-The answer must distinguish semantic obligations from deferred mechanism choices. It must not treat a research conclusion, a Proposed ADR, or a planning acceptance list as an implementation contract until the required reconciliation has landed.
+The answer must distinguish semantic obligations from deferred mechanism choices. It must not treat a research conclusion, a design proposal, or a planning acceptance list as an implementation contract until the required reconciliation has landed.
 
 ## Scope and non-goals
 
@@ -90,7 +90,7 @@ The researcher must test whether these are genuinely distinct under the required
 | Applicability | Evidence is missing, stale, outside its effective period, or produced under incompatible semantics | Unusable evidence becomes an implicit pass or an unexplained failure | Tests whether applicability is explicit and use-owned where appropriate | `PROVING CASE` |
 | Ownership | Governance labels an Engine result as an external observation or recomputes its meaning | Producer provenance and ownership are falsified | Tests provenance separation across domains | `PROVING CASE` |
 | Ingestion independence | An external observation arrives before correspondence to an Arcogine revision exists | Ingestion must guess or duplicate source facts | Tests revision-independent observation ownership | `PROVING CASE` |
-| Mechanism scope | A candidate requires a database/signature/retention system to state its semantics | Implementation detail becomes an accidental ADR | Keeps mechanism choices deferred unless indispensable | `BOUND / DEFER` |
+| Mechanism scope | A candidate requires a database/signature/retention system to state its semantics | Implementation detail becomes an accidental architectural commitment | Keeps mechanism choices deferred unless indispensable | `BOUND / DEFER` |
 
 ## Proving cases
 
@@ -107,20 +107,20 @@ For each case, state what evidence would make the result decision-quality and wh
 
 ## Evidence expectations
 
-Ground first in live `main`, the Governance architecture, ADR-0008, ADR-0013, ADR-0015, Proposed ADR-0016, the research operating model/register, the planning admission rule, and the current Governance implementation and boundary tests. Search semantic neighbors across Operational observations, runtime provenance, controlled revision history, conformance results, and existing research.
+Ground first in live `main`, the Governance architecture, the controlled revision contract, the Operational continuity contract, the Determinism Contract, the Governance evidence contract, the research operating model/register, the planning admission rule, and the current Governance implementation and boundary tests. Search semantic neighbors across Operational observations, runtime provenance, controlled revision history, conformance results, and existing research.
 
 External evidence is required only if it discriminates a candidate, exposes a failure mode, or establishes a material interoperability/consequence constraint. Any such source must be verified and cited with precise provenance; unverified background must be labeled as such. Absence claims must state the repository search scope.
 
 ## Falsification conditions
 
 - A concrete current consumer proves that context-bound identity is necessary to preserve a distinction that source-record identity with explicit uses cannot preserve.
-- A current Accepted ADR already settles a load-bearing identity, equality, history, or applicability fact that the investigation would otherwise treat as open.
+- A current adopted contract already settles a load-bearing identity, equality, history, or applicability fact that the investigation would otherwise treat as open.
 - A proving case shows that the surviving model cannot preserve historical attribution, explicit applicability, or ownership separation without importing a deferred mechanism as semantic contract.
 - Evidence demonstrates that producer-owned analytical provenance cannot be carried through a generic Governance use without Governance taking ownership of producer semantics.
 
 ## Adversarial-review plan
 
-This is a high-risk question. Before any ADR or equivalent durable architecture is accepted, an independent reviewer must reconstruct the constraints and candidate set before reading the report recommendation, then challenge omitted candidates, hidden assumptions, ownership inversion, stale repository authority, possibility-treated-as-necessity, over-generalization, and conclusions stronger than the evidence.
+This is a high-risk question. Before any durable architecture or specification change is accepted, an independent reviewer must reconstruct the constraints and candidate set before reading the report recommendation, then challenge omitted candidates, hidden assumptions, ownership inversion, stale repository authority, possibility-treated-as-necessity, over-generalization, and conclusions stronger than the evidence.
 
 ## Exit criteria
 
@@ -128,7 +128,7 @@ Stop only when the report identifies the surviving semantic contract (or conclud
 
 ## Expected durable destination
 
-Focused architecture/ADR reconciliation if a minimum contract survives; otherwise an explicit no-action or narrower research destination. Only after that reconciliation may the Governance plan be promoted to `READY_NEXT` and admit a concrete implementation responsibility. *(Outcome: ADR-0016 Accepted; the plan was promoted in the same reconciliation.)*
+Focused architecture/specification reconciliation if a minimum contract survives; otherwise an explicit no-action or narrower research destination. Only after that reconciliation may the Governance plan be promoted to `READY_NEXT` and admit a concrete implementation responsibility. *(Outcome: the Governance evidence contract was adopted; the plan was promoted in the same reconciliation.)*
 
 ## Follow-up / reopening triggers
 

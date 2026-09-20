@@ -31,7 +31,7 @@ public interface MachineView {
      * distinct from the cross-machine multi-eligible backlog ({@code
      * com.arcogine.factory.process.PendingWorkView}), which is not reflected here. Needed so a
      * runtime-event consumer can attribute a not-yet-dispatched job to the specific machine it is
-     * waiting on (ADR-0011).
+     * waiting on (docs/architecture/runtime-contract.md).
      */
     List<JobId> queuedJobs();
 

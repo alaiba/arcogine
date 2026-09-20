@@ -14,13 +14,13 @@
 Arcogine separates durable direction, current truth, research, and executable planning:
 
 - **[`product/charter.md`](product/charter.md)** — normative product direction and enduring principles; not a roadmap.
-- **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus enduring architectural principles.
-- **[`architecture/decisions/`](architecture/decisions/README.md)** — rationale for significant hard-to-reverse choices.
+- **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus enduring architectural principles, and the cross-cutting constraints the focused specifications apply.
+- **[`architecture/`](architecture/overview.md)** — focused architecture and specification documents owning exact domain contracts, identities, semantics and supported boundaries.
 - **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md), [`reference/api.md`](reference/api.md), and consumer/component references describe what exists now.
 - **[`research/`](research/README.md)** — research-area index linking the normative operating model, current research portfolio state, synthesis signals, investigation artifacts, and reusable brief/report structures. Research is not accepted architecture or implementation commitment.
 - **[`planning/`](planning/README.md)** — implementation-ready delivery planning only: admitted slices, dependencies, blockers on concrete prerequisites, acceptance evidence, and implementation status.
 
-Research discovers. Product/architecture/ADRs establish durable meaning. Planning sequences concrete implementation. Landed code/tests and current-state docs establish what actually exists.
+Research discovers. Product direction and canonical architecture/specifications establish durable meaning. Planning sequences concrete implementation. Landed code/tests and current-state docs establish what actually exists. Arcogine keeps no separate decision-record layer: the durable result of an architectural change is the changed canonical document, and Git and pull-request history preserve why it changed.
 
 A research conclusion does not become authoritative merely because it is recorded. An unresolved question that still determines implementation meaning must not be hidden inside a delivery plan.
 
@@ -45,6 +45,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 |---|---|
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, style, validation |
 | [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
+| [semantic-contract-support.md](development/semantic-contract-support.md) | Owning support declarations, retained admission and promise-specific review evidence |
 | [researching.md](development/researching.md) | Normative Arcogine research operating model: lifecycle/priority semantics, promotion/reconciliation, investigation and adversarial review, evidence custody, synthesis-seed handling, and register maintenance |
 | [continuous-improvement.md](development/continuous-improvement.md) | Continuous-improvement operating model: Session-close Kaizen, weekly Consistency review, delivery-process retrospective, and the improvement register |
 | [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
@@ -66,7 +67,12 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Factory Model v2](architecture/factory-model-v2.md) | Normative v2 canonicalization/fingerprint byte grammar |
 | [Standards alignment](architecture/standards-alignment.md) | Standards/interchange/conformance boundaries |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained manufacturing semantic mapping and deliberate divergences |
-| [Decision records](architecture/decisions/README.md) | ADR index and policy |
+| [Factory Model v1](architecture/factory-model-v1.md) | Normative v1 canonicalization/fingerprint byte grammar (implemented) |
+| [Runtime contract](architecture/runtime-contract.md) | Supported observations, ordered authoritative runtime events, provenance and transport boundary |
+| [Controlled revisions](architecture/controlled-revisions.md) | Historical occurrence identity, lineage, provenance and acceptance |
+| [Governance evidence](architecture/governance-evidence.md) | Evidence reference/use, applicability and immutable evaluation-basis contract |
+| [Operational continuity](architecture/operational-continuity.md) | Accountable operational continuation identity and continuity rules |
+| [External representations](architecture/external-representations.md) | Serialization, transport and industrial-interchange boundaries |
 
 ## Internal research
 

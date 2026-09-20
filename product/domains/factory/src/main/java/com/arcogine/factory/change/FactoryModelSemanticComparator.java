@@ -21,7 +21,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * The change-set/impact-scope and semantic-comparison seam: domain-owned semantic comparison for {@code factory-model:v1} artifacts.
+ * The change-set/impact-scope and semantic-comparison seam: domain-owned semantic comparison for
+ * {@code factory-model:v1} artifacts.
  *
  * <p>This is the only place that knows how to interpret {@link FactoryModel} internals for
  * change-attribution purposes. It never depends on Governance's {@code ChangeSet} orchestration
@@ -30,7 +31,8 @@ import java.util.TreeSet;
  * and generic transition/impact semantics owned by {@code :governance}.
  *
  * <p>Comparison is by stable domain identity ({@code MachineId}, operation id, {@code ProductId}).
- * Per ADR-0006 ("Current list ordering remains semantic in v1"), top-level {@code resources},
+ * Per docs/architecture/factory-model-v1.md ("List ordering is semantic"), top-level {@code
+ * resources},
  * {@code operations}, and {@code products} order is itself part of {@code factory-model:v1}
  * semantic content -- product order in particular can affect deterministic demand generation.
  * Reordering any of those top-level lists is therefore reported as an {@code ENTITY_MODIFIED}
@@ -257,7 +259,8 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
 
     /**
      * Appends an order-change note to {@code detail} when the entity identified by {@code id}
-     * occupies a different index in {@code baseOrder} versus {@code candidateOrder}. Per ADR-0006,
+     * occupies a different index in {@code baseOrder} versus {@code candidateOrder}. Per
+     * docs/architecture/factory-model-v1.md,
      * top-level list order is semantic in {@code factory-model:v1} for resources, operations, and
      * products, so a position change must not be silently absorbed by ID-keyed comparison.
      */

@@ -14,7 +14,8 @@ import java.util.List;
  * <p>This delegates the existing {@code factory-model:v1}-shaped structural checks (duplicate
  * ids, referential integrity, Unicode validity, and so on) to {@link FactoryModelValidator} via
  * {@link FactoryModelV2#baseModel()}, then adds the V2-only spatial/handling predicates required
- * by ADR-0014: floor extent, per-resource placement/footprint range and floor containment,
+ * by docs/architecture/factory-model-v2.md: floor extent, per-resource placement/footprint range
+ * and floor containment,
  * cross-resource footprint non-overlap, handling-value non-negativity, and the maximum
  * transfer-duration representability predicate.
  *
@@ -145,7 +146,8 @@ public final class FactoryModelV2Validator {
 
     /**
      * Checks every distinct pair of resources whose own placement/footprint already validated
-     * for pairwise footprint overlap, per ADR-0014's occupied-cell semantics.
+     * for pairwise footprint overlap, per the Factory Model v2 specification's occupied-cell
+     * semantics.
      */
     private static void validateNonOverlap(
             List<SpatialConfiguredResource> resources,
@@ -196,7 +198,8 @@ public final class FactoryModelV2Validator {
     }
 
     /**
-     * Applies ADR-0014's maximum-transfer-duration representability predicate:
+     * Applies the Factory Model v2 specification's maximum-transfer-duration representability
+     * predicate:
      *
      * <pre>
      * maxManhattanDistance = (W - 1) + (H - 1)

@@ -16,7 +16,7 @@ A good question is narrow enough that an independent researcher can tell what ev
 
 State the Arcogine decision that would change depending on the answer.
 
-If no product, architecture, ADR, contract, or implementation responsibility could change, this is probably not a research question.
+If no product direction, architecture, specification, contract, process policy, or implementation responsibility could change, this is probably not a research question.
 
 ## Scope and non-goals
 
@@ -120,7 +120,7 @@ Use the risk-proportionate review requirements in `docs/development/researching.
 
 For medium risk, note the proportionate adversarial examination expected when it helps execution.
 
-For high risk, the operating model requires genuinely independent adversarial review before the conclusion becomes decision-quality evidence for an ADR or comparably durable architecture.
+For high risk, the operating model requires genuinely independent adversarial review before the conclusion becomes decision-quality evidence for a durable architecture or specification change.
 
 A brief may name likely attack surfaces the adversarial reviewer should reconstruct independently before reading the recommendation in depth: omitted candidate, hidden assumption, failure case, ownership inversion, stale authority, misleading analogy, over-generalization, or conclusion stronger than the evidence.
 
@@ -137,12 +137,13 @@ State the smallest likely destination if the question settles:
 ```text
 no action
 product clarification
-architecture / ADR
+architecture / specification
+process policy
 reference contract
 concrete implementation responsibility -> docs/planning/
 ```
 
-Research does not perform that promotion itself.
+Research does not perform that reconciliation itself.
 
 ## Follow-up / reopening triggers
 

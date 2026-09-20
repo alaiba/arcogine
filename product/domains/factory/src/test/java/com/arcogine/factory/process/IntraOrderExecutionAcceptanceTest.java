@@ -20,7 +20,10 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/** ADR-0010 acceptance proof: one requirement, independently dispatchable unit children. */
+/**
+ * Unit-work decomposition (docs/architecture/engine-semantics-v1.md section 3) acceptance proof: one
+ * requirement, independently dispatchable unit children.
+ */
 class IntraOrderExecutionAcceptanceTest {
     private static FactoryRuntime runtime() {
         FactoryModel model = new FactoryModel(

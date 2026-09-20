@@ -2,7 +2,7 @@
 
 > **Status:** NOT ADMITTED — no Operational implementation slice is currently safe to execute  
 > **Scope:** Record the concrete admission conditions for future Operational work without embedding unresolved architecture in delivery planning  
-> **Authority:** Planning only; unresolved semantics live in research and Proposed architecture/ADRs
+> **Authority:** Planning only; unresolved semantics live in research, not in this plan, and adopted semantics live in canonical architecture/specifications
 
 ## Current landed dependencies
 
@@ -17,7 +17,7 @@ Operational Execution itself remains unimplemented.
 
 ## Why no implementation slice is admitted
 
-The durable operational identity is no longer a blocker: [ADR-0013](../architecture/decisions/0013-durable-operational-identity.md) is Accepted and defines the accountable-continuation referent together with its continuity, divergence, lineage, acceptance, and record-attachment rules.
+The durable operational identity is no longer a blocker: the [Operational continuity contract](../architecture/operational-continuity.md) is adopted and defines the accountable-continuation referent together with its continuity, divergence, lineage, acceptance, and record-attachment rules.
 
 That closes one critical-path semantic question; it does not admit a slice. The remaining shared boundaries — actor/capability ownership, external operation realization, authoritative subject correspondence, and temporal reconciliation — are still unresolved, and each must be settled at least to the extent required to define a concrete safe slice. Slice-specific safety/failure semantics, explicit prerequisites, and executable acceptance evidence remain independently required by the promotion criteria below.
 
@@ -42,7 +42,7 @@ Any promoted Operational slice must preserve:
 The first Operational delivery coordinate may be created only after:
 
 1. the exact semantic referent of the proposed slice is settled;
-2. any required ADR is Accepted or otherwise no longer an implementation blocker;
+2. any required architectural decision is adopted or otherwise no longer an implementation blocker;
 3. module/track ownership is known and does not duplicate Factory, Engine, Governance, or shared actor semantics;
 4. prerequisites are explicit and landed or deliberately fixture-backed;
 5. failure/safety semantics are explicit for consequential behavior; and

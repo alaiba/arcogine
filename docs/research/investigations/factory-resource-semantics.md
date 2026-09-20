@@ -161,9 +161,9 @@ Durable reconciliation should preserve these rules:
 - [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) starts from configured productive-resource identity, not an assumed reusable definition plus installed instance, and treats specification/classification, configured identity, capability, hierarchy, location, physical asset, and runtime state as orthogonal concepts;
 - `ConfiguredResource` documentation and current code state directly state that the canonical record is one configured resource; the production rename from the research-baseline `ResourceDefinition` was terminology-only;
 - implementation planning records the split as **not admitted** and requires a future checkable technical-specification/dependency invariant before reopening it;
-- ADR-0011's resource `definition identity` wording does not imply two distinct identifiers under the current collapsed model: the same canonical `MachineId` identifies the configured model record and runtime correlation target.
+- the runtime observation/event contract's resource `definition identity` wording does not imply two distinct identifiers under the current collapsed model: the same canonical `MachineId` identifies the configured model record and runtime correlation target.
 
-No new ADR is needed for keeping the existing model. A new/superseding ADR becomes appropriate only when Arcogine actually accepts an independently versioned specification identity, generalized qualification/allocation rules with hard compatibility impact, consequential pool/work-center aggregation, physical-asset correspondence semantics, or another hard-to-reverse resource contract.
+Keeping the existing model needs no architecture change. Reconciling the owning architecture or specification becomes appropriate only when Arcogine actually accepts an independently versioned specification identity, generalized qualification/allocation rules with hard compatibility impact, consequential pool/work-center aggregation, physical-asset correspondence semantics, or another hard-to-reverse resource contract.
 
 ## Follow-up research
 

@@ -11,36 +11,18 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 - **Owner:** the coding agent.
 - **Cadence:** event-driven only; no recurring due state.
 
-## Weekly Consistency review
+## Consistency review
 
-- **Trigger/cadence:** weekly, plus additional review after major architecture/status transitions when useful.
+- **Recommended cadence:** roughly weekly, and after significant architecture/status transitions when useful.
 - **Purpose:** deep repository semantic review across implementation, architecture/specifications, planning, docs, examples, config, tests, CI, and prior findings.
 - **Owner/runtime:** the Consistency reviewer using the canonical repository-snapshot protocol plus live GitHub state.
-- **Finding identity:** open `CONS:` issues are the unresolved finding ledger.
-- **Completion ledger:** GitHub issue **#295**, titled exactly `Consistency review ledger`, is append-only operational history for completed reviews. Its body is static instructions, not mutable state.
+- **Durable output:** only evidence-backed `CONS:` finding issues that require resolution.
 
-A completed formal review appends one comment to #295:
+The cadence is guidance, not persisted scheduler state. Arcogine does not maintain a last-reviewed timestamp, previous-reviewed-head ledger, or `CURRENT`/`DUE`/`OVERDUE` state for Consistency.
 
-```text
-### Consistency review completion
+A clean review records nothing after the session report. A review with findings creates, updates, reopens, or closes the applicable `CONS:` issues. Those issues are the durable outcome because they affect future work.
 
-- verified at: <UTC YYYY-MM-DD>
-- reviewed head: <full main SHA>
-- result: CLEAN | FINDINGS
-- finding issues: none | #<number>, #<number>, ...
-```
-
-Only comments authored by a repository OWNER, MEMBER, or COLLABORATOR and matching that complete shape count as completion records. The latest valid completion comment is the previous-review fact source. Corrections are new comments; do not rewrite old completion evidence.
-
-`CLEAN` requires `finding issues: none`. `FINDINGS` lists every unresolved consistency issue applicable to that reviewed head.
-
-Weekly due state is derived from the latest valid `verified at` date:
-
-- **CURRENT** — at most 7 days old;
-- **DUE** — more than 7 but at most 14 days old, or no valid completion exists;
-- **OVERDUE** — more than 14 days old.
-
-A malformed or future completion date is not current.
+Recent Git history may be used as a search-order heuristic, but no previous-review coordinate bounds review scope or is required for correctness.
 
 ## Delivery-process retrospective
 
@@ -156,8 +138,7 @@ The versioned state file records only trigger/baseline facts and the latest repo
 | Consistency review algorithm | `.github/agents/consistency.agent.md` |
 | Consistency corpus generation | `infra/dev/repo-snapshot.mjs` + `infra/dev/repomix.config.json` |
 | Consistency operating guidance | `docs/development/consistency-review.md` |
-| Consistency finding identity | GitHub `CONS:` issues |
-| Consistency completion history | issue #295 append-only completion comments |
+| Consistency finding identity/state | GitHub `CONS:` issues |
 | Retrospective method | this document |
 | Retrospective trigger/baseline state | `.github/continuous-improvement/retrospective.json` |
 | Retrospective mechanical window | `infra/dev/delivery-retrospective.mjs` |
@@ -169,15 +150,17 @@ PR review remains governed by `docs/development/reviewing.md`; it is evidence fo
 
 ## Reminder boundaries
 
-Do not evaluate recurring continuous-improvement obligations during ordinary repository grounding. Evaluate them only at the natural process boundaries defined in `AGENTS.md`: Session-close Kaizen and tasks explicitly concerning continuous improvement, Consistency cadence, delivery-process health, or repository-wide planning/next-work.
+Do not evaluate recurring continuous-improvement obligations during ordinary repository grounding.
 
-User-facing reminders state the action plainly and include the minimal fresh-session prompt:
+- Consistency review cadence is guidance only. Do not derive or report a machine state such as current/due/overdue. Recommend a fresh Consistency review when the user asks about repository-wide consistency or when a major transition makes one materially useful.
+- Evaluate the delivery-retrospective threshold only during Session-close Kaizen or tasks explicitly concerning continuous improvement, delivery-process health, or repository-wide planning/next-work.
 
-- weekly Consistency review due/overdue -> `The weekly Consistency review is due. Start a fresh session with: "Run the consistency review."`
-- retrospective threshold reached -> `The delivery-process retrospective threshold has been reached. Start a fresh session with: "Run the delivery-process retrospective."`
+When the retrospective threshold is reached, use the minimal reminder:
 
-If no action is warranted, say nothing. If the factual source cannot be verified, say so once without inventing a status.
+`The delivery-process retrospective threshold has been reached. Start a fresh session with: "Run the delivery-process retrospective."`
+
+If no action is warranted, say nothing. If the versioned retrospective state cannot be verified, say so once without inventing a status.
 
 ## Non-goals
 
-This system does not automatically execute a review/retrospective, maintain an intervention database, turn historical reports into normative guidance, create work without issue ownership, or use GitHub as a slow substitute for repository content already established through the snapshot protocol.
+This system does not automatically execute a review/retrospective, maintain a Consistency completion ledger, maintain an intervention database, turn historical reports into normative guidance, create work without issue ownership, or use GitHub as a slow substitute for repository content already established through the snapshot protocol.

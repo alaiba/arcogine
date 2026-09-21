@@ -13,7 +13,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { dispositionOf } from './pr-lifecycle.mjs';
 
@@ -318,7 +318,7 @@ async function main() {
 export { buildExactWindow, changesRequiredCount, summarizeWindow };
 
 const invokedDirectly =
-  process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (invokedDirectly) {
   main().then(

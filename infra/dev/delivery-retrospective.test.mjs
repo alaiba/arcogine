@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   buildExactWindow,
   changesRequiredCount,
+  collectSearchPages,
   summarizeWindow,
 } from './delivery-retrospective.mjs';
 
@@ -99,4 +100,43 @@ test('summary computes review-round totals deterministically', () => {
     changeRequiredSubmissions: 6,
     reviewRoundDistribution: { zero: 1, one: 1, two: 1, threePlus: 1 },
   });
+});
+
+test('search pagination is complete and stable before counts are accepted', async () => {
+  const pages = new Map([
+    [null, {
+      issueCount: 3,
+      nodes: [{ number: 1 }, { number: 2 }],
+      pageInfo: { hasNextPage: true, endCursor: 'next' },
+    }],
+    ['next', {
+      issueCount: 3,
+      nodes: [{ number: 3 }],
+      pageInfo: { hasNextPage: false, endCursor: null },
+    }],
+  ]);
+  const nodes = await collectSearchPages(async (cursor) => pages.get(cursor));
+  assert.deepEqual(nodes.map((item) => item.number), [1, 2, 3]);
+});
+
+test('search pagination fails closed on incomplete retrieval', async () => {
+  await assert.rejects(
+    () => collectSearchPages(async () => ({
+      issueCount: 3,
+      nodes: [{ number: 1 }, { number: 2 }],
+      pageInfo: { hasNextPage: false, endCursor: null },
+    })),
+    /reported 3 results but fetched 2/,
+  );
+});
+
+test('search pagination refuses GitHub search windows above the completeness cap', async () => {
+  await assert.rejects(
+    () => collectSearchPages(async () => ({
+      issueCount: 1001,
+      nodes: [],
+      pageInfo: { hasNextPage: false, endCursor: null },
+    })),
+    /cannot prove completeness above 1000/,
+  );
 });

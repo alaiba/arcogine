@@ -165,6 +165,44 @@ function buildExactWindow(records, baselineMergedAt, throughMergedAt) {
   });
 }
 
+async function collectSearchPages(fetchPage) {
+  const nodes = [];
+  let cursor = null;
+  let issueCount = null;
+
+  do {
+    const search = await fetchPage(cursor);
+    if (!search || !Number.isInteger(search.issueCount) || !search.pageInfo) {
+      throw new Error('retrospective search returned malformed pagination metadata');
+    }
+    if (issueCount === null) {
+      issueCount = search.issueCount;
+      if (issueCount > 1000) {
+        throw new Error(
+          `retrospective search matched ${issueCount} PRs; GitHub search cannot prove completeness above 1000`,
+        );
+      }
+    } else if (search.issueCount !== issueCount) {
+      throw new Error(
+        `retrospective search result count changed during pagination (${issueCount} -> ${search.issueCount})`,
+      );
+    }
+
+    nodes.push(...(search.nodes ?? []).filter(Boolean));
+    if (search.pageInfo.hasNextPage && !search.pageInfo.endCursor) {
+      throw new Error('retrospective search says another page exists but returned no cursor');
+    }
+    cursor = search.pageInfo.hasNextPage ? search.pageInfo.endCursor : null;
+  } while (cursor);
+
+  if (nodes.length !== issueCount) {
+    throw new Error(
+      `retrospective search reported ${issueCount} results but fetched ${nodes.length}; refusing partial data`,
+    );
+  }
+  return nodes;
+}
+
 function changesRequiredCount(record) {
   const reviews = record?.reviews;
   if (!reviews) throw new Error(`PR #${record?.number ?? '?'} has no review payload`);
@@ -210,29 +248,10 @@ async function fetchWindow({ repo, baselinePr, throughPr, token }) {
   const searchText =
     `repo:${repo} is:pr is:merged base:main merged:${startDay}..${endDay}`;
 
-  const nodes = [];
-  let cursor = null;
-  let issueCount = null;
-  do {
+  const nodes = await collectSearchPages(async (cursor) => {
     const data = await githubGraphql(token, SEARCH_QUERY, { query: searchText, cursor });
-    const search = data.search;
-    if (issueCount === null) {
-      issueCount = search.issueCount;
-      if (issueCount > 1000) {
-        throw new Error(
-          `retrospective search matched ${issueCount} PRs; GitHub search cannot prove completeness above 1000`,
-        );
-      }
-    }
-    nodes.push(...search.nodes.filter(Boolean));
-    cursor = search.pageInfo.hasNextPage ? search.pageInfo.endCursor : null;
-  } while (cursor);
-
-  if (nodes.length !== issueCount) {
-    throw new Error(
-      `retrospective search reported ${issueCount} results but fetched ${nodes.length}; refusing partial data`,
-    );
-  }
+    return data.search;
+  });
 
   const window = buildExactWindow(nodes, baseline.mergedAt, through.mergedAt);
   if (!window.some((pr) => pr.number === throughPr)) {
@@ -315,7 +334,7 @@ async function main() {
   }
 }
 
-export { buildExactWindow, changesRequiredCount, summarizeWindow };
+export { buildExactWindow, changesRequiredCount, collectSearchPages, summarizeWindow };
 
 const invokedDirectly =
   process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;

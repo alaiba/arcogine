@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Operational notes for coding agents working in this repository. See [README.md](README.md) for what Arcogine is, and [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for human contributor workflow/style detail. Don't duplicate either here.
+Operational notes for coding agents working in this repository. See [README.md](README.md) for what Arcogine is, and [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for shared contributor workflow/style guidance. Don't duplicate either here.
 
 ## Repository identity and task shorthand
 

@@ -247,7 +247,7 @@ python3 .github/scripts/check-transient-workspace.py
 node --test infra/dev/pr-lifecycle.test.mjs
 ```
 
-`infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, canonical disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
+`infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, trusted-review-author filtering, disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
 
 ```bash
 node --test infra/dev/delivery-retrospective.test.mjs

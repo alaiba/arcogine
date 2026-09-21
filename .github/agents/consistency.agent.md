@@ -143,7 +143,7 @@ Do not mutate findings while analyzing.
 1. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal reviewed target `T`; otherwise stop `INCOMPLETE` with no review-accounting mutations and restart against the new exact target.
 2. Reconcile finding issues idempotently.
 3. Resolve live `main` again. It must still equal reviewed target `T`.
-4. Report the review result in the session.
+4. Return the review result in chat.
 
 A clean review persists nothing. Do not create a completion issue/comment, timestamp, previous-reviewed-head record, or any other bookkeeping artifact. Only finding state survives the session because only findings require future repository work.
 

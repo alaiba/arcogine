@@ -21,10 +21,10 @@ compare S -> live main and resolve exact target T
       +--> unsafe/incomplete reconciliation -> INCOMPLETE; refresh snapshot
       |
       v
-read #295 completion comments + open CONS: findings
+load open CONS: findings
       |
       v
-use previous reviewed head as recency anchor, if present
+use recent Git history as search-order context when useful
       |
       v
 deep-search exact target corpus
@@ -43,18 +43,15 @@ mutate finding ledger as required
       |
       v
 recheck live main == reviewed target T
-      |
-      v
-re-read #295 and append one completion comment
 ```
 
-The previous reviewed head is an attention aid, never a scope boundary. A clean earlier review does not establish that older content is correct.
+Recent Git history is an attention aid, never a scope boundary. A clean earlier review does not establish that older content is correct.
 
 ## Repomix/GitHub boundary
 
 The project Repomix is the reviewer's repository-content baseline. Follow `docs/development/repository-snapshot.md` as the sole authority for reconciling that baseline to exact target `T`; Consistency does not duplicate that protocol here. Do not spend connector calls refetching unaffected static content.
 
-GitHub remains authority for live `main`, issue #295 and its comments, finding issue state, PR/review/CI state, commit/compare history, and mutations. PR/history queries are evidence-driven, not routine bulk loading.
+GitHub remains authority for live `main`, finding issue state, PR/review/CI state, commit/compare history, and mutations. PR/history queries are evidence-driven, not routine bulk loading.
 
 A snapshot may be older than live `main`; age alone is not a failure. If the canonical snapshot protocol cannot establish a complete exact target view, the review is `INCOMPLETE` and the snapshot must be refreshed.
 
@@ -62,7 +59,7 @@ The reviewer rechecks `main` before finding accounting and again before recordin
 
 ## Review depth
 
-A formal review is repository-wide in intent. If #295 has a previous reviewed head, a GitHub comparison from that head to target `T` supplies the recency bias independently of the snapshot `S..T` compare used to establish the corpus. New semantic changes are useful starting points, but the reviewer is expected to search broadly across the exact target corpus and chase mildly suspicious evidence into older content. The lifecycle/status, volatile duplicated-fact, cross-authority current-state, and candidate-closure passes in the agent contract are mandatory minimum discovery coverage.
+A formal review is repository-wide in intent. Recent Git history may supply recency bias independently of the snapshot `S..T` compare used to establish the corpus. New semantic changes are useful starting points, but the reviewer is expected to search broadly across the exact target corpus and chase mildly suspicious evidence into older content. The lifecycle/status, volatile duplicated-fact, cross-authority current-state, and candidate-closure passes in the agent contract are mandatory minimum discovery coverage.
 
 Those breadth passes also test **authority placement**, not only factual equality. Source comments/Javadocs should own current code behavior and limitations, not future delivery sequencing. Maintained explanatory docs should not copy change-prone executable/configuration values merely to restate them; when the exact value is not itself a contract, historical fact, or reproducibility datum, document the purpose/invariant and point to the executable owner instead. A copied claim can therefore be a consistency finding before it becomes stale.
 
@@ -84,23 +81,17 @@ CONS: <concise semantic title>
 
 Open issues represent unresolved findings. Finding reconciliation is idempotent: a semantic match reuses its existing issue identity; rerunning a review must not create a duplicate issue or duplicate equivalent evidence. Materially stronger evidence for the same unresolved finding may update that issue narrowly. A corrective PR may make a finding `IN_FLIGHT` but not resolved; only authoritative evidence on reviewed `main` establishes resolution. Regression reopens the same issue. Mutable lifecycle state is not duplicated in issue bodies.
 
-A formal review has narrow authority to reconcile its finding issues and append one completion record to #295. Remediation and merge remain separate workflows.
+A formal review has narrow authority to reconcile its finding issues. Remediation and merge remain separate workflows.
 
 ## Completion
 
-Issue #295 is a fixed append-only completion ledger titled exactly `Consistency review ledger`. Its body is static instructions, not mutable review state. If the issue is missing, inaccessible, or wrongly titled, the review is `INCOMPLETE`.
+A formal review persists only finding state.
 
-A completed review appends one factual completion comment:
+1. Do not mutate findings while analyzing.
+2. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal reviewed target `T`; otherwise stop `INCOMPLETE` with no review-accounting mutations and restart against the new exact target.
+3. Reconcile finding issues idempotently.
+4. Resolve live `main` again. It must still equal reviewed target `T`.
+5. Report the review result in the session.
 
-```text
-### Consistency review completion
+A clean review creates no completion issue, comment, timestamp, previous-reviewed-head record, or other bookkeeping artifact. Its value is the analysis itself; only unresolved findings need durable repository work state.
 
-- verified at: <UTC YYYY-MM-DD>
-- reviewed head: <full main SHA>
-- result: CLEAN | FINDINGS
-- finding issues: none | #<number>, #<number>, ...
-```
-
-Only complete comments authored by a repository OWNER, MEMBER, or COLLABORATOR count. Immediately before appending, re-fetch #295 and its comments. Corrections are later comments; never rewrite historical completion evidence.
-
-The recorded head is a recency anchor for the next review, not a certificate that older content was exhaustively cleared. Weekly due state is derived from the latest valid `verified at` value rather than being stored as a second mutable value.

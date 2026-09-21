@@ -1,7 +1,7 @@
 # Delivery-process retrospective — 2026-09-21
 
 > **Status:** Dated, non-normative delivery-process evidence  
-> **Scope:** All 79 pull requests merged after baseline PR #260 through the current main head produced by PR #368, ordered by merge time rather than PR number  
+> **Scope:** All 81 pull requests merged after baseline PR #260 through the current main head produced by PR #368, ordered by merge time rather than PR number  
 > **Baseline:** Live main at f4e1b5b259889fcff53300411c8894a1ed43120a on 2026-09-21  
 > **Purpose:** Verify the 2026-09-05 delivery-process interventions against later delivery evidence and establish the next empirical baseline. This document does not override AGENTS.md, contributor/review guidance, canonical architecture and specifications, planning, tests, CI, or current GitHub state.
 
@@ -9,7 +9,7 @@
 
 The delivery loop improved in one important dimension: ordinary work reaches a non-blocking review state with less churn, and the specific stale-base failure class is a smaller share of formal findings. The exact #255 failure pattern — merging an ordinary PR after a canonical blocking disposition without a later READY TO MERGE review — did not recur in the audited review history.
 
-The improvement is not complete. PR-description and justification-prose defects became a larger share of findings, semantic/status propagation still escaped into main, and a live merge-protection assumption turned out not to be enforced. The period also spent substantial review effort stabilizing the delivery system itself. Six process-heavy PRs (#259, #274, #289, #294, #279, and #335) account for 36 of 104 formal CHANGES REQUIRED review submissions.
+The improvement is not complete. PR-description and justification-prose defects became a larger share of findings, semantic/status propagation still escaped into main, and a live merge-protection assumption turned out not to be enforced. The period also spent substantial review effort stabilizing the delivery system itself. Six process-heavy PRs (#259, #274, #289, #294, #279, and #335) account for 36 of 106 formal CHANGES REQUIRED review submissions.
 
 The strongest result from the 2026-09-05 interventions is therefore selective:
 
@@ -27,7 +27,7 @@ Canonical landed baseline at audit time: f4e1b5b259889fcff53300411c8894a1ed43120
 
 Previous retrospective baseline: PR #260, merged 2026-09-04 02:09 UTC, merge commit 9e4cc84ac825d7714ef5f89a3007bf40b614a8f9.
 
-The retrospective data file still named #260 / 2026-09-05 as the baseline when this audit began. Live history contains **79 merged PRs after #260**. Because merge chronology is authoritative for this window, lower-numbered PRs that merged later, including #259 and #254, are included. The raw count is so far above the approximate 25-substantive-merge trigger that no borderline classification of small documentation or routine dependency updates can change the trigger result.
+The retrospective data file still named #260 / 2026-09-05 as the baseline when this audit began. Live history contains **81 merged PRs after #260**. Because merge chronology is authoritative for this window, lower-numbered PRs that merged later, including #259, #256, and #254, are included. The raw count is so far above the approximate 25-substantive-merge trigger that no borderline classification of small documentation or routine dependency updates can change the trigger result.
 
 Evidence included:
 
@@ -41,7 +41,7 @@ Evidence included:
 - current Consistency findings, using only those whose contradictory transition can be tied confidently to this delivery window;
 - current main and the exact files changed by the relevant transition PRs.
 
-For reproducibility, this audit counted **121 unique blocking findings**: 116 numbered REV findings plus five earlier-format unnumbered blockers in #332, #333, #334, and #335. Illustrative strings such as “REV-123” inside finding prose were not counted as findings.
+For reproducibility, this audit counted **127 unique blocking findings**: 122 numbered review findings plus five earlier-format unnumbered blockers in #332, #333, #334, and #335. Illustrative strings that merely matched the review-finding token shape inside finding prose were not counted as findings.
 
 A formal **CHANGES REQUIRED** review submission is used below as a review-round proxy. This is slightly more mechanical than the 2026-09-05 definition of a remediation round as a feedback checkpoint followed by a meaningful corrective change: current Arcogine review can correct PR metadata without changing the Git head, and a repeated re-review can occasionally restate a still-open finding. The zero-round result is exact; the higher-round buckets should be read as a comparable churn indicator, not precise developer-effort accounting.
 
@@ -59,9 +59,9 @@ Limitations:
 
 | Measure | 2026-09-05 baseline | 2026-09-21 window |
 | --- | ---: | ---: |
-| Merged PRs | 30 | 79 |
-| Unique formal blocking findings | 79 | 121 |
-| Findings per merged PR | 2.63 | 1.53 |
+| Merged PRs | 30 | 81 |
+| Unique formal blocking findings | 79 | 127 |
+| Findings per merged PR | 2.63 | 1.57 |
 
 The lower density is directionally good, but it is not a target by itself. Several current-window findings are exactly the adversarial review work Arcogine should retain.
 
@@ -69,22 +69,22 @@ The lower density is directionally good, but it is not a target by itself. Sever
 
 | Blocking-review checkpoints | 2026-09-05 remediation-round baseline | 2026-09-21 CHANGES REQUIRED proxy |
 | --- | ---: | ---: |
-| 0 | 4 / 30 = 13.3% | 25 / 79 = 31.6% |
-| 1 | 15 / 30 = 50.0% | 31 / 79 = 39.2% |
-| 2 | 3 / 30 = 10.0% | 14 / 79 = 17.7% |
-| 3+ | 8 / 30 = 26.7% | 9 / 79 = 11.4% |
+| 0 | 4 / 30 = 13.3% | 26 / 81 = 32.1% |
+| 1 | 15 / 30 = 50.0% | 31 / 81 = 38.3% |
+| 2 | 3 / 30 = 10.0% | 15 / 81 = 18.5% |
+| 3+ | 8 / 30 = 26.7% | 9 / 81 = 11.1% |
 
 The tail improved materially: the share of PRs with no blocking review checkpoint more than doubled, while the 3+ bucket fell by more than half.
 
 ### Baseline reconciliation
 
-The directly comparable stale-main / base-reconciliation class produced **10 findings out of 121 (8.3%)**, versus **10 out of 79 (12.7%)** in the previous retrospective.
+The directly comparable stale-main / base-reconciliation class produced **11 findings out of 127 (8.7%)**, versus **10 out of 79 (12.7%)** in the previous retrospective.
 
-The absolute count stayed flat while the audited window grew from 30 to 79 PRs. This is evidence that the live-main/base-normalization standard work reduced that specific waste class.
+The absolute count increased only from 10 to 11 while the audited window grew from 30 to 81 PRs. This is evidence that the live-main/base-normalization standard work reduced that specific waste class.
 
 ### PR-description and justification drift
 
-A narrow current-window classification identified **16 findings out of 121 (13.2%)** where the material defect was stale or over-strong PR validation, rationale, title, or justification prose. The 2026-09-05 baseline was **6 out of 79 (7.6%)**.
+A narrow current-window classification identified **17 findings out of 127 (13.4%)** where the material defect was stale or over-strong PR validation, rationale, title, or justification prose. The 2026-09-05 baseline was **6 out of 79 (7.6%)**.
 
 Issue #323 provides a concentrated example: across #316, #317, and #319, review value was entirely in justification prose rather than the diffs, and several findings were claims stronger than the available evidence. Those were healthy pre-merge catches, but they show the waste class did not improve.
 
@@ -133,17 +133,17 @@ These are not reasons to weaken review. They are reasons to keep adversarial rev
 
 | Intervention | Result | Evidence / decision |
 | --- | --- | --- |
-| Executable PR lifecycle enforcement | **PARTIALLY VERIFIED** | Base-reconciliation share fell from 12.7% to 8.3%, and the #255 blocking-disposition merge pattern did not recur. Issue #313 proves the protection stack is still incomplete because Code Owner enforcement is not observed to block protected changes. Retain the lifecycle system; close the live enforcement gap rather than adding another parallel gate. |
+| Executable PR lifecycle enforcement | **PARTIALLY VERIFIED** | Base-reconciliation share fell from 12.7% to 8.7%, and the #255 blocking-disposition merge pattern did not recur. Issue #313 proves the protection stack is still incomplete because Code Owner enforcement is not observed to block protected changes. Retain the lifecycle system; close the live enforcement gap rather than adding another parallel gate. |
 | Required validation for repository workflow tooling | **VERIFIED — retain** | No post-merge untested-helper escape was found. Missing/insufficient helper validation continued to be caught pre-merge and repaired. |
 | Earlier semantic-neighbor / acceptance-evidence closure | **NOT YET VERIFIED** | Direct status-propagation escapes #356 and #362 reached main, and review still found multiple authority/status-neighbor omissions before merge. Current Consistency breadth improvements landed late in the sample, so keep the underlying practice but do not declare it solved. |
 | Trial: small closure-set handoff | **INCONCLUSIVE — retire the trial** | Repository and PR search finds the experiment as retrospective/register history, but no durable marker identifies which slices actually exercised it. An uninstrumented experiment cannot support a causal conclusion. Existing concept-fan-out/review and Consistency breadth rules already own the durable behavior. |
-| Trial: final PR closeout summary | **NOT VERIFIED — superseded** | PR-description/justification drift rose to 13.2%. Do not add a final approval ritual. PR #353's newer stable-description rule is the narrower replacement and should be verified in the next window. |
+| Trial: final PR closeout summary | **NOT VERIFIED — superseded** | PR-description/justification drift rose to 13.4%. Do not add a final approval ritual. PR #353's newer stable-description rule is the narrower replacement and should be verified in the next window. |
 
 ## Avoidable recurring waste
 
 ### Delivery-system churn is concentrated
 
-The overall review-round tail improved, but process-heavy work remains expensive. Six PRs account for **36 / 104 = 34.6%** of all formal CHANGES REQUIRED submissions in the window:
+The overall review-round tail improved, but process-heavy work remains expensive. Six PRs account for **36 / 106 = 34.0%** of all formal CHANGES REQUIRED submissions in the window:
 
 - #259 — disposition merge gate;
 - #274 — durable delivery-label enforcement;
@@ -196,13 +196,13 @@ Using continuous-improvement terminology only as an analytical lens:
 
 At the next delivery-process retrospective, compare at least:
 
-- unique formal blocking findings: **121 across 79 merged PRs (1.53 per PR)**;
-- baseline-reconciliation findings: **10 / 121 = 8.3%**;
-- PR-description / justification findings: **16 / 121 = 13.2%**;
+- unique formal blocking findings: **127 across 81 merged PRs (1.57 per PR)**;
+- baseline-reconciliation findings: **11 / 127 = 8.7%**;
+- PR-description / justification findings: **17 / 127 = 13.4%**;
 - high-confidence post-merge escapes attributable to the window: **at least 5**;
-- no-blocking-review PRs: **25 / 79 = 31.6%**;
-- formal CHANGES REQUIRED proxy distribution: **25 zero / 31 one / 14 two / 9 three-plus**;
-- delivery-system concentration: **36 / 104 blocking review submissions in the six highest-churn process PRs**;
+- no-blocking-review PRs: **26 / 81 = 32.1%**;
+- formal CHANGES REQUIRED proxy distribution: **26 zero / 31 one / 15 two / 9 three-plus**;
+- delivery-system concentration: **36 / 106 blocking review submissions in the six highest-churn process PRs**;
 - repository-tooling validation escape: **none observed post-merge**;
 - lifecycle exact-pattern check: **no observed repeat of #255's merge-after-blocking-disposition pattern**.
 

@@ -2,13 +2,13 @@
 
 This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with an Arcogine Repomix attachment as the repository-content baseline and the GitHub connector for revision reconciliation plus live/mutable repository state.
 
-A formal review is diagnostic plus the narrow finding-ledger/register accounting described below. It does not authorize source/doc remediation, planning changes, architecture changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
+A formal review is diagnostic plus the narrow finding-ledger accounting described below. It does not authorize source/doc remediation, planning changes, architecture changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
 
 ## Goal
 
 Deeply inspect the repository for semantic inconsistency across implementation, architecture and specifications, planning, public/reference documentation, examples, configuration, tests, CI, and prior findings.
 
-A previous clean review is not evidence that older content is correct. New material gets first attention when a previous reviewed head exists, but recency never bounds scope. Follow suspicious evidence wherever it leads.
+A previous clean review is not evidence that older content is correct. New material may get first attention from recent Git history, but recency never bounds scope. Follow suspicious evidence wherever it leads.
 
 ## Required review corpus
 
@@ -24,7 +24,7 @@ At review start:
 
 Do not redundantly refetch unaffected static content through GitHub. The snapshot is a cache, not authority for changed target paths.
 
-GitHub remains authoritative for mutable state and history: live `main`, issue #295, finding issues, pull requests, reviews, CI/checks, commit/compare history, and all mutations.
+GitHub remains authoritative for mutable state and history: live `main`, finding issues, pull requests, reviews, CI/checks, commit/compare history, and all mutations.
 
 ## Authority and time
 
@@ -61,11 +61,11 @@ A misplaced claim can therefore be inconsistent even before its copied value or 
 
 After the exact target corpus at `T` is established:
 
-1. Read GitHub issue `#295`, titled exactly `Continuous improvement register`.
-2. Load currently open consistency findings whose titles begin `CONS:`.
-3. If #295 records a resolvable previous reviewed head, compare it with current `main` and use changed/new material as the first attention priority.
+1. Load currently open consistency findings whose titles begin `CONS:`.
+2. Use recent Git history as search-order context when useful, especially after major architecture/status transitions.
+3. Begin with changed/new material when it is a useful lead, but never treat recency as a scope boundary.
 
-Issue #295 is mandatory. If it is missing, inaccessible, has the wrong title, or its weekly Consistency section is malformed, stop `INCOMPLETE`; do not recreate, replace, or guess it.
+There is no Consistency completion ledger, last-reviewed timestamp, or required previous-reviewed-head coordinate. Do not reconstruct one from issue history or chat state.
 
 Closed findings are not preloaded. Search closed `CONS:` issues only when a candidate finding needs duplicate/regression matching.
 
@@ -79,7 +79,7 @@ Search and slice the Repomix corpus aggressively. For each material concept inve
 4. Inspect source/config/tests as executable evidence; inspect live GitHub CI/check evidence only when it materially proves or contradicts a claim.
 5. Use PR/commit history only when needed to explain a transition, attribute evidence, or determine whether a finding is in flight.
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
-7. If something appears even mildly inconsistent, follow the thread far enough to classify it regardless of file age or the previous reviewed head.
+7. If something appears even mildly inconsistent, follow the thread far enough to classify it regardless of file age or recency.
 
 After that concept-driven work, every formal repository-wide review must run these independent breadth passes over the complete target corpus. These passes are candidate-discovery mechanisms, not automatic findings:
 
@@ -88,7 +88,7 @@ After that concept-driven work, every formal repository-wide review must run the
 3. **Cross-authority current-state sweep.** For capabilities described as current, implemented, complete, partial, deferred, or blocked in architecture/planning authorities, search semantic neighbors across architecture, planning, product/reference/development docs, examples, and claim-bearing source comments for incompatible lifecycle state or ownership claims. This sweep must include older unchanged text; the changed-file range is not evidence that neighboring claims are current.
 4. **Candidate closure check.** When a candidate exposes drift in a maintained current-state surface, inspect the smallest neighboring closure set governed by the same authority before finalizing it. Examples include sibling API examples/schema claims for the same surface, neighboring status claims for the same capability, or sibling comments carrying the same delivery assumption. Keep unrelated subjects separate, but do not stop at the first contradictory line when adjacent claims share the same authority.
 
-A formal review may not record completion unless all four breadth passes were performed. If a required pass cannot be completed, stop `INCOMPLETE` before finding/register mutations and state which pass was not completed.
+A formal review may not record completion unless all four breadth passes were performed. If a required pass cannot be completed, stop `INCOMPLETE` before finding mutations and state which pass was not completed.
 
 Prefer evidence-driven repository search over a duplicated architecture matrix. The required breadth passes define minimum discovery coverage; they do not require maintaining a static architecture matrix or treating every search hit as a finding. Newness is a search-order heuristic, not a stopping rule.
 
@@ -134,7 +134,7 @@ Authority:
 
 Do not duplicate mutable lifecycle state in the body. Finding reconciliation is idempotent: before creating a new issue, match the candidate against loaded open findings and, when needed, closed `CONS:` findings. A semantic match reuses the existing issue identity. Re-running a review must not create a duplicate issue or append duplicate evidence merely because the same inconsistency was observed again. If materially stronger or newly relevant diagnostic evidence clarifies the same unresolved finding, update that issue narrowly while preserving its identity. Unresolved findings stay open; plausible corrective PRs remain open and are reported `IN_FLIGHT`; verified fixes on reviewed `main` close completed; false positives/duplicates/superseded findings close with explanation; regressions reopen the same issue.
 
-Invoking a formal review authorizes only the issue operations required to account for that review's findings and the final weekly-register update. It does not authorize remediation or unrelated issue changes.
+Invoking a formal review authorizes only the issue operations required to account for that review's findings. It does not authorize remediation or unrelated issue changes.
 
 ## Completion
 
@@ -143,30 +143,15 @@ Do not mutate findings while analyzing.
 1. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal reviewed target `T`; otherwise stop `INCOMPLETE` with no review-accounting mutations and restart against the new exact target.
 2. Reconcile finding issues idempotently.
 3. Resolve live `main` again. It must still equal reviewed target `T`.
-4. Re-fetch issue #295 immediately before writing, require the exact title, and replace only its `### Weekly Consistency review` subsection in the latest body while preserving all other content.
+4. Return the review result in chat.
 
-Write factual review state only:
-
-```text
-### Weekly Consistency review
-
-- last verified: <UTC YYYY-MM-DD>
-- reviewed head: <reviewed target T full SHA>
-- accounted result: CLEAN | FINDINGS
-- finding issues: none | #<number>, #<number>, ...
-- interval: every 7 days
-```
-
-`CLEAN` requires `finding issues: none`; `FINDINGS` lists every unresolved finding applicable to the reviewed head. The body edit is the complete recording operation. Do not create a completion comment, trigger a workflow, invoke `gh`, or maintain a second completion ledger.
-
-The register stores facts, not derived due-state cache. Weekly `CURRENT`/`DUE`/`OVERDUE` is derived from `last verified` when an agent grounds; see `AGENTS.md` and `docs/development/continuous-improvement.md`.
+A clean review persists nothing. Do not create a completion issue/comment, timestamp, previous-reviewed-head record, or any other bookkeeping artifact. Only finding state survives the session because only findings require future repository work.
 
 ## Report
 
 ```text
 Consistency review
 Head: <sha>
-Previous reviewed head: <sha | NONE>
 Findings: none | #<number>, #<number>, ...
 Coverage:
 - recency/concept pass: COMPLETE | NOT_APPLICABLE | INCOMPLETE

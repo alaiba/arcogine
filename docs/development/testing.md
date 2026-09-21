@@ -187,7 +187,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 
 | Job | Command | What it checks |
 |-----|---------|----------------|
-| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight and provisioning tooling, PR lifecycle resolution, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/frontend/docker/docs-only surfaces for conditional jobs |
+| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight and provisioning tooling, PR lifecycle resolution, retrospective window/counting logic, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/frontend/docker/docs-only surfaces for conditional jobs |
 | Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Frontend | separate steps: lint, typecheck, `test:coverage`, build, `npm audit --audit-level=high` | Node 22.22.2 floor, lint, typecheck, coverage, build, dependency audit — each step is separately attributable on failure, and the audit step always writes `npm-audit.json` (uploaded as an artifact only on failure) while still failing the job on any HIGH+ finding |
 | Playwright | `npx playwright test` (after `./gradlew :cli:bootJar`) | Browser E2E against the Java/Node floors |
@@ -228,6 +228,7 @@ python3 .github/scripts/check-transient-workspace.test.py
 python3 .github/scripts/check-transient-workspace.py
 bash infra/dev/claude-cloud.test.sh
 node --test infra/dev/pr-lifecycle.test.mjs
+node --test infra/dev/delivery-retrospective.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
 ```
 
@@ -244,6 +245,12 @@ python3 .github/scripts/check-transient-workspace.py
 
 ```bash
 node --test infra/dev/pr-lifecycle.test.mjs
+```
+
+`infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, trusted-review-author filtering, disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
+
+```bash
+node --test infra/dev/delivery-retrospective.test.mjs
 ```
 
 Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODULE_NOT_FOUND` rather than discovering the suite.

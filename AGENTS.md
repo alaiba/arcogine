@@ -84,26 +84,33 @@ authorities.
 
 ## Continuous improvement
 
-Arcogine's continuous-improvement operating model — Session-close Kaizen, the weekly
+Arcogine's continuous-improvement operating model — Session-close Kaizen, the
 Consistency review, and the evidence-based delivery-process retrospective — is defined
 in [`docs/development/continuous-improvement.md`](docs/development/continuous-improvement.md).
 
-Normal repository grounding does **not** evaluate recurring continuous-improvement
-obligations. Evaluate reminder state only at a natural process boundary:
+For `.?`, the standing responsibilities are only:
 
-- during `.?` Session-close Kaizen, after classifying/capturing the session's lessons
-  and before giving the deletion verdict;
-- when the current task explicitly concerns continuous-improvement state, Consistency
-  cadence, delivery-process health, or repository-wide planning/next-work.
+1. classify and durably capture anything from the current session that should survive
+   deletion; and
+2. evaluate the versioned delivery-retrospective trigger before giving the deletion
+   verdict.
 
-At those boundaries, follow `docs/development/continuous-improvement.md` to derive the
-weekly Consistency state and delivery-retrospective threshold from their factual
-authorities. If action is warranted, tell the user plainly what is due or recommended
-and include the minimal prompt for a fresh session. Do not expose internal derivation
-labels or machine-state tokens as the reminder itself.
+A Consistency review is **not** a standing `.?` subroutine. Recommend one from Kaizen
+only when the session itself provides a concrete reason that a repository-wide
+consistency sweep would be useful, such as a major cross-cutting architecture/status
+transition or evidence of broader semantic drift.
 
-If no action is warranted, say nothing. If the required register/baseline state cannot
-be verified, say so once without assuming everything is current. Never repeat the same
+Normal repository grounding does **not** evaluate the delivery-retrospective threshold.
+Outside `.?`, evaluate it only when the current task explicitly concerns continuous
+improvement, delivery-process health, or repository-wide planning/next-work.
+
+At those boundaries, follow `docs/development/continuous-improvement.md` and derive the
+retrospective threshold from its versioned factual authority. If action is warranted,
+tell the user plainly what is recommended and include the minimal prompt for a fresh
+session.
+
+If no action is warranted, say nothing. If the versioned retrospective state cannot be
+verified, say so once without assuming everything is current. Never repeat the same
 reminder more than once per session, and never derail the user's requested task merely
 because an improvement obligation is due.
 

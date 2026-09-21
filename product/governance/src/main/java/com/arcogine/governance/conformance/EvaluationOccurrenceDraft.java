@@ -7,9 +7,11 @@ import com.arcogine.governance.evidence.TemporalFrame;
 import com.arcogine.governance.requirement.Requirement;
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.ModelFingerprint;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Candidate basis for one evaluation occurrence. It becomes historical only after authority
@@ -56,6 +58,7 @@ public record EvaluationOccurrenceDraft(
         }
         validateUses(id, requirement, assertion, modelFingerprint, reliedOnUses, true);
         validateUses(id, requirement, assertion, modelFingerprint, consideredButExcludedUses, false);
+        validateUniqueUsePositions(reliedOnUses, consideredButExcludedUses);
     }
 
     public static EvaluationOccurrenceDraft create(
@@ -114,6 +117,23 @@ public record EvaluationOccurrenceDraft(
             if (use.role() != EvidenceUseRole.COMPARATOR
                     && !use.targetModelFingerprint().equals(modelFingerprint)) {
                 throw new IllegalArgumentException("non-comparator use must target the evaluated model");
+            }
+        }
+    }
+
+    private static void validateUniqueUsePositions(
+            List<EvidenceUse> reliedOnUses, List<EvidenceUse> consideredButExcludedUses) {
+        Set<Integer> positions = new HashSet<>();
+        for (EvidenceUse use : reliedOnUses) {
+            if (!positions.add(use.position())) {
+                throw new IllegalArgumentException(
+                        "evidence use position must be unique within an occurrence: " + use.position());
+            }
+        }
+        for (EvidenceUse use : consideredButExcludedUses) {
+            if (!positions.add(use.position())) {
+                throw new IllegalArgumentException(
+                        "evidence use position must be unique within an occurrence: " + use.position());
             }
         }
     }

@@ -19,18 +19,35 @@ public final class InMemoryEvidenceReferenceAuthority implements EvidenceReferen
 
     @Override
     public synchronized EvidenceReference record(EvidenceReference reference) {
-        Objects.requireNonNull(reference, "reference");
-        Key key = new Key(reference.sourceIdentity(), reference.revisionIdentity());
+        EvidenceReference canonical = canonicalizeRelation(Objects.requireNonNull(reference, "reference"));
+        Key key = new Key(canonical.sourceIdentity(), canonical.revisionIdentity());
         EvidenceReference existing = references.get(key);
         if (existing != null) {
-            if (!existing.provenance().equals(reference.provenance())
-                    || !existing.relationOptional().equals(reference.relationOptional())) {
-                throw new IllegalArgumentException("evidence reference would be rebound: " + reference);
+            if (!existing.provenance().equals(canonical.provenance())
+                    || !existing.relationOptional().equals(canonical.relationOptional())) {
+                throw new IllegalArgumentException("evidence reference would be rebound: " + canonical);
             }
             return existing;
         }
-        references.put(key, reference);
-        return reference;
+        references.put(key, canonical);
+        return canonical;
+    }
+
+    private EvidenceReference canonicalizeRelation(EvidenceReference reference) {
+        if (reference.relationOptional().isEmpty()) {
+            return reference;
+        }
+        EvidenceRelation relation = reference.relationOptional().orElseThrow();
+        EvidenceReference canonicalEarlier = record(relation.earlier());
+        if (canonicalEarlier == relation.earlier()) {
+            return reference;
+        }
+        return new EvidenceReference(
+                reference.sourceIdentity(),
+                reference.revisionIdentity(),
+                reference.provenance(),
+                Optional.of(new EvidenceRelation(
+                        relation.kind(), canonicalEarlier, relation.explanation())));
     }
 
     @Override

@@ -8,7 +8,7 @@ import {
   summarizeWindow,
 } from './delivery-retrospective.mjs';
 
-const review = (body) => ({ body });
+const review = (body, authorAssociation = 'OWNER') => ({ body, authorAssociation });
 const pr = (number, mergedAt, bodies = [], extra = {}) => ({
   number,
   merged: true,
@@ -63,13 +63,27 @@ test('duplicate PRs fail instead of silently altering counts', () => {
   );
 });
 
-test('canonical CHANGES REQUIRED parser ignores prose examples', () => {
+test('trusted CHANGES REQUIRED parser ignores prose examples', () => {
   const record = pr(10, '2026-09-05T00:00:00Z', [
     'Example: `Disposition: CHANGES REQUIRED` is not a verdict.',
     'Finding here.\n\nDisposition: **CHANGES REQUIRED**.',
     'Fixed.\n\nDisposition: **READY TO MERGE**.',
   ]);
   assert.equal(changesRequiredCount(record), 1);
+});
+
+test('untrusted review authors do not affect retrospective blocker counts', () => {
+  const record = pr(10, '2026-09-05T00:00:00Z');
+  record.reviews = {
+    totalCount: 4,
+    nodes: [
+      review('Disposition: **CHANGES REQUIRED**.', 'NONE'),
+      review('Disposition: **CHANGES REQUIRED**.', 'CONTRIBUTOR'),
+      review('Disposition: **CHANGES REQUIRED**.', 'MEMBER'),
+      review('Disposition: **CHANGES REQUIRED**.', 'COLLABORATOR'),
+    ],
+  };
+  assert.equal(changesRequiredCount(record), 2);
 });
 
 test('truncated review payload fails closed', () => {
@@ -97,7 +111,7 @@ test('summary computes review-round totals deterministically', () => {
   ];
   assert.deepEqual(summarizeWindow(window), {
     mergedPrCount: 4,
-    changeRequiredSubmissions: 6,
+    trustedChangesRequiredSubmissions: 6,
     reviewRoundDistribution: { zero: 1, one: 1, two: 1, threePlus: 1 },
   });
 });

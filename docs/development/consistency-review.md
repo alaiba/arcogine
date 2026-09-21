@@ -21,7 +21,7 @@ compare S -> live main and resolve exact target T
       +--> unsafe/incomplete reconciliation -> INCOMPLETE; refresh snapshot
       |
       v
-read #295 + open CONS: findings
+read #295 completion comments + open CONS: findings
       |
       v
 use previous reviewed head as recency anchor, if present
@@ -45,7 +45,7 @@ mutate finding ledger as required
 recheck live main == reviewed target T
       |
       v
-re-read #295 and replace only the weekly review subsection
+re-read #295 and append one completion comment
 ```
 
 The previous reviewed head is an attention aid, never a scope boundary. A clean earlier review does not establish that older content is correct.
@@ -54,7 +54,7 @@ The previous reviewed head is an attention aid, never a scope boundary. A clean 
 
 The project Repomix is the reviewer's repository-content baseline. Follow `docs/development/repository-snapshot.md` as the sole authority for reconciling that baseline to exact target `T`; Consistency does not duplicate that protocol here. Do not spend connector calls refetching unaffected static content.
 
-GitHub remains authority for live `main`, issue #295, finding issue state, PR/review/CI state, commit/compare history, and mutations. PR/history queries are evidence-driven, not routine bulk loading.
+GitHub remains authority for live `main`, issue #295 and its comments, finding issue state, PR/review/CI state, commit/compare history, and mutations. PR/history queries are evidence-driven, not routine bulk loading.
 
 A snapshot may be older than live `main`; age alone is not a failure. If the canonical snapshot protocol cannot establish a complete exact target view, the review is `INCOMPLETE` and the snapshot must be refreshed.
 
@@ -84,24 +84,23 @@ CONS: <concise semantic title>
 
 Open issues represent unresolved findings. Finding reconciliation is idempotent: a semantic match reuses its existing issue identity; rerunning a review must not create a duplicate issue or duplicate equivalent evidence. Materially stronger evidence for the same unresolved finding may update that issue narrowly. A corrective PR may make a finding `IN_FLIGHT` but not resolved; only authoritative evidence on reviewed `main` establishes resolution. Regression reopens the same issue. Mutable lifecycle state is not duplicated in issue bodies.
 
-A formal review has narrow authority to reconcile its finding issues and update the weekly review subsection of #295. Remediation and merge remain separate workflows.
+A formal review has narrow authority to reconcile its finding issues and append one completion record to #295. Remediation and merge remain separate workflows.
 
 ## Completion
 
-Issue #295 is fixed mandatory repository state. It is never discovered, bootstrapped, recreated, or substituted. If it is missing, inaccessible, wrongly titled, or its weekly review subsection is malformed, the review is `INCOMPLETE`.
+Issue #295 is a fixed append-only completion ledger titled exactly `Consistency review ledger`. Its body is static instructions, not mutable review state. If the issue is missing, inaccessible, or wrongly titled, the review is `INCOMPLETE`.
 
-A completed review writes factual state only:
+A completed review appends one factual completion comment:
 
 ```text
-### Weekly Consistency review
+### Consistency review completion
 
-- last verified: <UTC YYYY-MM-DD>
+- verified at: <UTC YYYY-MM-DD>
 - reviewed head: <full main SHA>
-- accounted result: CLEAN | FINDINGS
+- result: CLEAN | FINDINGS
 - finding issues: none | #<number>, #<number>, ...
-- interval: every 7 days
 ```
 
-Immediately before this write, re-fetch #295 and replace only that subsection in the latest body. There is no completion comment, event trigger, scheduled register writer, manual dispatch, or synchronous refresh step.
+Only complete comments authored by a repository OWNER, MEMBER, or COLLABORATOR count. Immediately before appending, re-fetch #295 and its comments. Corrections are later comments; never rewrite historical completion evidence.
 
-The recorded head is a recency anchor for the next review, not a certificate that older content was exhaustively cleared. Weekly due state is derived from `last verified` when an agent grounds rather than being stored as a second mutable value.
+The recorded head is a recency anchor for the next review, not a certificate that older content was exhaustively cleared. Weekly due state is derived from the latest valid `verified at` value rather than being stored as a second mutable value.

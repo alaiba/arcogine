@@ -167,6 +167,33 @@ class GovernanceEvidenceTest {
     }
 
     @Test
+    void correctionRelationCannotRebindCanonicalEarlierProvenance() {
+        Requirement requirement = requirement("correction provenance");
+        Assertion<?> assertion = externalAssertion(requirement);
+        InMemoryEvidenceReferenceAuthority evidenceAuthority = new InMemoryEvidenceReferenceAuthority();
+        InMemoryEvaluationOccurrenceAuthority occurrenceAuthority =
+                new InMemoryEvaluationOccurrenceAuthority(evidenceAuthority);
+        EvidenceReference original = new EvidenceReference("source", "record-1", PROVENANCE);
+        EvidenceReference conflictingEarlier = new EvidenceReference(
+                "source", "record-1", EvidenceProvenance.unknown("conflicting earlier provenance"));
+        EvidenceReference correction = EvidenceReference.relatedRevision(
+                "source", "record-2", EvidenceProvenance.unknown("corrected"),
+                EvidenceRelationKind.CORRECTION, conflictingEarlier, "late correction");
+        EvaluationOccurrenceId firstId = EvaluationOccurrenceId.generate();
+        EvaluationOccurrenceId secondId = EvaluationOccurrenceId.generate();
+        EvidenceUse firstUse = use(firstId, 0, original, MODEL, requirement, assertion,
+                EvidenceUseRole.RELIED_ON,
+                new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "first", "fixture"));
+        EvidenceUse correctionUse = use(secondId, 0, correction, MODEL, requirement, assertion,
+                EvidenceUseRole.RELIED_ON,
+                new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "corrected", "fixture"));
+
+        occurrenceAuthority.accept(draft(requirement, assertion, firstId, List.of(firstUse), List.of()));
+        assertThrows(IllegalArgumentException.class, () -> occurrenceAuthority.accept(
+                draft(requirement, assertion, secondId, List.of(correctionUse), List.of())));
+    }
+
+    @Test
     void unacceptedStructuralProducerRevisionCannotEnterAcceptedOccurrenceHistory() {
         Requirement requirement = requirement("structural provenance");
         Assertion<?> assertion = externalAssertion(requirement);
@@ -202,6 +229,35 @@ class GovernanceEvidenceTest {
         assertNotEquals(first.applicability(), rollback.applicability());
         assertEquals(OTHER_MODEL, comparator.targetModelFingerprint());
         assertTrue(comparator.role() == EvidenceUseRole.COMPARATOR);
+    }
+
+    @Test
+    void evidenceUsePositionIsUniqueWithinAnOccurrence() {
+        Requirement requirement = requirement("use identity");
+        Assertion<?> assertion = externalAssertion(requirement);
+        EvaluationOccurrenceId occurrence = EvaluationOccurrenceId.generate();
+        EvidenceUse reliedOn = use(
+                occurrence,
+                0,
+                new EvidenceReference("source", "record-1", PROVENANCE),
+                MODEL,
+                requirement,
+                assertion,
+                EvidenceUseRole.RELIED_ON,
+                new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "relied on", "fixture"));
+        EvidenceUse excluded = use(
+                occurrence,
+                0,
+                new EvidenceReference("source", "record-2", PROVENANCE),
+                MODEL,
+                requirement,
+                assertion,
+                EvidenceUseRole.CONSIDERED_BUT_NOT_RELIED_ON,
+                new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "excluded", "fixture"));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> draft(requirement, assertion, occurrence, List.of(reliedOn), List.of(excluded)));
     }
 
     @Test

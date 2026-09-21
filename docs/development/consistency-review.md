@@ -55,7 +55,7 @@ GitHub remains authority for live `main`, finding issue state, PR/review/CI stat
 
 A snapshot may be older than live `main`; age alone is not a failure. If the canonical snapshot protocol cannot establish a complete exact target view, the review is `INCOMPLETE` and the snapshot must be refreshed.
 
-The reviewer rechecks `main` before finding accounting and again after finding accounting, before reporting completion. Both checks must still equal reviewed target `T`. If `main` moved during a long review, do not report completion against the old target.
+The reviewer rechecks `main` before finding accounting and again after finding accounting, before reporting completion. Both checks must still equal reviewed target `T`. If `main` moved during a long review, do not return a final review result against the old target.
 
 ## Review depth
 
@@ -91,7 +91,7 @@ A formal review persists only finding state.
 2. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal reviewed target `T`; otherwise stop `INCOMPLETE` with no review-accounting mutations and restart against the new exact target.
 3. Reconcile finding issues idempotently.
 4. Resolve live `main` again. It must still equal reviewed target `T`.
-5. Report the review result in the session.
+5. Return the review result in chat.
 
 A clean review creates no completion issue, comment, timestamp, previous-reviewed-head record, or other bookkeeping artifact. Its value is the analysis itself; only unresolved findings need durable repository work state.
 
@@ -112,4 +112,4 @@ Limitations: none | <specific incomplete pass or other limitation>
 Overall: CLEAN | FINDINGS | INCOMPLETE
 ```
 
-A clean report is session output only; it is not persisted as bookkeeping.
+A clean review result is returned in chat only; it is not persisted as bookkeeping.

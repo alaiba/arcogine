@@ -38,7 +38,6 @@ jobs:
       contents: read
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
       docker: ${{ steps.filter.outputs.docker }}
       docs_only: ${{ steps.filter.outputs.docs_only }}
     steps:
@@ -47,7 +46,7 @@ jobs:
           fetch-depth: 0
 
       # Executable coverage for the pure classification function below (docs-only,
-      # known backend/frontend/docker paths, and the unknown-path fail-safe) — a
+      # known backend/docker paths, and the unknown-path fail-safe) — a
       # regex regression here fails this step instead of silently under-running.
       - name: Validate classifier logic
         run: bash .github/scripts/classify-changes.test.sh
@@ -171,124 +170,12 @@ jobs:
           flags: java
           fail_ci_if_error: false
 
-  frontend:
-    name: Frontend checks
-    needs: classify
-    if: needs.classify.outputs.frontend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Node.js 22.22.2
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '22.22.2'
-          cache: 'npm'
-          cache-dependency-path: product/interfaces/web/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: product/interfaces/web
-
-      - name: Lint
-        run: npm run lint
-        working-directory: product/interfaces/web
-
-      - name: Typecheck
-        run: npx tsc --noEmit
-        working-directory: product/interfaces/web
-
-      - name: Test + coverage
-        run: npm run test:coverage
-        working-directory: product/interfaces/web
-
-      - name: Build
-        run: npm run build
-        working-directory: product/interfaces/web
-
-      - name: npm audit
-        working-directory: product/interfaces/web
-        run: |
-          set +e
-          npm audit --audit-level=high
-          audit_status=$?
-          npm audit --json > npm-audit.json
-          exit "$audit_status"
-
-      - name: Upload frontend coverage to Codecov
-        if: always()
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        with:
-          files: product/interfaces/web/coverage/coverage-final.json
-          flags: frontend
-          fail_ci_if_error: false
-
-      - name: Upload audit report
-        if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: security-audit-reports
-          path: product/interfaces/web/npm-audit.json
-
-  playwright:
-    name: Playwright E2E
-    needs: classify
-    if: needs.classify.outputs.backend == 'true' || needs.classify.outputs.frontend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Java 21
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
-
-      - name: Build API JAR
-        run: ./gradlew --no-daemon :cli:bootJar
-        working-directory: product
-
-      - name: Setup Node.js 22.22.2
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '22.22.2'
-          cache: 'npm'
-          cache-dependency-path: product/interfaces/web/package-lock.json
-
-      - name: Install web dependencies
-        run: npm ci
-        working-directory: product/interfaces/web
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('product/interfaces/web/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-playwright-
-
-      - name: Install Playwright browsers
-        # ubuntu-latest runners have Chromium system dependencies pre-installed;
-        # --with-deps triggers a large apt install on every run (not cached)
-        # and was causing multi-minute hangs even after the browser cache hit.
-        run: npx playwright install chromium
-        working-directory: product/interfaces/web
-
-      - name: Run Playwright tests
-        run: npx playwright test
-        working-directory: product/interfaces/web
 
   build-dist:
     name: Build canonical dist/
     needs: classify
-    if: needs.classify.outputs.backend == 'true' || needs.classify.outputs.frontend == 'true' || needs.classify.outputs.docker == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: needs.classify.outputs.backend == 'true' || needs.classify.outputs.docker == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -303,17 +190,6 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
-
-      - name: Setup Node.js 22.22.2
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '22.22.2'
-          cache: 'npm'
-          cache-dependency-path: product/interfaces/web/package-lock.json
-
-      - name: Install web dependencies
-        run: npm ci
-        working-directory: product/interfaces/web
 
       - name: Build dist/
         run: ./arcogine build
@@ -328,7 +204,7 @@ jobs:
   docker:
     name: Docker image build, scan, and smoke test
     needs: [classify, build-dist]
-    if: needs.classify.outputs.docker == 'true' || needs.classify.outputs.backend == 'true' || needs.classify.outputs.frontend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: needs.classify.outputs.docker == 'true' || needs.classify.outputs.backend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -359,16 +235,13 @@ jobs:
       - name: Scan images with Trivy
         run: |
           trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-api:ci
-          trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-ui:ci
 
       - name: Docker smoke test
         run: |
           ./arcogine up --no-rebuild
           COMPOSE="docker compose --project-directory . --env-file .env -f infra/docker/compose.yaml"
           api_port="$($COMPOSE port api 3000 | sed -E 's/^.*://')"
-          ui_port="$($COMPOSE port ui 5173 | sed -E 's/^.*://')"
           curl -sf "http://localhost:${api_port}/api/health" > /dev/null
-          curl -sf "http://localhost:${ui_port}/health" > /dev/null
 
       - name: Print startup logs on failure
         if: failure()
@@ -443,8 +316,6 @@ jobs:
     needs:
       - classify
       - java
-      - frontend
-      - playwright
       - build-dist
       - docker
       - java-audit
@@ -453,7 +324,6 @@ jobs:
     permissions: {}
     env:
       BACKEND: ${{ needs.classify.outputs.backend }}
-      FRONTEND: ${{ needs.classify.outputs.frontend }}
       DOCKER: ${{ needs.classify.outputs.docker }}
       EVENT_NAME: ${{ github.event_name }}
     steps:
@@ -468,7 +338,6 @@ jobs:
               needs = json.load(f)
 
           backend = os.environ["BACKEND"] == "true"
-          frontend = os.environ["FRONTEND"] == "true"
           docker = os.environ["DOCKER"] == "true"
           full_sweep = os.environ["EVENT_NAME"] in ("schedule", "workflow_dispatch")
 
@@ -479,10 +348,8 @@ jobs:
           expected_to_run = {
               "classify": True,
               "java": backend or full_sweep,
-              "frontend": frontend or full_sweep,
-              "playwright": backend or frontend or full_sweep,
-              "build-dist": backend or frontend or docker or full_sweep,
-              "docker": docker or backend or frontend or full_sweep,
+              "build-dist": backend or docker or full_sweep,
+              "docker": docker or backend or full_sweep,
               "java-audit": backend or full_sweep,
               "security-secrets": True,
           }

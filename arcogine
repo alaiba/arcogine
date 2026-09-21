@@ -5,7 +5,6 @@
 # For anything more specific than the commands below, use the subsystem's
 # native tool directly:
 #   cd product && ./gradlew <task>       # Java: coverage, Checkstyle, bootJar, jmh, audit
-#   cd product/interfaces/web && npm ... / npx ...   # frontend: lint, typecheck, build, Playwright
 #   docker compose ...                   # containers
 #   trivy / gitleaks                     # security scans
 # See docs/development/testing.md for the full native-command reference.
@@ -16,25 +15,16 @@ REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo 
 cd "$REPO_ROOT"
 
 PRODUCT_DIR="$REPO_ROOT/product"
-WEB_DIR="$REPO_ROOT/product/interfaces/web"
 DIST_DIR="$REPO_ROOT/dist"
 DOCKER_DIR="$REPO_ROOT/infra/docker"
 ENV_TEMPLATE="$DOCKER_DIR/.env.example"
 
 API_IMAGE="arcogine-api:ci"
-WEB_IMAGE="arcogine-ui:ci"
 
 gradle() {
   (cd "$PRODUCT_DIR" && ./gradlew --no-daemon "$@")
 }
 
-npm_web() {
-  (cd "$WEB_DIR" && npm "$@")
-}
-
-npx_web() {
-  (cd "$WEB_DIR" && npx "$@")
-}
 
 ensure_env() {
   if [[ ! -f "$REPO_ROOT/.env" ]]; then
@@ -83,24 +73,20 @@ usage() {
 Usage: ./arcogine <command> [args]
 
 Commands:
-  setup             Optional full-development dependency bootstrap (safe to re-run)
-  test              Run Java + frontend unit test suites
-  check             Fast quality gates: compile, lint, typecheck, tests, coverage, build
-  check --full      Everything in check, plus Playwright E2E, canonical dist/
-                     build, Docker image build + smoke test, and security scans
-  build             Produce the canonical dist/ (dist/api/arcogine.jar, dist/web/)
+  setup             Optional Java dependency bootstrap (safe to re-run)
+  test              Run Java unit tests
+  check             Java compile, style, tests, and coverage gates
+  check --full      Everything in check, plus dist build, Docker image smoke test, and security scans
+  build             Produce the canonical dist/api/arcogine.jar
   snapshot          Generate the canonical whole-repository AI retrieval snapshot
   image             Package existing dist/ into runtime Docker images
   up                Build, package, and start the full local container stack
   down              Stop the local container stack
   run api           Start the Spring Boot API in development mode (Gradle)
-  run web           Start the Vite dev server on :5173
-  run ui            Alias for 'run web'
   run scenario PATH Run a headless scenario through the native Java CLI
 
 For anything more specific, use the subsystem's native tool directly:
   cd product && ./gradlew <task>                 # Java: coverage, Checkstyle, bootJar, jmh, audit
-  cd product/interfaces/web && npm ... / npx ...  # frontend: lint, typecheck, build, Playwright
   docker compose ...                             # containers
   trivy / gitleaks                               # security scans
 See docs/development/testing.md for the full native-command reference.
@@ -113,11 +99,6 @@ cmd_snapshot() {
 }
 
 cmd_setup() {
-  echo "==> Optional full-development bootstrap (frontend, browser, and Java dependencies)..."
-  echo "==> Installing frontend dependencies..."
-  npm_web ci
-  echo "==> Installing Playwright Chromium browser for E2E tests..."
-  npx_web playwright install chromium
   echo "==> Resolving Java toolchain and dependencies..."
   gradle help
 }
@@ -125,8 +106,6 @@ cmd_setup() {
 cmd_test() {
   echo "==> Running Java tests..."
   gradle test
-  echo "==> Running frontend tests..."
-  npm_web test
 }
 
 cmd_check() {
@@ -144,19 +123,8 @@ cmd_check() {
   gradle compileJava compileTestJava checkstyleMain checkstyleTest \
     test jacocoTestReport jacocoTestCoverageVerification
 
-  echo "==> Frontend: lint, typecheck, tests + coverage, build..."
-  npm_web run lint
-  npx_web tsc --noEmit
-  npm_web run test:coverage
-  npm_web run build
 
   if [[ "${1:-}" == "--full" ]]; then
-    echo "==> Building API JAR for Playwright's webServer..."
-    gradle :cli:bootJar
-
-    echo "==> Playwright E2E..."
-    npx_web playwright test
-
     echo "==> Building canonical dist/..."
     cmd_build
 
@@ -168,7 +136,6 @@ cmd_check() {
     compose up -d --wait --wait-timeout 120
     trap 'compose down' EXIT
     curl -sf "http://localhost:$(bound_port api 3000)/api/health" > /dev/null
-    curl -sf "http://localhost:$(bound_port ui 5173)/health" > /dev/null
     compose down
     trap - EXIT
 
@@ -176,9 +143,7 @@ cmd_check() {
     gradle cyclonedxBom
     trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 \
       "$PRODUCT_DIR/build/reports/cyclonedx/bom.json"
-    npm_web audit --audit-level=high
     trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$API_IMAGE"
-    trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$WEB_IMAGE"
     gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
   fi
 }
@@ -186,23 +151,17 @@ cmd_check() {
 cmd_build() {
   echo "==> Refreshing dist/..."
   rm -rf "$DIST_DIR"
-  mkdir -p "$DIST_DIR/api" "$DIST_DIR/web"
+  mkdir -p "$DIST_DIR/api"
 
   echo "==> Building executable Java artifact (dist/api/arcogine.jar)..."
   gradle :cli:stageDist
 
-  echo "==> Building production frontend (dist/web/)..."
-  ARCOGINE_DIST_WEB="../../../dist/web" npm_web run build
 
   if [[ ! -f "$DIST_DIR/api/arcogine.jar" ]]; then
     echo "FATAL: build did not produce $DIST_DIR/api/arcogine.jar" >&2
     exit 1
   fi
-  if [[ ! -f "$DIST_DIR/web/index.html" ]]; then
-    echo "FATAL: build did not produce $DIST_DIR/web/index.html" >&2
-    exit 1
-  fi
-  echo "==> dist/ ready: dist/api/arcogine.jar, dist/web/"
+  echo "==> dist/ ready: dist/api/arcogine.jar"
 }
 
 cmd_image() {
@@ -211,16 +170,9 @@ cmd_image() {
     echo "FATAL: $DIST_DIR/api/arcogine.jar not found. Run './arcogine build' first." >&2
     exit 1
   fi
-  if [[ ! -f "$DIST_DIR/web/index.html" ]]; then
-    echo "FATAL: $DIST_DIR/web/index.html not found. Run './arcogine build' first." >&2
-    exit 1
-  fi
-
   echo "==> Building API image ($API_IMAGE) from dist/api/..."
   docker build -f "$DOCKER_DIR/api.Dockerfile" -t "$API_IMAGE" "$DIST_DIR/api"
 
-  echo "==> Building web image ($WEB_IMAGE) from dist/web/..."
-  docker build -f "$DOCKER_DIR/web.Dockerfile" -t "$WEB_IMAGE" "$DIST_DIR/web"
 }
 
 cmd_up() {
@@ -235,7 +187,7 @@ cmd_up() {
   fi
   ensure_env
   compose up -d --wait --wait-timeout 120
-  echo "==> Stack up. API: http://localhost:$(bound_port api 3000)  Web: http://localhost:$(bound_port ui 5173)"
+  echo "==> Stack up. API: http://localhost:$(bound_port api 3000)"
 }
 
 cmd_down() {
@@ -251,7 +203,6 @@ cmd_down() {
 cmd_run() {
   case "$1" in
     api) gradle :cli:bootRun --args=serve ;;
-    web|ui) npm_web run dev ;;
     scenario)
       local scenario_path="$2"
       if [[ "$scenario_path" != /* ]]; then
@@ -316,14 +267,14 @@ case "$cmd" in
     cmd_down
     ;;
   run)
-    if [[ $# -eq 2 && ( "$2" == "api" || "$2" == "web" || "$2" == "ui" ) ]]; then
+    if [[ $# -eq 2 && "$2" == "api" ]]; then
       shift
       cmd_run "$1"
     elif [[ $# -eq 3 && "$2" == "scenario" ]]; then
       shift
       cmd_run "$1" "$2"
     else
-      echo "Usage: ./arcogine run {api|web|scenario <path>}" >&2
+      echo "Usage: ./arcogine run {api|scenario <path>}" >&2
       exit 1
     fi
     ;;

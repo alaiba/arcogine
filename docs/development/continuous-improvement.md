@@ -87,7 +87,7 @@ Manual analysis begins only after the mechanical window is established. It shoul
 - repeated waste that can be tied to a concrete mechanism;
 - whether an existing experiment/change should be retained, retired, or superseded.
 
-Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous.
+Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous. Hand-classified finding totals or category percentages are not standard baseline metrics; use them only as supporting analysis when the classification dataset is preserved and reproducible. The default headline metrics are the helper-owned mechanical values above.
 
 ### Action ownership
 

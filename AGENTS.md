@@ -102,7 +102,7 @@ authorities. If action is warranted, tell the user plainly what is due or recomm
 and include the minimal prompt for a fresh session. Do not expose internal derivation
 labels or machine-state tokens as the reminder itself.
 
-If no action is warranted, say nothing. If the required register/baseline state cannot
+If no action is warranted, say nothing. If the required completion-ledger/retrospective state cannot
 be verified, say so once without assuming everything is current. Never repeat the same
 reminder more than once per session, and never derail the user's requested task merely
 because an improvement obligation is due.

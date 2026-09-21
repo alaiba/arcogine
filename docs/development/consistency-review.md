@@ -2,7 +2,7 @@
 
 > **Status:** maintainer guidance around [`.github/agents/consistency.agent.md`](../../.github/agents/consistency.agent.md).
 
-Arcogine's formal Consistency review runs in a ChatGPT chat session. Repository content starts from a mandatory canonical-`main` Repomix baseline and is reconciled to one exact current `main` target through the repository snapshot protocol; the GitHub connector also provides mutable state, history when needed, and finding/completion-ledger accounting.
+Arcogine's formal Consistency review runs in a ChatGPT chat session. Repository content starts from a mandatory canonical-`main` Repomix baseline and is reconciled to one exact current `main` target through the repository snapshot protocol; the GitHub connector also provides mutable state, history when needed, and finding accounting.
 
 ## Operating loop
 
@@ -55,7 +55,7 @@ GitHub remains authority for live `main`, finding issue state, PR/review/CI stat
 
 A snapshot may be older than live `main`; age alone is not a failure. If the canonical snapshot protocol cannot establish a complete exact target view, the review is `INCOMPLETE` and the snapshot must be refreshed.
 
-The reviewer rechecks `main` before finding accounting and again before recording completion. Both checks must still equal reviewed target `T`. If `main` moved during a long review, do not attest completion against the old target.
+The reviewer rechecks `main` before finding accounting and again after finding accounting, before reporting completion. Both checks must still equal reviewed target `T`. If `main` moved during a long review, do not report completion against the old target.
 
 ## Review depth
 
@@ -95,3 +95,21 @@ A formal review persists only finding state.
 
 A clean review creates no completion issue, comment, timestamp, previous-reviewed-head record, or other bookkeeping artifact. Its value is the analysis itself; only unresolved findings need durable repository work state.
 
+## Report
+
+```text
+Consistency review
+Head: <sha>
+Findings: none | #<number>, #<number>, ...
+Coverage:
+- recency/concept pass: COMPLETE | NOT_APPLICABLE | INCOMPLETE
+- lifecycle/status prose sweep: COMPLETE | INCOMPLETE
+- volatile duplicated-fact sweep: COMPLETE | INCOMPLETE
+- cross-authority current-state sweep: COMPLETE | INCOMPLETE
+- candidate closure checks: COMPLETE | INCOMPLETE
+- open finding carry-forward: COMPLETE | NOT_APPLICABLE | INCOMPLETE
+Limitations: none | <specific incomplete pass or other limitation>
+Overall: CLEAN | FINDINGS | INCOMPLETE
+```
+
+A clean report is session output only; it is not persisted as bookkeeping.

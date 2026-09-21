@@ -88,19 +88,21 @@ Arcogine's continuous-improvement operating model — Session-close Kaizen, the
 Consistency review, and the evidence-based delivery-process retrospective — is defined
 in [`docs/development/continuous-improvement.md`](docs/development/continuous-improvement.md).
 
-Consistency review cadence is guidance rather than persisted scheduler state. Do not
-derive or report `CURRENT`/`DUE`/`OVERDUE` Consistency status or maintain a
-last-reviewed coordinate merely to support reminders. Recommend a fresh Consistency
-review when the user asks about repository-wide consistency or when a major transition
-makes one materially useful.
+For `.?`, the standing responsibilities are only:
+
+1. classify and durably capture anything from the current session that should survive
+   deletion; and
+2. evaluate the versioned delivery-retrospective trigger before giving the deletion
+   verdict.
+
+A Consistency review is **not** a standing `.?` subroutine. Recommend one from Kaizen
+only when the session itself provides a concrete reason that a repository-wide
+consistency sweep would be useful, such as a major cross-cutting architecture/status
+transition or evidence of broader semantic drift.
 
 Normal repository grounding does **not** evaluate the delivery-retrospective threshold.
-Evaluate it only at a natural process boundary:
-
-- during `.?` Session-close Kaizen, after classifying/capturing the session's lessons
-  and before giving the deletion verdict;
-- when the current task explicitly concerns continuous improvement, delivery-process
-  health, or repository-wide planning/next-work.
+Outside `.?`, evaluate it only when the current task explicitly concerns continuous
+improvement, delivery-process health, or repository-wide planning/next-work.
 
 At those boundaries, follow `docs/development/continuous-improvement.md` and derive the
 retrospective threshold from its versioned factual authority. If action is warranted,

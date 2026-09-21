@@ -20,7 +20,7 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 
 The cadence is guidance, not persisted scheduler state. Arcogine does not maintain a last-reviewed timestamp, previous-reviewed-head ledger, or `CURRENT`/`DUE`/`OVERDUE` state for Consistency.
 
-A clean review records nothing after the session report. A review with findings creates, updates, reopens, or closes the applicable `CONS:` issues. Those issues are the durable outcome because they affect future work.
+A clean review persists nothing after returning its review result in chat. A review with findings creates, updates, reopens, or closes the applicable `CONS:` issues. Those issues are the durable outcome because they affect future work.
 
 Recent Git history may be used as a search-order heuristic, but no previous-review coordinate bounds review scope or is required for correctness.
 
@@ -152,8 +152,14 @@ PR review remains governed by `docs/development/reviewing.md`; it is evidence fo
 
 Do not evaluate recurring continuous-improvement obligations during ordinary repository grounding.
 
-- Consistency review cadence is guidance only. Do not derive or report a machine state such as current/due/overdue. Recommend a fresh Consistency review when the user asks about repository-wide consistency or when a major transition makes one materially useful.
-- Evaluate the delivery-retrospective threshold only during Session-close Kaizen or tasks explicitly concerning continuous improvement, delivery-process health, or repository-wide planning/next-work.
+For `.?`, the standing responsibilities are only to:
+
+1. preserve any durable lesson from the current session; and
+2. evaluate the versioned delivery-retrospective trigger before the deletion verdict.
+
+Consistency has no standing reminder/cadence subroutine. Recommend a fresh Consistency review from Kaizen only when evidence from the current session itself makes a repository-wide sweep materially useful.
+
+Outside `.?`, evaluate the delivery-retrospective threshold only during tasks explicitly concerning continuous improvement, delivery-process health, or repository-wide planning/next-work.
 
 When the retrospective threshold is reached, use the minimal reminder:
 

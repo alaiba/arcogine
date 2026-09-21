@@ -18,8 +18,9 @@ import java.util.Optional;
  * actually implements: requirement/assertion identity and version, the fingerprint/revision
  * evaluated, the {@link ConformanceResult}, and -- only for {@link ConformanceResult#FAIL} -- the
  * associated {@link Finding}. It deliberately omits {@code observed-at}/applicable-period and
- * evidence-set fields from the architecture's full sketch: those require the external-evidence capability's {@code Evidence}/
- * {@code EvidenceUse}, which this slice does not implement.
+ * evidence-set fields from the architecture's full sketch: those belong to the additive
+ * evidence-use and evaluation-occurrence capability rather than changing this deterministic
+ * value's equality contract.
  *
  * <p>{@code controlledRevisionId} is {@code null} when the evaluated state is an unpersisted
  * candidate; this record never synthesizes one, mirroring {@code ChangeSet#resultingRevisionId}.

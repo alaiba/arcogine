@@ -90,6 +90,12 @@ jobs:
       - name: Validate PR lifecycle resolver
         run: node --test infra/dev/pr-lifecycle.test.mjs
 
+      # Retrospective sample/review-round facts must be mechanically reproducible.
+      # Keep this in the always-running tooling gate so partial-window or counting
+      # regressions fail before a dated retrospective can advance its baseline.
+      - name: Validate delivery retrospective tooling
+        run: node --test infra/dev/delivery-retrospective.test.mjs
+
       # infra/dev/repo-snapshot.mjs establishes the canonical-repository
       # provenance the ./arcogine snapshot artifact asserts. A regression here
       # could let the header claim canonical alaiba/arcogine state for a fork

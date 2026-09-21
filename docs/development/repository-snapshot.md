@@ -90,7 +90,7 @@ The snapshot is optimized for semantic review and retrieval rather than minimum 
 
 The wrapper also prepends a `<tracked_files>` manifest generated from `git ls-files`. It enumerates every tracked path even when Repomix does not include a file's contents (for example, binary assets). This lets a retrieval-oriented agent reason about path existence, links, packaging, and repository shape without requiring binary contents in the prompt.
 
-The snapshot intentionally does not include Git history/diffs. A Consistency review may use two compares for different purposes: `S..T` establishes the exact target corpus when the snapshot baseline is behind, while the previous reviewed head to `T` supplies recency bias. It then searches the complete target corpus without a historical scope boundary. Other tasks use live GitHub compare/history when they need to reconcile a descendant target or inspect repository evolution.
+The snapshot intentionally does not include Git history/diffs. For a Consistency review, `S..T` establishes the exact target corpus when the snapshot baseline is behind. Optional recent Git history may provide search-order context, but no persisted previous-review coordinate is required and recency never bounds the review scope. Other tasks use live GitHub compare/history when they need to reconcile a descendant target or inspect repository evolution.
 
 ## Authority boundary
 

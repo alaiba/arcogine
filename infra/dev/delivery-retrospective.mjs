@@ -4,8 +4,8 @@
  *
  * The helper owns facts that should not be hand-counted:
  * - the exact main-target PRs merged in (baseline merge time, through-PR merge time];
- * - the number of canonical CHANGES REQUIRED review submissions;
- * - the per-PR 0 / 1 / 2 / 3+ blocking-review checkpoint distribution.
+ * - the number of trusted-author CHANGES REQUIRED disposition submissions;
+ * - the per-PR 0 / 1 / 2 / 3+ trusted blocking-review checkpoint distribution.
  *
  * Interpretation, semantic finding classification, and improvement decisions remain human/reviewer work.
  */
@@ -114,7 +114,7 @@ query($query:String!, $cursor:String) {
         baseRefName
         reviews(first:100) {
           totalCount
-          nodes { body }
+          nodes { body authorAssociation }
         }
       }
     }
@@ -203,6 +203,8 @@ async function collectSearchPages(fetchPage) {
   return nodes;
 }
 
+const TRUSTED_REVIEW_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+
 function changesRequiredCount(record) {
   const reviews = record?.reviews;
   if (!reviews) throw new Error(`PR #${record?.number ?? '?'} has no review payload`);
@@ -211,7 +213,11 @@ function changesRequiredCount(record) {
       `PR #${record.number} has ${reviews.totalCount} reviews but only ${reviews.nodes.length} were fetched`,
     );
   }
-  return reviews.nodes.filter((review) => dispositionOf(review.body) === 'CHANGES REQUIRED').length;
+  return reviews.nodes.filter(
+    (review) =>
+      TRUSTED_REVIEW_ASSOCIATIONS.has(review.authorAssociation) &&
+      dispositionOf(review.body) === 'CHANGES REQUIRED',
+  ).length;
 }
 
 function summarizeWindow(window) {
@@ -225,7 +231,7 @@ function summarizeWindow(window) {
   }
   return {
     mergedPrCount: window.length,
-    changeRequiredSubmissions: rounds.reduce((sum, count) => sum + count, 0),
+    trustedChangesRequiredSubmissions: rounds.reduce((sum, count) => sum + count, 0),
     reviewRoundDistribution: distribution,
   };
 }
@@ -274,7 +280,7 @@ function render(summary) {
   return [
     `Retrospective window: PR #${summary.baselinePr} (exclusive) -> PR #${summary.throughPr} (inclusive)`,
     `Merged PRs: ${summary.mergedPrCount}`,
-    `CHANGES REQUIRED submissions: ${summary.changeRequiredSubmissions}`,
+    `Trusted CHANGES REQUIRED submissions: ${summary.trustedChangesRequiredSubmissions}`,
     `Review checkpoints: ${d.zero} zero / ${d.one} one / ${d.two} two / ${d.threePlus} three-plus`,
     `PRs: ${summary.pullRequests.map((pr) => `#${pr.number}`).join(', ')}`,
   ].join('\n');

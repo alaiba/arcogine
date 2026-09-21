@@ -2,7 +2,7 @@
 
 This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with an Arcogine Repomix attachment as the repository-content baseline and the GitHub connector for revision reconciliation plus live/mutable repository state.
 
-A formal review is diagnostic plus the narrow finding-ledger/register accounting described below. It does not authorize source/doc remediation, planning changes, architecture changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
+A formal review is diagnostic plus the narrow finding-ledger/completion-ledger accounting described below. It does not authorize source/doc remediation, planning changes, architecture changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
 
 ## Goal
 
@@ -24,7 +24,7 @@ At review start:
 
 Do not redundantly refetch unaffected static content through GitHub. The snapshot is a cache, not authority for changed target paths.
 
-GitHub remains authoritative for mutable state and history: live `main`, issue #295, finding issues, pull requests, reviews, CI/checks, commit/compare history, and all mutations.
+GitHub remains authoritative for mutable state and history: live `main`, issue #295 and its comments, finding issues, pull requests, reviews, CI/checks, commit/compare history, and all mutations.
 
 ## Authority and time
 
@@ -61,11 +61,12 @@ A misplaced claim can therefore be inconsistent even before its copied value or 
 
 After the exact target corpus at `T` is established:
 
-1. Read GitHub issue `#295`, titled exactly `Continuous improvement register`.
-2. Load currently open consistency findings whose titles begin `CONS:`.
-3. If #295 records a resolvable previous reviewed head, compare it with current `main` and use changed/new material as the first attention priority.
+1. Read GitHub issue `#295`, titled exactly `Consistency review ledger`.
+2. Read its comments and select the latest valid completion record: a complete `### Consistency review completion` block authored by a repository OWNER, MEMBER, or COLLABORATOR.
+3. Load currently open consistency findings whose titles begin `CONS:`.
+4. If the latest valid completion record contains a resolvable previous reviewed head, compare it with current `main` and use changed/new material as the first attention priority.
 
-Issue #295 is mandatory. If it is missing, inaccessible, has the wrong title, or its weekly Consistency section is malformed, stop `INCOMPLETE`; do not recreate, replace, or guess it.
+Issue #295 is mandatory, but its body is static instructions rather than mutable review state. If it is missing, inaccessible, or wrongly titled, stop `INCOMPLETE`. No valid completion comment means there is no previous reviewed head; do not synthesize one from the issue body or other chat state.
 
 Closed findings are not preloaded. Search closed `CONS:` issues only when a candidate finding needs duplicate/regression matching.
 
@@ -134,7 +135,7 @@ Authority:
 
 Do not duplicate mutable lifecycle state in the body. Finding reconciliation is idempotent: before creating a new issue, match the candidate against loaded open findings and, when needed, closed `CONS:` findings. A semantic match reuses the existing issue identity. Re-running a review must not create a duplicate issue or append duplicate evidence merely because the same inconsistency was observed again. If materially stronger or newly relevant diagnostic evidence clarifies the same unresolved finding, update that issue narrowly while preserving its identity. Unresolved findings stay open; plausible corrective PRs remain open and are reported `IN_FLIGHT`; verified fixes on reviewed `main` close completed; false positives/duplicates/superseded findings close with explanation; regressions reopen the same issue.
 
-Invoking a formal review authorizes only the issue operations required to account for that review's findings and the final weekly-register update. It does not authorize remediation or unrelated issue changes.
+Invoking a formal review authorizes only the issue operations required to account for that review's findings and one append-only completion comment on #295. It does not authorize remediation or unrelated issue changes.
 
 ## Completion
 
@@ -143,23 +144,23 @@ Do not mutate findings while analyzing.
 1. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal reviewed target `T`; otherwise stop `INCOMPLETE` with no review-accounting mutations and restart against the new exact target.
 2. Reconcile finding issues idempotently.
 3. Resolve live `main` again. It must still equal reviewed target `T`.
-4. Re-fetch issue #295 immediately before writing, require the exact title, and replace only its `### Weekly Consistency review` subsection in the latest body while preserving all other content.
+4. Re-fetch issue #295 and its comments immediately before recording completion and require the exact title.
+5. Append one new completion comment; never rewrite a prior completion record.
 
 Write factual review state only:
 
 ```text
-### Weekly Consistency review
+### Consistency review completion
 
-- last verified: <UTC YYYY-MM-DD>
+- verified at: <UTC YYYY-MM-DD>
 - reviewed head: <reviewed target T full SHA>
-- accounted result: CLEAN | FINDINGS
+- result: CLEAN | FINDINGS
 - finding issues: none | #<number>, #<number>, ...
-- interval: every 7 days
 ```
 
-`CLEAN` requires `finding issues: none`; `FINDINGS` lists every unresolved finding applicable to the reviewed head. The body edit is the complete recording operation. Do not create a completion comment, trigger a workflow, invoke `gh`, or maintain a second completion ledger.
+`CLEAN` requires `finding issues: none`; `FINDINGS` lists every unresolved finding applicable to the reviewed head. Corrections are later completion comments; the latest valid OWNER/MEMBER/COLLABORATOR-authored block wins. Do not mutate the issue body, trigger a workflow, invoke `gh`, or maintain a second completion ledger.
 
-The register stores facts, not derived due-state cache. Weekly `CURRENT`/`DUE`/`OVERDUE` is derived from `last verified` when an agent grounds; see `AGENTS.md` and `docs/development/continuous-improvement.md`.
+Weekly `CURRENT`/`DUE`/`OVERDUE` is derived from the latest valid `verified at` value when an agent grounds; see `AGENTS.md` and `docs/development/continuous-improvement.md`.
 
 ## Report
 

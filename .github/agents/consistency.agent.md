@@ -8,7 +8,7 @@ A formal review is diagnostic plus the narrow finding-ledger accounting describe
 
 Deeply inspect the repository for semantic inconsistency across implementation, architecture and specifications, planning, public/reference documentation, examples, configuration, tests, CI, and prior findings.
 
-A previous clean review is not evidence that older content is correct. New material gets first attention when a previous reviewed head exists, but recency never bounds scope. Follow suspicious evidence wherever it leads.
+A previous clean review is not evidence that older content is correct. New material may get first attention from recent Git history, but recency never bounds scope. Follow suspicious evidence wherever it leads.
 
 ## Required review corpus
 
@@ -79,7 +79,7 @@ Search and slice the Repomix corpus aggressively. For each material concept inve
 4. Inspect source/config/tests as executable evidence; inspect live GitHub CI/check evidence only when it materially proves or contradicts a claim.
 5. Use PR/commit history only when needed to explain a transition, attribute evidence, or determine whether a finding is in flight.
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
-7. If something appears even mildly inconsistent, follow the thread far enough to classify it regardless of file age or the previous reviewed head.
+7. If something appears even mildly inconsistent, follow the thread far enough to classify it regardless of file age or recency.
 
 After that concept-driven work, every formal repository-wide review must run these independent breadth passes over the complete target corpus. These passes are candidate-discovery mechanisms, not automatic findings:
 
@@ -152,7 +152,6 @@ A clean review persists nothing. Do not create a completion issue/comment, times
 ```text
 Consistency review
 Head: <sha>
-Previous reviewed head: <sha | NONE>
 Findings: none | #<number>, #<number>, ...
 Coverage:
 - recency/concept pass: COMPLETE | NOT_APPLICABLE | INCOMPLETE

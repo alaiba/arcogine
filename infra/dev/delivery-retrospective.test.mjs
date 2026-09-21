@@ -16,7 +16,7 @@ const pr = (number, mergedAt, bodies = [], extra = {}) => ({
   baseRefName: 'main',
   reviews: {
     totalCount: bodies.length,
-    nodes: bodies.map(review),
+    nodes: bodies.map((body) => review(body)),
   },
   ...extra,
 });

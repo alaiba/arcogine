@@ -84,26 +84,31 @@ authorities.
 
 ## Continuous improvement
 
-Arcogine's continuous-improvement operating model — Session-close Kaizen, the weekly
+Arcogine's continuous-improvement operating model — Session-close Kaizen, the
 Consistency review, and the evidence-based delivery-process retrospective — is defined
 in [`docs/development/continuous-improvement.md`](docs/development/continuous-improvement.md).
 
-Normal repository grounding does **not** evaluate recurring continuous-improvement
-obligations. Evaluate reminder state only at a natural process boundary:
+Consistency review cadence is guidance rather than persisted scheduler state. Do not
+derive or report `CURRENT`/`DUE`/`OVERDUE` Consistency status or maintain a
+last-reviewed coordinate merely to support reminders. Recommend a fresh Consistency
+review when the user asks about repository-wide consistency or when a major transition
+makes one materially useful.
+
+Normal repository grounding does **not** evaluate the delivery-retrospective threshold.
+Evaluate it only at a natural process boundary:
 
 - during `.?` Session-close Kaizen, after classifying/capturing the session's lessons
   and before giving the deletion verdict;
-- when the current task explicitly concerns continuous-improvement state, Consistency
-  cadence, delivery-process health, or repository-wide planning/next-work.
+- when the current task explicitly concerns continuous improvement, delivery-process
+  health, or repository-wide planning/next-work.
 
-At those boundaries, follow `docs/development/continuous-improvement.md` to derive the
-weekly Consistency state and delivery-retrospective threshold from their factual
-authorities. If action is warranted, tell the user plainly what is due or recommended
-and include the minimal prompt for a fresh session. Do not expose internal derivation
-labels or machine-state tokens as the reminder itself.
+At those boundaries, follow `docs/development/continuous-improvement.md` and derive the
+retrospective threshold from its versioned factual authority. If action is warranted,
+tell the user plainly what is recommended and include the minimal prompt for a fresh
+session.
 
-If no action is warranted, say nothing. If the required completion-ledger/retrospective state cannot
-be verified, say so once without assuming everything is current. Never repeat the same
+If no action is warranted, say nothing. If the versioned retrospective state cannot be
+verified, say so once without assuming everything is current. Never repeat the same
 reminder more than once per session, and never derail the user's requested task merely
 because an improvement obligation is due.
 

@@ -48,7 +48,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
 | [semantic-contract-support.md](development/semantic-contract-support.md) | Owning support declarations, retained admission and promise-specific review evidence |
 | [researching.md](development/researching.md) | Normative Arcogine research operating model: lifecycle/priority semantics, promotion/reconciliation, investigation and adversarial review, evidence custody, synthesis-seed handling, and register maintenance |
-| [continuous-improvement.md](development/continuous-improvement.md) | Continuous-improvement operating model: Session-close Kaizen, Consistency completion ledger, and delivery-process retrospective method |
+| [continuous-improvement.md](development/continuous-improvement.md) | Continuous-improvement operating model: Session-close Kaizen, Consistency review, and delivery-process retrospective method |
 | [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
 | [testing.md](development/testing.md) | Test categories, CI, quality gates, native commands |
 | [repository-snapshot.md](development/repository-snapshot.md) | Canonical whole-repository retrieval snapshot |

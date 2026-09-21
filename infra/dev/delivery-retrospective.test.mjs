@@ -1,0 +1,102 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  buildExactWindow,
+  changesRequiredCount,
+  summarizeWindow,
+} from './delivery-retrospective.mjs';
+
+const review = (body) => ({ body });
+const pr = (number, mergedAt, bodies = [], extra = {}) => ({
+  number,
+  merged: true,
+  mergedAt,
+  baseRefName: 'main',
+  reviews: {
+    totalCount: bodies.length,
+    nodes: bodies.map(review),
+  },
+  ...extra,
+});
+
+test('exact retrospective window uses merge timestamps, not PR numbers', () => {
+  const records = [
+    pr(500, '2026-09-04T01:00:00Z'),
+    pr(256, '2026-09-04T23:00:19Z'),
+    pr(259, '2026-09-06T09:29:55Z'),
+    pr(368, '2026-09-20T22:28:50Z'),
+    pr(100, '2026-09-21T00:00:00Z'),
+  ];
+  assert.deepEqual(
+    buildExactWindow(
+      records,
+      '2026-09-04T02:09:23Z',
+      '2026-09-20T22:28:50Z',
+    ).map((item) => item.number),
+    [256, 259, 368],
+  );
+});
+
+test('window excludes non-main and non-merged candidates', () => {
+  const records = [
+    pr(1, '2026-09-05T00:00:00Z', [], { baseRefName: 'release' }),
+    pr(2, '2026-09-06T00:00:00Z', [], { merged: false }),
+    pr(3, '2026-09-07T00:00:00Z'),
+  ];
+  assert.deepEqual(
+    buildExactWindow(records, '2026-09-04T00:00:00Z', '2026-09-08T00:00:00Z')
+      .map((item) => item.number),
+    [3],
+  );
+});
+
+test('duplicate PRs fail instead of silently altering counts', () => {
+  const records = [
+    pr(7, '2026-09-05T00:00:00Z'),
+    pr(7, '2026-09-05T00:00:00Z'),
+  ];
+  assert.throws(
+    () => buildExactWindow(records, '2026-09-04T00:00:00Z', '2026-09-06T00:00:00Z'),
+    /duplicate PR #7/,
+  );
+});
+
+test('canonical CHANGES REQUIRED parser ignores prose examples', () => {
+  const record = pr(10, '2026-09-05T00:00:00Z', [
+    'Example: `Disposition: CHANGES REQUIRED` is not a verdict.',
+    'Finding here.\n\nDisposition: **CHANGES REQUIRED**.',
+    'Fixed.\n\nDisposition: **READY TO MERGE**.',
+  ]);
+  assert.equal(changesRequiredCount(record), 1);
+});
+
+test('truncated review payload fails closed', () => {
+  const record = pr(10, '2026-09-05T00:00:00Z', [
+    'Disposition: CHANGES REQUIRED',
+  ]);
+  record.reviews.totalCount = 101;
+  assert.throws(() => changesRequiredCount(record), /only 1 were fetched/);
+});
+
+test('summary computes review-round totals deterministically', () => {
+  const window = [
+    pr(1, '2026-09-05T00:00:00Z', []),
+    pr(2, '2026-09-06T00:00:00Z', ['Disposition: CHANGES REQUIRED']),
+    pr(3, '2026-09-07T00:00:00Z', [
+      'Disposition: CHANGES REQUIRED',
+      'Disposition: CHANGES REQUIRED',
+    ]),
+    pr(4, '2026-09-08T00:00:00Z', [
+      'Disposition: CHANGES REQUIRED',
+      'Disposition: CHANGES REQUIRED',
+      'Disposition: CHANGES REQUIRED',
+      'Disposition: READY TO MERGE',
+    ]),
+  ];
+  assert.deepEqual(summarizeWindow(window), {
+    mergedPrCount: 4,
+    changeRequiredSubmissions: 6,
+    reviewRoundDistribution: { zero: 1, one: 1, two: 1, threePlus: 1 },
+  });
+});

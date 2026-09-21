@@ -58,7 +58,7 @@ Before interpretation:
    ```
 
 3. require the helper to complete successfully;
-4. use its exact PR window, merged-PR count, CHANGES REQUIRED submission count, and 0/1/2/3+ review-checkpoint distribution without manually reconstructing or retyping alternative totals.
+4. use its exact PR window, merged-PR count, trusted-author CHANGES REQUIRED disposition count, and 0/1/2/3+ trusted-review checkpoint distribution without manually reconstructing or retyping alternative totals.
 
 The helper fails closed when GitHub search/review retrieval cannot prove completeness. If it fails, the retrospective is `INCOMPLETE`; fix the retrieval/tooling problem rather than estimating the sample.
 

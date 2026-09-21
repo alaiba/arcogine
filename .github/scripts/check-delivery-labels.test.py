@@ -186,7 +186,7 @@ def test_plan_label_in_java_javadoc_fails() -> None:
 
 def test_plan_label_in_broad_source_surfaces_fails() -> None:
     for relative in (
-        "product/interfaces/web/src/App.tsx",
+        "product/interfaces/api/src/main/java/com/example/ApiSurface.java",
         "infra/dev/pr-lifecycle.mjs",
         ".github/scripts/some-tool.py",
         ".github/workflows/ci.yml",

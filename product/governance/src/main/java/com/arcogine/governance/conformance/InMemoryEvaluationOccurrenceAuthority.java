@@ -2,7 +2,12 @@ package com.arcogine.governance.conformance;
 
 import com.arcogine.governance.ControlledRevisionAuthority;
 import com.arcogine.governance.HistoricalRevision;
+import com.arcogine.governance.evidence.EvidenceProvenance;
+import com.arcogine.governance.evidence.EvidenceReferenceAuthority;
 import com.arcogine.governance.evidence.EvidenceUse;
+import com.arcogine.governance.evidence.InMemoryEvidenceReferenceAuthority;
+import com.arcogine.types.ControlledRevisionId;
+import com.arcogine.types.ModelFingerprint;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,19 +26,35 @@ import java.util.Optional;
 public final class InMemoryEvaluationOccurrenceAuthority implements EvaluationOccurrenceAuthority {
 
     private final ControlledRevisionAuthority revisionAuthority;
+    private final EvidenceReferenceAuthority evidenceReferenceAuthority;
     private final Clock clock;
     private final Map<EvaluationOccurrenceId, EvaluationOccurrence> occurrences = new LinkedHashMap<>();
 
     public InMemoryEvaluationOccurrenceAuthority() {
-        this(null, Clock.systemUTC());
+        this(null, new InMemoryEvidenceReferenceAuthority(), Clock.systemUTC());
     }
 
     public InMemoryEvaluationOccurrenceAuthority(ControlledRevisionAuthority revisionAuthority) {
-        this(revisionAuthority, Clock.systemUTC());
+        this(revisionAuthority, new InMemoryEvidenceReferenceAuthority(), Clock.systemUTC());
     }
 
-    InMemoryEvaluationOccurrenceAuthority(ControlledRevisionAuthority revisionAuthority, Clock clock) {
+    public InMemoryEvaluationOccurrenceAuthority(EvidenceReferenceAuthority evidenceReferenceAuthority) {
+        this(null, evidenceReferenceAuthority, Clock.systemUTC());
+    }
+
+    public InMemoryEvaluationOccurrenceAuthority(
+            ControlledRevisionAuthority revisionAuthority,
+            EvidenceReferenceAuthority evidenceReferenceAuthority) {
+        this(revisionAuthority, evidenceReferenceAuthority, Clock.systemUTC());
+    }
+
+    InMemoryEvaluationOccurrenceAuthority(
+            ControlledRevisionAuthority revisionAuthority,
+            EvidenceReferenceAuthority evidenceReferenceAuthority,
+            Clock clock) {
         this.revisionAuthority = revisionAuthority;
+        this.evidenceReferenceAuthority = Objects.requireNonNull(
+                evidenceReferenceAuthority, "evidenceReferenceAuthority");
         this.clock = Objects.requireNonNull(clock, "clock");
     }
 
@@ -45,6 +66,9 @@ public final class InMemoryEvaluationOccurrenceAuthority implements EvaluationOc
         }
         verifyRevision(candidate);
         verifyUseRevisions(candidate);
+        verifyOutcomeBasis(candidate);
+        verifyRelatedOccurrence(candidate);
+        verifyEvidenceReferences(candidate);
         EvaluationOccurrence accepted = new EvaluationOccurrence(candidate, clock.instant());
         occurrences.put(accepted.id(), accepted);
         return accepted;
@@ -95,6 +119,54 @@ public final class InMemoryEvaluationOccurrenceAuthority implements EvaluationOc
             if (!historical.artifact().fingerprint().equals(use.targetModelFingerprint())) {
                 throw new IllegalArgumentException("evidence-use revision is bound to a different model fingerprint");
             }
+        }
+    }
+
+    private void verifyOutcomeBasis(EvaluationOccurrenceDraft candidate) {
+        if (candidate.assertion().requiresExternalEvidence()
+                && (candidate.evaluation().result() == ConformanceResult.PASS
+                        || candidate.evaluation().result() == ConformanceResult.FAIL)
+                && candidate.reliedOnUses().stream().noneMatch(EvidenceUse::isReliedOn)) {
+            throw new IllegalArgumentException(
+                    "an external-evidence PASS or FAIL requires an adequate relied-on evidence use");
+        }
+    }
+
+    private void verifyRelatedOccurrence(EvaluationOccurrenceDraft candidate) {
+        candidate.relatedOccurrenceIdOptional().ifPresent(relatedId -> {
+            if (relatedId.equals(candidate.id())) {
+                throw new IllegalArgumentException("an occurrence cannot relate to itself");
+            }
+            if (!occurrences.containsKey(relatedId)) {
+                throw new IllegalArgumentException("related occurrence is not accepted: " + relatedId);
+            }
+        });
+    }
+
+    private void verifyEvidenceReferences(EvaluationOccurrenceDraft candidate) {
+        List<EvidenceUse> uses = new ArrayList<>();
+        uses.addAll(candidate.reliedOnUses());
+        uses.addAll(candidate.consideredButExcludedUses());
+        for (EvidenceUse use : uses) {
+            verifyProducerRevision(use.evidence().provenance());
+            evidenceReferenceAuthority.record(use.evidence());
+        }
+    }
+
+    private void verifyProducerRevision(EvidenceProvenance provenance) {
+        if (provenance.producerControlledRevision().isEmpty()) {
+            return;
+        }
+        if (revisionAuthority == null) {
+            throw new IllegalArgumentException(
+                    "evidence producer revision requires an authority for occurrence acceptance");
+        }
+        ControlledRevisionId producerRevisionId = provenance.producerControlledRevision().orElseThrow();
+        HistoricalRevision historical = revisionAuthority.resolve(producerRevisionId);
+        ModelFingerprint producerFingerprint = provenance.producerModelFingerprint().orElseThrow(() ->
+                new IllegalArgumentException("evidence producer revision requires a producer fingerprint"));
+        if (!historical.artifact().fingerprint().equals(producerFingerprint)) {
+            throw new IllegalArgumentException("evidence producer revision is bound to a different model fingerprint");
         }
     }
 }

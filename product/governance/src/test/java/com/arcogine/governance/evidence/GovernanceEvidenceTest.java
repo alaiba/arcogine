@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.arcogine.governance.ControlledRevision;
 import com.arcogine.governance.ControlledRevisionAuthority;
 import com.arcogine.governance.HistoricalRevision;
+import com.arcogine.governance.RevisionProvenance;
+import com.arcogine.governance.RevisionRecorder;
 import com.arcogine.governance.SemanticArtifact;
 import com.arcogine.governance.assertion.Assertion;
 import com.arcogine.governance.assertion.AssertionId;
@@ -96,11 +98,89 @@ class GovernanceEvidenceTest {
                 new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "corrected", "fixture"));
         InMemoryEvaluationOccurrenceAuthority authority = new InMemoryEvaluationOccurrenceAuthority();
         EvaluationOccurrence first = authority.accept(draft(requirement, assertion, firstId, List.of(firstUse), List.of()));
-        EvaluationOccurrence second = authority.accept(draft(requirement, assertion, secondId, List.of(secondUse), List.of()));
+        EvaluationOccurrence second = authority.accept(draft(
+                requirement, assertion, secondId, List.of(secondUse), List.of(), ConformanceResult.PASS, firstId));
 
         assertEquals(original, first.reliedOnUses().get(0).evidence());
         assertEquals(correction, second.reliedOnUses().get(0).evidence());
         assertNotEquals(first.reliedOnUses().get(0).evidence(), second.reliedOnUses().get(0).evidence());
+        assertEquals(ConformanceResult.UNKNOWN, first.evaluation().result());
+        assertEquals(ConformanceResult.PASS, second.evaluation().result());
+        assertEquals(first.id(), second.relatedOccurrenceIdOptional().orElseThrow());
+    }
+
+    @Test
+    void externalEvidenceOutcomeRequiresAnAdequateReliedOnUseAtAcceptance() {
+        Requirement requirement = requirement("acceptance basis");
+        Assertion<?> assertion = externalAssertion(requirement);
+        EvaluationOccurrenceId occurrence = EvaluationOccurrenceId.generate();
+        ConformanceEvaluation pass = new ConformanceEvaluation(
+                requirement.id(), requirement.version(), assertion.id(), assertion.version(),
+                MODEL, null, ConformanceResult.PASS, null);
+        EvaluationOccurrenceDraft candidate = new EvaluationOccurrenceDraft(
+                occurrence, requirement, assertion, MODEL, null, List.of(), List.of(), List.of(),
+                TemporalFrame.atKnowledgeBoundary(Instant.EPOCH), "fixture rules", pass, "unsupported pass", null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new InMemoryEvaluationOccurrenceAuthority().accept(candidate));
+    }
+
+    @Test
+    void relatedOccurrenceMustAlreadyBeAcceptedAndCannotBeSelf() {
+        Requirement requirement = requirement("lineage");
+        Assertion<?> assertion = externalAssertion(requirement);
+        InMemoryEvaluationOccurrenceAuthority authority = new InMemoryEvaluationOccurrenceAuthority();
+        EvaluationOccurrenceId occurrence = EvaluationOccurrenceId.generate();
+
+        assertThrows(IllegalArgumentException.class, () -> authority.accept(new EvaluationOccurrenceDraft(
+                occurrence, requirement, assertion, MODEL, null, List.of(), List.of(), List.of(),
+                TemporalFrame.atKnowledgeBoundary(Instant.EPOCH), "fixture rules",
+                unknownEvaluation(requirement, assertion), "unknown", EvaluationOccurrenceId.generate())));
+        assertThrows(IllegalArgumentException.class, () -> authority.accept(new EvaluationOccurrenceDraft(
+                occurrence, requirement, assertion, MODEL, null, List.of(), List.of(), List.of(),
+                TemporalFrame.atKnowledgeBoundary(Instant.EPOCH), "fixture rules",
+                unknownEvaluation(requirement, assertion), "unknown", occurrence)));
+    }
+
+    @Test
+    void evidenceReferencesShareAuthorityAndCannotBeReboundAcrossOccurrences() {
+        Requirement requirement = requirement("reference authority");
+        Assertion<?> assertion = externalAssertion(requirement);
+        InMemoryEvidenceReferenceAuthority evidenceAuthority = new InMemoryEvidenceReferenceAuthority();
+        InMemoryEvaluationOccurrenceAuthority occurrenceAuthority =
+                new InMemoryEvaluationOccurrenceAuthority(evidenceAuthority);
+        EvidenceReference firstReference = new EvidenceReference("source", "record", PROVENANCE);
+        EvidenceReference rebound = new EvidenceReference(
+                "source", "record", EvidenceProvenance.unknown("different provenance"));
+        EvaluationOccurrenceId firstId = EvaluationOccurrenceId.generate();
+        EvaluationOccurrenceId secondId = EvaluationOccurrenceId.generate();
+        EvidenceUse firstUse = use(firstId, 0, firstReference, MODEL, requirement, assertion,
+                EvidenceUseRole.RELIED_ON,
+                new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "first", "fixture"));
+        EvidenceUse secondUse = use(secondId, 0, rebound, MODEL, requirement, assertion,
+                EvidenceUseRole.RELIED_ON,
+                new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "second", "fixture"));
+
+        occurrenceAuthority.accept(draft(requirement, assertion, firstId, List.of(firstUse), List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> occurrenceAuthority.accept(draft(requirement, assertion, secondId, List.of(secondUse), List.of())));
+    }
+
+    @Test
+    void unacceptedStructuralProducerRevisionCannotEnterAcceptedOccurrenceHistory() {
+        Requirement requirement = requirement("structural provenance");
+        Assertion<?> assertion = externalAssertion(requirement);
+        ControlledRevision candidateRevision = new ControlledRevision(
+                ControlledRevisionId.generate(), MODEL, List.of(),
+                new RevisionProvenance(Instant.EPOCH, new RevisionRecorder("fixture", "candidate")));
+        EvidenceReference evidence = EvidenceReference.forControlledRevision(candidateRevision);
+        EvaluationOccurrenceId occurrence = EvaluationOccurrenceId.generate();
+        EvidenceUse use = use(occurrence, 0, evidence, MODEL, requirement, assertion,
+                EvidenceUseRole.RELIED_ON,
+                new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "structural", "fixture"));
+
+        assertThrows(IllegalArgumentException.class, () -> new InMemoryEvaluationOccurrenceAuthority(
+                new NoopRevisionAuthority()).accept(draft(requirement, assertion, occurrence, List.of(use), List.of())));
     }
 
     @Test
@@ -323,13 +403,31 @@ class GovernanceEvidenceTest {
             EvaluationOccurrenceId occurrenceId,
             List<EvidenceUse> reliedOnUses,
             List<EvidenceUse> excludedUses) {
+        return draft(requirement, assertion, occurrenceId, reliedOnUses, excludedUses,
+                ConformanceResult.UNKNOWN, null);
+    }
+
+    private static EvaluationOccurrenceDraft draft(
+            Requirement requirement,
+            Assertion<?> assertion,
+            EvaluationOccurrenceId occurrenceId,
+            List<EvidenceUse> reliedOnUses,
+            List<EvidenceUse> excludedUses,
+            ConformanceResult result,
+            EvaluationOccurrenceId relatedOccurrenceId) {
         ConformanceEvaluation evaluation = new ConformanceEvaluation(
                 requirement.id(), requirement.version(), assertion.id(), assertion.version(),
-                MODEL, null, ConformanceResult.UNKNOWN, null);
+                MODEL, null, result, null);
         return new EvaluationOccurrenceDraft(
                 occurrenceId, requirement, assertion, MODEL, null, reliedOnUses, excludedUses,
                 List.of(), TemporalFrame.atKnowledgeBoundary(Instant.EPOCH), "fixture rules",
-                evaluation, "unknown", null);
+                evaluation, result.name().toLowerCase(), relatedOccurrenceId);
+    }
+
+    private static ConformanceEvaluation unknownEvaluation(Requirement requirement, Assertion<?> assertion) {
+        return new ConformanceEvaluation(
+                requirement.id(), requirement.version(), assertion.id(), assertion.version(),
+                MODEL, null, ConformanceResult.UNKNOWN, null);
     }
 
     private static ModelFingerprint fingerprint(String suffix) {

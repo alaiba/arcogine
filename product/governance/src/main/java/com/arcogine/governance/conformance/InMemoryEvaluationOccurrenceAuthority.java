@@ -3,6 +3,7 @@ package com.arcogine.governance.conformance;
 import com.arcogine.governance.ControlledRevisionAuthority;
 import com.arcogine.governance.HistoricalRevision;
 import com.arcogine.governance.evidence.EvidenceProvenance;
+import com.arcogine.governance.evidence.EvidenceReference;
 import com.arcogine.governance.evidence.EvidenceReferenceAuthority;
 import com.arcogine.governance.evidence.EvidenceUse;
 import com.arcogine.governance.evidence.InMemoryEvidenceReferenceAuthority;
@@ -68,8 +69,8 @@ public final class InMemoryEvaluationOccurrenceAuthority implements EvaluationOc
         verifyUseRevisions(candidate);
         verifyOutcomeBasis(candidate);
         verifyRelatedOccurrence(candidate);
-        verifyEvidenceReferences(candidate);
-        EvaluationOccurrence accepted = new EvaluationOccurrence(candidate, clock.instant());
+        EvaluationOccurrenceDraft canonicalCandidate = canonicalizeEvidenceReferences(candidate);
+        EvaluationOccurrence accepted = new EvaluationOccurrence(canonicalCandidate, clock.instant());
         occurrences.put(accepted.id(), accepted);
         return accepted;
     }
@@ -143,14 +144,49 @@ public final class InMemoryEvaluationOccurrenceAuthority implements EvaluationOc
         });
     }
 
-    private void verifyEvidenceReferences(EvaluationOccurrenceDraft candidate) {
-        List<EvidenceUse> uses = new ArrayList<>();
-        uses.addAll(candidate.reliedOnUses());
-        uses.addAll(candidate.consideredButExcludedUses());
-        for (EvidenceUse use : uses) {
-            verifyProducerRevision(use.evidence().provenance());
-            evidenceReferenceAuthority.record(use.evidence());
-        }
+    private EvaluationOccurrenceDraft canonicalizeEvidenceReferences(EvaluationOccurrenceDraft candidate) {
+        List<EvidenceUse> reliedOnUses = candidate.reliedOnUses().stream()
+                .map(this::canonicalizeEvidenceUse)
+                .toList();
+        List<EvidenceUse> consideredButExcludedUses = candidate.consideredButExcludedUses().stream()
+                .map(this::canonicalizeEvidenceUse)
+                .toList();
+        return new EvaluationOccurrenceDraft(
+                candidate.id(),
+                candidate.requirement(),
+                candidate.assertion(),
+                candidate.modelFingerprint(),
+                candidate.controlledRevisionId(),
+                reliedOnUses,
+                consideredButExcludedUses,
+                candidate.knownMaterialGaps(),
+                candidate.temporalFrame(),
+                candidate.interpretationRules(),
+                candidate.evaluation(),
+                candidate.explanation(),
+                candidate.relatedOccurrenceId());
+    }
+
+    private EvidenceUse canonicalizeEvidenceUse(EvidenceUse use) {
+        verifyEvidenceReferenceTree(use.evidence());
+        EvidenceReference canonicalEvidence = evidenceReferenceAuthority.record(use.evidence());
+        return new EvidenceUse(
+                use.occurrenceId(),
+                use.position(),
+                canonicalEvidence,
+                use.targetModelFingerprint(),
+                use.targetControlledRevision(),
+                use.targetScope(),
+                use.requirement(),
+                use.assertion(),
+                use.role(),
+                use.temporalFrame(),
+                use.applicability());
+    }
+
+    private void verifyEvidenceReferenceTree(EvidenceReference reference) {
+        verifyProducerRevision(reference.provenance());
+        reference.relationOptional().ifPresent(relation -> verifyEvidenceReferenceTree(relation.earlier()));
     }
 
     private void verifyProducerRevision(EvidenceProvenance provenance) {

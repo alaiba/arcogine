@@ -170,7 +170,7 @@ Current architecture and enduring architectural principles
 Repository documentation uses these status categories, applied where they materially help a reader avoid confusing them:
 
 - **Normative** — enduring direction and principles. This charter, and the enduring-principle portions of `docs/architecture/overview.md`.
-- **Current state** — what Arcogine implements now. `docs/product/concepts.md`, `docs/reference/api.md`, `/product/interfaces/web/README.md`, the current-implementation portions of `docs/architecture/overview.md`.
+- **Current state** — what Arcogine implements now. `docs/product/concepts.md`, `docs/reference/api.md`, and the current-implementation portions of `docs/architecture/overview.md`.
 - **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
 - **Planned** — admitted implementation work with bounded ownership, prerequisites, sequencing, and acceptance evidence. `docs/planning/`.
 - **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research and planning authorities, such as a design proposal under review in a branch or pull request.

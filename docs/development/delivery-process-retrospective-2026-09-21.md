@@ -41,7 +41,7 @@ Evidence included:
 - current Consistency findings, using only those whose contradictory transition can be tied confidently to this delivery window;
 - current main and the exact files changed by the relevant transition PRs.
 
-For reproducibility, this audit counted **127 unique blocking findings**: 122 numbered review findings plus five earlier-format unnumbered blockers in #332, #333, #334, and #335. Illustrative strings that merely matched the review-finding token shape inside finding prose were not counted as findings.
+For reproducibility, this audit counted **126 unique blocking findings**: 121 numbered P0/P1/P2 review findings plus five earlier-format unnumbered blockers in #332, #333, #334, and #335. Illustrative strings that merely matched the review-finding token shape inside finding prose were not counted as findings.
 
 A formal **CHANGES REQUIRED** review submission is used below as a review-round proxy. This is slightly more mechanical than the 2026-09-05 definition of a remediation round as a feedback checkpoint followed by a meaningful corrective change: current Arcogine review can correct PR metadata without changing the Git head, and a repeated re-review can occasionally restate a still-open finding. The zero-round result is exact; the higher-round buckets should be read as a comparable churn indicator, not precise developer-effort accounting.
 
@@ -60,8 +60,8 @@ Limitations:
 | Measure | 2026-09-05 baseline | 2026-09-21 window |
 | --- | ---: | ---: |
 | Merged PRs | 30 | 81 |
-| Unique formal blocking findings | 79 | 127 |
-| Findings per merged PR | 2.63 | 1.57 |
+| Unique formal blocking findings | 79 | 126 |
+| Findings per merged PR | 2.63 | 1.56 |
 
 The lower density is directionally good, but it is not a target by itself. Several current-window findings are exactly the adversarial review work Arcogine should retain.
 
@@ -78,13 +78,13 @@ The tail improved materially: the share of PRs with no blocking review checkpoin
 
 ### Baseline reconciliation
 
-The directly comparable stale-main / base-reconciliation class produced **11 findings out of 127 (8.7%)**, versus **10 out of 79 (12.7%)** in the previous retrospective.
+The directly comparable stale-main / base-reconciliation class produced **11 findings out of 126 (8.7%)**, versus **10 out of 79 (12.7%)** in the previous retrospective.
 
 The absolute count increased only from 10 to 11 while the audited window grew from 30 to 81 PRs. This is evidence that the live-main/base-normalization standard work reduced that specific waste class.
 
 ### PR-description and justification drift
 
-A narrow current-window classification identified **17 findings out of 127 (13.4%)** where the material defect was stale or over-strong PR validation, rationale, title, or justification prose. The 2026-09-05 baseline was **6 out of 79 (7.6%)**.
+A narrow current-window classification identified **17 findings out of 126 (13.5%)** where the material defect was stale or over-strong PR validation, rationale, title, or justification prose. The 2026-09-05 baseline was **6 out of 79 (7.6%)**.
 
 Issue #323 provides a concentrated example: across #316, #317, and #319, review value was entirely in justification prose rather than the diffs, and several findings were claims stronger than the available evidence. Those were healthy pre-merge catches, but they show the waste class did not improve.
 
@@ -137,7 +137,7 @@ These are not reasons to weaken review. They are reasons to keep adversarial rev
 | Required validation for repository workflow tooling | **VERIFIED — retain** | No post-merge untested-helper escape was found. Missing/insufficient helper validation continued to be caught pre-merge and repaired. |
 | Earlier semantic-neighbor / acceptance-evidence closure | **NOT YET VERIFIED** | Direct status-propagation escapes #356 and #362 reached main, and review still found multiple authority/status-neighbor omissions before merge. Current Consistency breadth improvements landed late in the sample, so keep the underlying practice but do not declare it solved. |
 | Trial: small closure-set handoff | **INCONCLUSIVE — retire the trial** | Repository and PR search finds the experiment as retrospective/register history, but no durable marker identifies which slices actually exercised it. An uninstrumented experiment cannot support a causal conclusion. Existing concept-fan-out/review and Consistency breadth rules already own the durable behavior. |
-| Trial: final PR closeout summary | **NOT VERIFIED — superseded** | PR-description/justification drift rose to 13.4%. Do not add a final approval ritual. PR #353's newer stable-description rule is the narrower replacement and should be verified in the next window. |
+| Trial: final PR closeout summary | **NOT VERIFIED — superseded** | PR-description/justification drift rose to 13.5%. Do not add a final approval ritual. PR #353's newer stable-description rule is the narrower replacement and should be verified in the next window. |
 
 ## Avoidable recurring waste
 
@@ -196,9 +196,9 @@ Using continuous-improvement terminology only as an analytical lens:
 
 At the next delivery-process retrospective, compare at least:
 
-- unique formal blocking findings: **127 across 81 merged PRs (1.57 per PR)**;
-- baseline-reconciliation findings: **11 / 127 = 8.7%**;
-- PR-description / justification findings: **17 / 127 = 13.4%**;
+- unique formal blocking findings: **126 across 81 merged PRs (1.56 per PR)**;
+- baseline-reconciliation findings: **11 / 126 = 8.7%**;
+- PR-description / justification findings: **17 / 126 = 13.5%**;
 - high-confidence post-merge escapes attributable to the window: **at least 5**;
 - no-blocking-review PRs: **26 / 81 = 32.1%**;
 - formal CHANGES REQUIRED proxy distribution: **26 zero / 31 one / 15 two / 9 three-plus**;

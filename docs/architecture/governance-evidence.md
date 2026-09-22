@@ -1,6 +1,6 @@
 # Governance evidence
 
-Status: Adopted semantic contract; evidence identification, storage, reuse and explanation are not yet implemented
+Status: Adopted semantic contract; headless evidence references, uses, and in-memory evaluation-occurrence acceptance are implemented; durable storage and producer integrations are not
 Owning architecture: [Governance and Conformance](governance-conformance.md)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 

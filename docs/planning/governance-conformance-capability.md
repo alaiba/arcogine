@@ -1,6 +1,6 @@
 # Governance and Conformance Capability Implementation Plan
 
-> **Status:** Active; PLAN-GOV-1 complete, PLAN-GOV-2 initial slice complete, PLAN-GOV-3 complete, PLAN-GOV-4 initial slice complete; PLAN-GOV-5 is `READY_NEXT`
+> **Status:** Active; PLAN-GOV-1 complete, PLAN-GOV-2 initial slice complete, PLAN-GOV-3 complete, PLAN-GOV-4 initial slice complete, PLAN-GOV-5 headless slice complete
 > **Scope:** Implementation admission and sequencing for evidence, governed change, exceptions, mappings, and audit projections over the landed identity/change/conformance substrate
 > **Authority:** Planning only; durable semantics remain owned by Governance architecture and its adopted contracts  
 > **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [Governance evidence contract](../architecture/governance-evidence.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Operational continuity contract](../architecture/operational-continuity.md), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [controlled revision contract](../architecture/controlled-revisions.md)
@@ -53,12 +53,12 @@ Provides versioned requirements/assertions, scopes, catalogue selection against 
 
 Provides deterministic pre-change evaluation over explicit subject/revision/requirement/assertion inputs with attributable evaluation result and findings.
 
-The initial slice does not claim durable historical persistence of every evaluation/evidence record, and its `ConformanceEvaluation` is a deterministic value without occurrence identity; evaluation-occurrence identity and its acceptance boundary are PLAN-GOV-5 work under the Governance evidence contract.
+The initial slice does not claim durable historical persistence of every evaluation/evidence record. `ConformanceEvaluation` remains a deterministic value without occurrence identity; the additive occurrence identity and acceptance boundary are supplied by the headless evidence slice below.
 
 ## 3. Current implementation queue
 
 ```text
-PLAN-GOV-5  Evidence and EvidenceUse                         READY_NEXT
+PLAN-GOV-5  Evidence and EvidenceUse                         COMPLETE (headless slice)
     |
     v
 PLAN-GOV-6  Governed change / authorization / external workflow association  downstream
@@ -73,9 +73,9 @@ PLAN-GOV-8  Framework/control mappings
 PLAN-GOV-9  Audit snapshots / compliance projections
 ```
 
-## 4. PLAN-GOV-5 — Evidence and EvidenceUse — `READY_NEXT`
+## 4. PLAN-GOV-5 — Evidence and EvidenceUse — `COMPLETE (headless slice)`
 
-PLAN-GOV-5 is admitted for implementation. Its semantic contract is fixed by
+The first headless implementation is complete. Its semantic contract is fixed by
 the [Governance evidence contract](../architecture/governance-evidence.md)
 after decision-quality research and an independent adversarial review, and is summarized in
 [Governance architecture](../architecture/governance-conformance.md) §7, §9, and §12. Every one of

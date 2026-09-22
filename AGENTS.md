@@ -88,31 +88,17 @@ Arcogine's continuous-improvement operating model — Session-close Kaizen, the
 Consistency review, and the evidence-based delivery-process retrospective — is defined
 in [`docs/development/continuous-improvement.md`](docs/development/continuous-improvement.md).
 
-For `.?`, the standing responsibilities are only:
+For `.?`, classify and durably capture anything from the current session that should
+survive deletion, then give the deletion verdict. A Consistency review is **not** a
+standing `.?` subroutine; recommend one only when the session itself provides a
+concrete reason that a repository-wide consistency sweep would be useful, such as a
+major cross-cutting architecture/status transition or evidence of broader semantic
+drift.
 
-1. classify and durably capture anything from the current session that should survive
-   deletion; and
-2. evaluate the versioned delivery-retrospective trigger before giving the deletion
-   verdict.
-
-A Consistency review is **not** a standing `.?` subroutine. Recommend one from Kaizen
-only when the session itself provides a concrete reason that a repository-wide
-consistency sweep would be useful, such as a major cross-cutting architecture/status
-transition or evidence of broader semantic drift.
-
-Normal repository grounding does **not** evaluate the delivery-retrospective threshold.
-Outside `.?`, evaluate it only when the current task explicitly concerns continuous
-improvement, delivery-process health, or repository-wide planning/next-work.
-
-At those boundaries, follow `docs/development/continuous-improvement.md` and derive the
-retrospective threshold from its versioned factual authority. If action is warranted,
-tell the user plainly what is recommended and include the minimal prompt for a fresh
-session.
-
-If no action is warranted, say nothing. If the versioned retrospective state cannot be
-verified, say so once without assuming everything is current. Never repeat the same
-reminder more than once per session, and never derail the user's requested task merely
-because an improvement obligation is due.
+Delivery-process retrospectives are explicit work, not a standing reminder. Do not
+evaluate retrospective thresholds, due state, or reminder state during `.?`, normal
+repository grounding, continuous-improvement discussion, or repository planning unless
+the user explicitly asks to run or assess a retrospective.
 
 ## Temporary delivery coordinates and durable documentation
 

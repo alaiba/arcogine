@@ -1,0 +1,50 @@
+name: Continuous Improvement Reminder
+
+on:
+  schedule:
+    - cron: '17 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  remind:
+    name: Create checkpoint reminder
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create reminder issue if none is open
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TITLE: Continuous improvement checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh api --paginate "repos/${REPO}/issues?state=open&per_page=100" \
+            --jq '.[] | select(.pull_request == null) | .title' \
+            | grep -Fxq "$TITLE"; then
+            echo "Continuous improvement checkpoint already open."
+            exit 0
+          fi
+
+          body_file="${RUNNER_TEMP}/continuous-improvement-checkpoint.md"
+          cat > "$body_file" <<'EOF'
+          Run the repository's **Continuous Improvement** agent and review its recommendations.
+
+          Suggested invocation:
+
+          `Assess continuous improvement.`
+
+          The assessment should cover the current state of Arcogine's improvement practices, which practice—if any—is worth running now, and opportunities to simplify or strengthen repository-owned standard work.
+
+          Agent contract: `.github/agents/continuous-improvement.agent.md`
+
+          This issue is only a reminder. The workflow does not calculate due state, inspect repository health, or run Consistency, a retrospective, or any other improvement practice. Close the issue after the assessment; while it remains open, scheduled runs will not create another reminder.
+          EOF
+
+          gh issue create \
+            --repo "$REPO" \
+            --title "$TITLE" \
+            --body-file "$body_file"

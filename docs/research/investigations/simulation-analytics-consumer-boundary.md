@@ -27,7 +27,7 @@ The investigation must decide or explicitly classify:
 
 This question was extracted from a superseded mixed investigation into player-facing diagnostic evidence. The supersession narrative is maintained in [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) § Superseded predecessor, and its lifecycle state in [the research register](../research-register.md). That investigation concluded, provisionally, that reusable diagnostic derivations were game-owned, on the trigger that a *future* second consumer would be needed to justify shared ownership.
 
-That trigger was already satisfied. Arcogine currently has:
+That trigger was already satisfied. At this brief's baseline, Arcogine carried:
 
 - generic KPI computation in `com.arcogine.core.kpi` (`Kpi`, `KpiValue`, `ThroughputRate`, `OrderCount`, `EventCount`, `TotalSimulatedTime`);
 - an outward KPI endpoint (`GET /api/kpis`) and a KPI list inside the API snapshot projection (`SnapshotBuilder`, `SimSnapshot`);
@@ -35,7 +35,7 @@ That trigger was already satisfied. Arcogine currently has:
 - headless/CLI and reference consumers of the same runtime;
 - an adopted transport-neutral runtime contract (the [runtime observation/event contract](../../architecture/runtime-contract.md)) explicitly intended for HTTP/SSE, CLI, embedded Java, and future adapters.
 
-Reusable measurement, longitudinal retention, and comparison are therefore already multi-consumer concerns, not a hypothetical future need.
+That historical evidence established multiple consumers of reusable derived measurement at the time; later consumer retirement does not turn the old web implementation into a current dependency, and does not reopen the underlying question. Reusable measurement, longitudinal retention, and comparison were therefore already multi-consumer concerns, not a hypothetical future need, on evidence that predates the web consumer's retirement.
 
 ## Non-goals
 

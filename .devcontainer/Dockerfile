@@ -9,38 +9,6 @@ RUN apt-get update \
         curl \
         ca-certificates \
         gnupg \
-        fonts-freefont-ttf \
-        fonts-ipafont-gothic \
-        fonts-liberation \
-        fonts-noto-color-emoji \
-        fonts-tlwg-loma-otf \
-        fonts-wqy-zenhei \
-        libasound2 \
-        libatk-bridge2.0-0 \
-        libatk1.0-0 \
-        libatspi2.0-0 \
-        libcairo2 \
-        libcups2 \
-        libdbus-1-3 \
-        libdrm2 \
-        libfontconfig1 \
-        libfreetype6 \
-        libgbm1 \
-        libglib2.0-0 \
-        libnss3 \
-        libnspr4 \
-        libpango-1.0-0 \
-        libx11-xcb1 \
-        libx11-6 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxext6 \
-        libxfixes3 \
-        libxkbcommon0 \
-        libxrandr2 \
-        libxshmfence1 \
-        libxcb1 \
-        xvfb \
     && mkdir -p /usr/local/bin \
     && mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \

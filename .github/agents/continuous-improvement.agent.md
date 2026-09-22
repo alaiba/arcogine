@@ -141,7 +141,7 @@ When recommending another specialized practice, give the minimal invocation, for
 
 ## Common invocations
 
-Treat requests such as these as Continuous Improvement assessments:
+Treat `.!` and requests such as these as Continuous Improvement assessments:
 
 - "Assess continuous improvement."
 - "How healthy are our engineering practices?"

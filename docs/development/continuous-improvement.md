@@ -26,19 +26,13 @@ Recent Git history may be used as a search-order heuristic, but no previous-revi
 
 ## Delivery-process retrospective
 
-### Trigger
+### Invocation
 
-The retrospective is evidence-driven, not calendar-driven. Versioned trigger state lives in:
+The retrospective runs only when explicitly requested. Arcogine keeps no standing retrospective cadence, threshold, due state, or automatic reminder, and Session-close Kaizen does not evaluate whether a retrospective is due.
+
+Versioned baseline state for an explicitly invoked retrospective lives in:
 
 `.github/continuous-improvement/retrospective.json`
-
-Evaluate the retrospective method when any mechanical condition holds:
-
-- at least 25 merged PRs since `baselinePr`;
-- `escapeEvidenceCount >= 2`;
-- `p1LifecycleEscape == true`.
-
-Crossing a threshold means evaluate whether a retrospective is warranted; it is not itself the retrospective conclusion.
 
 ### Purpose
 
@@ -112,9 +106,8 @@ or
 - none
 
 ## Next baseline
-- baseline PR/date
+- baseline PR
 - specific measures to verify next time
-- early-trigger conditions
 ```
 
 Detailed review bodies, PR histories, issue evidence, and calculations remain in their owning GitHub/repository sources; do not duplicate them into the report unless necessary to support a decision.
@@ -128,7 +121,7 @@ A retrospective is complete only when one reviewed PR:
 3. names every concrete follow-up issue in the report;
 4. carries no unowned intervention/trial state.
 
-The versioned state file records only trigger/baseline facts and the latest report path. It is not an intervention register.
+The versioned state file records only the retrospective baseline and latest report path. It is not a trigger, due-state, reminder, or intervention register.
 
 ## Authority boundaries
 
@@ -140,7 +133,7 @@ The versioned state file records only trigger/baseline facts and the latest repo
 | Consistency operating guidance | `docs/development/consistency-review.md` |
 | Consistency finding identity/state | GitHub `CONS:` issues |
 | Retrospective method | this document |
-| Retrospective trigger/baseline state | `.github/continuous-improvement/retrospective.json` |
+| Retrospective baseline state | `.github/continuous-improvement/retrospective.json` |
 | Retrospective mechanical window | `infra/dev/delivery-retrospective.mjs` |
 | Dated retrospective evidence | `docs/history/continuous-improvement/` |
 | Retrospective actions | their owning GitHub issues |
@@ -148,25 +141,12 @@ The versioned state file records only trigger/baseline facts and the latest repo
 
 PR review remains governed by `docs/development/reviewing.md`; it is evidence for retrospectives, not a fourth improvement ceremony.
 
-## Reminder boundaries
+## Invocation boundaries
 
-Do not evaluate recurring continuous-improvement obligations during ordinary repository grounding.
+Session-close Kaizen has no standing retrospective reminder. Consistency likewise has no standing reminder/cadence subroutine; recommend a fresh Consistency review from Kaizen only when evidence from the current session itself makes a repository-wide sweep materially useful.
 
-For `.?`, the standing responsibilities are only to:
-
-1. preserve any durable lesson from the current session; and
-2. evaluate the versioned delivery-retrospective trigger before the deletion verdict.
-
-Consistency has no standing reminder/cadence subroutine. Recommend a fresh Consistency review from Kaizen only when evidence from the current session itself makes a repository-wide sweep materially useful.
-
-Outside `.?`, evaluate the delivery-retrospective threshold only during tasks explicitly concerning continuous improvement, delivery-process health, or repository-wide planning/next-work.
-
-When the retrospective threshold is reached, use the minimal reminder:
-
-`The delivery-process retrospective threshold has been reached. Start a fresh session with: "Run the delivery-process retrospective."`
-
-If no action is warranted, say nothing. If the versioned retrospective state cannot be verified, say so once without inventing a status.
+Do not infer or publish delivery-retrospective due state during ordinary repository grounding, `.?`, continuous-improvement discussion, or repository-wide planning. When the user explicitly asks to run or assess a delivery-process retrospective, use the versioned baseline and the mechanical method above.
 
 ## Non-goals
 
-This system does not automatically execute a review/retrospective, maintain a Consistency completion ledger, maintain an intervention database, turn historical reports into normative guidance, create work without issue ownership, or use GitHub as a slow substitute for repository content already established through the snapshot protocol.
+This system does not automatically execute or remind for a review/retrospective, maintain retrospective due state, maintain a Consistency completion ledger, maintain an intervention database, turn historical reports into normative guidance, create work without issue ownership, or use GitHub as a slow substitute for repository content already established through the snapshot protocol.

@@ -257,6 +257,11 @@ bash "$SCRIPT_DIR/check-dependabot-provenance.test.sh"
 # reach main while the required gate is green.
 bash "$SCRIPT_DIR/check-actions-workflows.sh"
 
+# Keep the reminder workflow's write authority and de-duplication contract
+# executable: it must stay schedule-only and serialize all check/create runs
+# under one fixed concurrency group.
+bash "$SCRIPT_DIR/check-continuous-improvement-reminder.sh"
+
 echo ""
 echo "Test Results: $pass_count/$test_count passed"
 if [ $fail_count -gt 0 ]; then

@@ -36,7 +36,7 @@ The simulation is fully deterministic: same inputs produce identical outputs eve
 
 ## Quick start
 
-This section is the canonical setup and local-run guide for Arcogine. `./arcogine` is the canonical developer entry point for common cross-project workflows.
+This section is the canonical setup and local-run guide. `./arcogine` is the repository entry point for common workflows.
 
 ### Dev container (recommended)
 
@@ -45,76 +45,65 @@ git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the folder in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote-containers) extension. The preferred development container currently provides **JDK 25 and Node 24**; dependency caches (`~/.gradle`, `product/interfaces/web/node_modules`) live in named Docker volumes for speed.
+Open the folder in VS Code with Dev Containers. The preferred development container provides JDK 25 and keeps the Gradle cache plus GitHub CLI configuration in named Docker volumes.
 
-On a brand-new machine, the first devcontainer start still needs a one-time GitHub login in the container:
+On a brand-new machine, authenticate GitHub once inside the container:
 
 ```bash
 gh auth login
 gh auth setup-git
 ```
 
-The container stores GitHub CLI auth in the Docker named volume `arcogine-gh-config`, so later rebuilds and reopenings can reuse the same login without re-authenticating while keeping the credential state out of the repository build context.
+The container reuses that credential state across rebuilds.
 
-After the container is ready, start the web app and API in two terminals:
+To start the current HTTP API:
 
 ```bash
-# Terminal 1: web dev server
-./arcogine run web
-
-# Terminal 2: API server
 ./arcogine run api
 ```
 
-Then open **http://127.0.0.1:5173**.
+For headless execution, use `./arcogine run scenario PATH`.
 
 ### Other execution environments
 
 - **Docker Compose:** `./arcogine build && ./arcogine up`
-- **Native full development (Linux/macOS, or Windows via WSL/Git Bash):** optionally run `./arcogine setup`, then `./arcogine run api` / `./arcogine run web` as above.
+- **Native development:** optionally run `./arcogine setup`, then use the API or headless commands above.
 
-The devcontainer is one supported environment, not the development contract. `./arcogine setup` is an optional convenience that installs the complete dependency set; it is not required for repository inspection or narrow documentation/backend/frontend work. In task-oriented containers, use the available environment where practical and install only the dependencies or capabilities the task needs. The setup command deliberately does not install or upgrade Java, Node, Docker, or security tools.
-
-`./arcogine` is a Bash script. On Windows it runs in the Dev Container, WSL, or Git Bash — not directly in PowerShell/cmd. The Dev Container is the recommended path on Windows.
+The devcontainer is one supported environment, not the development contract. `./arcogine setup` resolves the Java dependency/toolchain surface; it is not required for repository inspection or narrow documentation work.
 
 ### Development toolchain policy
 
-Arcogine deliberately separates **supported compatibility** from the versions used by its preferred development and runtime environments:
+- **Java compatibility baseline:** JDK 21 is a first-class development runtime. Java compilation uses `--release 21`; CI runs on JDK 21 while the preferred devcontainer currently uses JDK 25.
+- **Runtime Java:** the API runtime image currently uses Eclipse Temurin 25 JRE. Runtime-image JDK and Java compilation compatibility are deliberately separate concerns.
+- **Node.js:** Node remains repository tooling for scripts such as snapshot/retrospective utilities, but Arcogine no longer has a product/frontend Node compatibility contract.
 
-- **Java compatibility baseline:** JDK 21 is a first-class development runtime. Java compilation uses `--release 21`, so a supported newer JDK may compile the project without allowing post-21 language features, APIs, or bytecode. CI runs on an actual JDK 21; the preferred devcontainer currently uses JDK 25.
-- **Node.js support:** `^22.22.2 || ^24.15.0 || ^26.0.0`, declared in `product/interfaces/web/package.json`. The current floor is substantive: jsdom 30.0.1 declares that same range, its Undici 8 dependency requires Node 22.19+, and under Node 20.20.2 the Vitest jsdom workers fail at startup because the required Web IDL runtime API is unavailable. CI therefore exercises Node 22.22.2; the preferred devcontainer currently uses Node 24.
-- **Runtime Java:** the API runtime image currently uses Eclipse Temurin 25 JRE. The runtime-image JDK is independent of the Java 21 build-compatibility floor.
+Raising a supported Java minimum remains a deliberate repository change with coordinated CI and documentation updates.
 
-Raising a supported minimum is a deliberate repository change: update the compatibility declaration, CI floor, provisioning validation, and current documentation together. Preferred devcontainer/runtime versions may move independently as long as they remain compatible.
+## Running the current simulation
 
-## Your first session
-
-You can go from clone to meaningful results in under five minutes:
-
-1. **Load a scenario** — the welcome overlay offers three built-in options.
-2. **Run the simulation** — click Run and watch KPIs update in real time.
-3. **Try an intervention** — change the price or toggle a machine offline.
-4. **Save a baseline** — snapshot the current state before a big change.
-5. **Compare** — make the change, then compare against your baseline.
-6. **Toggle the agent** — enable the Sales Agent and see how it manages pricing.
-
-### Built-in scenarios
-
-| Scenario | Challenge | What you'll learn |
-|----------|-----------|-------------------|
-| **Basic** | None — balanced factory | How the controls work and what the KPIs mean |
-| **Overload** | Demand exceeds capacity | How to stabilize backlog and lead times with pricing |
-| **Capacity Expansion** | Same pressure, more machines | Whether structural upgrades beat tactical tuning |
+The retained application surfaces are headless scenario execution and the local HTTP API.
 
 ### Headless mode
-
-Run a scenario without the UI:
 
 ```bash
 java -jar dist/api/arcogine.jar run docs/examples/basic.toml
 ```
 
-(or, without building `dist/` first: `./arcogine run scenario docs/examples/basic.toml`)
+Without building `dist/` first:
+
+```bash
+./arcogine run scenario docs/examples/basic.toml
+```
+
+### HTTP API
+
+Start the local API with:
+
+```bash
+./arcogine run api
+```
+
+The API remains a current local simulation interface while Arcogine's consumer-neutral Engine contracts evolve independently. See [API Reference](docs/reference/api.md) for the current endpoints.
 
 ## Technology stack
 
@@ -124,7 +113,6 @@ java -jar dist/api/arcogine.jar run docs/examples/basic.toml
 | HTTP API | Spring Boot 4 + Spring MVC |
 | CLI | Picocli |
 | Build | Gradle (Kotlin DSL), via the `product/gradlew` wrapper |
-| Frontend | React 19 + TypeScript + Vite |
 | Container | Eclipse Temurin 25 JRE |
 
 ## Documentation
@@ -141,9 +129,9 @@ java -jar dist/api/arcogine.jar run docs/examples/basic.toml
 
 ```bash
 ./arcogine setup         # optional full-development dependency bootstrap
-./arcogine test          # Java + frontend unit tests
-./arcogine check         # fast gates: compile, tests, coverage, lint, build
-./arcogine check --full  # everything: check + Playwright E2E + Docker smoke + security scans
+./arcogine test          # Java unit tests
+./arcogine check         # Java compile, style, tests, and coverage
+./arcogine check --full  # check + dist build + Docker smoke + security scans
 ```
 
 See [testing.md](docs/development/testing.md) for the full test category reference.

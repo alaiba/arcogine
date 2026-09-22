@@ -16,10 +16,6 @@ flags:
     paths:
       - product/
     carryforward: true
-  frontend:
-    paths:
-      - product/interfaces/web/src/
-    carryforward: true
 
 comment:
   layout: "reach,diff,flags,files"

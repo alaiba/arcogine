@@ -102,7 +102,6 @@ Required outcome:
 
 - legacy API/SSE projects supported runtime semantics rather than internal scheduler events;
 - outward DTOs remain projections and never re-enter domain decision paths;
-- frontend consumption follows the supported envelope/observation boundary;
 - CLI/reference/headless paths either consume the supported runtime contract directly or document a deliberate broader orchestration adapter;
 - current-state API/reference documentation changes only with shipped behavior.
 

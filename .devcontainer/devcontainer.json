@@ -4,7 +4,6 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
-
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "25",
@@ -14,23 +13,17 @@
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-
   "mounts": [
     "source=arcogine-gradle-cache,target=/home/vscode/.gradle,type=volume",
-    "source=arcogine-web-node-modules,target=${containerWorkspaceFolder}/product/interfaces/web/node_modules,type=volume",
     "source=arcogine-gh-config,target=/home/vscode/.config/gh,type=volume"
   ],
-
   "containerEnv": {
     "GH_CONFIG_DIR": "/home/vscode/.config/gh"
   },
-
-  "forwardPorts": [3000, 5173],
+  "forwardPorts": [3000],
   "portsAttributes": {
-    "3000": { "label": "API (Spring Boot)", "onAutoForward": "notify" },
-    "5173": { "label": "UI (Vite)", "onAutoForward": "openBrowser" }
+    "3000": { "label": "API (Spring Boot)", "onAutoForward": "notify" }
   },
-
   "customizations": {
     "vscode": {
       "settings": {
@@ -40,10 +33,6 @@
           "editor.defaultFormatter": "redhat.java",
           "editor.formatOnSave": true
         },
-        "[typescript][typescriptreact]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.formatOnSave": true
-        },
         "files.watcherExclude": {
           "**/build/**": true,
           "**/.gradle/**": true
@@ -51,16 +40,10 @@
       },
       "extensions": [
         "vscjava.vscode-java-pack",
-        "vscjava.vscode-gradle",
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
-        "ms-playwright.playwright",
-        "bradlc.vscode-tailwindcss"
+        "vscjava.vscode-gradle"
       ]
     }
   },
-
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-
   "remoteUser": "vscode"
 }

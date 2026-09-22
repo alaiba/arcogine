@@ -19,7 +19,6 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | `product/consumer/challenge/` | Challenge Readiness: game-owned `ChallengeDefinition` and validator — headless, no dependency on any module above |
 | `product/interfaces/api/` | HTTP API (Spring Boot MVC), SSE |
 | `product/interfaces/cli/` | CLI entrypoint (Picocli, produces `arcogine.jar`) |
-| `product/interfaces/web/` | React/TypeScript experiment console |
 | `docs/examples/` | TOML scenario fixture files |
 | `docs/` | Project documentation |
 | `infra/` | Container and dev-environment infrastructure |
@@ -31,13 +30,13 @@ See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the 
 ## Development workflow
 
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
-2. **Make your changes.** Follow the code style enforced by Checkstyle and the frontend lint/format tooling.
-3. **Write tests** for new functionality. Java modules use JUnit 6; frontend stores and components use Vitest and Testing Library.
+2. **Make your changes.** Follow the code style enforced by Checkstyle.
+3. **Write tests** for new functionality. Java modules use JUnit 6.
 4. **Run the checks:**
 
 ```bash
-./arcogine check         # fast gates: compile, lint, tests, coverage, typecheck, build
-./arcogine check --full  # everything: check + Playwright + Docker + security
+./arcogine check         # Java compile, style, tests, and coverage
+./arcogine check --full  # check + dist build + Docker + security
 ```
 
 Use `./arcogine check` before pushing. Use `./arcogine check --full` when the change warrants the complete local validation surface. For individual test categories and native subsystem commands, see [`docs/development/testing.md`](../docs/development/testing.md).
@@ -46,7 +45,7 @@ Use `./arcogine check` before pushing. Use `./arcogine check --full` when the ch
 
 Keep PR descriptions stable under normal branch evolution. Describe semantic scope, rationale, non-goals, and validation actually performed. Do not present mutable Git/GitHub topology or gate state — such as the current `main`/head SHA, ahead/behind or commit counts, base freshness, mergeability, or current CI/check state — as validation facts that the body must stay synchronized with. GitHub and repository lifecycle tooling resolve those facts live. Exact SHAs may still appear when they intentionally identify immutable evidence/artifacts or are clearly labeled as historical provenance. Validation text should name reproducible commands, checks, or review performed rather than temporary branch shape.
 
-**Temporary artifacts:** use `logs/` for local diagnostics, captures, and session scratch that should never be committed; it is gitignored as a whole. Branch-local material that must be committed for continuity or handoff but must not land on `main` belongs under the unignored `workspace/` root. `workspace/` is transient storage, not an archive: remove its files before final review and do not add a marker file. The repository check rejects any tracked `workspace/` path. Do not redirect canonical tool outputs — Gradle, npm/Vitest coverage, Playwright reports, and `dist/` continue to use their configured locations.
+**Temporary artifacts:** use `logs/` for local diagnostics, captures, and session scratch that should never be committed; it is gitignored as a whole. Branch-local material that must be committed for continuity or handoff but must not land on `main` belongs under the unignored `workspace/` root. `workspace/` is transient storage, not an archive: remove its files before final review and do not add a marker file. The repository check rejects any tracked `workspace/` path. Do not redirect canonical tool outputs — Gradle and `dist/` continue to use their configured locations.
 
 For independent PR review, re-review, severity/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).
 
@@ -75,7 +74,6 @@ Near-term sequencing may live in issues, PRs, or planning documents; durable pro
 ## Code style
 
 - Checkstyle enforces Java style; `./arcogine check` (or `cd product && ./gradlew checkstyleMain checkstyleTest`) runs it, and warnings are treated as errors at compile time (`-Werror`).
-- ESLint + Prettier enforce frontend style; `cd product/interfaces/web && npm run lint` runs it.
 - Prefer explicit types over inference in public APIs.
 
 ## Architecture guardrails
@@ -105,9 +103,9 @@ A subset of these constraints is CI-enforced by `interfaces/api`'s ArchUnit `Arc
 
 ## Testing
 
-The contribution gate is `./arcogine check`. It covers Java compilation, Checkstyle, tests and Jacoco coverage gates, plus frontend linting, type-checking, tests, coverage, and production build.
+The contribution gate is `./arcogine check`. It covers Java compilation, Checkstyle, tests and Jacoco coverage gates.
 
-For Playwright E2E, the canonical distribution build, Docker image/smoke validation, and security scans, run `./arcogine check --full`.
+For the canonical distribution build, Docker image/smoke validation, and security scans, run `./arcogine check --full`.
 
 See [`docs/development/testing.md`](../docs/development/testing.md) for the test taxonomy, CI pipeline, native subsystem commands, and testing rationale.
 

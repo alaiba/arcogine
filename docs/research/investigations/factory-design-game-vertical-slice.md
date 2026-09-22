@@ -104,7 +104,7 @@ It combined two decisions with different owners:
 
 The investigation made substantial progress on the first and explicitly did not validate the second, which needs participant evidence rather than repository reasoning.
 
-The first half is **not game-local**. Arcogine already carries generic KPI computation (`com.arcogine.core.kpi`), an outward KPI endpoint and snapshot projection, and a web consumer that retains KPI history and computes baseline-to-baseline metric deltas (`product/interfaces/web/src/stores/baselines.ts`). Those are already several consumers of reusable derived measurement. The superseded investigation's trigger — that Arcogine should wait for a *future* second product consumer before considering shared analytics ownership — was therefore already satisfied when it was written, and does not survive.
+The first half is **not game-local**. At this investigation's baseline, Arcogine carried generic KPI computation (`com.arcogine.core.kpi`), an outward KPI endpoint and snapshot projection, and a web consumer that retained KPI history and computed baseline-to-baseline metric deltas. That historical evidence established multiple consumers of reusable derived measurement at the time; later consumer retirement does not turn the old web implementation into a current dependency. The superseded investigation's trigger — that Arcogine should wait for a *future* second product consumer before considering shared analytics ownership — was therefore already satisfied when it was written, and does not survive.
 
 Consequently:
 

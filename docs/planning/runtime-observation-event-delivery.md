@@ -76,7 +76,6 @@ The implementation must update together where behavior changes:
 
 - API runtime-event projection/DTO;
 - `SseController`;
-- frontend SSE client/store;
 - SSE integration/contract tests; and
 - `docs/reference/api.md`.
 
@@ -111,7 +110,7 @@ For each current headless/CLI path:
 - use the supported runtime/session boundary directly where semantics match;
 - retain broader scenario orchestration where it owns real extra concerns;
 - make any adapter boundary explicit;
-- provide a consumer-neutral reference path that can consume `RuntimeObservation` and ordered `RuntimeEvent` semantics without Spring/frontend/internal stores/raw `EventLog` replay; and
+- provide a consumer-neutral reference path that can consume `RuntimeObservation` and ordered `RuntimeEvent` semantics without Spring/internal stores/raw `EventLog` replay; and
 - remove duplicated outward observation/event semantics where doing so preserves ownership.
 
 ### PLAN-ENG-4-D acceptance
@@ -119,14 +118,13 @@ For each current headless/CLI path:
 PLAN-ENG-4-D closes when:
 
 1. current API/SSE projects supported runtime semantics, not internal scheduler taxonomy;
-2. the frontend consumes the supported outward projection;
-3. CLI/reference execution can consume or deliberately adapt the supported runtime contract;
-4. transport/CLI DTOs remain one-way projections;
-5. broader orchestration is not forced through `FactoryRuntime` solely for reuse;
+2. CLI/reference execution can consume or deliberately adapt the supported runtime contract;
+3. transport/CLI DTOs remain one-way projections;
+4. broader orchestration is not forced through `FactoryRuntime` solely for reuse;
 6. behavior-changing slices update current-state docs in the same PR; and
 7. no protocol/broker/event-bus/interchange framework is introduced to accomplish convergence.
 
-PLAN-ENG-4-D1 and PLAN-ENG-4-D2 should normally be separate reviewable PRs when their code surfaces differ.
+The previous React web consumer has been retired; this plan does not require a replacement consumer. PLAN-ENG-4-D1 and PLAN-ENG-4-D2 should normally be separate reviewable PRs when their code surfaces differ.
 
 ## 4. Provenance boundary
 

@@ -137,7 +137,7 @@ One distinction matters enough to state explicitly: **determinism is a critical 
 
 Arcogine is not fundamentally: a factory dashboard; a generic BI tool; only a discrete-event simulator; a game; an ERP clone; an MES clone; a collection of unrelated digital-twin integrations; or a separate model maintained per lifecycle stage.
 
-Arcogine is also not defined by: its current UI; Java; Spring; React; TOML scenarios; its current API; its current module names; or its current single-user, local-first deployment model. Those are implementation and current-state choices, evaluated and possibly changed over time — not product identity.
+Arcogine is also not defined by: any particular UI; Java; Spring; TOML scenarios; its current API; its current module names; or its current single-user, local-first deployment model. Those are implementation and current-state choices, evaluated and possibly changed over time — not product identity.
 
 Older ambitions such as "serious games" for training or "MMO-scale economic simulations" may remain possible applications built on the underlying engine, but they do not compete with the production-system/business-lifecycle thesis in Sections 1–3 as Arcogine's primary product identity.
 
@@ -170,7 +170,7 @@ Current architecture and enduring architectural principles
 Repository documentation uses these status categories, applied where they materially help a reader avoid confusing them:
 
 - **Normative** — enduring direction and principles. This charter, and the enduring-principle portions of `docs/architecture/overview.md`.
-- **Current state** — what Arcogine implements now. `docs/product/concepts.md`, `docs/reference/api.md`, `/product/interfaces/web/README.md`, the current-implementation portions of `docs/architecture/overview.md`.
+- **Current state** — what Arcogine implements now. `docs/product/concepts.md`, `docs/reference/api.md`, and the current-implementation portions of `docs/architecture/overview.md`.
 - **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
 - **Planned** — admitted implementation work with bounded ownership, prerequisites, sequencing, and acceptance evidence. `docs/planning/`.
 - **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research and planning authorities, such as a design proposal under review in a branch or pull request.

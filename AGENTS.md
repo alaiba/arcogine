@@ -95,10 +95,10 @@ concrete reason that a repository-wide consistency sweep would be useful, such a
 major cross-cutting architecture/status transition or evidence of broader semantic
 drift.
 
-Delivery-process retrospectives are explicit work, not a standing reminder. Do not
-evaluate retrospective thresholds, due state, or reminder state during `.?`, normal
-repository grounding, continuous-improvement discussion, or repository planning unless
-the user explicitly asks to run or assess a retrospective.
+Delivery-process retrospectives run only when explicitly requested. Do not assess or
+recommend one during `.?`, normal repository grounding, continuous-improvement
+discussion, or repository planning unless the user explicitly asks to run or assess a
+retrospective.
 
 ## Temporary delivery coordinates and durable documentation
 

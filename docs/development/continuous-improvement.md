@@ -4,6 +4,18 @@
 
 Arcogine has three distinct improvement loops. None substitutes for another.
 
+## Continuous Improvement assessment
+
+The repository's user-invocable [Continuous Improvement agent](../../.github/agents/continuous-improvement.agent.md) is an advisory health check over these practices and the delivery controls around them. It is not a fourth improvement loop.
+
+Invoke it with the repository shorthand `.!` or a prompt such as:
+
+`Assess continuous improvement.`
+
+The assessment re-grounds against current repository and live GitHub evidence, reports the health of the practices, recommends which practice—if any—is worth running, and identifies concrete opportunities to simplify or strengthen standard work. Its status labels are ephemeral report language only. It does not persist due state, completion timestamps, thresholds, or an intervention register, and it does not substitute for a formal Consistency review or delivery-process retrospective.
+
+A repository workflow, [`continuous-improvement-reminder.yml`](../../.github/workflows/continuous-improvement-reminder.yml), provides the only standing reminder. Once per week it creates an issue titled exactly `Continuous improvement checkpoint` only when no open issue with that title exists. The workflow performs no health analysis and derives no due state; the issue simply prompts an explicit Continuous Improvement assessment. Closing the issue acknowledges the reminder, after which a later scheduled run may create a new one.
+
 ## Session-close Kaizen
 
 - **Trigger:** `.?` at the close of a meaningful coding-agent session; see `AGENTS.md`.
@@ -128,6 +140,8 @@ The versioned state file records only the retrospective baseline and latest repo
 | Concern | Owning authority |
 | --- | --- |
 | Session-close Kaizen | `AGENTS.md` |
+| Continuous Improvement assessment | `.github/agents/continuous-improvement.agent.md` |
+| Assessment reminder delivery | `.github/workflows/continuous-improvement-reminder.yml` |
 | Consistency review algorithm | `.github/agents/consistency.agent.md` |
 | Consistency corpus generation | `infra/dev/repo-snapshot.mjs` + `infra/dev/repomix.config.json` |
 | Consistency operating guidance | `docs/development/consistency-review.md` |
@@ -143,10 +157,12 @@ PR review remains governed by `docs/development/reviewing.md`; it is evidence fo
 
 ## Invocation boundaries
 
-Session-close Kaizen has no standing retrospective reminder. Consistency likewise has no standing reminder/cadence subroutine; recommend a fresh Consistency review from Kaizen only when evidence from the current session itself makes a repository-wide sweep materially useful.
+Session-close Kaizen has no standing retrospective reminder. Consistency likewise has no standing due-state mechanism; recommend a fresh Consistency review from Kaizen only when evidence from the current session itself makes a repository-wide sweep materially useful.
 
-Do not infer or publish delivery-retrospective due state during ordinary repository grounding, `.?`, continuous-improvement discussion, or repository-wide planning. When the user explicitly asks to run or assess a delivery-process retrospective, use the versioned baseline and the mechanical method above.
+Ordinary repository grounding and `.?` do not assess global improvement health. The Continuous Improvement agent is the explicit on-demand boundary for that question and may recommend a specialized practice without performing it. Delivery-process retrospective execution remains explicit and uses the versioned baseline plus the mechanical method above.
+
+The scheduled checkpoint workflow is only an alarm clock for invoking that assessment. It does not establish that any practice is due.
 
 ## Non-goals
 
-This system does not automatically execute or remind for a review/retrospective, maintain retrospective due state, maintain a Consistency completion ledger, maintain an intervention database, turn historical reports into normative guidance, create work without issue ownership, or use GitHub as a slow substitute for repository content already established through the snapshot protocol.
+This system does not automatically execute a review/retrospective, infer practice due state, maintain retrospective due state, maintain a Consistency completion ledger, maintain an intervention database, turn historical reports into normative guidance, create work without issue ownership, or use GitHub as a slow substitute for repository content already established through the snapshot protocol.

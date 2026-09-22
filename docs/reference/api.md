@@ -231,5 +231,5 @@ The `SimSnapshot` returned by control and query endpoints:
 CORS is permissive by default (allows all origins). Set the `CORS_ALLOWED_ORIGIN` environment variable to restrict it:
 
 ```bash
-CORS_ALLOWED_ORIGIN=http://localhost:5173 java -jar dist/api/arcogine.jar serve
+CORS_ALLOWED_ORIGIN=https://your-consumer.example.com java -jar dist/api/arcogine.jar serve
 ```

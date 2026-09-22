@@ -50,7 +50,6 @@ These exist in the current software today. Where executable verification exists,
 | SSE connection limit | Concurrent `/api/events/stream` connections are capped at 64; further connections get `503` rather than exhausting server resources. |
 | Scenario input validation | Referential and range validation rejects invalid scenarios with `400` rather than partially applying them. |
 | Economy value bounds | Out-of-range price/economy input is rejected rather than applied to simulation state. |
-| Web image response headers | The nginx image configures `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. Configured, but with no executable response-header check — treat these as deployment settings rather than verified controls. |
 | CORS | Restricted when `CORS_ALLOWED_ORIGIN` is set; permissive (`*`) when unset. Configured, but with no executable check — treat it as a deployment setting rather than a verified control. |
 
 ### Structural limits that hardening does not remove
@@ -74,7 +73,7 @@ If you expose the current simulation service beyond localhost, apply at least:
 
 3. **TLS** — Arcogine does not terminate TLS. Place it behind a reverse proxy (nginx, Caddy, or a cloud load balancer) with TLS termination.
 
-4. **Dependency auditing** — Before deployment, run the Java dependency scan (`cd product && ./gradlew cyclonedxBom && trivy sbom ... product/build/reports/cyclonedx/bom.json`) and the frontend audit (`cd product/interfaces/web && npm audit --audit-level=high`). CI runs npm audit as part of the frontend job and scans built container images via Trivy in the docker job. Run `./arcogine check --full` locally for the complete security suite including the Java dependency scan.
+4. **Dependency auditing** — Before deployment, run the Java dependency scan (`cd product && ./gradlew cyclonedxBom && trivy sbom ... product/build/reports/cyclonedx/bom.json`) Run `./arcogine check --full` locally for the complete security suite including the Java dependency scan.
 
 5. **Log verbosity** — Set `LOGGING_LEVEL_ROOT=WARN` in production-like environments to reduce log noise.
 
@@ -102,8 +101,7 @@ This section is a trigger, not a plan. It exists so the question is asked before
 
 Security execution follows the quality-gate contract:
 
-- Scan commands invoke each scanner's native tool directly (`trivy sbom`, `trivy image`,
-  `npm audit`, `gitleaks detect`) — locally via `./arcogine check --full`, in CI via the
+- Scan commands invoke each scanner's native tool directly (`trivy sbom`, `trivy image`, `gitleaks detect`) — locally via `./arcogine check --full`, in CI via the
   jobs in `.github/workflows/ci.yml` — so all checks are discoverable from the same
   command surface documented in `docs/development/testing.md`.
 - CI remains responsible for installing scanner binaries/tools and enforcing policy
@@ -111,7 +109,7 @@ Security execution follows the quality-gate contract:
 
 **Responding to findings.** A finding inside an open pull request is owned by that PR's author: it blocks the PR and is fixed, or explicitly accepted, before merge. A finding from the **daily scheduled scan** has no PR and therefore no author, so it is the maintainer's to triage on the next working day — decide whether it is real, then fix it, add a reasoned `.trivyignore` entry, or record why no action is needed. A scheduled-scan failure is not resolved by a later green run: an unrelated merge can change the scanned artifact and clear the red without anyone having looked at the finding, which is exactly what happened to the 2026-09-09 failure. Close the finding deliberately, not by waiting for the signal to disappear.
 
-**Dependabot posture.** Dependabot **alerts** are enabled, and are the surface that reports known vulnerabilities in resolved dependencies. They are deliberately kept alongside the CI scanners rather than replaced by them: the Trivy SBOM and image scans run with `--ignore-unfixed`, so a CRITICAL vulnerability with no available fix is invisible to the CI gate by design, and alerts are what still surface it. Dependabot **version updates** (weekly Gradle/npm/Actions, grouped) are configured separately in `.github/dependabot.yml`. Remediation for anything these surface is owned by the dependency maintainer (`.github/agents/dependency-maintainer.agent.md`) either way.
+**Dependabot posture.** Dependabot **alerts** are enabled, and are the surface that reports known vulnerabilities in resolved dependencies. They are deliberately kept alongside the CI scanners rather than replaced by them: the Trivy SBOM and image scans run with `--ignore-unfixed`, so a CRITICAL vulnerability with no available fix is invisible to the CI gate by design, and alerts are what still surface it. Dependabot **version updates** (weekly Gradle/Actions, grouped) are configured separately in `.github/dependabot.yml`. Remediation for anything these surface is owned by the dependency maintainer (`.github/agents/dependency-maintainer.agent.md`) either way.
 
 For the full security verification test list, see `docs/development/testing.md`.
 

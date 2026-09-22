@@ -8,7 +8,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 SCRIPT_SOURCE="$SCRIPT_DIR/claude-cloud.sh"
-PACKAGE_NODE_RANGE="$(sed -n 's/.*"node"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$REPO_ROOT/product/interfaces/web/package.json")"
 BASH_BIN="$(command -v bash)"
 TEMP_ROOT="$(mktemp -d)"
 trap 'rm -rf "$TEMP_ROOT"' EXIT
@@ -95,9 +94,6 @@ case "$tool" in
   node)
     if [[ "${1:-}" == "--version" ]]; then
       echo "v${ARCOGINE_TEST_NODE_VERSION:-22.22.2}"
-    elif [[ "${1:-}" == "-p" ]]; then
-      sed -n 's/.*"node"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-        "$PWD/product/interfaces/web/package.json"
     fi
     ;;
   *)
@@ -112,8 +108,7 @@ EOF
 }
 
 start_case() {
-  local package_range="${1:-$PACKAGE_NODE_RANGE}"
-  local tools="${2:-bash git curl java javac node npm npx docker trivy gitleaks}"
+  local tools="${1:-bash git curl java javac node npm npx docker trivy gitleaks}"
   case_number=$((case_number + 1))
   CASE_ROOT="$TEMP_ROOT/case-$case_number"
   TEST_REPO="$CASE_ROOT/repository with spaces"
@@ -123,9 +118,7 @@ start_case() {
   LOG_DIR="$CASE_ROOT/log directory"
   COMMAND_LOG="$CASE_ROOT/commands.log"
 
-  mkdir -p "$TEST_REPO/product/interfaces/web" "$INVOKE_DIR" "$FAKE_BIN" "$CORE_BIN" "$LOG_DIR"
-  printf '%s\n' "{\"engines\":{\"node\":\"$package_range\"}}" \
-    > "$TEST_REPO/product/interfaces/web/package.json"
+  mkdir -p "$TEST_REPO" "$INVOKE_DIR" "$FAKE_BIN" "$CORE_BIN" "$LOG_DIR"
   : > "$COMMAND_LOG"
   make_core_path
   make_fakes "$tools"
@@ -242,71 +235,18 @@ export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_JAVA_NOISE=1
 run_cloud
 assert_result 'JAVA_TOOL_OPTIONS-style noise does not break Java detection' 0 'Java major version OK: 21'
 
-start_case '^22.22.2 || ^24.15.0 || ^26.0.0' 'bash git curl javac node npm npx docker trivy gitleaks'
+start_case 'bash git curl javac node npm npx docker trivy gitleaks'
 run_cloud
 assert_result 'missing java is a warning rather than a provisioning failure' 0 'Java is not available on PATH'
 
-start_case '^22.22.2 || ^24.15.0 || ^26.0.0' 'bash git curl java node npm npx docker trivy gitleaks'
+start_case 'bash git curl java node npm npx docker trivy gitleaks'
 export ARCOGINE_TEST_JAVA_VERSION=21.0.6
 run_cloud
 assert_result 'missing javac warns that a JDK is required' 0 'javac is not available'
 
-# Node support boundaries mirror the manifest's current explicit caret ranges.
-node_cases=(
-  '22.22.1|unsupported'
-  '22.22.2|supported'
-  '22.23.0|supported'
-  '24.14.9|unsupported'
-  '24.15.0|supported'
-  '24.16.1|supported'
-  '26.0.0|supported'
-  '26.99.99|supported'
-  '23.0.0|unsupported'
-  '25.0.0|unsupported'
-  '22.22|unsupported'
-)
-for node_case in "${node_cases[@]}"; do
-  IFS='|' read -r version expectation <<< "$node_case"
-  start_case
-  export ARCOGINE_TEST_NODE_VERSION="$version"
-  run_cloud
-  if [[ "$expectation" == supported ]]; then
-    assert_result "Node $version is accepted at its support boundary" 0 "Node.js version OK: $version"
-  else
-    assert_result "Node $version is rejected outside its support boundary" 0 "Node.js $version is outside Arcogine's supported range"
-  fi
-done
-
-start_case '^22.22.2 || ^24.15.0 || ^26.0.0' 'bash git curl java javac npm npx docker trivy gitleaks'
-export ARCOGINE_TEST_JAVA_VERSION=21.0.6
-run_cloud
-assert_result 'missing node warns without blocking provisioning' 0 'Node.js is not available on PATH'
-
-start_case '^22.22.2 || ^24.15.0 || ^26.0.0' 'bash git curl java javac node npx docker trivy gitleaks'
-export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_NODE_VERSION=22.22.2
-run_cloud
-assert_result 'supported node with missing npm warns without blocking provisioning' 0 'npm is not available on PATH'
-
-start_case '^22.22.2 || ^24.15.0 || ^26.0.0' 'bash git curl java javac node npm npx docker trivy gitleaks'
-export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_NODE_VERSION=22.22.2
-run_cloud
-assert_result 'matching Node support contract has no drift warning' 0 'Node.js version OK: 22.22.2'
-assert_output_not_contains 'matching Node support contract stays aligned' 'Node support contract drift'
-
-start_case
-export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_NODE_VERSION=22.22.2 ARCOGINE_TEST_FAIL_VERSION_TOOL=node
-run_cloud
-assert_result 'failing Node version probe warns without blocking provisioning' 0 'Node.js could not report a version on PATH'
-
-start_case '^22.22.2 || ^24.15.0 || ^26.0.0' 'bash git curl java javac node npm npx docker trivy gitleaks'
-export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_NODE_VERSION=22.22.2
-printf '%s\n' '{"engines":{"node":"^24.15.0"}}' > "$TEST_REPO/product/interfaces/web/package.json"
-run_cloud
-assert_result 'manifest support-contract drift is reported clearly' 0 'Node support contract drift'
-assert_output_contains 'drift warning names the manifest range' "package.json declares '^24.15.0'"
 
 # Optional inventory remains informational, including a failing version probe.
-start_case '^22.22.2 || ^24.15.0 || ^26.0.0' 'java javac node npm npx'
+start_case 'java javac node npm npx'
 export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_NODE_VERSION=22.22.2
 run_cloud
 assert_result 'missing optional tools are reported as not installed' 0 'not installed'
@@ -316,11 +256,9 @@ export ARCOGINE_TEST_JAVA_VERSION=21.0.6 ARCOGINE_TEST_NODE_VERSION=22.22.2 ARCO
 run_cloud
 assert_result 'failing optional version probe remains informational' 0 'version command failed; continuing because this inventory entry is informational'
 
-# The provisioning invariant is behavioral: only version/manifest inspection
-# commands appear in the fake command log, and the success message states that
-# project dependencies were not installed.
+# The provisioning invariant is behavioral: inspection must not install project dependencies.
 assert_output_contains 'successful provisioning communicates no dependency installation' 'No project dependencies were installed during provisioning.'
-for forbidden in 'npm ci' './gradlew' 'playwright install' 'apt ' 'apt-get '; do
+for forbidden in './gradlew' 'npm ci' 'apt ' 'apt-get '; do
   assert_command_log_not_contains "provisioning never invokes '$forbidden'" "$forbidden"
 done
 

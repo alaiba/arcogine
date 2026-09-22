@@ -181,7 +181,7 @@ When repository persistence is available, any agent producing a complete prompt 
 
 Before handing an implementation branch to independent PR review, inspect branch-added files, remove transient execution and handoff artifacts that are not maintained repository state, and run the tracked-workspace check. The implementation branch must delete its prompt before final review/merge readiness; temporary material accidentally placed outside `workspace/` still requires semantic cleanup.
 
-Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`), npm/Vitest (`product/interfaces/web/coverage/`, `test-results/`), Playwright (`playwright-report/`), and `dist/` continue to write to their configured locations per the canonical build commands.
+Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`) and `dist/` continue to write to their configured locations per the canonical build commands.
 
 ## GitHub message provenance and attribution
 
@@ -275,10 +275,9 @@ Agents never merge pull requests. `READY TO MERGE` hands control to the reposito
 
 - `product/` — all executable product source.
   - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `simulation`, `domains/{factory,economy,finance}`, `agents`, `consumer/challenge`, `interfaces/api` (Spring Boot HTTP API), `interfaces/cli` (Picocli entrypoint, produces `arcogine.jar`).
-  - `product/interfaces/web/` — React + TypeScript + Vite frontend, tested with Vitest (unit) and Playwright (`product/interfaces/web/e2e/`).
 - `docs/` — architecture, product, development, reference, planning docs, and executable example scenarios (`docs/examples/`). Read `docs/architecture/overview.md` before touching cross-module boundaries.
 - `infra/` — container and dev-environment infrastructure: `infra/docker/` (runtime-only Dockerfiles + Compose) and `infra/dev/claude-cloud.sh` (Claude Cloud environment provisioning).
-- `dist/` — generated, gitignored canonical distribution output (`dist/api/arcogine.jar`, `dist/web/`). Never commit to it directly; it's produced by `./arcogine build`.
+- `dist/` — generated, gitignored canonical distribution output (`dist/api/arcogine.jar`). Never commit to it directly; it's produced by `./arcogine build`.
 
 ## Canonical commands
 
@@ -286,22 +285,21 @@ Run everything from the repo root via `./arcogine`, a thin wrapper that composes
 
 ```bash
 ./arcogine setup        # optional full-development dependency bootstrap, safe to re-run
-./arcogine test         # Java + frontend unit tests
-./arcogine check        # fast quality gates: lint, typecheck, tests, coverage, build
-./arcogine check --full # + Playwright E2E, dist/ build, Docker image build + smoke test, security scans
-./arcogine build        # produce dist/ (dist/api/arcogine.jar, dist/web/) — no Docker
+./arcogine test         # Java unit tests
+./arcogine check        # Java compile, style, tests, and coverage
+./arcogine check --full # + dist/ build, Docker image build + smoke test, security scans
+./arcogine build        # produce dist/api/arcogine.jar — no Docker
 ./arcogine image        # package existing dist/ into runtime Docker images — no source compilation
 ./arcogine up           # build + image + docker compose up
 ./arcogine down         # docker compose down
 ./arcogine run api      # start the Spring Boot API on :3000
-./arcogine run web      # start the Vite dev server on :5173 (`run ui` is a compatibility alias)
 ./arcogine run scenario docs/examples/basic.toml  # run a headless scenario via the native CLI
 ./arcogine snapshot     # generate logs/arcogine-main-<sha>.xml, a whole-repo Repomix snapshot from a clean main checkout
 ```
 
 See [`docs/development/repository-snapshot.md`](docs/development/repository-snapshot.md) for the snapshot command's preconditions, canonical-provenance checks, and authority boundary.
 
-For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, `bootJar`, JMH, dependency audit), `cd product/interfaces/web && npm ...`/`npx ...` (lint, typecheck, build, Playwright), `docker compose ...` (containers), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
+For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, `bootJar`, JMH, dependency audit), `docker compose ...` (containers), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
 
 `./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. On a Windows host, prefer execution environments in this order when available: (1) the devcontainer, (2) a generic ad hoc Docker container, (3) WSL/Git Bash, and (4) native Windows tooling. Before running shell- or toolchain-dependent commands on Windows, inspect the running Docker containers first and identify the container that mounts this repository; do not assume a container name. If no suitable devcontainer is running, try the documented generic Docker workflow, then WSL/Git Bash, and finally native Windows tooling when the command supports it.
 
@@ -320,19 +318,19 @@ it as a build or product failure.
 
 **Always use `./gradlew` from `product/`, never a globally installed `gradle`.** The wrapper pins the exact build version in `product/gradle/wrapper/gradle-wrapper.properties`; a system Gradle install can silently diverge from it.
 
-Docker only packages prebuilt artifacts from `dist/` (see `infra/docker/api.Dockerfile`, `infra/docker/web.Dockerfile`) — it never compiles Java or frontend source. `./arcogine build` must run before `./arcogine image`.
+Docker only packages the prebuilt API artifact from `dist/` (see `infra/docker/api.Dockerfile`) — it never compiles Java source. `./arcogine build` must run before `./arcogine image`.
 
-`./arcogine setup` is an optional convenience for developers who want the full local dependency set (frontend packages, Playwright Chromium, and resolved Gradle dependencies); it is not a prerequisite for inspecting the repository or doing a narrow task. Agents must use the existing environment where practical and install only the tooling or dependencies the current task requires. Do not run setup automatically or turn it into a general-purpose toolchain manager. Environment-specific capabilities such as Docker and security scanners must not gate unrelated work.
+`./arcogine setup` is an optional convenience for developers who want resolved Gradle dependencies; it is not a prerequisite for inspecting the repository or doing a narrow task. Agents must use the existing environment where practical and install only the tooling or dependencies the current task requires. Do not run setup automatically or turn it into a general-purpose toolchain manager. Environment-specific capabilities such as Docker and security scanners must not gate unrelated work.
 
 ## Validating changes
 
-Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching only Java (`product/{types,simulation,domains,agents,consumer,interfaces/api,interfaces/cli}`) needs only the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a change touching only the frontend (`product/interfaces/web/`) needs only its gates (`cd product/interfaces/web && npm run lint && npx tsc --noEmit && npm run test:coverage && npm run build`); a documentation-only change needs neither. When a change spans both, or you can't tell whether it's narrow, run `./arcogine check`, which runs both unconditionally. For anything touching the API-web contract or E2E flows, also run `cd product/interfaces/web && npx playwright test` (or `./arcogine check --full`) — Playwright's own config builds/starts the API jar and web dev server via `webServer`, but the jar must already be built once (`cd product && ./gradlew :cli:bootJar`) for a clean checkout.
+Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching Java (`product/{types,governance,simulation,domains,agents,consumer,interfaces/api,interfaces/cli}`) needs the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a documentation-only change needs neither. Use `./arcogine check` when the repository-wide Java gate is appropriate, and `./arcogine check --full` when distribution, container, or security behavior is in scope.
 
 When finishing an implementation task, report the validation commands and tools used, the outcome of each, and any validation that was unavailable, skipped, or only partially completed. Do not summarize a partially completed validation as a full pass.
 
 ## Do not edit
 
-- `product/**/build/`, `product/interfaces/web/node_modules/`, `product/interfaces/web/coverage/`, `product/interfaces/web/dist/` — generated output.
+- `product/**/build/` — generated output.
 - `dist/` — generated distribution output, not committed.
 - `product/gradle/wrapper/gradle-wrapper.jar` and `.properties` — regenerate via `./gradlew wrapper`, don't hand-edit.
 - `.devcontainer/devcontainer-lock.json` — feature version lockfile, regenerated by the Dev Containers CLI.
@@ -340,7 +338,7 @@ When finishing an implementation task, report the validation commands and tools 
 ## Conventions worth knowing
 
 - **Gradle** has one true source: `product/gradle/wrapper/gradle-wrapper.properties`. Both `gradlew` and `gradlew.bat` read it, and no Gradle is installed via the devcontainer feature — don't add one back.
-- **Java and Node distinguish compatibility floors from preferred environments.** JDK 21 is a fully supported development runtime: Java sources compile with `--release 21` and CI runs on JDK 21, while the preferred devcontainer currently uses JDK 25 and the API runtime image uses Temurin 25. The frontend's Node support contract lives in `product/interfaces/web/package.json` (`^22.22.2 || ^24.15.0 || ^26.0.0`); its floor is imposed by the current jsdom 30 test environment and transitive Undici requirements, not by the devcontainer. CI pins Node 22.22.2 to exercise that floor, while the preferred devcontainer currently uses Node 24. Do **not** mechanically bump CI and devcontainer versions together. Raising or lowering a supported bound requires concrete build/test evidence and coordinated updates to the Java release or Node engine contract, Claude provisioning validation, CI floor, and current documentation. Preferred devcontainer/runtime versions may move independently as long as they remain compatible.
+- **Java compatibility and preferred environments are separate.** JDK 21 is a fully supported development runtime: Java sources compile with `--release 21` and CI runs on JDK 21, while the preferred devcontainer currently uses JDK 25 and the API runtime image uses Temurin 25. Node may be present for repository tooling, but there is no product/frontend Node support contract.
 - **Trivy and Gitleaks** are environment/security tools pinned independently in the devcontainer and CI. When intentionally changing either tool version, grep the repository for the old version and keep the relevant devcontainer/CI install sites aligned.
 - Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and partly enforced by `interfaces/api`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain or touching `IntegratedHandler`.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture/overview.md`.

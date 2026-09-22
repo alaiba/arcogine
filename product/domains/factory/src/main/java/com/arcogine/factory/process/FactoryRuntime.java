@@ -66,8 +66,8 @@ import java.util.stream.Stream;
  * this type's responsibility (docs/architecture/runtime-contract.md §8): {@link
  * #drainSupportedEvents()} returns and
  * clears only the events accumulated since it was last called, so a caller wanting durable replay
- * owns that retention itself. Persistence/recovery/checkpoint/replay semantics and consumer
- * (SSE/frontend) migration remain later work on this supported boundary.
+ * owns that retention itself. Persistence/recovery/checkpoint/replay semantics for consumers of
+ * this supported boundary remain later work.
  */
 public class FactoryRuntime {
 

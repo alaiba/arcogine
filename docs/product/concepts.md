@@ -1,6 +1,6 @@
 # Arcogine — Concepts
 
-This page explains what Arcogine simulates and how to interpret what you see in the UI. Read this before diving into scenarios.
+This page explains what Arcogine simulates and how to interpret the current simulation model and its exposed facts.
 
 This document describes the **current factory-simulation experience** — one current mode of engaging with Arcogine, not the complete Arcogine product ontology. See the [Product Charter](charter.md) for the enduring product vision.
 
@@ -87,13 +87,13 @@ Changing the offer price only affects **future** orders — evaluated the next t
 
 Each order locks in its unit price **at the moment it's created**, using whatever the offer price was at that instant. That price stays on the immutable order for its entire lifecycle and never changes, even if the offer price moves while the associated job is still in production. An order created at $10 is still worth `quantity x $10` when it finishes, no matter what the offer price is by then.
 
-The KPI dashboard's completed-sales figure (`completedSalesValue` in the API) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the offer price happens to be right now.
+The API's completed-sales figure (`completedSalesValue`) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the offer price happens to be right now.
 
 This is a deliberate product decision, not sophistication in accounting: "Completed sales value" is an operational number (how much value has this factory shipped), not a claim about recognized revenue. Arcogine has a small, separate Finance domain (a minimal double-entry ledger) that owns financial concepts like cash and a formally-recorded sales balance — under its current, deliberately simple immediate-settlement policy those numbers happen to match the operational figure above, but they answer a different question ("what has been financially recorded" vs. "what value has completed production") and aren't guaranteed to stay equal if Finance's policy evolves. See [`docs/architecture/overview.md`](../architecture/overview.md#pricing-orders-and-money-offerprice-vs-orderprice) for the full OfferPrice/OrderPrice model and the "Commercial, Operational, and Financial Truth" section for the Finance domain. Remaining runtime work is tracked in [`docs/planning/factory-simulation-engine-readiness.md`](../planning/factory-simulation-engine-readiness.md), which is planning guidance rather than architectural authority.
 
 ## KPIs (Key Performance Indicators)
 
-The dashboard shows four primary metrics, aligned with ISO 22400 definitions:
+The current simulation exposes four primary performance facts, aligned with ISO 22400 terminology where applicable:
 
 | KPI | What it measures | What to watch for |
 |-----|-----------------|-------------------|
@@ -112,36 +112,6 @@ The **Sales Agent** is an automated decision-maker that observes KPIs and adjust
 - Lowers the price when the factory has spare capacity
 
 You can toggle the agent on and off at any time. This lets you compare manual control against the agent's strategy, or use the agent as a starting point and fine-tune from there.
-
-## Baselines
-
-You can **save a baseline** — a snapshot of the current KPI state — at any point during a run. Baselines let you:
-
-- Record the state before making a change
-- Compare two different strategies on the same scenario
-- Track whether your interventions are actually improving things
-
-The UI supports up to 3 saved baselines per session.
-
-## The three built-in scenarios
-
-### Basic — learn the controls
-
-A balanced factory with moderate demand. Nothing is broken; use this to understand the UI, the simulation flow, and how the controls work.
-
-**What to try:** Run the sim, watch KPIs stabilize, then try changing the price. Save a baseline, toggle the agent, and compare.
-
-### Overload — manage a crisis
-
-Low starting price drives high demand. The factory can't keep up, so backlog grows and lead times spike. Your job is to stabilize the system.
-
-**What to try:** Raise the price to reduce demand pressure. Observe how backlog and lead time respond. Find the price that balances revenue against capacity.
-
-### Capacity Expansion — structural versus tactical
-
-Same demand pressure as Overload, but with additional machines. Compare whether adding capacity is more effective than tuning price.
-
-**What to try:** Run both Overload and Capacity Expansion with the same strategy, then compare the baselines. Does more hardware beat better pricing?
 
 ## Simulation controls
 

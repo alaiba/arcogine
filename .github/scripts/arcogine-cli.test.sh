@@ -2,7 +2,7 @@
 # Hermetic black-box regression coverage for the public ./arcogine interface.
 # The real wrapper is copied into a temporary git repository and every native
 # tool it dispatches to is replaced with a small logging stub. This protects
-# orchestration behavior without running Gradle, npm, Docker, or the product.
+# orchestration behavior without running Gradle, Docker, or the product.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,32 +50,6 @@ for arg in "$@"; do
 done
 EOF
 
-  cat > "$fake_bin/npm" <<'EOF'
-#!/bin/bash
-set -euo pipefail
-log="${ARCOGINE_TEST_LOG:?}"
-printf 'npm cwd=%s args=' "$PWD" >> "$log"
-for arg in "$@"; do printf '|%s' "$arg" >> "$log"; done
-printf '\n' >> "$log"
-
-if [[ "${ARCOGINE_TEST_NPM_FAIL_ON:-}" == "$*" ]]; then
-  exit 19
-fi
-
-if [[ "$*" == 'run build' && -n "${ARCOGINE_DIST_WEB:-}" && "${ARCOGINE_TEST_OMIT_WEB:-0}" != 1 ]]; then
-  mkdir -p "$ARCOGINE_DIST_WEB"
-  : > "${ARCOGINE_DIST_WEB}/index.html"
-fi
-EOF
-
-  cat > "$fake_bin/npx" <<'EOF'
-#!/bin/bash
-set -euo pipefail
-log="${ARCOGINE_TEST_LOG:?}"
-printf 'npx cwd=%s args=' "$PWD" >> "$log"
-for arg in "$@"; do printf '|%s' "$arg" >> "$log"; done
-printf '\n' >> "$log"
-EOF
 
   cat > "$fake_bin/node" <<'EOF'
 #!/bin/bash
@@ -104,8 +78,6 @@ fi
 last_arg="${!#}"
 if [[ "$last_arg" == 3000 ]]; then
   printf '0.0.0.0:3000\n'
-elif [[ "$last_arg" == 5173 ]]; then
-  printf '0.0.0.0:5173\n'
 fi
 EOF
 
@@ -131,24 +103,20 @@ start_case() {
   FAKE_BIN="$CASE_ROOT/fake-bin"
   TEST_LOG="$CASE_ROOT/invocations.log"
 
-  mkdir -p "$TEST_REPO/product/interfaces/web" "$TEST_REPO/infra/docker" \
+  mkdir -p "$TEST_REPO/product" "$TEST_REPO/infra/docker" \
     "$TEST_REPO/docs/examples" "$FAKE_BIN"
   git init -q "$TEST_REPO"
   EXPECTED_REPO_ROOT="$(git -C "$TEST_REPO" rev-parse --show-toplevel)"
   cp "$SCRIPT_SOURCE" "$TEST_REPO/arcogine"
   chmod +x "$TEST_REPO/arcogine"
   cp "$REPO_ROOT/infra/docker/.env.example" "$TEST_REPO/infra/docker/.env.example"
-  printf '%s\n' '{"engines":{"node":"^22.22.2 || ^24.15.0 || ^26.0.0"}}' \
-    > "$TEST_REPO/product/interfaces/web/package.json"
   : > "$TEST_LOG"
   make_fakes "$FAKE_BIN"
   cp "$FAKE_BIN/gradlew" "$TEST_REPO/product/gradlew"
   chmod +x "$TEST_REPO/product/gradlew"
 
-  unset ARCOGINE_TEST_GRADLE_FAIL_ON ARCOGINE_TEST_NPM_FAIL_ON \
-    ARCOGINE_TEST_OMIT_API ARCOGINE_TEST_OMIT_WEB
+  unset ARCOGINE_TEST_GRADLE_FAIL_ON ARCOGINE_TEST_OMIT_API
   export ARCOGINE_TEST_LOG="$TEST_LOG"
-  export ARCOGINE_TEST_PACKAGE_RANGE='^22.22.2 || ^24.15.0 || ^26.0.0'
   export ARCOGINE_TEST_COMPOSE_OK=1
 }
 
@@ -286,25 +254,16 @@ done
 # Dispatch to the expected native tools.
 start_case setup; run_script setup; record_result 'setup dispatch succeeds' 0
 assert_log_contains 'setup uses the repository Gradle wrapper' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=help"
-assert_log_contains 'setup installs frontend dependencies through npm from web directory' "npm cwd=$TEST_REPO/product/interfaces/web args=|ci"
-assert_log_contains 'setup reaches the explicit Playwright install command' 'npx cwd='
 
 start_case test; run_script test; record_result 'test dispatch succeeds' 0
 assert_log_contains 'test runs Java through the repository wrapper' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=test"
-assert_log_contains 'test runs frontend tests from the web directory' "npm cwd=$TEST_REPO/product/interfaces/web args=|test"
 
 start_case check-fast; run_script check; record_result 'check dispatch succeeds' 0
 assert_log_contains 'check runs the complete Java quality gate through the wrapper' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=compileJava arg=compileTestJava arg=checkstyleMain arg=checkstyleTest arg=test arg=jacocoTestReport arg=jacocoTestCoverageVerification"
-assert_log_contains 'check runs frontend linting and coverage commands' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|lint"
-assert_log_contains 'check runs frontend typechecking through npx' "npx cwd=$TEST_REPO/product/interfaces/web args=|tsc|--noEmit"
-assert_log_contains 'check runs the frontend coverage suite' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|test:coverage"
-assert_log_contains 'check runs the frontend production build' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|build"
 
 start_case check-full; run_script check --full; record_result 'check --full dispatch succeeds' 0
-assert_log_contains 'full check builds the API jar for browser validation' "arg=:cli:bootJar"
-assert_log_contains 'full check reaches Playwright' "npx cwd=$TEST_REPO/product/interfaces/web args=|playwright|test"
 assert_log_contains 'full check refreshes canonical dist before packaging' "arg=:cli:stageDist"
-assert_log_contains 'full check packages both runtime images' 'args=|build|-f'
+assert_log_contains 'full check packages the runtime image' 'args=|build|-f'
 assert_log_contains 'full check starts the Compose smoke sequence' '|up|-d|--wait|--wait-timeout|120'
 assert_log_contains 'full check performs health probes' 'curl cwd='
 assert_log_contains 'full check reaches the dependency and image scans' 'trivy cwd='
@@ -316,11 +275,6 @@ assert_log_contains 'snapshot reaches the repository snapshot tool' "node cwd=$T
 start_case run-api; run_script run api; record_result 'run api dispatch succeeds' 0
 assert_log_contains 'run api uses the backend development command' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=:cli:bootRun arg=--args=serve"
 
-start_case run-web; run_script run web; record_result 'run web dispatch succeeds' 0
-assert_log_contains 'run web uses the frontend development server from web directory' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|dev"
-
-start_case run-ui; run_script run ui; record_result 'run ui compatibility alias dispatches successfully' 0
-assert_log_contains 'run ui is equivalent to run web' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|dev"
 
 # Scenario paths are normalized by the wrapper and passed as one native CLI argument.
 start_case scenario-relative
@@ -344,46 +298,30 @@ start_case build-success
 mkdir -p "$TEST_REPO/dist"
 printf 'stale\n' > "$TEST_REPO/dist/stale.txt"
 run_script build
-record_result 'build succeeds when both canonical artifacts are produced' 0
+record_result 'build succeeds when the canonical artifact is produced' 0
 assert_absent 'build removes stale dist output' "$TEST_REPO/dist/stale.txt"
 assert_file 'build produces the canonical API artifact' "$TEST_REPO/dist/api/arcogine.jar"
-assert_file 'build produces the canonical web artifact' "$TEST_REPO/dist/web/index.html"
 assert_log_contains 'build dispatches the staged Java artifact command' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=:cli:stageDist"
-assert_log_contains 'build dispatches the frontend production build' "npm cwd=$TEST_REPO/product/interfaces/web args=|run|build"
 
 start_case build-missing-api
 export ARCOGINE_TEST_OMIT_API=1
 run_script build
 record_result 'build fails when the API artifact is absent' 1 'build did not produce'
 
-start_case build-missing-web
-export ARCOGINE_TEST_OMIT_WEB=1
-run_script build
-record_result 'build fails when the web artifact is absent' 1 'build did not produce'
 
 # Image preconditions are checked before either image build is dispatched.
 start_case image-missing-api
-mkdir -p "$TEST_REPO/dist/web"
-: > "$TEST_REPO/dist/web/index.html"
 run_script image
 record_result 'image fails when the API artifact is absent' 1 'arcogine.jar not found'
 assert_log_not_contains 'missing API precondition prevents Docker image builds' 'args=|build'
 
-start_case image-missing-web
+
+start_case image-success
 mkdir -p "$TEST_REPO/dist/api"
 : > "$TEST_REPO/dist/api/arcogine.jar"
 run_script image
-record_result 'image fails when the web artifact is absent' 1 'index.html not found'
-assert_log_not_contains 'missing web precondition prevents Docker image builds' 'args=|build'
-
-start_case image-success
-mkdir -p "$TEST_REPO/dist/api" "$TEST_REPO/dist/web"
-: > "$TEST_REPO/dist/api/arcogine.jar"
-: > "$TEST_REPO/dist/web/index.html"
-run_script image
-record_result 'image dispatch succeeds with canonical artifacts' 0
+record_result 'image dispatch succeeds with canonical artifact' 0
 assert_log_contains 'image builds the API runtime image from dist/api' "args=|build|-f|$EXPECTED_REPO_ROOT/infra/docker/api.Dockerfile|-t|arcogine-api:ci|$EXPECTED_REPO_ROOT/dist/api"
-assert_log_contains 'image builds the web runtime image from dist/web' "args=|build|-f|$EXPECTED_REPO_ROOT/infra/docker/web.Dockerfile|-t|arcogine-ui:ci|$EXPECTED_REPO_ROOT/dist/web"
 
 # Up either performs the complete prerequisite path or explicitly skips it.
 start_case up-rebuild
@@ -405,7 +343,6 @@ start_case fail-fast-test
 export ARCOGINE_TEST_GRADLE_FAIL_ON=test
 run_script test
 record_nonzero 'Java test failure propagates'
-assert_log_not_contains 'Java test failure prevents frontend tests' 'npm cwd='
 
 start_case fail-fast-up-build
 export ARCOGINE_TEST_GRADLE_FAIL_ON=:cli:stageDist

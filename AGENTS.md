@@ -57,6 +57,7 @@ Some repository tasks have additional repository-owned operating contracts.
 
 - **Work planning:** when asked to re-ground initiative progress, decide what to work on next, prioritize open work, identify blocked versus ready slices, identify safe parallel lanes, or generate a handoff prompt for a recommended next slice, read and follow [`.github/agents/work-planner.agent.md`](.github/agents/work-planner.agent.md) in addition to this file.
 - **Dependency maintenance:** when asked to process, apply, remediate, or sweep dependency updates or Dependabot pull requests, read and follow [`.github/agents/dependency-maintainer.agent.md`](.github/agents/dependency-maintainer.agent.md) in addition to this file.
+- **Continuous improvement:** when asked to assess the health of Arcogine's engineering practices, decide which improvement practice is worth running next, or identify opportunities to simplify or strengthen repository-owned standard work, read and follow [`.github/agents/continuous-improvement.agent.md`](.github/agents/continuous-improvement.agent.md) in addition to this file.
 - **Consistency review:** when asked to perform a repository consistency
   review, documentation/architecture reconciliation, periodic consistency
   sweep, or to operate as the consistency agent, read and follow
@@ -96,9 +97,9 @@ major cross-cutting architecture/status transition or evidence of broader semant
 drift.
 
 Delivery-process retrospectives run only when explicitly requested. Do not assess or
-recommend one during `.?`, normal repository grounding, continuous-improvement
-discussion, or repository planning unless the user explicitly asks to run or assess a
-retrospective.
+recommend one during `.?` or normal repository grounding. An explicit Continuous
+Improvement assessment may recommend a retrospective when current evidence makes that
+formal measurement useful, but it does not run the retrospective or create due state.
 
 ## Temporary delivery coordinates and durable documentation
 

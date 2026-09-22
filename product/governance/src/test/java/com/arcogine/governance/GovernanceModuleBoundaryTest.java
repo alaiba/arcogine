@@ -57,20 +57,13 @@ class GovernanceModuleBoundaryTest {
     }
 
     @Test
-    void productionGovernanceCodeNeverReferencesG5PlusConcepts() throws IOException {
-        // Regression guard for the conformance-evaluation/findings slice: production code must
-        // not smuggle in external-evidence, authorization, deployment, workflow, or a severity taxonomy
-        // ahead of their own gates.
+    void productionGovernanceCodeNeverReferencesLaterConcepts() throws IOException {
+        // Regression guard for later Governance capabilities: production code must not smuggle
+        // authorization, deployment, workflow, or a severity taxonomy ahead of their own gates.
         // Matches actual type declarations only (not javadoc prose describing these as non-goals).
         Path mainSourceRoot = moduleRoot().resolve("src/main/java");
         List<String> forbiddenDeclarations =
                 List.of(
-                        "class EvidenceUse",
-                        "record EvidenceUse(",
-                        "interface EvidenceUse",
-                        "class Evidence ",
-                        "record Evidence(",
-                        "interface Evidence ",
                         "class Severity",
                         "record Severity(",
                         "enum Severity",
@@ -87,7 +80,7 @@ class GovernanceModuleBoundaryTest {
                 for (String token : forbiddenDeclarations) {
                     assertFalse(
                             content.contains(token),
-                            file + " declares out-of-scope external-evidence-or-later concept: " + token);
+                            file + " declares out-of-scope later Governance concept: " + token);
                 }
             }
         }

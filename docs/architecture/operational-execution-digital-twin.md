@@ -21,7 +21,7 @@ This capability is a sibling of Factory Design / Engine Readiness and Governance
 
 The current implementation is simulation-first and does not execute real-world commands. Nothing in this document changes that current-state claim.
 
-Governance durable fingerprint/revision history, semantic change/impact, requirement/assertion, and initial conformance/finding contracts are implemented and authoritative. Operational work that needs those responsibilities must consume them rather than inventing substitutes. Governance evidence-use/authorization capabilities remain future dependencies where applicable.
+Governance durable fingerprint/revision history, semantic change/impact, requirement/assertion, initial conformance/finding contracts, and the headless evidence-use capability are implemented and authoritative. Operational work that needs those responsibilities must consume them rather than inventing substitutes. Governance authorization and Operational producer integration remain future dependencies where applicable.
 
 Engine runtime observation/event core/headless closure is also implemented. `RunId`, supported runtime observations/events, and `EngineSemanticsVersion` remain Engine-owned concepts. Distribution hardening and durable replay/reconnect remain separate future Engine work; Operational Execution must not assume they already exist.
 

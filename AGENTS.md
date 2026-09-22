@@ -169,7 +169,7 @@ When repository persistence is available, any agent producing a complete prompt 
 
 Before handing an implementation branch to independent PR review, inspect branch-added files, remove transient execution and handoff artifacts that are not maintained repository state, and run the tracked-workspace check. The implementation branch must delete its prompt before final review/merge readiness; temporary material accidentally placed outside `workspace/` still requires semantic cleanup.
 
-Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`) and `dist/` continue to write to their configured locations per the canonical build commands.
+Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`) continues to write to its configured location per the canonical build commands.
 
 ## GitHub message provenance and attribution
 
@@ -262,32 +262,25 @@ Agents never merge pull requests. `READY TO MERGE` hands control to the reposito
 ## Layout
 
 - `product/` — all executable product source.
-  - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `simulation`, `domains/{factory,economy,finance}`, `agents`, `consumer/challenge`, `interfaces/api` (Spring Boot HTTP API), `interfaces/cli` (Picocli entrypoint, produces `arcogine.jar`).
+  - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `simulation`, `domains/{factory,economy,finance}`, `agents`, `consumer/challenge`, `consumer/challenge-factory-integration-test`, `architecture-conformance-test`. There is currently no application server, HTTP API, or CLI product surface — retained executable evidence is tests, conformance checks, and benchmarks; a future outward consumer is introduced from the supported runtime contract (`docs/architecture/runtime-contract.md`) when a concrete product need exists.
 - `docs/` — architecture, product, development, reference, planning docs, and executable example scenarios (`docs/examples/`). Read `docs/architecture/overview.md` before touching cross-module boundaries.
-- `infra/` — container and dev-environment infrastructure: `infra/docker/` (runtime-only Dockerfiles + Compose) and `infra/dev/claude-cloud.sh` (Claude Cloud environment provisioning).
-- `dist/` — generated, gitignored canonical distribution output (`dist/api/arcogine.jar`). Never commit to it directly; it's produced by `./arcogine build`.
+- `infra/` — dev-environment infrastructure: `infra/dev/claude-cloud.sh` (Claude Cloud environment provisioning) and related repository tooling.
 
 ## Canonical commands
 
-Run everything from the repo root via `./arcogine`, a thin wrapper that composes the project's own tools (Gradle wrapper, npm/npx, Docker Compose):
+Run everything from the repo root via `./arcogine`, a thin wrapper that composes the project's own tools (Gradle wrapper, npm/npx):
 
 ```bash
 ./arcogine setup        # optional full-development dependency bootstrap, safe to re-run
 ./arcogine test         # Java unit tests
 ./arcogine check        # Java compile, style, tests, and coverage
-./arcogine check --full # + dist/ build, Docker image build + smoke test, security scans
-./arcogine build        # produce dist/api/arcogine.jar — no Docker
-./arcogine image        # package existing dist/ into runtime Docker images — no source compilation
-./arcogine up           # build + image + docker compose up
-./arcogine down         # docker compose down
-./arcogine run api      # start the Spring Boot API on :3000
-./arcogine run scenario docs/examples/basic.toml  # run a headless scenario via the native CLI
+./arcogine check --full # + dependency audit, secret scan
 ./arcogine snapshot     # generate logs/arcogine-main-<sha>.xml, a whole-repo Repomix snapshot from a clean main checkout
 ```
 
 See [`docs/development/repository-snapshot.md`](docs/development/repository-snapshot.md) for the snapshot command's preconditions, canonical-provenance checks, and authority boundary.
 
-For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, `bootJar`, JMH, dependency audit), `docker compose ...` (containers), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
+For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, JMH, dependency audit), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
 
 `./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. On a Windows host, prefer execution environments in this order when available: (1) the devcontainer, (2) a generic ad hoc Docker container, (3) WSL/Git Bash, and (4) native Windows tooling. Before running shell- or toolchain-dependent commands on Windows, inspect the running Docker containers first and identify the container that mounts this repository; do not assume a container name. If no suitable devcontainer is running, try the documented generic Docker workflow, then WSL/Git Bash, and finally native Windows tooling when the command supports it.
 
@@ -306,28 +299,25 @@ it as a build or product failure.
 
 **Always use `./gradlew` from `product/`, never a globally installed `gradle`.** The wrapper pins the exact build version in `product/gradle/wrapper/gradle-wrapper.properties`; a system Gradle install can silently diverge from it.
 
-Docker only packages the prebuilt API artifact from `dist/` (see `infra/docker/api.Dockerfile`) — it never compiles Java source. `./arcogine build` must run before `./arcogine image`.
-
-`./arcogine setup` is an optional convenience for developers who want resolved Gradle dependencies; it is not a prerequisite for inspecting the repository or doing a narrow task. Agents must use the existing environment where practical and install only the tooling or dependencies the current task requires. Do not run setup automatically or turn it into a general-purpose toolchain manager. Environment-specific capabilities such as Docker and security scanners must not gate unrelated work.
+`./arcogine setup` is an optional convenience for developers who want resolved Gradle dependencies; it is not a prerequisite for inspecting the repository or doing a narrow task. Agents must use the existing environment where practical and install only the tooling or dependencies the current task requires. Do not run setup automatically or turn it into a general-purpose toolchain manager. Environment-specific capabilities such as security scanners must not gate unrelated work.
 
 ## Validating changes
 
-Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching Java (`product/{types,governance,simulation,domains,agents,consumer,interfaces/api,interfaces/cli}`) needs the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a documentation-only change needs neither. Use `./arcogine check` when the repository-wide Java gate is appropriate, and `./arcogine check --full` when distribution, container, or security behavior is in scope.
+Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching Java (`product/{types,governance,simulation,domains,agents,consumer,architecture-conformance-test}`) needs the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a documentation-only change needs neither. Use `./arcogine check` when the repository-wide Java gate is appropriate, and `./arcogine check --full` when dependency-audit or secret-scan behavior is in scope.
 
 When finishing an implementation task, report the validation commands and tools used, the outcome of each, and any validation that was unavailable, skipped, or only partially completed. Do not summarize a partially completed validation as a full pass.
 
 ## Do not edit
 
 - `product/**/build/` — generated output.
-- `dist/` — generated distribution output, not committed.
 - `product/gradle/wrapper/gradle-wrapper.jar` and `.properties` — regenerate via `./gradlew wrapper`, don't hand-edit.
 - `.devcontainer/devcontainer-lock.json` — feature version lockfile, regenerated by the Dev Containers CLI.
 
 ## Conventions worth knowing
 
 - **Gradle** has one true source: `product/gradle/wrapper/gradle-wrapper.properties`. Both `gradlew` and `gradlew.bat` read it, and no Gradle is installed via the devcontainer feature — don't add one back.
-- **Java compatibility and preferred environments are separate.** JDK 21 is a fully supported development runtime: Java sources compile with `--release 21` and CI runs on JDK 21, while the preferred devcontainer currently uses JDK 25 and the API runtime image uses Temurin 25. Node may be present for repository tooling, but there is no product/frontend Node support contract.
+- **Java compatibility and preferred environments are separate.** JDK 21 is a fully supported development runtime: Java sources compile with `--release 21` and CI runs on JDK 21, while the preferred devcontainer currently uses JDK 25. Node may be present for repository tooling, but there is no product/frontend Node support contract.
 - **Trivy and Gitleaks** are environment/security tools pinned independently in the devcontainer and CI. When intentionally changing either tool version, grep the repository for the old version and keep the relevant devcontainer/CI install sites aligned.
-- Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and partly enforced by `interfaces/api`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain or touching `IntegratedHandler`.
+- Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture/overview.md`.
-- Example scenarios under `docs/examples/` are educational/executable documentation, not runtime assets — they must never be bundled into the JAR, `dist/`, or Docker images.
+- Example scenarios under `docs/examples/` are educational/executable documentation, not runtime assets — there is currently no distributable artifact for them to be bundled into.

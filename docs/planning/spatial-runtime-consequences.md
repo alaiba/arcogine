@@ -162,7 +162,7 @@ Two constraints follow for implementers:
 1. do not cite these fixtures as evidence that the ownership question is closed;
 2. do not harden these specific values into *new* outward contracts or DTOs while the research is
    open — see the KPI ownership note in
-   [Runtime Observation and Event Delivery](runtime-observation-event-delivery.md).
+   [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md#3-current-implementation-queue).
 
 `combinedQueueDepth` is deliberately listed separately and is **not** in this category: it is derived
 but result-affecting, because its exact arithmetic decides assignment. It remains Engine semantics
@@ -423,8 +423,10 @@ reset creates a new `RunId` without changing semantic interpretation.
 
 REST/SSE migration, transfer state/events, generic provenance framework.
 
-**Convergence note:** PLAN-ENG-4-D outward API/SSE migration should consume this settled runtime provenance
-shape rather than migrate the old envelope and immediately revise it.
+**Convergence note:** outward consumer convergence is retired as a standing objective (see
+[Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md#3-current-implementation-queue)); a future
+outward adapter should consume this settled runtime provenance shape rather than introduce an envelope that
+immediately needs revising.
 
 ### PLAN-ENG-5-C1 — Pure transfer arithmetic
 
@@ -679,10 +681,12 @@ consumes this provenance; it does not own Engine semantics.
 
 Future twin/reconciliation analytics retain Engine interpretation provenance independently of the durable operational identity and independently of subject correspondence. These answer different questions: which Engine interpretation produced a result; which accountable operational continuation a record belongs to; and which external and Arcogine subjects are authoritatively related. The Operational continuity contract is adopted and defines that identity's referent and rules, while deliberately deferring its final type name and representation; `EngineSemanticsVersion` and `RunId` remain Engine-owned and must never be derived from it, or it from them.
 
-### API/SSE PLAN-ENG-4 transport migration — REQUIRED BEFORE THAT MIGRATION, NOT BEFORE HEADLESS PLAN-GOV-5
+### A future outward transport migration — SEQUENCE IF AND WHEN ONE IS INTRODUCED
 
-Land PLAN-ENG-5-B2's final runtime provenance shape before PLAN-ENG-4-D migrates supported events and observations
-outward. This avoids immediate wire-contract churn. PLAN-ENG-4-D is not a prerequisite for headless PLAN-ENG-5.
+If a future outward adapter migrates supported events and observations outward, it should land after
+PLAN-ENG-5-B2's final runtime provenance shape, to avoid immediate wire-contract churn. No such migration is
+currently a prerequisite for headless PLAN-ENG-5, since outward consumer convergence is retired as a standing
+objective (see [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md#3-current-implementation-queue)).
 
 ## 9. Acceptance / readiness
 

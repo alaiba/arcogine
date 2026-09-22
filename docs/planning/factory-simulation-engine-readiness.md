@@ -1,9 +1,9 @@
 # Factory Simulation Engine Readiness Implementation Plan
 
-> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete. Outward convergence and independent same-semantics work remain admitted; remaining spatial runtime consequences are dependency-blocked where they harden the current durability or Factory V1/V2 model pending READY research and reconciliation.
+> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete. Outward consumer convergence is retired as an objective — a future consumer is demand-triggered, not standing backlog. Remaining spatial runtime consequences are dependency-blocked where they harden the current durability or Factory V1/V2 model pending READY research and reconciliation.
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
-> **Related:** [Factory Design Capability](factory-design-capability.md), [session-control semantics](../architecture/engine-semantics-v1.md#12-session-and-control-semantics), [unit-work decomposition semantics](../architecture/engine-semantics-v1.md#3-unit-work-decomposition-semantics), [runtime observation/event contract](../architecture/runtime-contract.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
+> **Related:** [Factory Design Capability](factory-design-capability.md), [session-control semantics](../architecture/engine-semantics-v1.md#12-session-and-control-semantics), [unit-work decomposition semantics](../architecture/engine-semantics-v1.md#3-unit-work-decomposition-semantics), [runtime observation/event contract](../architecture/runtime-contract.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
 
 ## 1. Runtime boundary
 
@@ -94,20 +94,9 @@ provenance propagation remains separate admitted work and is not implied by this
 
 Only the following Engine work is currently admitted.
 
-### PLAN-ENG-4-D — Outward consumer convergence
+Outward consumer convergence is no longer an outstanding Engine objective. PLAN-ENG-4-A/B/C (runtime identity/supported observation, the supported `RuntimeEvent` contract, and headless acceptance closure) are the completed supported runtime observation/event capability — see [runtime observation/event contract](../architecture/runtime-contract.md) and [Architecture Overview](../architecture/overview.md#event-dispatch-architecture). The product decision is no longer to migrate the retired legacy API/SSE/CLI toward this contract; those adapters were retired outright rather than migrated. A future outward consumer will be introduced from this supported contract when a concrete product need exists, scoped at that time rather than carried here as standing backlog.
 
-Use [Runtime Observation/Event Delivery](runtime-observation-event-delivery.md) as the detailed implementation companion.
-
-Required outcome:
-
-- legacy API/SSE projects supported runtime semantics rather than internal scheduler events;
-- outward DTOs remain projections and never re-enter domain decision paths;
-- CLI/reference/headless paths either consume the supported runtime contract directly or document a deliberate broader orchestration adapter;
-- current-state API/reference documentation changes only with shipped behavior.
-
-The API/SSE and CLI/reference changes may land separately when that keeps reviews narrow.
-
-The legacy KPI path is the one ownership-sensitive part of this convergence: `/api/kpis` and the snapshot KPI list currently derive from internal `EventLog`, which the runtime observation/event contract §8 and the external representation policy keep outside the supported contract. Migrating them must consume [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md) rather than define another formula set at the transport layer. Observation/event transport migration itself is unaffected and may proceed.
+The KPI-ownership caution this superseded plan recorded remains true independent of any adapter: `com.arcogine.core.kpi` computes from internal `EventLog`/`SimTime`, which the runtime observation/event contract §8 and the external representation policy keep outside the supported contract. A future analytical export must consume [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md) rather than define another formula set over `EventLog` at whatever transport layer is introduced.
 
 ### PLAN-ENG-5 — Spatial runtime consequences
 
@@ -146,7 +135,7 @@ Required outcome:
 
 If achieving the performance target requires different assignments, queue order, backlog semantics, or observable results, stop and return to research: that is Engine-semantics evolution, not PLAN-ENG-6.
 
-PLAN-ENG-6 is admitted performance hardening, not a prerequisite for outward convergence or spatial semantics. Schedule it after its semantic/conformance prerequisites when it does not compete with higher-priority Engine work.
+PLAN-ENG-6 is admitted performance hardening, not a prerequisite for spatial semantics or for a future outward consumer. Schedule it after its semantic/conformance prerequisites when it does not compete with higher-priority Engine work.
 
 ## 4. Dependency order
 
@@ -162,16 +151,14 @@ PLAN-ENG-3 complete
     |
 PLAN-ENG-W1 complete
     |
-PLAN-ENG-4 A/B/C complete
-    |\
-    | +--> PLAN-ENG-4-D outward convergence
+PLAN-ENG-4 A/B/C complete (outward consumer convergence retired as an objective)
     |
-    +----> PLAN-ENG-5 spatial consequences
+PLAN-ENG-5 spatial consequences
 ```
 
-Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and fixed Engine semantics identity is implemented. Those landed facts remain current evidence, not a reason to bypass the new durability/composition investigations. Unimplemented V2 canonical identity/coexistence and dependent spatial-runtime slices are now dependency-blocked as described in the detailed plan. PLAN-ENG-4-D and PLAN-ENG-6 may proceed when their own contracts are independent of the held questions.
+Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and fixed Engine semantics identity is implemented. Those landed facts remain current evidence, not a reason to bypass the new durability/composition investigations. Unimplemented V2 canonical identity/coexistence and dependent spatial-runtime slices are now dependency-blocked as described in the detailed plan. PLAN-ENG-6 may proceed when its own contracts are independent of the held questions.
 
-PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right. The current blocker for the held spatial slices is the semantic-contract maturity and Factory composition research above. Outward convergence should consume only provenance that is already settled independently of those questions rather than introducing a transport contract that immediately depends on a disputed semantic boundary.
+PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right. The current blocker for the held spatial slices is the semantic-contract maturity and Factory composition research above.
 
 ## 5. Determinism and provenance invariants
 

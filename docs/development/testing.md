@@ -1,63 +1,59 @@
 # Testing Guide
 
-This document covers all test categories in Arcogine, how to run them, and the rationale behind the testing architecture. **`./arcogine`** is the canonical entry point for cross-project quality gates and common build/run workflows from the repository root; anything more specific runs through its own native tool (`./gradlew`, `npm`/`npx`, `docker compose`, `trivy`, `gitleaks`) as noted per category below. For environment setup and the normal local-run procedure, see the root [README](../../README.md#quick-start).
+This document covers all test categories in Arcogine, how to run them, and the rationale behind the testing architecture. **`./arcogine`** is the canonical entry point for cross-project quality gates and common workflows from the repository root; anything more specific runs through its own native tool (`./gradlew`, `npm`/`npx`, `trivy`, `gitleaks`) as noted per category below. For environment setup and the normal local-run procedure, see the root [README](../../README.md#quick-start).
 
 This is about testing and quality-verifying Arcogine's own software — a different concept from the [Product Charter](/docs/product/charter.md)'s "Verify" mode, which describes a future capability for verifying a *user's* production model or configuration against their own objectives and constraints. Don't conflate the two terminologically: this document is entirely about the former.
+
+Arcogine currently has no application server, HTTP API, or CLI product surface. Its retained executable evidence is Java unit/property/determinism/acceptance tests, architecture conformance rules, benchmarks, and repository tooling, all run directly through the Java build. A future outward consumer will be introduced from the then-current supported runtime contract (see [`docs/architecture/runtime-contract.md`](../architecture/runtime-contract.md)) when a concrete product need exists, with its own test layer added at that point.
 
 ## Quick reference
 
 ```bash
 ./arcogine check         # fast gates (before pushing): Java compile, Checkstyle, tests, coverage
-./arcogine check --full  # everything: check + dist build + Docker smoke + security scans
+./arcogine check --full  # everything: check + dependency audit + secret scan
 ./arcogine --help        # list all ./arcogine commands
 ```
 
 Full repository setup is optional. For task-oriented work, run the narrowest
 applicable native command and install only its dependencies; documentation
-inspection does not need setup, backend validation does not need Node or
-Docker. `./arcogine setup` is a convenience for developers who want
-and resolved Gradle dependencies together. It does not provision toolchains.
+inspection does not need setup, backend validation does not need Node. `./arcogine setup` is a convenience for developers who want
+resolved Gradle dependencies. It does not provision toolchains.
 
 ## Quality gates
 
 | Command | Scope |
 |---------|-------|
 | `./arcogine check` | Java compile (`--release 21`, `-Xlint:all -Werror`), Checkstyle, JUnit tests, Jacoco coverage gates |
-| `./arcogine check --full` | Everything above, plus canonical `dist/` build, Docker image build/smoke, and security scans (dependency audit, Trivy image scan, Gitleaks) |
+| `./arcogine check --full` | Everything above, plus security scans (dependency audit via Trivy, secret scan via Gitleaks) |
 
 `./arcogine check --full` is a complete local certification command, so it
-fails up front with a scoped diagnostic when Docker, Docker Compose, Trivy,
-Gitleaks, or `curl` is unavailable. This is intentional rather than a silent
-skip. Use `./arcogine check` or the native commands below when the task does not
-require container/security certification.
+fails up front with a scoped diagnostic when Trivy or Gitleaks is unavailable.
+This is intentional rather than a silent skip. Use `./arcogine check` or the
+native commands below when the task does not require security certification.
 
 ### Command model
 
-`./arcogine` is the small cross-project developer interface. It covers setup, tests and quality gates, canonical distribution/image construction, local stack lifecycle, development servers, and headless scenario execution:
+`./arcogine` is the small cross-project developer interface. It covers setup, tests and quality gates, and repository snapshotting:
 
 ```text
-setup | test | check [--full] | build | image | up | down
-run api | run scenario PATH
+setup | test | check [--full]
 snapshot
 ```
 
 It deliberately does not wrap every subsystem operation. Use the native tool for more specific work:
 
-- **Java** (`cd product && ./gradlew <task>`): `compileJava`/`compileTestJava`, `checkstyleMain`/`checkstyleTest`, `test`, `jacocoTestReport`/`jacocoTestCoverageVerification`, `:cli:bootJar`, `:simulation:jmh`, `cyclonedxBom`
-- **Containers** (`./arcogine build`/`image`/`up`/`down`, or `docker compose` directly against `infra/docker/compose.yaml`)
-- **Security** (`trivy image`/`trivy sbom`, `gitleaks detect`)
+- **Java** (`cd product && ./gradlew <task>`): `compileJava`/`compileTestJava`, `checkstyleMain`/`checkstyleTest`, `test`, `jacocoTestReport`/`jacocoTestCoverageVerification`, `:simulation:jmh`, `cyclonedxBom`
+- **Security** (`trivy sbom`, `gitleaks detect`)
 
 ## Prerequisites and version policy
 
-Arcogine separates the **minimum compatibility contract** from the versions in the preferred developer and runtime environments:
+Arcogine separates the **minimum compatibility contract** from the versions in the preferred developer environment:
 
 - **Java:** JDK 21 is a first-class supported development runtime, not merely a compilation target. Every Java compile task uses `--release 21`, which fixes the accepted language level, Java API surface, and generated bytecode to Java 21 even when the compiler itself comes from a newer supported JDK. CI runs the complete backend gate on Temurin 21 to prove the actual floor; the preferred devcontainer currently uses JDK 25.
 - **Gradle:** always use the wrapper at `product/gradlew`; the exact build version is pinned by `product/gradle/wrapper/gradle-wrapper.properties`. No system Gradle is required.
 - **Node.js:** used by repository tooling; there is no product Node compatibility contract.
-- **Docker** and Docker Compose: required for container checks, optional for ordinary native development.
-- **Runtime Java:** the API container currently runs on Eclipse Temurin 25 JRE. The runtime image version is independent of the Java 21 compilation-compatibility floor.
 
-All Java commands run through the Gradle wrapper under `product/`. Raising a minimum Java or Node version requires updating the compatibility declaration, CI floor, Claude provisioning validation, and current documentation together; preferred devcontainer/runtime versions may move independently while they remain compatible.
+All Java commands run through the Gradle wrapper under `product/`. Raising a minimum Java or Node version requires updating the compatibility declaration, CI floor, Claude provisioning validation, and current documentation together; the preferred devcontainer version may move independently while it remains compatible.
 
 ### Capability and network matrix
 
@@ -65,10 +61,7 @@ All Java commands run through the Gradle wrapper under `product/`. Raising a min
 |----------|--------------------|-------------|
 | Documentation/repository inspection | Git and text tooling only | None |
 | Backend compile, Checkstyle, tests, coverage | JDK 21+ and the Gradle wrapper | Needed only when the pinned Gradle distribution or dependencies are not already cached |
-| Canonical `./arcogine build` | Java/backend build capability | Only for uncached dependencies |
-| Image build and Compose smoke test | Docker Engine, Docker Compose, and `curl` (used to health-check the running containers), plus a previously built `dist/` | May be needed to pull runtime base images |
 | Java SBOM scan | JDK/Gradle and Trivy | Needed for uncached Gradle dependencies and Trivy's vulnerability database |
-| Image vulnerability scan | Docker, built images, and Trivy | Needed for Trivy's vulnerability database |
 | Secret scan | Gitleaks | None after the scanner is installed |
 | GitHub Actions workflow validation | Bash, `curl`, `tar`, and `sha256sum` | Required to download the pinned actionlint release from GitHub Releases |
 
@@ -121,7 +114,7 @@ Notes:
 
 ### 3. Java unit tests (JUnit 6)
 
-Tests across the Gradle modules cover typed IDs and `SimTime`, scenario schema and TOML loading, the scheduler/runner/KPI/event-log core, factory model and runtime semantics, demand and pricing, finance, agents, Challenge Readiness, the HTTP API contract, and the headless CLI. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
+Tests across the Gradle modules cover typed IDs and `SimTime`, scenario schema and TOML loading, the scheduler/runner/KPI/event-log core, factory model and runtime semantics, demand and pricing, finance, agents, and Challenge Readiness. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
 
 `cd product && ./gradlew test`.
 
@@ -129,43 +122,27 @@ Tests across the Gradle modules cover typed IDs and `SimTime`, scenario schema a
 
 Invariants (monotonic time, no event loss, machine concurrency limits, queue FIFO ordering) are expressed as JUnit 6 parameterized/randomized-seed tests in `simulation` and `domains/factory`. They run as part of `./gradlew test`.
 
-### 5. Integration tests
-
-`interfaces/api` tests use `@SpringBootTest(webEnvironment = RANDOM_PORT)` and a `WebTestClient` built via `WebTestClient.bindToServer()` against the live server. They exercise the full HTTP contract (scenario load, run/pause/step, price/machine/agent commands, KPIs, topology, SSE), so they double as the API integration layer. Part of `./gradlew test`.
-
-### 6. Determinism tests
+### 5. Determinism tests
 
 `simulation` verifies that identical seeds produce identical event logs and KPIs. The rewrite uses `java.util.Random`/`SplittableRandom` (not Rust's ChaCha8), so determinism is asserted as **reproducibility** — two Java runs with the same seed are byte-identical — and any golden values are captured from Java runs, never copied from the Rust implementation.
 
-### 7. Java coverage (Jacoco) + per-module gates
+### 6. Java coverage (Jacoco) + per-module gates
 
-`cd product && ./gradlew test jacocoTestReport jacocoTestCoverageVerification` (part of `./arcogine check`). Each module declares a `jacocoTestCoverageVerification` gate (a `LINE` minimum, set a few points below measured actual) wired into `check`, so removing a module's tests fails the build instead of passing vacuously. CI uploads the per-module `jacocoTestReport.xml` to Codecov.
+`cd product && ./gradlew test jacocoTestReport jacocoTestCoverageVerification` (part of `./arcogine check`). Each module with production sources declares a `jacocoTestCoverageVerification` gate (a `LINE` minimum, set a few points below measured actual) wired into `check`, so removing a module's tests fails the build instead of passing vacuously. Test-only proof modules (`challenge-factory-integration-test`, `architecture-conformance-test`) have no production sources to cover and do not wire this gate. CI uploads the per-module `jacocoTestReport.xml` to Codecov.
 
-### 8. Benchmarks (JMH)
+### 7. Benchmarks (JMH)
 
 `cd product && ./gradlew :simulation:jmh` — runs the JMH microbenchmarks in `simulation`, ported from the Rust Criterion suites: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario runtime (run a 1000-tick scenario, and load+validate). Sources live in `product/simulation/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). ASM is pinned explicitly for JMH bytecode generation; benchmark sources use the same Java 21 release compatibility as the rest of the build, regardless of whether the build JDK is 21 or a supported newer JDK.
 
-### 9. Java dependency audit (CycloneDX SBOM + Trivy)
+### 8. Java dependency audit (CycloneDX SBOM + Trivy)
 
-`cd product && ./gradlew cyclonedxBom && trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/build/reports/cyclonedx/bom.json` (part of `./arcogine check --full`) — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `product/build/reports/cyclonedx/bom.json`, ~179 components) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`) and complements the Trivy image scan of the built API image (see below). (`trivy fs` is not used: it does not introspect a Spring Boot fat jar's nested `BOOT-INF/lib` jars without Trivy's separate Java DB.)
+`cd product && ./gradlew cyclonedxBom && trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/build/reports/cyclonedx/bom.json` (part of `./arcogine check --full`) — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `product/build/reports/cyclonedx/bom.json`) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`). (`trivy fs` is not used: it does not introspect nested dependency jars the way Trivy's Java DB does over an SBOM.)
 
-Shipped-runtime CVEs in `tomcat-embed-core` (3 CRITICAL + 3 HIGH, then 3 further CRITICAL) were remediated by overriding the Spring-managed version — `extra["tomcat.version"] = "11.0.25"` in `api`/`cli`. Non-shipped Netty CVEs (test-only, pulled by `spring-boot-starter-webflux`'s `WebTestClient`) are remediated the same way where practical — `extra["netty.version"] = "4.2.16.Final"` in `interfaces/api` — rather than suppressed, so the whole-build SBOM audit stays clean without relying on `.trivyignore`.
+A `.trivyignore` at the repo root suppresses **only non-shipped** findings that aren't otherwise remediated by a version override, each justified inline (currently just build-tooling-only `plexus-utils`). Shipped-runtime CVEs are never suppressed and will fail the gate.
 
-A `.trivyignore` at the repo root suppresses **only non-shipped** findings that aren't otherwise remediated by a version override, each justified inline: `netty-codec-*` (test-only — pulled by `spring-boot-starter-webflux`, the `WebTestClient` reactive client) and `plexus-utils` (build tooling). Shipped-runtime CVEs are never suppressed and will fail the gate.
+(OWASP dependency-check was considered but requires an NVD API key and a large database download; Trivy's vulnerability DB is lighter to provision for a source-only audit.)
 
-(OWASP dependency-check was considered but requires an NVD API key and a large database download; Trivy reuses the vulnerability DB already present from the image scans.)
-
-### 10. Docker build and smoke
-
-### 17. Docker build and smoke
-
-`./arcogine build` (produces `dist/`) then `./arcogine image` (builds runtime images from `dist/`), then the smoke sequence (start via `./arcogine up --no-rebuild`, health-check `:3000/api/health`, tear down via `./arcogine down`) — all part of `./arcogine check --full`. `infra/docker/api.Dockerfile` is runtime-only: it packages the already-built `dist/api/arcogine.jar` and never compiles source.
-
-### 11. Container image scans
-
-`docker build -f infra/docker/api.Dockerfile -t arcogine-api:ci dist/api && trivy image ... arcogine-api:ci` scans the built API image for CRITICAL/HIGH vulnerabilities. It runs as part of `./arcogine check --full`.
-
-### 12. Secret scan
+### 9. Secret scan
 
 `gitleaks detect --source . --config .github/security/gitleaks.toml --verbose` (part of `./arcogine check --full`) — scans the repo for leaked secrets.
 
@@ -175,10 +152,8 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 
 | Job | Command | What it checks |
 |-----|---------|----------------|
-| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight and provisioning tooling, PR lifecycle resolution, retrospective window/counting logic, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/docker/docs-only surfaces for conditional jobs |
+| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight tooling, PR lifecycle resolution, retrospective window/counting logic, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/docs-only surfaces for conditional jobs |
 | Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
-| Build dist/ | `./arcogine build` | Canonical `dist/api/arcogine.jar`, uploaded as a CI artifact |
-| Docker | `./arcogine image`, then `trivy image` on both images, then the smoke sequence | Runtime image build from `dist/`, CRITICAL/HIGH vulnerability scan, startup health-check |
 | Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
 | `gate` | Reads every other job's result from the `needs` context | The single stable, always-run aggregate status check (`CI / gate`) — passes if every required job succeeded or was intentionally skipped, fails if any failed or was cancelled |
@@ -187,17 +162,16 @@ The Java-related build jobs use Temurin 21 to exercise the supported Java floor;
 
 ### Change-aware execution
 
-The `classify` job inspects the changed files (PR diff against its base, or the pushed commit range on `main`) and sets `backend`/`docker`/`docs_only` outputs consumed by `if:` conditions on the other jobs:
+The `classify` job inspects the changed files (PR diff against its base, or the pushed commit range on `main`) and sets `backend`/`docs_only` outputs consumed by `if:` conditions on the other jobs:
 
-- A change under `.github/workflows/`, `arcogine`, Gradle build files, or `infra/docker/` other than `infra/docker/.env.example` is treated as touching **every** executable subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
-- A change confined to `product/{types,simulation,domains,agents,interfaces/api,interfaces/cli}/` sets `backend`.
-- A change confined to `infra/docker/.env.example` sets `docker`.
-- A change touching **only** `docs/`, `README.md`, or other `*.md` files (and none of the above) sets `docs_only`, which skips Java tests and the dist/Docker/security jobs.
-- **Fail-safe default:** any changed file that is neither documentation nor a recognized subsystem/CI path (e.g. `product/gradlew`, `.trivyignore`, a brand-new top-level directory) is "unknown" and forces `backend`/`docker` both `true` — an unrecognized path can never fall through to `docs_only`'s skip behavior by accident.
+- A change under `.github/workflows/`, `arcogine`, or Gradle build files is treated as touching **every** executable subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
+- A change confined to `product/{types,governance,simulation,domains,agents,consumer,architecture-conformance-test}/` sets `backend`.
+- A change touching **only** `docs/`, `README.md`, or other `*.md` files (and none of the above) sets `docs_only`, which skips the Java and dependency-audit jobs.
+- **Fail-safe default:** any changed file that is neither documentation nor a recognized subsystem/CI path (e.g. `product/gradlew`, `.trivyignore`, a brand-new top-level directory) is "unknown" and forces `backend` `true` — an unrecognized path can never fall through to `docs_only`'s skip behavior by accident.
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
 - `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
 
-The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the four `key=true|false` outputs), separated from the git/GitHub-context plumbing that builds the file list in the workflow step. `.github/scripts/classify-changes.test.sh` is a small table-driven test over that script — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression in the classifier fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
+The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from the git/GitHub-context plumbing that builds the file list in the workflow step. `.github/scripts/classify-changes.test.sh` is a small table-driven test over that script — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression in the classifier fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
 
 ### Repository-tooling suites
 
@@ -206,7 +180,6 @@ The always-running `classify` job also runs these repository-tooling checks. Roo
 ```bash
 bash .github/scripts/classify-changes.test.sh
 bash .github/scripts/arcogine-preflight.test.sh
-bash .github/scripts/arcogine-env.test.sh
 bash .github/scripts/arcogine-cli.test.sh
 bash .github/scripts/check-pr-disposition.test.sh
 python3 .github/scripts/check-transient-workspace.test.py
@@ -217,7 +190,7 @@ node --test infra/dev/delivery-retrospective.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
 ```
 
-The disposition suite also validates the workflow definitions through the pinned `check-actions-workflows.sh` helper. The shell suites use temporary repositories and fake executables where they need to exercise constrained-environment behavior; they do not install project dependencies or require Docker.
+The disposition suite also validates the workflow definitions through the pinned `check-actions-workflows.sh` helper. The shell suites use temporary repositories and fake executables where they need to exercise constrained-environment behavior; they do not install project dependencies.
 
 The transient-workspace suite covers `.github/scripts/check-transient-workspace.py`, which rejects any tracked file under the branch-local `workspace/` custody root while allowing similarly named paths elsewhere. Run it locally with:
 
@@ -272,7 +245,7 @@ bash .github/scripts/check-actions-workflows.sh
 
 ### Scheduled and manual security runs
 
-A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same jobs used on PRs/`main` — no separate/divergent security workflow — so the SBOM scan, Docker image scan, and secret scan all pick up newly published CVEs even when nothing in the repository changed. `build-dist`/`docker` still run first on these triggers because the image scans need a freshly built image to scan.
+A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same jobs used on PRs/`main` — no separate/divergent security workflow — so the SBOM scan and secret scan both pick up newly published CVEs even when nothing in the repository changed.
 
 ### Aggregate CI gate
 
@@ -286,45 +259,23 @@ The workflow sets `concurrency: group: ${{ github.workflow }}-${{ github.event.p
 
 ### Why this structure
 
-The test layers preserve four properties:
+The test layers preserve three properties:
 
 1. **Deterministic behavior** across identical seeds and scenarios.
-2. **Behavioral parity** between the headless CLI path and the API-driven runtime.
-3. **Fast feedback** for module-local logic.
-4. **Layered confidence** from unit, property, integration, API, and container checks.
-
-Route matrices and runtime error handling are validated in the `interfaces/api` smoke tests.
+2. **Fast feedback** for module-local logic.
+3. **Layered confidence** from unit, property, determinism, and acceptance checks.
 
 ### Handler delegation contract
 
-Factory event semantics have a single implementation authority: `FactoryHandler`. Both `interfaces/cli` (headless) and `interfaces/api` (server) use the same dispatch order:
-
-1. Pricing
-2. Demand
-3. Factory
-4. Agent evaluation (when applicable)
-
-Tests protect parity between the headless and API paths. If you change event-handling behavior, ensure both runtime paths stay aligned.
-
-### Testing SSE
-
-The `/api/events/stream` endpoint is a servlet `SseEmitter`. The controller sends a priming SSE comment on connect so the response headers flush immediately (otherwise a client blocks waiting for headers while the simulation is idle). Tests assert status/content-type directly, and the connection-limit test holds streams open via Reactor subscriptions (disposed in a `finally`) so the semaphore limit is reached.
+Factory event semantics have a single implementation authority: `FactoryHandler`, dispatched in a fixed order (Pricing, Demand, Factory, Agent evaluation when applicable). This dispatch order is durable regardless of what, if anything, consumes `FactoryRuntime`'s supported surface — a future outward adapter (CLI, HTTP, or otherwise) must reuse `FactoryHandler`'s dispatch rather than reimplementing it, which is exactly the duplication the retired `interfaces/cli`'s `HeadlessHandler` had accumulated and this repository does not want to repeat.
 
 ### Security verification tests
 
-The hardening checks live in the regular `interfaces/api` suite (`ApiSmokeTest`) and the `interfaces/cli` suite, not a separate pipeline.
-
-These are the maintained criteria those tests verify. Each is stated as the behavior that must hold, so a test and the requirement it exercises name the same thing; the `// --- Security: … ---` comment groups in `ApiSmokeTest` correspond to the entries below. When a criterion changes, change it here and in the test together — a criterion with no executable check, or a check tracing to a requirement that is not recorded here, is the decay this list exists to prevent.
+Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite (the retired `interfaces/api`'s `ApiSmokeTest` and `interfaces/cli`'s bind-address test are gone with those modules). The controls that remain are enforced at the domain/scenario level and verified there:
 
 | Criterion | Must hold | Exercised by |
 |---|---|---|
-| Request body size limit | A request body over 1 MiB to `/api/*` is rejected with `413`, **including** when it arrives with no `Content-Length` (chunked transfer encoding). Bodies under the limit are unaffected, whether or not their length is declared. | `oversizedBodyReturnsPayloadTooLarge`, `oversizedBodyWithoutContentLengthReturnsPayloadTooLarge`, `bodyUnderLimitIsAccepted`, `bodyUnderLimitWithoutContentLengthIsAccepted` |
-| Scenario load error propagation | An invalid scenario is rejected with `400` and an error naming the offending input, rather than being partially applied. | `loadInvalidTomlReturnsBadRequest`, `loadScenarioWithZeroMaxTicksReturnsBadRequest`, `loadScenarioWithMissingEquipmentReturnsBadRequest` |
-| Handler error surfaces in snapshot | A handler error is observable in the snapshot rather than being silently swallowed. | `handlerErrorSurfacesInSnapshot` |
-| SSE connection limit | Concurrent `/api/events/stream` connections are capped at 64; the next connection is rejected with `503` rather than exhausting server resources. | `sseConnectionLimitReturns503` |
-| Economy/price input validation | Out-of-range economy/price input is rejected with `400` instead of being applied to simulation state. | `extremePriceReturnsBadRequest` |
-| Default bind address | The native CLI/API binds `127.0.0.1` by default, so exposure beyond localhost is an explicit choice. | `ArcogineCommandTest.defaultBindAddressIsLocalhost` |
+| Scenario load error propagation | An invalid scenario is rejected with a descriptive error naming the offending input, rather than being partially applied. | `ScenarioLoaderTest`, `SimRunnerTest` (`product/simulation`) |
+| Economy/price input validation | Out-of-range economy/price input is rejected rather than applied to simulation state. | `PricingStateTest` (`product/domains/economy`) |
 
-**Configured but not verified.** CORS is configured in `WebConfig` (restricted by `CORS_ALLOWED_ORIGIN`, permissive when unset), and the nginx image configures `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. Neither has an executable check. Treat them as deployment settings, not verified controls, until those checks exist.
-
-This list covers the controls that exist today at the current local/single-user exposure. It is not a claim that the API is safe to expose to untrusted principals — see [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits that no amount of hardening removes, and for the readiness criteria that must be met before hosted or multi-user exposure.
+See [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits the retired API and CLI had, recorded so a future outward adapter is designed with them in mind rather than repeating them by default, and for the readiness criteria that must be met before any future hosted or multi-user exposure.

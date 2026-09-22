@@ -75,9 +75,7 @@ OpenAPI is the intended machine-readable description format for stable Arcogine 
 
 OpenAPI schemas follow accepted Arcogine domain semantics; they do not drive those semantics.
 
-The current manually documented API remains current-state authority until a versioned supported HTTP surface is migrated and OpenAPI generation/validation is deliberately established.
-
-In particular, the supported `RuntimeObservation` / `RuntimeEvent` domain contract must stabilize before the legacy HTTP/SSE surface is promoted into a durable external compatibility contract.
+Arcogine currently has no HTTP surface to document; a previous manually documented API was retired along with the adapter it described. In particular, the supported `RuntimeObservation` / `RuntimeEvent` domain contract must stabilize before any future HTTP/SSE surface is promoted into a durable external compatibility contract, and OpenAPI generation/validation should be established when that surface is introduced rather than documented by hand again.
 
 ## Runtime transports and integration envelopes project `RuntimeEvent`; they do not define it
 

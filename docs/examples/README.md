@@ -30,10 +30,6 @@ See:
 - `product/types/src/main/java/com/arcogine/types/scenario/ScenarioConfig.java` for schema
 - `product/simulation/src/main/java/com/arcogine/core/scenario/ScenarioLoader.java` for loader details
 
-## Starter loop for first-time users
+## Current execution surface
 
-1. Open the UI and load one of the built-in scenarios from the welcome overlay.
-2. Run or Step to establish baseline dynamics.
-3. Save a baseline before making interventions.
-4. Change one control at a time (price, machine state, agent).
-5. Compare against saved baseline metrics and iterate.
+Arcogine currently has no application server, HTTP API, or CLI product surface to load these scenarios through interactively. They remain educational/executable documentation of the scenario format rather than a runnable starter loop today. A future outward consumer will be introduced from the supported runtime contract when a concrete product need exists.

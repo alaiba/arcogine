@@ -2,7 +2,7 @@
 # Hermetic black-box regression coverage for the public ./arcogine interface.
 # The real wrapper is copied into a temporary git repository and every native
 # tool it dispatches to is replaced with a small logging stub. This protects
-# orchestration behavior without running Gradle, Docker, or the product.
+# orchestration behavior without running Gradle or the product.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -41,15 +41,7 @@ if [[ -n "${ARCOGINE_TEST_GRADLE_FAIL_ON:-}" ]]; then
     fi
   done
 fi
-
-for arg in "$@"; do
-  if [[ "$arg" == ':cli:stageDist' && "${ARCOGINE_TEST_OMIT_API:-0}" != 1 ]]; then
-    mkdir -p "$PWD/../dist/api"
-    : > "$PWD/../dist/api/arcogine.jar"
-  fi
-done
 EOF
-
 
   cat > "$fake_bin/node" <<'EOF'
 #!/bin/bash
@@ -63,25 +55,7 @@ if [[ "${1:-}" == '-p' ]]; then
 fi
 EOF
 
-  cat > "$fake_bin/docker" <<'EOF'
-#!/bin/bash
-set -euo pipefail
-log="${ARCOGINE_TEST_LOG:?}"
-printf 'docker cwd=%s args=' "$PWD" >> "$log"
-for arg in "$@"; do printf '|%s' "$arg" >> "$log"; done
-printf '\n' >> "$log"
-
-if [[ "${1:-}" == compose && "${2:-}" == version ]]; then
-  [[ "${ARCOGINE_TEST_COMPOSE_OK:-1}" == 1 ]]
-  exit
-fi
-last_arg="${!#}"
-if [[ "$last_arg" == 3000 ]]; then
-  printf '0.0.0.0:3000\n'
-fi
-EOF
-
-  for tool in curl trivy gitleaks; do
+  for tool in trivy gitleaks; do
     cat > "$fake_bin/$tool" <<'EOF'
 #!/bin/bash
 set -euo pipefail
@@ -103,21 +77,18 @@ start_case() {
   FAKE_BIN="$CASE_ROOT/fake-bin"
   TEST_LOG="$CASE_ROOT/invocations.log"
 
-  mkdir -p "$TEST_REPO/product" "$TEST_REPO/infra/docker" \
-    "$TEST_REPO/docs/examples" "$FAKE_BIN"
+  mkdir -p "$TEST_REPO/product" "$TEST_REPO/docs/examples" "$FAKE_BIN"
   git init -q "$TEST_REPO"
   EXPECTED_REPO_ROOT="$(git -C "$TEST_REPO" rev-parse --show-toplevel)"
   cp "$SCRIPT_SOURCE" "$TEST_REPO/arcogine"
   chmod +x "$TEST_REPO/arcogine"
-  cp "$REPO_ROOT/infra/docker/.env.example" "$TEST_REPO/infra/docker/.env.example"
   : > "$TEST_LOG"
   make_fakes "$FAKE_BIN"
   cp "$FAKE_BIN/gradlew" "$TEST_REPO/product/gradlew"
   chmod +x "$TEST_REPO/product/gradlew"
 
-  unset ARCOGINE_TEST_GRADLE_FAIL_ON ARCOGINE_TEST_OMIT_API
+  unset ARCOGINE_TEST_GRADLE_FAIL_ON
   export ARCOGINE_TEST_LOG="$TEST_LOG"
-  export ARCOGINE_TEST_COMPOSE_OK=1
 }
 
 run_script() {
@@ -157,18 +128,6 @@ record_nonzero() {
   fi
 }
 
-assert_output_contains() {
-  local name="$1" text="$2"
-  cases=$((cases + 1))
-  if grep -qF -- "$text" <<< "$LAST_OUTPUT"; then
-    echo "PASS: $name"
-  else
-    echo "FAIL: $name (output did not contain '$text')"
-    printf '  output: %s\n' "$LAST_OUTPUT"
-    failures=$((failures + 1))
-  fi
-}
-
 assert_log_contains() {
   local name="$1" text="$2"
   cases=$((cases + 1))
@@ -177,40 +136,6 @@ assert_log_contains() {
   else
     echo "FAIL: $name (invocation log did not contain '$text')"
     printf '  log:\n%s\n' "$(cat "$TEST_LOG")"
-    failures=$((failures + 1))
-  fi
-}
-
-assert_log_not_contains() {
-  local name="$1" text="$2"
-  cases=$((cases + 1))
-  if ! grep -qF -- "$text" "$TEST_LOG"; then
-    echo "PASS: $name"
-  else
-    echo "FAIL: $name (invocation log unexpectedly contained '$text')"
-    printf '  log:\n%s\n' "$(cat "$TEST_LOG")"
-    failures=$((failures + 1))
-  fi
-}
-
-assert_file() {
-  local name="$1" path="$2"
-  cases=$((cases + 1))
-  if [[ -f "$path" ]]; then
-    echo "PASS: $name"
-  else
-    echo "FAIL: $name (missing '$path')"
-    failures=$((failures + 1))
-  fi
-}
-
-assert_absent() {
-  local name="$1" path="$2"
-  cases=$((cases + 1))
-  if [[ ! -e "$path" ]]; then
-    echo "PASS: $name"
-  else
-    echo "FAIL: $name (unexpected '$path')"
     failures=$((failures + 1))
   fi
 }
@@ -226,17 +151,7 @@ invalid_cases=(
   'test|extra'
   'check|--full extra'
   'check|--bogus'
-  'build|extra'
   'snapshot|extra'
-  'image|extra'
-  'up|--no-rebuild extra'
-  'down|extra'
-  'run|'
-  'run|api extra'
-  'run|scenario'
-  'run|scenario path extra'
-  'run|unknown'
-  'clean|extra'
   '-h|extra'
 )
 for invalid_case in "${invalid_cases[@]}"; do
@@ -262,104 +177,17 @@ start_case check-fast; run_script check; record_result 'check dispatch succeeds'
 assert_log_contains 'check runs the complete Java quality gate through the wrapper' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=compileJava arg=compileTestJava arg=checkstyleMain arg=checkstyleTest arg=test arg=jacocoTestReport arg=jacocoTestCoverageVerification"
 
 start_case check-full; run_script check --full; record_result 'check --full dispatch succeeds' 0
-assert_log_contains 'full check refreshes canonical dist before packaging' "arg=:cli:stageDist"
-assert_log_contains 'full check packages the runtime image' 'args=|build|-f'
-assert_log_contains 'full check starts the Compose smoke sequence' '|up|-d|--wait|--wait-timeout|120'
-assert_log_contains 'full check performs health probes' 'curl cwd='
-assert_log_contains 'full check reaches the dependency and image scans' 'trivy cwd='
+assert_log_contains 'full check runs the Java quality gate' "arg=jacocoTestCoverageVerification"
+assert_log_contains 'full check reaches the dependency audit' 'trivy cwd='
 assert_log_contains 'full check reaches the secret scan' 'gitleaks cwd='
 
 start_case snapshot; run_script snapshot; record_result 'snapshot dispatch succeeds' 0
 assert_log_contains 'snapshot reaches the repository snapshot tool' "node cwd=$TEST_REPO args=|$EXPECTED_REPO_ROOT/infra/dev/repo-snapshot.mjs"
 
-start_case run-api; run_script run api; record_result 'run api dispatch succeeds' 0
-assert_log_contains 'run api uses the backend development command' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=:cli:bootRun arg=--args=serve"
-
-
-# Scenario paths are normalized by the wrapper and passed as one native CLI argument.
-start_case scenario-relative
-relative_scenario='docs/examples/example.toml'
-run_script run scenario "$relative_scenario"
-record_result 'relative scenario path dispatch succeeds' 0
-assert_log_contains 'relative scenario path is rooted at the repository' \
-  "arg=--args=run $EXPECTED_REPO_ROOT/$relative_scenario"
-
-start_case scenario-absolute
-absolute_scenario="$CASE_ROOT/absolute scenario.toml"
-: > "$absolute_scenario"
-run_script run scenario "$absolute_scenario"
-record_result 'absolute scenario path dispatch succeeds' 0
-assert_log_contains 'absolute scenario path is passed unchanged' \
-  "arg=--args=run $absolute_scenario"
-
-# Build invariants: dist is refreshed, both native builds are required, and both
-# canonical artifacts are required before success.
-start_case build-success
-mkdir -p "$TEST_REPO/dist"
-printf 'stale\n' > "$TEST_REPO/dist/stale.txt"
-run_script build
-record_result 'build succeeds when the canonical artifact is produced' 0
-assert_absent 'build removes stale dist output' "$TEST_REPO/dist/stale.txt"
-assert_file 'build produces the canonical API artifact' "$TEST_REPO/dist/api/arcogine.jar"
-assert_log_contains 'build dispatches the staged Java artifact command' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=:cli:stageDist"
-
-start_case build-missing-api
-export ARCOGINE_TEST_OMIT_API=1
-run_script build
-record_result 'build fails when the API artifact is absent' 1 'build did not produce'
-
-
-# Image preconditions are checked before either image build is dispatched.
-start_case image-missing-api
-run_script image
-record_result 'image fails when the API artifact is absent' 1 'arcogine.jar not found'
-assert_log_not_contains 'missing API precondition prevents Docker image builds' 'args=|build'
-
-
-start_case image-success
-mkdir -p "$TEST_REPO/dist/api"
-: > "$TEST_REPO/dist/api/arcogine.jar"
-run_script image
-record_result 'image dispatch succeeds with canonical artifact' 0
-assert_log_contains 'image builds the API runtime image from dist/api' "args=|build|-f|$EXPECTED_REPO_ROOT/infra/docker/api.Dockerfile|-t|arcogine-api:ci|$EXPECTED_REPO_ROOT/dist/api"
-
-# Up either performs the complete prerequisite path or explicitly skips it.
-start_case up-rebuild
-run_script up
-record_result 'up performs rebuild and startup' 0
-assert_log_contains 'ordinary up performs the build stage' "arg=:cli:stageDist"
-assert_log_contains 'ordinary up performs Docker image builds' 'args=|build|-f'
-assert_log_contains 'ordinary up starts Compose after prerequisites' 'args=|compose|--project-directory'
-assert_log_contains 'ordinary up starts the stack' '|up|-d|--wait|--wait-timeout|120'
-
-start_case up-no-rebuild
-run_script up --no-rebuild
-record_result 'up --no-rebuild starts without rebuilding' 0
-assert_log_not_contains 'no-rebuild skips the build stage' 'arg=:cli:stageDist'
-assert_log_not_contains 'no-rebuild skips Docker image builds' 'args=|build|-f'
-assert_log_contains 'no-rebuild still starts Compose' 'args=|compose|--project-directory'
-
 start_case fail-fast-test
 export ARCOGINE_TEST_GRADLE_FAIL_ON=test
 run_script test
 record_nonzero 'Java test failure propagates'
-
-start_case fail-fast-up-build
-export ARCOGINE_TEST_GRADLE_FAIL_ON=:cli:stageDist
-run_script up
-record_nonzero 'build failure prevents later up stages'
-assert_log_not_contains 'failed build prevents image packaging' 'args=|build|-f'
-assert_log_not_contains 'failed build prevents Compose startup' 'args=|up|-d'
-
-# clean owns only the canonical generated distribution directory and accepts no arguments.
-start_case clean
-mkdir -p "$TEST_REPO/dist"
-: > "$TEST_REPO/dist/generated.txt"
-run_script clean
-record_result 'clean succeeds and removes dist' 0
-assert_absent 'clean removes only canonical dist output' "$TEST_REPO/dist"
-run_script clean
-record_result 'clean succeeds when dist is already absent' 0
 
 if [[ "$failures" -gt 0 ]]; then
   echo "$failures assertion(s) failed across $cases checks."

@@ -2,9 +2,9 @@
 
 ## Scope
 
-Arcogine is a simulation engine intended for local development and experimentation. The MVP does not include production-grade authentication, authorization, or data encryption.
+Arcogine is a simulation engine intended for local development and experimentation. It currently has no application server, HTTP API, or CLI product surface -- retained executable evidence is tests, conformance checks, and benchmarks run directly through the Java build. Nothing in the repository today accepts network requests, so there is no production-grade authentication, authorization, or data encryption to describe because there is no running deployable those would apply to.
 
-This document covers how to report a vulnerability, what the current software actually does and does not protect, and what must be true before Arcogine is exposed more widely. It describes today's software honestly; where a requirement belongs to another authority, it points there rather than restating it.
+This document covers how to report a vulnerability, what the current software actually does and does not protect, and what must be true before Arcogine exposes a network-reachable surface again. It describes today's software honestly; where a requirement belongs to another authority, it points there rather than restating it.
 
 Two escalations are deliberately kept apart, because they are different boundaries with different owners:
 
@@ -37,53 +37,31 @@ Dependency vulnerabilities follow a separate, already-owned path: see [Security 
 
 ## Security Posture
 
-Arcogine is local-first by default. Understanding the current posture means separating three different things: controls that exist and are verified, limits that hardening cannot remove, and guidance for deploying anyway.
+Arcogine is local-first by default and, at present, has no network-reachable surface at all: no HTTP API, no CLI-launched server, no container image. The scenario/dependency/secret-scan controls below are the only things this section can describe until a future consumer reintroduces a network surface.
 
-### Implemented controls
-
-These exist in the current software today. Where executable verification exists, the maintained criteria and the tests that verify them are in [`docs/development/testing.md`](../docs/development/testing.md#security-verification-tests). Rows explicitly marked as unverified describe configuration, not observed enforcement.
+### Retained controls
 
 | Control | Behavior |
 |---|---|
-| Default bind address | Native CLI/API binds `127.0.0.1:3000`, so exposure beyond localhost is an explicit choice. Container images keep bind behavior explicit for container networking. |
-| Request body limit | Requests to `/api/*` over 1 MiB are rejected with `413`, including requests sent with chunked transfer encoding and no `Content-Length`. |
-| SSE connection limit | Concurrent `/api/events/stream` connections are capped at 64; further connections get `503` rather than exhausting server resources. |
-| Scenario input validation | Referential and range validation rejects invalid scenarios with `400` rather than partially applying them. |
+| Scenario input validation | Referential and range validation rejects invalid scenarios rather than partially applying them. |
 | Economy value bounds | Out-of-range price/economy input is rejected rather than applied to simulation state. |
-| CORS | Restricted when `CORS_ALLOWED_ORIGIN` is set; permissive (`*`) when unset. Configured, but with no executable check — treat it as a deployment setting rather than a verified control. |
+| Dependency auditing | `./arcogine check --full` runs the CycloneDX SBOM generation and `trivy sbom` scan (see [Security scan ownership](#security-scan-ownership)). |
+| Secret scanning | `gitleaks detect` runs in the same `check --full` pass and in CI. |
 
-### Structural limits that hardening does not remove
+### Structural limits that a future network surface must not reintroduce silently
 
-These are properties of the current architecture. No reverse proxy, TLS terminator, or firewall changes any of them, and they are the reason the current software is not safe to expose to untrusted or multiple principals:
+These were true of the retired HTTP API and CLI server, and are recorded here so a future outward adapter is built with them in mind rather than repeating them by default:
 
-- **No user or principal concept.** The REST API does not require authentication, and there is nothing to authenticate *as*. Authorization, per-user data separation, and audit attribution therefore do not exist and cannot be configured on.
-- **One shared simulation.** Simulation state is a single process-wide `SimThread` singleton. Every client shares one simulation: any caller can load a scenario, run, pause, reset, or change prices under any other caller. This makes multi-user operation structurally impossible today rather than merely unauthenticated.
-- **No scenario resource or cost bounds.** Beyond the request body cap, a scenario is not bounded by the compute or memory it will consume, so an accepted scenario can consume as much as it asks for.
+- **No user or principal concept existed.** The retired REST API did not require authentication, and there was nothing to authenticate *as*.
+- **One shared simulation.** The retired API held simulation state as a single process-wide singleton: every client shared one simulation, with no per-caller isolation.
+- **No scenario resource or cost bounds** beyond a request body cap.
 - **No encryption of scenario files or simulation state at rest.**
 
-These limits are acceptable for a local-only, single-user experimentation tool. They are **not** sufficient for hosted, multi-user, or production-consequential operation.
-
-## Hardening for Network Deployment
-
-If you expose the current simulation service beyond localhost, apply at least:
-
-1. **Bind address** — Use `--addr 127.0.0.1:3000` for native/local runs. For containerized networked runs, configure host binding intentionally and avoid broad accidental exposure.
-
-2. **CORS** — Set `CORS_ALLOWED_ORIGIN=http://your-ui-host:port` to restrict cross-origin access. When unset, CORS is permissive (`*`).
-
-3. **TLS** — Arcogine does not terminate TLS. Place it behind a reverse proxy (nginx, Caddy, or a cloud load balancer) with TLS termination.
-
-4. **Dependency auditing** — Before deployment, run the Java dependency scan (`cd product && ./gradlew cyclonedxBom && trivy sbom ... product/build/reports/cyclonedx/bom.json`) Run `./arcogine check --full` locally for the complete security suite including the Java dependency scan.
-
-5. **Log verbosity** — Set `LOGGING_LEVEL_ROOT=WARN` in production-like environments to reduce log noise.
-
-These controls harden network exposure of the current simulation service. They limit *who can reach it* and *how traffic is carried*. They do not add a user model, isolate one caller's simulation from another's, or bound what a scenario costs to run — see the structural limits above — and they do not satisfy the additional trust, authorization, command-integrity, observation-authenticity, or fail-safe requirements for real-world actuation.
-
-Concretely: applying all five controls above makes it reasonable to expose the service to a trusted operator on a trusted network. It does **not** make it a safe multi-user service, and it does not make it a production-operational one.
+A future outward adapter (HTTP, CLI, or otherwise) should treat closing these gaps as part of its own design, not assume the previous adapter's posture was acceptable to repeat.
 
 ## Before hosted or multi-user exposure
 
-A hosted or multi-user Arcogine is a different product boundary, even when it performs no physical actuation. The absence of the controls below is not a current defect — it matches the current local, single-user scope — but they stop being optional the moment a second principal can reach the same instance.
+A hosted or multi-user Arcogine is a different product boundary, even when it performs no physical actuation, and applies whenever a future consumer reintroduces a network-reachable surface. The absence of the controls below is not a current defect — there is currently no surface for them to apply to — but they stop being optional the moment a second principal can reach the same instance.
 
 Before any hosted or multi-user consumer is treated as safe, these must be explicit, recorded readiness criteria with executable verification, not prose:
 
@@ -101,7 +79,7 @@ This section is a trigger, not a plan. It exists so the question is asked before
 
 Security execution follows the quality-gate contract:
 
-- Scan commands invoke each scanner's native tool directly (`trivy sbom`, `trivy image`, `gitleaks detect`) — locally via `./arcogine check --full`, in CI via the
+- Scan commands invoke each scanner's native tool directly (`trivy sbom`, `gitleaks detect`) — locally via `./arcogine check --full`, in CI via the
   jobs in `.github/workflows/ci.yml` — so all checks are discoverable from the same
   command surface documented in `docs/development/testing.md`.
 - CI remains responsible for installing scanner binaries/tools and enforcing policy
@@ -109,7 +87,7 @@ Security execution follows the quality-gate contract:
 
 **Responding to findings.** A finding inside an open pull request is owned by that PR's author: it blocks the PR and is fixed, or explicitly accepted, before merge. A finding from the **daily scheduled scan** has no PR and therefore no author, so it is the maintainer's to triage on the next working day — decide whether it is real, then fix it, add a reasoned `.trivyignore` entry, or record why no action is needed. A scheduled-scan failure is not resolved by a later green run: an unrelated merge can change the scanned artifact and clear the red without anyone having looked at the finding, which is exactly what happened to the 2026-09-09 failure. Close the finding deliberately, not by waiting for the signal to disappear.
 
-**Dependabot posture.** Dependabot **alerts** are enabled, and are the surface that reports known vulnerabilities in resolved dependencies. They are deliberately kept alongside the CI scanners rather than replaced by them: the Trivy SBOM and image scans run with `--ignore-unfixed`, so a CRITICAL vulnerability with no available fix is invisible to the CI gate by design, and alerts are what still surface it. Dependabot **version updates** (weekly Gradle/Actions, grouped) are configured separately in `.github/dependabot.yml`. Remediation for anything these surface is owned by the dependency maintainer (`.github/agents/dependency-maintainer.agent.md`) either way.
+**Dependabot posture.** Dependabot **alerts** are enabled, and are the surface that reports known vulnerabilities in resolved dependencies. They are deliberately kept alongside the CI scanners rather than replaced by them: the Trivy SBOM scan runs with `--ignore-unfixed`, so a CRITICAL vulnerability with no available fix is invisible to the CI gate by design, and alerts are what still surface it. Dependabot **version updates** (weekly Gradle/Actions, grouped) are configured separately in `.github/dependabot.yml`. Remediation for anything these surface is owned by the dependency maintainer (`.github/agents/dependency-maintainer.agent.md`) either way.
 
 For the full security verification test list, see `docs/development/testing.md`.
 

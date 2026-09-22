@@ -5,7 +5,7 @@
 
 Arcogine is building toward purpose-built ways to design, understand, simulate, verify, operate, and improve a production system — all grounded in one executable model of the business. See [`docs/product/charter.md`](docs/product/charter.md) for the full product vision and enduring principles.
 
-**The current implementation is an early, deterministic, simulation-focused slice of that vision.** It does not yet include digital-twin connectivity, live operational execution, or multi-user/production deployment — see [Security](.github/SECURITY.md) and [Architecture](docs/architecture/overview.md) for exactly what exists today.
+**The current implementation is an early, deterministic, simulation-focused slice of that vision.** It has no application server, HTTP API, or CLI product surface today — retained executable evidence is tests, conformance checks, and benchmarks; a future outward consumer is introduced from the supported runtime contract when a concrete product need exists. It does not yet include digital-twin connectivity, live operational execution, or multi-user/production deployment — see [Security](.github/SECURITY.md) and [Architecture](docs/architecture/overview.md) for exactly what exists today.
 
 ## What is Arcogine today?
 
@@ -45,7 +45,7 @@ git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the folder in VS Code with Dev Containers. The preferred development container provides JDK 25 and keeps the Gradle cache plus GitHub CLI configuration in named Docker volumes.
+Open the folder in VS Code with Dev Containers. The preferred development container provides JDK 25 and keeps the Gradle cache plus GitHub CLI configuration in a named Docker volume.
 
 On a brand-new machine, authenticate GitHub once inside the container:
 
@@ -56,64 +56,29 @@ gh auth setup-git
 
 The container reuses that credential state across rebuilds.
 
-To start the current HTTP API:
+### Native development
 
-```bash
-./arcogine run api
-```
-
-For headless execution, use `./arcogine run scenario PATH`.
-
-### Other execution environments
-
-- **Docker Compose:** `./arcogine build && ./arcogine up`
-- **Native development:** optionally run `./arcogine setup`, then use the API or headless commands above.
+Optionally run `./arcogine setup`, then use the quality gates below.
 
 The devcontainer is one supported environment, not the development contract. `./arcogine setup` resolves the Java dependency/toolchain surface; it is not required for repository inspection or narrow documentation work.
 
 ### Development toolchain policy
 
 - **Java compatibility baseline:** JDK 21 is a first-class development runtime. Java compilation uses `--release 21`; CI runs on JDK 21 while the preferred devcontainer currently uses JDK 25.
-- **Runtime Java:** the API runtime image currently uses Eclipse Temurin 25 JRE. Runtime-image JDK and Java compilation compatibility are deliberately separate concerns.
 - **Node.js:** Node remains repository tooling for scripts such as snapshot/retrospective utilities, but Arcogine no longer has a product/frontend Node compatibility contract.
 
 Raising a supported Java minimum remains a deliberate repository change with coordinated CI and documentation updates.
 
 ## Running the current simulation
 
-The retained application surfaces are headless scenario execution and the local HTTP API.
-
-### Headless mode
-
-```bash
-java -jar dist/api/arcogine.jar run docs/examples/basic.toml
-```
-
-Without building `dist/` first:
-
-```bash
-./arcogine run scenario docs/examples/basic.toml
-```
-
-### HTTP API
-
-Start the local API with:
-
-```bash
-./arcogine run api
-```
-
-The API remains a current local simulation interface while Arcogine's consumer-neutral Engine contracts evolve independently. See [API Reference](docs/reference/api.md) for the current endpoints.
+Arcogine currently has no application server, HTTP API, or CLI product surface — retained executable evidence is Java tests, architecture conformance checks, and benchmarks, run directly through the Java build (see [Quality gates](#quality-gates) below). A future outward consumer will be introduced from the supported [runtime contract](docs/architecture/runtime-contract.md) when a concrete product need exists.
 
 ## Technology stack
 
 | Layer | Technology |
 |-------|-----------|
 | Simulation engine | Java (Java 21 compatibility baseline; preferred devcontainer JDK 25) |
-| HTTP API | Spring Boot 4 + Spring MVC |
-| CLI | Picocli |
 | Build | Gradle (Kotlin DSL), via the `product/gradlew` wrapper |
-| Container | Eclipse Temurin 25 JRE |
 
 ## Documentation
 
@@ -121,7 +86,6 @@ The API remains a current local simulation interface while Arcogine's consumer-n
 |----------|----------------|
 | [Product Charter](docs/product/charter.md) | Enduring product vision and principles — start here to understand what Arcogine is ultimately becoming |
 | [Concepts](docs/product/concepts.md) | How the current simulation works, KPIs, agents, scenarios |
-| [API Reference](docs/reference/api.md) | Every HTTP endpoint with curl examples |
 | [Architecture](docs/architecture/overview.md) | Design philosophy, module structure, determinism contract |
 | [Full docs index](docs/README.md) | Everything else: testing, standards, vision, security |
 
@@ -131,7 +95,7 @@ The API remains a current local simulation interface while Arcogine's consumer-n
 ./arcogine setup         # optional full-development dependency bootstrap
 ./arcogine test          # Java unit tests
 ./arcogine check         # Java compile, style, tests, and coverage
-./arcogine check --full  # check + dist build + Docker smoke + security scans
+./arcogine check --full  # check + dependency audit + secret scan
 ```
 
 See [testing.md](docs/development/testing.md) for the full test category reference.

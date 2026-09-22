@@ -5,7 +5,6 @@
 # For anything more specific than the commands below, use the subsystem's
 # native tool directly:
 #   cd product && ./gradlew <task>       # Java: coverage, Checkstyle, bootJar, jmh, audit
-#   docker compose ...                   # containers
 #   trivy / gitleaks                     # security scans
 # See docs/development/testing.md for the full native-command reference.
 set -euo pipefail
@@ -15,29 +14,9 @@ REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo 
 cd "$REPO_ROOT"
 
 PRODUCT_DIR="$REPO_ROOT/product"
-DIST_DIR="$REPO_ROOT/dist"
-DOCKER_DIR="$REPO_ROOT/infra/docker"
-ENV_TEMPLATE="$DOCKER_DIR/.env.example"
-
-API_IMAGE="arcogine-api:ci"
 
 gradle() {
   (cd "$PRODUCT_DIR" && ./gradlew --no-daemon "$@")
-}
-
-
-ensure_env() {
-  if [[ ! -f "$REPO_ROOT/.env" ]]; then
-    cp "$ENV_TEMPLATE" "$REPO_ROOT/.env"
-  fi
-}
-
-compose() {
-  docker compose \
-    --project-directory "$REPO_ROOT" \
-    --env-file "$REPO_ROOT/.env" \
-    -f "$DOCKER_DIR/compose.yaml" \
-    "$@"
 }
 
 require_commands() {
@@ -60,14 +39,6 @@ require_commands() {
   fi
 }
 
-# Actual host port Compose bound for a running service, per Compose itself
-# (not a reimplementation of its .env/env-var precedence). Only meaningful
-# after `compose up`. container_port is the port as declared in compose.yaml.
-bound_port() {
-  local service="$1" container_port="$2"
-  compose port "$service" "$container_port" | sed -E 's/^.*://'
-}
-
 usage() {
   cat <<'EOF'
 Usage: ./arcogine <command> [args]
@@ -76,18 +47,11 @@ Commands:
   setup             Optional Java dependency bootstrap (safe to re-run)
   test              Run Java unit tests
   check             Java compile, style, tests, and coverage gates
-  check --full      Everything in check, plus dist build, Docker image smoke test, and security scans
-  build             Produce the canonical dist/api/arcogine.jar
+  check --full      Everything in check, plus dependency audit and secret scan
   snapshot          Generate the canonical whole-repository AI retrieval snapshot
-  image             Package existing dist/ into runtime Docker images
-  up                Build, package, and start the full local container stack
-  down              Stop the local container stack
-  run api           Start the Spring Boot API in development mode (Gradle)
-  run scenario PATH Run a headless scenario through the native Java CLI
 
 For anything more specific, use the subsystem's native tool directly:
   cd product && ./gradlew <task>                 # Java: coverage, Checkstyle, bootJar, jmh, audit
-  docker compose ...                             # containers
   trivy / gitleaks                               # security scans
 See docs/development/testing.md for the full native-command reference.
 EOF
@@ -110,107 +74,20 @@ cmd_test() {
 
 cmd_check() {
   if [[ "${1:-}" == "--full" ]]; then
-    require_commands "./arcogine check --full container/security certification" \
-      docker trivy gitleaks curl
-    if ! docker compose version >/dev/null 2>&1; then
-      echo "FATAL: ./arcogine check --full requires Docker Compose." >&2
-      echo "Run './arcogine check' for portable source validation instead." >&2
-      exit 1
-    fi
+    require_commands "./arcogine check --full security certification" trivy gitleaks
   fi
 
   echo "==> Java: compile, Checkstyle, tests, coverage gates..."
   gradle compileJava compileTestJava checkstyleMain checkstyleTest \
     test jacocoTestReport jacocoTestCoverageVerification
 
-
   if [[ "${1:-}" == "--full" ]]; then
-    echo "==> Building canonical dist/..."
-    cmd_build
-
-    echo "==> Building runtime images from dist/..."
-    cmd_image
-
-    echo "==> Docker smoke test..."
-    ensure_env
-    compose up -d --wait --wait-timeout 120
-    trap 'compose down' EXIT
-    curl -sf "http://localhost:$(bound_port api 3000)/api/health" > /dev/null
-    compose down
-    trap - EXIT
-
-    echo "==> Security: dependency audit, image scans, secret scan..."
+    echo "==> Security: dependency audit, secret scan..."
     gradle cyclonedxBom
     trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 \
       "$PRODUCT_DIR/build/reports/cyclonedx/bom.json"
-    trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$API_IMAGE"
     gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
   fi
-}
-
-cmd_build() {
-  echo "==> Refreshing dist/..."
-  rm -rf "$DIST_DIR"
-  mkdir -p "$DIST_DIR/api"
-
-  echo "==> Building executable Java artifact (dist/api/arcogine.jar)..."
-  gradle :cli:stageDist
-
-
-  if [[ ! -f "$DIST_DIR/api/arcogine.jar" ]]; then
-    echo "FATAL: build did not produce $DIST_DIR/api/arcogine.jar" >&2
-    exit 1
-  fi
-  echo "==> dist/ ready: dist/api/arcogine.jar"
-}
-
-cmd_image() {
-  require_commands "./arcogine image" docker
-  if [[ ! -f "$DIST_DIR/api/arcogine.jar" ]]; then
-    echo "FATAL: $DIST_DIR/api/arcogine.jar not found. Run './arcogine build' first." >&2
-    exit 1
-  fi
-  echo "==> Building API image ($API_IMAGE) from dist/api/..."
-  docker build -f "$DOCKER_DIR/api.Dockerfile" -t "$API_IMAGE" "$DIST_DIR/api"
-
-}
-
-cmd_up() {
-  require_commands "./arcogine up" docker
-  if ! docker compose version >/dev/null 2>&1; then
-    echo "FATAL: ./arcogine up requires Docker Compose." >&2
-    exit 1
-  fi
-  if [[ "${1:-}" != "--no-rebuild" ]]; then
-    cmd_build
-    cmd_image
-  fi
-  ensure_env
-  compose up -d --wait --wait-timeout 120
-  echo "==> Stack up. API: http://localhost:$(bound_port api 3000)"
-}
-
-cmd_down() {
-  require_commands "./arcogine down" docker
-  if ! docker compose version >/dev/null 2>&1; then
-    echo "FATAL: ./arcogine down requires Docker Compose." >&2
-    exit 1
-  fi
-  ensure_env
-  compose down
-}
-
-cmd_run() {
-  case "$1" in
-    api) gradle :cli:bootRun --args=serve ;;
-    scenario)
-      local scenario_path="$2"
-      if [[ "$scenario_path" != /* ]]; then
-        scenario_path="$REPO_ROOT/$scenario_path"
-      fi
-      gradle :cli:bootRun --args="run $scenario_path"
-      ;;
-  esac
 }
 
 cmd="${1:-}"
@@ -230,61 +107,12 @@ case "$cmd" in
     shift
     cmd_check "${1:-}"
     ;;
-  build)
-    if [[ $# -ne 1 ]]; then
-      echo "Usage: ./arcogine build" >&2
-      exit 1
-    fi
-    cmd_build
-    ;;
   snapshot)
     if [[ $# -ne 1 ]]; then
       echo "Usage: ./arcogine snapshot" >&2
       exit 1
     fi
     cmd_snapshot
-    ;;
-  image)
-    if [[ $# -ne 1 ]]; then
-      echo "Usage: ./arcogine image" >&2
-      exit 1
-    fi
-    cmd_image
-    ;;
-  up)
-    if [[ $# -gt 2 || ( $# -eq 2 && "$2" != "--no-rebuild" ) ]]; then
-      echo "Usage: ./arcogine up [--no-rebuild]" >&2
-      exit 1
-    fi
-    shift
-    cmd_up "${1:-}"
-    ;;
-  down)
-    if [[ $# -ne 1 ]]; then
-      echo "Usage: ./arcogine down" >&2
-      exit 1
-    fi
-    cmd_down
-    ;;
-  run)
-    if [[ $# -eq 2 && "$2" == "api" ]]; then
-      shift
-      cmd_run "$1"
-    elif [[ $# -eq 3 && "$2" == "scenario" ]]; then
-      shift
-      cmd_run "$1" "$2"
-    else
-      echo "Usage: ./arcogine run {api|scenario <path>}" >&2
-      exit 1
-    fi
-    ;;
-  clean)
-    if [[ $# -ne 1 ]]; then
-      echo "Usage: ./arcogine clean" >&2
-      exit 1
-    fi
-    echo "==> Removing dist/ ..."
-    rm -rf "$DIST_DIR"
     ;;
   "")
     usage

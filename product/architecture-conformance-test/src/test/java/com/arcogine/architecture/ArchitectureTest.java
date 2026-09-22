@@ -1,4 +1,4 @@
-package com.arcogine.api.architecture;
+package com.arcogine.architecture;
 
 import static com.tngtech.archunit.lang.conditions.ArchConditions.callMethod;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -24,8 +24,15 @@ import com.tngtech.archunit.lang.ArchRule;
  *
  * <p>Deliberately a small, fixed rule set -- this is not a general architecture-policy framework,
  * just executable versions of specific invariants this codebase actually relies on. Scans only
- * main sources ({@link ImportOption.DoNotIncludeTests}) from sim-api's test classpath, which is
- * where every domain module is already visible.
+ * main sources ({@link ImportOption.DoNotIncludeTests}) from this module's test classpath, which
+ * is where every domain module is visible.
+ *
+ * <p>This class previously lived in interfaces/api's test classpath (the only module that, by
+ * virtue of depending on every domain, could see all sides of these rules) alongside an
+ * API-specific DTO-boundary rule. That rule proved a boundary for the HTTP adapter interfaces/api
+ * provided; it was removed, not relocated, when that adapter was retired -- see
+ * docs/architecture/overview.md for the durable "DTOs never re-enter domain decision paths"
+ * principle it encoded.
  */
 @AnalyzeClasses(packages = "com.arcogine", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
@@ -87,28 +94,6 @@ class ArchitectureTest {
             .because("Job's production-lifecycle mutators must only be called from within "
                     + "sim-factory -- external callers get JobView (FactoryHandler.job(JobId)/"
                     + "jobsView()), which excludes them");
-
-    /**
-     * API/UI DTO separation (docs/planning/factory-simulation-engine-readiness.md §8.4):
-     * API/UI DTOs remain outward projections and are never reused as domain decision inputs. The
-     * supported direction is {@code factory runtime semantics -> RuntimeObservation/RuntimeEvent ->
-     * outward adapters/DTOs}; a DTO must never flow back into a {@code FactoryRuntime} decision
-     * path. This is the structural half of the headless-closure acceptance list
-     * ({@code apiDtosDoNotReenterDomainDecisionPaths}); the behavioural half lives in
-     * {@code HeadlessClosureAcceptanceTest}. This module's test classpath is the only place
-     * that can see both sides of the boundary, since the domain modules do not depend on
-     * {@code interfaces/api} at all.
-     */
-    @ArchTest
-    static final ArchRule api_dtos_must_not_reenter_domain_decision_paths = noClasses()
-            .that()
-            .resideInAPackage("com.arcogine.factory..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage("com.arcogine.api..", "org.springframework..", "jakarta.servlet..")
-            .because("Runtime semantics must be decided from authoritative factory state "
-                    + "alone -- RuntimeObservation/RuntimeEvent project outward to API DTOs, and "
-                    + "those DTOs must never re-enter a FactoryRuntime decision path");
 
     @ArchTest
     static final ArchRule only_factory_may_mutate_machine_state = noClasses()

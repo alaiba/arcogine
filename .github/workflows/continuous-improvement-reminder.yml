@@ -3,7 +3,9 @@ name: Continuous Improvement Reminder
 on:
   schedule:
     - cron: '17 8 * * 1'
-  workflow_dispatch:
+concurrency:
+  group: continuous-improvement-reminder
+  cancel-in-progress: false
 
 permissions:
   issues: write

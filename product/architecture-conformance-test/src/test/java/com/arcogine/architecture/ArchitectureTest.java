@@ -17,10 +17,10 @@ import com.tngtech.archunit.lang.ArchRule;
 
 /**
  * Enforces, as CI-checked rules, the module-boundary and capability guardrails documented in
- * CONTRIBUTING.md and docs/architecture/overview.md -- so a future change that reintroduces one
- * of the couplings this codebase has spent effort removing (agents depending on Factory/Economy
- * internals, code outside Finance posting to the ledger directly, code outside Factory driving a
- * Job/Machine's lifecycle directly) fails the build instead of only failing review.
+ * CONTRIBUTING.md and docs/architecture/overview.md -- so a future change that reintroduces a
+ * forbidden Finance-to-Factory dependency, code outside Finance posting to the ledger directly,
+ * or code outside Factory driving a Job/Machine's lifecycle directly fails the build instead of
+ * only failing review.
  *
  * <p>Deliberately a small, fixed rule set -- this is not a general architecture-policy framework,
  * just executable versions of specific invariants this codebase actually relies on. Scans only
@@ -38,26 +38,6 @@ import com.tngtech.archunit.lang.ArchRule;
 class ArchitectureTest {
 
     @ArchTest
-    static final ArchRule sim_agents_must_not_depend_on_sim_factory = noClasses()
-            .that()
-            .resideInAPackage("com.arcogine.agents..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAPackage("com.arcogine.factory..")
-            .because("sim-agents must stay decoupled from Factory internals -- AgentObservation is "
-                    + "the only surface it needs");
-
-    @ArchTest
-    static final ArchRule sim_agents_must_not_depend_on_sim_economy = noClasses()
-            .that()
-            .resideInAPackage("com.arcogine.agents..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAPackage("com.arcogine.economy..")
-            .because("sim-agents must stay decoupled from Economy internals -- AgentObservation is "
-                    + "the only surface it needs");
-
-    @ArchTest
     static final ArchRule sim_finance_must_not_depend_on_sim_factory = noClasses()
             .that()
             .resideInAPackage("com.arcogine.finance..")
@@ -66,16 +46,6 @@ class ArchitectureTest {
             .resideInAPackage("com.arcogine.factory..")
             .because("Finance interprets OrderCompleted events, not Factory's internal state -- it "
                     + "must never reach into Factory directly to infer what happened");
-
-    @ArchTest
-    static final ArchRule sim_finance_must_not_depend_on_sim_economy = noClasses()
-            .that()
-            .resideInAPackage("com.arcogine.finance..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAPackage("com.arcogine.economy..")
-            .because("Finance has no reason to know OfferPrice or demand state -- only "
-                    + "OrderCompleted, which already carries the facts it needs");
 
     @ArchTest
     static final ArchRule only_finance_may_post_to_the_ledger = noClasses()

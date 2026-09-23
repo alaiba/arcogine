@@ -1,7 +1,7 @@
 # Factory Design Architecture
 
 > **Status:** Architectural reference; adopted boundaries marked below, remaining capabilities proposed  
-> **Scope:** Cross-consumer factory-design semantics and their boundary with scenario configuration and runtime behavior  
+> **Scope:** Cross-consumer factory-design semantics and their boundary with future scenario inputs and runtime behavior
 > **Authority:** The canonical model/publication/runtime boundary (§3–§6), the publication identity contract (§11) and the semantic-evolution contract (§11.1) are adopted architecture. Broader draft/workspace capabilities remain proposed; the Overview and product/reference docs describe the current implementation  
 > **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Model v1](factory-model-v1.md), [Factory Model v2](factory-model-v2.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
@@ -78,12 +78,12 @@ FactoryRuntime
     mutable state instantiated from that executable model
 ```
 
-The current `ScenarioConfig` combines simulation parameters, equipment/material/process definitions, economy configuration, and agent configuration. That remains useful as an input envelope, but it should not become the canonical factory model merely because those concerns are serialized together today.
+No scenario/run input envelope is currently implemented. The distinction remains architectural: a future scenario may describe an experiment or reference runtime inputs, while the canonical `FactoryModel` describes the production system itself. No scenario schema or serialization format is selected here.
 
 Conceptually:
 
 ```text
-Scenario / TOML -------+
+Future scenario -------+
 Game design -----------|
 Industrial design UI --|
 Optimizer -------------+--> FactoryModel --> publish --> FactoryModelVersion
@@ -107,8 +107,7 @@ A scenario may contain or reference a published model together with runtime inpu
 | Semantic layout | `FactoryModel` |
 | Simulation seed/limits | Scenario/runtime context |
 | Production workload | Scenario/runtime input |
-| Economy configuration | Scenario/context |
-| Agent configuration | Scenario/context |
+| Future consumer-specific policy inputs | Scenario/context, if required |
 | Production orders | Runtime |
 | Work items | Runtime |
 | Queues and assignments | Runtime |
@@ -520,7 +519,7 @@ When factory-design semantics change, ask:
 Revisit this document when Arcogine introduces or materially changes:
 
 - a canonical `FactoryModel` or equivalent;
-- the scenario-to-model adapter boundary;
+- any future scenario-to-model adapter boundary;
 - model versioning/hashes/lineage;
 - shared draft/design services;
 - semantic model diff/compare;

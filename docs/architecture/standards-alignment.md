@@ -43,8 +43,8 @@ When this repository refers to a standards family or shared conceptual model, a 
 Use the narrowest representation that matches the owning semantic boundary:
 
 ```text
-Human-authored scenario
-    -> TOML
+Future human-authored scenario
+    -> format selected from a concrete product need
 
 Stable HTTP/API representation
     -> JSON + OpenAPI
@@ -97,7 +97,7 @@ ISA-95 and IEC 62264 are closely harmonized standards families with shared linea
 
 **Current status:**
 
-- The scenario schema already uses selected ISA-95-oriented terms: `equipment`, `material`, `process_segment`, and `operations_definition`.
+- No scenario schema or serialized ISA-95-oriented input vocabulary is currently implemented.
 - Runtime concepts such as `Machine`, `Routing`, `RoutingStep`, `Order`, and `Job` are mappable to a narrow production-execution subset, but the mappings are approximate.
 - unit-work decomposition now keeps one accepted quantity-`N` `Order` as the aggregate request/correlation identity and deterministically materializes `N` independently dispatchable unit-quantity child `Job`s under that `OrderId`.
 - The current runtime model still does not consistently separate generalized resource definitions, production schedules, execution records, and performance records.
@@ -105,11 +105,11 @@ ISA-95 and IEC 62264 are closely harmonized standards families with shared linea
 
 | Arcogine area | ISA-95 relationship | Current assessment |
 |---|---|---|
-| Scenario `equipment` | Equipment | Good vocabulary mapping |
+| Factory `ConfiguredResource` | Configured productive resource | Good vocabulary mapping |
 | Runtime `Machine` | Equipment instance at approximately work-unit granularity | Useful alias; no capability or hierarchy model |
-| Scenario `material` / runtime `ProductId` | Material Definition | Partial; product-oriented and minimal |
-| `operations_definition` / `Routing` | Operations or Work Definition | Partial; simplified ordered steps |
-| `process_segment` / `RoutingStep` | Process Segment or work-step analogue | Partial; explicit eligible resource instances, no generalized capability requirement |
+| Runtime `ProductId` | Material Definition | Partial; product-oriented and minimal |
+| Factory `OperationDefinition` / runtime `Routing` | Operations or Work Definition | Partial; simplified ordered steps |
+| `OperationStepDefinition` / `RoutingStep` | Process Segment or work-step analogue | Partial; explicit eligible resource instances, no generalized capability requirement |
 | `Order` | Job Order / production request aggregate | Partial; one accepted quantity-bearing request under stable `OrderId` |
 | child `Job` | Independently dispatchable work item / execution state | Partial; unit-quantity child under parent `OrderId`, identified by `JobId` |
 | Factory events and observations | Work execution and performance facts | Narrow but useful semantic mapping; supported supported runtime observation/event contract contract is being established separately from internal scheduler events |
@@ -147,7 +147,7 @@ Queueing concepts provide the mathematical foundation for bottleneck analysis, w
 **Current commitment:**
 
 - keep queue, backlog/WIP, throughput, and lead-time semantics explicit;
-- use Little's Law as a reasonableness and scenario-validation relationship where its assumptions apply;
+- use Little's Law as a reasonableness relationship for workload/performance measures where its assumptions apply;
 - do not present approximate or transient simulation measurements as exact identity checks without documenting sampling windows and assumptions.
 
 ### ISO 22400 — Manufacturing operations management KPIs
@@ -216,11 +216,11 @@ RAMI 4.0 is a useful classification and positioning framework, not a code struct
 | RAMI concern | Arcogine analogue |
 |---|---|
 | Asset | Factory resources, products/materials, and future physical-asset models |
-| Integration | Scenario loading, model adapters, supported events/observations, external observations |
+| Integration | Model adapters, supported events/observations, external observations |
 | Communication | Supported runtime observation/event contract; no current transport adapter (HTTP/SSE was one, retired) — possible standardized async and operational adapters later |
 | Information | Shared types, domain models, observations, and public schemas |
 | Functional | Simulation, domain handlers, policies, verification, KPIs |
-| Business | Product objectives, economy, finance, agents, and future planning domains |
+| Business | Product objectives, Finance, and future planning domains |
 
 ### Asset Administration Shell / AASX
 
@@ -292,7 +292,7 @@ Relevant if Arcogine expands from production into supply-chain planning, sourcin
 
 ### FIPA
 
-Relevant only if independently developed autonomous agents need standardized inter-agent communication. Current agents act through Arcogine's controlled observation and event boundaries.
+Relevant only if independently developed autonomous agents need standardized inter-agent communication. Any future agents must act through explicit observations and capability boundaries.
 
 ### ISO 8000
 

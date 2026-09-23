@@ -9,6 +9,8 @@
 
 **The boundary is a set of distinct semantic roles plus consumer-owned mechanisms — not a platform abstraction.** No platform-level `Agent` concept, shared actor/subject/decision-source/capability value type, agent-communication ontology, Agency module, delivery track, or Agency-specific architecture is justified by current evidence and current consumers. Attribution — not agency — is what Arcogine actually lacks, and it is not yet needed by any committed consumer.
 
+The implementation examples in the original brief below describe repository state at the time of this investigation. The SalesAgent and observation implementation discussed there have since been retired; those references are retained as historical research evidence, not as current capability claims.
+
 The durable rules are recorded once, in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries), with [Operational architecture](../../architecture/operational-execution-digital-twin.md) §5 and [Governance architecture](../../architecture/governance-conformance.md) §4 reconciled to them. They are not restated here.
 
 ### Outcome against the original hypotheses
@@ -59,7 +61,7 @@ Arcogine already has several relevant architectural constraints:
 
 What is not yet established is the semantic boundary between **who or what is attributable for an action** and **how a choice was produced**.
 
-The current `SalesAgent` is one concrete decision-maker. It observes an `AgentObservation`, applies a deterministic pricing rule, and schedules events. That implementation is useful evidence, but it is not sufficient evidence for a generalized `Agent` abstraction.
+At the investigation baseline, `SalesAgent` was one concrete decision-maker. It observed an `AgentObservation`, applied a deterministic pricing rule, and scheduled events. That implementation was useful evidence, but was not sufficient evidence for a generalized `Agent` abstraction.
 
 This investigation asks whether Arcogine needs a platform-level agent concept at all, or whether agency is better represented as a composition of smaller concepts that also fit humans, organizations, external systems, NPCs, optimizers, planners, learned policies, and other decision sources.
 
@@ -120,7 +122,7 @@ A human supervisor, organization, autonomous controller, NPC, service, or extern
 
 ### H1. `Agent` may not be a platform primitive
 
-Do not introduce a generalized `Agent` interface, base class, ontology, or module merely because the current implementation contains `SalesAgent`.
+Do not introduce a generalized `Agent` interface, base class, ontology, or module merely because the historical implementation contained `SalesAgent`.
 
 Test whether the proving cases can instead be represented through a smaller composition such as:
 
@@ -228,7 +230,7 @@ Existing standards remain adapter/reference candidates when concrete interoperab
 
 The investigation is not complete until one candidate boundary is tested against all of these cases.
 
-### A. Current `SalesAgent`
+### A. Historical `SalesAgent` implementation
 
 Preserve current behavior without forcing the existing implementation to migrate merely to prove an abstraction.
 

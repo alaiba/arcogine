@@ -30,7 +30,7 @@ class FactoryModelSemanticComparatorTest {
         // docs/architecture/factory-model-v1.md ("List ordering is semantic") makes resources,
         // operations,
         // and products order-significant in factory-model:v1 -- product order specifically can
-        // affect deterministic demand generation. A pure top-level reorder must therefore surface
+        // is preserved in the canonical model identity. A pure top-level reorder must therefore surface
         // as a real, attributable semantic change, not be absorbed by ID-keyed comparison.
         FactoryModelVersion first = twoResourceModel(List.of(1, 2));
         FactoryModelVersion reordered = twoResourceModel(List.of(2, 1));
@@ -49,7 +49,7 @@ class FactoryModelSemanticComparatorTest {
 
     @Test
     void reorderingProductsIsAttributedAsEntityModified() {
-        // Product order can affect deterministic demand generation
+        // Product order is part of the canonical Factory model representation
         // (docs/architecture/factory-model-v1.md), so it must never be
         // treated as a no-op.
         OperationStepDefinition step =

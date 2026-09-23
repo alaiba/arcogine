@@ -5,10 +5,5 @@ public enum EventType {
     TaskStart,
     TaskEnd,
     OrderCompleted,
-    MachineAvailabilityChange,
-    PriceChange,
-    AgentEnabledChanged,
-    AgentDecision,
-    DemandEvaluation,
-    AgentEvaluation
+    MachineAvailabilityChange
 }

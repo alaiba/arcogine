@@ -29,13 +29,6 @@ class SimErrorTest {
     }
 
     @Test
-    void scenarioLoadMessage() {
-        assertEquals(
-            "scenario load error: bad toml",
-            new SimError.ScenarioLoadError("bad toml").getMessage());
-    }
-
-    @Test
     void invalidReferenceMessage() {
         assertEquals(
             "invalid reference: no such machine",

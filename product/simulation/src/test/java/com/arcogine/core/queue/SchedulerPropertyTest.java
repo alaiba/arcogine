@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
+import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ class SchedulerPropertyTest {
 
         Scheduler scheduler = new Scheduler();
         for (long t : times) {
-            scheduler.schedule(Event.of(new SimTime(t), EventPayload.DemandEvaluation.INSTANCE));
+            scheduler.schedule(orderAt(t));
         }
 
         long lastTime = 0L;
@@ -74,7 +75,7 @@ class SchedulerPropertyTest {
 
         Scheduler scheduler = new Scheduler();
         for (long t : times) {
-            scheduler.schedule(Event.of(new SimTime(t), EventPayload.DemandEvaluation.INSTANCE));
+            scheduler.schedule(orderAt(t));
         }
 
         int dequeued = 0;
@@ -94,12 +95,12 @@ class SchedulerPropertyTest {
 
         Scheduler scheduler = new Scheduler();
         if (baseTime > 0) {
-            scheduler.schedule(Event.of(new SimTime(baseTime), EventPayload.DemandEvaluation.INSTANCE));
+            scheduler.schedule(orderAt(baseTime));
             scheduler.nextEvent();
         }
 
         assertDoesNotThrow(() -> scheduler.schedule(
-                Event.of(new SimTime(baseTime + offset), EventPayload.DemandEvaluation.INSTANCE)));
+                orderAt(baseTime + offset)));
     }
 
     /** Exercise the full seed range for monotonicity to broaden coverage. */
@@ -112,7 +113,7 @@ class SchedulerPropertyTest {
             List<Long> times = randomTimes(rng);
             Scheduler scheduler = new Scheduler();
             for (long t : times) {
-                scheduler.schedule(Event.of(new SimTime(t), EventPayload.DemandEvaluation.INSTANCE));
+                scheduler.schedule(orderAt(t));
             }
             long lastTime = 0L;
             Optional<Event> next;
@@ -122,5 +123,9 @@ class SchedulerPropertyTest {
                 lastTime = time;
             }
         }
+    }
+
+    private static Event orderAt(long tick) {
+        return Event.of(new SimTime(tick), new EventPayload.OrderCreation(new ProductId(1), 1, 1.0));
     }
 }

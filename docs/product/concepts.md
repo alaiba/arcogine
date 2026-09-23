@@ -1,132 +1,42 @@
 # Arcogine — Concepts
 
-This page explains what Arcogine simulates and how to interpret the current simulation model and its exposed facts.
+This page describes the retained Factory and Engine capabilities. See the [Product Charter](charter.md) for Arcogine's enduring product direction.
 
-This document describes the **current factory-simulation experience** — one current mode of engaging with Arcogine, not the complete Arcogine product ontology. See the [Product Charter](charter.md) for the enduring product vision.
+## Current capability
 
-## The big picture
+Arcogine currently provides a headless, deterministic factory model and runtime. It has no outward application or interactive experiment loop; executable evidence lives in tests, conformance checks, and benchmarks.
 
-Arcogine models a simplified factory that makes products and sells them. Three systems interact in a feedback loop:
+The canonical **Factory model** describes products, operations, configured resources, and eligible-resource relationships. A validated model can be published as an immutable, fingerprinted version. A **FactoryRuntime** instantiates that version and executes explicit production workload under the identified Engine semantics.
 
-```text
-     You set a price
-           │
-           ▼
-    Demand responds        (lower price → more orders)
-           │
-           ▼
-    Factory produces        (machines process jobs through routing steps)
-           │
-           ▼
-    KPIs update             (throughput, lead time, backlog, revenue)
-           │
-           ▼
-    You (or the agent)      (observe KPIs, adjust price or machines)
-    make decisions
-           │
-           └───────────────► loop repeats
-```
-
-Your goal is to keep this loop healthy: enough demand to generate revenue, enough capacity to fulfill it, and short enough lead times that demand doesn't collapse.
-
-## Core vocabulary
+## Factory concepts
 
 | Term | Meaning |
 |------|---------|
-| **Tick** | One unit of simulation time. Events happen at specific ticks. |
-| **Event** | Something that happens: an order arrives, a machine starts work, a task finishes, the price changes. The simulation advances by processing events in time order. |
-| **Scenario** | A TOML file that defines the factory setup: machines, products, routings, and economic parameters. Loading a scenario configures the entire simulation. |
-| **Seed** | The random number seed in the scenario. Same seed = same results every time (deterministic simulation). |
+| **Resource** | A configured productive resource that performs eligible operation steps. |
+| **Product** | A product definition associated with an operation routing. |
+| **Operation** | An ordered set of processing steps and each step's eligible resources and duration. |
+| **Order** | Immutable accepted production intent: product, quantity, creation time, and agreed unit price. |
+| **Job** | A unit-quantity work item released from an order and processed through its routing. |
+| **Runtime** | Mutable execution state instantiated from one published Factory model version. |
+| **Observation** | A read-only projection of the current runtime's orders, jobs, resources, pending work, and performance facts. |
+| **Runtime event** | An ordered description of an authoritative runtime change, published after that change succeeds. |
 
-## The factory
+An accepted order remains the commercial record for its requested quantity and unit price. Runtime execution releases one unit-quantity job per unit, each with a stable ordinal and shared order identity. Order completion, backlog, completed sales value, and lead time remain order-level facts.
 
-### Machines
+The runtime accepts workload explicitly through its consumer-neutral command surface. It does not generate orders from a pricing or demand model. Repeated runs with the same published model, Engine semantics, and explicit commands produce the same ordered supported runtime events and terminal observations.
 
-Machines (also called equipment in ISA-95 terminology) are the physical resources that do work. Each machine can process up to its configured concurrency of active jobs at a time; a machine with concurrency `1` processes one job at a time. You can toggle machines online/offline during a run.
+## Commercial and financial facts
 
-A machine that is **offline** stops accepting new jobs. A machine can only be taken offline while it is **idle**: if it has active jobs, the request is rejected and the machine keeps running until its current work completes. Wait for the machine to become idle, then take it offline. Once offline, the machine can be brought back online at any time.
+An order's unit price is fixed when the order is accepted. Factory retains that commercial fact and derives its operational completed-sales value from completed orders. Finance separately interprets `OrderCompleted` as a financial fact and records balanced postings in its minimal ledger. Operational completion and financial interpretation have distinct owners even when the current immediate-settlement policy yields matching totals.
 
-### Products and routings
+## What is not currently provided
 
-A **product** (e.g., "Widget A") has a **routing** — an ordered list of processing steps. Each step defines a set of **eligible resources** that may perform it and a processing duration. At runtime, Arcogine deterministically selects one eligible resource based on current execution state; the routing defines eligibility, not a permanent one-machine binding.
+There is no scenario/TOML loader, pricing and demand experiment loop, SalesAgent, generic agent framework, application server, HTTP API, or CLI. A future input format or outward consumer must follow then-current product requirements and the [runtime contract](../architecture/runtime-contract.md); no replacement scenario format or experiment experience is selected here.
 
-Example: Widget A's routing might require milling for 5 ticks on either Mill A or Mill B, then turning for 3 ticks on Lathe A, then inspection for 2 ticks on QC Station. A job for Widget A must complete those steps in order, but a step with multiple eligible resources may run on any one of them selected by runtime dispatch.
+## Further reading
 
-### Orders and jobs
-
-When an order arrives, Arcogine stores an immutable **order** containing the accepted product, quantity, creation time, and unit price. It then creates one mutable, unit-quantity **job** per requested unit. Each child job references the same order, has its own ordinal within that order, and traverses the routing once while waiting in machine queues when necessary.
-
-Arcogine decomposes each accepted order quantity deterministically into unit-quantity child jobs: an order for 10 units creates ten independently dispatchable jobs, with ordinals 0–9, each traversing the routing once. Arcogine owns this decomposition; a game or other caller supplies only the production requirement.
-
-Order-level execution progress is authoritative: it records released and completed unit quantities and completes only when every child is complete. Commercial completion, backlog, sales count/value, and lead time remain order-level facts, so child jobs do not multiply revenue.
-
-The current lifecycle is:
-
-1. **Order accepted** — the order event freezes the unit price and quantity in immutable order intent
-2. **Child jobs created** — one unit-quantity job is created per requested unit; every child references the same order and has a stable ordinal within it
-3. **In progress** — child jobs are dispatched independently, each traversing the routing once while processing on a machine or waiting in a queue
-4. **Completed** — the order completes only after every child job completes; the order's sales value (quantity x its locked-in price) is added to completed sales value exactly once
-
-Any future outward job-level projection would need to keep each child job unit quantity, projecting product and commercial fields from the referenced immutable order rather than owning them as mutable job state.
-
-## The economy
-
-### Price and demand
-
-The price you set is your **offer price** — the ask currently on the table for new customers, not an external market signal (Arcogine doesn't model the broader market, just the firm's own pricing decisions). The economy model connects it to order volume:
-
-- **Base demand** — how many orders per evaluation period at the reference price
-- **Price elasticity** — how strongly demand responds to price changes (higher elasticity = more sensitive)
-- **Lead time sensitivity** — demand also drops when lead times grow (customers don't want to wait)
-
-Lowering the offer price increases demand. But more orders means more factory load, which increases lead times, which suppresses demand. Finding the equilibrium is the challenge.
-
-Changing the offer price only affects **future** orders — evaluated the next time demand is sampled. It never changes the terms of an order that already exists (see below).
-
-### Completed sales value
-
-Each order locks in its unit price **at the moment it's created**, using whatever the offer price was at that instant. That price stays on the immutable order for its entire lifecycle and never changes, even if the offer price moves while the associated job is still in production. An order created at $10 is still worth `quantity x $10` when it finishes, no matter what the offer price is by then.
-
-The completed-sales figure (`CompletedSalesValue`) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the offer price happens to be right now.
-
-This is a deliberate product decision, not sophistication in accounting: "Completed sales value" is an operational number (how much value has this factory shipped), not a claim about recognized revenue. Arcogine has a small, separate Finance domain (a minimal double-entry ledger) that owns financial concepts like cash and a formally-recorded sales balance — under its current, deliberately simple immediate-settlement policy those numbers happen to match the operational figure above, but they answer a different question ("what has been financially recorded" vs. "what value has completed production") and aren't guaranteed to stay equal if Finance's policy evolves. See [`docs/architecture/overview.md`](../architecture/overview.md#pricing-orders-and-money-offerprice-vs-orderprice) for the full OfferPrice/OrderPrice model and the "Commercial, Operational, and Financial Truth" section for the Finance domain. Remaining runtime work is tracked in [`docs/planning/factory-simulation-engine-readiness.md`](../planning/factory-simulation-engine-readiness.md), which is planning guidance rather than architectural authority.
-
-## KPIs (Key Performance Indicators)
-
-The current simulation exposes four primary performance facts, aligned with ISO 22400 terminology where applicable:
-
-| KPI | What it measures | What to watch for |
-|-----|-----------------|-------------------|
-| **Throughput** | Jobs completed per unit time | Dropping throughput means a bottleneck or insufficient demand |
-| **Lead time** | Average time from order creation to job completion | Rising lead time signals congestion or too much WIP |
-| **Backlog** | Number of orders waiting or in progress | Growing backlog means demand outpaces capacity |
-| **Utilization** | Fraction of time machines are actively working | Near 100% means machines are saturated; near 0% means idle capacity |
-
-These four metrics are connected by Little's Law: Backlog ≈ Throughput x Lead Time. If you push throughput up without reducing lead time, backlog grows.
-
-## The agent
-
-The **Sales Agent** is an automated decision-maker that observes KPIs and adjusts the price. When enabled, it runs periodically (every `agent_eval_interval` ticks) and:
-
-- Raises the price when backlog is high or lead times are growing
-- Lowers the price when the factory has spare capacity
-
-You can toggle the agent on and off at any time. This lets you compare manual control against the agent's strategy, or use the agent as a starting point and fine-tune from there.
-
-## Simulation controls
-
-| Control | What it does |
-|---------|-------------|
-| **Run** | Start the simulation. It advances continuously until paused, completed, or max ticks reached. |
-| **Pause** | Stop advancing. The simulation state is preserved; you can inspect, adjust, and resume. |
-| **Step** | Advance by exactly one event. Useful for understanding cause and effect. |
-| **Reset** | Reload the current scenario from scratch. All state is cleared. |
-| **Load scenario** | Parse and load a new scenario TOML. This also resets the simulation. |
-
-## What's next
-
-Arcogine currently has no application server, HTTP API, or CLI product surface to run a scenario through interactively; retained executable evidence is tests, conformance checks, and benchmarks (see [architecture/overview.md](../architecture/overview.md)). A future outward consumer will be introduced from the supported runtime contract when a concrete product need exists.
-
-- To set up the project, see the [Quick start](../../README.md#quick-start) in the root README.
-- To understand the architecture, see [architecture/overview.md](../architecture/overview.md).
-- To contribute, see [CONTRIBUTING.md](../../.github/CONTRIBUTING.md).
+- [Architecture overview](../architecture/overview.md)
+- [Factory design architecture](../architecture/factory-design.md)
+- [Runtime contract](../architecture/runtime-contract.md)
+- [Quick start](../../README.md#quick-start)
+- [Contributing](../../.github/CONTRIBUTING.md)

@@ -259,8 +259,8 @@ Agents never merge pull requests. When every merge gate holds, report that and s
 ## Layout
 
 - `product/` — all executable product source.
-  - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `simulation`, `domains/{factory,economy,finance}`, `agents`, `consumer/challenge`, `consumer/challenge-factory-integration-test`, `architecture-conformance-test`. There is currently no application server, HTTP API, or CLI product surface — retained executable evidence is tests, conformance checks, and benchmarks; a future outward consumer is introduced from the supported runtime contract (`docs/architecture/runtime-contract.md`) when a concrete product need exists.
-- `docs/` — architecture, product, development, reference, planning docs, and executable example scenarios (`docs/examples/`). Read `docs/architecture/overview.md` before touching cross-module boundaries.
+  - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `simulation`, `domains/{factory,finance}`, `consumer/challenge`, `consumer/challenge-factory-integration-test`, `architecture-conformance-test`. There is currently no application server, HTTP API, or CLI product surface — retained executable evidence is tests, conformance checks, and benchmarks; a future outward consumer is introduced from the supported runtime contract (`docs/architecture/runtime-contract.md`) when a concrete product need exists.
+- `docs/` — architecture, product, development, reference, and planning docs. Read `docs/architecture/overview.md` before touching cross-module boundaries.
 - `infra/` — dev-environment infrastructure: `infra/dev/claude-cloud.sh` (Claude Cloud environment provisioning) and related repository tooling.
 
 ## Canonical commands
@@ -300,7 +300,7 @@ it as a build or product failure.
 
 ## Validating changes
 
-Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching Java (`product/{types,governance,simulation,domains,agents,consumer,architecture-conformance-test}`) needs the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a documentation-only change needs neither. Use `./arcogine check` when the repository-wide Java gate is appropriate, and `./arcogine check --full` when dependency-audit or secret-scan behavior is in scope.
+Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching Java (`product/{types,governance,simulation,domains,consumer,architecture-conformance-test}`) needs the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a documentation-only change needs neither. Use `./arcogine check` when the repository-wide Java gate is appropriate, and `./arcogine check --full` when dependency-audit or secret-scan behavior is in scope.
 
 When finishing an implementation task, report the validation commands and tools used, the outcome of each, and any validation that was unavailable, skipped, or only partially completed. Do not summarize a partially completed validation as a full pass.
 
@@ -317,4 +317,3 @@ When finishing an implementation task, report the validation commands and tools 
 - **Trivy and Gitleaks** are environment/security tools pinned independently in the devcontainer and CI. When intentionally changing either tool version, grep the repository for the old version and keep the relevant devcontainer/CI install sites aligned.
 - Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture/overview.md`.
-- Example scenarios under `docs/examples/` are educational/executable documentation, not runtime assets — there is currently no distributable artifact for them to be bundled into.

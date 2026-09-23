@@ -29,6 +29,7 @@ product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=tr
 check "CI workflow change forces executable surfaces" ".github/workflows/ci.yml" "backend=true,docs_only=false,"
 check "unknown non-doc path fails safe" "product/gradlew" "backend=true,docs_only=false,"
 check "unknown root file fails safe" ".trivyignore" "backend=true,docs_only=false,"
+check "retired module path fails safe" "product/agents/src/main/java/com/arcogine/agents/Legacy.java" "backend=true,docs_only=false,"
 
 if [ "$failures" -gt 0 ]; then
   echo "$failures classification test(s) failed."

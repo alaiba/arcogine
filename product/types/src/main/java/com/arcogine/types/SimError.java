@@ -46,12 +46,6 @@ public sealed class SimError extends RuntimeException {
         public SimTime actual() { return actual; }
     }
 
-    public static final class ScenarioLoadError extends SimError {
-        public ScenarioLoadError(String message) {
-            super("scenario load error: " + message);
-        }
-    }
-
     public static final class InvalidReference extends SimError {
         public InvalidReference(String message) {
             super("invalid reference: " + message);

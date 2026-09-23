@@ -114,7 +114,7 @@ Notes:
 
 ### 3. Java unit tests (JUnit 6)
 
-Tests across the Gradle modules cover typed IDs and `SimTime`, scenario schema and TOML loading, scheduler behavior, factory model and runtime semantics, demand and pricing, finance, agents, and Challenge Readiness. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
+Tests across the Gradle modules cover typed IDs and `SimTime`, scheduler behavior, factory model and runtime semantics, Finance's ledger and ownership, and Challenge Readiness. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
 
 `cd product && ./gradlew test`.
 
@@ -124,7 +124,7 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 ### 5. Determinism tests
 
-The Factory Engine tests verify that equivalent fresh runtimes given the same model, semantics, and explicit commands produce identical ordered supported runtime-event streams and terminal observations. Runtime identity is normalized where comparisons concern semantic outcomes. Scenario-loading tests separately cover deterministic parsing and validation behavior.
+The Factory Engine tests verify that equivalent fresh runtimes given the same model, semantics, and explicit commands produce identical ordered supported runtime-event streams and terminal observations. Runtime identity is normalized where comparisons concern semantic outcomes.
 
 ### 6. Java coverage (Jacoco) + per-module gates
 
@@ -132,7 +132,7 @@ The Factory Engine tests verify that equivalent fresh runtimes given the same mo
 
 ### 7. Benchmarks (JMH)
 
-`cd product && ./gradlew :simulation:jmh` — runs the retained JMH microbenchmarks in `simulation`: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario loading/validation. Sources live in `product/simulation/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). ASM is pinned explicitly for JMH bytecode generation; benchmark sources use the same Java 21 release compatibility as the rest of the build, regardless of whether the build JDK is 21 or a supported newer JDK.
+`cd product && ./gradlew :simulation:jmh` — runs the retained scheduler throughput microbenchmarks (schedule / dequeue / interleaved over 1000 events) in `simulation`. Benchmarks are **on-demand** (not a CI gate). ASM is pinned explicitly for JMH bytecode generation; benchmark sources use the same Java 21 release compatibility as the rest of the build, regardless of whether the build JDK is 21 or a supported newer JDK.
 
 ### 8. Java dependency audit (CycloneDX SBOM + Trivy)
 
@@ -165,7 +165,7 @@ The Java-related build jobs use Temurin 21 to exercise the supported Java floor;
 The `classify` job inspects the changed files (PR diff against its base, or the pushed commit range on `main`) and sets `backend`/`docs_only` outputs consumed by `if:` conditions on the other jobs:
 
 - A change under `.github/workflows/`, `arcogine`, or Gradle build files is treated as touching **every** executable subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
-- A change confined to `product/{types,governance,simulation,domains,agents,consumer,architecture-conformance-test}/` sets `backend`.
+- A change confined to current product modules under `product/{types,governance,simulation,domains,consumer,architecture-conformance-test}/` sets `backend`; any unrecognized or retired module path fails safe to `backend=true`.
 - A change touching **only** `docs/`, `README.md`, or other `*.md` files (and none of the above) sets `docs_only`, which skips the Java and dependency-audit jobs.
 - **Fail-safe default:** any changed file that is neither documentation nor a recognized subsystem/CI path (e.g. `product/gradlew`, `.trivyignore`, a brand-new top-level directory) is "unknown" and forces `backend` `true` — an unrecognized path can never fall through to `docs_only`'s skip behavior by accident.
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
@@ -260,15 +260,13 @@ The test layers preserve three properties:
 
 ### Handler delegation contract
 
-Factory event semantics have a single implementation authority: `FactoryHandler`, dispatched in a fixed order (Pricing, Demand, Factory, Agent evaluation when applicable). This dispatch order is durable regardless of what, if anything, consumes `FactoryRuntime`'s supported surface — a future outward adapter (CLI, HTTP, or otherwise) must reuse `FactoryHandler`'s dispatch rather than reimplementing it, which is exactly the duplication the retired `interfaces/cli`'s `HeadlessHandler` had accumulated and this repository does not want to repeat.
+Factory event semantics have a single implementation authority: `FactoryHandler`, owned by its `FactoryRuntime`. Finance remains a separate event consumer for financial interpretation; no retained production code assembles an application-wide handler chain. A future outward consumer must use the supported runtime contract rather than reimplement Factory transitions.
 
 ### Security verification tests
 
-Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite (the retired `interfaces/api`'s `ApiSmokeTest` and `interfaces/cli`'s bind-address test are gone with those modules). The controls that remain are enforced at the domain/scenario level and verified there:
+Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite (the retired `interfaces/api`'s `ApiSmokeTest` and `interfaces/cli`'s bind-address test are gone with those modules). The controls that remain are enforced at the Factory runtime boundary and verified there:
 
 | Criterion | Must hold | Exercised by |
 |---|---|---|
-| Scenario load error propagation | An invalid scenario is rejected with a descriptive error naming the offending input, rather than being partially applied. | `ScenarioLoaderTest` (`product/simulation`) |
-| Economy/price input validation | Out-of-range economy/price input is rejected rather than applied to simulation state. | `PricingStateTest` (`product/domains/economy`) |
 
 See [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits the retired API and CLI had, recorded so a future outward adapter is designed with them in mind rather than repeating them by default, and for the readiness criteria that must be met before any future hosted or multi-user exposure.

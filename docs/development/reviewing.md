@@ -107,6 +107,8 @@ For every newly added repository artifact, review its lifetime as well as its co
 
 Any tracked file under the reserved `workspace/` root is merge-blocking `CHANGES REQUIRED`, regardless of filename or content. Independently, temporary material placed outside `workspace/` remains a review defect when its post-merge lifetime is unjustified. Handoff prompts and implementation explanations establish intent only; they never override live repository state. Before handing an implementation candidate to independent review, the implementation owner must remove transient execution/handoff artifacts and confirm that the candidate has no tracked `workspace/` paths.
 
+Durable repository assets must preserve retained meaning without depending on transient coordinates. Reviewers should catch semantic dependencies even when they have no deterministic syntax signal. The transient-coordinate checker covers only a full commit SHA paired with a concrete path under `workspace/`; historical SHA provenance and other syntax-free cases remain valid when durable state does not depend on temporary custody.
+
 ### 4. Review the net change
 
 Review:

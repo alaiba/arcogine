@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.arcogine.types.MachineId;
+import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -79,12 +80,12 @@ class FactoryModelImmutabilityTest {
 
         FactoryModel model = new FactoryModel(mutableResources, operations, products);
         FactoryModelVersion version = FactoryModelPublisher.publish(model);
-        String hashBeforeMutation = version.contentHash();
+        ModelFingerprint fingerprintBeforeMutation = version.fingerprint();
 
         // A source collection can only be mutated before construction (it's defensively copied),
         // so this exercises that the already-published version is unaffected by any further
         // change to the model instance itself: there is no setter to mutate it through.
-        assertEquals(hashBeforeMutation, version.contentHash());
+        assertEquals(fingerprintBeforeMutation, version.fingerprint());
         assertEquals(1, version.model().resources().size());
     }
 }

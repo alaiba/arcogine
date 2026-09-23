@@ -207,7 +207,7 @@ It is not the Arcogine runtime-event domain type, does not define simulation ord
 
 Parquet is the preferred design-for candidate for durable high-volume analytical export once supported outward schemas are stable.
 
-Candidate datasets include runtime events, periodic observations, KPI series, experiment batches, challenge/run comparisons, and parameter sweeps. Supported exports must derive from `RuntimeEvent`, `RuntimeObservation`, or another explicit outward contract — not by freezing internal `EventLog` serialization.
+Candidate datasets include runtime events, periodic observations, KPI series, experiment batches, challenge/run comparisons, and parameter sweeps. Supported exports must derive from `RuntimeEvent`, `RuntimeObservation`, or another explicit outward contract — not from internal scheduler events.
 
 ### RAMI 4.0
 

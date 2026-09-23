@@ -515,7 +515,7 @@ public class FactoryRuntime {
 
     /**
      * Allocates the next strictly monotonic, run-scoped sequence number and appends the resulting
-     * {@link RuntimeEventEnvelope} to this session's supported event log. Package-private emission
+     * {@link RuntimeEventEnvelope} to this session's supported event sequence. Package-private emission
      * point: this is the only place a {@link RuntimeEventEnvelope} is constructed, always after the
      * authoritative transition it describes has already succeeded.
      */

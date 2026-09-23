@@ -1,17 +1,17 @@
 # Simulation Analytics Consumer Boundary
 
 > **Status:** READY
-> **Risk:** **High** — touches major ownership, supported/public semantics, reproducibility, compatibility, and several existing consumers. Independent adversarial review is required before any architecture promotion (`docs/development/researching.md` §7, §9).
-> **Scope:** Where the boundary sits between authoritative simulation/runtime facts and reusable derived analytics, and how that boundary replaces the legacy `EventLog` KPI substrate
+> **Risk:** **High** — touches major ownership, supported/public semantics, reproducibility, and compatibility. Independent adversarial review is required before any architecture promotion (`docs/development/researching.md` §7, §9).
+> **Scope:** Where the boundary sits between authoritative simulation/runtime facts and any reusable derived analytics after removal of the legacy `EventLog`-derived KPI implementation
 > **Authority:** Research only. This brief decides nothing. Current Engine semantics, the runtime observation/event contract, the Determinism Contract, and `engine-semantics:v1` remain exactly as accepted until a separate, independently reviewed reconciliation says otherwise.
 
 ## Research question
 
-> What is the supported ownership boundary between authoritative simulation/runtime facts and reusable derived analytics, and how should that boundary replace the legacy `EventLog` KPI substrate without creating a second simulation engine or transport-specific KPI semantics?
+> What is the supported ownership boundary between authoritative simulation/runtime facts and any future reusable derived analytics, without creating a second simulation engine or transport-specific KPI semantics?
 
 ## Decision at stake
 
-Whether Arcogine's supported runtime contract keeps publishing substantial derived performance results, or whether reusable measurement moves to a consumer-neutral analytics layer computed over supported facts — and what that implies for the legacy KPI implementation, a future outward KPI surface, and the reproducibility guarantees already fixed by `engine-semantics:v1`.
+Whether Arcogine's supported runtime contract should keep publishing substantial derived performance results, or whether reusable measurement belongs in a consumer-neutral analytics layer over supported facts — and what that implies for future outward consumers and the reproducibility guarantees already fixed by `engine-semantics:v1`. The former generic `EventLog`-derived KPI implementation has been removed; this research remains open and does not prescribe a replacement.
 
 The investigation must decide or explicitly classify:
 
@@ -21,7 +21,7 @@ The investigation must decide or explicitly classify:
 - analytics provenance and versioning obligations;
 - event/observation retention versus runtime responsibility;
 - how embedded-Java and remote adapters get equivalent semantics without duplicated formulas;
-- the eventual replacement path for `com.arcogine.core.kpi`'s computation, for whatever future outward surface needs derived performance results (Arcogine currently has no HTTP API, CLI, or other outward surface — see [Architecture Overview — Outward Adapters](../../architecture/overview.md#outward-adapters) — so there is no current migration target such as the retired `/api/kpis`).
+- whether any future outward surface needs reusable derived performance results, and what supported inputs and ownership such results require (Arcogine currently has no HTTP API, CLI, or other outward surface — see [Architecture Overview — Outward Adapters](../../architecture/overview.md#outward-adapters)).
 
 ## Why this question exists
 
@@ -39,7 +39,7 @@ That historical evidence established multiple consumers of reusable derived meas
 
 ## Non-goals
 
-This investigation does not implement an analytics module, migrate or delete `com.arcogine.core.kpi`, change KPI formulas, alter `RuntimePerformanceObservation` in code, implement event retention/journaling, build a Java SDK, force consumers through HTTP/SSE, or reopen transport architecture. It does not change adopted architecture or `engine-semantics:v1`.
+This investigation does not implement an analytics module, restore the removed generic KPI implementation, change KPI formulas, alter `RuntimePerformanceObservation` in code, implement event retention, build a Java SDK, force consumers through HTTP/SSE, or reopen transport architecture. It does not change adopted architecture or `engine-semantics:v1`.
 
 It also does not decide game presentation. Which visualization produces correct player understanding remains product research in [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md).
 
@@ -47,7 +47,7 @@ It also does not decide game presentation. Which visualization produces correct 
 
 Compare at least these. **Do not predetermine model 3.**
 
-1. **Status quo / Engine-rich performance boundary.** The Engine continues publishing substantial derived performance results as part of the supported observation. Reusable analytics may exist outside it; the legacy KPI substrate migrates separately as ordinary debt.
+1. **Status quo / Engine-rich performance boundary.** The Engine continues publishing substantial derived performance results as part of the supported observation. Any reusable analytics responsibility is considered separately; the removed generic KPI implementation is not restored by this option.
 2. **Facts-only extreme.** The Engine publishes almost exclusively authoritative execution facts and current state. Every recomputable performance measure lives in analytics.
 3. **Mixed / minimal authoritative boundary.** The Engine exposes authoritative state and change plus only the minimum justified direct projections; reusable longitudinal, statistical, and diagnostic analysis lives in transport-neutral analytics over supported facts, events, and model facts.
 
@@ -85,7 +85,7 @@ Deriving occupancy duration from supported events is safe. Reimplementing candid
 
 ## The high-risk conflict
 
-Do not reduce this to relocating the legacy KPI package. Current *supported* runtime semantics already embed derived performance results:
+Do not reduce this to recreating the removed generic KPI package. Current *supported* runtime semantics already embed derived performance results:
 
 - `RuntimeObservation` carries a mandatory `RuntimePerformanceObservation`;
 - that record currently exposes `backlog`, `completedOrders`, `completedSalesValue`, `averageLeadTime`, and `throughputPerTick`;
@@ -104,7 +104,7 @@ At minimum, classify each of:
 - `busyTicks` and its accumulator semantics;
 - `FactoryHandler.avgLeadTime()`, `throughput(...)`, and completed-value/count aggregates;
 - `combinedQueueDepth` as Engine ranking semantics versus presentable measurement;
-- legacy `com.arcogine.core.kpi.*`;
+- the former `com.arcogine.core.kpi.*` implementation, now removed;
 - KPI/metric history and baseline comparison;
 - occupancy intervals;
 - waiting-by-step attribution;
@@ -141,7 +141,7 @@ Conclude only with a report that:
 - defines provenance obligations;
 - prevents analytics from reimplementing scheduling decisions;
 - defines compatibility expectations across embedded and remote adapters;
-- determines the disposition and migration path for the legacy KPI substrate and the current performance fields;
+- determines whether any consumer-neutral analytics responsibility remains and how it relates to current performance fields;
 - states explicitly whether the runtime observation/event contract, the Determinism Contract, or `engine-semantics:v1` require revision, a semantics-version change, or only implementation reorganization;
 - receives genuinely independent adversarial review before any architecture promotion.
 
@@ -151,6 +151,6 @@ Reusable evidence transferred from the superseded diagnostic-evidence investigat
 
 - the landed non-transfer diagnostic questions were derivable from supported observation plus supported events plus published model facts, with no proven new Engine fact gap — evidence about landed behavior, not a permanent theorem;
 - transfer-dependent diagnostics remain conditional and must be re-evaluated when transfer semantics land;
-- the legacy `EventLog` KPI substrate is not the future supported analytics substrate (the runtime observation/event contract §8, the external representation policy);
+- the former generic `EventLog`-derived KPI implementation was not a supported analytics substrate and has been removed (see the runtime observation/event contract and external representation policy);
 - current legacy HTTP/SSE internal-event surfaces are not the semantic compatibility boundary;
 - external bottleneck-detection evidence that remains load-bearing: Skoogh, Thürer, Subramaniyan, Matta & Roser (2023), *Throughput bottleneck detection in manufacturing: a systematic review of the literature on methods and operationalization modes*, Production & Manufacturing Research 11(1) 2283031, DOI 10.1080/21693277.2023.2283031 — utilization is not sufficient for bottleneck identification and, being period-averaged, detects only an average constraint; queue-state methods suffer transient fluctuation; shifting bottlenecks are a first-class contingency; no single method is universally recommended. Roser, Nakano & Tanaka's active period method (WSC 2001/2002, ISS 2002, ESM 2004) defines the bottleneck as the process with the longest uninterrupted non-waiting period, which is computable from supported dispatch/completion events without re-deciding any assignment.

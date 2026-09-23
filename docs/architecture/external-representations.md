@@ -12,8 +12,8 @@ historical `ControlledRevisionId` identity, and the supported `RuntimeObservatio
 contracts. Governance, Challenge/Game, and Operational Execution each own additional semantic
 histories and projections that must not be collapsed into one generic interchange ontology.
 
-The repository already uses TOML for human-oriented scenario authoring and bounded internal
-`EventLog` export. Arcogine currently has no HTTP API, SSE, or CLI product surface (see
+The repository already uses TOML for human-oriented scenario authoring. Arcogine currently has no
+HTTP API, SSE, or CLI product surface (see
 [Architecture Overview — Outward Adapters](overview.md#outward-adapters)); JSON was used for HTTP
 API and SSE payloads in that retired adapter and remains the default structured representation for
 a future one (see below), alongside possible future industrial (B2MML, AutomationML, AAS/AASX,
@@ -105,15 +105,15 @@ CloudEvents is a plausible future integration-envelope profile. It is not the Ar
 
 AsyncAPI may later describe supported asynchronous channels once multiple durable async transports justify a shared machine-readable channel contract. It is not required merely because SSE exists.
 
-## Supported runtime exports derive from supported observations/events, not the internal `EventLog`
+## Supported runtime exports derive from supported observations and events
 
-`EventLog` remains internal scheduler/trace machinery under the [runtime observation/event contract](runtime-contract.md).
+Future supported runtime-history, experiment, or analytical exports must be derived from supported
+`RuntimeEvent`, supported `RuntimeObservation`, or another explicitly supported outward contract.
+They must not establish durable public semantics by serializing internal `Event` or `EventPayload`
+structures directly.
 
-Future supported runtime-history, experiment, or analytical exports must be derived from supported `RuntimeEvent`, supported `RuntimeObservation`, or another explicitly supported outward contract.
-
-They must not establish durable public semantics by serializing internal `Event`, `EventPayload`, or `EventLog` structures directly.
-
-If retained supported runtime events are introduced, retention/gap/recovery semantics remain separate from the bounded internal trace.
+Any future retained supported-event capability needs explicit ownership, retention, and
+gap/recovery semantics; internal scheduler processing does not provide those contracts.
 
 ## Bulk analytical formats are projections, not domain models
 

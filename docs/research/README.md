@@ -8,9 +8,10 @@ Arcogine separates the **research operating model** from its **maintained state*
 
 | Surface | Owns |
 |---|---|
-| [`docs/development/researching.md`](../development/researching.md) | Normative research operating model: question/lifecycle definitions, priority semantics, promotion and reconciliation, investigation/review method, evidence custody, synthesis-seed handling, and register maintenance |
+| [`docs/development/researching.md`](../development/researching.md) | Normative research operating model: question/lifecycle definitions, priority semantics, promotion and reconciliation, investigation/review method, evidence custody, synthesis-seed handling, historical decision-rationale retention, and register maintenance |
 | [`research-register.md`](research-register.md) | Current admitted research questions, priority, lifecycle state, linked evidence artifact, expected destination, and review date |
 | [`synthesis-seeds.md`](synthesis-seeds.md) | Current non-authoritative cross-investigation synthesis signals retained under the research method |
+| [Historical decision rationale](../history/README.md#decision-rationale) | Selected dated, non-normative records of why a significant reconciled choice was made, retained under the research method's retention test; history, not research state or current authority |
 | [`investigations/`](investigations/) | Bounded research briefs, durable investigation write-ups, and deliberately retained or reconciled research-history artifacts linked from the register |
 | `workspace/research/` | Temporary branch-local reports, report revisions, adversarial reviews, checkpoints, diagnostic notes, and handoff artifacts; its files must be absent from the final merge candidate, while the custody branch retires only after reconciliation lands and independent review validates the transfer |
 | [`brief-template.md`](brief-template.md) | Reusable advisory structure for bounding a research question; it does not add lifecycle or `READY` criteria beyond the normative operating model |

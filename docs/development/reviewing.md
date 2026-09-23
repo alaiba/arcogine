@@ -221,11 +221,13 @@ This is bounded change-impact review. It does not require a repository-wide cons
 
 #### Architectural reconciliation discipline
 
-Arcogine keeps no separate decision-record layer. A significant architectural change — durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind — must be reconciled into the architecture or specification that owns the affected semantics, with code, tests, and dependent planning updated in the same PR.
+Arcogine keeps no separate decision-record authority. A significant architectural change — durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind — must be reconciled into the architecture or specification that owns the affected semantics, with code, tests, and dependent planning updated in the same PR.
 
 Do not demand an architecture change for ordinary local refactors.
 
 When a PR edits current architecture or a specification, compare the before and after text, establish the actual semantic consequences of the change, and require that the executable invariants, plans, and consumers that depended on the previous constraint are reconciled in the same PR. Where rationale is needed to understand or not accidentally undo a constraint, expect it concisely next to the rule; do not expect the document to narrate what it replaced, and do not require status fields, amendment metadata, or supersession chains. Git and pull-request history preserve the previous state and why it changed.
+
+A change may also add a [historical decision-rationale record](researching.md#historical-decision-rationale) under `docs/history/decisions/`. Do not demand one; "no rationale record" is a valid outcome, including in a research reconciliation's knowledge-transfer audit. When a record is present, review it as non-normative history: every constraint, qualification, or obligation it describes that still governs Arcogine must also appear in the owning canonical document or executable contract, which must stay understandable without the record, and the record must not carry a status/approval field or be cited as implementation authority. Flag misplaced reasoning the change introduces in either direction — alternative-analysis narrative added to a canonical document that a record would hold better, or a record that is the only place a current rule is stated. A pre-existing record that differs from current architecture is history, not drift.
 
 ## Finding severity
 

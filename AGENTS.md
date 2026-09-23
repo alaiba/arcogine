@@ -151,9 +151,14 @@ namespaces exist: catching identifier leakage no syntax pattern can safely recog
 boundaries; focused architecture and specification documents own exact contracts, identities,
 semantics, algorithms and supported boundaries. Together they must be sufficient to answer what
 Arcogine's architecture is now, without reading history. Arcogine keeps no separate
-decision-record layer: a significant architectural change is reconciled into the architecture or
-specification that owns the affected semantics, with code, tests, and dependent planning updated
-in the same reviewed change. Git and pull-request history preserve what changed and why.
+decision-record authority: a significant architectural change is reconciled into the architecture
+or specification that owns the affected semantics, with code, tests, and dependent planning updated
+in the same reviewed change. Git and pull-request history preserve what changed and why as delivery
+history. When losing the reasoning behind a significant choice would materially raise the risk of
+repeating or accidentally undoing it, a concise non-normative record may also be retained under
+`docs/history/decisions/` (retention test in `docs/development/researching.md`). Such a record
+cannot introduce, extend, override, or repair a current requirement and is never implementation or
+review authority; most changes need none.
 
 ## Artifact lifetime and transient workspace
 

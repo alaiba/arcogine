@@ -1,6 +1,6 @@
 # Research operating model
 
-This document is Arcogine's single normative authority for the **research operating model**: what qualifies as research, research lifecycle and portfolio-priority semantics, promotion/reconciliation, investigation and adversarial-review method, evidence custody, synthesis-seed handling, and maintenance of the research state registers.
+This document is Arcogine's single normative authority for the **research operating model**: what qualifies as research, research lifecycle and portfolio-priority semantics, promotion/reconciliation, investigation and adversarial-review method, evidence custody, synthesis-seed handling, historical decision-rationale retention, and maintenance of the research state registers.
 
 Current maintained state is separate from these rules:
 
@@ -339,6 +339,7 @@ separate durable reconciliation on the same workspace by default
 knowledge-transfer audit
         |
         +--> reusable evidence / know-how
+        +--> historical decision rationale (non-normative, only when retained)
         +--> qualifying synthesis seed (non-authoritative)
         +--> explicit discard
         |
@@ -379,7 +380,7 @@ Exact workspace `commit SHA + path` coordinates are **active-custody artifact id
 
 A copied coordinate is not preservation of its target. Recording a workspace SHA in a pull request, issue, commit message, or maintained document preserves the coordinate text, but it does not create a repository guarantee that the underlying Git object will remain fetchable after squash merge, branch deletion, mirroring/export, or Git-host retention changes. Do not copy temporary artifact coordinates into maintained state merely to make them appear durable.
 
-After retirement, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product, architecture/specification, or reference authority, admitted planning authority, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
+After retirement, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product, architecture/specification, or reference authority, admitted planning authority, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, any retained historical decision-rationale records, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
 
 If the exact report, adversarial review, source map, or other research artifact must itself remain readable after workspace retirement, deliberately promote that artifact to a durable repository location or another retention surface with an explicit persistence contract before retiring the workspace. Otherwise the knowledge-transfer audit is the preservation mechanism and the temporary evidence is intentionally expendable.
 
@@ -389,9 +390,72 @@ Temporary research evidence may be deleted only after every research question ca
 - qualifications that constrain an accepted conclusion into the same durable destination as that conclusion;
 - unresolved unknowns, reopening triggers, and newly exposed questions into the [research register](../research/research-register.md) when they remain material;
 - reusable proving cases, counterexamples, failure modes, measurements, protocols, source maps, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;
+- decision rationale worth retaining independently of the current contract — why the chosen option beat serious alternatives, which trade-offs were knowingly accepted, and what would justify revisiting it — into a historical decision-rationale record when it meets the retention test below; the audit states either where that rationale is preserved or that no separate rationale record is needed;
 - qualifying cross-investigation signals into `docs/research/synthesis-seeds.md` when they satisfy the synthesis-seed rules below;
 - any exact report/review/source artifact whose future readability is itself material into a deliberate durable repository location or another retention surface with an explicit persistence contract;
 - findings that no longer merit retention as explicitly discarded rather than accidentally lost with branch deletion.
+
+### Historical decision rationale
+
+A **historical decision-rationale record** is a concise, dated, non-normative account of why a significant reconciled choice was made: the serious alternatives, the trade-offs that actually decided it, and the changed conditions that would justify revisiting it. It lets that reasoning be retrieved deliberately after the temporary evidence that produced it retires, without making canonical documents carry alternative-analysis narrative and without restoring a decision-record authority. Research reconciliation is the normal producer; a significant architectural change reconciled without a research investigation applies the same rules. Records live under `docs/history/decisions/` (see [Historical evidence](../history/README.md)). Git and pull-request history remain delivery-history evidence of what changed and how it was reviewed; a record adds deliberate retrieval for selected high-value rationale and may cite the reconciliation pull request as its provenance.
+
+**Authority.** A historical decision-rationale record cannot introduce, extend, override, or repair a current requirement. Any constraint, qualification, behavior, identity rule, or support obligation that still governs Arcogine must be present in its owning canonical document or executable contract, and current architecture and specifications must remain sufficient without reading any record. Therefore:
+
+- a record is never implementation, review, or reconciliation authority — "the newest record says so" establishes nothing;
+- editing a record changes no current meaning, and a record that differs from current architecture is historical evidence, not documentation drift by itself;
+- a canonical document keeps any explanation whose removal would make a current rule ambiguous, unsafe to implement, or easy to misapply, while a record holds explanation whose primary purpose is why one option was selected over another, which trade-off was knowingly accepted, which assumptions were contingent at the time, and what evidence would justify choosing differently later.
+
+**Retention test.** Retain a record only when losing the rationale would materially increase the chance that a future maintainer would:
+
+- repeat substantial investigation;
+- re-open a deliberately rejected alternative without knowing the decisive trade-off;
+- mistake a contingent choice for a universal truth;
+- accidentally undo a constraint whose motivation is not apparent from the current contract; or
+- misunderstand why a deliberately narrower solution was chosen over a more general one.
+
+A record is most clearly warranted when several of these hold: the decision followed substantial research or independent adversarial review; two or more serious alternatives remained viable; the selected option knowingly accepted a non-obvious trade-off; the decision is foundational or hard to reverse; future evidence can reasonably trigger reconsideration; the canonical result is much shorter than the reasoning needed to understand the choice. A record is usually not warranted for ordinary local implementation choices, straightforward refactors, rationale that is obvious and fully captured by current code, tests, and documents, temporary delivery sequencing, research material with no surviving decision relevance, interesting but non-decisive analysis, or content already adequately preserved as a durable proving case, synthesis seed, or retained artifact. "No rationale record" is a valid and normal audit outcome; a record is never a prerequisite for reconciliation, review, or merge.
+
+**Boundaries with neighboring surfaces.** Keep each piece of reasoning in the one surface whose purpose it serves rather than repeating the same narrative across several:
+
+| Surface | Holds | Does not hold |
+|---|---|---|
+| Canonical architecture or specification | Current requirements and semantics, with the concise rationale needed to interpret and apply them | A chronological decision log or alternative-analysis narrative |
+| Historical decision-rationale record | Project-specific reasoning behind one significant reconciled choice | Current requirements, lifecycle state, or a copied report |
+| Retained research artifact under `docs/research/investigations/` | Analysis or evidence whose exact or substantial content stays independently valuable beyond a decision summary | A substitute for the canonical result |
+| Synthesis seed | A compact, potentially transferable signal for recognizing recurrence across investigations | An account of why Arcogine chose one option |
+| Research register | Current portfolio state, verdicts, and reopening triggers | A rationale archive |
+
+**Record content.** Name the file `YYYY-MM-DD-<semantic-slug>.md`, dated by when the choice was reconciled; there is no global sequence number, index file, or registry. Keep the record short — it is not an archived research report. Use this shape, omitting any section that does not apply:
+
+```markdown
+# <Decision title>
+
+> **Date:** YYYY-MM-DD
+>
+> **Authority:** Historical, non-normative evidence; current meaning lives only in the documents it was reconciled into
+>
+> **Reconciled into:** <canonical document(s) that received the decision>
+
+## Decision
+## Context
+## Serious alternatives
+## Decisive rationale
+## Consequences and accepted trade-offs
+## Reconsider when
+## Provenance
+```
+
+- **Decision** — a short historical statement of what was chosen at the time.
+- **Context** — only the constraints that materially shaped the choice.
+- **Serious alternatives** — the credible alternatives and concisely why each was not selected, saying plainly whether it was falsified or merely not justified by the evidence then available.
+- **Decisive rationale** — the small set of facts or trade-offs that actually discriminated the choice.
+- **Consequences and accepted trade-offs** — what the choice made easier or harder and what it deliberately left unresolved.
+- **Reconsider when** — concrete evidence or changed conditions that would materially weaken the original rationale. This explains the record; it neither reopens research nor creates work. A trigger that should actively reopen an Arcogine question also belongs in the research register.
+- **Provenance** — the merged reconciliation pull request or another delivery-history provenance reference, plus links to any deliberately retained evidence.
+
+A record must be understandable without reconstructing the cited pull request's discussion. It must not carry a status or acceptance field, approval lifecycle, sequence number, copied report or source dump, restated current specification text, temporary delivery coordinates, or workspace `commit SHA + path` coordinates presented as preserved evidence; a research artifact that must itself stay readable is promoted under the artifact-promotion rule above instead.
+
+**Later change.** When a later decision changes an earlier one, normally add a new dated record and cross-link the two rather than rewriting the earlier rationale to match the present. Small factual or link corrections are fine when they do not falsify the historical account. Retention is prospective: do not reconstruct records for past decisions wholesale; capture an older decision only when doing so has concrete current value.
 
 ### Synthesis-seed custody
 
@@ -429,7 +493,7 @@ Every seed must state a concrete `Revisit when` condition such as independent re
 
 The reconciliation must name the workspace(s) covered by its transfer audit and state whether each is retirement-eligible. If any material item still lacks a durable destination, qualifying synthesis-seed record, or explicit discard decision, keep the workspace available. Once the reconciliation has landed and its independent PR review has validated the transfer, deleting a retirement-eligible workspace branch is immediate post-merge cleanup. The reconciliation owns that retirement decision even though deleting the Git ref is an operational action after merge rather than part of repository content.
 
-This retirement rule does not create another lifecycle state, permanent report archive, research issue ledger, publication backlog, or second research roadmap. [`docs/research/research-register.md`](../research/research-register.md) is the maintained research portfolio state; [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md) is only maintained low-authority recurrence state. Neither state file defines the operating rules above or can make semantic or delivery decisions by itself.
+This retirement rule does not create another lifecycle state, permanent report archive, research issue ledger, publication backlog, or second research roadmap. [`docs/research/research-register.md`](../research/research-register.md) is the maintained research portfolio state; [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md) is only maintained low-authority recurrence state. Neither state file defines the operating rules above or can make semantic or delivery decisions by itself. Historical decision-rationale records are dated history, not maintained state, and cannot make such decisions either.
 
 ## 11. What this operating model intentionally does not decide
 
@@ -437,6 +501,7 @@ This document defines Arcogine's normative research operating model. It does not
 
 - list Arcogine's current open research questions — see [`docs/research/research-register.md`](../research/research-register.md);
 - decide any Arcogine semantic question (agency, operational identity, resource semantics, or otherwise) — each one's state is exactly what the maintained register and the applicable architecture or specification record, and this document neither settles nor reopens any of them;
-- create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, publication lifecycle/backlog, or new issue ledger.
+- create a Research delivery track, a second research roadmap, research delivery coordinates, a research sprint system, a permanent report archive, publication lifecycle/backlog, or new issue ledger;
+- create a decision-record authority, decision numbering, or decision status/approval lifecycle.
 
-Research documents remain research evidence only. Synthesis seeds remain non-authoritative recurrence signals only. Neither becomes accepted architecture simply because it exists.
+Research documents remain research evidence only. Synthesis seeds remain non-authoritative recurrence signals only. Historical decision-rationale records remain non-normative history only. None of them becomes accepted architecture simply because it exists.

@@ -18,9 +18,9 @@ Arcogine separates durable direction, current truth, research, and executable pl
 - **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md) and consumer/component references describe what exists now.
 - **[`research/`](research/README.md)** — research-area index linking the normative operating model, current research portfolio state, synthesis signals, investigation artifacts, and reusable brief/report structures. Research is not accepted architecture or implementation commitment.
 - **[`planning/`](planning/README.md)** — implementation-ready delivery planning only: admitted slices, dependencies, blockers on concrete prerequisites, acceptance evidence, and implementation status.
-- **[`history/`](history/README.md)** — dated, non-normative evidence retained for later comparison; never current authority.
+- **[`history/`](history/README.md)** — dated, non-normative evidence retained for later comparison, including selected decision rationale; never current authority.
 
-Research discovers. Product direction and canonical architecture/specifications establish durable meaning. Planning sequences concrete implementation. Landed code/tests and current-state docs establish what actually exists. Arcogine keeps no separate decision-record layer: the durable result of an architectural change is the changed canonical document, and Git and pull-request history preserve why it changed.
+Research discovers. Product direction and canonical architecture/specifications establish durable meaning. Planning sequences concrete implementation. Landed code/tests and current-state docs establish what actually exists. Arcogine keeps no separate decision-record authority: the durable result of an architectural change is the changed canonical document, and Git and pull-request history preserve why it changed. Where the reasoning behind a significant choice is worth deliberate later retrieval, a concise [historical decision-rationale record](history/README.md#decision-rationale) may also preserve it; such a record explains a past choice and never defines current meaning.
 
 A research conclusion does not become authoritative merely because it is recorded. An unresolved question that still determines implementation meaning must not be hidden inside a delivery plan.
 
@@ -46,7 +46,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, style, validation |
 | [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
 | [semantic-contract-support.md](development/semantic-contract-support.md) | Owning support declarations, retained admission and promise-specific review evidence |
-| [researching.md](development/researching.md) | Normative Arcogine research operating model: lifecycle/priority semantics, promotion/reconciliation, investigation and adversarial review, evidence custody, synthesis-seed handling, and register maintenance |
+| [researching.md](development/researching.md) | Normative Arcogine research operating model: lifecycle/priority semantics, promotion/reconciliation, investigation and adversarial review, evidence custody, synthesis-seed handling, historical decision-rationale retention, and register maintenance |
 | [continuous-improvement.md](development/continuous-improvement.md) | Continuous-improvement operating model: Session-close Kaizen, Consistency review, and delivery-process retrospective method |
 | [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
 | [testing.md](development/testing.md) | Test categories, CI, quality gates, native commands |
@@ -79,7 +79,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Document | What it covers |
 |---|---|
 | [Research area index](research/README.md) | Navigation and authority map for research surfaces |
-| [Research operating model](development/researching.md) | Normative research rules: lifecycle, priority, promotion/reconciliation, investigation/review, evidence custody, synthesis seeds, and register maintenance |
+| [Research operating model](development/researching.md) | Normative research rules: lifecycle, priority, promotion/reconciliation, investigation/review, evidence custody, synthesis seeds, decision-rationale retention, and register maintenance |
 | [Research register](research/research-register.md) | Current admitted research questions, priority, lifecycle state, evidence artifact, expected destination, and review date |
 | [Synthesis seeds](research/synthesis-seeds.md) | Current retained non-authoritative cross-investigation synthesis signals |
 | [Research brief template](research/brief-template.md) | Reusable advisory failure-oriented planning structure for bounding research questions; it does not add `READY` criteria |

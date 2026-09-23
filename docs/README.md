@@ -64,7 +64,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Governance and conformance](architecture/governance-conformance.md) | Revision/change/requirements/conformance/evidence/governed-change architecture |
 | [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture |
 | [Engine Semantics v1](architecture/engine-semantics-v1.md) | Normative current result-affecting Engine interpretation |
-| [Factory Model v2](architecture/factory-model-v2.md) | Normative v2 canonicalization/fingerprint byte grammar |
+| [Factory Model v2](architecture/factory-model-v2.md) | Normative, unreleased v2 canonicalization/fingerprint byte grammar: V1 production records plus an optional spatial record |
 | [Standards alignment](architecture/standards-alignment.md) | Standards/interchange/conformance boundaries |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained manufacturing semantic mapping and deliberate divergences |
 | [Factory Model v1](architecture/factory-model-v1.md) | Normative v1 canonicalization/fingerprint byte grammar (implemented) |
@@ -87,7 +87,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation — **concluded**; durable rules live in [Attribution and decision boundaries](architecture/overview.md#attribution-and-decision-boundaries) |
 | [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
 | [Factory-design game vertical slice](research/investigations/factory-design-game-vertical-slice.md) | Product loop, diagnostics, reference challenge, scoring/tutorial/technology evidence |
-| [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy and unselected recovery/session extensions |
+| [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, Engine applicability to optional-record Factory policies, and unselected recovery/session extensions |
 | [Operational/Digital Twin boundaries](research/investigations/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |
 
 ## Internal implementation planning

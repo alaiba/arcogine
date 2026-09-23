@@ -716,7 +716,9 @@ not. Five rules hold that line:
    system the designer authored belong to the canonical model and its fingerprint; rules describing
    how Arcogine interprets any such design belong to the Engine interpretation identity. Changing
    interpretation alone never changes the authored model's identity, and authored facts are never
-   synthesized to make an interpretation applicable.
+   synthesized to make an interpretation applicable. Publication validity never establishes
+   applicability: an interpretation applies only to the Factory policies and represented content
+   its own definition supports ([Factory semantic evolution](factory-design.md#111-semantic-evolution)).
 4. **An intentional change to result-affecting behavior is a new interpretation identity**, a
    bug fix that observably changes outcomes included. Repairing an implementation so that it
    conforms to the identified interpretation is not such a change. Implementations declare which

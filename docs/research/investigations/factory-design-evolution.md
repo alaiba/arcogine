@@ -78,11 +78,9 @@ This research should remain coupled to qualified applicability/performance and E
 
 ## Factory semantic composition and spatial/material-flow evolution
 
-The repository now has a READY high-risk investigation for the more fundamental boundary question: [Factory Model Semantic Composition](factory-model-semantic-composition.md). It asks whether production structure, spatial/layout facts, storage, material-flow topology, qualification/capability, hierarchy, and similar authored concerns should evolve as one linear whole-model policy, as composable concerns under one Factory identity, or through another evidence-supported model.
+The more fundamental boundary question is concluded: [Factory Model Semantic Composition](factory-model-semantic-composition.md) established that a Factory policy is one closed grammar that may admit explicitly present optional authored records under one aggregate fingerprint, reconciled into the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution). Its reopening triggers name the future concerns below.
 
-That investigation does **not** implement the future concerns listed here. Questions such as orientation, paths/aisles, conveyors, connection points, explicit transport resources, buffers, or congestion remain separate capability questions in the research register because current Factory spatial and Engine transfer semantics deliberately stop before them. When those questions are later investigated, they must consume the reconciled Factory-composition boundary rather than implicitly selecting a new whole-model version or aspect framework themselves.
-
-Any durability/version conclusion from the composition investigation must also incorporate [Semantic Contract Maturity and Durability](semantic-contract-maturity-durability.md).
+That investigation does **not** implement the future concerns listed here. Questions such as orientation, paths/aisles, conveyors, connection points, explicit transport resources, buffers, or congestion remain separate capability questions in the research register because current Factory spatial and Engine transfer semantics deliberately stop before them. When those questions are later investigated, they must consume that composition rule rather than implicitly selecting a new whole-model version or aspect framework themselves; admitting a new or split authored record is a new Factory policy.
 
 ## Promotion rule
 

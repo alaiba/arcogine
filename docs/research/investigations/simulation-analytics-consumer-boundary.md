@@ -1,7 +1,7 @@
 # Simulation Analytics Consumer Boundary
 
 > **Status:** READY
-> **Risk:** **High** — touches major ownership, supported/public semantics, reproducibility, compatibility, and several existing consumers. Independent adversarial review is required before any architecture promotion (`docs/development/researching.md` §7, §9).
+> **Risk:** **High** — touches major ownership, supported/public semantics, reproducibility, and compatibility. Independent adversarial review is required before any architecture promotion (`docs/development/researching.md` §7, §9).
 > **Scope:** Where the boundary sits between authoritative simulation/runtime facts and any reusable derived analytics after removal of the legacy `EventLog`-derived KPI implementation
 > **Authority:** Research only. This brief decides nothing. Current Engine semantics, the runtime observation/event contract, the Determinism Contract, and `engine-semantics:v1` remain exactly as accepted until a separate, independently reviewed reconciliation says otherwise.
 

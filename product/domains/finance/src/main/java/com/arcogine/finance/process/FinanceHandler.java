@@ -28,7 +28,7 @@ import java.util.List;
  * against a duplicate delivery either); nothing today can actually deliver an event twice
  * ({@link com.arcogine.core.queue.Scheduler#nextEvent()} is a plain dequeue, and {@code
  * FactoryHandler} cannot complete the same job's routing twice). The one scenario where this
- * assumption could be violated is a future event-replay feature that replays the {@code EventLog}
+ * assumption could be violated is a future event-replay feature that reprocesses prior events
  * back into a *live* handler stack rather than a fresh one -- if that is ever built, add an
  * idempotency guard here then, deliberately, rather than defending against it speculatively now.
  */

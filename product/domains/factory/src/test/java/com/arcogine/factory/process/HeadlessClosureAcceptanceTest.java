@@ -40,7 +40,7 @@ import org.junit.jupiter.api.Test;
  * <ul>
  *   <li>a consumer joining an already-progressed runtime can reconstruct the complete current
  *       supported view from one fresh {@link FactoryRuntime#observe()} alone, with no retained or
- *       replayed runtime events, no internal scheduler/{@code EventLog} replay, no {@code
+ *       replayed runtime events, no internal scheduler-event replay, no {@code
  *       FactoryHandler}/mutable-store access, and no API/Spring/frontend DTOs;
  *   <li>supported observations and supported runtime events close over the same authoritative
  *       transitions: an observation at sequence {@code S}, plus the supported events emitted after

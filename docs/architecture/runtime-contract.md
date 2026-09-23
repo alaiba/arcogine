@@ -9,11 +9,10 @@ Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-
 
 The repository contains several things called or treated as events that do not mean the same
 thing: `com.arcogine.core.event.Event`/`EventPayload` are deterministic scheduler and transition
-machinery; `EventLog` is a bounded in-memory simulation trace; `FactoryRuntime.advance()` returns
-internal processed events and `CommandResult.scheduledEvents()` reports internal events scheduled
-as a direct command effect. Promoting any of those directly into the long-term consumer contract
-would couple external compatibility to scheduler internals and blur "transition attempted" from
-"authoritatively applied".
+machinery; `FactoryRuntime.advance()` returns internal processed events and
+`CommandResult.scheduledEvents()` reports internal events scheduled as a direct command effect.
+Promoting any of those directly into the long-term consumer contract would couple external
+compatibility to scheduler internals and blur "transition attempted" from "authoritatively applied".
 
 This contract therefore defines a durable semantic boundary for current authoritative state and
 ordered authoritative runtime change without making Arcogine event sourced, without making SSE or
@@ -202,13 +201,15 @@ ControlledRevisionId
 
 This permits Governance provenance integration without making the runtime contract duplicate authoritative revision persistence.
 
-## `EventLog` and a supported runtime-event history have different responsibilities
+## Internal scheduler machinery is not supported runtime history
 
-The current `EventLog` remains an internal simulation trace of scheduler events. It is not renamed or silently repurposed into the supported external runtime-event history.
+Internal scheduler events remain execution machinery; their availability during processing does not
+create a retained history or replay contract. Supported observations and ordered runtime events
+remain the outward semantic boundary.
 
-If supported runtime delivery or later distribution hardening needs retained supported events, use a separately named responsibility such as `RuntimeEventJournal`/`RuntimeEventHistory` behind the runtime-event source contract.
-
-A bounded retained history is not a durable audit ledger. If retention drops events, recovery must detect the gap rather than silently pretending replay is complete.
+If a future consumer requires retained supported events, its ownership, retention, and recovery
+semantics must be defined explicitly. A bounded history is not a durable audit ledger, and recovery
+must detect dropped events rather than silently treating an incomplete sequence as complete.
 
 ## Transport mechanisms are adapters, not the event contract
 

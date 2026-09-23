@@ -187,22 +187,9 @@ The reverse implication is not established as a permanent platform invariant. Du
 
 Because v1 publication validation rejects ill-formed text, the implication applies over the complete set of models that can be successfully published under the v1 contract; no published v1 model lacks a defined fingerprint.
 
-## Existing `contentHash()` remains legacy provisional provenance
-
-`FactoryModelVersion.contentHash()` is **not** the digest component of `factory-model:v1`. Its Java-derived algorithm remains a legacy provenance surface for existing runtime/result consumers; removing that dependency is a bounded implementation change that must inventory its consumers, not a compatibility migration Arcogine owes anyone.
-
-```text
-contentHash()
-    legacy provisional Java-derived hash
-    existing raw provenance compatibility
-
-fingerprint()
-    durable namespaced semantic identity
-    factory-model:v1:sha256:<digest>
-    digest from the normative v1 byte grammar
-```
-
-Bare `modelContentHash` values must never be reinterpreted as v1 digests.
+`FactoryModelVersion.fingerprint()` is the durable namespaced semantic identity:
+`factory-model:v1:sha256:<digest>`, computed from the normative v1 byte grammar. No untyped
+implementation hash is part of the Factory model identity contract.
 
 ## The policy is immutable
 
@@ -235,6 +222,6 @@ The implementation pins literal expected canonical bytes (or equivalent byte-lev
 - null versus present `capacityLiters`;
 - positive, negative, zero, and signed-zero floating-point values;
 - NaN canonicalization if NaN remains publishable;
-- explicit evidence that legacy `contentHash()` remains distinct from the durable v1 digest.
+- typed `ModelFingerprint` rendering under the durable v1 identity contract.
 
 Golden vectors supplement the normative grammar; they do not replace it.

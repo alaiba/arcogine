@@ -1,13 +1,7 @@
 package com.arcogine.factory.model;
 
 import com.arcogine.factory.model.validation.FactoryModelValidator;
-import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-import java.util.List;
 
 /**
  * An immutable, published identity of a {@link FactoryModel}.
@@ -18,12 +12,9 @@ import java.util.List;
  * cross-process and
  * cross-language identity under that released policy.
  *
- * <p>{@link #contentHash()} remains the legacy Java-derived digest retained for compatibility with
- * existing runtime/result provenance. It is deterministic for the current model but is not the
- * durable fingerprint contract and must not be reinterpreted as a {@code factory-model:v1}
- * fingerprint. Controlled revision identity, lineage, and persistence are separate concerns from
- * both values; see docs/architecture/factory-design.md section 11,
- * docs/architecture/factory-model-v1.md, and docs/architecture/controlled-revisions.md.
+ * <p>Controlled revision identity, lineage, and persistence are separate concerns from the model
+ * fingerprint; see docs/architecture/factory-design.md section 11 and
+ * docs/architecture/controlled-revisions.md.
  *
  * <p>{@link FactoryModelPublisher#publish(FactoryModel)} is the intended way to obtain an
  * instance, but the invariant that an invalid model can never be published or instantiated
@@ -42,80 +33,7 @@ public record FactoryModelVersion(FactoryModel model) {
         FactoryModelValidator.requireValid(model);
     }
 
-    public String contentHash() {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(canonicalRepresentation(model).getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
-    }
-
     public ModelFingerprint fingerprint() {
         return FactoryModelFingerprintV1.fingerprint(model);
-    }
-
-    /**
-     * Builds an unambiguous canonical encoding of {@code model}'s semantic content.
-     *
-     * <p>Every variable-length field (names, id lists) is framed with an explicit
-     * length-then-colon-then-content token (netstring-style), and every collection is
-     * length-prefixed with its element count. This makes the encoding injective: unlike a naive
-     * concatenation with fixed delimiters such as {@code ':'}/{@code ';'}, a value that happens to
-     * contain a delimiter character cannot make two semantically different models collide onto the
-     * same encoded string, because a decimal digit-only length prefix can never be confused with
-     * delimiter-bearing content.
-     */
-    private static String canonicalRepresentation(FactoryModel model) {
-        StringBuilder sb = new StringBuilder();
-
-        List<ConfiguredResource> resources = model.resources();
-        frame(sb, resources.size());
-        for (ConfiguredResource r : resources) {
-            frame(sb, r.id().value());
-            frame(sb, r.name());
-            frame(sb, r.concurrency());
-            frame(sb, r.capacityLiters());
-            frame(sb, r.setupTime());
-        }
-
-        List<OperationDefinition> operations = model.operations();
-        frame(sb, operations.size());
-        for (OperationDefinition op : operations) {
-            frame(sb, op.id());
-            frame(sb, op.name());
-            List<OperationStepDefinition> steps = op.steps();
-            frame(sb, steps.size());
-            for (OperationStepDefinition step : steps) {
-                frame(sb, step.stepId());
-                frame(sb, step.name());
-                frame(sb, step.duration());
-                // eligibleResources is a Set: its iteration order isn't a defined canonical
-                // ordering, so two semantically-equal steps could otherwise hash differently.
-                // Sort by MachineId value explicitly rather than depending on Set/toString order.
-                List<Long> sortedEligible =
-                        step.eligibleResources().stream().map(MachineId::value).sorted().toList();
-                frame(sb, sortedEligible.size());
-                for (Long resourceId : sortedEligible) {
-                    frame(sb, resourceId);
-                }
-            }
-        }
-
-        List<ProductDefinition> products = model.products();
-        frame(sb, products.size());
-        for (ProductDefinition p : products) {
-            frame(sb, p.id().value());
-            frame(sb, p.name());
-            frame(sb, p.operationId());
-        }
-
-        return sb.toString();
-    }
-
-    private static void frame(StringBuilder sb, Object value) {
-        String s = String.valueOf(value);
-        sb.append(s.length()).append(':').append(s);
     }
 }

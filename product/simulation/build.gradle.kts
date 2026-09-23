@@ -29,17 +29,15 @@ configurations.named("jmh") {
     resolutionStrategy.force("org.ow2.asm:asm:9.10.1")
 }
 
-// Coverage gate: fails the build if sim-core line coverage drops below the
-// floor (e.g. if its test suite is deleted). Raised from 0.82 following
-// enhanced test coverage for EventLog edge cases, capacity boundaries, and
-// equality/hashing semantics (see EventLogTest).
+// Retained simulation runtime and scenario-loader tests cover 125 of 145 executable lines (86.2%).
+// The former 0.88 floor was raised for EventLog tests, whose implementation is now removed.
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {
         rule {
             limit {
                 counter = "LINE"
-                minimum = "0.88".toBigDecimal()
+                minimum = "0.86".toBigDecimal()
             }
         }
     }

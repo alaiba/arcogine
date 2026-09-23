@@ -120,31 +120,35 @@ and other active/delivery-history context where the coordinate helps sequence or
 [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s commit message guidance, which this section
 does not change.
 
-Do not carry those identifiers into durable semantic naming — content whose meaning is expected to
-outlive the delivery context that produced it. This includes architecture, product, reference, or
-development documents; code comments; workflow definitions; and test/class/file names introduced
-alongside the change. It does not include commit messages or other delivery-history records, which
-may keep the coordinate that was actually used to track the work. When a planned result, a review
-finding's resolution, or other delivery-context outcome is recorded as durable semantic naming,
-translate it into the semantic capability, contract, identity, invariant, or behavior it actually
-represents rather than naming it after the coordinate that tracked it. Working/process material
-may mention a temporary delivery coordinate when the coordinate itself is the subject, but durable
-semantic claims must remain understandable without reconstructing that coordinate after the
-originating plan, PR, or review is completed, condensed, renamed, or removed.
+Durable repository assets must not depend on transient coordinates. Durable assets include
+architecture, product, reference, and development documents; code comments; workflow definitions;
+and test/class/file names introduced alongside a change. A transient coordinate may remain in
+active planning/delivery context or durable delivery-history provenance (such as a commit message
+or merged PR reference), but maintained semantic state must survive independently through the
+durable capability, contract, identity, invariant, behavior, deliberately promoted artifact, or
+provenance it represents. Exact `commit SHA + workspace/... path` pairs identify artifacts only
+while those artifacts are in active workspace custody; copying the pair into durable state does
+not preserve the artifact. Working/process material may discuss coordinate syntax when the syntax
+itself is the subject. When delivery outcomes move into durable semantic naming, translate them
+into what they represent rather than naming them after the coordinate that tracked them.
 
 Planning filenames are semantic, not coordinate-derived: the delivery label belongs in a planning
 document's content, not its path, so the filename keeps describing the subject if sequencing
 changes later.
 
-The mechanical checker (`.github/scripts/check-delivery-labels.py`) enforces this deterministically
-by scanning every tracked repository file (`git ls-files`, so generated/untracked/build output is
-never in scope): a `PLAN-*` or `REV-<NNN>` token outside `docs/planning/` is a durable-naming leak;
-inside `docs/planning/`, the old ambiguous label forms it replaced (a bare `Gate` plus number, a
-bare letter-plus-number optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be
-reintroduced. Those old forms are not banned outside `docs/planning/` — they can be ordinary,
-unrelated identifiers elsewhere in the codebase — which is exactly why the reserved `PLAN-`/`REV-`
-namespaces exist: catching identifier leakage no syntax pattern can safely recognize (prose like
-"the next stage" with no literal coordinate) remains a human review responsibility.
+The mechanical checkers enforce recognizable cases deterministically by scanning tracked
+repository text (`git ls-files`, so generated/untracked/build output is never in scope):
+`.github/scripts/check-delivery-labels.py` rejects a `PLAN-*` or `REV-<NNN>` token outside
+`docs/planning/`, while `.github/scripts/check-transient-coordinates.py` rejects an exact full
+commit SHA paired with a concrete `workspace/...` artifact path in durable files. Neither checker
+attempts to infer semantic dependence from prose without a safe syntax signal. A `PLAN-*` or
+`REV-<NNN>` token outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the
+old ambiguous label forms it replaced (a bare `Gate` plus number, a bare letter-plus-number
+optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be reintroduced. Those old forms
+are not banned outside `docs/planning/` — they can be ordinary, unrelated identifiers elsewhere
+in the codebase — which is exactly why the reserved `PLAN-`/`REV-` namespaces exist. Catching
+semantic dependencies without a safe literal signal (for example, prose like "the next stage")
+remains a human-review responsibility.
 
 `docs/architecture/` holds Arcogine's current architecture. The
 [Architecture Overview](docs/architecture/overview.md) owns cross-cutting principles and domain

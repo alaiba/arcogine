@@ -171,7 +171,7 @@ The `classify` job inspects the changed files (PR diff against the immutable `pu
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
 - `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
 
-The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from Git/GitHub-context plumbing in `.github/scripts/discover-changed-files.sh`. Its deterministic temporary-repository regression test covers local three-dot PR comparison, unavailable-base fallback and conservative classification, push ranges, and full-sweep events; run it with `bash .github/scripts/discover-changed-files.test.sh`. `.github/scripts/classify-changes.test.sh` is a small table-driven test over the classifier — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
+The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from Git/GitHub-context plumbing in `.github/scripts/discover-changed-files.sh`. Its deterministic temporary-repository regression test covers local three-dot PR comparison, unavailable-base fallback and conservative classification, push ranges, and full-sweep events; run it with `bash .github/scripts/discover-changed-files.test.sh`. `.github/scripts/classify-changes.test.sh` is a small table-driven test over the classifier — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. The transient-coordinate and transient-workspace checker suites run as explicit always-required `classify` steps. Run the classifier locally with `bash .github/scripts/classify-changes.test.sh`.
 
 ### Repository-tooling suites
 
@@ -184,6 +184,8 @@ bash .github/scripts/arcogine-cli.test.sh
 bash .github/scripts/check-pr-disposition.test.sh
 python3 .github/scripts/check-transient-workspace.test.py
 python3 .github/scripts/check-transient-workspace.py
+python3 .github/scripts/check-transient-coordinates.test.py
+python3 .github/scripts/check-transient-coordinates.py
 bash infra/dev/claude-cloud.test.sh
 node --test infra/dev/delivery-retrospective.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
@@ -197,6 +199,13 @@ The transient-workspace suite covers `.github/scripts/check-transient-workspace.
 python3 .github/scripts/check-transient-workspace.test.py
 python3 .github/scripts/check-transient-workspace.py
 ```
+
+The transient-coordinate suite covers `.github/scripts/check-transient-coordinates.py`. It rejects
+an exact 40-character commit SHA paired with a concrete `workspace/...` artifact path in durable
+tracked text, while allowing ordinary historical SHAs, generic policy prose, active planning and
+transient workspace files. It does not query GitHub, check commit ancestry, validate arbitrary
+historical paths, or infer transientness outside the reserved `workspace/` root. Semantic
+dependencies without this recognizable syntax remain a human-review responsibility.
 
 `infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, trusted-review-author filtering, closing-disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
 

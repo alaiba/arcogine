@@ -12,8 +12,8 @@ historical `ControlledRevisionId` identity, and the supported `RuntimeObservatio
 contracts. Governance, Challenge/Game, and Operational Execution each own additional semantic
 histories and projections that must not be collapsed into one generic interchange ontology.
 
-The repository already uses TOML for human-oriented scenario authoring. Arcogine currently has no
-HTTP API, SSE, or CLI product surface (see
+Arcogine currently has no scenario loader or human-authored scenario format, and no HTTP API, SSE,
+or CLI product surface (see
 [Architecture Overview — Outward Adapters](overview.md#outward-adapters)); JSON was used for HTTP
 API and SSE payloads in that retired adapter and remains the default structured representation for
 a future one (see below), alongside possible future industrial (B2MML, AutomationML, AAS/AASX,
@@ -54,13 +54,13 @@ or, for outbound projections, the reverse direction.
 
 A serializer schema, protocol object model, broker envelope, CAD structure, or standards package does not become Arcogine's canonical ontology merely because an adapter uses it.
 
-## TOML remains a human-oriented scenario authoring format
+## Future scenario formats remain open
 
-The current scenario loader accepts TOML as an input envelope for simulation scenarios. TOML remains appropriate for examples, tests, hand-authored scenarios, and small experiments; a future CLI or other adapter that accepts scenarios should keep using it rather than introducing a parallel format.
+No current scenario loader or input format is selected. If a future product need requires scenario inputs, choose the format at that time and keep its input envelope distinct from the canonical published `FactoryModel`.
 
-TOML is not the canonical published `FactoryModel` artifact by implication, and a future scenario may reference published model/revision identity rather than embedding every authoritative factory-design fact.
+TOML is not a current Arcogine input contract. A future scenario may reference published model/revision identity rather than embedding every authoritative factory-design fact.
 
-Adding YAML or another parallel human-authoring syntax requires a concrete usability or integration need rather than format preference alone.
+Any selected format requires a concrete usability or integration need rather than format preference alone.
 
 ## JSON is the default structured external representation, not a semantic-identity mechanism
 
@@ -240,8 +240,8 @@ The same rule applies to repository structure: no top-level `interop` or `format
 Use the narrowest representation that matches the owning semantic boundary:
 
 ```text
-Human-authored scenario
-    -> TOML
+Future human-authored scenario
+    -> format selected from a concrete product need
 
 Stable HTTP/API representation
     -> JSON + OpenAPI

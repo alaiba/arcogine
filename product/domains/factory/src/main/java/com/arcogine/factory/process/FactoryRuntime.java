@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 
 /**
  * The supported, consumer-neutral entry point for submitting explicit production workload,
- * independent of the economy/pricing/demand/agent loop.
+ * independent of any commercial-policy or decision-maker assembly.
  *
  * <p>{@link FactoryHandler#submitOrder} takes a caller-supplied {@link Scheduler} and simulation
  * time -- necessary plumbing for the event-driven path, but not something a workload-submission
@@ -184,7 +184,7 @@ public class FactoryRuntime {
 
     /**
      * Brings a machine online or takes it offline, under the same dispatch semantics as the
-     * economy/scenario-driven {@link EventPayload.MachineAvailabilityChange} event, and returns a
+     * explicit {@link EventPayload.MachineAvailabilityChange} event, and returns a
      * definite {@link CommandResult}. Taking a machine offline never affects work already active on
      * it; bringing an eligible machine back online can immediately pick up work that was waiting
      * because no other eligible machine was available -- any such immediately-dispatched {@code
@@ -283,7 +283,7 @@ public class FactoryRuntime {
      * outcome of a machine coming online, derived by diffing authoritative job state rather than
      * inspecting internal scheduler machinery (docs/architecture/runtime-contract.md). Ordered
      * deterministically by
-     * order id then ordinal so repeated runs of the same scenario produce identical event streams.
+     * order id then ordinal so repeated runs with the same model and commands produce identical event streams.
      */
     private void emitNewlyDispatchedJobs(List<JobView> waitingBefore, SimTime time) {
         waitingBefore.stream()
@@ -397,7 +397,7 @@ public class FactoryRuntime {
      * up as a difference against {@code activeBefore}. The only job that can newly stop occupying
      * capacity without completing is the one whose step just ended, so that is the single {@code
      * JOB_WAITING} candidate. Dispatches are ordered deterministically by order id then ordinal, so
-     * repeated runs of the same scenario emit identical event streams.
+     * repeated runs with the same model and commands emit identical event streams.
      */
     private void emitPlacementChanges(Map<JobId, JobPlacement> activeBefore, JobId completedJobId, SimTime time) {
         Map<JobId, JobPlacement> activeAfter = activePlacements();

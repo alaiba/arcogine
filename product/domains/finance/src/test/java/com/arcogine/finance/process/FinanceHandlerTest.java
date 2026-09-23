@@ -11,6 +11,7 @@ import com.arcogine.finance.ledger.JournalEntry;
 import com.arcogine.finance.ledger.Posting;
 import com.arcogine.finance.ledger.Side;
 import com.arcogine.types.JobId;
+import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 import java.math.BigDecimal;
@@ -76,10 +77,14 @@ class FinanceHandlerTest {
         FinanceHandler handler = new FinanceHandler();
         Scheduler sched = new Scheduler();
 
-        handler.handleEvent(Event.of(SimTime.ZERO, new EventPayload.PriceChange(5.0)), sched);
         handler.handleEvent(
                 Event.of(SimTime.ZERO, new EventPayload.OrderCreation(new ProductId(1), 1, 5.0)), sched);
-        handler.handleEvent(Event.of(SimTime.ZERO, EventPayload.AgentEvaluation.INSTANCE), sched);
+        handler.handleEvent(Event.of(
+                SimTime.ZERO,
+                new EventPayload.MachineAvailabilityChange(new MachineId(1), false)), sched);
+        handler.handleEvent(Event.of(
+                SimTime.ZERO,
+                new EventPayload.TaskStart(new JobId(1), new MachineId(1), 0)), sched);
 
         assertTrue(handler.ledger().entries().isEmpty(), "only OrderCompleted should produce postings");
     }

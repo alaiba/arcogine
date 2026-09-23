@@ -4,7 +4,6 @@ dependencies {
     implementation(project(":types"))
     implementation(project(":simulation"))
     implementation(project(":governance"))
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.22")
 }
 
 // Coverage gate: fails the build if sim-factory line coverage drops below the

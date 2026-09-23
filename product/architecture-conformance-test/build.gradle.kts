@@ -8,9 +8,7 @@
 // review discipline alone.
 dependencies {
     testImplementation(project(":types"))
-    testImplementation(project(":agents"))
     testImplementation(project(":factory"))
-    testImplementation(project(":economy"))
     testImplementation(project(":finance"))
 
     testImplementation("com.tngtech.archunit:archunit-junit5:1.5.0")

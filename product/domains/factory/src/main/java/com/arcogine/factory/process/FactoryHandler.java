@@ -258,7 +258,7 @@ public class FactoryHandler implements EventHandler {
     /**
      * Accepts an immutable {@link Order} and deterministically creates one unit execution {@link Job}
      * per requested unit under the same routing/dispatch semantics regardless of how the caller decided to produce it --
-     * the economy-driven {@link EventPayload.OrderCreation} event and {@link FactoryRuntime}'s
+     * an internal {@link EventPayload.OrderCreation} event and {@link FactoryRuntime}'s
      * explicit workload submission both resolve to this one acceptance operation.
      *
      * <p>Children are allocated and initially dispatched in ascending ordinal order. Every child

@@ -10,17 +10,11 @@ public sealed interface EventPayload permits
         EventPayload.TaskStart,
         EventPayload.TaskEnd,
         EventPayload.OrderCompleted,
-        EventPayload.MachineAvailabilityChange,
-        EventPayload.PriceChange,
-        EventPayload.AgentEnabledChanged,
-        EventPayload.AgentDecision,
-        EventPayload.DemandEvaluation,
-        EventPayload.AgentEvaluation {
+        EventPayload.MachineAvailabilityChange {
 
     /**
-     * unitPrice is the OfferPrice in effect at the instant the order was created. It is a
-     * historical transaction fact: once the order exists, this price is immutable for the life
-     * of the order and must not be re-derived from current pricing state later.
+     * unitPrice is the commercial price agreed when the order was created. It is a historical
+     * transaction fact: once the order exists, this price is immutable for the life of the order.
      */
     record OrderCreation(ProductId productId, long quantity, double unitPrice) implements EventPayload {}
 
@@ -47,24 +41,4 @@ public sealed interface EventPayload permits
 
     record MachineAvailabilityChange(MachineId machineId, boolean online) implements EventPayload {}
 
-    record PriceChange(double newPrice) implements EventPayload {}
-
-    /**
-     * Whether the SalesAgent is enabled. This is orchestration config, not a domain state
-     * transition owned by any single domain handler -- it is modeled as an event (rather than a
-     * direct setter call, as it once was) purely for consistency with every other simulation
-     * command (PriceChange, MachineAvailabilityChange): it becomes part of the deterministic,
-     * replayable event stream instead of being an out-of-band mutation.
-     */
-    record AgentEnabledChanged(boolean enabled) implements EventPayload {}
-
-    record AgentDecision(String description) implements EventPayload {}
-
-    record DemandEvaluation() implements EventPayload {
-        public static final DemandEvaluation INSTANCE = new DemandEvaluation();
-    }
-
-    record AgentEvaluation() implements EventPayload {
-        public static final AgentEvaluation INSTANCE = new AgentEvaluation();
-    }
 }

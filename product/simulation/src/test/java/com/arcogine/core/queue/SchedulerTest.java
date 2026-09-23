@@ -18,9 +18,9 @@ class SchedulerTest {
     void eventsDequeuedInTimeOrder() {
         Scheduler scheduler = new Scheduler();
 
-        scheduler.schedule(Event.of(new SimTime(30), EventPayload.DemandEvaluation.INSTANCE));
-        scheduler.schedule(Event.of(new SimTime(10), EventPayload.DemandEvaluation.INSTANCE));
-        scheduler.schedule(Event.of(new SimTime(20), EventPayload.DemandEvaluation.INSTANCE));
+        scheduler.schedule(orderAt(30, 1));
+        scheduler.schedule(orderAt(10, 1));
+        scheduler.schedule(orderAt(20, 1));
 
         assertEquals(new SimTime(10), scheduler.nextEvent().orElseThrow().time());
         assertEquals(new SimTime(20), scheduler.nextEvent().orElseThrow().time());
@@ -35,7 +35,7 @@ class SchedulerTest {
         scheduler.schedule(Event.of(
                 new SimTime(5),
                 new EventPayload.OrderCreation(new ProductId(1), 1, 10.0)));
-        scheduler.schedule(Event.of(new SimTime(10), EventPayload.DemandEvaluation.INSTANCE));
+        scheduler.schedule(orderAt(10, 1));
 
         Event e1 = scheduler.nextEvent().orElseThrow();
         assertEquals(new SimTime(5), e1.time());
@@ -51,13 +51,13 @@ class SchedulerTest {
         Scheduler scheduler = new Scheduler();
 
         // Advance time by dequeuing an event
-        scheduler.schedule(Event.of(new SimTime(10), EventPayload.DemandEvaluation.INSTANCE));
+        scheduler.schedule(orderAt(10, 1));
         scheduler.nextEvent().orElseThrow();
 
         // Now try to schedule an event in the past
         SimError.EventOrderingViolation err = assertThrows(
                 SimError.EventOrderingViolation.class,
-                () -> scheduler.schedule(Event.of(new SimTime(5), EventPayload.DemandEvaluation.INSTANCE)));
+                () -> scheduler.schedule(orderAt(5, 1)));
         assertEquals(new SimTime(10), err.expectedMin());
         assertEquals(new SimTime(5), err.actual());
     }
@@ -66,14 +66,14 @@ class SchedulerTest {
     void sameTimeEventsAreAccepted() {
         Scheduler scheduler = new Scheduler();
 
-        scheduler.schedule(Event.of(new SimTime(10), EventPayload.DemandEvaluation.INSTANCE));
-        scheduler.schedule(Event.of(new SimTime(10), EventPayload.AgentEvaluation.INSTANCE));
+        scheduler.schedule(orderAt(10, 1));
+        scheduler.schedule(orderAt(10, 2));
 
         Event e1 = scheduler.nextEvent().orElseThrow();
         assertEquals(new SimTime(10), e1.time());
 
         // After dequeuing time=10, scheduling another time=10 should work
-        scheduler.schedule(Event.of(new SimTime(10), EventPayload.DemandEvaluation.INSTANCE));
+        scheduler.schedule(orderAt(10, 3));
 
         assertEquals(new SimTime(10), scheduler.nextEvent().orElseThrow().time());
         assertEquals(new SimTime(10), scheduler.nextEvent().orElseThrow().time());
@@ -114,6 +114,10 @@ class SchedulerTest {
 
     private static long orderQuantity(Event event) {
         return ((EventPayload.OrderCreation) event.payload()).quantity();
+    }
+
+    private static Event orderAt(long tick, long quantity) {
+        return Event.of(new SimTime(tick), new EventPayload.OrderCreation(new ProductId(1), quantity, 1.0));
     }
 
     @Test

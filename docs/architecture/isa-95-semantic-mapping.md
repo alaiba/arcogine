@@ -85,7 +85,7 @@ Arcogine's current position is:
 
 | Dimension | Current assessment |
 |---|---|
-| Scenario vocabulary | Partial alignment: the schema uses `equipment`, `material`, `process_segment`, and `operations_definition` |
+| Scenario vocabulary | No current scenario schema or serialized input vocabulary is selected |
 | Runtime terminology | Deliberately Arcogine-specific: `Machine`, `Job`, `Routing`, and `RoutingStep` are approachable aliases or partial analogues |
 | Semantic alignment | Narrow production-execution concepts are mappable, but several mappings are approximate |
 | Structural alignment | Limited: configured-resource design, requests, execution, and performance are intentionally narrower than the full ISA-95 separation |
@@ -96,7 +96,7 @@ Arcogine's current position is:
 
 The correct characterization is therefore:
 
-> Arcogine is ISA-95-informed and semantically mappable across a narrow production-execution subset. Its scenario schema adopts selected ISA-95 terminology, but its runtime model does not currently implement the complete ISA-95 resource, hierarchy, schedule, performance, or exchange models.
+> Arcogine is ISA-95-informed and semantically mappable across a narrow production-execution subset. Its Factory model and runtime do not implement the complete ISA-95 resource, hierarchy, schedule, performance, or exchange models.
 
 ## 5. Current concept mapping register
 
@@ -104,19 +104,16 @@ This table is the maintained working register. Unit-work decomposition is implem
 
 | Arcogine concept | Current meaning | Closest ISA-95 semantic role | Mapping | Disposition | Current limitation or direction |
 |---|---|---|---|---|---|
-| Scenario `equipment` | Configured productive resource | Equipment | Strong vocabulary mapping | Adopt | The runtime object is still named `Machine` |
-| `EquipmentConfig` | Scenario representation of one configured resource's name, concurrency, capacity, and setup parameters | Equipment information / resource properties | Partial | Alias | The canonical design uses one complete configured-resource identity; runtime `Machine` state remains separate |
+| `ConfiguredResource` | Complete configured productive resource identity and properties | Equipment information / resource properties | Partial | Alias | Runtime `Machine` state remains separate |
 | Runtime `Machine` | Mutable operational state instantiated from one configured resource, with active jobs, queue, concurrency, capacity, setup time, and busy ticks | Equipment instance at approximately work-unit granularity | Approximate | Alias | No separate reusable equipment classification or generalized capability/qualification model is admitted today |
 | `MachineState` | `Idle`, `Busy`, or `Offline` | Equipment operational status / availability | Narrow | Alias | This is status, not equipment capability |
 | Machine queue | Ordered work waiting for one machine | Execution scheduling / job-list state | Approximate | Alias | Must not be described as equipment capability |
 | Machine concurrency | Number of simultaneously active jobs allowed | Resource capacity property | Partial | Alias | No generalized capability/capacity model |
 | `capacityLiters` | Optional machine-specific volumetric property | Equipment property / capability parameter | Narrow | Alias | Specialized property, not a general resource requirement model |
 | `setupTime` | Configured setup duration | Equipment or operation parameter | Partial | Alias | Current execution does not yet model full setup-state semantics |
-| Scenario `material` / `MaterialConfig` | Named produced item linked to a routing | Material Definition analogue | Partial | Adopt at scenario boundary | Represents product-like output, not a generalized material model |
 | Runtime `ProductId` | Identifier carried by jobs and routing lookup | Material Definition identifier | Weak | Refactor | No first-class runtime product/material definition behind the ID |
-| Scenario `operations_definition` | Named ordered set of process segments | Operations Definition / Work Definition | Good vocabulary mapping | Adopt | Runtime equivalent is simplified `Routing` |
+| `OperationDefinition` / `Routing` | Named ordered set of operation steps | Operations Definition / Work Definition | Partial | Alias | Runtime routing is a simplified ordered definition |
 | Runtime `Routing` | Immutable ordered list of routing steps | Simplified Operations/Work Definition | Partial | Alias | Lacks explicit resource requirements, parameters, alternatives, and version semantics |
-| Scenario `process_segment` | Named step, concrete equipment ID, and duration | Process Segment analogue | Partial vocabulary mapping | Adopt at scenario boundary | A true process segment is more abstract than one concrete machine assignment |
 | Runtime `RoutingStep` | Step ID, name, eligible `MachineId` set, and duration | Simplified work step / Process Segment analogue | Partial | Alias | Explicit eligible instances support deterministic equivalent-resource dispatch, but there is no generalized capability requirement/pool model |
 | `Order` | Immutable accepted request intent: product, quantity, agreed unit price, and creation time, identified by `OrderId` | Job Order / production request, approximating a production-order aggregate, extended with a commercial price | Partial | Alias | One quantity-`N` order remains the aggregate request/correlation identity while execution is decomposed into child jobs |
 | `Job` | Mutable unit-quantity execution/work item identified by `JobId`, linked to parent `OrderId`, with deterministic `ordinalWithinOrder` | Work item / job execution state | Partial | Alias | One child job per requested quantity unit; independently dispatchable; no generalized lot/batch identity |
@@ -130,7 +127,6 @@ This table is the maintained working register. Unit-work decomposition is implem
 | `FactoryHandler` | Owner of machines, jobs, queues, routings, and production aggregates | Narrow production-execution function in a Level-3-like scope | Approximate | Alias | A class is not an ISA-95 level; Arcogine covers only a subset of MOM activities |
 | Throughput, lead-time, backlog, utilization and related observations | Operational measures derived from authoritative runtime state, aggregates, and counters | Operations Performance / manufacturing KPI information | Partial | Adopt or alias per KPI | Backlog, completed-sales, and order lead-time meanings remain order-level under child-job decomposition |
 | Finance ledger and observations | Financial interpretation of completed operational work | Enterprise/business-side financial information | Adjacent, not one-to-one | Diverge | Deliberately separate from operational production truth; child jobs do not multiply full order value |
-| Economy/demand model | Offer price and demand-generation behavior | Business/planning input adjacent to Level 4 | Arcogine-specific | Extend | Not an ISA-95 enterprise-planning implementation |
 | Proposed factory-floor position and footprint | Physical placement with transfer consequences | No one-to-one equipment-hierarchy mapping | Orthogonal | Extend | Must remain distinct from organizational/resource containment |
 | Proposed resource pool / work center | Group of eligible resources and aggregate capacity | Work Center / resource scope | Potentially strong | Adopt or alias when implemented | Introduce only when it owns real dispatch, capacity, or reporting semantics |
 | Enterprise / Site hierarchy | Organizational and physical scope above a factory | Enterprise / Site | Relevant but absent | Defer | No current multi-site or enterprise-scoped behavior |
@@ -156,7 +152,7 @@ the complete configured productive participant. It is not a reusable type, and a
 explicit set of eligible `MachineId` values is the sufficient current applicability
 boundary.
 
-Arcogine currently represents part of this through `MaterialConfig`, `OperationsDefinitionConfig`, `Routing`, `RoutingStep`, and the canonical `ConfiguredResource` record. The current boundary is deliberate:
+Arcogine currently represents part of this through `ProductDefinition`, `OperationDefinition`, `Routing`, `RoutingStep`, and the canonical `ConfiguredResource` record. No serialized scenario schema is currently implemented. The current boundary is deliberate:
 
 - no first-class runtime `Product` or generalized material definition;
 - `RoutingStep` expresses explicit eligible `MachineId` values rather than a generalized resource-capability requirement;
@@ -177,7 +173,7 @@ Priority
 Scheduling scope
 ```
 
-Arcogine receives work both through economy-driven `OrderCreation` events and the explicit `FactoryRuntime.submitWorkload` boundary. An immutable `Order` records accepted work intent (product, quantity, agreed price, creation time). Quantity `N` is currently decomposed into `N` independently dispatchable unit-quantity child jobs while aggregate progress remains correlated by the same `OrderId`.
+Arcogine's retained runtime accepts explicit work through the `FactoryRuntime.submitWorkload` boundary. An immutable `Order` records accepted work intent (product, quantity, agreed price, creation time). Quantity `N` is currently decomposed into `N` independently dispatchable unit-quantity child jobs while aggregate progress remains correlated by the same `OrderId`.
 
 For explicit production contracts and external consumers, further request/schedule concerns may later include:
 
@@ -388,7 +384,7 @@ Arcogine currently models a narrow production-execution slice, not the complete 
 | Area | Current Arcogine coverage | Status |
 |---|---|---|
 | Production definition | Materials linked to routings, complete configured resources, and explicit eligible-resource steps | Partial |
-| Production requests | Immutable `Order` intent accepted through explicit workload submission or economy-driven order creation | Partial |
+| Production requests | Immutable `Order` intent accepted through explicit workload submission | Partial |
 | Production scheduling | Deterministic event scheduler, explicit eligible-resource dispatch, per-machine FIFO queues, and cross-machine pending work | Simplified, simulation-specific |
 | Production execution | Machines, unit-quantity child jobs, task transitions, queues, order execution aggregates, and aggregate completion | Core current coverage |
 | Production performance | Internal events, order completion aggregates, jobs, and selected KPIs/observations | Partial |

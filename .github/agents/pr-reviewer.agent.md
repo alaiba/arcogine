@@ -175,13 +175,13 @@ When a surface changes, inspect maintained or executable surfaces that encode or
 | `FactoryModel` / model semantics | factory-design architecture, the Factory Model specifications, factory-design plan, engine assumptions, product concepts, provenance/identity contracts, tests |
 | routing/resource eligibility or execution decomposition | `docs/product/concepts.md`, factory-design architecture/plan, Engine Readiness, Engine Semantics, runtime/dispatch tests, consumer contracts |
 | `FactoryRuntime`, handlers, orders, jobs | architecture overview, Engine Readiness, the runtime and Engine Semantics contracts, acceptance/integration tests, consumer contracts |
-| events, scheduler, observations | event/state/observation architecture, API/SSE projections, determinism tests |
+| events, scheduler, observations | event/state/observation architecture, supported runtime contract, determinism tests |
 | module dependencies | architecture module graph, executable architecture rules, domain/challenge boundaries |
 | challenge domain | Challenge Readiness, game consumer plans, Engine-vs-Challenge boundary |
 | governance/conformance | governance architecture and plan, the identity/revision/fingerprint specifications, evidence/findings semantics |
 | operational/digital-twin work | operational architecture/plan, security/authority concerns, governance boundary |
-| controllers, DTOs, SSE | API/reference docs, frontend client/types, integration/E2E tests |
-| scenario schema/config | executable examples, product concepts, parser/config tests |
+| outward controllers and projections, if present | runtime contract, relevant adapter references, integration tests |
+| scenario/input format (if implemented) | approved input contract, product concepts, format-specific tests |
 | `./arcogine` commands | README, CONTRIBUTING, testing guide, AGENTS.md |
 | Gradle / Java / Node policy | executable configuration, CI, devcontainer/runtime policy, maintained development docs |
 | CI workflows/checks | testing guide, CONTRIBUTING, AGENTS.md where workflow depends on checks |

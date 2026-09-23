@@ -9,30 +9,9 @@ Arcogine is building toward purpose-built ways to design, understand, simulate, 
 
 ## What is Arcogine today?
 
-Today, Arcogine is a simulation platform where you experiment with how pricing, capacity, and automated agents interact in a factory environment. Three systems feed back into each other:
+Today, the retained implementation centers on Factory Design, a deterministic FactoryRuntime and Engine, Governance/conformance, the Challenge consumer, and Finance's financial interpretation of completed orders. FactoryRuntime executes explicit production workload from a published model version and exposes supported observations and runtime events. It does not currently provide an interactive application or experiment loop.
 
-```text
-     You set a price
-           │
-           ▼
-    Demand responds        (lower price → more orders)
-           │
-           ▼
-    Factory produces        (machines process jobs through routing steps)
-           │
-           ▼
-    KPIs update             (throughput, lead time, backlog, revenue)
-           │
-           ▼
-    You (or the agent)      (observe KPIs, decide what to change)
-    make decisions
-           │
-           └───────────────► loop repeats
-```
-
-The simulation is fully deterministic: same inputs produce identical outputs every time. This makes it useful for comparing strategies, testing hypotheses, and understanding cause-and-effect in complex operational systems.
-
-**New to Arcogine?** Read [Concepts](docs/product/concepts.md) to understand what you're looking at before running your first session.
+Repeated runs with the same model version, Engine semantics, and explicit commands produce identical outputs. **New to Arcogine?** Read [Concepts](docs/product/concepts.md) for the current retained capabilities.
 
 ## Quick start
 
@@ -85,7 +64,7 @@ Arcogine currently has no application server, HTTP API, or CLI product surface �
 | Document | What it covers |
 |----------|----------------|
 | [Product Charter](docs/product/charter.md) | Enduring product vision and principles — start here to understand what Arcogine is ultimately becoming |
-| [Concepts](docs/product/concepts.md) | How the current simulation works, KPIs, agents, scenarios |
+| [Concepts](docs/product/concepts.md) | Current Factory and Engine capabilities |
 | [Architecture](docs/architecture/overview.md) | Design philosophy, module structure, determinism contract |
 | [Full docs index](docs/README.md) | Everything else: testing, standards, vision, security |
 

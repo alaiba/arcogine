@@ -73,7 +73,7 @@ This does not claim that those fields are the ideal permanent ontology. Reclassi
 
 `resources`, `operations`, `products`, and operation `steps` are encoded in list order.
 
-This is intentionally conservative: product order can affect deterministic demand generation because the runtime preserves product order and selects by RNG index. V1 does not define a stronger order-independent equivalence than the canonical model/runtime guarantees.
+This is intentionally conservative: these collections are encoded in sequence, so reordering them changes the canonical bytes and therefore the model identity. V1 does not define a stronger order-independent equivalence.
 
 `eligibleResources` is set-shaped and is therefore sorted by ascending signed `MachineId` before encoding.
 

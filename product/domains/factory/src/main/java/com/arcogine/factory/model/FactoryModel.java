@@ -6,8 +6,8 @@ import java.util.List;
  * The canonical, consumer-neutral semantic definition of a designed production system: its
  * resources, operations, and products.
  *
- * <p>This is deliberately narrow. Simulation configuration, RNG seed, economy configuration,
- * agents, workload, and any other execution/run concern are never part of this type -- see
+ * <p>This is deliberately narrow. Simulation configuration, RNG seed, commercial policy,
+ * decision-makers, workload, and any other execution/run concern are never part of this type -- see
  * the canonical model boundary (docs/architecture/factory-design.md). {@link FactoryModel} is a
  * plain, immutable value;
  * it has no dependency on Spring, scenario parsing, or any runtime/mutable state.

@@ -24,8 +24,8 @@ import org.junit.jupiter.api.Test;
  * Proves the engine-readiness explicit-workload-submission criterion: a headless caller can instantiate a
  * published factory model's runtime and submit production workload through {@link
  * FactoryRuntime#submitWorkload}, supplying only product/quantity/commercial intent -- no
- * economy, pricing, demand, or agent handler in the loop, and no caller-owned {@code Scheduler} or
- * caller-chosen simulation time.
+ * economic policy handler in the loop, and no caller-owned {@code Scheduler} or caller-chosen
+ * simulation time.
  */
 class ExplicitWorkloadSubmissionTest {
 
@@ -46,7 +46,7 @@ class ExplicitWorkloadSubmissionTest {
     }
 
     @Test
-    void submitsExplicitWorkloadWithoutEconomyDemandOrAgents() {
+    void submitsExplicitWorkloadWithoutPolicyAssembly() {
         FactoryRuntime runtime = runtime();
 
         OrderId orderId = runtime.submitWorkload(new ProductId(1), 3, 12.0).orElseThrow();

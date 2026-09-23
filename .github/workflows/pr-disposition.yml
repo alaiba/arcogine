@@ -55,15 +55,6 @@ name: PR Disposition
 # `pull_request`-triggered job would, so this workflow explicitly publishes a
 # check run against the resolved head SHA via the Checks API.
 #
-# CHECK-NAME PROVENANCE (see docs/development/reviewing.md's required-check
-# provenance section):
-# GitHub branch-protection required status checks match by check NAME only,
-# not by which workflow produced them. A separate PR-authored workflow
-# (triggered by an ordinary, untrusted event) could create its own job named
-# "disposition" and satisfy the same required-check name without ever running
-# this evaluator. `.github/CODEOWNERS` mitigates this: authoring or changing a
-# workflow is itself a change under `.github/workflows/`, so it requires an
-# owner's independent approval before it can merge.
 on:
   pull_request_target:
     branches: [main]

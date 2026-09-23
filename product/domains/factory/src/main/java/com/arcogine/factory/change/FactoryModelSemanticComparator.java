@@ -34,7 +34,7 @@ import java.util.TreeSet;
  * Per docs/architecture/factory-model-v1.md ("List ordering is semantic"), top-level {@code
  * resources},
  * {@code operations}, and {@code products} order is itself part of {@code factory-model:v1}
- * semantic content -- product order in particular can affect deterministic demand generation.
+ * semantic content; Factory Model v1 preserves top-level product ordering in its canonical form.
  * Reordering any of those top-level lists is therefore reported as an {@code ENTITY_MODIFIED}
  * change against the moved entity, in addition to any content-level change.
  */

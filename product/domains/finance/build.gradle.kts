@@ -6,7 +6,7 @@ dependencies {
 }
 
 // Coverage gate: fails the build if sim-finance line coverage drops below the
-// floor (e.g. if its tests are deleted). Mirrors the gate in sim-economy.
+// floor (e.g. if its tests are deleted).
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))
     violationRules {

@@ -127,7 +127,7 @@ Observations inform Decisions.
 Decisions produce Events.
 ```
 
-— is strongly compatible with this charter and provides a useful current realization of several of its principles: explicit events, single-owner state, purpose-specific observations, and accountable decisions are one good way to keep design, simulation, verification, and execution semantically continuous. Existing ideas the current implementation already applies — authoritative state ownership per subsystem, immutable observations, explicit decisions, deterministic simulation, provenance via explicit model and run identity, the commercial/operational/financial truth distinction, and controlled agent capabilities — remain valuable and are not discarded by this charter.
+— is strongly compatible with this charter and provides useful architectural guidance: explicit events, single-owner state, purpose-specific observations, and accountable decisions are one way to keep design, simulation, verification, and execution semantically continuous. Existing architectural principles and implementation lessons — authoritative state ownership per subsystem, immutable observations, explicit decisions, deterministic simulation, provenance via explicit model and run identity, the commercial/operational/financial truth distinction, and controlled capabilities — remain valuable and are not discarded by this charter.
 
 Whether Events–State–Observations remains an architectural invariant, and how it evolves, is a question for [`docs/architecture/overview.md`](../architecture/overview.md), not for this charter. This charter is satisfied by any architecture that upholds its principles — explicit state ownership, purpose-specific observations, causality, and provenance among them — and does not itself mandate this specific pattern as permanent.
 
@@ -137,7 +137,7 @@ One distinction matters enough to state explicitly: **determinism is a critical 
 
 Arcogine is not fundamentally: a factory dashboard; a generic BI tool; only a discrete-event simulator; a game; an ERP clone; an MES clone; a collection of unrelated digital-twin integrations; or a separate model maintained per lifecycle stage.
 
-Arcogine is also not defined by: any particular UI; Java; Spring; TOML scenarios; its current API; its current module names; or its current single-user, local-first deployment model. Those are implementation and current-state choices, evaluated and possibly changed over time — not product identity.
+Arcogine is also not defined by: any particular UI; Java; Spring; a scenario-file format; its current API; its current module names; or its current single-user, local-first deployment model. Those are implementation and current-state choices, evaluated and possibly changed over time — not product identity.
 
 Older ambitions such as "serious games" for training or "MMO-scale economic simulations" may remain possible applications built on the underlying engine, but they do not compete with the production-system/business-lifecycle thesis in Sections 1–3 as Arcogine's primary product identity.
 

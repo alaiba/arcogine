@@ -6,7 +6,7 @@
 |---|---|---|
 | [Product Charter](product/charter.md) | Everyone | Enduring product thesis and principles |
 | [Root README](../README.md) | Everyone | What Arcogine is today, setup, and local run |
-| [Concepts](product/concepts.md) | New users | Current simulation concepts and behavior |
+| [Concepts](product/concepts.md) | New users | Current Factory and Engine capabilities |
 
 ## Documentation hierarchy
 
@@ -105,7 +105,3 @@ See [planning/README.md](planning/README.md) for the admission rule.
 | [Game consumer](planning/factory-design-game-consumer.md) | Settled ownership/integration boundary and playable implementation admission criteria |
 | [Game vertical-slice implementation gate](planning/factory-design-game-vertical-slice.md) | Explicit gate from product research into playable implementation |
 | [Operational implementation admission](planning/operational-execution-digital-twin-readiness.md) | Concrete conditions that must be met before an Operational delivery slice is created |
-
-## Examples
-
-[Examples](examples/README.md) are executable TOML scenario fixtures for education/testing; they are not runtime distribution assets.

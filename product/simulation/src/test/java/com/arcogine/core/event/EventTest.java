@@ -38,12 +38,7 @@ class EventTest {
                         new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 5, 10.0),
                         EventType.OrderCompleted),
                 new Case(new EventPayload.MachineAvailabilityChange(new MachineId(1), true),
-                        EventType.MachineAvailabilityChange),
-                new Case(new EventPayload.PriceChange(1.0), EventType.PriceChange),
-                new Case(new EventPayload.AgentEnabledChanged(true), EventType.AgentEnabledChanged),
-                new Case(new EventPayload.AgentDecision("test"), EventType.AgentDecision),
-                new Case(EventPayload.DemandEvaluation.INSTANCE, EventType.DemandEvaluation),
-                new Case(EventPayload.AgentEvaluation.INSTANCE, EventType.AgentEvaluation));
+                        EventType.MachineAvailabilityChange));
 
         for (Case c : cases) {
             Event event = Event.of(SimTime.ZERO, c.payload());

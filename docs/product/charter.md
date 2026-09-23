@@ -163,8 +163,8 @@ Current architecture and enduring architectural principles
         ├── docs/planning/
         │   Admitted implementation work, sequencing, blockers, and acceptance evidence
         │
-        └── Git and pull-request history
-            Historical rationale and superseded states; evidence, not current authority
+        └── Git and pull-request history; docs/history/
+            Historical rationale, superseded states, and dated evidence; not current authority
 ```
 
 Repository documentation uses these status categories, applied where they materially help a reader avoid confusing them:
@@ -174,7 +174,7 @@ Repository documentation uses these status categories, applied where they materi
 - **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
 - **Planned** — admitted implementation work with bounded ownership, prerequisites, sequencing, and acceptance evidence. `docs/planning/`.
 - **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research and planning authorities, such as a design proposal under review in a branch or pull request.
-- **Historical** — retained for context but no longer authoritative. Replaced or removed decisions and plans, preserved in Git history.
+- **Historical** — retained for context, not current authority. Replaced or removed decisions and plans, preserved in Git history, plus dated evidence such as selected decision rationale under `docs/history/`.
 
 A reader should never be left guessing whether a statement is mature product ambition, current implementation, an open research question, admitted implementation work, an open proposal, or a historical artifact.
 

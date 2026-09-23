@@ -1,6 +1,6 @@
 # Arcogine — Architectural Overview
 
-This document sits under the [Product Charter](/docs/product/charter.md), which defines Arcogine's enduring product direction and principles. This document describes the design philosophy and architectural principles that guide Arcogine's implementation *today*, and distinguishes principles expected to persist regardless of implementation from constraints specific to the current MVP. This document and the focused architecture/specification documents it links are the current architectural authority; Git and pull-request history hold the historical rationale for how they reached their present form.
+This document sits under the [Product Charter](/docs/product/charter.md), which defines Arcogine's enduring product direction and principles. This document describes the design philosophy and architectural principles that guide Arcogine's implementation *today*, and distinguishes principles expected to persist regardless of implementation from constraints specific to the current MVP. This document and the focused architecture/specification documents it links are the current architectural authority; Git and pull-request history hold the historical rationale for how they reached their present form, and selected non-normative [decision-rationale records](/docs/history/README.md#decision-rationale) may preserve why a significant choice was made without ever defining current architecture.
 
 ## Enduring architectural principles
 

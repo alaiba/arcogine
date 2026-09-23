@@ -15,7 +15,7 @@ This document is **not**:
 - marketing copy;
 - an architecture specification.
 
-It defines what Arcogine is ultimately intended to become and the principles against which future initiatives — features, refactors, architecture proposals — should be evaluated. It does not promise dates, phases, or that any specific capability will ship. For what Arcogine implements today, see [`docs/architecture/overview.md`](../architecture/overview.md), [`docs/product/concepts.md`](concepts.md), and [`docs/reference/api.md`](../reference/api.md).
+It defines what Arcogine is ultimately intended to become and the principles against which future initiatives — features, refactors, architecture proposals — should be evaluated. It does not promise dates, phases, or that any specific capability will ship. For what Arcogine implements today, see [`docs/architecture/overview.md`](../architecture/overview.md) and [`docs/product/concepts.md`](concepts.md).
 
 ## 1. Purpose
 
@@ -154,7 +154,7 @@ Current architecture and enduring architectural principles
         ├── docs/architecture/*.md
         │   Focused specifications owning exact contracts, identities, and semantics
         │
-        ├── docs/product/concepts.md / docs/reference/api.md / UI docs
+        ├── docs/product/concepts.md
         │   Current capability/reference documentation
         │
         ├── docs/research/
@@ -170,7 +170,7 @@ Current architecture and enduring architectural principles
 Repository documentation uses these status categories, applied where they materially help a reader avoid confusing them:
 
 - **Normative** — enduring direction and principles. This charter, and the enduring-principle portions of `docs/architecture/overview.md`.
-- **Current state** — what Arcogine implements now. `docs/product/concepts.md`, `docs/reference/api.md`, and the current-implementation portions of `docs/architecture/overview.md`.
+- **Current state** — what Arcogine implements now. `docs/product/concepts.md` and the current-implementation portions of `docs/architecture/overview.md`.
 - **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
 - **Planned** — admitted implementation work with bounded ownership, prerequisites, sequencing, and acceptance evidence. `docs/planning/`.
 - **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research and planning authorities, such as a design proposal under review in a branch or pull request.

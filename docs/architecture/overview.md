@@ -101,10 +101,9 @@ of an operational continuation remain open questions for those owning contracts.
 These describe today's implementation choices. They are not claims about Arcogine's permanent identity — see the Product Charter's [product boundaries](/docs/product/charter.md#9-what-arcogine-is-not) for why Java, current interfaces, and the current deployment model are implementation choices rather than product identity, subject to change as the product grows toward the full lifecycle described there.
 
 1. Core simulation is written in Java with a **Java 21 language/API/bytecode compatibility baseline**. The preferred devcontainer currently uses JDK 25, and CI runs on JDK 21 to prove the supported floor; the compiler JDK and compatibility baseline are deliberately separate concerns.
-2. The headless simulation core is the current implementation's primary layer; the UI and API are additive consumers of it. This describes today's layering, not a permanent claim that Arcogine's mature product surface is UI-secondary.
+2. The headless simulation core is the entire current implementation; there is presently no UI, HTTP API, or CLI product surface consuming it. Retained executable evidence is tests, conformance checks, and benchmarks. This describes today's layering, not a permanent claim that Arcogine's mature product surface has no outward consumer — a future one is introduced from the then-current supported runtime contract when a concrete product need exists (see [runtime contract](runtime-contract.md)).
 3. MVP ties factory flow to the economy loop.
-4. Support native and containerized local execution.
-5. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls (see [SECURITY.md](/.github/SECURITY.md)).
+4. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls (see [SECURITY.md](/.github/SECURITY.md)).
 
 ## Architectural implications of the Product Charter
 
@@ -145,7 +144,7 @@ Events:
 - carry only the domain-relevant facts needed to apply the transition;
 - participate in deterministic ordering via the `Scheduler`;
 - are the primary — ideally the *only* — mechanism for causing a simulation state transition;
-- remain suitable for inspection, testing, replay, and experiment analysis (`EventLog`, `/api/export/events`).
+- remain suitable for inspection, testing, replay, and experiment analysis (`EventLog`).
 
 ### State
 
@@ -173,12 +172,10 @@ Concrete, source-level version of the rule above — checkable in review, not ju
 | `OrderValue` | Derived by immutable `Order` from quantity × `OrderPrice` | Derived, not separately mutated |
 | `CompletedSalesValue`, `completedSales` | `FactoryHandler` | `TaskEnd` (once when the order-level execution aggregate completes) |
 | Ledger, `Cash`/`Sales` balances | `Ledger` (owned by `FinanceHandler`) | `OrderCompleted` |
-| `SalesAgent`'s last observation, intervention count | `SalesAgent` | `observe(...)` (called by `IntegratedHandler`), `AgentEvaluation` |
-| `IntegratedHandler.agentEnabled` | `IntegratedHandler` | `AgentEnabledChanged` |
-| `EventLog` | `EventLog` (owned by `SimThread`) | every dispatched internal `Event`; current legacy `SimThread` paths append and notify SSE listeners before `handleEvent(...)` |
-| Published API snapshot | `AtomicReference<SimSnapshot>` (owned by `SimThread`) | `SnapshotBuilder.buildSnapshot(...)`, called after each processed event/batch |
+| `SalesAgent`'s last observation, intervention count | `SalesAgent` | `observe(...)` (called by a composing `EventHandler`, see [Event Dispatch Architecture](#event-dispatch-architecture)), `AgentEvaluation` |
+| `EventLog` | `EventLog` (`:simulation`) | every dispatched internal `Event` |
 
-The current `SimThread` ordering in the `EventLog` row is legacy API behavior, not the target supported event contract. The [runtime contract](runtime-contract.md) requires supported `RuntimeEvent` state-change facts to be derived/published only after authoritative processing succeeds.
+The [runtime contract](runtime-contract.md) requires supported `RuntimeEvent` state-change facts to be derived/published only after authoritative processing succeeds.
 
 `DemandModel` reads `OfferPrice` and lead time on demand, via `DoubleSupplier`s bound to `PricingState`/`FactoryHandler` at construction — it has no state of its own to keep in sync, so it isn't listed as an owner above.
 
@@ -186,11 +183,11 @@ Order/job creation is not exclusively event-driven: `FactoryRuntime.submitWorklo
 
 `FactoryRuntime` also implements the consumer-neutral session-control semantics of [Engine Semantics v1 §1.2](engine-semantics-v1.md#12-session-and-control-semantics), additive to the shape above: `modelVersion()` retains and exposes the exact `FactoryModelVersion` the session was instantiated from, for the session's full lifetime; `advanceUntil(SimTime targetTime, long maxEvents)` sits alongside the unchanged single-event `advance()`, processing pending events one at a time until either the next event's time would exceed `targetTime` or `maxEvents` events have been processed, implemented directly in terms of `advance()` so the two can never diverge in ordering or dispatch behavior; `reset()` returns a fresh `FactoryRuntime.forModel(modelVersion())` rather than mutating the existing session in place, since `FactoryHandler`'s stores have no partial-reset subsystem to mutate safely. `submitWorkload` and `setMachineAvailability` — the two externally initiated runtime changes `FactoryRuntime` exposes — always return a definite `CommandResult<T>` (a stable code/diagnostic, `modelVersion()` provenance, and every `Event` scheduled as a direct effect of the command, captured by a command-scoped `RecordingScheduler` window rather than a permanently growing history) instead of ever throwing or returning `void`. `CommandResult` is a three-way sealed type: `Accepted`, `Rejected` (wraps the original, already-structured, sealed `SimError`; verified pre-mutation — `FactoryHandler.submitOrder` preflights its scheduling check before mutating any store, `setMachineAvailability` verifies its own two rejectable conditions from `machinesView()` before calling into `FactoryHandler` at all — so a `Rejected` result never follows partial mutation), and `Faulted` (a genuine engine fault surfacing from deep in `setMachineAvailability`'s online-machine dispatch cascade, after mutation may already have started; making that whole cascade provably preflight-safe was judged disproportionate, so `Faulted` reports it as a definite result instead of letting it throw past the command boundary, while making clear — unlike `Rejected` — that it does not promise zero mutation). Acceptance and execution outcome are independent facts, not one axis, so `Faulted` carries the same accepted value `Accepted` would have alongside the fault — the requested change genuinely was applied before the later failure, and a caller must not lose which entity was affected just because execution subsequently failed. `pendingWorkView()` exposes `FactoryHandler`'s cross-machine `pendingMultiEligible` backlog (see [Engine Semantics v1 §2](engine-semantics-v1.md#2-resource-selection-and-dispatch-semantics)) as read-only `PendingWorkView` entries — necessary because that waiting work is not associated with any single machine and so is invisible to `MachineView.queueDepth()`.
 
-supported runtime observation/event contract adds `FactoryRuntime.observe()` as the separate supported current-state boundary required by the [runtime contract](runtime-contract.md). It returns immutable, deterministically ordered resource, aggregate-order, unit-work decomposition child-job, and multi-eligible-pending-work projections plus the factory's authoritative backlog, completed-order/value, lead-time, and throughput calculations. Metadata carries an opaque per-runtime `RunId`, `FactoryModelVersion.fingerprint()` durable provenance, current simulated time, explicit active/quiescent advancement state, and a `latestEventSequence`. This projection never exposes `FactoryHandler`, mutable stores, or internal scheduler events; the legacy API/SSE still projects its existing internal-event behavior until the later outward-consumer-convergence migration.
+supported runtime observation/event contract adds `FactoryRuntime.observe()` as the separate supported current-state boundary required by the [runtime contract](runtime-contract.md). It returns immutable, deterministically ordered resource, aggregate-order, unit-work decomposition child-job, and multi-eligible-pending-work projections plus the factory's authoritative backlog, completed-order/value, lead-time, and throughput calculations. Metadata carries an opaque per-runtime `RunId`, `FactoryModelVersion.fingerprint()` durable provenance, current simulated time, explicit active/quiescent advancement state, and a `latestEventSequence`. This projection never exposes `FactoryHandler`, mutable stores, or internal scheduler events.
 
 the supported runtime observation/event contract also implements the supported `RuntimeEventEnvelope` contract on top of that boundary: `RuntimeEventType`/`RuntimeEventPayload`/`AffectedEntityRef` (`product/domains/factory/.../process/`) are a taxonomy distinct from the internal scheduler's `EventType`/`EventPayload`, and `FactoryRuntime` only ever constructs an envelope, via its single package-private `emit(...)` point, after the authoritative transition it describes has already succeeded. `submitWorkload` emits `ORDER_ACCEPTED` (carrying every created child `JobId`) followed by one `JOB_DISPATCHED`/`JOB_WAITING` per created job describing its resulting placement; `setMachineAvailability` emits `MACHINE_AVAILABILITY_CHANGED` only for a genuine online/offline transition (a no-op request emits nothing) plus any `JOB_DISPATCHED` a resulting dispatch cascade produced, including on the `Faulted` path where only the mutation that actually occurred is reported; `advance()` emits, for each processed `TaskEnd`, `JOB_STEP_COMPLETED`, then `ORDER_COMPLETED` when that step completed the order, then `JOB_DISPATCHED`/`JOB_WAITING` for every placement change the same `TaskEnd` authoritatively caused — freed capacity re-places both the completing job onto its next routing step and whatever queued or multi-eligible backlog work that machine can now accept, derived by diffing authoritative placement rather than by re-exposing internal scheduler events. Internal scheduler markers `FactoryHandler` ignores (`TaskStart`; the `OrderCompleted` a terminal `TaskEnd` schedules for other internal handlers) emit nothing and, by construction, change nothing `observe()` reports: observed time advances only with emission, and `RuntimeRunState` reflects pending *authoritative* work rather than a non-empty queue, so every observation fact stays coherent with one `latestEventSequence` boundary. `RuntimeObservationMetadata.latestEventSequence()` is a live cursor advanced in lockstep with emission — no longer hardcoded to zero — independent of when a caller retrieves the events themselves: `FactoryRuntime.drainSupportedEvents()` returns and clears everything accumulated since it was last called, rather than retaining an unbounded, cursor-replayable history. That retained/replayable-by-cursor responsibility is deliberately not part of this boundary (see the [runtime contract](runtime-contract.md); recovery/resynchronization is later distribution hardening); a caller needing durable replay retains the drained events itself.
 
-supported runtime observation/event contract closes the headless contract without adding new abstractions to it. `HeadlessClosureAcceptanceTest` proves that a consumer joining an already-progressed runtime reconstructs the complete supported view from one `observe()` result alone — no retained or replayed runtime events, no `FactoryHandler`/mutable store, no scheduler `Event`/`EventLog` replay, no API/Spring/frontend DTO — and that `latestEventSequence` survives draining so such a consumer knows where to continue; that supported events and observations close over the same authoritative transitions (the delta after an observation at sequence `S` is exactly `S+1..S'`, is consistent with the later observation, and explains what changed, without events carrying redundant full-state payloads); and that the active production bottleneck is identifiable from `ResourceObservation` facts alone, independently by carried load (active plus queued work) and by busy-tick utilization, deterministically and reproducibly. Making those real required three production corrections, each to a fact the contract already claimed: `FactoryHandler.handleTaskEnd` now credits the finished step's duration to the resource that performed it, so `ResourceObservation.busyTicks()` reports genuine cumulative utilization instead of the constant zero it previously always was; `FactoryRuntime.advance()` now reports the whole `TaskEnd` placement cascade as `JOB_DISPATCHED`/`JOB_WAITING` per the runtime contract, pinned by `taskEndDispatchCascadeIsReportedByTheSupportedEventStream`; and `observe()` now derives time, throughput, and `RuntimeRunState` from the supported boundary rather than the raw scheduler cursor per the runtime contract, pinned by `processingANoOpInternalMarkerLeavesTheSupportedObservationUnchanged`. The complementary structural fact — API/UI DTOs never re-entering domain decision paths — is enforced by `ArchitectureTest.api_dtos_must_not_reenter_domain_decision_paths` in `interfaces/api`, which fails the build if anything in `com.arcogine.factory..` depends on `com.arcogine.api..`, `org.springframework..`, or `jakarta.servlet..`. supported runtime observation/event contract core/headless closure is therefore complete; outward-consumer convergence (SSE/API DTO migration, CLI) and runtime-event recovery//resynchronization hardening (retained runtime-event history, replay-by-cursor, reconnect/resume, checkpoint/restore) remain outstanding, and the legacy API/SSE still projects its existing internal-event behavior until that outward-consumer-convergence migration.
+supported runtime observation/event contract closes the headless contract without adding new abstractions to it. `HeadlessClosureAcceptanceTest` proves that a consumer joining an already-progressed runtime reconstructs the complete supported view from one `observe()` result alone — no retained or replayed runtime events, no `FactoryHandler`/mutable store, no scheduler `Event`/`EventLog` replay, no outward-projection DTO — and that `latestEventSequence` survives draining so such a consumer knows where to continue; that supported events and observations close over the same authoritative transitions (the delta after an observation at sequence `S` is exactly `S+1..S'`, is consistent with the later observation, and explains what changed, without events carrying redundant full-state payloads); and that the active production bottleneck is identifiable from `ResourceObservation` facts alone, independently by carried load (active plus queued work) and by busy-tick utilization, deterministically and reproducibly. Making those real required three production corrections, each to a fact the contract already claimed: `FactoryHandler.handleTaskEnd` now credits the finished step's duration to the resource that performed it, so `ResourceObservation.busyTicks()` reports genuine cumulative utilization instead of the constant zero it previously always was; `FactoryRuntime.advance()` now reports the whole `TaskEnd` placement cascade as `JOB_DISPATCHED`/`JOB_WAITING` per the runtime contract, pinned by `taskEndDispatchCascadeIsReportedByTheSupportedEventStream`; and `observe()` now derives time, throughput, and `RuntimeRunState` from the supported boundary rather than the raw scheduler cursor per the runtime contract, pinned by `processingANoOpInternalMarkerLeavesTheSupportedObservationUnchanged`. The complementary structural fact — outward-projection DTOs never re-entering domain decision paths — was enforced by the retired `ArchitectureTest.api_dtos_must_not_reenter_domain_decision_paths`, which failed the build if anything in `com.arcogine.factory..` depended on the then-existing HTTP adapter's own package or its framework dependencies; that rule was removed, not relocated, when the adapter it proved a boundary for was retired (see [`architecture-conformance-test`](../development/testing.md#handler-delegation-contract)), and a future outward adapter should add the equivalent rule scoped to its own package. supported runtime observation/event contract core/headless closure is therefore complete. Outward-consumer convergence is no longer an outstanding Engine objective (see [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md)): a future consumer is introduced from this supported contract when a concrete product need exists, not migrated toward as standing backlog. Runtime-event recovery/resynchronization hardening (retained runtime-event history, replay-by-cursor, reconnect/resume, checkpoint/restore) remains a separate, independently-triggered concern.
 
 ### Observations
 
@@ -203,18 +200,16 @@ Observations should:
 - be immutable;
 - define the capability and visibility boundary for whoever consumes them (an agent can only act on what its observation exposes).
 
-### Domain observations vs. API/UI snapshots
+### Domain observations vs. outward projections/DTOs
 
-Two different things are easy to conflate because they can look similar in shape: a domain observation (e.g. `AgentObservation`, `FinanceObservation`) and an API/UI snapshot (e.g. `SnapshotBuilder`'s DTOs, `SimSnapshot`). The distinction is about audience and lifecycle, not just structure:
+Two different things are easy to conflate because they can look similar in shape: a domain observation (e.g. `AgentObservation`, `FinanceObservation`) and an outward projection/DTO serialized to an external consumer (an HTTP client, a UI, a CLI's own output shape). Arcogine currently has no such outward adapter, but the principle is durable and binds whatever adapter is introduced next. The distinction is about audience and lifecycle, not just structure:
 
 - A **domain observation** exists to support a decision made *inside* the simulation, this tick, by a consumer that is itself part of the deterministic event loop (an agent, a policy, a future evaluation component). It is scoped to exactly what that decision needs, is constructed fresh from authoritative state, and is never serialized or versioned — its contract is Java-internal.
-- An **API/UI snapshot** exists to serialize simulation state *outward*, to an external, non-deterministic consumer (an HTTP client, the UI) that is not part of the simulation loop and does not make simulation decisions. It has a wire contract (JSON field names, versioning concerns) that a domain observation must never be shaped by.
+- An **outward projection/DTO** exists to serialize simulation state *outward*, to an external, non-deterministic consumer that is not part of the simulation loop and does not make simulation decisions. It has a wire contract (field names, versioning concerns) that a domain observation must never be shaped by.
 
-Concretely: `FinanceObservation` (cash, sales balance, as `BigDecimal`) is what a future `FinanceAgent` would read to decide something *inside* the tick. `SimSnapshot`'s finance-facing fields, if ever added, would be what the UI reads to *display* the same underlying ledger state, independently shaped by JSON/display concerns (e.g. rounding for presentation, field names following the `snake_case` DTO convention rather than domain vocabulary). The two are allowed to report the same numbers; they must never be the same type, and a domain handler must never accept a DTO as an argument or return one.
+Concretely: `FinanceObservation` (cash, sales balance, as `BigDecimal`) is what a future `FinanceAgent` would read to decide something *inside* the tick. A future outward snapshot's finance-facing fields would be what an external consumer reads to *display* the same underlying ledger state, independently shaped by wire/display concerns (e.g. rounding for presentation, a naming convention distinct from domain vocabulary). The two are allowed to report the same numbers; they must never be the same type, and a domain handler must never accept a DTO as an argument or return one.
 
-The practical rule: if you find yourself passing a `SimSnapshot`/`JobInfo`/other DTO into a handler or agent to make a simulation decision, that's the DTO being used as an ad hoc internal read model — introduce or extend a domain observation instead. `SnapshotBuilder` is the one place allowed to read domain state broadly, precisely because its output never re-enters the simulation.
-
-**Known compatibility debt**: `JobInfo.revenue` (JSON field `revenue`) and `SimSnapshot.totalRevenue`/`currentPrice` (JSON fields `total_revenue`/`current_price`) still use pre-rename vocabulary — `revenue`/`totalRevenue` instead of `CompletedSalesValue`, `currentPrice` instead of `OfferPrice` — even though the domain model has since converged on the latter (see the Terminology table above). These are left unrenamed deliberately, as an external wire-contract boundary, not an oversight — renaming a public JSON field is a breaking API change, out of scope for an internal vocabulary cleanup. They are explicitly flagged, in code and here, as debt to resolve in a future API-versioning change, not a naming decision anyone should treat as settled or extend by adding more `revenue`-named fields.
+The practical rule: if you find yourself passing an outward DTO into a handler or agent to make a simulation decision, that's the DTO being used as an ad hoc internal read model — introduce or extend a domain observation instead. Whatever plays the retired `SnapshotBuilder`'s role for a future adapter is the one place allowed to read domain state broadly, precisely because its output never re-enters the simulation — and, per the retired `ArchitectureTest.api_dtos_must_not_reenter_domain_decision_paths` rule this principle previously had proving it (removed along with the adapter it proved a boundary for, not relocated — see [`architecture-conformance-test`](../development/testing.md)), a future adapter should add the equivalent rule scoped to its own package rather than assume review discipline alone is enough.
 
 ### Query dependencies between domains
 
@@ -564,11 +559,11 @@ Benefits of DES:
 
 ### Event taxonomy
 
-Not every `EventPayload` plays the same role, even though all of them flow through the same `Scheduler`/`IntegratedHandler` mechanism uniformly. Distinguishing the roles helps reason about a given event without changing how any of them are dispatched:
+Not every `EventPayload` plays the same role, even though all of them flow through the same `Scheduler`/`CompositeHandler` mechanism uniformly. Distinguishing the roles helps reason about a given event without changing how any of them are dispatched:
 
 - **Domain events** — facts about simulation state changing, owned by exactly one domain: `OrderCreation`, `TaskEnd`, `OrderCompleted`, `MachineAvailabilityChange`, `PriceChange`. These are what the Events–State–Observations invariant is fundamentally about.
 - **Evaluation/timer events** — periodic triggers with no state-owning payload of their own, whose purpose is to cause a domain to re-evaluate: `DemandEvaluation`, `AgentEvaluation`. They don't carry a fact so much as invoke a domain's own decision logic on schedule.
-- **Orchestration/control events** — signals about how the simulation is being run or which decision sources are active, rather than facts about the simulated world: `AgentEnabledChanged`. This is why `AgentEnabledChanged` is handled by `IntegratedHandler` itself (toggling whether `SalesAgent` participates in dispatch) rather than by a domain handler that owns simulation state — it controls the orchestrator's behavior, not a domain's.
+- **Orchestration/control events** — signals about how the simulation is being run or which decision sources are active, rather than facts about the simulated world: `AgentEnabledChanged`. Toggling whether `SalesAgent` participates in dispatch belongs to whatever composes the full handler chain (see [Event Dispatch Architecture](#event-dispatch-architecture)), not to a domain handler that owns simulation state — it controls the orchestrator's behavior, not a domain's.
 
 All three kinds remain scheduled `Event`s through the same `Scheduler`, deliberately — this taxonomy is a reading aid, not a proposal to split them into different mechanisms (that would reintroduce exactly the kind of special-casing the event system exists to avoid). It exists so a contributor adding a new event can ask "which of these three is this?" and get a clear answer, rather than defaulting every new signal into "domain event" whether or not it actually represents domain state changing.
 
@@ -580,7 +575,7 @@ Not every new metric or piece of derived behavior warrants a new `XHandler`/modu
 - Does that state have its own invariants worth protecting at construction/mutation time (the way `JournalEntry` rejects unbalanced entries)?
 - Does it react to events from other domains and produce its own facts, rather than just recomputing a view over another domain's existing state?
 
-If the answer is genuinely yes to state-with-invariants, it's a domain — a new `XHandler implements EventHandler`, its own `XObservation`, one line in `IntegratedHandler`'s explicit dispatch sequence (see [Event Dispatch Architecture](#event-dispatch-architecture)). If the answer is no — it's a computed value over state another domain already owns — it belongs as a method/projection on the existing owner (like `FactoryHandler.completedSalesValue()`) or in a KPI/projection layer, not a new module. This keeps the module count matched to genuine ownership boundaries instead of granularity of features.
+If the answer is genuinely yes to state-with-invariants, it's a domain — a new `XHandler implements EventHandler`, its own `XObservation`, one line in the composing `CompositeHandler`'s explicit dispatch sequence (see [Event Dispatch Architecture](#event-dispatch-architecture)). If the answer is no — it's a computed value over state another domain already owns — it belongs as a method/projection on the existing owner (like `FactoryHandler.completedSalesValue()`) or in a KPI/projection layer, not a new module. This keeps the module count matched to genuine ownership boundaries instead of granularity of features.
 
 ## Module Structure
 
@@ -608,20 +603,23 @@ product/
 │                         Operational, and Financial Truth" above
 ├── agents/               Agent framework: SalesAgent, AgentObservation
 ├── consumer/
-│   └── challenge/        Challenge Readiness: game-owned challenge definition/validation,
-│                         catalogue/economics, candidate admissibility, deterministic
-│                         challenge evaluation, attempt provenance/design-to-design
-│                         comparison, and (challenge content-loading layer) a rendering-technology-independent JSON
-│                         content-loading layer — schema-versioned decode, catalogue
-│                         loading, and evaluation-policy resolution — that reuses the
-│                         existing definition/catalogue validators rather than
-│                         reimplementing their rules (see
-│                         docs/planning/factory-design-game-challenge-readiness.md).
-│                         Headless — no dependency on any module below.
-└── interfaces/
-    ├── api/              Spring Boot HTTP + SSE server: controllers, SimThread,
-    │                     IntegratedHandler, SnapshotBuilder, DTOs
-    ├── cli/               Picocli CLI entry point: serve + headless run modes
+│   ├── challenge/        Challenge Readiness: game-owned challenge definition/validation,
+│   │                     catalogue/economics, candidate admissibility, deterministic
+│   │                     challenge evaluation, attempt provenance/design-to-design
+│   │                     comparison, and (challenge content-loading layer) a rendering-technology-independent JSON
+│   │                     content-loading layer — schema-versioned decode, catalogue
+│   │                     loading, and evaluation-policy resolution — that reuses the
+│   │                     existing definition/catalogue validators rather than
+│   │                     reimplementing their rules (see
+│   │                     docs/planning/factory-design-game-challenge-readiness.md).
+│   │                     Headless — no dependency on any module below.
+│   └── challenge-factory-integration-test/  Test-only proof module: demonstrates
+│                         Factory-executability and challenge admissibility are
+│                         independent validation axes, without either module
+│                         depending on the other.
+└── architecture-conformance-test/  Test-only proof module: the durable cross-domain
+                          ArchUnit module-boundary rules (see docs/development/
+                          testing.md), scanning every domain module's main sources.
 ```
 
 ### Dependency graph
@@ -631,21 +629,20 @@ types ← simulation ← factory
                     ← economy
                     ← agents
                     ← finance
-                         ↑
-            api ←────────┘ (all of the above)
-                ↑
-            cli (entry point)
 
 types ← governance ← factory
 
 challenge   (no dependency on any module above; a sibling, game-owned boundary)
+
+architecture-conformance-test ← types, agents, factory, economy, finance (test-only,
+                                 no production module depends on it)
 ```
 
-Each module exposes a clean public API and hides implementation details. Event-handling modules (`factory`, `economy`, `agents`, `finance`) implement the `EventHandler` interface and are wired together by `IntegratedHandler` in the API layer. Governance's production dependency remains on `:types` only — it has no dependency on `factory` or any other domain. `factory`'s production source depends on `governance` (in addition to its existing `types`/`simulation` dependency) for two narrow adapter ports: `SemanticArtifactVerifier` (the authoritative controlled-revision persistence and historical resolution historical-artifact codec boundary; `factory-model:v1` artifact encode/decode/fingerprint logic stays domain-owned in `FactoryModelArtifactV1`) and `SemanticChangeExtractor` (the semantic ChangeSet/impact capability semantic-comparison boundary; domain-specific diff logic stays domain-owned in `com.arcogine.factory.change.FactoryModelSemanticComparator`, classifying changes using Governance's generic `SemanticChangeKind`/`ChangedEntityRef` vocabulary). Governance never introspects `FactoryModel` internals directly; it only depends on the narrow SPIs the domain implements.
+Each module exposes a clean public API and hides implementation details. Event-handling modules (`factory`, `economy`, `agents`, `finance`) implement the `EventHandler` interface and are composable via `:simulation`'s `CompositeHandler` (see [Event Dispatch Architecture](#event-dispatch-architecture)) by whatever assembles the full chain. Governance's production dependency remains on `:types` only — it has no dependency on `factory` or any other domain. `factory`'s production source depends on `governance` (in addition to its existing `types`/`simulation` dependency) for two narrow adapter ports: `SemanticArtifactVerifier` (the authoritative controlled-revision persistence and historical resolution historical-artifact codec boundary; `factory-model:v1` artifact encode/decode/fingerprint logic stays domain-owned in `FactoryModelArtifactV1`) and `SemanticChangeExtractor` (the semantic ChangeSet/impact capability semantic-comparison boundary; domain-specific diff logic stays domain-owned in `com.arcogine.factory.change.FactoryModelSemanticComparator`, classifying changes using Governance's generic `SemanticChangeKind`/`ChangedEntityRef` vocabulary). Governance never introspects `FactoryModel` internals directly; it only depends on the narrow SPIs the domain implements.
 
 `challenge` is deliberately outside this dependency graph: it is a game-owned Challenge Readiness
 module (`com.arcogine.challenge`) that has no `project(...)` dependency on `types`, `simulation`,
-any domain module, `api`, or `cli`, and no Spring dependency. It defines immutable challenge
+or any domain module, and no framework dependency. It defines immutable challenge
 definitions and validation, game-owned catalogue/economics, deterministic candidate admissibility,
 deterministic challenge evaluation over supplied authoritative outcome facts, and immutable attempt
 provenance with deterministic design-to-design comparison. These are distinct validation domains
@@ -654,13 +651,13 @@ planning doc for the ownership boundary.
 
 ## Event Dispatch Architecture
 
-Events flow through a chain of handlers in deterministic order:
+Events flow through a chain of handlers in deterministic order. `:simulation`'s `CompositeHandler` is the durable, generic mechanism for this: it composes an ordered `List<EventHandler>` and dispatches each event to every member in that fixed order.
 
 ```text
 Scheduler (priority queue by SimTime, FIFO among same-tick events)
     │
     ▼
-IntegratedHandler
+CompositeHandler(order-dependent list)
     ├── PricingState.handleEvent()
     ├── DemandModel.handleEvent()      ← reads OfferPrice/leadTime on demand, via suppliers
     ├── FactoryHandler.handleEvent()   ← may schedule OrderCompleted
@@ -676,7 +673,9 @@ public interface EventHandler {
 }
 ```
 
-Handlers may schedule new events via the `Scheduler` but never reach into other handlers directly, and never receive a mutable reference to another handler's internals. `DemandModel` reads `OfferPrice`/lead time on demand via `DoubleSupplier`s bound at construction (not pushed copies); `FactoryHandler` never references `PricingState` at all — it only needs each order's own `OrderPrice`, captured once at `OrderCreation`. `AgentObservation` construction lives in a dedicated `AgentObservationProjector`, not inlined into `IntegratedHandler`. Every command (`ChangePrice`, `ChangeMachine`, `ToggleAgent`) becomes a domain event dispatched the same way — none of them bypass the event system.
+Handlers may schedule new events via the `Scheduler` but never reach into other handlers directly, and never receive a mutable reference to another handler's internals. `DemandModel` reads `OfferPrice`/lead time on demand via `DoubleSupplier`s bound at construction (not pushed copies); `FactoryHandler` never references `PricingState` at all — it only needs each order's own `OrderPrice`, captured once at `OrderCreation`. Every command (`ChangePrice`, `ChangeMachine`, `ToggleAgent`) becomes a domain event dispatched the same way — none of them bypass the event system.
+
+Assembling this full economy+factory+finance+agents composite (in this fixed order, plus the `AgentObservation` construction and `agentEnabled` toggle an assembler needs around it) is presently done by no retained production code: it was previously the retired `interfaces/api`'s `IntegratedHandler` and `interfaces/cli`'s independently-reimplemented `HeadlessHandler`, both removed along with the application shell they served. A future outward consumer that needs the full composite must assemble its own `CompositeHandler` over these handlers in this order — reusing `FactoryHandler`'s dispatch rather than reimplementing it, which is exactly the duplication `HeadlessHandler` had accumulated (see [testing guide](../development/testing.md#handler-delegation-contract)). `FactoryRuntime`'s own supported surface (see [State](#state) above) does not need this composite at all: it assembles only its own exclusive `FactoryHandler`/`Scheduler` pair for pure factory workload, with no Pricing/Demand/Finance/Agents dependency.
 
 ## Type System
 
@@ -759,31 +758,23 @@ Scenario factory semantics are instantiated through an implemented canonical-mod
 
 `FactoryModelVersion.fingerprint()` implements the durable `factory-model:v1` semantic fingerprint contract specified by [Factory Model v1](factory-model-v1.md). The contract uses the typed `ModelFingerprint` value and a language-independent canonical binary encoding with explicit policy versioning and compatibility vectors. Equal canonical semantic content therefore has a durable identity that is independent of process memory and implementation language under the v1 policy.
 
-`FactoryModelVersion.contentHash()` remains a separate legacy implementation surface. It is deterministic for the current Java model but is not the durable fingerprint contract, and bare content hashes must not be reinterpreted as `factory-model:v1` fingerprints. Existing `IntegratedHandler`/`SimResult.modelContentHash` provenance still carries that legacy hash; replacing it with truthful fingerprint/Engine provenance is a bounded later cleanup that must inventory its consumers, not a compatibility obligation. The supported runtime observation/event contract now supplies opaque per-runtime `RunId` on `RuntimeObservation`; that run identity is implemented and is distinct from the remaining broader provenance migration.
+`FactoryModelVersion.contentHash()` remains a separate legacy implementation surface. It is deterministic for the current Java model but is not the durable fingerprint contract, and bare content hashes must not be reinterpreted as `factory-model:v1` fingerprints. Existing `SimResult.modelContentHash` provenance still carries that legacy hash; replacing it with truthful fingerprint/Engine provenance is a bounded later cleanup that must inventory its consumers, not a compatibility obligation. The supported runtime observation/event contract now supplies opaque per-runtime `RunId` on `RuntimeObservation`; that run identity is implemented and is distinct from the remaining broader provenance migration.
 
 `:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by the [controlled revision contract](controlled-revisions.md). Governance identity/history capability is complete: `ControlledRevisionAuthority` defines the authoritative acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` adapter persists append-only revision records and immutable semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-authoritative parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Historical resolution returns the accepted immutable revision together with its exact semantic artifact; missing/corrupt metadata or artifacts and fingerprint mismatches fail explicitly rather than falling back to current model state.
 
 The factory proving ground reuses the exact `factory-model:v1` canonical bytes as its historical semantic artifact. `FactoryModelArtifactV1` strictly decodes and canonical-reencodes those bytes to reconstruct the exact historical `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one immutable artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The current filesystem record layout and locking mechanics are replaceable adapter details, not a selected permanent production persistence architecture. Governance semantic ChangeSet/impact capability's initial slice adds the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance` and the factory-domain `FactoryModelSemanticComparator` (Factory semantic-comparison capability) that implements `SemanticChangeExtractor` against `factory-model:v1` artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under [Factory Model v1](factory-model-v1.md)) as a real change. Governance requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the semantic ChangeSet/impact capability `ImpactScope` seam. Governance conformance evaluation/findings capability's initial slice adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a requirements/assertions capability `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing evidence, authorization, or deployment concepts. Approval/authorization, evidence, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain separate evidence/evidence-use capability+ concerns rather than revision identity.
 
-## API Layer
+## Outward Adapters
 
-The HTTP API uses Spring Boot 4 with Spring MVC:
-
-- REST endpoints for scenario loading, simulation control, interventions, and queries
-- Server-Sent Events (SSE) via `SseEmitter` for real-time event streaming
-- Simulation runs on a dedicated thread (`SimThread`) communicating via `BlockingQueue`
-- `AtomicReference<SimSnapshot>` provides lock-free snapshot reads for API handlers
+Arcogine currently has no outward adapter: no HTTP API, no CLI, no UI. A previous Spring Boot HTTP/SSE API and Picocli CLI were retired; see [Event Dispatch Architecture](#event-dispatch-architecture) for what a future adapter must reuse (`CompositeHandler` dispatch order) and [Domain observations vs. outward projections/DTOs](#domain-observations-vs-outward-projectionsdtos) for the boundary it must maintain. A future consumer is introduced from the supported [runtime contract](runtime-contract.md) when a concrete product need exists, not spun up preemptively.
 
 ## Technology Stack
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | Language | Java (release 21 compatibility baseline) | Records, sealed types, pattern matching |
-| Framework | Spring Boot 4 | HTTP server, DI, config |
-| CLI | Picocli | Command-line parsing |
 | Build | Gradle (Kotlin DSL, repository wrapper) | Multi-module build; exact version pinned by `product/gradle/wrapper/gradle-wrapper.properties` |
 | Config format | TOML | Scenario files (via Jackson TOML) |
-| Serialization | Jackson | JSON API responses, TOML parsing |
-| Testing | JUnit 6 | Unit and integration tests |
+| Serialization | Jackson | TOML parsing |
+| Testing | JUnit 6 | Unit and acceptance tests |
 | Coverage | JaCoCo | Code coverage reporting |
-| Container | Eclipse Temurin 25 | Docker runtime |

@@ -17,11 +17,11 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | `product/domains/finance/` | Ledger, financial interpretation of operational events |
 | `product/agents/` | Agent interface and implementations |
 | `product/consumer/challenge/` | Challenge Readiness: game-owned `ChallengeDefinition` and validator — headless, no dependency on any module above |
-| `product/interfaces/api/` | HTTP API (Spring Boot MVC), SSE |
-| `product/interfaces/cli/` | CLI entrypoint (Picocli, produces `arcogine.jar`) |
+| `product/consumer/challenge-factory-integration-test/` | Test-only proof module: Factory-executability and challenge admissibility are independent axes |
+| `product/architecture-conformance-test/` | Test-only module: durable cross-domain ArchUnit guardrails |
 | `docs/examples/` | TOML scenario fixture files |
 | `docs/` | Project documentation |
-| `infra/` | Container and dev-environment infrastructure |
+| `infra/` | Dev-environment infrastructure |
 
 Keep the repository root limited to primary entry points, standard discovery/configuration files, and files whose tools conventionally expect them there. CI, test-support, and security-support files should prefer `.github/` when their paths are explicitly controlled. Do not move conventionally discovered files merely to reduce visual clutter. For example, `.trivyignore` stays at the root because Trivy conventionally discovers it there, while the Gitleaks config can live under `.github/security/` because Arcogine invokes it with an explicit `--config` path.
 
@@ -36,7 +36,7 @@ See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the 
 
 ```bash
 ./arcogine check         # Java compile, style, tests, and coverage
-./arcogine check --full  # check + dist build + Docker + security
+./arcogine check --full  # check + dependency audit + secret scan
 ```
 
 Use `./arcogine check` before pushing. Use `./arcogine check --full` when the change warrants the complete local validation surface. For individual test categories and native subsystem commands, see [`docs/development/testing.md`](../docs/development/testing.md).
@@ -87,7 +87,7 @@ Observations inform Decisions.
 Decisions produce Events.
 ```
 
-The authoritative architecture description and detailed domain semantics live in [`docs/architecture/overview.md`](../docs/architecture/overview.md). Read it before adding a domain, changing cross-module boundaries, changing event dispatch, or touching `IntegratedHandler`.
+The authoritative architecture description and detailed domain semantics live in [`docs/architecture/overview.md`](../docs/architecture/overview.md). Read it before adding a domain, changing cross-module boundaries, or changing event dispatch.
 
 During implementation and review, preserve these non-negotiable constraints:
 
@@ -99,13 +99,13 @@ During implementation and review, preserve these non-negotiable constraints:
 6. Keep domain concepts distinct and owned by the appropriate domain; in particular, operational facts and Finance's financial interpretation of those facts must remain separate.
 7. The simulation must remain deterministic: identical inputs and seeds produce identical results.
 
-A subset of these constraints is CI-enforced by `interfaces/api`'s ArchUnit `ArchitectureTest`; the remainder are review constraints. Detailed examples — including pricing/order terminology and Commercial, Operational, and Financial Truth — belong in the architecture documentation rather than this contributor guide.
+A subset of these constraints is CI-enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`; the remainder are review constraints. Detailed examples — including pricing/order terminology and Commercial, Operational, and Financial Truth — belong in the architecture documentation rather than this contributor guide.
 
 ## Testing
 
 The contribution gate is `./arcogine check`. It covers Java compilation, Checkstyle, tests and Jacoco coverage gates.
 
-For the canonical distribution build, Docker image/smoke validation, and security scans, run `./arcogine check --full`.
+For the dependency audit and secret scan, run `./arcogine check --full`.
 
 See [`docs/development/testing.md`](../docs/development/testing.md) for the test taxonomy, CI pipeline, native subsystem commands, and testing rationale.
 

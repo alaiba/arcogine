@@ -402,7 +402,7 @@ Arcogine currently models a narrow production-execution slice, not the complete 
 | Personnel operations | None | Deferred |
 | Quality operations | Can be represented only as an ordinary routing step/machine | Not first-class |
 | Maintenance operations | None | Deferred |
-| Enterprise integration | Generic HTTP/SSE interfaces | No ISA-95 transaction/profile support |
+| Enterprise integration | None — no current outward adapter (a retired HTTP/SSE interface is a future-adapter example, not current coverage) | No ISA-95 transaction/profile support |
 | Spatial layout | Proposed by the factory-design initiative | Arcogine extension |
 
 Use this matrix to prevent broad statements such as "the factory domain implements Level 3". It implements production-execution behavior within a Level-3-like scope; it does not cover the full set of MOM activities.

@@ -19,18 +19,16 @@ check() {
   fi
 }
 
-check "empty diff" "" "backend=false,docker=false,docs_only=false,"
+check "empty diff" "" "backend=false,docs_only=false,"
 check "docs-only" "docs/foo.md
-README.md" "backend=false,docker=false,docs_only=true,"
-check "backend-only" "product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=true,docker=false,docs_only=false,"
-check "governance backend" "product/governance/src/main/java/com/arcogine/governance/Foo.java" "backend=true,docker=false,docs_only=false,"
-check "docker-only environment template" "infra/docker/.env.example" "backend=false,docker=true,docs_only=false,"
+README.md" "backend=false,docs_only=true,"
+check "backend-only" "product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=true,docs_only=false,"
+check "governance backend" "product/governance/src/main/java/com/arcogine/governance/Foo.java" "backend=true,docs_only=false,"
 check "docs mixed with backend" "docs/foo.md
-product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=true,docker=false,docs_only=false,"
-check "CI workflow change forces executable surfaces" ".github/workflows/ci.yml" "backend=true,docker=true,docs_only=false,"
-check "infra/docker change forces executable surfaces" "infra/docker/api.Dockerfile" "backend=true,docker=true,docs_only=false,"
-check "unknown non-doc path fails safe" "product/gradlew" "backend=true,docker=true,docs_only=false,"
-check "unknown root file fails safe" ".trivyignore" "backend=true,docker=true,docs_only=false,"
+product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=true,docs_only=false,"
+check "CI workflow change forces executable surfaces" ".github/workflows/ci.yml" "backend=true,docs_only=false,"
+check "unknown non-doc path fails safe" "product/gradlew" "backend=true,docs_only=false,"
+check "unknown root file fails safe" ".trivyignore" "backend=true,docs_only=false,"
 
 if [ "$failures" -gt 0 ]; then
   echo "$failures classification test(s) failed."

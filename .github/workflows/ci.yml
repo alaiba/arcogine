@@ -38,7 +38,6 @@ jobs:
       contents: read
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
-      docker: ${{ steps.filter.outputs.docker }}
       docs_only: ${{ steps.filter.outputs.docs_only }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -46,7 +45,7 @@ jobs:
           fetch-depth: 0
 
       # Executable coverage for the pure classification function below (docs-only,
-      # known backend/docker paths, and the unknown-path fail-safe) — a
+      # known backend paths, and the unknown-path fail-safe) — a
       # regex regression here fails this step instead of silently under-running.
       - name: Validate classifier logic
         run: bash .github/scripts/classify-changes.test.sh
@@ -58,12 +57,6 @@ jobs:
       # constrained host partway through an expensive `--full` run.
       - name: Validate arcogine preflight diagnostics
         run: bash .github/scripts/arcogine-preflight.test.sh
-
-      # ensure_env seeds root .env from the relocated infra/docker/.env.example
-      # template. Cover its create/preserve/no-stale-path invariants here so a
-      # regression is caught without depending on Docker actually running.
-      - name: Validate arcogine env template handling
-        run: bash .github/scripts/arcogine-env.test.sh
 
       # The canonical root wrapper owns command parsing, dispatch, artifact,
       # and lifecycle orchestration. Keep its black-box contract in this
@@ -166,90 +159,9 @@ jobs:
         if: always()
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          files: product/*/build/reports/jacoco/test/jacocoTestReport.xml,product/domains/*/build/reports/jacoco/test/jacocoTestReport.xml,product/interfaces/*/build/reports/jacoco/test/jacocoTestReport.xml
+          files: product/*/build/reports/jacoco/test/jacocoTestReport.xml,product/domains/*/build/reports/jacoco/test/jacocoTestReport.xml
           flags: java
           fail_ci_if_error: false
-
-
-
-  build-dist:
-    name: Build canonical dist/
-    needs: classify
-    if: needs.classify.outputs.backend == 'true' || needs.classify.outputs.docker == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Java 21
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
-
-      - name: Build dist/
-        run: ./arcogine build
-
-      - name: Upload dist/ artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: dist
-          path: dist/
-          retention-days: 1
-
-  docker:
-    name: Docker image build, scan, and smoke test
-    needs: [classify, build-dist]
-    if: needs.classify.outputs.docker == 'true' || needs.classify.outputs.backend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Download dist/ artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: dist
-          path: dist
-
-      - name: Setup Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Build images from dist/
-        run: ./arcogine image
-
-      - name: Install Trivy
-        run: |
-          set -euo pipefail
-          curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
-          echo "${TRIVY_SHA256}  /tmp/trivy.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/trivy.tar.gz -C /tmp
-          install /tmp/trivy /usr/local/bin/trivy
-          trivy --version
-
-      - name: Scan images with Trivy
-        run: |
-          trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 arcogine-api:ci
-
-      - name: Docker smoke test
-        run: |
-          ./arcogine up --no-rebuild
-          COMPOSE="docker compose --project-directory . --env-file .env -f infra/docker/compose.yaml"
-          api_port="$($COMPOSE port api 3000 | sed -E 's/^.*://')"
-          curl -sf "http://localhost:${api_port}/api/health" > /dev/null
-
-      - name: Print startup logs on failure
-        if: failure()
-        run: docker compose --project-directory . --env-file .env -f infra/docker/compose.yaml logs --no-color
-
-      - name: Tear down containers
-        if: always()
-        run: ./arcogine down
 
   java-audit:
     name: Java dependency audit
@@ -316,15 +228,12 @@ jobs:
     needs:
       - classify
       - java
-      - build-dist
-      - docker
       - java-audit
       - security-secrets
     runs-on: ubuntu-latest
     permissions: {}
     env:
       BACKEND: ${{ needs.classify.outputs.backend }}
-      DOCKER: ${{ needs.classify.outputs.docker }}
       EVENT_NAME: ${{ github.event_name }}
     steps:
       - name: Check required job results
@@ -338,7 +247,6 @@ jobs:
               needs = json.load(f)
 
           backend = os.environ["BACKEND"] == "true"
-          docker = os.environ["DOCKER"] == "true"
           full_sweep = os.environ["EVENT_NAME"] in ("schedule", "workflow_dispatch")
 
           # Mirrors each conditional job's own `if:` in this workflow. A job whose
@@ -348,8 +256,6 @@ jobs:
           expected_to_run = {
               "classify": True,
               "java": backend or full_sweep,
-              "build-dist": backend or docker or full_sweep,
-              "docker": docker or backend or full_sweep,
               "java-audit": backend or full_sweep,
               "security-secrets": True,
           }

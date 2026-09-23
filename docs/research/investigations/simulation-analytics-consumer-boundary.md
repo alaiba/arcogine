@@ -11,7 +11,7 @@
 
 ## Decision at stake
 
-Whether Arcogine's supported runtime contract keeps publishing substantial derived performance results, or whether reusable measurement moves to a consumer-neutral analytics layer computed over supported facts — and what that implies for the legacy KPI implementation, the outward KPI surface, and the reproducibility guarantees already fixed by `engine-semantics:v1`.
+Whether Arcogine's supported runtime contract keeps publishing substantial derived performance results, or whether reusable measurement moves to a consumer-neutral analytics layer computed over supported facts — and what that implies for the legacy KPI implementation, a future outward KPI surface, and the reproducibility guarantees already fixed by `engine-semantics:v1`.
 
 The investigation must decide or explicitly classify:
 
@@ -21,7 +21,7 @@ The investigation must decide or explicitly classify:
 - analytics provenance and versioning obligations;
 - event/observation retention versus runtime responsibility;
 - how embedded-Java and remote adapters get equivalent semantics without duplicated formulas;
-- the eventual migration target for `com.arcogine.core.kpi` and `/api/kpis`.
+- the eventual replacement path for `com.arcogine.core.kpi`'s computation, for whatever future outward surface needs derived performance results (Arcogine currently has no HTTP API, CLI, or other outward surface — see [Architecture Overview — Outward Adapters](../../architecture/overview.md#outward-adapters) — so there is no current migration target such as the retired `/api/kpis`).
 
 ## Why this question exists
 

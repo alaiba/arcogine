@@ -167,9 +167,9 @@ ISO 22400 is a useful semantic and formula reference for manufacturing KPIs.
 
 OpenAPI is the intended standard description format for stable HTTP contracts.
 
-**Current status:** The HTTP API is documented manually in [`docs/reference/api.md`](../reference/api.md). OpenAPI generation and contract validation are not yet established as the authoritative source.
+**Current status:** Arcogine currently has no HTTP API; a previous manually documented API was retired along with the adapter it described. OpenAPI generation and contract validation are not yet established as the authoritative source.
 
-**Design direction:** Stable HTTP projections should have machine-readable schemas and compatibility tests. OpenAPI follows accepted domain semantics rather than driving them. In particular, supported runtime observation/event contract `RuntimeObservation` / `RuntimeEvent` semantics should stabilize before the legacy API/SSE projection is promoted into a durable external compatibility surface.
+**Design direction:** Stable HTTP projections should have machine-readable schemas and compatibility tests. OpenAPI follows accepted domain semantics rather than driving them. In particular, supported runtime observation/event contract `RuntimeObservation` / `RuntimeEvent` semantics should stabilize before any future HTTP/SSE projection is promoted into a durable external compatibility surface.
 
 ### JSON for structured external projections
 
@@ -217,7 +217,7 @@ RAMI 4.0 is a useful classification and positioning framework, not a code struct
 |---|---|
 | Asset | Factory resources, products/materials, and future physical-asset models |
 | Integration | Scenario loading, model adapters, supported events/observations, external observations |
-| Communication | HTTP/SSE today; possible standardized async and operational adapters later |
+| Communication | Supported runtime observation/event contract; no current transport adapter (HTTP/SSE was one, retired) — possible standardized async and operational adapters later |
 | Information | Shared types, domain models, observations, and public schemas |
 | Functional | Simulation, domain handlers, policies, verification, KPIs |
 | Business | Product objectives, economy, finance, agents, and future planning domains |

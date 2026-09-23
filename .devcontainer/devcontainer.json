@@ -10,7 +10,6 @@
       "jdkDistro": "tem",
       "installGradle": false
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "mounts": [
@@ -19,10 +18,6 @@
   ],
   "containerEnv": {
     "GH_CONFIG_DIR": "/home/vscode/.config/gh"
-  },
-  "forwardPorts": [3000],
-  "portsAttributes": {
-    "3000": { "label": "API (Spring Boot)", "onAutoForward": "notify" }
   },
   "customizations": {
     "vscode": {

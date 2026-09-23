@@ -7,7 +7,6 @@
 | [Product Charter](product/charter.md) | Everyone | Enduring product thesis and principles |
 | [Root README](../README.md) | Everyone | What Arcogine is today, setup, and local run |
 | [Concepts](product/concepts.md) | New users | Current simulation concepts and behavior |
-| [API Reference](reference/api.md) | Developers | Current HTTP API contract |
 
 ## Documentation hierarchy
 
@@ -16,7 +15,7 @@ Arcogine separates durable direction, current truth, research, and executable pl
 - **[`product/charter.md`](product/charter.md)** — normative product direction and enduring principles; not a roadmap.
 - **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus enduring architectural principles, and the cross-cutting constraints the focused specifications apply.
 - **[`architecture/`](architecture/overview.md)** — focused architecture and specification documents owning exact domain contracts, identities, semantics and supported boundaries.
-- **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md), [`reference/api.md`](reference/api.md), and consumer/component references describe what exists now.
+- **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md) and consumer/component references describe what exists now.
 - **[`research/`](research/README.md)** — research-area index linking the normative operating model, current research portfolio state, synthesis signals, investigation artifacts, and reusable brief/report structures. Research is not accepted architecture or implementation commitment.
 - **[`planning/`](planning/README.md)** — implementation-ready delivery planning only: admitted slices, dependencies, blockers on concrete prerequisites, acceptance evidence, and implementation status.
 - **[`history/`](history/README.md)** — dated, non-normative evidence retained for later comparison; never current authority.
@@ -98,8 +97,7 @@ See [planning/README.md](planning/README.md) for the admission rule.
 | Document | What it covers |
 |---|---|
 | [Factory Design capability](planning/factory-design-capability.md) | Current canonical-model baseline and admitted v2 implementation work |
-| [Factory Simulation Engine readiness](planning/factory-simulation-engine-readiness.md) | Completed runtime core plus current outward-convergence and spatial implementation queue |
-| [Runtime observation/event delivery](planning/runtime-observation-event-delivery.md) | Detailed remaining outward consumer convergence for supported observations/events |
+| [Factory Simulation Engine readiness](planning/factory-simulation-engine-readiness.md) | Completed runtime core (outward consumer convergence retired as an objective) plus current spatial implementation queue |
 | [Spatial runtime consequences](planning/spatial-runtime-consequences.md) | Detailed accepted spatial/Engine-semantics implementation sequence |
 | [Governance/conformance capability](planning/governance-conformance-capability.md) | Landed Governance substrate and headless evidence-use capability; durable producer integrations and later authorization remain future work |
 | [Governance identity/history compatibility guard](planning/governance-continuity.md) | Downstream implementation invariants over completed revision identity/history |

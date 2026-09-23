@@ -67,7 +67,7 @@ The current lifecycle is:
 3. **In progress** — child jobs are dispatched independently, each traversing the routing once while processing on a machine or waiting in a queue
 4. **Completed** — the order completes only after every child job completes; the order's sales value (quantity x its locked-in price) is added to completed sales value exactly once
 
-The existing API/UI job projection remains a compatibility surface for job-level views, but each child job is unit quantity. Product and commercial fields are projected from the referenced immutable order where applicable rather than owned as mutable job state.
+Any future outward job-level projection would need to keep each child job unit quantity, projecting product and commercial fields from the referenced immutable order rather than owning them as mutable job state.
 
 ## The economy
 
@@ -87,7 +87,7 @@ Changing the offer price only affects **future** orders — evaluated the next t
 
 Each order locks in its unit price **at the moment it's created**, using whatever the offer price was at that instant. That price stays on the immutable order for its entire lifecycle and never changes, even if the offer price moves while the associated job is still in production. An order created at $10 is still worth `quantity x $10` when it finishes, no matter what the offer price is by then.
 
-The API's completed-sales figure (`completedSalesValue`) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the offer price happens to be right now.
+The completed-sales figure (`CompletedSalesValue`) is the sum of `quantity x unit price` for every order that has finished production — each using its own locked-in price, not whatever the offer price happens to be right now.
 
 This is a deliberate product decision, not sophistication in accounting: "Completed sales value" is an operational number (how much value has this factory shipped), not a claim about recognized revenue. Arcogine has a small, separate Finance domain (a minimal double-entry ledger) that owns financial concepts like cash and a formally-recorded sales balance — under its current, deliberately simple immediate-settlement policy those numbers happen to match the operational figure above, but they answer a different question ("what has been financially recorded" vs. "what value has completed production") and aren't guaranteed to stay equal if Finance's policy evolves. See [`docs/architecture/overview.md`](../architecture/overview.md#pricing-orders-and-money-offerprice-vs-orderprice) for the full OfferPrice/OrderPrice model and the "Commercial, Operational, and Financial Truth" section for the Finance domain. Remaining runtime work is tracked in [`docs/planning/factory-simulation-engine-readiness.md`](../planning/factory-simulation-engine-readiness.md), which is planning guidance rather than architectural authority.
 
@@ -123,19 +123,10 @@ You can toggle the agent on and off at any time. This lets you compare manual co
 | **Reset** | Reload the current scenario from scratch. All state is cleared. |
 | **Load scenario** | Parse and load a new scenario TOML. This also resets the simulation. |
 
-## Headless mode
-
-You can run scenarios without the UI:
-
-```bash
-java -jar dist/api/arcogine.jar run docs/examples/basic.toml
-```
-
-This executes the full simulation and prints a summary to stdout. Useful for batch comparisons or scripted experiments.
-
 ## What's next
+
+Arcogine currently has no application server, HTTP API, or CLI product surface to run a scenario through interactively; retained executable evidence is tests, conformance checks, and benchmarks (see [architecture/overview.md](../architecture/overview.md)). A future outward consumer will be introduced from the supported runtime contract when a concrete product need exists.
 
 - To set up the project, see the [Quick start](../../README.md#quick-start) in the root README.
 - To understand the architecture, see [architecture/overview.md](../architecture/overview.md).
-- To interact with the API directly, see [reference/api.md](../reference/api.md).
 - To contribute, see [CONTRIBUTING.md](../../.github/CONTRIBUTING.md).

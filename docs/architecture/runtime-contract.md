@@ -1,6 +1,6 @@
 # Runtime observation and event contract
 
-Status: Adopted semantic contract; headless `FactoryRuntime` implementation complete, legacy API/SSE projection migration outstanding
+Status: Adopted semantic contract; headless `FactoryRuntime` implementation complete. No current outward adapter exists; a future one is introduced from this contract when a concrete product need exists.
 Owning architecture: [Architecture Overview](overview.md#core-architecture-philosophy-events-state-observations)
 Engine interpretation: [Engine Semantics v1](engine-semantics-v1.md)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
@@ -85,7 +85,7 @@ A rejected command or rejected/failed transition must not emit a successful stat
 
 If a command is accepted and a later execution cascade faults after partial authoritative mutation, the consumer-neutral session-control distinction between acceptance and execution outcome is preserved. The supported runtime-event contract reports only the authoritative changes that actually occurred; it does not pretend an all-or-nothing transition happened when it did not. Fault/result reporting remains distinct from state-change event publication.
 
-The legacy `SimThread` SSE path can still log and notify internal events before `handleEvent(...)` completes. That behavior is migration debt owed to this contract; it is not the semantic model defined here.
+The retired legacy API's `SimThread` SSE path used to log and notify internal events before `handleEvent(...)` completed. That was migration debt owed to this contract, not the semantic model defined here; a future outward adapter must not repeat it.
 
 ## Every runtime has explicit run identity and a per-run sequence epoch
 
@@ -214,11 +214,9 @@ A bounded retained history is not a durable audit ledger. If retention drops eve
 
 HTTP/SSE, WebSocket, Kafka, NATS, MQTT, an embedded Java API, or later operational adapters are projections of the same transport-neutral runtime contract. None is a dependency of the simulation core.
 
-The legacy SSE design, where each internal `EventType` becomes an SSE `event:` name, is not the target compatibility boundary. When that API migrates, SSE should use one stable transport event name such as `runtime-event`, use the supported `sequence` as the SSE message ID, and carry the semantic `eventType` inside the envelope.
+The retired legacy API's SSE design, where each internal `EventType` became an SSE `event:` name, is not the target compatibility boundary. A future SSE-based adapter should use one stable transport event name such as `runtime-event`, use the supported `sequence` as the SSE message ID, and carry the semantic `eventType` inside the envelope.
 
 This avoids requiring transport-listener registration changes whenever a supported semantic event type is added and prevents the transport taxonomy from becoming the domain taxonomy.
-
-[`docs/reference/api.md`](../reference/api.md) remains a current-state reference and is updated only when that API migration is implemented; the legacy SSE endpoint does not yet have this behavior.
 
 CloudEvents or another integration envelope may later be an adapter representation, but it is not the Arcogine domain type and is not required by this runtime contract.
 

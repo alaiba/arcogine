@@ -48,10 +48,12 @@ import org.junit.jupiter.api.Test;
  *   <li>the supported observation is sufficient to identify the active production bottleneck.
  * </ul>
  *
- * <p>The complementary structural fact -- API/UI DTOs never re-enter domain decision paths -- is
- * behavioural evidence this class does not itself carry, and is instead enforced by {@code ArchitectureTest
- * .api_dtos_must_not_reenter_domain_decision_paths} in {@code interfaces/api}, the only module
- * whose test classpath can see both sides of that boundary.
+ * <p>The complementary structural fact -- outward-projection DTOs never re-enter domain decision
+ * paths -- is behavioural evidence this class does not itself carry; it is a durable outward-
+ * projection principle documented in docs/architecture/overview.md, enforced structurally only
+ * while an adapter exists to enforce it against (the legacy interfaces/api's now-removed
+ * ArchitectureTest.api_dtos_must_not_reenter_domain_decision_paths rule proved it for that
+ * adapter). A future outward adapter should add the equivalent rule scoped to its own package.
  *
  * <p>Everything here is driven purely through {@link FactoryRuntime}'s supported surface, matching
  * the conventions of the two tests above.

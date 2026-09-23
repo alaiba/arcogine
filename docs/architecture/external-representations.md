@@ -12,12 +12,15 @@ historical `ControlledRevisionId` identity, and the supported `RuntimeObservatio
 contracts. Governance, Challenge/Game, and Operational Execution each own additional semantic
 histories and projections that must not be collapsed into one generic interchange ontology.
 
-The repository already uses multiple concrete representations for different purposes: TOML for
-human-oriented scenario authoring, JSON for the HTTP API and SSE payloads, bounded internal
-`EventLog` export, and possible future industrial (B2MML, AutomationML, AAS/AASX, FMI/FMU, OPC UA,
-MQTT, IFC, STEP) or analytical (Parquet, Arrow, CSV) representations. Without an explicit boundary
-policy, a convenient serializer or integration standard could accidentally become the de facto
-domain model, semantic identity source, runtime event taxonomy, or persistence contract.
+The repository already uses TOML for human-oriented scenario authoring and bounded internal
+`EventLog` export. Arcogine currently has no HTTP API, SSE, or CLI product surface (see
+[Architecture Overview — Outward Adapters](overview.md#outward-adapters)); JSON was used for HTTP
+API and SSE payloads in that retired adapter and remains the default structured representation for
+a future one (see below), alongside possible future industrial (B2MML, AutomationML, AAS/AASX,
+FMI/FMU, OPC UA, MQTT, IFC, STEP) or analytical (Parquet, Arrow, CSV) representations. Without an
+explicit boundary policy, a convenient serializer or integration standard could accidentally become
+the de facto domain model, semantic identity source, runtime event taxonomy, or persistence
+contract.
 
 ## Arcogine semantic contracts are authoritative; external representations are projections or adapters by default
 
@@ -53,7 +56,7 @@ A serializer schema, protocol object model, broker envelope, CAD structure, or s
 
 ## TOML remains a human-oriented scenario authoring format
 
-The current scenario loader and API accept TOML as an input envelope for simulation scenarios. TOML remains appropriate for examples, tests, CLI usage, hand-authored scenarios, and small experiments.
+The current scenario loader accepts TOML as an input envelope for simulation scenarios. TOML remains appropriate for examples, tests, hand-authored scenarios, and small experiments; a future CLI or other adapter that accepts scenarios should keep using it rather than introducing a parallel format.
 
 TOML is not the canonical published `FactoryModel` artifact by implication, and a future scenario may reference published model/revision identity rather than embedding every authoritative factory-design fact.
 
@@ -61,7 +64,7 @@ Adding YAML or another parallel human-authoring syntax requires a concrete usabi
 
 ## JSON is the default structured external representation, not a semantic-identity mechanism
 
-JSON is the preferred default representation for ordinary external HTTP/API projections and other structured interchange where no stronger domain-specific format is required.
+JSON is the preferred default representation for a future ordinary external HTTP/API projection and other structured interchange where no stronger domain-specific format is required. No such projection currently exists.
 
 JSON serialization must not define or recanonicalize `factory-model:v1` semantic identity.
 
@@ -75,9 +78,7 @@ OpenAPI is the intended machine-readable description format for stable Arcogine 
 
 OpenAPI schemas follow accepted Arcogine domain semantics; they do not drive those semantics.
 
-The current manually documented API remains current-state authority until a versioned supported HTTP surface is migrated and OpenAPI generation/validation is deliberately established.
-
-In particular, the supported `RuntimeObservation` / `RuntimeEvent` domain contract must stabilize before the legacy HTTP/SSE surface is promoted into a durable external compatibility contract.
+Arcogine currently has no HTTP surface to document; a previous manually documented API was retired along with the adapter it described. In particular, the supported `RuntimeObservation` / `RuntimeEvent` domain contract must stabilize before any future HTTP/SSE surface is promoted into a durable external compatibility contract, and OpenAPI generation/validation should be established when that surface is introduced rather than documented by hand again.
 
 ## Runtime transports and integration envelopes project `RuntimeEvent`; they do not define it
 

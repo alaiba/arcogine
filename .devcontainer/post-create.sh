@@ -19,10 +19,6 @@ echo "==> Checking Git commit identity..."
 source infra/dev/git-identity.sh
 configure_arcogine_git_identity
 
-echo "==> Copying infra/docker/.env.example -> .env (if not present)..."
-[ -f .env ] || cp infra/docker/.env.example .env
-
-
 echo "==> Installing repository dependencies (./arcogine setup)..."
 ./arcogine setup
 
@@ -30,4 +26,3 @@ echo "==> Dev container ready. Canonical commands:"
 echo "    ./arcogine setup   — (re-)install dependencies"
 echo "    ./arcogine test    — run Java unit tests"
 echo "    ./arcogine check   — run full quality gates"
-echo "    ./arcogine run api — start the API on :3000"

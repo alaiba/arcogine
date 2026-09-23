@@ -35,8 +35,5 @@ product/interfaces/web/test-results/
 /logs/
 cobertura.xml
 
-# Canonical distribution output (built by ./arcogine build)
-/dist/
-
 # Local cargo config (machine-specific build settings)
 .cargo/

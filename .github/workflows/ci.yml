@@ -109,6 +109,13 @@ jobs:
       - name: Reject tracked transient workspace files
         run: python3 .github/scripts/check-transient-workspace.py
 
+      # Durable files must not depend on an exact temporary workspace artifact coordinate.
+      - name: Validate transient-coordinate checker
+        run: python3 .github/scripts/check-transient-coordinates.test.py
+
+      - name: Reject durable transient workspace coordinates
+        run: python3 .github/scripts/check-transient-coordinates.py
+
       - name: Determine changed-file surfaces
         id: filter
         env:

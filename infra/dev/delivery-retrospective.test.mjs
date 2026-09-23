@@ -72,6 +72,27 @@ test('trusted CHANGES REQUIRED parser ignores prose examples', () => {
   assert.equal(changesRequiredCount(record), 1);
 });
 
+test('only a closing CHANGES REQUIRED line counts as a blocking review', () => {
+  const counted = [
+    'Disposition: CHANGES REQUIRED',
+    '**Disposition: CHANGES REQUIRED**',
+    '- Disposition: CHANGES REQUIRED',
+    'Earlier: Disposition: READY TO MERGE\n\nDisposition: CHANGES REQUIRED',
+    'Finding.\n\nDisposition: **CHANGES REQUIRED**.\n\n   \n',
+  ];
+  const ignored = [
+    'Disposition: CHANGES REQUIRED\n\nBlocking finding follows after the verdict.',
+    '> Disposition: **CHANGES REQUIRED**',
+    'Disposition: CHANGES REQUIRED, but only cosmetically -- see below',
+    'For example, Disposition: CHANGES REQUIRED would block the PR.',
+    'Disposition: CHANGES REQUIRED\n\nDisposition: READY TO MERGE',
+    '',
+    null,
+  ];
+  assert.equal(changesRequiredCount(pr(11, '2026-09-05T00:00:00Z', counted)), counted.length);
+  assert.equal(changesRequiredCount(pr(12, '2026-09-05T00:00:00Z', ignored)), 0);
+});
+
 test('untrusted review authors do not affect retrospective blocker counts', () => {
   const record = pr(10, '2026-09-05T00:00:00Z');
   record.reviews = {

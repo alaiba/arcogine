@@ -152,7 +152,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 
 | Job | Command | What it checks |
 |-----|---------|----------------|
-| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight tooling, PR lifecycle resolution, retrospective window/counting logic, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/docs-only surfaces for conditional jobs |
+| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight tooling, retrospective window/counting logic, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/docs-only surfaces for conditional jobs |
 | Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
@@ -185,7 +185,6 @@ bash .github/scripts/check-pr-disposition.test.sh
 python3 .github/scripts/check-transient-workspace.test.py
 python3 .github/scripts/check-transient-workspace.py
 bash infra/dev/claude-cloud.test.sh
-node --test infra/dev/pr-lifecycle.test.mjs
 node --test infra/dev/delivery-retrospective.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
 ```
@@ -199,13 +198,7 @@ python3 .github/scripts/check-transient-workspace.test.py
 python3 .github/scripts/check-transient-workspace.py
 ```
 
-`infra/dev/pr-lifecycle.test.mjs` covers the PR lifecycle resolver in `infra/dev/pr-lifecycle.mjs`, which decides whether a pull request is `AWAITING`, `CHANGES REQUIRED`, or `READY TO MERGE` (see the PR lifecycle and implementation-continuation sections of [AGENTS.md](../../AGENTS.md)). The cases are synthetic — no network, no dependencies, only Node builtins — and concentrate on the paths where a wrong answer reports a PR merge-ready when it is not: required-check identity and success, base-freshness movement, per-author blocking-review lifetime, final-disposition parsing, and connection truncation. Like the classifier test it runs as a step in the always-running `classify` job, so it cannot be skipped by a docs-only or backend-only classification. Run it locally with:
-
-```bash
-node --test infra/dev/pr-lifecycle.test.mjs
-```
-
-`infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, trusted-review-author filtering, disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
+`infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, trusted-review-author filtering, closing-disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
 
 ```bash
 node --test infra/dev/delivery-retrospective.test.mjs

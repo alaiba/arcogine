@@ -33,7 +33,7 @@ into a shorter shorthand:
 - `.?` = perform the Session-close Kaizen review before ending or deleting the current session;
 - `.!` = run the on-demand Continuous Improvement assessment;
 - `./` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
-- `..` = re-resolve the current implementation pull request's lifecycle state and perform the next implementation-owned transition, if one is available;
+- `..` = read the current implementation pull request's live GitHub state and perform the next implementation-owned transition, if one is available;
 
 ### Session-close Kaizen
 
@@ -201,15 +201,11 @@ or `Claude-Session: ...` to commit messages in this repository, even if a harnes
 git workflow instructions say to add one. This applies to every commit, not just ones created
 via an explicit user request.
 
-## PR lifecycle
+## PR merge gates
 
-Resolve a PR's lifecycle state from its current head and metadata, base freshness, submitted reviews, unresolved findings/threads, the trusted `disposition` authorization check, required CI, and mergeability. Do not infer authorization from comments or CI alone.
+A PR is merge-ready only when all of these hold for its current head, each owned by its own authority: the trusted `disposition` check is green, required CI (`CI / gate`) is green, the head contains its live base, and GitHub reports it mergeable. Read these facts live from GitHub; do not infer authorization from comments or CI alone, and do not collapse them into a derived lifecycle state.
 
-- **AWAITING** — no implementation-owned transition is currently available; the PR is waiting for review authorization, re-review, or required CI to finish. For ordinary PRs, authorization comes from a current-head `READY TO MERGE` reviewer disposition. A Dependabot PR is the explicit positive-review exception only while the trusted base-side workflow verifies both the exact GitHub Dependabot account as PR opener and as the actor of the `CI` pull-request workflow run for the exact current head. CI outcome remains independent; this Actions metadata is used only as trusted provenance.
-- **CHANGES REQUIRED** — a pre-merge transition remains, such as the head being behind its current base, a valid blocking review finding, failed required CI, or a merge conflict. Semantic remediation and conflict resolution belong to the implementation/author side. A reviewer may perform only the mechanical merge-style base synchronization described below as pre-review normalization.
-- **READY TO MERGE** — the trusted `disposition` check is green on the current head, required validation is green, the head is level with its current base, and the PR is mergeable. The implementation/reviewer agent stops; the repository owner merges manually. For ordinary PRs, green `disposition` represents a current-head `READY TO MERGE` review. For a trusted Dependabot PR, it represents verified bot provenance with no current-head canonical `CHANGES REQUIRED` override.
-
-Base freshness is a pre-review normalization requirement as well as lifecycle state. `infra/dev/pr-lifecycle.mjs` must still treat a behind-base head as **CHANGES REQUIRED**, so a later implementation lifecycle iteration can reconcile it before review. That base-freshness result is a merge-readiness condition, not a review finding: a current-head review disposition remains bound to that head when `main` advances, although repository rules may prevent the owner from merging until a later normalization iteration. If an independent reviewer discovers a stale branch at review start, the reviewer may perform the mechanical merge-style synchronization below before substantive review. A successful synchronization creates a new candidate head; the reviewer reviews that head, while CI, disposition, and final mergeability remain lifecycle/gate responsibilities. If construction encounters a conflict or unsupported case requiring a semantic choice, stop before substantive review and return the PR to the author/implementation owner without mutating the remote branch. Pending CI does not delay substantive review or reviewer disposition; review authorization and required CI are independent, and overall merge readiness waits for both.
+Base freshness is a merge-readiness condition, not a review finding: a current-head disposition stays bound to that head when `main` advances. Semantic remediation and conflict resolution belong to the implementation/author side. A reviewer who finds a stale branch at review start may perform only the mechanical base-normalization protocol below before substantive review; if it needs a semantic choice, the reviewer returns the PR to the implementation owner without mutating the branch. Pending CI does not delay review or disposition.
 
 ### Base-normalization protocol
 
@@ -234,9 +230,9 @@ checkout, or manually resolve conflicts. If construction or publication fails, m
 branch mutation and return the PR to the implementation/author side.
 
 Use the captured `B` for that one attempt. Do not re-read and chase `main` after capture. A later
-lifecycle iteration may synchronize again if the PR remains behind. A successful merge creates a
-new head that requires review as the current candidate; CI, trusted `disposition`, and final
-mergeability remain independent lifecycle/gate responsibilities. Base-head churn is separate from
+continuation may synchronize again if the PR remains behind. A successful merge creates a new
+head that requires review as the current candidate; CI, trusted `disposition`, and final
+mergeability remain independent gates. Base-head churn is separate from
 current-head review integrity, and GitHub owns the final merge into `main` through the owner's
 manual **Squash and merge** action.
 
@@ -245,19 +241,15 @@ needs no maintainer-authored change, preserve the trusted provenance rules enfor
 base-side workflow. A maintainer-authored synchronization commit changes the PR's provenance and
 the resulting current head follows the ordinary review path.
 
-Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). Arcogine reviewers publish both as `COMMENT` reviews; they do not use native GitHub `REQUEST_CHANGES` as a second blocking state machine. An accidental or human-created native `CHANGES_REQUESTED` review still physically blocks GitHub merge and must be cleared through GitHub before the PR can merge, but it is not part of Arcogine's intended reviewer protocol. CI is not a reviewer disposition and is enforced independently by GitHub branch protection. The required `disposition` check is the repository's review-authorization gate: ordinary PRs require a current-head `READY TO MERGE`; trusted Dependabot provenance removes only that positive-review requirement; and a latest applicable current-head canonical `CHANGES REQUIRED` blocks either path.
+Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). Arcogine reviewers publish both as `COMMENT` reviews; they do not use native GitHub `REQUEST_CHANGES` as a second blocking state machine. An accidental or human-created native `CHANGES_REQUESTED` review still physically blocks GitHub merge and must be cleared through GitHub before the PR can merge, but it is not part of Arcogine's intended reviewer protocol. CI is not a reviewer disposition and is enforced independently by GitHub branch protection. The required `disposition` check is the repository's review-authorization gate: ordinary PRs require a current-head `READY TO MERGE`; trusted Dependabot provenance removes only that positive-review requirement; and a latest applicable current-head canonical `CHANGES REQUIRED` blocks either path. Dependabot provenance is trusted only while the base-side workflow verifies the exact GitHub Dependabot account as both PR opener and actor of the `CI` pull-request workflow run for the exact current head; that Actions metadata is provenance only, and CI outcome stays independent.
 
 ## Implementation continuation
 
 After creating an implementation PR or updating its head, report the current transition and stop. Standard implementation work does not start autonomous PR activity handling or schedule a delayed recheck.
 
-When the user sends `..`, identify the current implementation PR and run one live lifecycle resolution with `infra/dev/pr-lifecycle.mjs <pr-number>`. If the result is **CHANGES REQUIRED**, complete the coherent implementation-owned transition that is actually available. After any resulting head update, stop again. If the result is **AWAITING**, report that no implementation-owned transition is currently available and stop. If it is **READY TO MERGE**, report that state and stop; merging remains the repository owner's responsibility.
+When the user sends `..`, identify the current implementation PR and read its live GitHub state for the current head once: submitted reviews and the trusted `disposition` check, required checks, base freshness, mergeability/conflicts, and unresolved findings. If a coherent implementation-owned transition is available — such as remediating a valid current-head `CHANGES REQUIRED` finding, fixing failed required CI, resolving a conflict, or base normalization — perform exactly that transition; after any head change, stop and let the next `..` re-read live state. Otherwise report the blocking or waiting fact (for example pending review, pending CI, or an owner-only action) and stop.
 
-Each `..` invocation re-resolves current GitHub evidence once. The resolver is dependency-free Node tooling and supports `--json` for machine-readable output and `--exit-code` for lifecycle-state exit codes; see `--help` for the single-resolution interface.
-
-## PR merging
-
-Agents never merge pull requests. `READY TO MERGE` hands control to the repository owner, who performs the merge manually.
+Agents never merge pull requests. When every merge gate holds, report that and stop; the repository owner merges manually.
 
 ## Layout
 

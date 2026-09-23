@@ -132,7 +132,7 @@ The repository should not prescribe a provider. For experiments, route work by t
 
 Arcogine deliberately keeps important correctness constraints in durable repository authority instead of relying on conversational context:
 
-- `AGENTS.md` defines repository identity, branch handling, validation, and PR lifecycle-continuation rules;
+- `AGENTS.md` defines repository identity, branch handling, validation, and PR merge-gate/continuation rules;
 - specialized Work Planner, PR Reviewer, and Consistency contracts define repository-specific operating procedures;
 - architecture and specifications define semantic boundaries;
 - maintained planning documents define acceptance criteria and sequencing;

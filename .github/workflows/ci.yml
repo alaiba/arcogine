@@ -69,18 +69,13 @@ jobs:
       - name: Validate Claude Cloud provisioning
         run: bash infra/dev/claude-cloud.test.sh
 
-      # The PR lifecycle resolver in infra/dev/pr-lifecycle.mjs decides whether an
-      # implementation-owned transition exists, so a regression there can report a PR
-      # merge-ready when it is not. Run its suite here, in the always-running job the
-      # aggregate gate accounts for, rather than in a path-filtered job that a
+      # Node-based repository tooling suites run here, in the always-running job
+      # the aggregate gate accounts for, rather than in a path-filtered job that a
       # docs-only or backend-only change would skip.
       - name: Set up Node for tooling tests
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.22.2'
-
-      - name: Validate PR lifecycle resolver
-        run: node --test infra/dev/pr-lifecycle.test.mjs
 
       # Retrospective sample/review-round facts must be mechanically reproducible.
       # Keep this in the always-running tooling gate so partial-window or counting

@@ -1,10 +1,6 @@
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 
-dependencies {
-    testImplementation("tools.jackson.core:jackson-databind:3.2.2")
-}
-
-// Coverage gate: fails the build if sim-types line coverage drops below the
+// Coverage gate: fails the build if :types line coverage drops below the
 // floor (e.g. if its tests are deleted). Other modules adopt their own gate.
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))

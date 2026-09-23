@@ -50,9 +50,6 @@ log="${ARCOGINE_TEST_LOG:?}"
 printf 'node cwd=%s args=' "$PWD" >> "$log"
 for arg in "$@"; do printf '|%s' "$arg" >> "$log"; done
 printf '\n' >> "$log"
-if [[ "${1:-}" == '-p' ]]; then
-  printf '%s\n' "${ARCOGINE_TEST_PACKAGE_RANGE:-^22.22.2 || ^24.15.0 || ^26.0.0}"
-fi
 EOF
 
   for tool in trivy gitleaks; do
@@ -77,7 +74,7 @@ start_case() {
   FAKE_BIN="$CASE_ROOT/fake-bin"
   TEST_LOG="$CASE_ROOT/invocations.log"
 
-  mkdir -p "$TEST_REPO/product" "$TEST_REPO/docs/examples" "$FAKE_BIN"
+  mkdir -p "$TEST_REPO/product" "$FAKE_BIN"
   git init -q "$TEST_REPO"
   EXPECTED_REPO_ROOT="$(git -C "$TEST_REPO" rev-parse --show-toplevel)"
   cp "$SCRIPT_SOURCE" "$TEST_REPO/arcogine"

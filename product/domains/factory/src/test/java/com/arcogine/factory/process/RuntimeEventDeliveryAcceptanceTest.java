@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
-import com.arcogine.core.event.EventType;
 import com.arcogine.factory.machines.MachineView;
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.FactoryModelPublisher;
@@ -219,7 +218,7 @@ class RuntimeEventDeliveryAcceptanceTest {
         runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
         runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE).orElseThrow();
         Event completion = runtime.advance().orElseThrow();
-        assertEquals(EventType.TaskEnd, completion.eventType());
+        assertInstanceOf(EventPayload.TaskEnd.class, completion.payload());
 
         runtime.drainSupportedEvents(); // discard the setup events; only the transition under test matters
         CommandResult<EventPayload.MachineAvailabilityChange> result =

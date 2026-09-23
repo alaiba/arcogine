@@ -10,7 +10,7 @@ import java.util.List;
  * decision-makers, workload, and any other execution/run concern are never part of this type -- see
  * the canonical model boundary (docs/architecture/factory-design.md). {@link FactoryModel} is a
  * plain, immutable value;
- * it has no dependency on Spring, scenario parsing, or any runtime/mutable state.
+ * it has no dependency on any input format, application framework, or runtime/mutable state.
  */
 public record FactoryModel(
         List<ConfiguredResource> resources,

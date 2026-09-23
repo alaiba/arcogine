@@ -35,11 +35,6 @@ public class Job implements JobView {
         this.completedAt = null;
     }
 
-    /** Compatibility constructor for focused lifecycle tests; production supplies an ordinal. */
-    public Job(JobId id, Order order, int totalSteps, SimTime createdAt) {
-        this(id, order, 0, totalSteps, createdAt);
-    }
-
     public void start(MachineId machineId) {
         if (status != JobStatus.Queued && status != JobStatus.InProgress) {
             throw new SimError.InvalidStateTransition(
@@ -91,16 +86,10 @@ public class Job implements JobView {
     @Override
     public long ordinalWithinOrder() { return ordinalWithinOrder; }
 
-    /** Compatibility projection from immutable order intent; Job does not own this fact. */
+    /** Projection from the immutable accepted order; Job does not own this fact. */
     @Override
     public ProductId productId() {
         return order.productId();
-    }
-
-    /** Compatibility projection from immutable order intent; Job does not own this fact. */
-    @Override
-    public long quantity() {
-        return 1;
     }
 
     @Override
@@ -131,17 +120,5 @@ public class Job implements JobView {
     @Override
     public SimTime completedAt() {
         return completedAt;
-    }
-
-    /** Compatibility projection from immutable order intent; Job does not own this fact. */
-    @Override
-    public double unitPrice() {
-        return order.unitPrice();
-    }
-
-    /** Compatibility projection from immutable order intent; Job does not own this fact. */
-    @Override
-    public double orderValue() {
-        return unitPrice();
     }
 }

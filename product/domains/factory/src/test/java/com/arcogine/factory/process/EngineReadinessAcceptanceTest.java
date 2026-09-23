@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
-import com.arcogine.core.event.EventType;
 import com.arcogine.factory.jobs.JobView;
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.FactoryModelPublisher;
@@ -98,7 +97,7 @@ class EngineReadinessAcceptanceTest {
         long taskEndsSeen = 0;
         Event event;
         while (taskEndsSeen < requiredTaskEnds && (event = runtime.advance().orElse(null)) != null) {
-            if (event.eventType() == EventType.TaskEnd) {
+            if (event.payload() instanceof EventPayload.TaskEnd) {
                 taskEndsSeen++;
             }
             boolean isFinalTaskEnd = taskEndsSeen == requiredTaskEnds;

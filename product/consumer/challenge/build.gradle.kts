@@ -1,8 +1,8 @@
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 
 // This module is intentionally headless and game-owned: it must not depend on
-// Arcogine's runtime, simulation, economy, finance, API, Spring, or mutable
-// factory implementation types. It is the Challenge Readiness boundary and
+// Arcogine's runtime, simulation, finance, or mutable factory implementation
+// types, or on any application framework. It is the Challenge boundary and
 // stays independent of the factory runtime by construction (no `project(...)`
 // dependencies below).
 

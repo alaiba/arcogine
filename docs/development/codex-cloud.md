@@ -19,20 +19,14 @@ These properties appear to be intentional sandboxing. Do not add a PAT, GitHub C
 
 ## Toolchain and validation
 
-The initial inspected image had Java 21 and Node 20.20.2. Java 21 satisfies Arcogine's compatibility baseline, while Node 20 is below the frontend's supported engine range.
+The initial inspected image had Java 21 and Node 20.20.2. Java 21 satisfies Arcogine's compatibility baseline. Node now matters only for repository tooling; the frontend whose supported engine range excluded Node 20 at the time of the experiment has since been retired.
 
-A supported Node version can be provisioned inside the task with the available version managers. Both of the following were exercised successfully in separate tasks:
+A newer Node version can be provisioned inside the task with the available version managers. Both of the following were exercised successfully in separate tasks:
 
 - `nvm use 22.22.2`;
 - installing and selecting Node 24.15.0 with `mise`.
 
-After selecting a supported Node version, the cloud environment successfully ran:
-
-- `npm ci`;
-- frontend linting;
-- frontend unit tests (82 tests in the observed run);
-- the production frontend build;
-- `./arcogine check`, including Java compilation, Checkstyle, tests, coverage gates, frontend lint/type-check/tests, and the frontend build.
+The cloud environment then successfully ran `./arcogine check`, including Java compilation, Checkstyle, tests, and coverage gates. At the time, that command also covered the since-retired frontend's install, lint, type-check, unit tests, and build.
 
 Docker was not available inside the inspected container, so Docker-dependent validation should remain a CI responsibility when the cloud environment does not expose a Docker daemon/CLI.
 

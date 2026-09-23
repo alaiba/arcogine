@@ -32,7 +32,7 @@ The following Engine capability is complete and must not be reopened by adjacent
 ### PLAN-ENG-1 — Explicit workload and execution
 
 - immutable `Order` intent is separate from mutable execution;
-- workload can be submitted without economy/demand/agents;
+- workload is submitted explicitly, independent of any demand or pricing model;
 - quantity consumes proportional production work;
 - internal `OrderCreation` events and explicit workload submission share the same authoritative acceptance path.
 

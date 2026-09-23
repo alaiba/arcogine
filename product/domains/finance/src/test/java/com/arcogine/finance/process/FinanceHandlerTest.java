@@ -12,6 +12,7 @@ import com.arcogine.finance.ledger.Posting;
 import com.arcogine.finance.ledger.Side;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 import java.math.BigDecimal;
@@ -35,7 +36,7 @@ class FinanceHandlerTest {
         Scheduler sched = new Scheduler();
 
         Event orderCompleted = Event.of(
-                SimTime.of(10), new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 10, 12.0));
+                SimTime.of(10), completion(1, 10, 12.0));
         handler.handleEvent(orderCompleted, sched);
 
         assertEquals(1, handler.ledger().entries().size());
@@ -48,7 +49,7 @@ class FinanceHandlerTest {
 
         // quantity=10, unitPrice=12.0 -> orderValue=120.00
         Event orderCompleted = Event.of(
-                SimTime.of(10), new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 10, 12.0));
+                SimTime.of(10), completion(1, 10, 12.0));
         handler.handleEvent(orderCompleted, sched);
 
         JournalEntry entry = handler.ledger().entries().get(0);
@@ -96,7 +97,7 @@ class FinanceHandlerTest {
 
         // quantity=3, unitPrice=3.333 -> exact product 9.999, quantized (HALF_UP, scale 2) to 10.00.
         Event orderCompleted = Event.of(
-                SimTime.of(1), new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 3, 3.333));
+                SimTime.of(1), completion(1, 3, 3.333));
         handler.handleEvent(orderCompleted, sched);
 
         assertEquals(0, handler.ledger().balance(Account.CASH).compareTo(new BigDecimal("10.00")));
@@ -108,10 +109,10 @@ class FinanceHandlerTest {
         Scheduler sched = new Scheduler();
 
         handler.handleEvent(
-                Event.of(SimTime.of(1), new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 2, 10.0)),
+                Event.of(SimTime.of(1), completion(1, 2, 10.0)),
                 sched);
         handler.handleEvent(
-                Event.of(SimTime.of(2), new EventPayload.OrderCompleted(new JobId(2), new ProductId(1), 3, 5.0)),
+                Event.of(SimTime.of(2), completion(2, 3, 5.0)),
                 sched);
 
         assertEquals(2, handler.ledger().entries().size());
@@ -129,12 +130,31 @@ class FinanceHandlerTest {
         FinanceHandler handler = new FinanceHandler();
         Scheduler sched = new Scheduler();
         Event orderCompleted = Event.of(
-                SimTime.of(1), new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 2, 10.0));
+                SimTime.of(1), completion(1, 2, 10.0));
 
         handler.handleEvent(orderCompleted, sched);
         handler.handleEvent(orderCompleted, sched);
 
         assertEquals(2, handler.ledger().entries().size(), "no de-duplication: two deliveries, two postings");
         assertEquals(0, handler.ledger().balance(Account.CASH).compareTo(new BigDecimal("40.00")));
+    }
+
+    @Test
+    void journalEntryIdentifiesTheCompletedOrderRatherThanItsCompletingChildJob() {
+        FinanceHandler handler = new FinanceHandler();
+        Scheduler sched = new Scheduler();
+
+        handler.handleEvent(
+                Event.of(SimTime.of(1), new EventPayload.OrderCompleted(
+                        new OrderId(7), new JobId(21), new ProductId(1), 3, 10.0)),
+                sched);
+
+        assertEquals("Order 7 completed", handler.ledger().entries().getFirst().description());
+    }
+
+    /** An order-level completion whose completing child job identity differs from the order's. */
+    private static EventPayload.OrderCompleted completion(long orderId, long quantity, double unitPrice) {
+        return new EventPayload.OrderCompleted(
+                new OrderId(orderId), new JobId(orderId * 10), new ProductId(1), quantity, unitPrice);
     }
 }

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-/** Ported from crates/sim-types/src/lib.rs simtime_* tests. */
 class SimTimeTest {
 
     @Test

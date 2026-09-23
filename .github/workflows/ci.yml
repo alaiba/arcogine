@@ -162,7 +162,7 @@ jobs:
         if: always()
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          files: product/*/build/reports/jacoco/test/jacocoTestReport.xml,product/domains/*/build/reports/jacoco/test/jacocoTestReport.xml
+          files: product/*/build/reports/jacoco/test/jacocoTestReport.xml,product/domains/*/build/reports/jacoco/test/jacocoTestReport.xml,product/consumer/*/build/reports/jacoco/test/jacocoTestReport.xml
           flags: java
           fail_ci_if_error: false
 

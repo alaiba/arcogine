@@ -112,7 +112,7 @@ ISA-95 and IEC 62264 are closely harmonized standards families with shared linea
 | `OperationStepDefinition` / `RoutingStep` | Process Segment or work-step analogue | Partial; explicit eligible resource instances, no generalized capability requirement |
 | `Order` | Job Order / production request aggregate | Partial; one accepted quantity-bearing request under stable `OrderId` |
 | child `Job` | Independently dispatchable work item / execution state | Partial; unit-quantity child under parent `OrderId`, identified by `JobId` |
-| Factory events and observations | Work execution and performance facts | Narrow but useful semantic mapping; supported supported runtime observation/event contract contract is being established separately from internal scheduler events |
+| Factory events and observations | Work execution and performance facts | Narrow but useful semantic mapping; the supported runtime observation/event contract is established separately from internal scheduler events, with no outward transport projection yet |
 
 **Current commitment:**
 
@@ -154,7 +154,7 @@ Queueing concepts provide the mathematical foundation for bottleneck analysis, w
 
 ISO 22400 is a useful semantic and formula reference for manufacturing KPIs.
 
-**Current status:** Arcogine exposes operational measurements and observations such as throughput, lead time, backlog/work in process, machine activity, order counts, event counts, and simulated time. The exact supported outward KPI set and formulas continue to evolve.
+**Current status:** The supported runtime observation exposes operational measurements such as throughput, lead time, backlog, completed-order count and value, resource busy time and queue depth, and simulated time. No outward KPI surface exists, and ownership of reusable derived measures remains open research.
 
 **Current commitment:**
 
@@ -167,9 +167,9 @@ ISO 22400 is a useful semantic and formula reference for manufacturing KPIs.
 
 OpenAPI is the intended standard description format for stable HTTP contracts.
 
-**Current status:** Arcogine currently has no HTTP API; a previous manually documented API was retired along with the adapter it described. OpenAPI generation and contract validation are not yet established as the authoritative source.
+**Current status:** Arcogine currently has no HTTP API, so no OpenAPI description or contract validation exists.
 
-**Design direction:** Stable HTTP projections should have machine-readable schemas and compatibility tests. OpenAPI follows accepted domain semantics rather than driving them. In particular, supported runtime observation/event contract `RuntimeObservation` / `RuntimeEvent` semantics should stabilize before any future HTTP/SSE projection is promoted into a durable external compatibility surface.
+**Design direction:** Stable HTTP projections should have machine-readable schemas and compatibility tests. OpenAPI follows accepted domain semantics rather than driving them. In particular, a future HTTP/SSE projection derives from the supported `RuntimeObservation` / `RuntimeEvent` semantics rather than defining them, and becomes a durable external compatibility surface only with its own schema and compatibility tests.
 
 ### JSON for structured external projections
 
@@ -201,7 +201,7 @@ AutomationML maps through Arcogine's canonical factory-design boundary. It does 
 
 CloudEvents is a plausible integration-envelope projection for supported `RuntimeEvent` instances once an external event integration needs a standardized envelope.
 
-It is not the Arcogine runtime-event domain type, does not define simulation ordering or provenance semantics, and is not required by supported runtime observation/event contract. Arcogine-specific responsibilities such as run identity, supported sequence, simulated time, `ModelFingerprint`, optional authoritative `ControlledRevisionId`, affected entities, and semantic payload remain explicit.
+It is not the Arcogine runtime-event domain type, does not define simulation ordering or provenance semantics, and is not required by the supported runtime observation/event contract. Arcogine-specific responsibilities such as run identity, supported sequence, simulated time, `ModelFingerprint`, optional authoritative `ControlledRevisionId`, affected entities, and semantic payload remain explicit.
 
 ### Apache Parquet
 
@@ -217,7 +217,7 @@ RAMI 4.0 is a useful classification and positioning framework, not a code struct
 |---|---|
 | Asset | Factory resources, products/materials, and future physical-asset models |
 | Integration | Model adapters, supported events/observations, external observations |
-| Communication | Supported runtime observation/event contract; no current transport adapter (HTTP/SSE was one, retired) — possible standardized async and operational adapters later |
+| Communication | Supported runtime observation/event contract; no current transport adapter — possible HTTP/SSE, standardized async, and operational adapters later |
 | Information | Shared types, domain models, observations, and public schemas |
 | Functional | Simulation, domain handlers, policies, verification, KPIs |
 | Business | Product objectives, Finance, and future planning domains |

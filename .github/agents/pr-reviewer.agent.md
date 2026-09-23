@@ -334,7 +334,7 @@ If prior review history cannot be inspected, say so rather than claiming all pre
 
 ## GitHub feedback
 
-For a complete live-PR review or re-review, post actionable findings and the disposition to the PR using a formal **COMMENT** review whenever formal review submission is available. Arcogine reviewer verdicts never use native GitHub `REQUEST_CHANGES`; the canonical disposition is the repository's review state machine. Do not use native `APPROVE` as a substitute for the canonical disposition either. Human Code Owner approval required by GitHub for protected paths is a separate authorization concern and may still use native approval outside this reviewer protocol.
+For a complete live-PR review or re-review, post actionable findings and the disposition to the PR using a formal **COMMENT** review whenever formal review submission is available. Arcogine reviewer verdicts never use native GitHub `REQUEST_CHANGES`; the canonical disposition is the repository's review state machine. Do not use native `APPROVE` as a substitute for the canonical disposition either.
 
 If an existing native `CHANGES_REQUESTED` review is active, report it as an anomalous GitHub blocker. If you authored it and it no longer represents an unresolved blocker, clear/dismiss it where the available GitHub operation and permissions allow; otherwise identify the required platform cleanup. Do not create new native change-request state.
 

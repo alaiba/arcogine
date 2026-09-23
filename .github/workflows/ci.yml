@@ -50,6 +50,9 @@ jobs:
       - name: Validate classifier logic
         run: bash .github/scripts/classify-changes.test.sh
 
+      - name: Validate changed-file discovery
+        run: bash .github/scripts/discover-changed-files.test.sh
+
       # Ordinary CI runs on fully provisioned runners, so it never exercises
       # ./arcogine's missing-tool preflight branches. Cover them explicitly
       # here so a regression in the constrained-environment fail-fast
@@ -108,18 +111,23 @@ jobs:
 
       - name: Determine changed-file surfaces
         id: filter
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.event.after }}
         run: |
           set -euo pipefail
 
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            base="origin/${{ github.event.pull_request.base.ref }}"
-            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
-            files=$(git diff --name-only "$base"...HEAD)
-          elif [ "${{ github.event_name }}" = "push" ]; then
-            files=$(git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}" 2>/dev/null || git ls-files)
+          if files=$(bash .github/scripts/discover-changed-files.sh "$EVENT_NAME" "$PR_BASE_SHA" "$PUSH_BEFORE" "$PUSH_AFTER"); then
+            :
           else
-            # schedule / workflow_dispatch: treat as "everything relevant" for a full security sweep.
-            files=$(git ls-files)
+            status=$?
+            if [ "$EVENT_NAME" = "pull_request" ] && [ "$status" -eq 2 ]; then
+              echo "::warning::The pull request event base commit '$PR_BASE_SHA' is unavailable locally; classifying all tracked files to conservatively select executable validation. No network fetch was attempted."
+            else
+              exit "$status"
+            fi
           fi
 
           echo "Changed files:"

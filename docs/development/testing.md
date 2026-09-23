@@ -152,7 +152,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 
 | Job | Command | What it checks |
 |-----|---------|----------------|
-| Classify changes | Repository-owned shell/Node validation plus `git diff --name-only` against the PR base (or pushed range on `main`) | Validates classifier logic, developer/preflight tooling, retrospective window/counting logic, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/docs-only surfaces for conditional jobs |
+| Classify changes | Repository-owned shell/Node validation plus local `git diff --name-only` against the immutable PR event base SHA (or pushed range on `main`) | Validates changed-file discovery and classifier logic, developer/preflight tooling, retrospective window/counting logic, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/docs-only surfaces for conditional jobs |
 | Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
@@ -162,7 +162,7 @@ The Java-related build jobs use Temurin 21 to exercise the supported Java floor;
 
 ### Change-aware execution
 
-The `classify` job inspects the changed files (PR diff against its base, or the pushed commit range on `main`) and sets `backend`/`docs_only` outputs consumed by `if:` conditions on the other jobs:
+The `classify` job inspects the changed files (PR diff against the immutable `pull_request.base.sha` event value, or the pushed commit range on `main`) and sets `backend`/`docs_only` outputs consumed by `if:` conditions on the other jobs. Pull-request discovery uses the locally available base commit and does not fetch the mutable base branch; if the event base object is unavailable, it warns and classifies all tracked files so validation is over-selected:
 
 - A change under `.github/workflows/`, `arcogine`, or Gradle build files is treated as touching **every** executable subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
 - A change confined to current product modules under `product/{types,governance,simulation,domains,consumer,architecture-conformance-test}/` sets `backend`; any unrecognized or retired module path fails safe to `backend=true`.
@@ -171,7 +171,7 @@ The `classify` job inspects the changed files (PR diff against its base, or the 
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
 - `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
 
-The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from the git/GitHub-context plumbing that builds the file list in the workflow step. `.github/scripts/classify-changes.test.sh` is a small table-driven test over that script — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression in the classifier fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
+The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from Git/GitHub-context plumbing in `.github/scripts/discover-changed-files.sh`. Its deterministic temporary-repository regression test covers local three-dot PR comparison, unavailable-base fallback and conservative classification, push ranges, and full-sweep events; run it with `bash .github/scripts/discover-changed-files.test.sh`. `.github/scripts/classify-changes.test.sh` is a small table-driven test over the classifier — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
 
 ### Repository-tooling suites
 

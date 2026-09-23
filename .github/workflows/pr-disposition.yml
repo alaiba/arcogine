@@ -11,8 +11,8 @@ name: PR Disposition
 #   - an explicit current-head CHANGES REQUIRED disposition blocks either path.
 #
 # This workflow does not evaluate CI outcome, mergeability, base freshness, or
-# unresolved threads — those remain independently enforced by GitHub branch
-# protection and infra/dev/pr-lifecycle.mjs. The CI workflow run is consulted only
+# unresolved threads — those remain with GitHub's live PR state and branch
+# protection. The CI workflow run is consulted only
 # as trusted current-head provenance for Dependabot; `gate` remains the
 # independent validation result.
 #

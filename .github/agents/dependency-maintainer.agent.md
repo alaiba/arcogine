@@ -126,14 +126,14 @@ Treat visible current-head CI as separate evidence from local validation. Do not
 
 ## PR lifecycle
 
-Each dependency PR keeps the normal Arcogine lifecycle from `AGENTS.md`.
+Each dependency PR follows the normal Arcogine merge gates and continuation rules from `AGENTS.md`.
 
 - Reconcile a behind-base branch before treating it as a current candidate. For a Dependabot PR that still qualifies for trusted provenance, use Dependabot's own rebase/recreate path when practical; a maintainer-authored synchronization intentionally forfeits the bypass and moves the PR to ordinary review.
 - Respond to implementation-owned blockers and valid review findings on the same PR/slice.
 - Keep the PR title/body and validation claims truthful after compatibility fixes.
 - For a trusted Dependabot PR, do not request an independent review merely to make `disposition` pass. Wait for the trusted base-side workflow to publish current-head authorization; `gate`, strict base freshness, mergeability, current-head `CHANGES REQUIRED`, and Code Owner requirements remain independent.
 - For a Dependabot PR whose current-head provenance is no longer trusted, or for any manual dependency PR, hand the current head to the ordinary independent PR Reviewer when implementation work is complete.
-- Stop when the lifecycle reaches `READY TO MERGE`; the repository owner merges manually.
+- Stop when every merge gate holds for the current head; the repository owner merges manually.
 
 Do not confuse the Dependabot authorization exception with auto-merge or CI-only acceptance. A trusted Dependabot PR is still blocked by failed required CI, stale base, conflicts, a current-head canonical `CHANGES REQUIRED`, protected-path Code Owner requirements, or any native GitHub blocker that physically prevents merge. Agents still never merge it.
 
@@ -168,6 +168,6 @@ For each processed dependency PR, report:
 - validation performed and current visible CI state;
 - trusted `disposition` state and any remaining GitHub protection such as Code Owner approval;
 - any deferred member/update and why;
-- current PR lifecycle state and the next owner/action.
+- the current blocking or waiting fact, if any, and the next owner/action.
 
 For a sweep, finish with a compact queue summary covering every open dependency-update PR inspected.

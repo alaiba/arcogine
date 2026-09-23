@@ -15,8 +15,6 @@ import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { dispositionOf } from './pr-lifecycle.mjs';
-
 const DEFAULT_REPO = 'alaiba/arcogine';
 const STATE_PATH = fileURLToPath(
   new URL('../../.github/continuous-improvement/retrospective.json', import.meta.url),
@@ -205,6 +203,40 @@ async function collectSearchPages(fetchPage) {
 
 const TRUSTED_REVIEW_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
 
+const DISPOSITION_ALTERNATION = ['READY TO MERGE', 'CHANGES REQUIRED']
+  .map((d) => d.replace(/ /g, '\\s+'))
+  .join('|');
+
+/**
+ * Extract a historical review's explicit closing disposition, or null when absent.
+ *
+ * A disposition counts only when it ends the review: the marker must start its own line,
+ * that line must be the last non-blank line of the body, and the whole line must be the
+ * verdict (optional markdown emphasis and a closing full stop aside). Blockquoted lines
+ * are someone else's verdict. This keeps prose examples, inline code spans, and
+ * dispositions followed by further blocker text out of the blocking-review count.
+ *
+ * This is a retrospective counting rule only. Current-head review authorization belongs
+ * to .github/scripts/check-pr-disposition.sh and is intentionally stricter.
+ */
+function closingDisposition(body) {
+  if (!body) return null;
+  const lines = String(body).split(/\r?\n/);
+  let lastMeaningful = null;
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (lines[i].trim() !== '') {
+      lastMeaningful = lines[i];
+      break;
+    }
+  }
+  if (lastMeaningful === null) return null;
+  const match = lastMeaningful.match(
+    new RegExp(`^[ \\t*_+-]*Disposition:\\s*[*_]*\\s*(${DISPOSITION_ALTERNATION})\\s*[*_]*\\s*[.]?\\s*$`, 'i'),
+  );
+  if (!match) return null;
+  return match[1].replace(/\s+/g, ' ').toUpperCase();
+}
+
 function changesRequiredCount(record) {
   const reviews = record?.reviews;
   if (!reviews) throw new Error(`PR #${record?.number ?? '?'} has no review payload`);
@@ -216,7 +248,7 @@ function changesRequiredCount(record) {
   return reviews.nodes.filter(
     (review) =>
       TRUSTED_REVIEW_ASSOCIATIONS.has(review.authorAssociation) &&
-      dispositionOf(review.body) === 'CHANGES REQUIRED',
+      closingDisposition(review.body) === 'CHANGES REQUIRED',
   ).length;
 }
 

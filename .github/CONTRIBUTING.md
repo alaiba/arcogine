@@ -11,15 +11,12 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | Directory | Purpose |
 |-----------|---------|
 | `product/types/` | Shared types, typed IDs, error definitions |
-| `product/simulation/` | Event engine, scheduler, scenario loader |
+| `product/simulation/` | Event engine and scheduler |
 | `product/domains/factory/` | Machines, jobs, routing, queues |
-| `product/domains/economy/` | Pricing, demand, revenue |
 | `product/domains/finance/` | Ledger, financial interpretation of operational events |
-| `product/agents/` | Agent interface and implementations |
 | `product/consumer/challenge/` | Challenge Readiness: game-owned `ChallengeDefinition` and validator — headless, no dependency on any module above |
 | `product/consumer/challenge-factory-integration-test/` | Test-only proof module: Factory-executability and challenge admissibility are independent axes |
 | `product/architecture-conformance-test/` | Test-only module: durable cross-domain ArchUnit guardrails |
-| `docs/examples/` | TOML scenario fixture files |
 | `docs/` | Project documentation |
 | `infra/` | Dev-environment infrastructure |
 

@@ -34,7 +34,7 @@ The following Engine capability is complete and must not be reopened by adjacent
 - immutable `Order` intent is separate from mutable execution;
 - workload can be submitted without economy/demand/agents;
 - quantity consumes proportional production work;
-- economy-driven and explicit submission share the same authoritative acceptance path.
+- internal `OrderCreation` events and explicit workload submission share the same authoritative acceptance path.
 
 ### PLAN-ENG-2 — Deterministic resource dispatch
 

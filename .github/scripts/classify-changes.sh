@@ -18,13 +18,13 @@ fi
 
 unknown=false
 if [ -n "$files" ] && [ "$docs_only" = false ]; then
-  if printf '%s\n' "$files" | grep -qvE '^(docs/|README\.md$|.*\.md$|\.github/workflows/|arcogine$|product/build\.gradle|product/settings\.gradle|product/gradle/|product/gradle\.properties|product/(types|governance|simulation|domains|agents|consumer|architecture-conformance-test)/)'; then
+  if printf '%s\n' "$files" | grep -qvE '^(docs/|README\.md$|.*\.md$|\.github/workflows/|arcogine$|product/build\.gradle|product/settings\.gradle|product/gradle/|product/gradle\.properties|product/(types|governance|simulation|domains|consumer|architecture-conformance-test)/)'; then
     unknown=true
   fi
 fi
 
 backend=false
-if [ "$ci_or_shared" = true ] || [ "$unknown" = true ] || printf '%s\n' "$files" | grep -qE '^product/(types|governance|simulation|domains|agents|consumer|architecture-conformance-test)/'; then
+if [ "$ci_or_shared" = true ] || [ "$unknown" = true ] || printf '%s\n' "$files" | grep -qE '^product/(types|governance|simulation|domains|consumer|architecture-conformance-test)/'; then
   backend=true
 fi
 

@@ -37,14 +37,12 @@ Dependency vulnerabilities follow a separate, already-owned path: see [Security 
 
 ## Security Posture
 
-Arcogine is local-first by default and, at present, has no network-reachable surface at all: no HTTP API, no CLI-launched server, no container image. The scenario/dependency/secret-scan controls below are the only things this section can describe until a future consumer reintroduces a network surface.
+Arcogine is local-first by default and, at present, has no network-reachable surface at all: no HTTP API, no CLI-launched server, no container image. Dependency auditing and secret scanning are the current executable controls; the retired scenario and pricing validations are not current security controls.
 
 ### Retained controls
 
 | Control | Behavior |
 |---|---|
-| Scenario input validation | Referential and range validation rejects invalid scenarios rather than partially applying them. |
-| Economy value bounds | Out-of-range price/economy input is rejected rather than applied to simulation state. |
 | Dependency auditing | `./arcogine check --full` runs the CycloneDX SBOM generation and `trivy sbom` scan (see [Security scan ownership](#security-scan-ownership)). |
 | Secret scanning | `gitleaks detect` runs in the same `check --full` pass and in CI. |
 
@@ -54,8 +52,8 @@ These were true of the retired HTTP API and CLI server, and are recorded here so
 
 - **No user or principal concept existed.** The retired REST API did not require authentication, and there was nothing to authenticate *as*.
 - **One shared simulation.** The retired API held simulation state as a single process-wide singleton: every client shared one simulation, with no per-caller isolation.
-- **No scenario resource or cost bounds** beyond a request body cap.
-- **No encryption of scenario files or simulation state at rest.**
+- **No request resource or cost bounds** beyond a request body cap.
+- **No encryption of simulation state at rest.**
 
 A future outward adapter (HTTP, CLI, or otherwise) should treat closing these gaps as part of its own design, not assume the previous adapter's posture was acceptable to repeat.
 

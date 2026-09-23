@@ -120,31 +120,35 @@ and other active/delivery-history context where the coordinate helps sequence or
 [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s commit message guidance, which this section
 does not change.
 
-Do not carry those identifiers into durable semantic naming — content whose meaning is expected to
-outlive the delivery context that produced it. This includes architecture, product, reference, or
-development documents; code comments; workflow definitions; and test/class/file names introduced
-alongside the change. It does not include commit messages or other delivery-history records, which
-may keep the coordinate that was actually used to track the work. When a planned result, a review
-finding's resolution, or other delivery-context outcome is recorded as durable semantic naming,
-translate it into the semantic capability, contract, identity, invariant, or behavior it actually
-represents rather than naming it after the coordinate that tracked it. Working/process material
-may mention a temporary delivery coordinate when the coordinate itself is the subject, but durable
-semantic claims must remain understandable without reconstructing that coordinate after the
-originating plan, PR, or review is completed, condensed, renamed, or removed.
+Durable repository assets must not depend on transient coordinates. Durable assets include
+architecture, product, reference, and development documents; code comments; workflow definitions;
+and test/class/file names introduced alongside a change. A transient coordinate may remain in
+active planning/delivery context or durable delivery-history provenance (such as a commit message
+or merged PR reference), but maintained semantic state must survive independently through the
+durable capability, contract, identity, invariant, behavior, deliberately promoted artifact, or
+provenance it represents. Exact `commit SHA + workspace/... path` pairs identify artifacts only
+while those artifacts are in active workspace custody; copying the pair into durable state does
+not preserve the artifact. Working/process material may discuss coordinate syntax when the syntax
+itself is the subject. When delivery outcomes move into durable semantic naming, translate them
+into what they represent rather than naming them after the coordinate that tracked them.
 
 Planning filenames are semantic, not coordinate-derived: the delivery label belongs in a planning
 document's content, not its path, so the filename keeps describing the subject if sequencing
 changes later.
 
-The mechanical checker (`.github/scripts/check-delivery-labels.py`) enforces this deterministically
-by scanning every tracked repository file (`git ls-files`, so generated/untracked/build output is
-never in scope): a `PLAN-*` or `REV-<NNN>` token outside `docs/planning/` is a durable-naming leak;
-inside `docs/planning/`, the old ambiguous label forms it replaced (a bare `Gate` plus number, a
-bare letter-plus-number optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be
-reintroduced. Those old forms are not banned outside `docs/planning/` — they can be ordinary,
-unrelated identifiers elsewhere in the codebase — which is exactly why the reserved `PLAN-`/`REV-`
-namespaces exist: catching identifier leakage no syntax pattern can safely recognize (prose like
-"the next stage" with no literal coordinate) remains a human review responsibility.
+The mechanical checkers enforce recognizable cases deterministically by scanning tracked
+repository text (`git ls-files`, so generated/untracked/build output is never in scope):
+`.github/scripts/check-delivery-labels.py` rejects a `PLAN-*` or `REV-<NNN>` token outside
+`docs/planning/`, while `.github/scripts/check-transient-coordinates.py` rejects an exact full
+commit SHA paired with a concrete `workspace/...` artifact path in durable files. Neither checker
+attempts to infer semantic dependence from prose without a safe syntax signal. A `PLAN-*` or
+`REV-<NNN>` token outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the
+old ambiguous label forms it replaced (a bare `Gate` plus number, a bare letter-plus-number
+optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be reintroduced. Those old forms
+are not banned outside `docs/planning/` — they can be ordinary, unrelated identifiers elsewhere
+in the codebase — which is exactly why the reserved `PLAN-`/`REV-` namespaces exist. Catching
+semantic dependencies without a safe literal signal (for example, prose like "the next stage")
+remains a human-review responsibility.
 
 `docs/architecture/` holds Arcogine's current architecture. The
 [Architecture Overview](docs/architecture/overview.md) owns cross-cutting principles and domain
@@ -259,8 +263,8 @@ Agents never merge pull requests. When every merge gate holds, report that and s
 ## Layout
 
 - `product/` — all executable product source.
-  - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `simulation`, `domains/{factory,economy,finance}`, `agents`, `consumer/challenge`, `consumer/challenge-factory-integration-test`, `architecture-conformance-test`. There is currently no application server, HTTP API, or CLI product surface — retained executable evidence is tests, conformance checks, and benchmarks; a future outward consumer is introduced from the supported runtime contract (`docs/architecture/runtime-contract.md`) when a concrete product need exists.
-- `docs/` — architecture, product, development, reference, planning docs, and executable example scenarios (`docs/examples/`). Read `docs/architecture/overview.md` before touching cross-module boundaries.
+  - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `simulation`, `domains/{factory,finance}`, `consumer/challenge`, `consumer/challenge-factory-integration-test`, `architecture-conformance-test`. There is currently no application server, HTTP API, or CLI product surface — retained executable evidence is tests, conformance checks, and benchmarks; a future outward consumer is introduced from the supported runtime contract (`docs/architecture/runtime-contract.md`) when a concrete product need exists.
+- `docs/` — architecture, product, development, reference, and planning docs. Read `docs/architecture/overview.md` before touching cross-module boundaries.
 - `infra/` — dev-environment infrastructure: `infra/dev/claude-cloud.sh` (Claude Cloud environment provisioning) and related repository tooling.
 
 ## Canonical commands
@@ -300,7 +304,7 @@ it as a build or product failure.
 
 ## Validating changes
 
-Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching Java (`product/{types,governance,simulation,domains,agents,consumer,architecture-conformance-test}`) needs the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a documentation-only change needs neither. Use `./arcogine check` when the repository-wide Java gate is appropriate, and `./arcogine check --full` when dependency-audit or secret-scan behavior is in scope.
+Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching Java (`product/{types,governance,simulation,domains,consumer,architecture-conformance-test}`) needs the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a documentation-only change needs neither. Use `./arcogine check` when the repository-wide Java gate is appropriate, and `./arcogine check --full` when dependency-audit or secret-scan behavior is in scope.
 
 When finishing an implementation task, report the validation commands and tools used, the outcome of each, and any validation that was unavailable, skipped, or only partially completed. Do not summarize a partially completed validation as a full pass.
 
@@ -317,4 +321,3 @@ When finishing an implementation task, report the validation commands and tools 
 - **Trivy and Gitleaks** are environment/security tools pinned independently in the devcontainer and CI. When intentionally changing either tool version, grep the repository for the old version and keep the relevant devcontainer/CI install sites aligned.
 - Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture/overview.md`.
-- Example scenarios under `docs/examples/` are educational/executable documentation, not runtime assets — there is currently no distributable artifact for them to be bundled into.

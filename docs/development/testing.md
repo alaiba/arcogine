@@ -114,7 +114,7 @@ Notes:
 
 ### 3. Java unit tests (JUnit 6)
 
-Tests across the Gradle modules cover typed IDs and `SimTime`, scenario schema and TOML loading, scheduler behavior, factory model and runtime semantics, demand and pricing, finance, agents, and Challenge Readiness. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
+Tests across the Gradle modules cover typed IDs and `SimTime`, scheduler behavior, factory model and runtime semantics, Finance's ledger and ownership, and Challenge Readiness. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
 
 `cd product && ./gradlew test`.
 
@@ -124,7 +124,7 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 ### 5. Determinism tests
 
-The Factory Engine tests verify that equivalent fresh runtimes given the same model, semantics, and explicit commands produce identical ordered supported runtime-event streams and terminal observations. Runtime identity is normalized where comparisons concern semantic outcomes. Scenario-loading tests separately cover deterministic parsing and validation behavior.
+The Factory Engine tests verify that equivalent fresh runtimes given the same model, semantics, and explicit commands produce identical ordered supported runtime-event streams and terminal observations. Runtime identity is normalized where comparisons concern semantic outcomes.
 
 ### 6. Java coverage (Jacoco) + per-module gates
 
@@ -132,7 +132,7 @@ The Factory Engine tests verify that equivalent fresh runtimes given the same mo
 
 ### 7. Benchmarks (JMH)
 
-`cd product && ./gradlew :simulation:jmh` — runs the retained JMH microbenchmarks in `simulation`: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario loading/validation. Sources live in `product/simulation/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). ASM is pinned explicitly for JMH bytecode generation; benchmark sources use the same Java 21 release compatibility as the rest of the build, regardless of whether the build JDK is 21 or a supported newer JDK.
+`cd product && ./gradlew :simulation:jmh` — runs the retained scheduler throughput microbenchmarks (schedule / dequeue / interleaved over 1000 events) in `simulation`. Benchmarks are **on-demand** (not a CI gate). ASM is pinned explicitly for JMH bytecode generation; benchmark sources use the same Java 21 release compatibility as the rest of the build, regardless of whether the build JDK is 21 or a supported newer JDK.
 
 ### 8. Java dependency audit (CycloneDX SBOM + Trivy)
 
@@ -165,13 +165,13 @@ The Java-related build jobs use Temurin 21 to exercise the supported Java floor;
 The `classify` job inspects the changed files (PR diff against the immutable `pull_request.base.sha` event value, or the pushed commit range on `main`) and sets `backend`/`docs_only` outputs consumed by `if:` conditions on the other jobs. Pull-request discovery uses the locally available base commit and does not fetch the mutable base branch; if the event base object is unavailable, it warns and classifies all tracked files so validation is over-selected:
 
 - A change under `.github/workflows/`, `arcogine`, or Gradle build files is treated as touching **every** executable subsystem (conservative: CI/tooling and shared-manifest changes never cause a skip).
-- A change confined to `product/{types,governance,simulation,domains,agents,consumer,architecture-conformance-test}/` sets `backend`.
+- A change confined to current product modules under `product/{types,governance,simulation,domains,consumer,architecture-conformance-test}/` sets `backend`; any unrecognized or retired module path fails safe to `backend=true`.
 - A change touching **only** `docs/`, `README.md`, or other `*.md` files (and none of the above) sets `docs_only`, which skips the Java and dependency-audit jobs.
 - **Fail-safe default:** any changed file that is neither documentation nor a recognized subsystem/CI path (e.g. `product/gradlew`, `.trivyignore`, a brand-new top-level directory) is "unknown" and forces `backend` `true` — an unrecognized path can never fall through to `docs_only`'s skip behavior by accident.
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
 - `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
 
-The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from Git/GitHub-context plumbing in `.github/scripts/discover-changed-files.sh`. Its deterministic temporary-repository regression test covers local three-dot PR comparison, unavailable-base fallback and conservative classification, push ranges, and full-sweep events; run it with `bash .github/scripts/discover-changed-files.test.sh`. `.github/scripts/classify-changes.test.sh` is a small table-driven test over the classifier — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. Run it locally with `bash .github/scripts/classify-changes.test.sh`.
+The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from Git/GitHub-context plumbing in `.github/scripts/discover-changed-files.sh`. Its deterministic temporary-repository regression test covers local three-dot PR comparison, unavailable-base fallback and conservative classification, push ranges, and full-sweep events; run it with `bash .github/scripts/discover-changed-files.test.sh`. `.github/scripts/classify-changes.test.sh` is a small table-driven test over the classifier — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. The transient-coordinate and transient-workspace checker suites run as explicit always-required `classify` steps. Run the classifier locally with `bash .github/scripts/classify-changes.test.sh`.
 
 ### Repository-tooling suites
 
@@ -184,6 +184,8 @@ bash .github/scripts/arcogine-cli.test.sh
 bash .github/scripts/check-pr-disposition.test.sh
 python3 .github/scripts/check-transient-workspace.test.py
 python3 .github/scripts/check-transient-workspace.py
+python3 .github/scripts/check-transient-coordinates.test.py
+python3 .github/scripts/check-transient-coordinates.py
 bash infra/dev/claude-cloud.test.sh
 node --test infra/dev/delivery-retrospective.test.mjs
 node --test infra/dev/repo-snapshot.test.mjs
@@ -197,6 +199,13 @@ The transient-workspace suite covers `.github/scripts/check-transient-workspace.
 python3 .github/scripts/check-transient-workspace.test.py
 python3 .github/scripts/check-transient-workspace.py
 ```
+
+The transient-coordinate suite covers `.github/scripts/check-transient-coordinates.py`. It rejects
+an exact 40-character commit SHA paired with a concrete `workspace/...` artifact path in durable
+tracked text, while allowing ordinary historical SHAs, generic policy prose, active planning and
+transient workspace files. It does not query GitHub, check commit ancestry, validate arbitrary
+historical paths, or infer transientness outside the reserved `workspace/` root. Semantic
+dependencies without this recognizable syntax remain a human-review responsibility.
 
 `infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, trusted-review-author filtering, closing-disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
 
@@ -260,15 +269,10 @@ The test layers preserve three properties:
 
 ### Handler delegation contract
 
-Factory event semantics have a single implementation authority: `FactoryHandler`, dispatched in a fixed order (Pricing, Demand, Factory, Agent evaluation when applicable). This dispatch order is durable regardless of what, if anything, consumes `FactoryRuntime`'s supported surface — a future outward adapter (CLI, HTTP, or otherwise) must reuse `FactoryHandler`'s dispatch rather than reimplementing it, which is exactly the duplication the retired `interfaces/cli`'s `HeadlessHandler` had accumulated and this repository does not want to repeat.
+Factory event semantics have a single implementation authority: `FactoryHandler`, owned by its `FactoryRuntime`. Finance remains a separate event consumer for financial interpretation; no retained production code assembles an application-wide handler chain. A future outward consumer must use the supported runtime contract rather than reimplement Factory transitions.
 
 ### Security verification tests
 
-Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite (the retired `interfaces/api`'s `ApiSmokeTest` and `interfaces/cli`'s bind-address test are gone with those modules). The controls that remain are enforced at the domain/scenario level and verified there:
-
-| Criterion | Must hold | Exercised by |
-|---|---|---|
-| Scenario load error propagation | An invalid scenario is rejected with a descriptive error naming the offending input, rather than being partially applied. | `ScenarioLoaderTest` (`product/simulation`) |
-| Economy/price input validation | Out-of-range economy/price input is rejected rather than applied to simulation state. | `PricingStateTest` (`product/domains/economy`) |
+Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite (the retired `interfaces/api`'s `ApiSmokeTest` and `interfaces/cli`'s bind-address test are gone with those modules). Current executable security controls are dependency auditing and secret scanning, owned by the repository's full security scans and CI; they are not Factory runtime controls. See [`.github/SECURITY.md`](../../.github/SECURITY.md) for their owners and commands.
 
 See [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits the retired API and CLI had, recorded so a future outward adapter is designed with them in mind rather than repeating them by default, and for the readiness criteria that must be met before any future hosted or multi-user exposure.

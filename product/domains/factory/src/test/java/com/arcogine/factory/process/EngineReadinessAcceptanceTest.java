@@ -34,9 +34,9 @@ import org.junit.jupiter.api.Test;
  * completion observation/correlation, and determinism hold together as a single externally
  * observable contract, from a published model through to deterministic completion.
  *
- * <p>This class does not itself exercise the economy-driven order path or prove the
+ * <p>This class does not itself exercise the internal order-event path or prove the
  * immutable-intent/mutable-execution ownership separation; those remain the province of the
- * existing slice/economy tests. See {@code docs/planning/factory-simulation-engine-readiness.md}
+ * existing FactoryHandler event-path tests. See {@code docs/planning/factory-simulation-engine-readiness.md}
  * §5 for the full criterion-by-criterion evidence mapping.
  *
  * <p>The published model here has two routing steps and a quantity greater than one, so

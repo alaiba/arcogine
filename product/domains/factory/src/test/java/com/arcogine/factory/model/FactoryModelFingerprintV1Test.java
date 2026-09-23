@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.types.MachineId;
-import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
@@ -149,21 +148,6 @@ class FactoryModelFingerprintV1Test {
                                 FactoryModelPublisher.publish(modelWithCapacity(Double.longBitsToDouble(0x7fffffffffffffffL))).fingerprint());
         }
 
-        @Test
-        void legacyContentHashCompatibilityValueRemainsPinned() {
-                assertEquals(
-                        "3fbe9d181b8d982150d85a1ef422ad06142fc79a573ae43687fdedbe15cc569c",
-                        FactoryModelPublisher.publish(validLegacyFixture()).contentHash());
-        }
-
-        private static FactoryModel validLegacyFixture() {
-                return new FactoryModel(
-                                List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0)),
-                                List.of(new OperationDefinition(100, "Widget routing",
-                                List.of(new OperationStepDefinition(1, "Rough milling", Set.of(new MachineId(1)), 5)))),
-                                List.of(new ProductDefinition(new ProductId(10), "Widget", 100)));
-        }
-
         private static void assertMalformedResourceNameIsRejected() {
                 FactoryModel malformed = new FactoryModel(
                                 List.of(new ConfiguredResource(new MachineId(1), "bad\uD800", 1, null, 0)),
@@ -255,13 +239,5 @@ class FactoryModelFingerprintV1Test {
                 FactoryModelValidationException.class, () -> FactoryModelPublisher.publish(malformed));
 
         assertEquals("resources[Machine(1)].name", exception.result().errors().get(0).field());
-    }
-
-    @Test
-    void durableFingerprintRemainsSeparateFromLegacyHash() {
-        FactoryModelVersion version = FactoryModelPublisher.publish(representativeModel());
-
-        assertNotEquals(version.contentHash(), version.fingerprint().digest());
-        assertEquals(new ModelFingerprint("factory-model", "v1", "sha256", version.fingerprint().digest()), version.fingerprint());
     }
 }

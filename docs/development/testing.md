@@ -114,7 +114,7 @@ Notes:
 
 ### 3. Java unit tests (JUnit 6)
 
-Tests across the Gradle modules cover typed IDs and `SimTime`, scenario schema and TOML loading, the scheduler/runner/KPI/event-log core, factory model and runtime semantics, demand and pricing, finance, agents, and Challenge Readiness. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
+Tests across the Gradle modules cover typed IDs and `SimTime`, scenario schema and TOML loading, scheduler behavior, factory model and runtime semantics, demand and pricing, finance, agents, and Challenge Readiness. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
 
 `cd product && ./gradlew test`.
 
@@ -124,7 +124,7 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 ### 5. Determinism tests
 
-`simulation` verifies that identical seeds produce identical event logs and KPIs. The rewrite uses `java.util.Random`/`SplittableRandom` (not Rust's ChaCha8), so determinism is asserted as **reproducibility** — two Java runs with the same seed are byte-identical — and any golden values are captured from Java runs, never copied from the Rust implementation.
+The Factory Engine tests verify that equivalent fresh runtimes given the same model, semantics, and explicit commands produce identical ordered supported runtime-event streams and terminal observations. Runtime identity is normalized where comparisons concern semantic outcomes. Scenario-loading tests separately cover deterministic parsing and validation behavior.
 
 ### 6. Java coverage (Jacoco) + per-module gates
 
@@ -132,7 +132,7 @@ Invariants (monotonic time, no event loss, machine concurrency limits, queue FIF
 
 ### 7. Benchmarks (JMH)
 
-`cd product && ./gradlew :simulation:jmh` — runs the JMH microbenchmarks in `simulation`, ported from the Rust Criterion suites: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario runtime (run a 1000-tick scenario, and load+validate). Sources live in `product/simulation/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). ASM is pinned explicitly for JMH bytecode generation; benchmark sources use the same Java 21 release compatibility as the rest of the build, regardless of whether the build JDK is 21 or a supported newer JDK.
+`cd product && ./gradlew :simulation:jmh` — runs the retained JMH microbenchmarks in `simulation`: scheduler throughput (schedule / dequeue / interleaved over 1000 events) and scenario loading/validation. Sources live in `product/simulation/src/jmh/java/com/arcogine/core/bench/`. Benchmarks are **on-demand** (not a CI gate). ASM is pinned explicitly for JMH bytecode generation; benchmark sources use the same Java 21 release compatibility as the rest of the build, regardless of whether the build JDK is 21 or a supported newer JDK.
 
 ### 8. Java dependency audit (CycloneDX SBOM + Trivy)
 
@@ -254,7 +254,7 @@ The workflow sets `concurrency: group: ${{ github.workflow }}-${{ github.event.p
 
 The test layers preserve three properties:
 
-1. **Deterministic behavior** across identical seeds and scenarios.
+1. **Deterministic behavior** across identical explicit Engine inputs.
 2. **Fast feedback** for module-local logic.
 3. **Layered confidence** from unit, property, determinism, and acceptance checks.
 
@@ -268,7 +268,7 @@ Arcogine currently has no network-reachable surface, so there is no HTTP-layer s
 
 | Criterion | Must hold | Exercised by |
 |---|---|---|
-| Scenario load error propagation | An invalid scenario is rejected with a descriptive error naming the offending input, rather than being partially applied. | `ScenarioLoaderTest`, `SimRunnerTest` (`product/simulation`) |
+| Scenario load error propagation | An invalid scenario is rejected with a descriptive error naming the offending input, rather than being partially applied. | `ScenarioLoaderTest` (`product/simulation`) |
 | Economy/price input validation | Out-of-range economy/price input is rejected rather than applied to simulation state. | `PricingStateTest` (`product/domains/economy`) |
 
 See [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits the retired API and CLI had, recorded so a future outward adapter is designed with them in mind rather than repeating them by default, and for the readiness criteria that must be met before any future hosted or multi-user exposure.

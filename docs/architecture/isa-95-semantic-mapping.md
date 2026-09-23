@@ -123,12 +123,12 @@ This table is the maintained working register. Unit-work decomposition is implem
 | `JobStatus` | Queued, in progress, or completed | Work/job execution status | Good narrow mapping | Alias | Does not represent the complete requested/accepted/started/completed lifecycle |
 | Order-level execution aggregate | Current requested/released/completed quantity and aggregate completion correlated by `OrderId` | Production-request execution/performance aggregation | Partial | Alias | Implemented aggregate truth; still narrower than a complete ISA-95 production-performance model |
 | `OrderCreation` event | Acceptance/release fact that creates one `Order`, its execution aggregate, and `N` unit-quantity child jobs for quantity `N` | Job-order release / acceptance fact | Approximate | Alias | Arcogine-specific event machinery; no ISA-95 transaction/profile support |
-| `TaskStart` / `TaskEnd` | Actual operation execution facts correlated by child `JobId` and parent order membership | Work execution / performance facts | Good narrow mapping | Alias | No first-class operation-performance record exists beyond state and event history |
+| `TaskStart` / `TaskEnd` | Actual operation execution facts correlated by child `JobId` and parent order membership | Work execution / performance facts | Good narrow mapping | Alias | No first-class operation-performance record exists beyond state and supported runtime events |
 | `OrderCompleted` | Order-level completion fact emitted exactly once with explicit `OrderId` plus the completing child `JobId` | Job response / production performance fact | Partial | Alias | Narrow completion fact, not a complete production-performance response model |
 | `Scheduler` | Deterministic ordering of simulation events | No direct ISA-95 object equivalent | Arcogine-specific | Extend | Simulation infrastructure, not an Operations Schedule by itself |
-| `EventLog` | Bounded internal scheduler trace used by current debugging/export paths | Performance/history source analogue only | Partial | Extend | Not the supported supported runtime observation/event contract `RuntimeEvent` history or a structured ISA-95 performance model |
+| Internal scheduler events | Transient execution inputs ordered by `Scheduler` | No direct ISA-95 object equivalent | Arcogine-specific | Extend | They do not provide retained history or an outward performance model |
 | `FactoryHandler` | Owner of machines, jobs, queues, routings, and production aggregates | Narrow production-execution function in a Level-3-like scope | Approximate | Alias | A class is not an ISA-95 level; Arcogine covers only a subset of MOM activities |
-| Throughput, lead-time, backlog, utilization and related observations | Operational measures derived from simulation state and history | Operations Performance / manufacturing KPI information | Partial | Adopt or alias per KPI | Backlog, completed-sales, and order lead-time meanings remain order-level under child-job decomposition |
+| Throughput, lead-time, backlog, utilization and related observations | Operational measures derived from simulation state and supported runtime events | Operations Performance / manufacturing KPI information | Partial | Adopt or alias per KPI | Backlog, completed-sales, and order lead-time meanings remain order-level under child-job decomposition |
 | Finance ledger and observations | Financial interpretation of completed operational work | Enterprise/business-side financial information | Adjacent, not one-to-one | Diverge | Deliberately separate from operational production truth; child jobs do not multiply full order value |
 | Economy/demand model | Offer price and demand-generation behavior | Business/planning input adjacent to Level 4 | Arcogine-specific | Extend | Not an ISA-95 enterprise-planning implementation |
 | Proposed factory-floor position and footprint | Physical placement with transfer consequences | No one-to-one equipment-hierarchy mapping | Orthogonal | Extend | Must remain distinct from organizational/resource containment |
@@ -224,7 +224,7 @@ Failures or rejections
 Order completion outcome
 ```
 
-Arcogine currently derives performance from jobs, machine state, order-level execution aggregates, counters, and the event log. The implemented order execution view exposes requested/released/completed quantity and aggregate completion so consumers do not need to infer order performance by counting child jobs. `OrderCompleted` is emitted exactly once per order and carries explicit `OrderId` plus the completing child `JobId`. This is still not a complete ISA-95 performance model or interchange representation.
+Arcogine currently derives performance from jobs, machine state, order-level execution aggregates, counters, and supported runtime events. The implemented order execution view exposes requested/released/completed quantity and aggregate completion so consumers do not need to infer order performance by counting child jobs. `OrderCompleted` is emitted exactly once per order and carries explicit `OrderId` plus the completing child `JobId`. This is still not a complete ISA-95 performance model or interchange representation.
 
 ### 6.5 Current implemented unit-work decomposition model
 
@@ -250,8 +250,6 @@ Job
     + ordinalWithinOrder
     + mutable execution state
 
-EventLog
-    internal scheduler trace
 ```
 
 A quantity-`N` order materializes `N` child jobs in deterministic ordinal order. Equivalent eligible machines can process different child jobs concurrently while the request remains one order and order-level progress/completion remains aggregate truth.

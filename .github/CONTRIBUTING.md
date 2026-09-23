@@ -11,7 +11,7 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | Directory | Purpose |
 |-----------|---------|
 | `product/types/` | Shared types, typed IDs, error definitions |
-| `product/simulation/` | Event engine, scheduler, logging, KPIs, scenario loader |
+| `product/simulation/` | Event engine, scheduler, scenario loader |
 | `product/domains/factory/` | Machines, jobs, routing, queues |
 | `product/domains/economy/` | Pricing, demand, revenue |
 | `product/domains/finance/` | Ledger, financial interpretation of operational events |

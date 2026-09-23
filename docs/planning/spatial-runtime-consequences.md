@@ -606,7 +606,7 @@ Complete the supported read model around already-authoritative transfers:
 
 **Evidence**
 
-Late-join and observation/event-closure tests prove no internal store or scheduler/event-log replay is
+Late-join and observation/event-closure tests prove no internal store or scheduler-event replay is
 required, and existing KPI meanings remain stable.
 
 **Non-goals**

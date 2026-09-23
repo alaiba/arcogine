@@ -25,7 +25,7 @@ The investigation must decide or explicitly classify:
 
 ## Why this question exists
 
-This question was extracted from a superseded mixed investigation into player-facing diagnostic evidence. The supersession narrative is maintained in [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md) § Superseded predecessor, and its lifecycle state in [the research register](../research-register.md). That investigation concluded, provisionally, that reusable diagnostic derivations were game-owned, on the trigger that a *future* second consumer would be needed to justify shared ownership.
+This question was extracted from a superseded mixed investigation into player-facing diagnostic evidence. The supersession narrative is maintained in the [Factory-design game product research programme](factory-design-game-vertical-slice.md#superseded-predecessor), and its lifecycle state in [the research register](../research-register.md). That investigation concluded, provisionally, that reusable diagnostic derivations were game-owned, on the trigger that a *future* second consumer would be needed to justify shared ownership.
 
 That trigger was already satisfied. At this brief's baseline, Arcogine carried:
 
@@ -41,7 +41,7 @@ That historical evidence established multiple consumers of reusable derived meas
 
 This investigation does not implement an analytics module, restore the removed generic KPI implementation, change KPI formulas, alter `RuntimePerformanceObservation` in code, implement event retention, build a Java SDK, force consumers through HTTP/SSE, or reopen transport architecture. It does not change adopted architecture or `engine-semantics:v1`.
 
-It also does not decide game presentation. Which visualization produces correct player understanding remains product research in [Factory-design game vertical-slice research](factory-design-game-vertical-slice.md).
+It also does not decide game presentation. The bounded player-comprehension question is [Factory-design game diagnostic comprehension](factory-design-game-diagnostic-comprehension.md); this analytics investigation supplies ownership/input constraints to that product study rather than choosing its visualization.
 
 ## Candidate models
 

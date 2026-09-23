@@ -37,7 +37,8 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Durable semantic fingerprint/revision history, semantic change, requirements, conformance, evidence/governed change | [Governance architecture](architecture/governance-conformance.md) / [Governance plan](planning/governance-conformance-capability.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
 | Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
 | Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
-| Playable factory-design product hypothesis | [Game vertical-slice research](research/investigations/factory-design-game-vertical-slice.md) | Product evidence first; implementation only after promotion into the consumer plan |
+| Playable factory-design product research | [Game product-research programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella only; lifecycle lives on focused questions such as strategy space and diagnostic comprehension |
+| Inter-resource transfer boundary | [Transfer semantics research](research/investigations/transfer-semantics.md) | Separates transfer lifecycle/timing from spatial layout before V2/spatial activation |
 
 ## Development and contributing
 
@@ -86,8 +87,11 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |
 | [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation — **concluded**; durable rules live in [Attribution and decision boundaries](architecture/overview.md#attribution-and-decision-boundaries) |
 | [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
-| [Factory-design game vertical slice](research/investigations/factory-design-game-vertical-slice.md) | Product loop, diagnostics, reference challenge, scoring/tutorial/technology evidence |
-| [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, Engine applicability to optional-record Factory policies, and unselected recovery/session extensions |
+| [Factory-design game product programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella framing for focused game research; no programme-level lifecycle |
+| [Game diagnostic comprehension](research/investigations/factory-design-game-diagnostic-comprehension.md) | READY participant study for truthful non-spatial constraint diagnosis |
+| [Game strategy space](research/investigations/factory-design-game-strategy-space.md) | READY headless study of non-spatial capacity/capital design trade-offs |
+| [Transfer semantics](research/investigations/transfer-semantics.md) | READY transfer-lifecycle independence question plus CANDIDATE non-spatial timing follow-up |
+| [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, CANDIDATE Engine applicability after transfer research, and unselected recovery/session extensions |
 | [Operational/Digital Twin boundaries](research/investigations/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |
 
 ## Internal implementation planning

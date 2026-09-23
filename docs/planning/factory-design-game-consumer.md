@@ -39,9 +39,11 @@ Challenge admissibility and Arcogine executability remain separate decisions. Pa
 
 ## 2. Product-research dependency
 
-The playable requirement set is not yet an implementation input. It is being tested in [Factory-Design Game Vertical-Slice Research](../research/investigations/factory-design-game-vertical-slice.md).
+The playable requirement set is not yet an implementation input. The former umbrella vertical-slice question is superseded; current product state is coordinated by the [Factory-Design Game Product Research Programme](../research/investigations/factory-design-game-vertical-slice.md) and its focused register questions.
 
-Rendering/input technology, scoring, tutorial sequence, save-wrapper shape, interpolation policy, and other evidence-dependent consumer choices must not be selected in this plan before that research concludes.
+The two questions currently `READY` for a minimal non-spatial slice are [strategy space](../research/investigations/factory-design-game-strategy-space.md) and [diagnostic comprehension](../research/investigations/factory-design-game-diagnostic-comprehension.md). Controlled retry learning, spatial trade-off, scoring/level structure, and other product questions remain separate candidates and become implementation prerequisites only if the selected slice actually depends on them.
+
+Rendering/input technology, save-wrapper shape, packaging, interpolation policy, and similar implementation choices are deferred here until promoted requirements make them concrete; undecided does not by itself make them standing research questions.
 
 The implementation gate is tracked in [Factory-Design Game Vertical-Slice Implementation Gate](factory-design-game-vertical-slice.md).
 
@@ -57,14 +59,15 @@ The game may keep an editor-specific mutable draft, but it must project only sup
 
 ### Engine
 
-Before playable integration is admitted, the required Engine capabilities for the promoted product requirements must be landed. For the currently researched capacity/layout loop this includes:
+Before playable integration is admitted, the required Engine capabilities for the promoted product requirements must be landed. Every playable slice requires:
 
 - explicit production workload and immutable order intent;
 - deterministic independently dispatchable work and resource selection;
 - consumer-neutral bounded advancement;
-- stable supported observations and ordered runtime events;
-- deterministic spatial transfer consequences;
+- stable supported observations and ordered runtime events; and
 - the accepted order/work-item decomposition contract from [Engine Semantics v1 §3](../architecture/engine-semantics-v1.md#3-unit-work-decomposition-semantics).
+
+Deterministic spatial transfer consequences are required only if the promoted slice makes layout behaviorally consequential. That path is currently held by [transfer-lifecycle research](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence), subsequent Engine applicability, and the re-resolved spatial-runtime plan.
 
 Use the current [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) and its implementation companions as the authority for which of those gates are actually complete.
 
@@ -126,8 +129,8 @@ Any combined save is a consumer wrapper around the supported Arcogine recovery/c
 
 Playable/runtime-integrated work may begin only when:
 
-1. the vertical-slice product research has concluded and promoted a concrete requirement set;
-2. the required Factory/Engine gates for that requirement set are landed;
+1. every focused product-research question required by the selected first slice has concluded and promoted a concrete requirement set;
+2. the required Factory/Engine gates for that exact requirement set are landed;
 3. the integration surface is explicit;
 4. any selected save/recovery requirement has a supported Arcogine contract or is explicitly excluded from the first slice;
 5. game-only semantics remain outside Arcogine; and

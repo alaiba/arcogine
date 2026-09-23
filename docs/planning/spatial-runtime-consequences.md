@@ -1,6 +1,6 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Active delivery plan with an Engine research prerequisite. PLAN-ENG-5-0, PLAN-ENG-5-A1 (Factory V2 optional-record model/validation proving evidence), and fixed Engine semantics identity are implemented. The Factory composition question is concluded and reconciled; V2 publication identity and spatial runtime activation are dependency-blocked on the READY Engine applicability question.
+Status: Active delivery plan with transfer/Engine research prerequisites. PLAN-ENG-5-0, PLAN-ENG-5-A1 (Factory V2 optional-record model/validation proving evidence), and fixed Engine semantics identity are implemented. The Factory composition question is concluded and reconciled; V2 publication identity and transfer/spatial runtime activation are dependency-blocked first on the READY transfer-lifecycle question and then on a re-bounded Engine-applicability question.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -17,33 +17,27 @@ The architecture is fixed by:
 - [Engine Semantics v1](../architecture/engine-semantics-v1.md), the normative first-version Engine interpretation;
 - Accepted the runtime observation/event contract for supported observation/event state reconstruction and ordering.
 
-### Remaining prerequisite — Engine applicability
+### Remaining prerequisites — transfer boundary, then Engine applicability
 
 The [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
 is concluded: the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution)
 composes policies as closed grammars with explicitly present optional records, and
 [Factory Model v2](../architecture/factory-model-v2.md) is the reconciled, still unreleased grammar —
-V1 production records plus one optional, complete spatial record. Factory composition no longer
-blocks this plan.
+V1 production records plus one optional, complete spatial record.
 
-Publication validity is not Engine applicability. [Engine Semantics v1](../architecture/engine-semantics-v1.md)
-was specified against the same five spatial facts but states no applicability to a
-`factory-model:v2` artifact without them, and its fixed definition is not amended by the Factory
-reconciliation. Whether `engine-semantics:v1` can be stated as applicable to V2 artifacts, or a
-distinguishable Engine identity must execute them, is the READY
-[Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies).
-Until it is reconciled:
+A newly admitted upstream question now challenges one premise of the spatial path without changing current architecture in place: [Transfer semantics boundary research](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence) asks whether inter-resource transfer lifecycle is semantically independent of spatial layout. The current unreleased Factory/Engine contracts couple absence of the spatial record to absence of transfer behavior; that premise must be tested before release or activation makes it harder to correct.
 
-- do not release the V2 fingerprint policy (PLAN-ENG-5-A2) or make spatial transfer reachable
-  (PLAN-ENG-5-C3 onward);
-- do not re-point, extend, or reinterpret `engine-semantics:v1` in implementation or documentation
-  to accept V2 artifacts;
-- keep any spatial substrate built earlier unreachable, and re-confirm it against the Engine identity
-  the question selects before activation.
+The previous Engine-applicability question is therefore `CANDIDATE`, not `READY`: it had treated “spatial record absent => no transfer behavior” as an input to its preservation analysis. After the transfer-lifecycle question is reconciled, [Engine applicability](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies) must be re-bounded against the resulting exact Factory/Engine content domain and then conclude with its required independent adversarial review.
 
-The landed V2 shape/validation and Engine-v1 conformance/identity work are retained as proving
-evidence. Work outside this chain may continue where it does not assume an answer to the Engine
-applicability question.
+Until both gates are reconciled:
+
+- do not release the V2 fingerprint policy (PLAN-ENG-5-A2) or make transfer/spatial runtime behavior reachable;
+- do not start new transfer-specific implementation slices whose contract assumes that spatial presence is what makes transfer exist;
+- do not re-point, extend, or reinterpret `engine-semantics:v1` in implementation or documentation to accept V2 artifacts;
+- retain the landed V2 shape/validation and Engine-v1 conformance/identity work as proving evidence, not as proof that the disputed coupling is correct; and
+- if transfer research changes the relative merit of the reconciled Factory boundary, revisit that boundary before V2 attribution rather than forcing the answer through this delivery plan.
+
+Work outside this chain may continue where it does not assume an answer to the transfer-lifecycle or Engine-applicability questions.
 
 The first-release local-admission and shared-backlog-ranking questions in
 [Engine Evolution Research](../research/investigations/engine-evolution.md) are concluded after
@@ -118,7 +112,7 @@ coherent in the same landed change under the runtime observation/event contract.
 
 ## 5. Delivery slices
 
-**Engine-applicability rule:** Unimplemented slices below that release `factory-model:v2` publication identity or make spatial runtime behavior reachable are dependency-blocked until the [Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies) concludes, receives its required adversarial review, and its Engine architecture/specification reconciliation lands.
+**Research-gate rule:** Unimplemented slices below that release `factory-model:v2`, implement new transfer-specific substrate, or make transfer/spatial runtime behavior reachable are dependency-blocked until the READY [transfer-lifecycle question](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence) concludes, receives its required adversarial review, and its reconciliation lands. The Engine-applicability question must then be re-promoted, investigated and reconciled before V2 publication or runtime activation. Existing landed proving work remains evidence; this rule prevents new delivery from hardening the disputed coupling.
 
 ### PLAN-ENG-5-0 — Pin existing Engine semantics
 
@@ -337,13 +331,9 @@ Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine 
 
 ### PLAN-ENG-5-A2 — Factory V2 canonical identity
 
-**Status:** Dependency-blocked on the Engine applicability question (see the rule above). The
-Factory composition prerequisite is satisfied.
+**Status:** Dependency-blocked on the transfer-lifecycle and subsequent Engine-applicability questions (see the rule above). The Factory-composition prerequisite is otherwise satisfied.
 
-**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the
-[Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies);
-if its answer changes the relative cost of the reconciled Factory boundary, weigh that composition
-reopening trigger before release.
+**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the READY [transfer-lifecycle question](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence), then conclusion/reconciliation of the re-bounded [Engine-applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies). If either result changes the relative cost or grammar of the reconciled Factory boundary, weigh that composition reopening trigger before release.
 
 **Responsibility**
 
@@ -460,9 +450,9 @@ immediately needs revising.
 
 ### PLAN-ENG-5-C1 — Pure transfer arithmetic
 
-**Prerequisite:** PLAN-ENG-5-A1 and the `engine-semantics:v1` transfer rule. The seam stays unreachable, and its
-rule is re-confirmed against the Engine identity the applicability question selects before
-PLAN-ENG-5-C3.
+**Status:** Dependency-blocked by the transfer-lifecycle question. The existing specification remains current authority, but new implementation should not harden spatial timing as the sole source of transfer behavior while that boundary is under active research.
+
+**Prerequisite:** reconciliation of the READY [transfer-lifecycle question](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence), plus PLAN-ENG-5-A1 and the Engine transfer rule selected/reconciled for the resumed path.
 
 **Responsibility**
 
@@ -487,7 +477,9 @@ Destination selection, reservations, scheduler integration, runtime transfer sta
 
 ### PLAN-ENG-5-C2 — Destination admission-reservation substrate
 
-**Prerequisite:** PLAN-ENG-5-B1.
+**Status:** Dependency-blocked by the transfer-lifecycle question because reservation is part of the transfer phase whose applicability is under research.
+
+**Prerequisite:** reconciliation of the READY [transfer-lifecycle question](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence) plus PLAN-ENG-5-B1.
 
 **Responsibility**
 
@@ -512,8 +504,7 @@ Public reservation aggregate, transfer timing/state/events, transport capacity.
 
 ### PLAN-ENG-5-C3 — Vertical transfer activation
 
-**Prerequisites:** reconciliation of the Engine applicability question, PLAN-ENG-5-A2, PLAN-ENG-5-B2,
-PLAN-ENG-5-C1 and PLAN-ENG-5-C2.
+**Prerequisites:** reconciliation of the transfer-lifecycle question and the subsequently re-bounded Engine-applicability question, PLAN-ENG-5-A2, PLAN-ENG-5-B2, PLAN-ENG-5-C1 and PLAN-ENG-5-C2.
 
 **Research recheck before activation:** inbound reservation changes what "can accept" means and was a
 named reopening seam in both reviewed first-release dispatch questions. Before making the reservation
@@ -648,7 +639,7 @@ The scenario demonstrates:
 ## 6. Dependency and parallelism map
 
 ```text
-READY Engine applicability research --reconcile--> gates PLAN-ENG-5-A2 and PLAN-ENG-5-C3
+READY transfer-lifecycle research --reconcile--> re-bound Engine applicability --reconcile--> gates V2 release and transfer activation
 
 CONCLUDED dispatch research --retain v1--> PLAN-ENG-5-0 v1 fixtures ---> PLAN-ENG-5-B1 semantics identity (implemented) ---> PLAN-ENG-5-B2 provenance ----+
                                                                                                                         |          |
@@ -667,21 +658,16 @@ The first-release research gate is cleared. A future reopened investigation that
 outcome-changing alternative does not retroactively mutate v1 or invalidate historical v1 fixtures;
 it requires a new `EngineSemanticsVersion` and a separately reconciled implementation path.
 
-Practical parallelism while the Engine applicability question is open:
+Practical parallelism while the transfer boundary is open:
 
 - `PLAN-ENG-5-0`, `PLAN-ENG-5-A1`, and `PLAN-ENG-5-B1` are implemented and remain proving evidence;
-- `PLAN-ENG-5-A2` is dependency-blocked on the Engine applicability question; `PLAN-ENG-5-A3` waits for a
-  real cross-policy controlled transition;
-- `PLAN-ENG-5-B2` is independent of the Factory boundary and of the applicability outcome: it propagates
-  whichever Engine identity a runtime establishes and must not create a new outward compatibility promise;
-- `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` may only build unreachable substrate; `PLAN-ENG-5-C3` through
-  `PLAN-ENG-5-E` are not implementation-ready until the applicability question is reconciled;
-- work outside this chain may proceed under its own plan when it does not assume an answer to the
-  applicability question.
+- `PLAN-ENG-5-B2` remains independent of the disputed Factory/transfer boundary: it propagates whichever Engine identity a runtime establishes and must not create a new outward compatibility promise;
+- `PLAN-ENG-5-A2` and `PLAN-ENG-5-C1` through `PLAN-ENG-5-E` are held; `PLAN-ENG-5-C2` is held as part of the same transfer-phase contract rather than being expanded speculatively;
+- `PLAN-ENG-5-A3` still waits for a real cross-policy controlled transition and may need to be re-resolved if transfer research changes the unreleased V2 grammar;
+- work outside this chain may proceed under its own plan only when it does not assume an answer to transfer lifecycle, non-spatial timing, or V2 Engine applicability.
 
-After the Engine applicability question concludes, receives its independent adversarial review, and its
-reconciliation lands, re-resolve this dependency map before selecting the next PLAN-ENG-5 implementation
-slice.
+After the transfer-lifecycle question reconciles, re-resolve the Factory V2 boundary if required, re-promote/re-run Engine applicability, and only then re-resolve this dependency map before selecting the next PLAN-ENG-5 implementation slice.
+
 ## 7. KPI acceptance
 
 PLAN-ENG-5 preserves existing metric definitions:
@@ -729,14 +715,6 @@ Engine-semantics identity work remain valid evidence under the current architect
 first-release dispatch gate is closed for those already-landed v1 semantics, and the Factory
 composition question is concluded and reconciled.
 
-The remaining V2 publication and spatial-runtime path is **not implementation-ready** while the
-Engine applicability question is open. The Factory semantic-evolution contract, the Determinism
-Contract and Engine Semantics v1 remain authoritative; none of them makes `engine-semantics:v1`
-applicable to `factory-model:v2` artifacts.
+The remaining V2 publication and transfer/spatial-runtime path is **not implementation-ready** while the transfer-lifecycle question is open and Engine applicability is consequently only `CANDIDATE`. The Factory semantic-evolution contract, the Determinism Contract, Factory Model v2 and Engine Semantics v1 remain current authority; the new research gate questions whether their current coupling is the contract Arcogine should release, not whether implementation may ignore them.
 
-Before a held slice resumes, the Engine applicability question must reach a decision-quality
-conclusion, receive its independent adversarial review, and its Engine architecture/specification
-reconciliation must land. The plan must then be re-resolved against that result. If later activation
-still reaches PLAN-ENG-5-C3, perform the explicit reservation-aware dispatch recheck there. Any slice
-that encounters contradictory evidence must stop at that boundary rather than silently revising the
-accepted contract in product code.
+Before a held slice resumes, the transfer-lifecycle question must reach a decision-quality conclusion, receive its independent adversarial review, and its required reconciliation must land. Any Factory-boundary correction must then be applied before Engine applicability is re-promoted. The re-bounded Engine-applicability question must subsequently conclude and reconcile. Re-resolve this plan against both results. If later activation still reaches PLAN-ENG-5-C3, perform the explicit reservation-aware dispatch recheck there. Any slice that encounters contradictory evidence must stop rather than silently revising accepted semantics in product code.

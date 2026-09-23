@@ -3,7 +3,7 @@
 Status: Normative canonicalization contract; implemented by `FactoryModelVersion.fingerprint()`
 Fingerprint policy: `factory-model:v1`
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support) and the [Factory semantic-evolution contract](factory-design.md#111-semantic-evolution)
-Spatial successor: [Factory Model v2 Canonicalization](factory-model-v2.md)
+Successor policy: [Factory Model v2 Canonicalization](factory-model-v2.md)
 
 ## Purpose
 

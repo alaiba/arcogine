@@ -1,6 +1,6 @@
 # Factory Simulation Engine Readiness Implementation Plan
 
-> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete. Outward consumer convergence is retired as an objective — a future consumer is demand-triggered, not standing backlog. Remaining spatial runtime consequences are dependency-blocked where they harden the current durability or Factory V1/V2 model pending READY research and reconciliation.
+> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete. Outward consumer convergence is retired as an objective — a future consumer is demand-triggered, not standing backlog. The Factory composition question is concluded and reconciled; remaining spatial runtime consequences are dependency-blocked on the READY Engine applicability question.
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
 > **Related:** [Factory Design Capability](factory-design-capability.md), [session-control semantics](../architecture/engine-semantics-v1.md#12-session-and-control-semantics), [unit-work decomposition semantics](../architecture/engine-semantics-v1.md#3-unit-work-decomposition-semantics), [runtime observation/event contract](../architecture/runtime-contract.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
@@ -43,7 +43,7 @@ The following Engine capability is complete and must not be reopened by adjacent
 - deterministic selection, waiting, and queue behavior has a current implementation baseline and a normative `engine-semantics:v1` contract;
 - equivalent compatible resources can execute independent work.
 
-PLAN-ENG-2's **capability boundary** remains complete: independently dispatchable work is selected and queued deterministically. The two first-release research questions have now concluded after independent adversarial review, and both retain the existing v1 local-admission and shared-backlog-ranking rules with qualifications. PLAN-ENG-5-0 may therefore pin those rules deliberately; adjacent implementation still must not reinterpret them as optimality claims or change results silently.
+PLAN-ENG-2's **capability boundary** remains complete: independently dispatchable work is selected and queued deterministically. The two first-release research questions have now concluded after independent adversarial review, and both retain the existing v1 local-admission and shared-backlog-ranking rules with qualifications. PLAN-ENG-5-0 has pinned those rules deliberately; adjacent implementation still must not reinterpret them as optimality claims or change results silently.
 
 ### PLAN-ENG-3 — Consumer-neutral simulation session
 
@@ -100,19 +100,19 @@ The KPI-ownership caution this superseded plan recorded remains true independent
 
 ### PLAN-ENG-5 — Spatial runtime consequences
 
-Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, Factory Model v2 canonicalization, and Engine Semantics v1 are the governing contracts. **Planning execution is nevertheless on research hold** for unimplemented work that would release V2 identity/coexistence or activate spatial semantics on the assumption that those durability/composition boundaries are final.
+Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, Factory Model v2 canonicalization, and Engine Semantics v1 are the governing contracts. The Factory composition question is concluded and reconciled: `factory-model:v2` is an unreleased closed policy with an optional spatial record. **Planning execution remains blocked** for unimplemented work that would release V2 publication identity or activate spatial semantics until the READY [Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies) is reconciled; nothing makes `engine-semantics:v1` applicable to `factory-model:v2` artifacts in the meantime.
 
 The admitted sequence includes:
 
 1. pin pre-existing result-affecting Engine semantics and required arithmetic corrections — complete;
-2. implement Factory spatial facts/validation — shape/validation proving slice complete; V2 canonical identity now dependency-blocked by research;
-3. establish `EngineSemanticsVersion` — fixed identity complete; additional propagation may proceed only where independent of the research questions;
+2. implement Factory spatial facts/validation — optional-record shape/validation proving slice complete; V2 canonical identity dependency-blocked on the Engine applicability question;
+3. establish `EngineSemanticsVersion` — fixed identity complete; provenance propagation is independent of the applicability outcome;
 4. implement deterministic transfer arithmetic and inbound admission reservation;
 5. activate coherent transfer state/events/observations;
 6. close availability/no-rerouting edge semantics and late-join diagnostics; and
-7. complete V1/V2 historical coexistence before final closure.
+7. implement V1/V2 historical resolution before the first real cross-policy controlled transition.
 
-**First-release dispatch gate:** cleared. The two critical-path research questions in [Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded with `engine-semantics:v1` retained unchanged after adversarial review. PLAN-ENG-5-0 is therefore ready to pin the existing local-admission, shared-backlog-ranking, reselection, ordering, and exact-arithmetic rules together with the reviewed discriminating cases. The research conclusions do not authorize a policy change and do not claim the retained rules are globally optimal.
+**First-release dispatch gate:** cleared. The two critical-path research questions in [Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded with `engine-semantics:v1` retained unchanged after adversarial review. PLAN-ENG-5-0 has pinned the existing local-admission, shared-backlog-ranking, reselection, ordering, and exact-arithmetic rules together with the reviewed discriminating cases. The research conclusions do not authorize a policy change and do not claim the retained rules are globally optimal.
 
 No pathfinding, conveyor graph, transport-resource scheduling, congestion, rerouting, or orientation is part of this admitted work.
 
@@ -156,9 +156,9 @@ PLAN-ENG-4 A/B/C complete (outward consumer convergence retired as an objective)
 PLAN-ENG-5 spatial consequences
 ```
 
-Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and fixed Engine semantics identity is implemented. Those landed facts remain current evidence, not a reason to bypass the new durability/composition investigations. Unimplemented V2 canonical identity/coexistence and dependent spatial-runtime slices are now dependency-blocked as described in the detailed plan. PLAN-ENG-6 may proceed when its own contracts are independent of the held questions.
+Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and fixed Engine semantics identity is implemented. Those landed facts remain current evidence. The Factory composition question is concluded; unimplemented V2 publication identity and dependent spatial-runtime slices are dependency-blocked on the Engine applicability question as described in the detailed plan. PLAN-ENG-6 may proceed when its own contracts are independent of that question.
 
-PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right. The current blocker for the held spatial slices is the semantic-contract maturity and Factory composition research above.
+PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right. The current blocker for the held spatial slices is the Engine applicability question above.
 
 ## 5. Determinism and provenance invariants
 
@@ -198,9 +198,9 @@ The following are not implementation items in this plan:
 - new advancement/session semantics without a concrete consumer failure case; and
 - unselected transport/recovery technology or protocol choices.
 
-Current architecture assigns the retained dispatch rules to `engine-semantics:v1`. The concluded first-release research authorizes deliberate conformance to those rules, and no implementation task may silently change them while that architecture stands. The READY semantic-contract maturity investigation separately asks whether Arcogine declared permanent durability too early; only a later reconciliation may change that lifecycle rule. Planning itself must not create an exception in either direction.
+Current architecture assigns the retained dispatch rules to `engine-semantics:v1`. The concluded first-release research authorizes deliberate conformance to those rules, and no implementation task may silently change them while that architecture stands. The concluded semantic-contract maturity result is carried by the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support); planning itself must not create an exception to them in either direction.
 
-PLAN-ENG-6 is admitted separately because its implementation contract is exact result equivalence for the already-authoritative v1 semantics after PLAN-ENG-5-0 closes the conformance gap.
+PLAN-ENG-6 is admitted separately because its implementation contract is exact result equivalence for the already-authoritative v1 semantics, whose conformance gap PLAN-ENG-5-0 has closed.
 
 ## 8. Validation policy
 

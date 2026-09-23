@@ -374,36 +374,73 @@ Factory owns authored production-system facts; Engine owns the rules that interp
 (distance, rounding, destination binding, reservation, transfer lifecycle). Changing Engine
 interpretation alone never changes a model's fingerprint, and authored facts are never synthesized
 to make an interpretation applicable. [Factory Model v1](factory-model-v1.md) and
-[Factory Model v2](factory-model-v2.md) own their field membership, validation predicates and
-canonical bytes; this section owns how policies relate.
+[Factory Model v2](factory-model-v2.md) own their records, field membership, validation predicates
+and canonical bytes; this section owns how a policy is composed and how policies relate.
 
-A fingerprint policy identifies the complete semantic/canonicalization contract, not merely a hash
-algorithm. Ordinary serializer bytes never define identity, and publication rejects inputs for
-which canonicalization is undefined, so fingerprinting is total over published models. Once a
-policy has attributed records, its definition is fixed as a whole under the
-[semantic evolution rules](overview.md#semantic-evolution-and-support): a behaviorally relevant
-authored fact that cannot be represented without changing a policy's meaning requires a
-distinguishable policy identity, old fingerprints are never rewritten or rederived, and a
+**One closed policy, one aggregate identity.** A fingerprint policy identifies one complete, closed
+semantic/canonicalization grammar — the records it admits, the validation predicates within and
+across them, its canonical bytes and its rejection behavior — not merely a hash algorithm. Ordinary
+serializer bytes never define identity, and publication rejects inputs for which canonicalization
+is undefined, so fingerprinting is total over published models. One published Factory semantic
+artifact has exactly one aggregate `ModelFingerprint`; Factory defines no per-concern fingerprints.
+
+**Optional authored records.** A closed policy may admit explicitly present optional authored
+records beside its required ones, and the presence of each is canonical content. An absent record
+means the design makes no assertion in that semantic dimension; nothing is synthesized for it from
+a default. A present record carries authored values, and a legal zero or default-like value is an
+authored value distinct from absence in both meaning and canonical bytes. Unknown or partly
+authored facts are draft or adapter state, never published content; the policy states what makes a
+present record complete and rejects anything else. Which combinations of records are valid is
+decided by the policy's own closed predicate, not by a separate combination registry.
+
+**Attribution fixes the grammar.** Until a policy has attributed records its definition may be
+corrected in place. After the first retained or accepted attribution its definition is fixed as a
+whole under the [semantic evolution rules](overview.md#semantic-evolution-and-support): admitting a
+new record or variant, changing an accepted value domain, or changing a predicate, rejection rule
+or canonical byte requires a distinguishable policy identity; old fingerprints are never rewritten or rederived; and a
 controlled revision still binds exactly one fingerprint while lineage may cross policies without
-rewriting either artifact.
+rewriting either artifact. A new policy is warranted by an identity-defining grammar change, not by
+a new combination of records a policy already admits.
 
-There is no automatic lift between policies. A V1 model has no spatial facts and therefore no
-spatial behavior — the truthful execution of a design that never authored spatial semantics, not
-a degraded mode. Position, footprint and handling values must be explicitly authored and
-published; historical facts are never invented as defaults. Cross-policy comparison is explicit: a
-semantic `ChangeSet` must not silently span policies by inventing facts one model never declared.
-Before an actual cross-policy controlled transition, Arcogine provides artifact resolution with a
-registered verifier/decoder for each policy in scope and either an explicit migration
-classification or an explicitly chosen common semantic representation for any fine-grained
-comparison that claims equivalence, implementing only the seam that transition requires.
+**Exact references.** An aggregate may contain an exact immutable reference to an independently
+governed technical contract only when a concrete semantic dependency requires the reference itself
+— a statement, such as dependence on one approved specification revision, that inlined values
+cannot preserve ([Factory Resource Semantics](factory-resource-semantics.md)). The reference is
+aggregate content covered by the one fingerprint, not a second identity for the design.
 
-Retained attribution requires the exact definition of every referenced policy to remain
-resolvable; continuing decoding, execution, migration and interoperability are separately scoped
-support obligations declared by the owning contract, not consequences of a policy existing. The
-current V1/V2 code and specifications mandate neither eternal readers for every policy, a V2
-release, permanent V1/V2 coexistence, nor a linear whole-model version scheme; the composition of
-future Factory policies remains the open
-[Factory semantic-composition investigation](../research/investigations/factory-model-semantic-composition.md).
+**No automatic lift; explicit comparison.** There is no automatic lift between policies. A V1 model
+has no spatial facts and therefore no spatial behavior — the truthful execution of a design that
+never authored spatial semantics, not a degraded mode. Position, footprint and handling values
+must be explicitly authored and published; historical facts are never invented as defaults, and a
+design is never stripped of content a policy cannot represent in order to publish it under that
+policy. Cross-policy comparison is explicit: a semantic `ChangeSet` must not silently span
+policies by inventing facts one model never declared. Before an actual cross-policy controlled
+transition, Arcogine provides artifact resolution with a registered verifier/decoder for each
+policy in scope and either an explicit migration classification or an explicitly chosen common
+semantic representation for any fine-grained comparison that claims equivalence, implementing only
+the seam that transition requires. A common representation may map one policy's content into
+another's form only when the mapping invents nothing — records absent in the source stay absent —
+and preserves every semantic distinction of the source policy, including names, identifiers,
+order and nullability; where that cannot be shown, the comparison states its limitation. Such
+equivalence is never full-fingerprint equality, the same controlled occurrence, evidence
+applicability or reattribution of either artifact.
+
+**Publication validity is not Engine applicability.** A valid published artifact is executable
+under an Engine interpretation only when that interpretation's own definition supports the
+artifact's exact policy and the records, values, variants and interactions the artifact represents;
+recognizing which records are present is not sufficient. An Engine refuses an artifact outside that
+domain before runtime mutation rather than ignoring represented content or supplying absent content.
+
+**Support is separate from identity.** Retained attribution requires the exact definition of every
+referenced policy to remain resolvable; continuing publication, decoding, execution, migration and
+interoperability are separately scoped support obligations declared by the owning contract, not
+consequences of a policy existing. Defining a successor policy neither retires publication under an
+earlier one nor promises it indefinitely, and nothing mandates eternal readers for every policy or
+permanent coexistence of any two. A named support scope, such as the combinations of records one
+consumer or Engine accepts, may be declared where useful but never participates in content
+identity. Factory currently defines no open extension envelope, concern registry, per-concern
+fingerprint or generic migration framework; one would need a concrete requirement that closed
+policies with optional records and exact references cannot meet.
 
 ### 11.2 External change-management and deployment integration
 

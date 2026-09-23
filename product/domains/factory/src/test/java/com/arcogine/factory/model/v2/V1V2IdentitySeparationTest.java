@@ -11,10 +11,10 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves that a {@link FactoryModelV2} cannot travel through the existing
- * {@code factory-model:v1} publication/fingerprint path -- {@link
- * FactoryModelPublisher#publish(FactoryModel)} and the {@link FactoryModelVersion} constructor --
- * mechanically, not merely by documentation or convention.
+ * Proves that a {@link FactoryModelV2} -- with or without its spatial record -- cannot travel
+ * through the existing {@code factory-model:v1} publication/fingerprint path --
+ * {@link FactoryModelPublisher#publish(FactoryModel)} and the {@link FactoryModelVersion}
+ * constructor -- mechanically, not merely by documentation or convention.
  *
  * <p>{@code FactoryModelV2} and {@link FactoryModel} share no supertype, so the call
  * {@code FactoryModelPublisher.publish(someFactoryModelV2)} does not compile: it is a
@@ -52,14 +52,15 @@ class V1V2IdentitySeparationTest {
     }
 
     @Test
-    void factoryModelV2ProjectionOnlyDiscardsSpatialContentItNeverExposesAFactoryModelPublicly() {
-        // FactoryModelV2 exposes no public method returning a plain FactoryModel: the only such
-        // projection (baseModel()) is package-private and used solely by FactoryModelV2Validator
-        // to delegate V1-shaped structural checks. This keeps "V1-shaped content projected out of
-        // a V2 design" from ever being mistaken, by a public API, for "this V2 design published
-        // under factory-model:v1".
+    void noV2TypeExposesAFactoryModelPubliclySoSpatialContentCannotBeStrippedIntoV1() {
+        // No V2 type exposes a public method returning a plain FactoryModel: the only such
+        // projection (FactoryModelV2.baseModel()) is package-private and used solely by
+        // FactoryModelV2Validator to delegate V1-shaped structural checks. This keeps "the
+        // production records of a V2 design, with its spatial record dropped" from ever being
+        // mistaken, by a public API, for "this V2 design published under factory-model:v1".
         boolean hasPublicFactoryModelReturningMethod =
-                List.of(FactoryModelV2.class.getMethods()).stream()
+                List.of(FactoryModelV2.class, SpatialRecord.class, ResourceLayout.class).stream()
+                        .flatMap(type -> List.of(type.getMethods()).stream())
                         .anyMatch(method -> method.getReturnType() == FactoryModel.class);
 
         assertFalse(hasPublicFactoryModelReturningMethod);

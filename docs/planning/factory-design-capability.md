@@ -1,9 +1,11 @@
 # Factory Design Capability Implementation Plan
 
-> **Status:** Active/partial; current Factory Model v1 capability and the V2 shape/validation proving slice are landed, while unimplemented V2 identity/coexistence work is dependency-blocked on the READY Factory composition research  
+> **Status:** Active/partial; current Factory Model v1 capability and the V2 optional-record shape/validation proving slice are landed; V2 canonical identity is dependency-blocked on the Engine applicability question, and cross-policy historical resolution waits for a real transition
+>
 > **Scope:** Implementation-ready Factory Design work over the canonical production-system model  
-> **Authority:** Planning only. Current Factory architecture and specifications govern; this plan deliberately pauses work that would deepen linear whole-model version commitments while the Factory composition research is open.  
-> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [canonical model boundary](../architecture/factory-design.md#4-canonical-model-boundary), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution), [Determinism Contract](../architecture/overview.md#determinism-contract), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
+> **Authority:** Planning only. Current Factory architecture and specifications govern.
+>
+> **Related:** [Factory Design Architecture](../architecture/factory-design.md), [canonical model boundary](../architecture/factory-design.md#4-canonical-model-boundary), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution), [Determinism Contract](../architecture/overview.md#determinism-contract), [Factory Model v2](../architecture/factory-model-v2.md), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md), [Factory Resource Semantics](../architecture/factory-resource-semantics.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md), [Engine applicability research](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies)
 
 ## 1. Implementation boundary
 
@@ -45,15 +47,9 @@ The following are implemented and must be preserved:
 
 Current `ConfiguredResource` remains the supported complete configured-resource representation. [Factory Resource Semantics](../architecture/factory-resource-semantics.md) records the concluded interpretation and keeps the definition/installed-instance split **out of implementation**: repetition, catalogue reuse, or equal values are not sufficient triggers. Revisit only if an independently identified reusable technical specification must carry a checkable cross-consumer contract or dependency that complete configured-resource records cannot preserve.
 
-## 3. Factory spatial-model work under research hold
+## 3. Factory spatial-model work
 
-The Factory semantic-evolution contract remains the current accepted architecture and therefore still defines `factory-model:v2` as exactly v1 semantic content plus required authored spatial/handling facts. However, two READY high-risk investigations now challenge whether durability was declared too early and whether spatial semantics are an orthogonal Factory concern rather than a linear generation of the whole model:
-
-- [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md); the sibling [semantic-contract maturity](../research/investigations/semantic-contract-maturity-durability.md) question is concluded and its result is carried by the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support) and the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution).
-
-This is an **implementation hold, not an architectural supersession**. The already-landed V2 model/validation slice remains useful proving evidence. Do not start V2 canonical identity, V1/V2 coexistence, or another unimplemented Factory slice whose purpose is to harden the current linear-policy/durability assumptions until both research questions have decision-quality results, required adversarial review, and any necessary architecture/planning reconciliation has landed.
-
-Under the still-current the Factory semantic-evolution contract baseline, V2 consists of:
+The [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution) composes Factory policies as closed grammars that may admit explicitly present optional authored records. [Factory Model v2](../architecture/factory-model-v2.md) is the first such policy and is not released: the unchanged V1 production records plus one optional spatial record. A present record carries, completely and for every configured resource:
 
 - floor width and height;
 - resource reference-cell position;
@@ -61,70 +57,67 @@ Under the still-current the Factory semantic-evolution contract baseline, V2 con
 - `ticksPerCell`;
 - `handlingTicks`.
 
-Position/footprint containment, non-overlap, and the exact maximum-transfer-duration representability predicate are publication semantics. Orientation, aisle/path topology, conveyors, explicit transport resources, connection points, congestion, floor identity, and authoritative animation coordinates are not part of v2.
+An absent record asserts nothing spatial, and nothing is synthesized in its place. Position/footprint containment, non-overlap, complete resource coverage, and the exact maximum-transfer-duration representability predicate are publication semantics of a present record. Orientation, aisle/path topology, conveyors, explicit transport resources, connection points, congestion, floor identity, and authoritative animation coordinates are not part of v2.
 
-The implementation sequence is owned jointly with [Spatial Runtime Consequences](spatial-runtime-consequences.md):
+The implementation sequence is owned jointly with [Spatial Runtime Consequences](spatial-runtime-consequences.md). No generic migration or schema-evolution framework is admitted.
 
 ### PLAN-ENG-5-A1 — V2 model and validation
 
-**Status:** Implemented as proving evidence. `factory-model:v2` canonical bytes/fingerprint policy are not released by this slice. PLAN-ENG-5-A2 was the next V2 Factory-model slice and is now dependency-blocked by the research hold above.
+**Status:** Implemented as proving evidence for the reconciled optional-record shape. `factory-model:v2` canonical bytes/fingerprint policy are not released by this slice.
 
-Implement the five authored additions and deterministic validation required by the Factory semantic-evolution contract.
+Acceptance evidence proves:
 
-Acceptance evidence must prove:
-
-- exact anchored footprint occupancy;
-- floor containment;
-- non-overlap;
-- accepted zero/boundary values where [Factory Model v2](../architecture/factory-model-v2.md) permits them;
-- overflow-safe maximum transfer-duration validation; and
-- no change to v1 behavior or identity.
+- the production records keep one authoritative representation and V1-shaped validation;
+- an absent spatial record validates production semantics only and synthesizes nothing;
+- a present record with legal zero values is a different design from an absent record;
+- a present record places every configured resource exactly once, in resource-list order, and no unknown identifier;
+- exact anchored footprint occupancy, floor containment, non-overlap, accepted zero/boundary values, and overflow-safe maximum transfer-duration validation;
+- no public projection through which V2 content could be published under V1, and no change to v1 behavior or identity.
 
 ### PLAN-ENG-5-A2 — V2 canonical identity
 
-**Status:** Dependency-blocked. Do not implement while the Factory composition investigation is open.
+**Status:** Dependency-blocked on the [Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies). The Factory composition prerequisite is satisfied: the grammar to implement is the reconciled [Factory Model v2](../architecture/factory-model-v2.md). Releasing V2 publication identity fixes that grammar, its only admitted consumer is spatial runtime execution whose Engine identity is not yet settled, and an Engine answer that changes the relative cost of the Factory boundary is a composition reopening trigger to weigh before release.
 
-Implement the exact V2 canonical bytes and fingerprint policy from [Factory Model v2](../architecture/factory-model-v2.md).
+Implement the exact V2 canonicalizer, verifier, and fingerprint policy from [Factory Model v2](../architecture/factory-model-v2.md), with the support declaration that release requires, including whether `factory-model:v1` publication continues for production-only designs.
 
 Acceptance evidence must prove:
 
-- required golden vectors;
-- deterministic equivalent-content fingerprints;
-- every authored V2 field participates in identity;
+- the specification's required golden vectors, including spatial absent, spatial present with legal zero values, the absent-versus-zero distinction, marker framing, and coverage rejection;
+- canonical decode/re-encode and deterministic equivalent-content fingerprints;
+- every authored V2 fact, and the spatial record's presence, participates in identity;
 - V1 vectors/fingerprints remain byte-for-byte unchanged;
-- no automatic v1-to-v2 lift or synthesized historical spatial defaults; and
+- no automatic v1-to-v2 lift, no synthesized spatial defaults, and no V1 republication of V2 content with its spatial record dropped; and
 - malformed or semantically invalid V2 artifacts fail explicitly.
 
-### PLAN-ENG-5-A3 — V1/V2 historical coexistence
+### PLAN-ENG-5-A3 — Historical resolution for the first cross-policy transition
 
-**Status:** Dependency-blocked. Do not implement while the Factory composition investigation is open.
+**Status:** Not started. Implement only when a real controlled transition between `factory-model:v1` and `factory-model:v2` artifacts needs it; prerequisite PLAN-ENG-5-A2.
 
-Use the landed Governance revision authority to keep both released policies historically resolvable and verifiable.
+Use the landed Governance revision authority to keep the policies in scope historically resolvable and verifiable.
 
 Acceptance evidence must prove:
 
 - historical v1 resolution remains intact after V2 registration;
 - v2 resolution is independent;
 - controlled revision lineage may cross policy versions without rewriting either artifact; and
-- the first cross-policy transition is not falsely represented as an ordinary same-policy empty/equivalent diff.
+- the transition is not falsely represented as an ordinary same-policy empty/equivalent diff, and any common comparison representation it uses invents nothing and preserves every V1 distinction.
 
-This slice implements only the first coexistence/migration seam actually required by V1/V2. It does not create a generic schema-migration framework.
-
+This slice implements only the seam that transition requires. It does not create a generic schema-migration framework.
 ## 4. Existing Factory capabilities that remain closed
 
 ### PLAN-FD-1 — Canonical model boundary
 
-The behavior-preserving canonical seam is implemented for current semantics. A1 is landed proving evidence; A2/A3 are no longer implementation-ready while the research hold is active.
+The behavior-preserving canonical seam is implemented for current semantics. A1 is landed proving evidence; A2 and A3 prerequisites are stated in §3.
 
 ### PLAN-FD-2 — Executability validation
 
-Current deterministic validation remains the implementation contract for admitted semantics. V2 adds only the accepted spatial/arithmetic predicates required by the Factory semantic-evolution contract.
+Current deterministic validation remains the implementation contract for admitted semantics. V2 adds only the spatial-record predicates required by [Factory Model v2](../architecture/factory-model-v2.md).
 
 A richer cross-consumer finding taxonomy is **not** an admitted implementation slice; it is tracked in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md).
 
 ### PLAN-FD-3 — Publication, identity, and provenance
 
-Immutable publication and the currently accepted v1 semantic-identity contract are implemented. V2 identity/coexistence was previously admitted through A2/A3 and is now dependency-blocked pending research and reconciliation.
+Immutable publication and the currently accepted v1 semantic-identity contract are implemented. V2 identity is admitted through A2 and dependency-blocked as §3 states; A3 follows only a real cross-policy transition.
 
 `ModelFingerprint` remains semantic-content identity. `ControlledRevisionId` remains Governance-owned historical occurrence identity. Neither approval, deployment, external workflow identity, nor Engine interpretation belongs in the Factory fingerprint.
 
@@ -146,7 +139,7 @@ Finer route/policy/spatial/capability comparison and cross-consumer explanatory 
 Factory Design owns
     published products / operations / concrete resources
     authored behaviorally relevant constraints
-    authored V2 spatial/handling facts
+    authored optional V2 spatial/handling record
     validation / publication
     ModelFingerprint
 
@@ -189,7 +182,7 @@ The following remain intentionally **not implementation work** in this plan:
 - finer semantic comparison beyond the implemented slice;
 - shared draft lifecycle/collaboration;
 - Factory-specific additions to governed-change workflow; and
-- spatial/material-flow concepts beyond accepted v2.
+- spatial/material-flow concepts beyond the v2 spatial record.
 
 They are maintained in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md) and the research register. Do not assign new Factory delivery coordinates until the relevant question crosses the planning admission boundary.
 

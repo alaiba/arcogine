@@ -31,13 +31,13 @@ specification, implementation and support.
 
 ## What remains open
 
-- Factory model composition — the sibling
-  [Factory Model semantic composition](factory-model-semantic-composition.md) investigation; this
-  result constrains it (no rebinding, explicit comparison, scoped support) without selecting a
-  composition.
+- Factory model composition — since concluded by the sibling
+  [Factory Model semantic composition](factory-model-semantic-composition.md) investigation, which
+  consumed this result (no rebinding, explicit comparison, scoped support).
 - Same-label amendment of an attributed Engine definition — a separate bounded Engine question;
   a particular amendment would need its own attribution and supported-input evidence and would
-  not establish universal section freezing.
+  not establish universal section freezing. Its first concrete case is the
+  [Engine applicability question](engine-evolution.md#engine-applicability-to-optional-record-factory-policies).
 - Concrete custody mechanics for retained proving artifacts — ordinary bounded design/validation
   unless equality, acceptance or accountability semantics prove unsettled.
 - Operational closure/retirement and audit horizon — remain with the open Operational questions.

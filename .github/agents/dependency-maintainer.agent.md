@@ -131,11 +131,11 @@ Each dependency PR follows the normal Arcogine merge gates and continuation rule
 - Reconcile a behind-base branch before treating it as a current candidate. For a Dependabot PR that still qualifies for trusted provenance, use Dependabot's own rebase/recreate path when practical; a maintainer-authored synchronization intentionally forfeits the bypass and moves the PR to ordinary review.
 - Respond to implementation-owned blockers and valid review findings on the same PR/slice.
 - Keep the PR title/body and validation claims truthful after compatibility fixes.
-- For a trusted Dependabot PR, do not request an independent review merely to make `disposition` pass. Wait for the trusted base-side workflow to publish current-head authorization; `gate`, strict base freshness, mergeability, current-head `CHANGES REQUIRED`, and Code Owner requirements remain independent.
+- For a trusted Dependabot PR, do not request an independent review merely to make `disposition` pass. Wait for the trusted base-side workflow to publish current-head authorization; `gate`, strict base freshness, mergeability, and current-head `CHANGES REQUIRED` remain independent blockers.
 - For a Dependabot PR whose current-head provenance is no longer trusted, or for any manual dependency PR, hand the current head to the ordinary independent PR Reviewer when implementation work is complete.
 - Stop when every merge gate holds for the current head; the repository owner merges manually.
 
-Do not confuse the Dependabot authorization exception with auto-merge or CI-only acceptance. A trusted Dependabot PR is still blocked by failed required CI, stale base, conflicts, a current-head canonical `CHANGES REQUIRED`, protected-path Code Owner requirements, or any native GitHub blocker that physically prevents merge. Agents still never merge it.
+Do not confuse the Dependabot authorization exception with auto-merge or CI-only acceptance. A trusted Dependabot PR is still blocked by failed required CI, stale base, conflicts, a current-head canonical `CHANGES REQUIRED`, or any native GitHub blocker that physically prevents merge. Agents still never merge it.
 
 ## Queue/sweep behavior
 
@@ -166,7 +166,7 @@ For each processed dependency PR, report:
 - material upstream changes inspected;
 - compatibility/remediation changes made, if any;
 - validation performed and current visible CI state;
-- trusted `disposition` state and any remaining GitHub protection such as Code Owner approval;
+- trusted `disposition` state and any remaining GitHub protection;
 - any deferred member/update and why;
 - the current blocking or waiting fact, if any, and the next owner/action.
 

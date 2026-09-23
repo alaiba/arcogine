@@ -264,9 +264,6 @@ Factory event semantics have a single implementation authority: `FactoryHandler`
 
 ### Security verification tests
 
-Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite (the retired `interfaces/api`'s `ApiSmokeTest` and `interfaces/cli`'s bind-address test are gone with those modules). The controls that remain are enforced at the Factory runtime boundary and verified there:
-
-| Criterion | Must hold | Exercised by |
-|---|---|---|
+Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite (the retired `interfaces/api`'s `ApiSmokeTest` and `interfaces/cli`'s bind-address test are gone with those modules). Current executable security controls are dependency auditing and secret scanning, owned by the repository's full security scans and CI; they are not Factory runtime controls. See [`.github/SECURITY.md`](../../.github/SECURITY.md) for their owners and commands.
 
 See [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits the retired API and CLI had, recorded so a future outward adapter is designed with them in mind rather than repeating them by default, and for the readiness criteria that must be met before any future hosted or multi-user exposure.

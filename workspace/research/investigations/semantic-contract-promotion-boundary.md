@@ -1,25 +1,34 @@
-# Semantic-contract promotion boundary and premature durability
+# Semantic-contract promotion boundary and premature durability (revision 2)
 
-> **Research status:** ACTIVE (a completed report exists; nothing is reconciled, so the question is
-> not `CONCLUDED`)
+> **Research status:** ACTIVE. This is a completed report revision. Nothing is reconciled, so the
+> question is not `CONCLUDED`.
 >
-> **Research baseline:** live `main` `b9d6e8b0e3b10f07cbc6777e3bc3abbce2f45c19`. I re-checked it
-> just before committing, and `main` had not moved.
+> **Research baseline:** live `main` `b9d6e8b0e3b10f07cbc6777e3bc3abbce2f45c19`. Re-checked
+> immediately before persistence; unchanged since revision 1 and since the adversarial review.
 >
 > **Material under investigation (not landed truth):** workspace branch
-> `research/semantic-contract-promotion-boundary-review`, which carries only the research handoff
-> prompt on top of the baseline.
+> `research/semantic-contract-promotion-boundary-review`. It carries the research handoff, report
+> revision 1 (commit `8fa235b5621e3f97fd41c1aa327d6303e464c65d`, this path), and the adversarial
+> review of revision 1 (commit `9586901f9809a17c88ed0239700612eaa1a4c3d2`,
+> `workspace/research/investigations/semantic-contract-promotion-boundary-adversarial-review.md`,
+> disposition **REOPEN**).
 >
-> **Authority:** Research evidence only. It is not accepted architecture, product direction or
+> **Revision relationship:** this revision supersedes revision 1 as the report's current
+> conclusion. Revision 1 keeps its exact commit identity, and the REOPEN disposition binds to it
+> only. § Response to the adversarial review maps each of the review's four closing conditions to
+> the changes made here.
+>
+> **Authority:** Research evidence only. This is not accepted architecture, product direction or
 > implementation commitment until a separate, independently reviewed reconciliation promotes it.
 >
-> **Risk:** High (semantic identity, persistence, historical attribution, determinism, compatibility
-> obligations).
+> **Risk:** High (semantic identity, persistence, historical attribution, determinism,
+> compatibility obligations).
 >
-> **Adversarial-review status:** required, not yet performed. This revision contains only the
-> author's own self-challenge (§ Adversarial analysis). It is **not** decision-quality evidence
-> for reconciling canonical architecture or specifications until a genuinely independent
-> adversarial review of this exact revision has taken place.
+> **Adversarial-review status:** revision 1 was independently reviewed (REOPEN). **This revision
+> has not been reviewed.** It was written by a fresh session that read the review before revising
+> and is therefore anchored on the review's framing. Before any conclusion here is reconciled into
+> canonical architecture or a specification, a new independent adversarial review of this exact
+> revision is required.
 
 ## Question
 
@@ -27,546 +36,749 @@
 > Engine semantic definitions from mutable proving definitions into durable immutable identities,
 > and has Arcogine applied that boundary too early?
 
-The handoff frames the question the same way. I sharpened it in one respect: I evaluate the
-**evidence for fixation** of `factory-model:v1` and `engine-semantics:v1` separately from
-**whether the fixation rule itself is sound**. The two turned out to have different answers.
+Revision 1 treated "was the definition fixed?" as a question about attributed records alone. At
+the review's direction, this revision separates four questions that revision 1 conflated. Each
+one gets its own evidence scope:
+
+1. **Attribution audit (fact):** has any retained or accepted record actually been attributed to
+   `factory-model:v1` or `engine-semantics:v1`, whether the acceptance was declared or undeclared?
+2. **Published commitment (interpretation):** does owning text already publish a stability or
+   non-rebinding commitment, whatever the attribution facts are? Is that commitment independent,
+   or does it only follow from the attribution premise?
+3. **Fulfilment evidence:** what evidence shows that an existing promise is met? (A validation
+   gap does not erase a promise.)
+4. **Desirability:** what should the owner commit to from now on, and at what cost?
 
 ## Decision at stake
 
-- Is the "`factory-model:v1` is immutable because it has attributed records" assertion true? If it
-  is not, which reconciled results depend on it (the Factory V1→V2 successor structure, the
-  V1/V2-absent/V2-present Engine applicability partition, the READY Engine applicability question)?
-- Does Arcogine need a distinguishable provisional/pre-promotion identity regime, or only an
-  evidence requirement on the existing rule?
-- Should the concluded semantic-contract-maturity and Factory-composition results be reopened, and
-  if so, which load-bearing premise fails?
+- What is the true basis, if any, for `factory-model:v1` and `engine-semantics:v1` being fixed?
+  Should the owning text be corrected to state that basis, or should an explicit, authorized
+  transition narrow the promise?
+- What must the fixation rule say so that an actual, undeclared retained acceptance can never be
+  treated as permission to change a definition?
+- Do the Factory V1/V2 successor structure and the READY Engine applicability framing depend on a
+  false premise? Or do they rest on a commitment that survives when attribution is absent?
 
 ## Scope and non-goals
 
-In scope: the Factory fingerprint policies (primary case), `engine-semantics:v1` (secondary case),
-the controlled-revision authority as the only persistence-capable authority, and the architecture
-rules that decide fixation.
+In scope: the Factory fingerprint policies (primary case); `engine-semantics:v1` (secondary case);
+the controlled-revision authority and the Governance evidence authorities, since they are the only
+authorities that could retain attributed records; the cross-domain semantic evolution rules; and
+the delivery history of the texts that currently state fixation.
 
-Out of scope (per the handoff): editing canonical architecture or specifications; renaming
-code/types/files; implementing a provisional-identity mechanism; migration machinery; choosing
-final tokens. The Engine applicability answer itself (which Engine identity executes which V2 case)
-is not answered here. This report only tests the premise that question stands on.
+Out of scope, per the handoff: editing canonical architecture or specifications; renaming
+code/types/files; implementing any provisional-identity mechanism; migration machinery; choosing
+tokens. This report does not answer the Engine applicability question itself, and it does not
+choose between the interpretations it leaves open for the owner.
 
 ## Executive conclusion
 
-1. **The fixation rule is sound; applying it to V1 was premature.** The current rules say a
-   definition becomes fixed at the first retained or accepted attributed record, and that
-   disposable proving activity creates no obligation. That is a defensible boundary, and this
-   investigation found no evidence against it. What fails is the claim that the boundary has been
-   crossed.
-2. **The V1 immutability assertion is unsubstantiated, and its justification is partly circular and
-   partly equivocal.** Each of its three evidence items refers to proving activity or to an
-   in-process domain operation, not to retained or published reliance:
-   - "published fingerprints" means Factory's in-process `FactoryModelPublisher.publish`
-     validation step, not published reliance;
-   - "controlled revisions" and "stored canonical artifacts" exist only inside JUnit `@TempDir`
+1. **Attribution audit: no retained or accepted attribution was found. For the pre-consolidation
+   estate, the owner has positively declared that none existed.** The V1 specification cites three
+   kinds of evidence:
+   - "published fingerprints" refers to Factory's in-process `FactoryModelPublisher.publish`
+     validation step;
+   - "controlled revisions" and "stored canonical artifacts" exist only in JUnit `@TempDir`
      stores;
-   - no custody declaration, release, tag, outward consumer, or non-test instance of any retained
-     authority exists.
+   - no production composition root, release, tag, outward adapter or custody declaration exists.
 
-   The assertion also has a traceable origin. The original V1 decision (dated 2026-08-27) froze the
-   policy "once `factory-model:v1` ships in implementation", and the Factory-evolution decision
-   (2026-09-03) then called V1 "released". The 2026-09-21 architecture consolidation introduced the
-   attribution-based rule. In the same change it restated V1's freeze as "has attributed records",
-   without identifying any record. The freeze was carried over under a new justification that the
-   evidence does not meet.
-3. **`engine-semantics:v1` is even further from a legitimate freeze.** Several facts point the
-   same way:
-   - Its identity is a runtime constant; it is not stamped on any observation, event or retained
-     record, and propagation is a declared gap.
-   - Its spatial rules are not implemented.
-   - It was frozen by an earlier "released versions are immutable" rule, and no release exists.
-   - Its specification now states an unconditional "any intentional result-affecting change is a
-     new version" rule. That rule is stricter than the architecture's pre-attribution correction
-     allowance, and nothing justifies the difference.
-4. **The Factory V1→V2 successor structure depends on the premature freeze. The Factory
-   composition rule does not.**
-   - "One closed policy with explicit optional records and one aggregate fingerprint" stands on
-     its own merits.
-   - The existence of a *separate, coexisting* `factory-model:v2`, with V1 kept unchanged beside
-     it, rests on the premise that V1 was attributed. That premise is stated as context in the
-     composition decision record. So do several consequences:
-     - two identities for identical authored production content (V1 vs V2-absent, pinned as a
-       required V2 golden vector);
-     - the open "continued V1 publication" support question;
-     - the V1 rows in the transfer-applicability boundary and in the READY Engine applicability
-       question.
-   - If the premise fails, the simplest truthful model is one still-provisional Factory grammar
-     (production records plus an optional spatial record), corrected in place, with no V1/V2
-     compatibility estate.
-5. **A narrow boundary invariant survives, and a light distinguishability requirement survives with
-   it. A lifecycle does not.** Arcogine does not need a universal `proving`/`promoted` state. It
-   does need:
-   - (a) an explicit statement that deterministic identity generation, in-process publication,
-     implementation landing on `main`, a "normative" document status, golden vectors, and
-     acceptance by a test-scoped authority instance are **not** attribution;
-   - (b) each owning contract recording its fixation as an evidenced fact (the accepting authority
-     or published reliance that fixed it), or recording that no fixation has occurred;
-   - (c) a guarantee that the **committed identity token never denoted any other definition**. A
-     pre-promotion identity therefore has to be distinguishable from the eventual committed one:
-     either a visibly provisional token corrected in place, or abandon-and-reissue. That token must
-     also be refusable by a retained authority.
+   The consolidation change that introduced the "has attributed records" sentence also recorded an
+   owner declaration (2026-09-19): no retained artifact, external store, release, deployment or
+   external consumer relied on the estate. So the sentence is not just unevidenced. Its own
+   delivery context contradicts it for the period up to the consolidation. After the consolidation,
+   bounded inspection of main code finds no non-test authority instance. This result is **not
+   demonstrated anywhere in scope, and declared absent for the pre-consolidation estate**. It is
+   not a proof that nothing exists anywhere (§ Absence-claim scope).
+2. **Published commitment: V1 has a recorded promotion event, but its current standing is an open
+   interpretation question that the owner must settle explicitly.**
+   - The accepted fingerprint-contract decision of 2026-08-27 deliberately promoted
+     `factory-model:v1` to a "permanent cross-language protocol". It contrasted V1 with the legacy
+     hash, which it called "deliberately provisional", and its trigger was "once `factory-model:v1`
+     ships in implementation". The implementation shipped. That is a genuine, recorded owner
+     commitment, and revision 1 missed it as a commitment.
+   - The 2026-09-21 consolidation then withdrew pre-reset support commitments as forward promises
+     and replaced them with the scoped model. It restated V1's fixation as a consequence
+     ("therefore") of attribution, a premise that does not hold.
+   - Two readings are defensible (§ Factory V1 commitment status):
+     - **R1:** the current fixation depends on attribution only, so its trigger never occurred;
+     - **R2:** the current V1 text re-publishes an operative commitment whose stated justification
+       is wrong.
+   - Both readings agree on three points:
+     - the attribution justification must be replaced;
+     - nothing today authorizes changing V1's bytes under the V1 token by inference;
+     - either reading can be carried out only by an explicit, owner-authorized statement.
+3. **Engine: no attribution was found, and the current text reads more like an independent
+   commitment than V1's does.** This reverses revision 1's "even further from a freeze" claim as to
+   commitment status.
+   - Engine Semantics v1 §1 and Determinism Contract rule 4 state, unconditionally, that an
+     intentional result-affecting change is a new version. Engine §1 also promises that the
+     identifier, specification and fixtures are retained after retirement.
+   - Unlike V1's text, neither is premised on attribution.
+   - They sit in unresolved tension with semantic-evolution rule 2 and with the support policy's
+     explicit allowance for an unfrozen Engine definition whose stamped records are disposable.
+   - The owner must reconcile that tension. Missing metadata cannot settle it.
+4. **The proposed fixation rule must add undeclared acceptance and published commitment as
+   obligation-creating events, and must treat unknown as unknown.** Revision 1's invariants listed
+   declared acceptance, declared reliance and recorded owner commitment. They dropped actual
+   undeclared acceptance, which overview rule 5 and the support policy expressly make
+   obligation-creating. That falsification stands. In the repaired invariant (§ Surviving
+   invariants):
+   - a definition becomes non-rebinding at the earliest of three events:
+     - declared custody acceptance;
+     - actual undeclared retained acceptance;
+     - a published commitment in the owning contract;
+   - in-place correction requires an affirmative, scoped determination that none has occurred;
+   - prevention, discovery and remediation are separate obligations.
+5. **The Factory V1/V2 structure is not shown to be defective, and it survives or falls with the
+   owner's resolution of point 2.**
+   - Under R2, V1 is fixed by commitment and V2 is a necessary distinguishable successor.
+   - Under R1 plus an explicit narrowing, coexistence, retirement of V1, or one provisional grammar
+     all become open choices under the resulting obligations.
+   - Pinning different fingerprints for the same authored production content under two policies
+     (V2 golden vector 16) is deliberate policy-relative identity, not a defect. Revision 1 was
+     wrong to call it one.
+   - The composition rule (one closed policy, explicit optional records, one aggregate
+     fingerprint, absence distinct from authored zero) is untouched.
+6. **Naming and tokens remain options, not conclusions.** The following are all tested options
+   (§ Identity-mechanism options):
+   - a visibly provisional token;
+   - immutable experimental revision identities with bounded support;
+   - a reserved final identity;
+   - admission-time binding of an exact definition revision.
 
-   Rule 2's own boundary is already binary; (b) records it, and adds no new state.
-6. **Reopening.**
-   - The semantic-contract-maturity conclusion survives. Its rule is what this report applies. Its
-     "same-label amendment of an *attributed* Engine definition" open item currently has no
-     concrete attributed case.
-   - The Factory-composition result should be reopened **only** for its successor-identity
-     consequence (premise: "V1 was attributed and immutable"), not for its composition rule.
-   - The READY Engine applicability question should be re-scoped before execution, because it
-     presumes "fixed" Engine v1 and "retained historical v1 results" that do not exist.
+   None is shown to be necessary. Revision 1's "the committed token never denoted another
+   definition, anywhere, including history" requirement is withdrawn as a requirement.
+7. **Reopening consequences stay conditional.** The semantic-contract-maturity conclusion survives.
+   The Factory-composition result is not reopened by this report. It becomes reopenable only if the
+   owner selects R1 and then chooses to revisit the structure. The READY Engine applicability
+   brief's retained-history cases stay valid proving dimensions, but its premise that Engine v1 is
+   "fixed" depends on the Engine commitment question in point 3.
 
 **Confidence:**
-- The repository facts are high confidence, within the stated search scope.
-- "V1 is not attributed under current rules" is high confidence.
-- "The composition rule survives while the successor structure does not" is medium-high.
-- The provisional-distinguishability requirement is medium.
-- Collapsing to a single provisional Factory grammar is medium: it is the simplest candidate, but
-  the reconciliation must still weigh the voluntary-early-commitment alternative (candidate B
-  below), which this report does not falsify.
+
+| Finding | Confidence | Basis |
+| --- | --- | --- |
+| No retained or accepted attribution was demonstrated in scope | High within scope | Absence is not claimed globally |
+| No attribution existed pre-consolidation | High | Rests on the owner's positive declaration, not on inspection alone |
+| The V1 attribution sentence is wrong | High | |
+| A V1 promotion event is recorded (2026-08-27) | High | |
+| Which of R1 and R2 is operative | Open | Owner interpretation; evidence is balanced (§ Factory V1 commitment status) |
+| Engine's text reads as an independent commitment | Medium | The conflict with rule 2 is real either way |
+| The repaired invariant | High | Its elements are already in current text; this report only assembles them |
+| The matrix corrections | High | |
+
+## Response to the adversarial review
+
+| Review condition | What this revision changes |
+| --- | --- |
+| 1. Resolve, or explicitly leave open, whether existing stability language already publishes a commitment; scope each claim; do not equate unknown with absent. | The four questions are separated. The 2026-08-27 promotion event and the #370 withdrawal and owner declaration are added as evidence. The Factory commitment is left explicitly open with the evidence for each reading. The Engine commitment is assessed separately and reads as stronger. Absence claims are scoped, and the owner's positive declaration is distinguished from inspection. The recommendations of an affirmative "no fixation" entry and same-token correction are withdrawn. |
+| 2. Preserve actual undeclared retained acceptance; distinguish prevention from remediation. | Undeclared acceptance is an explicit obligation-creating event (invariant 2b). "Unknown ≠ mutable" is invariant 3. Prevention, discovery and remediation are separated (invariant 4). A test label no longer confers exemption; only the absence of admitted retained use does (invariant 1). |
+| 3. Separate policy-relative identity, historical meaning, continuing support and convenience cost; keep viable alternatives. | The matrix is rebuilt with separate semantic, epistemic, enforcement and cost dimensions. Case 14 is dropped as a falsifier and kept as a cost. The strongest form of candidate C (C\*: correct before the boundary, then obey the whole-definition rule) is tested and survives. Bounded-support immutable definitions are tested. |
+| 4. Correct the V2 source reading; downgrade the universal token conclusion; reassess Engine and Factory afterwards. | V2 §10 is re-read: its absence premise is a sufficient condition for correctability, and it names first retained attribution as the boundary. Revision 1's converse reading is withdrawn. The token requirement becomes a set of options. The Engine and Factory consequences are restated conditionally. |
+
+The review's anchoring qualification applies to it, not to this revision. This revision is
+anchored on the review by construction (§ Adversarial analysis).
 
 ## Repository evidence
 
-All items below are **Repository fact** at the baseline unless labeled otherwise.
+All items are **Repository fact** at the baseline unless labeled **Inference**.
 
 ### Architecture rules that decide fixation
 
-- [Architecture Overview, semantic evolution and support](../../../docs/architecture/overview.md#semantic-evolution-and-support):
-  - rule 2 says "A definition may be corrected in place only until the first retained or accepted
-    record is attributed to it";
-  - rule 3 says "Naming an identity creates none of [the support obligations] automatically";
-  - rule 5 says obligations arise when "the owning contract publishes reliance, or when an
-    authority that has declared its custody accepts a record at its commit boundary", and that
-    "Disposable activity — tests, scratch stores, drained events, local runs — creates no
-    obligation by existing";
-  - rule 7 says there is no universal lifecycle.
+[Architecture Overview, semantic evolution and support](../../../docs/architecture/overview.md#semantic-evolution-and-support):
 
-  The section also lists as **open**: "Same-identity amendment of an attributed Engine definition,
-  custody mechanics for retained proving artifacts".
-- [Semantic contract support](../../../docs/development/semantic-contract-support.md) says that
-  "*Before* publishing reliance ... or admitting material attributed to it into a retained
-  authority, record a compact declaration in the owning specification or authority contract". The
-  declaration covers custody (accepting authority, retained vs disposable scope, horizon, and so
-  on). The document also says "a path name, test label or later deletion is not proof of
-  disposability", and "An Engine that stamps records with a semantics identity must either use a
-  frozen exact definition or keep those records explicitly disposable".
-- Both the rules and the support document were introduced in the architecture consolidation of
-  2026-09-21 (delivery-history provenance: merged PR #370). `git log -S "Attribution fixes the
-  whole definition"` finds that commit as the first appearance.
+- **Rule 1** is unconditional: "An identity denotes exactly one definition". A materially changed
+  definition "requires a distinguishable identity".
+- **Rule 2:** "A definition may be corrected in place only until the first retained or accepted
+  record is attributed to it".
+- **Rule 3:** "Naming an identity creates none of [the support obligations] automatically".
+- **Rule 4** gives as an example of an owning contract promising more "retained conformance
+  fixtures for **released** Engine interpretations". "Released" is not defined anywhere current.
+- **Rule 5** says obligations arise "when the owning contract publishes reliance, or when an
+  authority that has declared its custody accepts a record at its commit boundary". It also says:
+  "Acceptance by an authority that never declared custody is a defect to account for, not a
+  waiver: the accepted fact is never disposed of to escape the obligation it created".
+- **Rule 6:** "Narrowing an in-scope promise requires an explicit, authorized transition under the
+  owning contract".
 
-### The V1 immutability assertion and its origin
+[Semantic contract support](../../../docs/development/semantic-contract-support.md):
 
-- [Factory Model v1](../../../docs/architecture/factory-model-v1.md), "The policy is immutable",
-  says: "`factory-model:v1` has attributed records: published fingerprints, controlled revisions
-  and stored canonical artifacts reference it. Under the semantic evolution rules its definition is
-  therefore fixed as a whole". The sentence first appears in the 2026-09-21 consolidation.
-- The predecessor decision record `0006-durable-semantic-fingerprint-contract.md` (accepted
-  2026-08-27; readable at the parent of the consolidation commit) had a heading "Released
-  fingerprint policies are immutable", with the trigger "Once `factory-model:v1` **ships in
-  implementation**, every supported implementation must produce the same fingerprint".
-- The predecessor `0014-factory-model-semantic-policy-evolution.md` (accepted 2026-09-03) opened
-  with "Arcogine's **released** `factory-model:v1` fingerprint policy is immutable under ADR-0006".
-  It derived the need for a separate `factory-model:v2` from it: spatial facts "cannot be added to
-  `factory-model:v1` without changing the meaning and canonical bytes of an already released
-  policy".
-- The predecessor `0015-engine-semantics-identity-and-reproducibility.md` (accepted 2026-09-03)
-  said "**Released** semantics versions are immutable and never reused".
-- `gh release list --repo alaiba/arcogine` returns nothing, and `git tag --list` is empty. The
-  repository is public (created 2026-04-01). No release event exists.
+- "An unproved promise is a validation gap to close, not a promise erased by missing evidence."
+- "Discovering undeclared retained acceptance blocks new admission until custody/support is
+  declared and requires accounting for the facts already accepted."
+- "Tests, scratch stores, drained events and local runs are disposable only while no retained use
+  has been admitted against them; a path name, test label or later deletion is not proof of
+  disposability."
+- "An Engine that stamps records with a semantics identity must either use a frozen exact
+  definition or keep those records explicitly disposable".
+- "A contract may be introduced and committed to in the same change."
 
-**Inference:** V1's freeze was originally triggered by implementation landing ("ships in
-implementation", later called "released"). The current rules explicitly reject that as a
-sufficient trigger. The consolidation kept the freeze but restated its reason in the new rule's
-vocabulary ("attributed records") without citing an acceptance event.
+**Inference (rule 1 vs rule 2):** read literally, rule 2's in-place correction changes what an
+already-named identity denotes, which is exactly what rule 1 forbids. The two can be reconciled in
+one of two ways:
 
-### What each claimed V1 "attributed record" concretely is
+- rule 1 applies from fixation onward; or
+- in-place correction changes an editable draft *document*, not an identity any retained record
+  resolves.
 
-| Claimed evidence | Concrete referent found | Retained or published reliance? |
+The current text does not say which. This matters for the token options below.
+
+### The Factory V1 fixation texts and their lineage
+
+- **Current [Factory Model v1](../../../docs/architecture/factory-model-v1.md), "The policy is
+  immutable":**
+  > `factory-model:v1` has attributed records: published fingerprints, controlled revisions and
+  > stored canonical artifacts reference it. Under the semantic evolution rules its definition is
+  > therefore fixed as a whole, and every implementation claiming the policy must produce the same
+  > fingerprint for the same v1 semantic content across processes, software versions, and
+  > implementation languages.
+
+  A separate paragraph follows: "Changing any identity-affecting rule while still calling the
+  policy v1 is forbidden", with a list. The next section is headed "Golden compatibility vectors
+  are part of the contract". The header names Factory Model v2 as "Successor policy".
+- **2026-08-27, accepted decision `0006-durable-semantic-fingerprint-contract`** (readable at the
+  parent of the consolidation commit `c599c908`):
+  - its Context calls the legacy `contentHash()` "provisional rather than a persisted, public, or
+    cross-process compatibility guarantee";
+  - it rejects promoting that hash because it "would turn Java implementation details into
+    permanent cross-language protocol semantics";
+  - it is headed "Released fingerprint policies are immutable", and its rule reads: "Once
+    `factory-model:v1` ships in implementation, every supported implementation must produce the
+    same fingerprint ... across processes, software versions, and implementation languages";
+  - the same prohibition list and "Golden compatibility vectors are part of the contract" follow.
+- **2026-09-21, consolidation (merged PR #370):**
+  - the description records an owner declaration supplied 2026-09-19: "everything presently in the
+    repository is the complete pre-reset estate — no client, retained artifact, external store,
+    release, deployment, or external consumer relies on it — and no pre-reset support commitment
+    needs to continue as a promise of the post-consolidation system";
+  - it adds: "This consolidation replaces the prior support promises with the scoped support
+    model" and "Pre-reset commitments remain historical facts ... Withdrawing them as forward
+    promises does not rewrite what they meant";
+  - it records a falsification trigger for any use the declaration excluded;
+  - the same change wrote the current V1 sentence citing attributed records (first appearance per
+    `git log -S`).
+- **2026-09-23, Factory composition reconciliation (merged PR #387):**
+  - the [composition decision record](../../../docs/history/decisions/2026-09-23-factory-model-semantic-composition.md)
+    Context states: "`factory-model:v1` was attributed and immutable";
+  - [Factory Model v2 §2](../../../docs/architecture/factory-model-v2.md#2-relationship-to-factory-modelv1)
+    states: "V1's grammar, digests, golden vectors, and historical fingerprints are permanently
+    unchanged by V2's existence".
+
+  The decision record is historical, not current authority.
+- `gh release list` returns nothing, and `git ls-remote --tags origin` returns nothing.
+
+### Concrete referents of the claimed V1 records
+
+| Claimed evidence | Concrete referent found | Retained or accepted attribution? |
 |---|---|---|
-| "published fingerprints" | `FactoryModelPublisher.publish(model)` validates and returns an in-memory `FactoryModelVersion`, whose fingerprint is computed on demand. In Factory's domain language "publication" is this validation boundary ([factory-design.md §11–§12](../../../docs/architecture/factory-design.md#11-publication-identity-and-provenance)). | No. It is an in-process domain operation, not rule 5's "publishes reliance". No outward adapter exists ([overview, Outward Adapters](../../../docs/architecture/overview.md#outward-adapters)). |
-| "controlled revisions" | `FileControlledRevisionAuthority` is constructed only in `FileControlledRevisionAuthorityTest`, `ChangeSetFactoryTest` and `PreChangeConformanceProvingCaseTest`, each on a JUnit `@TempDir`. | No. These are test-scoped scratch stores. No production composition root instantiates the authority. |
-| "stored canonical artifacts" | Artifacts written by those same temp-dir authorities. No canonical artifact file is committed (`product/**/src/{main,test}/resources` contains no tracked files). | No. |
-| (implicit) golden vector | One literal V1 fingerprint pinned in `FactoryModelFingerprintV1Test`. | A committed test vector, i.e. proving evidence; nothing consumes it outside the test. |
-| (implicit) documentation examples | `standards-alignment.md` and `factory-model-v1.md` show only the `<digest>` placeholder form. | No concrete digest in durable docs. |
-
-**Absence-claim scope:**
-- `git grep` over the baseline tree for `static void main`, for every construction of
-  `FileControlledRevisionAuthority`, for `factory-model:v1:sha256` literals, and for main-code uses
-  of `ModelFingerprint` and `EngineSemanticsVersion`.
-- `git grep` over the parent trees of the commits that retired the legacy API/CLI shell and the web
-  consumer (`product/interfaces/{api,cli,web}`), for `fingerprint`, `semanticsVersion` and
-  `FileControlledRevision`. There were no matches, so those retired surfaces never carried
-  fingerprints or revision authority.
-- GitHub releases and git tags.
-
-**Limitation:** this cannot observe contributor machines, forks, or third parties who may have
-built the public repository and kept outputs. Under rule 5 and the support policy's
-external-consumer case, that kind of undeclared third-party use creates no Arcogine obligation
-unless Arcogine published reliance. I found no such publication.
-
-### Other authorities
-
-- `EvidenceReferenceAuthority` and `EvaluationOccurrenceAuthority` have only in-memory
-  implementations (`InMemoryEvidenceReferenceAuthority`, `InMemoryEvaluationOccurrenceAuthority`).
-- [Governance evidence](../../../docs/architecture/governance-evidence.md) defers retention and
-  persistence.
-- No custody declaration exists in any owning specification or authority contract. `git grep -i
-  custody` over `docs/` (excluding research investigations) finds only the rule, the support
-  policy and research-custody prose.
-- [Controlled revisions](../../../docs/architecture/controlled-revisions.md) states the semantic
-  persistence obligations, but not retained-versus-disposable scope, horizon, or how disposable
-  material becomes retained admission.
+| "published fingerprints" | `FactoryModelPublisher.publish(model)` validates and returns an immutable in-memory `FactoryModelVersion`. Factory "publication" is this validation boundary ([factory-design.md §11](../../../docs/architecture/factory-design.md#11-publication-identity-and-provenance)). | Not demonstrated. It is an in-process domain operation, not rule 5's "publishes reliance". No outward adapter exists. |
+| "controlled revisions" | `FileControlledRevisionAuthority` (public constructor) is constructed only in `FileControlledRevisionAuthorityTest`, `ChangeSetFactoryTest` and `PreChangeConformanceProvingCaseTest`, each on a JUnit `@TempDir`. | Not demonstrated. These instances demonstrate a capability. No retained use is known to have been admitted against them. |
+| "stored canonical artifacts" | Written only by those temp-dir instances. No tracked files exist under `product/**/src/{main,test}/resources`. | Not demonstrated. |
+| golden vector | One literal V1 fingerprint in `FactoryModelFingerprintV1Test`, plus a synthetic `"a".repeat(64)` digest in `ModelFingerprintTest`. | Fulfilment evidence for reproduction (question 3), not attribution. |
 
 ### Engine
 
-- `EngineSemanticsVersion.CURRENT = "engine-semantics:v1"` was introduced 2026-09-18.
-  `FactoryRuntime.semanticsVersion()` exposes it.
-- `RuntimeObservationMetadata` carries `runId` and `modelFingerprint`, but no semantics version.
-  The overview states that propagation "remains follow-up work".
-- The [Engine specification](../../../docs/architecture/engine-semantics-v1.md) status is
-  "implementation partial (spatial execution and provenance propagation outstanding)".
-- Its §1 says: "An intentional change that can alter outcome for identical explicit inputs —
-  including a bug fix that observably changes interpretation — is a new version". This has no
-  pre-attribution qualifier.
-- No main-code consumer (Challenge included) records an Engine semantics identity.
+- `EngineSemanticsVersion.CURRENT = "engine-semantics:v1"` is exposed by
+  `FactoryRuntime.semanticsVersion()`.
+- `RuntimeObservationMetadata` carries no semantics identity, a declared propagation gap.
+- **Correction to revision 1:** the main-code Governance type `EvidenceProvenance` has an
+  `Optional<EngineSemanticsVersion>` field, so evidence references *can* carry an Engine identity.
+  Its only main-code holders are `InMemoryEvidenceReferenceAuthority` and
+  `InMemoryEvaluationOccurrenceAuthority`. Its main-code construction sites are its own static
+  factories; other callers are tests. No retaining authority exists, so this does not change the
+  attribution result. But revision 1's claim that the identity "is not stamped on any record" was
+  imprecise: the capability exists.
+- [Engine Semantics v1 §1](../../../docs/architecture/engine-semantics-v1.md#1-purpose):
+  - "An intentional change that can alter outcome for identical explicit inputs — including a bug
+    fix that observably changes interpretation — is a new version";
+  - "When a version is retired from execution, its identifier, this specification and the
+    conformance fixtures of section 14 remain".
+
+  Status: "implementation partial (spatial execution and provenance propagation outstanding)".
+- [Determinism Contract](../../../docs/architecture/overview.md#determinism-contract):
+  - rule 4: "An intentional change to result-affecting behavior is a new interpretation identity";
+  - rule 5: "A retired interpretation keeps its identifier, normative specification and
+    conformance fixtures".
+
+  Neither rule is qualified by attribution.
+- **2026-09-03, accepted decision `0015-engine-semantics-identity-and-reproducibility`:**
+  "**Released** semantics versions are immutable and never reused"; "For every released version
+  Arcogine retains its identifier, immutable normative specification, and conformance fixtures".
+  No Engine release event is defined or recorded.
 
 ### V2 and dependent research
 
-- [Factory Model v2 §10](../../../docs/architecture/factory-model-v2.md#10-identity-and-evolution)
-  uses the correctability test "No V2 fingerprint has yet been produced by a **shipped publication
-  path** or recorded against a controlled revision". That is the de facto boundary the repository
-  applies, and it is the old "ships in implementation" trigger, not the current rule 2/5 boundary.
-  Under that test, V1 counts as frozen only because its publication path is merged, and V1's
-  "controlled revisions" are the temp-dir ones.
-- The same document requires golden vector 16: "the same authored production content fingerprinted
-  under V1 and under V2 with the spatial record absent producing different fingerprints". It also
-  says a V2-absent artifact "carries V1's production stream unchanged". Two identities for
-  identical authored content are therefore a pinned consequence.
-- [Composition decision record](../../../docs/history/decisions/2026-09-23-factory-model-semantic-composition.md),
-  Context: "`factory-model:v1` was attributed and immutable; the V2 draft had never produced or
-  recorded a fingerprint". This is stated without evidence.
-- The READY [Engine applicability question](../../../docs/research/investigations/engine-applicability-after-transfer-boundary.md)
-  asks whether "an existing fixed definition" can admit the V2 cases. It lists "retained historical
-  v1 results" and "execution support for retained V1 artifacts" among its cases.
-- The concluded [semantic-contract maturity brief](../../../docs/research/investigations/semantic-contract-maturity-durability.md)
-  explicitly rejected durability "arising automatically from introduction, decision acceptance,
-  internal publication, or the first need for a deterministic identifier". Its full report and
-  review were not retained, so I could not check whether it audited V1's actual attribution.
+- [Factory Model v2 §10](../../../docs/architecture/factory-model-v2.md#10-identity-and-evolution):
+  - "No V2 fingerprint has yet been produced by a shipped publication path or recorded against a
+    controlled revision, so this grammar may still be corrected ... the first retained attribution
+    freezes the whole definition".
+  - Golden vector 16 pins different fingerprints for the same authored production content under V1
+    and V2 with the spatial record absent.
+- The [Factory semantic-evolution contract](../../../docs/architecture/factory-design.md#111-semantic-evolution)
+  distinguishes cross-policy semantic comparison from full-fingerprint equality ("Such equivalence
+  is never full-fingerprint equality"). It says: "nothing mandates eternal readers for every policy
+  or permanent coexistence of any two."
+- The composition decision record adds two points:
+  - an earlier argument that dual-policy support "would be a permanent burden did not survive
+    review";
+  - "no inspected consumer relied" on unchanged complete fingerprints.
+
+  These are historical qualifications; they support the current contract but do not replace it.
+- The READY [Engine applicability brief](../../../docs/research/investigations/engine-applicability-after-transfer-boundary.md)
+  states "Engine v1 remains fixed". It lists "Factory V1 under Engine v1 and retained historical
+  v1 results" among its cases. These are proving dimensions, not an inventory claim that such
+  records exist.
+
+### Absence-claim scope
+
+**Search scope:** `git grep` over the baseline tree for `static void main` (none under `product/`);
+for constructions of `FileControlledRevisionAuthority` (tests only); for users of
+`EvidenceProvenance` and `EngineSemanticsVersion`; and for `factory-model:v1:sha256` literals
+(test code and `<digest>` placeholders in docs). It also covers tracked resources (none), GitHub
+releases (none) and remote tags (none). Revision 1's additional searches of the parent trees of the
+retired interface modules are carried forward; this revision did not repeat them.
+
+**Out of scope:** contributor machines, forks, third-party builds, and ad-hoc local code that might
+have instantiated the public authority constructor outside tests.
+
+- For the **pre-consolidation** estate, the owner's positive declaration covers the gap. This
+  report relies on that declaration's authority, not on search results.
+- For the **post-consolidation** period, only the bounded search applies.
+- Third-party retention without an Arcogine publication creates no Arcogine obligation under rule
+  5. An *Arcogine* authority accepting and retaining without declaration would. Nothing found
+  indicates one, and the scope cannot exclude one absolutely.
+
+## Factory V1 commitment status
+
+This is review condition 1, the central open question. The question is whether the current V1
+stability language is an independently published commitment, or a derived consequence of the
+attribution premise.
+
+**Evidence for R1 (derived; its trigger never occurred):**
+
+- The sentence's grammar makes fixation and cross-version reproduction a consequence ("therefore")
+  of attribution under the semantic evolution rules.
+- The consolidation's stated intent was to withdraw pre-reset support promises and re-base all
+  obligations on the scoped model. In that model, fixation follows from attribution or published
+  reliance, and implementation landing is not a trigger (rules 3 and 5).
+- The owner's own declaration in that change says no retained artifact existed. Keeping an
+  implementation-triggered promise alive while declaring that nothing relied on it would have been
+  pointless, which suggests the attribution sentence was an intended re-basing that misstated the
+  facts.
+- Every post-consolidation statement of V1's fixation (the V1 specification, the composition
+  record) cites attribution, not an independent commitment.
+
+**Evidence for R2 (operative commitment; wrong justification):**
+
+- The current V1 text still publishes normative, unconditional-sounding content:
+  - cross-software-version reproduction;
+  - a separate prohibition paragraph;
+  - "golden *compatibility* vectors are part of the contract".
+- The support policy says a contract may be committed to in the same change it is introduced.
+- The consolidation did not remove the promise text. It re-published it in the post-consolidation
+  specification. Arguably that is a fresh publication under current rules, independent of whether
+  the pre-reset promise was withdrawn.
+- Post-consolidation owner conduct treated V1 as fixed:
+  - V2 was built as a separate successor;
+  - V2 §2 says V1 is "permanently unchanged";
+  - V2 golden vector 18 pins V1 as a regression.
+- Rule 6 requires an explicit, authorized transition to narrow a promise, and none has occurred.
+
+**Inference:**
+
+- The evidence is balanced. Research cannot decide what the owner's published text commits to.
+  The owner can.
+- The reconciliation does not depend on picking the "right" reading after the fact. Both readings
+  require the same explicit act: the owner states the operative basis in the V1 specification.
+  - Either V1 is committed, with the actual basis stated (the promotion decision and its
+    re-publication), not attribution.
+  - Or the promise is narrowed by an authorized transition that records an estate declaration and
+    a falsification trigger, in the form #370 already used as precedent.
+- An in-place change of V1's bytes under the V1 token without that act would violate R2 if R2
+  holds, and would violate rule 6's explicitness requirement under either reading.
+- Revision 1's "no fixation; correct in place" recommendation is therefore withdrawn.
+
+**Scope of any commitment:**
+
+- The V1 text binds "every implementation claiming the policy": the definition's reproducibility
+  across implementations and software versions.
+- It names no consumer, and it makes no decoding, execution or support-horizon promise. The text
+  itself disclaims that ("this specification fixes the definition, not a support horizon").
+- So even under R2, the commitment is about non-rebinding of the definition, not a compatibility
+  estate.
+- Cross-language reproduction is a validation gap, because only Java fixtures exist. That gap is a
+  question-3 matter and does not dissolve the promise.
+
+## Engine commitment status
+
+- **Attribution (question 1):** not demonstrated, for the reasons in § Engine above.
+- **Commitment (question 2):**
+  - The current Engine §1 new-version rule and retention promise, and Determinism Contract rules 4
+    and 5, are stated without an attribution premise.
+  - The predecessor "released" qualifier survives only as the undefined word "released" in overview
+    rule 4's example.
+  - **Inference:** as written, the Engine text reads more like an independent commitment than V1's
+    does. That commitment conflicts with rule 2's pre-attribution correction allowance, and with
+    the support policy's permission for an Engine to keep stamped records "explicitly disposable"
+    instead of using "a frozen exact definition", which presupposes that an unfrozen Engine
+    definition can exist.
+  - It is a genuine specification conflict. The resolution belongs to the owner, and missing
+    runtime metadata is not evidence of which side prevails.
+- **Whole-definition consequence:** if the Engine commitment is operative, then rule 2's whole-
+  definition fixation already covers the specified-but-unexecuted spatial rules (§5–§8, §12). That
+  may be intended, or it may not. The reconciliation should say which. Revision 1's argument that
+  the definition should *stay* provisional because those rules are unexecuted is downgraded to a
+  consideration for question 4. Overview rule 7 expressly rejects freezing only exercised
+  sections, so it is not a reason by itself.
+- **Consequence for the READY Engine applicability brief:** its "Engine v1 remains fixed" premise
+  is a commitment-status claim whose basis the brief does not state. Its retained-history cases
+  remain valid failure dimensions whether or not such records exist. This report does not
+  recommend collapsing the question to "one correctable Engine definition". It recommends that the
+  Engine commitment basis be made explicit before or during that investigation, so the brief's
+  whole-definition test runs against a stated basis. Factory and Engine may resolve differently.
 
 ## Candidate models
 
-- **A. Strict current model.** V1 and Engine v1 are already fixed by retained attribution. Any
-  semantic correction needs a distinguishable identity.
-- **B. Owner-declared early commitment.** V1 (and possibly Engine v1) is fixed by a deliberate
-  owner decision, not by attribution. This is legitimate in principle: the support policy says "a
-  contract may be introduced and committed to in the same change". It would have to be declared as
-  a commitment, with consumers, scope and the reason for choosing it.
-- **C. Premature promotion, correct in place, no marker.** Nothing is attributed, so correct V1 and
-  Engine v1 in place and keep the `v1` tokens. No other change.
-- **D. Evidence gap.** The rule is sound; add the missing declarations and fixation evidence. The
-  status of V1 and Engine v1 is whatever that evidence shows.
-- **E. Provisional identity regime.** A pre-promotion identity is visibly distinct from any
-  committed identity and is corrected in place. The committed token is issued only at promotion.
-  Retained authorities refuse provisional identities. There are two variants of the committed-token
-  choice: E1 uses a new committed token; E2 promotes the provisional definition under a reserved
-  token that no earlier definition used.
-- **F. Immutable ephemeral identifiers.** Every proving revision gets a fresh immutable identifier
-  (draft-NN style) carrying no support obligations, and the committed token is assigned at
-  promotion.
-- **G. Scoped mixed.** Factory and Engine have different legitimate boundaries.
-- **H. No-new-lifecycle boundary invariant.** Keep rules 1–7. Add: (a) generation, publication,
-  implementation, golden vectors and test-scoped acceptance are not attribution; (b) each owning
-  contract records fixation as an evidenced fact; (c) the committed token never denoted another
-  definition. This is D with enforceable content plus the distinguishability part of E, without a
-  lifecycle state.
+- **A. Fixed by attribution (current text taken literally).** Rests on a factual premise that is
+  not demonstrated, and for the pre-consolidation estate is declared false.
+- **B. Fixed by published commitment.** For Factory this is R2; the Engine text supports B more
+  directly. Legitimate under the support policy.
+- **C\*. Boundary-obeying correction.** Correct in place before any established fixation event;
+  after one, obey the whole-definition rule and mint a distinguishable identity. No new marker is
+  required. This is the strongest form of revision 1's candidate C.
+- **D. Evidence gap.** The rules are sound and the owning contracts lack stated bases. This is
+  compatible with B and C\*: it is the reconciliation work both need.
+- **G. Scoped mixed.** Factory and Engine resolve differently, for example Factory under R1 and
+  narrowed while Engine keeps its operative commitment, or the reverse.
+- **H′. Repaired boundary invariant.** Keep rules 1–7. State the fixation events (including
+  undeclared acceptance and published commitment), the epistemic rule (unknown ≠ mutable) and the
+  prevention/discovery/remediation split. No lifecycle state.
+- **I. Immutable, bounded-support definition identities.** Every materially changed definition
+  gets a distinguishable identity, including during proving. Each carries only the support its
+  owning contract declares, possibly none beyond definition resolvability. Distinct identities do
+  not by themselves create a support estate (rule 3; Factory §11.1).
+
+Revision 1's candidates E and F are now treated as identity *mechanisms* (next section), not as
+semantic models. They answer "how is a provisional definition kept distinguishable?", not "when is
+a definition fixed?".
+
+## Identity-mechanism options
+
+These options are evaluated, not selected.
+
+| Option | What it provides | Main limitation |
+|---|---|---|
+| T0. One token throughout; in-place correction before fixation (current) | No new machinery | Relies on C\*/H′ discipline. The history ambiguity in case 13 remains. |
+| T1. Visibly provisional token corrected in place; a committed token issued at promotion | A signal at a glance; retained authorities can refuse by token | Still rebinds the provisional token across its own history. A moving provisional name is not an acceptable sole retained identity (per the review). |
+| T2. Immutable experimental revision identities (draft-NN) with bounded support | No rebinding at all; experimental artifacts can be retained with declared horizons | Mints an identity per change; still needs a support declaration if retained |
+| T3. Reserved final identity used only at promotion | The committed token never denoted another definition | Does not by itself make pre-promotion identities refusable |
+| T4. Admission-time binding of an exact definition revision (for example a digest of the definition document) behind a mutable alias | Retained records resolve an exact definition even if the alias moves | New machinery. The alias must never be the retained identity. |
+
+**Inference:**
+
+- Case 13's history ambiguity is a real clarity cost when the identity token is inside canonical
+  bytes.
+- It creates no obligation, because Git history is delivery history, not a retained authority.
+- T1–T4 each reduce the ambiguity differently. None is shown to be necessary.
+- The support policy already permits retained experimental artifacts with declared definition,
+  basis, horizon and refusal. So refusing *every* experimental identity for lacking a promotion
+  label would be a stronger mechanism that needs its own justification.
+- Refusing identities whose exact definition cannot be resolved *is* justified by rule 4.
 
 ## External evidence
 
-All sources below were fetched and checked during this investigation (verified 2026-09-25).
+These sources were verified by revision 1 on 2026-09-25, and independently by the adversarial
+review on the same date. This revision did not re-fetch them. They are design precedents, not
+Arcogine authority.
 
 | Source | What it establishes | Where the analogy breaks |
 |---|---|---|
-| Semantic Versioning 2.0.0, semver.org, items 3, 4, 9 | Item 3: "Once a versioned package has been released, the contents of that version MUST NOT be modified". Item 4: 0.y.z is "for initial development. Anything MAY change at any time." Item 9: pre-releases "might not satisfy the intended compatibility requirements". The freeze trigger is **release**, not implementation. | SemVer versions API *compatibility* between packages. Even a 0.x release is immutable content, so "v0" under SemVer would still mint a new number per change and does **not** give in-place correctability. SemVer has no notion of persisted records attributed to a definition. Adopting "v0" by analogy would bring in the proliferation it was meant to avoid. |
-| Kubernetes, "API Overview — API versioning", kubernetes.io/docs/reference/using-api/ (page as of 2026-09-25) | Alpha versions (`v1alpha1`) "may change in incompatible ways ... without notice", and support "may be dropped at any time without notice". Beta may change with migration instructions. Stable `vX` remains available. Provisional status is **visible in the identifier**, and the committed name `v1` is reserved for the promoted definition. | Kubernetes versions a wire/storage API with a live store (etcd) and real users; alpha objects are persisted. Arcogine has no store and no users. The page does not say what happens to persisted alpha data, so it does not settle what a retained provisional record would mean. |
-| multiformats/multicodec README (GitHub, master, fetched 2026-09-25), status column | "draft - ... may be reassigned if it doesn't gain wide adoption"; "permanent - ... may not [be] reassigned". The NOTE says draft status alone does not make a code reassignable: "Check to see if it ever gained wide adoption". A content-identifier registry uses a provisional status whose rebinding permission depends on **actual adoption**, not on a label. | Multicodec codes are global registry entries with third-party adoption. Arcogine's policies are single-owner. The "adoption" test maps onto Arcogine's "retained or published reliance" test. The status label is a hint, not the authority, which matches Arcogine's "a path name, test label ... is not proof of disposability". |
-| IETF RFC 7595 (BCP 35), *Guidelines and Registration Procedures for URI Schemes*, June 2015, §3, §4, §7.1, §7.3 | "Provisional" registrations "can be updated by the original registrant", and transition to "permanent" is requested and approved "in the same manner as a new 'permanent' registration". A standards body keeps provisional and permanent identifiers as distinct statuses, with an explicit promotion act. | This is an identifier-registration process, not content identity. Its provisional names are the same token before and after promotion, so it does not support requirement (c). It shows that an explicit promotion *act* is normal practice, not that tokens must differ. |
+| Semantic Versioning 2.0.0, items 1, 3, 4, 9 | A public API may be declared by documentation. A released version's contents must not be modified. 0.y.z is for initial development, where anything may change *between versions*; each release is still immutable. | SemVer versions package compatibility, not persisted records attributed to a definition. An outside trigger ("release") cannot invalidate an Arcogine owner's choice of a different trigger, such as the 2026-08-27 "ships in implementation". SemVer "v0" still mints a new number per change, so it does not give in-place correction. |
+| Kubernetes API Overview, API versioning | Alpha/beta/stable names expose different stability expectations in the identifier. | A live store and real users. It shows visible provisional naming is useful, not that Arcogine needs it or needs the same storage lifecycle. |
+| IETF RFC 7595 / BCP 35 (June 2015), §7.2–§7.3 | A registration's status can change under a change-control process, with the same name before and after. | Registration permanence is not immutability of canonical semantic bytes. It does not support requiring distinct provisional and final tokens. |
 
-**How the external evidence bears on the candidates.** None of the four sources treats
-implementation as the freeze trigger. All four freeze on an explicit act (release, stable
-graduation, permanent registration) or on observed reliance (adoption). That contradicts the
-original "ships in implementation" trigger and supports the current rule 2/5 boundary. The
-evidence is mixed on whether the provisional marker must be part of the token itself:
-- Kubernetes: yes;
-- RFC 7595: no;
-- multicodec: status column, not token.
-
-That remains an Arcogine design choice, and I justify it below from an Arcogine-specific property
-(the token participates in canonical bytes), not from analogy.
+**Removed:** the multicodec source. The review could not re-verify it, and it was not load-bearing.
+Revision 1's claim that "all four analogues contradict" an implementation-linked trigger is
+withdrawn as too strong: every source shows only that some systems choose release or adoption
+triggers.
 
 ## Proving cases
 
-Legend: ✓ handled truthfully at proportionate cost; ✗ fails (untruthful, or creates unrequired
-obligations); ~ coherent but costly or ambiguous.
+The matrix is rebuilt so that each cell's result names its dimension:
 
-| # | Case | A strict | B declared | C in-place | D gap | E provisional | F ephemeral | H invariant |
-|---|---|---|---|---|---|---|---|---|
-| 1 | Golden vector changes before any retained authority accepts it | ✗ forces a new policy for a test-only change | ~ new policy by owner's choice | ✓ | ✓ once D shows no fixation | ✓ | ~ new draft id per change | ✓ |
-| 2 | Test creates a `ControlledRevision`, then all state is deleted | ✗ counts it as attribution (V1's current claim) | ✓ irrelevant to a declared freeze | ✓ | ✓ | ✓ authority would refuse or not persist | ✓ | ✓ (a) says so explicitly |
-| 3 | Canonical artifact stored only as a Git test fixture | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| 4 | Durable repository example refers to `factory-model:v1`, no consumer promised | ✗ | ~ | ~ the example silently changes meaning across history | ✓ if the example is declared illustrative | ✓ the example names a provisional token | ✓ | ✓ |
-| 5 | Internal retained authority deliberately accepts a fingerprint and must explain it months later, pre-release | ✓ | ✓ | ✗ no marker; nothing tells anyone the freeze happened | ✓ declaration precedes admission | ✓ promotion precedes admission | ✓ | ✓ this is exactly the legitimate boundary |
-| 6 | External consumer persists the identity | ✓ | ✓ | ✗ | ✓ | ✓ only committed tokens are published | ✓ | ✓ |
-| 7 | Provisional identity accidentally crosses into an authoritative store | n/a | n/a | ✗ undetectable | ~ review-only | ✓ mechanically refusable | ✓ refusable | ✓ with (c) plus authority refusal |
-| 8 | Semantic defect found just before promotion | ✗ new identity | ✗ new identity | ✓ | ✓ | ✓ | ✓ new draft id | ✓ |
-| 9 | Same defect found just after legitimate promotion | ✓ new identity | ✓ | ✗ in-place edit would rebind | ✓ | ✓ | ✓ | ✓ new identity; the old one keeps its meaning |
-| 10 | Spatial semantics discovered while provisional vs after commitment | ✗ provisional case builds a V1/V2 estate | ~ | ✓ provisional, ✗ committed (rebinds) | ✓ | ✓ | ✓ | ✓ correct in place before; new closed policy after |
-| 11 | Engine interpretation changes during internal proving vs after retained run attribution | ✗ new version for unimplemented rules | ~ | ✓ proving, ✗ after | ✓ | ✓ | ✓ | ✓ |
-| 12 | Support retired while historical attributed records remain | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ unchanged (rule 6) |
-| 13 | *(derived)* Repository history: an old commit's test pins `factory-model:v1` bytes that a later in-place correction changed | ✓ | ✓ | ✗ the committed token then denotes two definitions across history | ~ | ✓ provisional token was never the committed one | ✓ | ✓ via (c) |
-| 14 | *(derived)* Identical authored production content needs one identity | ✗ V1 vs V2-absent duplication is required | ✗ same | ✓ | ✓ | ✓ | ✓ | ✓ |
+- **S:** semantic contradiction (untruthful identity or history);
+- **E:** epistemic mishandling (unknown treated as known);
+- **M:** enforcement weakness (relies on review, not mechanism);
+- **C:** discretionary cost only.
 
-Notes on the derived cases:
-- **Case 13** is Arcogine-specific. The policy token is inside the canonical bytes (`arcogine.factory-model.v1\0` prefix), so git history permanently associates "v1" with whichever bytes the tests at a given commit pinned. Git history is delivery history, not a retained authority, so this creates no *obligation*. It does create *ambiguity* if the committed identity reuses a token that denoted something else earlier. That is the discriminator against C.
-- **Case 14** exposes the concrete cost of A: vector 16 of the V2 specification pins two different fingerprints for the same authored design.
+A ✓ means handled truthfully. Only S and E are falsifying.
+
+| # | Case | A attribution | B commitment | C\* boundary-obeying | H′ repaired | I bounded-support immutable |
+|---|---|---|---|---|---|---|
+| 1 | Golden vector changes before any fixation event | E: treats temp stores as attribution | C: new identity required by commitment | ✓ | ✓ after affirmative determination | ✓ (new identity; no support by default) |
+| 2 | Test creates a `ControlledRevision`, then all state is deleted | E | ✓ | ✓ if no retained use was admitted | ✓ (invariant 1) | ✓ |
+| 3 | Canonical artifact kept only as a Git test fixture | E | ✓ | ✓ | ✓ | ✓ |
+| 4 | Durable example refers to the identity; no consumer is promised | ✓ | ✓ | M: the example's meaning may drift across history | ✓ if the example is declared illustrative | ✓ |
+| 5 | Internal authority deliberately accepts under a declaration and must explain months later | ✓ | ✓ | ✓ | ✓ (2a) | ✓ |
+| 6 | External consumer persists the identity under published reliance | ✓ | ✓ | ✓ (fixation event) | ✓ (2c) | ✓ |
+| 7 | Provisional identity accidentally reaches an authoritative store | ✓ | ✓ | M: detection by review only | M/✓ depending on the refusal mechanism | ✓ (every identity already resolves exactly) |
+| 8 | Semantic defect found just before a fixation event | C | C | ✓ | ✓ | C: new identity |
+| 9 | Same defect found just after a legitimate fixation event | ✓ new identity | ✓ | ✓ new identity (C\* obeys the rule) | ✓ | ✓ |
+| 10 | Spatial semantics discovered while unfixed vs after fixation | E if the fixation is misattributed | C: successor required | ✓ both | ✓ both | C: new identity either way |
+| 11 | Engine interpretation changes during proving vs after retained run attribution | E | ✓ (Engine's current text) | ✓ | ✓ | ✓ |
+| 12 | Support retired while attributed records remain | ✓ | ✓ | ✓ | ✓ (rule 6) | ✓ |
+| 13 | Old commit's test pins identity bytes that a later correction changes | ✓ | ✓ | M/C: history ambiguity, no obligation | M/C (mechanism-dependent; see T1–T4) | ✓ |
+| 14 | Same authored production content under two policies | ✓ policy-relative by design | ✓ | ✓ | ✓ | ✓ |
+| U | *(new, from the review)* An authority actually retains a record without declaring custody. Later, someone changes the definition because no fixation event is recorded. | ✓ | ✓ | **S** unless C\* counts undeclared acceptance as the boundary | ✓ (2b; invariants 3 and 4) | ✓ |
+| P | *(new)* Normative owning text publishes a stability promise with a basis that turns out wrong, and nothing has been attributed | E | ✓ | **S/E** if it corrects in place without an explicit transition | ✓ (2c; rule 6 transition) | ✓ |
 
 **Results:**
-- **A fails** cases 1–4, 8, 10, 11 and 14. Its only support is the unsubstantiated attribution claim.
-- **C fails** cases 5, 6, 7 and 13. It removes obligations but gives no signal when a legitimate boundary is later crossed.
-- **D** is right about the rule but, left as a review-only declaration, handles case 7 weakly.
-- **E, F and H** all pass. **F** adds a new identifier per proving change, and nothing requires that cost while no record escapes.
-- **B** is not falsified: an owner can choose to commit early. It is ~/✗ on cases 1, 8, 10 and 14 purely on cost. It is also not what the repository currently claims, since the claimed basis is attribution.
-- **G (scoped mixed)** is absorbed. Factory and Engine turn out to be in the *same* state (neither is attributed), but they differ in readiness (below), so their future promotion moments should be decided separately.
 
-## Engine assessed separately
+- **A fails on E** (cases 1, 2, 3, 10, 11, P). Its only support is the factual premise, which is
+  not demonstrated.
+- **B is not falsified.** Its costs (1, 8, 10) are discretionary. It is the operative model
+  wherever the owner confirms a commitment.
+- **C\* survives** only when its "established boundary" includes undeclared acceptance and
+  published commitment. With that repair, C\* and H′ are essentially the same semantic model, and
+  H′ is C\* stated as invariants. Revision 1's unrepaired C (and revision 1's H) fails U. That was
+  the review's falsification, and it stands.
+- **I survives.** It is truthful everywhere. Its cost is identity proliferation, which is a support
+  burden only if each identity is also given support. Rule 3 and Factory §11.1 say it need not be.
+- **Case 14 falsifies nothing.** Policy-relative fingerprints are the specified design (Factory
+  §11.1; V2 vector 16). A single-grammar Factory remains an option, not a demonstrated consequence.
+- **G is not a separate semantic model.** Every surviving model may resolve differently for
+  Factory and Engine, and the current evidence suggests they will.
 
-- **Retained attribution:** none. The identity is not stamped on any observation, event or record.
-  `EngineSemanticsVersion` is a runtime-exposed constant. The support policy's "An Engine that
-  stamps records ... must either use a frozen exact definition or keep those records explicitly
-  disposable" is not yet engaged.
-- **Promotion:** none. It was frozen as "released" by a decision whose release trigger never
-  occurred. The consolidation then restated the new-version rule unconditionally in the
-  specification. That rule is stricter than overview rule 2 and is not justified by any recorded
-  acceptance.
-- **Readiness differs from Factory.** V1's canonicalization is fully implemented and pinned. Engine
-  v1's spatial transfer rules, destination binding and transfer events (§5–§8, §12) are specified
-  but not executed. Rule 2 fixes a *whole* definition, unexercised rules included. Promoting Engine
-  v1 now would therefore freeze behavior that no fixture has run. That is a reason to keep the
-  Engine definition provisional until its admitted Factory cases are settled and executed, and not
-  a reason to treat it as already fixed.
-- **Consequence:** fixing an unreleased Engine semantic mistake does not require minting
-  `engine-semantics:v2` under current rules. The READY Engine applicability question presumes "an
-  existing fixed definition" and "retained historical v1 results". Its identity-partition framing
-  (whether v1 can admit V2 cases "without changing its whole definition") therefore dissolves. What
-  remains is the substantive question of which interpretation each admitted Factory case gets,
-  under one still-correctable Engine definition.
-- **Future Engine boundary:** the first acceptance of a run result, or of evidence attributing
-  results to the identity, into a custody-declared retained authority; or a declared
-  published-reliance scope such as a supported runtime/interchange contract with a consumer. Under
-  either, the retained-conformance-fixture promise in the Determinism Contract rule 5 applies from
-  that moment.
+## Adversarial analysis
 
-## Factory V1 → V2 under both cases
+This is the author's self-challenge only, not an independent review.
 
-- **Case 1: V1 had legitimately crossed.**
-  - A distinguishable successor is needed, and the current V2 grammar is a reasonable one.
-  - Ordinal "v2" is acceptable but mildly misleading. The successor does not supersede V1 content;
-    it admits V1 production content plus an optional record, and the continued-V1-publication
-    question exists precisely because "v2" suggests replacement. A semantically descriptive
-    committed name would be clearer, but naming is secondary here.
-- **Case 2: V1 had not crossed (the evidence supports this case).**
-  - Spatial semantics should have been added by correcting the one provisional Factory grammar.
-    Its proving vectors would change in place.
-  - That removes: the separate V1 policy; the V1-vs-V2-absent duplicate identity; the cross-policy
-    comparison and verifier seam for a V1→V2 transition; the "continued V1 publication" support
-    decision; and the V1 row of every Engine applicability matrix.
-  - The composition rule itself (closed grammar, explicit optional records, one aggregate
-    fingerprint, absence ≠ authored zero) stands on its own merits and does not depend on the
-    freeze. The frozen-V1 premise did not decide *whether spatial facts belong in the aggregate*;
-    the composition analysis did that independently. It decided only *that the aggregate had to be
-    a new coexisting policy*.
-
-## Adversarial analysis (self-administered only)
-
-This is the author's self-challenge, not an independent review.
-
-- **"The public repository is itself published reliance."** Rule 5 requires the *owning contract*
-  to publish reliance, and the support policy says "the existence of an API or serializer does not"
-  create support. The V1 specification's stability sentence states a consequence of claimed
-  attribution; it names no consumer, scope or custody. I treat this as insufficient.
-
-  Residual risk: a reviewer could hold that a normative, public "must produce the same fingerprint
-  across software versions" sentence *is* a published promise whatever its stated basis. If so,
-  candidate B becomes the operative reading. The conclusion then changes from "V1 is not fixed" to
-  "V1 was fixed by an unevidenced, voluntary declaration whose cost should be reconsidered by an
-  explicit authorized transition". Under rule 6 that transition cannot free an *attributed*
-  identity, but no attributed record exists. This is the most important point for the independent
-  reviewer to test.
-- **"Temp-dir acceptance by `FileControlledRevisionAuthority` is 'acceptance by an authority that
-  never declared custody', which rule 5 calls a defect, not a waiver."** Rule 5 concerns an
-  authority that retains what it accepts. A `@TempDir` instance is a scratch store whose accepted
-  facts cannot outlive the test. The support policy's "later deletion is not proof of
-  disposability" guards against disposing of *retained* use, and nothing here was ever retained
-  beyond the test JVM. I checked the three constructing tests; each uses `@TempDir`. Residual risk:
-  the adapter has a public constructor, and any future non-test instantiation on a durable path
-  would cross the boundary with no declaration. That is exactly case 7, and it motivates the
-  refusal part of H.
-- **"The prior maturity research already considered this and chose non-rebinding over
-  correctability."** It rejected *eager* durability from "internal publication" and "first need for
-  a deterministic identifier". That supports this report. This report does not challenge the rule;
-  it challenges one application of it.
-- **Stale baseline.** I re-checked immediately before persistence; `main` is unchanged.
-- **Possibility treated as necessity.** I do not claim a provisional token is *required* by
-  external practice. The requirement (c) rests on case 13, which is Arcogine-specific, and it could
-  also be met by abandon-and-reissue (F) or by committing an existing definition unchanged (B).
-- **Overreach on V2.** I do not claim that collapsing to one Factory grammar is mandatory. B
-  remains a legitimate owner choice. My claim is narrower: the *stated* basis for the V1/V2
-  structure is false, so the structure has to be justified afresh or removed.
+- **Anchoring.** This revision was written after reading the review, and it adopts all four of the
+  review's challenges. A next reviewer should specifically test whether it over-corrects toward
+  commitment. Two examples to test:
+  - whether "re-publication after consolidation" (an R2 argument) is really a fresh commitment, or
+    the carried-over text of a promise the owner withdrew;
+  - whether the owner declaration in #370 legitimately closes the pre-consolidation attribution
+    question, or covers only "support commitments".
+- **Is #370's declaration within its own scope?** It speaks of retained artifacts, stores, releases
+  and consumers relying on the estate. That is the same subject as attribution. I treat it as
+  covering attribution for the pre-reset estate. If a reviewer reads it as covering only support
+  promises, question 1's pre-consolidation result falls back to "not demonstrated within the
+  bounded search". The rest of the report is unaffected, because it does not rely on a global
+  absence claim.
+- **"R1 plus narrowing is just C by another name."** No. C inferred mutability from missing
+  paperwork. R1 plus narrowing requires the explicit, authorized, recorded act that rule 6 demands,
+  with an estate declaration and a falsification trigger. The difference is who decides and whether
+  a record exists.
+- **"The Engine conflict is editorial: rule 4 plainly means post-attribution."** Possibly. But the
+  Engine text also carries a retention promise unconditionally, and the Determinism Contract is
+  the owning architectural statement. Calling it editorial would be possibility treated as
+  necessity. It stays an owner question.
+- **Stale baseline.** Re-checked immediately before persistence. `main` is unchanged at
+  `b9d6e8b0`.
+- **Conclusion stronger than evidence.** The two open questions (Factory R1/R2, Engine conflict)
+  are left open rather than resolved by lean. The only high-confidence claims are the attribution
+  audit, the wrong V1 justification, the recorded 2026-08-27 promotion event, the invariant repair
+  and the matrix corrections.
 
 ## Surviving invariants
 
-1. Deterministic identity generation, in-process Factory publication, implementation landing on
-   `main`, a "normative" document status, golden/test vectors, and acceptance by a test-scoped or
-   otherwise undeclared scratch authority instance are not attribution and fix nothing.
-2. A definition becomes non-rebinding only through an identifiable event:
-   - acceptance at the commit boundary of an authority that has declared custody; or
-   - a declared published-reliance scope; or
-   - an explicit, recorded owner commitment.
+1. **Not by itself a fixation event:**
+   - deterministic identity generation;
+   - in-process Factory publication;
+   - implementation landing on `main`;
+   - a "normative" document status;
+   - golden or test vectors;
+   - acceptance by a test-scoped authority instance whose accepted facts cannot outlive the test.
 
-   The owning contract records that event as evidence. It never records only an assertion.
-3. A committed identity token never denoted another definition, anywhere, including repository
-   history. Pre-promotion definitions therefore use a token distinguishable from the eventual
-   committed one, or keep a definition that is later committed unchanged.
-4. Retained authorities refuse identities not recorded as committed (declaration precedes
-   admission). This extends the existing support-policy rule into an authority-side refusal.
-5. Factory and Engine promote independently. Engine promotion should not freeze specified but
-   unexecuted rules without a deliberate decision to do so.
+   Each qualifies only *while no retained use has been admitted against it*. A path name, test
+   label or later deletion is not proof of disposability.
+2. **A definition becomes non-rebinding at the earliest of:**
+   - (a) acceptance at the commit boundary of an authority that has declared custody;
+   - (b) actual acceptance into an authority that retains the record, without a custody
+     declaration: a defect that nonetheless creates the obligation;
+   - (c) a published commitment in the owning contract, whether as declared reliance, an explicit
+     owner commitment, or normative stability text that the owner has not narrowed by an
+     authorized transition.
+3. **Unknown is not mutable.** In-place correction requires an affirmative, scoped determination
+   that no event in 2 has occurred. Where inspection cannot close the scope, the owner may make a
+   positive declaration with a falsification trigger (as in #370). Missing evidence of fixation is
+   never, by itself, permission to correct.
+4. **Prevention, discovery and remediation are distinct.**
+   - **Prevention:** declare custody before admission, and optionally have authorities refuse
+     identities that are undeclared or cannot be resolved exactly.
+   - **Discovery:** undeclared acceptance blocks further admission until custody and support are
+     declared.
+   - **Remediation:** preserve the original attribution and the exact definition in force at
+     acceptance, and never un-accept.
+   - A definition changed in place after an undiscovered acceptance has in effect rebound. The
+     retained record keeps the earlier definition's meaning, and the changed definition needs a
+     distinguishable identity.
+5. **Each owning contract states its fixation basis as a fact or an explicit commitment, never as an
+   unevidenced assertion.** Narrowing a stated commitment is an authorized transition under rule 6.
+6. **Factory and Engine determine fixation independently.**
+7. **Policy-relative identity is not duplication.** Distinct policies may give distinct fingerprints
+   to the same authored content. Cross-policy equivalence is explicit comparison, never
+   full-fingerprint equality, and distinct identities create no support obligation by existing.
+
+Invariants 1–5 and 7 are assembled from current text: overview rules 2, 3, 5 and 6, the support
+policy, and Factory §11.1. What is new is the explicit enumeration and the epistemic rule.
 
 ## Transferability and reuse
 
-- **Potentially transferable result:** "a durability freeze justified by implementation or
-  'release' language can survive a rule change by being re-described in the new rule's vocabulary
-  without the new rule's evidence". This is a governance failure mode, not a property of Arcogine
-  semantics.
-- **Arcogine-specific dependencies:** the 2026-09-21 consolidation, which rewrote decision records
-  into current architecture; and the token-in-canonical-bytes property.
-- **Evidence level:** one occurrence.
-- **Synthesis-seed candidate (for reconciliation to judge, not admitted here):** "freeze claims
-  must cite their fixing event; restating an inherited freeze under a new rule is a recurrence
-  risk". *Revisit when* a second inherited durability or support claim is found restated without
-  its evidence.
-- **Reusable asset:** the claimed-evidence-vs-concrete-referent audit table above, as a review
-  technique for any "has attributed records" claim.
+- **Potentially transferable failure mode (governance, not Arcogine semantics):** "A commitment
+  carried across a rule change can keep its text while its stated basis changes, leaving the
+  commitment's standing ambiguous." Here the 2026-08-27 promise text survived the consolidation,
+  but its trigger was re-described as attribution, which the facts do not support. Revision 1
+  described this as "a freeze restated under new vocabulary without evidence". The more accurate
+  lesson is that **basis substitution creates standing ambiguity**, not that it creates no
+  commitment.
+- **Evidence level:** one occurrence, with a possible second in the Engine "released" →
+  unconditional change. The reconciliation should judge whether that is the same pattern.
+- **Synthesis-seed candidate (for reconciliation to judge, not admitted here):** "when a rule change
+  re-bases existing commitments, each carried commitment must state whether it continues, on what
+  basis, or is withdrawn". *Revisit when* another carried-over commitment is found with a
+  substituted basis.
+- **Reusable assets:**
+  - the claimed-evidence-vs-concrete-referent audit table;
+  - the four-question split (attribution / commitment / fulfilment / desirability);
+  - the #370 pattern of an owner's positive estate declaration plus a falsification trigger, as the
+    mechanism for closing an absence question that inspection cannot close.
 
 ## What did not survive
 
-- "V1 is fixed because published fingerprints, controlled revisions and stored canonical artifacts
-  reference it." Unsubstantiated. The referents are an in-process validation step and `@TempDir`
-  test stores.
-- "Shipping in implementation" or "released" as the freeze trigger, when no release event exists.
-  Contradicted by current rules 3 and 5, and by every external source examined.
-- **Reusable negative knowledge:** Factory's domain word "publication" (validated model →
-  immutable in-memory version) must not be read as rule 5's "publishes reliance". The equivocation
-  is load-bearing in the V1 claim.
-- SemVer "v0" as the cure for proliferation. SemVer freezes every *release*, 0.x included, so it
-  does not provide in-place pre-promotion correction.
-- A universal lifecycle state. Still not needed. Rule 2's binary boundary plus evidence recording
-  covers the observed failure.
+From revision 1, withdrawn or corrected:
+
+- "V1 is not fixed; record no fixation; correct in place." Withdrawn, because it inferred the
+  absence of commitment from the absence of attribution.
+- Invariant 2's three-event list. It omitted undeclared acceptance (falsified by case U).
+- Invariant 3's universal token requirement ("never denoted another definition, anywhere, including
+  history"). Downgraded to mechanism options T1–T4.
+- Case 14 as a falsifier of A and B. Policy-relative identity is by design.
+- The reading of V2 §10 as adopting a "shipped publication path" freeze trigger. Its absence
+  premise is sufficient for correctability, not a converse trigger, and it names first retained
+  attribution as the boundary.
+- "Engine v1 is even further from a legitimate freeze" and the recommendation to re-scope the Engine
+  applicability brief around one correctable Engine definition. Replaced by § Engine commitment
+  status.
+- "Engine identity is not stamped on any record." The capability exists in `EvidenceProvenance`,
+  although no retaining authority exists.
+- "All four external analogues contradict an implementation-linked trigger." Too strong; multicodec
+  removed.
+
+Still negative knowledge:
+
+- Factory's domain word "publication" (validated model → immutable in-memory version) is not rule
+  5's "publishes reliance".
+- Naming an identity creates no support obligation.
+- A universal `proving`/`promoted` lifecycle is still not needed.
 
 ## Confidence and limitations
 
-- **High:** the repository facts, within the stated search scope; that V1 and Engine v1 have no
-  retained attribution; the provenance of the freeze claim.
-- **Medium-high:** that the Factory composition rule is independent of the freeze premise while the
-  successor structure is not.
-- **Medium:**
-  - requirement (c) (token distinguishability), which rests on case 13's ambiguity and not on an
-    obligation;
-  - the recommendation to prefer correction over candidate B, which is a cost judgment for the
-    owner.
+- **High:**
+  - the attribution audit within scope;
+  - the V1 attribution sentence being wrong (its own delivery context contradicts it);
+  - the 2026-08-27 promotion event;
+  - the invariant repair and matrix corrections.
+- **Open, with no lean asserted:** Factory R1 vs R2.
+- **Medium:** that the Engine text reads as an independent commitment.
 - **Limitations:**
-  - no visibility into forks or third-party builds of the public repository;
-  - the full reports and adversarial reviews of the concluded maturity and composition
-    investigations were not retained, so I cannot check whether they audited V1's attribution
-    evidence;
-  - I did not examine every planning document for dependent sequencing beyond those cited;
-  - the external sources are analogues, not normative for Arcogine.
+  - Contributor machines, forks and third-party builds are not visible. The pre-consolidation gap
+    is covered by the owner's declaration, not by inspection.
+  - The concluded maturity and composition investigations' full reports and reviews were not
+    retained, so it cannot be checked whether they examined V1's basis.
+  - This revision did not re-run revision 1's retired-interface searches or re-fetch the external
+    sources.
+  - This revision is anchored on the review.
 
 ## Unresolved unknowns
 
-- Whether the owner *wants* an early voluntary commitment for V1 (candidate B), for example to keep
-  proving vectors stable, given its costs.
-- The concrete refusal mechanism for retained authorities: a verifier registry scoped to committed
-  policies, a composition-root custody declaration, or review only. This is bounded design unless
+- Factory: is the current V1 stability text an operative commitment (R2), or a derived consequence
+  whose trigger never occurred (R1)? Only the owner's explicit statement resolves this.
+- Engine: does the unconditional new-version rule and retention promise override rule 2's
+  pre-attribution correction allowance for `engine-semantics:v1`? If so, is freezing its
+  unexecuted spatial rules intended?
+- Did #370's withdrawal of "pre-reset support commitments" cover the 2026-08-27 fixation promise,
+  given that the same change re-published the promise text?
+- Which identity mechanism (T0–T4), if any, is worth its cost. This is bounded design unless
   equality or acceptance semantics prove unsettled.
-- Which token scheme (a provisional marker in the token, or abandon-and-reissue) best fits the
-  canonical-prefix property. This is a naming consequence to settle in reconciliation.
-- The Engine applicability substance, re-scoped as: which interpretation each admitted Factory case
-  receives, under one correctable Engine definition.
+- What "released" means in overview rule 4's example, if anything, now.
 
 ## Durable consequences (recommended; not performed)
 
-1. **Architecture Overview, semantic evolution and support:** add invariant 1 (what is not
-   attribution) and the evidence requirement of invariant 2. Clarify that rule 2's correction
-   allowance applies to every contract whose fixation is not evidenced. No lifecycle state.
-2. **Semantic contract support:** require a fixation record (fixing event, or "no fixation") in
-   each owning contract. Add the authority-side refusal of invariant 4 to the review cases, and add
-   the "publication ≠ published reliance" caution.
-3. **Factory Model v1 / v2 and the Factory semantic-evolution contract:**
-   - replace the unsubstantiated "has attributed records" sentence;
-   - replace V2 §10's "shipped publication path" test with the rule 2/5 boundary;
-   - have the owner decide explicitly between committing V1 early (candidate B, recorded as a
-     commitment with its cost) and collapsing to one provisional Factory grammar (Case 2);
-   - reconsider golden vector 16 and the continued-V1-publication question accordingly.
-4. **Engine Semantics v1:** qualify the unconditional new-version rule by rule 2; record "no
-   fixation" and the intended promotion boundary. The Determinism Contract rule 4 needs the same
-   qualification.
-5. **Controlled revisions / governance:** record that no custody-declared retained instance exists
-   and what declaration must precede one.
+1. **Factory Model v1:** replace the "has attributed records" sentence with the basis the owner
+   selects:
+   - **R2:** a commitment basis, citing the actual promotion and publication rather than
+     attribution; or
+   - **R1:** an explicit, authorized narrowing transition with an estate declaration and a
+     falsification trigger.
+
+   Until then, current text stands, and nothing authorizes changing V1 bytes under the V1 token.
+2. **Architecture Overview / Semantic contract support:**
+   - enumerate the fixation events (invariant 2), including undeclared acceptance and published
+     commitment;
+   - add the epistemic rule (invariant 3) and the prevention/discovery/remediation split
+     (invariant 4);
+   - state how rule 1 and rule 2 relate (from fixation onward, or document vs identity);
+   - resolve or remove the undefined "released" in rule 4's example;
+   - add the publication-equivocation caution and the four-question split to the review cases.
+3. **Engine Semantics v1 / Determinism Contract:** the owner resolves the conflict between the
+   unconditional new-version rule and rule 2 for `engine-semantics:v1`, and records the basis
+   (commitment, or correctable until a stated event). The owner also records whether fixation
+   covers the unexecuted spatial rules.
+4. **Factory Model v2 §10:** optionally clarify the introductory absence sentence so that it cannot
+   be read as a converse "shipped path" trigger. No substantive change.
+5. **Controlled revisions / Governance evidence:** record that no custody-declared retained
+   instance exists. Also record that the public authority constructor and `EvidenceProvenance`'s
+   Engine field are capabilities whose first retained use needs a prior declaration.
 6. **Research register:**
-   - mark the Factory-composition result as reopened for its successor-identity consequence only;
-   - re-scope the READY Engine applicability question before execution;
-   - note that the maturity conclusion's rule survives and that its "attributed Engine definition"
-     open item has no current concrete case.
-7. **Decision-rationale record:** the composition record's Context bullet is historical and must
-   not be edited to change meaning. A new dated record should cross-link it if the reconciliation
-   changes the V1/V2 structure.
-8. **Knowledge transfer:** preserve the audit table technique and the publication-equivocation
-   negative knowledge in the support policy's review cases. The report itself need not be retained
-   beyond reconciliation.
+   - no change to the maturity or composition verdicts from this report;
+   - the Engine applicability brief should state its "Engine v1 remains fixed" basis once item 3 is
+     resolved, or name that as a prerequisite;
+   - the composition result becomes reopenable only if the owner takes the R1 path and chooses to
+     revisit the V1/V2 structure.
+7. **Decision-rationale records:** the composition record's Context bullet is historical and must
+   not be edited to change meaning. If reconciliation changes V1's basis or the V1/V2 structure, a
+   new dated record may cross-link it.
+8. **Knowledge transfer:** preserve the referent-audit technique, the four-question split, the
+   basis-substitution failure mode, and the estate-declaration pattern in the support policy's
+   review guidance. The report itself need not be retained beyond reconciliation.
 
 ## Implementation implication
 
-None from this report. Any code change (identity tokens, V1/V2 collapse, authority refusal,
+None from this report. Any code change (identity mechanism, V1/V2 restructuring, authority refusal,
 semantics-version propagation) follows only from a reviewed reconciliation and admitted planning.
-Until reconciliation, current code and documents stand.
+Until then, current code and documents stand.
 
 ## Follow-up triggers
 
-- An independent adversarial review is required before any of the above is reconciled.
-- Reopen this conclusion if either of the following is found:
-  - a non-test, custody-bearing authority instance that accepted records attributed to either
-    identity;
+- An independent adversarial review of **this revision** is required before reconciliation.
+- Strengthen the obligation side if any of these is found:
+  - a non-test Arcogine authority instance that retained records attributed to either identity,
+    declared or not;
   - an outward consumer or release that published reliance.
-- Revisit the Engine promotion boundary when semantics-version propagation lands or a retained run
-  or evidence authority is introduced.
+- Strengthen the correction side for Factory if the owner states expressly that the post-
+  consolidation V1 text was meant only as a consequence of attribution and published no
+  independent promise.
+- Revisit the Engine question when semantics-version propagation lands, or when a retaining
+  evidence or run authority is introduced.
 
 ## Sources
 
-- Semantic Versioning 2.0.0, <https://semver.org/spec/v2.0.0.html>, items 3, 4, 9. Verified
-  2026-09-25.
+- Semantic Versioning 2.0.0, <https://semver.org/spec/v2.0.0.html>, items 1, 3, 4, 9. Verified
+  2026-09-25 (revision 1 and the review).
 - Kubernetes documentation, "API Overview — API versioning",
-  <https://kubernetes.io/docs/reference/using-api/#api-versioning>. Verified 2026-09-25.
-- multiformats/multicodec README, status column,
-  <https://github.com/multiformats/multicodec/blob/master/README.md>. Verified 2026-09-25.
+  <https://kubernetes.io/docs/reference/using-api/#api-versioning>. Verified 2026-09-25 (revision 1
+  and the review).
 - IETF RFC 7595 / BCP 35, *Guidelines and Registration Procedures for URI Schemes*, June 2015,
-  §3, §4, §7.1, §7.3, <https://www.rfc-editor.org/rfc/rfc7595.html>. Verified 2026-09-25.
-- Repository delivery-history provenance: merged PRs #175 (V1 fingerprint contract, 2026-08-27),
-  #252 (Engine semantics contract, 2026-09-04), #345 (Engine semantics identity, 2026-09-18), #370
-  (architecture consolidation, 2026-09-21), #387 (Factory composition reconciliation, 2026-09-23),
-  #380 and #384 (legacy web and API/CLI retirement).
+  §7.2–§7.3, <https://www.rfc-editor.org/rfc/rfc7595.html>. Verified 2026-09-25 (revision 1 and the
+  review).
+- Repository delivery-history provenance:
+  - merged PR #175 (V1 fingerprint contract, 2026-08-27);
+  - #252 (Engine semantics contract);
+  - #345 (Engine semantics identity, 2026-09-18);
+  - #370 (architecture consolidation, 2026-09-21, including the owner's estate declaration);
+  - #387 (Factory composition reconciliation, 2026-09-23);
+  - #380 and #384 (legacy interface retirement).
+
+  Predecessor decision records `0006` and `0015` were read at `c599c908^`.

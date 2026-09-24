@@ -74,9 +74,11 @@ Inspect repository-owned lifecycle/review/CI controls only far enough to identif
 
 ## Opportunity analysis
 
-Prefer improvements that reduce recurring defects or recurring cost. In order of preference when appropriate:
+Prefer improvements that reduce recurring defects or recurring cost. Choose the strongest mechanism that actually fits the failure mode. An executable guard/test is preferred only when the invariant is mechanically observable and the guard exercises behavior or repository state; do not add CI tests whose only purpose is to assert that agent or process prose still contains required wording.
 
-1. executable guard/test;
+When applicable, prefer:
+
+1. executable guard/test for a mechanically observable invariant;
 2. canonical helper/tooling;
 3. simpler agent/contributor standard work;
 4. maintained documentation;

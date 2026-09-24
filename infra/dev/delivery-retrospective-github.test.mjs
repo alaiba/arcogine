@@ -129,8 +129,10 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
     'Disposition: **CHANGES REQUIRED**.',
   ].join('\n');
   const searchItems = [
+    baseline,
     { number: 11, merged: true, mergedAt: '2026-09-05T00:00:00Z', baseRefName: 'main' },
     through,
+    { number: 13, merged: true, mergedAt: '2026-09-06T10:00:00Z', baseRefName: 'main' },
   ];
   const calls = [];
   const graphql = async (_token, query, variables) => {
@@ -141,14 +143,15 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
     }
     if (query.includes('reviews(first:100)')) {
       const sourcePr = searchItems.find((item) => item.number === variables.number);
+      const outOfWindow = ![11, 12].includes(sourcePr.number);
       return {
         repository: {
           pullRequest: {
             ...sourcePr,
             reviews: {
-              totalCount: sourcePr.number === 11 ? 1 : 0,
-              pageInfo: { hasNextPage: false, endCursor: null },
-              nodes: sourcePr.number === 11 ? [{
+              totalCount: outOfWindow ? 101 : sourcePr.number === 11 ? 1 : 0,
+              pageInfo: { hasNextPage: outOfWindow, endCursor: outOfWindow ? 'more' : null },
+              nodes: outOfWindow ? Array.from({ length: 100 }, () => ({})) : sourcePr.number === 11 ? [{
                 id: 'PRR_11',
                 body: reviewBody,
                 authorAssociation: 'OWNER',
@@ -177,6 +180,7 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
   assert.equal(result.endpoints.through.mergedAt, through.mergedAt);
   assert.equal(result.candidates.complete, true);
   assert.equal(result.candidates.reportedCount, 2);
+  assert.equal(result.source.candidateSearch.reportedCount, 4);
   assert.equal(result.candidates.items[0].reviews.items[0].body, reviewBody);
   assert.equal(result.candidates.items[0].reviews.items[0].id, 'PRR_11');
   assert.equal(result.candidates.items[0].reviews.items[0].reviewedHead, 'abcdef0123456789');
@@ -184,5 +188,9 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
   assert.equal('findingAnalytics' in result, false);
   assert.equal('disposition' in result, false);
   assert.equal(calls.length, 4);
+  assert.deepEqual(
+    calls.filter((call) => call.query.includes('reviews(first:100)')).map((call) => call.variables.number),
+    [11, 12],
+  );
   assert.match(calls[1].variables.query, /merged:2026-09-04\.\.2026-09-06/);
 });

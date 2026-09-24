@@ -205,6 +205,17 @@ function utcDay(value) {
   return new Date(time).toISOString().slice(0, 10);
 }
 
+function inExactWindow(candidate, baseline, through) {
+  const mergedAt = Date.parse(candidate?.mergedAt);
+  if (!Number.isFinite(mergedAt)) {
+    throw new Error(`invalid merge timestamp for PR #${candidate?.number ?? '?'}`);
+  }
+  return candidate.merged === true &&
+    candidate.baseRefName === 'main' &&
+    mergedAt > Date.parse(baseline.mergedAt) &&
+    mergedAt <= Date.parse(through.mergedAt);
+}
+
 function endpointFact(pr, label) {
   if (!pr) throw new Error(`${label} pull request was not found`);
   return {
@@ -248,7 +259,8 @@ export async function acquireEvidence({
   });
 
   const items = [];
-  for (const candidate of candidates) {
+  const exactCandidates = candidates.filter((candidate) => inExactWindow(candidate, baseline, through));
+  for (const candidate of exactCandidates) {
     const reviewData = await graphql(token, REVIEW_QUERY, { owner, name, number: candidate.number });
     const pullRequest = reviewData?.repository?.pullRequest;
     if (!pullRequest || pullRequest.number !== candidate.number) {

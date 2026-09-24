@@ -99,9 +99,9 @@ Normalize the base if needed, then review current `main` against the resulting c
 
 ### Re-review
 
-Normalize the base if needed, resolve the resulting head, re-evaluate every prior unresolved finding, inspect changes since the previously reviewed head, and scan the full current-main-to-current-head net diff for regressions or newly exposed issues.
+Normalize the base if needed, resolve the resulting head, re-evaluate every prior finding, inspect changes since the previously reviewed head, and scan the full current-main-to-current-head net diff for regressions or newly exposed issues.
 
-Classify prior findings as `RESOLVED`, `STILL_OPEN`, `OBSOLETE`, or `REGRESSION`. Do not mechanically repeat resolved findings.
+Carry every prior finding forward under the same `REV-###` identity and set its status to `OPEN`, `RESOLVED`, or `OBSOLETE` after checking the current head. If a resolved defect recurs, reopen the same identity as `OPEN` and describe the recurrence as a regression in review prose; `REGRESSION` is not a finding status. Do not omit resolved or obsolete identities from the lifecycle record.
 
 ### Final review
 
@@ -330,7 +330,7 @@ Each block must contain exactly one value for every labeled field shown above. `
 
 ## Finding lifecycle
 
-Review continuity belongs in evidence-backed findings, not unverified conversational memory. On re-review, carry prior findings forward with their same identifiers, verify them against the new head, set each status to `OPEN`, `RESOLVED`, or `OBSOLETE`, detect regressions, and create new IDs only for genuinely new defects. A status change records lifecycle progress; it does not authorize ID reuse.
+Review continuity belongs in evidence-backed findings, not unverified conversational memory. On re-review, carry prior findings forward with their same identifiers, verify them against the new head, set each status to `OPEN`, `RESOLVED`, or `OBSOLETE`, describe regressions in review prose, and create new IDs only for genuinely new defects. A status change records lifecycle progress; it does not authorize ID reuse.
 
 If prior review history cannot be inspected, say so rather than claiming all previous findings are resolved.
 

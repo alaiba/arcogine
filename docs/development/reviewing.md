@@ -271,7 +271,7 @@ Arcogine's reviewer protocol uses the custom canonical disposition as its only r
 - do not use native `APPROVE` as a substitute for the canonical disposition;
 - fall back to a PR conversation comment only if formal review submission itself is unavailable;
 - keep comments concise enough to act on;
-- do not duplicate already-resolved findings on later heads.
+- carry each prior finding forward under the same `REV-###` identity with an explicit lifecycle status, without mechanically repeating its full explanation when resolved.
 
 An accidental or externally created native `CHANGES_REQUESTED` review still physically blocks GitHub merge and must be cleared through GitHub before merge, but it is an anomalous platform blocker, not part of the intended Arcogine review protocol.
 
@@ -282,11 +282,11 @@ PR comments are useful execution history, but any architectural conclusion that 
 When a new head is pushed, first apply the same base-normalization rule as an initial review. Then:
 
 1. resolve the new head SHA;
-2. verify the original finding against the new implementation;
+2. verify every prior finding against the new implementation;
 3. inspect the net diff for regressions introduced by the fix;
 4. check whether docs/PR description were kept in sync;
 5. check the current CI state;
-6. retire resolved findings instead of repeating them mechanically.
+6. carry every prior finding forward under its same `REV-###` identity, with status `OPEN`, `RESOLVED`, or `OBSOLETE`, after verifying it against the new head; do not omit resolved or obsolete identities from the lifecycle record. If a resolved defect recurs, reopen that same identity as `OPEN` and describe the recurrence as a regression in review prose. `REGRESSION` is not a finding status.
 
 A fix is complete when the violated invariant is restored, not merely when the named method/type from the original comment has changed.
 

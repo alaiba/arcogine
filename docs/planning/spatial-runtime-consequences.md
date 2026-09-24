@@ -27,7 +27,7 @@ V1 production records plus one optional, complete spatial record.
 
 A newly admitted upstream question now challenges one premise of the spatial path without changing current architecture in place: [Transfer semantics boundary research](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence) asks whether inter-resource transfer lifecycle is semantically independent of spatial layout. The current unreleased Factory/Engine contracts couple absence of the spatial record to absence of transfer behavior; that premise must be tested before release or activation makes it harder to correct.
 
-The previous Engine-applicability question is therefore `CANDIDATE`, not `READY`: it had treated “spatial record absent => no transfer behavior” as an input to its preservation analysis. After the transfer-lifecycle question is reconciled, [Engine applicability](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies) must be re-bounded against the resulting exact Factory/Engine content domain and then conclude with its required independent adversarial review.
+The predecessor [Engine-applicability investigation](../research/investigations/engine-applicability-optional-record-factory-policies.md) is `SUPERSEDED`: it treated “spatial record absent => no transfer behavior” as an input to its preservation analysis. The separate [successor Engine-applicability question](../research/investigations/engine-applicability-after-transfer-boundary.md) is `CANDIDATE` until the transfer-lifecycle question is reconciled. It must then be re-promoted against the resulting exact Factory/Engine content domain, investigated, and independently adversarially reviewed before reconciliation.
 
 Until both gates are reconciled:
 
@@ -333,7 +333,7 @@ Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine 
 
 **Status:** Dependency-blocked on the transfer-lifecycle and subsequent Engine-applicability questions (see the rule above). The Factory-composition prerequisite is otherwise satisfied.
 
-**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the READY [transfer-lifecycle question](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence), then conclusion/reconciliation of the re-bounded [Engine-applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies). If either result changes the relative cost or grammar of the reconciled Factory boundary, weigh that composition reopening trigger before release.
+**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the READY [transfer-lifecycle question](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence), then conclusion/reconciliation of the [successor Engine-applicability question](../research/investigations/engine-applicability-after-transfer-boundary.md). If either result changes the relative cost or grammar of the reconciled Factory boundary, weigh that composition reopening trigger before release.
 
 **Responsibility**
 

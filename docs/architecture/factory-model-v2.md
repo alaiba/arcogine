@@ -118,7 +118,7 @@ interactions the artifact represents
 whose meanings, anchor and maximum-transfer predicate §1.1 keeps unchanged. Whether
 `engine-semantics:v1` applies to artifacts of this policy — with the spatial record present or
 absent — is not established by this specification; it remains the open
-[Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies).
+[Engine applicability question](../research/investigations/engine-applicability-after-transfer-boundary.md).
 
 ## 2. Relationship to `factory-model:v1`
 

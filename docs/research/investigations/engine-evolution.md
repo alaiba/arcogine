@@ -1,6 +1,6 @@
 # Engine Evolution Research
 
-> **Lifecycle:** See the maintained research register; this artifact contains concluded dispatch history, concluded first-release dispatch decisions, a CANDIDATE Engine-applicability question awaiting the upstream transfer-lifecycle result, and other CANDIDATE follow-up questions
+> **Lifecycle:** See the maintained research register; this artifact contains concluded dispatch history, concluded first-release dispatch decisions, context and links for the superseded and successor Engine-applicability investigations, and other CANDIDATE follow-up questions
 >
 > **Scope:** Result-affecting Engine questions that still require evidence before current deterministic runtime semantics change  
 > **Authority:** Research only; current Engine semantics remain fixed by adopted architecture and executable evidence until a separate reconciliation change says otherwise
@@ -187,51 +187,9 @@ Do not research a replacement sequencing rule merely because one benchmark impro
 
 ## Engine applicability to optional-record Factory policies
 
-> **Lifecycle:** CANDIDATE — see the maintained [research register](../research-register.md). **Risk:** High; independent adversarial review remains required before Engine architecture reconciliation.
+The fixed [Engine v1 definition](../../architecture/engine-semantics-v1.md) includes spatial rules specified when Factory V2's spatial facts were mandatory. The [Factory composition result](factory-model-semantic-composition.md) made that record optional, while keeping Factory validity distinct from Engine applicability. The former investigation of both V2 forms is retained as [SUPERSEDED research evidence](engine-applicability-optional-record-factory-policies.md): it assumed the absent case had no transfer lifecycle. The separate [READY transfer-lifecycle question](transfer-semantics.md#ready--transfer-lifecycle-independence) now tests that premise. The [successor applicability brief](engine-applicability-after-transfer-boundary.md) remains CANDIDATE until the transfer result defines the cases it must assess. The [research register](../research-register.md) owns both lifecycle states.
 
-### Why this is no longer READY
-
-The previous READY framing treated one premise as already settled: a `factory-model:v2` artifact with the spatial record absent would execute with **no transfer behavior**. That premise is now the subject of the separate READY [Transfer semantics boundary research](transfer-semantics.md#ready--transfer-lifecycle-independence).
-
-Under Arcogine's research operating model, an independent researcher should not have to decide that upstream semantic question while supposedly investigating Engine identity/applicability. This question therefore returns to `CANDIDATE` until transfer-lifecycle independence is reconciled and the exact represented-content domain can be stated without assuming the answer.
-
-### Question to re-bound
-
-Which Engine semantics identity may execute artifacts of the reconciled [`factory-model:v2`](../../architecture/factory-model-v2.md) policy, and can an existing fixed Engine definition be stated as applicable to the policy's exact represented content without changing that definition?
-
-### Decision at stake
-
-Whether V2 execution can be attributed to `engine-semantics:v1` as a correction/preservation statement or requires a distinguishable Engine semantics identity after the transfer boundary is settled.
-
-[Engine Semantics v1](../../architecture/engine-semantics-v1.md) was specified against the same five spatial facts at a time when the unreleased V2 draft made them mandatory. The later Factory-composition result made the spatial record optional. The applicability analysis cannot now assume what an artifact without that record means for transfer lifecycle; publication validity and Engine applicability remain different predicates under the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution).
-
-### Constraints that remain valid
-
-- Whole-definition fixation covers rules no fixture has exercised and refusal behavior; unreleased or unimplemented spatial execution does not authorize changing a fixed Engine definition in place ([semantic evolution and support rules](../../architecture/overview.md#semantic-evolution-and-support), [Semantic contract support](../../development/semantic-contract-support.md)).
-- An in-place applicability statement is admissible only as a correction backed by proof that the complete already-defined contract — accepted input domain, interpretation, outputs, refusals and referenced semantic definitions — is preserved.
-- Otherwise changed applicability needs a distinguishable Engine identity and the prior identity stays exactly as defined.
-- This remains one concrete application of the open same-label amendment question; it does not settle that question in general.
-
-### Re-promotion trigger
-
-Return this question to `READY` only after the transfer-lifecycle investigation reconciles:
-
-- whether distinct-resource transfer exists without spatial facts;
-- the semantics of absence versus authored zero; and
-- any resulting correction/reopening of the unreleased Factory V2 boundary.
-
-The re-bounded brief must then enumerate the exact Factory-policy/content cases each Engine candidate accepts or refuses and define the before/after preservation comparison without importing unresolved transfer design.
-
-### Expected evidence and exit after re-promotion
-
-The eventual investigation still needs:
-
-- an inventory of retained or accepted records and declared support attributed to `engine-semantics:v1`;
-- a complete before/after comparison of accepted input domain and refusal behavior under each candidate;
-- supported-input, interaction and rejection fixtures for the chosen identity; and
-- Engine architecture/specification reconciliation stating which Engine identity executes which Factory policies and represented content.
-
-Release of `factory-model:v2` publication identity and spatial runtime activation remain blocked on both the transfer-lifecycle conclusion and the subsequently re-bounded Engine-applicability conclusion ([Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md)). If either result changes the relative merit of the reconciled Factory boundary, revisit Factory composition before V2 publication is released.
+V2 publication and spatial runtime activation remain blocked on transfer reconciliation followed by the successor applicability investigation and reconciliation; see [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md).
 
 ## Same-semantics shared-backlog performance
 

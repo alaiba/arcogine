@@ -86,6 +86,23 @@ test('review connection with inconsistent count fails closed', () => {
   }), /reported 2 reviews but fetched 1/);
 });
 
+test('review serializer preserves a missing author association as unproven', () => {
+  const result = serializeReviewConnection({
+    number: 11,
+    reviews: {
+      totalCount: 1,
+      pageInfo: { hasNextPage: false, endCursor: null },
+      nodes: [{
+        id: 'PRR_missingAssociation',
+        body: null,
+        submittedAt: '2026-09-06T12:00:00Z',
+        commit: null,
+      }],
+    },
+  });
+  assert.equal(result.items[0].authorAssociation, null);
+});
+
 test('review serializer retains identities and metadata without disposition or finding interpretation', () => {
   const body = `${revision(1)} - A structured finding\n\nSeverity: P2\nDisposition: **CHANGES REQUIRED**.`;
   const result = serializeReviewConnection({

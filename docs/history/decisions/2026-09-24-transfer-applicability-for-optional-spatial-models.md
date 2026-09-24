@@ -31,3 +31,7 @@ The current absent case has a defined no-transfer target if admitted, while exac
 ## Reconsider when
 
 A concrete consumer needs hand-off commitment without authored spatial facts, needs to author hand-off without geometry or timing, or needs positive non-spatial timing; a future Factory grammar separates geometry from timing; or exact Engine support research finds an owed production-only execution contract the current support options cannot satisfy.
+
+## Provenance
+
+[Reconciliation PR #402](https://github.com/alaiba/arcogine/pull/402) records the independent research review and knowledge-transfer audit as delivery history. The temporary report and review are not required to interpret the current contract after that transfer.

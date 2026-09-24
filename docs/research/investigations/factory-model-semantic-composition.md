@@ -57,12 +57,12 @@ Durable destinations:
 
 ## What remains open
 
-- **Engine applicability to the corrected policy.** Whether `engine-semantics:v1` can be stated as
-  applicable to `factory-model:v2` artifacts, with the spatial record present or absent, or a
-  distinguishable Engine identity is required:
-  [Engine applicability to optional-record Factory policies](engine-evolution.md#engine-applicability-to-optional-record-factory-policies).
-  `engine-semantics:v1` is unchanged, and V2 publication release and spatial runtime activation
-  stay blocked on that question.
+- **Engine applicability to the corrected policy — resolved.** The
+  [Engine applicability question](engine-evolution.md#concluded--engine-applicability-to-optional-record-factory-policies)
+  has concluded: `engine-semantics:v1` is unchanged and not applicable to `factory-model:v2`, and
+  [Engine Semantics v2](../../architecture/engine-semantics-v2.md) is the distinguishable identity
+  that applies to both its spatial-present and spatial-absent forms. V2 publication release and
+  spatial runtime activation now stay blocked only on their own implementation prerequisites.
 - **Continued `factory-model:v1` publication.** Whether new production-only designs are still
   published under `factory-model:v1` once V2 is released is a scoped support decision for the V2
   publication work, not an architectural rule.

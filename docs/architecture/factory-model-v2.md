@@ -115,10 +115,14 @@ interactions the artifact represents
 ([Factory semantic-evolution contract](factory-design.md#111-semantic-evolution)).
 
 [Engine Semantics v1](engine-semantics-v1.md) was specified against the same five spatial facts,
-whose meanings, anchor and maximum-transfer predicate §1.1 keeps unchanged. Whether
-`engine-semantics:v1` applies to artifacts of this policy — with the spatial record present or
-absent — is not established by this specification; it remains the open
-[Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies).
+whose meanings, anchor and maximum-transfer predicate §1.1 keeps unchanged. `engine-semantics:v1`
+is not applicable to artifacts of this policy, with the spatial record present or absent;
+[Engine Semantics v2](engine-semantics-v2.md) is the distinguishable identity that applies to both
+forms of this policy, reusing `engine-semantics:v1`'s non-spatial and spatial rules by explicit
+reference where their meanings are preserved. This reconciles the previously open
+[Engine applicability question](../research/investigations/engine-evolution.md#concluded--engine-applicability-to-optional-record-factory-policies);
+execution of `engine-semantics:v2` and release of this policy's canonical identity remain separately
+gated by their own implementation prerequisites.
 
 ## 2. Relationship to `factory-model:v1`
 

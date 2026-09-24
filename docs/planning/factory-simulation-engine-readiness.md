@@ -1,6 +1,6 @@
 # Factory Simulation Engine Readiness Implementation Plan
 
-> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete. Outward consumer convergence is retired as an objective — a future consumer is demand-triggered, not standing backlog. The Factory composition question is concluded and reconciled; remaining spatial runtime consequences are dependency-blocked on the READY Engine applicability question.
+> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine-semantics:v1 conformance, and fixed Engine semantics identity are complete. Outward consumer convergence is retired as an objective — a future consumer is demand-triggered, not standing backlog. The Factory composition question and the Engine applicability question are both concluded and reconciled ([Engine Semantics v2](../architecture/engine-semantics-v2.md) applies to `factory-model:v2`); remaining spatial runtime consequences are dependency-blocked only on their own implementation prerequisites.
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
 > **Related:** [Factory Design Capability](factory-design-capability.md), [session-control semantics](../architecture/engine-semantics-v1.md#12-session-and-control-semantics), [unit-work decomposition semantics](../architecture/engine-semantics-v1.md#3-unit-work-decomposition-semantics), [runtime observation/event contract](../architecture/runtime-contract.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
@@ -100,13 +100,13 @@ The former generic KPI implementation derived values from internal scheduler eve
 
 ### PLAN-ENG-5 — Spatial runtime consequences
 
-Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, Factory Model v2 canonicalization, and Engine Semantics v1 are the governing contracts. The Factory composition question is concluded and reconciled: `factory-model:v2` is an unreleased closed policy with an optional spatial record. **Planning execution remains blocked** for unimplemented work that would release V2 publication identity or activate spatial semantics until the READY [Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies) is reconciled; nothing makes `engine-semantics:v1` applicable to `factory-model:v2` artifacts in the meantime.
+Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, Factory Model v2 canonicalization, Engine Semantics v1, and [Engine Semantics v2](../architecture/engine-semantics-v2.md) are the governing contracts. The Factory composition question and the Engine applicability question are both concluded and reconciled: `factory-model:v2` is an unreleased closed policy with an optional spatial record, and `engine-semantics:v2` is the identity that applies to both its forms. **Planning execution remains blocked** for unimplemented work that would release V2 publication identity or activate spatial semantics, now on that work's own implementation prerequisites rather than on open research; `engine-semantics:v1` remains unchanged and inapplicable to `factory-model:v2` artifacts.
 
 The admitted sequence includes:
 
 1. pin pre-existing result-affecting Engine semantics and required arithmetic corrections — complete;
-2. implement Factory spatial facts/validation — optional-record shape/validation proving slice complete; V2 canonical identity dependency-blocked on the Engine applicability question;
-3. establish `EngineSemanticsVersion` — fixed identity complete; provenance propagation is independent of the applicability outcome;
+2. implement Factory spatial facts/validation — optional-record shape/validation proving slice complete; V2 canonical identity blocked only on its own implementation (PLAN-ENG-5-A2);
+3. establish `EngineSemanticsVersion` — fixed identity complete for `engine-semantics:v1`; establishing `engine-semantics:v2` and provenance propagation remain implementation work, independent of the applicability outcome;
 4. implement deterministic transfer arithmetic and inbound admission reservation;
 5. activate coherent transfer state/events/observations;
 6. close availability/no-rerouting edge semantics and late-join diagnostics; and
@@ -156,9 +156,9 @@ PLAN-ENG-4 A/B/C complete (outward consumer convergence retired as an objective)
 PLAN-ENG-5 spatial consequences
 ```
 
-Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and fixed Engine semantics identity is implemented. Those landed facts remain current evidence. The Factory composition question is concluded; unimplemented V2 publication identity and dependent spatial-runtime slices are dependency-blocked on the Engine applicability question as described in the detailed plan. PLAN-ENG-6 may proceed when its own contracts are independent of that question.
+Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and fixed Engine semantics identity is implemented. Those landed facts remain current evidence. The Factory composition question and the Engine applicability question are both concluded; unimplemented V2 publication identity and dependent spatial-runtime slices are now dependency-blocked on their own implementation prerequisites as described in the detailed plan, not on open research. PLAN-ENG-6 may proceed independently.
 
-PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right. The current blocker for the held spatial slices is the Engine applicability question above.
+PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right. The current blocker for the held spatial slices is their own unimplemented work in [Spatial Runtime Consequences](spatial-runtime-consequences.md), not open research.
 
 ## 5. Determinism and provenance invariants
 

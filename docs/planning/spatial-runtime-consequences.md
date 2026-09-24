@@ -1,6 +1,6 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Active delivery plan with an Engine research prerequisite. PLAN-ENG-5-0, PLAN-ENG-5-A1 (Factory V2 optional-record model/validation proving evidence), and fixed Engine semantics identity are implemented. The Factory composition question is concluded and reconciled; V2 publication identity and spatial runtime activation are dependency-blocked on the READY Engine applicability question.
+Status: Active delivery plan. PLAN-ENG-5-0, PLAN-ENG-5-A1 (Factory V2 optional-record model/validation proving evidence), and fixed Engine semantics identity are implemented. The Factory composition question and the Engine applicability question are both concluded and reconciled: [Engine Semantics v2](../architecture/engine-semantics-v2.md) is the identity that applies to both reconciled `factory-model:v2` forms. V2 publication identity and spatial runtime activation are now dependency-blocked only on their own remaining implementation prerequisites (V2 canonical codec/publication, `engine-semantics:v2` runtime establishment/provenance propagation, and the admission-reservation substrate), not on open research.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -17,7 +17,7 @@ The architecture is fixed by:
 - [Engine Semantics v1](../architecture/engine-semantics-v1.md), the normative first-version Engine interpretation;
 - Accepted the runtime observation/event contract for supported observation/event state reconstruction and ordering.
 
-### Remaining prerequisite — Engine applicability
+### Reconciled prerequisite — Engine applicability
 
 The [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
 is concluded: the [Factory semantic-evolution contract](../architecture/factory-design.md#111-semantic-evolution)
@@ -29,21 +29,22 @@ blocks this plan.
 Publication validity is not Engine applicability. [Engine Semantics v1](../architecture/engine-semantics-v1.md)
 was specified against the same five spatial facts but states no applicability to a
 `factory-model:v2` artifact without them, and its fixed definition is not amended by the Factory
-reconciliation. Whether `engine-semantics:v1` can be stated as applicable to V2 artifacts, or a
-distinguishable Engine identity must execute them, is the READY
-[Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies).
-Until it is reconciled:
+reconciliation. The [Engine applicability question](../research/investigations/engine-evolution.md#concluded--engine-applicability-to-optional-record-factory-policies)
+is now concluded and reconciled: `engine-semantics:v1` is not applicable to `factory-model:v2` in
+either form, and [Engine Semantics v2](../architecture/engine-semantics-v2.md) is the
+distinguishable identity that applies to both forms, reusing v1's non-spatial and spatial rules by
+explicit reference. That specification defines the identity and its obligations; it does not itself
+implement them. Until the implementation below lands:
 
 - do not release the V2 fingerprint policy (PLAN-ENG-5-A2) or make spatial transfer reachable
   (PLAN-ENG-5-C3 onward);
 - do not re-point, extend, or reinterpret `engine-semantics:v1` in implementation or documentation
-  to accept V2 artifacts;
-- keep any spatial substrate built earlier unreachable, and re-confirm it against the Engine identity
-  the question selects before activation.
+  to accept V2 artifacts — `engine-semantics:v2` is the only identity that may;
+- keep any spatial substrate built earlier unreachable, and re-confirm it against
+  `engine-semantics:v2`'s defined rules before activation.
 
 The landed V2 shape/validation and Engine-v1 conformance/identity work are retained as proving
-evidence. Work outside this chain may continue where it does not assume an answer to the Engine
-applicability question.
+evidence. Work outside this chain may continue.
 
 The first-release local-admission and shared-backlog-ranking questions in
 [Engine Evolution Research](../research/investigations/engine-evolution.md) are concluded after
@@ -62,7 +63,7 @@ Factory model v2 optional spatial record, when present
     ticksPerCell
     handlingTicks
 
-Engine semantics (v1 rules; executing identity for V2 artifacts still open)
+Engine semantics (`engine-semantics:v2`, reusing v1's dispatch/transfer rules by reference)
     existing dispatch/decomposition/scheduler rules
     destination binding timing
     Manhattan distance on position reference cells
@@ -118,7 +119,7 @@ coherent in the same landed change under the runtime observation/event contract.
 
 ## 5. Delivery slices
 
-**Engine-applicability rule:** Unimplemented slices below that release `factory-model:v2` publication identity or make spatial runtime behavior reachable are dependency-blocked until the [Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies) concludes, receives its required adversarial review, and its Engine architecture/specification reconciliation lands.
+**Engine-applicability rule:** The [Engine applicability question](../research/investigations/engine-evolution.md#concluded--engine-applicability-to-optional-record-factory-policies) has concluded and its reconciliation, [Engine Semantics v2](../architecture/engine-semantics-v2.md), has landed. Unimplemented slices below that release `factory-model:v2` publication identity or make spatial runtime behavior reachable remain dependency-blocked, now on their own listed implementation prerequisites rather than on that research question.
 
 ### PLAN-ENG-5-0 — Pin existing Engine semantics
 
@@ -337,13 +338,15 @@ Canonical V2 bytes/fingerprints, policy registration, V1→V2 migration, Engine 
 
 ### PLAN-ENG-5-A2 — Factory V2 canonical identity
 
-**Status:** Dependency-blocked on the Engine applicability question (see the rule above). The
-Factory composition prerequisite is satisfied.
+**Status:** Not started. The Factory composition and Engine applicability research prerequisites
+are both satisfied and reconciled; this slice is now blocked only on its own implementation.
 
-**Prerequisite:** PLAN-ENG-5-A1 plus reconciliation of the
-[Engine applicability question](../research/investigations/engine-evolution.md#engine-applicability-to-optional-record-factory-policies);
-if its answer changes the relative cost of the reconciled Factory boundary, weigh that composition
-reopening trigger before release.
+**Prerequisite:** PLAN-ENG-5-A1. The
+[Engine applicability question](../research/investigations/engine-evolution.md#concluded--engine-applicability-to-optional-record-factory-policies)
+is reconciled by [Engine Semantics v2](../architecture/engine-semantics-v2.md), which names
+`factory-model:v2` (both forms) as its applicable policy/content; no further research reconciliation
+gates this slice. Its measured implementation/support cost remains the Factory-composition
+reopening trigger to weigh before release, per that specification §7.
 
 **Responsibility**
 
@@ -460,9 +463,9 @@ immediately needs revising.
 
 ### PLAN-ENG-5-C1 — Pure transfer arithmetic
 
-**Prerequisite:** PLAN-ENG-5-A1 and the `engine-semantics:v1` transfer rule. The seam stays unreachable, and its
-rule is re-confirmed against the Engine identity the applicability question selects before
-PLAN-ENG-5-C3.
+**Prerequisite:** PLAN-ENG-5-A1 and the `engine-semantics:v2` transfer rule (reused from
+`engine-semantics:v1` by explicit reference). The seam stays unreachable, and its rule is
+re-confirmed against `engine-semantics:v2`'s defined rules before PLAN-ENG-5-C3.
 
 **Responsibility**
 
@@ -512,8 +515,8 @@ Public reservation aggregate, transfer timing/state/events, transport capacity.
 
 ### PLAN-ENG-5-C3 — Vertical transfer activation
 
-**Prerequisites:** reconciliation of the Engine applicability question, PLAN-ENG-5-A2, PLAN-ENG-5-B2,
-PLAN-ENG-5-C1 and PLAN-ENG-5-C2.
+**Prerequisites:** PLAN-ENG-5-A2, PLAN-ENG-5-B2, PLAN-ENG-5-C1 and PLAN-ENG-5-C2. The Engine
+applicability question is already reconciled by [Engine Semantics v2](../architecture/engine-semantics-v2.md).
 
 **Research recheck before activation:** inbound reservation changes what "can accept" means and was a
 named reopening seam in both reviewed first-release dispatch questions. Before making the reservation
@@ -648,7 +651,7 @@ The scenario demonstrates:
 ## 6. Dependency and parallelism map
 
 ```text
-READY Engine applicability research --reconcile--> gates PLAN-ENG-5-A2 and PLAN-ENG-5-C3
+CONCLUDED Engine applicability research --reconciled--> Engine Semantics v2 --gates--> PLAN-ENG-5-A2 and PLAN-ENG-5-C3 implementation
 
 CONCLUDED dispatch research --retain v1--> PLAN-ENG-5-0 v1 fixtures ---> PLAN-ENG-5-B1 semantics identity (implemented) ---> PLAN-ENG-5-B2 provenance ----+
                                                                                                                         |          |
@@ -667,21 +670,19 @@ The first-release research gate is cleared. A future reopened investigation that
 outcome-changing alternative does not retroactively mutate v1 or invalidate historical v1 fixtures;
 it requires a new `EngineSemanticsVersion` and a separately reconciled implementation path.
 
-Practical parallelism while the Engine applicability question is open:
+Practical parallelism now that the Engine applicability question is reconciled:
 
 - `PLAN-ENG-5-0`, `PLAN-ENG-5-A1`, and `PLAN-ENG-5-B1` are implemented and remain proving evidence;
-- `PLAN-ENG-5-A2` is dependency-blocked on the Engine applicability question; `PLAN-ENG-5-A3` waits for a
-  real cross-policy controlled transition;
+- `PLAN-ENG-5-A2` is blocked only on its own implementation (Factory V2 canonical codec/publication);
+  `PLAN-ENG-5-A3` waits for a real cross-policy controlled transition;
 - `PLAN-ENG-5-B2` is independent of the Factory boundary and of the applicability outcome: it propagates
   whichever Engine identity a runtime establishes and must not create a new outward compatibility promise;
 - `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` may only build unreachable substrate; `PLAN-ENG-5-C3` through
-  `PLAN-ENG-5-E` are not implementation-ready until the applicability question is reconciled;
-- work outside this chain may proceed under its own plan when it does not assume an answer to the
-  applicability question.
+  `PLAN-ENG-5-E` are not implementation-ready until PLAN-ENG-5-A2 and PLAN-ENG-5-B2 land;
+- work outside this chain may proceed under its own plan.
 
-After the Engine applicability question concludes, receives its independent adversarial review, and its
-reconciliation lands, re-resolve this dependency map before selecting the next PLAN-ENG-5 implementation
-slice.
+Re-resolve this dependency map before selecting the next PLAN-ENG-5 implementation slice, since it
+now reflects only implementation-side dependencies rather than an open research gate.
 ## 7. KPI acceptance
 
 PLAN-ENG-5 preserves existing metric definitions:
@@ -729,14 +730,15 @@ Engine-semantics identity work remain valid evidence under the current architect
 first-release dispatch gate is closed for those already-landed v1 semantics, and the Factory
 composition question is concluded and reconciled.
 
-The remaining V2 publication and spatial-runtime path is **not implementation-ready** while the
-Engine applicability question is open. The Factory semantic-evolution contract, the Determinism
-Contract and Engine Semantics v1 remain authoritative; none of them makes `engine-semantics:v1`
-applicable to `factory-model:v2` artifacts.
+The Engine applicability question is now concluded and reconciled: [Engine Semantics v2](../architecture/engine-semantics-v2.md)
+is the identity applicable to `factory-model:v2` artifacts in both forms, and `engine-semantics:v1`
+remains unchanged and inapplicable to them. The remaining V2 publication and spatial-runtime path is
+still **not implementation-ready**, now because PLAN-ENG-5-A2, PLAN-ENG-5-B2, PLAN-ENG-5-C1, and
+PLAN-ENG-5-C2 have not yet landed, not because of open research. The Factory semantic-evolution
+contract, the Determinism Contract, Engine Semantics v1, and Engine Semantics v2 remain
+authoritative.
 
-Before a held slice resumes, the Engine applicability question must reach a decision-quality
-conclusion, receive its independent adversarial review, and its Engine architecture/specification
-reconciliation must land. The plan must then be re-resolved against that result. If later activation
+Before a held slice resumes, its own listed prerequisites in §5/§6 must land. If later activation
 still reaches PLAN-ENG-5-C3, perform the explicit reservation-aware dispatch recheck there. Any slice
 that encounters contradictory evidence must stop at that boundary rather than silently revising the
 accepted contract in product code.

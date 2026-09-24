@@ -36,8 +36,11 @@ specification, implementation and support.
   consumed this result (no rebinding, explicit comparison, scoped support).
 - Same-label amendment of an attributed Engine definition — a separate bounded Engine question;
   a particular amendment would need its own attribution and supported-input evidence and would
-  not establish universal section freezing. Its first concrete case is the
-  [Engine applicability question](engine-evolution.md#engine-applicability-to-optional-record-factory-policies).
+  not establish universal section freezing. Its first concrete case, the
+  [Engine applicability question](engine-evolution.md#concluded--engine-applicability-to-optional-record-factory-policies),
+  has since concluded: the affirmative preservation burden was not met, so a distinguishable
+  identity (`engine-semantics:v2`) was adopted rather than a same-label amendment, without
+  settling the general same-label amendment question.
 - Concrete custody mechanics for retained proving artifacts — ordinary bounded design/validation
   unless equality, acceptance or accountability semantics prove unsettled.
 - Operational closure/retirement and audit horizon — remain with the open Operational questions.

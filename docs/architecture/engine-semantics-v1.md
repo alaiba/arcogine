@@ -4,13 +4,32 @@ Status: Normative interpretation contract; implementation partial (spatial execu
 Semantic identity: `engine-semantics:v1`
 Rationale: [Determinism Contract](overview.md#determinism-contract)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
-Model-side counterpart: [Factory Model v2 Canonicalization](factory-model-v2.md)
+Spatial fact source: [Factory Model v2 Canonicalization](factory-model-v2.md) §1.1 (fact meanings
+consumed by §§5-9 when applicable; see Applicability below for which Factory policy this
+specification executes)
+Distinguishable identity for `factory-model:v2`: [Engine Semantics v2](engine-semantics-v2.md) (not an amendment of this specification)
 
 ## 1. Purpose
 
 `engine-semantics:v1` defines the complete result-affecting Engine interpretation that Arcogine
 must attribute to a simulation run using this version. It records semantic rules, not Java class
 shape, DTO serialization, build identity, or replaceable implementation algorithms.
+
+**Applicability.** `engine-semantics:v1` is the executing Engine interpretation for
+`factory-model:v1` artifacts. Its rules, including the spatial rules in §§5-10, were written
+against the fixed meanings of the five spatial facts that
+[Factory Model v2 Canonicalization](factory-model-v2.md) defines — floor dimensions, resource
+position, resource footprint, `ticksPerCell`, and `handlingTicks` — because those meanings do not
+change when the surrounding Factory grammar is corrected. Consuming those fact *meanings* is not
+the same as this specification declaring applicability to `factory-model:v2` artifacts: whether
+`engine-semantics:v1` executes a `factory-model:v2` artifact, with its spatial record present or
+absent, is not established by this specification, and this paragraph does not establish it either.
+[Engine Semantics v2](engine-semantics-v2.md) is the distinguishable identity that explicitly
+applies to both reconciled `factory-model:v2` forms; it reuses this specification's non-spatial and
+spatial rules by explicit reference where their meanings are preserved, without this specification
+gaining a new applicability domain. This paragraph records a previously unwritten applicability
+boundary under the §1.1 completeness rule below; it changes no rule's behavior and is not an
+extension of what this specification already executed.
 
 `EngineSemanticsVersion` is the semantic identity of Arcogine's complete result-affecting
 simulation interpretation for a run. It is distinct from `ModelFingerprint` (which authored Factory

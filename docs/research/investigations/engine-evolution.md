@@ -1,6 +1,6 @@
 # Engine Evolution Research
 
-> **Lifecycle:** See the maintained research register; this artifact contains concluded dispatch history, concluded first-release dispatch decisions, a READY Engine applicability question, and CANDIDATE follow-up questions
+> **Lifecycle:** See the maintained research register; this artifact contains concluded dispatch history, concluded first-release dispatch decisions, a CONCLUDED Engine applicability question, and CANDIDATE follow-up questions
 >
 > **Scope:** Result-affecting Engine questions that still require evidence before current deterministic runtime semantics change  
 > **Authority:** Research only; current Engine semantics remain fixed by adopted architecture and executable evidence until a separate reconciliation change says otherwise
@@ -185,9 +185,9 @@ Current per-machine local queues are FIFO. The investigation proves that FIFO is
 
 Do not research a replacement sequencing rule merely because one benchmark improves. Reopen this question when a concrete supported consumer identifies the scheduling objective, fairness/starvation requirements, information horizon, and authoritative input facts that define what "better" means. Due dates/weights, setup matrices, resource-dependent duration, or full-horizon optimization remain separate semantic prerequisites when the chosen policy family needs them.
 
-## Engine applicability to optional-record Factory policies
+## CONCLUDED — Engine applicability to optional-record Factory policies
 
-> **Lifecycle:** READY — see the maintained [research register](../research-register.md). **Risk:** High; independent adversarial review is required before Engine architecture reconciliation.
+> **Lifecycle:** CONCLUDED — see the maintained [research register](../research-register.md). **Risk:** High; concluded after independent adversarial review (`ACCEPT WITH QUALIFICATIONS`).
 
 ### Question
 
@@ -195,25 +195,39 @@ Which Engine semantics identity may execute artifacts of the reconciled [`factor
 
 ### Decision at stake
 
-Whether spatial runtime activation is attributed to `engine-semantics:v1` or needs a distinguishable Engine semantics identity. [Engine Semantics v1](../../architecture/engine-semantics-v1.md) was specified against the same five spatial facts at a time when the unreleased `factory-model:v2` draft made them mandatory; it consumes those facts but states no applicability to a `factory-model:v2` artifact that omits them, and its implementation executes only `factory-model:v1` publications. The [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) makes publication validity and Engine applicability different predicates, so the concluded [Factory composition](factory-model-semantic-composition.md) result deliberately does not answer this.
+Whether spatial runtime activation is attributed to `engine-semantics:v1` or needs a distinguishable Engine semantics identity. [Engine Semantics v1](../../architecture/engine-semantics-v1.md) was specified against the same five spatial facts at a time when the unreleased `factory-model:v2` draft made them mandatory; it consumes those facts but states no applicability to a `factory-model:v2` artifact that omits them, and its implementation executes only `factory-model:v1` publications. The [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) makes publication validity and Engine applicability different predicates, so the concluded [Factory composition](factory-model-semantic-composition.md) result deliberately did not answer this.
 
-### Constraints
+### Reconciled conclusion
 
-- Whole-definition fixation covers rules no fixture has exercised and refusal behavior; that spatial execution has not shipped, or that no repository-local persistent run store was found, does not authorize changing `engine-semantics:v1` in place ([semantic evolution and support rules](../../architecture/overview.md#semantic-evolution-and-support), [Semantic contract support](../../development/semantic-contract-support.md)).
-- An in-place statement is admissible only as a correction backed by proof that the complete already-defined contract — accepted input domain, interpretation, outputs, refusals and referenced semantic definitions — is preserved.
-- Otherwise the changed applicability needs a distinguishable Engine identity, and `engine-semantics:v1` stays exactly as defined.
-- This applies the open same-label amendment question to one concrete case; an answer here does not settle same-label amendment in general.
+**Both-form preservation under `engine-semantics:v1` fails its affirmative burden; a distinguishable Engine identity, `engine-semantics:v2`, is adopted for the reconciled policy.** [Engine Semantics v2](../../architecture/engine-semantics-v2.md) leaves `engine-semantics:v1` completely unchanged — v1 continues to execute only `factory-model:v1` — and defines `engine-semantics:v2` as applicable to `factory-model:v2` artifacts in both the spatial-present and spatial-absent forms, reusing v1's non-spatial and spatial rules by explicit reference where their meanings are preserved.
 
-### Candidates
+The minimum new admission is a spatial-absent `factory-model:v2` artifact executed as itself, under its own actual fingerprint, with production-only behavior and no fabricated or defaulted spatial content. Reusing the existing transfer computation for the spatial-present case was feasible and fact-level preserved, but feasibility is not the same as an already-entailed applicability rule: v1's fixed text never states which Factory policy/content domain it admits, and admitting the previously-unrepresentable absent case is a new admission rather than a recorded-but-unwritten rule.
 
-- **Preservation proof and correction:** show that stating `engine-semantics:v1`'s applicability to the reconciled policy — spatial record present: the existing transfer rules over the same five facts; spatial record absent: the no-transfer behavior of a design without spatial facts — changes nothing the definition already fixed, then record it as a correction.
-- **Distinguishable Engine identity:** keep `engine-semantics:v1` as defined and introduce a new identity whose definition names the Factory policies and represented content it supports.
+### Binding qualifications and reopening triggers
 
-### Evidence expectations and exit criteria
+- **Conditional proof boundary.** The durable rationale states that the inspected fixed v1 definition did not establish both-form V2 applicability and that the affirmative correction burden was not met. It must not be read as a general rule that every different Factory fingerprint, every byte change, every newly implemented input, or every future Factory policy necessarily requires a new Engine identity. Discovery of an Engine-owned, whole-definition-preserving admission rule that already entails this exact V2-absence case under v1 would justify re-examining this conclusion; a new fixture that merely assumes such a rule is not that evidence.
+- **Present-only and partition scope.** The five spatial facts and their interpretation remain strongly preserved at the fact level. A present-only correction of `engine-semantics:v1` itself, or a hybrid partition (v1 for spatial-present, a successor for spatial-absent only), remains **unproven, not impossible** and is not adopted here; one successor covering both V2 forms is the selected conservative scope, not a proof that the hybrid is unavailable. Implementing the already-defined spatial mathematics alone does not, by itself, establish that either candidate was already correct.
+- **Exact attribution and dependency support.** `engine-semantics:v1`'s historical meaning, including its dependency on the five spatial facts as [Factory Model v2](../../architecture/factory-model-v2.md) §1.1 defines them, remains resolvable independently of that document's later optional-record correction; a mutable Factory reference must never silently rebind v1's fixed meaning. `engine-semantics:v2` must identify its own actual Factory policy/content support and preserve real Factory fingerprint provenance; it must never resurrect the historical mandatory-spatial V2 byte grammar, republish a V2 artifact as V1, or fall back silently from an unsupported identity to a supported one.
+- **Research acceptance is not release evidence.** This reconciliation defines the successor interpretation and its obligations. It does not itself implement `factory-model:v2` publication/codec/verification, spatial execution, complete Engine-identity propagation on observations/events, or successor conformance fixtures; those remain owned by the still-gated [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) slices.
+- **Knowledge transfer and bounded Factory reopening trigger.** The Factory composition question's existing reopening trigger remains bounded: a concrete measured successor/support cost or later consumer evidence may justify reopening that earlier choice; this research establishes no universal optimality claim and no measured implementation cost, so it does not itself reopen Factory composition.
 
-An inventory of retained or accepted records and declared support attributed to `engine-semantics:v1`; a complete before/after comparison of its accepted input domain and refusal behavior under each candidate; and the supported-input, interaction and rejection fixtures the chosen identity needs. The question exits with an Engine architecture/specification reconciliation stating which Engine identity executes which Factory policies and represented content.
+### Investigated candidates
 
-Spatial runtime activation and release of `factory-model:v2` publication identity stay blocked until this question is reconciled ([Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md)). If the answer requires an Engine identity transition whose cost changes the relative merit of the reconciled Factory boundary, that is a reopening trigger for the Factory composition question, to be weighed before V2 publication is released.
+- **Candidate A — preservation proof and correction (rejected for the full domain):** state that `engine-semantics:v1` already accepts both reconciled V2 forms without a new identity. Fails the affirmative whole-definition-preservation burden: v1's text does not admit the previously-unrepresentable spatial-absent case, and formula-level reuse for the present case does not establish full policy/reference/refusal preservation.
+- **Candidate B — distinguishable complete interpretation (adopted):** keep `engine-semantics:v1` exactly as defined; introduce `engine-semantics:v2`, whose definition names the Factory policy and represented content it supports and reuses v1's rules by explicit reference. See [Engine Semantics v2](../../architecture/engine-semantics-v2.md).
+- **Restricted alternative (not adopted, not foreclosed):** `engine-semantics:v1` for spatial-present only, refusing spatial-absent V2. A narrower restriction of Candidate A; does not answer the requested both-form applicability and is not evidence that Candidate A's missing absent-case entailment exists.
+
+### Durable proving cases
+
+- A quantity-one order with route `M1:2 -> M2:3` on two unary machines: `factory-model:v1` and spatial-absent `factory-model:v2` both complete at tick 5 under their respective identities (v1 and v2 respectively), proving equal production outcome does not collapse the two artifacts' distinct fingerprints or identities.
+- The same route with a present spatial record, floor `3x1`, footprints at `(0,0)` and `(2,0)`, `ticksPerCell=4`, `handlingTicks=1`: step one completes at 2, transfer arrives at 11, order completes at 14 under `engine-semantics:v2`'s reused transfer rules.
+- The same present record with both handling magnitudes set to legal zero: transfer still starts and completes on a separately scheduled turn at 2, with processing completing at 5 — proving present-with-zero is distinct authored content from absence, which has no such turn or event.
+- An incomplete or invalid present record (a missing resource layout, overlapping footprints, or an unrepresentable maximum-transfer duration) is rejected by Factory validation before any Engine-applicability question is reached, under both identities.
+- A valid artifact outside `engine-semantics:v2`'s declared policy/content domain (for example a `factory-model:v1` artifact requested against `engine-semantics:v2`, or a future Factory policy) is refused before runtime mutation, distinct from a Factory-invalid artifact.
+
+### Exit criteria — satisfied
+
+An Engine architecture/specification reconciliation now states which Engine identity executes which Factory policy and represented content: [Engine Semantics v2](../../architecture/engine-semantics-v2.md). The before/after accepted-input comparison and the supported-input/interaction/rejection fixture requirements are recorded there (§8) as obligations for the separately gated implementation work, not as fixtures this reconciliation itself adds. Spatial runtime activation and release of `factory-model:v2` publication identity remain blocked, now on their own implementation prerequisites in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) rather than on this research question.
 
 ## Same-semantics shared-backlog performance
 

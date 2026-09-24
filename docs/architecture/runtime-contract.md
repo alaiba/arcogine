@@ -46,7 +46,7 @@ Internal Event
    "what is true now"  "what authoritatively changed"
 ```
 
-`Event`, `EventType`, and `EventPayload` remain internal simulation-engine contracts. They are not automatically public compatibility types.
+`Event` and `EventPayload` remain internal simulation-engine contracts. They are not automatically public compatibility types.
 
 The supported runtime contract introduces separate runtime-observation and runtime-event types. A first implementation may map many internal events closely, but it must not define the supported envelope as a wrapper around `Event` or expose `EventPayload` as its payload type.
 
@@ -84,7 +84,7 @@ A rejected command or rejected/failed transition must not emit a successful stat
 
 If a command is accepted and a later execution cascade faults after partial authoritative mutation, the consumer-neutral session-control distinction between acceptance and execution outcome is preserved. The supported runtime-event contract reports only the authoritative changes that actually occurred; it does not pretend an all-or-nothing transition happened when it did not. Fault/result reporting remains distinct from state-change event publication.
 
-The retired legacy API's `SimThread` SSE path used to log and notify internal events before `handleEvent(...)` completed. That was migration debt owed to this contract, not the semantic model defined here; a future outward adapter must not repeat it.
+A future outward adapter must not log, notify, or forward an internal event as a runtime change before the handler processing it (`handleEvent(...)`) has completed the authoritative transition.
 
 ## Every runtime has explicit run identity and a per-run sequence epoch
 
@@ -122,7 +122,7 @@ payload
 
 The Java type names and payload decomposition may vary by implementation, but these responsibilities are stable.
 
-`eventType` is a supported semantic event taxonomy distinct from `EventType`.
+`eventType` is a supported semantic event taxonomy distinct from the internal scheduler's `EventPayload` variants.
 
 `affectedEntityRefs` provide stable correlation without forcing consumers to parse domain-specific payloads merely to identify affected runtime entities. Entity references must preserve domain identity rather than introducing stringly typed replacement identities.
 
@@ -215,7 +215,7 @@ must detect dropped events rather than silently treating an incomplete sequence 
 
 HTTP/SSE, WebSocket, Kafka, NATS, MQTT, an embedded Java API, or later operational adapters are projections of the same transport-neutral runtime contract. None is a dependency of the simulation core.
 
-The retired legacy API's SSE design, where each internal `EventType` became an SSE `event:` name, is not the target compatibility boundary. A future SSE-based adapter should use one stable transport event name such as `runtime-event`, use the supported `sequence` as the SSE message ID, and carry the semantic `eventType` inside the envelope.
+Transport event names must not be derived from internal scheduler event kinds. A future SSE-based adapter should use one stable transport event name such as `runtime-event`, use the supported `sequence` as the SSE message ID, and carry the semantic `eventType` inside the envelope.
 
 This avoids requiring transport-listener registration changes whenever a supported semantic event type is added and prevents the transport taxonomy from becoming the domain taxonomy.
 

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-/** Ported from crates/sim-types/src/lib.rs simerror_display_* tests. */
 class SimErrorTest {
 
     @Test
@@ -26,13 +25,6 @@ class SimErrorTest {
         assertEquals(
             "event ordering violation: expected time >= t=10, got t=5",
             new SimError.EventOrderingViolation(SimTime.of(10), SimTime.of(5)).getMessage());
-    }
-
-    @Test
-    void invalidReferenceMessage() {
-        assertEquals(
-            "invalid reference: no such machine",
-            new SimError.InvalidReference("no such machine").getMessage());
     }
 
     @Test

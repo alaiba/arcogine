@@ -4,7 +4,7 @@
 
 Arcogine is a simulation engine intended for local development and experimentation. It currently has no application server, HTTP API, or CLI product surface -- retained executable evidence is tests, conformance checks, and benchmarks run directly through the Java build. Nothing in the repository today accepts network requests, so there is no production-grade authentication, authorization, or data encryption to describe because there is no running deployable those would apply to.
 
-This document covers how to report a vulnerability, what the current software actually does and does not protect, and what must be true before Arcogine exposes a network-reachable surface again. It describes today's software honestly; where a requirement belongs to another authority, it points there rather than restating it.
+This document covers how to report a vulnerability, what the current software actually does and does not protect, and what must be true before Arcogine exposes a network-reachable surface. It describes today's software honestly; where a requirement belongs to another authority, it points there rather than restating it.
 
 Two escalations are deliberately kept apart, because they are different boundaries with different owners:
 
@@ -37,7 +37,7 @@ Dependency vulnerabilities follow a separate, already-owned path: see [Security 
 
 ## Security Posture
 
-Arcogine is local-first by default and, at present, has no network-reachable surface at all: no HTTP API, no CLI-launched server, no container image. Dependency auditing and secret scanning are the current executable controls; the retired scenario and pricing validations are not current security controls.
+Arcogine is local-first by default and, at present, has no network-reachable surface at all: no HTTP API, no CLI-launched server, no container image. Dependency auditing and secret scanning are the current executable controls.
 
 ### Retained controls
 
@@ -46,27 +46,17 @@ Arcogine is local-first by default and, at present, has no network-reachable sur
 | Dependency auditing | `./arcogine check --full` runs the CycloneDX SBOM generation and `trivy sbom` scan (see [Security scan ownership](#security-scan-ownership)). |
 | Secret scanning | `gitleaks detect` runs in the same `check --full` pass and in CI. |
 
-### Structural limits that a future network surface must not reintroduce silently
-
-These were true of the retired HTTP API and CLI server, and are recorded here so a future outward adapter is built with them in mind rather than repeating them by default:
-
-- **No user or principal concept existed.** The retired REST API did not require authentication, and there was nothing to authenticate *as*.
-- **One shared simulation.** The retired API held simulation state as a single process-wide singleton: every client shared one simulation, with no per-caller isolation.
-- **No request resource or cost bounds** beyond a request body cap.
-- **No encryption of simulation state at rest.**
-
-A future outward adapter (HTTP, CLI, or otherwise) should treat closing these gaps as part of its own design, not assume the previous adapter's posture was acceptable to repeat.
-
 ## Before hosted or multi-user exposure
 
-A hosted or multi-user Arcogine is a different product boundary, even when it performs no physical actuation, and applies whenever a future consumer reintroduces a network-reachable surface. The absence of the controls below is not a current defect — there is currently no surface for them to apply to — but they stop being optional the moment a second principal can reach the same instance.
+A hosted or multi-user Arcogine is a different product boundary, even when it performs no physical actuation, and applies whenever a future consumer introduces a network-reachable surface. The absence of the controls below is not a current defect — there is currently no surface for them to apply to — but they stop being optional the moment a second principal can reach the same instance.
 
 Before any hosted or multi-user consumer is treated as safe, these must be explicit, recorded readiness criteria with executable verification, not prose:
 
 - **Authentication** — who or what is making a request.
 - **Authorization enforcement** — what that identity may do, enforced at the API boundary rather than hidden in the UI.
-- **Per-principal isolation** — one caller's scenario, simulation state, and results separated from another's. This is the criterion the current singleton architecture fails structurally.
+- **Per-principal isolation** — one caller's inputs, simulation state, and results separated from another's, rather than one shared process-wide simulation.
 - **Resource and cost isolation** — bounds on what one principal can consume.
+- **Protection of stored state** — simulation state and results held at rest are protected appropriately to the exposure.
 - **Audit attribution** — a durable record of who did what.
 
 Ownership when that trigger fires: this is **product/interface ownership**, not Operational's. Operational Execution owns trust and authority semantics for *consequential* operations — actions with effects outside Arcogine — and a hosted, non-actuating deployment is not that. Generic actor and capability semantics also do not become Operational's by default; the research register's open actor-identity question may become relevant to the identity *referent* once a concrete consumer exists, but authorization enforcement and per-principal isolation belong with the interface that exposes them.

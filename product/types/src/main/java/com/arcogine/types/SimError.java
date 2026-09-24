@@ -46,12 +46,6 @@ public sealed class SimError extends RuntimeException {
         public SimTime actual() { return actual; }
     }
 
-    public static final class InvalidReference extends SimError {
-        public InvalidReference(String message) {
-            super("invalid reference: " + message);
-        }
-    }
-
     public static final class OutOfRange extends SimError {
         private final String field;
 

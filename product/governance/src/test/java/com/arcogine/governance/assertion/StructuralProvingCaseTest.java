@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
  * <p>Per the requirement-scope acceptance criteria, this uses a minimal test-domain fixture ({@link
  * DeclaredResource}) rather than manufacturing a permanent factory policy or duplicating {@code
  * FactoryModelValidator} as a competing executability authority. It proves the contract is
- * headlessly operable -- no Spring, no HTTP/API DTOs, no frontend code, no mutable runtime state,
+ * headlessly operable -- no application framework, no outward DTOs, no mutable runtime state,
  * no external evidence, no compliance framework -- while leaving the choice of a real permanent
  * factory-owned invariant to a future conformance-evaluation slice with actual conformance-evaluation semantics.
  */

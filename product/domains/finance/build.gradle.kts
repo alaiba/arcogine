@@ -5,7 +5,7 @@ dependencies {
     implementation(project(":simulation"))
 }
 
-// Coverage gate: fails the build if sim-finance line coverage drops below the
+// Coverage gate: fails the build if :finance line coverage drops below the
 // floor (e.g. if its tests are deleted).
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     dependsOn(tasks.named("test"))

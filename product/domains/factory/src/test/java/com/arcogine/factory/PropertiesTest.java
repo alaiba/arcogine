@@ -23,9 +23,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Property tests for sim-factory invariants. Ported from
- * crates/sim-factory/tests/properties.rs (proptest) to JUnit 5 parameterized /
- * randomized-seed tests covering the same input ranges.
+ * Property tests for Factory invariants, expressed as JUnit parameterized and
+ * randomized tests.
  */
 class PropertiesTest {
 
@@ -35,8 +34,8 @@ class PropertiesTest {
         return new Order(new OrderId(id), new ProductId(1), 1, SimTime.ZERO, 10.0);
     }
 
-    // job_current_step_never_exceeds_total:
-    //   total_steps in 1..=10, completions in 0..=15
+    // A job's current step never exceeds its total:
+    //   totalSteps in [1, 10], completions in [0, 15].
     static Stream<Arguments> jobStepInputs() {
         Random rng = new Random(SEED);
         List<Arguments> args = new ArrayList<>();
@@ -55,7 +54,7 @@ class PropertiesTest {
     @ParameterizedTest
     @MethodSource("jobStepInputs")
     void jobCurrentStepNeverExceedsTotal(int totalSteps, int completions) {
-        Job job = new Job(new JobId(1), order(1), totalSteps, SimTime.ZERO);
+        Job job = new Job(new JobId(1), order(1), 0, totalSteps, SimTime.ZERO);
         for (int i = 0; i < completions; i++) {
             if (job.isComplete()) {
                 break;
@@ -63,19 +62,19 @@ class PropertiesTest {
             try {
                 job.start(new MachineId(1));
             } catch (RuntimeException ignored) {
-                // mirrors `let _ = job.start(...)` — error tolerated
+                // an invalid transition is tolerated; only the step bound is under test
             }
             try {
                 job.completeStep(new SimTime(i + 1L));
             } catch (RuntimeException ignored) {
-                // mirrors `let _ = job.complete_step(...)` — error tolerated
+                // an invalid transition is tolerated; only the step bound is under test
             }
         }
         assertTrue(job.currentStep() <= totalSteps);
     }
 
-    // machine_active_jobs_never_exceeds_concurrency:
-    //   concurrency in 1..=5, job_count in 0..=20
+    // A machine's active jobs never exceed its concurrency:
+    //   concurrency in [1, 5], jobCount in [0, 20].
     static Stream<Arguments> concurrencyInputs() {
         Random rng = new Random(SEED + 1);
         List<Arguments> args = new ArrayList<>();
@@ -106,7 +105,7 @@ class PropertiesTest {
         assertEquals(Math.min(concurrency, jobCount), started);
     }
 
-    // queue_fifo_order: count in 0..=20
+    // Machine queues are FIFO: count in [0, 20].
     static Stream<Arguments> fifoCounts() {
         return IntStream.rangeClosed(0, 20).mapToObj(Arguments::of);
     }
@@ -132,7 +131,7 @@ class PropertiesTest {
         assertEquals(ids, dequeued);
     }
 
-    // no_lost_jobs: created in 1..=20
+    // No created job is lost: created in [1, 20].
     static Stream<Arguments> createdCounts() {
         return IntStream.rangeClosed(1, 20).mapToObj(Arguments::of);
     }
@@ -142,7 +141,7 @@ class PropertiesTest {
     void noLostJobs(int created) {
         JobStore store = new JobStore();
         for (int i = 0; i < created; i++) {
-            store.createJob(order(i + 1L), 2, SimTime.ZERO);
+            store.createJob(order(i + 1L), 0, 2, SimTime.ZERO);
         }
 
         long active = store.activeJobs().count();
@@ -158,7 +157,7 @@ class PropertiesTest {
         Random rng = new Random();
         int totalSteps = rng.nextInt(10) + 1;
         int completions = rng.nextInt(16);
-        Job job = new Job(new JobId(1), order(1), totalSteps, SimTime.ZERO);
+        Job job = new Job(new JobId(1), order(1), 0, totalSteps, SimTime.ZERO);
         for (int i = 0; i < completions; i++) {
             if (job.isComplete()) {
                 break;
@@ -167,7 +166,7 @@ class PropertiesTest {
                 job.start(new MachineId(1));
                 job.completeStep(new SimTime(i + 1L));
             } catch (RuntimeException ignored) {
-                // tolerated, mirrors proptest's ignored Results
+                // an invalid transition is tolerated; only the step bound is under test
             }
         }
         assertTrue(job.currentStep() <= totalSteps);

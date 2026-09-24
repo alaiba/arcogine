@@ -53,7 +53,7 @@ public class FinanceHandler implements EventHandler {
         BigDecimal amount = orderValue(oc.quantity(), oc.unitPrice());
         ledger.post(new JournalEntry(
                 time,
-                "Order " + oc.jobId().value() + " completed",
+                "Order " + oc.orderId().value() + " completed",
                 List.of(
                         new Posting(Account.CASH, Side.DEBIT, amount),
                         new Posting(Account.SALES, Side.CREDIT, amount))));

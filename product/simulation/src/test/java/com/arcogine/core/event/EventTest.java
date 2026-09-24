@@ -2,15 +2,16 @@ package com.arcogine.core.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Ported from crates/sim-core/src/event.rs #[cfg(test)] module. */
 class EventTest {
 
     @Test
@@ -27,22 +28,18 @@ class EventTest {
     }
 
     @Test
-    void eventTypeDerivedFromEachPayloadVariant() {
-        record Case(EventPayload payload, EventType expectedType) {}
+    void everyPayloadVariantIsCarriedUnchangedWithValueEquality() {
+        List<EventPayload> payloads = List.of(
+                new EventPayload.OrderCreation(new ProductId(1), 1, 10.0),
+                new EventPayload.TaskStart(new JobId(1), new MachineId(1), 0),
+                new EventPayload.TaskEnd(new JobId(1), new MachineId(1), 0),
+                new EventPayload.OrderCompleted(new OrderId(1), new JobId(2), new ProductId(1), 5, 10.0),
+                new EventPayload.MachineAvailabilityChange(new MachineId(1), true));
 
-        List<Case> cases = List.of(
-                new Case(new EventPayload.OrderCreation(new ProductId(1), 1, 10.0), EventType.OrderCreation),
-                new Case(new EventPayload.TaskStart(new JobId(1), new MachineId(1), 0), EventType.TaskStart),
-                new Case(new EventPayload.TaskEnd(new JobId(1), new MachineId(1), 0), EventType.TaskEnd),
-                new Case(
-                        new EventPayload.OrderCompleted(new JobId(1), new ProductId(1), 5, 10.0),
-                        EventType.OrderCompleted),
-                new Case(new EventPayload.MachineAvailabilityChange(new MachineId(1), true),
-                        EventType.MachineAvailabilityChange));
-
-        for (Case c : cases) {
-            Event event = Event.of(SimTime.ZERO, c.payload());
-            assertEquals(c.expectedType(), event.eventType());
+        for (EventPayload payload : payloads) {
+            Event event = Event.of(SimTime.of(7), payload);
+            assertSame(payload, event.payload());
+            assertEquals(Event.of(SimTime.of(7), payload), event);
         }
     }
 }

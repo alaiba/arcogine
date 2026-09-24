@@ -11,10 +11,11 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | Directory | Purpose |
 |-----------|---------|
 | `product/types/` | Shared types, typed IDs, error definitions |
+| `product/governance/` | Controlled revisions, semantic change, requirements, conformance, and evidence use |
 | `product/simulation/` | Event engine and scheduler |
-| `product/domains/factory/` | Machines, jobs, routing, queues |
+| `product/domains/factory/` | Canonical factory model and publication, `FactoryRuntime`, machines, jobs, routing, queues |
 | `product/domains/finance/` | Ledger, financial interpretation of operational events |
-| `product/consumer/challenge/` | Challenge Readiness: game-owned `ChallengeDefinition` and validator — headless, no dependency on any module above |
+| `product/consumer/challenge/` | Headless, game-owned challenge definitions, catalogue/economics, admissibility, evaluation, and attempt comparison — no dependency on any module above |
 | `product/consumer/challenge-factory-integration-test/` | Test-only proof module: Factory-executability and challenge admissibility are independent axes |
 | `product/architecture-conformance-test/` | Test-only module: durable cross-domain ArchUnit guardrails |
 | `docs/` | Project documentation |
@@ -42,7 +43,7 @@ Use `./arcogine check` before pushing. Use `./arcogine check --full` when the ch
 
 Keep PR descriptions stable under normal branch evolution. Describe semantic scope, rationale, non-goals, and validation actually performed. Do not present mutable Git/GitHub topology or gate state — such as the current `main`/head SHA, ahead/behind or commit counts, base freshness, mergeability, or current CI/check state — as validation facts that the body must stay synchronized with. GitHub resolves those facts live. Exact SHAs may still appear when they intentionally identify immutable evidence/artifacts or are clearly labeled as historical provenance. Validation text should name reproducible commands, checks, or review performed rather than temporary branch shape.
 
-**Temporary artifacts:** use `logs/` for local diagnostics, captures, and session scratch that should never be committed; it is gitignored as a whole. Branch-local material that must be committed for continuity or handoff but must not land on `main` belongs under the unignored `workspace/` root. `workspace/` is transient storage, not an archive: remove its files before final review and do not add a marker file. The repository check rejects any tracked `workspace/` path. Do not redirect canonical tool outputs — Gradle and `dist/` continue to use their configured locations.
+**Temporary artifacts:** use `logs/` for local diagnostics, captures, and session scratch that should never be committed; it is gitignored as a whole. Branch-local material that must be committed for continuity or handoff but must not land on `main` belongs under the unignored `workspace/` root. `workspace/` is transient storage, not an archive: remove its files before final review and do not add a marker file. The repository check rejects any tracked `workspace/` path. Do not redirect canonical tool outputs — Gradle continues to use its configured locations.
 
 For independent PR review, re-review, severity/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).
 
@@ -90,13 +91,13 @@ During implementation and review, preserve these non-negotiable constraints:
 
 1. Every mutable piece of domain state has exactly one authoritative owner; cross-domain consumers receive read-only observations or explicit purpose-specific context, never another subsystem's mutable state.
 2. Agents observe and emit decisions/events; they do not mutate simulation domains directly. Decisions that change simulation state become deterministic simulation events.
-3. Observation objects remain immutable and purpose-specific. API DTOs and UI snapshots are not automatically valid domain observations.
+3. Observation objects remain immutable and purpose-specific. Outward-projection DTOs are not automatically valid domain observations.
 4. Handler execution order stays explicit wherever order affects semantics. Do not introduce asynchronous/event-bus dispatch that weakens deterministic, explicitly ordered execution.
 5. Do not introduce synchronized copies of authoritative state or pairwise setter wiring between domains as a coupling mechanism.
 6. Keep domain concepts distinct and owned by the appropriate domain; in particular, operational facts and Finance's financial interpretation of those facts must remain separate.
 7. The simulation must remain deterministic: identical inputs and seeds produce identical results.
 
-A subset of these constraints is CI-enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`; the remainder are review constraints. Detailed examples — including pricing/order terminology and Commercial, Operational, and Financial Truth — belong in the architecture documentation rather than this contributor guide.
+A subset of these constraints is CI-enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`; the remainder are review constraints. Detailed examples — including order terminology and Commercial, Operational, and Financial Truth — belong in the architecture documentation rather than this contributor guide.
 
 ## Testing
 

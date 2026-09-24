@@ -178,7 +178,7 @@ Pay particular attention to boundaries among:
 - Governance/Conformance;
 - Challenge/Game consumer;
 - Operational Execution/Digital Twin;
-- API/CLI/Web outward projections.
+- any future outward projection (API/CLI/UI).
 
 If two tracks evaluate or identify related things, do not assume they should share a type or implementation.
 

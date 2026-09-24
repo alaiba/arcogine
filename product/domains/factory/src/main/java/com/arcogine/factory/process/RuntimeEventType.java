@@ -3,7 +3,7 @@ package com.arcogine.factory.process;
 /**
  * The minimum supported, consumer-facing runtime event taxonomy for {@link FactoryRuntime}
  * (the supported runtime-event contract). This is deliberately narrower than the internal
- * scheduler's {@code EventType}: it
+ * scheduler's {@code EventPayload} variants: it
  * represents meaningful authoritative state change a consumer-neutral caller can act on, not
  * scheduler implementation detail (e.g. the internal {@code TaskStart} marker event, which never
  * itself changes authoritative state, has no supported counterpart).

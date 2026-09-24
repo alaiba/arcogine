@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test;
  *   <li>a consumer joining an already-progressed runtime can reconstruct the complete current
  *       supported view from one fresh {@link FactoryRuntime#observe()} alone, with no retained or
  *       replayed runtime events, no internal scheduler-event replay, no {@code
- *       FactoryHandler}/mutable-store access, and no API/Spring/frontend DTOs;
+ *       FactoryHandler}/mutable-store access, and no outward-projection DTOs;
  *   <li>supported observations and supported runtime events close over the same authoritative
  *       transitions: an observation at sequence {@code S}, plus the supported events emitted after
  *       it, accounts for the state a later observation reports;
@@ -50,10 +50,9 @@ import org.junit.jupiter.api.Test;
  *
  * <p>The complementary structural fact -- outward-projection DTOs never re-enter domain decision
  * paths -- is behavioural evidence this class does not itself carry; it is a durable outward-
- * projection principle documented in docs/architecture/overview.md, enforced structurally only
- * while an adapter exists to enforce it against (the legacy interfaces/api's now-removed
- * ArchitectureTest.api_dtos_must_not_reenter_domain_decision_paths rule proved it for that
- * adapter). A future outward adapter should add the equivalent rule scoped to its own package.
+ * projection principle documented in docs/architecture/overview.md. No outward adapter exists
+ * today, so there is nothing to enforce it against structurally; a future outward adapter should
+ * add an architecture rule scoped to its own package.
  *
  * <p>Everything here is driven purely through {@link FactoryRuntime}'s supported surface, matching
  * the conventions of the two tests above.

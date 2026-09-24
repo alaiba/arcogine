@@ -17,7 +17,7 @@ class RequirementSourceProvenanceTest {
                         new RequirementId("arc.architecture.no-engine-dependency-in-governance"),
                         new RequirementVersion(1),
                         "Governance stays domain-neutral",
-                        "The :governance module must not depend on :factory, Spring, or the frontend.",
+                        "The :governance module must not depend on :factory or an application framework.",
                         ArcogineNativeRequirementSource.unspecified(),
                         RequirementScope.empty());
 

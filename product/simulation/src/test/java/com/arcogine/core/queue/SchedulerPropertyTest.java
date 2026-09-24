@@ -16,12 +16,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * Property tests ported from crates/sim-core/tests/properties.rs.
+ * Scheduler property tests.
  *
- * <p>The Rust suite used the {@code proptest} crate to generate randomized
- * inputs. Here each property is exercised across many fixed RNG seeds; for a
- * given seed the generated input is reproducible, mirroring proptest's
- * shrink/replay guarantee.
+ * <p>Each property is exercised across many fixed RNG seeds; for a given seed
+ * the generated input is reproducible, so any failure can be replayed exactly.
  */
 class SchedulerPropertyTest {
 

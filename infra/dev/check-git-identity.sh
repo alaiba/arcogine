@@ -12,29 +12,77 @@ if ! command -v gh >/dev/null 2>&1; then
   exit 1
 fi
 
-# The verified primary email is available when gh has the user scope. Fall back
-# to the public profile email when that scope is unavailable.
-if ! github_email="$(gh api user/emails --jq '[.[] | select(.primary and .verified) | .email][0] // empty' 2>/dev/null)"; then
-  github_email=""
+if ! account_info="$(gh api user --jq '[.login, (.id | tostring), (.email // "")] | @tsv' 2>/dev/null)"; then
+  account_info=""
 fi
-if [[ -z "$github_email" ]]; then
-  if ! github_email="$(gh api user --jq '.email // empty' 2>/dev/null)"; then
-    github_email=""
+IFS=$'\t' read -r github_login github_id github_profile_email <<< "$account_info"
+if [[ -z "${github_login:-}" || -z "${github_id:-}" ]]; then
+  echo 'ERROR: Could not identify the authenticated GitHub account; commit blocked.' >&2
+  echo '       Authenticate gh and retry.' >&2
+  exit 1
+fi
+
+# The verified email list requires gh's user scope. A missing scope does not
+# invalidate public or privacy-preserving noreply addresses; it only means a
+# private secondary address cannot be confirmed by this check.
+verified_emails=""
+verified_email_list_available=false
+if verified_emails="$(gh api user/emails --jq '.[] | select(.verified == true) | .email' 2>/dev/null)"; then
+  verified_email_list_available=true
+fi
+
+email_belongs_to_account() {
+  local candidate="$1"
+  local verified_email
+  local normalized_candidate="${candidate,,}"
+
+  [[ -n "$normalized_candidate" ]] || return 1
+  if [[ -n "$github_profile_email" && "$normalized_candidate" == "${github_profile_email,,}" ]]; then
+    return 0
   fi
+
+  while IFS= read -r verified_email; do
+    if [[ -n "$verified_email" && "$normalized_candidate" == "${verified_email,,}" ]]; then
+      return 0
+    fi
+  done <<< "$verified_emails"
+
+  if [[ "$normalized_candidate" == "${github_id}+${github_login,,}@users.noreply.github.com" ||
+    "$normalized_candidate" == "${github_login,,}@users.noreply.github.com" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+author_ident="$(git var GIT_AUTHOR_IDENT 2>/dev/null || true)"
+committer_ident="$(git var GIT_COMMITTER_IDENT 2>/dev/null || true)"
+if [[ "$author_ident" =~ \<([^\>]*)\> ]]; then
+  author_email="${BASH_REMATCH[1]}"
+else
+  author_email=""
+fi
+if [[ "$committer_ident" =~ \<([^\>]*)\> ]]; then
+  committer_email="${BASH_REMATCH[1]}"
+else
+  committer_email=""
 fi
 
-if [[ -z "$github_email" ]]; then
-  echo 'ERROR: Could not read a verified primary or public email from the authenticated GitHub account; commit blocked.' >&2
-  echo '       Authenticate gh, or publish the account email in GitHub settings.' >&2
-  exit 1
-fi
+for identity in "configured Git email:$configured_email" "effective author email:$author_email" "effective committer email:$committer_email"; do
+  identity_name="${identity%%:*}"
+  identity_email="${identity#*:}"
+  if ! email_belongs_to_account "$identity_email"; then
+    printf 'ERROR: %s is not confirmed as an email for the authenticated GitHub account; commit blocked.\n' "$identity_name" >&2
+    printf '       Email: %s\n' "$identity_email" >&2
+    printf '       Account: @%s\n' "$github_login" >&2
+    if [[ "$verified_email_list_available" == true ]]; then
+      echo '       Use a verified account email or a GitHub noreply address for this account.' >&2
+    else
+      echo '       GitHub did not expose the verified email list to gh.' >&2
+      echo '       For a private or secondary email, grant the user scope with: gh auth refresh -h github.com -s user' >&2
+      echo '       Or use this account’s GitHub noreply address.' >&2
+    fi
+    exit 1
+  fi
+done
 
-if [[ "$configured_email" != "$github_email" ]]; then
-  printf 'ERROR: Git commit email does not match the authenticated GitHub account; commit blocked.\n' >&2
-  printf '       Git:    %s\n' "$configured_email" >&2
-  printf '       GitHub: %s\n' "$github_email" >&2
-  printf '       Update this repository with: git config --local user.email "%s"\n' "$github_email" >&2
-  exit 1
-fi
-
-echo "Git commit email matches the authenticated GitHub account: $github_email"
+echo "Git commit emails match the authenticated GitHub account: @$github_login"

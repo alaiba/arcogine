@@ -1,14 +1,12 @@
-# Factory-Design Game Vertical-Slice Research
+# Factory-Design Game Product Research Programme
 
-> **Status:** READY  
-> **Scope:** Test the product hypothesis for the first playable factory-design game before playable implementation is admitted to delivery planning  
-> **Authority:** Research/product evidence only; this document does not authorize game implementation or change Arcogine semantics
+> **Status:** Maintained product-research programme; lifecycle belongs to the bounded questions in the research register  
+> **Scope:** Coordinate the focused product questions that must be answered before a first playable factory-design consumer is admitted  
+> **Authority:** Research/product framing only; this document does not authorize game implementation or change Arcogine semantics
 
-## Research question
+## Product thesis under test
 
-Can Arcogine's deterministic production-system semantics support a factory-design puzzle in which a player can understand, test, and improve meaningful capacity, layout, and capital trade-offs?
-
-The candidate loop is:
+The candidate product loop remains:
 
 ```text
 Understand a fixed production requirement
@@ -23,185 +21,122 @@ Publish the design
 Run production
         |
         v
-Diagnose queues, utilization, transfers, and bottlenecks
+Diagnose the result
         |
         v
 Revise and compare
 ```
 
-The intended player role is a production-system designer or industrial engineer, not a live shift operator. The product is successful only if the player can explain **why** a design performs better, not merely discover a hidden score formula.
+The intended player role is a production-system designer or industrial engineer, not a live shift operator. The product is valuable only if the player can form and test a causal model of the production system rather than discover an opaque score formula.
 
-## Hypotheses to test
+That thesis is deliberately **not one research question**. Capacity, challenge structure, player diagnosis, controlled comparison, spatial consequences, scoring, and implementation technology require different evidence and have different owners. Their lifecycle state is therefore tracked separately.
 
-1. **Capacity is legible.** Adding compatible capacity at a true bottleneck can improve the fixed production requirement, while adding capacity elsewhere may not.
-2. **Spatial arrangement is consequential.** Shorter production flows can compete with additional equipment because transfer consequences are deterministic and observable.
-3. **Capital creates a real trade-off.** More equipment is not universally optimal once construction cost is considered.
-4. **Diagnosis is possible from supported evidence.** The player can identify the bottleneck and major delay sources without reading raw scheduler/event internals.
-5. **Retry behaves like an experiment.** A player can relate a changed draft to changed authoritative outcomes and learn from the difference.
-6. **Several credible solutions exist.** The reference challenge does not collapse to one obvious dominant strategy.
+## Focused questions
 
-## Reference challenge candidate
+### Diagnostic evidence contract — READY
 
-Use one fixed game-owned production requirement with a simple three-step routing, for example:
+[Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md) asks what minimum player-facing evidence contract can be built from supported simulation facts so that every diagnosis is mechanically traceable, its method is explicit, and unsupported causal attribution is refused.
 
-```text
-Product A
-CUT -> ASSEMBLE -> INSPECT
-```
+This question is deterministic/fixture-driven. It does not claim to establish population-level player comprehension. A product-owner walkthrough is a qualitative smoke test only: failure can reject a candidate, while success cannot establish what independent players will understand.
 
-Candidate content parameters may begin around:
+### Non-spatial challenge strategy space — READY
 
-```text
-quantity:       20 units
-floor:          12 x 10 cells
-budget:         40,000 credits
-deadline:       400 simulation ticks
-```
+[Factory-design game strategy space](factory-design-game-strategy-space.md) asks whether a deliberately small fixed production challenge, using current production/capacity semantics plus game-owned capital costs, can produce several materially different and explainable viable interventions without relying on spatial layout.
 
-These numbers are **research/playtest parameters**, not Arcogine contracts. Tune or replace them when evidence shows that they do not create useful decisions.
+This question is headless and product-system focused. It is intentionally separated from presentation and from spatial transfer so that Arcogine can first determine whether capacity plus capital already creates a useful design problem.
 
-The challenge should make at least two approaches credible, such as:
+### Controlled retry explanation — CANDIDATE
 
-- spend more capital on parallel bottleneck capacity; or
-- retain less capacity and reduce transfer loss through layout.
+Question:
 
-Arcogine's accepted order/work-item semantics remain authoritative: one accepted quantity-bearing requirement is decomposed by Arcogine into independently dispatchable unit work while aggregate progress remains order-level. The game must not manufacture multiple production orders merely to create parallelism.
+> Can a controlled one-variable retry be presented as a mechanically traceable before/change/after evidence chain without asserting an unobserved causal mechanism?
 
-## Player-facing presentation under test
+Promote this only after the diagnostic-evidence and strategy-space investigations establish an evidence contract and a challenge family worth comparing. This remains a product-explanation question; reusable run-comparison derivations still belong to the analytics-boundary investigation.
 
-This is now a **presentation and comprehension** question, not an ownership question. The bounded form is:
+### Spatial design trade-off — CANDIDATE
 
-> Given supported Arcogine simulation facts and analytics, which presentation lets players correctly identify bottlenecks, major delay sources, and the causal effect of a design change?
+Question:
 
-The product research should determine which presentation lets a player answer:
+> Once transfer semantics and spatial runtime consequences are settled, does changing spatial arrangement create a legible performance trade-off against capacity and game-owned capital cost?
 
-- Where is work waiting?
-- Which operation or resource is the current bottleneck?
-- Which resources are saturated or underused?
-- How much time is attributable to processing versus transfer?
-- How far is the production requirement from completion?
-- What materially changed between this attempt and the previous attempt?
+This is not ready while Arcogine is still deciding whether transfer lifecycle/timing is semantically independent of spatial layout. It must consume the result of [Transfer semantics boundary research](transfer-semantics.md) and any reconciled spatial-runtime contract rather than using the game to decide them.
 
-Candidate techniques may include resource overlays, queue indicators, flow/transfer visualization, timeline summaries, bottleneck callouts, and attempt comparison. These are consumer presentation hypotheses. They do not become Engine semantics unless a concrete missing supported observation is proven.
+### External player validation — CANDIDATE
 
-### Boundary with the analytics question
+Question:
 
-Which *facts and reusable derivations* exist, and who owns them, is no longer decided here. That is [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md), an open High-risk investigation. Accordingly:
+> When independent target users become available, does the promoted diagnostic presentation let them correctly diagnose the reference challenge without repository/runtime knowledge or expert guidance?
 
-- overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain game research;
-- **the game must not invent shared KPI or diagnostic formulas while analytics ownership is unresolved.** If a presentation needs a reusable measure, that measure's ownership is an input from the analytics question, not a game decision;
-- transfer-dependent presentation remains conditional on landed transfer semantics — there is currently no transfer time, `TRANSFERRING` state, or transfer event in runtime behavior, so the processing-versus-transfer question cannot be asked of the current runtime at all;
-- sidecar versus in-process is a packaging/integration question, not a competing runtime semantics choice (the session-control semantics, the runtime observation/event contract already establish transport-neutral semantics with sibling adapters).
+This is the place for actual population-level comprehension evidence. It is intentionally not `READY` because no independent participant pool is currently available and the first internal playable slice does not need to make a population-level usability claim.
 
-### Superseded predecessor
+Promote it when either independent target users are available or product/release direction explicitly requires a claim about new-player comprehension, accessibility, onboarding, or diagnostic success. At promotion time, define the target population, tasks, falsification thresholds, and decision at stake. Reuse the deterministic fixture corpus from the diagnostic-evidence study where appropriate, but do not treat the product owner, an AI model, or repository reviewers as substitutes for the target population.
 
-The register question *"What player-facing evidence best exposes bottlenecks and causal performance differences?"* is **SUPERSEDED** rather than `CONCLUDED`: it was investigated, but its conclusion did not become durable, because the question itself was mixed.
+### Scoring, challenge and level structure — CANDIDATE
 
-It combined two decisions with different owners:
+The maintained register separately tracks:
 
-1. **technical contract/ownership** — which facts and temporal evidence are required, which derivations are safe, and where reusable derivations belong;
-2. **product cognition** — what a player must see to form the correct causal model.
+> What scoring, challenge, and level structures create several understandable viable strategies without an opaque dominant meta?
 
-The investigation made substantial progress on the first and explicitly did not validate the second, which needs participant evidence rather than repository reasoning.
+Do not promote it until the strategy-space investigation provides actual viable solution families and the product has evidence about what should be rewarded.
 
-The first half is **not game-local**. At this investigation's baseline, Arcogine carried generic KPI computation (`com.arcogine.core.kpi`), an outward KPI endpoint and snapshot projection, and a web consumer that retained KPI history and computed baseline-to-baseline metric deltas. That historical evidence established multiple consumers of reusable derived measurement at the time; later consumer retirement does not turn the old web implementation into a current dependency. The superseded investigation's trigger — that Arcogine should wait for a *future* second product consumer before considering shared analytics ownership — was therefore already satisfied when it was written, and does not survive.
+## Boundary with reusable analytics
 
-Consequently:
+Which *facts and reusable derivations* exist, and who owns them, is [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md), an independent High-risk investigation.
 
-- reusable technical evidence, proving cases, and truthfulness constraints transferred to the simulation-analytics boundary question;
-- the provisional conclusion that reusable diagnostic derivations are **game-owned** is explicitly superseded, pending that investigation;
-- the open player-comprehension question is the work described in this brief;
-- the investigation's report remains historical evidence at its exact workspace `commit SHA + path` until the workspace is retired after its reconciliation lands.
+Accordingly:
 
-## Product decisions to resolve before implementation
+- overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain game presentation choices;
+- the game must not invent shared KPI or diagnostic formulas while analytics ownership is unresolved;
+- a research-local derivation may be used to establish ground truth for a study, but selecting it for product use does not make it game-owned or part of Engine semantics;
+- transfer-dependent diagnostics remain outside the READY diagnostic-evidence-contract study until transfer semantics are reconciled and executable evidence exists; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
 
-Research should resolve or deliberately defer these consumer choices:
+## Boundary with transfer and spatial semantics
 
-| Decision | Evidence needed |
-|---|---|
-| Rendering/input technology | Target platforms, packaging constraints, team capability, and a representative interaction/performance prototype |
-| Sidecar versus supported in-process integration | Available Arcogine consumer surfaces plus target runtime/packaging constraints |
-| Draft-to-canonical projection UX | Editor usability prototype against the actual canonical model contract |
-| Visual interpolation policy | Supported event/observation timing plus desired presentation behavior |
-| Game-save wrapper | Available checkpoint/recovery contract plus game-owned persistence needs |
-| Scoring formula | Playtests showing understandable trade-offs without an opaque dominant meta |
-| Tutorial sequence | First-time-user observation showing which concepts require instruction versus discovery |
+Transfer is a production/runtime concern, not a game mechanic that the consumer may define. The current normative contracts couple transfer timing to the optional spatial record; [Transfer semantics boundary research](transfer-semantics.md) now tests whether that coupling is semantically justified before spatial activation proceeds.
 
-These decisions are intentionally absent from executable planning until evidence selects a contract.
+The game therefore must not assume that:
 
-## Product success criteria
+- absence of spatial facts necessarily means absence of transfer lifecycle;
+- placement is behaviorally consequential before a landed Engine contract makes it so; or
+- a game-local movement formula can stand in for missing Factory/Engine semantics.
 
-The hypothesis is supported when evidence shows that:
+## Product/implementation choices that are not research by default
 
-1. players understand the objective, constraints, and available equipment without Arcogine-specific tooling knowledge;
-2. capacity investment creates an understandable conditional trade-off;
-3. spatial arrangement creates an understandable performance trade-off;
-4. solving one bottleneck can expose another;
-5. players can identify bottlenecks and major delay sources from presented evidence;
-6. retrying after a design change is perceived as an informative experiment;
-7. at least two credible solutions exist for the reference challenge; and
-8. scoring or rating rewards useful performance without obscuring the causal explanation.
+Rendering/input technology, sidecar versus in-process packaging, save-wrapper shape, and similar implementation choices do not belong in one standing research brief merely because they are undecided. They become research only when a bounded material uncertainty can change a product or implementation decision and has explicit evidence and exit criteria. Otherwise they remain deferred consumer implementation choices until a promoted requirement makes the decision concrete.
 
-## Arcogine boundary
+Draft-to-canonical projection UX, visual interpolation, scoring presentation, and tutorial sequencing may become focused product studies when the selected product requirement makes them material. They are not prerequisites merely because they are imaginable.
+
+## Shared Arcogine boundary
 
 Research must not use game pressure to invent shared semantics. In particular:
 
 - game catalogue prices, availability, score, progression, tutorial state, and presentation remain game-owned;
 - canonical executability remains Arcogine-owned;
-- production workload, dispatch, queues, processing, transfers, time, and performance facts remain Arcogine-owned;
+- production workload, dispatch, queues, processing, transfers, time, and authoritative performance facts remain Arcogine-owned;
+- reusable analytics ownership remains with the analytics-boundary investigation;
 - game attempt snapshots may explain player-authored differences without requiring a new canonical model-diff abstraction;
-- unresolved equipment ontology, spatial evolution, and richer design comparison remain separate research questions.
+- unresolved equipment ontology, transfer semantics, spatial evolution, and richer design comparison remain separate research questions.
 
-## Playtest protocol
+## Superseded predecessor
 
-Player comprehension cannot be settled by repository reasoning. Established evidence on dynamic-system learning (Sterman, *Learning in and about complex systems*, System Dynamics Review 10(2–3), 1994) is the specific reason: outcome feedback alone — retry and watch the score move — does not reliably produce understanding, and its misperception effects proved robust to experience and incentives. So the loop's understandability claim requires participant evidence, not argument.
+The register question *"What player-facing evidence best exposes bottlenecks and causal performance differences?"* is **SUPERSEDED** rather than `CONCLUDED`: it combined two decisions with different owners.
 
-The smallest study that would settle it:
+1. **technical contract/ownership** — which facts and temporal evidence are required, which derivations are safe, and where reusable derivations belong;
+2. **product cognition** — what a player must see to form the correct causal model.
 
-- **Material:** 6–8 pre-recorded traces from the reference challenge, generated headlessly with retained supported runtime events. Ground truth is computed from the trace, not authored. The set must include: one true capacity bottleneck; one capacity-added-at-constraint pair; one capacity-added-away pair with a null outcome delta; one constraint-migration pair; one starvation-versus-surplus case; and one deliberately confounded pair where two variables changed at once.
-- **Participants:** 8–12, split between engineering-literate and non-specialist. This is a "does the presentation systematically mislead" question, not an effect-size question — sufficient for a first pass, insufficient for a comparative claim between two designs.
-- **Tasks, scored against ground truth rather than preference:**
-  1. Name the constraining operation or resource.
-  2. For a named idle resource, say whether it was starved or surplus.
-  3. Name the largest source of delay.
-  4. Given two candidate interventions, predict which improves completion.
-  5. Given an attempt pair, explain why the second performed differently.
-  6. Given the confounded pair, say what can and cannot be attributed. **"Cannot attribute to one change" is the correct answer**, and scoring it as correct is the point of the item.
-- **Pre-registered falsification thresholds** — fix these before running, and treat a miss as falsification rather than as a tuning signal:
-  - < 70% correct on task 1 → the constraint presentation fails;
-  - < 60% correct on task 2 → the starved/surplus distinction is not landing;
-  - < 50% correct on task 6 → the comparison presentation is manufacturing causal confidence, which is worse than showing less;
-  - any case where a majority reads the capacity-added-away pair as an improvement → the null-result presentation fails.
-- **Do not** ask which visualization participants preferred, or collect self-reported insight as the primary measure.
+The investigation made substantial progress on the first and explicitly did not validate the second, which requires participant evidence.
 
-## Truthful explanation constraints
+The first half is **not game-local**. At that investigation's baseline, Arcogine carried generic KPI computation, an outward KPI endpoint and snapshot projection, and a web consumer that retained KPI history and computed baseline-to-baseline metric deltas. That historical evidence established multiple consumers of reusable derived measurement at the time; later consumer retirement does not make those implementations current dependencies, but it does invalidate the old premise that a future second consumer was needed before asking the ownership question.
 
-Whatever presentation the research selects must respect what the evidence actually licenses. These constrain the product, not the Engine.
+Consequently:
 
-The game may state, **as measured fact**, things of this shape:
+- reusable technical evidence, proving cases, and truthfulness constraints transferred to [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md);
+- the provisional conclusion that reusable diagnostic derivations are **game-owned** is explicitly superseded;
+- the immediately actionable product question is now the focused [diagnostic-evidence contract](factory-design-game-diagnostic-evidence.md), which can establish truthfulness/traceability without a participant pool; population-level comprehension remains the separate external-player-validation candidate above; and
+- the broad vertical-slice question itself is superseded by the focused portfolio recorded here and in the research register.
 
-- how many units waited for a given operation step, and for how long in total;
-- how long a resource was occupied, and its longest uninterrupted active period;
-- that one resource was idle while units waited for another;
-- each attempt's completion tick;
-- what the player changed between two attempts (known from the game's own draft snapshots).
+## Promotion to playable implementation
 
-The game may state, **as a named interpretation**, that under a named detection method a particular resource was the constraint in one attempt and a different one in the next — so the constraint moved. The method must be named and its supporting numbers shown.
+This programme does not have one `CONCLUDED` state. Playable implementation may be admitted only when the implementation gate can name the exact focused research conclusions required by the chosen first slice, the required Arcogine semantics are landed, and executable acceptance tests can be written.
 
-The game may state a **causal explanation only when exactly one variable changed**: naming the change and the effect side by side, not asserting a mechanism. Deterministic re-execution makes that controlled comparison genuinely available, and it is the strongest attribution the evidence supports.
-
-The game must **not**:
-
-- attribute an improvement to one change when several changed — state the change set and the outcome delta, and offer a controlled re-run instead;
-- make any causal claim about placement while placement has no runtime consequence;
-- present instantaneous utilization derived from a completion-credited cumulative busy-time counter;
-- present a "blocked" state, which is unreachable while queues are unbounded, or any queue count that includes multi-eligible waiting work more than once;
-- show a bare bottleneck badge with no method and no supporting numbers, which presents a consumer heuristic as an authoritative verdict.
-
-The general rule: **prefer the weaker true statement.** Where the evidence supports only association, say association. A null result is a result.
-
-## Exit and promotion
-
-This research is complete when the product team can state a bounded playable requirement set, supported by playtest/prototype evidence meeting the protocol above, that no longer depends on unresolved consumer decisions.
-
-Only then promote the selected requirements into the game consumer implementation plan. If the research shows that the loop is not understandable or engaging, record that conclusion rather than manufacturing implementation work.
+A minimal non-spatial **internal playable** slice would currently require, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. It does not require independent human participants merely to exist as an internal playable slice. A later release goal that claims broad player comprehension must separately promote and satisfy external-player validation. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.

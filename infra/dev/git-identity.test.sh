@@ -39,9 +39,13 @@ cat >"$TEMP_ROOT/bin/gh" <<'EOF'
 #!/usr/bin/env bash
 case "${1:-} ${2:-}" in
   'api user')
-    printf 'owner\t42\t%s\n' "${GH_TEST_PROFILE_EMAIL:-public@example.com}"
+    printf '%s\t42\t%s\n' "${GH_TEST_LOGIN:-owner}" "${GH_TEST_PROFILE_EMAIL:-public@example.com}"
     ;;
-  'api user/emails')
+  'api repos/alaiba/arcogine')
+    printf '%s\tUser\n' "${GH_TEST_REPO_OWNER:-owner}"
+    ;;
+  'api --paginate')
+    [[ "${3:-}" == user/emails ]] || exit 2
     if [[ "${GH_TEST_EMAILS:-}" == available ]]; then
       printf '%s\n' "${GH_TEST_VERIFIED_EMAILS:-}"
     else
@@ -56,6 +60,13 @@ git config --local user.email secondary@example.com
 GH_TEST_EMAILS=available GH_TEST_VERIFIED_EMAILS=secondary@example.com \
   PATH="$TEMP_ROOT/bin:$PATH" bash "$SCRIPT_DIR/check-git-identity.sh" >identity-secondary.log
 grep -qF 'Git commit emails match the authenticated GitHub account: @owner' identity-secondary.log
+
+if GH_TEST_LOGIN=other PATH="$TEMP_ROOT/bin:$PATH" \
+  bash "$SCRIPT_DIR/check-git-identity.sh" >identity-wrong-owner.log 2>&1; then
+  echo 'identity check unexpectedly accepted a non-owner GitHub account' >&2
+  exit 1
+fi
+grep -qF 'is not the human owner of alaiba/arcogine' identity-wrong-owner.log
 
 git config --local user.email public@example.com
 GH_TEST_EMAILS=unavailable PATH="$TEMP_ROOT/bin:$PATH" \

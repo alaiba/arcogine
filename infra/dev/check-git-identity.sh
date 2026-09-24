@@ -22,12 +22,26 @@ if [[ -z "${github_login:-}" || -z "${github_id:-}" ]]; then
   exit 1
 fi
 
+if ! repository_owner_info="$(gh api repos/alaiba/arcogine --jq '[.owner.login, .owner.type] | @tsv' 2>/dev/null)"; then
+  repository_owner_info=""
+fi
+IFS=$'\t' read -r repository_owner repository_owner_type <<< "$repository_owner_info"
+if [[ "${repository_owner_type:-}" != User || "${github_login,,}" != "${repository_owner,,}" ]]; then
+  printf 'ERROR: Authenticated GitHub account @%s is not the human owner of alaiba/arcogine; commit blocked.\n' "$github_login" >&2
+  if [[ -n "${repository_owner:-}" ]]; then
+    printf '       Repository owner: @%s (%s)\n' "$repository_owner" "${repository_owner_type:-unknown}" >&2
+  else
+    echo '       Could not identify the repository owner through GitHub.' >&2
+  fi
+  exit 1
+fi
+
 # The verified email list requires gh's user scope. A missing scope does not
 # invalidate public or privacy-preserving noreply addresses; it only means a
 # private secondary address cannot be confirmed by this check.
 verified_emails=""
 verified_email_list_available=false
-if verified_emails="$(gh api user/emails --jq '.[] | select(.verified == true) | .email' 2>/dev/null)"; then
+if verified_emails="$(gh api --paginate user/emails --jq '.[] | select(.verified == true) | .email' 2>/dev/null)"; then
   verified_email_list_available=true
 fi
 

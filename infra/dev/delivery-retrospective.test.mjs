@@ -99,6 +99,18 @@ test('evidence v1 accepts complete collections with matching counts', () => {
   assert.equal(validateEvidence(value), value);
 });
 
+test('evidence v1 rejects missing review author provenance', () => {
+  const value = baseEvidence([review('Disposition: **READY TO MERGE**.')]);
+  value.candidates.items[1].reviews.items[0].authorAssociation = null;
+  assert.throws(() => validateEvidence(value), /author association is missing/);
+});
+
+test('evidence v1 rejects unsupported review author associations', () => {
+  const value = baseEvidence([review('Disposition: **READY TO MERGE**.')]);
+  value.candidates.items[1].reviews.items[0].authorAssociation = 'UNKNOWN';
+  assert.throws(() => validateEvidence(value), /author association UNKNOWN is unsupported/);
+});
+
 test('evidence validation rejects an unsupported schema version', () => {
   assert.throws(() => validateEvidence(baseEvidence([], { schemaVersion: 2 })), /unsupported schema version/);
 });

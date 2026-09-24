@@ -37,7 +37,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Durable semantic fingerprint/revision history, semantic change, requirements, conformance, evidence/governed change | [Governance architecture](architecture/governance-conformance.md) / [Governance plan](planning/governance-conformance-capability.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
 | Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
 | Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
-| Playable factory-design product research | [Game product-research programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella only; lifecycle lives on focused questions such as strategy space and diagnostic comprehension |
+| Playable factory-design product research | [Game product-research programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella only; lifecycle lives on focused questions such as strategy space and diagnostic evidence |
 | Inter-resource transfer boundary | [Transfer semantics research](research/investigations/transfer-semantics.md) | Separates transfer lifecycle/timing from spatial layout before V2/spatial activation |
 
 ## Development and contributing
@@ -88,7 +88,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation — **concluded**; durable rules live in [Attribution and decision boundaries](architecture/overview.md#attribution-and-decision-boundaries) |
 | [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
 | [Factory-design game product programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella framing for focused game research; no programme-level lifecycle |
-| [Game diagnostic comprehension](research/investigations/factory-design-game-diagnostic-comprehension.md) | READY participant study for truthful non-spatial constraint diagnosis |
+| [Game diagnostic evidence contract](research/investigations/factory-design-game-diagnostic-evidence.md) | READY deterministic study of truthful, inspectable non-spatial diagnostic claims; no participant pool required |
 | [Game strategy space](research/investigations/factory-design-game-strategy-space.md) | READY headless study of non-spatial capacity/capital design trade-offs |
 | [Transfer semantics](research/investigations/transfer-semantics.md) | READY transfer-lifecycle independence question plus CANDIDATE non-spatial timing follow-up |
 | [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, CANDIDATE Engine applicability after transfer research, and unselected recovery/session extensions |

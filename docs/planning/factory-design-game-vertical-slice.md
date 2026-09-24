@@ -11,11 +11,11 @@ The former READY “vertical-slice research question” has been superseded by t
 For the smallest **non-spatial** playable slice, the currently required product evidence is:
 
 - [Factory-design game strategy-space research](../research/investigations/factory-design-game-strategy-space.md) — whether current capacity semantics plus game-owned capital constraints produce a useful design problem; and
-- [Factory-design game diagnostic-comprehension research](../research/investigations/factory-design-game-diagnostic-comprehension.md) — whether players can correctly diagnose that problem from supported evidence.
+- [Factory-design game diagnostic-evidence research](../research/investigations/factory-design-game-diagnostic-evidence.md) — whether the product can expose a mechanically truthful, inspectable diagnostic evidence contract without unsupported inference.
 
 Neither question authorizes implementation merely by being `READY`; each must first reach a decision-quality conclusion and promote a bounded requirement set.
 
-Controlled retry learning, scoring/level structure, and other candidate product questions are additional gates only if the selected first slice actually depends on them.
+Controlled retry explanation, scoring/level structure, external-player validation, and other candidate product questions are additional gates only if the selected first slice actually depends on them. External-player validation is not required for an internal playable slice unless product/release direction explicitly requires a population-level comprehension claim.
 
 A slice that makes **layout** behaviorally consequential has an additional upstream semantic dependency: the READY [transfer-lifecycle research](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence), any resulting Factory/Engine reconciliation, the subsequently re-bounded Engine-applicability question, and the spatial runtime work selected after those results.
 

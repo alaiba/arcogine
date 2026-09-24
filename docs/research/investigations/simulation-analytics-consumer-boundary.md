@@ -41,7 +41,7 @@ That historical evidence established multiple consumers of reusable derived meas
 
 This investigation does not implement an analytics module, restore the removed generic KPI implementation, change KPI formulas, alter `RuntimePerformanceObservation` in code, implement event retention, build a Java SDK, force consumers through HTTP/SSE, or reopen transport architecture. It does not change adopted architecture or `engine-semantics:v1`.
 
-It also does not decide game presentation. The bounded player-comprehension question is [Factory-design game diagnostic comprehension](factory-design-game-diagnostic-comprehension.md); this analytics investigation supplies ownership/input constraints to that product study rather than choosing its visualization.
+It also does not decide game presentation. The bounded product-facing truthfulness question is [Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md); this analytics investigation supplies ownership/input constraints to that product study rather than choosing its visualization. Population-level player comprehension is a separate deferred product-validation question.
 
 ## Candidate models
 

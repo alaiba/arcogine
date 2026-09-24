@@ -33,11 +33,11 @@ That thesis is deliberately **not one research question**. Capacity, challenge s
 
 ## Focused questions
 
-### Diagnostic comprehension — READY
+### Diagnostic evidence contract — READY
 
-[Factory-design game diagnostic comprehension](factory-design-game-diagnostic-comprehension.md) asks which presentation of supported simulation evidence lets players correctly identify the current constraint, distinguish starvation from surplus, identify major delay sources, and avoid unsupported causal attribution.
+[Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md) asks what minimum player-facing evidence contract can be built from supported simulation facts so that every diagnosis is mechanically traceable, its method is explicit, and unsupported causal attribution is refused.
 
-This question is participant-evidence driven. It does not decide reusable analytics ownership, challenge economics, spatial semantics, or whether the game as a whole is engaging.
+This question is deterministic/fixture-driven. It does not claim to establish population-level player comprehension. A product-owner walkthrough is a qualitative smoke test only: failure can reject a candidate, while success cannot establish what independent players will understand.
 
 ### Non-spatial challenge strategy space — READY
 
@@ -45,13 +45,13 @@ This question is participant-evidence driven. It does not decide reusable analyt
 
 This question is headless and product-system focused. It is intentionally separated from presentation and from spatial transfer so that Arcogine can first determine whether capacity plus capital already creates a useful design problem.
 
-### Controlled retry learning — CANDIDATE
+### Controlled retry explanation — CANDIDATE
 
 Question:
 
-> After changing exactly one authored design variable, can a player predict the direction of the resulting change, explain the observed difference from supported evidence, and choose a rational next intervention?
+> Can a controlled one-variable retry be presented as a mechanically traceable before/change/after evidence chain without asserting an unobserved causal mechanism?
 
-Promote this only after the diagnostic-comprehension and strategy-space investigations establish a presentation candidate and a challenge family worth testing. The study must score prediction and explanation against deterministic ground truth, not self-reported insight.
+Promote this only after the diagnostic-evidence and strategy-space investigations establish an evidence contract and a challenge family worth comparing. This remains a product-explanation question; reusable run-comparison derivations still belong to the analytics-boundary investigation.
 
 ### Spatial design trade-off — CANDIDATE
 
@@ -60,6 +60,16 @@ Question:
 > Once transfer semantics and spatial runtime consequences are settled, does changing spatial arrangement create a legible performance trade-off against capacity and game-owned capital cost?
 
 This is not ready while Arcogine is still deciding whether transfer lifecycle/timing is semantically independent of spatial layout. It must consume the result of [Transfer semantics boundary research](transfer-semantics.md) and any reconciled spatial-runtime contract rather than using the game to decide them.
+
+### External player validation — CANDIDATE
+
+Question:
+
+> When independent target users become available, does the promoted diagnostic presentation let them correctly diagnose the reference challenge without repository/runtime knowledge or expert guidance?
+
+This is the place for actual population-level comprehension evidence. It is intentionally not `READY` because no independent participant pool is currently available and the first internal playable slice does not need to make a population-level usability claim.
+
+Promote it when either independent target users are available or product/release direction explicitly requires a claim about new-player comprehension, accessibility, onboarding, or diagnostic success. At promotion time, define the target population, tasks, falsification thresholds, and decision at stake. Reuse the deterministic fixture corpus from the diagnostic-evidence study where appropriate, but do not treat the product owner, an AI model, or repository reviewers as substitutes for the target population.
 
 ### Scoring, challenge and level structure — CANDIDATE
 
@@ -122,11 +132,11 @@ Consequently:
 
 - reusable technical evidence, proving cases, and truthfulness constraints transferred to [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md);
 - the provisional conclusion that reusable diagnostic derivations are **game-owned** is explicitly superseded;
-- the still-open player-comprehension work is now the focused [diagnostic-comprehension](factory-design-game-diagnostic-comprehension.md) question; and
+- the immediately actionable product question is now the focused [diagnostic-evidence contract](factory-design-game-diagnostic-evidence.md), which can establish truthfulness/traceability without a participant pool; population-level comprehension remains the separate external-player-validation candidate above; and
 - the broad vertical-slice question itself is superseded by the focused portfolio recorded here and in the research register.
 
 ## Promotion to playable implementation
 
 This programme does not have one `CONCLUDED` state. Playable implementation may be admitted only when the implementation gate can name the exact focused research conclusions required by the chosen first slice, the required Arcogine semantics are landed, and executable acceptance tests can be written.
 
-A minimal non-spatial playable slice would currently require, at least, a concluded challenge-strategy question and a concluded diagnostic-comprehension question. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.
+A minimal non-spatial **internal playable** slice would currently require, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. It does not require independent human participants merely to exist as an internal playable slice. A later release goal that claims broad player comprehension must separately promote and satisfy external-player validation. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.

@@ -33,7 +33,7 @@ In scope:
 Out of scope:
 
 - spatial layout, transfer timing, paths, conveyors, buffers, congestion, or transport resources;
-- player comprehension/presentation — [Diagnostic comprehension](factory-design-game-diagnostic-comprehension.md) owns that;
+- player comprehension/presentation — [Diagnostic evidence contract](factory-design-game-diagnostic-evidence.md) owns the truthful evidence boundary; population-level comprehension remains a separate later validation question;
 - score/rating formulas, progression, level sequencing, tutorial design, renderer/input technology;
 - changing Engine dispatch/scheduling semantics to improve the challenge;
 - manufacturing several production orders merely to create parallelism. Arcogine owns quantity decomposition.

@@ -52,7 +52,7 @@ for arg in "$@"; do printf '|%s' "$arg" >> "$log"; done
 printf '\n' >> "$log"
 EOF
 
-  for tool in trivy gitleaks; do
+  for tool in java trivy gitleaks; do
     cat > "$fake_bin/$tool" <<'EOF'
 #!/bin/bash
 set -euo pipefail

@@ -3,7 +3,6 @@ set -euo pipefail
 
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 script="$dir/classify-changes.sh"
-repo="$(cd "$dir/../.." && pwd)"
 failures=0
 
 check() {
@@ -37,14 +36,3 @@ if [ "$failures" -gt 0 ]; then
 fi
 
 echo "All classification tests passed."
-
-python3 "$dir/check-markdown-links.test.py"
-python3 "$dir/check-markdown-links.py" "$repo"
-python3 "$dir/check-delivery-labels.test.py"
-python3 "$dir/check-delivery-labels.py"
-
-echo "Validating GitHub attribution hygiene helper..."
-node --test "$repo/infra/dev/github-attribution-hygiene.test.mjs"
-
-echo "Validating Git identity setup helper..."
-bash "$repo/infra/dev/git-identity.test.sh"

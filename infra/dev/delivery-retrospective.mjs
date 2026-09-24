@@ -217,7 +217,7 @@ const DISPOSITION_ALTERNATION = ['READY TO MERGE', 'CHANGES REQUIRED']
  * dispositions followed by further blocker text out of the blocking-review count.
  *
  * This is a retrospective counting rule only. Current-head review authorization belongs
- * to .github/scripts/check-pr-disposition.sh and is intentionally stricter.
+ * to .github/scripts/check-pr-disposition.mjs and is intentionally stricter.
  */
 function closingDisposition(body) {
   if (!body) return null;

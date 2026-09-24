@@ -43,78 +43,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-
-      # Executable coverage for the pure classification function below (docs-only,
-      # known backend paths, and the unknown-path fail-safe) — a
-      # regex regression here fails this step instead of silently under-running.
-      - name: Validate classifier logic
-        run: bash .github/scripts/classify-changes.test.sh
-
-      - name: Validate changed-file discovery
-        run: bash .github/scripts/discover-changed-files.test.sh
-
-      # Ordinary CI runs on fully provisioned runners, so it never exercises
-      # ./arcogine's missing-tool preflight branches. Cover them explicitly
-      # here so a regression in the constrained-environment fail-fast
-      # diagnostics fails loudly instead of only surfacing on a real
-      # constrained host partway through an expensive `--full` run.
-      - name: Validate arcogine preflight diagnostics
-        run: bash .github/scripts/arcogine-preflight.test.sh
-
-      # The canonical root wrapper owns command parsing, dispatch, artifact,
-      # and lifecycle orchestration. Keep its black-box contract in this
-      # always-running tooling gate rather than behind a product path filter.
-      - name: Validate arcogine CLI contract
-        run: bash .github/scripts/arcogine-cli.test.sh
-
-      # Claude Cloud setup intentionally only inspects the supplied image and
-      # must remain dependency-free and non-fatal for unrelated tasks.
-      - name: Validate Claude Cloud provisioning
-        run: bash infra/dev/claude-cloud.test.sh
-
-      # Node-based repository tooling suites run here, in the always-running job
-      # the aggregate gate accounts for, rather than in a path-filtered job that a
-      # docs-only or backend-only change would skip.
       - name: Set up Node for tooling tests
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.22.2'
 
-      # Retrospective sample/review-round facts must be mechanically reproducible.
-      # Keep this in the always-running tooling gate so partial-window or counting
-      # regressions fail before a dated retrospective can advance its baseline.
-      - name: Validate delivery retrospective tooling
-        run: node --test infra/dev/delivery-retrospective.test.mjs
-
-      # infra/dev/repo-snapshot.mjs establishes the canonical-repository
-      # provenance the ./arcogine snapshot artifact asserts. A regression here
-      # could let the header claim canonical alaiba/arcogine state for a fork
-      # or a local-only commit, so it runs alongside the other always-running
-      # tooling suites rather than a path-filtered job.
-      - name: Validate repository snapshot tooling
-        run: node --test infra/dev/repo-snapshot.test.mjs
-
-      # Validate the trusted PR review-authorization evaluator. Ordinary PRs need a
-      # current-head READY TO MERGE disposition; genuine Dependabot-authored PRs use
-      # the API-derived provenance exception. A regression could authorize the wrong PR.
-      - name: Validate PR disposition gate evaluator
-        run: bash .github/scripts/check-pr-disposition.test.sh
-
-      # Transient workspace files are branch-local custody artifacts, never
-      # mergeable repository state. Test the checker and apply it to this exact
-      # candidate tree in the always-running tooling job.
-      - name: Validate transient workspace checker
-        run: python3 .github/scripts/check-transient-workspace.test.py
-
-      - name: Reject tracked transient workspace files
-        run: python3 .github/scripts/check-transient-workspace.py
-
-      # Durable files must not depend on an exact temporary workspace artifact coordinate.
-      - name: Validate transient-coordinate checker
-        run: python3 .github/scripts/check-transient-coordinates.test.py
-
-      - name: Reject durable transient workspace coordinates
-        run: python3 .github/scripts/check-transient-coordinates.py
+      - name: Validate repository tooling
+        run: bash .github/scripts/check-repository-tooling.sh
 
       - name: Determine changed-file surfaces
         id: filter
@@ -227,11 +162,10 @@ jobs:
       - name: Run Gitleaks
         run: gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
 
-  # Stable aggregate CI validation signal. Its needs: list and the
-  # expected_to_run map in the step below (mirroring each conditional job's own
-  # if:) must be kept in sync
-  # by hand when jobs are added/removed/reconditioned; the step fails closed
-  # if they drift, rather than silently accepting an unexamined job.
+  # Stable aggregate CI validation signal. Keep this needs: list in sync with
+  # the expected-job map in .github/scripts/check-ci-gate.mjs when jobs are
+  # added, removed, or their conditions change. The evaluator fails closed if
+  # their key sets drift, rather than silently accepting an unexamined job.
   gate:
     name: gate
     if: always()
@@ -241,65 +175,18 @@ jobs:
       - java-audit
       - security-secrets
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      contents: read
     env:
       BACKEND: ${{ needs.classify.outputs.backend }}
       EVENT_NAME: ${{ github.event_name }}
+      NEEDS_JSON: ${{ toJSON(needs) }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.22.2'
       - name: Check required job results
-        run: |
-          echo '${{ toJSON(needs) }}' > /tmp/needs.json
-          python3 - <<'EOF'
-          import json
-          import os
-
-          with open("/tmp/needs.json") as f:
-              needs = json.load(f)
-
-          backend = os.environ["BACKEND"] == "true"
-          full_sweep = os.environ["EVENT_NAME"] in ("schedule", "workflow_dispatch")
-
-          # Mirrors each conditional job's own `if:` in this workflow. A job whose
-          # surface was selected must not come back skipped — that would mean its
-          # condition and this expectation drifted apart, which is exactly the
-          # silent-skip failure mode this gate exists to catch.
-          expected_to_run = {
-              "classify": True,
-              "java": backend or full_sweep,
-              "java-audit": backend or full_sweep,
-              "security-secrets": True,
-          }
-
-          # Fail closed if this job's needs: list and the expectation map above
-          # have drifted apart (e.g. a future job added to needs: but forgotten
-          # here). An unlisted job would otherwise return None from .get(), which
-          # is falsy, silently letting it skip unexamined — exactly the
-          # false-green class this gate exists to eliminate.
-          needs_keys = set(needs.keys())
-          expected_keys = set(expected_to_run.keys())
-          if needs_keys != expected_keys:
-              print("Failing gate: needs: and expected_to_run have drifted apart.")
-              print("  in needs: but missing from expected_to_run:", sorted(needs_keys - expected_keys))
-              print("  in expected_to_run but missing from needs:", sorted(expected_keys - needs_keys))
-              raise SystemExit(1)
-
-          failed = []
-          unexpected_skips = []
-          for job, info in needs.items():
-              result = info.get("result")
-              print(f"{job}: {result} (expected to run: {expected_to_run[job]})")
-              if result in ("failure", "cancelled"):
-                  failed.append((job, result))
-              elif result == "skipped" and expected_to_run[job]:
-                  unexpected_skips.append(job)
-
-          if failed:
-              print("Failing gate: required job(s) failed or were cancelled:", failed)
-              raise SystemExit(1)
-
-          if unexpected_skips:
-              print("Failing gate: job(s) skipped despite their surface being selected:", unexpected_skips)
-              raise SystemExit(1)
-
-          print("All required jobs succeeded or were intentionally skipped.")
-          EOF
+        run: node .github/scripts/check-ci-gate.mjs

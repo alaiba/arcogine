@@ -152,8 +152,8 @@ changes later.
 
 The mechanical checkers enforce recognizable cases deterministically by scanning tracked
 repository text (`git ls-files`, so generated/untracked/build output is never in scope):
-`.github/scripts/check-delivery-labels.py` rejects a `PLAN-*` or `REV-<NNN>` token outside
-`docs/planning/`, while `.github/scripts/check-transient-coordinates.py` rejects an exact full
+`.github/scripts/check-delivery-labels.mjs` rejects a `PLAN-*` or `REV-<NNN>` token outside
+`docs/planning/`, while `.github/scripts/check-transient-coordinates.mjs` rejects an exact full
 commit SHA paired with a concrete `workspace/...` artifact path in durable files. Neither checker
 attempts to infer semantic dependence from prose without a safe syntax signal. A `PLAN-*` or
 `REV-<NNN>` token outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the
@@ -186,7 +186,7 @@ Classify temporary material by its intended lifetime:
 - **Transient committed material:** use the reserved `workspace/` root for branch-local artifacts that must survive the current session or be handed to another actor, but are not intended to survive on `main`. This includes implementation and fresh-session prompts, research reports/revisions, adversarial reviews, checkpoints, diagnostic notes, and intentionally branch-transient review packets. A useful semantic structure is `workspace/implementation/`, `workspace/research/`, and `workspace/review/`.
 - **Durable material:** keep maintained repository state in its existing canonical locations (`docs/`, product code/tests, scripts, workflows, and related maintained surfaces). A transient artifact can inform durable reconciliation without becoming durable itself.
 
-`workspace/` is not an archive. It must not be gitignored, must not contain a permanent marker file such as `.gitkeep` or a README, and must be absent from `main` and every merge candidate as tracked content. The repository-owned check `.github/scripts/check-transient-workspace.py` enforces this final-tree invariant. Git therefore normally shows no `workspace/` directory at all on `main`.
+`workspace/` is not an archive. It must not be gitignored, must not contain a permanent marker file such as `.gitkeep` or a README, and must be absent from `main` and every merge candidate as tracked content. The repository-owned check `.github/scripts/check-transient-workspace.mjs` enforces this final-tree invariant. Git therefore normally shows no `workspace/` directory at all on `main`.
 
 When repository persistence is available, any agent producing a complete prompt for a fresh session, coding agent, reviewer, researcher, or other execution context must write it to a semantic path under `workspace/`, commit it with the repository owner's human Git identity, and hand it off only as `branch + exact commit SHA + path` (with an issue/PR/planning identifier only when useful for locating the work). Do not duplicate the complete prompt in chat after persistence succeeds, and never use branch tip alone as its identity. If persistence is required but unavailable, report the handoff as blocked; do not fall back to pasting the complete prompt into chat. If the prompt changes, commit a new revision and return its new coordinates.
 

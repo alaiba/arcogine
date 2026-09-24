@@ -16,9 +16,5 @@ Thumbs.db
 product/.gradle/
 product/**/build/
 
-# Python
-__pycache__/
-*.py[cod]
-
 # Temporary build/test artifacts and logs
 /logs/

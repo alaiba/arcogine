@@ -152,7 +152,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 
 | Job | Command | What it checks |
 |-----|---------|----------------|
-| Classify changes | Repository-owned shell/Node validation plus local `git diff --name-only` against the immutable PR event base SHA (or pushed range on `main`) | Validates changed-file discovery and classifier logic, developer/preflight tooling, retrospective window/counting logic, repository snapshot tooling, the PR disposition evaluator, and every GitHub Actions workflow definition with pinned actionlint; then buckets the diff into backend/docs-only surfaces for conditional jobs |
+| Classify changes | Canonical repository-tooling runner, then local `git diff --name-only` against the immutable PR event base SHA (or pushed range on `main`) | Runs independently owned shell and Node tooling tests/checkers, then buckets the diff into backend/docs-only surfaces for conditional jobs |
 | Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
@@ -171,41 +171,41 @@ The `classify` job inspects the changed files (PR diff against the immutable `pu
 - The secret scan (`security-secrets`) and the `classify`/`gate` jobs always run regardless of classification.
 - `schedule` and `workflow_dispatch` runs (see below) ignore the classification and always run every job, since they exist to re-check security posture independent of any code change.
 
-The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from Git/GitHub-context plumbing in `.github/scripts/discover-changed-files.sh`. Its deterministic temporary-repository regression test covers local three-dot PR comparison, unavailable-base fallback and conservative classification, push ranges, and full-sweep events; run it with `bash .github/scripts/discover-changed-files.test.sh`. `.github/scripts/classify-changes.test.sh` is a small table-driven test over the classifier — docs-only, each known subsystem, a shared-manifest change, and the `product/gradlew`/`.trivyignore` unknown-path cases — and runs as a step in the `classify` job on every trigger, so a regex regression fails visibly instead of silently under-running checks. It also invokes the repository's always-required Markdown-link, delivery-label, GitHub-attribution-hygiene, and Git-identity suites so they cannot be skipped by a docs-only or backend-only classification. The transient-coordinate and transient-workspace checker suites run as explicit always-required `classify` steps. Run the classifier locally with `bash .github/scripts/classify-changes.test.sh`.
+The pure classification logic lives in `.github/scripts/classify-changes.sh` (reads changed paths on stdin, writes the `key=true|false` outputs), separated from Git/GitHub-context plumbing in `.github/scripts/discover-changed-files.sh`. The direct Git/shell boundary remains Bash. Its deterministic temporary-repository regression test covers local three-dot PR comparison, unavailable-base fallback and conservative classification, push ranges, and full-sweep events; run it with `bash .github/scripts/discover-changed-files.test.sh`. `.github/scripts/classify-changes.test.sh` tests classification only.
 
 ### Repository-tooling suites
 
-The always-running `classify` job also runs these repository-tooling checks. Root `./arcogine` behavioral and safety suites live under `.github/scripts/`; direct `infra/dev` tools keep their tests beside the implementation. Run the same set locally with:
+Repository tooling uses Node.js and built-in `node:test` for repository logic, parsing, and checkers; Bash remains for the public `./arcogine` entry point, environment/provisioning behavior, thin orchestration, and direct Git pipelines. Product code and tests remain Java/Gradle/JUnit. Specialized validators such as actionlint, Trivy, Gitleaks, and Gradle remain independent tools.
+
+The always-running `classify` job invokes the canonical repository-tooling runner. Run it locally with:
 
 ```bash
-bash .github/scripts/classify-changes.test.sh
-bash .github/scripts/arcogine-preflight.test.sh
-bash .github/scripts/arcogine-cli.test.sh
-bash .github/scripts/check-pr-disposition.test.sh
-python3 .github/scripts/check-transient-workspace.test.py
-python3 .github/scripts/check-transient-workspace.py
-python3 .github/scripts/check-transient-coordinates.test.py
-python3 .github/scripts/check-transient-coordinates.py
-bash infra/dev/claude-cloud.test.sh
-node --test infra/dev/delivery-retrospective.test.mjs
-node --test infra/dev/repo-snapshot.test.mjs
+bash .github/scripts/check-repository-tooling.sh
 ```
 
-The disposition suite also validates the workflow definitions through the pinned `check-actions-workflows.sh` helper. The shell suites use temporary repositories and fake executables where they need to exercise constrained-environment behavior; they do not install project dependencies.
+Every component remains independently runnable. The runner includes shell-native tests, Node tests under `.github/scripts/` and `infra/dev/`, the real-repository static checkers, and workflow syntax validation through the pinned `check-actions-workflows.sh` helper. The shell suites use temporary repositories and fake executables where they need to exercise constrained-environment behavior; they do not install project dependencies.
 
-The transient-workspace suite covers `.github/scripts/check-transient-workspace.py`, which rejects any tracked file under the branch-local `workspace/` custody root while allowing similarly named paths elsewhere. Run it locally with:
+The transient-workspace checker rejects any tracked file under the branch-local `workspace/` custody root while allowing similarly named paths elsewhere. Run the test and checker directly with:
 
 ```bash
-python3 .github/scripts/check-transient-workspace.test.py
-python3 .github/scripts/check-transient-workspace.py
+node --test .github/scripts/check-transient-workspace.test.mjs
+node .github/scripts/check-transient-workspace.mjs
 ```
 
-The transient-coordinate suite covers `.github/scripts/check-transient-coordinates.py`. It rejects
-an exact 40-character commit SHA paired with a concrete `workspace/...` artifact path in durable
+The transient-coordinate checker rejects an exact 40-character commit SHA paired with a concrete `workspace/...` artifact path in durable
 tracked text, while allowing ordinary historical SHAs, generic policy prose, active planning and
 transient workspace files. It does not query GitHub, check commit ancestry, validate arbitrary
 historical paths, or infer transientness outside the reserved `workspace/` root. Semantic
 dependencies without this recognizable syntax remain a human-review responsibility.
+
+Run the Markdown-link and delivery-label tests and checks directly with:
+
+```bash
+node --test .github/scripts/check-markdown-links.test.mjs
+node .github/scripts/check-markdown-links.mjs .
+node --test .github/scripts/check-delivery-labels.test.mjs
+node .github/scripts/check-delivery-labels.mjs
+```
 
 `infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, trusted-review-author filtering, closing-disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
 
@@ -231,19 +231,21 @@ node --test infra/dev/repo-snapshot.test.mjs
 
 ### PR disposition and workflow-definition validation
 
-The always-running `classify` job validates both layers of the PR disposition merge gate:
+The always-running repository-tooling runner validates both layers of the PR disposition merge gate:
 
-- `.github/scripts/check-pr-disposition.test.sh` exercises the disposition evaluator semantics.
+- `.github/scripts/check-pr-disposition.test.mjs` exercises disposition semantics; `.github/scripts/check-dependabot-provenance.test.mjs` independently covers trusted provenance.
 - `.github/scripts/check-actions-workflows.sh` validates every `.github/workflows/*.yml` definition with the repository-pinned actionlint version.
 
 The workflow-definition check deliberately validates GitHub Actions syntax before merge so a workflow cannot reach `main` in a form that GitHub rejects before scheduling any jobs. The helper always downloads actionlint 1.7.12, verifies the pinned archive SHA-256, and executes that exact binary rather than substituting an arbitrary runner- or developer-provided `actionlint` from `PATH`. It therefore requires `curl`, `tar`, `sha256sum`, and network access to GitHub Releases whenever it runs.
 
-Run the two checks locally with:
+Run focused checks locally with:
 
 ```bash
-bash .github/scripts/check-pr-disposition.test.sh
+node --test .github/scripts/check-pr-disposition.test.mjs .github/scripts/check-dependabot-provenance.test.mjs
 bash .github/scripts/check-actions-workflows.sh
 ```
+
+The CI workflow's stable gate evaluator is `.github/scripts/check-ci-gate.mjs`; its test exercises job failures, unexpected skips, full sweeps, and needs/map drift. The continuous-improvement reminder workflow has its own focused Node contract checker and test.
 
 ### Scheduled and manual security runs
 
@@ -251,7 +253,7 @@ A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same j
 
 ### Aggregate CI gate
 
-`CI / gate` is the stable aggregate validation signal produced by the CI workflow. It depends on every merge-relevant job, runs with `if: always()`, and treats a `skipped` result as acceptable **only when that job's surface was not selected** by the change classifier (or a `schedule`/`workflow_dispatch` full sweep) — it mirrors each conditional job's own `if:` and fails if a job comes back `skipped` despite its surface being selected, which catches a condition/classifier drift rather than silently accepting it. It also fails on any `failure`/`cancelled` result, and fails closed if its own `needs:` list and its internal expectation map (which mirrors each job's `if:`) ever drift apart — e.g. a job added to `needs:` without a matching entry in the map — rather than let an unlisted job's `skipped` result pass unexamined. This keeps the CI-side gate stable even as jobs are added, removed, or made conditional; the workflow file itself still requires both lists to be updated together (the gate job's own comment says so). Which check contexts are currently required for `main` is live GitHub ruleset state, not a fact owned by this guide; resolve that configuration from GitHub when inspecting or changing merge protection.
+`CI / gate` is the stable aggregate validation signal produced by the CI workflow. It depends on every merge-relevant job, runs with `if: always()`, and treats a `skipped` result as acceptable **only when that job's surface was not selected** by the change classifier (or a `schedule`/`workflow_dispatch` full sweep) — it mirrors each conditional job's own `if:` and fails if a job comes back `skipped` despite its surface being selected, which catches a condition/classifier drift rather than silently accepting it. It also fails on any `failure`/`cancelled` result, and fails closed if its own `needs:` list and its internal expectation map (which mirrors each job's `if:`) ever drift apart — e.g. a job added to `needs:` without a matching entry in the map — rather than let an unlisted job's `skipped` result pass unexamined. This keeps the CI-side gate stable even as jobs are added, removed, or made conditional. The `needs:` list lives in `.github/workflows/ci.yml`, and the matching expected-job map lives in `.github/scripts/check-ci-gate.mjs`; update both when a job is added, removed, or its condition changes. Which check contexts are currently required for `main` is live GitHub ruleset state, not a fact owned by this guide; resolve that configuration from GitHub when inspecting or changing merge protection.
 
 ### Superseded run cancellation
 

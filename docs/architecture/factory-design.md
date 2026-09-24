@@ -429,6 +429,11 @@ under an Engine interpretation only when that interpretation's own definition su
 artifact's exact policy and the records, values, variants and interactions the artifact represents;
 recognizing which records are present is not sufficient. An Engine refuses an artifact outside that
 domain before runtime mutation rather than ignoring represented content or supplying absent content.
+The [current transfer-applicability boundary](transfer-applicability.md) selects no transfer for an
+admitted V2 artifact without spatial content, distinguishes it from authored zero and refusal, and
+leaves the exact Engine identity/support partition to its separate investigation. That selection is
+specific to the current closed V2 grammar, not a general rule that every future transfer lifecycle
+must be conditioned on authored duration inputs.
 
 **Support is separate from identity.** Retained attribution requires the exact definition of every
 referenced policy to remain resolvable; continuing publication, decoding, execution, migration and

@@ -59,7 +59,7 @@ Question:
 
 > Once transfer semantics and spatial runtime consequences are settled, does changing spatial arrangement create a legible performance trade-off against capacity and game-owned capital cost?
 
-This is not ready while Arcogine is still deciding whether transfer lifecycle/timing is semantically independent of spatial layout. It must consume the result of [Transfer semantics boundary research](transfer-semantics.md) and any reconciled spatial-runtime contract rather than using the game to decide them.
+This is not ready while Engine applicability and spatial runtime consequences remain unresolved. It must consume the [current transfer-applicability boundary](../../architecture/transfer-applicability.md), the successor [Engine-applicability result](engine-applicability-after-transfer-boundary.md), and a reconciled spatial-runtime contract rather than using the game to decide them.
 
 ### External player validation — CANDIDATE
 
@@ -88,15 +88,15 @@ Accordingly:
 - overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain game presentation choices;
 - the game must not invent shared KPI or diagnostic formulas while analytics ownership is unresolved;
 - a research-local derivation may be used to establish ground truth for a study, but selecting it for product use does not make it game-owned or part of Engine semantics;
-- transfer-dependent diagnostics remain outside the READY diagnostic-evidence-contract study until transfer semantics are reconciled and executable evidence exists; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
+- transfer-dependent diagnostics remain outside the READY diagnostic-evidence-contract study until Engine applicability and spatial runtime consequences are reconciled and executable evidence exists; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
 
 ## Boundary with transfer and spatial semantics
 
-Transfer is a production/runtime concern, not a game mechanic that the consumer may define. The current normative contracts couple transfer timing to the optional spatial record; [Transfer semantics boundary research](transfer-semantics.md) now tests whether that coupling is semantically justified before spatial activation proceeds.
+Transfer is a production/runtime concern, not a game mechanic that the consumer may define. The [current transfer-applicability boundary](../../architecture/transfer-applicability.md) selects no transfer for admitted V2 spatial-absent content and preserves a full lifecycle for admitted present content with zero or positive timing. Exact Engine identity/support and spatial activation remain open.
 
 The game therefore must not assume that:
 
-- absence of spatial facts necessarily means absence of transfer lifecycle;
+- Factory publication validity alone makes a design executable under an Engine identity;
 - placement is behaviorally consequential before a landed Engine contract makes it so; or
 - a game-local movement formula can stand in for missing Factory/Engine semantics.
 

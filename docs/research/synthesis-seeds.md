@@ -10,6 +10,16 @@ Current Arcogine research questions and lifecycle state are tracked separately i
 
 ## Seeds
 
+### Zero-duration phases can remain observable at a bounded execution boundary
+
+- **Signal** — A separately scheduled zero-duration phase can differ from an absent phase when advancement stops between same-time turns or commands can interleave there. Equal final timestamps alone do not establish equivalent execution semantics.
+- **Origin** — Transfer-lifecycle independence investigation and independent adversarial review (`ACCEPT WITH QUALIFICATIONS`). Durable destination: the [current transfer-applicability boundary](../architecture/transfer-applicability.md), which carries the corrected bounded-step witness.
+- **Evidence posture** — The distinction follows from Arcogine's specified one-event advancement, inclusive `advanceUntil` target, command boundary and transfer lifecycle. Current tests exercise the V1 advancement side; transfer execution is still unimplemented, so the transfer-side result is specification-derived rather than experimentally observed in the runtime. No claim about other engines is established.
+- **Boundaries / counterevidence** — An engine that hides intermediate state may still expose distinct events or ordering consequences. Atomic same-time advancement alone does not prove equivalence; compare the actual observation, event, command and ordering contracts. Conversely, an unobservable internal zero-time step may be equivalent under a narrower contract.
+- **Reusable assets** — The corrected `M1:5 -> M2:3` one-event witness in the [transfer boundary](../architecture/transfer-applicability.md), plus its refusal-before-runtime distinction. The witness calls `advanceUntil(SimTime.of(5), 1)` before processing `TaskEnd`, not after it.
+- **Occurrences** — None beyond the originating investigation.
+- **Revisit when** — An independent Arcogine investigation or a materially comparable external engine case shows the same zero-versus-absent distinction, or executable transfer conformance contradicts the specification-derived witness. This seed creates no research question or implementation commitment by itself.
+
 ### Durable identity contracts drift into their own storage representation
 
 - **Signal** — When a durable identity or provenance contract states its invariant in terms of what is *kept* (records retained, fields carried, a log prefix preserved), it silently fixes a storage representation and then mis-classifies legitimate representation changes as semantic changes. The repair in both observed instances was the same move: restate the invariant as what must remain **answerable or provable**, and leave *where the supporting material lives* to implementation.

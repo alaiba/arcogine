@@ -119,6 +119,9 @@ whose meanings, anchor and maximum-transfer predicate §1.1 keeps unchanged. Whe
 `engine-semantics:v1` applies to artifacts of this policy — with the spatial record present or
 absent — is not established by this specification; it remains the open
 [Engine applicability question](../research/investigations/engine-applicability-after-transfer-boundary.md).
+The [current transfer-applicability boundary](transfer-applicability.md) selects no transfer for an
+admitted V2 artifact when this record is absent. It does not make this Factory grammar an Engine
+support declaration, or collapse absent content into an authored zero.
 
 ## 2. Relationship to `factory-model:v1`
 

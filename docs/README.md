@@ -38,7 +38,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
 | Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
 | Playable factory-design product research | [Game product-research programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella only; lifecycle lives on focused questions such as strategy space and diagnostic evidence |
-| Inter-resource transfer boundary | [Transfer semantics research](research/investigations/transfer-semantics.md) | Separates transfer lifecycle/timing from spatial layout before V2/spatial activation |
+| Inter-resource transfer boundary | [Current transfer applicability](architecture/transfer-applicability.md) / [transfer research](research/investigations/transfer-semantics.md) | Current V2 absence, authored zero and refusal meanings; exact Engine identity/support still open |
 
 ## Development and contributing
 
@@ -66,6 +66,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture |
 | [Engine Semantics v1](architecture/engine-semantics-v1.md) | Normative current result-affecting Engine interpretation |
 | [Factory Model v2](architecture/factory-model-v2.md) | Normative, unreleased v2 canonicalization/fingerprint byte grammar: V1 production records plus an optional spatial record |
+| [Factory/Engine transfer applicability](architecture/transfer-applicability.md) | Current V2 transfer existence, artifact admission and support boundaries; Engine identity remains open |
 | [Standards alignment](architecture/standards-alignment.md) | Standards/interchange/conformance boundaries |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained manufacturing semantic mapping and deliberate divergences |
 | [Factory Model v1](architecture/factory-model-v1.md) | Normative v1 canonicalization/fingerprint byte grammar (implemented) |
@@ -90,8 +91,8 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Factory-design game product programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella framing for focused game research; no programme-level lifecycle |
 | [Game diagnostic evidence contract](research/investigations/factory-design-game-diagnostic-evidence.md) | READY deterministic study of truthful, inspectable non-spatial diagnostic claims; no participant pool required |
 | [Game strategy space](research/investigations/factory-design-game-strategy-space.md) | READY headless study of non-spatial capacity/capital design trade-offs |
-| [Transfer semantics](research/investigations/transfer-semantics.md) | READY transfer-lifecycle independence question plus CANDIDATE non-spatial timing follow-up |
-| [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, CANDIDATE Engine applicability after transfer research, and unselected recovery/session extensions |
+| [Transfer semantics](research/investigations/transfer-semantics.md) | CONCLUDED current transfer-applicability boundary plus CANDIDATE non-spatial hand-off/timing follow-up |
+| [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, READY Engine applicability, and unselected recovery/session extensions |
 | [Operational/Digital Twin boundaries](research/investigations/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |
 
 ## Internal implementation planning

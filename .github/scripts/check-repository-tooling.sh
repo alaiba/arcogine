@@ -27,6 +27,7 @@ run "Node repository-tooling tests" node --test \
   .github/scripts/check-continuous-improvement-reminder.test.mjs \
   .github/scripts/check-ci-gate.test.mjs \
   infra/dev/delivery-retrospective.test.mjs \
+  infra/dev/delivery-retrospective-github.test.mjs \
   infra/dev/repo-snapshot.test.mjs \
   infra/dev/github-attribution-hygiene.test.mjs
 run "Markdown-link check" node .github/scripts/check-markdown-links.mjs .

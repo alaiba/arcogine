@@ -88,7 +88,7 @@ Accordingly:
 - overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain game presentation choices;
 - the game must not invent shared KPI or diagnostic formulas while analytics ownership is unresolved;
 - a research-local derivation may be used to establish ground truth for a study, but selecting it for product use does not make it game-owned or part of Engine semantics;
-- transfer-dependent diagnostics remain outside the READY diagnostic-comprehension study until transfer semantics are reconciled and executable evidence exists.
+- transfer-dependent diagnostics remain outside the READY diagnostic-evidence-contract study until transfer semantics are reconciled and executable evidence exists; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
 
 ## Boundary with transfer and spatial semantics
 

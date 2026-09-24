@@ -102,7 +102,24 @@ Before interpretation:
 
 4. require acquisition, evidence-contract validation, and analysis to complete; then use the analyzer's exact PR window, merged-PR count, trusted-author CHANGES REQUIRED disposition count, review-checkpoint distribution, and structured-finding dataset without manually reconstructing or retyping alternative totals.
 
-The GitHub GraphQL adapter is the current local acquisition path. Another approved acquisition path must emit the same source-neutral contract and can then use the same analyzer unchanged. The executable contract and completeness rules live in `infra/dev/delivery-retrospective-evidence.mjs`; acquisition-specific retrieval rules live in `infra/dev/delivery-retrospective-github.mjs`; all retrospective counting and finding analysis live in the pure `infra/dev/delivery-retrospective.mjs` analyzer.
+The GitHub GraphQL adapter is the current local acquisition path. Another approved acquisition path must emit the same source-neutral contract and can then use the same analyzer unchanged. The executable contract and completeness rules live in `infra/dev/delivery-retrospective-evidence.mjs`; the local GraphQL retrieval rules live in `infra/dev/delivery-retrospective-github.mjs`; the ChatGPT connector procedure below owns connector-specific retrieval; all retrospective counting and finding analysis live in the pure `infra/dev/delivery-retrospective.mjs` analyzer.
+
+#### ChatGPT GitHub connector acquisition
+
+A formal retrospective running in ChatGPT may use the GitHub connector as an approved acquisition path only by producing the same Retrospective Evidence v1 contract and then invoking the exact-current pure analyzer. The connector path does not hand-count dispositions or findings.
+
+Use this fail-closed procedure:
+
+1. Read `.github/continuous-improvement/retrospective.json`, `infra/dev/delivery-retrospective-evidence.mjs`, and `infra/dev/delivery-retrospective.mjs` from one exact current `main` SHA. Resolve the requested `throughPr` from live GitHub.
+2. Fetch baseline and through PR metadata and require both to be merged into `main` with valid merge timestamps.
+3. Enumerate merged `main` PR candidates one UTC merge day at a time from the baseline merge day through the through-PR merge day, using a repository-scoped PR search capped at 100 results per day. If any daily query returns 100 results, the connector cannot prove that day complete and the retrospective is `INCOMPLETE`. De-duplicate PR numbers, fetch authoritative PR metadata for every candidate, then retain only the exact `(baseline mergedAt, through mergedAt]` interval.
+4. For every exact-window PR, retrieve submitted reviews from GitHub's raw REST review subresource through the connector's approved raw-fetch surface: `/repos/<owner>/<repo>/pulls/<number>/reviews?per_page=100&page=<n>`. Fetch pages in order until one returns fewer than 100 reviews. Reject a repeated page, duplicate review identity, fetch failure, malformed payload, or any other condition that prevents proving complete enumeration; do not substitute the connector's normalized review-list projection when the raw subresource is available.
+5. Populate Evidence v1 review fields from the authoritative raw review payload: use `node_id` as the review identity when present, `body` as the body, `author_association` as `authorAssociation`, `submitted_at` as `submittedAt`, and `commit_id` as `reviewedHead`. Preserve these values rather than replacing them with weaker normalized projections; in particular, the analyzer's finding-head consistency check depends on `reviewedHead`.
+6. Only when the active connector surface genuinely cannot expose authoritative review association or reviewed-commit provenance may acquisition fall back to weaker fields, and review enumeration must still be proven complete independently. In that fallback only, Arcogine may synthesize `OWNER` when the authenticated GitHub login equals the repository owner login and the review author login equals that same verified login, and may set `reviewedHead` to `null` when the reviewed commit is genuinely unavailable. Do not infer `MEMBER` or `COLLABORATOR` from repository permission levels. Any other review author without a direct GitHub association makes acquisition `INCOMPLETE`.
+7. Set source provenance to identify the connector acquisition path (for example, `adapter: "github-connector"`) and include enough non-semantic retrieval metadata to diagnose its completeness proof. Validate the completed bundle against the exact-current Evidence v1 validator.
+8. Materialize the exact-current `delivery-retrospective-evidence.mjs` and `delivery-retrospective.mjs` into the ChatGPT execution environment together with the validated evidence JSON, preserving their relative import relationship, and run the analyzer with Node. If the runtime cannot execute the analyzer, the retrospective is `INCOMPLETE`; do not reproduce its aggregation rules in model reasoning.
+
+The connector acquisition path may make different GitHub calls from the local GraphQL adapter, but after Evidence v1 validation the downstream analyzer and interpretation boundary are identical.
 
 The adapter fails closed when GitHub search/review retrieval cannot prove completeness. The analyzer fails closed on unsupported or internally incomplete evidence. If either fails, the retrospective is `INCOMPLETE`; fix the retrieval/tooling problem rather than estimating the sample. Structurally complete evidence can still contain malformed or noncanonical historical reviewer findings. In that case the analyzer preserves the core window/review metrics, marks finding analytics incomplete, and reports the specific coverage diagnostics; do not treat any incomplete distribution as a complete sample.
 
@@ -187,7 +204,8 @@ The versioned state file records only the retrospective baseline and latest repo
 | Retrospective method | this document |
 | Retrospective baseline state | `.github/continuous-improvement/retrospective.json` |
 | Retrospective evidence contract | `infra/dev/delivery-retrospective-evidence.mjs` |
-| Retrospective GitHub acquisition | `infra/dev/delivery-retrospective-github.mjs` |
+| Retrospective local GitHub acquisition | `infra/dev/delivery-retrospective-github.mjs` |
+| Retrospective ChatGPT connector acquisition | this document + `infra/dev/delivery-retrospective-evidence.mjs` |
 | Retrospective mechanical analysis | `infra/dev/delivery-retrospective.mjs` |
 | Dated retrospective evidence | `docs/history/continuous-improvement/` |
 | Retrospective actions | their owning GitHub issues |

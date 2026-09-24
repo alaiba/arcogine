@@ -192,7 +192,7 @@ export function serializeReviewConnection(pullRequest) {
     items: connection.nodes.map((review) => ({
       id: review.id ?? null,
       body: review.body ?? null,
-      authorAssociation: review.authorAssociation ?? 'UNKNOWN',
+      authorAssociation: review.authorAssociation ?? null,
       submittedAt: review.submittedAt,
       reviewedHead: review.commit?.oid ?? null,
     })),

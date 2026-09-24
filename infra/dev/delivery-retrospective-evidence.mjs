@@ -25,6 +25,16 @@ export const FINDING_CATEGORIES = Object.freeze([
 export const FINDING_SEVERITIES = Object.freeze(['P0', 'P1', 'P2', 'P3', 'Nit']);
 export const FINDING_CONFIDENCES = Object.freeze(['HIGH', 'MEDIUM', 'LOW']);
 export const FINDING_STATUSES = Object.freeze(['OPEN', 'RESOLVED', 'OBSOLETE']);
+export const REVIEW_AUTHOR_ASSOCIATIONS = Object.freeze([
+  'COLLABORATOR',
+  'CONTRIBUTOR',
+  'FIRST_TIMER',
+  'FIRST_TIME_CONTRIBUTOR',
+  'MANNEQUIN',
+  'MEMBER',
+  'NONE',
+  'OWNER',
+]);
 
 function fail(message) {
   throw new Error(`invalid retrospective evidence: ${message}`);
@@ -75,6 +85,9 @@ function validateReview(review, prNumber, index, reviewIds) {
     fail(`${label} body must be a string or null`);
   }
   if (!nonemptyString(review.authorAssociation)) fail(`${label} author association is missing`);
+  if (!REVIEW_AUTHOR_ASSOCIATIONS.includes(review.authorAssociation)) {
+    fail(`${label} author association ${review.authorAssociation} is unsupported`);
+  }
   if (!timestamp(review.submittedAt)) fail(`${label} submission timestamp is missing or invalid`);
   if (review.reviewedHead !== null && !nonemptyString(review.reviewedHead)) {
     fail(`${label} reviewed head must be a string or null`);

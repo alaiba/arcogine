@@ -194,6 +194,11 @@ jobs:
         with:
           ref: main
 
+      - name: Set up Node for trusted evaluators
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.22.2'
+
       - name: Verify trusted Dependabot provenance
         id: dependabot
         env:
@@ -231,7 +236,7 @@ jobs:
                  PR_AUTHOR_TYPE="$AUTHOR_TYPE" \
                  PR_AUTHOR_ID="$AUTHOR_ID" \
                  PR_HEAD_CI_RUN_B64="$CI_RUN_B64" \
-                 bash .github/scripts/check-dependabot-provenance.sh; then
+                 node .github/scripts/check-dependabot-provenance.mjs; then
                 TRUSTED=true
               fi
             else
@@ -252,7 +257,7 @@ jobs:
           REVIEW_BODIES_B64: ${{ steps.reviews.outputs.review_bodies_b64 }}
         run: |
           set +e
-          bash .github/scripts/check-pr-disposition.sh
+          node .github/scripts/check-pr-disposition.mjs
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
 
       - name: Publish disposition check

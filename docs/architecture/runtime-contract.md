@@ -254,7 +254,7 @@ A bounded journal must expose enough information to detect that a cursor has fal
 
 ## Challenge/Game and Operational Execution remain consumers/siblings, not owners
 
-Challenge/Game code may consume supported Engine observations/outcome facts but does not define runtime event semantics, reconstruct authoritative queues/dispatch from event replay, or make challenge scoring part of the runtime event contract. The playable consumer continues to depend on a complete supported runtime observation/event contract and deterministic spatial runtime consequences as specified by its own planning initiative.
+Challenge/Game code may consume supported Engine observations/outcome facts but does not define runtime event semantics, reconstruct authoritative queues/dispatch from event replay, or make challenge scoring part of the runtime event contract. Every playable consumer depends on the complete supported runtime observation/event contract. Deterministic spatial/transfer runtime consequences are additionally required only when the promoted consumer requirements make spatial layout behaviorally consequential; a non-spatial playable slice does not acquire that dependency merely by being playable.
 
 Operational Execution / Digital Twin remains a sibling track. These events are simulation-runtime events. They do not define production telemetry envelopes, source authenticity, operational actor/target identity, actuation acknowledgements, deployment provenance, external-observation ingestion, or modeled-versus-observed reconciliation.
 

@@ -35,6 +35,20 @@ into a shorter shorthand:
 - `./` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
 - `..` = read the current implementation pull request's live GitHub state and perform the next implementation-owned transition, if one is available;
 
+### Prompt handoff preflight
+
+When the user asks to write, draft, generate, or prepare a complete prompt or handoff for another session, agent, reviewer, researcher, or execution context, treat repository persistence as a **precondition to composing the complete artifact**, not as cleanup after drafting it in chat.
+
+Before composing the prompt body:
+
+1. read any applicable specialized prompt-generation or handoff instructions;
+2. choose the appropriate semantic path under `workspace/` and the branch that will carry it;
+3. compose the complete prompt directly into that persisted artifact;
+4. commit it; and
+5. hand it off only as `branch + exact commit SHA + path` (plus an issue/PR/planning identifier only when useful).
+
+Do not first produce the complete prompt in chat and then persist a copy. After persistence succeeds, do not duplicate the prompt body in chat. If repository persistence is required but unavailable, report the handoff as blocked rather than falling back to chat-only prompt custody.
+
 ### Session-close Kaizen
 
 When the user's entire message is `.?`, inspect the current session and live repository for anything learned, decided, repeated, or encountered that should survive deletion of the conversation by changing executable safeguards, standard work, or maintained repository knowledge.
@@ -46,7 +60,7 @@ Classify each material candidate as one of:
 - **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being smuggled into the current PR or slice.
 - **Discard** — the observation is situational, transient, or otherwise not worth preserving.
 
-Prefer stronger forms of durable capture in this order when they fit the lesson: executable guard/test, canonical helper/tooling, agent/contributor standard work, maintained documentation, then canonical architecture or specification for genuinely architectural or hard-to-reverse constraints. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
+Prefer the strongest durable capture that actually fits the lesson. Use an executable guard/test only when the invariant is mechanically observable and the guard exercises behavior or repository state rather than merely asserting that instruction prose still contains particular wording. Otherwise prefer canonical helper/tooling, agent/contributor standard work, maintained documentation, then canonical architecture or specification for genuinely architectural or hard-to-reverse constraints. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
 
 Do not manufacture a lesson merely to produce an output. Finish every Session-close Kaizen review with an explicit deletion verdict: either the session is safe to delete because nothing unique remains, or name exactly what still needs to be captured first.
 

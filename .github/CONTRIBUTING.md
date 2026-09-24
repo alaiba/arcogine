@@ -27,6 +27,8 @@ See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the 
 
 ## Development workflow
 
+The managed devcontainer and Claude Cloud setup install a pre-commit check that confirms `gh` is authenticated as the repository's human owner and that the configured, author, and committer emails belong to that account. It accepts verified account emails, the public profile email, and the account's GitHub noreply addresses; private secondary emails require `gh`'s `user` scope. In other environments, install it once with `bash infra/dev/install-git-hooks.sh`.
+
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
 2. **Make your changes.** Follow the code style enforced by Checkstyle.
 3. **Write tests** for new functionality. Java modules use JUnit 6.
@@ -64,6 +66,8 @@ When a roadmap item spans several capabilities:
 - reconcile a significant architectural change into the architecture or specification document that owns the affected semantics, with code, tests, and dependent planning updated in the same reviewed change, rather than leaving the constraint in a PR discussion, branch name, issue comment, or chat transcript; where rationale is needed to understand or not accidentally undo a constraint, keep it concise and next to the rule, and leave the chronology of how the document got there to Git and pull-request history; do not grow the canonical document into an analysis of rejected alternatives — when that reasoning meets the retention test in [`docs/development/researching.md`](../docs/development/researching.md#historical-decision-rationale), preserve it as a non-normative historical decision-rationale record instead, which is never required and never carries a current requirement;
 - reconcile the feature branch with the latest `main` before final review when `main` has moved materially, then review the **net diff against current `main`**, not merely the original branch commit;
 - after a PR is merged, delete feature/review branches once they contain no unique work that still needs to be preserved.
+
+Before final review, close semantic consequences as part of completing the implementation whenever a change affects domain behavior, planning/readiness status, maintained current-state documentation, an internal interface with meaningful consumers, durable identity/canonicalization or revision semantics, persistence, scheduler/time authority, determinism, major ownership, public compatibility/event contracts, security/authority, or hard-to-reverse architecture. Identify the small set of concepts whose meaning, ownership, lifecycle, status, supported behavior, or authority changed; search maintained current-state documentation, planning, tests, examples, interfaces, and executable configuration for current vocabulary and plausible prior-state assumptions; and reconcile stale claims in the same change. Isolated refactors, narrow tests, typo/link corrections, and other mechanical changes with no contract effect do not require this fan-out. Keep the work bounded to the affected semantic neighborhood. This applies the existing obligation to keep authoritative documentation and planning truthful; it does not create a closure-set handoff artifact, a new review gate, or a repository-wide Consistency sweep.
 
 A useful review question is: **if this PR were merged by itself, would the repository tell the truth about what exists now, while leaving later roadmap decisions genuinely open?**
 

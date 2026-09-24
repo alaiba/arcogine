@@ -69,6 +69,15 @@ echo "==> Checking Git commit identity..."
 source "$SCRIPT_DIR/git-identity.sh"
 configure_arcogine_git_identity
 
+if command -v bash >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then
+  echo "==> Installing Git pre-commit check..."
+  if ! bash "$SCRIPT_DIR/install-git-hooks.sh"; then
+    echo "WARNING: Git pre-commit check could not be installed; continuing because hook setup is optional in this environment." >&2
+  fi
+else
+  echo "WARNING: Git pre-commit check was not installed because bash or git is unavailable; continuing because hook setup is optional in this environment." >&2
+fi
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

@@ -27,6 +27,8 @@ See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the 
 
 ## Development workflow
 
+The managed devcontainer and Claude Cloud setup install a pre-commit check that confirms `gh` is authenticated as the repository's human owner and that the configured, author, and committer emails belong to that account. It accepts verified account emails, the public profile email, and the account's GitHub noreply addresses; private secondary emails require `gh`'s `user` scope. In other environments, install it once with `bash infra/dev/install-git-hooks.sh`.
+
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
 2. **Make your changes.** Follow the code style enforced by Checkstyle.
 3. **Write tests** for new functionality. Java modules use JUnit 6.

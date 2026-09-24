@@ -19,6 +19,9 @@ echo "==> Checking Git commit identity..."
 source infra/dev/git-identity.sh
 configure_arcogine_git_identity
 
+echo "==> Installing Git pre-commit check..."
+bash infra/dev/install-git-hooks.sh
+
 echo "==> Installing repository dependencies (./arcogine setup)..."
 ./arcogine setup
 

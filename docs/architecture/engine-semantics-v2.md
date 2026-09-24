@@ -141,11 +141,11 @@ weighed separately from this Engine identity choice.
 This specification defines the identity, its applicability, and its reused/absent-case rules. It
 does not itself:
 
-- implement publication, canonical encoding, or verification of `factory-model:v2`, owned by
-  [PLAN-ENG-5-A2](../planning/spatial-runtime-consequences.md#plan-eng-5-a2--factory-v2-canonical-identity);
+- implement publication, canonical encoding, or verification of `factory-model:v2`, owned by the
+  Factory V2 canonical-identity delivery work in [Spatial Runtime Consequences](../planning/spatial-runtime-consequences.md);
 - implement runtime establishment of `engine-semantics:v2`, observation/event provenance
   propagation, the admission-reservation substrate, or spatial transfer activation, owned by the
-  still-gated PLAN-ENG-5 slices in [Spatial Runtime Consequences](../planning/spatial-runtime-consequences.md);
+  still-gated spatial-runtime delivery slices in [Spatial Runtime Consequences](../planning/spatial-runtime-consequences.md);
 - declare that any of the above is currently supported. A support declaration for
   `engine-semantics:v2`, made under [Semantic contract support](../development/semantic-contract-support.md),
   follows when that implementation lands; this specification alone is not that declaration.

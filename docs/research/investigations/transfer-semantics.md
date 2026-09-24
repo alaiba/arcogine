@@ -12,7 +12,7 @@ Current unreleased Factory/Engine architecture couples three concepts:
 2. **transfer timing**; and
 3. the optional **spatial record** carrying floor, position, footprint, `ticksPerCell`, and `handlingTicks`.
 
-Under the current contract, absence of that spatial record means the design makes no handling assertion, and the current Engine-applicability candidate interprets that absence as no transfer behavior. This coupling is now material because V2 is unreleased and spatial runtime activation is still blocked: Arcogine can still determine whether spatial presence is the correct semantic discriminator before retaining that assumption in a released contract.
+Under the current contract, absence of that spatial record means the design makes no handling assertion. The [superseded Engine-applicability investigation](engine-applicability-optional-record-factory-policies.md) inherited "spatial absent implies no transfer lifecycle" as a premise; that is why the lifecycle question below was admitted. Its reviewed evidence remains useful, but its recommendation does not constrain this investigation's candidates. The coupling is material because V2 is unreleased and spatial runtime activation is still blocked: Arcogine can determine whether spatial presence is the correct semantic discriminator before retaining that assumption in a released contract.
 
 This document does not decide that the current contract is wrong. It splits the uncertainty into bounded questions.
 

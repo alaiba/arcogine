@@ -57,12 +57,12 @@ Durable destinations:
 
 ## What remains open
 
-- **Engine applicability to the corrected policy.** Whether `engine-semantics:v1` can be stated as
-  applicable to `factory-model:v2` artifacts, with the spatial record present or absent, or a
-  distinguishable Engine identity is required:
-  [Engine applicability to optional-record Factory policies](engine-evolution.md#engine-applicability-to-optional-record-factory-policies).
+- **Engine applicability to the corrected policy.** After the separate transfer-lifecycle question
+  settles the meaning of each represented V2 case, determine whether `engine-semantics:v1` or another
+  fixed Engine definition can admit those cases, or whether a distinguishable identity is required:
+  [Engine applicability after transfer-boundary reconciliation](engine-applicability-after-transfer-boundary.md).
   `engine-semantics:v1` is unchanged, and V2 publication release and spatial runtime activation
-  stay blocked on that question.
+  stay blocked first on transfer reconciliation and then on that successor question.
 - **Continued `factory-model:v1` publication.** Whether new production-only designs are still
   published under `factory-model:v1` once V2 is released is a scoped support decision for the V2
   publication work, not an architectural rule.

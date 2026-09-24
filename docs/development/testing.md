@@ -207,10 +207,10 @@ node --test .github/scripts/check-delivery-labels.test.mjs
 node .github/scripts/check-delivery-labels.mjs
 ```
 
-`infra/dev/delivery-retrospective.test.mjs` covers the pure counting/window logic behind `infra/dev/delivery-retrospective.mjs`. It pins the exact merge-time boundary, exclusion of non-main/non-merged candidates, duplicate rejection, trusted-review-author filtering, closing-disposition parsing, fail-closed review truncation, and deterministic 0/1/2/3+ checkpoint totals. The live helper uses GitHub only when a retrospective runs; its deterministic suite is always required CI.
+`infra/dev/delivery-retrospective.test.mjs` covers the source-neutral evidence contract and pure analyzer. It pins the exact merge-time boundary, candidate and nested-review completeness, trusted-review-author filtering, closing-disposition parsing, structured finding lifecycle/aggregates, diagnostic coverage, and offline analyzer invocation. `infra/dev/delivery-retrospective-github.test.mjs` covers the GitHub acquisition adapter with injected GraphQL fixtures, including stable pagination, the 1000-result search cap, review-connection truncation, and transport-field serialization. Both suites are included in the repository-tooling runner and require no live GitHub access.
 
 ```bash
-node --test infra/dev/delivery-retrospective.test.mjs
+node --test infra/dev/delivery-retrospective.test.mjs infra/dev/delivery-retrospective-github.test.mjs
 ```
 
 Pass the **file**, not the directory: `node --test infra/dev/` fails with `MODULE_NOT_FOUND` rather than discovering the suite.

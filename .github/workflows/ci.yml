@@ -162,11 +162,10 @@ jobs:
       - name: Run Gitleaks
         run: gitleaks detect --source . --config .github/security/gitleaks.toml --verbose
 
-  # Stable aggregate CI validation signal. Its needs: list and the
-  # expected_to_run map in the step below (mirroring each conditional job's own
-  # if:) must be kept in sync
-  # by hand when jobs are added/removed/reconditioned; the step fails closed
-  # if they drift, rather than silently accepting an unexamined job.
+  # Stable aggregate CI validation signal. Keep this needs: list in sync with
+  # the expected-job map in .github/scripts/check-ci-gate.mjs when jobs are
+  # added, removed, or their conditions change. The evaluator fails closed if
+  # their key sets drift, rather than silently accepting an unexamined job.
   gate:
     name: gate
     if: always()

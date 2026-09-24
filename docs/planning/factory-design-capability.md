@@ -1,6 +1,6 @@
 # Factory Design Capability Implementation Plan
 
-> **Status:** Active/partial; current Factory Model v1 capability and the V2 optional-record shape/validation proving slice are landed; V2 canonical identity is dependency-blocked first on transfer-lifecycle research and then on re-bounded Engine applicability, and cross-policy historical resolution waits for a real transition
+> **Status:** Active/partial; current Factory Model v1 capability and the V2 optional-record shape/validation proving slice are landed; V2 canonical identity is dependency-blocked on READY Engine applicability, and cross-policy historical resolution waits for a real transition
 >
 > **Scope:** Implementation-ready Factory Design work over the canonical production-system model  
 > **Authority:** Planning only. Current Factory architecture and specifications govern.
@@ -76,7 +76,7 @@ Acceptance evidence proves:
 
 ### PLAN-ENG-5-A2 — V2 canonical identity
 
-**Status:** Dependency-blocked on the READY [transfer-lifecycle question](../research/investigations/transfer-semantics.md#ready--transfer-lifecycle-independence) and then on the [successor Engine applicability question](../research/investigations/engine-applicability-after-transfer-boundary.md). The Factory-composition result remains current authority, but the transfer investigation may reopen the still-unreleased V2 grammar if spatial presence proves to be the wrong discriminator for transfer behavior. Releasing V2 publication identity would fix that grammar, so publication must wait until the transfer boundary and executing Engine identity are settled.
+**Status:** Dependency-blocked on the READY [Engine applicability question](../research/investigations/engine-applicability-after-transfer-boundary.md). The Factory-composition result and [current transfer-applicability boundary](../architecture/transfer-applicability.md) are reconciled without changing the still-unreleased V2 grammar. Releasing V2 publication identity would fix that grammar, so publication must wait until the executing Engine identity and exact support scope are settled. Decide new V1 publication separately from execution support for retained V1 artifacts.
 
 Implement the exact V2 canonicalizer, verifier, and fingerprint policy from [Factory Model v2](../architecture/factory-model-v2.md), with the support declaration that release requires, including whether `factory-model:v1` publication continues for production-only designs.
 

@@ -69,6 +69,9 @@ echo "==> Checking Git commit identity..."
 source "$SCRIPT_DIR/git-identity.sh"
 configure_arcogine_git_identity
 
+echo "==> Installing Git pre-commit check..."
+bash "$SCRIPT_DIR/install-git-hooks.sh"
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

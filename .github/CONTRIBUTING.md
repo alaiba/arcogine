@@ -27,6 +27,8 @@ See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the 
 
 ## Development workflow
 
+The managed devcontainer and Claude Cloud setup install a pre-commit check that compares `user.email` with the authenticated GitHub account. In other environments, install it once with `bash infra/dev/install-git-hooks.sh`.
+
 1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`).
 2. **Make your changes.** Follow the code style enforced by Checkstyle.
 3. **Write tests** for new functionality. Java modules use JUnit 6.

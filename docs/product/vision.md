@@ -13,4 +13,4 @@ Retained here as historical/etymological context; not part of current normative 
 
 The GitHub repository description is a project setting outside this document's edit surface, so it is recorded here as a recommendation rather than applied directly. The previous description ("a deterministic simulation engine for factory systems, economic dynamics, and agent-driven decision making") is a simulation-only tagline that no longer represents Arcogine's product identity per the Charter. A more accurate replacement:
 
-> Arcogine is building toward one executable model spanning design, simulation, verification, and operation of a production system. The current implementation is an early deterministic simulation engine for factory and economic dynamics.
+> Arcogine is building toward one executable model spanning design, simulation, verification, and operation of a production system. The current implementation is an early deterministic factory simulation engine.

@@ -18,7 +18,6 @@ import com.arcogine.types.SimTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Ported from the inline #[cfg(test)] module in crates/sim-factory/src/process.rs. */
 class FactoryHandlerTest {
 
     private static FactoryHandler oneMachineOneProduct() {
@@ -367,30 +366,6 @@ class FactoryHandlerTest {
     }
 
     @Test
-    void jobOrderValueIsFixedAtOrderCreationPriceRegardlessOfLaterOrders() {
-        FactoryHandler h = oneMachineOneProduct();
-        Scheduler sched = new Scheduler();
-
-        // Order A is created while the offer price is $10.
-        Event orderA = orderEvent(1, 3, 10.0);
-        sched.schedule(orderA);
-        sched.nextEvent();
-        h.handleEvent(orderA, sched);
-
-        var jobA = h.jobs.allJobs().findFirst().orElseThrow();
-        assertEquals(10.0, jobA.unitPrice());
-        assertEquals(10.0, jobA.orderValue());
-
-        // The offer price changes to $999 before job A completes. Job A's own price must not move.
-        driveToCompletion(h, sched, 3);
-
-        assertEquals(10.0, jobA.unitPrice());
-        assertEquals(
-                10.0, jobA.orderValue(), "child execution value must not track later offer price changes");
-        assertEquals(30.0, h.completedSalesValue());
-    }
-
-    @Test
     void completedSalesValueSumsEachOrdersOwnCreationTimePrice() {
         FactoryHandler h = oneMachineOneProduct();
         Scheduler sched = new Scheduler();
@@ -407,7 +382,7 @@ class FactoryHandlerTest {
                 completedA.payload() instanceof EventPayload.OrderCompleted,
                 "order A's completion schedules OrderCompleted, which must be drained before continuing");
 
-        // Offer price rises to $50 before order B is created.
+        // Order B is accepted later at its own, different agreed unit price.
         Event orderB = orderEvent(sched.currentTime().ticks(), 2, 50.0);
         sched.schedule(orderB);
         sched.nextEvent();

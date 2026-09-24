@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
-import com.arcogine.core.event.EventType;
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
@@ -62,7 +61,7 @@ class ExplicitWorkloadSubmissionTest {
         Event completed = null;
         while (completed == null) {
             Event next = runtime.advance().orElseThrow();
-            if (next.eventType() == EventType.OrderCompleted) completed = next;
+            if (next.payload() instanceof EventPayload.OrderCompleted) completed = next;
         }
         assertTrue(runtime.jobsView().allMatch(job -> job.isComplete()));
         assertEquals(1L, runtime.completedSales());

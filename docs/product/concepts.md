@@ -31,7 +31,7 @@ An order's unit price is fixed when the order is accepted. Factory retains that 
 
 ## What is not currently provided
 
-There is no scenario/TOML loader, pricing and demand experiment loop, SalesAgent, generic agent framework, application server, HTTP API, or CLI. A future input format or outward consumer must follow then-current product requirements and the [runtime contract](../architecture/runtime-contract.md); no replacement scenario format or experiment experience is selected here.
+There is no scenario input format, pricing or demand model, experiment loop, agent framework, application server, HTTP API, or CLI. A future input format or outward consumer must follow then-current product requirements and the [runtime contract](../architecture/runtime-contract.md); no replacement scenario format or experiment experience is selected here.
 
 ## Further reading
 

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/** Ported from the inline #[cfg(test)] module in crates/sim-factory/src/routing.rs. */
 class RoutingStoreTest {
 
     private static Routing sampleRouting() {

@@ -15,8 +15,8 @@ import java.util.Optional;
  * obtaining a reference via {@code FactoryHandler.jobsView()}/{@code job(JobId)}, is structurally
  * limited to reading, not just conventionally expected to.
  *
- * <p>Order/commercial getters are compatibility projections from the immutable accepted order
- * referenced by this job. They are not mutable job-owned state.
+ * <p>{@code productId()} projects the immutable accepted order referenced by this job; it is not
+ * mutable job-owned state. Commercial facts such as price and order value belong to the order.
  */
 public interface JobView {
 
@@ -27,8 +27,6 @@ public interface JobView {
     long ordinalWithinOrder();
 
     ProductId productId();
-
-    long quantity();
 
     JobStatus status();
 
@@ -45,10 +43,4 @@ public interface JobView {
     Optional<Long> leadTime();
 
     boolean isComplete();
-
-    /** The price agreed by the referenced immutable order. */
-    double unitPrice();
-
-    /** Unit execution value only; commercial order value belongs to the parent order. */
-    double orderValue();
 }

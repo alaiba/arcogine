@@ -8,7 +8,7 @@ dependencies {
     implementation(project(":types"))
 }
 
-// JMH microbenchmarks (ported from crates/sim-core/benches). Run with
+// On-demand JMH scheduler microbenchmarks. Run with
 // `./gradlew :simulation:jmh`. ASM is pinned explicitly for JMH bytecode
 // generation; benchmark sources use the same Java 21 release compatibility
 // as the rest of the build.

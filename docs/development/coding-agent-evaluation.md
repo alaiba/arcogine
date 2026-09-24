@@ -64,7 +64,7 @@ A useful starting rule is to route by **semantic risk**, not by provider prestig
 | File/reference lookup, repository search | Luna / Haiku | Search results require architectural adjudication |
 | Tests, coverage, fixtures | Luna / Haiku | Tests reveal unclear or disputed product semantics |
 | Small bug with a clear reproducer | Luna / Haiku | Root cause crosses domain boundaries or the obvious fix violates an invariant |
-| Well-specified Java/TypeScript implementation slice | Luna / Haiku | Acceptance criteria are incomplete, implementation exposes a contract gap, or repeated validation fails |
+| Well-specified Java implementation slice | Luna / Haiku | Acceptance criteria are incomplete, implementation exposes a contract gap, or repeated validation fails |
 | Mechanical refactor / documentation reconciliation | Luna / Haiku | The change alters compatibility, architecture status, or normative semantics |
 | Medium cross-module feature | Mid/frontier model as needed | Use repository evidence to decide whether the cheaper worker is still converging |
 | Difficult debugging / ambiguous remediation | Stronger reasoning model | — |
@@ -121,7 +121,6 @@ The repository should not prescribe a provider. For experiments, route work by t
 | Architecture/readiness synthesis | Strong reasoning environment already available | Use an independent second opinion before freezing hard-to-reverse semantics |
 | Architectural adjudication | Strong Claude/GPT reasoning plus repository authority | Do not optimize for inference cost when a wrong decision creates downstream rework |
 | Straight Java implementation | Luna / Haiku / Cursor Free / Copilot Free / free external-agent pool | Escalate only after concrete failure or semantic ambiguity |
-| Straight React/TypeScript implementation | Luna / Haiku / Cursor Free / Copilot Free / free external-agent pool | Escalate on cross-boundary/API semantics rather than routine UI code |
 | Tests and coverage | Luna / Haiku / cheapest capable free agent | Strong models are usually unnecessary unless tests expose a semantic defect |
 | Repository archaeology / broad search | Luna or another very-low-cost large-context/free pool | Use stronger reasoning to adjudicate conclusions, not necessarily to perform every search |
 | Documentation reconciliation | Luna / Haiku / cheap free agent with repository search | Independent review for architecture/status transitions |

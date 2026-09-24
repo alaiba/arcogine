@@ -4,7 +4,7 @@
 #
 # For anything more specific than the commands below, use the subsystem's
 # native tool directly:
-#   cd product && ./gradlew <task>       # Java: coverage, Checkstyle, bootJar, jmh, audit
+#   cd product && ./gradlew <task>       # Java: coverage, Checkstyle, jmh, audit
 #   trivy / gitleaks                     # security scans
 # See docs/development/testing.md for the full native-command reference.
 set -euo pipefail
@@ -51,7 +51,7 @@ Commands:
   snapshot          Generate the canonical whole-repository AI retrieval snapshot
 
 For anything more specific, use the subsystem's native tool directly:
-  cd product && ./gradlew <task>                 # Java: coverage, Checkstyle, bootJar, jmh, audit
+  cd product && ./gradlew <task>                 # Java: coverage, Checkstyle, jmh, audit
   trivy / gitleaks                               # security scans
 See docs/development/testing.md for the full native-command reference.
 EOF

@@ -11,7 +11,6 @@ import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import org.junit.jupiter.api.Test;
 
-/** Ported from crates/sim-core/tests/event_ordering.rs. */
 class SchedulerTest {
 
     @Test

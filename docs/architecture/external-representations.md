@@ -14,9 +14,8 @@ histories and projections that must not be collapsed into one generic interchang
 
 Arcogine currently has no scenario loader or human-authored scenario format, and no HTTP API, SSE,
 or CLI product surface (see
-[Architecture Overview — Outward Adapters](overview.md#outward-adapters)); JSON was used for HTTP
-API and SSE payloads in that retired adapter and remains the default structured representation for
-a future one (see below), alongside possible future industrial (B2MML, AutomationML, AAS/AASX,
+[Architecture Overview — Outward Adapters](overview.md#outward-adapters)); JSON is the default
+structured representation for a future one (see below), alongside possible future industrial (B2MML, AutomationML, AAS/AASX,
 FMI/FMU, OPC UA, MQTT, IFC, STEP) or analytical (Parquet, Arrow, CSV) representations. Without an
 explicit boundary policy, a convenient serializer or integration standard could accidentally become
 the de facto domain model, semantic identity source, runtime event taxonomy, or persistence
@@ -58,7 +57,7 @@ A serializer schema, protocol object model, broker envelope, CAD structure, or s
 
 No current scenario loader or input format is selected. If a future product need requires scenario inputs, choose the format at that time and keep its input envelope distinct from the canonical published `FactoryModel`.
 
-TOML is not a current Arcogine input contract. A future scenario may reference published model/revision identity rather than embedding every authoritative factory-design fact.
+A future scenario may reference published model/revision identity rather than embedding every authoritative factory-design fact.
 
 Any selected format requires a concrete usability or integration need rather than format preference alone.
 
@@ -78,7 +77,7 @@ OpenAPI is the intended machine-readable description format for stable Arcogine 
 
 OpenAPI schemas follow accepted Arcogine domain semantics; they do not drive those semantics.
 
-Arcogine currently has no HTTP surface to document; a previous manually documented API was retired along with the adapter it described. In particular, the supported `RuntimeObservation` / `RuntimeEvent` domain contract must stabilize before any future HTTP/SSE surface is promoted into a durable external compatibility contract, and OpenAPI generation/validation should be established when that surface is introduced rather than documented by hand again.
+Arcogine currently has no HTTP surface to document. A future HTTP/SSE surface derives from the supported `RuntimeObservation` / `RuntimeEvent` domain contract rather than defining it, and OpenAPI generation/validation should be established when that surface is introduced rather than written by hand.
 
 ## Runtime transports and integration envelopes project `RuntimeEvent`; they do not define it
 

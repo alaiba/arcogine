@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
-import com.arcogine.core.event.EventType;
 import com.arcogine.factory.jobs.JobView;
 import com.arcogine.factory.machines.MachineView;
 import com.arcogine.factory.model.FactoryModel;
@@ -115,7 +114,7 @@ class SessionControlAcceptanceTest {
                 "submitting workload against an idle machine must dispatch immediately, scheduling at "
                         + "least the first step's TaskEnd as a direct effect of this command");
         for (Event scheduled : result.scheduledEvents()) {
-            assertEquals(EventType.TaskEnd, scheduled.eventType());
+            assertInstanceOf(EventPayload.TaskEnd.class, scheduled.payload());
         }
     }
 
@@ -182,7 +181,7 @@ class SessionControlAcceptanceTest {
 
         OrderId firstOrder = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
         Event completion = runtime.advance().orElseThrow();
-        assertEquals(EventType.TaskEnd, completion.eventType());
+        assertInstanceOf(EventPayload.TaskEnd.class, completion.payload());
         assertTrue(
                 runtime.jobsView().findFirst().orElseThrow().isComplete(),
                 "the first order must complete, leaving simulated time at Long.MAX_VALUE and the "
@@ -318,7 +317,7 @@ class SessionControlAcceptanceTest {
         runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE).orElseThrow(); // dispatches to M2 immediately
 
         Event completion = runtime.advance().orElseThrow(); // M2's TaskEnd fires at t=Long.MAX_VALUE
-        assertEquals(EventType.TaskEnd, completion.eventType());
+        assertInstanceOf(EventPayload.TaskEnd.class, completion.payload());
 
         CommandResult<EventPayload.MachineAvailabilityChange> result =
                 runtime.setMachineAvailability(new MachineId(1), true);
@@ -505,7 +504,7 @@ class SessionControlAcceptanceTest {
 
         // Freeing one machine must dispatch the waiting job and clear it from pendingWorkView().
         Event firstCompletion = runtime.advance().orElseThrow();
-        assertEquals(EventType.TaskEnd, firstCompletion.eventType());
+        assertInstanceOf(EventPayload.TaskEnd.class, firstCompletion.payload());
         assertTrue(
                 runtime.pendingWorkView().isEmpty(),
                 "once an eligible machine frees up, the waiting job must be dispatched and no longer pending");

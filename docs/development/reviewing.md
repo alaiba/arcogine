@@ -162,9 +162,9 @@ Each mutable fact has one authoritative owner. Prefer immutable/read-only projec
 
 #### Domain boundaries
 
-Check that factory, economy, finance, simulation, agents, and interfaces retain their authority boundaries. In particular:
+Check that factory, finance, simulation, governance, challenge, and any outward consumer retain their authority boundaries. In particular:
 
-- factory execution must not require economy internals;
+- factory execution must not require commercial-policy, financial, or consumer internals;
 - operational facts and financial interpretation remain distinct;
 - consumer boundaries should not expose scheduler/time plumbing without a concrete reason;
 - mutable internal handlers/stores should not escape ownership boundaries merely for convenience.
@@ -175,18 +175,16 @@ Keep immutable accepted production/commercial intent distinct from mutable execu
 
 #### Canonical model and provenance
 
-Runtime behavior should continue to derive from a published canonical factory model where that boundary applies. Do not weaken provenance or silently promote the current provisional model content hash into a durable cross-process identity guarantee contrary to the Factory publication identity contract.
+Runtime behavior should continue to derive from a published canonical factory model where that boundary applies. Do not weaken provenance or rebind what a durable `ModelFingerprint`, `EngineSemanticsVersion`, or other attributed identity denotes, contrary to the Factory publication identity contract and the semantic evolution rules.
 
 #### Compatibility
 
 Preserve compatibility by default. Inspect especially:
 
-- HTTP/API DTOs;
-- UI-facing projections;
-- event payloads and correlation semantics;
-- SSE/wire shapes;
-- scenario behavior and deterministic baselines;
-- identity/provenance fields.
+- supported runtime observations/events, their payloads, and correlation semantics;
+- deterministic Engine behavior and conformance baselines;
+- identity/provenance fields and canonical/fingerprint encodings;
+- any outward DTO, wire, or presentation shape an adapter introduces.
 
 An intentional compatibility change must be necessary, explicit, documented, and tested at the appropriate contract boundary.
 
@@ -398,11 +396,11 @@ Prefer tests that demonstrate observable semantics and invariants, including as 
 
 - deterministic replay/event ordering;
 - ownership/linkage and lifecycle completion;
-- explicit workload without economy dependencies;
+- explicit workload independent of any demand or pricing model;
 - compatibility/event contracts;
 - model provenance;
-- scenario-level regression behavior;
-- intentional KPI or timing changes when semantics change.
+- acceptance-level regression behavior;
+- intentional derived-measure or timing changes when semantics change.
 
 Do not demand redundant tests when existing integration/baseline coverage already proves the invariant.
 

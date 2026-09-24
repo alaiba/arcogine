@@ -114,7 +114,7 @@ Notes:
 
 ### 3. Java unit tests (JUnit 6)
 
-Tests across the Gradle modules cover typed IDs and `SimTime`, scheduler behavior, factory model and runtime semantics, Finance's ledger and ownership, and Challenge Readiness. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
+Tests across the Gradle modules cover typed IDs and `SimTime`, scheduler behavior, factory model and runtime semantics, Governance history/change/requirements/conformance/evidence, Finance's ledger and ownership, and the headless Challenge capability. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
 
 `cd product && ./gradlew test`.
 
@@ -273,6 +273,4 @@ Factory event semantics have a single implementation authority: `FactoryHandler`
 
 ### Security verification tests
 
-Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite (the retired `interfaces/api`'s `ApiSmokeTest` and `interfaces/cli`'s bind-address test are gone with those modules). Current executable security controls are dependency auditing and secret scanning, owned by the repository's full security scans and CI; they are not Factory runtime controls. See [`.github/SECURITY.md`](../../.github/SECURITY.md) for their owners and commands.
-
-See [`.github/SECURITY.md`](../../.github/SECURITY.md) for the structural limits the retired API and CLI had, recorded so a future outward adapter is designed with them in mind rather than repeating them by default, and for the readiness criteria that must be met before any future hosted or multi-user exposure.
+Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite. Current executable security controls are dependency auditing and secret scanning, owned by the repository's full security scans and CI; they are not Factory runtime controls. See [`.github/SECURITY.md`](../../.github/SECURITY.md) for their owners and commands, and for the readiness criteria that must be met before any future hosted or multi-user exposure.

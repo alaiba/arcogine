@@ -57,16 +57,27 @@ The retrospective is **not** a process-history dump, an issue ledger, or a secon
 Before interpretation:
 
 1. choose one exact main-target `throughPr` that bounds the run;
-2. run:
+2. acquire and save a complete Retrospective Evidence v1 bundle:
 
    ```bash
-   node infra/dev/delivery-retrospective.mjs --through-pr <number> --json
+   node infra/dev/delivery-retrospective-github.mjs \
+     --through-pr <number> \
+     --output logs/retrospective-evidence.json
    ```
 
-3. require the helper to complete successfully;
-4. use its exact PR window, merged-PR count, trusted-author CHANGES REQUIRED disposition count, and 0/1/2/3+ trusted-review checkpoint distribution without manually reconstructing or retyping alternative totals.
+3. run the source-neutral analyzer against that saved bundle:
 
-The helper fails closed when GitHub search/review retrieval cannot prove completeness. If it fails, the retrospective is `INCOMPLETE`; fix the retrieval/tooling problem rather than estimating the sample.
+   ```bash
+   node infra/dev/delivery-retrospective.mjs \
+     --input logs/retrospective-evidence.json \
+     --json
+   ```
+
+4. require acquisition, evidence-contract validation, and analysis to complete; then use the analyzer's exact PR window, merged-PR count, trusted-author CHANGES REQUIRED disposition count, review-checkpoint distribution, and structured-finding dataset without manually reconstructing or retyping alternative totals.
+
+The GitHub GraphQL adapter is the current local acquisition path. Another approved acquisition path must emit the same source-neutral contract and can then use the same analyzer unchanged. The executable contract and completeness rules live in `infra/dev/delivery-retrospective-evidence.mjs`; acquisition-specific retrieval rules live in `infra/dev/delivery-retrospective-github.mjs`; all retrospective counting and finding analysis live in the pure `infra/dev/delivery-retrospective.mjs` analyzer.
+
+The adapter fails closed when GitHub search/review retrieval cannot prove completeness. The analyzer fails closed on unsupported or internally incomplete evidence. If either fails, the retrospective is `INCOMPLETE`; fix the retrieval/tooling problem rather than estimating the sample. Structurally complete evidence can still contain malformed or noncanonical historical reviewer findings. In that case the analyzer preserves the core window/review metrics, marks finding analytics incomplete, and reports the specific coverage diagnostics; do not treat any incomplete distribution as a complete sample.
 
 Manual analysis begins only after the mechanical window is established. It should focus on:
 
@@ -75,7 +86,7 @@ Manual analysis begins only after the mechanical window is established. It shoul
 - repeated waste that can be tied to a concrete mechanism;
 - whether an existing experiment/change should be retained, retired, or superseded.
 
-Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous. Hand-classified finding totals or category percentages are not standard baseline metrics; use them only as supporting analysis when the classification dataset is preserved and reproducible. The default headline metrics are the helper-owned mechanical values above.
+Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous. Hand-classified finding totals or category percentages remain noncanonical. The analyzer may report mechanically parsed PR Reviewer fields — including severity, category, confidence, distinct findings, and per-PR incidence — when its structured-finding coverage is complete; when it is incomplete, use the diagnostics and do not present the observed values as complete distributions. Interpretation and improvement decisions remain retrospective reasoning, not analyzer output.
 
 ### Action ownership
 
@@ -148,7 +159,9 @@ The versioned state file records only the retrospective baseline and latest repo
 | Consistency finding identity/state | GitHub `CONS:` issues |
 | Retrospective method | this document |
 | Retrospective baseline state | `.github/continuous-improvement/retrospective.json` |
-| Retrospective mechanical window | `infra/dev/delivery-retrospective.mjs` |
+| Retrospective evidence contract | `infra/dev/delivery-retrospective-evidence.mjs` |
+| Retrospective GitHub acquisition | `infra/dev/delivery-retrospective-github.mjs` |
+| Retrospective mechanical analysis | `infra/dev/delivery-retrospective.mjs` |
 | Dated retrospective evidence | `docs/history/continuous-improvement/` |
 | Retrospective actions | their owning GitHub issues |
 | Raw delivery evidence | GitHub PR/review/CI/issue history |

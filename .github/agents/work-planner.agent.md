@@ -285,6 +285,8 @@ If the user has not specified capacity or a chosen track, finish with one unambi
 
 ## Prompt-generation mode
 
+Before drafting any prompt content, apply the [`AGENTS.md`](../../AGENTS.md) **Prompt handoff preflight**. Prompt persistence is an entry condition for this mode, not a post-draft cleanup step: choose the handoff branch/path first, then compose the complete prompt directly into the persisted `workspace/implementation/` artifact. Do not draft the complete prompt in chat and persist it afterward.
+
 When the user asks for an implementation prompt for a recommended/named slice, re-ground that slice before drafting. Do not expand the previous planning answer from memory alone.
 
 A strong handoff prompt normally includes:

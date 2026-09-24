@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/** Ported from crates/sim-factory/tests/job_routing.rs. */
 class JobRoutingTest {
 
     private static Routing sampleRouting() {
@@ -42,7 +41,7 @@ class JobRoutingTest {
     @Test
     void newJobIsQueuedAndReferencesItsOrder() {
         Order order = order(7, 10, 0, 12.0);
-        Job job = new Job(new JobId(1), order, 2, new SimTime(0));
+        Job job = new Job(new JobId(1), order, 0, 2, new SimTime(0));
         assertEquals(new OrderId(7), job.orderId());
         assertEquals(JobStatus.Queued, job.status());
         assertEquals(0, job.currentStep());
@@ -51,24 +50,20 @@ class JobRoutingTest {
     }
 
     @Test
-    void jobCommercialGettersProjectFromImmutableOrder() {
+    void jobProjectsItsProductFromTheImmutableOrder() {
         Order order = order(7, 5, 0, 12.0);
-        Job job = new Job(new JobId(1), order, 1, new SimTime(0));
+        Job job = new Job(new JobId(1), order, 0, 1, new SimTime(0));
         assertEquals(order.productId(), job.productId());
-        assertEquals(1L, job.quantity());
-        assertEquals(order.unitPrice(), job.unitPrice());
-        assertEquals(order.unitPrice(), job.orderValue());
 
         job.start(new MachineId(1));
         job.completeStep(new SimTime(5));
 
-        assertEquals(order.unitPrice(), job.unitPrice());
-        assertEquals(order.unitPrice(), job.orderValue());
+        assertEquals(order.productId(), job.productId());
     }
 
     @Test
     void jobAdvancesThroughSteps() {
-        Job job = new Job(new JobId(1), order(1, 10, 0, 12.0), 2, new SimTime(0));
+        Job job = new Job(new JobId(1), order(1, 10, 0, 12.0), 0, 2, new SimTime(0));
 
         job.start(new MachineId(1));
         assertEquals(JobStatus.InProgress, job.status());
@@ -90,7 +85,7 @@ class JobRoutingTest {
 
     @Test
     void completedJobHasLeadTime() {
-        Job job = new Job(new JobId(1), order(1, 10, 10, 12.0), 1, new SimTime(10));
+        Job job = new Job(new JobId(1), order(1, 10, 10, 12.0), 0, 1, new SimTime(10));
         job.start(new MachineId(1));
         job.completeStep(new SimTime(25));
 
@@ -99,7 +94,7 @@ class JobRoutingTest {
 
     @Test
     void cannotStartCompletedJob() {
-        Job job = new Job(new JobId(1), order(1, 10, 0, 12.0), 1, new SimTime(0));
+        Job job = new Job(new JobId(1), order(1, 10, 0, 12.0), 0, 1, new SimTime(0));
         job.start(new MachineId(1));
         job.completeStep(new SimTime(5));
         assertEquals(JobStatus.Completed, job.status());
@@ -109,7 +104,7 @@ class JobRoutingTest {
 
     @Test
     void cannotCompleteStepWhenQueued() {
-        Job job = new Job(new JobId(1), order(1, 10, 0, 12.0), 2, new SimTime(0));
+        Job job = new Job(new JobId(1), order(1, 10, 0, 12.0), 0, 2, new SimTime(0));
         assertEquals(JobStatus.Queued, job.status());
 
         assertThrows(
@@ -119,8 +114,8 @@ class JobRoutingTest {
     @Test
     void jobStoreCreatesUniqueIdsForJobsReferencingOrders() {
         JobStore store = new JobStore();
-        JobId id1 = store.createJob(order(1, 10, 0, 12.0), 2, new SimTime(0));
-        JobId id2 = store.createJob(order(2, 5, 1, 20.0), 2, new SimTime(1));
+        JobId id1 = store.createJob(order(1, 10, 0, 12.0), 0, 2, new SimTime(0));
+        JobId id2 = store.createJob(order(2, 5, 1, 20.0), 0, 2, new SimTime(1));
         assertNotEquals(id1, id2);
     }
 

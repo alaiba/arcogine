@@ -83,7 +83,6 @@ class LargeOrderDecompositionBenchmarkTest {
         assertEquals(new JobId(QUANTITY), jobIds.getLast());
         assertTrue(runtime.jobsView().allMatch(job ->
                 job.orderId().equals(orderId)
-                        && job.quantity() == 1
                         && job.totalSteps() == 1
                         && job.ordinalWithinOrder() == job.id().value() - 1));
 

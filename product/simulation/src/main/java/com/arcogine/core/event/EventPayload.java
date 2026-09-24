@@ -32,12 +32,7 @@ public sealed interface EventPayload permits
      * recomputed.
      */
     record OrderCompleted(OrderId orderId, JobId jobId, ProductId productId, long quantity, double unitPrice)
-            implements EventPayload {
-        /** Source-compatible construction for historical fixtures; production always supplies OrderId. */
-        public OrderCompleted(JobId jobId, ProductId productId, long quantity, double unitPrice) {
-            this(new OrderId(jobId.value()), jobId, productId, quantity, unitPrice);
-        }
-    }
+            implements EventPayload {}
 
     record MachineAvailabilityChange(MachineId machineId, boolean online) implements EventPayload {}
 

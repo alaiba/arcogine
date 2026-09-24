@@ -44,7 +44,7 @@ The devcontainer is one supported environment, not the development contract. `./
 ### Development toolchain policy
 
 - **Java compatibility baseline:** JDK 21 is a first-class development runtime. Java compilation uses `--release 21`; CI runs on JDK 21 while the preferred devcontainer currently uses JDK 25.
-- **Node.js:** Node remains repository tooling for scripts such as snapshot/retrospective utilities, but Arcogine no longer has a product/frontend Node compatibility contract.
+- **Node.js:** Node is repository tooling for scripts such as snapshot/retrospective utilities; Arcogine has no product Node compatibility contract.
 
 Raising a supported Java minimum remains a deliberate repository change with coordinated CI and documentation updates.
 

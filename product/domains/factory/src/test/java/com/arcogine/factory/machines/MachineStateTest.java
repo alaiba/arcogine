@@ -11,7 +11,6 @@ import com.arcogine.types.MachineState;
 import com.arcogine.types.SimError;
 import org.junit.jupiter.api.Test;
 
-/** Ported from crates/sim-factory/tests/machine_state.rs. */
 class MachineStateTest {
 
     private static Machine testMachine() {

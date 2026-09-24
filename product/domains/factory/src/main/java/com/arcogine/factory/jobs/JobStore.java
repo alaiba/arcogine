@@ -30,11 +30,6 @@ public class JobStore {
         return id;
     }
 
-    /** Compatibility helper for focused store tests; production supplies an ordinal. */
-    public JobId createJob(Order order, int totalSteps, SimTime createdAt) {
-        return createJob(order, 0, totalSteps, createdAt);
-    }
-
     public Job get(JobId id) {
         Job job = byId.get(id);
         if (job == null) throw new SimError.UnknownId("job", id.value());

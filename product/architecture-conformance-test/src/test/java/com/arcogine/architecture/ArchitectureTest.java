@@ -26,19 +26,12 @@ import com.tngtech.archunit.lang.ArchRule;
  * just executable versions of specific invariants this codebase actually relies on. Scans only
  * main sources ({@link ImportOption.DoNotIncludeTests}) from this module's test classpath, which
  * is where every domain module is visible.
- *
- * <p>This class previously lived in interfaces/api's test classpath (the only module that, by
- * virtue of depending on every domain, could see all sides of these rules) alongside an
- * API-specific DTO-boundary rule. That rule proved a boundary for the HTTP adapter interfaces/api
- * provided; it was removed, not relocated, when that adapter was retired -- see
- * docs/architecture/overview.md for the durable "DTOs never re-enter domain decision paths"
- * principle it encoded.
  */
 @AnalyzeClasses(packages = "com.arcogine", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
 
     @ArchTest
-    static final ArchRule sim_finance_must_not_depend_on_sim_factory = noClasses()
+    static final ArchRule finance_must_not_depend_on_factory = noClasses()
             .that()
             .resideInAPackage("com.arcogine.finance..")
             .should()
@@ -52,7 +45,7 @@ class ArchitectureTest {
             .that()
             .resideOutsideOfPackage("com.arcogine.finance..")
             .should(callMethod(Ledger.class, "post", JournalEntry.class))
-            .because("Ledger.post must only be called from within sim-finance -- external callers "
+            .because("Ledger.post must only be called from within Finance -- external callers "
                     + "get LedgerView (FinanceHandler.ledger()), which excludes it");
 
     @ArchTest
@@ -62,7 +55,7 @@ class ArchitectureTest {
             .should(callMethod(Job.class, "start", MachineId.class)
                     .or(callMethod(Job.class, "completeStep", SimTime.class)))
             .because("Job's production-lifecycle mutators must only be called from within "
-                    + "sim-factory -- external callers get JobView (FactoryHandler.job(JobId)/"
+                    + "Factory -- external callers get JobView (FactoryHandler.job(JobId)/"
                     + "jobsView()), which excludes them");
 
     @ArchTest
@@ -75,6 +68,6 @@ class ArchitectureTest {
                     .or(callMethod(Machine.class, "dequeueJob"))
                     .or(callMethod(Machine.class, "setAvailability", boolean.class))
                     .or(callMethod(Machine.class, "setBusyTicks", long.class)))
-            .because("Machine's mutators must only be called from within sim-factory -- external "
+            .because("Machine's mutators must only be called from within Factory -- external "
                     + "callers get MachineView (FactoryHandler.machinesView()), which excludes them");
 }

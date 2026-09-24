@@ -34,8 +34,9 @@ RUN apt-get update \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && rm -f /tmp/trivy.tar.gz /tmp/gitleaks.tar.gz
 
-# JDK 25 (Temurin) and Gradle are provided by the `java` devcontainer feature
-# declared in devcontainer.json, so no toolchain install is needed here.
+# JDK 25 (Temurin) is provided by the `java` devcontainer feature declared in
+# devcontainer.json, and Gradle comes from the repository wrapper, so no
+# toolchain install is needed here.
 
 # Pre-create the Gradle cache dir owned by vscode: Docker populates a fresh
 # named volume from the image's content at the mount path (including

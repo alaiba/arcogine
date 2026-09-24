@@ -137,7 +137,7 @@ One distinction matters enough to state explicitly: **determinism is a critical 
 
 Arcogine is not fundamentally: a factory dashboard; a generic BI tool; only a discrete-event simulator; a game; an ERP clone; an MES clone; a collection of unrelated digital-twin integrations; or a separate model maintained per lifecycle stage.
 
-Arcogine is also not defined by: any particular UI; Java; Spring; a scenario-file format; its current API; its current module names; or its current single-user, local-first deployment model. Those are implementation and current-state choices, evaluated and possibly changed over time — not product identity.
+Arcogine is also not defined by: any particular UI; Java or any particular framework; a scenario-file format; any particular API; its current module names; or its current single-user, local-first deployment model. Those are implementation and current-state choices, evaluated and possibly changed over time — not product identity.
 
 Older ambitions such as "serious games" for training or "MMO-scale economic simulations" may remain possible applications built on the underlying engine, but they do not compete with the production-system/business-lifecycle thesis in Sections 1–3 as Arcogine's primary product identity.
 

@@ -7,7 +7,7 @@ import com.arcogine.factory.model.validation.FactoryModelValidator;
  *
  * <p>Publication validates the model first (see {@link FactoryModelValidator}) and never returns
  * a version for a structurally invalid model, so a runtime is never constructed from a partially
- * valid design. {@link FactoryModelVersion} itself derives its content hash from the model rather
+ * valid design. {@link FactoryModelVersion} itself derives its fingerprint from the model rather
  * than accepting one, so publication cannot produce a version with a mismatched identity either.
  */
 public final class FactoryModelPublisher {

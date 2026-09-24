@@ -26,13 +26,13 @@ export function validateFile(rel, text) {
   if (SELF_FILES.has(rel)) return [];
   const errors = [];
   const inPlanning = rel.startsWith(PLANNING_DIR);
-  if (matches(rel, PLAN).length || matches(rel, REV).length) errors.push(`${rel}: file path embeds a reserved PLAN-*/REV-NNN delivery-coordinate token; filenames must remain semantic, never coordinate-derived`);
+  if (matches(rel, PLAN).length || matches(rel, REV).length) errors.push(`${rel}: file path embeds a reserved PLAN-*/REV-<N> delivery-coordinate token; filenames must remain semantic, never coordinate-derived`);
   else if (inPlanning && LEGACY_FILENAME.test(path.posix.basename(rel))) errors.push(`${rel}: planning filename still embeds a legacy delivery-coordinate form; planning filenames should be semantic (the label belongs in the content, not the path)`);
   for (const [index, line] of text.split(/\r?\n/).entries()) {
     if (!inPlanning) {
       for (const match of matches(line, PLAN)) errors.push(`${rel}:${index + 1}: durable artifact contains a PLAN-* delivery coordinate (\`${match[0]}\`) -- name the capability/contract/invariant instead`);
       for (const match of matches(line, REV)) errors.push(CANONICAL_REV.test(match[0])
-        ? `${rel}:${index + 1}: durable artifact contains a REV-NNN delivery coordinate (\`${match[0]}\`) -- name the capability/contract/invariant instead`
+        ? `${rel}:${index + 1}: durable artifact contains a REV-<N> delivery coordinate (\`${match[0]}\`) -- name the capability/contract/invariant instead`
         : `${rel}:${index + 1}: malformed delivery-coordinate token \`${match[0]}\` -- review/finding identifiers must conform exactly to REV-<digits>`);
       continue;
     }
@@ -70,7 +70,7 @@ function main() {
   if (errors.length) {
     console.error('Delivery-label check failed:');
     for (const error of errors) console.error(`- ${error}`);
-    console.error('Planning coordinates use PLAN-<TRACK>-<LOCAL-ID>; PR-local review/finding identifiers use REV-NNN. Both are allowed in docs/planning/ and active delivery history (issues, PRs, reviews, branches, commits, handoffs); durable artifacts (documentation, code/Javadoc comments, workflow definitions, test/class/file names) must name the underlying capability, contract, identity, invariant, or behavior instead. Legacy ambiguous forms (Gate 4, G1.3, D1, C1, O1, W1, DH-E, ...) must not be reintroduced into planning material.');
+    console.error('Planning coordinates use PLAN-<TRACK>-<LOCAL-ID>; PR-local review/finding identifiers use REV-<N> (variable-width decimal, e.g. REV-1, REV-9, REV-10). Both are allowed in docs/planning/ and active delivery history (issues, PRs, reviews, branches, commits, handoffs); durable artifacts (documentation, code/Javadoc comments, workflow definitions, test/class/file names) must name the underlying capability, contract, identity, invariant, or behavior instead. Legacy ambiguous forms (Gate 4, G1.3, D1, C1, O1, W1, DH-E, ...) must not be reintroduced into planning material.');
     return 1;
   }
   console.log('Delivery-label check passed');

@@ -65,11 +65,12 @@ Before substantive review, retrieve and verify:
 
 Never assume the head reviewed previously is still current.
 
-If the PR is behind live `main`, synchronize it **before** spending substantive review effort:
+If the PR is behind live `main`, synchronize it **before** spending substantive review effort by applying the **base-normalization protocol**, a mechanical, history-preserving merge:
 
-- for an open same-repository PR eligible under `AGENTS.md`'s base-normalization protocol, capture `H` (the PR head), `B` (the live base), and `A` (the merge base when needed); construct exactly one merge commit `M` with first parent `H`, second parent `B`, and a tree formed from the base tree plus the PR-side delta, using ordinary three-way text merges only for supported overlapping text files;
+- for an open same-repository PR that is behind its live base, capture `H` (the PR head), `B` (the live base), and `A` (the merge base when needed); construct exactly one merge commit `M` with first parent `H`, second parent `B`, and a tree formed from the base tree plus the PR-side delta, using ordinary three-way text merges only for supported overlapping text files;
 - use repository-scoped GitHub Git-data operations. Immediately before publication, re-read the PR head; if it is no longer `H`, abandon without mutation. Otherwise publish `H -> M` with a non-forced ref update (`force=false`). This is a best-effort check, not exact-head atomicity: a reset to an ancestor such as `B` in the tiny post-check interval can still fast-forward to `M`, and that residual race is accepted. Do not use a local `gh` prerequisite, rebase, force push, lease, or separate compare-and-swap protocol;
-- if construction encounters a real conflict or unsupported structural case, make no remote branch mutation and return the PR to the author/implementation owner. The reviewer does not resolve conflicts or make semantic choices;
+- if construction encounters a real conflict or unsupported structural case — such as ambiguous renames/copies, file/directory conflicts, submodules, symlinks, incompatible modes, or unsupported binary content — make no remote branch mutation and return the PR to the author/implementation owner. The reviewer does not resolve conflicts or make semantic choices;
+- for a stale Dependabot PR that currently qualifies for trusted provenance and otherwise needs no maintainer-authored change, preserve that provenance: a maintainer-authored synchronization commit changes the PR's provenance, and the resulting current head follows the ordinary review path instead;
 - after successful synchronization, resolve the resulting PR head and begin review from that candidate. Do not immediately synchronize again solely because `main` advanced after `B` was observed; a later continuation may do so if required. CI, trusted `disposition`, and final mergeability remain independent repository gates rather than reviewer-owned orchestration;
 - **do not wait for pending CI to finish before substantive review or reviewer disposition**; review authorization and CI are independent, and final merge readiness remains blocked until required CI is green.
 
@@ -271,7 +272,7 @@ Arcogine's reviewer protocol uses the custom canonical disposition as its only r
 - do not use native `APPROVE` as a substitute for the canonical disposition;
 - fall back to a PR conversation comment only if formal review submission itself is unavailable;
 - keep comments concise enough to act on;
-- carry each prior finding forward under the same `REV-###` identity with an explicit lifecycle status, without mechanically repeating its full explanation when resolved.
+- carry each prior finding forward under the same `REV-<N>` identity with an explicit lifecycle status, without mechanically repeating its full explanation when resolved.
 
 An accidental or externally created native `CHANGES_REQUESTED` review still physically blocks GitHub merge and must be cleared through GitHub before merge, but it is an anomalous platform blocker, not part of the intended Arcogine review protocol.
 
@@ -286,7 +287,7 @@ When a new head is pushed, first apply the same base-normalization rule as an in
 3. inspect the net diff for regressions introduced by the fix;
 4. check whether docs/PR description were kept in sync;
 5. check the current CI state;
-6. carry every prior finding forward under its same `REV-###` identity, with status `OPEN`, `RESOLVED`, or `OBSOLETE`, after verifying it against the new head; do not omit resolved or obsolete identities from the lifecycle record. If a resolved defect recurs, reopen that same identity as `OPEN` and describe the recurrence as a regression in review prose. `REGRESSION` is not a finding status.
+6. carry every prior finding forward under its same `REV-<N>` identity, with status `OPEN`, `RESOLVED`, or `OBSOLETE`, after verifying it against the new head; do not omit resolved or obsolete identities from the lifecycle record. If a resolved defect recurs, reopen that same identity as `OPEN` and describe the recurrence as a regression in review prose. `REGRESSION` is not a finding status.
 
 A fix is complete when the violated invariant is restored, not merely when the named method/type from the original comment has changed.
 

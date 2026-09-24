@@ -63,10 +63,22 @@ test('returns actionable diagnostics with file and line for tracked leaks', (t) 
 });
 
 test('allows ordinary compact identifiers and policy metavariables', () => {
-  assert.deepEqual(validateFile('AGENTS.md', 'PLAN-<TRACK>-<LOCAL-ID> and REV-<NNN>.\n'), []);
+  assert.deepEqual(validateFile('AGENTS.md', 'PLAN-<TRACK>-<LOCAL-ID> and REV-<N>.\n'), []);
   assert.deepEqual(validateFile('docs/architecture/overview.md', 'D3, O1, and C1 are ordinary identifiers.\n'), []);
   assert.deepEqual(validateFile('docs/planning/example.md', 'See PLAN-ENG-4.\n'), []);
   assert.deepEqual(validateFile('docs/planning/runtime-observation.md', 'Semantic content.\n'), []);
+});
+
+test('accepts variable-width REV identifiers of any width in allowed delivery/planning context', () => {
+  for (const rev of ['REV-1', 'REV-9', 'REV-10', 'REV-2047']) {
+    assert.deepEqual(validateFile('docs/planning/example.md', `${rev}.\n`), []);
+  }
+});
+
+test('rejects well-formed REV-<digits> identifiers of any width when leaked into durable content', () => {
+  for (const rev of ['REV-1', 'REV-9', 'REV-10', 'REV-2047']) {
+    assert.match(validateFile('docs/architecture/overview.md', `${rev}\n`)[0], /durable artifact contains a REV/);
+  }
 });
 
 test('exempts its own literal policy fixtures', () => {

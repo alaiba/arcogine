@@ -4,13 +4,15 @@ import com.arcogine.factory.model.validation.FactoryModelValidator;
 import com.arcogine.types.ModelFingerprint;
 
 /**
- * An immutable, published identity of a {@link FactoryModel}.
+ * An immutable, published snapshot of a {@link FactoryModel}.
  *
- * <p>{@link #fingerprint()} is the durable semantic identity contract for published factory
- * models. It implements the policy-versioned {@code factory-model:v1} canonical encoding from
- * docs/architecture/factory-model-v1.md and returns a typed {@link ModelFingerprint} suitable for
- * cross-process and
- * cross-language identity under that released policy.
+ * <p>{@link #fingerprint()} is the deterministic content identity of the published model under
+ * the current work-in-progress canonical form, {@code factory-model:wip}, specified by
+ * docs/architecture/factory-model.md. For one definition, equal canonical content always has the
+ * same fingerprint, across processes and implementation languages. The definition itself is not
+ * yet promoted: between development revisions its bytes and fingerprints may change, so the
+ * fingerprint is not a durable cross-revision identity. Publication proves validity and gives an
+ * immutable in-process snapshot; it does not by itself create a durable-use promise.
  *
  * <p>Controlled revision identity, lineage, and persistence are separate concerns from the model
  * fingerprint; see docs/architecture/factory-design.md section 11 and
@@ -34,6 +36,6 @@ public record FactoryModelVersion(FactoryModel model) {
     }
 
     public ModelFingerprint fingerprint() {
-        return FactoryModelFingerprintV1.fingerprint(model);
+        return FactoryModelCanonicalForm.fingerprint(model);
     }
 }

@@ -1,12 +1,13 @@
 package com.arcogine.factory.change;
 
 import com.arcogine.factory.model.FactoryModel;
-import com.arcogine.factory.model.FactoryModelArtifactV1;
+import com.arcogine.factory.model.FactoryModelArtifact;
 import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ConfiguredResource;
+import com.arcogine.factory.model.spatial.SpatialRecord;
 import com.arcogine.governance.SemanticArtifact;
 import com.arcogine.governance.change.ChangedEntityRef;
 import com.arcogine.governance.change.SemanticChange;
@@ -17,12 +18,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
  * The change-set/impact-scope and semantic-comparison seam: domain-owned semantic comparison for
- * {@code factory-model:v1} artifacts.
+ * current {@code factory-model:wip} artifacts.
  *
  * <p>This is the only place that knows how to interpret {@link FactoryModel} internals for
  * change-attribution purposes. It never depends on Governance's {@code ChangeSet} orchestration
@@ -31,22 +33,27 @@ import java.util.TreeSet;
  * and generic transition/impact semantics owned by {@code :governance}.
  *
  * <p>Comparison is by stable domain identity ({@code MachineId}, operation id, {@code ProductId}).
- * Per docs/architecture/factory-model-v1.md ("List ordering is semantic"), top-level {@code
- * resources},
- * {@code operations}, and {@code products} order is itself part of {@code factory-model:v1}
- * semantic content; Factory Model v1 preserves top-level product ordering in its canonical form.
- * Reordering any of those top-level lists is therefore reported as an {@code ENTITY_MODIFIED}
- * change against the moved entity, in addition to any content-level change.
+ * Per docs/architecture/factory-model.md ("List ordering is semantic"), top-level {@code
+ * resources}, {@code operations}, and {@code products} order is itself part of the canonical
+ * content. Reordering any of those top-level lists is therefore reported as an {@code
+ * ENTITY_MODIFIED} change against the moved entity, in addition to any content-level change.
+ *
+ * <p>The optional spatial record is compared only coarsely: its addition, removal, or any change
+ * to its content is one change against the model's single spatial-record entity. That keeps a
+ * spatial difference from ever disappearing behind an empty change list without claiming a finer
+ * spatial comparison than Factory currently defines.
  */
 public final class FactoryModelSemanticComparator implements SemanticChangeExtractor {
 
     private static final String RESOURCE_TYPE = "factory.resource";
     private static final String OPERATION_TYPE = "factory.operation";
     private static final String PRODUCT_TYPE = "factory.product";
+    private static final ChangedEntityRef SPATIAL_RECORD =
+            new ChangedEntityRef("factory.spatialRecord", "spatial", "spatial record");
 
     @Override
     public boolean supports(ModelFingerprint fingerprint) {
-        return FactoryModelArtifactV1.supports(fingerprint);
+        return FactoryModelArtifact.supports(fingerprint);
     }
 
     @Override
@@ -58,12 +65,27 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
         compareResources(baseModel, candidateModel, changes);
         compareOperations(baseModel, candidateModel, changes);
         compareProducts(baseModel, candidateModel, changes);
+        compareSpatialRecord(baseModel.spatial(), candidateModel.spatial(), changes);
         return changes;
     }
 
     private static FactoryModel decode(SemanticArtifact artifact) {
-        FactoryModelVersion version = FactoryModelArtifactV1.decode(artifact.canonicalBytes());
+        FactoryModelVersion version = FactoryModelArtifact.decode(artifact.canonicalBytes());
         return version.model();
+    }
+
+    private static void compareSpatialRecord(
+            Optional<SpatialRecord> base, Optional<SpatialRecord> candidate, List<SemanticChange> changes) {
+        if (base.isEmpty() && candidate.isPresent()) {
+            changes.add(new SemanticChange(
+                    SemanticChangeKind.ENTITY_ADDED, SPATIAL_RECORD, "spatial record added"));
+        } else if (base.isPresent() && candidate.isEmpty()) {
+            changes.add(new SemanticChange(
+                    SemanticChangeKind.ENTITY_REMOVED, SPATIAL_RECORD, "spatial record removed"));
+        } else if (!base.equals(candidate)) {
+            changes.add(new SemanticChange(
+                    SemanticChangeKind.ENTITY_MODIFIED, SPATIAL_RECORD, "spatial record content changed"));
+        }
     }
 
     private static void compareResources(
@@ -260,9 +282,9 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
     /**
      * Appends an order-change note to {@code detail} when the entity identified by {@code id}
      * occupies a different index in {@code baseOrder} versus {@code candidateOrder}. Per
-     * docs/architecture/factory-model-v1.md,
-     * top-level list order is semantic in {@code factory-model:v1} for resources, operations, and
-     * products, so a position change must not be silently absorbed by ID-keyed comparison.
+     * docs/architecture/factory-model.md, top-level list order is semantic for resources,
+     * operations, and products, so a position change must not be silently absorbed by ID-keyed
+     * comparison.
      */
     private static String describeOrderChange(
             String detail, List<String> baseOrder, List<String> candidateOrder, String id) {

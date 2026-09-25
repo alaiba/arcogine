@@ -11,7 +11,7 @@ import java.util.Set;
  * com.arcogine.factory.machines.MachineView}.
  *
  * <p>The dispatch semantics
- * (docs/architecture/engine-semantics-v1.md section 2)
+ * (docs/architecture/engine-semantics.md section 2)
  * established this backlog as the runtime's second authoritative waiting-work structure alongside
  * each machine's own queue. The consumer-neutral runtime inspection contract requires it to be
  * observable through the supported runtime boundary, not only inferable from a machine's queue

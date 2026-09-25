@@ -7,32 +7,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-class EngineSemanticsVersionTest {
+class EngineSemanticsTest {
 
     @Test
-    void currentVersionHasTheCanonicalSemanticIdentifier() {
-        assertEquals("engine-semantics:v1", EngineSemanticsVersion.CURRENT.value());
-        assertEquals("engine-semantics:v1", EngineSemanticsVersion.CURRENT.toString());
-        assertTrue(EngineSemanticsVersion.isSupported(EngineSemanticsVersion.CURRENT));
-        assertEquals(
-                EngineSemanticsVersion.CURRENT,
-                EngineSemanticsVersion.requireSupported(EngineSemanticsVersion.CURRENT));
+    void currentInterpretationIsNamedByTheDevelopmentMarker() {
+        assertEquals("engine-semantics:wip", EngineSemantics.CURRENT.value());
+        assertEquals("engine-semantics:wip", EngineSemantics.CURRENT.toString());
+        assertTrue(EngineSemantics.isSupported(EngineSemantics.CURRENT));
+        assertEquals(EngineSemantics.CURRENT, EngineSemantics.requireSupported(EngineSemantics.CURRENT));
     }
 
     @Test
-    void unsupportedVersionIsDistinguishableAndFailsExplicitly() {
-        EngineSemanticsVersion unsupported = new EngineSemanticsVersion("engine-semantics:v2");
+    void discardedOrdinalNameIsRefusedRatherThanReadAsTheCurrentInterpretation() {
+        EngineSemantics obsolete = new EngineSemantics("engine-semantics:v1");
 
-        assertFalse(EngineSemanticsVersion.isSupported(unsupported));
+        assertFalse(EngineSemantics.isSupported(obsolete));
         IllegalArgumentException failure = assertThrows(
-                IllegalArgumentException.class, () -> EngineSemanticsVersion.requireSupported(unsupported));
-        assertEquals("unsupported engine semantics version: engine-semantics:v2", failure.getMessage());
+                IllegalArgumentException.class, () -> EngineSemantics.requireSupported(obsolete));
+        assertEquals("unsupported engine semantics: engine-semantics:v1", failure.getMessage());
     }
 
     @Test
     void valueIsRequiredAndCannotBeBlank() {
-        assertThrows(NullPointerException.class, () -> new EngineSemanticsVersion(null));
-        assertThrows(IllegalArgumentException.class, () -> new EngineSemanticsVersion(" "));
-        assertThrows(NullPointerException.class, () -> EngineSemanticsVersion.isSupported(null));
+        assertThrows(NullPointerException.class, () -> new EngineSemantics(null));
+        assertThrows(IllegalArgumentException.class, () -> new EngineSemantics(" "));
+        assertThrows(NullPointerException.class, () -> EngineSemantics.isSupported(null));
     }
 }

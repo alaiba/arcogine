@@ -25,7 +25,7 @@ import java.util.Optional;
  *     {@code RuntimeObservationMetadata#latestEventSequence()} once applied); always positive
  * @param simulationTime the simulated time at which the described authoritative change occurred
  * @param eventType the supported taxonomy member this event belongs to
- * @param modelFingerprint the durable semantic fingerprint ({@code
+ * @param modelFingerprint the source model's content fingerprint ({@code
  * FactoryModelVersion#fingerprint()})
  *     of the model this run was instantiated from
  * @param controlledRevisionId present only when the runtime is actually authoritatively bound to a

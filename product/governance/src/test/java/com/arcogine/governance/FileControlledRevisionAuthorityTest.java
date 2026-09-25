@@ -5,6 +5,8 @@ import static com.arcogine.governance.GovernanceHistoryException.Code.FINGERPRIN
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_ARTIFACT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_PARENT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.STORAGE_INTEGRITY;
+import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_ARTIFACT_POLICY;
+import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_STORE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.FactoryModel;
-import com.arcogine.factory.model.FactoryModelArtifactV1;
+import com.arcogine.factory.model.FactoryModelArtifact;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
@@ -25,6 +27,7 @@ import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -48,12 +51,12 @@ class FileControlledRevisionAuthorityTest {
     private static final SemanticArtifactVerifier FACTORY_VERIFIER = new SemanticArtifactVerifier() {
         @Override
         public boolean supports(ModelFingerprint fingerprint) {
-            return FactoryModelArtifactV1.supports(fingerprint);
+            return FactoryModelArtifact.supports(fingerprint);
         }
 
         @Override
         public ModelFingerprint fingerprint(byte[] canonicalBytes) {
-            return FactoryModelArtifactV1.fingerprint(canonicalBytes);
+            return FactoryModelArtifact.fingerprint(canonicalBytes);
         }
     };
 
@@ -84,9 +87,9 @@ class FileControlledRevisionAuthorityTest {
         assertEquals(accepted, resolved.revision());
         assertEquals(accepted.provenance(), resolved.revision().provenance());
         assertArrayEquals(
-                FactoryModelArtifactV1.encode(version), resolved.artifact().canonicalBytes());
+                FactoryModelArtifact.encode(version), resolved.artifact().canonicalBytes());
         FactoryModelVersion reconstructed =
-                FactoryModelArtifactV1.decode(resolved.artifact().canonicalBytes());
+                FactoryModelArtifact.decode(resolved.artifact().canonicalBytes());
         assertEquals(version.model(), reconstructed.model());
         assertEquals(accepted.modelFingerprint(), reconstructed.fingerprint());
     }
@@ -364,7 +367,7 @@ class FileControlledRevisionAuthorityTest {
     @Test
     void semanticArtifactDefensivelyCopiesCanonicalBytes() {
         FactoryModelVersion version = version("Widget", 5);
-        byte[] bytes = FactoryModelArtifactV1.encode(version);
+        byte[] bytes = FactoryModelArtifact.encode(version);
         SemanticArtifact artifact = new SemanticArtifact(version.fingerprint(), bytes);
         bytes[0] ^= 1;
         assertEquals(
@@ -375,6 +378,66 @@ class FileControlledRevisionAuthorityTest {
         assertEquals(
                 version.fingerprint(), FACTORY_VERIFIER.fingerprint(artifact.canonicalBytes()));
         assertFalse(Arrays.equals(bytes, artifact.canonicalBytes()));
+    }
+
+    @Test
+    void provingStoreNeverAdoptsOrModifiesALocationItDidNotCreate() throws IOException {
+        // A store written by an earlier layout, or any other directory content, is refused as a
+        // whole rather than reopened and partially reinterpreted as current proving evidence.
+        Path earlierLayout = tempDirectory.resolve("earlier-layout");
+        Path staleRecord = earlierLayout.resolve("revisions").resolve("stale.revision");
+        Files.createDirectories(staleRecord.getParent());
+        byte[] staleBytes = "arcogine-revision-store-v1\0stale".getBytes(StandardCharsets.US_ASCII);
+        Files.write(staleRecord, staleBytes);
+
+        GovernanceHistoryException refused = assertThrows(
+                GovernanceHistoryException.class,
+                () -> FileControlledRevisionAuthority.openProvingStore(earlierLayout, FACTORY_VERIFIER));
+        assertEquals(UNSUPPORTED_STORE, refused.code());
+        assertArrayEquals(staleBytes, Files.readAllBytes(staleRecord));
+        assertFalse(Files.exists(earlierLayout.resolve("proving-store")));
+        assertFalse(Files.exists(earlierLayout.resolve("artifacts")));
+
+        Path foreignMarker = tempDirectory.resolve("foreign-marker");
+        Files.createDirectories(foreignMarker);
+        Files.write(foreignMarker.resolve("proving-store"), new byte[] {1, 2, 3});
+        assertEquals(
+                UNSUPPORTED_STORE,
+                assertThrows(
+                                GovernanceHistoryException.class,
+                                () -> FileControlledRevisionAuthority.openProvingStore(foreignMarker, FACTORY_VERIFIER))
+                        .code());
+
+        Path fresh = tempDirectory.resolve("fresh");
+        FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER);
+        assertTrue(Files.exists(fresh.resolve("proving-store")));
+        assertTrue(FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER).revisions().isEmpty());
+    }
+
+    @Test
+    void discardedPolicyArtifactsAreRefusedBeforeAnyStoreMutation() throws IOException {
+        // Bytes laid out under a discarded ordinal policy are never admitted as, or reinterpreted
+        // into, current proving content.
+        FactoryModelVersion version = version("Widget", 5);
+        byte[] current = FactoryModelArtifact.encode(version);
+        byte[] discardedPrefix = "arcogine.factory-model.v1\0".getBytes(StandardCharsets.US_ASCII);
+        int currentPrefix = "arcogine.factory-model.wip\0".getBytes(StandardCharsets.US_ASCII).length;
+        byte[] discardedBytes = new byte[discardedPrefix.length + current.length - currentPrefix - 1];
+        System.arraycopy(discardedPrefix, 0, discardedBytes, 0, discardedPrefix.length);
+        System.arraycopy(
+                current, currentPrefix + 1, discardedBytes, discardedPrefix.length, current.length - currentPrefix - 1);
+        ModelFingerprint discardedFingerprint = new ModelFingerprint(
+                "factory-model", "v1", "sha256", version.fingerprint().digest());
+        ControlledRevision candidate = revision(
+                id(15), discardedFingerprint, List.of(), Instant.parse("2026-09-01T18:00:00Z"));
+        FileControlledRevisionAuthority authority = authorityAt(ACCEPTED_AT);
+
+        GovernanceHistoryException failure = assertThrows(
+                GovernanceHistoryException.class,
+                () -> authority.accept(candidate, new SemanticArtifact(discardedFingerprint, discardedBytes)));
+        assertEquals(UNSUPPORTED_ARTIFACT_POLICY, failure.code());
+        assertTrue(authority.revisions().isEmpty());
+        assertTrue(regularFiles(tempDirectory.resolve("artifacts")).isEmpty());
     }
 
     private GovernanceHistoryException.Code acceptAfterStart(
@@ -390,11 +453,11 @@ class FileControlledRevisionAuthorityTest {
     }
 
     private FileControlledRevisionAuthority authority() {
-        return new FileControlledRevisionAuthority(tempDirectory, FACTORY_VERIFIER);
+        return FileControlledRevisionAuthority.openProvingStore(tempDirectory, FACTORY_VERIFIER);
     }
 
     private FileControlledRevisionAuthority authorityAt(Instant instant) {
-        return new FileControlledRevisionAuthority(
+        return FileControlledRevisionAuthority.openProvingStore(
                 tempDirectory, FACTORY_VERIFIER, Clock.fixed(instant, ZoneOffset.UTC));
     }
 
@@ -414,11 +477,11 @@ class FileControlledRevisionAuthorityTest {
 
     private static SemanticArtifact artifact(FactoryModelVersion version) {
         return new SemanticArtifact(
-                version.fingerprint(), FactoryModelArtifactV1.encode(version));
+                version.fingerprint(), FactoryModelArtifact.encode(version));
     }
 
     private static FactoryModelVersion reconstructed(HistoricalRevision revision) {
-        return FactoryModelArtifactV1.decode(revision.artifact().canonicalBytes());
+        return FactoryModelArtifact.decode(revision.artifact().canonicalBytes());
     }
 
     private static FactoryModelVersion version(String productName, long duration) {

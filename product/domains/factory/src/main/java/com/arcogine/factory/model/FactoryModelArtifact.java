@@ -4,22 +4,31 @@ import com.arcogine.types.ModelFingerprint;
 import java.util.Objects;
 
 /**
- * Public artifact boundary for the released {@code factory-model:v1} semantic encoding.
+ * Public artifact boundary for the current {@code factory-model:wip} canonical form.
  *
- * <p>The bytes are the same canonical bytes used by {@link FactoryModelVersion#fingerprint()}.
- * Decoding is strict: malformed or merely decodable-but-noncanonical bytes are rejected.
+ * <p>The bytes are the same canonical bytes {@link FactoryModelVersion#fingerprint()} digests.
+ * Decoding is strict: malformed or merely decodable-but-noncanonical bytes are rejected with
+ * {@link IllegalArgumentException}, and content that decodes but violates a publication predicate
+ * is rejected with
+ * {@link com.arcogine.factory.model.validation.FactoryModelValidationException} because it could
+ * never have been published.
+ *
+ * <p>Only the current development definition is understood. Artifacts or fingerprints under any
+ * other policy -- including the discarded ordinal policies -- are unsupported and are never
+ * reinterpreted as current content. A {@code factory-model:wip} artifact is verified only against
+ * the current definition; it is development evidence, not a durable historical record.
  */
-public final class FactoryModelArtifactV1 {
+public final class FactoryModelArtifact {
 
-    private FactoryModelArtifactV1() {}
+    private FactoryModelArtifact() {}
 
     public static byte[] encode(FactoryModelVersion version) {
         Objects.requireNonNull(version, "version");
-        return FactoryModelFingerprintV1.canonicalBytes(version.model());
+        return FactoryModelCanonicalForm.canonicalBytes(version.model());
     }
 
     public static FactoryModelVersion decode(byte[] canonicalBytes) {
-        return new FactoryModelVersion(FactoryModelFingerprintV1.decodeCanonicalBytes(canonicalBytes));
+        return new FactoryModelVersion(FactoryModelCanonicalForm.decode(canonicalBytes));
     }
 
     public static ModelFingerprint fingerprint(byte[] canonicalBytes) {
@@ -27,9 +36,6 @@ public final class FactoryModelArtifactV1 {
     }
 
     public static boolean supports(ModelFingerprint fingerprint) {
-        Objects.requireNonNull(fingerprint, "fingerprint");
-        return "factory-model".equals(fingerprint.namespace())
-                && "v1".equals(fingerprint.policyVersion())
-                && "sha256".equals(fingerprint.algorithm());
+        return FactoryModelCanonicalForm.identifies(Objects.requireNonNull(fingerprint, "fingerprint"));
     }
 }

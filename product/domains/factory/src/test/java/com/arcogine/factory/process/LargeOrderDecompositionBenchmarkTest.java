@@ -24,7 +24,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit-work decomposition (docs/architecture/engine-semantics-v1.md section 3) closure evidence for
+ * Unit-work decomposition (docs/architecture/engine-semantics.md section 3) closure evidence for
  * the supported child-materialization ceiling.
  *
  * <p>This is intentionally an acceptance benchmark rather than a wall-clock performance contract:

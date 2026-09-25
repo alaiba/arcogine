@@ -9,7 +9,7 @@ import com.arcogine.types.SimTime;
 
 /**
  * Immutable current projection of one independently dispatchable child job
- * (docs/architecture/engine-semantics-v1.md section 3).
+ * (docs/architecture/engine-semantics.md section 3).
  */
 public record JobObservation(
         JobId jobId,

@@ -4,7 +4,17 @@ import com.arcogine.types.ControlledRevisionId;
 import java.util.List;
 import java.util.Optional;
 
-/** Authoritative acceptance and durable historical-resolution boundary for controlled revisions. */
+/**
+ * Authoritative acceptance and historical-resolution boundary for controlled revisions.
+ *
+ * <p>Within one authority, acceptance fixes a revision's identity, fingerprint binding, lineage and
+ * recording provenance, and resolution returns the exact accepted artifact. Whether accepted
+ * records are retained commitments depends on the authority's declared custody: the current
+ * implementation, {@link FileControlledRevisionAuthority}, is a disposable proving store over
+ * work-in-progress definitions. No retained authority exists while every semantic contract is work
+ * in progress; one is introduced only with an explicit promotion and admits only promoted
+ * definitions.
+ */
 public interface ControlledRevisionAuthority {
 
     /**

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Headless acceptance evidence for the supported {@link RuntimeEventEnvelope} contract: post-
  * authoritative publication, run-scoped strictly monotonic sequencing independent of internal
- * scheduler machinery, durable model provenance, and cross-cutting {@code OrderId}/{@code JobId}
+ * scheduler machinery, source-model provenance, and cross-cutting {@code OrderId}/{@code JobId}
  * correlation. Driven entirely through {@link FactoryRuntime}, matching {@link
  * RuntimeObservationAcceptanceTest} and {@link SessionControlAcceptanceTest}'s
  * conventions.

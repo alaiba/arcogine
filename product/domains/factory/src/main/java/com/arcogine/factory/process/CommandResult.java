@@ -27,7 +27,7 @@ import java.util.List;
  * for {@link FactoryRuntime#setMachineAvailability}, trigger a dispatch cascade whose own
  * scheduling can fail after mutation has already started (full preflight safety for that cascade is
  * deliberately
- * not required by docs/architecture/engine-semantics-v1.md section 1.2). §7.2 requires a definite
+ * not required by docs/architecture/engine-semantics.md section 1.2). §7.2 requires a definite
  * result even then -- an uncaught exception past the command boundary is not one -- so that case is
  * {@link Faulted}, not {@link Rejected}: unlike {@link Rejected}, which guarantees zero mutation,
  * {@link Faulted} means the command's own preconditions passed and its requested change was

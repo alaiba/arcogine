@@ -1,6 +1,7 @@
-package com.arcogine.factory.model.v2;
+package com.arcogine.factory.model.spatial;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,7 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-class FactoryModelV2Test {
+class SpatialRecordTest {
 
     private static ConfiguredResource mill(long id) {
         return new ConfiguredResource(new MachineId(id), "Mill " + id, 1, null, 0);
@@ -43,7 +44,17 @@ class FactoryModelV2Test {
     void spatialAbsenceMustBeExplicitRatherThanNull() {
         assertThrows(
                 NullPointerException.class,
-                () -> new FactoryModelV2(List.of(), List.of(), List.of(), null));
+                () -> new FactoryModel(List.of(), List.of(), List.of(), null));
+    }
+
+    @Test
+    void productionOnlyConstructorSpellsAnExplicitlyAbsentRecord() {
+        FactoryModel productionOnly = new FactoryModel(List.of(mill(1)), List.of(routing()), widget());
+
+        assertTrue(productionOnly.spatial().isEmpty());
+        assertEquals(
+                new FactoryModel(List.of(mill(1)), List.of(routing()), widget(), Optional.empty()),
+                productionOnly);
     }
 
     @Test
@@ -72,7 +83,7 @@ class FactoryModelV2Test {
         List<ResourceLayout> layouts = new ArrayList<>(List.of(layout(1, 0, 0)));
 
         SpatialRecord spatial = new SpatialRecord(new FactoryFloor(10, 10), 1, 0, layouts);
-        FactoryModelV2 model = new FactoryModelV2(resources, List.of(), List.of(), Optional.of(spatial));
+        FactoryModel model = new FactoryModel(resources, List.of(), List.of(), Optional.of(spatial));
         resources.clear();
         layouts.clear();
 
@@ -81,18 +92,17 @@ class FactoryModelV2Test {
     }
 
     @Test
-    void baseModelProjectsTheProductionRecordsWhetherSpatialIsPresentOrAbsent() {
-        FactoryModelV2 absent = new FactoryModelV2(List.of(mill(1)), List.of(routing()), widget(), Optional.empty());
-        FactoryModelV2 present = new FactoryModelV2(
+    void presentRecordKeepsTheSameProductionRecordsButIsADifferentDesign() {
+        FactoryModel absent = new FactoryModel(List.of(mill(1)), List.of(routing()), widget());
+        FactoryModel present = new FactoryModel(
                 List.of(mill(1)),
                 List.of(routing()),
                 widget(),
                 Optional.of(new SpatialRecord(new FactoryFloor(10, 10), 7, 11, List.of(layout(1, 3, 4)))));
 
-        FactoryModel expected = new FactoryModel(List.of(mill(1)), List.of(routing()), widget());
-
-        assertEquals(expected, absent.baseModel());
-        assertEquals(expected, present.baseModel());
-        assertTrue(FactoryModel.class.isInstance(present.baseModel()));
+        assertEquals(absent.resources(), present.resources());
+        assertEquals(absent.operations(), present.operations());
+        assertEquals(absent.products(), present.products());
+        assertNotEquals(absent, present);
     }
 }

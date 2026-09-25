@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/** Executable characterization of the retained v1 derived-result arithmetic. */
-class EngineSemanticsV1DerivedResultConformanceTest {
+/** Executable conformance evidence for the current Engine derived-result arithmetic. */
+class EngineDerivedResultConformanceTest {
 
     @Test
     void meanLeadTimeAndBusyTicksSaturateAtTheLongBoundary() {

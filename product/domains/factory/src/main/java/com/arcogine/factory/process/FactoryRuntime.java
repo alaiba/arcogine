@@ -9,7 +9,7 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.FactoryRuntimeAssembler;
 import com.arcogine.factory.orders.Order;
 import com.arcogine.factory.orders.OrderExecutionView;
-import com.arcogine.types.EngineSemanticsVersion;
+import com.arcogine.types.EngineSemantics;
 import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
@@ -75,7 +75,7 @@ public class FactoryRuntime {
     private final RecordingScheduler scheduler;
     private final FactoryModelVersion modelVersion;
     private final RunId runId;
-    private final EngineSemanticsVersion semanticsVersion;
+    private final EngineSemantics engineSemantics;
     private final List<RuntimeEventEnvelope> pendingSupportedEvents = new ArrayList<>();
     private long eventSequence;
 
@@ -99,13 +99,16 @@ public class FactoryRuntime {
         this.scheduler = new RecordingScheduler();
         this.modelVersion = modelVersion;
         this.runId = RunId.create();
-        this.semanticsVersion = EngineSemanticsVersion.requireSupported(EngineSemanticsVersion.CURRENT);
+        this.engineSemantics = EngineSemantics.requireSupported(EngineSemantics.CURRENT);
     }
 
     /**
      * Assembles a fresh factory runtime from a published model and returns a {@link FactoryRuntime}
      * that exclusively owns it, so its explicit-workload scheduler is the only authority over the
      * factory's event ordering.
+     *
+     * @throws UnsupportedModelContentException when the model represents content the current Engine
+     *     interpretation does not execute; no runtime state is created
      */
     public static FactoryRuntime forModel(FactoryModelVersion version) {
         FactoryRuntimeAssembler.Assembled assembled = FactoryRuntimeAssembler.assemble(version);
@@ -125,9 +128,13 @@ public class FactoryRuntime {
         return runId;
     }
 
-    /** The fixed Engine semantics interpretation used for this runtime's entire lifetime. */
-    public EngineSemanticsVersion semanticsVersion() {
-        return semanticsVersion;
+    /**
+     * The one Engine interpretation this runtime executes for its entire lifetime. While Engine
+     * semantics are work in progress this names the current build's definition; it is fixed for the
+     * session but is not an identity spanning development revisions.
+     */
+    public EngineSemantics engineSemantics() {
+        return engineSemantics;
     }
 
     /**

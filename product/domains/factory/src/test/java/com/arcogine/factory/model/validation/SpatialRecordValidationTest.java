@@ -1,4 +1,4 @@
-package com.arcogine.factory.model.v2;
+package com.arcogine.factory.model.validation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -7,12 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.ConfiguredResource;
+import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
-import com.arcogine.factory.model.validation.FactoryModelValidationException;
-import com.arcogine.factory.model.validation.ModelValidationError;
-import com.arcogine.factory.model.validation.ModelValidationResult;
+import com.arcogine.factory.model.spatial.FactoryFloor;
+import com.arcogine.factory.model.spatial.ResourceFootprint;
+import com.arcogine.factory.model.spatial.ResourceLayout;
+import com.arcogine.factory.model.spatial.ResourcePlacement;
+import com.arcogine.factory.model.spatial.SpatialRecord;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import java.util.List;
@@ -20,7 +23,11 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-class FactoryModelV2ValidatorTest {
+/**
+ * Publication predicates of the optional spatial record, applied by {@link FactoryModelValidator}
+ * (docs/architecture/factory-model.md).
+ */
+class SpatialRecordValidationTest {
 
     private static ConfiguredResource resource(long id) {
         return new ConfiguredResource(new MachineId(id), "Resource " + id, 1, null, 0);
@@ -44,12 +51,12 @@ class FactoryModelV2ValidatorTest {
         return List.of(new ProductDefinition(new ProductId(10), "Widget", 100));
     }
 
-    private static FactoryModelV2 withSpatial(List<ConfiguredResource> resources, SpatialRecord spatial) {
-        return new FactoryModelV2(resources, List.of(routingOver(1)), widget(), Optional.of(spatial));
+    private static FactoryModel withSpatial(List<ConfiguredResource> resources, SpatialRecord spatial) {
+        return new FactoryModel(resources, List.of(routingOver(1)), widget(), Optional.of(spatial));
     }
 
-    private static FactoryModelV2 withoutSpatial(List<ConfiguredResource> resources) {
-        return new FactoryModelV2(resources, List.of(routingOver(1)), widget(), Optional.empty());
+    private static FactoryModel withoutSpatial(List<ConfiguredResource> resources) {
+        return new FactoryModel(resources, List.of(routingOver(1)), widget(), Optional.empty());
     }
 
     /**
@@ -58,7 +65,7 @@ class FactoryModelV2ValidatorTest {
      * unrelated coverage finding. Every model includes a resource with id 1, so the routing step
      * can reference it without a spurious referential-integrity error.
      */
-    private static FactoryModelV2 model(
+    private static FactoryModel model(
             long floorW,
             long floorH,
             long ticksPerCell,
@@ -71,18 +78,18 @@ class FactoryModelV2ValidatorTest {
                 new SpatialRecord(new FactoryFloor(floorW, floorH), ticksPerCell, handlingTicks, layouts));
     }
 
-    private static void assertValid(FactoryModelV2 model) {
-        ModelValidationResult result = FactoryModelV2Validator.validate(model);
+    private static void assertValid(FactoryModel model) {
+        ModelValidationResult result = FactoryModelValidator.validate(model);
         assertTrue(result.isValid(), () -> result.errors().toString());
     }
 
-    private static void assertInvalid(FactoryModelV2 model) {
-        ModelValidationResult result = FactoryModelV2Validator.validate(model);
+    private static void assertInvalid(FactoryModel model) {
+        ModelValidationResult result = FactoryModelValidator.validate(model);
         assertFalse(result.isValid());
     }
 
-    private static void assertCoverageError(FactoryModelV2 model, String message) {
-        ModelValidationResult result = FactoryModelV2Validator.validate(model);
+    private static void assertCoverageError(FactoryModel model, String message) {
+        ModelValidationResult result = FactoryModelValidator.validate(model);
         assertTrue(
                 result.errors().contains(new ModelValidationError("spatial.resourceLayouts", message)),
                 () -> result.errors().toString());
@@ -91,8 +98,8 @@ class FactoryModelV2ValidatorTest {
     // ---- Basic valid model ----------------------------------------------------------------
 
     @Test
-    void validModelWithTwoResourcesHandlingAndOrdinaryV1ContentValidatesDeterministically() {
-        FactoryModelV2 model = model(10, 10, 2, 3, List.of(layout(1, 0, 0, 2, 2), layout(2, 5, 5, 1, 1)));
+    void validModelWithTwoResourcesHandlingAndOrdinaryProductionContentValidatesDeterministically() {
+        FactoryModel model = model(10, 10, 2, 3, List.of(layout(1, 0, 0, 2, 2), layout(2, 5, 5, 1, 1)));
 
         assertValid(model);
         // Determinism: repeated validation of an equivalent model yields the same result.
@@ -101,11 +108,11 @@ class FactoryModelV2ValidatorTest {
 
     @Test
     void requireValidThrowsForInvalidModelAndReturnsSilentlyForValidModel() {
-        FactoryModelV2 valid = model(5, 5, 0, 0, List.of(layout(1, 0, 0, 1, 1)));
-        FactoryModelV2Validator.requireValid(valid); // must not throw
+        FactoryModel valid = model(5, 5, 0, 0, List.of(layout(1, 0, 0, 1, 1)));
+        FactoryModelValidator.requireValid(valid); // must not throw
 
-        FactoryModelV2 invalid = model(0, 5, 0, 0, List.of(layout(1, 0, 0, 1, 1)));
-        assertThrows(FactoryModelValidationException.class, () -> FactoryModelV2Validator.requireValid(invalid));
+        FactoryModel invalid = model(0, 5, 0, 0, List.of(layout(1, 0, 0, 1, 1)));
+        assertThrows(FactoryModelValidationException.class, () -> FactoryModelValidator.requireValid(invalid));
     }
 
     // ---- Absent spatial record ----------------------------------------------------------------
@@ -119,13 +126,13 @@ class FactoryModelV2ValidatorTest {
     void absentSpatialRecordValidatesProductionSemanticsOnly() {
         // An absent record asserts nothing, so no spatial predicate is evaluated against
         // synthesized values; the production records are still fully validated.
-        FactoryModelV2 badProduction = new FactoryModelV2(
+        FactoryModel badProduction = new FactoryModel(
                 List.of(new ConfiguredResource(new MachineId(1), "Resource 1", 0, null, 0)),
                 List.of(routingOver(999)),
                 widget(),
                 Optional.empty());
 
-        ModelValidationResult result = FactoryModelV2Validator.validate(badProduction);
+        ModelValidationResult result = FactoryModelValidator.validate(badProduction);
 
         assertFalse(result.isValid());
         assertTrue(
@@ -136,15 +143,17 @@ class FactoryModelV2ValidatorTest {
     @Test
     void absentSpatialRecordIsDistinctFromPresentRecordWithLegalZeroMagnitudes() {
         List<ConfiguredResource> resources = List.of(resource(1));
-        FactoryModelV2 absent = withoutSpatial(resources);
-        FactoryModelV2 presentWithZero = withSpatial(
+        FactoryModel absent = withoutSpatial(resources);
+        FactoryModel presentWithZero = withSpatial(
                 resources,
                 new SpatialRecord(new FactoryFloor(1, 1), 0, 0, List.of(layout(1, 0, 0, 1, 1))));
 
         // Both are publishable designs, and they share their production records...
         assertValid(absent);
         assertValid(presentWithZero);
-        assertEquals(absent.baseModel(), presentWithZero.baseModel());
+        assertEquals(absent.resources(), presentWithZero.resources());
+        assertEquals(absent.operations(), presentWithZero.operations());
+        assertEquals(absent.products(), presentWithZero.products());
         // ...but zero magnitudes at the origin are authored facts, not a spelling of "no spatial
         // record": the two are different designs.
         assertNotEquals(absent, presentWithZero);
@@ -157,7 +166,7 @@ class FactoryModelV2ValidatorTest {
 
     @Test
     void presentRecordMustPlaceEveryConfiguredResource() {
-        FactoryModelV2 missing = withSpatial(
+        FactoryModel missing = withSpatial(
                 List.of(resource(1), resource(2)),
                 new SpatialRecord(new FactoryFloor(5, 5), 0, 0, List.of(layout(1, 0, 0, 1, 1))));
 
@@ -167,7 +176,7 @@ class FactoryModelV2ValidatorTest {
 
     @Test
     void presentRecordWithoutAnyLayoutIsPartialAndInvalid() {
-        FactoryModelV2 headerOnly = withSpatial(
+        FactoryModel headerOnly = withSpatial(
                 List.of(resource(1)), new SpatialRecord(new FactoryFloor(5, 5), 0, 0, List.of()));
 
         assertInvalid(headerOnly);
@@ -176,7 +185,7 @@ class FactoryModelV2ValidatorTest {
 
     @Test
     void presentRecordMustNotPlaceAnUnknownResource() {
-        FactoryModelV2 unknown = withSpatial(
+        FactoryModel unknown = withSpatial(
                 List.of(resource(1)),
                 new SpatialRecord(
                         new FactoryFloor(5, 5), 0, 0, List.of(layout(1, 0, 0, 1, 1), layout(9, 3, 3, 1, 1))));
@@ -189,7 +198,7 @@ class FactoryModelV2ValidatorTest {
     void presentRecordMustNotPlaceAResourceTwice() {
         // The repeated entry is identical to the first, so a duplicate is caught as a coverage
         // defect rather than hidden as, or confused with, a self-overlap.
-        FactoryModelV2 duplicate = withSpatial(
+        FactoryModel duplicate = withSpatial(
                 List.of(resource(1), resource(2)),
                 new SpatialRecord(
                         new FactoryFloor(5, 5),
@@ -197,7 +206,7 @@ class FactoryModelV2ValidatorTest {
                         0,
                         List.of(layout(1, 0, 0, 1, 1), layout(1, 0, 0, 1, 1), layout(2, 2, 2, 1, 1))));
 
-        ModelValidationResult result = FactoryModelV2Validator.validate(duplicate);
+        ModelValidationResult result = FactoryModelValidator.validate(duplicate);
 
         assertFalse(result.isValid());
         assertEquals(
@@ -209,7 +218,7 @@ class FactoryModelV2ValidatorTest {
     @Test
     void presentRecordLayoutsFollowResourceListOrder() {
         List<ConfiguredResource> resources = List.of(resource(1), resource(2));
-        FactoryModelV2 reordered = withSpatial(
+        FactoryModel reordered = withSpatial(
                 resources,
                 new SpatialRecord(
                         new FactoryFloor(5, 5), 0, 0, List.of(layout(2, 2, 2, 1, 1), layout(1, 0, 0, 1, 1))));
@@ -427,11 +436,11 @@ class FactoryModelV2ValidatorTest {
         assertInvalid(model(floorW, floorH, 0, 0, List.of(layout(1, 0, 0, 1, 1))));
     }
 
-    // ---- V2 does not weaken underlying V1-shaped structural validation -------------------------
+    // ---- Spatial validation does not weaken production-record validation ------------------------
 
     @Test
-    void v2ValidationStillCatchesV1ShapedStructuralErrors() {
-        FactoryModelV2 badModel = new FactoryModelV2(
+    void spatialValidationStillCatchesProductionRecordErrors() {
+        FactoryModel badModel = new FactoryModel(
                 List.of(resource(1)),
                 List.of(routingOver(999)),
                 widget(),
@@ -442,10 +451,10 @@ class FactoryModelV2ValidatorTest {
 
     @Test
     void invalidModelReportsMultipleDeterministicErrorsRatherThanFailingFast() {
-        FactoryModelV2 badModel = model(0, 0, -1, -1, List.of(layout(1, -1, -1, 0, 0)));
+        FactoryModel badModel = model(0, 0, -1, -1, List.of(layout(1, -1, -1, 0, 0)));
 
-        ModelValidationResult first = FactoryModelV2Validator.validate(badModel);
-        ModelValidationResult second = FactoryModelV2Validator.validate(badModel);
+        ModelValidationResult first = FactoryModelValidator.validate(badModel);
+        ModelValidationResult second = FactoryModelValidator.validate(badModel);
 
         assertFalse(first.isValid());
         assertTrue(first.errors().size() > 1);

@@ -53,7 +53,7 @@ public sealed interface RuntimeEventPayload {
 
     /**
      * {@link RuntimeEventType#JOB_STEP_COMPLETED}: {@code jobId} (with parent {@code orderId}
-     * retained for cross-cutting correlation, docs/architecture/engine-semantics-v1.md section 3)
+     * retained for cross-cutting correlation, docs/architecture/engine-semantics.md section 3)
      * finished the step at {@code stepIndex} on {@code
      * machineId}. {@code jobComplete} reports whether that step was the job's last.
      */
@@ -65,7 +65,7 @@ public sealed interface RuntimeEventPayload {
      * {@link RuntimeEventType#ORDER_COMPLETED}: the operational fact that {@code orderId} fulfilled
      * its full execution aggregate, with the completing child {@code jobId} retained for
      * cross-cutting
-     * work-item correlation (docs/architecture/engine-semantics-v1.md section 3) alongside the
+     * work-item correlation (docs/architecture/engine-semantics.md section 3) alongside the
      * commercial facts a downstream consumer needs.
      */
     record OrderCompleted(OrderId orderId, JobId jobId, ProductId productId, long quantity, double unitPrice)

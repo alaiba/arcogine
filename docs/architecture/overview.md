@@ -195,16 +195,19 @@ commitment, not determinism, content equality, or the first possible record of a
    Any human-readable label is optional and gets its meaning from that binding or declaration.
    The commitment is recorded in the owning contract, not a repository-wide maturity state,
    registry, or version ladder. Factory and Engine commitments need not be made together.
-6. **A promoted identity never rebinds.** It denotes exactly one definition, including rules no
-   fixture has exercised and rejection behavior no consumer has observed. A materially changed
-   definition — field membership, canonical bytes, validation, result-affecting interpretation —
-   needs a distinguishable identity; development after promotion continues under a WIP definition
-   or a new identity, never by editing the promoted one.
+6. **The exact basis bound by a promotion never rebinds.** The stable reference recorded by
+   the promotion continues to denote the same definition, including rules no fixture has exercised
+   and rejection behavior no consumer has observed. A materially changed definition — field
+   membership, canonical bytes, validation, result-affecting interpretation — must not replace the
+   definition behind that reference; development continues under WIP, or a later commitment records
+   a distinct stable reference. Promotion does not require a new shared semantic entity or a
+   human-readable name.
 7. **Support is scoped separately from meaning.** For a promoted definition, retaining its exact
    definition, retaining content, decoding, executing, migrating and interoperating are separate
-   obligations the owning contract declares for the uses it accepts; naming an identity creates none
-   of them. Withdrawing support removes a capability; it never frees a promoted identity for changed
-   meaning and never silently discharges obligations accepted records created.
+   obligations the owning contract declares for the uses it accepts; recording or naming a reference
+   creates none of them. Withdrawing support removes a capability; it never permits the stable
+   reference of an accepted commitment to be rebound to changed meaning and never silently
+   discharges obligations accepted records created.
 8. **Misuse is handled explicitly.** Retention of, or reliance on, material outside a declared custody
    is a defect to diagnose and account for: further admission stops, the accepted facts and the
    definition they used are preserved as far as the evidence allows, and the use is neither silently

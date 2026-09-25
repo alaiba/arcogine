@@ -56,10 +56,11 @@ The interpretation is **work in progress**, named by the mutable development mar
 - the marker therefore identifies the definition current in one build, not a definition that spans
   revisions. A result produced under an earlier development revision is not attributable to today's
   text by its marker; comparing results across revisions is a claim its consumer must establish;
-- implementation, fixtures and this normative description do not promote the interpretation. A
-  promoted Engine interpretation receives a distinguishable durable name and the non-rebinding and
-  support obligations of the [semantic evolution rules](overview.md#semantic-evolution-and-support);
-  Engine and Factory need not promote together.
+- implementation, fixtures and this normative description do not promote the interpretation. If an
+  owner later promotes it for a concrete stability/support need, the promotion records an
+  unambiguous stable reference to the exact definition being promoted plus the applicable
+  non-rebinding and support obligations of the [semantic evolution rules](overview.md#semantic-evolution-and-support);
+  a human-readable label is optional, and Engine and Factory need not promote together.
 
 Complete conformance requires the result-affecting rules and the behavioral fixtures, not merely a
 reported name.

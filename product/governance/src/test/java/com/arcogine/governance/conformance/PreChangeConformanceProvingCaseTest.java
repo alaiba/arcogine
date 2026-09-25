@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.change.FactoryModelSemanticComparator;
 import com.arcogine.factory.model.FactoryModel;
-import com.arcogine.factory.model.FactoryModelArtifactV1;
+import com.arcogine.factory.model.FactoryModelArtifact;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
@@ -35,7 +35,6 @@ import com.arcogine.governance.requirement.RequirementScope;
 import com.arcogine.governance.requirement.RequirementVersion;
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.MachineId;
-import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -55,17 +54,7 @@ import org.junit.jupiter.api.io.TempDir;
 class PreChangeConformanceProvingCaseTest {
 
     private static final RevisionRecorder RECORDER = new RevisionRecorder("test", "operator");
-    private static final SemanticArtifactVerifier FACTORY_VERIFIER = new SemanticArtifactVerifier() {
-        @Override
-        public boolean supports(ModelFingerprint fingerprint) {
-            return FactoryModelArtifactV1.supports(fingerprint);
-        }
-
-        @Override
-        public ModelFingerprint fingerprint(byte[] canonicalBytes) {
-            return FactoryModelArtifactV1.fingerprint(canonicalBytes);
-        }
-    };
+    private static final SemanticArtifactVerifier FACTORY_VERIFIER = FactoryModelArtifact.verifier();
     private static final FactoryModelSemanticComparator COMPARATOR = new FactoryModelSemanticComparator();
 
     @TempDir
@@ -74,7 +63,7 @@ class PreChangeConformanceProvingCaseTest {
     @Test
     void preChangeCandidateIsEvaluatedAgainstRequirementsAffectedByItsRealImpactScope() {
         FileControlledRevisionAuthority authority =
-                new FileControlledRevisionAuthority(tempDirectory, FACTORY_VERIFIER);
+                FileControlledRevisionAuthority.openProvingStore(tempDirectory.resolve("store"), FACTORY_VERIFIER);
         FactoryModelVersion baseModel = model(List.of(1));
         FactoryModelVersion candidateModel = model(List.of(1, 2));
         ControlledRevision base = accept(authority, baseModel, List.of());
@@ -115,7 +104,7 @@ class PreChangeConformanceProvingCaseTest {
         // The assertion subject is the actual candidate semantic model state, not the ChangeSet:
         // ChangeSet is used above only to drive requirement selection through its ImpactScope. The
         // binding function is FactoryModelVersion::fingerprint, which recomputes the fingerprint
-        // from the model's own canonical content (FactoryModelFingerprintV1.fingerprint(model)) on
+        // from the model's own canonical content (FactoryModelCanonicalForm.fingerprint(model)) on
         // every call -- a non-trivial, content-derived derivation, not a constant or a pass-through
         // accessor unrelated to the subject's own content. changeSet.candidateFingerprint() is used
         // only as the expected value being verified against, which is legitimate: it is the
@@ -166,7 +155,7 @@ class PreChangeConformanceProvingCaseTest {
                         new RevisionProvenance(Instant.now(), RECORDER));
         return authority.accept(
                 candidate,
-                new SemanticArtifact(version.fingerprint(), FactoryModelArtifactV1.encode(version)));
+                new SemanticArtifact(version.fingerprint(), FactoryModelArtifact.encode(version)));
     }
 
     private static FactoryModelVersion model(List<Integer> resourceIds) {

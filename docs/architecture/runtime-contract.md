@@ -2,7 +2,7 @@
 
 Status: Adopted semantic contract; headless `FactoryRuntime` implementation complete. No current outward adapter exists; a future one is introduced from this contract when a concrete product need exists.
 Owning architecture: [Architecture Overview](overview.md#core-architecture-philosophy-events-state-observations)
-Engine interpretation: [Engine Semantics v1](engine-semantics-v1.md)
+Engine interpretation: [Engine semantics](engine-semantics.md)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 
 ## Purpose
@@ -114,7 +114,7 @@ sequence
 simulationTime
 eventType
 modelFingerprint
-engineSemanticsVersion
+engineSemantics
 controlledRevisionId [optional when authoritatively bound]
 affectedEntityRefs[]
 payload
@@ -126,7 +126,7 @@ The Java type names and payload decomposition may vary by implementation, but th
 
 `affectedEntityRefs` provide stable correlation without forcing consumers to parse domain-specific payloads merely to identify affected runtime entities. Entity references must preserve domain identity rather than introducing stringly typed replacement identities.
 
-The [unit-work decomposition](engine-semantics-v1.md#3-unit-work-decomposition-semantics) correlation is part of the supported contract. Events concerning a child work item must preserve its `JobId` and enough parent correlation to identify the owning `OrderId`. The aggregate order-completion event preserves both explicit `OrderId` and the completing child `JobId`.
+The [unit-work decomposition](engine-semantics.md#3-unit-work-decomposition-semantics) correlation is part of the supported contract. Events concerning a child work item must preserve its `JobId` and enough parent correlation to identify the owning `OrderId`. The aggregate order-completion event preserves both explicit `OrderId` and the completing child `JobId`.
 
 ## Supported observations expose authoritative current state and the event cursor they include
 
@@ -138,7 +138,7 @@ A supported runtime observation carries at least:
 Run
     runId
     modelFingerprint
-    engineSemanticsVersion
+    engineSemantics
     controlledRevisionId [optional when authoritatively bound]
     current simulated time
     run state
@@ -179,7 +179,7 @@ API/UI DTOs may project these supported observations, but DTO types never become
 
 ## Model fingerprint and Engine semantics are mandatory provenance; controlled revision is conditional provenance
 
-Every supported runtime observation and runtime event carries the durable `ModelFingerprint` of the published `FactoryModelVersion` that instantiated the runtime and the `EngineSemanticsVersion` fixed for the run (see the [Determinism Contract](overview.md#determinism-contract)). `FactoryRuntime` also exposes its fixed semantics version directly so headless callers can read it without first observing or draining events. Propagating `EngineSemanticsVersion` into the observation/event metadata types is a known implementation gap; the runtime already fixes and reports one version.
+Every supported runtime observation and runtime event carries the `ModelFingerprint` of the published `FactoryModelVersion` that instantiated the runtime and the `EngineSemantics` fixed for the run (see the [Determinism Contract](overview.md#determinism-contract)). `FactoryRuntime` also exposes its fixed interpretation directly so headless callers can read it without first observing or draining events. Propagating `EngineSemantics` into the observation/event metadata types is a known implementation gap; the runtime already fixes and reports one interpretation. While the Factory and Engine definitions are work in progress, these name the definitions current in the producing build; they are not durable cross-revision provenance ([semantic evolution rules](overview.md#semantic-evolution-and-support)).
 
 A `ControlledRevisionId` is carried only when the runtime was actually instantiated with an authoritative controlled-revision binding supplied by the owning revision/repository boundary.
 
@@ -191,8 +191,8 @@ Thus:
 ModelFingerprint
     mandatory semantic source identity
 
-EngineSemanticsVersion
-    mandatory result-affecting interpretation identity
+EngineSemantics
+    mandatory result-affecting interpretation
 
 ControlledRevisionId
     optional historical occurrence identity

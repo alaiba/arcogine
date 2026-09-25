@@ -26,14 +26,14 @@ infrastructure, ingestion adapter, or Java type shape.
 It builds on, and does not reopen, the neighbouring contracts: semantic content identity and
 controlled historical occurrence are different identities and an accepted record is never rewritten
 ([controlled revisions](controlled-revisions.md)); a fingerprint identifies canonical content under
-a named policy and does not establish the provenance of an occurrence
-([Factory Model v1](factory-model-v1.md)); external formats are projections and serialization never
+a named definition and does not establish the provenance of an occurrence
+([Factory model](factory-model.md)); external formats are projections and serialization never
 defines identity ([external representations](external-representations.md)); raw external
 observations never acquire Arcogine identity at ingestion and corrections are new accepted records
 about earlier ones ([Operational continuity](operational-continuity.md)); and Engine-produced
-results carry `ModelFingerprint`, `EngineSemanticsVersion` and explicit result-affecting inputs,
-with retirement removing executability, not provenance, and cross-version comparison explicit and
-consumer-owned ([Determinism Contract](overview.md#determinism-contract)).
+results carry `ModelFingerprint`, `EngineSemantics` and explicit result-affecting inputs, with
+cross-interpretation comparison explicit and consumer-owned, and with durable attribution beginning only
+at an explicit promotion ([Determinism Contract](overview.md#determinism-contract)).
 
 ## 1. Evidence need, evidence provenance, and evidence use stay separate dimensions
 
@@ -133,11 +133,14 @@ Evidence does not categorically lack a model fingerprint or revision. The durabl
   coincident identifiers do not establish it. This restates the Operational continuity contract §11 and does not extend it.
 - An Arcogine-derived analytical or verification result **may, and where the producer's contract
   establishes it must, retain producer-intrinsic provenance**: the subject `ModelFingerprint`, the
-  controlled revision when the producer was bound to one, the `EngineSemanticsVersion` when Engine
+  controlled revision when the producer was bound to one, the `EngineSemantics` when Engine
   behaviour was involved, run/result or result-boundary identity, the explicit result-affecting
   inputs the Determinism Contract names, and the analytical definition/version needed to interpret the result. A run
   identifier alone does not identify a time-varying result; model plus Engine version alone omits
-  workload, random inputs, ordered commands, and other material inputs.
+  workload, random inputs, ordered commands, and other material inputs. While the Factory and Engine
+  definitions are work in progress, their fingerprints and Engine names identify the definition current
+  in the producing build only: such provenance is development evidence, not an exact cross-revision
+  reference, and a use that needs the producing definition resolved after it changed stays unresolved.
 - The target model/revision/claim of a later use is a separate relationship and may differ from the
   source model that produced the evidence. A result for design `baseline` may serve as a comparator
   for candidate `changed` only through an explicit use-owned role and the owning domain's comparison
@@ -183,12 +186,14 @@ Evidence does not categorically lack a model fingerprint or revision. The durabl
 - Consumer-specific freshness, admissibility, coverage, conflict-resolution, and compatibility
   policies remain open. No universal policy, predicate, or enum is selected here.
 
-## 7. Cross-version compatibility is explicit, claim-specific, and consumer-owned
+## 7. Cross-interpretation compatibility is explicit, claim-specific, and consumer-owned
 
-Cross-version compatibility is a determination about a particular claim, metric, and set of
-assumptions, made by the consuming use. Equal `EngineSemanticsVersion` values do not establish equal
-workload, units, scope, or experimental conditions; different values do not by themselves make
-results incomparable for a fact the changed semantics cannot affect. Without adequate compatibility
+Compatibility across Engine interpretations or development revisions is a determination about a
+particular claim, metric, and set of assumptions, made by the consuming use. Equal `EngineSemantics`
+values do not establish equal workload, units, scope, or experimental conditions — and equal
+work-in-progress markers from different development revisions do not even establish equal
+interpretation; different values do not by themselves make results incomparable for a fact the
+changed semantics cannot affect. Without adequate compatibility
 evidence, comparison stays unsupported — identity never authorizes guessing. This applies the [Determinism Contract](overview.md#determinism-contract)'s
 consumer-owned comparison rule to Governance use and does not modify it.
 
@@ -203,7 +208,7 @@ occurrence**; this is an explicit rule, not a side effect of the evidence contra
   distinguishes them. Equal results never make two occurrences the same historical fact.
 - The occurrence is distinct from the `Finding` it may produce, from the deterministic evaluation
   function that computed the result, from any audit projection over it, and from `RunId`,
-  `ModelFingerprint`, `ControlledRevisionId`, and `EngineSemanticsVersion`.
+  `ModelFingerprint`, `ControlledRevisionId`, and `EngineSemantics`.
 - The occurrence's **basis is fixed** when the occurrence is recorded: the exact requirement and
   assertion definitions used; the subject fingerprint and optional verified revision; the relied-on
   uses; the relevant considered-but-excluded material and known material gaps; the temporal frame and
@@ -240,9 +245,12 @@ occurrence**; this is an explicit rule, not a side effect of the evidence contra
   material is missing or corrupt, the system discloses the gap; it never substitutes a current
   definition, a current source revision, or re-execution under current semantics. A retained digest
   with missing content proves neither readability nor meaning.
-- Retirement of a producer's executability does not erase attribution or automatically invalidate a
-  historical result (the [Determinism Contract](overview.md#determinism-contract): the durability guarantee is attribution plus a verifiable definition, not permanent re-execution). Whether the result still serves a new claim is a new
-  use determination.
+- Retirement of a promoted producer's executability does not erase attribution or automatically
+  invalidate a historical result (the [Determinism Contract](overview.md#determinism-contract):
+  after promotion the guarantee is attribution plus a verifiable definition, not permanent
+  re-execution). A result attributed only to a work-in-progress definition carries no such
+  guarantee once that definition changes. Whether the result still serves a new claim is a new use
+  determination.
 
 ## 10. Use targets are point identities; accumulating continuations are out of scope
 
@@ -261,7 +269,7 @@ decision; it must not reinterpret the point-identity rule as though a continuati
   provenance, subject correspondence, and reconciliation. Governance may consume a fixture-backed or
   Operational-supplied explicit correspondence assertion for a bounded case; doing so neither
   implements ingestion nor establishes that the correspondence authority is trusted.
-- **Engine and analytics producers** own calculation semantics, result identity, `EngineSemanticsVersion`,
+- **Engine and analytics producers** own calculation semantics, result identity, `EngineSemantics`,
   and analytical definitions. Verification-objective semantics (throughput, lead time, utilization,
   safety separation, operational reconciliation, and the like) remain domain-owned; Governance
   consumes attributable results and does not become a generic simulation/verification engine.
@@ -274,9 +282,11 @@ decision; it must not reinterpret the point-identity rule as though a continuati
 
 A headless evidence-capable implementation may prove the generic reference/use/occurrence
 contract using producer identities and provenance that actually exist, or explicit fixtures at the
-owning seam. Structural facts have a landed producer identity (fingerprint plus authoritative
-controlled revision). The Engine runtime exposes a fixed `EngineSemanticsVersion`, but durable Engine
-result identity and observation/event provenance propagation are not yet established; Operational
+owning seam. Structural facts have a landed producer identity (fingerprint plus a controlled
+revision accepted by the proving store), proven for development use only: no retained revision
+authority exists while the Factory definition is work in progress. The Engine runtime exposes a fixed
+`EngineSemantics`, but durable Engine result identity and observation/event provenance propagation
+are not yet established; Operational
 observation identity, correspondence, and trust are not implemented; analytical-definition provenance
 ownership is unresolved; durable requirement-definition and evaluation-history storage do not exist.
 

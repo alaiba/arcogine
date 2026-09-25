@@ -92,7 +92,7 @@ Accordingly:
 
 ## Boundary with transfer and spatial semantics
 
-Transfer is a production/runtime concern, not a game mechanic that the consumer may define. The [current transfer-applicability boundary](../../architecture/transfer-applicability.md) selects no transfer for admitted V2 spatial-absent content and preserves a full lifecycle for admitted present content with zero or positive timing. Exact Engine identity/support and spatial activation remain open.
+Transfer is a production/runtime concern, not a game mechanic that the consumer may define. The [current transfer-applicability boundary](../../architecture/transfer-applicability.md) selects no transfer for spatial-absent content and preserves a full lifecycle for present content with zero or positive timing. The current Engine refuses present spatial content until spatial execution lands.
 
 The game therefore must not assume that:
 

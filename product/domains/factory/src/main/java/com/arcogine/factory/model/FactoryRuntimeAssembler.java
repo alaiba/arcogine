@@ -3,6 +3,7 @@ package com.arcogine.factory.model;
 import com.arcogine.factory.machines.Machine;
 import com.arcogine.factory.machines.MachineStore;
 import com.arcogine.factory.process.FactoryHandler;
+import com.arcogine.factory.process.UnsupportedModelContentException;
 import com.arcogine.factory.routing.Routing;
 import com.arcogine.factory.routing.RoutingStep;
 import com.arcogine.factory.routing.RoutingStore;
@@ -20,6 +21,11 @@ import java.util.List;
  * FactoryModelVersion}'s own canonical constructor already guarantees {@code version.model()} is
  * valid, since there is no way to construct a {@code FactoryModelVersion} wrapping an invalid
  * model in the first place.
+ *
+ * <p>Validity is not executability. The current Engine interpretation executes production records
+ * only; it defines no executed meaning for a present spatial record (docs/architecture/
+ * transfer-applicability.md). Such a model is refused with {@link UnsupportedModelContentException}
+ * before any runtime state is created, rather than having its spatial content ignored.
  */
 public final class FactoryRuntimeAssembler {
 
@@ -27,6 +33,11 @@ public final class FactoryRuntimeAssembler {
 
     public static Assembled assemble(FactoryModelVersion version) {
         FactoryModel model = version.model();
+        if (model.spatial().isPresent()) {
+            throw new UnsupportedModelContentException(
+                    "spatial",
+                    "the current Engine interpretation does not execute a present spatial record");
+        }
 
         MachineStore machines = new MachineStore();
         for (ConfiguredResource resource : model.resources()) {

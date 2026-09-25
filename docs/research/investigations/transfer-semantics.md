@@ -2,23 +2,25 @@
 
 > **Status:** Maintained research programme; the lifecycle question is concluded through the current [transfer-applicability boundary](../../architecture/transfer-applicability.md), while non-spatial timing remains a candidate
 > **Scope:** Separate the existence of inter-resource transfer as runtime behavior from spatial layout and from the mechanism used to determine transfer duration  
-> **Authority:** Research only; the [transfer-applicability boundary](../../architecture/transfer-applicability.md), Factory Model v2 and Engine Semantics v1 own current meaning
+> **Authority:** Research only; the [transfer-applicability boundary](../../architecture/transfer-applicability.md), the [Factory model](../../architecture/factory-model.md) and the [Engine semantics](../../architecture/engine-semantics.md) own current meaning
 
 ## Why this programme exists
 
-Current unreleased Factory/Engine architecture couples three concepts:
+The work-in-progress Factory/Engine architecture couples three concepts:
 
 1. the **transfer lifecycle** (`TRANSFER_STARTED`, `TRANSFERRING`, `TRANSFER_COMPLETED`, destination binding/admission consequences);
 2. **transfer timing**; and
 3. the optional **spatial record** carrying floor, position, footprint, `ticksPerCell`, and `handlingTicks`.
 
-Absence of that spatial record means the design makes no handling assertion. The [superseded Engine-applicability investigation](engine-applicability-optional-record-factory-policies.md) inherited "spatial absent implies no transfer lifecycle" as a premise; that is why the lifecycle question below was admitted. Its reviewed evidence remains useful, but its recommendation did not constrain the lifecycle candidates. V2 remains unreleased and spatial runtime activation is blocked pending the separate [Engine applicability question](engine-applicability-after-transfer-boundary.md).
+Absence of that spatial record means the design makes no handling assertion. The [superseded Engine-applicability investigation](engine-applicability-optional-record-factory-policies.md) inherited "spatial absent implies no transfer lifecycle" as a premise; that is why the lifecycle question below was admitted. Its reviewed evidence remains useful, but its recommendation did not constrain the lifecycle candidates. Spatial runtime activation is ordinary remaining delivery in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md); the [Engine-identity question](engine-applicability-after-transfer-boundary.md) that once blocked it was superseded by the provisional semantic-contract reset.
 
-The lifecycle investigation and independent adversarial review selected the [current transfer-applicability boundary](../../architecture/transfer-applicability.md). The selection is bounded to currently represented V2 content. This brief retains the original proving cases and the separately deferred timing question as research context; it is not the current Engine definition.
+The lifecycle investigation and independent adversarial review selected the [current transfer-applicability boundary](../../architecture/transfer-applicability.md). The selection is bounded to currently represented spatial-record content. This brief retains the original proving cases and the separately deferred timing question as research context; it is not the current Engine definition.
 
 ## CONCLUDED — transfer lifecycle independence
 
-The adopted result is explicit no transfer for a distinct-resource continuation under an Engine that admits V2 with no spatial record. A present complete spatial record can yield a zero or positive transfer interval with the full lifecycle under an Engine that admits it. Factory-valid but Engine-unsupported artifacts are refused before runtime mutation; support is checked before same-resource control cases. This is a current design choice, not a universal requirement to condition every future transfer lifecycle on authored timing facts. The exact Engine identity/support partition remains open in the [successor question](engine-applicability-after-transfer-boundary.md). Independent review accepted the no-transfer recommendation with qualifications covering this scope, publication versus execution support, refusal priority, and the corrected bounded-step witness; all four are captured in the adopted boundary. No V2 grammar correction or runtime activation follows from this conclusion alone.
+The question, decision and scope below are retained as asked; they predate the provisional semantic-contract reset, which replaced the Factory V1/V2 policies with one work-in-progress model and made the Engine interpretation work in progress.
+
+The adopted result is explicit no transfer for a distinct-resource continuation under an Engine that admits a model with no spatial record. A present complete spatial record can yield a zero or positive transfer interval with the full lifecycle under an Engine that admits it. Factory-valid but Engine-unsupported models are refused before runtime mutation; support is checked before same-resource control cases. This is a current design choice, not a universal requirement to condition every future transfer lifecycle on authored timing facts. The later question about exact Engine identities was superseded by the reset; the current Engine executes only the spatial-absent case and refuses present spatial content until spatial execution is implemented. Independent review accepted the no-transfer recommendation with qualifications covering this scope, publication versus execution support, refusal priority, and the corrected bounded-step witness; all four are captured in the adopted boundary. No Factory grammar correction or runtime activation follows from this conclusion alone.
 
 ### Question
 
@@ -110,7 +112,7 @@ If a concrete consumer needs hand-off or positive transfer duration without spat
 
 ### Why it is not READY yet
 
-The concluded current boundary selects no transfer on V2 absence and finds no present need for an additional hand-off assertion or positive non-spatial interval. A future consumer need can reopen that choice; no candidate representation is admitted now.
+The concluded current boundary selects no transfer when the spatial record is absent and finds no present need for an additional hand-off assertion or positive non-spatial interval. A future consumer need can reopen that choice; no candidate representation is admitted now.
 
 ### Candidate families to test when promoted
 
@@ -129,14 +131,9 @@ The investigation must prefer the smallest authored invariant that a concrete co
 
 ### Promotion trigger
 
-Promote only when a concrete simulation, game, industrial-design or operational consumer needs to assert hand-off without spatial facts, or needs positive non-spatial transfer time. Revisit the current no-transfer choice, Factory grammar and Engine identity/support together; do not assume that adding a timing record automatically admits a transfer lifecycle.
+Promote only when a concrete simulation, game, industrial-design or operational consumer needs to assert hand-off without spatial facts, or needs positive non-spatial transfer time. Revisit the current no-transfer choice, the Factory grammar and the Engine interpretation together; do not assume that adding a timing record automatically admits a transfer lifecycle.
 
 ## Consequences for current work
 
-Until the successor Engine-applicability question is reconciled:
-
-- do not release `factory-model:v2` or activate spatial transfer runtime behavior;
-- derive the exact identity/support cases from the adopted [transfer-applicability boundary](../../architecture/transfer-applicability.md), including artifact refusal before runtime cases;
-- do not infer that fixed `engine-semantics:v1` admits V2 or that V1 publication and historical V1 execution have one support switch.
-
-If a later need selects a transfer contract independent of the current optional spatial record, revisit the concluded Factory composition result before V2 attribution. Because V2 is unreleased, the appropriate outcome may be a correction to its grammar; if attribution has occurred by then, the semantic evolution rules control instead.
+- make spatial content executable only through the [spatial-runtime plan](../../planning/spatial-runtime-consequences.md), preserving the adopted boundary's absence, authored-zero and refusal meanings and refusal before runtime cases;
+- while both definitions are work in progress, a later transfer contract independent of the optional spatial record is a coordinated correction of the Factory model and the Engine interpretation that revisits the concluded Factory composition result, not a successor policy; after either is promoted, the [semantic evolution rules](../../architecture/overview.md#semantic-evolution-and-support) control instead.

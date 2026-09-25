@@ -1,4 +1,4 @@
-package com.arcogine.factory.model.v2;
+package com.arcogine.factory.model.spatial;
 
 import com.arcogine.types.MachineId;
 import java.util.Objects;
@@ -9,7 +9,8 @@ import java.util.Objects;
  *
  * <p>This entry holds only spatial facts. The resource's own facts -- name, concurrency, capacity,
  * setup time -- stay owned by its {@link com.arcogine.factory.model.ConfiguredResource} in
- * {@link FactoryModelV2#resources()}; a layout never carries a second copy of them.
+ * {@link com.arcogine.factory.model.FactoryModel#resources()}; a layout never carries a second
+ * copy of them.
  */
 public record ResourceLayout(
         MachineId resourceId, ResourcePlacement placement, ResourceFootprint footprint) {

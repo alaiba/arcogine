@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.change.FactoryModelSemanticComparator;
 import com.arcogine.factory.model.FactoryModel;
-import com.arcogine.factory.model.FactoryModelArtifactV1;
+import com.arcogine.factory.model.FactoryModelArtifact;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
@@ -38,17 +38,7 @@ import org.junit.jupiter.api.io.TempDir;
 class ChangeSetFactoryTest {
 
     private static final RevisionRecorder RECORDER = new RevisionRecorder("test", "operator");
-    private static final SemanticArtifactVerifier FACTORY_VERIFIER = new SemanticArtifactVerifier() {
-        @Override
-        public boolean supports(ModelFingerprint fingerprint) {
-            return FactoryModelArtifactV1.supports(fingerprint);
-        }
-
-        @Override
-        public ModelFingerprint fingerprint(byte[] canonicalBytes) {
-            return FactoryModelArtifactV1.fingerprint(canonicalBytes);
-        }
-    };
+    private static final SemanticArtifactVerifier FACTORY_VERIFIER = FactoryModelArtifact.verifier();
     private static final FactoryModelSemanticComparator COMPARATOR = new FactoryModelSemanticComparator();
 
     @TempDir
@@ -106,7 +96,7 @@ class ChangeSetFactoryTest {
         FactoryModelVersion candidateVersion = model(List.of(1, 2));
         SemanticArtifact candidateArtifact =
                 new SemanticArtifact(
-                        candidateVersion.fingerprint(), FactoryModelArtifactV1.encode(candidateVersion));
+                        candidateVersion.fingerprint(), FactoryModelArtifact.encode(candidateVersion));
 
         ChangeSet changeSet =
                 ChangeSetFactory.fromCandidateSnapshot(
@@ -136,7 +126,7 @@ class ChangeSetFactoryTest {
         // Declares realCandidate's fingerprint but carries differentCandidate's canonical bytes.
         SemanticArtifact mismatchedArtifact =
                 new SemanticArtifact(
-                        realCandidate.fingerprint(), FactoryModelArtifactV1.encode(differentCandidate));
+                        realCandidate.fingerprint(), FactoryModelArtifact.encode(differentCandidate));
 
         IllegalArgumentException exception =
                 org.junit.jupiter.api.Assertions.assertThrows(
@@ -162,7 +152,7 @@ class ChangeSetFactoryTest {
         FactoryModelVersion candidateVersion = model(List.of(1, 2));
         SemanticArtifact candidateArtifact =
                 new SemanticArtifact(
-                        candidateVersion.fingerprint(), FactoryModelArtifactV1.encode(candidateVersion));
+                        candidateVersion.fingerprint(), FactoryModelArtifact.encode(candidateVersion));
         SemanticArtifactVerifier unsupportingVerifier = new SemanticArtifactVerifier() {
             @Override
             public boolean supports(ModelFingerprint fingerprint) {
@@ -172,6 +162,11 @@ class ChangeSetFactoryTest {
             @Override
             public ModelFingerprint fingerprint(byte[] canonicalBytes) {
                 throw new AssertionError("must not be reached when the policy is unsupported");
+            }
+
+            @Override
+            public String definitionBinding() {
+                return "unsupporting-test-definition";
             }
         };
 
@@ -197,7 +192,7 @@ class ChangeSetFactoryTest {
         FactoryModelVersion candidateVersion = model(List.of(1, 2));
         SemanticArtifact candidateArtifact =
                 new SemanticArtifact(
-                        candidateVersion.fingerprint(), FactoryModelArtifactV1.encode(candidateVersion));
+                        candidateVersion.fingerprint(), FactoryModelArtifact.encode(candidateVersion));
         SemanticArtifactVerifier failingVerifier = new SemanticArtifactVerifier() {
             @Override
             public boolean supports(ModelFingerprint fingerprint) {
@@ -207,6 +202,11 @@ class ChangeSetFactoryTest {
             @Override
             public ModelFingerprint fingerprint(byte[] canonicalBytes) {
                 throw new IllegalStateException("cannot decode candidate bytes");
+            }
+
+            @Override
+            public String definitionBinding() {
+                return "failing-test-definition";
             }
         };
 
@@ -267,7 +267,7 @@ class ChangeSetFactoryTest {
     }
 
     private FileControlledRevisionAuthority authority() {
-        return new FileControlledRevisionAuthority(tempDirectory, FACTORY_VERIFIER);
+        return FileControlledRevisionAuthority.openProvingStore(tempDirectory.resolve("store"), FACTORY_VERIFIER);
     }
 
     private ControlledRevision accept(
@@ -282,7 +282,7 @@ class ChangeSetFactoryTest {
                         new RevisionProvenance(Instant.now(), RECORDER));
         return authority.accept(
                 candidate,
-                new SemanticArtifact(version.fingerprint(), FactoryModelArtifactV1.encode(version)));
+                new SemanticArtifact(version.fingerprint(), FactoryModelArtifact.encode(version)));
     }
 
     private static FactoryModelVersion model(List<Integer> resourceIds) {

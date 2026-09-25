@@ -3,7 +3,7 @@
 > **Status:** Active; PLAN-GOV-1 complete, PLAN-GOV-2 initial slice complete, PLAN-GOV-3 complete, PLAN-GOV-4 initial slice complete, PLAN-GOV-5 headless slice complete
 > **Scope:** Implementation admission and sequencing for evidence, governed change, exceptions, mappings, and audit projections over the landed identity/change/conformance substrate
 > **Authority:** Planning only; durable semantics remain owned by Governance architecture and its adopted contracts  
-> **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [Governance evidence contract](../architecture/governance-evidence.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Operational continuity contract](../architecture/operational-continuity.md), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory Model v1 specification](../architecture/factory-model-v1.md), [controlled revision contract](../architecture/controlled-revisions.md)
+> **Related:** [Governance Architecture](../architecture/governance-conformance.md), [Identity/History Compatibility Guard](governance-continuity.md), [Governance evidence contract](../architecture/governance-evidence.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Operational continuity contract](../architecture/operational-continuity.md), [Factory publication identity contract](../architecture/factory-design.md#11-publication-identity-and-provenance), [Factory model specification](../architecture/factory-model.md), [controlled revision contract](../architecture/controlled-revisions.md)
 
 ## 1. Boundary
 
@@ -35,7 +35,7 @@ optional framework mappings / audit projection
 
 ### PLAN-GOV-1 — Durable fingerprint and controlled revision history — COMPLETE
 
-Provides durable semantic identity, opaque historical revision identity, authoritative history, lineage, recording provenance, and exact historical semantic-state resolution.
+Provides the semantic-fingerprint seam, opaque historical revision identity, append-only history, lineage, recording provenance, and exact semantic-state resolution. The landed store is an explicitly disposable proving store over work-in-progress Factory content; a retained, commitment-bearing revision authority is introduced only with an explicit promotion under the [semantic evolution rules](../architecture/overview.md#semantic-evolution-and-support).
 
 Downstream work must preserve the [Identity/History Compatibility Guard](governance-continuity.md).
 
@@ -120,16 +120,17 @@ still depend only on `:types`.
 Bounded by the Governance evidence contract §12: prove the contract with producer identities and provenance that actually
 exist, or with explicit fixtures at the owning seam, and state which provenance class is proved.
 
-- **Structural facts** are the production-backed class: authoritative controlled revision plus
-  `ModelFingerprint` supply a real producer identity, and the model version is the evidence's own
-  provenance.
+- **Structural facts** are the implementation-backed class: a controlled revision accepted by the
+  proving store plus `ModelFingerprint` supply a real producer identity, and the model version is
+  the evidence's own provenance. While the Factory definition is work in progress, that identity is
+  development evidence, not a retained historical commitment.
 - **Arcogine-derived analytical results** may be proved through an explicitly attributed fixture
-  carrying producer-owned `ModelFingerprint`, `EngineSemanticsVersion`, run/result identity, and
-  explicit inputs. `FactoryRuntime` exposes a fixed `EngineSemanticsVersion`, but durable Engine
+  carrying producer-owned `ModelFingerprint`, `EngineSemantics`, run/result identity, and
+  explicit inputs. `FactoryRuntime` exposes a fixed `EngineSemantics`, but durable Engine
   result identity and observation/event provenance propagation are not yet established and
   analytical-definition ownership is an open research question, so this slice must not claim a
-  production Engine or analytics integration and must never infer or stamp a missing semantics
-  version.
+  production Engine or analytics integration and must never infer or stamp a missing Engine
+  interpretation.
 - **External observations** may be proved only through a fixture that retains source
   identity/subject/time/trust provenance and an explicit correspondence assertion supplied at the
   seam. No Operational observation type, ingestion, correspondence authority, or trust semantics is
@@ -162,13 +163,15 @@ against, distinguishing fixture-proved seams from production integrations:
 6. **External observation before correspondence** — a fixture observation retains source provenance
    with no Arcogine subject at ingestion; the use carries the explicit correspondence decision.
 7. **Analytical result** — a fixture result retains producer-owned provenance unchanged; a result
-   with no `EngineSemanticsVersion` remains explicitly unresolved rather than being stamped.
+   with no `EngineSemantics` remains explicitly unresolved rather than being stamped.
 8. **Source model versus use target** — a result produced for one model is used as a comparator
    for another only through an explicit comparator role.
 9. **Definition rebinding** — a later requirement/assertion wording or rule change under the same
    identity plus version cannot change the definition a historical occurrence resolves to.
-10. **Retired producer** — attribution survives loss of executability; missing required material is
-    disclosed rather than substituted.
+10. **Unresolvable producer interpretation** — attribution stays recorded when the producing
+    interpretation can no longer be resolved — a retired promoted producer, or a work-in-progress
+    marker whose definition has since changed; missing required material is disclosed rather than
+    substituted.
 11. **Context-bound packaging** — if evidence and use are stored together or copied per evaluation,
     the independent source identity and use context remain distinguishable.
 12. **Accumulating continuation** — a use target that is an operational continuation rather than a

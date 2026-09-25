@@ -1,70 +1,75 @@
-# Engine Semantics v1
+# Engine semantics
 
-Status: Normative interpretation contract; implementation partial (spatial execution and provenance propagation outstanding)
-Semantic identity: `engine-semantics:v1`
+Status: Normative work-in-progress interpretation, `engine-semantics:wip`. Production-only execution is implemented; the spatial transfer rules (§5–§13) are specified but not executed, and a present spatial record is refused; propagation into observation/event metadata is outstanding. Not promoted.
 Rationale: [Determinism Contract](overview.md#determinism-contract)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
-Model-side counterpart: [Factory Model v2 Canonicalization](factory-model-v2.md)
+Model-side counterpart: [Factory model](factory-model.md)
 
 ## 1. Purpose
 
-`engine-semantics:v1` defines the complete result-affecting Engine interpretation that Arcogine
-must attribute to a simulation run using this version. It records semantic rules, not Java class
-shape, DTO serialization, build identity, or replaceable implementation algorithms.
+This document defines the complete result-affecting Engine interpretation a simulation run uses. It
+records semantic rules, not Java class shape, DTO serialization, build identity, or replaceable
+implementation algorithms.
 
-`EngineSemanticsVersion` is the semantic identity of Arcogine's complete result-affecting
-simulation interpretation for a run. It is distinct from `ModelFingerprint` (which authored Factory
-design was executed), from `RunId` (which runtime epoch produced the facts, correlation only, and
-never an input to any result), and from software/build/release identity (which implementation
-artifact happened to execute them, kept as diagnostic provenance only). None of those substitutes
-for it: the same design legitimately produces different outcomes under different accepted
+`EngineSemantics` names that interpretation for a run. It is distinct from `ModelFingerprint`
+(which authored Factory design was executed), from `RunId` (which runtime epoch produced the facts,
+correlation only, and never an input to any result), and from software/build identity (which
+implementation artifact happened to execute them, kept as diagnostic context only). None of those
+substitutes for it: the same design legitimately produces different outcomes under different
 interpretations, so `ModelFingerprint` alone would attribute a result to a design that did not
-determine it, while builds change for many semantics-preserving reasons and carry no stable
-meaning. A fact describing the production system the designer authored
-belongs to the canonical model and its fingerprint; a rule describing how Arcogine interprets any
-such design belongs here when changing it can change semantic outcome for identical explicit
-inputs; a replaceable algorithm that preserves observable semantics is an implementation detail.
+determine it, while builds change for many semantics-preserving reasons. A fact describing the
+production system the designer authored belongs to the canonical model and its fingerprint; a rule
+describing how Arcogine interprets any such design belongs here when changing it can change semantic
+outcome for identical explicit inputs; a replaceable algorithm that preserves observable semantics is
+an implementation detail.
 
-The durable result inputs are:
+The result inputs are:
 
 ```text
 ModelFingerprint
-+ EngineSemanticsVersion (`engine-semantics:v1`)
++ EngineSemantics (the interpretation the run executes)
 + explicit workload
 + seed/random inputs
 + ordered external commands
 + any other explicitly identified result-affecting input
 ```
 
-A run fixes its Engine semantics version at establishment. The version never changes mid-run, and
-a new runtime always gets a fresh `RunId` regardless of which version it uses. One version covers
-dispatch, decomposition, scheduling, transfer and derived-result interpretation together, because
-those rules interact to produce one outcome; independently versioned sub-policies would need a
-concrete independent-evolution requirement.
+A run fixes its interpretation at establishment; it never changes mid-run, and a new runtime always
+gets a fresh `RunId`. One interpretation covers dispatch, decomposition, scheduling, transfer and
+derived-result rules together, because those rules interact to produce one outcome; independently
+named sub-policies would need a concrete independent-evolution requirement. The runtime executes
+exactly one interpretation, reports it through `FactoryRuntime.engineSemantics()`, and refuses any
+other name rather than silently executing under different semantics. Carrying it in every supported
+observation and event envelope is required by the [runtime contract](runtime-contract.md);
+propagation into the metadata types is a known implementation gap.
 
-The runtime supports exactly one version, reports it through `FactoryRuntime`, and must refuse an
-unsupported version rather than silently executing a record under different semantics. Carrying
-the version in every supported observation and event envelope is required by the
-[runtime contract](runtime-contract.md); propagation into the metadata types is a known
-implementation gap. An intentional change that can alter outcome for identical explicit inputs —
-including a bug fix that observably changes interpretation — is a new version; repairing an
-implementation to conform to this specification is not. Performance work, dependency upgrades,
-refactors, logging and projection-only changes keep the version only while they preserve the
-normative behavior. When a version is retired from execution, its identifier, this specification
-and the conformance fixtures of section 14 remain, so historical results stay attributable and
-interpretable; cross-version comparison is explicit and owned by the consumer making the claim.
+The interpretation is **work in progress**, named by the mutable development marker
+`engine-semantics:wip`:
 
-Complete conformance to this specification requires the result-affecting rules and the behavioral
-fixtures, not merely a reported constant. Retaining this document creates no execution or
-compatibility promise beyond what the [support policy](../development/semantic-contract-support.md)
-declares for it.
+- for the same model, explicit inputs and current definition, supported outcomes are deterministic;
+- between development revisions the result-affecting rules may be corrected or extended without a
+  new name. An intentional change that can alter outcome for identical explicit inputs — a bug fix
+  that observably changes interpretation included — is a definition change: it updates this
+  specification and the conformance fixtures of §14 in the same change. Repairing an implementation
+  to conform to this specification is not a definition change, and performance work, dependency
+  upgrades, refactors, logging and projection-only changes must preserve the normative behavior;
+- the marker therefore identifies the definition current in one build, not a definition that spans
+  revisions. A result produced under an earlier development revision is not attributable to today's
+  text by its marker; comparing results across revisions is a claim its consumer must establish;
+- implementation, fixtures and this normative description do not promote the interpretation. A
+  promoted Engine interpretation receives a distinguishable durable name and the non-rebinding and
+  support obligations of the [semantic evolution rules](overview.md#semantic-evolution-and-support);
+  Engine and Factory need not promote together.
+
+Complete conformance requires the result-affecting rules and the behavioral fixtures, not merely a
+reported name.
 
 ### 1.1 Completeness rule
 
 This specification claims to identify the **complete** result-affecting Engine interpretation. That
 claim is operational, not aspirational. The membership test is:
 
-> A rule belongs to `engine-semantics:v1` if changing it can change the outcome — acceptance or
+> A rule belongs to the Engine interpretation if changing it can change the outcome — acceptance or
 > rejection, assignment, ordering, timing, or derived result — for an identical `ModelFingerprint`,
 > explicit workload, seed/random inputs, and ordered external commands.
 
@@ -74,7 +79,7 @@ Four consequences follow.
    envelope, ceiling, or bound that deterministically decides acceptance, rejection, assignment,
    ordering, or timing is a semantic rule regardless of where it currently sits in the
    implementation. Every such limit is either
-   - part of `EngineSemanticsVersion` and recorded in this specification, or
+   - part of the interpretation and recorded in this specification, or
    - an explicitly identified reproducibility input recorded alongside `ModelFingerprint`, explicit
      workload, seed, and ordered commands.
 
@@ -87,15 +92,15 @@ Four consequences follow.
    that owns the behavior they bound — the child materialization envelope in section 3, the exact
    ranking arithmetic in section 2 rule 3, the derived-result edge cases in section 10.1, and the
    accumulator register in section 10.2.
-2. **A rule is in scope even when the capability that motivated this version did not introduce it.**
+2. **A rule is in scope even when the capability that motivated it did not introduce it.**
    Pre-existing behavior that satisfies the membership test is captured here rather than left
    implicit because it predates spatial transfer work. Sections 1.2, 2, 3 and 4 exist for exactly
    that reason.
-3. **Recording a previously unwritten rule is a correction, not a semantics change**, provided the
-   rule's behavior is unchanged. Changing the behavior requires a new Engine semantics version.
+3. **Recording a previously unwritten rule is a correction, not a behavior change**, provided the
+   rule's behavior is unchanged. Changing the behavior is a definition change (§1).
 4. **A rule that satisfies the membership test but is absent here is a defect in this document**,
-   not a licence to treat the behavior as unversioned. The correct response is to record it, or to
-   promote it to an explicitly identified reproducibility input — not to leave it ambient.
+   not a licence to treat the behavior as unspecified. The correct response is to record it, or to
+   make it an explicitly identified reproducibility input — not to leave it ambient.
 5. **Incidental implementation ordering is never a semantic tie-breaker.** Hash iteration order,
    set or map traversal order, thread scheduling, and comparable artefacts of the runtime are not
    rules two conforming implementations could agree on, so they may not decide a result. Where
@@ -106,8 +111,8 @@ Four consequences follow.
 
 The consumer-neutral session/control behavior satisfies the section 1.1 membership test: it decides
 how far a session advances and whether an externally initiated change is applied, for an identical
-ordered command sequence. It is therefore part of the `engine-semantics:v1` interpretation, and two
-implementations may not claim this version while differing on it.
+ordered command sequence. It is therefore part of the interpretation, and two implementations may not
+claim the same interpretation while differing on it.
 
 This section owns those rules; `SessionControlAcceptanceTest` and `RecordingSchedulerTest` prove
 them. In scope:
@@ -144,13 +149,12 @@ Further session rules in scope:
   separately from per-machine queue depth, so a consumer never sees every queue empty while
   real work is still waiting.
 
-A change to any rule in this section is a change to `engine-semantics:v1` and requires a new
-Engine semantics version.
+A change to any rule in this section is a change to the interpretation (§1).
 
 ## 2. Resource-selection and dispatch semantics
 
 Spatial transfer semantics do not redefine the existing resource-selection and dispatch behavior.
-The following rules are part of v1:
+The following rules are part of the interpretation:
 
 1. Start from the routing step's authored eligible-machine set. Prefer online machines by filtering
    out `Offline` resources when at least one eligible machine is online. If every eligible machine
@@ -201,7 +205,7 @@ The following rules are part of v1:
    and only exception, and it is governed by section 6 rule 9 and section 9 rule 8.
 8. **Each machine's own queue is strict FIFO in arrival order.** Entries are appended at the tail on
    enqueue and taken from the head on dispatch. Queue position is not re-derived from job identity,
-   ordinal, order identity, step duration, remaining steps, waiting time, or priority; v1 has no
+   ordinal, order identity, step duration, remaining steps, waiting time, or priority; there is no
    priority, aging, or reordering rule for per-machine queues.
 9. **The shared multi-eligible backlog holds pre-binding work only**, and retains arrival order. An
    entry's eligible set is the one captured when it was enqueued. Reconsideration re-runs selection
@@ -213,7 +217,7 @@ The following rules are part of v1:
     currently admissible under the same acceptance rule that otherwise permits immediate processing;
     transfer semantics do not move selection earlier or redefine ranking.
 
-Changing any of those result-affecting rules requires a new Engine semantics version.
+Changing any of those result-affecting rules is a change to the interpretation (§1).
 
 ## 3. Unit-work decomposition semantics
 
@@ -228,7 +232,7 @@ aggregate completion by counting child states itself, and the game/challenge lay
 one production requirement into several orders merely to obtain parallelism — Arcogine owns that
 decomposition.
 
-The unit-work decomposition rules are part of v1:
+The unit-work decomposition rules are part of the interpretation:
 
 1. Workload quantity `N` decomposes into `N` independently dispatchable `JobId` children.
 2. Child creation/release and initial dispatch use deterministic ordinal ordering.
@@ -244,7 +248,7 @@ The unit-work decomposition rules are part of v1:
    the `OrderId` and the completing child `JobId`. Backlog, completed sales and value, lead time
    and order-throughput remain order-level facts; child count never multiplies a sale. Material
    lots, arbitrary batch sizes and split/merge semantics are separate future contracts.
-5. **The supported child-materialization envelope is part of `engine-semantics:v1`.** Workload
+5. **The supported child-materialization envelope is part of the interpretation.** Workload
    submission accepts `1 <= N <= 100000` and rejects anything outside that closed interval as an
    out-of-range explicit input. The bound is a flat count of children; it does not vary with routing
    step count, resource count, or any other model content.
@@ -257,12 +261,12 @@ Rule 5 is recorded here rather than left as an implementation guard because it s
 `100001` is deterministically rejected and a workload of `100000` is deterministically accepted and
 executed. Two implementations choosing different envelopes would disagree about whether a run
 happens at all, which is the strongest possible outcome difference. The envelope is consequently
-neither an ambient policy nor a free implementation choice; changing the accepted interval requires
-a new Engine semantics version, and a deployment that needs a different interval must expose it as
-an explicitly identified reproducibility input rather than silently widening or narrowing v1.
+neither an ambient policy nor a free implementation choice; changing the accepted interval is a
+change to the interpretation, and a deployment that needs a different interval must expose it as an
+explicitly identified reproducibility input rather than silently widening or narrowing it.
 
-A change that can alter assignment, ordering, or completion outcome for identical explicit inputs
-requires a new Engine semantics version.
+A change that can alter assignment, ordering, or completion outcome for identical explicit inputs is a
+change to the interpretation (§1).
 
 ## 4. Scheduler and dispatch-cascade ordering
 
@@ -276,7 +280,7 @@ requires a new Engine semantics version.
 5. The intra-handler recovery cascade is also semantic ordering where it changes assignment:
    after a completed step releases a machine, the Engine first attempts to dispatch that machine's
    own queued work and only then reconsiders `pendingMultiEligible` work. A change to that ordering
-   can change assignments and therefore requires a new Engine semantics version.
+   can change assignments and is therefore a change to the interpretation.
 6. The cascade runs at the same two trigger points and in the same shape for both of them: a step
    completion that releases a machine, and a machine coming back online. Taking a machine offline
    runs no cascade.
@@ -302,18 +306,25 @@ not because spatial transfer introduced them.
 Spatial transfer semantics apply this boundary:
 
 - authored plant facts belong to the canonical Factory model and `ModelFingerprint`;
-- result-affecting rules for interpreting those facts belong to `engine-semantics:v1`;
+- result-affecting rules for interpreting those facts belong to this interpretation;
 - authoritative facts that exist only during one run are runtime state;
 - replaceable mechanisms preserving the same semantic outcomes are implementation details.
 
-The V2 model facts consumed by this specification are floor dimensions, resource position,
-resource footprint, `ticksPerCell`, and `handlingTicks`, as fixed and canonicalized by
-[Factory Model v2 Canonicalization](factory-model-v2.md). This specification consumes those facts;
-it never defines their canonical encoding or identity.
+The spatial-record facts consumed by this specification are floor dimensions, resource position,
+resource footprint, `ticksPerCell`, and `handlingTicks`, as defined and canonicalized by the
+[Factory model](factory-model.md#22-optional-spatial-record). This specification consumes those
+facts; it never defines their canonical encoding or identity.
+
+**Execution status.** Sections 6–13 specify how the interpretation reads a present spatial record.
+The current implementation does not execute them: a published model whose spatial record is present
+is refused before any runtime state exists, and a model whose record is absent has no transfer
+lifecycle ([transfer applicability](transfer-applicability.md)). These sections are the current
+specified design for spatial execution, correctable while the interpretation is work in progress;
+they are not implemented behavior.
 
 ## 6. Destination selection and binding
 
-The v1 rule is **transfer begins when the selected destination becomes admissible for binding under
+The rule is **transfer begins when the selected destination becomes admissible for binding under
 the existing acceptance semantics**.
 
 1. On completion of operation `k`, the source resource releases processing capacity exactly as it
@@ -329,7 +340,7 @@ the existing acceptance semantics**.
    the inbound job is not yet active processing and is not yet queued work.
 6. Transfer duration is computed and fixed at that binding instant.
 7. `TRANSFER_STARTED` is emitted for the authoritative transition into the in-flight state.
-8. Destination binding is immutable after transfer start. V1 does not reroute.
+8. Destination binding is immutable after transfer start. There is no rerouting.
 9. **Binding collapses the job's effective eligible set to the bound destination** for every
    subsequent waiting decision. From binding until the job begins processing there, the bound
    destination is the only machine the job can be placed on, regardless of how many machines the
@@ -358,32 +369,32 @@ transferDuration = handlingTicks + (ticksPerCell * manhattanDistance)
 
 Semantic rules:
 
-1. Resource positions are integer reference cells defined by Factory Model v2 as the minimum-coordinate
-   cells of their footprints.
+1. Resource positions are integer reference cells defined by the Factory model as the
+   minimum-coordinate cells of their footprints.
 2. Distance is Manhattan distance between those reference cells.
-3. Resource footprint does **not** affect v1 transfer distance. Footprint remains canonical Factory
+3. Resource footprint does **not** affect transfer distance. Footprint remains canonical Factory
    content for publication/layout validation and future spatial semantics.
 4. `handlingTicks` is applied once per transfer, not once per endpoint.
-5. Arithmetic is integer throughout. V1 has no floating-point distance and no rounding rule because
+5. Arithmetic is integer throughout. There is no floating-point distance and no rounding rule because
    none is required by the chosen metric.
-6. Factory V2 publication validation must prove the exact maximum-duration predicate defined by
-   Factory Model v2 §1.1: `(W - 1) + (H - 1)` and
+6. Factory publication validation proves the exact maximum-duration predicate defined by the
+   [Factory model](factory-model.md#22-optional-spatial-record): `(W - 1) + (H - 1)` and
    `handlingTicks + ticksPerCell * maxManhattanDistance` must be representable with overflow-safe
    arithmetic in the runtime duration type. This guarantees representability of the derived
    transfer duration; it does not guarantee that `currentSimTime + transferDuration` is
    representable at an arbitrarily extreme current time. The existing runtime time-addition guard
    remains responsible for that condition.
 7. Distinct resource footprints may not overlap. Because each reference cell lies inside its own
-   footprint under Factory Model v2, distinct valid resources cannot share the same reference cell, so a
-   zero-distance inter-resource transfer is not a supported v1 state.
+   footprint, distinct valid resources cannot share the same reference cell, so a zero-distance
+   inter-resource transfer is not a supported state.
 8. Consecutive operations on the **same resource** perform no transfer at all: no transfer state,
    no duration, and no transfer events.
-9. A V2 design with `ticksPerCell = 0` and `handlingTicks = 0` therefore preserves the completion
+9. A present spatial record with `ticksPerCell = 0` and `handlingTicks = 0` therefore preserves the completion
    timing that would occur without spatial transfer delay while still exposing the authoritative
    transfer start/completion transitions for distinct resources.
 
 Changing metric, endpoint interpretation, handling application, arithmetic/rounding, zero-distance
-semantics, or same-resource behavior requires a new Engine semantics version.
+semantics, or same-resource behavior is a change to the interpretation.
 
 ## 8. Transfer runtime state machine
 
@@ -434,7 +445,7 @@ else:
    That reserved inbound capacity counts when deciding whether the destination can admit additional
    work, but the job is not in the destination's active-processing set and does not make the machine
    `Busy` merely because it is in flight.
-3. V1 invents no transport resource/capacity, conveyor scheduler, physical buffer, or congestion
+3. The interpretation invents no transport resource/capacity, conveyor scheduler, physical buffer, or congestion
    model.
 4. Admission reservation must be distinguishable from both active processing and queued work. It
    need not be a new public resource abstraction; it is runtime bookkeeping required to preserve
@@ -455,7 +466,7 @@ else:
    consequences unambiguously: it **counts in the destination's queue depth**, it is **no longer
    held as reserved admission capacity** (the reservation is converted, not additionally retained,
    so one waiting job never consumes two units of the same destination's capacity), and it is not an
-   active job until processing starts. This is the one case in v1 where a job whose authored routing
+   active job until processing starts. This is the one case where a job whose authored routing
    step listed several eligible machines legitimately occupies a per-machine queue.
 
 ## 10. KPI and resource-observation interpretation
@@ -488,7 +499,7 @@ not misdiagnose that state as ordinary processing utilization.
 
 The arithmetic that produces supported derived results is itself result-affecting under section 1.1:
 two implementations computing these differently would report different supported observations for an
-identical model, workload, seed and ordered command sequence. These rules are part of v1.
+identical model, workload, seed and ordered command sequence. These rules are part of the interpretation.
 
 1. **Cumulative `busyTicks` saturates.** A resource's cumulative busy time is credited at step
    completion by adding the finished step's duration. Because durations are non-negative, a negative
@@ -510,8 +521,8 @@ identical model, workload, seed and ordered command sequence. These rules are pa
 Rules 1 to 4 are deliberate total-function choices at domain edges, not incidental defensive coding:
 each replaces an undefined, wrapped, or non-finite value with a defined one a consumer can interpret.
 Rule 5 is the deliberate exception, and it is a rejection rule rather than a value rule. Changing any
-of them changes supported derived results for identical explicit inputs and therefore requires a new
-Engine semantics version.
+of them changes supported derived results for identical explicit inputs and is therefore a change to
+the interpretation.
 
 ### 10.2 Derived-result accumulator register
 
@@ -520,7 +531,7 @@ derived result, because an accumulator's overflow policy changes the reported va
 explicit inputs exactly as a zero-denominator rule does. Sentinel cases and accumulators are two
 halves of one contract; specifying only the first leaves the second ambient.
 
-| Supported derived result | Accumulator | v1 accumulation rule |
+| Supported derived result | Accumulator | Accumulation rule |
 |---|---|---|
 | resource `busyTicks` / utilization | per-resource cumulative tick sum | saturating (rule 1 below) |
 | mean lead time | sum of completed-order lead times ÷ completed count | saturating (rule 1 below) |
@@ -549,13 +560,10 @@ halves of one contract; specifying only the first leaves the second ambient.
    round-to-nearest above it — deterministic across conforming implementations either way, so no
    further rounding rule is required.
 
-**Implementation obligation.** Rule 1's saturation requirement is satisfied today for `busyTicks` but
-**not** for mean-lead-time accumulation, which currently sums lead times without an overflow check.
-That is a real gap between this contract and shipped behavior. The implementation slice that pins
-existing semantics must make the accumulation saturating and prove it, rather than relaxing this
-specification to describe wrapping. Specifying wrap-around would freeze an arithmetic defect into a
-durable reproducibility contract, which is the opposite of what `EngineSemanticsVersion` exists to
-guarantee.
+Both tick-valued accumulators saturate in the current implementation, pinned by
+`EngineDerivedResultConformanceTest`. Specifying wrap-around instead would turn an arithmetic defect
+into a reproducibility rule, which is why a wrapping accumulator is a conformance failure rather than
+an alternative behavior.
 
 ## 11. Supported job and runtime observation contract
 
@@ -583,7 +591,7 @@ Runtime observation metadata carries once per observation:
 
 - `RunId`;
 - `ModelFingerprint`;
-- mandatory `EngineSemanticsVersion`;
+- the mandatory `EngineSemantics` the run executes (not yet propagated into the metadata type; §1);
 - optional `ControlledRevisionId` only when authoritatively bound;
 - the existing supported-event sequence, time, and run-state metadata.
 
@@ -611,8 +619,8 @@ Carries:
 - destination resource identity;
 - affected references for job, order, and destination.
 
-The envelope also carries existing run/model/revision provenance plus mandatory
-`EngineSemanticsVersion`.
+The envelope also carries existing run/model/revision provenance plus the mandatory
+`EngineSemantics` the run executes.
 
 At a shared `SimTime`, ordering uses only the supported runtime-event sequence. A zero-duration
 transfer is still a scheduled completion turn, so the authoritative chain can be:
@@ -631,7 +639,7 @@ already happened.
 
 ## 13. Deliberately deferred spatial/runtime capabilities
 
-V1 does not define:
+The interpretation does not define:
 
 - authoritative intermediate transfer coordinates/progress;
 - rerouting;
@@ -641,13 +649,18 @@ V1 does not define:
 - resource orientation as a transfer input;
 - animation authority.
 
-Those require a new Engine semantics version, a new Factory model policy, or both only when their
-actual ownership and result-affecting meaning become concrete.
+Adding them is a deliberate change to the Engine interpretation, the Factory model, or both, made only
+when their actual ownership and result-affecting meaning become concrete.
 
 ## 14. Conformance fixtures
 
-Before `engine-semantics:v1` is considered released, pinned behavioral fixtures must prove the
-normative semantics above using representative explicit inputs. The fixtures must cover at least:
+Pinned behavioral fixtures prove the normative semantics above using representative explicit inputs.
+They change together with any definition change (§1). The executed production-only scope is pinned by
+`EngineDispatchConformanceTest`, `EngineDerivedResultConformanceTest`,
+`SessionControlAcceptanceTest`, the runtime event/observation acceptance suites and the
+child-materialization acceptance and benchmark tests; the transfer items (7–11 and 13) accompany
+spatial execution when it is implemented. Complete fixtures for the executed scope are a precondition
+of promoting the interpretation, never a promotion by themselves. The fixtures must cover at least:
 
 1. current deterministic resource-selection behavior, including offline filtering/all-offline
    fallback, `canAcceptJob` ranking, `combinedQueueDepth`, `MachineId` tie-breaking, and the

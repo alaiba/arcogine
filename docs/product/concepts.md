@@ -6,7 +6,7 @@ This page describes the retained Factory and Engine capabilities. See the [Produ
 
 Arcogine currently provides a headless, deterministic factory model and runtime. It has no outward application or interactive experiment loop; executable evidence lives in tests, conformance checks, and benchmarks.
 
-The canonical **Factory model** describes products, operations, configured resources, and eligible-resource relationships. A validated model can be published as an immutable, fingerprinted version. A **FactoryRuntime** instantiates that version and executes explicit production workload under the identified Engine semantics.
+The canonical **Factory model** describes products, operations, configured resources, and eligible-resource relationships, and may carry an authored spatial layout that the current Engine does not yet execute. A validated model can be published as an immutable, fingerprinted version. A **FactoryRuntime** instantiates that version and executes explicit production workload under one Engine interpretation. Both the model's canonical form and the Engine semantics are work in progress until explicitly promoted.
 
 ## Factory concepts
 

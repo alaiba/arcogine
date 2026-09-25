@@ -30,8 +30,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
-/** Executable characterization of the retained v1 resource-dispatch semantics. */
-class EngineSemanticsV1DispatchConformanceTest {
+/** Executable conformance evidence for the current Engine resource-dispatch semantics. */
+class EngineDispatchConformanceTest {
 
     private record Step(long duration, Set<Integer> machines) {}
 
@@ -246,7 +246,7 @@ class EngineSemanticsV1DispatchConformanceTest {
     }
 
     @Test
-    void quantityAndConcurrencyOverlapFixtureRetainsV1CompletionVector() {
+    void quantityAndConcurrencyOverlapFixtureRetainsTheCurrentCompletionVector() {
         FactoryRuntime runtime = runtime(
                 List.of(2, 2, 1),
                 List.of(
@@ -278,7 +278,7 @@ class EngineSemanticsV1DispatchConformanceTest {
     }
 
     @Test
-    void recoveryObjectiveConflictPreservesV1MakespanAndMeanLeadTime() {
+    void recoveryObjectiveConflictPreservesTheCurrentMakespanAndMeanLeadTime() {
         Result result = runRecovery(
                 List.of(2, 1, 1),
                 List.of(

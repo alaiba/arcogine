@@ -21,7 +21,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit-work decomposition (docs/architecture/engine-semantics-v1.md section 3) acceptance proof: one
+ * Unit-work decomposition (docs/architecture/engine-semantics.md section 3) acceptance proof: one
  * requirement, independently dispatchable unit children.
  */
 class IntraOrderExecutionAcceptanceTest {

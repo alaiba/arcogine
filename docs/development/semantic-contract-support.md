@@ -3,82 +3,126 @@
 This policy is the review mechanism behind the
 [semantic evolution and support](../architecture/overview.md#semantic-evolution-and-support) rules
 in the Architecture Overview, which own the architectural constraint; owning specifications define
-domain meaning. This document owns how support is
-declared and reviewed, not a support registry or a research backlog.
+domain meaning. This document owns how work-in-progress status, promotion and support are stated
+and reviewed. It consumes the Overview's canonical [determinism, equivalence, identity, and
+durability vocabulary](../architecture/overview.md#determinism-equivalence-identity-and-durability).
+It is not a support registry, a maturity tracker or a research backlog.
 
-## Declare support where the contract is owned
+## Work in progress is the default
 
-Before publishing reliance on a semantic contract, or admitting material attributed to it into a
-retained authority, record a compact declaration in the owning specification or authority
-contract. Use only the information the promised use needs; links to exact owned definitions and
-existing evidence suffice. No universal maturity state or central registry is required, and a
-contract may be introduced and committed to in the same change.
+The Factory model and the Engine interpretation are work in progress (`factory-model:wip`,
+`engine-semantics:wip`). Each owning specification states that status in its header. Review a change
+to a WIP definition like any other definition change:
 
-Record:
+- the owning specification, its golden vectors or conformance fixtures, and every dependent
+  consumer, plan and document change together;
+- no successor identity, legacy decoder, alias, tombstone, dual publication or migration path is
+  added for earlier development material — stale or foreign input fails explicitly instead;
+- vectors and fixtures are regenerated deliberately from the specification, preferably through an
+  independent implementation of it, and the change says why the old values no longer hold.
 
-- the owner, the exact identity/definition revision and its fixed aspects — a mutable document
-  title or branch tip alone does not select a definition;
-- the supported uses, inputs, consumers and exclusions, and whether each obligation comes from a
-  published promise or from acceptance at a named authority's commit boundary;
+Name contracts, types, packages, files and tests by what they mean. An ordinal suffix, an
+implementation milestone or a golden vector is not a maturity or support signal; maturity and
+support are stated explicitly in the owning contract. Technical codec/runtime markers are not
+human release labels, and neither kind of name supplies its own meaning. Do not turn a spelling
+into a new architectural generation or planning prerequisite.
+
+The no-migration rule above is the current development reset policy, not a consequence of strict
+canonical decoding. A future supported importer or migration has its own source/target meanings,
+preserved distinctions, losses, and validation. No such mechanism or support promise is added here.
+
+## Audit the referent behind a durability claim
+
+Words such as *published*, *attributed*, *retained*, *released* or *fixed* are claims about something
+concrete. First specify which [property](../architecture/overview.md#durability-and-related-properties)
+is claimed: storage durability, reference stability, traceability, historical interpretability,
+reproducibility, compatibility, or a support commitment, including its subject and scope. Then
+identify the claim's referent and classify it:
+
+- a **capability** — an API, a store implementation, a serializer, a codec;
+- an **accepted use** — a record admitted into a declared custody, a consumer that relies on it;
+- a **promise** — owning-contract text committing to a durable behavior or support scope;
+- **fulfilment evidence** — vectors, fixtures and tests showing a promise is met;
+- a **cost preference** — a judgement that one design is cheaper or simpler.
+
+Under this policy, explicit promotion establishes a declared stability/support commitment; it
+neither creates content identity nor supplies evidence of persistence, traceability, or
+reproducibility. Existing occurrence non-rebinding and the duty to account for undeclared reliance
+remain applicable. For example, an in-process `FactoryModelPublisher.publish` call and a revision store opened
+over a temporary directory are capabilities, not accepted use, and golden vectors are fulfilment
+evidence for the current definition, not a promise that it will not change. Custody is what an
+authority declares, not where it happens to be used: a path name, test label or later deletion neither
+proves disposability nor creates retention. When a claim's referent cannot be found, say what was
+searched; a failed search is not proof of absence.
+
+## Declaring a promotion
+
+Promotion is an explicit owner decision tied to a concrete stability/support need, recorded in the
+owning specification or authority contract in the same change that admits the promised use.
+Factory and Engine commitments need not be made together. Use only the information the promised
+use needs:
+
+- the owner approval and the concrete use and stability/support need it serves;
+- the exact definition and an unambiguous stable reference to it, including the grammar or rules,
+  validation/refusal behavior, and relevant fixtures; a mutable document title, branch tip, or WIP
+  marker alone does not select an exact definition. A human-readable label is optional and derives
+  its meaning from the binding or declaration, not the other way around;
+- the supported uses, inputs, consumers and exclusions;
 - custody: the accepting authority, retained versus disposable scope, horizon, exact-definition
-  resolution, the transitive basis needed for the claimed explanation, and how transfer from
-  disposable material becomes retained admission;
+  resolution and the transitive basis the claimed explanation needs;
 - separately, content retention, decoding, execution, migration, interoperability and
   historical-explanation promises, including dependencies and explicit gaps;
-- failure/refusal behavior for unsupported identity or input, missing or corrupt basis,
-  undeclared custody, incomplete admission, and exhausted retention;
+- failure/refusal behavior for unsupported identity or input, missing or corrupt basis, undeclared
+  custody and exhausted retention;
 - evidence of fulfilment, its scope, known limitations and unimplemented obligations;
-- authorized change/retirement behavior: successor meaning, scope and compatibility evidence,
-  effects on existing accepted uses, retained basis, and refusal after expiry.
+- authorized change/retirement behavior: successor meaning, effects on existing accepted uses,
+  retained basis, and refusal after expiry.
 
-An obligation and evidence that it is fulfilled are different facts. An unproved promise is a
-validation gap to close, not a promise erased by missing evidence. Silence creates no new support
-offer but waives no obligation of an actual accepted use. Discovering undeclared retained
-acceptance blocks new admission until custody/support is declared and requires accounting for the
-facts already accepted.
+A retained authority admitting a promoted identity refuses WIP and other unpromoted definitions.
+Promotion is a status in one owning contract, not a platform-wide lifecycle type; after it,
+declarations stay scoped by promise, so a contract can carry enduring attribution while only part of
+its behavior is executed or supported.
 
-Tests, scratch stores, drained events and local runs are disposable only while no retained use has
-been admitted against them; a path name, test label or later deletion is not proof of
-disposability. An Engine that stamps records with a semantics identity must either use a frozen
-exact definition or keep those records explicitly disposable; the first retained attribution
-freezes the whole definition, and a changed definition needs a distinguishable identity after that
-boundary.
+An obligation and evidence that it is fulfilled are different facts: an unproved promise of a
+promoted contract is a validation gap to close, not a promise erased by missing evidence. Silence
+creates no support offer. Discovering retention of, or reliance on, material outside a declared
+custody blocks further admission until custody is declared or the use is withdrawn, and requires
+accounting for what was already accepted; it never promotes the contracts involved by itself.
 
 ## Review evidence proportionate to each promise
 
-Use canonical-byte vectors and strict rejection cases for fingerprint reproduction;
-reopen/corruption/old-definition cases for retained history; supported-input, interaction and
-rejection fixtures for Engine semantics; boundary-only clients and unknown-version/upgrade cases
-for interchange; and authority, failure and gap evidence proportionate to consequential use. A
-serializer, version constant, declaration or green unrelated test is not that evidence. An injected
-verifier seam also means the absence of an in-tree codec cannot prove the absence of every
-possible producer.
+Use canonical-byte vectors and strict rejection cases for fingerprint reproduction within a
+definition; refusal cases for discarded or foreign input; custody-declaration and no-adoption cases for
+proving stores; reopen/corruption/old-definition cases for retained history once it exists;
+supported-input, interaction and rejection fixtures for Engine semantics; boundary-only clients and
+unknown-version/upgrade cases for interchange; and authority, failure and gap evidence proportionate
+to consequential use. A serializer, marker constant, declaration or green unrelated test is not that
+evidence. An injected verifier seam also means the absence of an in-tree codec cannot prove the
+absence of every possible producer.
 
-No new research is needed merely to fill a declaration whose semantics are settled. Use the normal
-research boundary only when equality, acceptance or consequential accountability itself remains
-unresolved. Experiments and pending migrations should carry a bounded reassessment trigger; a
-deliberately internal, continuously evolving interface needs no promotion/retirement ceremony.
-Simplify this checklist if it adds process without changing decisions, while preserving the owning
-semantic obligations.
+No new research is needed merely to fill a declaration whose semantics are settled, or to implement an
+explicit owner decision about a contract's status; use the normal research boundary only when
+equality, acceptance or consequential accountability itself remains unresolved. Simplify this
+checklist if it adds process without changing decisions, while preserving the owning semantic
+obligations.
 
 ## Discriminating review cases
 
-These cases separate distinct support obligations; they are not a mandatory ontology for every
-future question.
+These cases separate distinct obligations; they are not a mandatory ontology for every future
+question.
 
 | Case | What review must distinguish |
 | --- | --- |
-| Fingerprint-definition correction | Before the first retained attribution a normative definition can be corrected; after it, an identity-affecting correction needs a new identity. An existing label always denotes its unchanged definition and bytes. |
-| Historical artifact after evolution | Retain the exact revision → fingerprint → definition/artifact basis the accepted use requires; never resolve it against current state. Equal content can recur in a distinct revision. |
-| Engine section never exercised | Editorial section boundaries and missing fixture coverage do not make part of an attributed definition mutable; rejection behavior and cross-rule interactions still matter. |
-| Engine run already retained | Keep its attribution and exact definition. Repairing implementation nonconformance differs from changing normative behavior; a new interpretation cannot silently rewrite that result. |
-| Disposable proving artifact | Scratch activity alone creates no retained use; transfer into an accepting authority must declare custody/support before admission. |
-| Retained experimental artifact | Record the exact definition, the actual retained basis, horizon and failure behavior. If the authority cannot meet those obligations, refuse admission; if it already accepted, remediate the defect without un-accepting the fact. |
+| WIP definition correction | The specification, vectors or fixtures and dependents change together under the same marker. Earlier development artifacts are refused or reset, never migrated or reinterpreted. |
+| Durability claim | Identify the referent — capability, accepted use, promise, fulfilment evidence or cost preference. Specify the claimed property and scope separately; promotion establishes a declared stability/support commitment, not all the other properties. |
+| Proving persistence | A proving store may survive reopen, but it declares disposable custody and is bound to the exact definition that wrote it, so it refuses to reopen under another even when the public WIP marker is unchanged. Persisting WIP content there creates no attribution or compatibility promise, and it never adopts a location it did not create. |
+| Accidental retention | WIP material found retained or relied on outside a declared custody is a defect: stop further admission, preserve what was accepted and the definition it used as far as evidence allows, and decide explicitly. It is neither silently rewritten nor treated as a promotion. |
+| Promoted definition correction | An identity-affecting correction needs a distinguishable identity; the stable promoted reference always denotes its definition. |
+| Historical artifact after evolution | For a promoted definition, retain the exact revision → fingerprint → definition/artifact basis the accepted use requires and never resolve it against current state. Equal content can recur in a distinct revision. |
+| Engine rule never exercised | For a promoted interpretation, editorial section boundaries and missing fixture coverage do not make part of it mutable; rejection behavior and cross-rule interactions still matter. While WIP, an unexercised rule is corrected like any other rule. |
+| Label or attestation | A label may name a later claim about a collection of exact references. Neither the spelling nor the existence of the claim proves equivalence, executability, compatibility, or fulfilment. No shared attestation entity is selected. |
+| Strict decoder versus importer | A canonical decoder enforces its declared representation and validity contract. A separately supported conversion can produce a target artifact without pretending the source already had target meaning; current development reset policy still applies. |
 | External consumer | A concrete information set and scoped compatibility evidence create support; the existence of an API or serializer does not. |
 | Operational consequence | The [Operational continuity contract](../architecture/operational-continuity.md) governs continuity, accepted compaction, loss and divergence. A generic expiry field cannot waive accountability or erase the only audit basis. |
 | Representation change | An adapter or layout change may preserve semantic identity while breaking an independently promised wire contract. Canonical identity-defining bytes are semantic, unlike ordinary serializer bytes. |
-| Retired execution | Exact definition and attribution survive for the required horizon; missing execution is explicit. Retired execution is neither missing meaning nor automatic invalidation of past results. |
-
-Published attribution with bounded execution is coherent; one exclusive whole-contract
-`proving`/`promoted` state cannot express it. Declarations are therefore scoped by promise, without
-a platform-wide lifecycle type.
+| Retired execution | For a promoted interpretation, the exact definition and attribution survive for the required horizon; missing execution is explicit, neither missing meaning nor automatic invalidation of past results. |

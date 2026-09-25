@@ -31,7 +31,7 @@ import com.arcogine.governance.requirement.RequirementId;
 import com.arcogine.governance.requirement.RequirementScope;
 import com.arcogine.governance.requirement.RequirementVersion;
 import com.arcogine.types.ControlledRevisionId;
-import com.arcogine.types.EngineSemanticsVersion;
+import com.arcogine.types.EngineSemantics;
 import com.arcogine.types.ModelFingerprint;
 import java.time.Instant;
 import java.util.List;
@@ -318,23 +318,25 @@ class GovernanceEvidenceTest {
                 MODEL, Optional.empty(), Optional.empty(), "result-1", Map.of("workload", "small"), Optional.empty());
         assertTrue(result.producerModelFingerprint().isPresent());
         assertTrue(result.producerOccurrence().isPresent());
-        assertTrue(result.engineSemanticsVersion().isEmpty());
+        assertTrue(result.engineSemantics().isEmpty());
         EvidenceProvenance versioned = EvidenceProvenance.analytical(
-                MODEL, Optional.empty(), Optional.of(EngineSemanticsVersion.CURRENT), "result-2", Map.of(), Optional.empty());
-        assertEquals(EngineSemanticsVersion.CURRENT, versioned.engineSemanticsVersion().orElseThrow());
+                MODEL, Optional.empty(), Optional.of(EngineSemantics.CURRENT), "result-2", Map.of(), Optional.empty());
+        assertEquals(EngineSemantics.CURRENT, versioned.engineSemantics().orElseThrow());
     }
 
     @Test
-    void retiredProducerAttributionRemainsWhileMissingInterpretationIsAVisibleGap() {
+    void developmentProvenanceStaysRecordedWhileItsInterpretationIsAVisibleGap() {
+        // A work-in-progress Engine marker names whichever definition produced the result; it does
+        // not resolve that definition after the interpretation changes, so reliance stays unestablished.
         EvidenceProvenance analytical = EvidenceProvenance.analytical(
-                MODEL, Optional.empty(), Optional.of(EngineSemanticsVersion.CURRENT),
-                "retired-result", Map.of("input", "1"), Optional.of("analysis:v1"));
-        EvidenceReference result = new EvidenceReference("retired-engine", "result-1", analytical);
-        assertEquals("retired-engine", result.sourceIdentity());
-        assertEquals("retired-result", result.provenance().producerOccurrence().orElseThrow());
+                MODEL, Optional.empty(), Optional.of(EngineSemantics.CURRENT),
+                "earlier-result", Map.of("input", "1"), Optional.of("analysis:v1"));
+        EvidenceReference result = new EvidenceReference("earlier-engine-build", "result-1", analytical);
+        assertEquals("earlier-engine-build", result.sourceIdentity());
+        assertEquals("earlier-result", result.provenance().producerOccurrence().orElseThrow());
         EvidenceApplicability unresolved = new EvidenceApplicability(
                 EvidenceApplicabilityStatus.NOT_ESTABLISHED,
-                "producer no longer executable and interpretation material is unavailable",
+                "interpretation named only by a development marker that no longer resolves",
                 "historical attribution only");
         assertFalse(unresolved.isAdequate());
     }

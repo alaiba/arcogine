@@ -51,7 +51,7 @@ Stable HTTP/API representation
 
 Factory semantic identity
     -> factory-model:<policy>:<algorithm>:<digest>
-       currently factory-model:v1:sha256:<digest>
+       currently factory-model:wip:sha256:<digest> (work in progress)
 
 Historical controlled revision identity
     -> ControlledRevisionId
@@ -71,7 +71,7 @@ Industrial interchange
 
 Two rules are especially important:
 
-1. **Representation is not identity.** `factory-model:v1` is defined by the Factory Model v1 specification's normative binary grammar, not TOML, JSON, a serializer library, or canonical JSON.
+1. **Representation is not identity.** The Factory fingerprint is defined by the [Factory model specification](factory-model.md)'s normative binary grammar, not TOML, JSON, a serializer library, or canonical JSON.
 2. **Projection is not ontology.** OpenAPI, CloudEvents, B2MML, AutomationML, AASX, FMI, Parquet, IFC, glTF, STEP, OPC UA, MQTT, and similar formats map around Arcogine-owned semantic contracts rather than becoming those contracts automatically.
 
 ## Regional adoption context
@@ -175,7 +175,7 @@ OpenAPI is the intended standard description format for stable HTTP contracts.
 
 JSON is the default structured representation for ordinary external HTTP/API projections where no stronger domain-specific format is required.
 
-JSON is **not** Arcogine's semantic identity representation. `factory-model:v1` remains the durable model identity contract from the Factory Model v1 specification and must not be redefined through JSON canonicalization or serializer defaults.
+JSON is **not** Arcogine's semantic identity representation. The Factory model specification's canonical binary grammar remains the model identity definition and must not be redefined through JSON canonicalization or serializer defaults.
 
 ---
 

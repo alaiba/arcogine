@@ -23,7 +23,7 @@ Arcogine needs one independently identified **configured productive resource in 
 | First-class capability now? | **Defer.** Explicit eligible-resource IDs remain sufficient for current execution. |
 | One superclass for machines, workers, tools, transport, and storage? | **No.** Shared allocation/requirement relations may emerge without shared machine semantics. |
 | Work centers, pools, hierarchy now? | **Defer.** Introduce only when the grouping owns consequential scheduling, capacity, responsibility, or reporting semantics. |
-| Placement versus hierarchy? | Keep separate. Accepted V2 spatial semantics do not create equipment hierarchy. |
+| Placement versus hierarchy? | Keep separate. The accepted spatial-record semantics do not create equipment hierarchy. |
 | Designed resource versus physical asset? | Keep distinct. External physical-asset identity/correspondence is an Operational concern. |
 | Likely future resource-model pressure? | Qualified operation-resource applicability and resource-dependent performance when a concrete consumer must infer or verify feasibility. |
 
@@ -96,7 +96,7 @@ The cases that determined the conclusion are:
 6. **Worker plus machine:** shared participation/allocation does not justify treating personnel as machines.
 7. **Work center / pool:** grouping needs its own identity only when it owns real scheduling, capacity, responsibility, or reporting behavior.
 8. **Station:** may be one scheduling unit, a composition, a location, or consumer vocabulary; no universal Station type follows.
-9. **Transport:** V2 transfer delay can remain policy-level until vehicle/conveyor scarcity, movement, failures, or allocation affect outcomes.
+9. **Transport:** Spatial transfer delay can remain policy-level until vehicle/conveyor scarcity, movement, failures, or allocation affect outcomes.
 10. **Buffer/storage:** needs explicit occupancy/material/blocking semantics before becoming a canonical participant.
 11. **Equipment replacement:** can preserve designed resource identity while physical-asset identity changes; this proves design/asset correspondence, not definition/instance splitting.
 12. **Equipment upgrade:** can preserve resource identity while configured facts change; a specification revision changes only when its own contract changes.

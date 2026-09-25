@@ -7,6 +7,7 @@ import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_PA
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_REVISION;
 import static com.arcogine.governance.GovernanceHistoryException.Code.STORAGE_INTEGRITY;
 import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_ARTIFACT_POLICY;
+import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_STORE;
 
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.ModelFingerprint;
@@ -24,7 +25,9 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
@@ -41,43 +44,178 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Durable append-only controlled-revision authority backed by one filesystem directory.
+ * Disposable development proving store for controlled revisions, backed by one filesystem
+ * directory.
  *
- * <p>Revision records and semantic artifacts use private versioned binary files. Semantic
+ * <p>The store proves the controlled-revision mechanics -- append-only acceptance, immutable
+ * ID-to-record binding, lineage integrity, reopen across processes, atomic installation and exact
+ * artifact resolution -- against the current work-in-progress semantic definitions. It is not a
+ * retained authority: what it accepts creates no durable attribution or compatibility commitment,
+ * and it is bound to the exact definition that created it, so after that definition changes it is
+ * refused and must be reset rather than read under the new one. Retained, commitment-bearing
+ * admission is unavailable while every semantic contract is work in progress; it arrives only with
+ * an explicit promotion (docs/architecture/overview.md, "Semantic evolution and support").
+ *
+ * <p>The store declares its proving scope in a marker at its root, together with the {@link
+ * SemanticArtifactVerifier#definitionBinding() definition binding} of the verifier that created it.
+ * It initializes only an absent location, which it creates itself, and reopens only a directory
+ * whose marker names the same binding; any other location -- an existing empty directory, one
+ * holding only names this store would use, a store written by an earlier layout, or one written
+ * under a different definition that shares the same public work-in-progress marker -- is refused
+ * before any revision or artifact is read, and without being modified, adopted or deleted. Semantic
  * artifacts are deduplicated by a physical key derived from the complete {@link ModelFingerprint};
  * the fingerprint remains the semantic identity and the key never escapes this adapter.
  */
 public final class FileControlledRevisionAuthority implements ControlledRevisionAuthority {
 
+    private static final byte[] STORE_MARKER =
+            "arcogine-proving-revision-store\0".getBytes(StandardCharsets.US_ASCII);
     private static final byte[] REVISION_MAGIC =
-            "arcogine-revision-store-v1\0".getBytes(StandardCharsets.US_ASCII);
+            "arcogine-proving-revision\0".getBytes(StandardCharsets.US_ASCII);
     private static final byte[] ARTIFACT_MAGIC =
-            "arcogine-semantic-artifact-v1\0".getBytes(StandardCharsets.US_ASCII);
+            "arcogine-proving-artifact\0".getBytes(StandardCharsets.US_ASCII);
+    private static final String STORE_MARKER_FILE = "proving-store";
+    private static final String LOCK_FILE = "authority.lock";
     private static final Object PROCESS_LOCK = new Object();
 
+    private final Path authorityRoot;
     private final Path revisionsDirectory;
     private final Path artifactsDirectory;
     private final Path lockFile;
     private final SemanticArtifactVerifier verifier;
     private final Clock clock;
+    private final byte[] storeMarker;
 
-    public FileControlledRevisionAuthority(Path root, SemanticArtifactVerifier verifier) {
-        this(root, verifier, Clock.systemUTC());
-    }
-
-    FileControlledRevisionAuthority(Path root, SemanticArtifactVerifier verifier, Clock clock) {
-        Path authorityRoot = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
+    private FileControlledRevisionAuthority(Path root, SemanticArtifactVerifier verifier, Clock clock) {
+        authorityRoot = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
         this.verifier = Objects.requireNonNull(verifier, "verifier");
         this.clock = Objects.requireNonNull(clock, "clock");
         revisionsDirectory = authorityRoot.resolve("revisions");
         artifactsDirectory = authorityRoot.resolve("artifacts");
-        lockFile = authorityRoot.resolve("authority.lock");
-        try {
-            Files.createDirectories(revisionsDirectory);
-            Files.createDirectories(artifactsDirectory);
-        } catch (IOException e) {
-            throw storageFailure("cannot initialize controlled revision authority", e);
+        lockFile = authorityRoot.resolve(LOCK_FILE);
+        storeMarker = storeMarker(verifier.definitionBinding());
+    }
+
+    /**
+     * Opens the proving store at {@code root}. When {@code root} is absent this call creates it
+     * and initializes the store; an existing location is opened only if it already is a proving
+     * store written under {@code verifier}'s definition binding.
+     *
+     * <p>Within one process, concurrent openers of the same new location are serialized, so it is
+     * initialized exactly once. An opener in another process that observes the location before its
+     * initialization completes is refused and may retry. An initialization interrupted before its
+     * marker was written leaves a directory that is refused thereafter and must be removed.
+     *
+     * @throws GovernanceHistoryException with {@code UNSUPPORTED_STORE} when {@code root} exists
+     *     but is not a proving store -- including an empty directory or one holding only names this
+     *     store would use -- is one created under a different definition binding, or lacks the lock
+     *     file its initialization created; nothing there is modified
+     */
+    public static FileControlledRevisionAuthority openProvingStore(
+            Path root, SemanticArtifactVerifier verifier) {
+        return openProvingStore(root, verifier, Clock.systemUTC());
+    }
+
+    static FileControlledRevisionAuthority openProvingStore(
+            Path root, SemanticArtifactVerifier verifier, Clock clock) {
+        FileControlledRevisionAuthority authority = new FileControlledRevisionAuthority(root, verifier, clock);
+        // Ownership is never inferred from what an existing directory contains: the store owns a
+        // location only because this opener created it atomically, or because it already carries
+        // this definition's marker. An existing location is locked only through the lock file its
+        // own initialization created -- never by creating one -- and its marker is verified again
+        // under that lock before anything is written there.
+        synchronized (PROCESS_LOCK) {
+            if (authority.createRootIfAbsent()) {
+                authority.withExclusiveLock(true, () -> {
+                    authority.writeAtomic(authority.authorityRoot.resolve(STORE_MARKER_FILE), authority.storeMarker);
+                    authority.createStoreDirectories();
+                    return null;
+                });
+            } else {
+                try {
+                    authority.requireOwned();
+                } catch (IOException e) {
+                    throw storageFailure("cannot open controlled revision proving store", e);
+                }
+                authority.withExclusiveLock(false, () -> {
+                    authority.requireOwned();
+                    authority.createStoreDirectories();
+                    return null;
+                });
+            }
         }
+        return authority;
+    }
+
+    /** Atomically creates the root when it is absent and reports whether this opener created it. */
+    private boolean createRootIfAbsent() {
+        try {
+            Path parent = authorityRoot.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+        } catch (IOException e) {
+            throw storageFailure("cannot create the parent of the controlled revision proving store", e);
+        }
+        try {
+            Files.createDirectory(authorityRoot);
+            return true;
+        } catch (FileAlreadyExistsException e) {
+            return false;
+        } catch (IOException e) {
+            throw storageFailure("cannot create controlled revision proving store", e);
+        }
+    }
+
+    /** Refuses, without modifying anything, a root that is not a store written under this definition. */
+    private void requireOwned() throws IOException {
+        if (!Files.isDirectory(authorityRoot)) {
+            throw unsupportedStore();
+        }
+        Path marker = authorityRoot.resolve(STORE_MARKER_FILE);
+        if (!Files.isRegularFile(marker)) {
+            throw unsupportedStore();
+        }
+        byte[] actual = Files.readAllBytes(marker);
+        if (!Arrays.equals(storeMarker, actual)) {
+            throw isProvingStoreMarker(actual) ? definitionMismatch() : unsupportedStore();
+        }
+    }
+
+    private void createStoreDirectories() throws IOException {
+        Files.createDirectories(revisionsDirectory);
+        Files.createDirectories(artifactsDirectory);
+    }
+
+    private static byte[] storeMarker(String binding) {
+        if (binding == null || binding.isBlank()) {
+            throw new IllegalArgumentException("verifier must name the definition it verifies against");
+        }
+        byte[] bindingBytes = binding.getBytes(StandardCharsets.UTF_8);
+        byte[] marker = Arrays.copyOf(STORE_MARKER, STORE_MARKER.length + bindingBytes.length);
+        System.arraycopy(bindingBytes, 0, marker, STORE_MARKER.length, bindingBytes.length);
+        return marker;
+    }
+
+    private static boolean isProvingStoreMarker(byte[] marker) {
+        return marker.length >= STORE_MARKER.length
+                && Arrays.equals(STORE_MARKER, Arrays.copyOf(marker, STORE_MARKER.length));
+    }
+
+    private GovernanceHistoryException definitionMismatch() {
+        return new GovernanceHistoryException(
+                UNSUPPORTED_STORE,
+                "proving store was created under a different definition than "
+                        + verifier.definitionBinding()
+                        + "; it is never reinterpreted and must be reset: "
+                        + authorityRoot);
+    }
+
+    private GovernanceHistoryException unsupportedStore() {
+        return new GovernanceHistoryException(
+                UNSUPPORTED_STORE,
+                "not a controlled-revision proving store; it is neither adopted nor modified: "
+                        + authorityRoot);
     }
 
     @Override
@@ -409,9 +547,15 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     }
 
     private <T> T withExclusiveLock(CheckedSupplier<T> action) {
+        return withExclusiveLock(false, () -> {
+            requireOwned();
+            return action.get();
+        });
+    }
+
+    private <T> T withExclusiveLock(boolean createLockFile, CheckedSupplier<T> action) {
         synchronized (PROCESS_LOCK) {
-            try (FileChannel channel = FileChannel.open(
-                            lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            try (FileChannel channel = openLockFile(createLockFile);
                     FileLock lock = channel.lock()) {
                 if (!lock.isValid()) {
                     throw new IllegalStateException("controlled revision authority lock is invalid");
@@ -425,10 +569,25 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         }
     }
 
+    private FileChannel openLockFile(boolean create) throws IOException {
+        if (create) {
+            return FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        }
+        try {
+            return FileChannel.open(lockFile, StandardOpenOption.WRITE);
+        } catch (NoSuchFileException e) {
+            throw new GovernanceHistoryException(
+                    UNSUPPORTED_STORE,
+                    "proving store has no lock file from its initialization; it is neither adopted nor"
+                            + " modified: "
+                            + authorityRoot);
+        }
+    }
+
     private static void writeFingerprint(DataOutputStream output, ModelFingerprint fingerprint)
             throws IOException {
         writeString(output, fingerprint.namespace());
-        writeString(output, fingerprint.policyVersion());
+        writeString(output, fingerprint.policy());
         writeString(output, fingerprint.algorithm());
         writeString(output, fingerprint.digest());
     }

@@ -5,6 +5,8 @@ import static com.arcogine.governance.GovernanceHistoryException.Code.FINGERPRIN
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_ARTIFACT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_PARENT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.STORAGE_INTEGRITY;
+import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_ARTIFACT_POLICY;
+import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_STORE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.FactoryModel;
-import com.arcogine.factory.model.FactoryModelArtifactV1;
+import com.arcogine.factory.model.FactoryModelArtifact;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.OperationDefinition;
@@ -25,14 +27,19 @@ import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,17 +52,7 @@ class FileControlledRevisionAuthorityTest {
     private static final RevisionRecorder RECORDER =
             new RevisionRecorder("governance-test", "operator-17");
     private static final Instant ACCEPTED_AT = Instant.parse("2026-09-02T08:30:45.123456789Z");
-    private static final SemanticArtifactVerifier FACTORY_VERIFIER = new SemanticArtifactVerifier() {
-        @Override
-        public boolean supports(ModelFingerprint fingerprint) {
-            return FactoryModelArtifactV1.supports(fingerprint);
-        }
-
-        @Override
-        public ModelFingerprint fingerprint(byte[] canonicalBytes) {
-            return FactoryModelArtifactV1.fingerprint(canonicalBytes);
-        }
-    };
+    private static final SemanticArtifactVerifier FACTORY_VERIFIER = FactoryModelArtifact.verifier();
 
     @TempDir
     Path tempDirectory;
@@ -84,9 +81,9 @@ class FileControlledRevisionAuthorityTest {
         assertEquals(accepted, resolved.revision());
         assertEquals(accepted.provenance(), resolved.revision().provenance());
         assertArrayEquals(
-                FactoryModelArtifactV1.encode(version), resolved.artifact().canonicalBytes());
+                FactoryModelArtifact.encode(version), resolved.artifact().canonicalBytes());
         FactoryModelVersion reconstructed =
-                FactoryModelArtifactV1.decode(resolved.artifact().canonicalBytes());
+                FactoryModelArtifact.decode(resolved.artifact().canonicalBytes());
         assertEquals(version.model(), reconstructed.model());
         assertEquals(accepted.modelFingerprint(), reconstructed.fingerprint());
     }
@@ -186,7 +183,7 @@ class FileControlledRevisionAuthorityTest {
         assertNotEquals(acceptedA.id(), acceptedC.id());
         assertEquals(acceptedA.modelFingerprint(), acceptedC.modelFingerprint());
         assertEquals(3, authority.revisions().size());
-        assertEquals(2, regularFiles(tempDirectory.resolve("artifacts")).size());
+        assertEquals(2, regularFiles(store().resolve("artifacts")).size());
         assertEquals(f1.model(), reconstructed(authority.resolve(acceptedA.id())).model());
         assertEquals(f2.model(), reconstructed(authority.resolve(acceptedB.id())).model());
         assertEquals(f1.model(), reconstructed(authority.resolve(acceptedC.id())).model());
@@ -243,7 +240,7 @@ class FileControlledRevisionAuthorityTest {
                 Instant.parse("2026-09-01T18:00:00Z"));
         FileControlledRevisionAuthority authority = authorityAt(ACCEPTED_AT);
         ControlledRevision accepted = authority.accept(candidate, artifact(version));
-        Path artifactFile = onlyRegularFile(tempDirectory.resolve("artifacts"));
+        Path artifactFile = onlyRegularFile(store().resolve("artifacts"));
 
         Files.delete(artifactFile);
         GovernanceHistoryException missing = assertThrows(
@@ -277,7 +274,7 @@ class FileControlledRevisionAuthorityTest {
                 Instant.parse("2026-09-01T18:00:00Z"));
         ControlledRevision accepted = authorityAt(ACCEPTED_AT).accept(candidate, artifact(version));
 
-        Path revisionFile = onlyRegularFile(tempDirectory.resolve("revisions"));
+        Path revisionFile = onlyRegularFile(store().resolve("revisions"));
         Files.write(revisionFile, new byte[] {9, 8, 7});
 
         GovernanceHistoryException failure = assertThrows(
@@ -364,7 +361,7 @@ class FileControlledRevisionAuthorityTest {
     @Test
     void semanticArtifactDefensivelyCopiesCanonicalBytes() {
         FactoryModelVersion version = version("Widget", 5);
-        byte[] bytes = FactoryModelArtifactV1.encode(version);
+        byte[] bytes = FactoryModelArtifact.encode(version);
         SemanticArtifact artifact = new SemanticArtifact(version.fingerprint(), bytes);
         bytes[0] ^= 1;
         assertEquals(
@@ -375,6 +372,210 @@ class FileControlledRevisionAuthorityTest {
         assertEquals(
                 version.fingerprint(), FACTORY_VERIFIER.fingerprint(artifact.canonicalBytes()));
         assertFalse(Arrays.equals(bytes, artifact.canonicalBytes()));
+    }
+
+    @Test
+    void provingStoreNeverAdoptsOrModifiesALocationItDidNotCreate() throws IOException {
+        // A store written by an earlier layout, a foreign proving-store marker, other directory
+        // content -- including names the store itself would use -- an empty directory it did not
+        // create, or a regular file is refused as a whole: not reopened, partially reinterpreted,
+        // or touched in any way, including by creating the store's lock file.
+        Path reservedLock = tempDirectory.resolve("reserved-lock");
+        Files.createDirectories(reservedLock);
+        Files.write(reservedLock.resolve("authority.lock"), "foreign".getBytes(StandardCharsets.UTF_8));
+        Path reservedPending = tempDirectory.resolve("reserved-pending");
+        Files.createDirectories(reservedPending);
+        Files.write(reservedPending.resolve(".pending-123.tmp"), "foreign".getBytes(StandardCharsets.UTF_8));
+        Path emptyDirectory = tempDirectory.resolve("empty-directory");
+        Files.createDirectories(emptyDirectory);
+        Path earlierLayout = tempDirectory.resolve("earlier-layout");
+        Files.createDirectories(earlierLayout.resolve("revisions"));
+        Files.write(
+                earlierLayout.resolve("revisions").resolve("stale.revision"),
+                "arcogine-revision-store-v1\0stale".getBytes(StandardCharsets.US_ASCII));
+        Path foreignMarker = tempDirectory.resolve("foreign-marker");
+        Files.createDirectories(foreignMarker);
+        Files.write(foreignMarker.resolve("proving-store"), new byte[] {1, 2, 3});
+        Path foreignContent = tempDirectory.resolve("foreign-content");
+        Files.createDirectories(foreignContent);
+        Files.write(foreignContent.resolve("notes.txt"), "unrelated".getBytes(StandardCharsets.UTF_8));
+        Path regularFile = tempDirectory.resolve("regular-file");
+        Files.write(regularFile, "not a directory".getBytes(StandardCharsets.UTF_8));
+
+        for (Path location : List.of(
+                reservedLock, reservedPending, emptyDirectory, earlierLayout, foreignMarker, foreignContent, regularFile)) {
+            Map<String, String> before = contents(tempDirectory);
+
+            GovernanceHistoryException refused = assertThrows(
+                    GovernanceHistoryException.class,
+                    () -> FileControlledRevisionAuthority.openProvingStore(location, FACTORY_VERIFIER));
+            assertEquals(UNSUPPORTED_STORE, refused.code(), location.toString());
+            assertEquals(before, contents(tempDirectory), location.toString());
+        }
+        assertFalse(Files.exists(emptyDirectory.resolve("authority.lock")));
+        assertFalse(Files.exists(foreignContent.resolve("authority.lock")));
+
+        Path fresh = tempDirectory.resolve("fresh");
+        FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER);
+        assertTrue(Files.exists(fresh.resolve("proving-store")));
+        assertTrue(FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER).revisions().isEmpty());
+    }
+
+    @Test
+    void concurrentOpenersOfOneAbsentLocationShareOneInitializedStore() throws Exception {
+        // Only the opener that creates the absent location initializes it; every other opener
+        // reopens that store rather than adopting a partially initialized directory.
+        Path fresh = tempDirectory.resolve("contended");
+        int openers = 8;
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(openers);
+        try {
+            List<Future<FileControlledRevisionAuthority>> opened = new ArrayList<>();
+            for (int i = 0; i < openers; i++) {
+                opened.add(executor.submit(() -> {
+                    start.await();
+                    return FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER);
+                }));
+            }
+            start.countDown();
+            for (Future<FileControlledRevisionAuthority> authority : opened) {
+                assertTrue(authority.get().revisions().isEmpty());
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertEquals(
+                Set.of("artifacts", "authority.lock", "proving-store", "revisions"),
+                contents(fresh).keySet());
+        String marker = new String(Files.readAllBytes(fresh.resolve("proving-store")), StandardCharsets.UTF_8);
+        assertTrue(marker.endsWith(FACTORY_VERIFIER.definitionBinding()), marker);
+    }
+
+    @Test
+    void reopenLocksOnlyThroughTheLockFileItsInitializationCreated() throws IOException {
+        // Even a location carrying this definition's marker is never given a new lock file: a
+        // store whose lock has gone -- or a location swapped in after the marker was read -- is
+        // refused unchanged rather than locked by creating content in it.
+        FileControlledRevisionAuthority.openProvingStore(store(), FACTORY_VERIFIER);
+        Files.delete(store().resolve("authority.lock"));
+        Map<String, String> before = contents(tempDirectory);
+
+        GovernanceHistoryException refused = assertThrows(
+                GovernanceHistoryException.class,
+                () -> FileControlledRevisionAuthority.openProvingStore(store(), FACTORY_VERIFIER));
+        assertEquals(UNSUPPORTED_STORE, refused.code());
+        assertEquals(before, contents(tempDirectory));
+    }
+
+    @Test
+    void openedAuthorityNeverRecreatesLockOrUsesAReplacementLocation() throws IOException {
+        FileControlledRevisionAuthority opened =
+                FileControlledRevisionAuthority.openProvingStore(store(), FACTORY_VERIFIER);
+        Path lock = store().resolve("authority.lock");
+        Files.delete(lock);
+        Map<String, String> beforeMissingLock = contents(tempDirectory);
+
+        GovernanceHistoryException missingLock = assertThrows(
+                GovernanceHistoryException.class, opened::revisions);
+        assertEquals(UNSUPPORTED_STORE, missingLock.code());
+        assertEquals(beforeMissingLock, contents(tempDirectory));
+        assertFalse(Files.exists(lock));
+
+        Path replaceable = tempDirectory.resolve("replaceable-store");
+        FileControlledRevisionAuthority replaced =
+                FileControlledRevisionAuthority.openProvingStore(replaceable, FACTORY_VERIFIER);
+        Path original = tempDirectory.resolve("replaceable-store-original");
+        Files.move(replaceable, original);
+        Files.createDirectories(replaceable.resolve("revisions"));
+        Files.createDirectories(replaceable.resolve("artifacts"));
+        Files.write(
+                replaceable.resolve("authority.lock"),
+                "foreign-lock".getBytes(StandardCharsets.UTF_8));
+        Files.write(
+                replaceable.resolve("notes.txt"),
+                "foreign".getBytes(StandardCharsets.UTF_8));
+        Map<String, String> beforeReplacement = contents(tempDirectory);
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision candidate = revision(
+                id(24),
+                version.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T18:00:00Z"));
+
+        GovernanceHistoryException replacement = assertThrows(
+                GovernanceHistoryException.class,
+                () -> replaced.accept(candidate, artifact(version)));
+        assertEquals(UNSUPPORTED_STORE, replacement.code());
+        assertEquals(beforeReplacement, contents(tempDirectory));
+        assertFalse(Files.exists(replaceable.resolve("proving-store")));
+    }
+
+    @Test
+    void storeWrittenUnderOneWipDefinitionIsNeverReadUnderAnotherSharingItsMarker() throws IOException {
+        // Two development revisions of the Factory definition both publish factory-model:wip, so
+        // only the definition binding tells them apart. The store must fail closed before any of
+        // the earlier revision's records or artifacts are read, resolved or changed.
+        SemanticArtifactVerifier earlierDefinition = boundTo("earlier-definition-build");
+        SemanticArtifactVerifier laterDefinition = boundTo("later-definition-build");
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision accepted = FileControlledRevisionAuthority
+                .openProvingStore(store(), earlierDefinition, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC))
+                .accept(
+                        revision(id(16), version.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z")),
+                        artifact(version));
+        assertTrue(laterDefinition.supports(accepted.modelFingerprint()));
+        Map<String, String> before = contents(store());
+
+        GovernanceHistoryException refused = assertThrows(
+                GovernanceHistoryException.class,
+                () -> FileControlledRevisionAuthority.openProvingStore(store(), laterDefinition));
+        assertEquals(UNSUPPORTED_STORE, refused.code());
+        assertEquals(before, contents(store()));
+
+        assertEquals(
+                accepted,
+                FileControlledRevisionAuthority.openProvingStore(store(), earlierDefinition)
+                        .resolve(accepted.id())
+                        .revision());
+    }
+
+    @Test
+    void storeRecordsTheFactoryDefinitionBindingAndRequiresOne() throws IOException {
+        Path fresh = tempDirectory.resolve("fresh-binding");
+        FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER);
+
+        String marker = new String(Files.readAllBytes(fresh.resolve("proving-store")), StandardCharsets.UTF_8);
+        assertTrue(marker.endsWith(FACTORY_VERIFIER.definitionBinding()), marker);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> FileControlledRevisionAuthority.openProvingStore(tempDirectory.resolve("unbound"), boundTo(" ")));
+    }
+
+    @Test
+    void discardedPolicyArtifactsAreRefusedBeforeAnyStoreMutation() throws IOException {
+        // Bytes laid out under a discarded ordinal policy are never admitted as, or reinterpreted
+        // into, current proving content.
+        FactoryModelVersion version = version("Widget", 5);
+        byte[] current = FactoryModelArtifact.encode(version);
+        byte[] discardedPrefix = "arcogine.factory-model.v1\0".getBytes(StandardCharsets.US_ASCII);
+        int currentPrefix = "arcogine.factory-model.wip\0".getBytes(StandardCharsets.US_ASCII).length;
+        byte[] discardedBytes = new byte[discardedPrefix.length + current.length - currentPrefix - 1];
+        System.arraycopy(discardedPrefix, 0, discardedBytes, 0, discardedPrefix.length);
+        System.arraycopy(
+                current, currentPrefix + 1, discardedBytes, discardedPrefix.length, current.length - currentPrefix - 1);
+        ModelFingerprint discardedFingerprint = new ModelFingerprint(
+                "factory-model", "v1", "sha256", version.fingerprint().digest());
+        ControlledRevision candidate = revision(
+                id(15), discardedFingerprint, List.of(), Instant.parse("2026-09-01T18:00:00Z"));
+        FileControlledRevisionAuthority authority = authorityAt(ACCEPTED_AT);
+
+        GovernanceHistoryException failure = assertThrows(
+                GovernanceHistoryException.class,
+                () -> authority.accept(candidate, new SemanticArtifact(discardedFingerprint, discardedBytes)));
+        assertEquals(UNSUPPORTED_ARTIFACT_POLICY, failure.code());
+        assertTrue(authority.revisions().isEmpty());
+        assertTrue(regularFiles(store().resolve("artifacts")).isEmpty());
     }
 
     private GovernanceHistoryException.Code acceptAfterStart(
@@ -389,13 +590,18 @@ class FileControlledRevisionAuthorityTest {
         }
     }
 
+    /** The store location; absent until the first opener creates it. */
+    private Path store() {
+        return tempDirectory.resolve("store");
+    }
+
     private FileControlledRevisionAuthority authority() {
-        return new FileControlledRevisionAuthority(tempDirectory, FACTORY_VERIFIER);
+        return FileControlledRevisionAuthority.openProvingStore(store(), FACTORY_VERIFIER);
     }
 
     private FileControlledRevisionAuthority authorityAt(Instant instant) {
-        return new FileControlledRevisionAuthority(
-                tempDirectory, FACTORY_VERIFIER, Clock.fixed(instant, ZoneOffset.UTC));
+        return FileControlledRevisionAuthority.openProvingStore(
+                store(), FACTORY_VERIFIER, Clock.fixed(instant, ZoneOffset.UTC));
     }
 
     private static ControlledRevision revision(
@@ -414,11 +620,11 @@ class FileControlledRevisionAuthorityTest {
 
     private static SemanticArtifact artifact(FactoryModelVersion version) {
         return new SemanticArtifact(
-                version.fingerprint(), FactoryModelArtifactV1.encode(version));
+                version.fingerprint(), FactoryModelArtifact.encode(version));
     }
 
     private static FactoryModelVersion reconstructed(HistoricalRevision revision) {
-        return FactoryModelArtifactV1.decode(revision.artifact().canonicalBytes());
+        return FactoryModelArtifact.decode(revision.artifact().canonicalBytes());
     }
 
     private static FactoryModelVersion version(String productName, long duration) {
@@ -432,6 +638,37 @@ class FileControlledRevisionAuthorityTest {
                 new ProductDefinition(new ProductId(10), productName, operation.id());
         return FactoryModelPublisher.publish(
                 new FactoryModel(List.of(machine), List.of(operation), List.of(product)));
+    }
+
+    private static SemanticArtifactVerifier boundTo(String definitionBinding) {
+        return new SemanticArtifactVerifier() {
+            @Override
+            public boolean supports(ModelFingerprint fingerprint) {
+                return FACTORY_VERIFIER.supports(fingerprint);
+            }
+
+            @Override
+            public ModelFingerprint fingerprint(byte[] canonicalBytes) {
+                return FACTORY_VERIFIER.fingerprint(canonicalBytes);
+            }
+
+            @Override
+            public String definitionBinding() {
+                return definitionBinding;
+            }
+        };
+    }
+
+    private static Map<String, String> contents(Path root) throws IOException {
+        Map<String, String> contents = new TreeMap<>();
+        try (var paths = Files.walk(root)) {
+            for (Path path : paths.filter(path -> !path.equals(root)).toList()) {
+                contents.put(
+                        root.relativize(path).toString(),
+                        Files.isDirectory(path) ? "<directory>" : HexFormat.of().formatHex(Files.readAllBytes(path)));
+            }
+        }
+        return contents;
     }
 
     private static Path onlyRegularFile(Path directory) throws IOException {

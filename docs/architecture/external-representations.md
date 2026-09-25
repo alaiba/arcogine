@@ -1,7 +1,7 @@
 # External representations and interchange boundaries
 
 Status: Adopted repository-wide representation policy
-Related: [Standards Alignment](standards-alignment.md), [Factory Model v1](factory-model-v1.md), [Controlled revisions](controlled-revisions.md), [Runtime contract](runtime-contract.md)
+Related: [Standards Alignment](standards-alignment.md), [Factory model](factory-model.md), [Controlled revisions](controlled-revisions.md), [Runtime contract](runtime-contract.md)
 
 ## Purpose
 
@@ -65,9 +65,9 @@ Any selected format requires a concrete usability or integration need rather tha
 
 JSON is the preferred default representation for a future ordinary external HTTP/API projection and other structured interchange where no stronger domain-specific format is required. No such projection currently exists.
 
-JSON serialization must not define or recanonicalize `factory-model:v1` semantic identity.
+JSON serialization must not define or recanonicalize Factory semantic identity.
 
-`factory-model:v1` is defined by the [Factory Model v1 specification](factory-model-v1.md)'s normative binary grammar and SHA-256 policy. A JSON representation of the same factory model is a projection of semantic content, not the bytes from which the durable fingerprint is derived.
+The Factory fingerprint is defined by the [Factory model specification](factory-model.md)'s normative binary grammar and SHA-256 digest. A JSON representation of the same factory model is a projection of semantic content, not the bytes from which the fingerprint is derived.
 
 The same principle applies to every semantic-fingerprint policy unless a reviewed architectural decision explicitly defines otherwise.
 

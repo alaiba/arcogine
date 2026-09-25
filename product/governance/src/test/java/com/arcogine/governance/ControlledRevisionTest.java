@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 class ControlledRevisionTest {
 
     private static final ModelFingerprint FINGERPRINT_ONE =
-            new ModelFingerprint("factory-model", "v1", "sha256", "a".repeat(64));
+            new ModelFingerprint("factory-model", "wip", "sha256", "a".repeat(64));
     private static final ModelFingerprint FINGERPRINT_TWO =
-            new ModelFingerprint("factory-model", "v1", "sha256", "b".repeat(64));
+            new ModelFingerprint("factory-model", "wip", "sha256", "b".repeat(64));
     private static final RevisionProvenance PROVENANCE = new RevisionProvenance(
             Instant.parse("2026-08-28T12:00:00Z"), new RevisionRecorder("test", "governance-test"));
 

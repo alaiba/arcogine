@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * Typed, stable correlation to one authoritative entity affected by a {@link RuntimeEventEnvelope},
  * used in place of an ambiguous display string (docs/architecture/runtime-contract.md,
- * docs/architecture/engine-semantics-v1.md section 3 child-job identity semantics). A single
+ * docs/architecture/engine-semantics.md section 3 child-job identity semantics). A single
  * supported event can carry more than one ref -- e.g. a job-step-completion event correlates both
  * the completing {@link JobId} and its parent {@link OrderId}.
  */

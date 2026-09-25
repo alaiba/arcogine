@@ -129,7 +129,7 @@ survive them.
 
 ## Provenance
 
-Reconciled by the owner-directed reset pull request, together with the research supersession, the
+Reconciled in [pull request #405](https://github.com/alaiba/arcogine/pull/405), together with the research supersession, the
 knowledge-transfer audit above and its independent PR review. The earlier choices it replaces are
 recorded in the [Factory composition rationale](2026-09-23-factory-model-semantic-composition.md)
 and the [transfer-applicability rationale](2026-09-24-transfer-applicability-for-optional-spatial-models.md),

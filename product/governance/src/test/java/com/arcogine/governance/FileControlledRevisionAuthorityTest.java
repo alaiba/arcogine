@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
@@ -182,7 +183,7 @@ class FileControlledRevisionAuthorityTest {
         assertNotEquals(acceptedA.id(), acceptedC.id());
         assertEquals(acceptedA.modelFingerprint(), acceptedC.modelFingerprint());
         assertEquals(3, authority.revisions().size());
-        assertEquals(2, regularFiles(tempDirectory.resolve("artifacts")).size());
+        assertEquals(2, regularFiles(store().resolve("artifacts")).size());
         assertEquals(f1.model(), reconstructed(authority.resolve(acceptedA.id())).model());
         assertEquals(f2.model(), reconstructed(authority.resolve(acceptedB.id())).model());
         assertEquals(f1.model(), reconstructed(authority.resolve(acceptedC.id())).model());
@@ -239,7 +240,7 @@ class FileControlledRevisionAuthorityTest {
                 Instant.parse("2026-09-01T18:00:00Z"));
         FileControlledRevisionAuthority authority = authorityAt(ACCEPTED_AT);
         ControlledRevision accepted = authority.accept(candidate, artifact(version));
-        Path artifactFile = onlyRegularFile(tempDirectory.resolve("artifacts"));
+        Path artifactFile = onlyRegularFile(store().resolve("artifacts"));
 
         Files.delete(artifactFile);
         GovernanceHistoryException missing = assertThrows(
@@ -273,7 +274,7 @@ class FileControlledRevisionAuthorityTest {
                 Instant.parse("2026-09-01T18:00:00Z"));
         ControlledRevision accepted = authorityAt(ACCEPTED_AT).accept(candidate, artifact(version));
 
-        Path revisionFile = onlyRegularFile(tempDirectory.resolve("revisions"));
+        Path revisionFile = onlyRegularFile(store().resolve("revisions"));
         Files.write(revisionFile, new byte[] {9, 8, 7});
 
         GovernanceHistoryException failure = assertThrows(
@@ -376,8 +377,17 @@ class FileControlledRevisionAuthorityTest {
     @Test
     void provingStoreNeverAdoptsOrModifiesALocationItDidNotCreate() throws IOException {
         // A store written by an earlier layout, a foreign proving-store marker, other directory
-        // content, or a regular file is refused as a whole -- not reopened, partially reinterpreted,
+        // content -- including names the store itself would use -- an empty directory it did not
+        // create, or a regular file is refused as a whole: not reopened, partially reinterpreted,
         // or touched in any way, including by creating the store's lock file.
+        Path reservedLock = tempDirectory.resolve("reserved-lock");
+        Files.createDirectories(reservedLock);
+        Files.write(reservedLock.resolve("authority.lock"), "foreign".getBytes(StandardCharsets.UTF_8));
+        Path reservedPending = tempDirectory.resolve("reserved-pending");
+        Files.createDirectories(reservedPending);
+        Files.write(reservedPending.resolve(".pending-123.tmp"), "foreign".getBytes(StandardCharsets.UTF_8));
+        Path emptyDirectory = tempDirectory.resolve("empty-directory");
+        Files.createDirectories(emptyDirectory);
         Path earlierLayout = tempDirectory.resolve("earlier-layout");
         Files.createDirectories(earlierLayout.resolve("revisions"));
         Files.write(
@@ -392,7 +402,8 @@ class FileControlledRevisionAuthorityTest {
         Path regularFile = tempDirectory.resolve("regular-file");
         Files.write(regularFile, "not a directory".getBytes(StandardCharsets.UTF_8));
 
-        for (Path location : List.of(earlierLayout, foreignMarker, foreignContent, regularFile)) {
+        for (Path location : List.of(
+                reservedLock, reservedPending, emptyDirectory, earlierLayout, foreignMarker, foreignContent, regularFile)) {
             Map<String, String> before = contents(tempDirectory);
 
             GovernanceHistoryException refused = assertThrows(
@@ -400,14 +411,63 @@ class FileControlledRevisionAuthorityTest {
                     () -> FileControlledRevisionAuthority.openProvingStore(location, FACTORY_VERIFIER));
             assertEquals(UNSUPPORTED_STORE, refused.code(), location.toString());
             assertEquals(before, contents(tempDirectory), location.toString());
-            assertFalse(Files.exists(location.resolve("authority.lock")), location.toString());
         }
+        assertFalse(Files.exists(emptyDirectory.resolve("authority.lock")));
+        assertFalse(Files.exists(foreignContent.resolve("authority.lock")));
 
         Path fresh = tempDirectory.resolve("fresh");
         FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER);
         assertTrue(Files.exists(fresh.resolve("proving-store")));
         assertTrue(FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER).revisions().isEmpty());
     }
+
+    @Test
+    void concurrentOpenersOfOneAbsentLocationShareOneInitializedStore() throws Exception {
+        // Only the opener that creates the absent location initializes it; every other opener
+        // reopens that store rather than adopting a partially initialized directory.
+        Path fresh = tempDirectory.resolve("contended");
+        int openers = 8;
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(openers);
+        try {
+            List<Future<FileControlledRevisionAuthority>> opened = new ArrayList<>();
+            for (int i = 0; i < openers; i++) {
+                opened.add(executor.submit(() -> {
+                    start.await();
+                    return FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER);
+                }));
+            }
+            start.countDown();
+            for (Future<FileControlledRevisionAuthority> authority : opened) {
+                assertTrue(authority.get().revisions().isEmpty());
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertEquals(
+                Set.of("artifacts", "authority.lock", "proving-store", "revisions"),
+                contents(fresh).keySet());
+        String marker = new String(Files.readAllBytes(fresh.resolve("proving-store")), StandardCharsets.UTF_8);
+        assertTrue(marker.endsWith(FACTORY_VERIFIER.definitionBinding()), marker);
+    }
+
+    @Test
+    void reopenLocksOnlyThroughTheLockFileItsInitializationCreated() throws IOException {
+        // Even a location carrying this definition's marker is never given a new lock file: a
+        // store whose lock has gone -- or a location swapped in after the marker was read -- is
+        // refused unchanged rather than locked by creating content in it.
+        FileControlledRevisionAuthority.openProvingStore(store(), FACTORY_VERIFIER);
+        Files.delete(store().resolve("authority.lock"));
+        Map<String, String> before = contents(tempDirectory);
+
+        GovernanceHistoryException refused = assertThrows(
+                GovernanceHistoryException.class,
+                () -> FileControlledRevisionAuthority.openProvingStore(store(), FACTORY_VERIFIER));
+        assertEquals(UNSUPPORTED_STORE, refused.code());
+        assertEquals(before, contents(tempDirectory));
+    }
+
     @Test
     void storeWrittenUnderOneWipDefinitionIsNeverReadUnderAnotherSharingItsMarker() throws IOException {
         // Two development revisions of the Factory definition both publish factory-model:wip, so
@@ -417,22 +477,22 @@ class FileControlledRevisionAuthorityTest {
         SemanticArtifactVerifier laterDefinition = boundTo("later-definition-build");
         FactoryModelVersion version = version("Widget", 5);
         ControlledRevision accepted = FileControlledRevisionAuthority
-                .openProvingStore(tempDirectory, earlierDefinition, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC))
+                .openProvingStore(store(), earlierDefinition, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC))
                 .accept(
                         revision(id(16), version.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z")),
                         artifact(version));
         assertTrue(laterDefinition.supports(accepted.modelFingerprint()));
-        Map<String, String> before = contents(tempDirectory);
+        Map<String, String> before = contents(store());
 
         GovernanceHistoryException refused = assertThrows(
                 GovernanceHistoryException.class,
-                () -> FileControlledRevisionAuthority.openProvingStore(tempDirectory, laterDefinition));
+                () -> FileControlledRevisionAuthority.openProvingStore(store(), laterDefinition));
         assertEquals(UNSUPPORTED_STORE, refused.code());
-        assertEquals(before, contents(tempDirectory));
+        assertEquals(before, contents(store()));
 
         assertEquals(
                 accepted,
-                FileControlledRevisionAuthority.openProvingStore(tempDirectory, earlierDefinition)
+                FileControlledRevisionAuthority.openProvingStore(store(), earlierDefinition)
                         .resolve(accepted.id())
                         .revision());
     }
@@ -472,7 +532,7 @@ class FileControlledRevisionAuthorityTest {
                 () -> authority.accept(candidate, new SemanticArtifact(discardedFingerprint, discardedBytes)));
         assertEquals(UNSUPPORTED_ARTIFACT_POLICY, failure.code());
         assertTrue(authority.revisions().isEmpty());
-        assertTrue(regularFiles(tempDirectory.resolve("artifacts")).isEmpty());
+        assertTrue(regularFiles(store().resolve("artifacts")).isEmpty());
     }
 
     private GovernanceHistoryException.Code acceptAfterStart(
@@ -487,13 +547,18 @@ class FileControlledRevisionAuthorityTest {
         }
     }
 
+    /** The store location; absent until the first opener creates it. */
+    private Path store() {
+        return tempDirectory.resolve("store");
+    }
+
     private FileControlledRevisionAuthority authority() {
-        return FileControlledRevisionAuthority.openProvingStore(tempDirectory, FACTORY_VERIFIER);
+        return FileControlledRevisionAuthority.openProvingStore(store(), FACTORY_VERIFIER);
     }
 
     private FileControlledRevisionAuthority authorityAt(Instant instant) {
         return FileControlledRevisionAuthority.openProvingStore(
-                tempDirectory, FACTORY_VERIFIER, Clock.fixed(instant, ZoneOffset.UTC));
+                store(), FACTORY_VERIFIER, Clock.fixed(instant, ZoneOffset.UTC));
     }
 
     private static ControlledRevision revision(

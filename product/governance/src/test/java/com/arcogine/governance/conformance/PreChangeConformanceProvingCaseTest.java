@@ -63,7 +63,7 @@ class PreChangeConformanceProvingCaseTest {
     @Test
     void preChangeCandidateIsEvaluatedAgainstRequirementsAffectedByItsRealImpactScope() {
         FileControlledRevisionAuthority authority =
-                FileControlledRevisionAuthority.openProvingStore(tempDirectory, FACTORY_VERIFIER);
+                FileControlledRevisionAuthority.openProvingStore(tempDirectory.resolve("store"), FACTORY_VERIFIER);
         FactoryModelVersion baseModel = model(List.of(1));
         FactoryModelVersion candidateModel = model(List.of(1, 2));
         ControlledRevision base = accept(authority, baseModel, List.of());

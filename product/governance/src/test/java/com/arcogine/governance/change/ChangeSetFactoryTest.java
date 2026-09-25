@@ -267,7 +267,7 @@ class ChangeSetFactoryTest {
     }
 
     private FileControlledRevisionAuthority authority() {
-        return FileControlledRevisionAuthority.openProvingStore(tempDirectory, FACTORY_VERIFIER);
+        return FileControlledRevisionAuthority.openProvingStore(tempDirectory.resolve("store"), FACTORY_VERIFIER);
     }
 
     private ControlledRevision accept(

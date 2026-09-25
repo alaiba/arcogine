@@ -126,7 +126,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         // under that lock before anything is written there.
         synchronized (PROCESS_LOCK) {
             if (authority.createRootIfAbsent()) {
-                authority.withExclusiveLock(() -> {
+                authority.withExclusiveLock(true, () -> {
                     authority.writeAtomic(authority.authorityRoot.resolve(STORE_MARKER_FILE), authority.storeMarker);
                     authority.createStoreDirectories();
                     return null;
@@ -547,7 +547,10 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     }
 
     private <T> T withExclusiveLock(CheckedSupplier<T> action) {
-        return withExclusiveLock(true, action);
+        return withExclusiveLock(false, () -> {
+            requireOwned();
+            return action.get();
+        });
     }
 
     private <T> T withExclusiveLock(boolean createLockFile, CheckedSupplier<T> action) {

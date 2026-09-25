@@ -469,6 +469,49 @@ class FileControlledRevisionAuthorityTest {
     }
 
     @Test
+    void openedAuthorityNeverRecreatesLockOrUsesAReplacementLocation() throws IOException {
+        FileControlledRevisionAuthority opened =
+                FileControlledRevisionAuthority.openProvingStore(store(), FACTORY_VERIFIER);
+        Path lock = store().resolve("authority.lock");
+        Files.delete(lock);
+        Map<String, String> beforeMissingLock = contents(tempDirectory);
+
+        GovernanceHistoryException missingLock = assertThrows(
+                GovernanceHistoryException.class, opened::revisions);
+        assertEquals(UNSUPPORTED_STORE, missingLock.code());
+        assertEquals(beforeMissingLock, contents(tempDirectory));
+        assertFalse(Files.exists(lock));
+
+        Path replaceable = tempDirectory.resolve("replaceable-store");
+        FileControlledRevisionAuthority replaced =
+                FileControlledRevisionAuthority.openProvingStore(replaceable, FACTORY_VERIFIER);
+        Path original = tempDirectory.resolve("replaceable-store-original");
+        Files.move(replaceable, original);
+        Files.createDirectories(replaceable.resolve("revisions"));
+        Files.createDirectories(replaceable.resolve("artifacts"));
+        Files.write(
+                replaceable.resolve("authority.lock"),
+                "foreign-lock".getBytes(StandardCharsets.UTF_8));
+        Files.write(
+                replaceable.resolve("notes.txt"),
+                "foreign".getBytes(StandardCharsets.UTF_8));
+        Map<String, String> beforeReplacement = contents(tempDirectory);
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision candidate = revision(
+                id(24),
+                version.fingerprint(),
+                List.of(),
+                Instant.parse("2026-09-01T18:00:00Z"));
+
+        GovernanceHistoryException replacement = assertThrows(
+                GovernanceHistoryException.class,
+                () -> replaced.accept(candidate, artifact(version)));
+        assertEquals(UNSUPPORTED_STORE, replacement.code());
+        assertEquals(beforeReplacement, contents(tempDirectory));
+        assertFalse(Files.exists(replaceable.resolve("proving-store")));
+    }
+
+    @Test
     void storeWrittenUnderOneWipDefinitionIsNeverReadUnderAnotherSharingItsMarker() throws IOException {
         // Two development revisions of the Factory definition both publish factory-model:wip, so
         // only the definition binding tells them apart. The store must fail closed before any of

@@ -76,9 +76,10 @@ At the beginning of every complete review or re-review:
 1. Resolve current `main` and record its SHA.
 2. Resolve the PR number, title, current base, current head SHA, mergeability, and live base distance where available.
 3. **Normalize a stale base before substantive review.**
-   - For an open same-repository PR eligible under `AGENTS.md`'s base-normalization protocol, capture `H` (the PR head), `B` (the live base), and `A` (the merge base when needed). Construct exactly one merge commit `M` with first parent `H`, second parent `B`, and a tree formed from the base tree plus the PR-side delta, using ordinary three-way text merges only for supported overlapping text files.
+   - For an open same-repository PR that is behind its live base, apply the base-normalization protocol defined in `docs/development/reviewing.md`: capture `H` (the PR head), `B` (the live base), and `A` (the merge base when needed). Construct exactly one merge commit `M` with first parent `H`, second parent `B`, and a tree formed from the base tree plus the PR-side delta, using ordinary three-way text merges only for supported overlapping text files.
    - Use repository-scoped GitHub Git-data operations. Immediately before publication, re-read the PR head; if it is no longer `H`, abandon without mutation. Otherwise publish `H -> M` with a non-forced ref update (`force=false`). This is a best-effort check, not exact-head atomicity: a reset to an ancestor such as `B` in the tiny post-check interval can still fast-forward to `M`, and that residual race is accepted. Do not use a local `gh` prerequisite, rebase, force push, lease, or separate compare-and-swap protocol.
    - If construction encounters a real conflict or unsupported structural case, make no remote branch mutation and return the PR to its author/implementation owner. Do not resolve conflicts or file a reconciliation finding against the stale head merely to request synchronization.
+   - For a stale Dependabot PR that otherwise qualifies for trusted provenance, preserve that provenance during normalization: a maintainer-authored synchronization commit changes the PR's provenance, and the resulting head follows the ordinary review path instead.
 4. After successful normalization, resolve the resulting current head and review that candidate. Do not ask the reviewer to orchestrate CI, trusted `disposition`, or final mergeability; those remain independent repository gates. Do not immediately synchronize again solely because `main` advanced after `B` was observed; a later continuation may do so if required.
 5. Inspect the PR description, changed files, and net `current main...current normalized PR head` diff.
 6. Inspect existing reviews, comments, unresolved threads, and prior findings when available. Treat any active native GitHub `CHANGES_REQUESTED` state as an anomalous platform blocker that must be cleared before merge; Arcogine reviewers do not create it.
@@ -101,7 +102,7 @@ Normalize the base if needed, then review current `main` against the resulting c
 
 Normalize the base if needed, resolve the resulting head, re-evaluate every prior finding, inspect changes since the previously reviewed head, and scan the full current-main-to-current-head net diff for regressions or newly exposed issues.
 
-Carry every prior finding forward under the same `REV-###` identity and set its status to `OPEN`, `RESOLVED`, or `OBSOLETE` after checking the current head. If a resolved defect recurs, reopen the same identity as `OPEN` and describe the recurrence as a regression in review prose; `REGRESSION` is not a finding status. Do not omit resolved or obsolete identities from the lifecycle record.
+Carry every prior finding forward under the same `REV-<N>` identity and set its status to `OPEN`, `RESOLVED`, or `OBSOLETE` after checking the current head. If a resolved defect recurs, reopen the same identity as `OPEN` and describe the recurrence as a regression in review prose; `REGRESSION` is not a finding status. Do not omit resolved or obsolete identities from the lifecycle record.
 
 ### Final review
 
@@ -298,10 +299,10 @@ Do not pull future work into the current PR without a concrete dependency on sat
 
 ## Finding format
 
-Assign each genuinely new actionable finding the next unused `REV-###` number monotonically across that PR's review lifecycle. Never reuse an identifier for a different semantic defect. Carry the same identifier forward while reconciling that finding; a finding that has been resolved or found inapplicable remains represented with its final status rather than disappearing from the lifecycle record.
+Assign each genuinely new actionable finding the next unused `REV-<N>` number monotonically across that PR's review lifecycle. Never reuse an identifier for a different semantic defect. Carry the same identifier forward while reconciling that finding; a finding that has been resolved or found inapplicable remains represented with its final status rather than disappearing from the lifecycle record.
 
 ```text
-REV-### - concise title
+REV-<N> - concise title
 
 Severity: P0 | P1 | P2 | P3 | Nit
 Category: <category>
@@ -326,7 +327,7 @@ Status: OPEN
 
 The status value is `OPEN`, `RESOLVED`, or `OBSOLETE`; `OPEN` is shown in the example. Use the severity semantics and calibration examples from `docs/development/reviewing.md`. Do not manufacture a finding merely to populate the format.
 
-Each block must contain exactly one value for every labeled field shown above. `Head` is the full SHA of the head reviewed for that review. The category, severity, confidence, title, and semantic subject identify the finding and remain stable when its `REV-###` is carried forward; update only `Head` and `Status`. If a finding must be materially reclassified or the subject changes, close the old identity as `OBSOLETE` and assign a new unused identifier to the distinct finding.
+Each block must contain exactly one value for every labeled field shown above. `Head` is the full SHA of the head reviewed for that review. The category, severity, confidence, title, and semantic subject identify the finding and remain stable when its `REV-<N>` is carried forward; update only `Head` and `Status`. If a finding must be materially reclassified or the subject changes, close the old identity as `OBSOLETE` and assign a new unused identifier to the distinct finding.
 
 ## Finding lifecycle
 

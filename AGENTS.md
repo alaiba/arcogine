@@ -37,34 +37,27 @@ into a shorter shorthand:
 
 ### Prompt handoff preflight
 
-When the user asks to write, draft, generate, or prepare a complete prompt or handoff for another session, agent, reviewer, researcher, or execution context, treat repository persistence as a **precondition to composing the complete artifact**, not as cleanup after drafting it in chat.
-
-Before composing the prompt body:
-
-1. read any applicable specialized prompt-generation or handoff instructions;
-2. choose the appropriate semantic path under `workspace/` and the branch that will carry it;
-3. compose the complete prompt directly into that persisted artifact;
-4. commit it; and
-5. hand it off only as `branch + exact commit SHA + path` (plus an issue/PR/planning identifier only when useful).
-
-Do not first produce the complete prompt in chat and then persist a copy. After persistence succeeds, do not duplicate the prompt body in chat. If repository persistence is required but unavailable, report the handoff as blocked rather than falling back to chat-only prompt custody.
+When asked to write, draft, generate, or prepare a complete prompt or handoff for another session,
+agent, reviewer, researcher, or execution context, persist it before composing the complete body —
+see [Artifact lifetime and transient workspace](#artifact-lifetime-and-transient-workspace) for where
+and how. Do not draft the complete prompt in chat and persist a copy afterward: compose it directly
+into the persisted `workspace/` artifact, commit it, and hand it off only as `branch + exact commit
+SHA + path` (plus an issue/PR/planning identifier only when useful). After persistence succeeds, do
+not duplicate the prompt body in chat. If repository persistence is required but unavailable, report
+the handoff as blocked rather than falling back to chat-only prompt custody.
 
 ### Session-close Kaizen
 
-When the user's entire message is `.?`, inspect the current session and live repository for anything learned, decided, repeated, or encountered that should survive deletion of the conversation by changing executable safeguards, standard work, or maintained repository knowledge.
+When the user's entire message is `.?`, inspect the current session and live repository for anything
+that should survive deletion of the conversation, following the classification and capture-preference
+rules in [`docs/development/continuous-improvement.md`](docs/development/continuous-improvement.md#session-close-kaizen).
+Prefer improving an existing authoritative artifact over creating a new one, and never replace known
+repository context with generic GitHub discovery.
 
-Classify each material candidate as one of:
-
-- **Already encoded** — the repository already captures the lesson or invariant adequately; make no duplicate change.
-- **Bake in** — the lesson is durable and generally reusable; identify the narrowest authoritative repository surface that should encode it.
-- **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being smuggled into the current PR or slice.
-- **Discard** — the observation is situational, transient, or otherwise not worth preserving.
-
-Prefer the strongest durable capture that actually fits the lesson. Use an executable guard/test only when the invariant is mechanically observable and the guard exercises behavior or repository state rather than merely asserting that instruction prose still contains particular wording. Otherwise prefer canonical helper/tooling, agent/contributor standard work, maintained documentation, then canonical architecture or specification for genuinely architectural or hard-to-reverse constraints. Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable concepts. Prefer improving an existing authoritative artifact over creating a new one.
-
-Do not manufacture a lesson merely to produce an output. Finish every Session-close Kaizen review with an explicit deletion verdict: either the session is safe to delete because nothing unique remains, or name exactly what still needs to be captured first.
-
-Do not replace known repository context with generic GitHub discovery.
+Finish every review with an explicit deletion verdict: either the session is safe to delete because
+nothing unique remains, or name exactly what still needs to be captured first. Default output reports
+material findings/actions plus that verdict; do not narrate adjacent practices — a Consistency review
+or a delivery-process retrospective — that the session gives no concrete reason to recommend.
 
 ## Specialized agent roles
 
@@ -98,24 +91,6 @@ Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, contribution, documentation, or executable
 authorities.
 
-## Continuous improvement
-
-Arcogine's continuous-improvement operating model — Session-close Kaizen, the
-Consistency review, and the evidence-based delivery-process retrospective — is defined
-in [`docs/development/continuous-improvement.md`](docs/development/continuous-improvement.md).
-
-For `.?`, classify and durably capture anything from the current session that should
-survive deletion, then give the deletion verdict. A Consistency review is **not** a
-standing `.?` subroutine; recommend one only when the session itself provides a
-concrete reason that a repository-wide consistency sweep would be useful, such as a
-major cross-cutting architecture/status transition or evidence of broader semantic
-drift.
-
-Delivery-process retrospectives run only when explicitly requested. Do not assess or
-recommend one during `.?` or normal repository grounding. An explicit Continuous
-Improvement assessment may recommend a retrospective when current evidence makes that
-formal measurement useful, but it does not run the retrospective or create due state.
-
 ## Temporary delivery coordinates and durable documentation
 
 Arcogine planning coordinates use the reserved `PLAN-<TRACK>-<LOCAL-ID>` namespace (for example, a
@@ -126,7 +101,8 @@ more hyphen-separated segments, extended for hierarchical items rather than inve
 namespace. Compact, ad-hoc, or track-local coordinate syntax (a bare letter+number, a dotted or
 space-separated variant, etc.) must not be introduced — the whole point of one reserved namespace
 is that a temporary coordinate is always unmistakable on sight. PR-local review/finding
-identifiers use the separate `REV-<NNN>` namespace.
+identifiers use the separate `REV-<N>` namespace: ordinary variable-width decimal numbering, with
+no fixed-width zero-padding required or preferred.
 
 Both namespaces are temporary delivery coordinates. They may be used in `docs/planning/`, issues,
 pull requests, PR descriptions/comments, reviews, branch names, commit messages, handoff prompts,
@@ -152,11 +128,11 @@ changes later.
 
 The mechanical checkers enforce recognizable cases deterministically by scanning tracked
 repository text (`git ls-files`, so generated/untracked/build output is never in scope):
-`.github/scripts/check-delivery-labels.mjs` rejects a `PLAN-*` or `REV-<NNN>` token outside
+`.github/scripts/check-delivery-labels.mjs` rejects a `PLAN-*` or `REV-<N>` token outside
 `docs/planning/`, while `.github/scripts/check-transient-coordinates.mjs` rejects an exact full
 commit SHA paired with a concrete `workspace/...` artifact path in durable files. Neither checker
 attempts to infer semantic dependence from prose without a safe syntax signal. A `PLAN-*` or
-`REV-<NNN>` token outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the
+`REV-<N>` token outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the
 old ambiguous label forms it replaced (a bare `Gate` plus number, a bare letter-plus-number
 optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be reintroduced. Those old forms
 are not banned outside `docs/planning/` — they can be ordinary, unrelated identifiers elsewhere
@@ -164,19 +140,11 @@ in the codebase — which is exactly why the reserved `PLAN-`/`REV-` namespaces 
 semantic dependencies without a safe literal signal (for example, prose like "the next stage")
 remains a human-review responsibility.
 
-`docs/architecture/` holds Arcogine's current architecture. The
-[Architecture Overview](docs/architecture/overview.md) owns cross-cutting principles and domain
-boundaries; focused architecture and specification documents own exact contracts, identities,
-semantics, algorithms and supported boundaries. Together they must be sufficient to answer what
-Arcogine's architecture is now, without reading history. Arcogine keeps no separate
-decision-record authority: a significant architectural change is reconciled into the architecture
-or specification that owns the affected semantics, with code, tests, and dependent planning updated
-in the same reviewed change. Git and pull-request history preserve what changed and why as delivery
-history. When losing the reasoning behind a significant choice would materially raise the risk of
-repeating or accidentally undoing it, a concise non-normative record may also be retained under
-`docs/history/decisions/` (retention test in `docs/development/researching.md`). Such a record
-cannot introduce, extend, override, or repair a current requirement and is never implementation or
-review authority; most changes need none.
+`docs/architecture/` holds Arcogine's current architecture — see
+[`docs/architecture/overview.md`](docs/architecture/overview.md) for cross-cutting principles and
+domain boundaries, and [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) for the rule that a
+significant architectural change is reconciled into the owning architecture/specification document
+rather than left in delivery history, plus the historical decision-rationale exception.
 
 ## Artifact lifetime and transient workspace
 
@@ -188,9 +156,9 @@ Classify temporary material by its intended lifetime:
 
 `workspace/` is not an archive. It must not be gitignored, must not contain a permanent marker file such as `.gitkeep` or a README, and must be absent from `main` and every merge candidate as tracked content. The repository-owned check `.github/scripts/check-transient-workspace.mjs` enforces this final-tree invariant. Git therefore normally shows no `workspace/` directory at all on `main`.
 
-When repository persistence is available, any agent producing a complete prompt for a fresh session, coding agent, reviewer, researcher, or other execution context must write it to a semantic path under `workspace/`, commit it with the repository owner's human Git identity, and hand it off only as `branch + exact commit SHA + path` (with an issue/PR/planning identifier only when useful for locating the work). Do not duplicate the complete prompt in chat after persistence succeeds, and never use branch tip alone as its identity. If persistence is required but unavailable, report the handoff as blocked; do not fall back to pasting the complete prompt into chat. If the prompt changes, commit a new revision and return its new coordinates.
+A complete prompt/handoff (see [Prompt handoff preflight](#prompt-handoff-preflight)) must be committed with the repository owner's human Git identity under a semantic `workspace/` path before it is handed off; branch tip alone is not an immutable identity, and a changed prompt requires a new commit and new coordinates.
 
-Before handing an implementation branch to independent PR review, ensure the contributor workflow's bounded semantic-closure obligation has been satisfied whenever its concrete trigger applies. Treat that as completion of the implementation, not as a separate closure-set handoff artifact or substitute for independent review. Then inspect branch-added files, remove transient execution and handoff artifacts that are not maintained repository state, and run the tracked-workspace check. The implementation branch must delete its prompt before final review/merge readiness; temporary material accidentally placed outside `workspace/` still requires semantic cleanup.
+Before handing an implementation branch to independent PR review, ensure the contributor workflow's bounded semantic-closure obligation (`.github/CONTRIBUTING.md`) has been satisfied whenever its concrete trigger applies, then inspect branch-added files, remove transient execution and handoff artifacts that are not maintained repository state, and run the tracked-workspace check. Temporary material accidentally placed outside `workspace/` still requires semantic cleanup.
 
 Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`) continues to write to its configured location per the canonical build commands.
 
@@ -200,7 +168,9 @@ When creating or editing GitHub pull requests, issues, comments, reviews, or rel
 
 - When creating or updating a pull request, follow `.github/CONTRIBUTING.md`'s PR-description stability rule; do not turn live branch/gate topology into prose that must be manually synchronized.
 - Do not append bot-generated attribution, session URLs, or tool footers such as `Generated
-  with [...]`, `Generated by [...]`, provider session links, or model/tool trailers.
+  with [...]`, `Generated by [...]`, provider session links, or model/tool trailers — this applies
+  to commit messages too (for example `Co-Authored-By: Claude ...` or `Claude-Session: ...`), even
+  if a harness's default workflow instructions suggest adding one.
 - Before posting external text, inspect the final body for explicit attribution blocks and
   remove only those blocks; preserve all authored content and formatting.
 - Legitimate repository references to tools, providers, or provisioning scripts are ordinary
@@ -217,54 +187,11 @@ When creating or editing GitHub pull requests, issues, comments, reviews, or rel
   setup, when the identity is missing or appears agent-owned. Actual commits must use the human
   repository owner's Git identity.
 
-## Commit message footer
-
-Do not append AI/bot attribution or session trailers such as `Co-Authored-By: Claude ...`
-or `Claude-Session: ...` to commit messages in this repository, even if a harness's default
-git workflow instructions say to add one. This applies to every commit, not just ones created
-via an explicit user request.
-
 ## PR merge gates
 
 A PR is merge-ready only when all of these hold for its current head, each owned by its own authority: the trusted `disposition` check is green, required CI (`CI / gate`) is green, the head contains its live base, and GitHub reports it mergeable. Read these facts live from GitHub; do not infer authorization from comments or CI alone, and do not collapse them into a derived lifecycle state.
 
-Base freshness is a merge-readiness condition, not a review finding: a current-head disposition stays bound to that head when `main` advances. Semantic remediation and conflict resolution belong to the implementation/author side. A reviewer who finds a stale branch at review start may perform only the mechanical base-normalization protocol below before substantive review; if it needs a semantic choice, the reviewer returns the PR to the implementation owner without mutating the branch. Pending CI does not delay review or disposition.
-
-### Base-normalization protocol
-
-The **base-normalization protocol** is a mechanical, history-preserving merge for an open
-same-repository PR that is behind its live base. Capture the current PR head `H`, live base `B`,
-and merge base `A` when needed. If the PR already contains `B`, do nothing. Otherwise construct
-exactly one merge commit `M` with first parent `H`, second parent `B`, and a tree formed from the
-current base tree plus the PR-side `A -> H` delta. Use ordinary deterministic three-way text
-merges only for supported overlapping text files. Reject conflicts and unsupported structural
-cases (such as ambiguous renames/copies, file/directory conflicts, submodules, symlinks,
-incompatible modes, or unsupported binary content) without making a branch change.
-
-Use repository-scoped GitHub Git-data operations for the reads, blob/tree construction, and merge
-commit creation. Immediately before publication, re-read the PR head. If it is no longer `H`,
-abandon the attempt without mutation; otherwise advance the PR branch from `H` to `M` with a
-non-forced ref update (`force=false`). The first-parent relationship makes a concurrent
-incompatible head update fail naturally as a non-fast-forward update. This final head check is
-best-effort, not exact-head atomicity: a branch reset to an ancestor such as `B` in the tiny
-interval between the check and update can still fast-forward to `M`, and that residual race is an
-accepted design trade-off. Do not add a separate force/CAS/lease protocol, require a local `gh`
-checkout, or manually resolve conflicts. If construction or publication fails, make no remote
-branch mutation and return the PR to the implementation/author side.
-
-Use the captured `B` for that one attempt. Do not re-read and chase `main` after capture. A later
-continuation may synchronize again if the PR remains behind. A successful merge creates a new
-head that requires review as the current candidate; CI, trusted `disposition`, and final
-mergeability remain independent gates. Base-head churn is separate from
-current-head review integrity, and GitHub owns the final merge into `main` through the owner's
-manual **Squash and merge** action.
-
-For a stale Dependabot PR that currently qualifies for trusted provenance and otherwise
-needs no maintainer-authored change, preserve the trusted provenance rules enforced by the
-base-side workflow. A maintainer-authored synchronization commit changes the PR's provenance and
-the resulting current head follows the ordinary review path.
-
-Reviewer disposition is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED` (see [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)). Arcogine reviewers publish both as `COMMENT` reviews; they do not use native GitHub `REQUEST_CHANGES` as a second blocking state machine. An accidental or human-created native `CHANGES_REQUESTED` review still physically blocks GitHub merge and must be cleared through GitHub before the PR can merge, but it is not part of Arcogine's intended reviewer protocol. CI is not a reviewer disposition and is enforced independently by GitHub branch protection. The required `disposition` check is the repository's review-authorization gate: ordinary PRs require a current-head `READY TO MERGE`; trusted Dependabot provenance removes only that positive-review requirement; and a latest applicable current-head canonical `CHANGES REQUIRED` blocks either path. Dependabot provenance is trusted only while the base-side workflow verifies the exact GitHub Dependabot account as both PR opener and actor of the `CI` pull-request workflow run for the exact current head; that Actions metadata is provenance only, and CI outcome stays independent.
+Base freshness is a merge-readiness condition, not a review finding, and pending CI never delays review or disposition: a current-head disposition stays bound to that head when `main` advances. A reviewer who finds a stale branch at review start may perform only the mechanical **base-normalization protocol** defined in [`docs/development/reviewing.md`](docs/development/reviewing.md#1-resolve-and-normalize-the-live-revision) before substantive review; if it needs a semantic choice, the reviewer returns the PR to the implementation owner without mutating the branch. See that document and [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md) for the exact mechanical algorithm, and for the `disposition` gate's authorization rules (trusted Dependabot provenance, ordinary reviewer authorization, and the `CHANGES REQUIRED` override). Reviewer disposition itself is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED`; Arcogine reviewers publish it as a `COMMENT` review and never use native GitHub `REQUEST_CHANGES` or `APPROVE` as a substitute.
 
 ## Implementation continuation
 
@@ -283,44 +210,37 @@ Agents never merge pull requests. When every merge gate holds, report that and s
 
 ## Canonical commands
 
-Run everything from the repo root via `./arcogine`, a thin wrapper that composes the project's own tools (Gradle wrapper, npm/npx):
+`./arcogine` (run from the repo root) is the canonical developer entry point; run `./arcogine --help`
+or see [`docs/development/testing.md`](docs/development/testing.md) for the exact command list,
+native subsystem commands (`cd product && ./gradlew <task>`, `trivy`, `gitleaks`), and the JDK-21
+Docker workflow that backend validation needs when the host JDK is older.
 
-```bash
-./arcogine setup        # optional full-development dependency bootstrap, safe to re-run
-./arcogine test         # Java unit tests
-./arcogine check        # Java compile, style, tests, and coverage
-./arcogine check --full # + dependency audit, secret scan
-./arcogine snapshot     # generate logs/arcogine-main-<sha>.xml, a whole-repo Repomix snapshot from a clean main checkout
-```
-
-See [`docs/development/repository-snapshot.md`](docs/development/repository-snapshot.md) for the snapshot command's preconditions, canonical-provenance checks, and authority boundary.
-
-For anything more specific, use the subsystem's native tool directly: `cd product && ./gradlew <task>` (coverage, Checkstyle, JMH, dependency audit), `trivy`/`gitleaks` (security scans). See `docs/development/testing.md` for the full command reference.
-
-`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash on Windows, but not directly in PowerShell/cmd. On a Windows host, prefer execution environments in this order when available: (1) the devcontainer, (2) a generic ad hoc Docker container, (3) WSL/Git Bash, and (4) native Windows tooling. Before running shell- or toolchain-dependent commands on Windows, inspect the running Docker containers first and identify the container that mounts this repository; do not assume a container name. If no suitable devcontainer is running, try the documented generic Docker workflow, then WSL/Git Bash, and finally native Windows tooling when the command supports it.
-
-### Backend test environment
-
-Backend validation requires a JDK 21+ runtime and the repository Gradle wrapper. On Windows, prefer
-the devcontainer, then a generic ad hoc Docker container, then WSL/Git Bash, and finally native
-Windows tooling. If the current host exposes only a pre-21 JDK or otherwise cannot run the wrapper,
-do not use it for backend validation; use the first available supported environment from that order,
-including the documented
-`gradle:9-jdk21` Docker workflow in
-[`docs/development/testing.md`](docs/development/testing.md#running-java-tests-on-the-minimum-jdk),
-for example `docker exec arcogine-build ./gradlew test`. Classify a host Gradle failure as
-environmental only when it is attributable to the unsupported or missing JVM; otherwise investigate
-it as a build or product failure.
-
-**Always use `./gradlew` from `product/`, never a globally installed `gradle`.** The wrapper pins the exact build version in `product/gradle/wrapper/gradle-wrapper.properties`; a system Gradle install can silently diverge from it.
-
-`./arcogine setup` is an optional convenience for developers who want resolved Gradle dependencies; it is not a prerequisite for inspecting the repository or doing a narrow task. Agents must use the existing environment where practical and install only the tooling or dependencies the current task requires. Do not run setup automatically or turn it into a general-purpose toolchain manager. Environment-specific capabilities such as security scanners must not gate unrelated work.
+`./arcogine` is a Bash script — it works in the dev container, on Linux/macOS, and via WSL/Git Bash
+on Windows, but not directly in PowerShell/cmd. On a Windows host, or when the current JDK is below
+21, prefer execution environments in this order when available: (1) the devcontainer, (2) a generic
+ad hoc Docker container, (3) WSL/Git Bash, and (4) native Windows tooling. Before running shell- or
+toolchain-dependent commands on Windows, inspect the running Docker containers first and identify the
+container that mounts this repository; do not assume a container name. If no suitable devcontainer is
+running, try the documented generic Docker workflow, then WSL/Git Bash, and finally native Windows
+tooling when the command supports it. Classify a host Gradle failure as environmental only when it is
+attributable to the unsupported or missing JVM; otherwise investigate it as a build or product
+failure.
 
 ## Validating changes
 
-Before considering a change complete, run the narrowest validation that actually exercises what changed. A change touching Java (`product/{types,governance,simulation,domains,consumer,architecture-conformance-test}`) needs the Java gates (`cd product && ./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification`); a documentation-only change needs neither. Use `./arcogine check` when the repository-wide Java gate is appropriate, and `./arcogine check --full` when dependency-audit or secret-scan behavior is in scope.
+Before considering a change complete, run the narrowest validation that actually exercises what
+changed — see [`docs/development/testing.md`](docs/development/testing.md) for the Java gates and
+native commands; a documentation-only change needs neither.
 
-When finishing an implementation task, report the validation commands and tools used, the outcome of each, and any validation that was unavailable, skipped, or only partially completed. Do not summarize a partially completed validation as a full pass.
+When finishing an implementation task, report the validation commands and tools used, the outcome of
+each, and any validation that was unavailable, skipped, or only partially completed. Do not summarize
+a partially completed validation as a full pass.
+
+**PR-body preflight:** base reconciliation, ahead/behind state, mergeability, current CI/check
+results, and current head/base coordinates are live lifecycle facts to verify when required, not
+PR-description validation to persist. Follow [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s
+PR-description stability rule: `## Validation` states reproducible commands/checks/review actually
+performed, not the resulting branch topology.
 
 ## Do not edit
 
@@ -331,7 +251,6 @@ When finishing an implementation task, report the validation commands and tools 
 ## Conventions worth knowing
 
 - **Gradle** has one true source: `product/gradle/wrapper/gradle-wrapper.properties`. Both `gradlew` and `gradlew.bat` read it, and no Gradle is installed via the devcontainer feature — don't add one back.
-- **Java compatibility and preferred environments are separate.** JDK 21 is a fully supported development runtime: Java sources compile with `--release 21` and CI runs on JDK 21, while the preferred devcontainer currently uses JDK 25. Node may be present for repository tooling, but there is no product/frontend Node support contract.
 - **Trivy and Gitleaks** are environment/security tools pinned independently in the devcontainer and CI. When intentionally changing either tool version, grep the repository for the old version and keep the relevant devcontainer/CI install sites aligned.
 - Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture/overview.md`.

@@ -21,7 +21,7 @@ const TRUSTED_REVIEW_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR'])
 const DISPOSITION_ALTERNATION = ['READY TO MERGE', 'CHANGES REQUIRED']
   .map((disposition) => disposition.replace(/ /g, '\\s+'))
   .join('|');
-const FINDING_HEADER = /^REV-(\d{3}) - (\S(?:.*\S)?)$/;
+const FINDING_HEADER = /^REV-(\d+) - (\S(?:.*\S)?)$/;
 const FINDING_LIKE_LINE = /^\s*REV-/;
 const FIELD_NAMES = ['Severity', 'Category', 'Confidence', 'Head', 'Subject', 'Status'];
 
@@ -226,6 +226,14 @@ function findingAggregateKey(...values) {
   return JSON.stringify(values);
 }
 
+function revisionNumber(revisionId) {
+  return Number(/^REV-(\d+)$/.exec(revisionId)?.[1] ?? Number.POSITIVE_INFINITY);
+}
+
+function compareRevisionIds(left, right) {
+  return revisionNumber(left) - revisionNumber(right) || left.localeCompare(right);
+}
+
 function sortedCountObject(counts) {
   return Object.fromEntries([...counts.entries()].sort(([left], [right]) => left.localeCompare(right)));
 }
@@ -296,7 +304,7 @@ function analyzeFindings(window) {
       }
       const presentIds = new Set(groupFindings.map((finding) => finding.revisionId));
       if (hasClosingDisposition && previouslySeenIds.size) {
-        const omitted = [...previouslySeenIds].filter((revisionId) => !presentIds.has(revisionId)).sort();
+        const omitted = [...previouslySeenIds].filter((revisionId) => !presentIds.has(revisionId)).sort(compareRevisionIds);
         if (omitted.length) {
           diagnostics.findingsOmittedFromRereview.push({
             prNumber: pr.number,
@@ -391,7 +399,7 @@ function analyzeFindings(window) {
       status: last.status,
       lastReview: { id: last.reviewId, submittedAt: last.submittedAt },
     };
-  }).sort((left, right) => left.prNumber - right.prNumber || left.revisionId.localeCompare(right.revisionId));
+  }).sort((left, right) => left.prNumber - right.prNumber || compareRevisionIds(left.revisionId, right.revisionId));
 
   const bySeverity = new Map();
   const byCategory = new Map();

@@ -17,6 +17,7 @@ import { validateEvidence } from './delivery-retrospective-evidence.mjs';
 const headA = 'a'.repeat(40);
 const headB = 'b'.repeat(40);
 const revision = (number) => ['REV', String(number).padStart(3, '0')].join('-');
+const bareRevision = (number) => ['REV', String(number)].join('-');
 
 function review(body, options = {}) {
   return {
@@ -280,6 +281,21 @@ test('multiple findings in one review are parsed as separate identities', () => 
   assert.equal(summary.findingAnalytics.diagnostics.structuredFindingsParsed, 2);
   assert.deepEqual(summary.findingAnalytics.distinctFindings.map((item) => item.revisionId), [revision(1), revision(2)]);
   assert.equal(summary.trustedChangesRequiredSubmissions, 1);
+});
+
+test('variable-width REV identifiers parse alongside historical zero-padded ones and sort numerically', () => {
+  const body = [
+    finding(bareRevision(1)),
+    finding(revision(2), { category: 'SCOPE' }),
+    finding(bareRevision(10), { category: 'TEST_EVIDENCE' }),
+  ].join('\n\n') + '\n\nDisposition: **CHANGES REQUIRED**.';
+  const summary = analyzeEvidence(baseEvidence([review(body)]));
+  assert.equal(summary.findingAnalytics.diagnostics.structuredFindingsParsed, 3);
+  assert.deepEqual(summary.findingAnalytics.diagnostics.malformedFindingBlocks, []);
+  assert.deepEqual(
+    summary.findingAnalytics.distinctFindings.map((item) => item.revisionId),
+    [bareRevision(1), revision(2), bareRevision(10)],
+  );
 });
 
 test('same PR + REV carried through re-review counts once and records first and current lifecycle facts', () => {

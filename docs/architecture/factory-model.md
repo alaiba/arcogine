@@ -384,4 +384,4 @@ This document does not define result-affecting interpretation of the spatial fac
 semantics](engine-semantics.md)), controlled-revision identity or authority ([controlled
 revisions](controlled-revisions.md)), external interchange formats ([external
 representations](external-representations.md)), a universal canonicalization scheme for non-Factory
-domains, or the promoted durable identity a future promotion would introduce.
+domains, or any stable-reference or support declaration a future promotion may require.

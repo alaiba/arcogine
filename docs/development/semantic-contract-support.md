@@ -72,16 +72,16 @@ use needs:
   resolution and the transitive basis the claimed explanation needs;
 - separately, content retention, decoding, execution, migration, interoperability and
   historical-explanation promises, including dependencies and explicit gaps;
-- failure/refusal behavior for unsupported identity or input, missing or corrupt basis, undeclared
-  custody and exhausted retention;
+- failure/refusal behavior for an unsupported reference or input, missing or corrupt basis,
+  undeclared custody and exhausted retention;
 - evidence of fulfilment, its scope, known limitations and unimplemented obligations;
 - authorized change/retirement behavior: successor meaning, effects on existing accepted uses,
   retained basis, and refusal after expiry.
 
-A retained authority admitting a promoted identity refuses WIP and other unpromoted definitions.
-Promotion is a status in one owning contract, not a platform-wide lifecycle type; after it,
-declarations stay scoped by promise, so a contract can carry enduring attribution while only part of
-its behavior is executed or supported.
+A retained authority operating under a promotion declaration refuses WIP and any definition not
+covered by that declaration. Promotion is a status in one owning contract, not a platform-wide
+lifecycle type; after it, declarations stay scoped by promise, so a contract can carry enduring
+attribution while only part of its behavior is executed or supported.
 
 An obligation and evidence that it is fulfilled are different facts: an unproved promise of a
 promoted contract is a validation gap to close, not a promise erased by missing evidence. Silence
@@ -117,7 +117,7 @@ question.
 | Durability claim | Identify the referent — capability, accepted use, promise, fulfilment evidence or cost preference. Specify the claimed property and scope separately; promotion establishes a declared stability/support commitment, not all the other properties. |
 | Proving persistence | A proving store may survive reopen, but it declares disposable custody and is bound to the exact definition that wrote it, so it refuses to reopen under another even when the public WIP marker is unchanged. Persisting WIP content there creates no attribution or compatibility promise, and it never adopts a location it did not create. |
 | Accidental retention | WIP material found retained or relied on outside a declared custody is a defect: stop further admission, preserve what was accepted and the definition it used as far as evidence allows, and decide explicitly. It is neither silently rewritten nor treated as a promotion. |
-| Promoted definition correction | An identity-affecting correction needs a distinguishable identity; the stable promoted reference always denotes its definition. |
+| Promoted definition correction | A materially changed definition never replaces the definition behind an existing stable promotion reference. Continue under WIP or, if a later support commitment accepts the changed definition, bind a distinct stable reference. Neither step requires a new shared semantic entity or human-readable name. |
 | Historical artifact after evolution | For a promoted definition, retain the exact revision → fingerprint → definition/artifact basis the accepted use requires and never resolve it against current state. Equal content can recur in a distinct revision. |
 | Engine rule never exercised | For a promoted interpretation, editorial section boundaries and missing fixture coverage do not make part of it mutable; rejection behavior and cross-rule interactions still matter. While WIP, an unexercised rule is corrected like any other rule. |
 | Label or attestation | A label may name a later claim about a collection of exact references. Neither the spelling nor the existence of the claim proves equivalence, executability, compatibility, or fulfilment. No shared attestation entity is selected. |

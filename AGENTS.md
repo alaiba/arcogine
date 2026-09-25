@@ -252,5 +252,5 @@ performed, not the resulting branch topology.
 
 - **Gradle** has one true source: `product/gradle/wrapper/gradle-wrapper.properties`. Both `gradlew` and `gradlew.bat` read it, and no Gradle is installed via the devcontainer feature — don't add one back.
 - **Trivy and Gitleaks** are environment/security tools pinned independently in the devcontainer and CI. When intentionally changing either tool version, grep the repository for the old version and keep the relevant devcontainer/CI install sites aligned.
-- Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails-events-state-observations) and enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain.
+- Architecture guardrails (module dependency direction, event/state/observation boundaries) are documented in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-guardrails) and enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`. Read that section before adding a new domain.
 - The simulation must stay deterministic (seeded RNG only) — see `docs/architecture/overview.md`.

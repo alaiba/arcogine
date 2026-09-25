@@ -44,7 +44,7 @@ The durable operational identity must not be derived from, inferred from, or col
 RunId
 ModelFingerprint
 ControlledRevisionId
-EngineSemanticsVersion
+EngineSemantics
 actor identity
 deployment identity or location
 external target identity

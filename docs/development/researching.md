@@ -50,6 +50,8 @@ A topic is ready for implementation planning only when semantic/product meaning,
 
 `docs/research/` therefore tracks what Arcogine still needs to understand or decide; `docs/planning/` tracks executable work given what is already known or decided. Research documents never receive temporary delivery coordinates.
 
+An explicit owner decision is a separate route, not a research conclusion. When the owner decides a question directly — for example by choosing to replace an architecture rather than settle an open argument about what the existing one permits — that decision is reconciled as an ordinary architecture and implementation change under independent PR review. It needs no research acceptance, is not tested for compatibility with the rules it deliberately replaces, and must not be presented as the adoption of an unaccepted report. Research made moot by the decision is marked `SUPERSEDED`, and the knowledge-transfer audit below still applies to its evidence.
+
 A synthesis seed is outside the promotion path. It preserves only recurrence-detection value under the rules in §10; if recurrence later justifies a bounded Arcogine research question, that question must be deliberately admitted to the normal research register and lifecycle.
 
 ### Research-register maintenance
@@ -252,6 +254,7 @@ An adversarial reviewer specifically attempts to discover, as applicable:
 - a source that does not actually support the claim attributed to it;
 - a misleading analogy;
 - evidence of *possibility* being treated as evidence of *necessity*;
+- a discretionary cost, or an equality requirement no consumer actually has, presented as a semantic falsification;
 - an abstraction generalized beyond its actual consumers;
 - an unresolved question silently declared settled;
 - a conclusion stronger than its evidence.

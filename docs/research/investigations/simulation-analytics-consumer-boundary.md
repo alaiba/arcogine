@@ -3,7 +3,7 @@
 > **Status:** READY
 > **Risk:** **High** — touches major ownership, supported/public semantics, reproducibility, and compatibility. Independent adversarial review is required before any architecture promotion (`docs/development/researching.md` §7, §9).
 > **Scope:** Where the boundary sits between authoritative simulation/runtime facts and any reusable derived analytics after removal of the legacy `EventLog`-derived KPI implementation
-> **Authority:** Research only. This brief decides nothing. Current Engine semantics, the runtime observation/event contract, the Determinism Contract, and `engine-semantics:v1` remain exactly as accepted until a separate, independently reviewed reconciliation says otherwise.
+> **Authority:** Research only. This brief decides nothing. Current Engine semantics, the runtime observation/event contract, the Determinism Contract, and the [Engine semantics](../../architecture/engine-semantics.md) remain exactly as accepted until a separate, independently reviewed reconciliation says otherwise.
 
 ## Research question
 
@@ -11,7 +11,7 @@
 
 ## Decision at stake
 
-Whether Arcogine's supported runtime contract should keep publishing substantial derived performance results, or whether reusable measurement belongs in a consumer-neutral analytics layer over supported facts — and what that implies for future outward consumers and the reproducibility guarantees already fixed by `engine-semantics:v1`. The former generic `EventLog`-derived KPI implementation has been removed; this research remains open and does not prescribe a replacement.
+Whether Arcogine's supported runtime contract should keep publishing substantial derived performance results, or whether reusable measurement belongs in a consumer-neutral analytics layer over supported facts — and what that implies for future outward consumers and the reproducibility guarantees the [Engine semantics](../../architecture/engine-semantics.md) already specify. The former generic `EventLog`-derived KPI implementation has been removed; this research remains open and does not prescribe a replacement.
 
 The investigation must decide or explicitly classify:
 
@@ -39,7 +39,7 @@ That historical evidence established multiple consumers of reusable derived meas
 
 ## Non-goals
 
-This investigation does not implement an analytics module, restore the removed generic KPI implementation, change KPI formulas, alter `RuntimePerformanceObservation` in code, implement event retention, build a Java SDK, force consumers through HTTP/SSE, or reopen transport architecture. It does not change adopted architecture or `engine-semantics:v1`.
+This investigation does not implement an analytics module, restore the removed generic KPI implementation, change KPI formulas, alter `RuntimePerformanceObservation` in code, implement event retention, build a Java SDK, force consumers through HTTP/SSE, or reopen transport architecture. It does not change adopted architecture or the Engine semantics.
 
 It also does not decide game presentation. The bounded product-facing truthfulness question is [Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md); this analytics investigation supplies ownership/input constraints to that product study rather than choosing its visualization. Population-level player comprehension is a separate deferred product-validation question.
 
@@ -61,7 +61,7 @@ The principle to test is:
 
 Worked examples that any surviving rule must classify correctly:
 
-- `combinedQueueDepth` is derived **and** result-affecting, because it is a dispatch ranking key whose exact arithmetic changes assignment (`engine-semantics-v1.md` §2 rule 3). It stays Engine semantics.
+- `combinedQueueDepth` is derived **and** result-affecting, because it is a dispatch ranking key whose exact arithmetic changes assignment ([Engine semantics](../../architecture/engine-semantics.md) §2 rule 3). It stays Engine semantics.
 - Interval utilization is measurement over outcomes. It must not become scheduling semantics merely because the Engine could compute it.
 - A fresh current-state projection may expose a direct summary such as queue depth without thereby becoming historical analytics.
 
@@ -90,8 +90,8 @@ Do not reduce this to recreating the removed generic KPI package. Current *suppo
 - `RuntimeObservation` carries a mandatory `RuntimePerformanceObservation`;
 - that record currently exposes `backlog`, `completedOrders`, `completedSalesValue`, `averageLeadTime`, and `throughputPerTick`;
 - `FactoryRuntime`/`FactoryHandler` compute several of those values;
-- `engine-semantics:v1` §10.1–§10.2 treat supported derived-result arithmetic **and accumulation** as result-affecting, because a formula or accumulator change alters supported results for identical explicit inputs;
-- planned v1 conformance work intends to pin exactly that derived-result behavior (`busyTicks` saturation, throughput and mean-lead-time edge cases, accumulator exactness).
+- Engine semantics §10.1–§10.2 treat supported derived-result arithmetic **and accumulation** as result-affecting, because a formula or accumulator change alters supported results for identical explicit inputs;
+- Engine conformance work pins exactly that derived-result behavior (`busyTicks` saturation, throughput and mean-lead-time edge cases, accumulator exactness).
 
 So any reclassification of those fields is a change to a reproducibility contract, not a refactor. This investigation must resolve that conflict; it must not pre-empt it.
 
@@ -114,7 +114,7 @@ At minimum, classify each of:
 - active-period and other bottleneck inference;
 - run/attempt comparison;
 - retained supported-event history and analytics accumulator state;
-- `ModelFingerprint`, `EngineSemanticsVersion`, run/event-range, and analytical-definition provenance.
+- `ModelFingerprint`, `EngineSemantics`, run/event-range, and analytical-definition provenance.
 
 ## Proving and failure cases
 
@@ -127,7 +127,7 @@ At minimum:
 5. `combinedQueueDepth`: exact as Engine ranking semantics, unsafe as physical queue visualization.
 6. The same run consumed through embedded and HTTP/SSE adapters yields semantically equivalent facts and analytics **without duplicated formulas**.
 7. Draining, non-retained supported-event access still permits defined duration analytics through an explicit retention/accumulator owner.
-8. Analytical results produced under different `EngineSemanticsVersion`s are not silently treated as directly comparable.
+8. Analytical results produced under different Engine interpretations, or under different development revisions of one work-in-progress interpretation, are not silently treated as directly comparable.
 9. One-variable deterministic rerun versus a multi-variable change.
 10. Once transfer lands, destination reservation/admission load is distinguished from processing occupancy.
 
@@ -142,7 +142,7 @@ Conclude only with a report that:
 - prevents analytics from reimplementing scheduling decisions;
 - defines compatibility expectations across embedded and remote adapters;
 - determines whether any consumer-neutral analytics responsibility remains and how it relates to current performance fields;
-- states explicitly whether the runtime observation/event contract, the Determinism Contract, or `engine-semantics:v1` require revision, a semantics-version change, or only implementation reorganization;
+- states explicitly whether the runtime observation/event contract, the Determinism Contract, or the Engine semantics require revision, an explicit interpretation change, or only implementation reorganization;
 - receives genuinely independent adversarial review before any architecture promotion.
 
 ## Inherited evidence

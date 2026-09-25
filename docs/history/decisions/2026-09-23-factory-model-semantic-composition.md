@@ -4,7 +4,7 @@
 >
 > **Authority:** Historical, non-normative evidence; current meaning lives only in the documents it was reconciled into
 >
-> **Reconciled into:** [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution), [Factory Model v2](../../architecture/factory-model-v2.md), [Determinism Contract](../../architecture/overview.md#determinism-contract)
+> **Reconciled into:** [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution), Factory Model v2 (the specification is now the [Factory model](../../architecture/factory-model.md)), [Determinism Contract](../../architecture/overview.md#determinism-contract)
 
 ## Decision
 

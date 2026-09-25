@@ -3,7 +3,7 @@
 > **Status:** Maintained architectural reference  
 > **Scope:** Mapping between Arcogine manufacturing-domain semantics and ISA-95 / IEC 62264 concepts  
 > **Authority:** Describes current mappings, deliberate divergences, and design constraints; it does not establish ISA-95 conformance  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Standards Alignment](standards-alignment.md), [Factory-Design Game Consumer Initiative](../planning/factory-design-game-consumer.md), [unit-work decomposition semantics](engine-semantics-v1.md#3-unit-work-decomposition-semantics)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Standards Alignment](standards-alignment.md), [Factory-Design Game Consumer Initiative](../planning/factory-design-game-consumer.md), [unit-work decomposition semantics](engine-semantics.md#3-unit-work-decomposition-semantics)
 
 ## 1. Purpose
 
@@ -427,7 +427,7 @@ Machine
 
 is preferable to renaming the class `WorkUnit` without adding actual hierarchy or work-unit semantics.
 
-Likewise, Engine Semantics v1 keeps the established Arcogine term `Job` for an independently dispatchable work item instead of adding a standards-sounding type whose semantics would not be clearer.
+Likewise, the Engine semantics keep the established Arcogine term `Job` for an independently dispatchable work item instead of adding a standards-sounding type whose semantics would not be clearer.
 
 ### 10.3 Do not use a standard term when
 
@@ -471,7 +471,7 @@ Revisit this document whenever a change introduces or materially alters:
 
 This mapping document records current relationships and accepted design constraints. Reconcile the owning architecture or specification when a hard-to-reverse choice is actually made, for example:
 
-- aggregate boundaries between product, order, work item, and performance — Engine Semantics v1 §3 records the implemented unit-work decomposition `Order`/aggregate/`Job` boundary;
+- aggregate boundaries between product, order, work item, and performance — Engine semantics §3 records the implemented unit-work decomposition `Order`/aggregate/`Job` boundary;
 - capability-pool and deterministic dispatch semantics;
 - hierarchy and spatial-model separation;
 - the canonical public model contract;

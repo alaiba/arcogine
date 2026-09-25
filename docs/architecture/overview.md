@@ -19,7 +19,7 @@ ownership:
   publication and content identity ([Factory Design](factory-design.md)).
 - **Engine** owns deterministic simulation interpretation and authoritative runtime state: dispatch,
   decomposition, scheduling, transfer and derived-result rules under one identified interpretation
-  ([Engine Semantics](engine-semantics-v1.md), [Determinism Contract](#determinism-contract)).
+  ([Engine semantics](engine-semantics.md), [Determinism Contract](#determinism-contract)).
 - **Governance** owns controlled history, requirements/assertions, evidence use, conformance
   findings and governed change ([Governance and Conformance](governance-conformance.md)).
 - **Operational** owns real-operation integration, accountable continuation and the relationship
@@ -30,71 +30,64 @@ ownership:
 
 ### Semantic evolution and support
 
-Arcogine attributes durable facts to named semantic definitions: a fingerprint under a named
-canonicalization policy, a controlled revision bound to one historical occurrence, a run attributed
-to one Engine interpretation, evidence referencing one exact source revision, an operational
-continuation answering for the facts it accepted. Replay, historical explanation, conformance
-evaluation, comparison and audit all depend on those references keeping the meaning they had when
-they were made — while the definitions themselves still have to be correctable and extensible, and
-while decoding, executing, migrating or interoperating with every definition ever named is an
-open-ended cost no consumer has asked Arcogine to pay. These cross-domain rules reconcile the two
-forces:
+Arcogine names the semantic definitions its facts are computed under: a fingerprint under a
+canonicalization definition, a run under one Engine interpretation. Historical explanation,
+comparison, conformance and audit need such names to keep their meaning once something durable
+relies on them, while definitions still under development need to stay correctable without a
+successor-per-correction ladder or a compatibility estate nobody asked for. Arcogine separates the
+two by making durability an explicit act rather than a side effect of implementation:
 
-1. **Semantic identity never rebinds.** An identity denotes exactly one definition and one
-   intrinsic provenance. A materially changed definition — changed field membership, canonical
-   bytes, result-affecting interpretation, or the referent of a historical record — requires a
-   distinguishable identity. Corrections, changed interpretations and later occurrences are new
-   distinguishable things; they never rewrite what an existing identity denotes. This holds for
-   content identities, historical occurrence identities, evidence references and accountable
-   continuations alike, each under the equality rule its owning contract defines.
-2. **Attribution fixes the whole definition.** A definition may be corrected in place only until
-   the first retained or accepted record is attributed to it. From that point the whole definition
-   is fixed, including rules no fixture has exercised and rejection behavior no consumer has yet
-   observed.
-3. **Historical meaning and continuing support are different obligations.** Retaining the exact
-   definition an identity denotes, retaining content, decoding, executing, migrating and
-   interoperating are separately scoped promises with their own dependencies. Naming an identity
-   creates none of them automatically — treating every named definition as permanently supported
-   would manufacture a compatibility estate no consumer requires and make ordinary correction
-   impossible — and a digest or identifier alone never substitutes for an explanation whose basis
-   was not retained.
-4. **Retained attribution requires resolvable definitions.** Every identity stamped on a retained
-   or accepted record keeps its exact identity-defining definition resolvable for as long as that
-   record is retained. An owning contract may promise more — for example retained conformance
-   fixtures for released Engine interpretations.
-5. **Support obligations arise from accepted use and are scoped by the owning contract.** An
-   obligation exists when the owning contract publishes reliance, or when an authority that has
-   declared its custody accepts a record at its commit boundary. Disposable activity — tests,
-   scratch stores, drained events, local runs — creates no obligation by existing; admitting such
-   material into retained authority is a new decision. Acceptance by an authority that never
-   declared custody is a defect to account for, not a waiver: the accepted fact is never disposed
-   of to escape the obligation it created.
-6. **Withdrawing support never frees an identity for changed meaning.** Retiring execution,
-   decoding or compatibility for a definition removes a capability, not the meaning of the records
-   attributed to it. Narrowing an in-scope promise requires an explicit, authorized transition
-   under the owning contract, and that transition must neither rewrite history nor silently
-   discharge obligations already created.
-7. **There is no universal lifecycle.** Arcogine adopts no repository-wide maturity state such as
-   `proving`/`promoted` for whole contracts, no single retention horizon and no single version
-   scheme: retained attribution, executed behavior and outward compatibility are independent
-   promises that do not share one state, so a contract can carry enduring attribution obligations
-   while only part of its behavior is executed or supported. Nor does Arcogine freeze only the
-   exercised sections of a definition — specification sections are editorial units, the rules
-   interact, and rejection behavior matters without a happy-path fixture exercising it.
+1. **Factory and Engine semantics are work in progress until promoted.** The [Factory
+   model](factory-model.md) (`factory-model:wip`) and the [Engine interpretation](engine-semantics.md)
+   (`engine-semantics:wip`) are named by mutable development markers. Between development revisions
+   their records, grammar, canonical bytes, fingerprints, validation and interpretation may be
+   corrected or extended without a new name; each change updates the owning specification, its
+   fixtures and its dependents in the same change.
+2. **Determinism holds within a definition.** For the same current definition and explicit inputs,
+   canonical bytes, fingerprints and supported simulation outcomes are deterministic. A running
+   session executes one fixed interpretation over one immutable published model snapshot; neither
+   changes under it.
+3. **A WIP marker is not cross-revision provenance.** Equal WIP names or fingerprints produced by
+   different development revisions establish no compatibility and no historical interpretation.
+   Material produced under an earlier revision is not interpreted by the current one: development
+   stores are reset rather than migrated, and stale or foreign input fails explicitly instead of
+   being read as current meaning.
+4. **Nothing promotes by accident.** Tests, golden vectors, in-process publication, implementation
+   landing, persistence in a proving store, an internal file write, and a normative description of
+   current behavior neither promote a contract nor create a durable-use promise. No unpromoted
+   artifact or result may be represented as a committed durable record: while every contract is WIP,
+   retained, commitment-bearing admission is unavailable and proving authorities declare disposable
+   custody.
+5. **Promotion is an explicit owner decision tied to a concrete durable-use need.** It identifies the
+   exact frozen definition, gives it a meaningful durable name distinct from the WIP marker, and
+   states the supported uses and consumers, the retained basis and the actual support obligations.
+   It is recorded in the owning contract, not in a repository-wide maturity state, registry or
+   version ladder. Factory and Engine promote independently.
+6. **A promoted identity never rebinds.** It denotes exactly one definition, including rules no
+   fixture has exercised and rejection behavior no consumer has observed. A materially changed
+   definition — field membership, canonical bytes, validation, result-affecting interpretation —
+   needs a distinguishable identity; development after promotion continues under a WIP definition
+   or a new identity, never by editing the promoted one.
+7. **Support is scoped separately from meaning.** For a promoted definition, retaining its exact
+   definition, retaining content, decoding, executing, migrating and interoperating are separate
+   obligations the owning contract declares for the uses it accepts; naming an identity creates none
+   of them. Withdrawing support removes a capability; it never frees a promoted identity for changed
+   meaning and never silently discharges obligations accepted records created.
+8. **Misuse is handled explicitly.** Retention of, or reliance on, material outside a declared custody
+   is a defect to diagnose and account for: further admission stops, the accepted facts and the
+   definition they used are preserved as far as the evidence allows, and the use is neither silently
+   rewritten nor treated as having promoted the contracts it touched.
 
-Each owning contract therefore states its identity's equality rule, its fixed aspects, and the
-support it actually promises; silence offers no support but waives no obligation an actual accepted
-use created. Evolving a fingerprint policy, Engine interpretation, evidence reference scheme or
-continuation rule means introducing a distinguishable identity and reconciling the consumers in
-scope, never editing an attributed definition in place — which is what lets historical
-reconstruction stay truthful without permanent executors or eternal readers. The owning contracts
-apply these rules to [fingerprints](factory-model-v1.md),
-[controlled revisions](controlled-revisions.md), [Engine interpretation](engine-semantics-v1.md),
-[evidence](governance-evidence.md) and [operational continuity](operational-continuity.md);
-declaration and review mechanics live in
-[Semantic contract support](../development/semantic-contract-support.md). Same-identity amendment
-of an attributed Engine definition, custody mechanics for retained proving artifacts, and closure
-of an operational continuation remain open questions for those owning contracts.
+Historical *occurrence* identities are a different kind of identity: a `ControlledRevisionId`, an
+evidence reference, an evaluation occurrence or an operational continuation never rebinds within the
+authority that accepted it, under the equality rule its owning contract defines, whatever the
+maturity of the content it refers to. The owning contracts apply these rules to the [Factory
+model](factory-model.md), the [Engine interpretation](engine-semantics.md), [controlled
+revisions](controlled-revisions.md), [evidence](governance-evidence.md) and [operational
+continuity](operational-continuity.md); review guidance lives in [Semantic contract
+support](../development/semantic-contract-support.md). Why this boundary replaced an earlier
+attribution-driven freeze is recorded, non-normatively, in the [provisional semantic-contract reset
+rationale](/docs/history/decisions/2026-09-25-provisional-semantic-contract-reset.md).
 
 ## Current implementation constraints (MVP)
 
@@ -169,9 +162,9 @@ The [runtime contract](runtime-contract.md) requires supported `RuntimeEvent` st
 
 Order/job creation has both an internal event path and a supported runtime command: `FactoryRuntime.submitWorkload(productId, quantity, unitPrice)` is the consumer-neutral entry point for callers, without any need to own a `Scheduler` or choose a simulation time. `FactoryRuntime` is only built via `FactoryRuntime.forModel(FactoryModelVersion)`, which assembles and owns its own exclusive `FactoryHandler`/`Scheduler` pair — it is never wrapped around an already-live `FactoryHandler` another scheduler might also be driving, and it does not expose that `FactoryHandler` directly (callers observe state through its own read-only projections instead). Both paths use the same package-private `FactoryHandler.submitOrder(...)` acceptance operation and create the same immutable `Order` and deterministic quantity-`N` set of unit-quantity sibling `Job`s under the same `OrderId` aggregate, with identical routing/dispatch semantics; `submitOrder` itself is not public, so scheduler/time plumbing never leaks past `FactoryHandler`.
 
-`FactoryRuntime` also implements the consumer-neutral session-control semantics of [Engine Semantics v1 §1.2](engine-semantics-v1.md#12-session-and-control-semantics), additive to the shape above: `modelVersion()` retains and exposes the exact `FactoryModelVersion` the session was instantiated from, for the session's full lifetime; `advanceUntil(SimTime targetTime, long maxEvents)` sits alongside the unchanged single-event `advance()`, processing pending events one at a time until either the next event's time would exceed `targetTime` or `maxEvents` events have been processed, implemented directly in terms of `advance()` so the two can never diverge in ordering or dispatch behavior; `reset()` returns a fresh `FactoryRuntime.forModel(modelVersion())` rather than mutating the existing session in place, since `FactoryHandler`'s stores have no partial-reset subsystem to mutate safely. `submitWorkload` and `setMachineAvailability` — the two externally initiated runtime changes `FactoryRuntime` exposes — always return a definite `CommandResult<T>` (a stable code/diagnostic, `modelVersion()` provenance, and every `Event` scheduled as a direct effect of the command, captured by a command-scoped `RecordingScheduler` window rather than a permanently growing history) instead of ever throwing or returning `void`. `CommandResult` is a three-way sealed type: `Accepted`, `Rejected` (wraps the original, already-structured, sealed `SimError`; verified pre-mutation — `FactoryHandler.submitOrder` preflights its scheduling check before mutating any store, `setMachineAvailability` verifies its own two rejectable conditions from `machinesView()` before calling into `FactoryHandler` at all — so a `Rejected` result never follows partial mutation), and `Faulted` (a genuine engine fault surfacing from deep in `setMachineAvailability`'s online-machine dispatch cascade, after mutation may already have started; making that whole cascade provably preflight-safe was judged disproportionate, so `Faulted` reports it as a definite result instead of letting it throw past the command boundary, while making clear — unlike `Rejected` — that it does not promise zero mutation). Acceptance and execution outcome are independent facts, not one axis, so `Faulted` carries the same accepted value `Accepted` would have alongside the fault — the requested change genuinely was applied before the later failure, and a caller must not lose which entity was affected just because execution subsequently failed. `pendingWorkView()` exposes `FactoryHandler`'s cross-machine `pendingMultiEligible` backlog (see [Engine Semantics v1 §2](engine-semantics-v1.md#2-resource-selection-and-dispatch-semantics)) as read-only `PendingWorkView` entries — necessary because that waiting work is not associated with any single machine and so is invisible to `MachineView.queueDepth()`.
+`FactoryRuntime` also implements the consumer-neutral session-control semantics of [Engine semantics §1.2](engine-semantics.md#12-session-and-control-semantics), additive to the shape above: `modelVersion()` retains and exposes the exact `FactoryModelVersion` the session was instantiated from, for the session's full lifetime; `advanceUntil(SimTime targetTime, long maxEvents)` sits alongside the unchanged single-event `advance()`, processing pending events one at a time until either the next event's time would exceed `targetTime` or `maxEvents` events have been processed, implemented directly in terms of `advance()` so the two can never diverge in ordering or dispatch behavior; `reset()` returns a fresh `FactoryRuntime.forModel(modelVersion())` rather than mutating the existing session in place, since `FactoryHandler`'s stores have no partial-reset subsystem to mutate safely. `submitWorkload` and `setMachineAvailability` — the two externally initiated runtime changes `FactoryRuntime` exposes — always return a definite `CommandResult<T>` (a stable code/diagnostic, `modelVersion()` provenance, and every `Event` scheduled as a direct effect of the command, captured by a command-scoped `RecordingScheduler` window rather than a permanently growing history) instead of ever throwing or returning `void`. `CommandResult` is a three-way sealed type: `Accepted`, `Rejected` (wraps the original, already-structured, sealed `SimError`; verified pre-mutation — `FactoryHandler.submitOrder` preflights its scheduling check before mutating any store, `setMachineAvailability` verifies its own two rejectable conditions from `machinesView()` before calling into `FactoryHandler` at all — so a `Rejected` result never follows partial mutation), and `Faulted` (a genuine engine fault surfacing from deep in `setMachineAvailability`'s online-machine dispatch cascade, after mutation may already have started; making that whole cascade provably preflight-safe was judged disproportionate, so `Faulted` reports it as a definite result instead of letting it throw past the command boundary, while making clear — unlike `Rejected` — that it does not promise zero mutation). Acceptance and execution outcome are independent facts, not one axis, so `Faulted` carries the same accepted value `Accepted` would have alongside the fault — the requested change genuinely was applied before the later failure, and a caller must not lose which entity was affected just because execution subsequently failed. `pendingWorkView()` exposes `FactoryHandler`'s cross-machine `pendingMultiEligible` backlog (see [Engine semantics §2](engine-semantics.md#2-resource-selection-and-dispatch-semantics)) as read-only `PendingWorkView` entries — necessary because that waiting work is not associated with any single machine and so is invisible to `MachineView.queueDepth()`.
 
-The supported runtime observation/event contract adds `FactoryRuntime.observe()` as the separate supported current-state boundary required by the [runtime contract](runtime-contract.md). It returns immutable, deterministically ordered resource, aggregate-order, unit-work decomposition child-job, and multi-eligible-pending-work projections plus the factory's authoritative backlog, completed-order/value, lead-time, and throughput calculations. Metadata carries an opaque per-runtime `RunId`, `FactoryModelVersion.fingerprint()` durable provenance, current simulated time, explicit active/quiescent advancement state, and a `latestEventSequence`. This projection never exposes `FactoryHandler`, mutable stores, or internal scheduler events.
+The supported runtime observation/event contract adds `FactoryRuntime.observe()` as the separate supported current-state boundary required by the [runtime contract](runtime-contract.md). It returns immutable, deterministically ordered resource, aggregate-order, unit-work decomposition child-job, and multi-eligible-pending-work projections plus the factory's authoritative backlog, completed-order/value, lead-time, and throughput calculations. Metadata carries an opaque per-runtime `RunId`, `FactoryModelVersion.fingerprint()` source-model provenance, current simulated time, explicit active/quiescent advancement state, and a `latestEventSequence`. This projection never exposes `FactoryHandler`, mutable stores, or internal scheduler events.
 
 The supported runtime observation/event contract also implements the supported `RuntimeEventEnvelope` contract on top of that boundary: `RuntimeEventType`/`RuntimeEventPayload`/`AffectedEntityRef` (`product/domains/factory/.../process/`) are a taxonomy distinct from the internal scheduler's `EventPayload`, and `FactoryRuntime` only ever constructs an envelope, via its single package-private `emit(...)` point, after the authoritative transition it describes has already succeeded. `submitWorkload` emits `ORDER_ACCEPTED` (carrying every created child `JobId`) followed by one `JOB_DISPATCHED`/`JOB_WAITING` per created job describing its resulting placement; `setMachineAvailability` emits `MACHINE_AVAILABILITY_CHANGED` only for a genuine online/offline transition (a no-op request emits nothing) plus any `JOB_DISPATCHED` a resulting dispatch cascade produced, including on the `Faulted` path where only the mutation that actually occurred is reported; `advance()` emits, for each processed `TaskEnd`, `JOB_STEP_COMPLETED`, then `ORDER_COMPLETED` when that step completed the order, then `JOB_DISPATCHED`/`JOB_WAITING` for every placement change the same `TaskEnd` authoritatively caused — freed capacity re-places both the completing job onto its next routing step and whatever queued or multi-eligible backlog work that machine can now accept, derived by diffing authoritative placement rather than by re-exposing internal scheduler events. Internal scheduler markers `FactoryHandler` ignores (`TaskStart`; the `OrderCompleted` a terminal `TaskEnd` schedules for other internal handlers) emit nothing and, by construction, change nothing `observe()` reports: observed time advances only with emission, and `RuntimeRunState` reflects pending *authoritative* work rather than a non-empty queue, so every observation fact stays coherent with one `latestEventSequence` boundary. `RuntimeObservationMetadata.latestEventSequence()` is a live cursor advanced in lockstep with emission, independent of when a caller retrieves the events themselves: `FactoryRuntime.drainSupportedEvents()` returns and clears everything accumulated since it was last called, rather than retaining an unbounded, cursor-replayable history. That retained/replayable-by-cursor responsibility is deliberately not part of this boundary (see the [runtime contract](runtime-contract.md); recovery/resynchronization is later distribution hardening); a caller needing durable replay retains the drained events itself.
 
@@ -303,7 +296,7 @@ This preserves the boundary between provenance and explicit policy input; it doe
 | Not introduced | Why | Reopen when |
 |---|---|---|
 | Platform `Agent` type, actor/subject/decision-source value types, actor kind enum | No current consumer proves a shared equality/namespace/lifecycle contract | Multiple concrete consumers demonstrate the *same* such contract (see above) |
-| Shared temporally extended `Capability`, procedure, or skill type | The [unit-work decomposition](engine-semantics-v1.md#3-unit-work-decomposition-semantics) aggregate/child pattern already supplies aggregate intent, child identity, correlation, and a completion rule | A concrete consumer shows that pattern cannot express a real temporally extended capability |
+| Shared temporally extended `Capability`, procedure, or skill type | The [unit-work decomposition](engine-semantics.md#3-unit-work-decomposition-semantics) aggregate/child pattern already supplies aggregate intent, child identity, correlation, and a completion rule | A concrete consumer shows that pattern cannot express a real temporally extended capability |
 | Agent message bus or conversation ontology | Typed operations, events, observations, results, and explicit public commitments suffice; an accepted order is already such a commitment | A proving case shows ordinary domain interaction cannot represent a required interaction cleanly |
 | Agency module, subsystem, or delivery track | The result is cross-cutting semantic distinctions, not a coherent implementation responsibility | A surviving shared contract acquires an owner that no existing module can hold |
 | A universal `Decision` record, subject reference, or observation reference | Each is domain-owned today for reasons that differ per domain | A cross-domain consumer needs one contract, not merely one shape |
@@ -416,40 +409,46 @@ decomposition, scheduling, transfer timing — without pretending the designer a
 production system, and without claiming that historical results were produced under rules they were
 not. Five rules hold that line:
 
-1. **A simulation outcome is a function of explicit inputs and one identified Engine
-   interpretation.** The reproducibility inputs are the authored model identity, the Engine
-   interpretation identity, the explicit workload, the seed and other random inputs, the ordered
-   external commands, and any other explicitly identified result-affecting input. Nothing else may
-   influence acceptance, rejection, assignment, ordering, simulated time, terminal state or derived
-   results; run identity is correlation metadata and never affects an outcome.
+1. **A simulation outcome is a function of explicit inputs and one Engine interpretation.** The
+   reproducibility inputs are the authored model content, the Engine interpretation, the explicit
+   workload, the seed and other random inputs, the ordered external commands, and any other
+   explicitly identified result-affecting input. Nothing else may influence acceptance, rejection,
+   assignment, ordering, simulated time, terminal state or derived results; run identity is
+   correlation metadata and never affects an outcome.
 2. **No result-affecting rule may remain ambient.** Any limit, ordering rule, tie-break, rounding or
-   accumulation rule that two implementations could choose differently is part of the identified
-   interpretation or is an explicitly identified input. One interpretation identity covers a run's
-   complete result-affecting interpretation and is fixed when the run is established.
-   [Engine Semantics v1](engine-semantics-v1.md) owns the exact rules, their membership test and
-   the conformance fixtures that pin them.
+   accumulation rule that two implementations could choose differently is part of the
+   interpretation or is an explicitly identified input. One interpretation covers a run's complete
+   result-affecting behavior and is fixed when the run is established.
+   [Engine semantics](engine-semantics.md) owns the exact rules, their membership test and the
+   conformance fixtures that pin them.
 3. **Authored facts and interpretation have different owners.** Facts describing the production
    system the designer authored belong to the canonical model and its fingerprint; rules describing
-   how Arcogine interprets any such design belong to the Engine interpretation identity. Changing
-   interpretation alone never changes the authored model's identity, and authored facts are never
+   how Arcogine interprets any such design belong to the Engine interpretation. Changing
+   interpretation alone never changes the authored model's fingerprint, and authored facts are never
    synthesized to make an interpretation applicable. Publication validity never establishes
-   applicability: an interpretation applies only to the Factory policies and represented content
-   its own definition supports ([Factory semantic evolution](factory-design.md#111-semantic-evolution)).
-4. **An intentional change to result-affecting behavior is a new interpretation identity**, a
-   bug fix that observably changes outcomes included. Repairing an implementation so that it
-   conforms to the identified interpretation is not such a change. Implementations declare which
-   interpretations they execute and refuse unsupported ones rather than silently substituting
-   current behavior.
-5. **The durability guarantee is attribution plus a verifiable definition, not permanent
-   re-execution.** A retired interpretation keeps its identifier, normative specification and
-   conformance fixtures, so historical results stay attributable and interpretable after execution
-   support ends. Cross-interpretation comparison is explicit and owned by the consumer making the
-   claim; identity never authorizes guessing that results are comparable.
+   executability: an interpretation executes only the represented content its own definition
+   supports and refuses the rest before runtime mutation
+   ([transfer applicability](transfer-applicability.md)).
+4. **Interpretation changes are explicit.** While the interpretation is work in progress, an
+   intentional change to result-affecting behavior — a bug fix that observably changes outcomes
+   included — is a definition change recorded in the specification and its fixtures in the same
+   change; it is never an unrecorded drift of implementation behavior. Repairing an implementation
+   so that it conforms to the specification is not such a change. Implementations declare which
+   interpretation they execute and refuse any other rather than silently substituting current
+   behavior.
+5. **Durable attribution begins at promotion.** A result produced under a work-in-progress
+   interpretation is reproducible from the same build and inputs, but its WIP marker does not make it
+   attributable to a later definition. Once an interpretation is promoted, its guarantee is
+   attribution plus a verifiable definition, not permanent re-execution: the promoted name,
+   specification and conformance fixtures stay resolvable for the uses its contract accepts after
+   execution support ends. Comparison across interpretations or development revisions is explicit and
+   owned by the consumer making the claim; a name never authorizes guessing that results are
+   comparable.
 
 Nondeterministic boundaries a consumer needs to replay — clocks, external inputs, human or agent
 decisions — are converted into recorded explicit inputs rather than admitted into the
-interpretation. Runtime provenance carries the authored model identity and the Engine
-interpretation identity, so a consumer can state exactly what produced a result
+interpretation. Runtime provenance carries the source model's fingerprint and the Engine
+interpretation, so a consumer can state what produced a result under the current definitions
 ([runtime contract](runtime-contract.md)).
 
 The current implementation realizes this contract with:
@@ -458,7 +457,7 @@ The current implementation realizes this contract with:
 - Java strict floating-point semantics; compilation targets the Java 21 compatibility baseline
 - No concurrent mutation of simulation state
 
-Given the same published factory model, Engine semantics version, and explicit workload/commands,
+Given the same published factory model, Engine interpretation, and explicit workload/commands,
 fresh `FactoryRuntime` sessions produce identical ordered supported `RuntimeEvent` streams and
 terminal `RuntimeObservation` state. Tests comparing semantic outcomes account for the per-run
 `RunId`; a test that depends on that correlation identity is wrong.
@@ -467,24 +466,24 @@ This determinism contract is scoped to simulation, replay, and verification cont
 
 ## Factory Model Identity (current state)
 
-The runtime establishes one fixed `EngineSemanticsVersion` (`engine-semantics:v1`) alongside the
-authored `ModelFingerprint` and opaque per-runtime `RunId`. These identities answer different
-provenance questions: the semantics identity describes the result-affecting Engine interpretation
-([Engine Semantics v1](engine-semantics-v1.md)), while `RunId` is correlation only. Runtime
-observation/event field propagation of the semantics identity remains follow-up work, and the
-reported constant is not evidence of complete conformance to that specification.
+The runtime establishes one fixed `EngineSemantics` (`engine-semantics:wip`) alongside the source
+`ModelFingerprint` and opaque per-runtime `RunId`. These answer different provenance questions: the
+Engine name says which result-affecting interpretation ([Engine semantics](engine-semantics.md)) the
+run executes — the current development definition, not an identity spanning revisions — while
+`RunId` is correlation only. Runtime observation/event field propagation of the Engine name remains
+follow-up work, and the reported name is not evidence of complete conformance to that specification.
 
-Factory runtime semantics are instantiated through the canonical-model seam: `FactoryModel` (validated) → `FactoryModelVersion` (immutable, published) → `FactoryRuntimeAssembler` (deterministic runtime instantiation). See [Factory Design](factory-design.md#4-canonical-model-boundary) for the boundary this implements.
+Factory runtime semantics are instantiated through the canonical-model seam: `FactoryModel` (validated) → `FactoryModelVersion` (immutable, published) → `FactoryRuntimeAssembler` (deterministic runtime instantiation). See [Factory Design](factory-design.md#4-canonical-model-boundary) for the boundary this implements. `FactoryModel` holds the required production records and an explicit optional spatial record; the current Engine executes production records only, so `FactoryRuntimeAssembler` refuses a published model whose spatial record is present before any runtime state exists.
 
-`FactoryModelVersion.fingerprint()` implements the durable `factory-model:v1` semantic fingerprint contract specified by [Factory Model v1](factory-model-v1.md). The contract uses the typed `ModelFingerprint` value and a language-independent canonical binary encoding with explicit policy versioning and compatibility vectors. Equal canonical semantic content therefore has a durable identity that is independent of process memory and implementation language under the v1 policy.
+`FactoryModelVersion.fingerprint()` implements the work-in-progress `factory-model:wip` canonical form specified by the [Factory model](factory-model.md): one aggregate `ModelFingerprint` over a language-independent binary encoding of the production records and the optional spatial record, pinned by golden vectors for the current definition. Equal canonical content has an equal fingerprint independent of process memory and implementation language under the current definition; the definition itself is not promoted, so the fingerprint is not a durable cross-revision identity.
 
 The supported runtime observation/event contract supplies opaque per-runtime `RunId` and the
-durable `ModelFingerprint` on `RuntimeObservation`; `EngineSemanticsVersion` identifies the
-result-affecting interpretation. These identities answer separate provenance questions.
+source-model `ModelFingerprint` on `RuntimeObservation`; `EngineSemantics` names the
+result-affecting interpretation. These answer separate provenance questions.
 
-`:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by the [controlled revision contract](controlled-revisions.md). Governance identity/history capability is complete: `ControlledRevisionAuthority` defines the authoritative acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` adapter persists append-only revision records and immutable semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-authoritative parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Historical resolution returns the accepted immutable revision together with its exact semantic artifact; missing/corrupt metadata or artifacts and fingerprint mismatches fail explicitly rather than falling back to current model state.
+`:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by the [controlled revision contract](controlled-revisions.md). `ControlledRevisionAuthority` defines the acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` is a disposable development **proving store**: it declares that scope at its root, never adopts or modifies a location it did not create, persists append-only revision records and semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-accepted parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Resolution returns the accepted revision together with its exact semantic artifact; missing/corrupt metadata or artifacts, fingerprint mismatches and artifacts of unsupported definitions fail explicitly rather than falling back to current model state. Because every semantic contract is work in progress, no retained, commitment-bearing revision authority exists.
 
-The factory proving ground reuses the exact `factory-model:v1` canonical bytes as its historical semantic artifact. `FactoryModelArtifactV1` strictly decodes and canonical-reencodes those bytes to reconstruct the exact historical `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one immutable artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The current filesystem record layout and locking mechanics are replaceable adapter details, not a selected permanent production persistence architecture. The Governance semantic change/impact capability provides the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance`, and the factory-domain `FactoryModelSemanticComparator` implements `SemanticChangeExtractor` against `factory-model:v1` artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under [Factory Model v1](factory-model-v1.md)) as a real change. The requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the `ImpactScope` seam. The conformance evaluation/findings capability adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing authorization or deployment concepts; evidence references, evidence use, and evidence-backed conformance follow the [Governance evidence contract](governance-evidence.md). Approval/authorization, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain later Governance concerns, separate from revision identity.
+The proving store reuses the current `factory-model:wip` canonical bytes as its semantic artifact. `FactoryModelArtifact` strictly decodes and canonical-reencodes those bytes to reconstruct the exact `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The filesystem record layout and locking mechanics are replaceable adapter details, not a selected production persistence architecture. The Governance semantic change/impact capability provides the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance`, and the factory-domain `FactoryModelSemanticComparator` implements `SemanticChangeExtractor` for current Factory artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under the [Factory model](factory-model.md)) as a real change, and reporting any spatial-record addition, removal or change coarsely against the model's spatial-record entity. The requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the `ImpactScope` seam. The conformance evaluation/findings capability adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing authorization or deployment concepts; evidence references, evidence use, and evidence-backed conformance follow the [Governance evidence contract](governance-evidence.md). Approval/authorization, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain later Governance concerns, separate from revision identity.
 
 ## Outward Adapters
 

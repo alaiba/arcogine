@@ -100,7 +100,7 @@ Derive and evaluate concrete cases including:
 2. A later correction or reinterpretation creates an attributable historical distinction rather than silently rewriting the evidence or the earlier evaluation.
 3. Missing, stale, inapplicable, or cross-version-incompatible evidence cannot silently yield `PASS`, and the resulting use remains explainable.
 4. An external observation can be fixture-backed while retaining source/subject/time/trust provenance and without Governance inventing Operational telemetry types or revision-binding at ingestion.
-5. An Arcogine-derived analytical result preserves its producer-owned model, `EngineSemanticsVersion`, run/result, and interpretation provenance without Governance owning the calculation.
+5. An Arcogine-derived analytical result preserves its producer-owned model, `EngineSemantics`, run/result, and interpretation provenance without Governance owning the calculation.
 6. A historical evaluation remains attributable after the requirement/assertion version, evidence set, or semantic revision later changes.
 
 For each case, state what evidence would make the result decision-quality and which candidate models fail or survive.

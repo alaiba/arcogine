@@ -3,7 +3,7 @@
 > **Status:** Architectural reference; adopted boundaries marked below, remaining capabilities proposed  
 > **Scope:** Cross-consumer factory-design semantics and their boundary with future scenario inputs and runtime behavior
 > **Authority:** The canonical model/publication/runtime boundary (§3–§6), the publication identity contract (§11) and the semantic-evolution contract (§11.1) are adopted architecture. Broader draft/workspace capabilities remain proposed; the Overview and product/reference docs describe the current implementation  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Model v1](factory-model-v1.md), [Factory Model v2](factory-model-v2.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory model](factory-model.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
 
 ## 1. Architectural position
 
@@ -140,7 +140,7 @@ FactoryRuntime
 
 These need not all become separate persistence entities or modules initially.
 
-Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is executable and gives it the durable `factory-model:v1` `ModelFingerprint` defined by the [Factory Model v1 specification](factory-model-v1.md). It is still not itself a **controlled revision** entity. Governance identity/history capability now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. Section 11 draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
+Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is valid and gives it the `factory-model:wip` `ModelFingerprint` defined by the [Factory model specification](factory-model.md). Validity is not executability: the current Engine refuses a published model whose optional spatial record is present (§11.1). Publication creates an in-process snapshot, not a durable-use promise, and the snapshot is still not itself a **controlled revision** entity. Governance identity/history capability now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. Section 11 draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
 
 ### 4.1 What belongs in the canonical model
 
@@ -248,7 +248,7 @@ Authorization may be owned externally: Arcogine can produce the technical assess
 | Resource grouping or hierarchy | Future orthogonal concept; admitted only when it owns consequential behavior |
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
 | Structured executability validation | Shared Arcogine model/design capability |
-| Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; durable fingerprint policy completed by Governance identity/history capability |
+| Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; work-in-progress canonical form owned by the [Factory model](factory-model.md) |
 | Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see the [controlled revision contract](controlled-revisions.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
 | Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (governed-change and external-workflow integration), or an external change-management system referenced not depended on |
 | Operational deployment target/application and effective applied-artifact provenance | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
@@ -348,7 +348,7 @@ A published model version is the bridge between design and downstream contexts.
 
 Publication identity must not bundle two concepts together:
 
-- **Semantic fingerprint** — a deterministic identity derived from canonical model content under a durable versioned canonicalization policy ([Factory Model v1](factory-model-v1.md) today). Equivalent canonical facts produce equivalent fingerprints, independent of consumer presentation metadata, authorship, or timing. This is the publication identity carried by `FactoryModelVersion`.
+- **Semantic fingerprint** — a deterministic identity derived from canonical model content under a named canonicalization definition (the work-in-progress [Factory model](factory-model.md) today). Equivalent canonical facts produce equivalent fingerprints under one definition, independent of consumer presentation metadata, authorship, or timing. This is the publication identity carried by `FactoryModelVersion`.
 - **Controlled revision** — a persisted, controlled historical configuration occurrence with separate identity, semantic-fingerprint binding, lineage, and recording provenance. [controlled revision contract](controlled-revisions.md) defines it, implemented through `ControlledRevisionId`, `ControlledRevision`, and `ControlledRevisionAuthority`. Authorization, external workflow linkage, conformance, and deployment remain separate records that may reference a revision; a revision need not be authorized or deployed to exist.
 
 Every runtime or verification result must retain the semantic fingerprint of the model version it instantiated. A `ControlledRevisionId` is additional historical provenance only when an authoritative revision binding actually exists; it must not be synthesized from the fingerprint.
@@ -372,34 +372,38 @@ verification evidence about a candidate change; none of that requires an externa
 Factory owns authored production-system facts; Engine owns the rules that interpret them
 (distance, rounding, destination binding, reservation, transfer lifecycle). Changing Engine
 interpretation alone never changes a model's fingerprint, and authored facts are never synthesized
-to make an interpretation applicable. [Factory Model v1](factory-model-v1.md) and
-[Factory Model v2](factory-model-v2.md) own their records, field membership, validation predicates
-and canonical bytes; this section owns how a policy is composed and how policies relate.
+to make an interpretation applicable. The [Factory model](factory-model.md) owns the records, field
+membership, validation predicates and canonical bytes; this section owns how the model is composed
+and how it evolves.
 
-**One closed policy, one aggregate identity.** A fingerprint policy identifies one complete, closed
-semantic/canonicalization grammar — the records it admits, the validation predicates within and
-across them, its canonical bytes and its rejection behavior — not merely a hash algorithm. Ordinary
-serializer bytes never define identity, and publication rejects inputs for which canonicalization
-is undefined, so fingerprinting is total over published models. One published Factory semantic
-artifact has exactly one aggregate `ModelFingerprint`; Factory defines no per-concern fingerprints.
+**One closed definition, one aggregate identity.** The Factory canonical form is one complete,
+closed semantic/canonicalization grammar — the records it admits, the validation predicates within
+and across them, its canonical bytes and its rejection behavior — not merely a hash algorithm.
+Ordinary serializer bytes never define identity, and publication rejects inputs for which
+canonicalization is undefined, so fingerprinting is total over published models. One published
+design has exactly one aggregate `ModelFingerprint` covering every record it contains; Factory
+defines no per-concern fingerprints, and a design is never given a second, production-only
+fingerprint that drops a record it carries.
 
-**Optional authored records.** A closed policy may admit explicitly present optional authored
+**Optional authored records.** The definition may admit explicitly present optional authored
 records beside its required ones, and the presence of each is canonical content. An absent record
 means the design makes no assertion in that semantic dimension; nothing is synthesized for it from
 a default. A present record carries authored values, and a legal zero or default-like value is an
 authored value distinct from absence in both meaning and canonical bytes. Unknown or partly
-authored facts are draft or adapter state, never published content; the policy states what makes a
-present record complete and rejects anything else. Which combinations of records are valid is
-decided by the policy's own closed predicate, not by a separate combination registry.
+authored facts are draft or adapter state, never published content; the definition states what makes
+a present record complete and rejects anything else. Which combinations of records are valid is
+decided by the definition's own closed predicate, not by a separate combination registry.
 
-**Attribution fixes the grammar.** Until a policy has attributed records its definition may be
-corrected in place. After the first retained or accepted attribution its definition is fixed as a
-whole under the [semantic evolution rules](overview.md#semantic-evolution-and-support): admitting a
-new record or variant, changing an accepted value domain, or changing a predicate, rejection rule
-or canonical byte requires a distinguishable policy identity; old fingerprints are never rewritten or rederived; and a
-controlled revision still binds exactly one fingerprint while lineage may cross policies without
-rewriting either artifact. A new policy is warranted by an identity-defining grammar change, not by
-a new combination of records a policy already admits.
+**Evolution before and after promotion.** The Factory definition is work in progress
+(`factory-model:wip`). Admitting a new record or variant, changing a value domain, predicate,
+rejection rule or canonical byte is a correction of the current definition: the specification, its
+golden vectors and dependent consumers change together, and fingerprints or artifacts produced under
+an earlier development revision are neither rederived nor migrated — they are disposable development
+material, and current readers refuse rather than reinterpret anything they cannot verify. Promotion
+is an explicit decision under the [semantic evolution rules](overview.md#semantic-evolution-and-support);
+after it, the promoted definition is fixed as a whole, an identity-defining change needs a
+distinguishable identity, and a controlled revision still binds exactly one fingerprint while
+lineage may span definitions without rewriting either artifact.
 
 **Exact references.** An aggregate may contain an exact immutable reference to an independently
 governed technical contract only when a concrete semantic dependency requires the reference itself
@@ -407,44 +411,39 @@ governed technical contract only when a concrete semantic dependency requires th
 cannot preserve ([Factory Resource Semantics](factory-resource-semantics.md)). The reference is
 aggregate content covered by the one fingerprint, not a second identity for the design.
 
-**No automatic lift; explicit comparison.** There is no automatic lift between policies. A V1 model
-has no spatial facts and therefore no spatial behavior — the truthful execution of a design that
-never authored spatial semantics, not a degraded mode. Position, footprint and handling values
-must be explicitly authored and published; historical facts are never invented as defaults, and a
-design is never stripped of content a policy cannot represent in order to publish it under that
-policy. Cross-policy comparison is explicit: a semantic `ChangeSet` must not silently span
-policies by inventing facts one model never declared. Before an actual cross-policy controlled
-transition, Arcogine provides artifact resolution with a registered verifier/decoder for each
-policy in scope and either an explicit migration classification or an explicitly chosen common
-semantic representation for any fine-grained comparison that claims equivalence, implementing only
-the seam that transition requires. A common representation may map one policy's content into
-another's form only when the mapping invents nothing — records absent in the source stay absent —
-and preserves every semantic distinction of the source policy, including names, identifiers,
-order and nullability; where that cannot be shown, the comparison states its limitation. Such
-equivalence is never full-fingerprint equality, the same controlled occurrence, evidence
-applicability or reattribution of either artifact.
+**Nothing invented, nothing stripped.** A design without a spatial record has no spatial facts and
+therefore no spatial behavior — the truthful execution of a design that never authored spatial
+semantics, not a degraded mode. Position, footprint and handling values must be explicitly authored
+and published; facts are never invented as defaults, and a design is never stripped of content in
+order to publish, fingerprint or execute it. Semantic comparison works by stable domain identity
+within the current definition and never hides a represented difference. Should a promoted definition
+and a successor ever need comparison, that comparison is explicit and built only for the real
+transition that needs it: it invents nothing — records absent in the source stay absent — preserves
+every source distinction, including names, identifiers, order and nullability, and states its
+limitations; such equivalence is never full-fingerprint equality, the same controlled occurrence,
+evidence applicability or reattribution.
 
-**Publication validity is not Engine applicability.** A valid published artifact is executable
-under an Engine interpretation only when that interpretation's own definition supports the
-artifact's exact policy and the records, values, variants and interactions the artifact represents;
-recognizing which records are present is not sufficient. An Engine refuses an artifact outside that
-domain before runtime mutation rather than ignoring represented content or supplying absent content.
-The [current transfer-applicability boundary](transfer-applicability.md) selects no transfer for an
-admitted V2 artifact without spatial content, distinguishes it from authored zero and refusal, and
-leaves the exact Engine identity/support partition to its separate investigation. That selection is
-specific to the current closed V2 grammar, not a general rule that every future transfer lifecycle
-must be conditioned on authored duration inputs.
+**Publication validity is not Engine executability.** A valid published model is executable only
+when the Engine interpretation's own definition supports the records, values, variants and
+interactions it represents; recognizing which records are present is not sufficient. An Engine
+refuses a model outside that domain before runtime mutation rather than ignoring represented content
+or supplying absent content. The [current transfer-applicability boundary](transfer-applicability.md)
+selects no transfer for a model without spatial content and distinguishes it from authored zero and
+from refusal; the current Engine executes production records only and refuses a present spatial
+record until spatial execution is implemented. That selection is specific to the current spatial
+grammar, not a general rule that every future transfer lifecycle must be conditioned on authored
+duration inputs.
 
-**Support is separate from identity.** Retained attribution requires the exact definition of every
-referenced policy to remain resolvable; continuing publication, decoding, execution, migration and
-interoperability are separately scoped support obligations declared by the owning contract, not
-consequences of a policy existing. Defining a successor policy neither retires publication under an
-earlier one nor promises it indefinitely, and nothing mandates eternal readers for every policy or
-permanent coexistence of any two. A named support scope, such as the combinations of records one
-consumer or Engine accepts, may be declared where useful but never participates in content
-identity. Factory currently defines no open extension envelope, concern registry, per-concern
-fingerprint or generic migration framework; one would need a concrete requirement that closed
-policies with optional records and exact references cannot meet.
+**Support is separate from identity.** While the definition is work in progress it carries no
+obligation to read, execute, migrate or coexist with earlier development material. After promotion,
+retaining the exact promoted definition, continuing publication, decoding, execution, migration and
+interoperability are separately scoped obligations the owning contract declares for the uses it
+accepts; nothing mandates eternal readers or permanent coexistence of two definitions. A named
+support scope, such as the combinations of records one consumer or Engine accepts, may be declared
+where useful but never participates in content identity. Factory currently defines no open
+extension envelope, concern registry, per-concern fingerprint or generic migration framework; one
+would need a concrete requirement that a closed definition with optional records and exact references
+cannot meet.
 
 ### 11.2 External change-management and deployment integration
 

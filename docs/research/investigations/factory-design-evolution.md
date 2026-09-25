@@ -2,7 +2,7 @@
 
 > **Status:** Maintained research programme  
 > **Scope:** Factory-model and authoring questions that are not admitted to implementation because their durable invariant or cross-consumer need is not yet established  
-> **Authority:** Research only; accepted Factory Model v1/v2 semantics and current implementation remain authoritative elsewhere
+> **Authority:** Research only; the current Factory model specification and implementation remain authoritative elsewhere
 
 ## Purpose
 
@@ -50,8 +50,7 @@ Research should test concrete needs for:
 - routing/operation-detail changes;
 - spatial/layout changes;
 - capability/constraint changes;
-- policy-version transitions;
-- cross-policy comparison where an older model never authored the newer facts;
+- comparison where one design never authored an optional record the other carries, or across a future promoted definition and its successor;
 - explanations useful to game players, industrial reviewers, optimizers, and governed change.
 
 Promote only shared semantics that more than one concrete consumer needs or that Governance requires for an accepted workflow.
@@ -80,7 +79,7 @@ This research should remain coupled to qualified applicability/performance and E
 
 The more fundamental boundary question is concluded: [Factory Model Semantic Composition](factory-model-semantic-composition.md) established that a Factory policy is one closed grammar that may admit explicitly present optional authored records under one aggregate fingerprint, reconciled into the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution). Its reopening triggers name the future concerns below.
 
-The narrower [transfer-lifecycle question](transfer-semantics.md#concluded--transfer-lifecycle-independence) is concluded for current V2 content in the [transfer-applicability boundary](../../architecture/transfer-applicability.md). Explicit non-spatial hand-off or timing remains a separate CANDIDATE requiring a concrete consumer need, and could reopen the still-unreleased V2 grammar before attribution. It is distinct from the richer spatial/material-flow capabilities below. Exact Engine identity/support is the READY [successor applicability question](engine-applicability-after-transfer-boundary.md).
+The narrower [transfer-lifecycle question](transfer-semantics.md#concluded--transfer-lifecycle-independence) is concluded for current spatial-record content in the [transfer-applicability boundary](../../architecture/transfer-applicability.md). Explicit non-spatial hand-off or timing remains a separate CANDIDATE requiring a concrete consumer need, and could reopen the still-unreleased V2 grammar before attribution. It is distinct from the richer spatial/material-flow capabilities below. Exact Engine identity/support is the READY [successor applicability question](engine-applicability-after-transfer-boundary.md).
 
 The composition investigation does **not** implement the future concerns listed here. Questions such as orientation, paths/aisles, conveyors, connection points, explicit transport resources, buffers, or congestion remain separate capability questions in the research register because current Factory spatial and Engine transfer semantics deliberately stop before them. When those questions are later investigated, they must consume the then-current transfer/composition rules rather than implicitly selecting a new whole-model version or aspect framework themselves; admitting a new or split authored record is a new Factory policy.
 

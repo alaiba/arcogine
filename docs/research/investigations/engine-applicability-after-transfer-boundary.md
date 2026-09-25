@@ -1,50 +1,45 @@
 # Engine applicability after transfer-boundary reconciliation
 
-> **Status:** READY — see the maintained [research register](../research-register.md)
->
-> **Priority:** Critical-path
+> **Status:** SUPERSEDED — see the maintained [research register](../research-register.md)
 >
 > **Risk:** High — whole-definition identity, refusal, deterministic results, and historical attribution
 >
-> **Authority:** Research brief only; current Factory and Engine specifications remain authoritative
+> **Authority:** Research brief only; current Factory and Engine specifications are authoritative
 
-## Question and decision at stake
+## Question as admitted
 
-Under the adopted [transfer-applicability boundary](../../architecture/transfer-applicability.md), **which Engine semantics identity or identities may execute each exact `factory-model:v2` represented-content case, and can any existing fixed Engine definition admit those cases without changing its whole definition?**
+Under the adopted [transfer-applicability boundary](../../architecture/transfer-applicability.md),
+the brief asked which Engine semantics identity or identities may execute each exact
+`factory-model:v2` represented-content case — V1, V2 with the spatial record absent, present with
+zero timing, present with positive timing — and whether the then-fixed `engine-semantics:v1`
+definition could admit those cases without changing its whole definition. It was `READY` but never
+investigated.
 
-The decision determines truthful execution support and result attribution for the still-unreleased V2 policy. Factory publication validity does not establish Engine applicability. The answer may alter the Factory/Engine specification and the held [spatial-runtime plan](../../planning/spatial-runtime-consequences.md); this brief admits no implementation.
+## Why it is superseded
 
-## Why this is READY
+The question existed because the Factory V1/V2 policies and `engine-semantics:v1` were treated as
+fixed identities whose definitions could not change in place. The 2026-09-25 owner-directed
+[provisional semantic-contract reset](../../history/decisions/2026-09-25-provisional-semantic-contract-reset.md)
+replaced that estate: one work-in-progress Factory model carries the optional spatial record, and the
+Engine interpretation is work in progress under a mutable development marker. There is no longer a
+fixed Engine definition whose admission domain must be preserved, no V1/V2 identity partition to
+allocate, and no publication-release decision gated on the answer. No investigation or review was
+performed, and nothing here was accepted as research.
 
-The separate [transfer-lifecycle question](transfer-semantics.md#concluded--transfer-lifecycle-independence) has been reconciled for current V2 content. The [superseded predecessor](engine-applicability-optional-record-factory-policies.md) investigated Engine identity under an assumed no-transfer absent case and produced substantial reviewed evidence. Its candidate set and both-form recommendation are methods to challenge, not an adopted answer. Current [Factory V2](../../architecture/factory-model-v2.md) remains an unreleased optional-record grammar; [Engine v1](../../architecture/engine-semantics-v1.md) remains fixed, with spatial execution and provenance propagation incomplete.
+## What survives, and where
 
-The landed transfer boundary supplies these inputs to this **separate** investigation:
+The brief's behavioral proving dimensions remain valid independent of identity and now live in
+current contracts, tests or delivery:
 
-- for an admitted V2-absent artifact, distinct-resource continuation has no transfer under the selected current design;
-- admitted V2-present artifacts can have a full zero-duration or positive-duration transfer lifecycle under an applicable interpretation;
-- Factory-valid artifacts outside an Engine's support domain are refused before mutation, including same-resource-only artifacts when its predicate excludes their content;
-- the V2 grammar needs no lifecycle-driven correction on current evidence; and
-- V1 publication support, execution support for retained V1 artifacts, and new V2 execution support are separate decisions.
+| Proving dimension | Current home |
+| --- | --- |
+| Model refusal before runtime mutation, ahead of same-resource or distinct-resource runtime cases | [Transfer applicability](../../architecture/transfer-applicability.md); `EngineSemanticsAcceptanceTest` |
+| Present authored zero versus absence, including events, state, ordering and bounded advancement | [Transfer applicability](../../architecture/transfer-applicability.md) proving case; spatial fixtures in [Engine semantics](../../architecture/engine-semantics.md#14-conformance-fixtures) |
+| Factory-invalid content, valid but Engine-unsupported content, and an unsupported Engine name as distinct failures | `FactoryModelValidationException`, `UnsupportedModelContentException`, `EngineSemantics.requireSupported` and their tests |
+| Truthful Factory fingerprint and Engine attribution on results, reset, observations and events | [Runtime contract](../../architecture/runtime-contract.md); provenance propagation in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) |
+| Same-resource and distinct-resource continuation, binding, reservation, arrival and recovery | Transfer slices of [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) |
+| A future optional Factory concern irrelevant to one interpretation needs explicit support, not wildcard acceptance | [Factory semantic evolution](../../architecture/factory-design.md#111-semantic-evolution) ("Publication validity is not Engine executability") |
 
-V2 publication release and spatial-runtime activation remain blocked until this question concludes and its consequences are reconciled. Research priority does not itself admit those slices.
-
-## Scope for the future investigation
-
-Derive candidates from the **landed transfer contract** before applying predecessor reasoning. Compare preservation of any existing fixed Engine definition with distinguishable interpretation and, where case meanings warrant it, an explicit support partition. Do not assume a new identifier already exists, one identity covers both V2 forms, v1 does or does not support the present form, or Factory and Engine version numbers pair one-to-one. A still-supported V1-only state is a valid interim refusal boundary, not a full answer to V2 applicability. If a candidate refuses V2-absent, apply its exact artifact predicate before examining same-resource or distinct-resource runtime cases; a runtime outcome cannot rescue an excluded artifact.
-
-Apply the whole-definition test to accepted policy/content, referenced definitions, result-affecting rules, output/events, refusals, and provenance, including historical records and unexercised rules. Distinguish Factory-invalid data, Factory-valid but Engine-unsupported data, and unsupported Engine identity. Preserve actual Factory fingerprints and conditional controlled-revision provenance; a representation projection must not relabel the source. An absence of failing fixtures is not affirmative preservation proof. A new implementation of already-defined behavior need not change semantic identity, but implementation feasibility does not prove admission under a fixed definition.
-
-## Proving dimensions to derive into cases
-
-- Factory V1 under Engine v1 and retained historical v1 results;
-- V2 spatial-present and V2 spatial-absent under their **reconciled** meanings;
-- artifact admission/refusal before same-resource control cases, including same-resource-only V2-absent artifacts and multi-eligible routes whose eventual destination is same-resource;
-- present authored zero versus absence, including events, state, ordering, and bounded advancement;
-- same-resource and distinct-resource continuation, binding, reservation, arrival, and recovery;
-- Factory-invalid content, valid but Engine-unsupported policy/content, and unsupported Engine identity;
-- truthful Factory fingerprint and selected Engine attribution on accepted results, reset, observations, and events;
-- present-only versus both-form support, if their meanings justify partitioning;
-- separate V1 new-publication, retained-V1 execution, and V2-absent execution support declarations; and
-- a future optional Factory concern irrelevant to one claimed interpretation, testing explicit support rather than wildcard acceptance.
-
-Evidence should include the exact current definition/dependency inventory, accepted-input and refusal matrix for every candidate, historical-attribution and support obligations, deterministic proving/failure fixtures, and an explicit falsification of unsupported preservation claims. The [retained predecessor evidence](engine-applicability-optional-record-factory-policies.md) supplies methods and cases, not a default answer. Independent adversarial review is required before any Engine architecture/specification reconciliation. Publication and runtime support require their own later executable evidence; research acceptance alone does not release them.
+The identity-specific dimensions — V1 publication versus retained V1 execution, present-only versus
+both-form support partitions, and the whole-definition test against fixed `engine-semantics:v1` — are
+discarded with the estate they concerned.

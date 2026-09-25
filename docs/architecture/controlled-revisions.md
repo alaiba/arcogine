@@ -1,6 +1,6 @@
 # Controlled revisions
 
-Status: Adopted semantic contract; implemented by `:types`/`:governance` value types and `ControlledRevisionAuthority`
+Status: Adopted semantic contract; implemented by `:types`/`:governance` value types and `ControlledRevisionAuthority`, whose current implementation is a disposable proving store
 Owning architecture: [Governance and Conformance](governance-conformance.md)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 
@@ -100,7 +100,7 @@ same revision ID  implies          the same immutable revision record
 
 A revision does not contain multiple alternate fingerprints for the same semantic state. If Arcogine later needs to relate fingerprints produced under different policies, that relationship must be represented explicitly rather than mutating or multiplying the semantic identity stored in an existing historical revision.
 
-There is no generic model/schema-version field on a revision. `ModelFingerprint.policyVersion` already versions the fingerprint semantics. A separate domain model or serialization schema version should be added only when a concrete cross-domain contract requires it; it must not be invented as part of historical revision identity.
+There is no generic model/schema-version field on a revision. `ModelFingerprint.policy` already names the canonicalization definition the fingerprint was computed under. A separate domain model or serialization schema version should be added only when a concrete cross-domain contract requires it; it must not be invented as part of historical revision identity.
 
 ## A revision has zero or one parent
 
@@ -141,7 +141,7 @@ When an authoritative revision store accepts a non-root revision, the named pare
 
 Repository-level parent existence, uniqueness, and cycle integrity belong to the authoritative persistence boundary. A standalone revision value object can enforce local shape invariants such as non-null fields, no self-parent, and parent cardinality, but it cannot by itself prove global graph integrity.
 
-Lineage is independent of fingerprint policy version. A parent and child may reference fingerprints produced under different policy versions when a later migration/evolution contract permits that history; the revision relation itself does not derive from fingerprint equality.
+Lineage is independent of the fingerprint's canonicalization definition. A parent and child may reference fingerprints produced under different definitions — for example a promoted definition and its successor — when the owning evolution contract permits that history; the revision relation itself does not derive from fingerprint equality.
 
 ## Rollback is an ordinary new revision
 
@@ -259,13 +259,15 @@ The horizontal dimension is configuration history. The attached records are gove
 
 A controlled revision references semantic content through `ModelFingerprint`; the revision record itself does not embed serialized model bytes, an artifact URI, or a content-addressed blob.
 
-Historical change attribution is nevertheless incomplete if Arcogine can identify `R42 -> F1` but cannot recover the exact semantic state represented by F1. The authoritative revision store must therefore resolve an accepted revision to the exact semantic state required for historical reconstruction. The current `FileControlledRevisionAuthority` adapter does so by persisting the immutable canonical artifact whose policy-specific verifier (`SemanticArtifactVerifier`) proves it reproduces the referenced fingerprint; the filesystem layout and locking mechanics are replaceable adapter details, not a selected permanent persistence architecture.
+Historical change attribution is nevertheless incomplete if Arcogine can identify `R42 -> F1` but cannot recover the exact semantic state represented by F1. The authoritative revision store must therefore resolve an accepted revision to the exact semantic state required for historical reconstruction. The current `FileControlledRevisionAuthority` adapter does so by persisting the canonical artifact whose definition-specific verifier (`SemanticArtifactVerifier`) proves it reproduces the referenced fingerprint; the filesystem layout and locking mechanics are replaceable adapter details, not a selected permanent persistence architecture.
+
+That adapter is a disposable development **proving store**. Its artifacts are work-in-progress Factory content, verified only against the definition the current build implements, so a store written before a definition change is reset rather than migrated. It declares its proving scope at its root and refuses — without adopting, modifying or deleting — any location it did not create, so a store written under an earlier layout or discarded definition fails explicitly instead of being partially reinterpreted. Artifacts under any definition the verifier does not support are refused at acceptance and on resolution.
 
 ## Authoritative historical identity begins at persistence acceptance
 
 `ControlledRevisionId` is intended to survive process, deployment, and storage boundaries.
 
-Creating a revision-shaped value in memory does not by itself make it an authoritative historical fact. A controlled revision becomes authoritative when its immutable record is accepted by Arcogine's authoritative revision store.
+Creating a revision-shaped value in memory does not by itself make it an authoritative historical fact. A controlled revision becomes authoritative when its immutable record is accepted by Arcogine's authoritative revision store. Within that store the identity, fingerprint binding, lineage and provenance obligations below hold whatever the maturity of the referenced content. Whether acceptance is also a retained historical commitment depends on the store's declared custody: the only store today is a disposable proving store, and retained, commitment-bearing acceptance is unavailable while every semantic contract is work in progress. A retained store is introduced only together with an explicit promotion ([semantic evolution rules](overview.md#semantic-evolution-and-support)); it declares its custody and admits only the promoted definition's identities.
 
 The persistence contract guarantees at least:
 

@@ -8,12 +8,12 @@
 
 PLAN-GOV-1 supplies:
 
-- durable semantic `ModelFingerprint` semantics;
+- the semantic `ModelFingerprint` seam (the Factory definition behind it is work in progress);
 - opaque `ControlledRevisionId` historical identity;
 - immutable controlled revision values with current zero-or-one parent lineage;
 - recording provenance;
 - authoritative append-only acceptance;
-- durable reopenable history;
+- reopenable history in a disposable proving store;
 - exact historical semantic-artifact resolution; and
 - explicit integrity failures for duplicate/missing/corrupt/mismatched state.
 
@@ -42,7 +42,7 @@ Constructing a value in memory does not create authoritative history. Authority 
 
 ## Current adapter boundary
 
-`FileControlledRevisionAuthority` is the current durable adapter proving restart/reopen, atomic append-only acceptance, integrity behavior, and exact artifact resolution.
+`FileControlledRevisionAuthority` is the current adapter: a disposable development proving store demonstrating restart/reopen, atomic append-only acceptance, integrity behavior, and exact artifact resolution. It declares its proving scope at its root, never adopts or modifies a location it did not create, and may need to be reset after a Factory definition change. Retained, commitment-bearing revision custody is unavailable while the Factory definition is work in progress; it is introduced only with an explicit promotion.
 
 Its directory layout, binary record format, lock mechanics, and physical artifact key are replaceable implementation details. They are not a selected production database/storage architecture.
 
@@ -50,6 +50,6 @@ A hard-to-reverse production persistence/migration/retention/integrity choice mu
 
 ## Downstream use
 
-Later Governance evidence/governed-change work, Engine optional revision provenance, and future Operational deployment/reconciliation may reference authoritative `ControlledRevisionId` values. They must consume this substrate rather than create alternate revision identity/history.
+Later Governance evidence/governed-change work, Engine optional revision provenance, and future Operational deployment/reconciliation may reference authoritative `ControlledRevisionId` values. They must consume this substrate rather than create alternate revision identity/history, and must not treat revisions from the proving store as retained historical commitments.
 
 This file contains no open lineage/source-control research programme. Branch/ref/tag/multi-parent semantics are not implementation work until a concrete workflow is promoted through the normal research/architecture/planning boundary.

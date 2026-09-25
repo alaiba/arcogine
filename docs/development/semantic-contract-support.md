@@ -4,7 +4,9 @@ This policy is the review mechanism behind the
 [semantic evolution and support](../architecture/overview.md#semantic-evolution-and-support) rules
 in the Architecture Overview, which own the architectural constraint; owning specifications define
 domain meaning. This document owns how work-in-progress status, promotion and support are stated
-and reviewed. It is not a support registry, a maturity tracker or a research backlog.
+and reviewed. It consumes the Overview's canonical [determinism, equivalence, identity, and
+durability vocabulary](../architecture/overview.md#determinism-equivalence-identity-and-durability).
+It is not a support registry, a maturity tracker or a research backlog.
 
 ## Work in progress is the default
 
@@ -21,12 +23,21 @@ to a WIP definition like any other definition change:
 
 Name contracts, types, packages, files and tests by what they mean. An ordinal suffix, an
 implementation milestone or a golden vector is not a maturity or support signal; maturity and
-support are stated explicitly in the owning contract.
+support are stated explicitly in the owning contract. Technical codec/runtime markers are not
+human release labels, and neither kind of name supplies its own meaning. Do not turn a spelling
+into a new architectural generation or planning prerequisite.
+
+The no-migration rule above is the current development reset policy, not a consequence of strict
+canonical decoding. A future supported importer or migration has its own source/target meanings,
+preserved distinctions, losses, and validation. No such mechanism or support promise is added here.
 
 ## Audit the referent behind a durability claim
 
 Words such as *published*, *attributed*, *retained*, *released* or *fixed* are claims about something
-concrete. Before a review accepts one, identify its referent and classify it:
+concrete. First specify which [property](../architecture/overview.md#durability-and-related-properties)
+is claimed: storage durability, reference stability, traceability, historical interpretability,
+reproducibility, compatibility, or a support commitment, including its subject and scope. Then
+identify the claim's referent and classify it:
 
 - a **capability** — an API, a store implementation, a serializer, a codec;
 - an **accepted use** — a record admitted into a declared custody, a consumer that relies on it;
@@ -34,8 +45,10 @@ concrete. Before a review accepts one, identify its referent and classify it:
 - **fulfilment evidence** — vectors, fixtures and tests showing a promise is met;
 - a **cost preference** — a judgement that one design is cheaper or simpler.
 
-Only an explicit promotion creates durable obligations; the other categories are capabilities or
-evidence. For example, an in-process `FactoryModelPublisher.publish` call and a revision store opened
+Under this policy, explicit promotion establishes a declared stability/support commitment; it
+neither creates content identity nor supplies evidence of persistence, traceability, or
+reproducibility. Existing occurrence non-rebinding and the duty to account for undeclared reliance
+remain applicable. For example, an in-process `FactoryModelPublisher.publish` call and a revision store opened
 over a temporary directory are capabilities, not accepted use, and golden vectors are fulfilment
 evidence for the current definition, not a promise that it will not change. Custody is what an
 authority declares, not where it happens to be used: a path name, test label or later deletion neither
@@ -44,14 +57,16 @@ searched; a failed search is not proof of absence.
 
 ## Declaring a promotion
 
-Promotion is an explicit owner decision tied to a concrete durable-use need, recorded in the owning
-specification or authority contract in the same change that makes the durable use possible. Factory
-and Engine promote independently. Use only the information the promised use needs:
+Promotion is an explicit owner decision tied to a concrete stability/support need, recorded in the
+owning specification or authority contract in the same change that admits the promised use.
+Factory and Engine commitments need not be made together. Use only the information the promised
+use needs:
 
-- the owner approval and the durable-use need it serves;
-- the exact frozen definition — grammar or rules, validation and refusal behavior, fixtures — and
-  its durable semantic name, distinct from the WIP marker; a mutable document title or branch tip
-  never selects a definition;
+- the owner approval and the concrete use and stability/support need it serves;
+- the exact definition and an unambiguous stable reference to it, including the grammar or rules,
+  validation/refusal behavior, and relevant fixtures; a mutable document title, branch tip, or WIP
+  marker alone does not select an exact definition. A human-readable label is optional and derives
+  its meaning from the binding or declaration, not the other way around;
 - the supported uses, inputs, consumers and exclusions;
 - custody: the accepting authority, retained versus disposable scope, horizon, exact-definition
   resolution and the transitive basis the claimed explanation needs;
@@ -99,12 +114,14 @@ question.
 | Case | What review must distinguish |
 | --- | --- |
 | WIP definition correction | The specification, vectors or fixtures and dependents change together under the same marker. Earlier development artifacts are refused or reset, never migrated or reinterpreted. |
-| Durability claim | Identify the referent — capability, accepted use, promise, fulfilment evidence or cost preference. Only an explicit promotion creates durable obligations. |
+| Durability claim | Identify the referent — capability, accepted use, promise, fulfilment evidence or cost preference. Specify the claimed property and scope separately; promotion establishes a declared stability/support commitment, not all the other properties. |
 | Proving persistence | A proving store may survive reopen, but it declares disposable custody and is bound to the exact definition that wrote it, so it refuses to reopen under another even when the public WIP marker is unchanged. Persisting WIP content there creates no attribution or compatibility promise, and it never adopts a location it did not create. |
 | Accidental retention | WIP material found retained or relied on outside a declared custody is a defect: stop further admission, preserve what was accepted and the definition it used as far as evidence allows, and decide explicitly. It is neither silently rewritten nor treated as a promotion. |
-| Promoted definition correction | An identity-affecting correction needs a distinguishable identity; the promoted name always denotes its definition. |
+| Promoted definition correction | An identity-affecting correction needs a distinguishable identity; the stable promoted reference always denotes its definition. |
 | Historical artifact after evolution | For a promoted definition, retain the exact revision → fingerprint → definition/artifact basis the accepted use requires and never resolve it against current state. Equal content can recur in a distinct revision. |
 | Engine rule never exercised | For a promoted interpretation, editorial section boundaries and missing fixture coverage do not make part of it mutable; rejection behavior and cross-rule interactions still matter. While WIP, an unexercised rule is corrected like any other rule. |
+| Label or attestation | A label may name a later claim about a collection of exact references. Neither the spelling nor the existence of the claim proves equivalence, executability, compatibility, or fulfilment. No shared attestation entity is selected. |
+| Strict decoder versus importer | A canonical decoder enforces its declared representation and validity contract. A separately supported conversion can produce a target artifact without pretending the source already had target meaning; current development reset policy still applies. |
 | External consumer | A concrete information set and scoped compatibility evidence create support; the existence of an API or serializer does not. |
 | Operational consequence | The [Operational continuity contract](../architecture/operational-continuity.md) governs continuity, accepted compaction, loss and divergence. A generic expiry field cannot waive accountability or erase the only audit basis. |
 | Representation change | An adapter or layout change may preserve semantic identity while breaking an independently promised wire contract. Canonical identity-defining bytes are semantic, unlike ordinary serializer bytes. |

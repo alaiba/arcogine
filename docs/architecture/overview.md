@@ -28,14 +28,144 @@ ownership:
   without becoming domain truth, and consumer domains (Challenge/Game, analytics, UI) never
   redefine authoritative production semantics.
 
+### Determinism, equivalence, identity, and durability
+
+These are canonical cross-cutting definitions, not a universal data model, lifecycle, or identity
+service. Owning domain specifications select their concrete equality, input, output, and support
+contracts. A current normative specification states what must hold; being normative does not by
+itself create a separately versioned semantic entity or a stability promise.
+
+#### Determinism
+
+**Determinism** is a property of a defined computation: with the same definition and the same
+complete result-affecting inputs, repeated evaluation produces the same specified observable
+result. A claim must identify the admitted input domain, initial-state assumptions, and the output
+boundary and equality being compared. Formally, for a fixed definition `D` and declared observation
+boundary `P`, `O = P(evaluate(D, I))` is single-valued for each admitted complete input `I`.
+
+Relevant inputs include ordered commands and any result-affecting random, time, numerical, or
+external context. A seed alone is insufficient when the random algorithm or its consumption order
+can differ. Incidental metadata may be excluded only by the owning contract, not after a comparison
+fails; for example, the simulation contract excludes per-run correlation identity, not production
+ordering or timing. Determinism neither requires identical implementation binaries nor establishes
+equivalence between different definitions. It does not prove correctness against a specification,
+accuracy about physical reality, persistence, or later reproducibility. The [Determinism
+Contract](#determinism-contract) specializes this definition for the current simulation boundary.
+
+#### Durability and related properties
+
+Qualify a durability claim with the property, subject, scope, and horizon it actually concerns.
+Do not infer one row of this table from another:
+
+| Term | Meaning |
+|---|---|
+| **Persistence / storage durability** | Persistence stores information beyond its producing operation or process. A storage-durability guarantee specifies which accepted information survives which failures, recovery conditions, and retention horizon. Writing a file alone proves no broader guarantee. |
+| **Referential stability / non-rebinding** | A reference declared stable continues to denote the same referent under its owning equality rule. This does not ensure that the referent remains available. A mutable lookup alias is not such a reference. |
+| **Traceability** | Evidence-backed links identify the relevant inputs, definitions, implementations, occurrences, or decisions behind a recorded fact. A link or stated rationale is not by itself proof of causation. |
+| **Historical interpretability** | Sufficient original meaning and context remain resolvable to understand a historical fact without silently substituting today's definition. This need not include an executable implementation. |
+| **Reproducibility** | The necessary basis and capabilities can be recovered and used to repeat a computation against a stated result boundary. Required inputs, definitions, implementation/environment constraints, and dependencies must be available; a deterministic computation whose basis was lost is not thereby reproducible. |
+| **Compatibility** | A scoped, potentially directional relationship: a particular consumer can read, execute, exchange, or convert particular input under stated conditions. It is not semantic equivalence and need not be symmetric or transitive. |
+| **Stability / support commitment** | An authorized promise to specified consumers or uses about preservation, interpretation, compatibility, execution, migration, or support over a stated scope and horizon. The promise and evidence that it is fulfilled are different facts. |
+
+A stored result can survive a restart while its interpretation has been lost. An old definition can
+remain interpretable after its execution support ends. A development experiment can be traceable and
+reproducible without an external stability promise. Conversely, a promise may exist without adequate
+fulfilment evidence. These distinctions do not waive current admission or retention policies.
+
+Use **durable commitment** only for a stated stability/support promise, not as a synonym for all
+these properties. Promotion concerns that commitment; it does not make a computation deterministic,
+create semantic equivalence, or cause previously recorded facts to acquire identity.
+
+#### Equivalence, canonicalization, and fingerprints
+
+The owning domain first states what objects are being compared and which distinctions matter for
+the declared purpose. For a domain `X`, a semantic equivalence relation `~` partitions `X` into
+equivalence classes. It must be reflexive, symmetric, and transitive. A tolerance, similarity score,
+one-way compatibility test, or equality of one experiment's outcomes is not automatically that
+relation. Different concerns can legitimately use different equivalence relations.
+
+**Canonicalization** selects a deterministic representation of the distinctions the owning contract
+retains. When `C` claims to represent the classes of a declared relation, its correctness condition
+is `x ~ y` if and only if `C(x) = C(y)`: it neither distinguishes equivalent members nor collapses a
+required distinction. This is a criterion for that claim, not a claim that every behavioral
+equivalence has a computable complete canonicalizer. A concrete contract must state its scope and
+justify any narrower representation rather than infer universal equivalence from a byte comparison.
+
+A **hash function** maps representations to digests. A **fingerprint** is the resulting compact,
+content-derived value together with whatever interpretation context its contract requires. For a
+canonical-content fingerprint, the construction is `F(x) = H(C(x))`. The equivalence decision comes
+before `C`, and `C` comes before `H`; hashing does not decide which differences are consequential.
+Equal canonical bytes yield equal digests. Treating equal digests as equal canonical bytes relies on
+the chosen hash's collision-resistance assumption, not mathematical injectivity. A collision is not
+semantic equivalence, and hashing cannot recover information the canonicalizer discarded.
+
+Always ask **a fingerprint of what, under which rules?** A model-content fingerprint does not thereby
+identify its complete validation definition, the Engine interpretation, the executable build, or a
+historical occurrence. A build digest can distinguish semantics-preserving refactors without proving
+behavioral difference. A definition or schema reference helps only when its referent and resolution
+are known. Reference spelling, equality, availability, and support are separate properties.
+
+The [Factory model](factory-model.md) continues to own the concrete content distinctions and
+canonical bytes used by `ModelFingerprint`; this vocabulary changes none of its field membership,
+ordering, normalization, or golden vectors. The [Engine specification](engine-semantics.md) owns its
+result-affecting rules. Equal results for one workload do not establish equal Factory designs or
+behavioral equivalence for every admitted Engine input. Neither definition is a version of physical
+reality, and an external observation does not become a simulation result by being compared with one.
+
+#### Separate semantic responsibilities
+
+| Responsibility | Question and owning surface |
+|---|---|
+| Semantic definition | What do authored facts or interpretation rules mean, and which distinctions matter? Factory and Engine specifications own their respective answers. |
+| Canonical representation / codec | Which representation encodes those distinctions, and which grammar does a decoder accept? The owning representation contract defines framing, normalization, and validation. |
+| Runtime executability | Does this implementation execute the behavior required by the represented content and requested interpretation? Engine owns this test; model validity alone is insufficient. |
+| Exact reference / provenance | Which content, definition, implementation, inputs, or occurrence does the claim concern, and can that basis be resolved? The relevant domain or accepting authority owns the binding. |
+| Compatibility / migration / support | Which consumers, conversions, preserved distinctions, losses, and obligations are supported? These are declared relationships, not consequences of a matching name. |
+| Human naming / attestation | How does a party refer to or make a claim about identified things? The label's binding and any declaration supply its meaning; its spelling supplies no semantics. |
+
+These responsibilities may share an artifact where a concrete requirement justifies that choice;
+they must not be collapsed merely because a string is reused. A format discriminator does not define
+an architectural generation, a specification title does not prove runtime support, and a support
+label does not determine equivalence. Planning must name the represented-content or behavioral
+prerequisite, rather than manufacture a dependency from a version label alone.
+
+**Strict decoding** means enforcing the declared decoding contract: grammar/framing, canonicality
+where required, and the applicable validity predicates. It does not establish historical provenance
+that the input does not contain, or prohibit a separate importer or migration operation. Such an
+operation must identify its source/target meanings and any preserved distinctions, assumptions, or
+losses instead of silently pretending source data was authored under the target definition. No
+legacy decoder or migration is introduced by this distinction; the current development reset policy
+below and the [Factory artifact contract](factory-model.md#5-canonicality-and-decoding) still apply.
+
+#### Human-readable labels and attestations
+
+A human-friendly label is optional and orthogonal to content equality, determinism, encoding,
+execution, and support. It may alias an exact reference or name a later declaration grouping several
+references, such as a Factory definition, Engine definition, and build. A declaration or attestation
+records what a party claims about that basis; a convenient name alone proves neither the claim nor
+its fulfilment. No shared label, release-bundle, or attestation entity is introduced here.
+
+Where a label selects a configuration or a declaration participates in an admission policy, resolve
+and record the relevant basis as required by that use. The selected facts and explicit policy, not
+the label's intrinsic spelling, supply its effect. Stable declaration bindings must not be silently
+rebound; mutable aliases must not be passed off as exact historical references.
+
+The current `factory-model:wip` prefix/policy and `engine-semantics:wip` marker are technical values
+used by the implemented codec, support checks, and runtime reporting, not merely display aliases.
+This separation does not remove or rename them: changing a hashed prefix would change fingerprints.
+Their existence does not establish that a permanent independently identified semantic object, public
+version ladder, or human-readable label is required. The unresolved concrete choices are recorded
+in the [research register](../research/research-register.md), with [question-specific
+framing](../research/investigations/semantic-equivalence-and-reference-boundaries.md).
+
 ### Semantic evolution and support
 
-Arcogine names the semantic definitions its facts are computed under: a fingerprint under a
-canonicalization definition, a run under one Engine interpretation. Historical explanation,
-comparison, conformance and audit need such names to keep their meaning once something durable
-relies on them, while definitions still under development need to stay correctable without a
-successor-per-correction ladder or a compatibility estate nobody asked for. Arcogine separates the
-two by making durability an explicit act rather than a side effect of implementation:
+The [definitions above](#determinism-equivalence-identity-and-durability) separate semantic meaning,
+exact reference, representation, execution, persistence, and support. The rules here apply that
+vocabulary to the current Factory and Engine development policy. Their specifications remain
+normative and correctable without a successor-per-correction ladder; technical markers do not
+create an independent architectural generation. Promotion establishes a scoped stability/support
+commitment, not determinism, content equality, or the first possible record of an exact basis:
 
 1. **Factory and Engine semantics are work in progress until promoted.** The [Factory
    model](factory-model.md) (`factory-model:wip`) and the [Engine interpretation](engine-semantics.md)
@@ -47,22 +177,24 @@ two by making durability an explicit act rather than a side effect of implementa
    canonical bytes, fingerprints and supported simulation outcomes are deterministic. A running
    session executes one fixed interpretation over one immutable published model snapshot; neither
    changes under it.
-3. **A WIP marker is not cross-revision provenance.** Equal WIP names or fingerprints produced by
-   different development revisions establish no compatibility and no historical interpretation.
-   Material produced under an earlier revision is not interpreted by the current one: development
-   stores are reset rather than migrated, and stale or foreign input fails explicitly instead of
-   being read as current meaning.
+3. **A WIP marker alone is not cross-revision provenance.** Equal WIP names or fingerprints
+   produced by different development revisions do not by themselves establish compatible meaning.
+   Current proving stores bind their contents to the definition build that wrote them, refuse a
+   mismatching binding, and are reset rather than migrated. A raw decoder enforces its current
+   grammar and predicates; a shared WIP prefix cannot reveal every historical definition change.
+   No reader may claim historical meaning that its available basis does not establish.
 4. **Nothing promotes by accident.** Tests, golden vectors, in-process publication, implementation
    landing, persistence in a proving store, an internal file write, and a normative description of
    current behavior neither promote a contract nor create a durable-use promise. No unpromoted
    artifact or result may be represented as a committed durable record: while every contract is WIP,
    retained, commitment-bearing admission is unavailable and proving authorities declare disposable
    custody.
-5. **Promotion is an explicit owner decision tied to a concrete durable-use need.** It identifies the
-   exact frozen definition, gives it a meaningful durable name distinct from the WIP marker, and
-   states the supported uses and consumers, the retained basis and the actual support obligations.
-   It is recorded in the owning contract, not in a repository-wide maturity state, registry or
-   version ladder. Factory and Engine promote independently.
+5. **Promotion is an explicit owner decision tied to a concrete stability/support need.** It
+   identifies the exact definition through an unambiguous stable reference distinct from the
+   mutable WIP marker, and states the supported uses and consumers, retained basis, and obligations.
+   Any human-readable label is optional and gets its meaning from that binding or declaration.
+   The commitment is recorded in the owning contract, not a repository-wide maturity state,
+   registry, or version ladder. Factory and Engine commitments need not be made together.
 6. **A promoted identity never rebinds.** It denotes exactly one definition, including rules no
    fixture has exercised and rejection behavior no consumer has observed. A materially changed
    definition — field membership, canonical bytes, validation, result-affecting interpretation —
@@ -403,11 +535,12 @@ Java features available within the **Java 21 compatibility baseline** map cleanl
 
 Deterministic simulation is architectural, not an implementation convenience: acceptance tests,
 comparison of design candidates, historical explanation of a run, and challenge evaluation are all
-meaningless if two executions of the same explicit inputs can legitimately disagree. At the same
+meaningless if executions under the same definition and complete inputs can legitimately disagree. At the same
 time Arcogine must be able to change how it interprets a design — dispatch ranking, work
 decomposition, scheduling, transfer timing — without pretending the designer authored a different
 production system, and without claiming that historical results were produced under rules they were
-not. Five rules hold that line:
+not. The [canonical definition of determinism](#determinism) supplies the computation and comparison
+scope; the following rules specialize it for simulation. Five rules hold that line:
 
 1. **A simulation outcome is a function of explicit inputs and one Engine interpretation.** The
    reproducibility inputs are the authored model content, the Engine interpretation, the explicit
@@ -436,14 +569,15 @@ not. Five rules hold that line:
    so that it conforms to the specification is not such a change. Implementations declare which
    interpretation they execute and refuse any other rather than silently substituting current
    behavior.
-5. **Durable attribution begins at promotion.** A result produced under a work-in-progress
-   interpretation is reproducible from the same build and inputs, but its WIP marker does not make it
-   attributable to a later definition. Once an interpretation is promoted, its guarantee is
-   attribution plus a verifiable definition, not permanent re-execution: the promoted name,
-   specification and conformance fixtures stay resolvable for the uses its contract accepts after
-   execution support ends. Comparison across interpretations or development revisions is explicit and
-   owned by the consumer making the claim; a name never authorizes guessing that results are
-   comparable.
+5. **Historical basis and support commitments are separate.** Development results may have
+   traceability and reproducibility when their exact basis and capabilities are retained; the WIP
+   marker alone does not provide that basis or attribute them to a later definition. Current
+   commitment-bearing admission remains unavailable until promotion. A promoted commitment states
+   which exact references, definitions, fixtures, and content remain resolvable for its accepted
+   uses; historical interpretability does not automatically promise permanent re-execution.
+   Comparison across interpretations or development revisions is explicit and owned by the
+   consumer making the claim. Neither a shared name nor a matching result from one run proves
+   behavioral equivalence.
 
 Nondeterministic boundaries a consumer needs to replay — clocks, external inputs, human or agent
 decisions — are converted into recorded explicit inputs rather than admitted into the
@@ -482,6 +616,12 @@ source-model `ModelFingerprint` on `RuntimeObservation`; `EngineSemantics` names
 result-affecting interpretation. These answer separate provenance questions.
 
 `:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by the [controlled revision contract](controlled-revisions.md). `ControlledRevisionAuthority` defines the acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` is a disposable development **proving store**: it declares that scope and the exact definition binding at its root, refuses to reopen under a changed definition even though the WIP marker is unchanged, never adopts or modifies a location it did not create, persists append-only revision records and semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-accepted parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Resolution returns the accepted revision together with its exact semantic artifact; missing/corrupt metadata or artifacts, fingerprint mismatches and artifacts of unsupported definitions fail explicitly rather than falling back to current model state. Because every semantic contract is work in progress, no retained, commitment-bearing revision authority exists.
+
+Here, *disposable* describes the declared retention/support scope, not volatile storage: the
+proving store persists data to exercise revision acceptance, lineage, integrity, and reopen
+behavior. Its definition-build binding is a conservative compatibility check, not a proof of
+semantic equivalence; the current reset policy does not establish that all future migrations must
+be forbidden.
 
 The proving store reuses the current `factory-model:wip` canonical bytes as its semantic artifact. `FactoryModelArtifact` strictly decodes and canonical-reencodes those bytes to reconstruct the exact `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The filesystem record layout and locking mechanics are replaceable adapter details, not a selected production persistence architecture. The Governance semantic change/impact capability provides the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance`, and the factory-domain `FactoryModelSemanticComparator` implements `SemanticChangeExtractor` for current Factory artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under the [Factory model](factory-model.md)) as a real change, and reporting any spatial-record addition, removal or change coarsely against the model's spatial-record entity. The requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the `ImpactScope` seam. The conformance evaluation/findings capability adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing authorization or deployment concepts; evidence references, evidence use, and evidence-backed conformance follow the [Governance evidence contract](governance-evidence.md). Approval/authorization, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain later Governance concerns, separate from revision identity.
 

@@ -110,39 +110,55 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     static FileControlledRevisionAuthority openProvingStore(
             Path root, SemanticArtifactVerifier verifier, Clock clock) {
         FileControlledRevisionAuthority authority = new FileControlledRevisionAuthority(root, verifier, clock);
+        // Ownership is established read-only before anything -- the lock file included -- is
+        // created in the location. The check is repeated under the store lock before any write, so
+        // concurrent openers of the same new location still initialize it exactly once.
         try {
+            authority.requireOwnedOrInitializable();
             Files.createDirectories(authority.authorityRoot);
         } catch (IOException e) {
-            throw storageFailure("cannot initialize controlled revision proving store", e);
+            throw storageFailure("cannot open controlled revision proving store", e);
         }
         authority.withExclusiveLock(() -> {
-            authority.initializeOrVerifyScope();
+            if (!authority.requireOwnedOrInitializable()) {
+                authority.writeAtomic(authority.authorityRoot.resolve(STORE_MARKER_FILE), authority.storeMarker);
+            }
+            Files.createDirectories(authority.revisionsDirectory);
+            Files.createDirectories(authority.artifactsDirectory);
             return null;
         });
         return authority;
     }
 
-    private void initializeOrVerifyScope() throws IOException {
+    /**
+     * Without modifying anything, returns {@code true} when the root is a proving store written
+     * under this verifier's definition and {@code false} when it is absent or empty and may be
+     * initialized; every other location is refused.
+     */
+    private boolean requireOwnedOrInitializable() throws IOException {
+        if (!Files.exists(authorityRoot)) {
+            return false;
+        }
+        if (!Files.isDirectory(authorityRoot)) {
+            throw unsupportedStore();
+        }
         Path marker = authorityRoot.resolve(STORE_MARKER_FILE);
-        byte[] expected = storeMarker;
         if (Files.exists(marker)) {
             byte[] actual = Files.readAllBytes(marker);
-            if (!Arrays.equals(expected, actual)) {
+            if (!Arrays.equals(storeMarker, actual)) {
                 throw isProvingStoreMarker(actual) ? definitionMismatch() : unsupportedStore();
             }
-        } else {
-            try (var entries = Files.list(authorityRoot)) {
-                boolean foreignContent = entries
-                        .map(path -> path.getFileName().toString())
-                        .anyMatch(name -> !name.equals(LOCK_FILE) && !name.startsWith(PENDING_PREFIX));
-                if (foreignContent) {
-                    throw unsupportedStore();
-                }
-            }
-            writeAtomic(marker, expected);
+            return true;
         }
-        Files.createDirectories(revisionsDirectory);
-        Files.createDirectories(artifactsDirectory);
+        try (var entries = Files.list(authorityRoot)) {
+            boolean foreignContent = entries
+                    .map(path -> path.getFileName().toString())
+                    .anyMatch(name -> !name.equals(LOCK_FILE) && !name.startsWith(PENDING_PREFIX));
+            if (foreignContent) {
+                throw unsupportedStore();
+            }
+        }
+        return false;
     }
 
     private static byte[] storeMarker(String binding) {

@@ -375,38 +375,39 @@ class FileControlledRevisionAuthorityTest {
 
     @Test
     void provingStoreNeverAdoptsOrModifiesALocationItDidNotCreate() throws IOException {
-        // A store written by an earlier layout, or any other directory content, is refused as a
-        // whole rather than reopened and partially reinterpreted as current proving evidence.
+        // A store written by an earlier layout, a foreign proving-store marker, other directory
+        // content, or a regular file is refused as a whole -- not reopened, partially reinterpreted,
+        // or touched in any way, including by creating the store's lock file.
         Path earlierLayout = tempDirectory.resolve("earlier-layout");
-        Path staleRecord = earlierLayout.resolve("revisions").resolve("stale.revision");
-        Files.createDirectories(staleRecord.getParent());
-        byte[] staleBytes = "arcogine-revision-store-v1\0stale".getBytes(StandardCharsets.US_ASCII);
-        Files.write(staleRecord, staleBytes);
-
-        GovernanceHistoryException refused = assertThrows(
-                GovernanceHistoryException.class,
-                () -> FileControlledRevisionAuthority.openProvingStore(earlierLayout, FACTORY_VERIFIER));
-        assertEquals(UNSUPPORTED_STORE, refused.code());
-        assertArrayEquals(staleBytes, Files.readAllBytes(staleRecord));
-        assertFalse(Files.exists(earlierLayout.resolve("proving-store")));
-        assertFalse(Files.exists(earlierLayout.resolve("artifacts")));
-
+        Files.createDirectories(earlierLayout.resolve("revisions"));
+        Files.write(
+                earlierLayout.resolve("revisions").resolve("stale.revision"),
+                "arcogine-revision-store-v1\0stale".getBytes(StandardCharsets.US_ASCII));
         Path foreignMarker = tempDirectory.resolve("foreign-marker");
         Files.createDirectories(foreignMarker);
         Files.write(foreignMarker.resolve("proving-store"), new byte[] {1, 2, 3});
-        assertEquals(
-                UNSUPPORTED_STORE,
-                assertThrows(
-                                GovernanceHistoryException.class,
-                                () -> FileControlledRevisionAuthority.openProvingStore(foreignMarker, FACTORY_VERIFIER))
-                        .code());
+        Path foreignContent = tempDirectory.resolve("foreign-content");
+        Files.createDirectories(foreignContent);
+        Files.write(foreignContent.resolve("notes.txt"), "unrelated".getBytes(StandardCharsets.UTF_8));
+        Path regularFile = tempDirectory.resolve("regular-file");
+        Files.write(regularFile, "not a directory".getBytes(StandardCharsets.UTF_8));
+
+        for (Path location : List.of(earlierLayout, foreignMarker, foreignContent, regularFile)) {
+            Map<String, String> before = contents(tempDirectory);
+
+            GovernanceHistoryException refused = assertThrows(
+                    GovernanceHistoryException.class,
+                    () -> FileControlledRevisionAuthority.openProvingStore(location, FACTORY_VERIFIER));
+            assertEquals(UNSUPPORTED_STORE, refused.code(), location.toString());
+            assertEquals(before, contents(tempDirectory), location.toString());
+            assertFalse(Files.exists(location.resolve("authority.lock")), location.toString());
+        }
 
         Path fresh = tempDirectory.resolve("fresh");
         FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER);
         assertTrue(Files.exists(fresh.resolve("proving-store")));
         assertTrue(FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER).revisions().isEmpty());
     }
-
     @Test
     void storeWrittenUnderOneWipDefinitionIsNeverReadUnderAnotherSharingItsMarker() throws IOException {
         // Two development revisions of the Factory definition both publish factory-model:wip, so
@@ -553,9 +554,10 @@ class FileControlledRevisionAuthorityTest {
     private static Map<String, String> contents(Path root) throws IOException {
         Map<String, String> contents = new TreeMap<>();
         try (var paths = Files.walk(root)) {
-            for (Path path : paths.filter(Files::isRegularFile).toList()) {
+            for (Path path : paths.filter(path -> !path.equals(root)).toList()) {
                 contents.put(
-                        root.relativize(path).toString(), HexFormat.of().formatHex(Files.readAllBytes(path)));
+                        root.relativize(path).toString(),
+                        Files.isDirectory(path) ? "<directory>" : HexFormat.of().formatHex(Files.readAllBytes(path)));
             }
         }
         return contents;

@@ -35,7 +35,6 @@ import com.arcogine.governance.requirement.RequirementScope;
 import com.arcogine.governance.requirement.RequirementVersion;
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.MachineId;
-import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -55,17 +54,7 @@ import org.junit.jupiter.api.io.TempDir;
 class PreChangeConformanceProvingCaseTest {
 
     private static final RevisionRecorder RECORDER = new RevisionRecorder("test", "operator");
-    private static final SemanticArtifactVerifier FACTORY_VERIFIER = new SemanticArtifactVerifier() {
-        @Override
-        public boolean supports(ModelFingerprint fingerprint) {
-            return FactoryModelArtifact.supports(fingerprint);
-        }
-
-        @Override
-        public ModelFingerprint fingerprint(byte[] canonicalBytes) {
-            return FactoryModelArtifact.fingerprint(canonicalBytes);
-        }
-    };
+    private static final SemanticArtifactVerifier FACTORY_VERIFIER = FactoryModelArtifact.verifier();
     private static final FactoryModelSemanticComparator COMPARATOR = new FactoryModelSemanticComparator();
 
     @TempDir

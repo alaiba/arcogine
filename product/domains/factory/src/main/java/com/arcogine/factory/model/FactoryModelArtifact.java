@@ -1,5 +1,6 @@
 package com.arcogine.factory.model;
 
+import com.arcogine.governance.SemanticArtifactVerifier;
 import com.arcogine.types.ModelFingerprint;
 import java.util.Objects;
 
@@ -20,6 +21,8 @@ import java.util.Objects;
  */
 public final class FactoryModelArtifact {
 
+    private static final SemanticArtifactVerifier VERIFIER = new Verifier();
+
     private FactoryModelArtifact() {}
 
     public static byte[] encode(FactoryModelVersion version) {
@@ -37,5 +40,33 @@ public final class FactoryModelArtifact {
 
     public static boolean supports(ModelFingerprint fingerprint) {
         return FactoryModelCanonicalForm.identifies(Objects.requireNonNull(fingerprint, "fingerprint"));
+    }
+
+    /**
+     * The Governance verifier for current Factory artifacts. Its definition binding names the exact
+     * build of the current definition, so a proving store written under an earlier development
+     * revision -- which shares the same public {@code factory-model:wip} marker -- is refused
+     * rather than read under this one.
+     */
+    public static SemanticArtifactVerifier verifier() {
+        return VERIFIER;
+    }
+
+    private static final class Verifier implements SemanticArtifactVerifier {
+
+        @Override
+        public boolean supports(ModelFingerprint fingerprint) {
+            return FactoryModelArtifact.supports(fingerprint);
+        }
+
+        @Override
+        public ModelFingerprint fingerprint(byte[] canonicalBytes) {
+            return FactoryModelArtifact.fingerprint(canonicalBytes);
+        }
+
+        @Override
+        public String definitionBinding() {
+            return FactoryModelCanonicalForm.definitionBinding();
+        }
     }
 }

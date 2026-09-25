@@ -316,8 +316,10 @@ never by digesting untrusted bytes directly.
 Only the current definition is understood. A fingerprint under any other namespace or policy —
 including the discarded ordinal `factory-model` policies — is unsupported, and bytes laid out under
 another definition fail at the prefix. Because the marker does not change between development
-revisions, bytes written under an earlier development revision are verified only against the current
-definition; such material is disposable proving evidence and is reset rather than migrated
+revisions, persisted development material is bound instead to the exact build of the definition that
+wrote it: the Factory artifact verifier's definition binding is a digest of the compiled classes that
+define the records, validation and canonical form, and a proving store refuses to reopen under a
+different binding. Such material is disposable proving evidence and is reset rather than migrated
 ([controlled revisions](controlled-revisions.md#the-revision-record-does-not-choose-model-artifact-persistence)).
 
 ## 6. Required test coverage

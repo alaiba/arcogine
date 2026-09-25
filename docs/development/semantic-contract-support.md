@@ -100,7 +100,7 @@ question.
 | --- | --- |
 | WIP definition correction | The specification, vectors or fixtures and dependents change together under the same marker. Earlier development artifacts are refused or reset, never migrated or reinterpreted. |
 | Durability claim | Identify the referent — capability, accepted use, promise, fulfilment evidence or cost preference. Only an explicit promotion creates durable obligations. |
-| Proving persistence | A proving store may survive reopen, but it declares disposable custody; persisting WIP content there creates no attribution or compatibility promise, and it never adopts a location it did not create. |
+| Proving persistence | A proving store may survive reopen, but it declares disposable custody and is bound to the exact definition that wrote it, so it refuses to reopen under another even when the public WIP marker is unchanged. Persisting WIP content there creates no attribution or compatibility promise, and it never adopts a location it did not create. |
 | Accidental retention | WIP material found retained or relied on outside a declared custody is a defect: stop further admission, preserve what was accepted and the definition it used as far as evidence allows, and decide explicitly. It is neither silently rewritten nor treated as a promotion. |
 | Promoted definition correction | An identity-affecting correction needs a distinguishable identity; the promoted name always denotes its definition. |
 | Historical artifact after evolution | For a promoted definition, retain the exact revision → fingerprint → definition/artifact basis the accepted use requires and never resolve it against current state. Equal content can recur in a distinct revision. |

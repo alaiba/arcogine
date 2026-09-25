@@ -87,7 +87,10 @@ These were choices not adopted, not designs shown impossible.
 - Golden vectors are regenerated deliberately with the definition; compatibility with the discarded
   bytes is not maintained.
 - Governance proves its revision and structural-evidence mechanics in a proving store only; no
-  retained historical commitment exists until promotion.
+  retained historical commitment exists until promotion. Because the public marker is stable across
+  revisions, a proving store is bound to the exact build of the definition that wrote it and is
+  refused, then reset, after any definition-code change — conservatively including
+  behavior-preserving refactors.
 - The spatial record is represented, validated and fingerprinted, but the Engine refuses it before
   runtime mutation until spatial execution lands, rather than silently ignoring it. The Engine
   applicability research that had blocked that work became moot.
@@ -123,8 +126,8 @@ survive them.
   explain records later, an outward consumer that persists fingerprints or Engine names, a release
   promising reproducibility, or externally relied-on conformance claims — which is the trigger for an
   explicit promotion rather than for revisiting this reset;
-- development churn under one marker causes real harm, such as a proving artifact decoding silently
-  under a changed grammar, suggesting admission-time definition binding or recorded build context;
+- development churn under one marker causes harm the build-bound proving store does not catch, such
+  as a change of meaning that leaves every definition class untouched;
 - promoting Factory and Engine independently proves unworkable for a real consumer.
 
 ## Provenance

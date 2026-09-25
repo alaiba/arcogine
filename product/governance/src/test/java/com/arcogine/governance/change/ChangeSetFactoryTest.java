@@ -38,17 +38,7 @@ import org.junit.jupiter.api.io.TempDir;
 class ChangeSetFactoryTest {
 
     private static final RevisionRecorder RECORDER = new RevisionRecorder("test", "operator");
-    private static final SemanticArtifactVerifier FACTORY_VERIFIER = new SemanticArtifactVerifier() {
-        @Override
-        public boolean supports(ModelFingerprint fingerprint) {
-            return FactoryModelArtifact.supports(fingerprint);
-        }
-
-        @Override
-        public ModelFingerprint fingerprint(byte[] canonicalBytes) {
-            return FactoryModelArtifact.fingerprint(canonicalBytes);
-        }
-    };
+    private static final SemanticArtifactVerifier FACTORY_VERIFIER = FactoryModelArtifact.verifier();
     private static final FactoryModelSemanticComparator COMPARATOR = new FactoryModelSemanticComparator();
 
     @TempDir
@@ -173,6 +163,11 @@ class ChangeSetFactoryTest {
             public ModelFingerprint fingerprint(byte[] canonicalBytes) {
                 throw new AssertionError("must not be reached when the policy is unsupported");
             }
+
+            @Override
+            public String definitionBinding() {
+                return "unsupporting-test-definition";
+            }
         };
 
         IllegalArgumentException exception =
@@ -207,6 +202,11 @@ class ChangeSetFactoryTest {
             @Override
             public ModelFingerprint fingerprint(byte[] canonicalBytes) {
                 throw new IllegalStateException("cannot decode candidate bytes");
+            }
+
+            @Override
+            public String definitionBinding() {
+                return "failing-test-definition";
             }
         };
 

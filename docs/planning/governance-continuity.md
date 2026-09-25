@@ -42,7 +42,7 @@ Constructing a value in memory does not create authoritative history. Authority 
 
 ## Current adapter boundary
 
-`FileControlledRevisionAuthority` is the current adapter: a disposable development proving store demonstrating restart/reopen, atomic append-only acceptance, integrity behavior, and exact artifact resolution. It declares its proving scope at its root, never adopts or modifies a location it did not create, and may need to be reset after a Factory definition change. Retained, commitment-bearing revision custody is unavailable while the Factory definition is work in progress; it is introduced only with an explicit promotion.
+`FileControlledRevisionAuthority` is the current adapter: a disposable development proving store demonstrating restart/reopen, atomic append-only acceptance, integrity behavior, and exact artifact resolution. It declares its proving scope and the exact definition binding at its root, never adopts or modifies a location it did not create, and refuses to reopen once the Factory definition it was written under changes, so it must then be reset. Retained, commitment-bearing revision custody is unavailable while the Factory definition is work in progress; it is introduced only with an explicit promotion.
 
 Its directory layout, binary record format, lock mechanics, and physical artifact key are replaceable implementation details. They are not a selected production database/storage architecture.
 

@@ -34,8 +34,11 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,17 +51,7 @@ class FileControlledRevisionAuthorityTest {
     private static final RevisionRecorder RECORDER =
             new RevisionRecorder("governance-test", "operator-17");
     private static final Instant ACCEPTED_AT = Instant.parse("2026-09-02T08:30:45.123456789Z");
-    private static final SemanticArtifactVerifier FACTORY_VERIFIER = new SemanticArtifactVerifier() {
-        @Override
-        public boolean supports(ModelFingerprint fingerprint) {
-            return FactoryModelArtifact.supports(fingerprint);
-        }
-
-        @Override
-        public ModelFingerprint fingerprint(byte[] canonicalBytes) {
-            return FactoryModelArtifact.fingerprint(canonicalBytes);
-        }
-    };
+    private static final SemanticArtifactVerifier FACTORY_VERIFIER = FactoryModelArtifact.verifier();
 
     @TempDir
     Path tempDirectory;
@@ -415,6 +408,47 @@ class FileControlledRevisionAuthorityTest {
     }
 
     @Test
+    void storeWrittenUnderOneWipDefinitionIsNeverReadUnderAnotherSharingItsMarker() throws IOException {
+        // Two development revisions of the Factory definition both publish factory-model:wip, so
+        // only the definition binding tells them apart. The store must fail closed before any of
+        // the earlier revision's records or artifacts are read, resolved or changed.
+        SemanticArtifactVerifier earlierDefinition = boundTo("earlier-definition-build");
+        SemanticArtifactVerifier laterDefinition = boundTo("later-definition-build");
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision accepted = FileControlledRevisionAuthority
+                .openProvingStore(tempDirectory, earlierDefinition, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC))
+                .accept(
+                        revision(id(16), version.fingerprint(), List.of(), Instant.parse("2026-09-01T18:00:00Z")),
+                        artifact(version));
+        assertTrue(laterDefinition.supports(accepted.modelFingerprint()));
+        Map<String, String> before = contents(tempDirectory);
+
+        GovernanceHistoryException refused = assertThrows(
+                GovernanceHistoryException.class,
+                () -> FileControlledRevisionAuthority.openProvingStore(tempDirectory, laterDefinition));
+        assertEquals(UNSUPPORTED_STORE, refused.code());
+        assertEquals(before, contents(tempDirectory));
+
+        assertEquals(
+                accepted,
+                FileControlledRevisionAuthority.openProvingStore(tempDirectory, earlierDefinition)
+                        .resolve(accepted.id())
+                        .revision());
+    }
+
+    @Test
+    void storeRecordsTheFactoryDefinitionBindingAndRequiresOne() throws IOException {
+        Path fresh = tempDirectory.resolve("fresh-binding");
+        FileControlledRevisionAuthority.openProvingStore(fresh, FACTORY_VERIFIER);
+
+        String marker = new String(Files.readAllBytes(fresh.resolve("proving-store")), StandardCharsets.UTF_8);
+        assertTrue(marker.endsWith(FACTORY_VERIFIER.definitionBinding()), marker);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> FileControlledRevisionAuthority.openProvingStore(tempDirectory.resolve("unbound"), boundTo(" ")));
+    }
+
+    @Test
     void discardedPolicyArtifactsAreRefusedBeforeAnyStoreMutation() throws IOException {
         // Bytes laid out under a discarded ordinal policy are never admitted as, or reinterpreted
         // into, current proving content.
@@ -495,6 +529,36 @@ class FileControlledRevisionAuthorityTest {
                 new ProductDefinition(new ProductId(10), productName, operation.id());
         return FactoryModelPublisher.publish(
                 new FactoryModel(List.of(machine), List.of(operation), List.of(product)));
+    }
+
+    private static SemanticArtifactVerifier boundTo(String definitionBinding) {
+        return new SemanticArtifactVerifier() {
+            @Override
+            public boolean supports(ModelFingerprint fingerprint) {
+                return FACTORY_VERIFIER.supports(fingerprint);
+            }
+
+            @Override
+            public ModelFingerprint fingerprint(byte[] canonicalBytes) {
+                return FACTORY_VERIFIER.fingerprint(canonicalBytes);
+            }
+
+            @Override
+            public String definitionBinding() {
+                return definitionBinding;
+            }
+        };
+    }
+
+    private static Map<String, String> contents(Path root) throws IOException {
+        Map<String, String> contents = new TreeMap<>();
+        try (var paths = Files.walk(root)) {
+            for (Path path : paths.filter(Files::isRegularFile).toList()) {
+                contents.put(
+                        root.relativize(path).toString(), HexFormat.of().formatHex(Files.readAllBytes(path)));
+            }
+        }
+        return contents;
     }
 
     private static Path onlyRegularFile(Path directory) throws IOException {

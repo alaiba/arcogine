@@ -12,6 +12,7 @@ import com.arcogine.factory.model.spatial.ResourceLayout;
 import com.arcogine.factory.model.spatial.ResourcePlacement;
 import com.arcogine.factory.model.spatial.SpatialRecord;
 import com.arcogine.factory.model.validation.FactoryModelValidationException;
+import com.arcogine.governance.SemanticArtifactVerifier;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
@@ -59,6 +60,25 @@ class FactoryModelArtifactTest {
         System.arraycopy(discardedPrefix, 0, discardedArtifact, 0, discardedPrefix.length);
         System.arraycopy(current, PREFIX_LENGTH + 1, discardedArtifact, discardedPrefix.length, current.length - PREFIX_LENGTH - 1);
         assertThrows(IllegalArgumentException.class, () -> FactoryModelArtifact.decode(discardedArtifact));
+    }
+
+    @Test
+    void verifierChecksCurrentArtifactsAndNamesTheExactDefinitionBuild() {
+        FactoryModelVersion version = publishedModel(Optional.of(spatial(0)));
+        byte[] canonicalBytes = FactoryModelArtifact.encode(version);
+        SemanticArtifactVerifier verifier = FactoryModelArtifact.verifier();
+
+        assertTrue(verifier.supports(version.fingerprint()));
+        assertFalse(verifier.supports(new ModelFingerprint(
+                "factory-model", "v1", "sha256", version.fingerprint().digest())));
+        assertEquals(version.fingerprint(), verifier.fingerprint(canonicalBytes));
+
+        // The binding is derived from the definition's compiled classes: stable within one build,
+        // and deliberately not the public marker, which does not change between revisions.
+        String binding = verifier.definitionBinding();
+        assertTrue(binding.matches("factory-model-definition-build:sha256:[0-9a-f]{64}"), binding);
+        assertEquals(binding, FactoryModelArtifact.verifier().definitionBinding());
+        assertFalse(binding.contains(version.fingerprint().digest()));
     }
 
     @Test

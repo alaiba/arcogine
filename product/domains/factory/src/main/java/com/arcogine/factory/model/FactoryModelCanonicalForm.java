@@ -5,6 +5,7 @@ import com.arcogine.factory.model.spatial.ResourceFootprint;
 import com.arcogine.factory.model.spatial.ResourceLayout;
 import com.arcogine.factory.model.spatial.ResourcePlacement;
 import com.arcogine.factory.model.spatial.SpatialRecord;
+import com.arcogine.factory.model.validation.FactoryModelValidator;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
@@ -67,6 +68,69 @@ final class FactoryModelCanonicalForm {
         return NAMESPACE.equals(fingerprint.namespace())
                 && POLICY.equals(fingerprint.policy())
                 && ALGORITHM.equals(fingerprint.algorithm());
+    }
+
+    /**
+     * Names the exact build of the current definition: a digest of the compiled classes that define
+     * the model's records, validation and canonical form. It changes whenever that code changes --
+     * behavior-preserving refactors and a different compiler included -- so persisted proving
+     * material never outlives the definition build that wrote it. It is build context, not a
+     * semantic identity or version, and never participates in a fingerprint.
+     */
+    static String definitionBinding() {
+        return DefinitionBinding.VALUE;
+    }
+
+    private static final class DefinitionBinding {
+
+        private static final List<Class<?>> DEFINITION_CLASSES = List.of(
+                FactoryModel.class,
+                ConfiguredResource.class,
+                OperationDefinition.class,
+                OperationStepDefinition.class,
+                ProductDefinition.class,
+                SpatialRecord.class,
+                FactoryFloor.class,
+                ResourceLayout.class,
+                ResourcePlacement.class,
+                ResourceFootprint.class,
+                MachineId.class,
+                ProductId.class,
+                FactoryModelValidator.class,
+                FactoryModelVersion.class,
+                FactoryModelCanonicalForm.class,
+                FactoryModelArtifact.class);
+
+        private static final String VALUE = compute();
+
+        private static String compute() {
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                for (Class<?> type : DEFINITION_CLASSES) {
+                    byte[] name = type.getName().getBytes(StandardCharsets.UTF_8);
+                    byte[] bytecode = classBytes(type);
+                    digest.update(ByteBuffer.allocate(Long.BYTES).putLong(name.length).array());
+                    digest.update(name);
+                    digest.update(ByteBuffer.allocate(Long.BYTES).putLong(bytecode.length).array());
+                    digest.update(bytecode);
+                }
+                return "factory-model-definition-build:sha256:" + HexFormat.of().formatHex(digest.digest());
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException("SHA-256 not available", e);
+            }
+        }
+
+        private static byte[] classBytes(Class<?> type) {
+            String resource = type.getName().substring(type.getName().lastIndexOf('.') + 1) + ".class";
+            try (var input = type.getResourceAsStream(resource)) {
+                if (input == null) {
+                    throw new IllegalStateException("definition class bytes are unavailable: " + type.getName());
+                }
+                return input.readAllBytes();
+            } catch (IOException e) {
+                throw new IllegalStateException("definition class bytes are unreadable: " + type.getName(), e);
+            }
+        }
     }
 
     /**

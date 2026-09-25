@@ -49,17 +49,19 @@ import java.util.Optional;
  * ID-to-record binding, lineage integrity, reopen across processes, atomic installation and exact
  * artifact resolution -- against the current work-in-progress semantic definitions. It is not a
  * retained authority: what it accepts creates no durable attribution or compatibility commitment,
- * its contents are verified only against the definitions the current build implements, and it may
- * need to be reset after a definition changes. Retained, commitment-bearing admission is
- * unavailable while every semantic contract is work in progress; it arrives only with an explicit
- * promotion (docs/architecture/overview.md, "Semantic evolution and support").
+ * and it is bound to the exact definition that created it, so after that definition changes it is
+ * refused and must be reset rather than read under the new one. Retained, commitment-bearing
+ * admission is unavailable while every semantic contract is work in progress; it arrives only with
+ * an explicit promotion (docs/architecture/overview.md, "Semantic evolution and support").
  *
- * <p>The store declares its proving scope in a marker at its root. It initializes only an absent
- * or empty directory and reopens only a directory carrying that marker; any other location -- a
- * store written by an earlier layout included -- is refused without being modified, adopted or
- * deleted. Semantic artifacts are deduplicated by a physical key derived from the complete {@link
- * ModelFingerprint}; the fingerprint remains the semantic identity and the key never escapes this
- * adapter.
+ * <p>The store declares its proving scope in a marker at its root, together with the {@link
+ * SemanticArtifactVerifier#definitionBinding() definition binding} of the verifier that created it.
+ * It initializes only an absent or empty directory and reopens only a directory whose marker names
+ * the same binding; any other location -- a store written by an earlier layout, or under a
+ * different definition that shares the same public work-in-progress marker -- is refused before
+ * any revision or artifact is read, and without being modified, adopted or deleted. Semantic
+ * artifacts are deduplicated by a physical key derived from the complete {@link ModelFingerprint};
+ * the fingerprint remains the semantic identity and the key never escapes this adapter.
  */
 public final class FileControlledRevisionAuthority implements ControlledRevisionAuthority {
 
@@ -80,6 +82,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     private final Path lockFile;
     private final SemanticArtifactVerifier verifier;
     private final Clock clock;
+    private final byte[] storeMarker;
 
     private FileControlledRevisionAuthority(Path root, SemanticArtifactVerifier verifier, Clock clock) {
         authorityRoot = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
@@ -88,6 +91,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         revisionsDirectory = authorityRoot.resolve("revisions");
         artifactsDirectory = authorityRoot.resolve("artifacts");
         lockFile = authorityRoot.resolve(LOCK_FILE);
+        storeMarker = storeMarker(verifier.definitionBinding());
     }
 
     /**
@@ -95,7 +99,8 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
      * empty.
      *
      * @throws GovernanceHistoryException with {@code UNSUPPORTED_STORE} when {@code root} holds
-     *     content that is not a proving store; nothing there is modified
+     *     content that is not a proving store, or a proving store created under a different
+     *     definition binding than {@code verifier}'s; nothing there is modified
      */
     public static FileControlledRevisionAuthority openProvingStore(
             Path root, SemanticArtifactVerifier verifier) {
@@ -119,9 +124,11 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
 
     private void initializeOrVerifyScope() throws IOException {
         Path marker = authorityRoot.resolve(STORE_MARKER_FILE);
+        byte[] expected = storeMarker;
         if (Files.exists(marker)) {
-            if (!Arrays.equals(STORE_MARKER, Files.readAllBytes(marker))) {
-                throw unsupportedStore();
+            byte[] actual = Files.readAllBytes(marker);
+            if (!Arrays.equals(expected, actual)) {
+                throw isProvingStoreMarker(actual) ? definitionMismatch() : unsupportedStore();
             }
         } else {
             try (var entries = Files.list(authorityRoot)) {
@@ -132,10 +139,34 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
                     throw unsupportedStore();
                 }
             }
-            writeAtomic(marker, STORE_MARKER);
+            writeAtomic(marker, expected);
         }
         Files.createDirectories(revisionsDirectory);
         Files.createDirectories(artifactsDirectory);
+    }
+
+    private static byte[] storeMarker(String binding) {
+        if (binding == null || binding.isBlank()) {
+            throw new IllegalArgumentException("verifier must name the definition it verifies against");
+        }
+        byte[] bindingBytes = binding.getBytes(StandardCharsets.UTF_8);
+        byte[] marker = Arrays.copyOf(STORE_MARKER, STORE_MARKER.length + bindingBytes.length);
+        System.arraycopy(bindingBytes, 0, marker, STORE_MARKER.length, bindingBytes.length);
+        return marker;
+    }
+
+    private static boolean isProvingStoreMarker(byte[] marker) {
+        return marker.length >= STORE_MARKER.length
+                && Arrays.equals(STORE_MARKER, Arrays.copyOf(marker, STORE_MARKER.length));
+    }
+
+    private GovernanceHistoryException definitionMismatch() {
+        return new GovernanceHistoryException(
+                UNSUPPORTED_STORE,
+                "proving store was created under a different definition than "
+                        + verifier.definitionBinding()
+                        + "; it is never reinterpreted and must be reset: "
+                        + authorityRoot);
     }
 
     private GovernanceHistoryException unsupportedStore() {

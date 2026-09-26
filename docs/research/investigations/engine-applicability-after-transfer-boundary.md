@@ -20,10 +20,10 @@ investigated.
 The question existed because the Factory V1/V2 policies and `engine-semantics:v1` were treated as
 fixed identities whose definitions could not change in place. The 2026-09-25 owner-directed
 [provisional semantic-contract reset](../../history/decisions/2026-09-25-provisional-semantic-contract-reset.md)
-replaced that estate: one work-in-progress Factory model carries the optional spatial record, and the
-Engine interpretation is work in progress under a mutable development marker. There is no longer a
-fixed Engine definition whose admission domain must be preserved, no V1/V2 identity partition to
-allocate, and no publication-release decision gated on the answer. No investigation or review was
+replaced that estate: one current Factory model carries the optional spatial record, and the Engine
+interpretation is a mutable current development definition whose status is not encoded as an Engine
+identity. There is no longer a fixed Engine definition whose admission domain must be preserved, no
+V1/V2 identity partition to allocate, and no publication-release decision gated on the answer. No investigation or review was
 performed, and nothing here was accepted as research.
 
 ## What survives, and where
@@ -33,10 +33,10 @@ current contracts, tests or delivery:
 
 | Proving dimension | Current home |
 | --- | --- |
-| Model refusal before runtime mutation, ahead of same-resource or distinct-resource runtime cases | [Transfer applicability](../../architecture/transfer-applicability.md); `EngineSemanticsAcceptanceTest` |
+| Model refusal before runtime mutation, ahead of same-resource or distinct-resource runtime cases | [Transfer applicability](../../architecture/transfer-applicability.md); `FactoryRuntimeExecutabilityAcceptanceTest` |
 | Present authored zero versus absence, including events, state, ordering and bounded advancement | [Transfer applicability](../../architecture/transfer-applicability.md) proving case; spatial fixtures in [Engine semantics](../../architecture/engine-semantics.md#14-conformance-fixtures) |
-| Factory-invalid content, valid but Engine-unsupported content, and an unsupported Engine name as distinct failures | `FactoryModelValidationException`, `UnsupportedModelContentException`, `EngineSemantics.requireSupported` and their tests |
-| Truthful Factory fingerprint and Engine attribution on results, reset, observations and events | [Runtime contract](../../architecture/runtime-contract.md); provenance propagation in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) |
+| Factory-invalid content and valid but Engine-unsupported content as distinct failures | `FactoryModelValidationException`, `UnsupportedModelContentException`, and their tests |
+| Truthful Factory fingerprint and explicit treatment of any Engine-definition provenance a consumer actually requires | [Runtime contract](../../architecture/runtime-contract.md); provenance boundaries in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) |
 | Same-resource and distinct-resource continuation, binding, reservation, arrival and recovery | Transfer slices of [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) |
 | A future optional Factory concern irrelevant to one interpretation needs explicit support, not wildcard acceptance | [Factory semantic evolution](../../architecture/factory-design.md#111-semantic-evolution) ("Publication validity is not Engine executability") |
 

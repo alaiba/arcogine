@@ -24,7 +24,7 @@ import java.util.TreeSet;
 
 /**
  * The change-set/impact-scope and semantic-comparison seam: domain-owned semantic comparison for
- * current {@code factory-model:wip} artifacts.
+ * artifacts under the current Factory canonical form.
  *
  * <p>This is the only place that knows how to interpret {@link FactoryModel} internals for
  * change-attribution purposes. It never depends on Governance's {@code ChangeSet} orchestration

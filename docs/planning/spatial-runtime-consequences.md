@@ -15,7 +15,7 @@ The architecture is fixed by:
 - [Factory semantic evolution](../architecture/factory-design.md#111-semantic-evolution) and the
   [Factory model](../architecture/factory-model.md);
 - [Determinism Contract](../architecture/overview.md#determinism-contract);
-- [Engine semantics](../architecture/engine-semantics.md), whose §5–§13 specify how the work-in-progress
+- [Engine semantics](../architecture/engine-semantics.md), whose §5–§13 specify how the current
   interpretation reads a present spatial record;
 - the [current transfer-applicability boundary](../architecture/transfer-applicability.md);
 - the runtime observation/event contract for supported observation/event state reconstruction and
@@ -30,11 +30,11 @@ The current Engine executes only the first case and refuses present spatial cont
 mutation. Making the other cases executable is the remaining work of this plan; it changes which
 content the Engine admits, not what the cases mean.
 
-Both the Factory model and the Engine interpretation are work in progress under the
-[semantic evolution rules](../architecture/overview.md#semantic-evolution-and-support). Activating
-spatial execution therefore needs no successor Factory policy or Engine identity: it implements
-already-specified rules of the current interpretation, and any correction those rules need while
-implementing is made in the Engine specification and its fixtures in the same change.
+The Factory model and Engine interpretation are current development definitions under the
+[semantic evolution rules](../architecture/overview.md#semantic-evolution-and-support). Development
+status is not encoded as a Factory policy or Engine identity. Activating spatial execution therefore
+implements already-specified rules of the current interpretation; any correction those rules need
+while implementing is made in the Engine specification and its fixtures in the same change.
 
 The first-release local-admission and shared-backlog-ranking questions in
 [Engine Evolution Research](../research/investigations/engine-evolution.md) are concluded after
@@ -293,9 +293,10 @@ behavior.
 
 ### PLAN-ENG-5-A2 — Spatial content in the canonical form
 
-**Status:** Implemented. The work-in-progress `factory-model:wip` canonical form and its one
-aggregate fingerprint cover the production records and the spatial record, with or without the record
-present, as specified by the [Factory model](../architecture/factory-model.md).
+**Status:** Implemented. The current Factory canonical form and its one
+`factory-model:sha256:<digest>` aggregate fingerprint cover the production records and the spatial
+record, with or without the record present, as specified by the [Factory
+model](../architecture/factory-model.md).
 
 **Evidence**
 
@@ -310,31 +311,33 @@ A separate policy release, migration from earlier development definitions, Engin
 
 ### PLAN-ENG-5-B1 — Engine interpretation fixed per runtime
 
-**Status:** Implemented. `EngineSemantics` names the Engine interpretation, with the single supported
-work-in-progress value `engine-semantics:wip`. `FactoryRuntime` fixes and exposes it for its lifetime;
-fresh/reset runtimes receive new `RunId` values without changing it. Any other name, the discarded
-ordinal names included, fails explicitly through the narrow support check. A published model with a
-present spatial record is refused with `UnsupportedModelContentException` before any runtime state
-exists.
+**Status:** Implemented. A `FactoryRuntime` executes the repository's current Engine definition for
+its lifetime; callers cannot select or mutate an alternative interpretation. Fresh/reset runtimes
+receive new `RunId` values without introducing an Engine-definition identifier. A published model
+with a present spatial record is refused with `UnsupportedModelContentException` before any runtime
+state exists.
 
 **Evidence**
 
-`EngineSemanticsTest` and `EngineSemanticsAcceptanceTest`.
+`FactoryRuntimeExecutabilityAcceptanceTest` and the Engine conformance suites.
 
 **Non-goals**
 
-Observation/event field propagation, transfer behavior, caller-selectable or multiple interpretations.
+An Engine-definition identity/version API, transfer behavior, caller-selectable or multiple
+interpretations.
 
-### PLAN-ENG-5-B2 — Runtime provenance propagation
+### PLAN-ENG-5-B2 — Runtime revision-provenance symmetry
 
-**Prerequisite:** PLAN-ENG-5-B1.
+**Prerequisite:** none beyond the existing supported runtime metadata contract.
 
 **Responsibility**
 
-- add the mandatory `EngineSemantics` to `RuntimeObservationMetadata` and `RuntimeEventEnvelope`;
 - add the missing optional `ControlledRevisionId` to observation metadata when authoritatively
   revision-bound, preserving symmetry with event provenance;
-- keep `RunId`, `ModelFingerprint`, revision provenance and the Engine interpretation distinct.
+- keep `RunId`, `ModelFingerprint` and revision provenance distinct;
+- do not add a placeholder Engine-definition identifier. If a concrete supported consumer later
+  requires exact Engine-definition provenance, that is admitted through the exact-reference boundary,
+  not this spatial-plan slice.
 
 **Evidence**
 
@@ -344,8 +347,8 @@ observations and events; reset creates a new `RunId` without changing the interp
 
 **Non-goals**
 
-REST/SSE migration, transfer state/events, generic provenance framework, any claim that
-work-in-progress provenance is durable across development revisions.
+REST/SSE migration, transfer state/events, generic provenance framework, or any claim that current
+development provenance is automatically durable across definition revisions.
 
 **Convergence note:** outward consumer convergence is retired as a standing objective (see
 [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md#3-current-implementation-queue)); a future
@@ -537,8 +540,9 @@ The scenario demonstrates:
 4. a mid-transfer fresh observation reconstructs supported in-flight state and agrees with resource
    admission load without replay;
 5. transfer start/completion ordering is deterministic, including zero-duration behavior;
-6. the result carries both design provenance (`ModelFingerprint`) and interpretation provenance
-   (`EngineSemantics`);
+6. the result carries source-design provenance (`ModelFingerprint`) without synthesizing an
+   Engine-definition identifier; any future use that requires exact interpretation provenance must
+   carry that basis explicitly;
 7. a destination can become offline after binding, transfer completes at the fixed time, and the
    job waits on that bound destination without rerouting;
 8. a design without a spatial record receives no synthesized spatial semantics;
@@ -553,7 +557,8 @@ PLAN-ENG-5-A1 spatial record/validation (implemented) ---> PLAN-ENG-5-A2 canonic
        |
        +--> PLAN-ENG-5-C1 transfer arithmetic ---------------------------------+
                                                                                |
-PLAN-ENG-5-B1 interpretation per runtime (implemented) ---> PLAN-ENG-5-B2 provenance ---+--> PLAN-ENG-5-C3 activation
+PLAN-ENG-5-B1 current interpretation fixed per runtime (implemented)                    +--> PLAN-ENG-5-C3 activation
+PLAN-ENG-5-B2 revision-provenance symmetry ---------------------------------------------+
        |                                                                                |          |
        +--> PLAN-ENG-5-C2 admission reservation ---------------------------------------+          v
                                                                                         PLAN-ENG-5-C4 edges
@@ -591,21 +596,29 @@ not a redefinition of processing utilization or queue depth.
 
 ### Challenge — REQUIRED WHEN CONSUMER INTEGRATES
 
-When Challenge attempts consume real Engine-produced results, compatibility must include the Engine
-interpretation wherever changed Engine semantics can affect compared outcomes; while the interpretation
-is work in progress, results from different development revisions are not comparable by name alone.
-Synthetic Challenge-only attempts do not block PLAN-ENG-5.
+When Challenge attempts consume real Engine-produced results, compatibility must account for the
+producing Engine definition wherever changed semantics can affect compared outcomes. No current
+Engine identifier establishes that compatibility; cross-revision comparison requires an explicit
+basis owned by the consumer. Synthetic Challenge-only attempts do not block PLAN-ENG-5.
 
 ### Governance — REQUIRED WHEN CONSUMER INTEGRATES
 
-Future Arcogine analytical evidence produced from simulation must retain `ModelFingerprint`,
-`EngineSemantics`, and the explicit producing inputs/results required by the Governance evidence
-contract. Governance consumes this provenance; it does not own Engine semantics, and it treats
-work-in-progress provenance as development evidence rather than a durable cross-revision reference.
+Future Arcogine analytical evidence produced from simulation must retain `ModelFingerprint` and
+the explicit producing inputs/results required by the Governance evidence contract. Governance
+consumes this provenance; it does not own Engine semantics and must not synthesize an Engine
+definition identifier. A future use that requires the exact producing Engine definition must carry
+an explicitly owned/resolvable basis.
 
 ### Operational — REQUIRED WHEN CONSUMER INTEGRATES
 
-Future twin/reconciliation analytics retain Engine interpretation provenance independently of the durable operational identity and independently of subject correspondence. These answer different questions: which Engine interpretation produced a result; which accountable operational continuation a record belongs to; and which external and Arcogine subjects are authoritatively related. The Operational continuity contract is adopted and defines that identity's referent and rules, while deliberately deferring its final type name and representation; `EngineSemantics` and `RunId` remain Engine-owned and must never be derived from it, or it from them.
+Future twin/reconciliation analytics retain whatever exact Engine interpretation provenance their
+own producer contract actually requires, independently of the durable operational identity and
+subject correspondence. These answer different questions: which Engine basis produced a result;
+which accountable operational continuation a record belongs to; and which external and Arcogine
+subjects are authoritatively related. The Operational continuity contract is adopted and defines
+that identity's referent and rules, while deliberately deferring its final type name and
+representation; `RunId` remains Engine-owned and must never be derived from operational identity,
+or operational identity from it.
 
 ### A future outward transport migration — SEQUENCE IF AND WHEN ONE IS INTRODUCED
 

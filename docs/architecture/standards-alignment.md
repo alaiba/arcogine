@@ -49,9 +49,9 @@ Future human-authored scenario
 Stable HTTP/API representation
     -> JSON + OpenAPI
 
-Factory semantic identity
-    -> factory-model:<policy>:<algorithm>:<digest>
-       currently factory-model:wip:sha256:<digest> (work in progress)
+Factory canonical-content fingerprint
+    -> factory-model:<algorithm>:<digest>
+       currently factory-model:sha256:<digest>
 
 Historical controlled revision identity
     -> ControlledRevisionId

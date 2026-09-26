@@ -6,7 +6,7 @@ import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_AR
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_PARENT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_REVISION;
 import static com.arcogine.governance.GovernanceHistoryException.Code.STORAGE_INTEGRITY;
-import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_ARTIFACT_POLICY;
+import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_ARTIFACT_FINGERPRINT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_STORE;
 
 import com.arcogine.types.ControlledRevisionId;
@@ -49,22 +49,22 @@ import java.util.Optional;
  *
  * <p>The store proves the controlled-revision mechanics -- append-only acceptance, immutable
  * ID-to-record binding, lineage integrity, reopen across processes, atomic installation and exact
- * artifact resolution -- against the current work-in-progress semantic definitions. It is not a
- * retained authority: what it accepts creates no durable attribution or compatibility commitment,
- * and it is bound to the exact definition that created it, so after that definition changes it is
- * refused and must be reset rather than read under the new one. Retained, commitment-bearing
- * admission is unavailable while every semantic contract is work in progress; it arrives only with
- * an explicit promotion (docs/architecture/overview.md, "Semantic evolution and support").
+ * artifact resolution -- against the current development semantic definitions. It is not a
+ * retained authority: what it accepts creates no stability, support, or compatibility commitment,
+ * and it is bound to the exact definition build that created it, so after that definition changes
+ * it is refused and must be reset rather than read under the new one. Retained,
+ * commitment-bearing admission is introduced only by an explicit owner decision
+ * (docs/architecture/overview.md, "Semantic evolution and support").
  *
  * <p>The store declares its proving scope in a marker at its root, together with the {@link
  * SemanticArtifactVerifier#definitionBinding() definition binding} of the verifier that created it.
  * It initializes only an absent location, which it creates itself, and reopens only a directory
  * whose marker names the same binding; any other location -- an existing empty directory, one
  * holding only names this store would use, a store written by an earlier layout, or one written
- * under a different definition that shares the same public work-in-progress marker -- is refused
- * before any revision or artifact is read, and without being modified, adopted or deleted. Semantic
- * artifacts are deduplicated by a physical key derived from the complete {@link ModelFingerprint};
- * the fingerprint remains the semantic identity and the key never escapes this adapter.
+ * under a different definition build -- is refused before any revision or artifact is read, and
+ * without being modified, adopted or deleted. Semantic artifacts are deduplicated by a physical key
+ * derived from the complete {@link ModelFingerprint}; the fingerprint identifies canonical content
+ * in the current producing context and the physical key never escapes this adapter.
  */
 public final class FileControlledRevisionAuthority implements ControlledRevisionAuthority {
 
@@ -376,8 +376,8 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     private void verifyArtifact(SemanticArtifact artifact, boolean storedArtifact) {
         if (!verifier.supports(artifact.fingerprint())) {
             throw new GovernanceHistoryException(
-                    UNSUPPORTED_ARTIFACT_POLICY,
-                    "unsupported semantic artifact policy: " + artifact.fingerprint());
+                    UNSUPPORTED_ARTIFACT_FINGERPRINT,
+                    "unsupported semantic artifact fingerprint: " + artifact.fingerprint());
         }
         ModelFingerprint computed;
         try {
@@ -587,14 +587,12 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     private static void writeFingerprint(DataOutputStream output, ModelFingerprint fingerprint)
             throws IOException {
         writeString(output, fingerprint.namespace());
-        writeString(output, fingerprint.policy());
         writeString(output, fingerprint.algorithm());
         writeString(output, fingerprint.digest());
     }
 
     private static ModelFingerprint readFingerprint(DataInputStream input) throws IOException {
-        return new ModelFingerprint(
-                readString(input), readString(input), readString(input), readString(input));
+        return new ModelFingerprint(readString(input), readString(input), readString(input));
     }
 
     private static void writeString(DataOutputStream output, String value) throws IOException {

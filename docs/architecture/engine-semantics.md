@@ -1,6 +1,6 @@
 # Engine semantics
 
-Status: Normative work-in-progress interpretation, `engine-semantics:wip`. Production-only execution is implemented; the spatial transfer rules (§5–§13) are specified but not executed, and a present spatial record is refused; propagation into observation/event metadata is outstanding. Not promoted.
+Status: Normative current development interpretation. Production-only execution is implemented; the spatial transfer rules (§5–§13) are specified but not executed, and a present spatial record is refused. No stability/support promotion has been declared.
 Rationale: [Determinism Contract](overview.md#determinism-contract)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 Model-side counterpart: [Factory model](factory-model.md)
@@ -11,59 +11,56 @@ This document defines the complete result-affecting Engine interpretation a simu
 records semantic rules, not Java class shape, DTO serialization, build identity, or replaceable
 implementation algorithms.
 
-`EngineSemantics` names that interpretation for a run. It is distinct from `ModelFingerprint`
-(which authored Factory design was executed), from `RunId` (which runtime epoch produced the facts,
-correlation only, and never an input to any result), and from software/build identity (which
-implementation artifact happened to execute them, kept as diagnostic context only). None of those
-substitutes for it: the same design legitimately produces different outcomes under different
-interpretations, so `ModelFingerprint` alone would attribute a result to a design that did not
-determine it, while builds change for many semantics-preserving reasons. A fact describing the
-production system the designer authored belongs to the canonical model and its fingerprint; a rule
-describing how Arcogine interprets any such design belongs here when changing it can change semantic
-outcome for identical explicit inputs; a replaceable algorithm that preserves observable semantics is
-an implementation detail.
+The current implementation has no dedicated identifier for this interpretation. That absence is
+deliberate: a human development label would not identify the exact definition, while a build identity
+would distinguish many semantics-preserving changes. `ModelFingerprint` identifies the authored
+Factory content and `RunId` identifies one runtime epoch for correlation; neither substitutes for
+the Engine definition. If a concrete consumer later requires an exact resolvable Engine-definition
+reference, that reference is introduced for that boundary rather than synthesized from development
+status.
+
+A fact describing the production system the designer authored belongs to the canonical model and its
+fingerprint; a rule describing how Arcogine interprets any such design belongs here when changing it
+can change semantic outcome for identical explicit inputs; a replaceable algorithm that preserves
+observable semantics is an implementation detail.
 
 The result inputs are:
 
 ```text
-ModelFingerprint
-+ EngineSemantics (the interpretation the run executes)
+current Engine definition
++ ModelFingerprint
 + explicit workload
 + seed/random inputs
 + ordered external commands
 + any other explicitly identified result-affecting input
 ```
 
-A run fixes its interpretation at establishment; it never changes mid-run, and a new runtime always
-gets a fresh `RunId`. One interpretation covers dispatch, decomposition, scheduling, transfer and
-derived-result rules together, because those rules interact to produce one outcome; independently
-named sub-policies would need a concrete independent-evolution requirement. The runtime executes
-exactly one interpretation, reports it through `FactoryRuntime.engineSemantics()`, and refuses any
-other name rather than silently executing under different semantics. Carrying it in every supported
-observation and event envelope is required by the [runtime contract](runtime-contract.md);
-propagation into the metadata types is a known implementation gap.
+A run fixes the current interpretation at establishment; it never changes mid-run, and a new runtime
+always gets a fresh `RunId`. One interpretation covers dispatch, decomposition, scheduling,
+transfer and derived-result rules together, because those rules interact to produce one outcome;
+independently identified sub-definitions would need a concrete independent-evolution requirement.
 
-The interpretation is **work in progress**, named by the mutable development marker
-`engine-semantics:wip`:
+The interpretation is under active development. That status is human-facing repository state and is
+not emitted through runtime APIs or provenance:
 
 - for the same model, explicit inputs and current definition, supported outcomes are deterministic;
-- between development revisions the result-affecting rules may be corrected or extended without a
-  new name. An intentional change that can alter outcome for identical explicit inputs — a bug fix
-  that observably changes interpretation included — is a definition change: it updates this
-  specification and the conformance fixtures of §14 in the same change. Repairing an implementation
-  to conform to this specification is not a definition change, and performance work, dependency
-  upgrades, refactors, logging and projection-only changes must preserve the normative behavior;
-- the marker therefore identifies the definition current in one build, not a definition that spans
-  revisions. A result produced under an earlier development revision is not attributable to today's
-  text by its marker; comparing results across revisions is a claim its consumer must establish;
-- implementation, fixtures and this normative description do not promote the interpretation. If an
-  owner later promotes it for a concrete stability/support need, the promotion records an
-  unambiguous stable reference to the exact definition being promoted plus the applicable
-  non-rebinding and support obligations of the [semantic evolution rules](overview.md#semantic-evolution-and-support);
-  a human-readable label is optional, and Engine and Factory need not promote together.
+- between development revisions the result-affecting rules may be corrected or extended. An
+  intentional change that can alter outcome for identical explicit inputs — a bug fix that observably
+  changes interpretation included — is a definition change: it updates this specification and the
+  conformance fixtures of §14 in the same change. Repairing an implementation to conform to this
+  specification is not a definition change, and performance work, dependency upgrades, refactors,
+  logging and projection-only changes must preserve the normative behavior;
+- a result produced under an earlier development revision is not attributable to today's definition
+  merely from its model fingerprint, run ID, or a human status label; comparing results across
+  revisions is a claim its consumer must establish;
+- implementation, fixtures and this normative description do not establish a stability/support
+  commitment. If an owner later declares one for a concrete need, the declaration records an
+  unambiguous stable reference to the exact definition plus the applicable non-rebinding and support
+  obligations of the [semantic evolution rules](overview.md#semantic-evolution-and-support). Engine
+  and Factory commitments need not be made together.
 
-Complete conformance requires the result-affecting rules and the behavioral fixtures, not merely a
-reported name.
+Complete conformance requires the result-affecting rules and the behavioral fixtures, not a reported
+interpretation name.
 
 ### 1.1 Completeness rule
 
@@ -592,7 +589,6 @@ Runtime observation metadata carries once per observation:
 
 - `RunId`;
 - `ModelFingerprint`;
-- the mandatory `EngineSemantics` the run executes (not yet propagated into the metadata type; §1);
 - optional `ControlledRevisionId` only when authoritatively bound;
 - the existing supported-event sequence, time, and run-state metadata.
 
@@ -620,8 +616,9 @@ Carries:
 - destination resource identity;
 - affected references for job, order, and destination.
 
-The envelope also carries existing run/model/revision provenance plus the mandatory
-`EngineSemantics` the run executes.
+The envelope also carries the existing run/model/revision provenance. No placeholder Engine
+definition identifier is emitted; a future exact Engine-definition reference is added only if a
+concrete supported boundary requires it.
 
 At a shared `SimTime`, ordering uses only the supported runtime-event sequence. A zero-duration
 transfer is still a scheduled completion turn, so the authoritative chain can be:
@@ -658,7 +655,8 @@ when their actual ownership and result-affecting meaning become concrete.
 Pinned behavioral fixtures prove the normative semantics above using representative explicit inputs.
 They change together with any definition change (§1). The executed production-only scope is pinned by
 `EngineDispatchConformanceTest`, `EngineDerivedResultConformanceTest`,
-`SessionControlAcceptanceTest`, the runtime event/observation acceptance suites and the
+`FactoryRuntimeExecutabilityAcceptanceTest`, `SessionControlAcceptanceTest`, the runtime
+event/observation acceptance suites and the
 child-materialization acceptance and benchmark tests; the transfer items (7–11 and 13) accompany
 spatial execution when it is implemented. Complete fixtures for the executed scope are a precondition
 of promoting the interpretation, never a promotion by themselves. The fixtures must cover at least:

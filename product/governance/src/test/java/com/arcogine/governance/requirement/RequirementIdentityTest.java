@@ -103,7 +103,7 @@ class RequirementIdentityTest {
     }
 
     private static ModelFingerprint fingerprint(String suffix) {
-        return new ModelFingerprint("test-model", "v1", "sha256", "0".repeat(62) + suffix);
+        return new ModelFingerprint("test-model", "sha256", "0".repeat(62) + suffix);
     }
 
     private static ControlledRevisionId revisionId(int suffix) {

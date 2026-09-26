@@ -6,13 +6,12 @@ import com.arcogine.types.ModelFingerprint;
 /**
  * An immutable, published snapshot of a {@link FactoryModel}.
  *
- * <p>{@link #fingerprint()} is the deterministic content identity of the published model under
- * the current work-in-progress canonical form, {@code factory-model:wip}, specified by
- * docs/architecture/factory-model.md. For one definition, equal canonical content always has the
- * same fingerprint, across processes and implementation languages. The definition itself is not
- * yet promoted: between development revisions its bytes and fingerprints may change, so the
- * fingerprint is not a durable cross-revision identity. Publication proves validity and gives an
- * immutable in-process snapshot; it does not by itself create a durable-use promise.
+ * <p>{@link #fingerprint()} is the deterministic content fingerprint of the published model under
+ * the current canonical form specified by docs/architecture/factory-model.md. For one definition,
+ * equal canonical content always has the same fingerprint, across processes and implementation
+ * languages. The definition itself may change between development revisions, so the fingerprint is
+ * not an exact cross-revision definition reference. Publication proves validity and gives an
+ * immutable in-process snapshot; it does not by itself create a stability or support promise.
  *
  * <p>Controlled revision identity, lineage, and persistence are separate concerns from the model
  * fingerprint; see docs/architecture/factory-design.md section 11 and

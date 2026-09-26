@@ -3,16 +3,16 @@
 This policy is the review mechanism behind the
 [semantic evolution and support](../architecture/overview.md#semantic-evolution-and-support) rules
 in the Architecture Overview, which own the architectural constraint; owning specifications define
-domain meaning. This document owns how work-in-progress status, promotion and support are stated
-and reviewed. It consumes the Overview's canonical [determinism, equivalence, identity, and
+domain meaning. This document owns how development status, promotion and support are stated and
+reviewed. It consumes the Overview's canonical [determinism, equivalence, identity, and
 durability vocabulary](../architecture/overview.md#determinism-equivalence-identity-and-durability).
 It is not a support registry, a maturity tracker or a research backlog.
 
-## Work in progress is the default
+## Development definitions are mutable by default
 
-The Factory model and the Engine interpretation are work in progress (`factory-model:wip`,
-`engine-semantics:wip`). Each owning specification states that status in its header. Review a change
-to a WIP definition like any other definition change:
+The Factory model and Engine interpretation are current development definitions. That status is
+human-facing repository state only; it is not encoded in canonical bytes, fingerprints, runtime
+identifiers, or provenance. Review a development-definition change like any other definition change:
 
 - the owning specification, its golden vectors or conformance fixtures, and every dependent
   consumer, plan and document change together;
@@ -21,11 +21,11 @@ to a WIP definition like any other definition change:
 - vectors and fixtures are regenerated deliberately from the specification, preferably through an
   independent implementation of it, and the change says why the old values no longer hold.
 
-Name contracts, types, packages, files and tests by what they mean. An ordinal suffix, an
-implementation milestone or a golden vector is not a maturity or support signal; maturity and
-support are stated explicitly in the owning contract. Technical codec/runtime markers are not
-human release labels, and neither kind of name supplies its own meaning. Do not turn a spelling
-into a new architectural generation or planning prerequisite.
+Name contracts, types, packages, files and tests by what they mean. An ordinal suffix, development
+status, implementation milestone or golden vector is not a semantic identity, maturity boundary, or
+support signal; maturity and support are stated explicitly in the owning contract. Do not encode a
+human status label into a codec, fingerprint, runtime API, or provenance field merely to make
+development state machine-readable.
 
 The no-migration rule above is the current development reset policy, not a consequence of strict
 canonical decoding. A future supported importer or migration has its own source/target meanings,
@@ -64,8 +64,8 @@ use needs:
 
 - the owner approval and the concrete use and stability/support need it serves;
 - the exact definition and an unambiguous stable reference to it, including the grammar or rules,
-  validation/refusal behavior, and relevant fixtures; a mutable document title, branch tip, or WIP
-  marker alone does not select an exact definition. A human-readable label is optional and derives
+  validation/refusal behavior, and relevant fixtures; a mutable document title, branch tip, or
+  human development label does not select an exact definition. A human-readable label is optional and derives
   its meaning from the binding or declaration, not the other way around;
 - the supported uses, inputs, consumers and exclusions;
 - custody: the accepting authority, retained versus disposable scope, horizon, exact-definition
@@ -78,8 +78,8 @@ use needs:
 - authorized change/retirement behavior: successor meaning, effects on existing accepted uses,
   retained basis, and refusal after expiry.
 
-A retained authority operating under a promotion declaration refuses WIP and any definition not
-covered by that declaration. Promotion is a status in one owning contract, not a platform-wide
+A retained authority operating under a promotion declaration admits only definitions covered by
+that declaration; ordinary current development definitions are not implicitly covered. Promotion is a status in one owning contract, not a platform-wide
 lifecycle type; after it, declarations stay scoped by promise, so a contract can carry enduring
 attribution while only part of its behavior is executed or supported.
 
@@ -113,13 +113,13 @@ question.
 
 | Case | What review must distinguish |
 | --- | --- |
-| WIP definition correction | The specification, vectors or fixtures and dependents change together under the same marker. Earlier development artifacts are refused or reset, never migrated or reinterpreted. |
+| Development-definition correction | The specification, vectors or fixtures and dependents change together. Earlier development artifacts are refused or reset, never migrated or reinterpreted merely because their current technical shape still parses. |
 | Durability claim | Identify the referent — capability, accepted use, promise, fulfilment evidence or cost preference. Specify the claimed property and scope separately; promotion establishes a declared stability/support commitment, not all the other properties. |
-| Proving persistence | A proving store may survive reopen, but it declares disposable custody and is bound to the exact definition that wrote it, so it refuses to reopen under another even when the public WIP marker is unchanged. Persisting WIP content there creates no attribution or compatibility promise, and it never adopts a location it did not create. |
-| Accidental retention | WIP material found retained or relied on outside a declared custody is a defect: stop further admission, preserve what was accepted and the definition it used as far as evidence allows, and decide explicitly. It is neither silently rewritten nor treated as a promotion. |
-| Promoted definition correction | A materially changed definition never replaces the definition behind an existing stable promotion reference. Continue under WIP or, if a later support commitment accepts the changed definition, bind a distinct stable reference. Neither step requires a new shared semantic entity or human-readable name. |
+| Proving persistence | A proving store may survive reopen, but it declares disposable custody and is bound to the exact definition build that wrote it, so it refuses to reopen under another. Persisting development content there creates no stability, support, or compatibility promise, and it never adopts a location it did not create. |
+| Accidental retention | Development material found retained or relied on outside a declared custody is a defect: stop further admission, preserve what was accepted and the definition it used as far as evidence allows, and decide explicitly. It is neither silently rewritten nor treated as a promotion. |
+| Promoted definition correction | A materially changed definition never replaces the definition behind an existing stable promotion reference. Continue development without that commitment or, if a later support commitment accepts the changed definition, bind a distinct stable reference. Neither step requires a new shared semantic entity or human-readable name. |
 | Historical artifact after evolution | For a promoted definition, retain the exact revision → fingerprint → definition/artifact basis the accepted use requires and never resolve it against current state. Equal content can recur in a distinct revision. |
-| Engine rule never exercised | For a promoted interpretation, editorial section boundaries and missing fixture coverage do not make part of it mutable; rejection behavior and cross-rule interactions still matter. While WIP, an unexercised rule is corrected like any other rule. |
+| Engine rule never exercised | For a promoted interpretation, editorial section boundaries and missing fixture coverage do not make part of it mutable; rejection behavior and cross-rule interactions still matter. Before such a commitment, an unexercised current-development rule is corrected like any other rule. |
 | Label or attestation | A label may name a later claim about a collection of exact references. Neither the spelling nor the existence of the claim proves equivalence, executability, compatibility, or fulfilment. No shared attestation entity is selected. |
 | Strict decoder versus importer | A canonical decoder enforces its declared representation and validity contract. A separately supported conversion can produce a target artifact without pretending the source already had target meaning; current development reset policy still applies. |
 | External consumer | A concrete information set and scoped compatibility evidence create support; the existence of an API or serializer does not. |

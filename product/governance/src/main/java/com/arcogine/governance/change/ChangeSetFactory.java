@@ -105,7 +105,7 @@ public final class ChangeSetFactory {
             SemanticArtifact candidateArtifact, SemanticArtifactVerifier verifier) {
         if (!verifier.supports(candidateArtifact.fingerprint())) {
             throw new IllegalArgumentException(
-                    "verifier does not support the candidate artifact's declared fingerprint policy: "
+                    "verifier does not support the candidate artifact's declared fingerprint: "
                             + candidateArtifact.fingerprint());
         }
         ModelFingerprint computed;
@@ -128,7 +128,7 @@ public final class ChangeSetFactory {
             SemanticChangeExtractor extractor, SemanticArtifact base, SemanticArtifact candidate) {
         if (!extractor.supports(base.fingerprint()) || !extractor.supports(candidate.fingerprint())) {
             throw new IllegalArgumentException(
-                    "extractor does not support the fingerprint policy of the supplied artifacts");
+                    "extractor does not support the supplied artifact fingerprints");
         }
         return extractor.compare(base, candidate);
     }

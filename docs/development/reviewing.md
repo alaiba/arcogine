@@ -176,7 +176,7 @@ Keep immutable accepted production/commercial intent distinct from mutable execu
 
 #### Canonical model and provenance
 
-Runtime behavior should continue to derive from a published canonical factory model where that boundary applies. Do not weaken provenance, rebind what a promoted identity or an accepted historical occurrence denotes, or present a work-in-progress `ModelFingerprint` or `EngineSemantics` as durable cross-revision provenance, contrary to the Factory publication identity contract and the semantic evolution rules. Nothing a PR adds — a test, vector, store or normative sentence — promotes a contract implicitly; a durability claim needs the referent audit in [Semantic contract support](semantic-contract-support.md#audit-the-referent-behind-a-durability-claim).
+Runtime behavior should continue to derive from a published canonical factory model where that boundary applies. Do not weaken provenance, rebind what an accepted stable promotion reference or historical occurrence denotes, or present a `ModelFingerprint`, `RunId`, build label, or human development label as an exact cross-revision definition reference, contrary to the Factory publication contract and the semantic evolution rules. Nothing a PR adds — a test, vector, store or normative sentence — promotes a contract implicitly; a durability claim needs the referent audit in [Semantic contract support](semantic-contract-support.md#audit-the-referent-behind-a-durability-claim).
 
 #### Compatibility
 

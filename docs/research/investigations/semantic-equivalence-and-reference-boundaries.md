@@ -109,13 +109,13 @@ a serious candidate. A document hash identifies that document, not automatically
 meaning or conformance; a build digest identifies code, not behavioral equivalence. Human labels are
 optional aliases or claims, not a preferred identification mechanism.
 
-**Discriminating cases.** Identical model bytes under changed validation or interpretation;
-same-marker development artifacts; behavior-preserving build changes; two independent conforming
+**Discriminating cases.** Identical model bytes or equal content fingerprints under changed
+validation or interpretation; behavior-preserving build changes; two independent conforming
 implementations; an unavailable referenced schema; a specification referring to a moving dependency;
 an old result with a known build but missing inputs; and a partially implemented specification.
-Examine existing `ModelFingerprint`, `EngineSemantics`, artifact-prefix/support checks, evidence
-provenance, and the proving store's definition-build binding separately rather than treating them
-as one token to rename.
+Examine the current `ModelFingerprint`, the Engine's deliberate absence of a dedicated definition
+identifier, artifact-prefix/support checks, evidence provenance, and the proving store's
+definition-build binding separately rather than introducing a replacement token by assumption.
 
 **Evidence and exit.** Inventory actual consumers and the information they must identify, resolve,
 or compare. For each proposed reference, state its referent, scope, transitive basis, binding,

@@ -121,16 +121,16 @@ Bounded by the Governance evidence contract §12: prove the contract with produc
 exist, or with explicit fixtures at the owning seam, and state which provenance class is proved.
 
 - **Structural facts** are the implementation-backed class: a controlled revision accepted by the
-  proving store plus `ModelFingerprint` supply a real producer identity, and the model version is
-  the evidence's own provenance. While the Factory definition is work in progress, that identity is
-  development evidence, not a retained historical commitment.
+  proving store plus `ModelFingerprint` supply a real producer binding, and the model version is
+  the evidence's own provenance. The proving store is disposable development custody, not a retained
+  historical commitment.
 - **Arcogine-derived analytical results** may be proved through an explicitly attributed fixture
-  carrying producer-owned `ModelFingerprint`, `EngineSemantics`, run/result identity, and
-  explicit inputs. `FactoryRuntime` exposes a fixed `EngineSemantics`, but durable Engine
-  result identity and observation/event provenance propagation are not yet established and
-  analytical-definition ownership is an open research question, so this slice must not claim a
-  production Engine or analytics integration and must never infer or stamp a missing Engine
-  interpretation.
+  carrying producer-owned `ModelFingerprint`, run/result identity, explicit inputs and any
+  analytical-definition provenance the producer actually owns. `FactoryRuntime` exposes no
+  placeholder Engine-definition identifier; exact Engine-definition provenance is therefore an
+  explicit gap unless and until a concrete producer/consumer boundary defines it. This slice must
+  not claim a production Engine or analytics integration and must never infer or stamp a missing
+  Engine interpretation.
 - **External observations** may be proved only through a fixture that retains source
   identity/subject/time/trust provenance and an explicit correspondence assertion supplied at the
   seam. No Operational observation type, ingestion, correspondence authority, or trust semantics is
@@ -162,8 +162,9 @@ against, distinguishing fixture-proved seams from production integrations:
    except for an assertion whose semantics establish a violation from adequate evidence of absence.
 6. **External observation before correspondence** — a fixture observation retains source provenance
    with no Arcogine subject at ingestion; the use carries the explicit correspondence decision.
-7. **Analytical result** — a fixture result retains producer-owned provenance unchanged; a result
-   with no `EngineSemantics` remains explicitly unresolved rather than being stamped.
+7. **Analytical result** — a fixture result retains producer-owned provenance unchanged; when a use
+   requires the exact producing Engine definition and no such reference was captured, the gap remains
+   explicitly unresolved rather than being stamped with a development label or current-build value.
 8. **Source model versus use target** — a result produced for one model is used as a comparator
    for another only through an explicit comparator role.
 9. **Definition rebinding** — a later requirement/assertion wording or rule change under the same

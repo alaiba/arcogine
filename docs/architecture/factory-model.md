@@ -1,6 +1,6 @@
 # Factory model
 
-Status: Normative work-in-progress definition, `factory-model:wip`; implemented by `FactoryModelVersion.fingerprint()` and `FactoryModelArtifact`. Not promoted.
+Status: Normative current development definition; implemented by `FactoryModelVersion.fingerprint()` and `FactoryModelArtifact`. No stability/support promotion has been declared.
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support); composition rules: [Factory semantic evolution](factory-design.md#111-semantic-evolution)
 
 ## 1. Purpose and status
@@ -11,20 +11,22 @@ the one aggregate `ModelFingerprint` is digested from. Where this document and a
 disagree, this document is authoritative. The canonical model boundary it serves is defined by the
 [Factory Design architecture](factory-design.md).
 
-The definition is **work in progress**. `factory-model:wip` is a mutable development marker, not a
-durable semantic identity:
+The definition is under active development. That status is human-facing repository state, not part
+of the canonical bytes, fingerprint, decoder dispatch, or provenance:
 
 - for the same current definition and the same authored content, canonical bytes and fingerprints
   are deterministic across processes and implementation languages;
-- between development revisions the records, predicates, grammar, bytes and fingerprints may change
-  without a new marker; such a change updates this document, its golden vectors and every dependent
-  in the same change;
-- a `factory-model:wip` fingerprint therefore means "equal content under the definition current when
-  it was computed". Equal WIP strings or fingerprints from different development revisions establish
-  no compatibility, and no current reader interprets an artifact produced under an earlier revision;
+- between development revisions the records, predicates, grammar, bytes and fingerprints may change;
+  such a change updates this document, its golden vectors and every dependent in the same change;
+- a `ModelFingerprint` identifies canonical Factory content in the producing definition context. It
+  does not identify the exact definition revision that produced it, establish compatibility across
+  development revisions, or select a support/maturity state;
+- the fingerprint alone does not establish which development revision produced bytes. A raw decoder
+  can establish only that bytes satisfy the current grammar, predicates, and canonical round-trip;
+  any use that needs historical definition provenance must obtain that basis separately;
 - tests, golden vectors, in-process publication, persistence in a proving store and this normative
-  description do not promote the definition. Promotion is an explicit owner decision under the
-  [semantic evolution rules](overview.md#semantic-evolution-and-support).
+  description do not establish a stability/support commitment. Such a commitment is an explicit
+  owner decision under the [semantic evolution rules](overview.md#semantic-evolution-and-support).
 
 Semantic content identity is distinct from historical occurrence identity: equal fingerprints may
 recur in distinct [controlled revisions](controlled-revisions.md).
@@ -67,9 +69,9 @@ referencing only configured resources; every product referencing an existing ope
 name a well-formed Unicode scalar-value sequence (in Java, an unpaired UTF-16 surrogate is rejected
 before publication succeeds).
 
-Names and current allocated IDs participate in identity. That does not claim they are the ideal
-ontology; reclassifying names as presentation-only or introducing a logical identity distinct from
-current IDs is an ordinary definition change while the model is work in progress.
+Names and current allocated IDs participate in canonical content. That does not claim they are the
+ideal ontology; reclassifying names as presentation-only or introducing a logical identity distinct
+from current IDs is an ordinary change to the current development definition.
 
 ### 2.2 Optional spatial record
 
@@ -139,11 +141,10 @@ runtime state exists ([transfer applicability](transfer-applicability.md)).
 
 ```text
 namespace      = factory-model
-policy         = wip
 algorithm      = sha256
 digest         = 64 lowercase hexadecimal characters
 
-factory-model:wip:sha256:<digest>
+factory-model:sha256:<digest>
 ```
 
 The digest is SHA-256 over the complete canonical byte stream of §4, **including the definition
@@ -164,12 +165,12 @@ acceptable ([external representations](external-representations.md)).
 
 ### 4.1 Definition prefix
 
-The stream begins with the exact ASCII bytes of `arcogine.factory-model.wip` followed by a zero byte —
-27 bytes:
+The stream begins with the exact ASCII bytes of `arcogine.factory-model` followed by a zero byte —
+23 bytes:
 
 ```text
 61 72 63 6f 67 69 6e 65 2e 66 61 63 74 6f 72 79
-2d 6d 6f 64 65 6c 2e 77 69 70 00
+2d 6d 6f 64 65 6c 00
 ```
 
 The prefix is domain separation, not a negotiation field. A decoder reads it to decide whether the
@@ -313,13 +314,19 @@ never by digesting untrusted bytes directly.
 
 ### 5.5 Other definitions are refused, not reinterpreted
 
-Only the current definition is understood. A fingerprint under any other namespace or policy —
-including the discarded ordinal `factory-model` policies — is unsupported, and bytes laid out under
-another definition fail at the prefix. Because the marker does not change between development
-revisions, persisted development material is bound instead to the exact build of the definition that
-wrote it: the Factory artifact verifier's definition binding is a digest of the compiled classes that
-define the records, validation and canonical form, and a proving store refuses to reopen under a
-different binding. Such material is disposable proving evidence and is reset rather than migrated
+Only the current definition is understood. A fingerprint with another namespace or algorithm is
+unsupported, and bytes carrying the former ordinal `factory-model:v1`/`v2` prefixes fail at the
+canonical prefix boundary. The current unversioned prefix is a domain separator, not an exact
+definition reference: an older development artifact whose bytes also satisfy today's grammar,
+predicates, and canonical round-trip is indistinguishable to the raw decoder from bytes authored
+under today's definition. The decoder therefore establishes current canonical validity, not
+historical provenance.
+
+Persisted development material that requires cross-revision protection is bound separately to the
+exact build of the definition that wrote it: the Factory artifact verifier's definition binding is a
+digest of the compiled classes that define the records, validation and canonical form, and a proving
+store refuses to reopen under a different binding. Such material is disposable proving evidence and
+is reset rather than migrated
 ([controlled revisions](controlled-revisions.md#the-revision-record-does-not-choose-model-artifact-persistence)).
 
 ## 6. Required test coverage

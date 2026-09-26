@@ -150,12 +150,12 @@ and record the relevant basis as required by that use. The selected facts and ex
 the label's intrinsic spelling, supply its effect. Stable declaration bindings must not be silently
 rebound; mutable aliases must not be passed off as exact historical references.
 
-The current `factory-model:wip` prefix/policy and `engine-semantics:wip` marker are technical values
-used by the implemented codec, support checks, and runtime reporting, not merely display aliases.
-This separation does not remove or rename them: changing a hashed prefix would change fingerprints.
-Their existence does not establish that a permanent independently identified semantic object, public
-version ladder, or human-readable label is required. The unresolved concrete choices are recorded
-in the [research register](../research/research-register.md), with [question-specific
+Development status is human-facing repository state only. It does not appear in canonical bytes,
+fingerprints, decoder dispatch, runtime APIs, or provenance. The current Factory fingerprint contains
+only its domain namespace, digest algorithm, and digest; the current Engine exposes no dedicated
+definition identifier. Neither absence implies that an exact definition reference can never be
+needed: the unresolved concrete boundary question remains in the [research
+register](../research/research-register.md), with [question-specific
 framing](../research/investigations/semantic-equivalence-and-reference-boundaries.md).
 
 ### Semantic evolution and support
@@ -163,44 +163,42 @@ framing](../research/investigations/semantic-equivalence-and-reference-boundarie
 The [definitions above](#determinism-equivalence-identity-and-durability) separate semantic meaning,
 exact reference, representation, execution, persistence, and support. The rules here apply that
 vocabulary to the current Factory and Engine development policy. Their specifications remain
-normative and correctable without a successor-per-correction ladder; technical markers do not
-create an independent architectural generation. Promotion establishes a scoped stability/support
-commitment, not determinism, content equality, or the first possible record of an exact basis:
+normative and correctable without a successor-per-correction identity ladder. Promotion establishes
+a scoped stability/support commitment, not determinism, content equality, or the first possible
+record of an exact basis:
 
-1. **Factory and Engine semantics are work in progress until promoted.** The [Factory
-   model](factory-model.md) (`factory-model:wip`) and the [Engine interpretation](engine-semantics.md)
-   (`engine-semantics:wip`) are named by mutable development markers. Between development revisions
-   their records, grammar, canonical bytes, fingerprints, validation and interpretation may be
-   corrected or extended without a new name; each change updates the owning specification, its
-   fixtures and its dependents in the same change.
+1. **Development status is not semantic data.** The [Factory model](factory-model.md) and [Engine
+   interpretation](engine-semantics.md) are current development definitions. Between repository
+   revisions their records, grammar, canonical bytes, fingerprints, validation and interpretation
+   may be corrected or extended; each change updates the owning specification, fixtures and
+   dependents together. No maturity/status token is encoded in their technical contracts.
 2. **Determinism holds within a definition.** For the same current definition and explicit inputs,
    canonical bytes, fingerprints and supported simulation outcomes are deterministic. A running
    session executes one fixed interpretation over one immutable published model snapshot; neither
    changes under it.
-3. **A WIP marker alone is not cross-revision provenance.** Equal WIP names or fingerprints
-   produced by different development revisions do not by themselves establish compatible meaning.
-   Current proving stores bind their contents to the definition build that wrote them, refuse a
-   mismatching binding, and are reset rather than migrated. A raw decoder enforces its current
-   grammar and predicates; a shared WIP prefix cannot reveal every historical definition change.
-   No reader may claim historical meaning that its available basis does not establish.
-4. **Nothing promotes by accident.** Tests, golden vectors, in-process publication, implementation
-   landing, persistence in a proving store, an internal file write, and a normative description of
-   current behavior neither promote a contract nor create a durable-use promise. No unpromoted
-   artifact or result may be represented as a committed durable record: while every contract is WIP,
-   retained, commitment-bearing admission is unavailable and proving authorities declare disposable
-   custody.
+3. **Current technical values are not exact cross-revision definition references.** A Factory
+   content fingerprint does not identify the exact definition revision that produced it, and the
+   current Engine has no dedicated definition identifier. Current proving stores bind their contents
+   separately to the definition build that wrote them, refuse a mismatching binding, and are reset
+   rather than migrated. A raw decoder enforces its current grammar and predicates. No reader may
+   claim historical meaning that its available basis does not establish.
+4. **Nothing creates a support commitment by accident.** Tests, golden vectors, in-process
+   publication, implementation landing, persistence in a proving store, an internal file write, and
+   a normative description of current behavior do not create a retained stability/support promise.
+   Proving authorities declare disposable custody; retained, commitment-bearing admission requires
+   an explicit owner declaration.
 5. **Promotion is an explicit owner decision tied to a concrete stability/support need.** It
-   identifies the exact definition through an unambiguous stable reference distinct from the
-   mutable WIP marker, and states the supported uses and consumers, retained basis, and obligations.
-   Any human-readable label is optional and gets its meaning from that binding or declaration.
-   The commitment is recorded in the owning contract, not a repository-wide maturity state,
-   registry, or version ladder. Factory and Engine commitments need not be made together.
-6. **The exact basis bound by a promotion never rebinds.** The stable reference recorded by
-   the promotion continues to denote the same definition, including rules no fixture has exercised
-   and rejection behavior no consumer has observed. A materially changed definition — field
-   membership, canonical bytes, validation, result-affecting interpretation — must not replace the
-   definition behind that reference; development continues under WIP, or a later commitment records
-   a distinct stable reference. Promotion does not require a new shared semantic entity or a
+   identifies the exact definition through an unambiguous stable reference and states the supported
+   uses and consumers, retained basis, and obligations. Any human-readable label is optional and gets
+   its meaning from that binding or declaration. The commitment is recorded in the owning contract,
+   not a repository-wide maturity state, registry, or version ladder. Factory and Engine commitments
+   need not be made together.
+6. **The exact basis bound by a promotion never rebinds.** The stable reference recorded by the
+   promotion continues to denote the same definition, including rules no fixture has exercised and
+   rejection behavior no consumer has observed. A materially changed definition — field membership,
+   canonical bytes, validation, result-affecting interpretation — must not replace the definition
+   behind that reference; later development continues without a commitment or a later commitment
+   records a distinct stable reference. Promotion does not require a new shared semantic entity or a
    human-readable name.
 7. **Support is scoped separately from meaning.** For a promoted definition, retaining its exact
    definition, retaining content, decoding, executing, migrating and interoperating are separate
@@ -565,27 +563,28 @@ scope; the following rules specialize it for simulation. Five rules hold that li
    executability: an interpretation executes only the represented content its own definition
    supports and refuses the rest before runtime mutation
    ([transfer applicability](transfer-applicability.md)).
-4. **Interpretation changes are explicit.** While the interpretation is work in progress, an
-   intentional change to result-affecting behavior — a bug fix that observably changes outcomes
-   included — is a definition change recorded in the specification and its fixtures in the same
-   change; it is never an unrecorded drift of implementation behavior. Repairing an implementation
-   so that it conforms to the specification is not such a change. Implementations declare which
-   interpretation they execute and refuse any other rather than silently substituting current
-   behavior.
+4. **Interpretation changes are explicit.** An intentional change to result-affecting behavior — a
+   bug fix that observably changes outcomes included — is a definition change recorded in the
+   specification and its fixtures in the same change; it is never unrecorded implementation drift.
+   Repairing an implementation so that it conforms to the specification is not such a change. The
+   current implementation executes the repository's current Engine definition; no placeholder
+   identifier is emitted to imply stronger provenance.
 5. **Historical basis and support commitments are separate.** Development results may have
-   traceability and reproducibility when their exact basis and capabilities are retained; the WIP
-   marker alone does not provide that basis or attribute them to a later definition. Current
-   commitment-bearing admission remains unavailable until promotion. A promoted commitment states
-   which exact references, definitions, fixtures, and content remain resolvable for its accepted
-   uses; historical interpretability does not automatically promise permanent re-execution.
+   traceability and reproducibility when their exact basis and capabilities are retained. Neither a
+   model fingerprint, a run ID, nor a human development label supplies the exact Engine definition
+   basis after it changes. Commitment-bearing admission requires an explicit promotion. A promoted
+   commitment states which exact references, definitions, fixtures, and content remain resolvable
+   for its accepted uses; historical interpretability does not automatically promise permanent
+   re-execution.
    Comparison across interpretations or development revisions is explicit and owned by the
    consumer making the claim. Neither a shared name nor a matching result from one run proves
    behavioral equivalence.
 
 Nondeterministic boundaries a consumer needs to replay — clocks, external inputs, human or agent
 decisions — are converted into recorded explicit inputs rather than admitted into the
-interpretation. Runtime provenance carries the source model's fingerprint and the Engine
-interpretation, so a consumer can state what produced a result under the current definitions
+interpretation. Runtime provenance carries the source model's fingerprint and run correlation. No
+dedicated exact Engine-definition reference is currently emitted; a consumer that needs one must use
+a separately established exact basis rather than infer it from development status
 ([runtime contract](runtime-contract.md)).
 
 The current implementation realizes this contract with:
@@ -594,31 +593,30 @@ The current implementation realizes this contract with:
 - Java strict floating-point semantics; compilation targets the Java 21 compatibility baseline
 - No concurrent mutation of simulation state
 
-Given the same published factory model, Engine interpretation, and explicit workload/commands,
+Given the same published factory model, current Engine definition, and explicit workload/commands,
 fresh `FactoryRuntime` sessions produce identical ordered supported `RuntimeEvent` streams and
 terminal `RuntimeObservation` state. Tests comparing semantic outcomes account for the per-run
 `RunId`; a test that depends on that correlation identity is wrong.
 
 This determinism contract is scoped to simulation, replay, and verification contexts, where it is a critical property. It is not a claim that real-world execution itself must be, or will be made, deterministic — production operates in a non-deterministic world of real machines, people, and failures. See the Product Charter's [continuity with current architecture](/docs/product/charter.md#8-continuity-with-current-architecture) section for this distinction.
 
-## Factory Model Identity (current state)
+## Factory model and runtime provenance (current state)
 
-The runtime establishes one fixed `EngineSemantics` (`engine-semantics:wip`) alongside the source
-`ModelFingerprint` and opaque per-runtime `RunId`. These answer different provenance questions: the
-Engine name says which result-affecting interpretation ([Engine semantics](engine-semantics.md)) the
-run executes — the current development definition, not an identity spanning revisions — while
-`RunId` is correlation only. Runtime observation/event field propagation of the Engine name remains
-follow-up work, and the reported name is not evidence of complete conformance to that specification.
+The runtime retains the source `ModelFingerprint` and opaque per-runtime `RunId`. The fingerprint
+identifies canonical Factory content in the current producing context; `RunId` is correlation only.
+The runtime executes the current result-affecting [Engine definition](engine-semantics.md), but no
+dedicated Engine-definition identifier is exposed today. That omission is intentional until a
+concrete boundary requires an exact resolvable reference.
 
 Factory runtime semantics are instantiated through the canonical-model seam: `FactoryModel` (validated) → `FactoryModelVersion` (immutable, published) → `FactoryRuntimeAssembler` (deterministic runtime instantiation). See [Factory Design](factory-design.md#4-canonical-model-boundary) for the boundary this implements. `FactoryModel` holds the required production records and an explicit optional spatial record; the current Engine executes production records only, so `FactoryRuntimeAssembler` refuses a published model whose spatial record is present before any runtime state exists.
 
-`FactoryModelVersion.fingerprint()` implements the work-in-progress `factory-model:wip` canonical form specified by the [Factory model](factory-model.md): one aggregate `ModelFingerprint` over a language-independent binary encoding of the production records and the optional spatial record, pinned by golden vectors for the current definition. Equal canonical content has an equal fingerprint independent of process memory and implementation language under the current definition; the definition itself is not promoted, so the fingerprint is not a durable cross-revision identity.
+`FactoryModelVersion.fingerprint()` implements the current canonical form specified by the [Factory model](factory-model.md): one aggregate `ModelFingerprint` rendered as `factory-model:sha256:<digest>` over a language-independent binary encoding of the production records and the optional spatial record, pinned by golden vectors for the current definition. Equal canonical content has an equal fingerprint independent of process memory and implementation language under the same definition; the fingerprint does not identify the exact definition revision that produced it.
 
 The supported runtime observation/event contract supplies opaque per-runtime `RunId` and the
-source-model `ModelFingerprint` on `RuntimeObservation`; `EngineSemantics` names the
-result-affecting interpretation. These answer separate provenance questions.
+source-model `ModelFingerprint` on `RuntimeObservation`. It does not currently invent an Engine
+definition identifier; exact Engine-definition provenance remains a separately triggered concern.
 
-`:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by the [controlled revision contract](controlled-revisions.md). `ControlledRevisionAuthority` defines the acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` is a disposable development **proving store**: it declares that scope and the exact definition binding at its root, refuses to reopen under a changed definition even though the WIP marker is unchanged, never adopts or modifies a location it did not create, persists append-only revision records and semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-accepted parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Resolution returns the accepted revision together with its exact semantic artifact; missing/corrupt metadata or artifacts, fingerprint mismatches and artifacts of unsupported definitions fail explicitly rather than falling back to current model state. Because every semantic contract is work in progress, no retained, commitment-bearing revision authority exists.
+`:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by the [controlled revision contract](controlled-revisions.md). `ControlledRevisionAuthority` defines the acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` is a disposable development **proving store**: it declares that scope and the exact definition binding at its root, refuses to reopen under a changed definition build, never adopts or modifies a location it did not create, persists append-only revision records and semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-accepted parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Resolution returns the accepted revision together with its exact semantic artifact; missing/corrupt metadata or artifacts, fingerprint mismatches and artifacts of unsupported definitions fail explicitly rather than falling back to current model state. No retained, commitment-bearing revision authority exists without an explicit stability/support declaration.
 
 Here, *disposable* describes the declared retention/support scope, not volatile storage: the
 proving store persists data to exercise revision acceptance, lineage, integrity, and reopen
@@ -626,7 +624,7 @@ behavior. Its definition-build binding is a conservative compatibility check, no
 semantic equivalence; the current reset policy does not establish that all future migrations must
 be forbidden.
 
-The proving store reuses the current `factory-model:wip` canonical bytes as its semantic artifact. `FactoryModelArtifact` strictly decodes and canonical-reencodes those bytes to reconstruct the exact `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The filesystem record layout and locking mechanics are replaceable adapter details, not a selected production persistence architecture. The Governance semantic change/impact capability provides the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance`, and the factory-domain `FactoryModelSemanticComparator` implements `SemanticChangeExtractor` for current Factory artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under the [Factory model](factory-model.md)) as a real change, and reporting any spatial-record addition, removal or change coarsely against the model's spatial-record entity. The requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the `ImpactScope` seam. The conformance evaluation/findings capability adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing authorization or deployment concepts; evidence references, evidence use, and evidence-backed conformance follow the [Governance evidence contract](governance-evidence.md). Approval/authorization, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain later Governance concerns, separate from revision identity.
+The proving store reuses the current current Factory canonical bytes as its semantic artifact. `FactoryModelArtifact` strictly decodes and canonical-reencodes those bytes to reconstruct the exact `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The filesystem record layout and locking mechanics are replaceable adapter details, not a selected production persistence architecture. The Governance semantic change/impact capability provides the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance`, and the factory-domain `FactoryModelSemanticComparator` implements `SemanticChangeExtractor` for current Factory artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under the [Factory model](factory-model.md)) as a real change, and reporting any spatial-record addition, removal or change coarsely against the model's spatial-record entity. The requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the `ImpactScope` seam. The conformance evaluation/findings capability adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing authorization or deployment concepts; evidence references, evidence use, and evidence-backed conformance follow the [Governance evidence contract](governance-evidence.md). Approval/authorization, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain later Governance concerns, separate from revision identity.
 
 ## Outward Adapters
 

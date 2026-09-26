@@ -15,7 +15,7 @@ public final class GovernanceHistoryException extends RuntimeException {
         MISSING_REVISION,
         MISSING_ARTIFACT,
         FINGERPRINT_MISMATCH,
-        UNSUPPORTED_ARTIFACT_POLICY,
+        UNSUPPORTED_ARTIFACT_FINGERPRINT,
         STORAGE_INTEGRITY,
         /** The storage location is not a store this authority created; it is never adopted. */
         UNSUPPORTED_STORE

@@ -10,8 +10,7 @@ import java.util.Objects;
  * <p>The refusal happens before any runtime state exists, so no partially assembled runtime can
  * observe, ignore, or default the unsupported content. It is distinct from
  * {@link com.arcogine.factory.model.validation.FactoryModelValidationException} (content that can
- * never be published) and from an unsupported {@link com.arcogine.types.EngineSemantics} name:
- * model validity and Engine executability are separate predicates.
+ * never be published): model validity and current Engine executability are separate predicates.
  */
 public final class UnsupportedModelContentException extends RuntimeException {
 

@@ -4,19 +4,19 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * A content digest of canonical semantic content under a named canonicalization policy.
+ * A content digest of canonical semantic content within a domain namespace.
  *
- * <p>{@code policy} names the definition the digest was computed under. A work-in-progress
- * definition is named by a mutable development marker such as {@code wip}: equal fingerprints then
- * mean equal content under the current definition only, never across development revisions.
+ * <p>The fingerprint identifies content under the canonical form implemented by the producing
+ * context. It does not identify that canonical form's exact development revision, maturity, support
+ * status, or any human-facing label. Those concerns require their own explicit basis when a concrete
+ * consumer needs them.
  */
-public record ModelFingerprint(String namespace, String policy, String algorithm, String digest) {
+public record ModelFingerprint(String namespace, String algorithm, String digest) {
 
     private static final Pattern SHA256_DIGEST = Pattern.compile("[0-9a-f]{64}");
 
     public ModelFingerprint {
         requireText(namespace, "namespace");
-        requireText(policy, "policy");
         requireText(algorithm, "algorithm");
         requireText(digest, "digest");
         if ("sha256".equals(algorithm) && !SHA256_DIGEST.matcher(digest).matches()) {
@@ -32,6 +32,6 @@ public record ModelFingerprint(String namespace, String policy, String algorithm
 
     @Override
     public String toString() {
-        return namespace + ":" + policy + ":" + algorithm + ":" + digest;
+        return namespace + ":" + algorithm + ":" + digest;
     }
 }

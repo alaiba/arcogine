@@ -40,7 +40,7 @@ The following are implemented and must be preserved:
 - an explicit optional spatial record (floor, per-resource position and footprint, `ticksPerCell`, `handlingTicks`) that is absent or present and complete;
 - deterministic structural validation of the production records and, when present, the spatial record;
 - immutable in-process publication;
-- the work-in-progress `factory-model:wip` canonical form and one aggregate fingerprint under the [Factory model specification](../architecture/factory-model.md), deterministic for one definition and not promoted;
+- the current Factory canonical form and one aggregate `factory-model:sha256:<digest>` fingerprint under the [Factory model specification](../architecture/factory-model.md), deterministic for one definition and carrying no development-status or exact-definition identifier;
 - runtime instantiation only from a published model, with present spatial content refused by the current Engine before any runtime state exists;
 - runtime/result attribution to the source model's fingerprint;
 - Governance-owned controlled revision identity/history independently of Factory fingerprint identity, currently in a disposable proving store;
@@ -60,7 +60,7 @@ The [Factory semantic-evolution contract](../architecture/factory-design.md#111-
 
 An absent record asserts nothing spatial, and nothing is synthesized in its place. Position/footprint containment, non-overlap, complete resource coverage, and the exact maximum-transfer-duration representability predicate are publication semantics of a present record. Orientation, aisle/path topology, conveyors, explicit transport resources, connection points, congestion, floor identity, and authoritative animation coordinates are not part of the record.
 
-The model shape, validation and canonical form are complete (PLAN-ENG-5-A1 and PLAN-ENG-5-A2 in [Spatial Runtime Consequences](spatial-runtime-consequences.md), which owns the remaining execution sequence). Because the definition is work in progress, a later spatial correction changes the specification, golden vectors and dependents together; no successor policy, migration or dual publication is planned. No generic migration or schema-evolution framework is admitted.
+The model shape, validation and canonical form are complete (PLAN-ENG-5-A1 and PLAN-ENG-5-A2 in [Spatial Runtime Consequences](spatial-runtime-consequences.md), which owns the remaining execution sequence). A later spatial correction changes the current specification, golden vectors and dependents together; no successor identity, migration or dual publication is planned merely for development material. No generic migration or schema-evolution framework is admitted.
 
 ## 4. Existing Factory capabilities that remain closed
 
@@ -76,15 +76,15 @@ A richer cross-consumer finding taxonomy is **not** an admitted implementation s
 
 ### PLAN-FD-3 — Publication, identity, and provenance
 
-Immutable publication and the work-in-progress fingerprint are implemented. Promoting the Factory definition to a durable identity is an explicit owner decision under the [semantic evolution rules](../architecture/overview.md#semantic-evolution-and-support), made when a concrete durable-use need exists; it is not planned work here.
+Immutable publication and the current content fingerprint are implemented. A stability/support promotion is an explicit owner decision under the [semantic evolution rules](../architecture/overview.md#semantic-evolution-and-support), made when a concrete durable-use need exists; it is not planned work here and does not imply that `ModelFingerprint` itself becomes an exact definition reference.
 
-`ModelFingerprint` remains semantic-content identity. `ControlledRevisionId` remains Governance-owned historical occurrence identity. Neither approval, deployment, external workflow identity, nor Engine interpretation belongs in the Factory fingerprint.
+`ModelFingerprint` remains the Factory canonical-content fingerprint. `ControlledRevisionId` remains Governance-owned historical occurrence identity. Neither approval, deployment, external workflow identity, nor Engine interpretation belongs in the Factory fingerprint.
 
 ### PLAN-FD-4 — Deterministic runtime instantiation
 
 Runtime continues to instantiate from one validated published model. Derived indexes/compiled structures are not independently authored models.
 
-Engine result-affecting interpretation is separately named by `EngineSemantics` under the Determinism Contract.
+Engine result-affecting interpretation remains separately owned by the [Engine semantics](../architecture/engine-semantics.md) contract. No dedicated Engine-definition identifier is currently exposed; exact-reference needs remain separate from runtime instantiation.
 
 ### PLAN-FD-5 — Semantic comparison
 

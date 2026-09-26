@@ -184,7 +184,9 @@ class FactoryModelSemanticComparatorTest {
         FactoryModelVersion version = twoResourceModel(List.of(1));
         assertTrue(comparator.supports(version.fingerprint()));
         assertFalse(comparator.supports(new ModelFingerprint(
-                "factory-model", "v1", "sha256", version.fingerprint().digest())));
+                "other-model", "sha256", version.fingerprint().digest())));
+        assertFalse(comparator.supports(new ModelFingerprint(
+                "factory-model", "sha512", version.fingerprint().digest())));
     }
 
     @Test

@@ -5,7 +5,7 @@ import com.arcogine.types.ModelFingerprint;
 import java.util.Objects;
 
 /**
- * Public artifact boundary for the current {@code factory-model:wip} canonical form.
+ * Public artifact boundary for the current Factory canonical form.
  *
  * <p>The bytes are the same canonical bytes {@link FactoryModelVersion#fingerprint()} digests.
  * Decoding is strict: malformed or merely decodable-but-noncanonical bytes are rejected with
@@ -14,10 +14,10 @@ import java.util.Objects;
  * {@link com.arcogine.factory.model.validation.FactoryModelValidationException} because it could
  * never have been published.
  *
- * <p>Only the current development definition is understood. Artifacts or fingerprints under any
- * other policy -- including the discarded ordinal policies -- are unsupported and are never
- * reinterpreted as current content. A {@code factory-model:wip} artifact is verified only against
- * the current definition; it is development evidence, not a durable historical record.
+ * <p>Only the current development definition is understood. Artifacts using discarded ordinal
+ * prefixes are unsupported and are never reinterpreted as current content. The fingerprint carries
+ * no maturity label or exact-definition identifier; current artifacts are verified against the
+ * current definition and are development evidence, not durable historical records.
  */
 public final class FactoryModelArtifact {
 
@@ -45,8 +45,8 @@ public final class FactoryModelArtifact {
     /**
      * The Governance verifier for current Factory artifacts. Its definition binding names the exact
      * build of the current definition, so a proving store written under an earlier development
-     * revision -- which shares the same public {@code factory-model:wip} marker -- is refused
-     * rather than read under this one.
+     * revision is refused rather than read under this one. The binding is separate because a
+     * content fingerprint does not identify the exact definition build that produced it.
      */
     public static SemanticArtifactVerifier verifier() {
         return VERIFIER;

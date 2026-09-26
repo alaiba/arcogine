@@ -19,12 +19,12 @@ Revision B    fingerprint F2
 Revision C    fingerprint F1
 ```
 
-A and C identify equal semantic content under the same fingerprint policy, but they are not the
-same historical revision. C may be a rollback, re-publication, re-application, or another later
+Within one admitted Factory definition context, A and C may carry the same content fingerprint, but
+they are not the same historical revision. C may be a rollback, re-publication, re-application, or another later
 controlled occurrence. Reusing A's identity for C would erase the fact that B existed between them
 and would make later authorization, conformance, deployment, audit, and evidence records ambiguous.
 
-> **Durable semantic identity is not historical revision identity.**
+> **Canonical content equality is not historical revision identity.**
 
 The revision identifier is independent of human version labels, authorship, timestamps, parents,
 external workflow identifiers, approval state, deployment state, and any particular persistence
@@ -83,7 +83,7 @@ Every controlled revision references exactly one `ModelFingerprint`.
 
 The fingerprint answers:
 
-> What canonical semantic content does this revision represent under the named fingerprint policy?
+> What canonical Factory content fingerprint is bound to this historical revision?
 
 The revision ID answers:
 
@@ -98,9 +98,15 @@ same revision ID  implies          the same immutable revision record
 
 `ControlledRevisionId` generation must not consume or derive from the fingerprint.
 
-A revision does not contain multiple alternate fingerprints for the same semantic state. If Arcogine later needs to relate fingerprints produced under different policies, that relationship must be represented explicitly rather than mutating or multiplying the semantic identity stored in an existing historical revision.
+A revision does not contain multiple alternate fingerprints for the same accepted content binding.
+If Arcogine later needs to relate fingerprints produced under different semantic or representation
+definitions, that relationship must be represented explicitly rather than inferred from equal
+fingerprint strings or added retroactively to an existing historical revision.
 
-There is no generic model/schema-version field on a revision. `ModelFingerprint.policy` already names the canonicalization definition the fingerprint was computed under. A separate domain model or serialization schema version should be added only when a concrete cross-domain contract requires it; it must not be invented as part of historical revision identity.
+There is no generic model/schema-version field on a revision. `ModelFingerprint` deliberately does
+not carry one. A separate exact-definition, domain-model, or serialization-schema reference is added
+only when a concrete consumer contract requires it; it must not be invented as part of historical
+revision identity.
 
 ## A revision has zero or one parent
 
@@ -261,13 +267,27 @@ A controlled revision references semantic content through `ModelFingerprint`; th
 
 Historical change attribution is nevertheless incomplete if Arcogine can identify `R42 -> F1` but cannot recover the exact semantic state represented by F1. The authoritative revision store must therefore resolve an accepted revision to the exact semantic state required for historical reconstruction. The current `FileControlledRevisionAuthority` adapter does so by persisting the canonical artifact whose definition-specific verifier (`SemanticArtifactVerifier`) proves it reproduces the referenced fingerprint; the filesystem layout and locking mechanics are replaceable adapter details, not a selected permanent persistence architecture.
 
-That adapter is a disposable development **proving store**. Its artifacts are work-in-progress Factory content, and the store is bound to the exact definition that wrote them: at creation it records the verifier's definition binding at its root — for Factory, a digest of the compiled classes that define the model's records, validation and canonical form — and it refuses to reopen under any other binding, before any revision or artifact is read. A store written before a definition change therefore fails explicitly and is reset rather than migrated, even though the public `factory-model:wip` marker is unchanged. It initializes only an absent location that it creates itself; ownership is never inferred from what an existing directory contains. It therefore refuses — without adopting, modifying or deleting, and without creating its own lock file there — any location it did not create, including an existing empty directory, one holding only names the store itself uses, and a store written under an earlier layout or discarded definition, and it refuses artifacts under any definition the verifier does not support at acceptance and on resolution. The binding is build context, not semantic identity: any change to the definition code, behavior-preserving refactors and a different compiler included, invalidates existing proving stores; a change of meaning that alters no definition code must be accompanied by resetting them.
+That adapter is a disposable development **proving store**. Its artifacts use the current Factory
+canonical form, and the store is bound to the exact definition build that wrote them: at creation it
+records the verifier's definition binding at its root — for Factory, a digest of the compiled classes
+that define the model's records, validation and canonical form — and it refuses to reopen under any
+other binding, before any revision or artifact is read. A store written before a definition change
+therefore fails explicitly and is reset rather than migrated; the content fingerprint is not used as
+an exact definition-build reference. It initializes only an absent location that it creates itself; ownership is never inferred from what an existing directory contains. It therefore refuses — without adopting, modifying or deleting, and without creating its own lock file there — any location it did not create, including an existing empty directory, one holding only names the store itself uses, and a store written under an earlier layout or discarded definition, and it refuses artifacts under any definition the verifier does not support at acceptance and on resolution. The binding is build context, not semantic identity: any change to the definition code, behavior-preserving refactors and a different compiler included, invalidates existing proving stores; a change of meaning that alters no definition code must be accompanied by resetting them.
 
 ## Authoritative historical identity begins at persistence acceptance
 
 `ControlledRevisionId` is intended to survive process, deployment, and storage boundaries.
 
-Creating a revision-shaped value in memory does not by itself make it an authoritative historical fact. A controlled revision becomes authoritative when its immutable record is accepted by Arcogine's authoritative revision store. Within that store the identity, fingerprint binding, lineage and provenance obligations below hold whatever the maturity of the referenced content. Whether acceptance is also a retained historical commitment depends on the store's declared custody: the only store today is a disposable proving store, and retained, commitment-bearing acceptance is unavailable while every semantic contract is work in progress. A retained store is introduced only together with an explicit promotion ([semantic evolution rules](overview.md#semantic-evolution-and-support)); it declares its custody and admits only the promoted definition's identities.
+Creating a revision-shaped value in memory does not by itself make it an authoritative historical
+fact. A controlled revision becomes authoritative when its immutable record is accepted by
+Arcogine's authoritative revision store. Within that store the revision identity, fingerprint
+binding, lineage and provenance obligations below hold independently of development status. Whether
+acceptance is also a retained historical commitment depends on the store's declared custody: the only
+store today is a disposable proving store. A retained store is introduced only together with an
+explicit stability/support promotion ([semantic evolution
+rules](overview.md#semantic-evolution-and-support)); its admission contract records the exact basis
+it accepts rather than inferring that basis from a fingerprint label.
 
 The persistence contract guarantees at least:
 
@@ -295,7 +315,7 @@ The contract preserves later paths to concepts analogous to source-control syste
 Such mechanisms must remain separate from the distinction established here:
 
 ```text
-ModelFingerprint       = semantic content identity
+ModelFingerprint       = canonical content fingerprint
 ControlledRevisionId   = historical occurrence identity
 ```
 

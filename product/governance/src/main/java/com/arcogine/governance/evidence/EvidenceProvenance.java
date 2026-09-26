@@ -1,7 +1,6 @@
 package com.arcogine.governance.evidence;
 
 import com.arcogine.types.ControlledRevisionId;
-import com.arcogine.types.EngineSemantics;
 import com.arcogine.types.ModelFingerprint;
 import java.time.Instant;
 import java.util.Map;
@@ -12,10 +11,10 @@ import java.util.Optional;
  * Immutable intrinsic meaning and provenance retained with an evidence reference.
  *
  * <p>Optional values are deliberately explicit. Governance does not infer a missing producer
- * model, Engine interpretation, subject, or result boundary from the later use. A producer model
- * fingerprint or Engine interpretation named by a work-in-progress marker identifies the definition
- * current when the evidence was produced only for that development revision; it is development
- * provenance, not a durable cross-revision identity.
+ * model, subject, exact Engine definition, or result boundary from the later use. No dedicated
+ * Engine-definition identifier is currently modeled: if a concrete consumer needs exact Engine
+ * provenance, that basis must be introduced explicitly rather than synthesized from a human-facing
+ * development label.
  */
 public record EvidenceProvenance(
         String sourceDescription,
@@ -25,7 +24,6 @@ public record EvidenceProvenance(
         Optional<Instant> producedAt,
         Optional<ModelFingerprint> producerModelFingerprint,
         Optional<ControlledRevisionId> producerControlledRevision,
-        Optional<EngineSemantics> engineSemantics,
         Optional<String> producerOccurrence,
         Optional<String> analyticalDefinition,
         Map<String, String> materialInputs,
@@ -40,7 +38,6 @@ public record EvidenceProvenance(
         producedAt = Objects.requireNonNull(producedAt, "producedAt");
         producerModelFingerprint = Objects.requireNonNull(producerModelFingerprint, "producerModelFingerprint");
         producerControlledRevision = Objects.requireNonNull(producerControlledRevision, "producerControlledRevision");
-        engineSemantics = Objects.requireNonNull(engineSemantics, "engineSemantics");
         producerOccurrence = requireOptionalText(producerOccurrence, "producerOccurrence");
         analyticalDefinition = requireOptionalText(analyticalDefinition, "analyticalDefinition");
         materialInputs = materialInputs == null ? Map.of() : Map.copyOf(materialInputs);
@@ -61,17 +58,15 @@ public record EvidenceProvenance(
                 Optional.of(Objects.requireNonNull(controlledRevisionId, "controlledRevisionId")),
                 Optional.empty(),
                 Optional.empty(),
-                Optional.empty(),
                 Map.of(),
                 Optional.empty(),
                 Optional.empty());
     }
 
-    /** Explicit analytical provenance fixture; no missing Engine interpretation is synthesized. */
+    /** Explicit analytical provenance fixture; no Engine-definition identifier is synthesized. */
     public static EvidenceProvenance analytical(
             ModelFingerprint modelFingerprint,
             Optional<ControlledRevisionId> controlledRevisionId,
-            Optional<EngineSemantics> engineSemantics,
             String resultIdentity,
             Map<String, String> materialInputs,
             Optional<String> analyticalDefinition) {
@@ -83,7 +78,6 @@ public record EvidenceProvenance(
                 Optional.empty(),
                 Optional.of(Objects.requireNonNull(modelFingerprint, "modelFingerprint")),
                 Objects.requireNonNull(controlledRevisionId, "controlledRevisionId"),
-                Objects.requireNonNull(engineSemantics, "engineSemantics"),
                 Optional.of(requireText(resultIdentity, "resultIdentity")),
                 Objects.requireNonNull(analyticalDefinition, "analyticalDefinition"),
                 materialInputs,
@@ -108,7 +102,6 @@ public record EvidenceProvenance(
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
-                Optional.empty(),
                 Map.of(),
                 receivedAt,
                 trustOrQuality);
@@ -118,7 +111,6 @@ public record EvidenceProvenance(
     public static EvidenceProvenance unknown(String explanation) {
         return new EvidenceProvenance(
                 "Unknown provenance: " + requireText(explanation, "explanation"),
-                Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),

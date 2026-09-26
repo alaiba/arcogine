@@ -30,22 +30,21 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * The language-independent canonical form of the current, work-in-progress Factory model
- * definition ({@code factory-model:wip}), specified by docs/architecture/factory-model.md.
+ * The language-independent canonical form of the current Factory model definition, specified by
+ * docs/architecture/factory-model.md.
  *
  * <p>For one definition, equal canonical content always produces the same bytes and fingerprint.
- * The definition itself is provisional: its grammar, bytes and fingerprints may change between
- * development revisions without a new marker, so a {@code factory-model:wip} fingerprint is never
- * evidence that an artifact produced by another development revision has the same meaning.
+ * The definition itself may change between development revisions, so the fingerprint identifies
+ * canonical content in the producing context; it is not an exact reference to the definition that
+ * produced it.
  */
 final class FactoryModelCanonicalForm {
 
     static final String NAMESPACE = "factory-model";
-    static final String POLICY = "wip";
     static final String ALGORITHM = "sha256";
 
     private static final byte[] PREFIX =
-            ("arcogine." + NAMESPACE + "." + POLICY + "\0").getBytes(StandardCharsets.US_ASCII);
+            ("arcogine." + NAMESPACE + "\0").getBytes(StandardCharsets.US_ASCII);
     private static final int ABSENT = 0;
     private static final int PRESENT = 1;
 
@@ -56,7 +55,6 @@ final class FactoryModelCanonicalForm {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return new ModelFingerprint(
                     NAMESPACE,
-                    POLICY,
                     ALGORITHM,
                     HexFormat.of().formatHex(digest.digest(canonicalBytes(model))));
         } catch (NoSuchAlgorithmException e) {
@@ -66,7 +64,6 @@ final class FactoryModelCanonicalForm {
 
     static boolean identifies(ModelFingerprint fingerprint) {
         return NAMESPACE.equals(fingerprint.namespace())
-                && POLICY.equals(fingerprint.policy())
                 && ALGORITHM.equals(fingerprint.algorithm());
     }
 
@@ -289,7 +286,7 @@ final class FactoryModelCanonicalForm {
                 throw illegalArgumentException;
             }
             throw new IllegalArgumentException(
-                    "invalid " + NAMESPACE + ":" + POLICY + " canonical artifact", e);
+                    "invalid " + NAMESPACE + " canonical artifact", e);
         }
     }
 

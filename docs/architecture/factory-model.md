@@ -340,7 +340,7 @@ revisions is not a requirement. Tests must cover at least:
 
 1. one representative model with the spatial record absent and one with it present, each with exact
    expected bytes and fingerprint;
-2. the 27-byte definition prefix;
+2. the 23-byte definition prefix;
 3. repeated or equivalent construction producing the same fingerprint;
 4. each representative artifact decoding to its model and re-encoding to identical bytes;
 5. rejection of trailing bytes, a truncated field, a bad `OPTIONAL_F64` marker, invalid UTF-8, an

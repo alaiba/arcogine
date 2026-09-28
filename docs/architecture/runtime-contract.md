@@ -114,7 +114,7 @@ sequence
 simulationTime
 eventType
 modelFingerprint
-engineSemantics
+
 controlledRevisionId [optional when authoritatively bound]
 affectedEntityRefs[]
 payload
@@ -138,7 +138,7 @@ A supported runtime observation carries at least:
 Run
     runId
     modelFingerprint
-    engineSemantics
+    
     controlledRevisionId [optional when authoritatively bound]
     current simulated time
     run state
@@ -177,9 +177,16 @@ Purpose-specific observation types are preferred over one unrestricted universal
 
 API/UI DTOs may project these supported observations, but DTO types never become domain decision inputs.
 
-## Model fingerprint and Engine semantics are mandatory provenance; controlled revision is conditional provenance
+## Model fingerprint is mandatory source-model provenance; controlled revision is conditional provenance
 
-Every supported runtime observation and runtime event carries the `ModelFingerprint` of the published `FactoryModelVersion` that instantiated the runtime and the `EngineSemantics` fixed for the run (see the [Determinism Contract](overview.md#determinism-contract)). `FactoryRuntime` also exposes its fixed interpretation directly so headless callers can read it without first observing or draining events. Propagating `EngineSemantics` into the observation/event metadata types is a known implementation gap; the runtime already fixes and reports one interpretation. While the Factory and Engine definitions are work in progress, these name the definitions current in the producing build; they are not durable cross-revision provenance ([semantic evolution rules](overview.md#semantic-evolution-and-support)).
+Every supported runtime observation and runtime event carries the `ModelFingerprint` of the published
+`FactoryModelVersion` that instantiated the runtime (see the [Determinism
+Contract](overview.md#determinism-contract)). The runtime executes the repository's current Engine
+definition for its lifetime but does not expose a placeholder Engine-definition identifier. A model
+fingerprint, run ID, or human development label must not be used as a substitute for an exact Engine
+definition reference. If a concrete supported consumer requires that reference, the owning boundary
+must define and carry it explicitly ([semantic evolution
+rules](overview.md#semantic-evolution-and-support)).
 
 A `ControlledRevisionId` is carried only when the runtime was actually instantiated with an authoritative controlled-revision binding supplied by the owning revision/repository boundary.
 
@@ -189,10 +196,7 @@ Thus:
 
 ```text
 ModelFingerprint
-    mandatory semantic source identity
-
-EngineSemantics
-    mandatory result-affecting interpretation
+    mandatory source-model content fingerprint
 
 ControlledRevisionId
     optional historical occurrence identity

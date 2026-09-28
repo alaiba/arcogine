@@ -68,7 +68,7 @@ class ConformanceEvaluatorTest {
             for (byte b : hash) {
                 hex.append(String.format("%02x", b));
             }
-            return new ModelFingerprint("test-domain", "v1", "sha-256", hex.toString());
+            return new ModelFingerprint("test-domain", "sha-256", hex.toString());
         } catch (java.security.NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
@@ -84,7 +84,7 @@ class ConformanceEvaluatorTest {
     private static final ModelFingerprint NOT_APPLICABLE_FINGERPRINT =
             fingerprintOf(new DeclaredResource("press-1", -1));
     private static final ModelFingerprint OTHER_FINGERPRINT =
-            new ModelFingerprint("test-domain", "v1", "sha-256", "c0ffee");
+            new ModelFingerprint("test-domain", "sha-256", "c0ffee");
 
     private static final RequirementId REQUIREMENT_ID =
             new RequirementId("arc.test.declared-capacity-must-be-positive");

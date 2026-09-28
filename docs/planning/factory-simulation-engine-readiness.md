@@ -1,6 +1,6 @@
 # Factory Simulation Engine Readiness Implementation Plan
 
-> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine conformance, and a runtime that fixes one work-in-progress Engine interpretation are complete. Outward consumer convergence is retired as an objective — a future consumer is demand-triggered, not standing backlog. The Factory spatial record and its canonical form are implemented; spatial execution is not, and a model with a present spatial record is refused before any runtime state exists. The remaining transfer slices proceed in dependency order.
+> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine conformance, and a runtime that fixes the current Engine interpretation are complete. Outward consumer convergence is retired as an objective — a future consumer is demand-triggered, not standing backlog. The Factory spatial record and its canonical form are implemented; spatial execution is not, and a model with a present spatial record is refused before any runtime state exists. The remaining transfer slices proceed in dependency order.
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
 > **Related:** [Factory Design Capability](factory-design-capability.md), [session-control semantics](../architecture/engine-semantics.md#12-session-and-control-semantics), [unit-work decomposition semantics](../architecture/engine-semantics.md#3-unit-work-decomposition-semantics), [runtime observation/event contract](../architecture/runtime-contract.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Transfer Semantics Boundary Research](../research/investigations/transfer-semantics.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
@@ -85,11 +85,11 @@ the accepted derived-result arithmetic. The implementation also uses a wide exac
 
 ### Engine interpretation fixed per runtime
 
-The runtime establishes one `EngineSemantics` for every fresh and reset session. The supported
-value is the work-in-progress marker `engine-semantics:wip`; it is distinct from `ModelFingerprint`,
-`RunId`, and build identity, it names the current build's definition rather than an identity spanning
-development revisions, and any other name fails explicitly. Runtime observation/event provenance
-propagation remains separate admitted work and is not implied by this capability.
+Every fresh and reset session executes the repository's current Engine definition for its lifetime.
+Callers cannot select or mutate an alternative interpretation. The runtime exposes no placeholder
+Engine-definition identifier: `ModelFingerprint` remains source-model content provenance, `RunId`
+remains correlation, and any future exact Engine-definition reference is introduced only for a
+concrete supported boundary that requires it.
 
 ## 3. Current implementation queue
 
@@ -101,7 +101,7 @@ The former generic KPI implementation derived values from internal scheduler eve
 
 ### PLAN-ENG-5 — Spatial runtime consequences
 
-Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, the [Factory model](../architecture/factory-model.md), [Engine semantics](../architecture/engine-semantics.md), and the [current transfer-applicability boundary](../architecture/transfer-applicability.md) remain governing contracts. The work-in-progress Factory model carries an optional spatial record under one canonical form; the transfer boundary selects no transfer for a model without that record while preserving authored zero and refusal as distinct. The current Engine refuses present spatial content until spatial execution is implemented; the remaining slices make it executable without any successor Factory policy or Engine identity.
+Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, the [Factory model](../architecture/factory-model.md), [Engine semantics](../architecture/engine-semantics.md), and the [current transfer-applicability boundary](../architecture/transfer-applicability.md) remain governing contracts. The current Factory model carries an optional spatial record under one canonical form; the transfer boundary selects no transfer for a model without that record while preserving authored zero and refusal as distinct. The current Engine refuses present spatial content until spatial execution is implemented; the remaining slices make it executable without any successor Factory policy or Engine identity.
 
 The admitted sequence includes:
 
@@ -165,7 +165,7 @@ PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right.
 For identical explicit inputs, deterministic simulation semantics are scoped to:
 
 - the same published semantic model;
-- the same Engine interpretation (`EngineSemantics`, under one definition);
+- the same current Engine definition;
 - the same workload/commands;
 - the same seed/random inputs; and
 - any other explicit result-affecting input introduced by accepted semantics.
@@ -198,7 +198,7 @@ The following are not implementation items in this plan:
 - new advancement/session semantics without a concrete consumer failure case; and
 - unselected transport/recovery technology or protocol choices.
 
-Current architecture assigns the retained dispatch rules to the [Engine semantics](../architecture/engine-semantics.md). The concluded first-release research authorizes deliberate conformance to those rules, and no implementation task may silently change them; an intended change is an explicit specification and fixture change. The Engine interpretation is work in progress under the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support); planning itself must not create an exception to them in either direction.
+Current architecture assigns the retained dispatch rules to the [Engine semantics](../architecture/engine-semantics.md). The concluded first-release research authorizes deliberate conformance to those rules, and no implementation task may silently change them; an intended change is an explicit specification and fixture change. The Engine interpretation remains a current development definition under the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support); planning itself must not create an implicit identity, support commitment, or exception to those rules.
 
 PLAN-ENG-6 is admitted separately because its implementation contract is exact result equivalence for the current, already-pinned semantics.
 

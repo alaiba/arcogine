@@ -23,7 +23,11 @@ The current implementation is simulation-first and does not execute real-world c
 
 Governance durable fingerprint/revision history, semantic change/impact, requirement/assertion, initial conformance/finding contracts, and the headless evidence-use capability are implemented and authoritative. Operational work that needs those responsibilities must consume them rather than inventing substitutes. Governance authorization and Operational producer integration remain future dependencies where applicable.
 
-Engine runtime observation/event core/headless closure is also implemented. `RunId`, supported runtime observations/events, and `EngineSemantics` remain Engine-owned concepts. Distribution hardening and durable replay/reconnect remain separate future Engine work; Operational Execution must not assume they already exist.
+Engine runtime observation/event core/headless closure is also implemented. `RunId` and supported
+runtime observations/events remain Engine-owned concepts. No dedicated Engine-definition identifier
+is exposed today; if a future Operational use requires one, that reference remains Engine-owned and
+must be introduced by its owning contract. Distribution hardening and durable replay/reconnect remain
+separate future Engine work; Operational Execution must not assume they already exist.
 
 ## 2. Synthetic versus operational is not a global execution kind
 
@@ -76,7 +80,7 @@ It is not:
 RunId
 ModelFingerprint
 ControlledRevisionId
-EngineSemantics
+exact Engine-definition reference, if one is later introduced
 target identity
 actor identity
 deployment identity
@@ -393,7 +397,11 @@ Operational Execution does not turn `FactoryRuntime` into a production-control r
 
 The architectural pressure from Operational work is broader than simply adding a second command vocabulary. Domain-level operations and state-transition meaning should remain reusable across synthetic and externally grounded realization where the semantics genuinely match. Exactly where that reusable contract belongs — Factory, Engine, a lower shared domain, or only structural analogy — remains an open design question and must not be generalized prematurely.
 
-`EngineSemantics` remains Engine-owned. It names the result-affecting Engine interpretation for simulation, including future Engine-driven prediction or virtual-commissioning use where applicable. It is not a generic Arcogine execution-semantics identity, and while the interpretation is work in progress it is not durable cross-revision provenance.
+The result-affecting Engine interpretation remains Engine-owned for simulation, including future
+Engine-driven prediction or virtual-commissioning use where applicable. Arcogine currently exposes
+no dedicated identifier for that definition. If a concrete consumer later requires an exact
+Engine-definition reference, that reference remains Engine-owned and must not be generalized into a
+generic Arcogine execution-semantics identity.
 
 Current Engine runtime observation/event core/headless closure is complete. Operational Execution must not assume outstanding transport, retained-history, replay, reconnect, or distribution hardening merely because the headless contract exists.
 

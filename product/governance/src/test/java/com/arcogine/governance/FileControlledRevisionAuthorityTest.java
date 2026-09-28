@@ -5,7 +5,7 @@ import static com.arcogine.governance.GovernanceHistoryException.Code.FINGERPRIN
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_ARTIFACT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.MISSING_PARENT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.STORAGE_INTEGRITY;
-import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_ARTIFACT_POLICY;
+import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_ARTIFACT_FINGERPRINT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_STORE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -512,10 +512,10 @@ class FileControlledRevisionAuthorityTest {
     }
 
     @Test
-    void storeWrittenUnderOneWipDefinitionIsNeverReadUnderAnotherSharingItsMarker() throws IOException {
-        // Two development revisions of the Factory definition both publish factory-model:wip, so
-        // only the definition binding tells them apart. The store must fail closed before any of
-        // the earlier revision's records or artifacts are read, resolved or changed.
+    void storeWrittenUnderOneDefinitionBuildIsNeverReadUnderAnother() throws IOException {
+        // The content fingerprint does not identify an exact development definition build. The
+        // store binding does, and the store must fail closed before any earlier revision's records
+        // or artifacts are read, resolved or changed.
         SemanticArtifactVerifier earlierDefinition = boundTo("earlier-definition-build");
         SemanticArtifactVerifier laterDefinition = boundTo("later-definition-build");
         FactoryModelVersion version = version("Widget", 5);
@@ -553,19 +553,19 @@ class FileControlledRevisionAuthorityTest {
     }
 
     @Test
-    void discardedPolicyArtifactsAreRefusedBeforeAnyStoreMutation() throws IOException {
-        // Bytes laid out under a discarded ordinal policy are never admitted as, or reinterpreted
+    void discardedPrefixArtifactsAreRefusedBeforeAnyStoreMutation() throws IOException {
+        // Bytes laid out under a discarded ordinal prefix are never admitted as, or reinterpreted
         // into, current proving content.
         FactoryModelVersion version = version("Widget", 5);
         byte[] current = FactoryModelArtifact.encode(version);
         byte[] discardedPrefix = "arcogine.factory-model.v1\0".getBytes(StandardCharsets.US_ASCII);
-        int currentPrefix = "arcogine.factory-model.wip\0".getBytes(StandardCharsets.US_ASCII).length;
+        int currentPrefix = "arcogine.factory-model\0".getBytes(StandardCharsets.US_ASCII).length;
         byte[] discardedBytes = new byte[discardedPrefix.length + current.length - currentPrefix - 1];
         System.arraycopy(discardedPrefix, 0, discardedBytes, 0, discardedPrefix.length);
         System.arraycopy(
                 current, currentPrefix + 1, discardedBytes, discardedPrefix.length, current.length - currentPrefix - 1);
         ModelFingerprint discardedFingerprint = new ModelFingerprint(
-                "factory-model", "v1", "sha256", version.fingerprint().digest());
+                "factory-model", "sha256", version.fingerprint().digest());
         ControlledRevision candidate = revision(
                 id(15), discardedFingerprint, List.of(), Instant.parse("2026-09-01T18:00:00Z"));
         FileControlledRevisionAuthority authority = authorityAt(ACCEPTED_AT);
@@ -573,7 +573,26 @@ class FileControlledRevisionAuthorityTest {
         GovernanceHistoryException failure = assertThrows(
                 GovernanceHistoryException.class,
                 () -> authority.accept(candidate, new SemanticArtifact(discardedFingerprint, discardedBytes)));
-        assertEquals(UNSUPPORTED_ARTIFACT_POLICY, failure.code());
+        assertEquals(FINGERPRINT_MISMATCH, failure.code());
+        assertTrue(authority.revisions().isEmpty());
+        assertTrue(regularFiles(store().resolve("artifacts")).isEmpty());
+    }
+
+    @Test
+    void unsupportedFingerprintNamespaceIsRefusedBeforeAnyStoreMutation() throws IOException {
+        FactoryModelVersion version = version("Widget", 5);
+        ModelFingerprint unsupported =
+                new ModelFingerprint("other-model", "sha256", version.fingerprint().digest());
+        ControlledRevision candidate = revision(
+                id(17), unsupported, List.of(), Instant.parse("2026-09-01T18:00:00Z"));
+        FileControlledRevisionAuthority authority = authorityAt(ACCEPTED_AT);
+
+        GovernanceHistoryException failure = assertThrows(
+                GovernanceHistoryException.class,
+                () -> authority.accept(candidate, new SemanticArtifact(
+                        unsupported, FactoryModelArtifact.encode(version))));
+
+        assertEquals(UNSUPPORTED_ARTIFACT_FINGERPRINT, failure.code());
         assertTrue(authority.revisions().isEmpty());
         assertTrue(regularFiles(store().resolve("artifacts")).isEmpty());
     }

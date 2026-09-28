@@ -9,20 +9,21 @@ class ModelFingerprintTest {
 
     @Test
     void rendersCanonicalExternalForm() {
-        ModelFingerprint fingerprint = new ModelFingerprint("factory-model", "wip", "sha256", "a".repeat(64));
+        ModelFingerprint fingerprint = new ModelFingerprint("factory-model", "sha256", "a".repeat(64));
 
-        assertEquals("factory-model:wip:sha256:" + "a".repeat(64), fingerprint.toString());
+        assertEquals("factory-model:sha256:" + "a".repeat(64), fingerprint.toString());
     }
 
     @Test
     void rejectsBlankComponents() {
-        assertThrows(NullPointerException.class, () -> new ModelFingerprint(null, "wip", "sha256", "a".repeat(64)));
-        assertThrows(IllegalArgumentException.class, () -> new ModelFingerprint("factory-model", " ", "sha256", "a".repeat(64)));
+        assertThrows(NullPointerException.class, () -> new ModelFingerprint(null, "sha256", "a".repeat(64)));
+        assertThrows(IllegalArgumentException.class, () -> new ModelFingerprint("factory-model", " ", "a".repeat(64)));
+        assertThrows(IllegalArgumentException.class, () -> new ModelFingerprint("factory-model", "sha256", " "));
     }
 
     @Test
     void rejectsMalformedSha256Digest() {
-        assertThrows(IllegalArgumentException.class, () -> new ModelFingerprint("factory-model", "wip", "sha256", "A".repeat(64)));
-        assertThrows(IllegalArgumentException.class, () -> new ModelFingerprint("factory-model", "wip", "sha256", "a".repeat(63)));
+        assertThrows(IllegalArgumentException.class, () -> new ModelFingerprint("factory-model", "sha256", "A".repeat(64)));
+        assertThrows(IllegalArgumentException.class, () -> new ModelFingerprint("factory-model", "sha256", "a".repeat(63)));
     }
 }

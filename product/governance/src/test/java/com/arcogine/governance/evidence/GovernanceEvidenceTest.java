@@ -31,7 +31,6 @@ import com.arcogine.governance.requirement.RequirementId;
 import com.arcogine.governance.requirement.RequirementScope;
 import com.arcogine.governance.requirement.RequirementVersion;
 import com.arcogine.types.ControlledRevisionId;
-import com.arcogine.types.EngineSemantics;
 import com.arcogine.types.ModelFingerprint;
 import java.time.Instant;
 import java.util.List;
@@ -313,30 +312,29 @@ class GovernanceEvidenceTest {
     }
 
     @Test
-    void analyticalFixtureDoesNotStampMissingEngineSemantics() {
+    void analyticalFixtureDoesNotInventAnEngineDefinitionIdentifier() {
         EvidenceProvenance result = EvidenceProvenance.analytical(
-                MODEL, Optional.empty(), Optional.empty(), "result-1", Map.of("workload", "small"), Optional.empty());
+                MODEL, Optional.empty(), "result-1", Map.of("workload", "small"), Optional.empty());
+
         assertTrue(result.producerModelFingerprint().isPresent());
         assertTrue(result.producerOccurrence().isPresent());
-        assertTrue(result.engineSemantics().isEmpty());
-        EvidenceProvenance versioned = EvidenceProvenance.analytical(
-                MODEL, Optional.empty(), Optional.of(EngineSemantics.CURRENT), "result-2", Map.of(), Optional.empty());
-        assertEquals(EngineSemantics.CURRENT, versioned.engineSemantics().orElseThrow());
+        assertTrue(List.of(EvidenceProvenance.class.getRecordComponents()).stream()
+                .noneMatch(component -> component.getName().equals("engineSemantics")));
     }
 
     @Test
-    void developmentProvenanceStaysRecordedWhileItsInterpretationIsAVisibleGap() {
-        // A work-in-progress Engine marker names whichever definition produced the result; it does
-        // not resolve that definition after the interpretation changes, so reliance stays unestablished.
+    void developmentProvenanceStaysRecordedWhileExactEngineDefinitionIsAVisibleGap() {
+        // The producing build/occurrence can remain attributable even when no exact Engine
+        // definition reference was captured. That gap must remain explicit rather than filled by a
+        // development label.
         EvidenceProvenance analytical = EvidenceProvenance.analytical(
-                MODEL, Optional.empty(), Optional.of(EngineSemantics.CURRENT),
-                "earlier-result", Map.of("input", "1"), Optional.of("analysis:v1"));
+                MODEL, Optional.empty(), "earlier-result", Map.of("input", "1"), Optional.of("analysis:v1"));
         EvidenceReference result = new EvidenceReference("earlier-engine-build", "result-1", analytical);
         assertEquals("earlier-engine-build", result.sourceIdentity());
         assertEquals("earlier-result", result.provenance().producerOccurrence().orElseThrow());
         EvidenceApplicability unresolved = new EvidenceApplicability(
                 EvidenceApplicabilityStatus.NOT_ESTABLISHED,
-                "interpretation named only by a development marker that no longer resolves",
+                "exact Engine definition was not captured for this earlier result",
                 "historical attribution only");
         assertFalse(unresolved.isAdequate());
     }
@@ -489,7 +487,7 @@ class GovernanceEvidenceTest {
     }
 
     private static ModelFingerprint fingerprint(String suffix) {
-        return new ModelFingerprint("test", "v1", "sha256", suffix.repeat(64));
+        return new ModelFingerprint("test", "sha256", suffix.repeat(64));
     }
 
     private static final class NoopRevisionAuthority implements ControlledRevisionAuthority {

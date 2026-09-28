@@ -1,7 +1,6 @@
 package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,7 +17,6 @@ import com.arcogine.factory.model.spatial.ResourceFootprint;
 import com.arcogine.factory.model.spatial.ResourceLayout;
 import com.arcogine.factory.model.spatial.ResourcePlacement;
 import com.arcogine.factory.model.spatial.SpatialRecord;
-import com.arcogine.types.EngineSemantics;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import java.util.Arrays;
@@ -27,11 +25,8 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/**
- * Acceptance evidence for the Engine interpretation a runtime executes, and for the boundary
- * between Factory validity and Engine executability.
- */
-class EngineSemanticsAcceptanceTest {
+/** Acceptance evidence for the boundary between Factory validity and current Engine executability. */
+class FactoryRuntimeExecutabilityAcceptanceTest {
 
     private static FactoryModel productionRecords(Optional<SpatialRecord> spatial) {
         return new FactoryModel(
@@ -63,32 +58,9 @@ class EngineSemanticsAcceptanceTest {
     }
 
     @Test
-    void freshRuntimesExposeOneStableSupportedInterpretationIndependentOfRunIdentity() {
-        FactoryModelVersion version = model();
-        FactoryRuntime first = FactoryRuntime.forModel(version);
-        FactoryRuntime second = FactoryRuntime.forModel(version);
-
-        assertEquals(EngineSemantics.CURRENT, first.engineSemantics());
-        assertEquals("engine-semantics:wip", first.engineSemantics().toString());
-        assertEquals(first.engineSemantics(), second.engineSemantics());
-        assertNotEquals(first.runId(), second.runId());
-    }
-
-    @Test
-    void resetCreatesAFreshRunWithTheSameFixedInterpretation() {
-        FactoryRuntime original = FactoryRuntime.forModel(model());
-        FactoryRuntime reset = original.reset();
-
-        assertNotEquals(original.runId(), reset.runId());
-        assertEquals(original.engineSemantics(), reset.engineSemantics());
-        assertTrue(EngineSemantics.isSupported(reset.engineSemantics()));
-    }
-
-    @Test
-    void runtimeDoesNotExposeCallerSelectedOrMutableInterpretation() {
+    void runtimeDoesNotExposeAPlaceholderEngineSemanticsIdentifier() {
         assertTrue(Arrays.stream(FactoryRuntime.class.getMethods())
-                .filter(method -> method.getName().equals("forModel"))
-                .noneMatch(method -> Arrays.asList(method.getParameterTypes()).contains(EngineSemantics.class)));
+                .noneMatch(method -> method.getName().equals("engineSemantics")));
         assertTrue(Arrays.stream(FactoryRuntime.class.getMethods())
                 .noneMatch(method -> method.getName().equals("setEngineSemantics")));
     }
@@ -96,8 +68,8 @@ class EngineSemanticsAcceptanceTest {
     @Test
     void validSpatialContentIsRefusedBeforeAnyRuntimeStateExists() {
         // Present legal zero and positive magnitudes are both valid published designs, but the
-        // current Engine interpretation executes production records only. Neither is run as though
-        // its spatial record were absent, and no runtime is assembled.
+        // current Engine executes production records only. Neither is run as though its spatial
+        // record were absent, and no runtime is assembled.
         for (SpatialRecord spatial : List.of(spatial(0, 0), spatial(2, 1))) {
             FactoryModelVersion published = FactoryModelPublisher.publish(productionRecords(Optional.of(spatial)));
 

@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 class FactoryModelArtifactTest {
 
     private static final int PREFIX_LENGTH =
-            "arcogine.factory-model.wip\0".getBytes(StandardCharsets.US_ASCII).length;
+            "arcogine.factory-model\0".getBytes(StandardCharsets.US_ASCII).length;
     private static final int PRESENCE_OFFSET = PREFIX_LENGTH;
     private static final int HEADER_LENGTH = 4 * Long.BYTES;
 
@@ -46,13 +46,12 @@ class FactoryModelArtifactTest {
     }
 
     @Test
-    void onlyTheCurrentDefinitionIsSupportedAndDiscardedPoliciesAreNeverReinterpreted() {
+    void currentFingerprintShapeIsSupportedAndDiscardedPrefixesAreNeverReinterpreted() {
         String digest = publishedModel(Optional.empty()).fingerprint().digest();
 
-        assertTrue(FactoryModelArtifact.supports(new ModelFingerprint("factory-model", "wip", "sha256", digest)));
-        assertFalse(FactoryModelArtifact.supports(new ModelFingerprint("factory-model", "v1", "sha256", digest)));
-        assertFalse(FactoryModelArtifact.supports(new ModelFingerprint("factory-model", "v2", "sha256", digest)));
-        assertFalse(FactoryModelArtifact.supports(new ModelFingerprint("other-model", "wip", "sha256", digest)));
+        assertTrue(FactoryModelArtifact.supports(new ModelFingerprint("factory-model", "sha256", digest)));
+        assertFalse(FactoryModelArtifact.supports(new ModelFingerprint("other-model", "sha256", digest)));
+        assertFalse(FactoryModelArtifact.supports(new ModelFingerprint("factory-model", "sha512", digest)));
 
         byte[] current = FactoryModelArtifact.encode(publishedModel(Optional.empty()));
         byte[] discardedPrefix = "arcogine.factory-model.v1\0".getBytes(StandardCharsets.US_ASCII);
@@ -70,11 +69,12 @@ class FactoryModelArtifactTest {
 
         assertTrue(verifier.supports(version.fingerprint()));
         assertFalse(verifier.supports(new ModelFingerprint(
-                "factory-model", "v1", "sha256", version.fingerprint().digest())));
+                "other-model", "sha256", version.fingerprint().digest())));
         assertEquals(version.fingerprint(), verifier.fingerprint(canonicalBytes));
 
         // The binding is derived from the definition's compiled classes: stable within one build,
-        // and deliberately not the public marker, which does not change between revisions.
+        // and deliberately separate from the content fingerprint, which is not an exact definition
+        // reference.
         String binding = verifier.definitionBinding();
         assertTrue(binding.matches("factory-model-definition-build:sha256:[0-9a-f]{64}"), binding);
         assertEquals(binding, FactoryModelArtifact.verifier().definitionBinding());

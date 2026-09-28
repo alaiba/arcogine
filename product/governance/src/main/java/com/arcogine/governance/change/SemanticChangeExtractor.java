@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * Domain adapter SPI that produces domain-attributed {@link SemanticChange}s between two exact
- * semantic artifacts of the same fingerprint policy.
+ * semantic artifacts understood by the same domain comparison contract.
  *
  * <p>This is the seam that keeps Governance generic: {@code :governance} depends only on this
  * interface, never on a specific domain model. A domain module (e.g. {@code :factory}) implements
@@ -19,7 +19,7 @@ import java.util.List;
  */
 public interface SemanticChangeExtractor {
 
-    /** Whether this extractor understands artifacts encoded under the given fingerprint policy. */
+    /** Whether this extractor understands artifacts identified by the given fingerprint shape. */
     boolean supports(ModelFingerprint fingerprint);
 
     /**

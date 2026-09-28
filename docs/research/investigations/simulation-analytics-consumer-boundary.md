@@ -114,7 +114,9 @@ At minimum, classify each of:
 - active-period and other bottleneck inference;
 - run/attempt comparison;
 - retained supported-event history and analytics accumulator state;
-- `ModelFingerprint`, `EngineSemantics`, run/event-range, and analytical-definition provenance.
+- `ModelFingerprint`, run/event-range, analytical-definition provenance, and any exact
+  Engine-definition basis a concrete analytics claim actually requires; no placeholder Engine
+  identifier is assumed.
 
 ## Proving and failure cases
 

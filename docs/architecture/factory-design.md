@@ -140,7 +140,7 @@ FactoryRuntime
 
 These need not all become separate persistence entities or modules initially.
 
-Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is valid and gives it the `factory-model:wip` `ModelFingerprint` defined by the [Factory model specification](factory-model.md). Validity is not executability: the current Engine refuses a published model whose optional spatial record is present (§11.1). Publication creates an in-process snapshot, not a durable-use promise, and the snapshot is still not itself a **controlled revision** entity. Governance identity/history capability now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. Section 11 draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
+Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is valid and gives it the `factory-model:sha256:<digest>` `ModelFingerprint` defined by the [Factory model specification](factory-model.md). Validity is not executability: the current Engine refuses a published model whose optional spatial record is present (§11.1). Publication creates an in-process snapshot, not a durable-use promise, and the snapshot is still not itself a **controlled revision** entity. Governance identity/history capability now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. Section 11 draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
 
 ### 4.1 What belongs in the canonical model
 
@@ -394,16 +394,16 @@ authored facts are draft or adapter state, never published content; the definiti
 a present record complete and rejects anything else. Which combinations of records are valid is
 decided by the definition's own closed predicate, not by a separate combination registry.
 
-**Evolution before and after promotion.** The Factory definition is work in progress
-(`factory-model:wip`). Admitting a new record or variant, changing a value domain, predicate,
-rejection rule or canonical byte is a correction of the current definition: the specification, its
-golden vectors and dependent consumers change together, and fingerprints or artifacts produced under
-an earlier development revision are neither rederived nor migrated — they are disposable development
-material, and current readers refuse rather than reinterpret anything they cannot verify. Promotion
-is an explicit decision under the [semantic evolution rules](overview.md#semantic-evolution-and-support);
-after it, the promoted definition is fixed as a whole, an identity-defining change needs a
-distinguishable identity, and a controlled revision still binds exactly one fingerprint while
-lineage may span definitions without rewriting either artifact.
+**Evolution before and after promotion.** The Factory definition is under active development.
+Admitting a new record or variant, changing a value domain, predicate, rejection rule or canonical
+byte is a correction of the current definition: the specification, its golden vectors and dependent
+consumers change together, and fingerprints or artifacts produced under an earlier development
+revision are neither rederived nor migrated — they are disposable development material, and current
+readers refuse rather than reinterpret anything they cannot verify. Development status is not encoded
+in the fingerprint or canonical bytes. Promotion is an explicit decision under the [semantic
+evolution rules](overview.md#semantic-evolution-and-support); after it, the exact basis bound by the
+commitment is fixed, and a controlled revision still binds exactly one fingerprint while lineage may
+span definition changes without rewriting either artifact.
 
 **Exact references.** An aggregate may contain an exact immutable reference to an independently
 governed technical contract only when a concrete semantic dependency requires the reference itself
@@ -434,8 +434,9 @@ record until spatial execution is implemented. That selection is specific to the
 grammar, not a general rule that every future transfer lifecycle must be conditioned on authored
 duration inputs.
 
-**Support is separate from identity.** While the definition is work in progress it carries no
-obligation to read, execute, migrate or coexist with earlier development material. After promotion,
+**Support is separate from content fingerprinting.** The current development definition carries no
+obligation to read, execute, migrate or coexist with earlier development material merely by existing.
+After promotion,
 retaining the exact promoted definition, continuing publication, decoding, execution, migration and
 interoperability are separately scoped obligations the owning contract declares for the uses it
 accepts; nothing mandates eternal readers or permanent coexistence of two definitions. A named

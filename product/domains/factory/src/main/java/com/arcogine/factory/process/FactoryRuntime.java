@@ -9,7 +9,6 @@ import com.arcogine.factory.model.FactoryModelVersion;
 import com.arcogine.factory.model.FactoryRuntimeAssembler;
 import com.arcogine.factory.orders.Order;
 import com.arcogine.factory.orders.OrderExecutionView;
-import com.arcogine.types.EngineSemantics;
 import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
@@ -75,7 +74,6 @@ public class FactoryRuntime {
     private final RecordingScheduler scheduler;
     private final FactoryModelVersion modelVersion;
     private final RunId runId;
-    private final EngineSemantics engineSemantics;
     private final List<RuntimeEventEnvelope> pendingSupportedEvents = new ArrayList<>();
     private long eventSequence;
 
@@ -99,7 +97,6 @@ public class FactoryRuntime {
         this.scheduler = new RecordingScheduler();
         this.modelVersion = modelVersion;
         this.runId = RunId.create();
-        this.engineSemantics = EngineSemantics.requireSupported(EngineSemantics.CURRENT);
     }
 
     /**
@@ -126,15 +123,6 @@ public class FactoryRuntime {
     /** Opaque correlation identity for this fresh runtime session. */
     public RunId runId() {
         return runId;
-    }
-
-    /**
-     * The one Engine interpretation this runtime executes for its entire lifetime. While Engine
-     * semantics are work in progress this names the current build's definition; it is fixed for the
-     * session but is not an identity spanning development revisions.
-     */
-    public EngineSemantics engineSemantics() {
-        return engineSemantics;
     }
 
     /**

@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * The definite result every externally initiated {@link FactoryRuntime} command returns, per
- * docs/planning/factory-simulation-engine-readiness.md §7.2: accepted/rejected status; a stable
+ * {@code docs/architecture/engine-semantics.md} §1.2: accepted/rejected status; a stable
  * result/rejection code; an understandable diagnostic; affected-entity identifiers when
  * applicable; session/model provenance; and every event scheduled as a direct effect of the
  * command (empty for a rejection, since a rejected command must never leave partial mutation and
@@ -26,10 +26,10 @@ import java.util.List;
  * <p>A command that verified every rejectable precondition it can determine up front can still,
  * for {@link FactoryRuntime#setMachineAvailability}, trigger a dispatch cascade whose own
  * scheduling can fail after mutation has already started (full preflight safety for that cascade is
- * deliberately
- * not required by docs/architecture/engine-semantics.md section 1.2). §7.2 requires a definite
- * result even then -- an uncaught exception past the command boundary is not one -- so that case is
- * {@link Faulted}, not {@link Rejected}: unlike {@link Rejected}, which guarantees zero mutation,
+ * deliberately not required by {@code docs/architecture/engine-semantics.md} §1.2. That contract
+ * requires a definite result even then -- an uncaught exception past the command boundary is not
+ * one -- so that case is {@link Faulted}, not {@link Rejected}: unlike {@link Rejected}, which
+ * guarantees zero mutation,
  * {@link Faulted} means the command's own preconditions passed and its requested change was
  * genuinely applied, but the runtime then failed while carrying out the resulting work, after some
  * further mutation and/or partial event scheduling may already have happened.

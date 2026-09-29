@@ -46,10 +46,9 @@ import java.util.stream.Stream;
  * {@code FactoryHandler} is not exposed directly; observation happens through this type's own
  * read-only projections.
  *
- * <p>This class implements the consumer-neutral session-control boundary
- * (docs/planning/factory-simulation-engine-readiness.md §7): consumer-neutral session/control
- * semantics layered onto the exclusive {@link FactoryHandler}/{@link Scheduler} pair underlying
- * the runtime-boundary and multi-resource-dispatch criteria of the same readiness plan. {@link
+ * <p>This class implements the consumer-neutral session-control boundary defined in
+ * {@code docs/architecture/engine-semantics.md} §1.2: session/control semantics layered onto the
+ * exclusive {@link FactoryHandler}/{@link Scheduler} pair. {@link
  * #modelVersion()} identifies the published model the session was instantiated from throughout
  * its lifetime; {@link #advance()} and {@link #advanceUntil} give a caller both
  * one-event-at-a-time and bounded-simulated-time control; {@link #reset()} gives a caller a fresh
@@ -142,7 +141,7 @@ public class FactoryRuntime {
     /**
      * Submits one explicit production order and creates its execution job, under the same
      * acceptance/routing/dispatch semantics as any other accepted order, and returns a definite
-     * {@link CommandResult} per docs/planning/factory-simulation-engine-readiness.md §7.2.
+     * {@link CommandResult} per {@code docs/architecture/engine-semantics.md} §1.2.
      *
      * <p>On acceptance, {@link CommandResult.Accepted#value()} is the new {@link OrderId}. On
      * rejection (e.g. {@link SimError.OutOfRange} for an invalid quantity, {@link
@@ -198,7 +197,7 @@ public class FactoryRuntime {
      * CommandResult.Faulted#value()} still carries it, unlike a rejection, which never has one.
      * This method never lets such a failure propagate past its own boundary as a bare exception: it
      * always returns a definite {@link CommandResult}, per
-     * docs/planning/factory-simulation-engine-readiness.md §7.2.
+     * {@code docs/architecture/engine-semantics.md} §1.2.
      */
     public CommandResult<EventPayload.MachineAvailabilityChange> setMachineAvailability(
             MachineId machineId, boolean online) {

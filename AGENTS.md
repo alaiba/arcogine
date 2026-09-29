@@ -138,9 +138,11 @@ changes later.
 The mechanical checkers enforce recognizable cases deterministically by scanning tracked
 repository text (`git ls-files`, so generated/untracked/build output is never in scope):
 `.github/scripts/check-delivery-labels.mjs` rejects a `PLAN-*` or `REV-<N>` token outside
-`docs/planning/`, while `.github/scripts/check-transient-coordinates.mjs` rejects an exact full
-commit SHA paired with a concrete `workspace/...` artifact path in durable files. Neither checker
-attempts to infer semantic dependence from prose without a safe syntax signal. A `PLAN-*` or
+`docs/planning/`; `.github/scripts/check-transient-coordinates.mjs` rejects an exact full commit
+SHA paired with a concrete `workspace/...` artifact path in durable files; and
+`.github/scripts/check-source-authority-links.mjs` rejects product-source references to
+`docs/planning/`, `docs/research/`, or `workspace/research/`. These checkers do not attempt to
+infer semantic dependence from prose without a safe syntax signal. A `PLAN-*` or
 `REV-<N>` token outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the
 old ambiguous label forms it replaced (a bare `Gate` plus number, a bare letter-plus-number
 optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be reintroduced. Those old forms

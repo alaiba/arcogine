@@ -35,7 +35,7 @@ optional framework mappings / audit projection
 
 ### PLAN-GOV-1 — Durable fingerprint and controlled revision history — COMPLETE
 
-Provides the semantic-fingerprint seam, opaque historical revision identity, append-only history, lineage, recording provenance, and exact semantic-state resolution. The landed store is an explicitly disposable proving store over work-in-progress Factory content; a retained, commitment-bearing revision authority is introduced only with an explicit promotion under the [semantic evolution rules](../architecture/overview.md#semantic-evolution-and-support).
+Provides the semantic-fingerprint seam, opaque historical revision identity, append-only history, lineage, recording provenance, and exact semantic-state resolution. The Governance authority port is realized by [built-in Storage](../architecture/storage.md) within one Factory definition binding. Stronger retained historical support requires an explicit scoped declaration under the [semantic evolution rules](../architecture/overview.md#semantic-evolution-and-support).
 
 Downstream work must preserve the [Identity/History Compatibility Guard](governance-continuity.md).
 
@@ -120,10 +120,10 @@ still depend only on `:types`.
 Bounded by the Governance evidence contract §12: prove the contract with producer identities and provenance that actually
 exist, or with explicit fixtures at the owning seam, and state which provenance class is proved.
 
-- **Structural facts** are the implementation-backed class: a controlled revision accepted by the
-  proving store plus `ModelFingerprint` supply a real producer binding, and the model version is
-  the evidence's own provenance. The proving store is disposable development custody, not a retained
-  historical commitment.
+- **Structural facts** are the implementation-backed class: a controlled revision accepted through
+  built-in Storage plus `ModelFingerprint` supply a real producer binding, and the model version is
+  the evidence's own provenance. The current definition-bound support scope does not create a
+  cross-definition historical commitment.
 - **Arcogine-derived analytical results** may be proved through an explicitly attributed fixture
   carrying producer-owned `ModelFingerprint`, run/result identity, explicit inputs and any
   analytical-definition provenance the producer actually owns. `FactoryRuntime` exposes no

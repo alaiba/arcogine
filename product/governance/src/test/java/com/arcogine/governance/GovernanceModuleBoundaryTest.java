@@ -14,9 +14,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Structural evidence that {@code :governance} (and the requirement/assertion/catalogue
  * packages added by this slice) stays domain-neutral: it may only depend on {@code :types} in its
- * main source set. {@code :factory} may only be a {@code testImplementation} dependency (used to
- * prove the change-set/requirement-scope seam against a real domain, not to let production Governance code depend on
- * factory implementation classes).
+ * main source set. Cross-domain integration tests run in {@code :storage}; Governance does not
+ * depend on Factory or Storage in production or test source sets.
  */
 class GovernanceModuleBoundaryTest {
 

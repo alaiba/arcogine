@@ -35,6 +35,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Canonical production-system semantics, validation, publication, deterministic instantiation | [Factory design architecture](architecture/factory-design.md) / [Factory design plan](planning/factory-design-capability.md) | One published semantic model is the downstream source of truth |
 | Deterministic workload, work items, dispatch, session, supported observations/events, spatial consequences | [Engine readiness](planning/factory-simulation-engine-readiness.md) | Simulation runtime truth; not production-control semantics |
 | Semantic fingerprint/revision history, semantic change, requirements, conformance, evidence/governed change | [Governance architecture](architecture/governance-conformance.md) / [Governance plan](planning/governance-conformance-capability.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
+| Built-in persistent realization of controlled revisions | [Storage architecture](architecture/storage.md) / [Storage plan](planning/storage-capability.md) | Governance owns history meaning; Storage owns current local persistence and its support scope |
 | Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
 | Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
 | Playable factory-design product research | [Game product-research programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella only; lifecycle lives on focused questions such as strategy space and diagnostic evidence |
@@ -63,6 +64,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Architecture overview](architecture/overview.md) | Current design, modules, determinism and Events-State-Observations principles |
 | [Factory design](architecture/factory-design.md) | Cross-consumer factory-model/design lifecycle semantics |
 | [Governance and conformance](architecture/governance-conformance.md) | Revision/change/requirements/conformance/evidence/governed-change architecture |
+| [Storage](architecture/storage.md) | Public contract, built-in provider, local persistence guarantees and limits |
 | [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture |
 | [Engine semantics](architecture/engine-semantics.md) | Normative work-in-progress result-affecting Engine interpretation (ngine-semantics:wip) |
 | [Factory model](architecture/factory-model.md) | Normative work-in-progress Factory records, predicates and canonical/fingerprint byte grammar (actory-model:wip): production records plus an optional spatial record |
@@ -70,7 +72,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Standards alignment](architecture/standards-alignment.md) | Standards/interchange/conformance boundaries |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained manufacturing semantic mapping and deliberate divergences |
 | [Runtime contract](architecture/runtime-contract.md) | Supported observations, ordered authoritative runtime events, provenance and transport boundary |
-| [Controlled revisions](architecture/controlled-revisions.md) | Historical occurrence identity, lineage, provenance, acceptance and proving-store custody |
+| [Controlled revisions](architecture/controlled-revisions.md) | Historical occurrence identity, lineage, provenance and authority acceptance |
 | [Governance evidence](architecture/governance-evidence.md) | Evidence reference/use, applicability and immutable evaluation-basis contract |
 | [Operational continuity](architecture/operational-continuity.md) | Accountable operational continuation identity and continuity rules |
 | [External representations](architecture/external-representations.md) | Serialization, transport and industrial-interchange boundaries |
@@ -82,6 +84,8 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Research area index](research/README.md) | Navigation and authority map for research surfaces |
 | [Research operating model](development/researching.md) | Normative research rules: lifecycle, priority, promotion/reconciliation, investigation/review, evidence custody, synthesis seeds, decision-rationale retention, and register maintenance |
 | [Research register](research/research-register.md) | Current admitted research questions, priority, lifecycle state, evidence artifact, expected destination, and review date |
+| [Storage failure model](research/investigations/storage-failure-model.md) | READY question on stronger local durability, recovery and concurrency guarantees |
+| [Storage historical support](research/investigations/storage-historical-support.md) | READY question on exact resolution across format and definition changes |
 | [Synthesis seeds](research/synthesis-seeds.md) | Current retained non-authoritative cross-investigation synthesis signals |
 | [Research brief template](research/brief-template.md) | Reusable advisory failure-oriented planning structure for bounding research questions; it does not add `READY` criteria |
 | [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |
@@ -104,6 +108,7 @@ See [planning/README.md](planning/README.md) for the admission rule.
 | [Factory Simulation Engine readiness](planning/factory-simulation-engine-readiness.md) | Completed runtime core (outward consumer convergence retired as an objective) plus current spatial implementation queue |
 | [Spatial runtime consequences](planning/spatial-runtime-consequences.md) | Detailed accepted spatial/Engine-semantics implementation sequence |
 | [Governance/conformance capability](planning/governance-conformance-capability.md) | Landed Governance substrate and headless evidence-use capability; durable producer integrations and later authorization remain future work |
+| [Storage capability](planning/storage-capability.md) | Built-in controlled-revision storage slice and explicit stronger-support gaps |
 | [Governance identity/history compatibility guard](planning/governance-continuity.md) | Downstream implementation invariants over completed revision identity/history |
 | [Challenge delivery](planning/factory-design-game-challenge-readiness.md) | Closed headless challenge sequence and downstream invariants |
 | [Game consumer](planning/factory-design-game-consumer.md) | Settled ownership/integration boundary and playable implementation admission criteria |

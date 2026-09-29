@@ -24,7 +24,7 @@ of the canonical bytes, fingerprint, decoder dispatch, or provenance:
 - the fingerprint alone does not establish which development revision produced bytes. A raw decoder
   can establish only that bytes satisfy the current grammar, predicates, and canonical round-trip;
   any use that needs historical definition provenance must obtain that basis separately;
-- tests, golden vectors, in-process publication, persistence in a proving store and this normative
+- tests, golden vectors, in-process publication, physical persistence and this normative
   description do not establish a stability/support commitment. Such a commitment is an explicit
   owner decision under the [semantic evolution rules](overview.md#semantic-evolution-and-support).
 
@@ -324,10 +324,10 @@ historical provenance.
 
 Persisted development material that requires cross-revision protection is bound separately to the
 exact build of the definition that wrote it: the Factory artifact verifier's definition binding is a
-digest of the compiled classes that define the records, validation and canonical form, and a proving
-store refuses to reopen under a different binding. Such material is disposable proving evidence and
-is reset rather than migrated
-([controlled revisions](controlled-revisions.md#the-revision-record-does-not-choose-model-artifact-persistence)).
+digest of the compiled classes that define the records, validation and canonical form. Built-in
+[Storage](storage.md) refuses to reopen under a different binding without reinterpreting or deleting
+the accepted material. This does not supply a compatible historical reader or promote the Factory
+definition ([controlled revisions](controlled-revisions.md#the-revision-record-does-not-choose-model-artifact-persistence)).
 
 ## 6. Required test coverage
 

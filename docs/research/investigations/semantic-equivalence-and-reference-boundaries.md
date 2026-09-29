@@ -18,7 +18,7 @@ Arcogine use needs. A specification can remain normative without being made into
 versioned runtime object. Conversely, calling a technical token a label does not remove its current
 codec, digest, support-check, or provenance use. The current [Factory definition](../../architecture/factory-model.md),
 [Engine rules](../../architecture/engine-semantics.md), strict artifact checks, and
-[proving-store policy](../../architecture/controlled-revisions.md) remain the implementation baseline.
+[built-in Storage scope](../../architecture/storage.md) remain the implementation baseline.
 No field membership, ordering, normalization, fingerprint, dispatch behavior, storage policy, or
 supported input is changed by recording this framing.
 
@@ -114,7 +114,7 @@ validation or interpretation; behavior-preserving build changes; two independent
 implementations; an unavailable referenced schema; a specification referring to a moving dependency;
 an old result with a known build but missing inputs; and a partially implemented specification.
 Examine the current `ModelFingerprint`, the Engine's deliberate absence of a dedicated definition
-identifier, artifact-prefix/support checks, evidence provenance, and the proving store's
+identifier, artifact-prefix/support checks, evidence provenance, and built-in Storage's
 definition-build binding separately rather than introducing a replacement token by assumption.
 
 **Evidence and exit.** Inventory actual consumers and the information they must identify, resolve,

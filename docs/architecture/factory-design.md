@@ -398,8 +398,9 @@ decided by the definition's own closed predicate, not by a separate combination 
 Admitting a new record or variant, changing a value domain, predicate, rejection rule or canonical
 byte is a correction of the current definition: the specification, its golden vectors and dependent
 consumers change together, and fingerprints or artifacts produced under an earlier development
-revision are neither rederived nor migrated — they are disposable development material, and current
-readers refuse rather than reinterpret anything they cannot verify. Development status is not encoded
+revision are neither rederived nor migrated under the current development policy. Built-in Storage
+preserves accepted bytes but refuses a definition mismatch rather than reinterpreting or deleting
+them; current readers refuse anything they cannot verify. Development status is not encoded
 in the fingerprint or canonical bytes. Promotion is an explicit decision under the [semantic
 evolution rules](overview.md#semantic-evolution-and-support); after it, the exact basis bound by the
 commitment is fixed, and a controlled revision still binds exactly one fingerprint while lineage may

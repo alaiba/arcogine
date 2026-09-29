@@ -186,7 +186,7 @@ External AAS semantic IDs and asset identities remain distinct from Arcogine sem
 
 This policy does not select the physical persistence representation for authoritative controlled revisions or historical semantic artifacts.
 
-The Governance-owned authoritative revision persistence capability remains responsible for durable revision persistence, repository-level lineage integrity, and exact controlled-revision-to-semantic-state/artifact resolution.
+Governance owns controlled-revision meaning and the acceptance/resolution contract. [Arcogine Storage](storage.md) owns its current physical realization and integrity enforcement within the documented local support scope.
 
 A later implementation decision may choose JSON, binary storage, a database representation, content-addressed blobs, or another mechanism. That choice must preserve the already-fixed distinction between:
 

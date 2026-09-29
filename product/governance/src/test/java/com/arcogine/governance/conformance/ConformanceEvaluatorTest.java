@@ -96,7 +96,7 @@ class ConformanceEvaluatorTest {
     /**
      * Minimal in-memory {@link ControlledRevisionAuthority} test double, used only to exercise the
      * real controlled-revision-authority-binding contract ({@code resolve} throwing for anything never {@code
-     * accept}-ed) without depending on the filesystem-backed {@code FileControlledRevisionAuthority}.
+     * accept}-ed) without depending on built-in storage.
      */
     private static final class InMemoryControlledRevisionAuthority implements ControlledRevisionAuthority {
         private final Map<ControlledRevisionId, HistoricalRevision> accepted = new LinkedHashMap<>();

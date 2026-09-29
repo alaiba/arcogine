@@ -65,11 +65,11 @@ public final class ChangeSetFactory {
      * #fromAuthoritativeRevisions} is the applicable path.
      *
      * <p>Unlike an authoritative revision -- whose fingerprint-to-bytes binding is verified by
-     * the persistence-acceptance/resolution boundary ({@code FileControlledRevisionAuthority}) -- a candidate
+     * the {@link ControlledRevisionAuthority} acceptance/resolution boundary -- a candidate
      * snapshot is caller-supplied and never passes through that boundary. Before its declared
      * fingerprint is recorded as {@link ChangeSet#candidateFingerprint()}, {@code verifier} is used
      * to recompute the fingerprint from {@code candidateArtifact}'s own canonical bytes and confirm
-     * it matches the declared one, mirroring {@code FileControlledRevisionAuthority}'s verification
+     * it matches the declared one, mirroring the authority's verification
      * precedent so a caller cannot claim an untrue candidate identity.
      */
     public static ChangeSet fromCandidateSnapshot(

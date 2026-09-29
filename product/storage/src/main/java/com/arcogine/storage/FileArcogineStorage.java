@@ -1,4 +1,4 @@
-package com.arcogine.governance;
+package com.arcogine.storage;
 
 import static com.arcogine.governance.GovernanceHistoryException.Code.DUPLICATE_REVISION_ID;
 import static com.arcogine.governance.GovernanceHistoryException.Code.FINGERPRINT_MISMATCH;
@@ -9,6 +9,14 @@ import static com.arcogine.governance.GovernanceHistoryException.Code.STORAGE_IN
 import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_ARTIFACT_FINGERPRINT;
 import static com.arcogine.governance.GovernanceHistoryException.Code.UNSUPPORTED_STORE;
 
+import com.arcogine.governance.ControlledRevision;
+import com.arcogine.governance.ControlledRevisionAuthority;
+import com.arcogine.governance.GovernanceHistoryException;
+import com.arcogine.governance.HistoricalRevision;
+import com.arcogine.governance.RevisionProvenance;
+import com.arcogine.governance.RevisionRecorder;
+import com.arcogine.governance.SemanticArtifact;
+import com.arcogine.governance.SemanticArtifactVerifier;
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.ModelFingerprint;
 import java.io.ByteArrayInputStream;
@@ -44,21 +52,15 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Disposable development proving store for controlled revisions, backed by one filesystem
- * directory.
+ * Private filesystem realization of Arcogine's built-in controlled-revision storage.
  *
- * <p>The store proves the controlled-revision mechanics -- append-only acceptance, immutable
- * ID-to-record binding, lineage integrity, reopen across processes, atomic installation and exact
- * artifact resolution -- against the current development semantic definitions. It is not a
- * retained authority: what it accepts creates no stability, support, or compatibility commitment,
- * and it is bound to the exact definition build that created it, so after that definition changes
- * it is refused and must be reset rather than read under the new one. Retained,
- * commitment-bearing admission is introduced only by an explicit owner decision
- * (docs/architecture/overview.md, "Semantic evolution and support").
+ * <p>Acceptance, immutable ID bindings, lineage, recording provenance, and exact artifact
+ * resolution implement the Governance port. The current representation is bound to the producing
+ * definition build; a mismatch is refused without reinterpreting or deleting its contents.
  *
- * <p>The store declares its proving scope in a marker at its root, together with the {@link
- * SemanticArtifactVerifier#definitionBinding() definition binding} of the verifier that created it.
- * It initializes only an absent location, which it creates itself, and reopens only a directory
+ * <p>The legacy on-disk marker retains its original bytes for existing-root compatibility, together
+ * with the {@link SemanticArtifactVerifier#definitionBinding() definition binding} of the verifier
+ * that created it. It initializes only an absent location and reopens only a directory
  * whose marker names the same binding; any other location -- an existing empty directory, one
  * holding only names this store would use, a store written by an earlier layout, or one written
  * under a different definition build -- is refused before any revision or artifact is read, and
@@ -66,7 +68,7 @@ import java.util.Optional;
  * derived from the complete {@link ModelFingerprint}; the fingerprint identifies canonical content
  * in the current producing context and the physical key never escapes this adapter.
  */
-public final class FileControlledRevisionAuthority implements ControlledRevisionAuthority {
+final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAuthority {
 
     private static final byte[] STORE_MARKER =
             "arcogine-proving-revision-store\0".getBytes(StandardCharsets.US_ASCII);
@@ -86,7 +88,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     private final Clock clock;
     private final byte[] storeMarker;
 
-    private FileControlledRevisionAuthority(Path root, SemanticArtifactVerifier verifier, Clock clock) {
+    private FileArcogineStorage(Path root, SemanticArtifactVerifier verifier, Clock clock) {
         authorityRoot = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
         this.verifier = Objects.requireNonNull(verifier, "verifier");
         this.clock = Objects.requireNonNull(clock, "clock");
@@ -97,28 +99,22 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     }
 
     /**
-     * Opens the proving store at {@code root}. When {@code root} is absent this call creates it
-     * and initializes the store; an existing location is opened only if it already is a proving
-     * store written under {@code verifier}'s definition binding.
+     * Opens built-in storage at {@code root}. When {@code root} is absent this call creates it;
+     * an existing location is opened only if its private marker and definition binding match.
      *
      * <p>Within one process, concurrent openers of the same new location are serialized, so it is
      * initialized exactly once. An opener in another process that observes the location before its
      * initialization completes is refused and may retry. An initialization interrupted before its
-     * marker was written leaves a directory that is refused thereafter and must be removed.
+     * marker was written leaves a directory that remains refused pending explicit operator recovery.
      *
      * @throws GovernanceHistoryException with {@code UNSUPPORTED_STORE} when {@code root} exists
-     *     but is not a proving store -- including an empty directory or one holding only names this
+     *     but is not an owned store -- including an empty directory or one holding only names this
      *     store would use -- is one created under a different definition binding, or lacks the lock
      *     file its initialization created; nothing there is modified
      */
-    public static FileControlledRevisionAuthority openProvingStore(
-            Path root, SemanticArtifactVerifier verifier) {
-        return openProvingStore(root, verifier, Clock.systemUTC());
-    }
-
-    static FileControlledRevisionAuthority openProvingStore(
+    static FileArcogineStorage open(
             Path root, SemanticArtifactVerifier verifier, Clock clock) {
-        FileControlledRevisionAuthority authority = new FileControlledRevisionAuthority(root, verifier, clock);
+        FileArcogineStorage authority = new FileArcogineStorage(root, verifier, clock);
         // Ownership is never inferred from what an existing directory contains: the store owns a
         // location only because this opener created it atomically, or because it already carries
         // this definition's marker. An existing location is locked only through the lock file its
@@ -135,16 +131,20 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
                 try {
                     authority.requireOwned();
                 } catch (IOException e) {
-                    throw storageFailure("cannot open controlled revision proving store", e);
+                    throw storageFailure("cannot open controlled revision storage", e);
                 }
                 authority.withExclusiveLock(false, () -> {
                     authority.requireOwned();
-                    authority.createStoreDirectories();
                     return null;
                 });
             }
         }
         return authority;
+    }
+
+    @Override
+    public ControlledRevisionAuthority controlledRevisions() {
+        return this;
     }
 
     /** Atomically creates the root when it is absent and reports whether this opener created it. */
@@ -155,7 +155,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
                 Files.createDirectories(parent);
             }
         } catch (IOException e) {
-            throw storageFailure("cannot create the parent of the controlled revision proving store", e);
+            throw storageFailure("cannot create the parent of controlled revision storage", e);
         }
         try {
             Files.createDirectory(authorityRoot);
@@ -163,7 +163,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         } catch (FileAlreadyExistsException e) {
             return false;
         } catch (IOException e) {
-            throw storageFailure("cannot create controlled revision proving store", e);
+            throw storageFailure("cannot create controlled revision storage", e);
         }
     }
 
@@ -179,6 +179,9 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         byte[] actual = Files.readAllBytes(marker);
         if (!Arrays.equals(storeMarker, actual)) {
             throw isProvingStoreMarker(actual) ? definitionMismatch() : unsupportedStore();
+        }
+        if (!Files.isDirectory(revisionsDirectory) || !Files.isDirectory(artifactsDirectory)) {
+            throw unsupportedStore();
         }
     }
 
@@ -205,16 +208,16 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
     private GovernanceHistoryException definitionMismatch() {
         return new GovernanceHistoryException(
                 UNSUPPORTED_STORE,
-                "proving store was created under a different definition than "
+                "controlled revision storage was created under a different definition than "
                         + verifier.definitionBinding()
-                        + "; it is never reinterpreted and must be reset: "
+                        + "; it is never reinterpreted or deleted: "
                         + authorityRoot);
     }
 
     private GovernanceHistoryException unsupportedStore() {
         return new GovernanceHistoryException(
                 UNSUPPORTED_STORE,
-                "not a controlled-revision proving store; it is neither adopted nor modified: "
+                "not an owned controlled-revision store; it is neither adopted nor modified: "
                         + authorityRoot);
     }
 
@@ -316,7 +319,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
             writeAtomic(revisionPath, encodeRevision(accepted));
             return accepted;
         } catch (RuntimeException e) {
-            if (artifactCreated) {
+            if (artifactCreated && !Files.exists(revisionPath)) {
                 try {
                     Files.deleteIfExists(artifactPath);
                 } catch (IOException cleanupFailure) {
@@ -578,7 +581,7 @@ public final class FileControlledRevisionAuthority implements ControlledRevision
         } catch (NoSuchFileException e) {
             throw new GovernanceHistoryException(
                     UNSUPPORTED_STORE,
-                    "proving store has no lock file from its initialization; it is neither adopted nor"
+                    "controlled revision storage has no lock file from its initialization; it is neither adopted nor"
                             + " modified: "
                             + authorityRoot);
         }

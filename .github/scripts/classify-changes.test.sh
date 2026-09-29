@@ -23,6 +23,7 @@ check "docs-only" "docs/foo.md
 README.md" "backend=false,docs_only=true,"
 check "backend-only" "product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=true,docs_only=false,"
 check "governance backend" "product/governance/src/main/java/com/arcogine/governance/Foo.java" "backend=true,docs_only=false,"
+check "storage backend" "product/storage/src/main/java/com/arcogine/storage/Foo.java" "backend=true,docs_only=false,"
 check "docs mixed with backend" "docs/foo.md
 product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=true,docs_only=false,"
 check "CI workflow change forces executable surfaces" ".github/workflows/ci.yml" "backend=true,docs_only=false,"

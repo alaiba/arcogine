@@ -247,7 +247,7 @@ Authorization may be owned externally: Arcogine can produce the technical assess
 | Capability/qualification relations | Future orthogonal concept; not inferred from explicit eligibility |
 | Resource grouping or hierarchy | Future orthogonal concept; admitted only when it owns consequential behavior |
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
-| Structured executability validation | Shared Arcogine model/design capability |
+| Structured Factory model validation for publication | Arcogine canonical model |
 | Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; work-in-progress canonical form owned by the [Factory model](factory-model.md) |
 | Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see the [controlled revision contract](controlled-revisions.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
 | Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (governed-change and external-workflow integration), or an external change-management system referenced not depended on |

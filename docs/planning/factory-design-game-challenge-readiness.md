@@ -29,7 +29,7 @@ challenge evaluation
 attempt provenance / comparison
 ```
 
-Challenge rules may reject a canonically executable factory for budget/catalogue reasons. Challenge admission never proves Arcogine executability.
+Challenge rules may reject a Factory model valid for publication for budget/catalogue reasons. Challenge admission establishes neither Factory publication validity nor Engine executability.
 
 ## 2. Completed implementation sequence
 
@@ -89,7 +89,7 @@ Any consumer of the completed Challenge capability must preserve:
 
 - Challenge state and production runtime state remain separate;
 - game catalogue/economics do not enter the canonical Factory model;
-- admitted candidate does not imply canonically executable factory;
+- admitted candidate does not imply Factory publication validity or Engine executability;
 - canonical execution/outcome facts come from Arcogine, not Challenge reconstruction;
 - evaluation behavior is versioned by evaluation-policy identity;
 - attempts remain attributable to exact challenge/policy/input/outcome facts;

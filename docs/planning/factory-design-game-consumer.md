@@ -53,7 +53,7 @@ Playable/runtime-integrated work must not define missing Arcogine semantics unde
 
 ### Factory Design
 
-Consume the supported canonical model, executability validation, immutable publication, model identity/provenance, and deterministic runtime-instantiation boundary.
+Consume the supported canonical model, Factory model validation for publication, immutable publication, model identity/provenance, and deterministic runtime-instantiation boundary. Engine admission remains the authority for runtime executability.
 
 The game may keep an editor-specific mutable draft, but it must project only supported canonical facts at validation/publication time.
 
@@ -86,7 +86,8 @@ That substrate may be consumed by the eventual game, but its completion is not e
 | Challenge identity/rules, catalogue availability/prices, construction budget | Challenge layer |
 | Candidate admissibility | Challenge layer |
 | Evaluation policy, score/rating semantics, attempt history/comparison | Challenge layer |
-| Canonical production-system semantics and executability | Arcogine Factory Design |
+| Canonical production-system semantics and publication validity | Arcogine Factory Design |
+| Engine executability of a published model | Arcogine Engine/runtime |
 | Published model identity/version/provenance | Arcogine Factory Design / Governance where revision-bound |
 | Workload, work items, queues, dispatch, processing, transfers | Arcogine Engine/runtime |
 | Simulation clock and deterministic event ordering | Arcogine Engine/runtime |

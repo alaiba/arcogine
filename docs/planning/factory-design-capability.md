@@ -68,9 +68,9 @@ The model shape, validation and canonical form are complete (PLAN-ENG-5-A1 and P
 
 The canonical seam is implemented, including the optional spatial record.
 
-### PLAN-FD-2 — Executability validation
+### PLAN-FD-2 — Factory model validation for publication
 
-Current deterministic validation remains the implementation contract for admitted semantics, including the spatial-record predicates required by the [Factory model](../architecture/factory-model.md).
+Current deterministic validation remains the publication-validity contract for admitted Factory semantics, including the spatial-record predicates required by the [Factory model](../architecture/factory-model.md). Engine admission separately determines whether a published model is executable.
 
 A richer cross-consumer finding taxonomy is **not** an admitted implementation slice; it is tracked in [Factory Design Evolution Research](../research/investigations/factory-design-evolution.md).
 

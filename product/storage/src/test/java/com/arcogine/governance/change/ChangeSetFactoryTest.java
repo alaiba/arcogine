@@ -14,7 +14,8 @@ import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.governance.ControlledRevision;
-import com.arcogine.governance.FileControlledRevisionAuthority;
+import com.arcogine.governance.ControlledRevisionAuthority;
+import com.arcogine.storage.BuiltInStorage;
 import com.arcogine.governance.RevisionProvenance;
 import com.arcogine.governance.RevisionRecorder;
 import com.arcogine.governance.SemanticArtifact;
@@ -32,7 +33,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * End-to-end change-set/impact-scope tests: {@link ChangeSetFactory} against the real controlled-revision-authority persistence
- * boundary ({@link FileControlledRevisionAuthority}) and the real factory-domain semantic comparator
+ * boundary ({@link ControlledRevisionAuthority}) and the real factory-domain semantic comparator
  * ({@link FactoryModelSemanticComparator}) -- not test-only object injection.
  */
 class ChangeSetFactoryTest {
@@ -46,7 +47,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void comparesTwoAuthoritativeRevisionsThroughHistoricalResolution() {
-        FileControlledRevisionAuthority authority = authority();
+        ControlledRevisionAuthority authority = authority();
         ControlledRevision base = accept(authority, model(List.of(1)), List.of());
         ControlledRevision candidate = accept(authority, model(List.of(1, 2)), List.of(base.id()));
 
@@ -67,7 +68,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void equalSemanticFingerprintAcrossDistinctRevisionsYieldsNoSemanticChangesButDistinctIdentity() {
-        FileControlledRevisionAuthority authority = authority();
+        ControlledRevisionAuthority authority = authority();
         FactoryModelVersion f1 = model(List.of(1));
         FactoryModelVersion f2 = model(List.of(1, 2));
         ControlledRevision revisionA = accept(authority, f1, List.of());
@@ -91,7 +92,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void candidateSnapshotIsComparedWithoutBecomingAControlledRevision() {
-        FileControlledRevisionAuthority authority = authority();
+        ControlledRevisionAuthority authority = authority();
         ControlledRevision base = accept(authority, model(List.of(1)), List.of());
         FactoryModelVersion candidateVersion = model(List.of(1, 2));
         SemanticArtifact candidateArtifact =
@@ -117,9 +118,9 @@ class ChangeSetFactoryTest {
     @Test
     void candidateSnapshotWithFingerprintNotMatchingItsBytesIsRejected() {
         // A caller must not be able to claim a fingerprint for canonical bytes
-        // that don't actually produce it -- mirroring FileControlledRevisionAuthority's own
+        // that don't actually produce it -- mirroring ControlledRevisionAuthority's own
         // fingerprint-to-bytes verification precedent for authoritative artifacts.
-        FileControlledRevisionAuthority authority = authority();
+        ControlledRevisionAuthority authority = authority();
         ControlledRevision base = accept(authority, model(List.of(1)), List.of());
         FactoryModelVersion realCandidate = model(List.of(1, 2));
         FactoryModelVersion differentCandidate = model(List.of(1, 2, 3));
@@ -147,7 +148,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void candidateSnapshotWithUnsupportedFingerprintPolicyIsRejected() {
-        FileControlledRevisionAuthority authority = authority();
+        ControlledRevisionAuthority authority = authority();
         ControlledRevision base = accept(authority, model(List.of(1)), List.of());
         FactoryModelVersion candidateVersion = model(List.of(1, 2));
         SemanticArtifact candidateArtifact =
@@ -187,7 +188,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void candidateSnapshotWhoseFingerprintCannotBeComputedIsRejected() {
-        FileControlledRevisionAuthority authority = authority();
+        ControlledRevisionAuthority authority = authority();
         ControlledRevision base = accept(authority, model(List.of(1)), List.of());
         FactoryModelVersion candidateVersion = model(List.of(1, 2));
         SemanticArtifact candidateArtifact =
@@ -228,7 +229,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void externalChangeRequestReferenceSurvivesEndToEnd() {
-        FileControlledRevisionAuthority authority = authority();
+        ControlledRevisionAuthority authority = authority();
         ControlledRevision base = accept(authority, model(List.of(1)), List.of());
         ControlledRevision candidate = accept(authority, model(List.of(1, 2)), List.of(base.id()));
         ExternalChangeReference jiraRef = new ExternalChangeReference("jira", "ARC-42");
@@ -246,7 +247,7 @@ class ChangeSetFactoryTest {
 
     @Test
     void impactScopeIsUsableForFutureRequirementScopeMatching() {
-        FileControlledRevisionAuthority authority = authority();
+        ControlledRevisionAuthority authority = authority();
         ControlledRevision base = accept(authority, model(List.of(1)), List.of());
         ControlledRevision candidate = accept(authority, model(List.of(1, 2)), List.of(base.id()));
 
@@ -266,12 +267,12 @@ class ChangeSetFactoryTest {
         assertTrue(!changeSet.impactScope().intersects(unrelatedScope));
     }
 
-    private FileControlledRevisionAuthority authority() {
-        return FileControlledRevisionAuthority.openProvingStore(tempDirectory.resolve("store"), FACTORY_VERIFIER);
+    private ControlledRevisionAuthority authority() {
+        return BuiltInStorage.open(tempDirectory.resolve("store"), FACTORY_VERIFIER).controlledRevisions();
     }
 
     private ControlledRevision accept(
-            FileControlledRevisionAuthority authority,
+            ControlledRevisionAuthority authority,
             FactoryModelVersion version,
             List<ControlledRevisionId> parents) {
         ControlledRevision candidate =

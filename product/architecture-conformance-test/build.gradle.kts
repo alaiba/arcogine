@@ -6,6 +6,7 @@
 dependencies {
     testImplementation(project(":types"))
     testImplementation(project(":factory"))
+    testImplementation(project(":storage"))
     testImplementation(project(":finance"))
 
     testImplementation("com.tngtech.archunit:archunit-junit5:1.5.0")

@@ -284,8 +284,9 @@ decision; it must not reinterpret the point-identity rule as though a continuati
 A headless evidence-capable implementation may prove the generic reference/use/occurrence contract
 using producer identities and provenance that actually exist, or explicit fixtures at the owning
 seam. Structural facts have a landed producer binding (fingerprint plus a controlled revision
-accepted by the proving store), proven for development use only; no retained revision authority has
-been declared. The Engine runtime intentionally exposes no placeholder exact-definition identifier.
+accepted through the built-in [Storage](storage.md) boundary), proven within its current
+definition-bound scope; stronger retained historical support has not been declared. The Engine
+runtime intentionally exposes no placeholder exact-definition identifier.
 If a future evidence use requires exact Engine-definition provenance, that remains an explicit gap
 until the producer owns and exposes such a basis. Operational observation identity, correspondence,
 and trust are not implemented; analytical-definition provenance ownership is unresolved; durable

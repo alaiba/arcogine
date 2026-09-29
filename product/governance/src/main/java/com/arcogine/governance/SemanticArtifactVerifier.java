@@ -13,7 +13,7 @@ public interface SemanticArtifactVerifier {
      * An opaque token naming the exact definition build this verifier checks artifacts against.
      *
      * <p>A content fingerprint does not identify the exact development revision of its canonical
-     * definition. A proving store records this token when it is created and refuses to reopen under
+     * definition. Built-in storage records this token when it is created and refuses to reopen under
      * any other, so material written under one definition build is never interpreted under another.
      * The token is build context, never semantic identity: it does not participate in fingerprints,
      * revisions or comparison.

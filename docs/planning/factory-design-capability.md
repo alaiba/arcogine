@@ -43,7 +43,7 @@ The following are implemented and must be preserved:
 - the current Factory canonical form and one aggregate `factory-model:sha256:<digest>` fingerprint under the [Factory model specification](../architecture/factory-model.md), deterministic for one definition and carrying no development-status or exact-definition identifier;
 - runtime instantiation only from a published model, with present spatial content refused by the current Engine before any runtime state exists;
 - runtime/result attribution to the source model's fingerprint;
-- Governance-owned controlled revision identity/history independently of Factory fingerprint identity, currently in a disposable proving store;
+- Governance-owned controlled revision identity/history independently of Factory fingerprint identity, realized through built-in Storage within one definition binding;
 - semantic comparison of factory resources, operations, and products through the Governance semantic-change seam, with coarse attribution of spatial-record changes.
 
 Current `ConfiguredResource` remains the supported complete configured-resource representation. [Factory Resource Semantics](../architecture/factory-resource-semantics.md) records the concluded interpretation and keeps the definition/installed-instance split **out of implementation**: repetition, catalogue reuse, or equal values are not sufficient triggers. Revisit only if an independently identified reusable technical specification must carry a checkable cross-consumer contract or dependency that complete configured-resource records cannot preserve.

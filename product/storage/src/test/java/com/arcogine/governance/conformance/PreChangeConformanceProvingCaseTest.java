@@ -13,7 +13,8 @@ import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.governance.ControlledRevision;
-import com.arcogine.governance.FileControlledRevisionAuthority;
+import com.arcogine.governance.ControlledRevisionAuthority;
+import com.arcogine.storage.BuiltInStorage;
 import com.arcogine.governance.RevisionProvenance;
 import com.arcogine.governance.RevisionRecorder;
 import com.arcogine.governance.SemanticArtifact;
@@ -62,8 +63,8 @@ class PreChangeConformanceProvingCaseTest {
 
     @Test
     void preChangeCandidateIsEvaluatedAgainstRequirementsAffectedByItsRealImpactScope() {
-        FileControlledRevisionAuthority authority =
-                FileControlledRevisionAuthority.openProvingStore(tempDirectory.resolve("store"), FACTORY_VERIFIER);
+        ControlledRevisionAuthority authority =
+                BuiltInStorage.open(tempDirectory.resolve("store"), FACTORY_VERIFIER).controlledRevisions();
         FactoryModelVersion baseModel = model(List.of(1));
         FactoryModelVersion candidateModel = model(List.of(1, 2));
         ControlledRevision base = accept(authority, baseModel, List.of());
@@ -144,7 +145,7 @@ class PreChangeConformanceProvingCaseTest {
     }
 
     private ControlledRevision accept(
-            FileControlledRevisionAuthority authority,
+            ControlledRevisionAuthority authority,
             FactoryModelVersion version,
             List<ControlledRevisionId> parents) {
         ControlledRevision candidate =

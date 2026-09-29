@@ -1,10 +1,12 @@
 # Arcogine — Concepts
 
-This page describes the retained Factory and Engine capabilities. See the [Product Charter](charter.md) for Arcogine's enduring product direction.
+This page describes retained Factory, Engine, Governance and Storage capabilities. See the [Product Charter](charter.md) for Arcogine's enduring product direction.
 
 ## Current capability
 
 Arcogine currently provides a headless, deterministic factory model and runtime. It has no outward application or interactive experiment loop; executable evidence lives in tests, conformance checks, and benchmarks.
+
+Governance can accept controlled historical revisions with distinct occurrence identities and resolve their exact accepted Factory artifacts. [Arcogine Storage](../architecture/storage.md) supplies the built-in persistent realization behind Governance's authority contract. Its current local support scope binds a root to one Factory definition build; it refuses a different binding without deleting the stored information. This does not make Factory or Engine definitions stable release contracts.
 
 The canonical **Factory model** describes products, operations, configured resources, and eligible-resource relationships, and may carry an authored spatial layout that the current Engine does not yet execute. A validated model can be published as an immutable, fingerprinted version. A **FactoryRuntime** instantiates that version and executes explicit production workload under one Engine interpretation. Both the model's canonical form and the Engine semantics are work in progress until explicitly promoted.
 

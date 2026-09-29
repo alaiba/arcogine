@@ -95,6 +95,8 @@ UX complexity, permissions, information density, and available actions should fo
 
 **Causality and provenance.** Arcogine should make it possible to understand what happened, why, under which model or configuration, based on what observations, because of which decision, and by which human, policy, agent, or external authority.
 
+**Core capabilities can drive foundations.** Governance and verification may impose concrete requirements for identity, provenance, history, authority, and integrity before an outward experience exists. Invest early when deferral would make correctness costly or impossible to recover. Each investment still needs a named requirement, an owning capability, bounded responsibility, and observable acceptance evidence; a possible future use alone is insufficient.
+
 **Humans and agents participate in the same governance model.** Human users and autonomous decision-makers should ultimately act through explicit capabilities, authority, constraints, and accountable decisions — neither is a special case exempt from the other's rules.
 
 **Safety scales with consequence.** Exploration in simulation can be permissive. Actions affecting real production require proportionate controls around authority, validation, approval, failure handling, auditability, and reversibility. This charter does not prescribe the concrete mechanisms — that is architecture and implementation work, done later, under this principle.

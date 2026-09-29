@@ -178,15 +178,15 @@ record of an exact basis:
    changes under it.
 3. **Current technical values are not exact cross-revision definition references.** A Factory
    content fingerprint does not identify the exact definition revision that produced it, and the
-   current Engine has no dedicated definition identifier. Current proving stores bind their contents
-   separately to the definition build that wrote them, refuse a mismatching binding, and are reset
-   rather than migrated. A raw decoder enforces its current grammar and predicates. No reader may
+   current Engine has no dedicated definition identifier. Current built-in Storage binds its contents
+   separately to the definition build that wrote them and refuses a mismatching binding without
+   reinterpretation or deletion. A raw decoder enforces its current grammar and predicates. No reader may
    claim historical meaning that its available basis does not establish.
 4. **Nothing creates a support commitment by accident.** Tests, golden vectors, in-process
-   publication, implementation landing, persistence in a proving store, an internal file write, and
-   a normative description of current behavior do not create a retained stability/support promise.
-   Proving authorities declare disposable custody; retained, commitment-bearing admission requires
-   an explicit owner declaration.
+   publication, implementation landing, physical persistence, an internal file write, and a
+   normative description of current behavior do not create a retained stability/support promise.
+   Storage's product status and a payload definition's support status are separate; retained,
+   commitment-bearing admission requires an explicit owner declaration.
 5. **Promotion is an explicit owner decision tied to a concrete stability/support need.** It
    identifies the exact definition through an unambiguous stable reference and states the supported
    uses and consumers, retained basis, and obligations. Any human-readable label is optional and gets
@@ -227,7 +227,7 @@ rationale](/docs/history/decisions/2026-09-25-provisional-semantic-contract-rese
 These describe today's implementation choices. They are not claims about Arcogine's permanent identity — see the Product Charter's [product boundaries](/docs/product/charter.md#9-what-arcogine-is-not) for why Java, current interfaces, and the current deployment model are implementation choices rather than product identity, subject to change as the product grows toward the full lifecycle described there.
 
 1. Core simulation is written in Java with a **Java 21 language/API/bytecode compatibility baseline**. The preferred devcontainer currently uses JDK 25, and CI runs on JDK 21 to prove the supported floor; the compiler JDK and compatibility baseline are deliberately separate concerns.
-2. The headless simulation core is the entire current implementation; there is presently no UI, HTTP API, or CLI product surface consuming it. Retained executable evidence is tests, conformance checks, and benchmarks. This describes today's layering, not a permanent claim that Arcogine's mature product surface has no outward consumer — a future one is introduced from the then-current supported runtime contract when a concrete product need exists (see [runtime contract](runtime-contract.md)).
+2. The current implementation is headless: Factory, Engine, Governance, Storage, Challenge and Finance have no UI, HTTP API, or CLI product surface consuming them. Retained executable evidence is tests, conformance checks, and benchmarks. This describes today's layering, not a permanent claim that Arcogine's mature product surface has no outward consumer — a future one is introduced from the then-current supported runtime contract when a concrete product need exists (see [runtime contract](runtime-contract.md)).
 3. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls (see [SECURITY.md](/.github/SECURITY.md)).
 
 ## Architectural implications of the Product Charter
@@ -491,6 +491,7 @@ product/
 ├── types/                Shared typed IDs, time, quantities, and errors
 ├── governance/           Controlled revisions, semantic change, requirements,
 │                         conformance, and evidence-use capabilities
+├── storage/              Built-in persistence of controlled-revision history
 ├── simulation/           Deterministic event scheduler and EventHandler contract
 ├── domains/
 │   ├── factory/          Canonical model, runtime, machines, orders, jobs, routing
@@ -508,14 +509,15 @@ types ← simulation ← factory
                     ← finance
 
 types ← governance ← factory
+types, governance ← storage
 
 challenge (independent game-owned boundary)
 
 challenge-factory-integration-test ← types, factory, challenge (test-only)
-architecture-conformance-test ← types, factory, finance (test-only)
+architecture-conformance-test ← types, factory, finance, storage (test-only)
 ```
 
-Governance depends on `types`; Factory depends on the narrow Governance ports it implements. Challenge remains independent of the production simulation and domain modules; the test-only Challenge–Factory integration module proves that canonical Factory executability and Challenge admissibility are independent validation axes without either module depending on the other. The architecture-conformance module scans current production sources to protect retained Factory and Finance ownership rules.
+Governance depends on `types`; Factory depends on the narrow Governance ports it implements. Storage depends on `governance` and `types` to realize the revision authority without either semantic owner depending on its implementation. Challenge remains independent of the production simulation and domain modules; the test-only Challenge–Factory integration module proves that canonical Factory executability and Challenge admissibility are independent validation axes without either module depending on the other. The architecture-conformance module scans current production sources to protect retained ownership rules.
 
 ## Event Dispatch Architecture
 
@@ -616,15 +618,32 @@ The supported runtime observation/event contract supplies opaque per-runtime `Ru
 source-model `ModelFingerprint` on `RuntimeObservation`. It does not currently invent an Engine
 definition identifier; exact Engine-definition provenance remains a separately triggered concern.
 
-`:types` provides the opaque UUIDv4 `ControlledRevisionId` value model, and `:governance` provides the immutable `ControlledRevision`, lineage, and recording-provenance values fixed by the [controlled revision contract](controlled-revisions.md). `ControlledRevisionAuthority` defines the acceptance/lookup/resolution boundary, and `accept(...)` returns the immutable accepted record after the authority establishes its `recordedAt` at the commit boundary rather than trusting the candidate's timestamp. The current `FileControlledRevisionAuthority` is a disposable development **proving store**: it declares that scope and the exact definition binding at its root, refuses to reopen under a changed definition build, never adopts or modifies a location it did not create, persists append-only revision records and semantic artifacts across process/reopen boundaries, rejects duplicate/rebound IDs, requires an already-accepted parent under the current `0..1` lineage policy, verifies the supplied canonical artifact reproduces the revision's `ModelFingerprint`, and atomically installs the revision record under process/filesystem locking. Resolution returns the accepted revision together with its exact semantic artifact; missing/corrupt metadata or artifacts, fingerprint mismatches and artifacts of unsupported definitions fail explicitly rather than falling back to current model state. No retained, commitment-bearing revision authority exists without an explicit stability/support declaration.
+`:types` provides opaque UUIDv4 `ControlledRevisionId`; `:governance` owns the immutable
+`ControlledRevision`, lineage and recording-provenance values and the
+`ControlledRevisionAuthority` acceptance/resolution port. `:storage` implements that port through
+the public `ArcogineStorage` contract and `BuiltInStorage.open` composition point. Its concrete
+filesystem implementation is private. Successful acceptance fixes the ID, fingerprint, lineage,
+artifact and authority-owned recording time; duplicate IDs fail. Resolution recovers the exact
+accepted artifact rather than current model state. [Storage](storage.md) owns the implemented
+opening, integrity, concurrency and durability scope; [controlled revisions](controlled-revisions.md)
+owns historical meaning.
 
-Here, *disposable* describes the declared retention/support scope, not volatile storage: the
-proving store persists data to exercise revision acceptance, lineage, integrity, and reopen
-behavior. Its definition-build binding is a conservative compatibility check, not a proof of
-semantic equivalence; the current reset policy does not establish that all future migrations must
-be forbidden.
+The current built-in provider retains the legacy on-disk representation privately and refuses
+foreign, incomplete or differently definition-bound roots without adopting or deleting them. The
+Factory `SemanticArtifactVerifier` supplies a conservative compiled-definition binding and checks
+canonical bytes and fingerprints. That binding is not an exact semantic-definition archive or a
+proof of cross-build equivalence. Factory and Engine meanings remain development definitions;
+product-owned physical storage does not promote them or promise historical interpretation after a
+definition change. Distinct revisions can share one fingerprint and artifact, including the
+`F1 -> F2 -> F1` rollback case, without becoming the same occurrence.
 
-The proving store reuses the current Factory canonical bytes as its semantic artifact. `FactoryModelArtifact` strictly decodes and canonical-reencodes those bytes to reconstruct the exact `FactoryModelVersion`, while the Governance store remains artifact-policy-agnostic through `SemanticArtifactVerifier`. Distinct revisions may therefore share one `ModelFingerprint` and one artifact — including the `F1 -> F2 -> F1` rollback case — without becoming the same historical occurrence. The filesystem record layout and locking mechanics are replaceable adapter details, not a selected production persistence architecture. The Governance semantic change/impact capability provides the generic `ChangeSet`/`SemanticChange`/`ImpactScope` contract in `:governance`, and the factory-domain `FactoryModelSemanticComparator` implements `SemanticChangeExtractor` for current Factory artifacts, keyed on stable domain identity while still attributing a semantically significant top-level list reorder (semantic under the [Factory model](factory-model.md)) as a real change, and reporting any spatial-record addition, removal or change coarsely against the model's spatial-record entity. The requirements/assertions capability adds the generic `Requirement`/`Assertion`/`RequirementCatalogue` contract in `:governance`, whose `RequirementScope` matches directly against the `ImpactScope` seam. The conformance evaluation/findings capability adds the generic `ConformanceResult`/`ConformanceEvaluation`/`Finding` contract and the deterministic `ConformanceEvaluator` in `com.arcogine.governance.conformance`, which evaluates a `Requirement`/`Assertion` pair against a model fingerprint (and an optional, never-synthesized `ControlledRevisionId`) without introducing authorization or deployment concepts; evidence references, evidence use, and evidence-backed conformance follow the [Governance evidence contract](governance-evidence.md). Approval/authorization, deployment, external change-management relationships, labels/tags/branches, and multi-parent merge semantics remain later Governance concerns, separate from revision identity.
+The Governance semantic change/impact capability provides `ChangeSet`/`SemanticChange`/`ImpactScope`
+in `:governance`; Factory's `FactoryModelSemanticComparator` implements the domain comparison port.
+Governance also owns requirements/assertions, deterministic conformance evaluation, evidence
+references and evidence use. The headless evidence acceptance boundary remains in memory; Storage
+does not yet persist evaluation or evidence history. Approval, authorization, deployment, external
+change-management relationships, labels/tags/branches and multi-parent merge semantics remain
+later Governance concerns.
 
 ## Outward Adapters
 

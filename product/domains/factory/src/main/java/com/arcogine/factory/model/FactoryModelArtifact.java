@@ -44,7 +44,7 @@ public final class FactoryModelArtifact {
 
     /**
      * The Governance verifier for current Factory artifacts. Its definition binding names the exact
-     * build of the current definition, so a proving store written under an earlier development
+     * build of the current definition, so built-in storage written under an earlier development
      * revision is refused rather than read under this one. The binding is separate because a
      * content fingerprint does not identify the exact definition build that produced it.
      */

@@ -48,8 +48,7 @@ identify the claim's referent and classify it:
 Under this policy, explicit promotion establishes a declared stability/support commitment; it
 neither creates content identity nor supplies evidence of persistence, traceability, or
 reproducibility. Existing occurrence non-rebinding and the duty to account for undeclared reliance
-remain applicable. For example, an in-process `FactoryModelPublisher.publish` call and a revision store opened
-over a temporary directory are capabilities, not accepted use, and golden vectors are fulfilment
+remain applicable. For example, an in-process `FactoryModelPublisher.publish` call and a built-in storage instance opened over a temporary directory are capabilities, not accepted use, and golden vectors are fulfilment
 evidence for the current definition, not a promise that it will not change. Custody is what an
 authority declares, not where it happens to be used: a path name, test label or later deletion neither
 proves disposability nor creates retention. When a claim's referent cannot be found, say what was
@@ -92,8 +91,8 @@ accounting for what was already accepted; it never promotes the contracts involv
 ## Review evidence proportionate to each promise
 
 Use canonical-byte vectors and strict rejection cases for fingerprint reproduction within a
-definition; refusal cases for discarded or foreign input; custody-declaration and no-adoption cases for
-proving stores; reopen/corruption/old-definition cases for retained history once it exists;
+definition; refusal cases for discarded or foreign input; custody-declaration, no-adoption, reopen, corruption, and definition-mismatch cases for
+built-in Storage; stronger historical-retention cases when a scoped commitment is declared;
 supported-input, interaction and rejection fixtures for Engine semantics; boundary-only clients and
 unknown-version/upgrade cases for interchange; and authority, failure and gap evidence proportionate
 to consequential use. A serializer, marker constant, declaration or green unrelated test is not that
@@ -115,7 +114,7 @@ question.
 | --- | --- |
 | Development-definition correction | The specification, vectors or fixtures and dependents change together. Earlier development artifacts are refused or reset, never migrated or reinterpreted merely because their current technical shape still parses. |
 | Durability claim | Identify the referent — capability, accepted use, promise, fulfilment evidence or cost preference. Specify the claimed property and scope separately; promotion establishes a declared stability/support commitment, not all the other properties. |
-| Proving persistence | A proving store may survive reopen, but it declares disposable custody and is bound to the exact definition build that wrote it, so it refuses to reopen under another. Persisting development content there creates no stability, support, or compatibility promise, and it never adopts a location it did not create. |
+| Built-in storage | Product-owned Storage persists accepted revisions within one definition binding and refuses a mismatched or foreign root without reinterpretation, adoption, or deletion. This does not by itself promote the payload definition or establish cross-definition historical support. |
 | Accidental retention | Development material found retained or relied on outside a declared custody is a defect: stop further admission, preserve what was accepted and the definition it used as far as evidence allows, and decide explicitly. It is neither silently rewritten nor treated as a promotion. |
 | Promoted definition correction | A materially changed definition never replaces the definition behind an existing stable promotion reference. Continue development without that commitment or, if a later support commitment accepts the changed definition, bind a distinct stable reference. Neither step requires a new shared semantic entity or human-readable name. |
 | Historical artifact after evolution | For a promoted definition, retain the exact revision → fingerprint → definition/artifact basis the accepted use requires and never resolve it against current state. Equal content can recur in a distinct revision. |

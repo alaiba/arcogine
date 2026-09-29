@@ -9,7 +9,7 @@ Arcogine is building toward purpose-built ways to design, understand, simulate, 
 
 ## What is Arcogine today?
 
-Today, the retained implementation centers on Factory Design, a deterministic FactoryRuntime and Engine, Governance/conformance, the Challenge consumer, and Finance's financial interpretation of completed orders. FactoryRuntime executes explicit production workload from a published model version and exposes supported observations and runtime events. It does not currently provide an interactive application or experiment loop.
+Today, the retained implementation centers on Factory Design, a deterministic FactoryRuntime and Engine, Governance/conformance, built-in Storage for controlled revisions, the Challenge consumer, and Finance's financial interpretation of completed orders. FactoryRuntime executes explicit production workload from a published model version and exposes supported observations and runtime events. It does not currently provide an interactive application or experiment loop.
 
 Repeated runs with the same model version, Engine semantics, and explicit commands produce identical outputs. **New to Arcogine?** Read [Concepts](docs/product/concepts.md) for the current retained capabilities.
 

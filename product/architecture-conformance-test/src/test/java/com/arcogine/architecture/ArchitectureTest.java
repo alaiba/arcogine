@@ -31,6 +31,24 @@ import com.tngtech.archunit.lang.ArchRule;
 class ArchitectureTest {
 
     @ArchTest
+    static final ArchRule governance_and_factory_do_not_depend_on_storage = noClasses()
+            .that()
+            .resideInAnyPackage("com.arcogine.governance..", "com.arcogine.factory..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.arcogine.storage..")
+            .because("semantic owners consume the Governance port, not a storage mechanism");
+
+    @ArchTest
+    static final ArchRule storage_does_not_depend_on_factory = noClasses()
+            .that()
+            .resideInAPackage("com.arcogine.storage..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.arcogine.factory..")
+            .because("Factory supplies artifacts through the domain-neutral verifier");
+
+    @ArchTest
     static final ArchRule finance_must_not_depend_on_factory = noClasses()
             .that()
             .resideInAPackage("com.arcogine.finance..")

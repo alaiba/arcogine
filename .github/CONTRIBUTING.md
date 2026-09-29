@@ -12,6 +12,7 @@ Before proposing a significant product, domain, or architecture change, read [`d
 |-----------|---------|
 | `product/types/` | Shared types, typed IDs, error definitions |
 | `product/governance/` | Controlled revisions, semantic change, requirements, conformance, and evidence use |
+| `product/storage/` | Arcogine-owned built-in persistence behind public storage and Governance contracts |
 | `product/simulation/` | Event engine and scheduler |
 | `product/domains/factory/` | Canonical factory model and publication, `FactoryRuntime`, machines, jobs, routing, queues |
 | `product/domains/finance/` | Ledger, financial interpretation of operational events |
@@ -60,6 +61,7 @@ When a roadmap item spans several capabilities:
 - keep a behavior-preserving refactor behavior-preserving: do not combine a representation/boundary change with new scheduling, workload, persistence, or external-contract semantics unless the change genuinely requires them together;
 - preserve deterministic behavior and existing API/wire compatibility by default; intentional compatibility breaks must be explicit in the PR and supported by migration/contract tests as appropriate;
 - do not introduce abstractions only because a later roadmap step might need them; add the abstraction when the current slice gives it a concrete responsibility;
+- a concrete requirement may come from a core headless capability such as Governance; it does not require an already shipped UI or external integration. Apply the [Charter's core-capability principle](../docs/product/charter.md#6-enduring-product-principles) and keep the responsibility bounded;
 - update authoritative current-state documentation when implementation changes established behavior or ownership, and update planning documents when the remaining sequence changes; do not make planning prose claim that deferred capability already exists;
 - when a change removes or replaces automation, schema, or tooling, treat live GitHub state or configuration whose meaning, lifecycle, or operation depends on that component as part of the change's closure; inspect and reconcile affected state before treating the change as complete, and if the current task or role is not authorized to make the required live mutation, report that reconciliation as a blocker rather than treating the repository diff as sufficient;
 - keep initiative-local stage/gate/slice identifiers, and PR-local review/finding identifiers (see `AGENTS.md`), in planning, issues, PRs, reviews, branch names, commits, and implementation handoffs where they help coordinate or track delivery; when knowledge moves into durable semantic naming — current-state documentation, code comments, workflow definitions, test names — translate the coordinate into the capability, contract, identity, invariant, or behavior it represents;

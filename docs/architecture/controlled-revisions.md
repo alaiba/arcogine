@@ -1,6 +1,6 @@
 # Controlled revisions
 
-Status: Adopted semantic contract; implemented by `:types`/`:governance` value types and `ControlledRevisionAuthority`, whose current implementation is a disposable proving store
+Status: Adopted semantic contract; implemented by `:types`/`:governance` value types and `ControlledRevisionAuthority`, with built-in persistence supplied by `:storage` within a definition-bound support scope
 Owning architecture: [Governance and Conformance](governance-conformance.md)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 
@@ -265,29 +265,31 @@ The horizontal dimension is configuration history. The attached records are gove
 
 A controlled revision references semantic content through `ModelFingerprint`; the revision record itself does not embed serialized model bytes, an artifact URI, or a content-addressed blob.
 
-Historical change attribution is nevertheless incomplete if Arcogine can identify `R42 -> F1` but cannot recover the exact semantic state represented by F1. The authoritative revision store must therefore resolve an accepted revision to the exact semantic state required for historical reconstruction. The current `FileControlledRevisionAuthority` adapter does so by persisting the canonical artifact whose definition-specific verifier (`SemanticArtifactVerifier`) proves it reproduces the referenced fingerprint; the filesystem layout and locking mechanics are replaceable adapter details, not a selected permanent persistence architecture.
+Historical change attribution is nevertheless incomplete if Arcogine can identify `R42 -> F1`
+but cannot recover the exact semantic state represented by F1. `ControlledRevisionAuthority`
+therefore resolves an accepted revision to its exact artifact. Arcogine's [built-in Storage](storage.md)
+implements this port by persisting Factory canonical bytes checked by a domain-supplied
+`SemanticArtifactVerifier`. Governance owns the meaning; Storage owns the private persistent
+realization, opening and integrity enforcement.
 
-That adapter is a disposable development **proving store**. Its artifacts use the current Factory
-canonical form, and the store is bound to the exact definition build that wrote them: at creation it
-records the verifier's definition binding at its root — for Factory, a digest of the compiled classes
-that define the model's records, validation and canonical form — and it refuses to reopen under any
-other binding, before any revision or artifact is read. A store written before a definition change
-therefore fails explicitly and is reset rather than migrated; the content fingerprint is not used as
-an exact definition-build reference. It initializes only an absent location that it creates itself; ownership is never inferred from what an existing directory contains. It therefore refuses — without adopting, modifying or deleting, and without creating its own lock file there — any location it did not create, including an existing empty directory, one holding only names the store itself uses, and a store written under an earlier layout or discarded definition, and it refuses artifacts under any definition the verifier does not support at acceptance and on resolution. The binding is build context, not semantic identity: any change to the definition code, behavior-preserving refactors and a different compiler included, invalidates existing proving stores; a change of meaning that alters no definition code must be accompanied by resetting them.
+The initial provider is bound to the verifier's exact definition build. It refuses a different
+binding without reading, reinterpreting, or deleting the root. The binding is conservative build
+context, not a stable semantic identity or compatible historical reader. The former proving-store
+marker stays private and readable for existing roots; that legacy format does not define current
+product purpose or a retained historical support promise. See [Storage](storage.md) for the exact
+supported failure and compatibility scope.
 
 ## Authoritative historical identity begins at persistence acceptance
 
 `ControlledRevisionId` is intended to survive process, deployment, and storage boundaries.
 
-Creating a revision-shaped value in memory does not by itself make it an authoritative historical
-fact. A controlled revision becomes authoritative when its immutable record is accepted by
-Arcogine's authoritative revision store. Within that store the revision identity, fingerprint
-binding, lineage and provenance obligations below hold independently of development status. Whether
-acceptance is also a retained historical commitment depends on the store's declared custody: the only
-store today is a disposable proving store. A retained store is introduced only together with an
-explicit stability/support promotion ([semantic evolution
-rules](overview.md#semantic-evolution-and-support)); its admission contract records the exact basis
-it accepts rather than inferring that basis from a fingerprint label.
+Creating a revision-shaped value in memory does not by itself make it an authoritative
+historical fact. A controlled revision becomes authoritative when its immutable record is accepted
+by `ControlledRevisionAuthority`; Storage supplies the current persistent realization. Within that
+authority the revision identity, fingerprint binding, lineage and provenance obligations hold
+independently of development status. Retained, cross-definition historical reliance requires an
+explicit support declaration and a resolvable basis under the [semantic evolution
+rules](overview.md#semantic-evolution-and-support); physical persistence alone does not supply it.
 
 The persistence contract guarantees at least:
 

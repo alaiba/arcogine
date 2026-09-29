@@ -152,6 +152,12 @@ A `.trivyignore` at the repo root suppresses **only non-shipped** findings that 
 
 `gitleaks detect --source . --config .github/security/gitleaks.toml --verbose` (part of `./arcogine check --full`) — scans the repo for leaked secrets.
 
+### 10. Research experiment fixtures
+
+Investigations that need reproducible Factory/Engine evidence share one **test-only** substrate: the `com.arcogine.factory.research` package in `:factory`'s test sources, whose `package-info.java` states its vocabulary and how to add a fixture. It runs with the rest of `cd product && ./gradlew test`. A fixture records its authored model, an explicit ordered workload/command script, whether it means to capture the complete supported-event stream, and the research-local derivations and ground truth it expects. Runtime event delivery drains rather than retains, so the captured event window is explicit, and the runner fails when a fixture's declared window and its actual capture disagree. Derivations read only supported evidence (the published model, supported observations and supported events), never scheduler or handler internals, and may return an explicit refusal.
+
+This is research infrastructure, not an Arcogine subsystem: it adds no production API or dependency, and a research-local derivation that appears in a fixture is not thereby an Engine fact, game-owned analytics, or a public contract — promoting one is a decision for the owning research and architecture process. A fixture carries neither a repository revision nor an Engine-definition identifier; the source revision that produced a run belongs to the research custody that ran it (see [researching.md](researching.md)).
+
 ## CI pipeline
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each invoking its native tool directly:

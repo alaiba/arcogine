@@ -9,7 +9,9 @@ record remains truthfully resolvable as storage representation and domain defini
 independently? This determines scoped historical support, not whether built-in Storage exists.
 Start from the current definition-bound refusal. Coordinate with the existing
 [exact-reference, scoped-commitment, and conversion questions](semantic-equivalence-and-reference-boundaries.md)
-rather than allocating a new universal definition identity here.
+and the [Factory canonical-artifact-boundary question](factory-canonical-artifact-boundary.md)
+rather than allocating a new universal definition identity or assuming the current public codec must
+remain the persistence boundary.
 
 ## Scope and candidates
 
@@ -21,8 +23,9 @@ universal attestation, broad migration framework, or permanent re-execution prom
 
 ## Discriminating cases and evidence
 
-- A private storage format changes while Factory meaning does not. Determine whether exact accepted
-  artifact bytes and occurrence provenance remain recoverable without making format identity semantic.
+- A private storage format changes while Factory meaning does not. Determine whether the accepted
+  semantic basis and occurrence provenance remain recoverable without making format identity semantic
+  or presuming that today's public Factory canonical bytes must remain Storage's persistent representation.
 - Factory meaning changes while the old bytes still parse under a new decoder. Determine how each
   candidate avoids falsely attributing current meaning to an old accepted occurrence.
 - Factory bytes are preserved but the old verifier/definition is unavailable. Separate byte custody,

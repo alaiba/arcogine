@@ -10,8 +10,12 @@ Arcogine Storage stores authoritative information with guarantees owned by Arcog
 implementation realizes one bounded responsibility: Governance's `ControlledRevisionAuthority`.
 Governance defines historical occurrence identity, lineage, acceptance and recording provenance;
 Storage realizes persistent acceptance, coordination, integrity checks, and exact retrieval. Factory
-provides canonical bytes, fingerprints, decoding, and a `SemanticArtifactVerifier`. Storage does not
-interpret Factory content or define an alternative revision identity.
+currently provides canonical bytes, fingerprints, decoding, and a `SemanticArtifactVerifier`, and the
+built-in provider persists those verified bytes. That is the current implementation boundary, not a
+decision that fingerprint projection, a public reversible Factory artifact, and Storage representation
+must permanently remain the same contract; the
+[Factory canonical-artifact-boundary research](../research/investigations/factory-canonical-artifact-boundary.md)
+owns that open question. Storage does not interpret Factory content or define an alternative revision identity.
 
 Clients call `BuiltInStorage.open(Path, SemanticArtifactVerifier)`, receive an `ArcogineStorage`, and
 obtain `ControlledRevisionAuthority` through `controlledRevisions()`. The filesystem implementation

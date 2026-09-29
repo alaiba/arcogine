@@ -20,6 +20,7 @@ run "Git identity setup" bash infra/dev/git-identity.test.sh
 run "Node repository-tooling tests" node --test \
   .github/scripts/check-markdown-links.test.mjs \
   .github/scripts/check-delivery-labels.test.mjs \
+  .github/scripts/check-source-authority-links.test.mjs \
   .github/scripts/check-transient-workspace.test.mjs \
   .github/scripts/check-transient-coordinates.test.mjs \
   .github/scripts/check-pr-disposition.test.mjs \
@@ -32,6 +33,7 @@ run "Node repository-tooling tests" node --test \
   infra/dev/github-attribution-hygiene.test.mjs
 run "Markdown-link check" node .github/scripts/check-markdown-links.mjs .
 run "Delivery-label check" node .github/scripts/check-delivery-labels.mjs
+run "Source-authority-link check" node .github/scripts/check-source-authority-links.mjs
 run "Transient-coordinate check" node .github/scripts/check-transient-coordinates.mjs
 run "Transient-workspace check" node .github/scripts/check-transient-workspace.mjs
 run "Continuous-improvement reminder contract" node .github/scripts/check-continuous-improvement-reminder.mjs

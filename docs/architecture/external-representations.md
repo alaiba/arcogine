@@ -246,7 +246,7 @@ Stable HTTP/API representation
     -> JSON + OpenAPI
 
 Factory semantic identity
-    -> ModelFingerprint / factory-model:<policy>:<algorithm>:<digest>
+    -> ModelFingerprint / factory-model:<algorithm>:<digest>
 
 Historical controlled revision identity
     -> ControlledRevisionId

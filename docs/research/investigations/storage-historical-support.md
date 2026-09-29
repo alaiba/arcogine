@@ -13,6 +13,28 @@ and the [Factory canonical-artifact-boundary question](factory-canonical-artifac
 rather than allocating a new universal definition identity or assuming the current public codec must
 remain the persistence boundary.
 
+## Current-contract baseline
+
+Start from a provider that conforms to the current [Storage](../../architecture/storage.md) and
+[controlled-revision](../../architecture/controlled-revisions.md) contracts. A departure from an
+already-owned guarantee (acceptance, immutable ID binding, exact-definition refusal, or faithful
+resolution of an accepted record) is a correctness defect fixed independently of this question. It is
+neither evidence for a stronger claim nor a reason to redefine the baseline, and it does not by itself
+block this brief. Concretely, the baseline already requires:
+
+- accepted recorder source and subject resolve exactly as accepted after reopen, and valid Unicode,
+  supplementary characters included, survives unchanged;
+- text the private UTF-8 record format cannot represent, such as an unpaired surrogate, is refused
+  before anything is persisted rather than silently substituted;
+- distinct opaque definition bindings never collapse to the same stored marker, so a root created
+  under one is refused under any other, and a root written before strict text encoding, whose text
+  may have been substituted, is refused rather than read;
+- a repeated or rebound controlled-revision ID is still rejected, and an accepted revision's
+  fingerprint, lineage and provenance never change.
+
+These examples add no historical-reader, cross-definition compatibility, migration or
+provider-substitution guarantee; stronger resolvability is what this question investigates.
+
 ## Scope and candidates
 
 Compare (1) preservation and refusal with a retained compatible reader/build, (2) a scoped exact

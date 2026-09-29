@@ -5,7 +5,10 @@ import com.arcogine.factory.model.spatial.ResourceFootprint;
 import com.arcogine.factory.model.spatial.ResourceLayout;
 import com.arcogine.factory.model.spatial.ResourcePlacement;
 import com.arcogine.factory.model.spatial.SpatialRecord;
+import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.factory.model.validation.FactoryModelValidator;
+import com.arcogine.factory.model.validation.ModelValidationError;
+import com.arcogine.factory.model.validation.ModelValidationResult;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
@@ -69,17 +72,40 @@ final class FactoryModelCanonicalForm {
 
     /**
      * Names the exact build of the current definition: a digest of the compiled classes that define
-     * the model's records, validation and canonical form. It changes whenever that code changes --
-     * behavior-preserving refactors and a different compiler included -- so persisted proving
-     * material never outlives the definition build that wrote it. It is build context, not a
-     * semantic identity or version, and never participates in a fingerprint.
+     * the model's records, validation, canonical form and the artifact verification path built on
+     * them. It changes whenever that code changes -- behavior-preserving refactors and a different
+     * compiler included -- so persisted proving material never outlives the definition build that
+     * wrote it. It is build context, not a semantic identity or version, and never participates in a
+     * fingerprint.
      */
     static String definitionBinding() {
         return DefinitionBinding.VALUE;
     }
 
+    /**
+     * The compiled classes whose bytes {@link #definitionBinding()} covers. Exposed to tests only, so
+     * coverage of everything that can change artifact acceptance cannot silently regress.
+     */
+    static List<Class<?>> definitionBindingClasses() {
+        return DefinitionBinding.DEFINITION_CLASSES;
+    }
+
+    /** The build digest over exactly {@code classes}; exposed to tests only. */
+    static String definitionBindingOver(List<Class<?>> classes) {
+        return DefinitionBinding.compute(classes);
+    }
+
     private static final class DefinitionBinding {
 
+        /**
+         * The model records and their value types, plus every repository class whose executable
+         * behavior decides whether an artifact is supported, decodes, is valid or verifies:
+         * canonical encoding/decoding, the publication validator with its result, error and
+         * exception types, the concrete verifier {@link FactoryModelArtifact#verifier()} returns
+         * (a nested class whose bytes are separate from those of {@link FactoryModelArtifact}), and
+         * the fingerprint value that verification computes and compares. The Governance verifier
+         * port itself has no executable behavior and is deliberately not part of the binding.
+         */
         private static final List<Class<?>> DEFINITION_CLASSES = List.of(
                 FactoryModel.class,
                 ConfiguredResource.class,
@@ -93,17 +119,22 @@ final class FactoryModelCanonicalForm {
                 ResourceFootprint.class,
                 MachineId.class,
                 ProductId.class,
+                ModelFingerprint.class,
                 FactoryModelValidator.class,
+                ModelValidationResult.class,
+                ModelValidationError.class,
+                FactoryModelValidationException.class,
                 FactoryModelVersion.class,
                 FactoryModelCanonicalForm.class,
-                FactoryModelArtifact.class);
+                FactoryModelArtifact.class,
+                FactoryModelArtifact.verifier().getClass());
 
-        private static final String VALUE = compute();
+        private static final String VALUE = compute(DEFINITION_CLASSES);
 
-        private static String compute() {
+        private static String compute(List<Class<?>> classes) {
             try {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                for (Class<?> type : DEFINITION_CLASSES) {
+                for (Class<?> type : classes) {
                     byte[] name = type.getName().getBytes(StandardCharsets.UTF_8);
                     byte[] bytecode = classBytes(type);
                     digest.update(ByteBuffer.allocate(Long.BYTES).putLong(name.length).array());

@@ -66,8 +66,8 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Governance and conformance](architecture/governance-conformance.md) | Revision/change/requirements/conformance/evidence/governed-change architecture |
 | [Storage](architecture/storage.md) | Public contract, built-in provider, local persistence guarantees and limits |
 | [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture |
-| [Engine semantics](architecture/engine-semantics.md) | Normative work-in-progress result-affecting Engine interpretation (ngine-semantics:wip) |
-| [Factory model](architecture/factory-model.md) | Normative work-in-progress Factory records, predicates and canonical/fingerprint byte grammar (actory-model:wip): production records plus an optional spatial record |
+| [Engine semantics](architecture/engine-semantics.md) | Normative work-in-progress result-affecting Engine interpretation |
+| [Factory model](architecture/factory-model.md) | Normative work-in-progress Factory records, predicates and canonical/fingerprint byte grammar: production records plus an optional spatial record |
 | [Factory/Engine transfer applicability](architecture/transfer-applicability.md) | Transfer existence by represented content, and model admission by the current Engine |
 | [Standards alignment](architecture/standards-alignment.md) | Standards/interchange/conformance boundaries |
 | [ISA-95 semantic mapping](architecture/isa-95-semantic-mapping.md) | Maintained manufacturing semantic mapping and deliberate divergences |

@@ -324,7 +324,8 @@ historical provenance.
 
 Persisted development material that requires cross-revision protection is bound separately to the
 exact build of the definition that wrote it: the Factory artifact verifier's definition binding is a
-digest of the compiled classes that define the records, validation and canonical form. Built-in
+digest of the compiled classes that define the records, validation, canonical form and the
+verification path that decides whether an artifact is supported, decodes, is valid and verifies. Built-in
 [Storage](storage.md) refuses to reopen under a different binding without reinterpreting or deleting
 the accepted material. This does not supply a compatible historical reader or promote the Factory
 definition ([controlled revisions](controlled-revisions.md#the-revision-record-does-not-choose-model-artifact-persistence)).

@@ -59,7 +59,7 @@ Question:
 
 > Once transfer semantics and spatial runtime consequences are settled, does changing spatial arrangement create a legible performance trade-off against capacity and game-owned capital cost?
 
-This is not ready while Engine applicability and spatial runtime consequences remain unresolved. It must consume the [current transfer-applicability boundary](../../architecture/transfer-applicability.md), the successor [Engine-applicability result](engine-applicability-after-transfer-boundary.md), and a reconciled spatial-runtime contract rather than using the game to decide them.
+This is not ready until spatial runtime consequences are executable. It must consume the [current transfer-applicability boundary](../../architecture/transfer-applicability.md), the current [Engine semantics](../../architecture/engine-semantics.md), and the executable spatial-runtime work in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) rather than using the game to decide them.
 
 ### External player validation — CANDIDATE
 
@@ -88,7 +88,7 @@ Accordingly:
 - overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain game presentation choices;
 - the game must not invent shared KPI or diagnostic formulas while analytics ownership is unresolved;
 - a research-local derivation may be used to establish ground truth for a study, but selecting it for product use does not make it game-owned or part of Engine semantics;
-- transfer-dependent diagnostics remain outside the READY diagnostic-evidence-contract study until Engine applicability and spatial runtime consequences are reconciled and executable evidence exists; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
+- transfer-dependent diagnostics remain outside the READY diagnostic-evidence-contract study until spatial runtime consequences are executable and evidenced; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
 
 ## Boundary with transfer and spatial semantics
 
@@ -96,7 +96,7 @@ Transfer is a production/runtime concern, not a game mechanic that the consumer 
 
 The game therefore must not assume that:
 
-- Factory publication validity alone makes a design executable under an Engine identity;
+- Factory publication validity alone makes a design executable by the current Engine;
 - placement is behaviorally consequential before a landed Engine contract makes it so; or
 - a game-local movement formula can stand in for missing Factory/Engine semantics.
 

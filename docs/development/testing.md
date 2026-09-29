@@ -106,7 +106,7 @@ Notes:
 
 ### 1. Java static analysis (Checkstyle)
 
-`cd product && ./gradlew checkstyleMain checkstyleTest` (part of `./arcogine check`) — runs Checkstyle 13.5.0 against a deliberately minimal, high-signal ruleset (`product/config/checkstyle/checkstyle.xml`): unused/redundant/star imports plus a few bug-oriented checks. The compiler does **not** flag unused imports, so this is genuinely additive. Expand the ruleset deliberately rather than adopting a large style guide wholesale.
+`cd product && ./gradlew checkstyleMain checkstyleTest` (part of `./arcogine check`) — runs the repository-pinned Checkstyle release (see [`product/build.gradle.kts`](../../product/build.gradle.kts)) against a deliberately minimal, high-signal ruleset (`product/config/checkstyle/checkstyle.xml`): unused/redundant/star imports plus a few bug-oriented checks. The compiler does **not** flag unused imports, so this is genuinely additive. Expand the ruleset deliberately rather than adopting a large style guide wholesale.
 
 ### 2. Java compilation
 
@@ -217,7 +217,15 @@ node --test .github/scripts/check-markdown-links.test.mjs
 node .github/scripts/check-markdown-links.mjs .
 node --test .github/scripts/check-delivery-labels.test.mjs
 node .github/scripts/check-delivery-labels.mjs
+node --test .github/scripts/check-source-authority-links.test.mjs
+node .github/scripts/check-source-authority-links.mjs
 ```
+
+The source-authority-link checker enforces the product-source lifetime boundary: tracked files under
+`product/` may refer to durable architecture/specification/reference/development authorities, but
+must not refer to `docs/planning/`, `docs/research/`, or `workspace/research/`. Planning and
+research may cite implementation as evidence; the dependency does not point back from durable
+product source into those transient surfaces.
 
 `infra/dev/delivery-retrospective.test.mjs` covers the source-neutral evidence contract and pure analyzer. It pins the exact merge-time boundary, candidate and nested-review completeness, proven review-author association, trusted-review-author filtering, closing-disposition parsing, structured finding lifecycle/aggregates, diagnostic coverage, and offline analyzer invocation. `infra/dev/delivery-retrospective-github.test.mjs` covers the GitHub acquisition adapter with injected GraphQL fixtures, including stable pagination, the 1000-result search cap, review-connection truncation, transport-field serialization, and preservation of missing author association as unproven input. Both suites are included in the repository-tooling runner and require no live GitHub access. The ChatGPT connector acquisition path is repository standard work in `docs/development/continuous-improvement.md`, not a second analyzer; it must produce the same validated Evidence v1 bundle before invoking the pure analyzer.
 
@@ -248,7 +256,7 @@ The always-running repository-tooling runner validates both layers of the PR dis
 - `.github/scripts/check-pr-disposition.test.mjs` exercises disposition semantics; `.github/scripts/check-dependabot-provenance.test.mjs` independently covers trusted provenance.
 - `.github/scripts/check-actions-workflows.sh` validates every `.github/workflows/*.yml` definition with the repository-pinned actionlint version.
 
-The workflow-definition check deliberately validates GitHub Actions syntax before merge so a workflow cannot reach `main` in a form that GitHub rejects before scheduling any jobs. The helper always downloads actionlint 1.7.12, verifies the pinned archive SHA-256, and executes that exact binary rather than substituting an arbitrary runner- or developer-provided `actionlint` from `PATH`. It therefore requires `curl`, `tar`, `sha256sum`, and network access to GitHub Releases whenever it runs.
+The workflow-definition check deliberately validates GitHub Actions syntax before merge so a workflow cannot reach `main` in a form that GitHub rejects before scheduling any jobs. The [workflow validation helper](../../.github/scripts/check-actions-workflows.sh) downloads its repository-pinned actionlint release, verifies the archive SHA-256, and executes that verified binary rather than substituting an arbitrary runner- or developer-provided `actionlint` from `PATH`. The helper owns the exact version and checksum. It therefore requires `curl`, `tar`, `sha256sum`, and network access to GitHub Releases whenever it runs.
 
 Run focused checks locally with:
 

@@ -10,8 +10,8 @@ import java.util.Optional;
  * A {@link Scheduler} that can, for the duration of one command call, additionally capture every
  * {@link Event} it schedules into a caller-supplied sink, so {@link FactoryRuntime} can report
  * exactly which events a specific command scheduled
- * (docs/planning/factory-simulation-engine-readiness.md
- * §7.2's "events produced by the accepted command" field on {@link CommandResult}) without changing
+ * (the command-scoped event list required by {@link CommandResult} and
+ * {@code docs/architecture/engine-semantics.md} §1.2) without changing
  * {@link Scheduler}'s own public contract or touching any other consumer of it.
  *
  * <p>Capture is a scoped window, not a permanent history: {@link #startCapturing(List)} begins

@@ -136,7 +136,13 @@ The Factory Engine tests verify that equivalent fresh runtimes given the same mo
 
 ### 8. Java dependency audit (CycloneDX SBOM + Trivy)
 
-`cd product && ./gradlew cyclonedxBom && trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/build/reports/cyclonedx/bom.json` (part of `./arcogine check --full`) — generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `product/build/reports/cyclonedx/bom.json`) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`). (`trivy fs` is not used: it does not introspect nested dependency jars the way Trivy's Java DB does over an SBOM.)
+Run from the repository root (also part of `./arcogine check --full`):
+
+```bash
+(cd product && ./gradlew cyclonedxBom) && trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/build/reports/cyclonedx/bom.json
+```
+
+This generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `product/build/reports/cyclonedx/bom.json`) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`). (`trivy fs` is not used: it does not introspect nested dependency jars the way Trivy's Java DB does over an SBOM.)
 
 A `.trivyignore` at the repo root suppresses **only non-shipped** findings that aren't otherwise remediated by a version override, each justified inline (currently just build-tooling-only `plexus-utils`). Shipped-runtime CVEs are never suppressed and will fail the gate.
 

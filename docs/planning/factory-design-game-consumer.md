@@ -67,7 +67,7 @@ Before playable integration is admitted, the required Engine capabilities for th
 - stable supported observations and ordered runtime events; and
 - the accepted order/work-item decomposition contract from [Engine semantics §3](../architecture/engine-semantics.md#3-unit-work-decomposition-semantics).
 
-Deterministic spatial transfer consequences are required only if the promoted slice makes layout behaviorally consequential. That path is currently held by [Engine applicability research](../research/investigations/engine-applicability-after-transfer-boundary.md) and the re-resolved spatial-runtime plan; the [current transfer boundary](../architecture/transfer-applicability.md) is already reconciled.
+Deterministic spatial transfer consequences are required only if the promoted slice makes layout behaviorally consequential. That path depends on the executable spatial-runtime work in [Spatial Runtime Consequences](spatial-runtime-consequences.md); the [current transfer boundary](../architecture/transfer-applicability.md) is already reconciled.
 
 Use the current [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md) and its implementation companions as the authority for which of those gates are actually complete.
 

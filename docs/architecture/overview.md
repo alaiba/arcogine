@@ -628,8 +628,9 @@ accepted artifact rather than current model state. [Storage](storage.md) owns th
 opening, integrity, concurrency and durability scope; [controlled revisions](controlled-revisions.md)
 owns historical meaning.
 
-The current built-in provider retains the legacy on-disk representation privately and refuses
-foreign, incomplete or differently definition-bound roots without adopting or deleting them. The
+The current built-in provider keeps its legacy on-disk naming privately and refuses foreign,
+incomplete, differently definition-bound or pre-strict-text-encoding roots without adopting or
+deleting them. The
 Factory `SemanticArtifactVerifier` supplies a conservative compiled-definition binding and checks
 canonical bytes and fingerprints. That binding is not an exact semantic-definition archive or a
 proof of cross-build equivalence. Factory and Engine meanings remain development definitions;

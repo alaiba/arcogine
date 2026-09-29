@@ -20,6 +20,7 @@ run "Git identity setup" bash infra/dev/git-identity.test.sh
 run "Node repository-tooling tests" node --test \
   .github/scripts/check-markdown-links.test.mjs \
   .github/scripts/check-delivery-labels.test.mjs \
+  .github/scripts/check-source-authority-links.test.mjs \
   .github/scripts/check-transient-workspace.test.mjs \
   .github/scripts/check-transient-coordinates.test.mjs \
   .github/scripts/check-pr-disposition.test.mjs \

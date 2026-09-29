@@ -139,9 +139,10 @@ public class FactoryRuntime {
     }
 
     /**
-     * Submits one explicit production order and creates its execution job, under the same
-     * acceptance/routing/dispatch semantics as any other accepted order, and returns a definite
-     * {@link CommandResult} per {@code docs/architecture/engine-semantics.md} §1.2.
+     * Submits one explicit production order and creates one unit-quantity child job for each
+     * requested unit, under the same acceptance/routing/dispatch semantics as any other accepted
+     * order. It returns a definite {@link CommandResult} per
+     * {@code docs/architecture/engine-semantics.md} §1.2.
      *
      * <p>On acceptance, {@link CommandResult.Accepted#value()} is the new {@link OrderId}. On
      * rejection (e.g. {@link SimError.OutOfRange} for an invalid quantity, {@link

@@ -236,13 +236,18 @@ A change may also add a [historical decision-rationale record](researching.md#hi
 
 ## Finding severity
 
-Use severity to communicate merge risk, not rhetorical emphasis:
+This section is the canonical semantic authority for Arcogine finding severity. Agent contracts and
+analysis tooling reference it; they must not define a competing severity vocabulary. Severity
+communicates defect/merge risk, not remediation priority or rhetorical emphasis:
 
 - **P0** — catastrophic correctness, data, or security issue.
 - **P1** — functional or architectural blocker; should not merge.
 - **P2** — important issue that should normally be fixed before merge.
-- **P3** — non-blocking improvement.
-- **Nit** — optional polish only.
+- **P3** — actionable non-blocking improvement.
+
+Anything below the P3 threshold is not a finding. Optional polish may be mentioned in the review
+session's chat output when useful, but it receives no `REV-<N>` identity, is not persisted as a
+formal review finding, and does not affect disposition.
 
 Do not inflate severity. A P1 must identify a real invariant or correctness failure, not a preferred design alternative.
 
@@ -251,10 +256,16 @@ Use these calibration examples when the boundary is unclear:
 - a semantic regression demonstrated by failing integration/contract tests, or a change that violates a binding architecture invariant, is normally **P1**;
 - a PR whose central claimed behavior is still defeated by another maintained execution path is normally **P1**;
 - a false completion/status claim or missing completion evidence that can be corrected without changing otherwise safe runtime behavior is normally **P2**, unless that false status itself unlocks a dependent architectural boundary;
-- a stale PR title/body or validation description after remediation is normally **P2** when it materially misstates the proposed head;
-- optional extra coverage, cleanup, or future hardening that does not affect the current invariant is **P3** or **Nit**.
+- a materially false PR claim about the proposed change's semantic scope, rationale, compatibility/migration behavior, or non-goals is normally **P2** when it would mislead review or downstream use;
+- optional extra coverage, cleanup, or future hardening is **P3** only when it is genuinely actionable and worth preserving as a finding; otherwise omit it from the finding ledger.
 
-Do not require PR bodies to restate live Git/GitHub topology such as current head/base SHAs, ahead/behind or commit counts, base freshness, mergeability, or CI/check state; resolve those facts from live metadata. Historical provenance and exact immutable evidence coordinates are fine when clearly labeled. A stale-description P2 applies when prose that is present materially misstates the candidate or its validation, not because the PR body omits live topology.
+PR bodies intentionally do not own live Git/GitHub topology or implementation-validation state. If a
+body happens to contain stale head/base SHAs, ahead/behind counts, base freshness, mergeability,
+CI/check state, local test results, or unavailable-check notes, do not create a finding and do not
+change disposition solely for that lifecycle prose. Resolve the facts live and mention the stale
+transient text only in chat to the implementation owner. Historical provenance and exact immutable
+evidence coordinates remain valid when clearly labeled. Substantive false claims about the change
+itself remain review findings under the normal severity rules above.
 
 Each actionable finding should state:
 
@@ -289,7 +300,7 @@ When a new head is pushed, first apply the same base-normalization rule as an in
 1. resolve the new head SHA;
 2. verify every prior finding against the new implementation;
 3. inspect the net diff for regressions introduced by the fix;
-4. check whether docs/PR description were kept in sync;
+4. check whether docs and the PR description's substantive change intent (scope/rationale, compatibility or migration behavior, and non-goals) remain true; transient lifecycle/validation prose is not a finding;
 5. check the current CI state;
 6. carry every prior finding forward under its same `REV-<N>` identity, with status `OPEN`, `RESOLVED`, or `OBSOLETE`, after verifying it against the new head; do not omit resolved or obsolete identities from the lifecycle record. If a resolved defect recurs, reopen that same identity as `OPEN` and describe the recurrence as a regression in review prose. `REGRESSION` is not a finding status.
 

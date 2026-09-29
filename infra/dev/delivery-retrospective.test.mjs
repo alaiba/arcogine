@@ -392,12 +392,13 @@ test('quoted and fenced finding examples are ignored as noncanonical reviewer da
   assert.equal(result.complete, false);
 });
 
-test('unsupported severity, confidence, and status values are reported literally', () => {
+test('historical severity is preserved without enforcing current review policy', () => {
   const result = analyzeEvidence(baseEvidence([review(finding(revision(1), {
-    severity: 'P4', confidence: 'MAYBE', status: 'DEFERRED',
+    severity: 'Nit', confidence: 'MAYBE', status: 'DEFERRED',
   }))])).findingAnalytics;
+  assert.equal(result.distinctFindings[0].severity, 'Nit');
   assert.deepEqual(result.diagnostics.unsupportedValues, {
-    severity: ['P4'], confidence: ['MAYBE'], status: ['DEFERRED'],
+    confidence: ['MAYBE'], status: ['DEFERRED'],
   });
   assert.equal(result.complete, false);
 });

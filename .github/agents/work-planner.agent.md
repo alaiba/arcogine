@@ -302,8 +302,8 @@ A strong handoff prompt normally includes:
 9. the reconciliation rule for hard-to-reverse identity/taxonomy/persistence/public-contract choices: the durable result belongs in the architecture or specification that owns the affected semantics, not in a delivery artifact;
 10. documentation reconciliation requirements, including translating plan-local coordinates into semantic vocabulary in durable docs;
 11. narrowest applicable validation commands from `AGENTS.md`;
-12. PR creation/continuation requirements — stated so the implementer keeps two truths distinct: branch/base reconciliation with `main` is an execution/lifecycle requirement to satisfy before final review, but the resulting current head/base SHA, ahead/behind state, base freshness, mergeability, and CI/review state are live facts to verify, not PR-description validation content to serialize (`.github/CONTRIBUTING.md`'s PR-description stability rule);
-13. final-report checklist.
+12. PR creation/continuation requirements — use the repository PR template for stable change intent only; keep local validation, unavailable checks, head/base SHA, ahead/behind state, base freshness, mergeability, and CI/review state out of the PR body; converge exact-head `CI / gate` to green before implementation handoff while leaving independent `disposition` to the reviewer (`AGENTS.md` and `.github/CONTRIBUTING.md`);
+13. final-report checklist, including transient local-validation results and the terminal exact-head CI result reported to the developer in chat.
 
 If the requested slice depends on an open PR, say so explicitly and instruct the implementation session not to treat that dependency as landed until it actually merges. If the slice is independent, say that explicitly.
 

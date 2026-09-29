@@ -130,7 +130,7 @@ Each dependency PR follows the normal Arcogine merge gates and continuation rule
 
 - Reconcile a behind-base branch before treating it as a current candidate. For a Dependabot PR that still qualifies for trusted provenance, use Dependabot's own rebase/recreate path when practical; a maintainer-authored synchronization intentionally forfeits the bypass and moves the PR to ordinary review.
 - Respond to implementation-owned blockers and valid review findings on the same PR/slice.
-- Keep the PR title/body and validation claims truthful after compatibility fixes.
+- Keep the PR title/body's stable change intent truthful after compatibility fixes; report local validation and live CI/lifecycle state in the implementation handoff rather than adding them to the PR body.
 - For a trusted Dependabot PR, do not request an independent review merely to make `disposition` pass. Wait for the trusted base-side workflow to publish current-head authorization; `gate`, strict base freshness, mergeability, and current-head `CHANGES REQUIRED` remain independent blockers.
 - For a Dependabot PR whose current-head provenance is no longer trusted, or for any manual dependency PR, hand the current head to the ordinary independent PR Reviewer when implementation work is complete.
 - Stop when every merge gate holds for the current head; the repository owner merges manually.

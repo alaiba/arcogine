@@ -135,7 +135,6 @@ Before judging implementation, identify:
 - explicit non-goals;
 - prerequisite work;
 - compatibility expectations;
-- claimed validation;
 - planning/readiness status affected, if any.
 
 A handoff prompt or implementation explanation is useful evidence of intent but is never authority over the live repository.
@@ -241,7 +240,7 @@ Additionally verify:
 - **Acceptance-criterion truth:** identify evidence that actually proves each material completion claim.
 - **Forward consistency:** determine whether the proposed change would introduce contradictions across affected current docs, architecture, planning, specification constraints, reference contracts, product concepts, examples, tests, configuration, or consumers. Use semantic concept fan-out for medium/high-risk changes rather than relying only on the changed-file list. This is bounded PR-impact review, not a substitute for the repository-wide Consistency agent.
 - **Authority/status propagation:** when a decision or capability changes state, determine whether maintained surfaces that describe that state have been reconciled.
-- **PR-description truthfulness:** after fixes, verify title/body, validation claims, scope, API names, and completion statements describe the current head.
+- **PR-description truthfulness:** after fixes, verify the stable title/body claims about semantic scope/rationale, compatibility or migration behavior, non-goals, API names, and completion meaning describe the current head. Transient lifecycle or validation text is not review authority and is never a finding by itself.
 
 ## High-value Arcogine invariants
 
@@ -293,7 +292,8 @@ Do not report a finding solely because:
 - a sibling capability uses synthetic fixtures while production integration is explicitly deferred;
 - the product charter describes mature direction rather than today's implementation;
 - two artifacts use different wording while preserving the same semantics;
-- exact tool versions differ across surfaces that intentionally express different compatibility roles.
+- exact tool versions differ across surfaces that intentionally express different compatibility roles;
+- a PR body contains stale local-validation or live Git/GitHub lifecycle facts; resolve those facts live and, if useful, mention the stale transient prose only in the review session's chat output rather than creating a finding.
 
 Do not pull future work into the current PR without a concrete dependency on satisfying the current slice.
 
@@ -304,7 +304,7 @@ Assign each genuinely new actionable finding the next unused `REV-<N>` number mo
 ```text
 REV-<N> - concise title
 
-Severity: P0 | P1 | P2 | P3 | Nit
+Severity: <severity from docs/development/reviewing.md>
 Category: <category>
 Confidence: HIGH | MEDIUM | LOW
 Head: <reviewed PR head SHA>
@@ -325,7 +325,7 @@ Required invariant/outcome:
 Status: OPEN
 ```
 
-The status value is `OPEN`, `RESOLVED`, or `OBSOLETE`; `OPEN` is shown in the example. Use the severity semantics and calibration examples from `docs/development/reviewing.md`. Do not manufacture a finding merely to populate the format.
+The status value is `OPEN`, `RESOLVED`, or `OBSOLETE`; `OPEN` is shown in the example. `docs/development/reviewing.md` is the sole severity authority; this agent intentionally does not restate its vocabulary. Do not manufacture a finding merely to populate the format, and do not persist optional polish that falls below the canonical P3 threshold.
 
 Each block must contain exactly one value for every labeled field shown above. `Head` is the full SHA of the head reviewed for that review. The category, severity, confidence, title, and semantic subject identify the finding and remain stable when its `REV-<N>` is carried forward; update only `Head` and `Status`. If a finding must be materially reclassified or the subject changes, close the old identity as `OBSOLETE` and assign a new unused identifier to the distinct finding.
 

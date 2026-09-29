@@ -106,7 +106,7 @@ Notes:
 
 ### 1. Java static analysis (Checkstyle)
 
-`cd product && ./gradlew checkstyleMain checkstyleTest` (part of `./arcogine check`) — runs Checkstyle 13.5.0 against a deliberately minimal, high-signal ruleset (`product/config/checkstyle/checkstyle.xml`): unused/redundant/star imports plus a few bug-oriented checks. The compiler does **not** flag unused imports, so this is genuinely additive. Expand the ruleset deliberately rather than adopting a large style guide wholesale.
+`cd product && ./gradlew checkstyleMain checkstyleTest` (part of `./arcogine check`) — runs the repository-pinned Checkstyle release (see [`product/build.gradle.kts`](../../product/build.gradle.kts)) against a deliberately minimal, high-signal ruleset (`product/config/checkstyle/checkstyle.xml`): unused/redundant/star imports plus a few bug-oriented checks. The compiler does **not** flag unused imports, so this is genuinely additive. Expand the ruleset deliberately rather than adopting a large style guide wholesale.
 
 ### 2. Java compilation
 
@@ -250,7 +250,7 @@ The always-running repository-tooling runner validates both layers of the PR dis
 - `.github/scripts/check-pr-disposition.test.mjs` exercises disposition semantics; `.github/scripts/check-dependabot-provenance.test.mjs` independently covers trusted provenance.
 - `.github/scripts/check-actions-workflows.sh` validates every `.github/workflows/*.yml` definition with the repository-pinned actionlint version.
 
-The workflow-definition check deliberately validates GitHub Actions syntax before merge so a workflow cannot reach `main` in a form that GitHub rejects before scheduling any jobs. The helper always downloads actionlint 1.7.12, verifies the pinned archive SHA-256, and executes that exact binary rather than substituting an arbitrary runner- or developer-provided `actionlint` from `PATH`. It therefore requires `curl`, `tar`, `sha256sum`, and network access to GitHub Releases whenever it runs.
+The workflow-definition check deliberately validates GitHub Actions syntax before merge so a workflow cannot reach `main` in a form that GitHub rejects before scheduling any jobs. The [workflow validation helper](../../.github/scripts/check-actions-workflows.sh) downloads its repository-pinned actionlint release, verifies the archive SHA-256, and executes that verified binary rather than substituting an arbitrary runner- or developer-provided `actionlint` from `PATH`. The helper owns the exact version and checksum. It therefore requires `curl`, `tar`, `sha256sum`, and network access to GitHub Releases whenever it runs.
 
 Run focused checks locally with:
 

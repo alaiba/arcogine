@@ -12,7 +12,6 @@ import { pathToFileURL } from 'node:url';
 import {
   FINDING_CATEGORIES,
   FINDING_CONFIDENCES,
-  FINDING_SEVERITIES,
   FINDING_STATUSES,
   validateEvidence,
 } from './delivery-retrospective-evidence.mjs';
@@ -118,6 +117,9 @@ export function summarizeWindow(window) {
   };
 }
 
+// Severity is historical review evidence, not analyzer policy. Preserve the non-empty token
+// recorded by the review; the current semantic standard lives only in
+// docs/development/reviewing.md and can legitimately differ from older review history.
 function parseReviewFindings(body, prNumber, review, diagnostics) {
   if (!body) return [];
   const sourceLines = String(body).split(/\r?\n/);
@@ -201,7 +203,6 @@ function parseReviewFindings(body, prNumber, review, diagnostics) {
     };
     diagnostics.structuredFindingsParsed += 1;
     if (!FINDING_CATEGORIES.includes(finding.category)) diagnostics.unknownCategories.add(finding.category);
-    if (!FINDING_SEVERITIES.includes(finding.severity)) diagnostics.unsupportedValues.severity.add(finding.severity);
     if (!FINDING_CONFIDENCES.includes(finding.confidence)) diagnostics.unsupportedValues.confidence.add(finding.confidence);
     if (!FINDING_STATUSES.includes(finding.status)) diagnostics.unsupportedValues.status.add(finding.status);
     if (review.reviewedHead && finding.head.toLowerCase() !== review.reviewedHead.toLowerCase()) {
@@ -263,7 +264,6 @@ function analyzeFindings(window) {
     headMismatches: [],
     unknownCategories: new Set(),
     unsupportedValues: {
-      severity: new Set(),
       confidence: new Set(),
       status: new Set(),
     },

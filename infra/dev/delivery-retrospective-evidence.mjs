@@ -22,7 +22,6 @@ export const FINDING_CATEGORIES = Object.freeze([
   'PR_RECONCILIATION',
 ]);
 
-export const FINDING_SEVERITIES = Object.freeze(['P0', 'P1', 'P2', 'P3', 'Nit']);
 export const FINDING_CONFIDENCES = Object.freeze(['HIGH', 'MEDIUM', 'LOW']);
 export const FINDING_STATUSES = Object.freeze(['OPEN', 'RESOLVED', 'OBSOLETE']);
 export const REVIEW_AUTHOR_ASSOCIATIONS = Object.freeze([

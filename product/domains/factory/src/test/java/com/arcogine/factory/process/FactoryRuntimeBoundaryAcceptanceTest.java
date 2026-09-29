@@ -23,9 +23,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end acceptance evidence for the runtime-boundary criteria of the Factory Simulation
- * Engine Readiness plan (see {@code docs/planning/factory-simulation-engine-readiness.md} §5).
- * Unlike the narrower slice tests it deliberately does not duplicate ({@link
+ * End-to-end acceptance evidence for the supported Factory runtime boundary.
+ * Unlike the narrower tests it deliberately does not duplicate ({@link
  * ExplicitWorkloadSubmissionTest}, {@link ProportionalQuantityWorkTest}, {@link
  * OrderIntentSeparationTest}), this test drives everything through {@link FactoryRuntime} alone --
  * never {@link FactoryHandler}, a {@code Scheduler}, or any store directly -- to prove that
@@ -35,14 +34,15 @@ import org.junit.jupiter.api.Test;
  *
  * <p>This class does not itself exercise the internal order-event path or prove the
  * immutable-intent/mutable-execution ownership separation; those remain the province of the
- * existing FactoryHandler event-path tests. See {@code docs/planning/factory-simulation-engine-readiness.md}
- * §5 for the full criterion-by-criterion evidence mapping.
+ * existing FactoryHandler event-path tests. Those narrower tests remain the executable evidence
+ * for their respective invariants; this class proves that the supported runtime boundary composes
+ * them from a published model through deterministic completion.
  *
  * <p>The published model here has two routing steps and a quantity greater than one, so
  * completion genuinely depends on the full quantity-scaled routing executing, not on a
  * single-step coincidence.
  */
-class EngineReadinessAcceptanceTest {
+class FactoryRuntimeBoundaryAcceptanceTest {
 
     private static final long QUANTITY = 4;
     private static final double UNIT_PRICE = 12.5;

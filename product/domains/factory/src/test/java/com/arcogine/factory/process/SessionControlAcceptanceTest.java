@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end acceptance evidence for the session-control criteria of the Factory Simulation
- * Engine Readiness plan (see {@code docs/planning/factory-simulation-engine-readiness.md} §7),
- * driven entirely through {@link FactoryRuntime} -- never {@link FactoryHandler}, a store, or
- * a scheduler directly -- matching how {@link EngineReadinessAcceptanceTest} and {@link
+ * End-to-end acceptance evidence for the consumer-neutral session/control semantics defined by
+ * {@code docs/architecture/engine-semantics.md} §1.2, driven entirely through {@link
+ * FactoryRuntime} -- never {@link FactoryHandler}, a store, or a scheduler directly -- matching
+ * how {@link FactoryRuntimeBoundaryAcceptanceTest} and {@link
  * MultiResourceDispatchAcceptanceTest} prove their own boundaries end to end.
  *
  * <p>The published model here has two routing steps on two different machines and a quantity

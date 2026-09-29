@@ -20,7 +20,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves the engine-readiness explicit-workload-submission criterion: a headless caller can instantiate a
+ * Proves the explicit-workload-submission contract: a headless caller can instantiate a
  * published factory model's runtime and submit production workload through {@link
  * FactoryRuntime#submitWorkload}, supplying only product/quantity/commercial intent -- no
  * economic policy handler in the loop, and no caller-owned {@code Scheduler} or caller-chosen

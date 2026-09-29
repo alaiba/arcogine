@@ -26,7 +26,7 @@ import java.util.List;
  * <p>A command that verified every rejectable precondition it can determine up front can still,
  * for {@link FactoryRuntime#setMachineAvailability}, trigger a dispatch cascade whose own
  * scheduling can fail after mutation has already started (full preflight safety for that cascade is
- * deliberately not required by {@code docs/architecture/engine-semantics.md} §1.2. That contract
+ * deliberately not required by {@code docs/architecture/engine-semantics.md} §1.2). That contract
  * requires a definite result even then -- an uncaught exception past the command boundary is not
  * one -- so that case is {@link Faulted}, not {@link Rejected}: unlike {@link Rejected}, which
  * guarantees zero mutation,

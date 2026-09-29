@@ -27,8 +27,8 @@ import org.junit.jupiter.api.Test;
  * multi-resource dispatch through the supported consumer-facing seam. {@link
  * MultiResourceDispatchTest} exercises the same dispatch invariants at the narrower {@link
  * FactoryHandler} seam; this class exists to prove the full model -> assembler -> runtime
- * boundary specifically, matching how {@link EngineReadinessAcceptanceTest} proves the runtime
- * boundary end to end.
+ * boundary specifically, matching how {@link FactoryRuntimeBoundaryAcceptanceTest} proves the
+ * runtime boundary end to end.
  */
 class MultiResourceDispatchAcceptanceTest {
 

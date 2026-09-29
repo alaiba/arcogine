@@ -52,6 +52,7 @@ Proposed/planned behavior differing from current source is not drift by itself; 
 Authority placement is itself part of consistency. A maintained artifact should own only facts appropriate to its role:
 
 - source comments and Javadocs explain current code behavior, local invariants, and current limitations; future delivery state, sequencing, and roadmap claims belong in planning authorities rather than being maintained inside code comments;
+- product source and tests must not reference planning or research artifacts as authority, provenance, or explanatory dependencies; planning/research may cite implementation as evidence, while product source states the durable semantic contract directly or points to its durable owner;
 - explanatory documentation should avoid copying volatile executable/configuration values when the exact value is not itself part of that document's contract. Prefer the purpose/invariant plus a pointer to the executable owner for the current value;
 - exact values remain appropriate where the artifact intentionally owns them, such as public compatibility/support contracts, normative semantic/version identifiers, historical evidence, or reproducibility records.
 

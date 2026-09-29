@@ -31,7 +31,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves the engine-readiness quantity-proportional-work criterion: an order for quantity N consumes N times
+ * Proves the quantity-proportional-work contract: an order for quantity N consumes N times
  * the routing/machine work of an otherwise identical quantity-1 order, for both the internal
  * {@link EventPayload.OrderCreation} path and {@link FactoryRuntime}'s explicit workload
  * submission, while order completion still fires exactly once per order.

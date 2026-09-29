@@ -9,6 +9,27 @@ host, and concurrency failures must Arcogine Storage survive, and what implement
 evidence would satisfy that selected guarantee? This decides a bounded recovery/coordination
 contract, not whether Arcogine should own Storage.
 
+## Current-contract baseline
+
+Start from a provider that conforms to the current [Storage](../../architecture/storage.md) and
+[controlled-revision](../../architecture/controlled-revisions.md) contracts. A departure from an
+already-owned guarantee (acceptance, immutable ID binding, exact-definition refusal, or faithful
+resolution of an accepted record) is a correctness defect fixed independently of this question. It is
+neither evidence for a stronger claim nor a reason to redefine the baseline, and it does not by itself
+block this brief. Concretely, the baseline already requires:
+
+- accepted recorder source and subject resolve exactly as accepted after reopen, and valid Unicode,
+  supplementary characters included, survives unchanged;
+- text the private UTF-8 record format cannot represent, such as an unpaired surrogate, is refused
+  before anything is persisted rather than silently substituted;
+- distinct opaque definition bindings never collapse to the same stored marker, so a root created
+  under one is refused under any other;
+- a repeated or rebound controlled-revision ID is still rejected, and an accepted revision's
+  fingerprint, lineage and provenance never change.
+
+These examples add no crash, power-loss, concurrency, backup or repair guarantee; stronger survival is
+what this question investigates.
+
 ## Scope and candidates
 
 Compare (1) retaining the current atomic-installation, forced-file and lock model with its limited

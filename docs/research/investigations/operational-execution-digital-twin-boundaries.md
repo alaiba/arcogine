@@ -1,6 +1,6 @@
 # Operational Execution and Digital-Twin Boundary Research
 
-> **Status:** READY for the remaining boundaries; the durable operational identity question is CONCLUDED and reconciled into the Operational continuity contract  
+> **Status:** CANDIDATE for the remaining boundaries; the durable operational identity question is CONCLUDED and reconciled into the Operational continuity contract. The [research register](../research-register.md) owns lifecycle state  
 > **Scope:** Resolve the semantic and safety boundaries required before Arcogine admits implementation that connects shared production semantics to independently existing operational systems  
 > **Authority:** Research only; this document defines no implementation queue or Operational module contract
 

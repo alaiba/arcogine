@@ -67,6 +67,11 @@ import java.util.Optional;
  * without being modified, adopted or deleted. Semantic artifacts are deduplicated by a physical key
  * derived from the complete {@link ModelFingerprint}; the fingerprint identifies canonical content
  * in the current producing context and the physical key never escapes this adapter.
+ *
+ * <p>Every string admitted into the private representation -- recording provenance, fingerprints and
+ * the definition binding -- is encoded as strict UTF-8. Text containing an unpaired UTF-16 surrogate
+ * cannot be stored exactly, so it is refused before anything is persisted rather than being
+ * substituted; valid Unicode, supplementary characters included, resolves unchanged.
  */
 final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAuthority {
 
@@ -194,7 +199,13 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         if (binding == null || binding.isBlank()) {
             throw new IllegalArgumentException("verifier must name the definition it verifies against");
         }
-        byte[] bindingBytes = binding.getBytes(StandardCharsets.UTF_8);
+        byte[] bindingBytes;
+        try {
+            bindingBytes = utf8(binding);
+        } catch (CharacterCodingException e) {
+            throw new IllegalArgumentException(
+                    "verifier definition binding must be well-formed Unicode text", e);
+        }
         byte[] marker = Arrays.copyOf(STORE_MARKER, STORE_MARKER.length + bindingBytes.length);
         System.arraycopy(bindingBytes, 0, marker, STORE_MARKER.length, bindingBytes.length);
         return marker;
@@ -225,7 +236,19 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
     public ControlledRevision accept(ControlledRevision candidate, SemanticArtifact artifact) {
         Objects.requireNonNull(candidate, "candidate");
         Objects.requireNonNull(artifact, "artifact");
+        // The recorder is preserved verbatim, so text this representation cannot hold exactly is
+        // refused before the lock is taken and before any artifact or record is installed.
+        requireRepresentable(candidate.provenance().recorder().source(), "recorder source");
+        requireRepresentable(candidate.provenance().recorder().subject(), "recorder subject");
         return withExclusiveLock(() -> acceptLocked(candidate, artifact));
+    }
+
+    private static void requireRepresentable(String text, String field) {
+        try {
+            utf8(text);
+        } catch (CharacterCodingException e) {
+            throw new IllegalArgumentException(field + " must be well-formed Unicode text", e);
+        }
     }
 
     @Override
@@ -599,9 +622,23 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
     }
 
     private static void writeString(DataOutputStream output, String value) throws IOException {
-        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = utf8(value);
         output.writeInt(bytes.length);
         output.write(bytes);
+    }
+
+    /**
+     * Encodes {@code value} as UTF-8, reporting text that is not well-formed instead of silently
+     * substituting it, so a persisted string always reads back as the exact string that was stored.
+     */
+    private static byte[] utf8(String value) throws CharacterCodingException {
+        ByteBuffer encoded = StandardCharsets.UTF_8.newEncoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .encode(CharBuffer.wrap(value));
+        byte[] bytes = new byte[encoded.remaining()];
+        encoded.get(bytes);
+        return bytes;
     }
 
     private static String readString(DataInputStream input) throws IOException {

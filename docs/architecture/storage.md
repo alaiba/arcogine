@@ -45,6 +45,11 @@ the verified artifact, and installs the immutable revision record. Governance's 
 established by the authority at that boundary; the candidate timestamp is not trusted. The record,
 artifact fingerprint and bytes, lineage, and recording provenance must agree on resolution. An ID
 already present is rejected, even when the repeated candidate is equal; retry is not idempotent.
+Accepted text is stored exactly or refused: valid Unicode, supplementary characters included,
+resolves unchanged, while recorder text the private UTF-8 record format cannot represent (an
+unpaired UTF-16 surrogate) is refused with `IllegalArgumentException` before anything is installed,
+never substituted. A definition binding held to the same standard is refused before a root is
+created or opened, so distinct bindings never share a stored marker.
 Distinct accepted occurrences may share a fingerprint and physical artifact, including
 `F1 -> F2 -> F1`, without sharing revision identity.
 

@@ -386,10 +386,10 @@ Do not create a generic `interop`, `formats`, `ExternalModel`, or cross-domain i
 
 This standards register deliberately does **not** choose:
 
-- Governance authoritative controlled-revision persistence and historical resolution persistence/database/artifact format;
+- a permanent persistence backend, database, or artifact format for built-in [Storage](storage.md)'s controlled-revision history;
 - a canonical JSON representation for `FactoryModel`;
 - CloudEvents, Kafka, NATS, MQTT, WebSocket, or another runtime transport as the Engine domain contract;
 - one universal industrial interchange format;
 - a generic cross-domain interchange module or ontology.
 
-Those choices remain with the capability that owns the semantic boundary and are made only when implementation pressure makes the decision concrete.
+Governance owns controlled-revision semantics and the `ControlledRevisionAuthority` port; Storage owns the supported persistence behavior and its private format. The remaining choices stay with their owning capabilities and are made only when implementation pressure makes a decision concrete.

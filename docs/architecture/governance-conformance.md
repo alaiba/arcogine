@@ -502,7 +502,7 @@ The [Factory publication identity contract](factory-design.md#11-publication-ide
 
 Reconcile this architecture, and the specification that owns the affected semantics, when implementation commits to hard-to-reverse choices about:
 
-- replacement/production controlled-revision persistence, artifact retention/resolution, migration, or integrity semantics beyond the current replaceable Governance identity/history capability adapter;
+- replacement/production controlled-revision persistence, artifact retention/resolution, migration, or integrity semantics beyond the current bounded built-in [Storage](storage.md) implementation;
 - extending current `0..1` lineage to multi-parent merge semantics;
 - branch/ref/tag semantics over controlled revisions;
 - cryptographic revision-record integrity/signature semantics;

@@ -85,14 +85,14 @@ class FactoryRuntimeBoundaryAcceptanceTest {
     }
 
     @Test
-    void quantityDrivesRepeatedProductionStepCompletionBeforeTheJobIsDone() {
+    void allUnitJobsCompleteTheirRoutingBeforeTheOrderIsDone() {
         FactoryRuntime runtime = freshRuntime();
         runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
-        // Two routing steps repeated QUANTITY times means QUANTITY * 2 TaskEnd events are
-        // required before the job can be complete -- not one, and not just QUANTITY. Other event
-        // types may legitimately appear in the stream alongside them (e.g. TaskStart), so this
-        // counts TaskEnd events specifically rather than asserting every advanced event is one.
+        // Each of QUANTITY unit jobs traverses both routing steps once, so QUANTITY * 2 TaskEnd
+        // events are required before the order can be complete. Other event types may legitimately
+        // appear in the stream alongside them (e.g. TaskStart), so this counts TaskEnd events
+        // specifically rather than asserting every advanced event is one.
         long requiredTaskEnds = QUANTITY * 2;
         long taskEndsSeen = 0;
         Event event;
@@ -125,8 +125,8 @@ class FactoryRuntimeBoundaryAcceptanceTest {
 
         assertEquals(orderId, completed.orderId());
 
-        // OrderCompleted correlates back to the submitted order via jobId -> FactoryRuntime.job ->
-        // JobView.orderId, under the 1 Order <-> 1 Job invariant this model deliberately keeps.
+        // The event's jobId resolves to its completed child job; JobView.orderId links that job
+        // back to the submitted order, which may own multiple unit jobs.
         JobView resolvedJob = runtime.job(completed.jobId());
         assertEquals(orderId, resolvedJob.orderId(), "OrderCompleted.jobId must resolve to the submitted order");
         assertTrue(resolvedJob.isComplete(), "the resolved job must be complete at the completion observation");

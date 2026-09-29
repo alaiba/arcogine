@@ -64,6 +64,8 @@ class BuiltInStorageTest {
             new RevisionRecorder("governance-test", "operator-17");
     private static final Instant ACCEPTED_AT = Instant.parse("2026-09-02T08:30:45.123456789Z");
     private static final SemanticArtifactVerifier FACTORY_VERIFIER = FactoryModelArtifact.verifier();
+    private static final String STORE_MARKER_PREFIX = "arcogine-proving-revision-store/strict-utf8\0";
+    private static final String LEGACY_STORE_MARKER_PREFIX = "arcogine-proving-revision-store\0";
 
     @TempDir
     Path tempDirectory;
@@ -629,7 +631,7 @@ class BuiltInStorageTest {
                 Set.of("artifacts", "authority.lock", "proving-store", "revisions"),
                 contents(fresh).keySet());
         String marker = new String(Files.readAllBytes(fresh.resolve("proving-store")), StandardCharsets.UTF_8);
-        assertEquals("arcogine-proving-revision-store\0" + FACTORY_VERIFIER.definitionBinding(), marker);
+        assertEquals(STORE_MARKER_PREFIX + FACTORY_VERIFIER.definitionBinding(), marker);
     }
 
     @Test
@@ -734,6 +736,132 @@ class BuiltInStorageTest {
     }
 
     @Test
+    void asciiRecorderTextResolvesUnchangedAfterReopen() {
+        RevisionRecorder recorder = new RevisionRecorder("import-service", "operator-17");
+
+        assertRecorderResolvesUnchangedAfterReopen(40, recorder);
+    }
+
+    @Test
+    void validUnicodeRecorderTextResolvesUnchangedAfterReopen() throws IOException {
+        // U+1F9EA is a supplementary character, stored as a surrogate pair in a Java string.
+        RevisionRecorder recorder = new RevisionRecorder(
+                "source-🧪-é", "subject-日本-🧪");
+
+        assertRecorderResolvesUnchangedAfterReopen(41, recorder);
+
+        // The private format is unchanged for valid Unicode: the text is stored as plain UTF-8.
+        String record = new String(
+                Files.readAllBytes(onlyRegularFile(store().resolve("revisions"))),
+                StandardCharsets.ISO_8859_1);
+        for (String text : List.of(recorder.source(), recorder.subject())) {
+            assertTrue(record.contains(new String(
+                    text.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1)));
+        }
+    }
+
+    @Test
+    void unpairedHighSurrogateInRecorderSourceIsRefusedWithoutMutation() throws IOException {
+        assertRecorderRefusedWithoutMutation(
+                42, new RevisionRecorder("\uD800", "operator-17"), "recorder source");
+        assertRecorderRefusedWithoutMutation(
+                43, new RevisionRecorder("trailing-high-\uD83E", "operator-17"), "recorder source");
+    }
+
+    @Test
+    void unpairedLowSurrogateInRecorderSubjectIsRefusedWithoutMutation() throws IOException {
+        assertRecorderRefusedWithoutMutation(
+                44, new RevisionRecorder("governance-test", "\uDC00"), "recorder subject");
+        assertRecorderRefusedWithoutMutation(
+                45, new RevisionRecorder("governance-test", "reversed-\uDDEA\uD83E"), "recorder subject");
+    }
+
+    @Test
+    void malformedDefinitionBindingIsRefusedBeforeAnyRootInitialization() throws IOException {
+        List<String> malformedBindings = List.of("\uD800", "\uDC00", "build-\uD83E", "\uDDEA\uD83E-build");
+        for (int index = 0; index < malformedBindings.size(); index++) {
+            String malformed = malformedBindings.get(index);
+            Path absent = tempDirectory.resolve("malformed-binding-" + index);
+            Map<String, String> before = contents(tempDirectory);
+
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> BuiltInStorage.open(absent, boundTo(malformed)));
+            assertFalse(Files.exists(absent));
+            assertEquals(before, contents(tempDirectory));
+        }
+    }
+
+    @Test
+    void distinctDefinitionBindingsCannotAliasThroughLossyEncoding() throws IOException {
+        // Each malformed binding used to encode to the same bytes as the substitute character, so a
+        // store created under one silently reopened under the other.
+        String[][] pairs = {{"?", "\uD800"}, {"?", "\uDC00"}, {"a?b", "a\uD800b"}, {"build-?", "build-\uD83E"}};
+        for (int index = 0; index < pairs.length; index++) {
+            String created = pairs[index][0];
+            String lossy = pairs[index][1];
+            Path root = tempDirectory.resolve("alias-" + index);
+            BuiltInStorage.open(root, boundTo(created)).controlledRevisions();
+            Map<String, String> before = contents(root);
+
+            assertThrows(IllegalArgumentException.class, () -> BuiltInStorage.open(root, boundTo(lossy)));
+            assertEquals(before, contents(root));
+            assertTrue(BuiltInStorage.open(root, boundTo(created)).controlledRevisions().revisions().isEmpty());
+        }
+    }
+
+    @Test
+    void validUnicodeDefinitionBindingIsRecordedExactlyAndStaysExact() throws IOException {
+        String binding = "definition-🧪-build";
+        Path root = tempDirectory.resolve("unicode-binding");
+        BuiltInStorage.open(root, boundTo(binding)).controlledRevisions();
+
+        byte[] expected = (STORE_MARKER_PREFIX + binding).getBytes(StandardCharsets.UTF_8);
+        assertArrayEquals(expected, Files.readAllBytes(root.resolve("proving-store")));
+        assertTrue(BuiltInStorage.open(root, boundTo(binding)).controlledRevisions().revisions().isEmpty());
+        Map<String, String> before = contents(root);
+        GovernanceHistoryException different = assertThrows(
+                GovernanceHistoryException.class,
+                () -> BuiltInStorage.open(root, boundTo("definition-🧫-build")));
+        assertEquals(UNSUPPORTED_STORE, different.code());
+        assertEquals(before, contents(root));
+    }
+
+    @Test
+    void rootWrittenBeforeStrictTextEncodingIsRefusedWithoutBeingReadOrChanged() throws IOException {
+        // The earlier encoder stored an unpaired-surrogate binding or recorder as a literal "?", so
+        // a marker written then cannot be told apart from one authored exactly -- "?" below is the
+        // marker a "\uD800" binding used to leave. No verifier may adopt such a root, however its
+        // binding compares, and nothing in it is read.
+        List<String> bindings = List.of("?", "definition-build-1");
+        for (int index = 0; index < bindings.size(); index++) {
+            String binding = bindings.get(index);
+            SemanticArtifactVerifier verifier = boundTo(binding);
+            Path root = tempDirectory.resolve("earlier-encoding-" + index);
+            FactoryModelVersion version = version("Widget", 5);
+            ControlledRevisionAuthority opened = BuiltInStorage
+                    .open(root, verifier, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC))
+                    .controlledRevisions();
+            opened.accept(revision(id(46 + index), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+            Files.write(
+                    root.resolve("proving-store"),
+                    (LEGACY_STORE_MARKER_PREFIX + binding).getBytes(StandardCharsets.UTF_8));
+            Map<String, String> before = contents(root);
+
+            GovernanceHistoryException refused = assertThrows(
+                    GovernanceHistoryException.class, () -> BuiltInStorage.open(root, verifier));
+            assertEquals(UNSUPPORTED_STORE, refused.code(), binding);
+            assertTrue(refused.getMessage().contains("before strict text encoding"), refused.getMessage());
+            assertEquals(before, contents(root), binding);
+
+            // An authority opened earlier refuses the swapped-in root the same way.
+            GovernanceHistoryException reuse = assertThrows(GovernanceHistoryException.class, opened::revisions);
+            assertEquals(UNSUPPORTED_STORE, reuse.code(), binding);
+            assertEquals(before, contents(root), binding);
+        }
+    }
+
+    @Test
     void discardedPrefixArtifactsAreRefusedBeforeAnyStoreMutation() throws IOException {
         // Bytes laid out under a discarded ordinal prefix are never admitted as, or reinterpreted
         // into, current proving content.
@@ -804,13 +932,69 @@ class BuiltInStorageTest {
                 store(), FACTORY_VERIFIER, Clock.fixed(instant, ZoneOffset.UTC)).controlledRevisions();
     }
 
+    private void assertRecorderResolvesUnchangedAfterReopen(int suffix, RevisionRecorder recorder) {
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision accepted = authorityAt(ACCEPTED_AT).accept(
+                revision(id(suffix), version.fingerprint(), List.of(), ACCEPTED_AT, recorder),
+                artifact(version));
+
+        assertEquals(recorder, accepted.provenance().recorder());
+        ControlledRevisionAuthority reopened = authority();
+        assertEquals(recorder, reopened.findById(accepted.id()).orElseThrow().provenance().recorder());
+        HistoricalRevision resolved = reopened.resolve(accepted.id());
+        assertEquals(accepted, resolved.revision());
+        assertEquals(recorder, resolved.revision().provenance().recorder());
+        assertEquals(List.of(accepted), reopened.revisions());
+    }
+
+    /** A malformed recorder is refused before any artifact or revision record is installed. */
+    private void assertRecorderRefusedWithoutMutation(int suffix, RevisionRecorder recorder, String field)
+            throws IOException {
+        FactoryModelVersion version = version("Widget", 5);
+        Path root = tempDirectory.resolve("refused-" + suffix);
+        ControlledRevisionAuthority authority = BuiltInStorage
+                .open(root, FACTORY_VERIFIER, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC))
+                .controlledRevisions();
+        Map<String, String> before = contents(root);
+        ControlledRevision candidate =
+                revision(id(suffix), version.fingerprint(), List.of(), ACCEPTED_AT, recorder);
+
+        IllegalArgumentException refused = assertThrows(
+                IllegalArgumentException.class, () -> authority.accept(candidate, artifact(version)));
+        assertTrue(refused.getMessage().startsWith(field), refused.getMessage());
+        assertEquals(before, contents(root));
+        assertTrue(authority.findById(candidate.id()).isEmpty());
+        assertTrue(authority.revisions().isEmpty());
+        assertTrue(regularFiles(root.resolve("artifacts")).isEmpty());
+
+        // No binding was left behind: the same revision ID and artifact are still acceptable.
+        ControlledRevision retry = authority.accept(
+                revision(candidate.id(), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+        assertEquals(RECORDER, retry.provenance().recorder());
+        assertEquals(
+                retry,
+                BuiltInStorage.open(root, FACTORY_VERIFIER)
+                        .controlledRevisions()
+                        .resolve(candidate.id())
+                        .revision());
+    }
+
     private static ControlledRevision revision(
             ControlledRevisionId id,
             ModelFingerprint fingerprint,
             List<ControlledRevisionId> parents,
             Instant recordedAt) {
+        return revision(id, fingerprint, parents, recordedAt, RECORDER);
+    }
+
+    private static ControlledRevision revision(
+            ControlledRevisionId id,
+            ModelFingerprint fingerprint,
+            List<ControlledRevisionId> parents,
+            Instant recordedAt,
+            RevisionRecorder recorder) {
         return new ControlledRevision(
-                id, fingerprint, parents, new RevisionProvenance(recordedAt, RECORDER));
+                id, fingerprint, parents, new RevisionProvenance(recordedAt, recorder));
     }
 
     private static ControlledRevisionId id(int suffix) {

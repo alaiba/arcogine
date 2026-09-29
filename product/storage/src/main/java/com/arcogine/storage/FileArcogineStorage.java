@@ -58,20 +58,33 @@ import java.util.Optional;
  * resolution implement the Governance port. The current representation is bound to the producing
  * definition build; a mismatch is refused without reinterpreting or deleting its contents.
  *
- * <p>The legacy on-disk marker retains its original bytes for existing-root compatibility, together
- * with the {@link SemanticArtifactVerifier#definitionBinding() definition binding} of the verifier
- * that created it. It initializes only an absent location and reopens only a directory
- * whose marker names the same binding; any other location -- an existing empty directory, one
- * holding only names this store would use, a store written by an earlier layout, or one written
- * under a different definition build -- is refused before any revision or artifact is read, and
- * without being modified, adopted or deleted. Semantic artifacts are deduplicated by a physical key
+ * <p>The private on-disk marker keeps its {@code proving-store} name and carries a text-encoding
+ * discriminator, together with the {@link SemanticArtifactVerifier#definitionBinding() definition
+ * binding} of the verifier that created it. It initializes only an absent location and reopens only
+ * a directory whose marker names the same binding; any other location -- an existing empty
+ * directory, one holding only names this store would use, a store written by an earlier layout or
+ * before strict text encoding, or one written under a different definition build -- is refused
+ * before any revision or artifact is read, and without being modified, adopted or deleted.
+ * Semantic artifacts are deduplicated by a physical key
  * derived from the complete {@link ModelFingerprint}; the fingerprint identifies canonical content
  * in the current producing context and the physical key never escapes this adapter.
+ *
+ * <p>Every string admitted into the private representation -- recording provenance, fingerprints and
+ * the definition binding -- is encoded as strict UTF-8. Text containing an unpaired UTF-16 surrogate
+ * cannot be stored exactly, so it is refused before it can be persisted rather than being
+ * substituted; valid Unicode, supplementary characters included, resolves unchanged. A root written
+ * before strict encoding may hold text that was silently substituted, so its marker is never
+ * accepted: it cannot be told apart from one whose text was authored exactly.
  */
 final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAuthority {
 
-    private static final byte[] STORE_MARKER =
+    /** Marker prefix of roots written before strict text encoding; such roots are always refused. */
+    private static final byte[] LEGACY_STORE_MARKER =
             "arcogine-proving-revision-store\0".getBytes(StandardCharsets.US_ASCII);
+    // Differs from the legacy prefix at the byte that follows "store", so no marker written under
+    // either encoding can equal, or be a prefix of, one written under the other.
+    private static final byte[] STORE_MARKER =
+            "arcogine-proving-revision-store/strict-utf8\0".getBytes(StandardCharsets.US_ASCII);
     private static final byte[] REVISION_MAGIC =
             "arcogine-proving-revision\0".getBytes(StandardCharsets.US_ASCII);
     private static final byte[] ARTIFACT_MAGIC =
@@ -178,7 +191,10 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         }
         byte[] actual = Files.readAllBytes(marker);
         if (!Arrays.equals(storeMarker, actual)) {
-            throw isProvingStoreMarker(actual) ? definitionMismatch() : unsupportedStore();
+            if (startsWith(actual, LEGACY_STORE_MARKER)) {
+                throw earlierTextEncoding();
+            }
+            throw startsWith(actual, STORE_MARKER) ? definitionMismatch() : unsupportedStore();
         }
         if (!Files.isDirectory(revisionsDirectory) || !Files.isDirectory(artifactsDirectory)) {
             throw unsupportedStore();
@@ -194,15 +210,30 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         if (binding == null || binding.isBlank()) {
             throw new IllegalArgumentException("verifier must name the definition it verifies against");
         }
-        byte[] bindingBytes = binding.getBytes(StandardCharsets.UTF_8);
+        byte[] bindingBytes;
+        try {
+            bindingBytes = utf8(binding);
+        } catch (CharacterCodingException e) {
+            throw new IllegalArgumentException(
+                    "verifier definition binding must be well-formed Unicode text", e);
+        }
         byte[] marker = Arrays.copyOf(STORE_MARKER, STORE_MARKER.length + bindingBytes.length);
         System.arraycopy(bindingBytes, 0, marker, STORE_MARKER.length, bindingBytes.length);
         return marker;
     }
 
-    private static boolean isProvingStoreMarker(byte[] marker) {
-        return marker.length >= STORE_MARKER.length
-                && Arrays.equals(STORE_MARKER, Arrays.copyOf(marker, STORE_MARKER.length));
+    private static boolean startsWith(byte[] bytes, byte[] prefix) {
+        return bytes.length >= prefix.length
+                && Arrays.equals(prefix, Arrays.copyOf(bytes, prefix.length));
+    }
+
+    private GovernanceHistoryException earlierTextEncoding() {
+        return new GovernanceHistoryException(
+                UNSUPPORTED_STORE,
+                "controlled revision storage was written before strict text encoding, so recorder or"
+                        + " definition-binding text it holds may have been substituted; it is never read,"
+                        + " reinterpreted or deleted: "
+                        + authorityRoot);
     }
 
     private GovernanceHistoryException definitionMismatch() {
@@ -225,7 +256,19 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
     public ControlledRevision accept(ControlledRevision candidate, SemanticArtifact artifact) {
         Objects.requireNonNull(candidate, "candidate");
         Objects.requireNonNull(artifact, "artifact");
+        // The recorder is preserved verbatim, so text this representation cannot hold exactly is
+        // refused before the lock is taken and before any artifact or record is installed.
+        requireRepresentable(candidate.provenance().recorder().source(), "recorder source");
+        requireRepresentable(candidate.provenance().recorder().subject(), "recorder subject");
         return withExclusiveLock(() -> acceptLocked(candidate, artifact));
+    }
+
+    private static void requireRepresentable(String text, String field) {
+        try {
+            utf8(text);
+        } catch (CharacterCodingException e) {
+            throw new IllegalArgumentException(field + " must be well-formed Unicode text", e);
+        }
     }
 
     @Override
@@ -599,9 +642,23 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
     }
 
     private static void writeString(DataOutputStream output, String value) throws IOException {
-        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = utf8(value);
         output.writeInt(bytes.length);
         output.write(bytes);
+    }
+
+    /**
+     * Encodes {@code value} as UTF-8, reporting text that is not well-formed instead of silently
+     * substituting it, so a persisted string always reads back as the exact string that was stored.
+     */
+    private static byte[] utf8(String value) throws CharacterCodingException {
+        ByteBuffer encoded = StandardCharsets.UTF_8.newEncoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .encode(CharBuffer.wrap(value));
+        byte[] bytes = new byte[encoded.remaining()];
+        encoded.get(bytes);
+        return bytes;
     }
 
     private static String readString(DataInputStream input) throws IOException {

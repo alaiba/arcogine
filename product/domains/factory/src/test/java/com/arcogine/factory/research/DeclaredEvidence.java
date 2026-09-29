@@ -15,7 +15,7 @@ import java.util.Set;
  *
  * <p>Reading an undeclared input fails, so a derivation cannot quietly depend on evidence its
  * definition does not name. Every read is recorded, so the outcome a derivation builds carries the
- * exact observations and event interval that supported it.
+ * observations it read and the event interval covering the events it read.
  */
 public final class DeclaredEvidence {
 

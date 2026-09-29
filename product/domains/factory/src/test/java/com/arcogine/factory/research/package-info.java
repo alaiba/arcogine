@@ -26,9 +26,10 @@
  *       kept, so where evidence is collected is part of the experiment, and {@code EvidenceWindow}
  *       records it. A fixture declares whether it means to capture the complete run, and the runner
  *       fails if the evidence does not match.
- *   <li>Evidence is the published model plus supported observations and supported events. Nothing
- *       here reads scheduler queues, handler or store state, or the internal events that advancement
- *       and command results expose, and a source-level test holds the package to that.
+ *   <li>Evidence is the published model plus supported observations and supported events, kept in
+ *       experiment-local values; it is not a Governance evidence reference. Nothing here reads
+ *       scheduler queues, handler or store state, or the internal events that advancement and
+ *       command results expose, and a source-level test holds the package to that.
  *   <li>A derivation is research-local. Its existence here does not make it an Engine fact,
  *       game-owned analytics, or a public API, and a test helper cannot decide otherwise. It may
  *       read only the inputs its {@code ResearchDefinition} declares, can only read a

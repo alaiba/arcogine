@@ -5,9 +5,9 @@ package com.arcogine.factory.research;
  *
  * <p>An oracle receives only {@link DeclaredEvidence}: a view of a finished evidence bundle limited
  * to the inputs its {@link ResearchDefinition} declares. It is never given a {@code FactoryRuntime},
- * so it cannot modify runtime truth, and it has no route to scheduler or handler internals, so it
- * cannot re-decide scheduling or dispatch. It may only measure what the supported evidence
- * licenses, or refuse.
+ * so nothing in its contract lets it modify runtime truth, and it has no route to scheduler or
+ * handler internals, so it has no way to re-decide scheduling or dispatch. It may only measure what
+ * the supported evidence licenses, or refuse.
  */
 public interface Oracle<T> {
 

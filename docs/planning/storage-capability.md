@@ -24,7 +24,13 @@ questions below.
 
 [Failure-model research](../research/investigations/storage-failure-model.md) and
 [historical-support research](../research/investigations/storage-historical-support.md) are `READY`
-questions, not selected implementation slices. No WAL, database, migration, replication,
-evidence-history storage, or universal provider contract is admitted by this plan. A later slice
-needs a settled owning contract, dependencies, bounded responsibility, and acceptance cases before
-it receives a delivery coordinate.
+questions, not selected implementation slices. The [research register](../research/research-register.md)
+also preserves three later `CANDIDATE` triggers: backup/restore when retained authoritative history
+must survive loss or replacement of its storage location; performance/capacity when a named workload
+objective or measured limit exists; and alternate-provider conformance when a concrete substitution
+need appears. Those candidates have no dedicated brief or admitted implementation slice yet.
+
+No WAL, database, migration, replication, backup mechanism, performance framework, alternate
+backend, evidence-history storage, or universal provider contract is admitted by this plan. A later
+slice needs a settled owning contract, dependencies, bounded responsibility, and acceptance cases
+before it receives a delivery coordinate.

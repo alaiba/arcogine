@@ -27,7 +27,8 @@ block this brief. Concretely, the baseline already requires:
 - text the private UTF-8 record format cannot represent, such as an unpaired surrogate, is refused
   before anything is persisted rather than silently substituted;
 - distinct opaque definition bindings never collapse to the same stored marker, so a root created
-  under one is refused under any other;
+  under one is refused under any other, and a root written before strict text encoding, whose text
+  may have been substituted, is refused rather than read;
 - a repeated or rebound controlled-revision ID is still rejected, and an accepted revision's
   fingerprint, lineage and provenance never change.
 

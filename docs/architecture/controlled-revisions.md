@@ -274,10 +274,11 @@ realization, opening and integrity enforcement.
 
 The initial provider is bound to the verifier's exact definition build. It refuses a different
 binding without reading, reinterpreting, or deleting the root. The binding is conservative build
-context, not a stable semantic identity or compatible historical reader. The former proving-store
-marker stays private and readable for existing roots; that legacy format does not define current
-product purpose or a retained historical support promise. See [Storage](storage.md) for the exact
-supported failure and compatibility scope.
+context, not a stable semantic identity or compatible historical reader. The private proving-store
+naming stays; that legacy format does not define current product purpose or a retained historical
+support promise. A root written before strict text encoding could have stored recording provenance
+inexactly, so it is refused rather than read. See [Storage](storage.md) for the exact supported
+failure and compatibility scope.
 
 ## Authoritative historical identity begins at persistence acceptance
 

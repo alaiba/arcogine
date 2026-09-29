@@ -11,7 +11,8 @@ public final class BuiltInStorage {
 
     /**
      * Opens an owned root or creates one at an absent location. An existing foreign, incomplete, or
-     * differently definition-bound root is refused without adoption or deletion. Acceptance commits
+     * differently definition-bound root, or one written before strict text encoding, is refused
+     * without adoption or deletion. Acceptance commits
      * per operation; the returned object has no close-time commit step.
      *
      * <p>Text is persisted exactly or refused: the verifier's definition binding must be well-formed

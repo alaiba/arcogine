@@ -64,6 +64,8 @@ class BuiltInStorageTest {
             new RevisionRecorder("governance-test", "operator-17");
     private static final Instant ACCEPTED_AT = Instant.parse("2026-09-02T08:30:45.123456789Z");
     private static final SemanticArtifactVerifier FACTORY_VERIFIER = FactoryModelArtifact.verifier();
+    private static final String STORE_MARKER_PREFIX = "arcogine-proving-revision-store/strict-utf8\0";
+    private static final String LEGACY_STORE_MARKER_PREFIX = "arcogine-proving-revision-store\0";
 
     @TempDir
     Path tempDirectory;
@@ -629,7 +631,7 @@ class BuiltInStorageTest {
                 Set.of("artifacts", "authority.lock", "proving-store", "revisions"),
                 contents(fresh).keySet());
         String marker = new String(Files.readAllBytes(fresh.resolve("proving-store")), StandardCharsets.UTF_8);
-        assertEquals("arcogine-proving-revision-store\0" + FACTORY_VERIFIER.definitionBinding(), marker);
+        assertEquals(STORE_MARKER_PREFIX + FACTORY_VERIFIER.definitionBinding(), marker);
     }
 
     @Test
@@ -814,7 +816,7 @@ class BuiltInStorageTest {
         Path root = tempDirectory.resolve("unicode-binding");
         BuiltInStorage.open(root, boundTo(binding)).controlledRevisions();
 
-        byte[] expected = ("arcogine-proving-revision-store\0" + binding).getBytes(StandardCharsets.UTF_8);
+        byte[] expected = (STORE_MARKER_PREFIX + binding).getBytes(StandardCharsets.UTF_8);
         assertArrayEquals(expected, Files.readAllBytes(root.resolve("proving-store")));
         assertTrue(BuiltInStorage.open(root, boundTo(binding)).controlledRevisions().revisions().isEmpty());
         Map<String, String> before = contents(root);
@@ -823,6 +825,40 @@ class BuiltInStorageTest {
                 () -> BuiltInStorage.open(root, boundTo("definition-🧫-build")));
         assertEquals(UNSUPPORTED_STORE, different.code());
         assertEquals(before, contents(root));
+    }
+
+    @Test
+    void rootWrittenBeforeStrictTextEncodingIsRefusedWithoutBeingReadOrChanged() throws IOException {
+        // The earlier encoder stored an unpaired-surrogate binding or recorder as a literal "?", so
+        // a marker written then cannot be told apart from one authored exactly -- "?" below is the
+        // marker a "\uD800" binding used to leave. No verifier may adopt such a root, however its
+        // binding compares, and nothing in it is read.
+        List<String> bindings = List.of("?", "definition-build-1");
+        for (int index = 0; index < bindings.size(); index++) {
+            String binding = bindings.get(index);
+            SemanticArtifactVerifier verifier = boundTo(binding);
+            Path root = tempDirectory.resolve("earlier-encoding-" + index);
+            FactoryModelVersion version = version("Widget", 5);
+            ControlledRevisionAuthority opened = BuiltInStorage
+                    .open(root, verifier, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC))
+                    .controlledRevisions();
+            opened.accept(revision(id(46 + index), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+            Files.write(
+                    root.resolve("proving-store"),
+                    (LEGACY_STORE_MARKER_PREFIX + binding).getBytes(StandardCharsets.UTF_8));
+            Map<String, String> before = contents(root);
+
+            GovernanceHistoryException refused = assertThrows(
+                    GovernanceHistoryException.class, () -> BuiltInStorage.open(root, verifier));
+            assertEquals(UNSUPPORTED_STORE, refused.code(), binding);
+            assertTrue(refused.getMessage().contains("before strict text encoding"), refused.getMessage());
+            assertEquals(before, contents(root), binding);
+
+            // An authority opened earlier refuses the swapped-in root the same way.
+            GovernanceHistoryException reuse = assertThrows(GovernanceHistoryException.class, opened::revisions);
+            assertEquals(UNSUPPORTED_STORE, reuse.code(), binding);
+            assertEquals(before, contents(root), binding);
+        }
     }
 
     @Test

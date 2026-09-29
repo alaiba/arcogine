@@ -31,13 +31,15 @@ without adoption, overwrite, repair, or deletion. Interrupted initialization may
 root; the implementation does not silently complete or erase it. A new root's record directories
 are initialized under its lock. An existing root missing either directory is refused unchanged.
 
-The representation retains the original private `proving-store` marker and `arcogine-proving-*`
-record prefixes. This makes compatible existing roots readable without renaming or migrating them.
-Those bytes describe legacy format, not the current product purpose or a stronger custody promise.
-The verifier's opaque `definitionBinding()` is a conservative exact-build guard. A mismatched build
-is refused before records are read, and the root remains untouched. Equal content fingerprints do
-not prove equal definition meaning. A refusal preserves bytes but supplies neither a compatible
-reader nor an exact-definition archive.
+The representation keeps the private `proving-store` file name and `arcogine-proving-*` record
+prefixes; those names describe legacy format, not the current product purpose or a stronger custody
+promise. The marker also carries a text-encoding discriminator. A root written before strict text
+encoding may hold recorder or binding text that was silently substituted, and that cannot be told
+apart from text authored exactly, so such a root is refused before any record is read, whichever
+verifier reopens it, and is not converted. The verifier's opaque `definitionBinding()` is a
+conservative exact-build guard. A mismatched build is refused before records are read, and the root
+remains untouched. Equal content fingerprints do not prove equal definition meaning. A refusal
+preserves bytes but supplies neither a compatible reader nor an exact-definition archive.
 
 The accepted revision record is the authoritative commit boundary. Storage validates the candidate
 and verifier, checks an already accepted parent under the current zero-or-one-parent policy, stores
@@ -46,10 +48,11 @@ established by the authority at that boundary; the candidate timestamp is not tr
 artifact fingerprint and bytes, lineage, and recording provenance must agree on resolution. An ID
 already present is rejected, even when the repeated candidate is equal; retry is not idempotent.
 Accepted text is stored exactly or refused: valid Unicode, supplementary characters included,
-resolves unchanged, while recorder text the private UTF-8 record format cannot represent (an
-unpaired UTF-16 surrogate) is refused with `IllegalArgumentException` before anything is installed,
-never substituted. A definition binding held to the same standard is refused before a root is
-created or opened, so distinct bindings never share a stored marker.
+resolves unchanged, while text the private UTF-8 record format cannot represent (an unpaired UTF-16
+surrogate) is refused with `IllegalArgumentException`, never substituted. A malformed recorder is
+refused by `accept` before the acceptance lock is taken and before any artifact or revision record is
+installed. A malformed definition binding is refused before a root is created or opened, so distinct
+bindings never share a stored marker.
 Distinct accepted occurrences may share a fingerprint and physical artifact, including
 `F1 -> F2 -> F1`, without sharing revision identity.
 

@@ -123,6 +123,14 @@ not preserve the artifact. Working/process material may discuss coordinate synta
 itself is the subject. When delivery outcomes move into durable semantic naming, translate them
 into what they represent rather than naming them after the coordinate that tracked them.
 
+Product source and tests have a stricter lifetime boundary: maintained files under `product/`
+must not reference `docs/planning/`, `docs/research/`, or transient research-workspace artifacts.
+Planning and research may cite implementation as evidence, but product source must describe current
+behavior, invariants, and limitations in durable semantic terms and, when a textual authority is
+useful, point to the current architecture, specification, reference, or development contract that
+owns them. The dependency direction is one-way: transient planning/research material may point to
+durable implementation; durable product source must not point back to transient planning/research.
+
 Planning filenames are semantic, not coordinate-derived: the delivery label belongs in a planning
 document's content, not its path, so the filename keeps describing the subject if sequencing
 changes later.

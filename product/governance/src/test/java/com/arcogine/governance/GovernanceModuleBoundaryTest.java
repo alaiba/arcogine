@@ -13,7 +13,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Structural evidence that {@code :governance}, including its requirement/assertion/catalogue
- * packages, stays domain-neutral: it may only depend on {@code :types} in its main source set. Cross-domain integration tests run in {@code :storage}; Governance does not
+ * packages, stays domain-neutral: it may only depend on {@code :types} in its main source set.
+ * Cross-domain integration tests run in {@code :storage}; Governance does not
  * depend on Factory or Storage in production or test source sets.
  */
 class GovernanceModuleBoundaryTest {

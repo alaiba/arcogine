@@ -22,7 +22,7 @@ const DISPOSITION_ALTERNATION = ['READY TO MERGE', 'CHANGES REQUIRED']
   .join('|');
 const FINDING_HEADER = /^REV-(\d+) - (\S(?:.*\S)?)$/;
 const FINDING_LIKE_LINE = /^\s*REV-/;
-const FIELD_NAMES = ['Severity', 'Category', 'Confidence', 'Head', 'Subject', 'Status'];
+const REQUIRED_FIELD_NAMES = ['Category', 'Confidence', 'Head', 'Subject', 'Status'];
 
 function usage() {
   return `delivery-retrospective -- analyze a Retrospective Evidence v1 bundle
@@ -117,9 +117,9 @@ export function summarizeWindow(window) {
   };
 }
 
-// Severity is historical review evidence, not analyzer policy. Preserve the non-empty token
-// recorded by the review; the current semantic standard lives only in
-// docs/development/reviewing.md and can legitimately differ from older review history.
+// Severity is optional historical review evidence, not analyzer policy. Preserve it when an older
+// review recorded it, but do not require it from current canonical findings or use it as finding
+// identity.
 function parseReviewFindings(body, prNumber, review, diagnostics) {
   if (!body) return [];
   const sourceLines = String(body).split(/\r?\n/);
@@ -171,7 +171,7 @@ function parseReviewFindings(body, prNumber, review, diagnostics) {
       fields.set(match[1], match[2]);
     }
 
-    const missing = FIELD_NAMES.filter((name) => !fields.has(name) || fields.get(name) === '');
+    const missing = REQUIRED_FIELD_NAMES.filter((name) => !fields.has(name) || fields.get(name) === '');
     const reasons = [];
     if (!header) reasons.push('noncanonical finding heading');
     if (missing.length) reasons.push(`missing fields: ${missing.join(', ')}`);
@@ -191,7 +191,7 @@ function parseReviewFindings(body, prNumber, review, diagnostics) {
       prNumber,
       revisionId: `REV-${header[1]}`,
       title: header[2],
-      severity: fields.get('Severity'),
+      severity: fields.get('Severity') ?? null,
       category: fields.get('Category'),
       confidence: fields.get('Confidence'),
       head: fields.get('Head'),
@@ -220,7 +220,7 @@ function parseReviewFindings(body, prNumber, review, diagnostics) {
 }
 
 function stableIdentityFields(finding) {
-  return ['title', 'severity', 'category', 'confidence', 'subject'];
+  return ['title', 'category', 'confidence', 'subject'];
 }
 
 function findingAggregateKey(...values) {
@@ -401,32 +401,19 @@ function analyzeFindings(window) {
     };
   }).sort((left, right) => left.prNumber - right.prNumber || compareRevisionIds(left.revisionId, right.revisionId));
 
-  const bySeverity = new Map();
   const byCategory = new Map();
-  const bySeverityCategory = new Map();
   const byConfidence = new Map();
   const categoryPrs = new Map();
-  const severityCategoryPrs = new Map();
   for (const finding of distinctFindings) {
-    bySeverity.set(finding.severity, (bySeverity.get(finding.severity) ?? 0) + 1);
     byCategory.set(finding.category, (byCategory.get(finding.category) ?? 0) + 1);
-    bySeverityCategory.set(
-      findingAggregateKey(finding.severity, finding.category),
-      (bySeverityCategory.get(findingAggregateKey(finding.severity, finding.category)) ?? 0) + 1,
-    );
     byConfidence.set(finding.confidence, (byConfidence.get(finding.confidence) ?? 0) + 1);
     const categoryKey = findingAggregateKey(finding.category);
     const categorySet = categoryPrs.get(categoryKey) ?? new Set();
     categorySet.add(finding.prNumber);
     categoryPrs.set(categoryKey, categorySet);
-    const pairKey = findingAggregateKey(finding.severity, finding.category);
-    const pairSet = severityCategoryPrs.get(pairKey) ?? new Set();
-    pairSet.add(finding.prNumber);
-    severityCategoryPrs.set(pairKey, pairSet);
   }
 
   const categoryIncidence = new Map([...categoryPrs].map(([category, prs]) => [category, prs.size]));
-  const pairIncidence = new Map([...severityCategoryPrs].map(([pair, prs]) => [pair, prs.size]));
   const incompleteReasons = [];
   if (diagnostics.blockingReviewsWithoutParseableFinding.length) incompleteReasons.push('blocking reviews without a parseable canonical finding');
   if (diagnostics.findingsOmittedFromRereview.length) incompleteReasons.push('prior finding identities omitted from re-review');
@@ -460,20 +447,15 @@ function analyzeFindings(window) {
   return {
     complete,
     completeness: {
-      severityDistribution: complete,
       categoryDistribution: complete,
-      severityCategoryDistribution: complete,
       confidenceDistribution: complete,
       prIncidence: complete,
     },
     totalDistinctFindings: distinctFindings.length,
     prsWithFindings: new Set(distinctFindings.map((finding) => finding.prNumber)).size,
-    findingsBySeverity: sortedCountObject(bySeverity),
     findingsByCategory: sortedCountObject(byCategory),
-    findingsBySeverityCategory: sortedPairRows(bySeverityCategory, ['severity', 'category'], 'findingCount'),
     findingsByConfidence: sortedCountObject(byConfidence),
     prIncidenceByCategory: sortedPairRows(categoryIncidence, ['category'], 'prCount'),
-    prIncidenceBySeverityCategory: sortedPairRows(pairIncidence, ['severity', 'category'], 'prCount'),
     distinctFindings,
     diagnostics: diagnosticOutput,
   };

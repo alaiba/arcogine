@@ -10,9 +10,9 @@ import java.util.Set;
  * The minimum useful impact representation: the set of stable domain entities a {@link
  * ChangeSet} touched, in deterministic order.
  *
- * <p>This is deliberately not a requirement-registry match. It is the seam a future requirement
- * scope can intersect against ({@link #intersects(Set)}) without redesigning {@code ChangeSet}. It
- * does not itself know about requirements, conformance, or evaluation.
+ * <p>This type is deliberately independent of requirement and conformance types. Requirement or
+ * evaluation scopes can intersect it through {@link #intersects(Set)} without making
+ * {@code ChangeSet} depend on those domains.
  */
 public final class ImpactScope {
 
@@ -40,8 +40,8 @@ public final class ImpactScope {
 
     /**
      * Whether any entity in this scope is also present in a candidate requirement/evaluation
-     * scope. This is the entire seam a future requirement-registry match needs; it deliberately
-     * does not know what a requirement is.
+     * scope. The operation depends only on {@link ChangedEntityRef} membership and deliberately
+     * does not depend on requirement or conformance types.
      */
     public boolean intersects(Set<ChangedEntityRef> candidateScope) {
         Objects.requireNonNull(candidateScope, "candidateScope");

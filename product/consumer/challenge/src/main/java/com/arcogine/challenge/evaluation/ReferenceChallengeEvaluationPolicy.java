@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The first, versioned policy for the reference vertical slice.
+ * A versioned reference policy for fixed-contract challenge evaluation.
  *
  * <p>Policy {@value #POLICY_ID} v{@value #POLICY_VERSION} succeeds only when the supplied
  * authoritative facts say the fixed contract completed on or before the challenge deadline and

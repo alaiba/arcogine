@@ -22,9 +22,10 @@ import java.util.Map;
  * into a structurally complete {@link ChallengeDefinition}, or into deterministic, actionable
  * {@link ChallengeContentIssue} diagnostics explaining why it could not.
  *
- * <p>This is the layer that the baseline challenge-definition types explicitly deferred: {@code ChallengeDefinition} and its nested value
- * records reject structurally absent fields via ordinary constructor {@code
- * NullPointerException}s, which is unsuitable for untrusted input. {@code ChallengeContentLoader}
+ * <p>{@code ChallengeDefinition} and its nested value records reject structurally absent fields
+ * via ordinary constructor {@code NullPointerException}s, which is unsuitable for untrusted input.
+ * This loader owns the external-representation boundary and reports malformed input through
+ * structured {@link ChallengeContentIssue} diagnostics. {@code ChallengeContentLoader}
  * never lets a malformed or incomplete external representation reach a {@code
  * ChallengeDefinition} constructor uncaught -- every missing, mistyped, or malformed field is
  * translated into a {@link ChallengeContentIssue} before construction is attempted.

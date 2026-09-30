@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
  * FactoryModelValidator} owns Factory publication validity, while Engine admission decides whether
  * published content is executable; this structural fixture establishes neither. It proves the
  * contract is headlessly operable -- no application framework, no outward DTOs, no mutable runtime state,
- * no external evidence, no compliance framework -- while leaving the choice of a real permanent
- * factory-owned invariant to a future conformance-evaluation slice with actual conformance-evaluation semantics.
+ * no external evidence, no compliance framework. The factory-owned invariant used here is a
+ * structural fixture; this test does not select a permanent production conformance rule.
  */
 class StructuralProvingCaseTest {
 

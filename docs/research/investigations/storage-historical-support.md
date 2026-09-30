@@ -6,7 +6,8 @@ Status: CANDIDATE brief; no conclusion — promote only for a named retained use
 
 For a named retained historical use and declared support horizon, what minimum basis must Arcogine
 preserve so an accepted record remains truthfully resolvable as storage representation and domain
-definitions evolve independently? This determines scoped historical support, not whether built-in Storage exists.
+definitions evolve independently? This determines scoped historical support, not whether built-in
+Storage exists.
 Start from the current definition-bound refusal. Coordinate with the existing
 [exact-reference, scoped-commitment, and conversion questions](semantic-equivalence-and-reference-boundaries.md)
 and the [Factory canonical-artifact-boundary question](factory-canonical-artifact-boundary.md)
@@ -82,7 +83,8 @@ platform-wide promise.
 
 Stop with a selected resolution/refusal contract for the named retained use and horizon, preserved
 and unavailable bases, conversion losses if any, evidence by case, and explicit exclusions.
-This is high risk identity and history work; independent adversarial review precedes promotion.
+This is high risk identity and history work; independent adversarial review precedes any architecture
+promotion.
 Reconcile any accepted result into [Storage](../../architecture/storage.md), the owning semantic
 specification and [semantic support policy](../../development/semantic-contract-support.md), then
 admit only a bounded implementation slice. Reopen when a real historical reliance, upgrade, or

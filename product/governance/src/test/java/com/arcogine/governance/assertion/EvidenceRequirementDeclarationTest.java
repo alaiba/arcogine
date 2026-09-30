@@ -12,8 +12,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves invariant 4 (structural vs. external-evidence declaration) and the explicit requirement-scope/conformance-evaluation/external-evidence
- * boundary: production assertion types declare evidence need only, never a conformance result or
+ * Proves the structural-vs-external-evidence declaration boundary and the explicit
+ * requirement-scope/conformance-evaluation/external-evidence boundary: production assertion types
+ * declare evidence need only, never a conformance result or
  * evidence record.
  */
 class EvidenceRequirementDeclarationTest {
@@ -87,7 +88,7 @@ class EvidenceRequirementDeclarationTest {
     }
 
     @Test
-    void productionAssertionAndRequirementTypesContainNoG4OrG5Concepts() {
+    void productionAssertionAndRequirementTypesExcludeSeparateAuthorityConcepts() {
         Set<String> forbiddenConceptFragments =
                 Set.of(
                         "conformanceresult",
@@ -99,8 +100,9 @@ class EvidenceRequirementDeclarationTest {
                         "exception",
                         "riskacceptance",
                         "frameworkcontrolmapping");
-        // "evidence" itself is allowed (EvidenceRequirement is the requirement-scope declaration seam); the
-        // forbidden fragments above are the conformance-evaluation, external-evidence, and later governance concepts the requirement-scope capability must not pull forward.
+        // "evidence" itself is allowed because EvidenceRequirement declares the evidence need. The
+        // forbidden fragments belong to conformance evaluation, evidence use, or separate
+        // governance authority/workflow concerns rather than requirement/assertion declarations.
         Class<?>[] productionTypes = {
             Assertion.class,
             AssertionId.class,

@@ -246,7 +246,7 @@ class ChangeSetFactoryTest {
     }
 
     @Test
-    void impactScopeIsUsableForFutureRequirementScopeMatching() {
+    void impactScopeIntersectsRequirementScopeWithoutChangeSetCoupling() {
         ControlledRevisionAuthority authority = authority();
         ControlledRevision base = accept(authority, model(List.of(1)), List.of());
         ControlledRevision candidate = accept(authority, model(List.of(1, 2)), List.of(base.id()));
@@ -259,8 +259,8 @@ class ChangeSetFactoryTest {
                         COMPARATOR,
                         ChangeProvenance.of("engineer", "add machine"));
 
-        // A hypothetical future requirement's registered scope, matched against ImpactScope
-        // without any ChangeSet redesign -- proving the seam without fabricating requirement-scope infrastructure.
+        // Requirement/evaluation scope matching uses the same ChangedEntityRef vocabulary without
+        // making ChangeSet depend on requirement types.
         Set<ChangedEntityRef> requirementScope = Set.of(new ChangedEntityRef("factory.resource", "2", ""));
         assertTrue(changeSet.impactScope().intersects(requirementScope));
         Set<ChangedEntityRef> unrelatedScope = Set.of(new ChangedEntityRef("factory.resource", "99", ""));

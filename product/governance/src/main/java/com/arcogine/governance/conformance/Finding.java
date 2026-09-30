@@ -16,10 +16,10 @@ import java.util.Optional;
  *
  * <p>A {@code Finding} exists only for {@link ConformanceResult#FAIL}; {@link
  * ConformanceEvaluator} never produces one for {@code PASS}, {@code UNKNOWN}, or {@code
- * NOT_APPLICABLE} (see {@link ConformanceEvaluation#finding()}). It deliberately carries no
- * severity, remediation state, exception/risk-acceptance reference, or workflow status -- those
- * are later governance-state capabilities described in the architecture (§10), not part of this
- * minimal evaluation/findings slice.
+ * NOT_APPLICABLE} (see {@link ConformanceEvaluation#finding()}). This value records the failed
+ * evaluation's requirement/assertion identity, evaluated semantic identity, affected entities, and
+ * explanation. It does not model severity, remediation state, exception/risk-acceptance reference,
+ * authorization, or workflow status.
  *
  * <p>{@code controlledRevisionId} is {@code null}/empty when the evaluated candidate has not been
  * accepted through the persistence-acceptance boundary. Per

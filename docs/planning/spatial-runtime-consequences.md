@@ -598,8 +598,8 @@ not a redefinition of processing utilization or queue depth.
 
 When Challenge attempts consume real Engine-produced results, compatibility must account for the
 producing Engine definition wherever changed semantics can affect compared outcomes. No current
-Engine identifier establishes that compatibility; cross-revision comparison requires an explicit
-basis owned by the consumer. Synthetic Challenge-only attempts do not block PLAN-ENG-5.
+Engine identifier establishes that compatibility. A concrete cross-revision comparison use must
+follow [simulation analytics cross-revision comparability](../research/investigations/simulation-analytics-cross-revision-comparability.md), which in turn routes any required exact Engine reference or behavioral-equivalence claim to its existing research owner. Synthetic Challenge-only attempts do not block PLAN-ENG-5.
 
 ### Governance — REQUIRED WHEN CONSUMER INTEGRATES
 

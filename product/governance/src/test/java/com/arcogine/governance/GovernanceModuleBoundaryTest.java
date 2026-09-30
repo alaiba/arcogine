@@ -12,9 +12,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * Structural evidence that {@code :governance} (and the requirement/assertion/catalogue
- * packages added by this slice) stays domain-neutral: it may only depend on {@code :types} in its
- * main source set. Cross-domain integration tests run in {@code :storage}; Governance does not
+ * Structural evidence that {@code :governance}, including its requirement/assertion/catalogue
+ * packages, stays domain-neutral: it may only depend on {@code :types} in its main source set. Cross-domain integration tests run in {@code :storage}; Governance does not
  * depend on Factory or Storage in production or test source sets.
  */
 class GovernanceModuleBoundaryTest {
@@ -56,10 +55,10 @@ class GovernanceModuleBoundaryTest {
     }
 
     @Test
-    void productionGovernanceCodeNeverReferencesLaterConcepts() throws IOException {
-        // Regression guard for later Governance capabilities: production code must not smuggle
-        // authorization, deployment, workflow, or a severity taxonomy ahead of their own gates.
-        // Matches actual type declarations only (not javadoc prose describing these as non-goals).
+    void productionGovernanceCodeExcludesSeparateAuthorityConcepts() throws IOException {
+        // Regression guard for the current Governance ownership boundary: production code must not
+        // declare authorization, deployment, workflow, or a severity taxonomy that belongs to
+        // separate authority surfaces. Matches actual type declarations only, not Javadoc prose.
         Path mainSourceRoot = moduleRoot().resolve("src/main/java");
         List<String> forbiddenDeclarations =
                 List.of(
@@ -79,7 +78,7 @@ class GovernanceModuleBoundaryTest {
                 for (String token : forbiddenDeclarations) {
                     assertFalse(
                             content.contains(token),
-                            file + " declares out-of-scope later Governance concept: " + token);
+                            file + " declares concept outside the Governance module boundary: " + token);
                 }
             }
         }

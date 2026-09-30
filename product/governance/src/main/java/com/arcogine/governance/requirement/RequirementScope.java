@@ -13,9 +13,10 @@ import java.util.Set;
 /**
  * Deterministic, explicit business/entity applicability of one {@link Requirement}.
  *
- * <p>This is the requirement half of a seam the change-set/impact-scope capability deliberately
- * left open: {@code ChangeSet -> ImpactScope -> ChangedEntityRef} on one side, {@code Requirement
- * -> RequirementScope -> ChangedEntityRef} on the other. {@link #intersects(ImpactScope)} reuses
+ * <p>{@code RequirementScope} and {@link ImpactScope} share {@link ChangedEntityRef} as their
+ * explicit applicability vocabulary: {@code ChangeSet -> ImpactScope -> ChangedEntityRef} on one
+ * side, {@code Requirement -> RequirementScope -> ChangedEntityRef} on the other. {@link
+ * #intersects(ImpactScope)} reuses
  * {@link ImpactScope#intersects(Set)} directly rather than duplicating an entity-reference
  * abstraction.
  *

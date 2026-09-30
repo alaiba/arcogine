@@ -50,9 +50,9 @@ import org.junit.jupiter.api.Test;
  *
  * <p>The complementary structural fact -- outward-projection DTOs never re-enter domain decision
  * paths -- is behavioural evidence this class does not itself carry; it is a durable outward-
- * projection principle documented in docs/architecture/overview.md. No outward adapter exists
- * today, so there is nothing to enforce it against structurally; a future outward adapter should
- * add an architecture rule scoped to its own package.
+ * projection principle documented in docs/architecture/overview.md. The repository has no
+ * outward-adapter package to which a structural rule can currently be scoped, so this test carries
+ * no structural check for that principle; the architecture remains its durable authority.
  *
  * <p>Everything here is driven purely through {@link FactoryRuntime}'s supported surface, matching
  * the conventions of the two tests above.

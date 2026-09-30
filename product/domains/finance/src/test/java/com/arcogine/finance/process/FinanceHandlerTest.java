@@ -123,10 +123,9 @@ class FinanceHandlerTest {
     void deliveringTheSameOrderCompletedEventTwicePostsTwice() {
         // Documents the event-uniqueness assumption in FinanceHandler's class Javadoc:
         // FinanceHandler trusts each OrderCompleted it receives is a distinct completion and does
-        // not de-duplicate, matching every other handler in the codebase. This is intentional,
-        // not an oversight -- nothing today can actually redeliver an event (see the Javadoc for
-        // why), so no guard exists. If that ever changes (e.g. a future event-replay feature),
-        // this test is expected to be deliberately updated alongside adding a guard.
+        // not de-duplicate, matching the supported event-delivery contract documented by the
+        // handler. If that contract permits redelivery into a live handler, this expectation and
+        // FinanceHandler's idempotency behavior must change together.
         FinanceHandler handler = new FinanceHandler();
         Scheduler sched = new Scheduler();
         Event orderCompleted = Event.of(

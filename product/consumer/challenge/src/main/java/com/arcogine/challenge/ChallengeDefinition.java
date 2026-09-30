@@ -8,8 +8,8 @@ import java.util.List;
  *
  * <p>{@code ChallengeDefinition} answers game-owned questions -- what the player must build,
  * within what constraints, to satisfy a fixed contract -- and is entirely independent of
- * Arcogine's canonical factory runtime. It carries no challenge, score, medal, or evaluation
- * outcome; those belong to later Challenge Readiness slices.
+ * Arcogine's canonical factory runtime. It carries the challenge rules, but no score, medal, or
+ * evaluation outcome; those are produced by the Challenge evaluation and attempt capabilities.
  *
  * <p>Construction only establishes an immutable value; it does not decide whether that value
  * represents valid challenge content. Use {@link

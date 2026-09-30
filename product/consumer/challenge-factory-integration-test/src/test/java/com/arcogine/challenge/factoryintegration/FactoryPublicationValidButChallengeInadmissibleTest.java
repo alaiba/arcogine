@@ -33,26 +33,27 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Content-loading acceptance criterion: canonical Factory-executability and challenge admissibility are
+ * Content-loading acceptance criterion: Factory publication validity and challenge admissibility are
  * independent validation axes. This is the only module in the repository with a test dependency
  * on both {@code :factory} and {@code :challenge}; neither of those production modules depends on
  * the other, and this module carries no production sources of its own.
  *
  * <p>The proof: ONE conceptual candidate -- nine cutter/mill occurrences -- is used both ways. The
  * Factory model built from it contains the same nine machines and passes {@link
- * FactoryModelValidator#validate} -- the structural, game-rule-agnostic notion of "this factory
- * graph is well-formed and could run". The equal-shaped challenge candidate draft (nine placed
- * occurrences of the same catalogue item) is rejected by {@link CandidateAdmissibilityPolicy} for
+ * FactoryModelValidator#validate}, establishing that its canonical content is valid for
+ * publication. This test does not perform Engine admission and establishes no runtime
+ * executability. The equal-shaped challenge candidate draft (nine placed occurrences of the same
+ * catalogue item) is rejected by {@link CandidateAdmissibilityPolicy} for
  * a purely game-rule reason (exceeding the challenge's starting credit budget) that has nothing to
- * do with structural validity. Nine cutters is a perfectly coherent, executable factory shape; it
- * is inadmissible only because this challenge's economy caps spend at 40,000 credits.
+ * do with Factory publication validity. Nine cutters are accepted by the Factory model validator
+ * but inadmissible because this challenge's economy caps spend at 40,000 credits.
  */
-class CanonicalExecutableButChallengeInadmissibleTest {
+class FactoryPublicationValidButChallengeInadmissibleTest {
 
     private static final int CUTTER_COUNT = 9;
 
     @Test
-    void factoryValidCandidateCanStillBeChallengeInadmissibleOnBudget() {
+    void factoryPublicationValidCandidateCanStillBeChallengeInadmissibleOnBudget() {
         FactoryModel factoryModel = new FactoryModel(
                 mills(),
                 List.of(routing()),
@@ -60,7 +61,7 @@ class CanonicalExecutableButChallengeInadmissibleTest {
 
         ModelValidationResult factoryResult = FactoryModelValidator.validate(factoryModel);
         assertTrue(factoryResult.isValid(),
-                () -> "expected a canonically well-formed, executable factory model mirroring the "
+                () -> "expected a Factory model valid for publication, mirroring the "
                         + "nine-occurrence candidate draft: " + factoryResult.errors());
 
         EquipmentCatalogueItemId cutter = new EquipmentCatalogueItemId("equipment.cutter");

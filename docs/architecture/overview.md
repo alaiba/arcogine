@@ -517,7 +517,7 @@ challenge-factory-integration-test ← types, factory, challenge (test-only)
 architecture-conformance-test ← types, factory, finance, storage (test-only)
 ```
 
-Governance depends on `types`; Factory depends on the narrow Governance ports it implements. Storage depends on `governance` and `types` to realize the revision authority without either semantic owner depending on its implementation. Challenge remains independent of the production simulation and domain modules; the test-only Challenge–Factory integration module proves that canonical Factory executability and Challenge admissibility are independent validation axes without either module depending on the other. The architecture-conformance module scans current production sources to protect retained ownership rules.
+Governance depends on `types`; Factory depends on the narrow Governance ports it implements. Storage depends on `governance` and `types` to realize the revision authority without either semantic owner depending on its implementation. Challenge remains independent of the production simulation and domain modules; the test-only Challenge–Factory integration module demonstrates that Factory publication validity and Challenge admissibility are independent validation axes without either module depending on the other. It does not establish Engine executability. The architecture-conformance module scans current production sources to protect retained ownership rules.
 
 ## Event Dispatch Architecture
 

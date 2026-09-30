@@ -12,8 +12,10 @@ import java.util.Set;
  * valid.
  *
  * <p>This answers a game-owned question -- "is this challenge content internally valid?" -- and
- * is a distinct validation domain from Arcogine's {@code FactoryModelValidator}, which answers
- * "is this projected production system executable by Arcogine?" This validator does not call,
+ * is a distinct validation domain from Factory publication validation by {@code
+ * FactoryModelValidator}.
+ * Publication validity does not establish Engine executability; the Engine decides whether a
+ * published model is executable under its supported content. This validator does not call,
  * extend, or reuse {@code FactoryModelValidator}, and it does not decide whether the challenge's
  * catalogue identities resolve to real equipment offers, whether its budget affords anything, or
  * whether its deadline is achievable -- those remain later Challenge Readiness slices or

@@ -5,8 +5,9 @@ import java.util.List;
 /**
  * Consumer-neutral immutable snapshot of authoritative runtime state.
  *
- * <p>The cursor remains zero until the supported runtime-event contract introduces supported runtime events. Internal
- * scheduler events are deliberately absent from this contract.
+ * <p>The cursor is the latest supported runtime-event sequence included in this observation. It is zero only before
+ * any supported runtime event has been published in the run. Internal scheduler events are deliberately absent from
+ * this contract.
  */
 public record RuntimeObservation(
         RuntimeObservationMetadata metadata,

@@ -85,7 +85,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Research operating model](development/researching.md) | Normative research rules: lifecycle, priority, promotion/reconciliation, investigation/review, evidence custody, synthesis seeds, decision-rationale retention, and register maintenance |
 | [Research register](research/research-register.md) | Current admitted research questions, priority, lifecycle state, evidence artifact, expected destination, and review date |
 | [Storage failure model](research/investigations/storage-failure-model.md) | READY question on stronger local durability, recovery and concurrency guarantees |
-| [Storage historical support](research/investigations/storage-historical-support.md) | READY question on exact resolution across format and definition changes |
+| [Storage historical support](research/investigations/storage-historical-support.md) | CANDIDATE question; promote only when a concrete retained use and support horizon bound the cross-definition resolution need |
 | [Synthesis seeds](research/synthesis-seeds.md) | Current retained non-authoritative cross-investigation synthesis signals |
 | [Research brief template](research/brief-template.md) | Reusable advisory failure-oriented planning structure for bounding research questions; it does not add `READY` criteria |
 | [Research report template](research/report-template.md) | Reusable structure for decision-quality research reports |

@@ -92,7 +92,7 @@ That substrate may be consumed by the eventual game, but its completion is not e
 | Workload, work items, queues, dispatch, processing, transfers | Arcogine Engine/runtime |
 | Simulation clock and deterministic event ordering | Arcogine Engine/runtime |
 | Supported runtime observations/events and performance facts | Arcogine Engine/runtime |
-| Reusable derived measurement (longitudinal aggregation, utilization/occupancy intervals, diagnosis, run comparison) | **Unresolved — not game-owned by default.** Open High-risk research: [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md) |
+| Reusable derived measurement (longitudinal aggregation, utilization/occupancy intervals, diagnosis, run comparison) | **Unresolved — not game-owned by default.** The READY [analytics ownership boundary](../research/investigations/simulation-analytics-consumer-boundary.md) decides whether shared analytics survives; evidence/provenance and adapter questions remain conditional on that path, while [cross-revision comparability](../research/investigations/simulation-analytics-cross-revision-comparability.md) is an independent sibling that promotes for a concrete comparison use |
 | Player-facing presentation, explanation, wording, and visualization of supported facts | Game |
 | Game save wrapper around any supported Arcogine checkpoint | Game |
 

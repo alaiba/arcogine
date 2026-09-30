@@ -3,9 +3,9 @@ package com.arcogine.challenge.evaluation;
 /**
  * Narrow, consumer-neutral production facts supplied by an authoritative producer.
  *
- * <p>This value deliberately does not describe queues, dispatch, transfers, or runtime state. A
- * later adapter may obtain these facts from an Arcogine-supported result, while tests may provide
- * synthetic facts directly.
+ * <p>This value contains no queue, dispatch, transfer, or runtime-state detail. It records only
+ * the authoritative producer's fixed-contract completion fact and completion tick; tests may
+ * construct synthetic facts directly.
  */
 public record AuthoritativeOutcomeFacts(boolean contractCompleted, Long completionTick) {
 

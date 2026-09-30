@@ -48,7 +48,7 @@ The repository is authoritative over prior chat/session context and implementati
 | What is this PR intended to accomplish? | PR description and applicable slice/acceptance criteria, reconciled with current planning and prerequisites |
 | What public API/interface exists today? | implementation and tests, reconciled with `docs/reference/` and consumers |
 | What commands, versions, modules, builds, or CI behavior exist? | executable scripts and configuration |
-| What is Arcogine's review policy and severity model? | `docs/development/reviewing.md` |
+| What is Arcogine's review policy and finding/disposition model? | `docs/development/reviewing.md` |
 | What are contribution mechanics? | `.github/CONTRIBUTING.md` |
 | How should coding agents operate? | `AGENTS.md` |
 
@@ -225,7 +225,7 @@ Treat a missing, self-administered-only, `MORE EVIDENCE REQUIRED`, `REOPEN`, or 
 
 ## Risk-proportionate depth
 
-Use semantic risk to control review breadth, not severity.
+Use semantic risk to control review breadth. PR-local findings do not carry severity; every open finding is pre-merge work.
 
 - **Low:** isolated refactors, narrow tests, typo/link corrections, mechanical changes with no contract effect. Inspect direct code/docs, tests/checks, and immediate contracts.
 - **Medium:** domain behavior, planning status, maintained current-state docs, internal interfaces with meaningful consumers. Inspect architecture/planning, semantic neighbors, compatibility, and executable evidence; perform concept fan-out for changed semantics.
@@ -304,7 +304,6 @@ Assign each genuinely new actionable finding the next unused `REV-<N>` number mo
 ```text
 REV-<N> - concise title
 
-Severity: <severity from docs/development/reviewing.md>
 Category: <category>
 Confidence: HIGH | MEDIUM | LOW
 Head: <reviewed PR head SHA>
@@ -325,9 +324,9 @@ Required invariant/outcome:
 Status: OPEN
 ```
 
-The status value is `OPEN`, `RESOLVED`, or `OBSOLETE`; `OPEN` is shown in the example. `docs/development/reviewing.md` is the sole severity authority; this agent intentionally does not restate its vocabulary. Do not manufacture a finding merely to populate the format, and do not persist optional polish that falls below the canonical P3 threshold.
+The status value is `OPEN`, `RESOLVED`, or `OBSOLETE`; `OPEN` is shown in the example. Do not manufacture a finding merely to populate the format. Optional polish or future work that does not need correction on this PR head belongs in review prose or a durable follow-up issue, not in a `REV-<N>` block.
 
-Each block must contain exactly one value for every labeled field shown above. `Head` is the full SHA of the head reviewed for that review. The category, severity, confidence, title, and semantic subject identify the finding and remain stable when its `REV-<N>` is carried forward; update only `Head` and `Status`. If a finding must be materially reclassified or the subject changes, close the old identity as `OBSOLETE` and assign a new unused identifier to the distinct finding.
+Each block must contain exactly one value for every labeled field shown above. `Head` is the full SHA of the head reviewed for that review. The category, confidence, title, and semantic subject identify the finding and remain stable when its `REV-<N>` is carried forward; update only `Head` and `Status`. If a finding must be materially reclassified or the subject changes, close the old identity as `OBSOLETE` and assign a new unused identifier to the distinct finding.
 
 ## Finding lifecycle
 
@@ -362,7 +361,7 @@ Every complete review/re-review that is actually performed must identify:
 - reviewed PR head SHA;
 - review mode;
 - material semantic-impact classification;
-- actionable findings, highest severity first;
+- actionable findings in `REV-<N>` order, with `OPEN` findings clearly visible;
 - prior-finding lifecycle on re-review;
 - validation/CI state;
 - semantic neighbors inspected for medium/high-risk reviews, including important checked surfaces that required no change;
@@ -383,8 +382,8 @@ Disposition: **READY TO MERGE**
 ```
 
 There are exactly two disposition values:
-- `**READY TO MERGE**` — independent review of the code/docs is complete and finds no blocking issue on this exact PR head
-- `**CHANGES REQUIRED**` — an implementation-owned review blocker remains
+- `**READY TO MERGE**` — independent review of the code/docs is complete and no `OPEN` `REV-<N>` finding remains on this exact PR head
+- `**CHANGES REQUIRED**` — at least one implementation-owned `REV-<N>` finding remains `OPEN`
 
 There is no third disposition for "review is clean but CI is still pending." CI is not a reviewer disposition and review authorization is genuinely orthogonal to CI status, never coupled to it in review vocabulary: you may issue `READY TO MERGE` based solely on the code/docs review, regardless of whether required CI has finished for this head. For ordinary PRs, that reviewer verdict is necessary but not sufficient for merge — required CI, strict base freshness, mergeability, and other branch protections are enforced independently. Do not withhold a `READY TO MERGE` disposition merely because CI is still running, and do not treat CI transitioning from pending to green as by itself requiring a fresh review when the reviewed head remains unchanged.
 

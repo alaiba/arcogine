@@ -56,10 +56,10 @@ class GovernanceModuleBoundaryTest {
     }
 
     @Test
-    void productionGovernanceCodeExcludesSeparateAuthorityConcepts() throws IOException {
-        // Regression guard for the current Governance ownership boundary: production code must not
-        // declare authorization, deployment, workflow, or a severity taxonomy that belongs to
-        // separate authority surfaces. Matches actual type declarations only, not Javadoc prose.
+    void productionGovernanceCodeStaysWithinTheImplementedSurface() throws IOException {
+        // Regression guard for the implemented Governance surface: production code currently
+        // defines none of these state/decision record types. This asserts their absence from the
+        // implemented surface only; it does not assign permanent ownership of those concepts.
         Path mainSourceRoot = moduleRoot().resolve("src/main/java");
         List<String> forbiddenDeclarations =
                 List.of(
@@ -79,7 +79,7 @@ class GovernanceModuleBoundaryTest {
                 for (String token : forbiddenDeclarations) {
                     assertFalse(
                             content.contains(token),
-                            file + " declares concept outside the Governance module boundary: " + token);
+                            file + " declares concept outside the implemented Governance surface: " + token);
                 }
             }
         }

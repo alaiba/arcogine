@@ -16,7 +16,7 @@ Useful measurements are:
 - number of human interventions;
 - first-pass test and quality-gate success;
 - semantic correctness under Arcogine's architecture and specifications;
-- number and severity of independent-review findings;
+- number, category, and validity of independent-review findings;
 - wall-clock time;
 - reliability of Git/PR iteration and remediation;
 - ability to follow `AGENTS.md` and the repository's specialized agent contracts.
@@ -178,7 +178,7 @@ For each meaningful experiment, record:
 | Arcogine task | Issue/PR/slice and semantic-risk class |
 | Human interventions | Clarifications, corrections, manual edits |
 | Validation | Commands run and result |
-| Independent review | Findings by severity and whether valid |
+| Independent review | Finding count/categories and whether valid |
 | Outcome | Abandoned, acceptable patch, PR opened, merged |
 | Approximate cost | Cash cost or quota consumed when observable |
 | Notes | Harness strengths, failures, context issues, Git/PR limitations |

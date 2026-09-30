@@ -48,7 +48,7 @@ The PR description is stable change intent, not an execution log. Keep it to the
 
 **Temporary artifacts:** use `logs/` for local diagnostics, captures, and session scratch that should never be committed; it is gitignored as a whole. Branch-local material that must be committed for continuity or handoff but must not land on `main` belongs under the unignored `workspace/` root. `workspace/` is transient storage, not an archive: remove its files before final review and do not add a marker file. The repository check rejects any tracked `workspace/` path. Do not redirect canonical tool outputs — Gradle continues to use its configured locations.
 
-For independent PR review, re-review, severity/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).
+For independent PR review, re-review, finding/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).
 
 ## Change slicing and branch hygiene
 

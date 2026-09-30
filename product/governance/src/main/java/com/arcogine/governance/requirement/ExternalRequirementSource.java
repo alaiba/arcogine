@@ -14,8 +14,9 @@ import java.util.Optional;
  * national adoption or applicable profile (e.g. {@code "ANSI/ISA-95.00.01-2010"}). Two sources
  * differing in any of these fields are distinct provenance, never collapsed into a family label.
  *
- * <p>This slice never imports actual copyrighted standards text or builds a standards catalogue;
- * only this metadata shape is implemented, proven with synthetic fixtures.
+ * <p>This value carries provenance metadata only; it neither imports copyrighted standards text
+ * nor represents a standards catalogue. Synthetic fixtures prove the metadata contract without
+ * embedding standards content.
  */
 public record ExternalRequirementSource(
         String authority, String designation, String edition, String locator, String adoptionProfile)

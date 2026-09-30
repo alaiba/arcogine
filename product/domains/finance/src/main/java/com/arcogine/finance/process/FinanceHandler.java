@@ -25,12 +25,11 @@ import java.util.List;
  * <p><b>Event-uniqueness assumption</b>: this class trusts that each {@code OrderCompleted} it
  * receives represents a distinct completion -- it does not de-duplicate. Delivering the same
  * event twice posts twice. This matches every other handler in the codebase (none of them guard
- * against a duplicate delivery either); nothing today can actually deliver an event twice
- * ({@link com.arcogine.core.queue.Scheduler#nextEvent()} is a plain dequeue, and {@code
- * FactoryHandler} cannot complete the same job's routing twice). The one scenario where this
- * assumption could be violated is a future event-replay feature that reprocesses prior events
- * back into a *live* handler stack rather than a fresh one -- if that is ever built, add an
- * idempotency guard here then, deliberately, rather than defending against it speculatively now.
+ * against a duplicate delivery either). The supported event path does not redeliver an
+ * {@code OrderCompleted} into the same live handler ({@link
+ * com.arcogine.core.queue.Scheduler#nextEvent()} is a plain dequeue, and {@code FactoryHandler}
+ * cannot complete the same job's routing twice). If the supported event-delivery contract permits
+ * redelivery into a live handler, this class requires an idempotency guard at that boundary.
  */
 public class FinanceHandler implements EventHandler {
 

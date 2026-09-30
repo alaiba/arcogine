@@ -17,9 +17,10 @@ import org.junit.jupiter.api.Test;
  * headless structural assertion, evaluated purely from authoritative semantic facts.
  *
  * <p>Per the requirement-scope acceptance criteria, this uses a minimal test-domain fixture ({@link
- * DeclaredResource}) rather than manufacturing a permanent factory policy or duplicating {@code
- * FactoryModelValidator} as a competing executability authority. It proves the contract is
- * headlessly operable -- no application framework, no outward DTOs, no mutable runtime state,
+ * DeclaredResource}) rather than manufacturing a permanent Factory invariant. {@code
+ * FactoryModelValidator} owns Factory publication validity, while Engine admission decides whether
+ * published content is executable; this structural fixture establishes neither. It proves the
+ * contract is headlessly operable -- no application framework, no outward DTOs, no mutable runtime state,
  * no external evidence, no compliance framework -- while leaving the choice of a real permanent
  * factory-owned invariant to a future conformance-evaluation slice with actual conformance-evaluation semantics.
  */

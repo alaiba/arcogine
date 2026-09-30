@@ -14,7 +14,8 @@ import java.util.Set;
  * <p>This is a distinct validation domain from {@code
  * com.arcogine.challenge.validation.ChallengeDefinitionValidator} (which validates a challenge's
  * own content in isolation) and from Arcogine's {@code FactoryModelValidator} (which validates
- * canonical production executability). It does not call, extend, or reuse either.
+ * canonical Factory content for publication). Engine admission separately determines whether a
+ * published model is executable. This validator does not call, extend, or reuse either authority.
  *
  * <p>Validation never mutates its inputs, never consults wall-clock time, random state, or any
  * runtime/session lookup, and iterates declared collections in their existing order, so repeated

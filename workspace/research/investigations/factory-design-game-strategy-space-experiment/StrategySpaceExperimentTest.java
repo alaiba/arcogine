@@ -526,6 +526,8 @@ class StrategySpaceExperimentTest {
     private final Map<String, DesignResult> cache = new HashMap<>();
     private final Set<String> replayed = new HashSet<>();
     private long runs;
+    /** The projection order this instance's enumeration, interventions and cells simulate under. */
+    private boolean reversedOrder;
 
     DesignResult simulate(Profile profile, long quantity, Design design, boolean reversed, boolean replay) {
         String key = profile.name() + "/N" + quantity + "/" + design.key() + (reversed ? "/reversed" : "");
@@ -640,7 +642,7 @@ class StrategySpaceExperimentTest {
     Intervention intervene(Context context, Design base, boolean replay) {
         Profile profile = context.profile();
         long quantity = context.quantity();
-        DesignResult result = simulate(profile, quantity, base, false, replay);
+        DesignResult result = simulate(profile, quantity, base, reversedOrder, replay);
         long baseCompletion = result.completion();
         Set<Integer> activeSteps = result.pools().activeSteps();
         Set<Offer> atOffers = new LinkedHashSet<>();
@@ -659,7 +661,7 @@ class StrategySpaceExperimentTest {
         long bestDelta = Long.MIN_VALUE;
         for (Offer offer : orderedAt) {
             Design probe = base.plus(offer, 1);
-            long delta = baseCompletion - simulate(profile, quantity, probe, false, replay).completion();
+            long delta = baseCompletion - simulate(profile, quantity, probe, reversedOrder, replay).completion();
             atProbes.add(new AtProbe(offer, delta, !probe.withinLimits()));
             if (delta > bestDelta) {
                 bestDelta = delta;
@@ -680,7 +682,7 @@ class StrategySpaceExperimentTest {
             Set<Integer> unitsSet = new TreeSet<>(List.of(1, matched));
             for (int units : unitsSet) {
                 Design probe = base.plus(offer, units);
-                long delta = baseCompletion - simulate(profile, quantity, probe, false, replay).completion();
+                long delta = baseCompletion - simulate(profile, quantity, probe, reversedOrder, replay).completion();
                 away.add(new AwayProbe(step, offer, units, delta, !probe.withinLimits()));
             }
         }
@@ -691,7 +693,7 @@ class StrategySpaceExperimentTest {
         String migratedTo = "";
         StringBuilder trace = new StringBuilder(result.pools().activeLabel() + "@" + baseCompletion);
         for (int units = 1; units <= 4; units++) {
-            DesignResult relieved = simulate(profile, quantity, base.plus(bestAt, units), false, replay);
+            DesignResult relieved = simulate(profile, quantity, base.plus(bestAt, units), reversedOrder, replay);
             trace.append(" -> +").append(units).append(bestAt).append(":")
                     .append(relieved.pools().activeLabel()).append("@").append(relieved.completion());
             Set<Integer> newlyActive = new TreeSet<>(relieved.pools().activeSteps());
@@ -831,131 +833,10 @@ class StrategySpaceExperimentTest {
         StringBuilder summary = new StringBuilder("# Strategy-space experiment output (pass 1)\n\n");
         summary.append("Projectable designs per (profile, N): ").append(designs.size()).append("\n\n");
 
-        Map<String, List<DesignResult>> results = new LinkedHashMap<>();
-        for (Profile profile : PROFILES) {
-            for (long quantity : QUANTITIES) {
-                boolean replay = profile.name().equals(REFERENCE_PROFILE) && quantity == REFERENCE_QUANTITY;
-                List<DesignResult> list = new ArrayList<>();
-                StringBuilder csv = new StringBuilder(
-                        "design,cutters,assemblers,twins,inspectors,flex,provision,completion,active,occupancy,sharedDualUse\n");
-                for (Design design : designs) {
-                    DesignResult result = simulate(profile, quantity, design, false, replay);
-                    list.add(result);
-                    csv.append(design.key()).append(',').append(design.cutters()).append(',')
-                            .append(design.assemblers()).append(',').append(design.twins()).append(',')
-                            .append(design.inspectors()).append(',').append(design.flex()).append(",\"")
-                            .append(design.provision()).append("\",").append(result.completion()).append(',')
-                            .append(result.pools().activeLabel()).append(',').append(result.pools().occupancy())
-                            .append(',').append(result.pools().sharedResourceDualUse()).append('\n');
-                }
-                results.put(profile.name() + "/N" + quantity, list);
-                Files.writeString(OUT.resolve("designs-" + profile.name() + "-N" + quantity + ".csv"), csv.toString());
-            }
-        }
-
-        // Granularity control: one twin versus two single assemblers, all else equal.
-        summary.append("## Granularity control (1 TWIN_ASSEMBLER vs 2 ASSEMBLER)\n\n");
-        for (Map.Entry<String, List<DesignResult>> entry : results.entrySet()) {
-            Map<String, DesignResult> byKey = new HashMap<>();
-            entry.getValue().forEach(result -> byKey.put(result.design().key(), result));
-            int pairs = 0;
-            List<String> mismatches = new ArrayList<>();
-            for (DesignResult result : entry.getValue()) {
-                Design design = result.design();
-                if (design.twins() >= 1 && design.assemblers() + 2 <= Offer.ASSEMBLER.limit) {
-                    Design twin = design.plus(Offer.TWIN_ASSEMBLER, -1).plus(Offer.ASSEMBLER, 2);
-                    DesignResult other = byKey.get(twin.key());
-                    pairs++;
-                    if (other.completion() != result.completion()) {
-                        mismatches.add(design.key() + "=" + result.completion() + " vs " + twin.key() + "="
-                                + other.completion());
-                    }
-                }
-            }
-            summary.append("- ").append(entry.getKey()).append(": ").append(pairs).append(" pairs, ")
-                    .append(mismatches.size()).append(" completion mismatches")
-                    .append(mismatches.isEmpty() ? "" : " e.g. " + mismatches.subList(0, Math.min(5, mismatches.size())))
-                    .append('\n');
-        }
-
-        // Contexts and cells.
-        List<Context> contexts = new ArrayList<>();
-        for (Profile profile : PROFILES) {
-            for (long quantity : QUANTITIES) {
-                List<DesignResult> list = results.get(profile.name() + "/N" + quantity);
-                long starter = list.stream().filter(r -> r.design().equals(STARTER)).findFirst().orElseThrow().completion();
-                for (Family family : Family.values()) {
-                    for (String rule : RULES) {
-                        for (int delta : DELTAS) {
-                            List<Integer> phis = family == Family.F ? PHIS : List.of(0);
-                            for (int phi : phis) {
-                                CostParams cost = new CostParams(rule, delta, phi);
-                                List<Entry> entries = list.stream()
-                                        .filter(r -> family.admits(r.design()))
-                                        .map(r -> new Entry(r, cost.cost(r.design(), profile)))
-                                        .toList();
-                                List<TieClass> frontier = frontier(entries);
-                                TieClass fastest = frontier.getLast();
-                                contexts.add(new Context(profile, quantity, family, cost, entries, frontier, starter,
-                                        fastest.completion(), fastest.cost()));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Map<String, Cell> cells = new LinkedHashMap<>();
-        StringBuilder cellCsv = new StringBuilder("cell,profile,N,family,rule,delta,phi,f,beta,target,budget,starterT,floorT,"
-                + "frontierClasses,feasibleClasses,weak,strong,strongPair,incomparableUnexplained,monotone,tieClasses,"
-                + "provisionDistinctTies,capitalBinding,base,baseT,active,bestAt,bestDelta,material,irrelevant,"
-                + "migrationUnits,migratedTo,positive\n");
-        StringBuilder frontierCsv = new StringBuilder("context,class,cost,completion,members,provisions,active,occupancy\n");
-        for (Context context : contexts) {
-            for (int c = 0; c < context.frontier().size(); c++) {
-                TieClass tieClass = context.frontier().get(c);
-                frontierCsv.append(context.id()).append(',').append(c).append(',').append(tieClass.cost()).append(',')
-                        .append(tieClass.completion()).append(",\"")
-                        .append(tieClass.members().stream().map(e -> e.design().key()).collect(Collectors.joining(" ")))
-                        .append("\",\"")
-                        .append(tieClass.members().stream().map(e -> e.design().provision().toString())
-                                .collect(Collectors.joining(" ")))
-                        .append("\",\"")
-                        .append(tieClass.members().stream().map(e -> e.result().pools().activeLabel())
-                                .collect(Collectors.joining(" ")))
-                        .append("\",\"")
-                        .append(tieClass.members().stream().map(e -> e.result().pools().occupancy())
-                                .collect(Collectors.joining(" ")))
-                        .append("\"\n");
-            }
-            boolean replay = context.profile().name().equals(REFERENCE_PROFILE)
-                    && context.quantity() == REFERENCE_QUANTITY;
-            for (int fraction : TARGET_FRACTIONS) {
-                for (int slack : BUDGET_SLACKS) {
-                    Cell cell = evaluate(context, fraction, slack, replay);
-                    cells.put(cell.id(), cell);
-                    Intervention in = cell.intervention();
-                    cellCsv.append(cell.id()).append(',').append(context.profile().name()).append(',')
-                            .append(context.quantity()).append(',').append(context.family()).append(',')
-                            .append(context.cost().rule()).append(',').append(context.cost().deltaPct()).append(',')
-                            .append(context.cost().phiPct()).append(',').append(fraction).append(',').append(slack)
-                            .append(',').append(cell.target()).append(',').append(cell.budget()).append(',')
-                            .append(context.starterCompletion()).append(',').append(context.floorCompletion())
-                            .append(',').append(context.frontier().size()).append(',').append(cell.feasible().size())
-                            .append(',').append(cell.weak()).append(',').append(cell.strong()).append(",\"")
-                            .append(cell.strongPair().orElse("")).append("\",").append(cell.incomparableUnexplained())
-                            .append(',').append(cell.monotone()).append(',').append(cell.tieClasses()).append(',')
-                            .append(cell.provisionDistinctTies()).append(',').append(cell.capitalBinding()).append(',')
-                            .append(in.base().key()).append(',').append(in.baseCompletion()).append(',')
-                            .append(in.activeLabel()).append(',').append(in.bestAt()).append(',')
-                            .append(in.bestDelta()).append(',').append(in.material()).append(',')
-                            .append(in.irrelevant()).append(',').append(in.migrationUnits()).append(',')
-                            .append(in.migratedTo()).append(',').append(cell.positive()).append('\n');
-                }
-            }
-        }
-        Files.writeString(OUT.resolve("cells.csv"), cellCsv.toString());
-        Files.writeString(OUT.resolve("frontiers.csv"), frontierCsv.toString());
+        Map<String, List<DesignResult>> results = enumerateAll(designs, OUT);
+        appendGranularity(summary, results);
+        List<Context> contexts = buildContexts(results);
+        Map<String, Cell> cells = evaluateAll(contexts, OUT);
 
         // Aggregate map by family.
         summary.append("\n## Cell map by family\n\n");
@@ -1136,6 +1017,614 @@ class StrategySpaceExperimentTest {
                 .append(replayed.size()).append('\n');
         Files.writeString(OUT.resolve("summary.md"), summary.toString());
         assertTrue(runs > 0);
+    }
+
+    // ---------------------------------------------------------------- shared pass machinery
+
+    /** Enumerates and simulates every design for every (profile, N) under this instance's order. */
+    Map<String, List<DesignResult>> enumerateAll(List<Design> designs, Path dir) throws IOException {
+        Files.createDirectories(dir);
+        Map<String, List<DesignResult>> results = new LinkedHashMap<>();
+        for (Profile profile : PROFILES) {
+            for (long quantity : QUANTITIES) {
+                boolean replay = profile.name().equals(REFERENCE_PROFILE) && quantity == REFERENCE_QUANTITY;
+                List<DesignResult> list = new ArrayList<>();
+                StringBuilder csv = new StringBuilder(
+                        "design,cutters,assemblers,twins,inspectors,flex,provision,completion,active,occupancy,sharedDualUse\n");
+                for (Design design : designs) {
+                    DesignResult result = simulate(profile, quantity, design, reversedOrder, replay);
+                    list.add(result);
+                    csv.append(design.key()).append(',').append(design.cutters()).append(',')
+                            .append(design.assemblers()).append(',').append(design.twins()).append(',')
+                            .append(design.inspectors()).append(',').append(design.flex()).append(",\"")
+                            .append(design.provision()).append("\",").append(result.completion()).append(',')
+                            .append(result.pools().activeLabel()).append(',').append(result.pools().occupancy())
+                            .append(',').append(result.pools().sharedResourceDualUse()).append('\n');
+                }
+                results.put(profile.name() + "/N" + quantity, list);
+                Files.writeString(dir.resolve("designs-" + profile.name() + "-N" + quantity + ".csv"), csv.toString());
+            }
+        }
+        return results;
+    }
+
+    /** Granularity control: one twin versus two single assemblers, all else equal. */
+    static void appendGranularity(StringBuilder summary, Map<String, List<DesignResult>> results) {
+        summary.append("## Granularity control (1 TWIN_ASSEMBLER vs 2 ASSEMBLER)\n\n");
+        for (Map.Entry<String, List<DesignResult>> entry : results.entrySet()) {
+            Map<String, DesignResult> byKey = new HashMap<>();
+            entry.getValue().forEach(result -> byKey.put(result.design().key(), result));
+            int pairs = 0;
+            List<String> mismatches = new ArrayList<>();
+            for (DesignResult result : entry.getValue()) {
+                Design design = result.design();
+                if (design.twins() >= 1 && design.assemblers() + 2 <= Offer.ASSEMBLER.limit) {
+                    Design twin = design.plus(Offer.TWIN_ASSEMBLER, -1).plus(Offer.ASSEMBLER, 2);
+                    DesignResult other = byKey.get(twin.key());
+                    pairs++;
+                    if (other.completion() != result.completion()) {
+                        mismatches.add(design.key() + "=" + result.completion() + " vs " + twin.key() + "="
+                                + other.completion());
+                    }
+                }
+            }
+            summary.append("- ").append(entry.getKey()).append(": ").append(pairs).append(" pairs, ")
+                    .append(mismatches.size()).append(" completion mismatches")
+                    .append(mismatches.isEmpty() ? "" : " e.g. " + mismatches.subList(0, Math.min(5, mismatches.size())))
+                    .append('\n');
+        }
+    }
+
+    static List<Context> buildContexts(Map<String, List<DesignResult>> results) {
+        List<Context> contexts = new ArrayList<>();
+        for (Profile profile : PROFILES) {
+            for (long quantity : QUANTITIES) {
+                List<DesignResult> list = results.get(profile.name() + "/N" + quantity);
+                long starter = list.stream().filter(r -> r.design().equals(STARTER)).findFirst().orElseThrow().completion();
+                for (Family family : Family.values()) {
+                    for (String rule : RULES) {
+                        for (int delta : DELTAS) {
+                            List<Integer> phis = family == Family.F ? PHIS : List.of(0);
+                            for (int phi : phis) {
+                                CostParams cost = new CostParams(rule, delta, phi);
+                                List<Entry> entries = list.stream()
+                                        .filter(r -> family.admits(r.design()))
+                                        .map(r -> new Entry(r, cost.cost(r.design(), profile)))
+                                        .toList();
+                                List<TieClass> frontier = frontier(entries);
+                                TieClass fastest = frontier.getLast();
+                                contexts.add(new Context(profile, quantity, family, cost, entries, frontier, starter,
+                                        fastest.completion(), fastest.cost()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return contexts;
+    }
+
+    Map<String, Cell> evaluateAll(List<Context> contexts, Path dir) throws IOException {
+        Map<String, Cell> cells = new LinkedHashMap<>();
+        StringBuilder cellCsv = new StringBuilder("cell,profile,N,family,rule,delta,phi,f,beta,target,budget,starterT,floorT,"
+                + "frontierClasses,feasibleClasses,weak,strong,strongPair,incomparableUnexplained,monotone,tieClasses,"
+                + "provisionDistinctTies,capitalBinding,base,baseT,active,bestAt,bestDelta,material,irrelevant,"
+                + "migrationUnits,migratedTo,positive\n");
+        StringBuilder frontierCsv = new StringBuilder("context,class,cost,completion,members,provisions,active,occupancy\n");
+        for (Context context : contexts) {
+            for (int c = 0; c < context.frontier().size(); c++) {
+                TieClass tieClass = context.frontier().get(c);
+                frontierCsv.append(context.id()).append(',').append(c).append(',').append(tieClass.cost()).append(',')
+                        .append(tieClass.completion()).append(",\"")
+                        .append(tieClass.members().stream().map(e -> e.design().key()).collect(Collectors.joining(" ")))
+                        .append("\",\"")
+                        .append(tieClass.members().stream().map(e -> e.design().provision().toString())
+                                .collect(Collectors.joining(" ")))
+                        .append("\",\"")
+                        .append(tieClass.members().stream().map(e -> e.result().pools().activeLabel())
+                                .collect(Collectors.joining(" ")))
+                        .append("\",\"")
+                        .append(tieClass.members().stream().map(e -> e.result().pools().occupancy())
+                                .collect(Collectors.joining(" ")))
+                        .append("\"\n");
+            }
+            boolean replay = context.profile().name().equals(REFERENCE_PROFILE)
+                    && context.quantity() == REFERENCE_QUANTITY;
+            for (int fraction : TARGET_FRACTIONS) {
+                for (int slack : BUDGET_SLACKS) {
+                    Cell cell = evaluate(context, fraction, slack, replay);
+                    cells.put(cell.id(), cell);
+                    Intervention in = cell.intervention();
+                    cellCsv.append(cell.id()).append(',').append(context.profile().name()).append(',')
+                            .append(context.quantity()).append(',').append(context.family()).append(',')
+                            .append(context.cost().rule()).append(',').append(context.cost().deltaPct()).append(',')
+                            .append(context.cost().phiPct()).append(',').append(fraction).append(',').append(slack)
+                            .append(',').append(cell.target()).append(',').append(cell.budget()).append(',')
+                            .append(context.starterCompletion()).append(',').append(context.floorCompletion())
+                            .append(',').append(context.frontier().size()).append(',').append(cell.feasible().size())
+                            .append(',').append(cell.weak()).append(',').append(cell.strong()).append(",\"")
+                            .append(cell.strongPair().orElse("")).append("\",").append(cell.incomparableUnexplained())
+                            .append(',').append(cell.monotone()).append(',').append(cell.tieClasses()).append(',')
+                            .append(cell.provisionDistinctTies()).append(',').append(cell.capitalBinding()).append(',')
+                            .append(in.base().key()).append(',').append(in.baseCompletion()).append(',')
+                            .append(in.activeLabel()).append(',').append(in.bestAt()).append(',')
+                            .append(in.bestDelta()).append(',').append(in.material()).append(',')
+                            .append(in.irrelevant()).append(',').append(in.migrationUnits()).append(',')
+                            .append(in.migratedTo()).append(',').append(cell.positive()).append('\n');
+                }
+            }
+        }
+        Files.writeString(dir.resolve("cells.csv"), cellCsv.toString());
+        Files.writeString(dir.resolve("frontiers.csv"), frontierCsv.toString());
+        return cells;
+    }
+
+    // ---------------------------------------------------------------- pass 2
+
+    enum PairKind {
+        POOLING,
+        MATERIAL_DEDICATED,
+        FINE_TUNING
+    }
+
+    record ClassifiedPair(Entry cheaper, Entry faster, PairKind kind, long surplusEffect, long threshold) {
+        String keys() {
+            return cheaper.design().key() + ">" + faster.design().key();
+        }
+
+        String describe() {
+            return kind + " " + cheaper.design().key() + cheaper.design().provision() + "[" + cheaper.cost() + ","
+                    + cheaper.result().completion() + "," + cheaper.result().pools().activeLabel() + "] vs "
+                    + faster.design().key() + faster.design().provision() + "[" + faster.cost() + ","
+                    + faster.result().completion() + "," + faster.result().pools().activeLabel() + "]"
+                    + (kind == PairKind.POOLING ? "" : " surplusEffect=" + surplusEffect + " threshold=" + threshold);
+        }
+    }
+
+    /** The pass-1 strong-multiplicity pair test, shared so pass 2 applies exactly the same rule. */
+    static boolean explainedIncomparable(Entry cheaper, Entry faster) {
+        Provision a = cheaper.design().provision();
+        Provision b = faster.design().provision();
+        if (a.atMost(b) || b.atMost(a)) {
+            return false;
+        }
+        Set<Integer> constraint = cheaper.result().pools().activeSteps();
+        boolean relieves = faster.design().slotsServing(constraint) > cheaper.design().slotsServing(constraint);
+        Entry moreFlex = cheaper.design().flex() >= faster.design().flex() ? cheaper : faster;
+        boolean flexExplained = cheaper.design().flex() == faster.design().flex()
+                || moreFlex.result().pools().sharedResourceDualUse();
+        return relieves && flexExplained;
+    }
+
+    static Design realize(Provision provision) {
+        int twins = Math.min(Offer.TWIN_ASSEMBLER.limit, provision.asmOnly() / 2);
+        return new Design(provision.cut(), provision.asmOnly() - 2 * twins, twins, provision.inspOnly(), provision.flex());
+    }
+
+    /** Every explained provision-incomparable feasible-frontier pair of the cell, classified (pass-2 B). */
+    List<ClassifiedPair> classify(Cell cell) {
+        Context context = cell.context();
+        List<ClassifiedPair> out = new ArrayList<>();
+        List<TieClass> feasible = cell.feasible();
+        for (int i = 0; i < feasible.size(); i++) {
+            for (int j = i + 1; j < feasible.size(); j++) {
+                for (Entry cheaper : feasible.get(i).members()) {
+                    for (Entry faster : feasible.get(j).members()) {
+                        if (!explainedIncomparable(cheaper, faster)) {
+                            continue;
+                        }
+                        if (cheaper.design().flex() != faster.design().flex()) {
+                            out.add(new ClassifiedPair(cheaper, faster, PairKind.POOLING, 0, 0));
+                            continue;
+                        }
+                        Provision a = cheaper.design().provision();
+                        Provision b = faster.design().provision();
+                        Provision reduced = new Provision(
+                                Math.min(a.cut(), b.cut()),
+                                Math.min(a.asmOnly(), b.asmOnly()),
+                                Math.min(a.inspOnly(), b.inspOnly()),
+                                a.flex());
+                        long reducedCompletion = simulate(
+                                context.profile(), context.quantity(), realize(reduced), reversedOrder, false).completion();
+                        long effect = reducedCompletion - cheaper.result().completion();
+                        long threshold = Math.max(1, (5 * reducedCompletion + 99) / 100);
+                        out.add(new ClassifiedPair(cheaper, faster,
+                                effect >= threshold ? PairKind.MATERIAL_DEDICATED : PairKind.FINE_TUNING, effect, threshold));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    static boolean provingCases(Cell cell) {
+        Intervention in = cell.intervention();
+        return in.material() && in.irrelevant() && in.migration() && cell.weak();
+    }
+
+    static boolean material(List<ClassifiedPair> pairs) {
+        return pairs.stream().anyMatch(pair -> pair.kind() != PairKind.FINE_TUNING);
+    }
+
+    static long count(List<ClassifiedPair> pairs, PairKind kind) {
+        return pairs.stream().filter(pair -> pair.kind() == kind).count();
+    }
+
+    record Verdict(Cell canonical, Cell reversed, List<ClassifiedPair> pairsC, List<ClassifiedPair> pairsR, long survivingPairs) {
+        boolean materialC() {
+            return material(pairsC);
+        }
+
+        boolean materialR() {
+            return material(pairsR);
+        }
+
+        boolean robustMaterial() {
+            return materialC() && materialR();
+        }
+
+        boolean positive() {
+            return provingCases(canonical) && provingCases(reversed) && robustMaterial();
+        }
+    }
+
+    record DispatchProfile(Map<String, List<Long>> dispatchesByResource, List<String> meanWaitByStep) {}
+
+    /**
+     * Dispatch profile over the complete run: JOB_DISPATCHED counts per resource and step, and the mean
+     * interval each step's work waited (dispatch time minus the job's previous step completion, or
+     * minus order acceptance for the first step).
+     */
+    static final class DispatchProfileOracle implements Oracle<DispatchProfile> {
+
+        static final ResearchDefinition DEFINITION = new ResearchDefinition(
+                "dispatch-profile-from-supported-events",
+                "For supported events 1..latestEventSequence of the closing observation, count JOB_DISPATCHED per"
+                        + " (resource name from the published model, step index); and per step, the mean over its"
+                        + " dispatches of dispatch time minus the same job's JOB_STEP_COMPLETED time for the previous"
+                        + " step, or minus the ORDER_ACCEPTED time for the first step, as an exact sum/count. Refuse when"
+                        + " any event was not retained or a previous-step completion is missing.",
+                Set.of(EvidenceInput.PUBLISHED_MODEL, EvidenceInput.OBSERVATIONS, EvidenceInput.SUPPORTED_EVENTS));
+
+        private record StepKey(JobId jobId, int stepIndex) {}
+
+        @Override
+        public ResearchDefinition definition() {
+            return DEFINITION;
+        }
+
+        @Override
+        public OracleOutcome<DispatchProfile> evaluate(DeclaredEvidence evidence) {
+            FactoryModel model = evidence.publishedModel();
+            RuntimeObservation closing = evidence.observation(ExperimentEvidence.CLOSING_LABEL);
+            long cursor = closing.metadata().latestEventSequence();
+            Optional<List<RuntimeEventEnvelope>> events = evidence.completeEvents(0, cursor);
+            if (events.isEmpty()) {
+                return evidence.underdetermined("supported events 1.." + cursor + " are not all retained");
+            }
+            Map<MachineId, String> names = new HashMap<>();
+            model.resources().forEach(resource -> names.put(resource.id(), resource.name()));
+            int stepCount = model.operations().getFirst().steps().size();
+            long accepted = -1;
+            Map<StepKey, Long> dispatchTime = new LinkedHashMap<>();
+            Map<StepKey, Long> completionTime = new HashMap<>();
+            Map<String, long[]> counts = new TreeMap<>();
+            for (RuntimeEventEnvelope event : events.get()) {
+                switch (event.payload()) {
+                    case RuntimeEventPayload.OrderAccepted ignored -> accepted = event.simulationTime().value();
+                    case RuntimeEventPayload.JobDispatched dispatched -> {
+                        dispatchTime.put(
+                                new StepKey(dispatched.jobId(), dispatched.stepIndex()), event.simulationTime().value());
+                        counts.computeIfAbsent(names.get(dispatched.machineId()), name -> new long[stepCount])
+                                [dispatched.stepIndex()]++;
+                    }
+                    case RuntimeEventPayload.JobStepCompleted completed -> completionTime.put(
+                            new StepKey(completed.jobId(), completed.stepIndex()), event.simulationTime().value());
+                    default -> { }
+                }
+            }
+            if (accepted < 0) {
+                return evidence.underdetermined("no ORDER_ACCEPTED event");
+            }
+            long[] waitSum = new long[stepCount];
+            long[] waitCount = new long[stepCount];
+            for (Map.Entry<StepKey, Long> dispatch : dispatchTime.entrySet()) {
+                int step = dispatch.getKey().stepIndex();
+                Long ready = step == 0
+                        ? Long.valueOf(accepted)
+                        : completionTime.get(new StepKey(dispatch.getKey().jobId(), step - 1));
+                if (ready == null) {
+                    return evidence.underdetermined("missing previous-step completion for " + dispatch.getKey());
+                }
+                waitSum[step] += dispatch.getValue() - ready;
+                waitCount[step]++;
+            }
+            Map<String, List<Long>> byResource = new TreeMap<>();
+            counts.forEach((name, values) -> byResource.put(name, java.util.Arrays.stream(values).boxed().toList()));
+            List<String> meanWait = new ArrayList<>();
+            for (int step = 0; step < stepCount; step++) {
+                meanWait.add(STEP_NAMES.get(step) + "=" + waitSum[step] + "/" + waitCount[step]);
+            }
+            return evidence.derived(new DispatchProfile(Collections.unmodifiableMap(byResource), List.copyOf(meanWait)));
+        }
+    }
+
+    static String dispatchProfile(Context context, Design design, boolean reversedOrder) {
+        ExperimentEvidence evidence = execute(project(design, context.profile(), reversedOrder), context.quantity(), 0);
+        return design.key() + (reversedOrder ? " [R]" : " [C]") + " T=" + completionTick(evidence) + " "
+                + describe(new DispatchProfileOracle().evaluateOn(evidence));
+    }
+
+    @Test
+    void runPass2OrderRobustnessAndMechanism() throws IOException {
+        Path out = Path.of("build", "strategy-space-pass-2");
+        Files.createDirectories(out);
+        List<Design> designs = enumerate();
+        StrategySpaceExperimentTest canonical = new StrategySpaceExperimentTest();
+        StrategySpaceExperimentTest reversed = new StrategySpaceExperimentTest();
+        reversed.reversedOrder = true;
+        Map<String, List<DesignResult>> resultsC = canonical.enumerateAll(designs, out.resolve("order-C"));
+        Map<String, List<DesignResult>> resultsR = reversed.enumerateAll(designs, out.resolve("order-R"));
+
+        StringBuilder summary = new StringBuilder("# Strategy-space experiment output (pass 2)\n\n");
+        summary.append("## A. Projection-order sensitivity (order C versus order R)\n\n")
+                .append("| (profile, N) | designs | completion differs | with a flex cell | without a flex cell |"
+                        + " max abs difference |\n|---|---:|---:|---:|---:|---:|\n");
+        for (String key : resultsC.keySet()) {
+            List<DesignResult> c = resultsC.get(key);
+            List<DesignResult> r = resultsR.get(key);
+            long differs = 0;
+            long withFlex = 0;
+            long maxDiff = 0;
+            for (int i = 0; i < c.size(); i++) {
+                assertEquals(c.get(i).design(), r.get(i).design());
+                long diff = Math.abs(c.get(i).completion() - r.get(i).completion());
+                if (diff != 0) {
+                    differs++;
+                    if (c.get(i).design().flex() > 0) {
+                        withFlex++;
+                    }
+                    maxDiff = Math.max(maxDiff, diff);
+                }
+            }
+            summary.append("| ").append(key).append(" | ").append(c.size()).append(" | ").append(differs).append(" | ")
+                    .append(withFlex).append(" | ").append(differs - withFlex).append(" | ").append(maxDiff).append(" |\n");
+        }
+        summary.append("\nUnder order R:\n\n");
+        appendGranularity(summary, resultsR);
+
+        Map<String, Cell> cellsC = canonical.evaluateAll(buildContexts(resultsC), out.resolve("order-C"));
+        Map<String, Cell> cellsR = reversed.evaluateAll(buildContexts(resultsR), out.resolve("order-R"));
+
+        Map<String, Verdict> verdicts = new LinkedHashMap<>();
+        StringBuilder csv = new StringBuilder("cell,family,strongC,poolingC,materialDedicatedC,fineTuningC,materialC,"
+                + "provingC,strongR,poolingR,materialDedicatedR,fineTuningR,materialR,provingR,robustMaterial,"
+                + "survivingPairs,positive2,firstMaterialPairC\n");
+        StringBuilder pairsCsv = new StringBuilder("cell,order,kind,cheaper,cheaperCost,cheaperT,faster,fasterCost,fasterT,"
+                + "surplusEffect,threshold\n");
+        for (Map.Entry<String, Cell> entry : cellsC.entrySet()) {
+            Cell c = entry.getValue();
+            Cell r = cellsR.get(entry.getKey());
+            List<ClassifiedPair> pairsC = canonical.classify(c);
+            List<ClassifiedPair> pairsR = reversed.classify(r);
+            Set<String> keysR = pairsR.stream().map(ClassifiedPair::keys).collect(Collectors.toSet());
+            long surviving = pairsC.stream()
+                    .filter(pair -> pair.kind() != PairKind.FINE_TUNING && keysR.contains(pair.keys()))
+                    .count();
+            Verdict verdict = new Verdict(c, r, pairsC, pairsR, surviving);
+            verdicts.put(entry.getKey(), verdict);
+            csv.append(entry.getKey()).append(',').append(c.context().family()).append(',').append(c.strong())
+                    .append(',').append(count(pairsC, PairKind.POOLING)).append(',')
+                    .append(count(pairsC, PairKind.MATERIAL_DEDICATED)).append(',')
+                    .append(count(pairsC, PairKind.FINE_TUNING)).append(',').append(verdict.materialC()).append(',')
+                    .append(provingCases(c)).append(',').append(r.strong()).append(',')
+                    .append(count(pairsR, PairKind.POOLING)).append(',')
+                    .append(count(pairsR, PairKind.MATERIAL_DEDICATED)).append(',')
+                    .append(count(pairsR, PairKind.FINE_TUNING)).append(',').append(verdict.materialR()).append(',')
+                    .append(provingCases(r)).append(',').append(verdict.robustMaterial()).append(',').append(surviving)
+                    .append(',').append(verdict.positive()).append(",\"")
+                    .append(pairsC.stream().filter(p -> p.kind() != PairKind.FINE_TUNING).findFirst()
+                            .map(ClassifiedPair::describe).orElse(""))
+                    .append("\"\n");
+            for (String order : List.of("C", "R")) {
+                for (ClassifiedPair pair : order.equals("C") ? pairsC : pairsR) {
+                    pairsCsv.append(entry.getKey()).append(',').append(order).append(',').append(pair.kind()).append(',')
+                            .append(pair.cheaper().design().key()).append(',').append(pair.cheaper().cost()).append(',')
+                            .append(pair.cheaper().result().completion()).append(',')
+                            .append(pair.faster().design().key()).append(',').append(pair.faster().cost()).append(',')
+                            .append(pair.faster().result().completion()).append(',').append(pair.surplusEffect())
+                            .append(',').append(pair.threshold()).append('\n');
+                }
+            }
+        }
+        Files.writeString(out.resolve("pass2-cells.csv"), csv.toString());
+        Files.writeString(out.resolve("pass2-pairs.csv"), pairsCsv.toString());
+
+        summary.append("\n## B/C. Mechanism classification and pass-2 verdicts by family\n\n")
+                .append("| family | cells | MVS-S C | POOLING C | MATERIAL-DEDICATED C | FINE-TUNING only C | material C |"
+                        + " MVS-S R | material R | order-robust material | proving cases C and R | pass-2 positive |\n")
+                .append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n");
+        for (Family family : Family.values()) {
+            List<Verdict> list = verdicts.values().stream().filter(v -> v.canonical().context().family() == family).toList();
+            summary.append("| ").append(family).append(" | ").append(list.size())
+                    .append(" | ").append(list.stream().filter(v -> v.canonical().strong()).count())
+                    .append(" | ").append(list.stream().filter(v -> count(v.pairsC(), PairKind.POOLING) > 0).count())
+                    .append(" | ").append(list.stream().filter(v -> count(v.pairsC(), PairKind.MATERIAL_DEDICATED) > 0).count())
+                    .append(" | ").append(list.stream().filter(v -> v.canonical().strong() && !v.materialC()).count())
+                    .append(" | ").append(list.stream().filter(Verdict::materialC).count())
+                    .append(" | ").append(list.stream().filter(v -> v.reversed().strong()).count())
+                    .append(" | ").append(list.stream().filter(Verdict::materialR).count())
+                    .append(" | ").append(list.stream().filter(Verdict::robustMaterial).count())
+                    .append(" | ").append(list.stream()
+                            .filter(v -> provingCases(v.canonical()) && provingCases(v.reversed())).count())
+                    .append(" | ").append(list.stream().filter(Verdict::positive).count()).append(" |\n");
+        }
+
+        summary.append("\n### By (profile, N, family, rule)\n\n| group | cells | material C | material R | order-robust material |"
+                + " pass-2 positive |\n|---|---:|---:|---:|---:|---:|\n");
+        Map<String, List<Verdict>> grouped = new TreeMap<>();
+        for (Verdict verdict : verdicts.values()) {
+            Context context = verdict.canonical().context();
+            grouped.computeIfAbsent(context.profile().name() + " | " + context.quantity() + " | " + context.family() + " | "
+                    + context.cost().rule(), key -> new ArrayList<>()).add(verdict);
+        }
+        grouped.forEach((key, list) -> summary.append("| ").append(key).append(" | ").append(list.size())
+                .append(" | ").append(list.stream().filter(Verdict::materialC).count())
+                .append(" | ").append(list.stream().filter(Verdict::materialR).count())
+                .append(" | ").append(list.stream().filter(Verdict::robustMaterial).count())
+                .append(" | ").append(list.stream().filter(Verdict::positive).count()).append(" |\n"));
+
+        summary.append("\n### Family F by flex price\n\n| rule | phi | cells | material C | order-robust material |"
+                + " pass-2 positive |\n|---|---:|---:|---:|---:|---:|\n");
+        for (String rule : RULES) {
+            for (int phi : PHIS) {
+                List<Verdict> list = verdicts.values().stream()
+                        .filter(v -> v.canonical().context().family() == Family.F
+                                && v.canonical().context().cost().rule().equals(rule)
+                                && v.canonical().context().cost().phiPct() == phi)
+                        .toList();
+                summary.append("| ").append(rule).append(" | ").append(phi).append(" | ").append(list.size())
+                        .append(" | ").append(list.stream().filter(Verdict::materialC).count())
+                        .append(" | ").append(list.stream().filter(Verdict::robustMaterial).count())
+                        .append(" | ").append(list.stream().filter(Verdict::positive).count()).append(" |\n");
+            }
+        }
+
+        summary.append("\n### Family D cells with a MATERIAL-DEDICATED pair (either order)\n\n");
+        verdicts.values().stream()
+                .filter(v -> v.canonical().context().family() == Family.D)
+                .filter(v -> count(v.pairsC(), PairKind.MATERIAL_DEDICATED) + count(v.pairsR(), PairKind.MATERIAL_DEDICATED) > 0)
+                .forEach(v -> summary.append("- ").append(v.canonical().id()).append(" C: ")
+                        .append(v.pairsC().stream().filter(p -> p.kind() == PairKind.MATERIAL_DEDICATED)
+                                .map(ClassifiedPair::describe).toList())
+                        .append(" R: ")
+                        .append(v.pairsR().stream().filter(p -> p.kind() == PairKind.MATERIAL_DEDICATED)
+                                .map(ClassifiedPair::describe).toList())
+                        .append('\n'));
+
+        summary.append("\n### Sample FINE-TUNING pairs (Family D, order C)\n\n");
+        verdicts.values().stream()
+                .filter(v -> v.canonical().context().family() == Family.D)
+                .flatMap(v -> v.pairsC().stream().filter(p -> p.kind() == PairKind.FINE_TUNING)
+                        .map(p -> v.canonical().id() + ": " + p.describe()))
+                .distinct().limit(12).forEach(line -> summary.append("- ").append(line).append('\n'));
+
+        // Reference cells and the pass-1 candidate under pass-2 rules.
+        List<String> spotlight = new ArrayList<>();
+        for (Family family : Family.values()) {
+            CostParams cost = family == Family.F ? REFERENCE_COST_F : REFERENCE_COST_D;
+            spotlight.add(REFERENCE_PROFILE + "|N" + REFERENCE_QUANTITY + "|" + family + "|" + cost.label() + "|f"
+                    + REFERENCE_F + "|b" + REFERENCE_BETA);
+        }
+        spotlight.add("P2|N12|F|WORK|d90|p125|f80|b25");
+        summary.append("\n## Spotlight cells\n");
+        for (String id : spotlight) {
+            Verdict v = verdicts.get(id);
+            summary.append("\n### ").append(id).append("\n\n")
+                    .append("- C: target=").append(v.canonical().target()).append(" budget=").append(v.canonical().budget())
+                    .append(" feasible classes=").append(v.canonical().feasible().size()).append(" proving cases=")
+                    .append(provingCases(v.canonical())).append(" pairs=")
+                    .append(v.pairsC().stream().map(ClassifiedPair::describe).toList()).append('\n')
+                    .append("- R: target=").append(v.reversed().target()).append(" budget=").append(v.reversed().budget())
+                    .append(" feasible classes=").append(v.reversed().feasible().size()).append(" proving cases=")
+                    .append(provingCases(v.reversed())).append(" pairs=")
+                    .append(v.pairsR().stream().map(ClassifiedPair::describe).toList()).append('\n')
+                    .append("- order-robust material=").append(v.robustMaterial()).append(", surviving pairs=")
+                    .append(v.survivingPairs()).append(", pass-2 positive=").append(v.positive()).append('\n');
+            summary.append("- R feasible frontier: ");
+            for (TieClass tieClass : v.reversed().feasible()) {
+                summary.append(tieClass.members().stream().map(e -> e.design().key()).toList()).append("[")
+                        .append(tieClass.cost()).append(",").append(tieClass.completion()).append("] ");
+            }
+            summary.append('\n');
+        }
+
+        // Candidate selection and robustness under pass-2 rules.
+        summary.append("\n## Pass-2 candidate selection and robustness\n\n");
+        List<Verdict> positives = verdicts.values().stream().filter(Verdict::positive).toList();
+        summary.append("Pass-2 positive cells: ").append(positives.size()).append(" of ").append(verdicts.size()).append("\n\n");
+        Verdict candidate = verdicts.get(spotlight.get(1)).positive() ? verdicts.get(spotlight.get(1)) : null;
+        if (candidate == null) {
+            long bestSupport = -1;
+            for (Verdict verdict : positives) {
+                long support = neighbours(verdict.canonical(), cellsC).values().stream().flatMap(List::stream)
+                        .map(cell -> verdicts.get(cell.id())).filter(Verdict::positive).count();
+                if (support > bestSupport) {
+                    bestSupport = support;
+                    candidate = verdict;
+                }
+            }
+        }
+        if (candidate != null) {
+            summary.append("Candidate: ").append(candidate.canonical().id()).append("\n\n- C pairs: ")
+                    .append(candidate.pairsC().stream().filter(p -> p.kind() != PairKind.FINE_TUNING)
+                            .map(ClassifiedPair::describe).toList())
+                    .append("\n- R pairs: ")
+                    .append(candidate.pairsR().stream().filter(p -> p.kind() != PairKind.FINE_TUNING)
+                            .map(ClassifiedPair::describe).toList())
+                    .append("\n\n| axis | neighbours | order-robust material | pass-2 positive | collapsed (either order) |\n"
+                            + "|---|---:|---:|---:|---:|\n");
+            boolean robust = true;
+            for (Map.Entry<String, List<Cell>> axis : neighbours(candidate.canonical(), cellsC).entrySet()) {
+                List<Verdict> list = axis.getValue().stream().map(cell -> verdicts.get(cell.id())).toList();
+                long material = list.stream().filter(Verdict::robustMaterial).count();
+                long collapsed = list.stream()
+                        .filter(v -> v.canonical().feasible().size() <= 1 || v.reversed().feasible().size() <= 1).count();
+                summary.append("| ").append(axis.getKey()).append(" | ").append(list.size()).append(" | ").append(material)
+                        .append(" | ").append(list.stream().filter(Verdict::positive).count()).append(" | ")
+                        .append(collapsed).append(" |\n");
+                if (!list.isEmpty() && (2 * material < list.size() || collapsed > 0)) {
+                    robust = false;
+                }
+            }
+            summary.append("\nRobust under the pre-registered rule (pass-2 metrics): ").append(robust).append('\n');
+        } else {
+            summary.append("No pass-2 positive cell exists in the declared window.\n");
+        }
+
+        // D. Load-bearing dispatch evidence.
+        summary.append("\n## D. Dispatch profiles (research-local, supported events only)\n\n");
+        Set<String> profiled = new LinkedHashSet<>();
+        List<Verdict> subjects = new ArrayList<>();
+        if (candidate != null) {
+            subjects.add(candidate);
+        }
+        subjects.add(verdicts.get(spotlight.get(2)));
+        for (Verdict subject : subjects) {
+            Context context = subject.canonical().context();
+            Optional<ClassifiedPair> pair = subject.pairsC().stream().filter(p -> p.kind() != PairKind.FINE_TUNING).findFirst();
+            if (pair.isEmpty()) {
+                continue;
+            }
+            for (Design design : List.of(pair.get().cheaper().design(), pair.get().faster().design())) {
+                for (boolean order : List.of(false, true)) {
+                    String line = context.profile().name() + "/N" + context.quantity() + " "
+                            + dispatchProfile(context, design, order);
+                    if (profiled.add(line)) {
+                        summary.append("- ").append(line).append('\n');
+                    }
+                }
+            }
+        }
+        Cell referenceF = verdicts.get(spotlight.get(1)).canonical();
+        for (TieClass tieClass : referenceF.context().frontier()) {
+            for (Entry entry : tieClass.members()) {
+                if (entry.design().flex() > 0) {
+                    for (boolean order : List.of(false, true)) {
+                        String line = "P1/N12 " + dispatchProfile(referenceF.context(), entry.design(), order);
+                        if (profiled.add(line)) {
+                            summary.append("- ").append(line).append('\n');
+                        }
+                    }
+                }
+            }
+        }
+
+        summary.append("\n## Execution\n\nRuntime executions: order C ").append(canonical.runs).append(", order R ")
+                .append(reversed.runs).append("; replay-checked design keys: C ").append(canonical.replayed.size())
+                .append(", R ").append(reversed.replayed.size()).append('\n');
+        Files.writeString(out.resolve("summary.md"), summary.toString());
+        assertTrue(canonical.runs > 0 && reversed.runs > 0);
     }
 
     static Map<String, List<Cell>> neighbours(Cell cell, Map<String, Cell> cells) {

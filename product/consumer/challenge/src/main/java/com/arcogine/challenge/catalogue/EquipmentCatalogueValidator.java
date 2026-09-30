@@ -76,7 +76,8 @@ public final class EquipmentCatalogueValidator {
      * #validate(EquipmentCatalogue)}. It does not decide other catalogue-internal validity
      * (blank ids, negative costs, etc.) -- use {@link #validate(EquipmentCatalogue)} for that --
      * nor does it reject draft occurrences for using equipment outside the challenge's allowed
-     * set; that is candidate admissibility, a later Challenge Readiness slice.
+     * set; {@link com.arcogine.challenge.admissibility.CandidateAdmissibilityPolicy} enforces that
+     * candidate rule.
      */
     public static EquipmentCatalogueValidationResult validateChallengeResolution(
             ChallengeDefinition challenge, EquipmentCatalogue catalogue) {

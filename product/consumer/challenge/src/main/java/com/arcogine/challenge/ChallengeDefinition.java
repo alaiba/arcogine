@@ -4,12 +4,15 @@ import com.arcogine.challenge.catalogue.EquipmentCatalogueIdentity;
 import java.util.List;
 
 /**
- * An immutable, explicitly versioned, game-owned definition of a Challenge Readiness challenge.
+ * An immutable, explicitly versioned, game-owned definition of challenge content.
  *
  * <p>{@code ChallengeDefinition} answers game-owned questions -- what the player must build,
  * within what constraints, to satisfy a fixed contract -- and is entirely independent of
- * Arcogine's canonical factory runtime. It carries no challenge, score, medal, or evaluation
- * outcome; those belong to later Challenge Readiness slices.
+ * Arcogine's canonical factory runtime. It carries the challenge rules and evaluation-policy
+ * identity, but no evaluation result or score. {@link
+ * com.arcogine.challenge.evaluation.ReferenceChallengeEvaluationPolicy} produces a {@link
+ * com.arcogine.challenge.evaluation.ChallengeEvaluationResult}, which a {@link
+ * com.arcogine.challenge.attempt.ChallengeAttempt} can retain.
  *
  * <p>Construction only establishes an immutable value; it does not decide whether that value
  * represents valid challenge content. Use {@link

@@ -16,10 +16,12 @@ import java.util.Set;
  * FactoryModelValidator}.
  * Publication validity does not establish Engine executability; the Engine decides whether a
  * published model is executable under its supported content. This validator does not call,
- * extend, or reuse {@code FactoryModelValidator}, and it does not decide whether the challenge's
- * catalogue identities resolve to real equipment offers, whether its budget affords anything, or
- * whether its deadline is achievable -- those remain later Challenge Readiness slices or
- * Arcogine production semantics.
+ * extend, or reuse {@code FactoryModelValidator}. It does not resolve catalogue identities to
+ * offers ({@link com.arcogine.challenge.catalogue.EquipmentCatalogueValidator#validateChallengeResolution}),
+ * or assess candidate affordability ({@link
+ * com.arcogine.challenge.admissibility.CandidateAdmissibilityPolicy}). It also cannot forecast
+ * whether Engine execution will meet a challenge deadline; that requires a concrete runtime
+ * assessment.
  *
  * <p>Validation never mutates the definition, never consults wall-clock time, random state, or
  * any runtime/session lookup, and iterates the definition's own declared collections in their

@@ -6,9 +6,10 @@ import com.arcogine.challenge.EquipmentCatalogueItemId;
  * A single occurrence of a catalogue item in a draft, carrying only what draft economics needs to
  * price it.
  *
- * <p>This deliberately carries no position, orientation, footprint, routing, operation
- * assignment, machine capability, canonical resource id, or runtime state -- those belong to a
- * later projection/placement slice, not to construction-cost calculation.
+ * <p>This economics input deliberately carries no placement, routing, operation assignment,
+ * machine capability, canonical resource id, or runtime state. The game-owned candidate placement
+ * is represented separately by {@link com.arcogine.challenge.admissibility.PlacedEquipment};
+ * canonical Factory projection and runtime state are outside this construction-cost value.
  */
 public record DraftEquipmentOccurrence(EquipmentCatalogueItemId itemId) {
 

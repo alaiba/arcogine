@@ -29,8 +29,9 @@ import java.util.Optional;
  * occurrence order.
  *
  * <p>This calculator does not enforce that occurrences use only the challenge's {@code
- * availableEquipment}, nor does it enforce catalogue quantity limits against occurrence counts --
- * those checks belong to candidate admissibility, a later Challenge Readiness slice.
+ * availableEquipment}, nor does it enforce catalogue quantity limits against occurrence counts.
+ * {@link com.arcogine.challenge.admissibility.CandidateAdmissibilityPolicy} enforces those
+ * candidate rules.
  */
 public final class DraftEconomicsCalculator {
 

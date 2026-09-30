@@ -22,10 +22,11 @@ questions below.
 
 ## Unadmitted stronger behavior
 
-[Failure-model research](../research/investigations/storage-failure-model.md) and
-[historical-support research](../research/investigations/storage-historical-support.md) are `READY`
-questions, not selected implementation slices. The [research register](../research/research-register.md)
-also preserves three later `CANDIDATE` triggers: backup/restore when retained authoritative history
+[Failure-model research](../research/investigations/storage-failure-model.md) is `READY`.
+[Historical-support research](../research/investigations/storage-historical-support.md) is
+`CANDIDATE` until a concrete retained use and support horizon are named; neither is a selected
+implementation slice. The [research register](../research/research-register.md) also preserves three
+later `CANDIDATE` triggers: backup/restore when retained authoritative history
 must survive loss or replacement of its storage location; performance/capacity when a named workload
 objective or measured limit exists; and alternate-provider conformance when a concrete substitution
 need appears. Those candidates have no dedicated brief or admitted implementation slice yet.

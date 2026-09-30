@@ -1627,6 +1627,52 @@ class StrategySpaceExperimentTest {
         assertTrue(canonical.runs > 0 && reversed.runs > 0);
     }
 
+    /**
+     * Replay check for the positive candidate's load-bearing designs: the pass-1 harness replayed only
+     * the reference (P1, N = 12) context, so the candidate (P2, N = 12) family's frontier designs and
+     * intervention probes are re-run here under both orders, with full evidence equality after
+     * run-identity normalization, plus the landed waiting-work derivation at floor(T / 2).
+     */
+    @Test
+    void replayCandidateLoadBearingDesigns() throws IOException {
+        Path out = Path.of("build", "strategy-space-pass-2");
+        Files.createDirectories(out);
+        Profile profile = PROFILES.get(1);
+        long quantity = 12;
+        List<Design> loadBearing = List.of(
+                STARTER,
+                STARTER.plus(Offer.INSPECTOR, 1),
+                STARTER.plus(Offer.CUTTER, 1),
+                STARTER.plus(Offer.CUTTER, 2),
+                STARTER.plus(Offer.ASSEMBLER, 1),
+                new Design(1, 1, 0, 1, 1),
+                new Design(1, 1, 0, 0, 2),
+                new Design(1, 0, 1, 2, 0),
+                new Design(1, 2, 0, 2, 0),
+                new Design(2, 1, 0, 2, 0),
+                new Design(1, 1, 0, 3, 0),
+                new Design(1, 3, 0, 2, 0));
+        StringBuilder report = new StringBuilder("# Candidate load-bearing replay (P2, N = 12)\n\n");
+        for (boolean order : List.of(false, true)) {
+            StrategySpaceExperimentTest pass = new StrategySpaceExperimentTest();
+            pass.reversedOrder = order;
+            for (Design design : loadBearing) {
+                DesignResult result = pass.simulate(profile, quantity, design, order, true);
+                long mid = result.completion() / 2;
+                ExperimentEvidence evidence = execute(project(design, profile, order), quantity, mid);
+                assertEquals(result.completion(), completionTick(evidence));
+                report.append("- ").append(order ? "[R] " : "[C] ").append(design.key()).append(design.provision())
+                        .append(" T=").append(result.completion()).append(" active=").append(result.pools().activeLabel())
+                        .append(" occupancy=").append(result.pools().occupancy()).append(" replayed=")
+                        .append(pass.replayed.contains(profile.name() + "/N" + quantity + "/" + design.key()
+                                + (order ? "/reversed" : "")))
+                        .append(" waiting@").append(mid).append("=")
+                        .append(describe(new WaitingWorkByStepOracle("mid-run").evaluateOn(evidence))).append('\n');
+            }
+        }
+        Files.writeString(out.resolve("candidate-replay.md"), report.toString());
+    }
+
     static Map<String, List<Cell>> neighbours(Cell cell, Map<String, Cell> cells) {
         Context context = cell.context();
         Map<String, List<Cell>> axes = new LinkedHashMap<>();

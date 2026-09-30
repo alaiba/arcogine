@@ -459,7 +459,7 @@ Conformance/verification assessments, authorization decisions, simulation runs, 
 
 Validation belongs at the shared model/design boundary, not independently in each consumer.
 
-A consumer may perform optimistic local checks for responsiveness, but Arcogine remains authoritative for shared executability semantics.
+A consumer may perform optimistic local checks for responsiveness, but Factory model validation is authoritative for publication validity and Engine admission is authoritative for runtime executability.
 
 Validation should be deterministic, structured, attributable to fields/entities when possible, explicit about severity, and atomic with respect to publication/instantiation.
 

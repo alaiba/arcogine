@@ -100,7 +100,7 @@ Reject a candidate when it:
 
 ## Exit criteria
 
-Conclude when one candidate is sufficiently specified and evidenced to reconcile into Factory/Engine architecture, or when the evidence supports removing/defering executable setup semantics for now.
+Conclude when one candidate is sufficiently specified and evidenced to reconcile into Factory/Engine architecture, or when the evidence supports removing/deferring executable setup semantics for now.
 
 The durable destination is:
 

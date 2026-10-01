@@ -29,11 +29,64 @@ This conclusion also preserves these orthogonal distinctions:
 
 No Factory implementation slice is promoted by this conclusion. Current `ConfiguredResource` remains the supported complete configured-resource record.
 
-## Qualified operation-resource applicability and performance — CANDIDATE
+## Setup and changeover semantics — READY
 
-Current explicit eligible-resource IDs are sufficient for present execution. They do not, however, express engineering qualification or resource-dependent performance when heterogeneous resources can perform the same operation under different material, tooling, dimensional, quality, duration, consumption, or cost constraints.
+[Factory Setup and Changeover Semantics Research](factory-setup-changeover-semantics.md) asks what
+setup/changeover semantics, if any, Arcogine should represent and whether the current scalar
+`ConfiguredResource.setupTime` truthfully represents them.
 
-Research this only when a concrete optimizer, industrial authoring/verification workflow, game mechanic, MES import, or other consumer needs Arcogine to **discover or verify** applicability rather than accept explicitly authored eligibility. The investigation must keep qualification separate from runtime availability/selection and must test whether operation-resource performance needs its own relation rather than being hidden inside a reusable equipment type.
+This is READY because the uncertainty is already present in the canonical model: `setupTime`
+participates in authored Factory content and runtime projection while current Engine execution does
+not consume it. The investigation must be free to remove/defer the field, retain a precisely bounded
+fixed meaning, or replace it with operation-resource or state/sequence-dependent semantics. It must
+keep immutable authored setup rules distinct from mutable runtime setup state.
+
+## Resource characteristics and operation requirements — READY
+
+[Factory Resource Characteristics and Operation Requirements Research](factory-resource-characteristics-requirements.md)
+asks which configured-resource characteristics, if any, are canonical Factory facts, how operation
+requirements should relate to them, and what the current privileged `capacityLiters` field should
+become.
+
+This is READY because `capacityLiters` is already canonical, comparable and observable while current
+execution does not use it. The investigation must test removal/deferment as the null candidate and
+must not jump from one specialized field to an untyped generic property bag. Typed characteristics
+or requirements do not by themselves justify reusable equipment/specification identity.
+
+## Qualified operation-resource applicability — CANDIDATE
+
+Current explicit eligible-resource IDs remain sufficient for present execution. They do not express
+engineering qualification when Arcogine must discover or verify whether a resource satisfies
+material, tooling, dimensional, quality, environmental or other operation requirements.
+
+Promote this when a concrete optimizer, industrial authoring/verification workflow, game mechanic,
+MES import, or another consumer needs Arcogine to derive or verify applicability rather than accept
+explicit authored eligibility. Keep qualification separate from runtime availability/selection,
+resource-dependent performance, and reusable equipment-type identity. The READY resource-
+characteristics investigation may supply candidate requirement/provision semantics, but it does not
+pre-decide that eligibility must become derived.
+
+## Operation-resource-dependent performance — CANDIDATE
+
+Current step duration belongs to `OperationStepDefinition`, so two resources eligible for the same
+step cannot currently differ in processing duration because of which resource is selected. More
+generally, Arcogine has no explicit relation for selected-resource-dependent duration, consumption,
+yield/quality consequence, or other result-affecting performance.
+
+The factory-design game now provides a concrete motivating use: equipment choices such as
+cheap/slow versus expensive/fast or specialized versus flexible-but-less-efficient cannot be
+represented merely by changing game catalogue prices. That makes this question materially closer to
+promotion, but not yet READY until its own bounded brief states the decision, candidate ownership
+models, proving cases, evidence expectations and exit criteria.
+
+When promoted, ask:
+
+> When several resources are eligible for the same operation step, which result-affecting properties
+> may legitimately depend on the selected resource, and should those facts belong to the step, the
+> resource, or an explicit operation-resource relation?
+
+Keep this separate from qualification: "may perform this operation" and "what happens when this
+resource performs it" are different semantic relations.
 
 ## Validation finding taxonomy — CANDIDATE
 

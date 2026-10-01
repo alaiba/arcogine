@@ -1,0 +1,113 @@
+{
+  "main_baseline": "335908a154170655d4a6f694db8826980dee4547",
+  "reviewed_report": "df23807640d68512d3ac9bee1b189d462c9efe08",
+  "comparison": "byte-for-byte",
+  "matched_files": 21,
+  "files": [
+    {
+      "path": "pass-1/cells.csv",
+      "sha256": "d7fed357cc0d44437f8bc96c96c26ecb8e8d3745fbc8e5a7f1be5912cc059bf6",
+      "bytes": 550493
+    },
+    {
+      "path": "pass-1/designs-P1-N12.csv",
+      "sha256": "1e05dd9eb63a692996a26ffd2f9c2173311363f46baa6bdd6e9cce3d5516a6cf",
+      "bytes": 187985
+    },
+    {
+      "path": "pass-1/designs-P1-N24.csv",
+      "sha256": "e605c82e22fd5f65f57b6c337ab53ba2cf75399e5d3db28c7f2505d6d63ad5fc",
+      "bytes": 189325
+    },
+    {
+      "path": "pass-1/designs-P1-N6.csv",
+      "sha256": "248b1da41116ccc502cc1dbcd304ce6ee68663da2b2abb3260e3119d70303dd1",
+      "bytes": 186203
+    },
+    {
+      "path": "pass-1/designs-P2-N12.csv",
+      "sha256": "03ce62b46e16da5106b8b2429c6ff970a6bc25e8f946de1d9928543510ffc581",
+      "bytes": 183122
+    },
+    {
+      "path": "pass-1/designs-P2-N24.csv",
+      "sha256": "bd2be019df4a8fe791be0549ec2974b17563965a913c5390984f9edd6fa8855e",
+      "bytes": 185133
+    },
+    {
+      "path": "pass-1/designs-P2-N6.csv",
+      "sha256": "f317682d843343bcecf7cda7ba51cc64551bd2ca297f847fc7ad28509d059eeb",
+      "bytes": 180932
+    },
+    {
+      "path": "pass-1/frontiers.csv",
+      "sha256": "1e464442437e4dc6b8a5c66e808396c0d9baf8e105622a04aeefac921f61e240",
+      "bytes": 432860
+    },
+    {
+      "path": "pass-1/summary.md",
+      "sha256": "4879e3dbdcec9bc50890a072fe2758660b4a732e30bfe14d5401ee2b2aead6e6",
+      "bytes": 13050
+    },
+    {
+      "path": "pass-2/candidate-replay.md",
+      "sha256": "872ed6f4445e1fe90dde1771eac53319ebb8736405cf01f9735dd9d822171599",
+      "bytes": 7563
+    },
+    {
+      "path": "pass-2/order-R/cells.csv",
+      "sha256": "f1b4d0f7dda05ba9ab5ea18fecde27d16830accc7ed0e3aa5f1bd2961f1ecabc",
+      "bytes": 551053
+    },
+    {
+      "path": "pass-2/order-R/designs-P1-N12.csv",
+      "sha256": "9c84db54b0c5bb4e5d8b754b6c29d2e2b23011fc0d600ead3b52487594c9c23b",
+      "bytes": 187145
+    },
+    {
+      "path": "pass-2/order-R/designs-P1-N24.csv",
+      "sha256": "5874095b6575abe74f543bd89c1ecddc34e9b8a23c3c0524ed495f446f38ff15",
+      "bytes": 188487
+    },
+    {
+      "path": "pass-2/order-R/designs-P1-N6.csv",
+      "sha256": "85e62f530270429ccb385977b6c42d04f10801f89dca2ca8d3203c7c42bdffec",
+      "bytes": 184954
+    },
+    {
+      "path": "pass-2/order-R/designs-P2-N12.csv",
+      "sha256": "edf21ede38be365993f7e222d4e4b569ec8a241480ff1c69c0e78a4babe23644",
+      "bytes": 181958
+    },
+    {
+      "path": "pass-2/order-R/designs-P2-N24.csv",
+      "sha256": "cec1efaacf7c16e0cb03d8d14c2764eb7c96ff4ebfea6d9c76e285dee97b0a57",
+      "bytes": 184052
+    },
+    {
+      "path": "pass-2/order-R/designs-P2-N6.csv",
+      "sha256": "7256e3fe2eb4dbfb0c17feb67247ceb9c7f8ea3c1cc4178c6493f6c4b3607119",
+      "bytes": 179670
+    },
+    {
+      "path": "pass-2/order-R/frontiers.csv",
+      "sha256": "5241a9735b298bf966964792b916860a2481588c223fa96a64fa5fdaa22bdbfb",
+      "bytes": 435597
+    },
+    {
+      "path": "pass-2/pass2-cells.csv",
+      "sha256": "2484100e8245f6401088958252031e82718b4590d559a851376669eb2cc86fb3",
+      "bytes": 359925
+    },
+    {
+      "path": "pass-2/pass2-pairs.csv",
+      "sha256": "8d892f3e9cddaee09af7f9e4d5fa22fbd91b0bc94bcf9b14d11ade5633d597fd",
+      "bytes": 1437741
+    },
+    {
+      "path": "pass-2/summary.md",
+      "sha256": "d299ebc4fecb8343c310646102f61317f47d507ea77e569abbc6d045ca0afb2e",
+      "bytes": 34448
+    }
+  ]
+}

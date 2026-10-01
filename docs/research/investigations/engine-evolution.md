@@ -179,17 +179,24 @@ Also retain `canAcceptJob` primacy, all-offline fallback/recovery, final `Machin
 
 The retained ranking has a bounded interpretation and objective boundary, overlap/tie/reselection cases have been reproduced independently, omitted-candidate challenges did not produce a better-supported replacement, and the high-risk conclusion received adversarial review with **ACCEPT WITH QUALIFICATIONS**. The durable consequence is no semantics change: preserve the exact current ranking and pin the reviewed boundary cases, subject to the qualifications above.
 
-## READY — shared-resource final tie-break semantics
+## CANDIDATE — shared-resource final tie-break semantics
 
 [Engine Shared-Resource Final Tie-Break Research](engine-shared-resource-final-tiebreak.md) asks
 whether final `MachineId` ordering remains an acceptable result-affecting tie-break when otherwise
 tied resources differ in how broadly their capacity can serve future operation steps.
 
-This is a narrower reopening than the concluded `combinedQueueDepth` question. The current ranking,
-unbound shared waiting/reselection and all earlier ranking keys remain fixed while the investigation
-tests only cases that reach the final tie-break. The prior dispatch work retained `MachineId`
-conservatively; it did not establish that resource identity is the correct strategic discriminator
-for shared capacity.
+This is a bounded candidate for a future narrower reopening than the concluded
+`combinedQueueDepth` question. The current ranking, unbound shared waiting/reselection and all
+earlier ranking keys would remain fixed while the investigation tests only cases that reach the
+final tie-break. The prior dispatch work retained `MachineId` conservatively; it did not establish
+that resource identity is the correct strategic discriminator for shared capacity.
+
+Do not promote it merely because multi-step eligibility exists: that fact already existed under the
+retained conclusion. Promote only when one of that conclusion's reopening triggers actually fires
+— a supported consumer objective/fairness contract, representative workload evidence, landed
+heterogeneous resource performance/capability semantics, a local-admission or spatial semantics
+change, or another material change to what compatible shared demand means. Branch-local game
+research may inform that future decision but is not itself landed authority.
 
 A key discriminator is whether permuting IDs/order among otherwise unchanged resources may
 legitimately change supported outcomes. Candidate replacements must state a stronger invariant and

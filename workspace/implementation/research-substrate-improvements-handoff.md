@@ -20,7 +20,9 @@ Operate as an ordinary implementation agent. Before substantive work, read and f
 3. `docs/development/testing.md`;
 4. the package documentation in
    `product/domains/factory/src/test/java/com/arcogine/factory/research/package-info.java`, and every
-   class in that package.
+   class in that package;
+5. `docs/architecture/overview.md`, its Layout and module-dependency material, and the
+   `architecture-conformance-test` module, before changing module structure.
 
 Use the devcontainer for Gradle, per `AGENTS.md` on Windows. Commit with the repository owner's human
 identity and add no tool or model attribution.
@@ -35,9 +37,12 @@ change.
 
 ## Hard boundaries
 
-- **Test sources only.** Everything stays under `product/domains/factory/src/test/java/` (plus build
-  configuration only if item 8 requires it). No production source, Engine rule, Factory model, or
-  public API changes. `ResearchPackageBoundaryTest` must keep passing unchanged in intent.
+- **Research infrastructure only.** After step 0, all substrate code lives in the dedicated research
+  module. Changes elsewhere are limited to Gradle settings and build files, an architecture-conformance
+  rule, moved or updated tests, and the layout and documentation updates step 0 requires. No production
+  source, Engine rule, Factory model, or public API changes. The guarantee that
+  `ResearchPackageBoundaryTest` gives — the substrate reads only the supported runtime contract and is
+  never a production dependency — must hold at least as strongly after the move.
 - **No transient references.** Per `AGENTS.md`, product source and tests must not reference
   `docs/planning/`, `docs/research/`, `workspace/`, or temporary coordinates (`PLAN-*`, `REV-*`,
   workspace SHAs). Describe behavior semantically and cite only durable authorities such as
@@ -47,12 +52,57 @@ change.
   public API, matching existing oracles. Do not read scheduler, handler, or store internals.
 - **No new Engine interpretation.** Expected values in new fixtures are hand-derived from the
   specification, as `StarterCorpus` does, and change only with an Engine definition change.
-- Keep `checkstyleTest`, `-Xlint:all -Werror` and the `:factory` coverage gate green.
+- Keep Checkstyle, `-Xlint:all -Werror` and every module's coverage gate green. `:factory` coverage
+  must not depend on the moved research tests; if it drops below its floor, report it rather than
+  lowering the floor silently.
 
 ## Work items
 
 Each item states the problem and the acceptance evidence. Exact class shape is the implementer's call;
-prefer extending existing types over parallel ones.
+prefer extending existing types over parallel ones. Do step 0 first; items 1–9 then land directly in
+the new module.
+
+### 0. Extract the substrate into a dedicated research module
+
+**Problem.** The substrate is test code inside `:factory`
+(`product/domains/factory/src/test/java/com/arcogine/factory/research/`). Its supported-contract-only
+rule is enforced by a source-text scan; it cannot be reused by other modules' experiments; experiments
+have no home; and no durable document names it.
+
+**Do.**
+- Create a Gradle module under `product/` (suggested `product/research-experiments`, project
+  `:research-experiments`; final name is the implementer's call if a clearer one fits the repository
+  conventions) and register it in `product/settings.gradle.kts`.
+- It depends only on `:factory` and `:types` (plus what they expose) through ordinary dependencies, so
+  the compiler, not a string scan, limits it to `:factory`'s public API. If any substrate code needs a
+  non-public `:factory` type, stop and report it rather than widening production visibility.
+- Move the substrate classes and their tests (including `StarterCorpus`, oracles and the corpus/contract
+  tests) into the module, keeping one package (a rename such as `com.arcogine.research.experiment` is
+  acceptable if it reads better). Preserve history with `git mv` where practical.
+- The module publishes no production artifact, and no product module may depend on it. Add an
+  `architecture-conformance-test` rule asserting that nothing outside the research module depends on its
+  package.
+- Rework `ResearchPackageBoundaryTest` so its guarantees survive the move: not on the production
+  classpath, no reference from production sources, and no use of scheduler, handler, or store internals.
+  Prefer the module dependency boundary plus an ArchUnit rule over source-text scanning; keep a text
+  check only for what the compiler cannot prove.
+- Make the module part of the CI Java gate (compile, Checkstyle, tests, coverage verification with a
+  sensible floor) per `docs/development/testing.md`. Confirm `./arcogine` and CI pick it up.
+- Update the durable descriptions in the same change: the Layout sections of `AGENTS.md` and
+  `docs/architecture/overview.md` (module list), plus `docs/development/testing.md`. Add a short
+  "executable research substrate" paragraph to `docs/development/researching.md` naming the module as
+  the standard place for deterministic experiments and stating its boundary: supported runtime contract
+  only, research-local derivations, never a production dependency. Keep the wording durable and
+  semantic.
+
+**Accept.**
+- `:factory` no longer contains the research package.
+- The new module builds and tests green in the CI gate.
+- The ArchUnit rule fails if a product module is made to depend on the research module (demonstrate it
+  once locally, then revert).
+- Every moved corpus and contract test passes with unchanged expectations.
+- The layout and research documentation name the module.
+
 
 ### 1. Shared-eligibility routing family
 
@@ -155,14 +205,14 @@ difference, using `TamperedEvidence` or an equivalent existing mechanism.
 **Problem.** Running a workspace-held experiment required copying a test file into the tracked test
 tree and deleting it afterwards, which is fragile.
 
-**Do.** Choose the smallest mechanism, such as an opt-in Gradle property that adds an extra test source
-directory to `:factory` tests, ignored when unset. Document it in `docs/development/testing.md` in
+**Do.** Choose the smallest mechanism, such as an opt-in Gradle property that adds an extra source
+directory to the research module's tests, ignored when unset. Document it in `docs/development/testing.md` in
 durable terms: no `workspace/` path is baked into source; the directory is supplied by the caller. If no
 safe mechanism exists without weakening the CI gate or the coverage verification, document the copy
 procedure instead and record that decision in the PR description.
 
 **Accept.** With the property unset, CI behavior is unchanged. With it set, a class in an external
-directory compiles against the factory test classpath and runs under `--tests`.
+directory compiles against the research module's classpath and runs under `--tests`.
 
 ### 9. Pooling proving case (optional, if items 1–3 land cleanly)
 

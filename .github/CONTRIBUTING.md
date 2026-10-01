@@ -18,6 +18,7 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | `product/domains/finance/` | Ledger, financial interpretation of operational events |
 | `product/consumer/challenge/` | Headless, game-owned challenge definitions, catalogue/economics, admissibility, evaluation, and attempt comparison — no dependency on any module above |
 | `product/consumer/challenge-factory-integration-test/` | Test-only proof module: Factory publication validity and challenge admissibility are independent axes |
+| `product/research-experiments/` | Non-shipped research infrastructure: the deterministic research-experiment substrate over the supported runtime contract; never a production dependency |
 | `product/architecture-conformance-test/` | Test-only module: durable cross-domain ArchUnit guardrails |
 | `docs/` | Project documentation |
 | `infra/` | Dev-environment infrastructure |

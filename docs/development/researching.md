@@ -148,6 +148,29 @@ In particular:
 - **research priority is not implementation commitment** — a `High`-priority `CANDIDATE` question is not evidence that implementation is admitted;
 - an **open branch is not landed capability** — a branch under investigation (including a prior research branch) is evidence to read, not architecture to cite as current.
 
+### Executable research substrate
+
+Deterministic experiments over Factory/Engine behavior use the `product/research-experiments`
+module, the standard place for them rather than a per-investigation harness. It runs fixtures —
+an authored model, an explicit ordered command script, the evidence window the experiment means to
+capture, and expected claims — in fresh runtimes and returns the supported evidence each run
+produced. Its boundary is fixed:
+
+- it is an embedded consumer of the [supported runtime contract](../architecture/runtime-contract.md)
+  only: published model facts, supported observations and supported events, never scheduler,
+  handler or store internals;
+- a derivation it computes is research-local. Reaching a value through the substrate does not
+  make it an Engine fact, game-owned analytics, a Factory concept or a public API; promoting a
+  measurement or an interpretation of one is a reconciliation decision, not an implementation
+  consequence;
+- it is never a production dependency, and executable checks enforce that direction.
+
+Fixture expectations are derived by hand from the current specifications, never copied from a run.
+An experiment whose sources stay in research custody can run against the module without being
+copied into the tracked tree; [testing.md](testing.md#10-research-experiment-fixtures) documents
+the mechanics. A fixture carries no source revision; the revision a run executed on belongs to the
+research custody that ran it (§2 and §10).
+
 ## 5. External evidence
 
 Do not specify a minimum number of references, pages, word count, or a mandatory literature review for every question. A citation quota produces padding, not decision quality. Instead, use evidence sufficiency and risk-proportionate depth.

@@ -9,6 +9,7 @@ include(
     "finance",
     "challenge",
     "challenge-factory-integration-test",
+    "research-experiments",
     "architecture-conformance-test",
 )
 

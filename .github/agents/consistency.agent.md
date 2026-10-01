@@ -99,7 +99,7 @@ Carry every open issue-backed finding forward on every review. A merged PR, clos
 
 A material finding requires the artifact making the claim plus either contradictory authoritative/executable evidence, a clear demonstration that required evidence is absent, or a demonstrated authority-placement defect where the artifact redundantly owns volatile or future-state information without an independent contract/history/reproducibility reason to do so.
 
-Use exact paths, symbols, criteria, specification sections, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green. `docs/development/reviewing.md` is the sole authority for finding severity; do not restate or extend its vocabulary here.
+Use exact paths, symbols, criteria, specification sections, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green. Consistency findings do not carry severity metadata: the durable issue identity, category, evidence, authority analysis, confidence, and lifecycle state are the information this workflow actually uses.
 
 Useful categories are `PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `PLANNING_STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `SPECIFICATION_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
 
@@ -116,7 +116,6 @@ CONS: <concise semantic title>
 A new finding body needs durable diagnostic evidence only:
 
 ```text
-Severity: <severity from docs/development/reviewing.md>
 Category: <category>
 Confidence: HIGH | MEDIUM | LOW
 
@@ -165,4 +164,4 @@ Limitations: none | <specific incomplete pass or other limitation>
 Overall: CLEAN | FINDINGS | INCOMPLETE
 ```
 
-Present each material finding with issue number, severity, category, evidence, authority analysis, and smallest coherent corrective action. `CLEAN` means no evidence-backed inconsistency was found during this review; it never claims exhaustive proof of consistency.
+Present each material finding with issue number, category, confidence, evidence, authority analysis, and smallest coherent corrective action. `CLEAN` means no evidence-backed inconsistency was found during this review; it never claims exhaustive proof of consistency.

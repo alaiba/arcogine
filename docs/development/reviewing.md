@@ -30,10 +30,10 @@ The reviewer is not a second implementation agent and should not optimize for fi
 A good review:
 
 - verifies correctness and architectural fit rather than personal style preference;
-- distinguishes blockers from non-blocking improvements and future work;
+- distinguishes actionable defects from optional observations and future work;
 - prefers the smallest change that satisfies the current slice;
 - does not pull later roadmap work into the current PR without a concrete dependency;
-- says explicitly when no blocking issues remain.
+- says explicitly when no open review findings remain.
 
 Review is diagnostic with one narrow pre-review exception: a reviewer may perform the repository-approved **mechanical merge-style synchronization** needed to make a stale PR a current candidate against live `main`. That normalization must not include conflict resolution, semantic choices, compatibility fixes, or any other implementation work. If construction or publication cannot complete mechanically, return the PR to the author/implementation owner before substantive review.
 
@@ -236,30 +236,35 @@ An explicit owner decision to change architecture is a decision input, not a res
 
 A change may also add a [historical decision-rationale record](researching.md#historical-decision-rationale) under `docs/history/decisions/`. Do not demand one; "no rationale record" is a valid outcome, including in a research reconciliation's knowledge-transfer audit. When a record is present, review it as non-normative history: every constraint, qualification, or obligation it describes that still governs Arcogine must also appear in the owning canonical document or executable contract, which must stay understandable without the record, and the record must not carry a status/approval field or be cited as implementation authority. Flag misplaced reasoning the change introduces in either direction — alternative-analysis narrative added to a canonical document that a record would hold better, or a record that is the only place a current rule is stated. A pre-existing record that differs from current architecture is history, not drift.
 
-## Finding severity
+## Findings and merge obligation
 
-This section is the canonical semantic authority for Arcogine finding severity. Agent contracts and
-analysis tooling reference it; they must not define a competing severity vocabulary. Severity
-communicates defect/merge risk, not remediation priority or rhetorical emphasis:
+A formal PR finding is an evidence-backed defect that the implementation owner must resolve before
+the reviewed head is merge-authorized. PR-local findings use the temporary `REV-<N>` identity and
+do **not** carry a severity tag. Severity would not change the PR lifecycle: every `OPEN`
+`REV-<N>` blocks the canonical reviewer disposition, so attaching P-level metadata would be
+decorative and could incorrectly suggest that a real defect is optional.
 
-- **P0** — catastrophic correctness, data, or security issue.
-- **P1** — functional or architectural blocker; should not merge.
-- **P2** — important issue that should normally be fixed before merge.
-- **P3** — actionable non-blocking improvement.
+Create a `REV-<N>` only when the reviewed candidate itself needs implementation-owned correction
+or reconciliation before merge. Typical findings include correctness or architecture violations,
+false semantic/completion claims, missing required evidence, authority-placement defects, broken
+compatibility or determinism, and incomplete semantic propagation required to make the PR truthful.
 
-Anything below the P3 threshold is not a finding. Optional polish may be mentioned in the review
-session's chat output when useful, but it receives no `REV-<N>` identity, is not persisted as a
-formal review finding, and does not affect disposition.
+If an observation is genuinely optional for this PR, it is **not** a formal PR finding. Mention
+small optional polish in review prose without a `REV-<N>`. If the observation represents real
+repository work that should survive this PR, record it through the durable issue/Consistency
+workflow rather than leaving an open PR-local identifier that will lose its lifecycle when the PR
+closes.
 
-Do not inflate severity. A P1 must identify a real invariant or correctness failure, not a preferred design alternative.
+The finding lifecycle itself carries the merge obligation:
 
-Use these calibration examples when the boundary is unclear:
+- `OPEN` — the defect still exists on the reviewed head; disposition is `CHANGES REQUIRED`.
+- `RESOLVED` — the violated invariant is restored on the reviewed head.
+- `OBSOLETE` — the finding no longer applies because the relevant subject changed or the original
+  premise was invalidated.
 
-- a semantic regression demonstrated by failing integration/contract tests, or a change that violates a binding architecture invariant, is normally **P1**;
-- a PR whose central claimed behavior is still defeated by another maintained execution path is normally **P1**;
-- a false completion/status claim or missing completion evidence that can be corrected without changing otherwise safe runtime behavior is normally **P2**, unless that false status itself unlocks a dependent architectural boundary;
-- a materially false PR claim about the proposed change's semantic scope, rationale, compatibility/migration behavior, or non-goals is normally **P2** when it would mislead review or downstream use;
-- optional extra coverage, cleanup, or future hardening is **P3** only when it is genuinely actionable and worth preserving as a finding; otherwise omit it from the finding ledger.
+A complete review may issue `READY TO MERGE` only when it has no new `OPEN` findings and every
+prior `REV-<N>` is `RESOLVED` or `OBSOLETE`. Optional observations and future ideas do not
+affect disposition because they are not findings.
 
 PR bodies intentionally do not own live Git/GitHub topology or implementation-validation state. If a
 body happens to contain stale head/base SHAs, ahead/behind counts, base freshness, mergeability,
@@ -267,7 +272,7 @@ CI/check state, local test results, or unavailable-check notes, do not create a 
 change disposition solely for that lifecycle prose. Resolve the facts live and mention the stale
 transient text only in chat to the implementation owner. Historical provenance and exact immutable
 evidence coordinates remain valid when clearly labeled. Substantive false claims about the change
-itself remain review findings under the normal severity rules above.
+itself remain review findings.
 
 Each actionable finding should state:
 
@@ -327,8 +332,8 @@ CI absence alone is not automatically an architectural blocker, but merge readin
 
 Every ordinary PR review/re-review should end with a clear disposition. There are exactly two:
 
-- **READY TO MERGE** — independent review of the code/docs is complete and finds no blocking issue on this exact PR head.
-- **CHANGES REQUIRED** — at least one blocking/pre-merge finding remains.
+- **READY TO MERGE** — independent review of the code/docs is complete and no `OPEN` `REV-<N>` finding remains on this exact PR head.
+- **CHANGES REQUIRED** — at least one `OPEN` `REV-<N>` finding remains.
 
 CI is not a reviewer disposition, and review authorization is genuinely orthogonal to CI status — there is no third disposition for "review is clean but CI is still pending." A review may conclude `READY TO MERGE` based solely on the code/docs review, regardless of whether required CI has finished running for this head. That review disposition is necessary for ordinary PRs but is not sufficient for merge: required CI, base freshness, and other GitHub protections are enforced independently. A current-head `READY TO MERGE` review is not invalidated merely because `main` later advances; that base-head change may still block the owner's merge under repository rules and can require a later normalization iteration. Do treat the PR head changing, new findings surfacing, or a synchronization that creates a new head as requiring a fresh disposition.
 
@@ -336,7 +341,7 @@ A trusted Dependabot PR is the explicit positive-review exception. The base-side
 
 Trusted Dependabot provenance removes only the need for a positive `READY TO MERGE` review. A current-head canonical `CHANGES REQUIRED` still blocks the PR and revokes the default authorization until it is superseded on that head or becomes stale on a later head. Required CI, strict base freshness, and mergeability remain independent protections.
 
-Optional, genuinely non-blocking observations belong in review prose or a follow-up issue, not in a formal disposition. If the only remaining items are non-blocking, the disposition is simply `READY TO MERGE`.
+Optional observations belong in review prose or a durable follow-up issue, not in the `REV-<N>` ledger. A review with no `OPEN` findings may issue `READY TO MERGE`.
 
 For medium- and high-risk reviews, the final report should also identify the material semantic neighbors inspected, including important surfaces inspected that required no change. This coverage note is evidence of review breadth, not a claim that those surfaces are globally consistent.
 

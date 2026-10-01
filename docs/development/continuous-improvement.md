@@ -130,7 +130,7 @@ Manual analysis begins only after the mechanical window is established. It shoul
 - repeated waste that can be tied to a concrete mechanism;
 - whether an existing experiment/change should be retained, retired, or superseded.
 
-Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous. Hand-classified finding totals or category percentages remain noncanonical. The analyzer may report mechanically parsed PR Reviewer fields — including severity, category, confidence, distinct findings, and per-PR incidence — when its structured-finding coverage is complete; when it is incomplete, use the diagnostics and do not present the observed values as complete distributions. Interpretation and improvement decisions remain retrospective reasoning, not analyzer output.
+Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous. Hand-classified finding totals or category percentages remain noncanonical. The analyzer may report mechanically parsed PR Reviewer fields — including category, confidence, distinct findings, and per-PR incidence — when its structured-finding coverage is complete. Historical review bodies may still contain a legacy `Severity:` field; the analyzer preserves that value on the parsed historical finding when present, but severity is not part of current finding identity or aggregate analytics. When structured-finding coverage is incomplete, use the diagnostics and do not present the observed values as complete distributions. Interpretation and improvement decisions remain retrospective reasoning, not analyzer output.
 
 ### Action ownership
 

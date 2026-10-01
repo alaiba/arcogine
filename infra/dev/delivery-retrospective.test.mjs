@@ -59,10 +59,11 @@ function evidence(items, overrides = {}) {
 }
 
 function finding(id, fields = {}) {
+  const severity = fields.severity === null ? [] : [`Severity: ${fields.severity ?? 'P2'}`];
   return [
     `${id} - ${fields.title ?? 'The current report describes a stale contract'}`,
     '',
-    `Severity: ${fields.severity ?? 'P2'}`,
+    ...severity,
     `Category: ${fields.category ?? 'DOCUMENTATION_ACCURACY'}`,
     `Confidence: ${fields.confidence ?? 'HIGH'}`,
     `Head: ${fields.head ?? headA}`,
@@ -255,15 +256,15 @@ test('review checkpoint summary remains 0 / 1 / 2 / 3+ per PR', () => {
   });
 });
 
-test('canonical P2 DOCUMENTATION_ACCURACY finding fields are captured', () => {
-  const value = baseEvidence([blockingReview(finding(revision(1)))]);
+test('canonical severity-less finding fields are captured', () => {
+  const value = baseEvidence([blockingReview(finding(revision(1), { severity: null }))]);
   const summary = analyzeEvidence(value);
   assert.equal(summary.findingAnalytics.complete, true);
   assert.deepEqual(summary.findingAnalytics.distinctFindings[0], {
     prNumber: 2,
     revisionId: revision(1),
     title: 'The current report describes a stale contract',
-    severity: 'P2',
+    severity: null,
     category: 'DOCUMENTATION_ACCURACY',
     confidence: 'HIGH',
     subject: 'reporting contract',
@@ -313,6 +314,21 @@ test('same PR + REV carried through re-review counts once and records first and 
   assert.equal(summary.findingAnalytics.distinctFindings[0].currentReviewedHead, headB);
 });
 
+test('historical severity does not split identity when a current re-review omits severity', () => {
+  const first = blockingReview(finding(revision(1), { severity: 'P1' }), {
+    id: 'R_1', submittedAt: '2026-09-06T12:00:00Z', reviewedHead: headA,
+  });
+  const second = review(finding(revision(1), { severity: null, head: headB, status: 'RESOLVED' }), {
+    id: 'R_2', submittedAt: '2026-09-07T12:00:00Z', reviewedHead: headB,
+  });
+  const result = analyzeEvidence(baseEvidence([first, second])).findingAnalytics;
+  assert.equal(result.complete, true);
+  assert.equal(result.totalDistinctFindings, 1);
+  assert.equal(result.distinctFindings[0].severity, 'P1');
+  assert.equal(result.distinctFindings[0].status, 'RESOLVED');
+  assert.deepEqual(result.diagnostics.conflictingFindingIdentities, []);
+});
+
 test('obsolete lifecycle status remains explicit in the distinct finding dataset', () => {
   const first = review(finding(revision(1)), { id: 'R_1', submittedAt: '2026-09-06T12:00:00Z' });
   const second = review(finding(revision(1), { head: headB, status: 'OBSOLETE' }), {
@@ -352,16 +368,9 @@ test('finding distributions count both findings and per-PR incidence determinist
   const result = analyzeEvidence(value).findingAnalytics;
   assert.equal(result.totalDistinctFindings, 3);
   assert.equal(result.prsWithFindings, 2);
-  assert.deepEqual(result.findingsBySeverity, { P2: 3 });
   assert.deepEqual(result.findingsByCategory, { DOCUMENTATION_ACCURACY: 3 });
-  assert.deepEqual(result.findingsBySeverityCategory, [
-    { severity: 'P2', category: 'DOCUMENTATION_ACCURACY', findingCount: 3 },
-  ]);
   assert.deepEqual(result.findingsByConfidence, { HIGH: 3 });
   assert.deepEqual(result.prIncidenceByCategory, [{ category: 'DOCUMENTATION_ACCURACY', prCount: 2 }]);
-  assert.deepEqual(result.prIncidenceBySeverityCategory, [
-    { severity: 'P2', category: 'DOCUMENTATION_ACCURACY', prCount: 2 },
-  ]);
 });
 
 test('unknown categories are preserved literally and mark finding analytics incomplete', () => {
@@ -379,7 +388,7 @@ test('malformed canonical-looking finding data and blocker gaps are visible, nev
   assert.equal(result.diagnostics.malformedFindingBlocks.length, 1);
   assert.equal(result.diagnostics.blockingReviewsWithoutParseableFinding.length, 1);
   assert.equal(result.complete, false);
-  assert.equal(result.completeness.severityDistribution, false);
+  assert.equal(result.completeness.categoryDistribution, false);
 });
 
 test('quoted and fenced finding examples are ignored as noncanonical reviewer data', () => {

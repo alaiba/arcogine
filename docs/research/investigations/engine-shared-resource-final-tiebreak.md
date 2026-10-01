@@ -1,6 +1,6 @@
 # Engine Shared-Resource Final Tie-Break Research
 
-> **Status:** READY  
+> **Status:** CANDIDATE  
 > **Scope:** Test whether final `MachineId` ordering remains an acceptable result-affecting tie-break when eligible resources include capacity shared across multiple operation steps  
 > **Authority:** Research only; current [Engine semantics](../../architecture/engine-semantics.md) remain normative until any conclusion is reconciled
 
@@ -8,9 +8,22 @@
 
 > When otherwise tied eligible resources differ in how broadly their capacity can serve future operation steps, is final `MachineId` ordering an acceptable result-affecting tie-break, or should Arcogine preserve a different explicit invariant?
 
+## Promotion trigger
+
+Promote this question to READY only when the retained dispatch reopening boundary actually fires:
+for example, a supported consumer objective/fairness contract, representative workload evidence,
+landed heterogeneous resource performance/capability semantics, a local-admission or spatial
+semantics change, or another material change to what compatible shared demand means.
+
+Current multi-step eligibility by itself is not a new trigger; it was already present when the
+existing dispatch conclusion retained final `MachineId` tie-breaking. The active factory-design
+game research branch may provide future evidence, but branch-local findings do not make this
+question READY until the relevant product/semantic consequence is durably reconciled or another
+documented reopening trigger is established.
+
 ## Decision at stake
 
-Whether the Engine should:
+Once promoted, whether the Engine should:
 
 - retain final `MachineId` ordering and explicitly accept identity-order sensitivity;
 - use a separate authored priority distinct from resource identity;

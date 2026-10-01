@@ -73,6 +73,17 @@ Names and current allocated IDs participate in canonical content. That does not 
 ideal ontology; reclassifying names as presentation-only or introducing a logical identity distinct
 from current IDs is an ordinary change to the current development definition.
 
+`capacityLiters` and `setupTime` are likewise authored canonical resource facts under the current
+development definition. They participate in canonical bytes and the model fingerprint, survive
+runtime assembly as configured machine facts, and are exposed by current resource observations.
+The current Engine does **not** use either field to determine operation eligibility, resource
+selection, queueing, step duration, or processing completion; processing duration remains the
+authored `OperationStepDefinition.duration`. Consequently, changing either resource field can change
+Factory content identity and observed configuration without changing the current Engine execution
+outcome for an otherwise identical model and workload. This describes current behavior only: it does
+not claim that either field is the final resource ontology or that executable setup, volumetric
+qualification, or resource-dependent performance semantics already exist.
+
 ### 2.2 Optional spatial record
 
 The spatial record is either **absent** or **present and complete**. When present it carries exactly

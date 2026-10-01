@@ -2,9 +2,13 @@
 
 ## Identity
 
-Transient implementation handoff on branch `alaiba/research-substrate-improvements`, created from live
-`main` `cac5a305a1934cee003c0965418af934acd823f8`. Re-resolve live `main` before starting. If it has
-moved, bring this branch current with a history-preserving merge.
+Transient implementation handoff on branch `alaiba/research-substrate-improvements`. The branch was
+originally created from historical `main` `cac5a305a1934cee003c0965418af934acd823f8`. At this handoff
+revision, live `main` is `335908a154170655d4a6f694db8826980dee4547`, which includes the configured-
+resource current-truth clarification and the expanded resource/game research portfolio from PRs #436
+and #437. Re-resolve live `main` before starting and bring this branch current with a history-preserving
+merge if needed. Preserve prior handoff commits in history rather than rebasing or force-pushing them
+away.
 
 The implementer edits this branch; it is the implementation PR's branch. Before handing off to review,
 delete this file. `workspace/` must be absent from the final tree, as
@@ -22,7 +26,13 @@ Operate as an ordinary implementation agent. Before substantive work, read and f
    `product/domains/factory/src/test/java/com/arcogine/factory/research/package-info.java`, and every
    class in that package;
 5. `docs/architecture/overview.md`, its Layout and module-dependency material, and the
-   `architecture-conformance-test` module, before changing module structure.
+   `architecture-conformance-test` module, before changing module structure;
+6. `docs/architecture/factory-model.md` and `docs/architecture/engine-semantics.md`, especially the
+   current configured-resource execution facts and final resource-selection tie-break; and
+7. the current research boundaries in
+   `docs/research/investigations/simulation-analytics-consumer-boundary.md` and
+   `docs/research/investigations/engine-shared-resource-final-tiebreak.md` so reusable experiment
+   measurements are not promoted into analytics or Engine policy by implementation naming.
 
 Use the devcontainer for Gradle, per `AGENTS.md` on Windows. Commit with the repository owner's human
 identity and add no tool or model attribution.
@@ -32,8 +42,13 @@ identity and add no tool or model attribution.
 A recent research run used the test-only research experiment package
 (`com.arcogine.factory.research`) for roughly 30,000 deterministic runs over a non-spatial
 `CUT -> ASSEMBLE -> INSPECT` design space. The substrate's evidence discipline held. The run also
-exposed concrete gaps, listed below. All are test-infrastructure improvements; none is a production
-change.
+exposed concrete gaps, listed below. All are research/test-infrastructure improvements; none is a
+production semantic change.
+
+The source strategy-space investigation remains active and unreconciled. Its branch-local measurements,
+operational definitions and conclusions are evidence to learn from, not accepted product requirements or
+architecture. This implementation must improve the reusable experiment substrate without turning that
+investigation's interpretations into repository-wide semantics.
 
 ## Hard boundaries
 
@@ -49,9 +64,17 @@ change.
   `docs/architecture/engine-semantics.md`.
 - **Research-local stays research-local.** New derivations are `Oracle` implementations with a
   `ResearchDefinition`. Their Javadoc must say they are not Engine facts, game-owned analytics, or
-  public API, matching existing oracles. Do not read scheduler, handler, or store internals.
+  public API, matching existing oracles. Do not read scheduler, handler, or store internals. A reusable
+  oracle may calculate a measurement such as occupancy, waiting work or dispatch counts; it must not
+  silently name that measurement the active constraint, bottleneck, optimum or other investigation-
+  specific interpretation while the owning diagnostic/analytics questions remain open.
 - **No new Engine interpretation.** Expected values in new fixtures are hand-derived from the
   specification, as `StarterCorpus` does, and change only with an Engine definition change.
+- **Characterize `MachineId` sensitivity; do not select policy.** Current `MachineId` ordering is the
+  final deterministic resource-selection tie-break. A fixture may prove that an explicit ordering can
+  affect one current-semantics shared-resource case, but that does not make every shared-resource design
+  order-sensitive, does not establish the tie-break as desirable, and does not satisfy the promotion
+  trigger for the separate shared-resource final-tie-break research CANDIDATE.
 - Keep Checkstyle, `-Xlint:all -Werror` and every module's coverage gate green. `:factory` coverage
   must not depend on the moved research tests; if it drops below its floor, report it rather than
   lowering the floor silently.
@@ -70,17 +93,25 @@ rule is enforced by a source-text scan; it cannot be reused by other modules' ex
 have no home; and no durable document names it.
 
 **Do.**
-- Create a Gradle module under `product/` (suggested `product/research-experiments`, project
-  `:research-experiments`; final name is the implementer's call if a clearer one fits the repository
-  conventions) and register it in `product/settings.gradle.kts`.
-- It depends only on `:factory` and `:types` (plus what they expose) through ordinary dependencies, so
-  the compiler, not a string scan, limits it to `:factory`'s public API. If any substrate code needs a
+- Create a **non-shipped internal research-support Gradle module** under `product/` (suggested
+  `product/research-experiments`, project `:research-experiments`; final name is the implementer's call
+  if a clearer one fits repository conventions) and register it in `product/settings.gradle.kts`.
+- Put the reusable substrate classes in that module's `src/main/java` and the module's own corpus,
+  contract and proving tests in `src/test/java`. This explicit shape makes reuse by branch-local
+  experiments possible and makes a module coverage gate meaningful; "non-shipped" means the module is
+  repository research infrastructure, not a product/runtime capability or outward artifact.
+- The reusable main substrate depends only on `:factory` and `:types` through ordinary dependencies,
+  so the compiler limits it to `:factory`'s public API. Existing corpus tests currently exercise
+  Factory semantic comparison through Governance API types; a narrowly scoped `testImplementation`
+  dependency on `:governance` is acceptable for those tests if still needed after the move. Do not let
+  that test dependency leak into the reusable substrate. If main substrate code needs Governance or a
   non-public `:factory` type, stop and report it rather than widening production visibility.
 - Move the substrate classes and their tests (including `StarterCorpus`, oracles and the corpus/contract
   tests) into the module, keeping one package (a rename such as `com.arcogine.research.experiment` is
   acceptable if it reads better). Preserve history with `git mv` where practical.
-- The module publishes no production artifact, and no product module may depend on it. Add an
-  `architecture-conformance-test` rule asserting that nothing outside the research module depends on its
+- No production or consumer module may depend on the research module. The test-only
+  `architecture-conformance-test` may depend on/inspect it solely to enforce that direction. Add a
+  conformance rule asserting that production/consumer modules do not depend on or reference the research
   package.
 - Rework `ResearchPackageBoundaryTest` so its guarantees survive the move: not on the production
   classpath, no reference from production sources, and no use of scheduler, handler, or store internals.
@@ -88,12 +119,15 @@ have no home; and no durable document names it.
   check only for what the compiler cannot prove.
 - Make the module part of the CI Java gate (compile, Checkstyle, tests, coverage verification with a
   sensible floor) per `docs/development/testing.md`. Confirm `./arcogine` and CI pick it up.
-- Update the durable descriptions in the same change: the Layout sections of `AGENTS.md` and
-  `docs/architecture/overview.md` (module list), plus `docs/development/testing.md`. Add a short
-  "executable research substrate" paragraph to `docs/development/researching.md` naming the module as
-  the standard place for deterministic experiments and stating its boundary: supported runtime contract
-  only, research-local derivations, never a production dependency. Keep the wording durable and
-  semantic.
+- Update the durable descriptions in the same change: the Layout sections of `AGENTS.md`,
+  `.github/CONTRIBUTING.md`, and `docs/architecture/overview.md` (module list and dependency graph),
+  plus `docs/development/testing.md`. Add a short "executable research substrate" paragraph to
+  `docs/development/researching.md` naming the module as the standard place for deterministic
+  experiments and stating its boundary: supported runtime contract only, research-local derivations,
+  never a production dependency. Keep the wording durable and semantic.
+- Update `.github/scripts/classify-changes.sh` and its focused tests so the new durable
+  `product/research-experiments/` surface is intentionally classified as backend rather than remaining
+  permanently dependent on the fail-safe "unknown path" fallback.
 
 **Accept.**
 - `:factory` no longer contains the research package.
@@ -101,7 +135,8 @@ have no home; and no durable document names it.
 - The ArchUnit rule fails if a product module is made to depend on the research module (demonstrate it
   once locally, then revert).
 - Every moved corpus and contract test passes with unchanged expectations.
-- The layout and research documentation name the module.
+- The layout, dependency graph and research/testing documentation name the module.
+- The change classifier recognizes the module path explicitly and its focused regression tests pass.
 
 
 ### 1. Shared-eligibility routing family
@@ -119,60 +154,97 @@ callers in the same change.
 through `FactoryModelPublisher`, and that existing `StarterCorpus` fixtures are unchanged in model and
 fingerprint.
 
-### 2. Explicit, result-affecting resource ordering
+### 2. Explicit resource ordering as an experiment input
 
-**Problem.** `MachineId` is assigned from list order, and it is the Engine's final selection tie-break
-(`engine-semantics.md` §2 rule 4). For shared resources, list order changed completion by up to 6
-ticks. For resources serving a single step it never did.
+**Problem.** `MachineId` is assigned from resource construction/list order, and it is the current
+Engine interpretation's final resource-selection tie-break (`engine-semantics.md` §2 rule 4). The
+strategy-space run found current-semantics shared-resource cases where reversing that order changed
+completion by up to 6 ticks, while its tested dedicated-only family was order-invariant. That is a
+characterization of those cases, not a universal statement about all dedicated or shared resources.
 
-**Do.** Make resource order an explicit authored input of the family or builder from item 1, and
-document in Javadoc that it is result-affecting for shared resources.
+**Do.** Make resource order an explicit authored input of the family or builder from item 1. Document
+precisely that ordering **can** become result-affecting when otherwise tied selection reaches the final
+`MachineId` rule; do not describe `MachineId` ordering as desirable policy or imply that every
+shared-resource model is order-sensitive. The fixture API exposes an experiment input; it does not
+promote or reopen Engine semantics.
 
-**Accept.** Two pinned fixtures with hand-derived expectations:
-- a dedicated-only design whose completion is invariant under reversed resource order;
-- a design with a shared resource whose completion differs under reversed order.
+**Accept.** Two pinned current-semantics fixtures with hand-derived expectations:
+- one dedicated-only design whose completion is invariant under reversed resource order;
+- one design with a shared resource whose completion differs under reversed order.
 
-### 3. Pool-aware constraint derivation
+The test names/Javadoc describe only those proven cases and current interpretation, not a universal
+resource-order law.
 
-**Problem.** `ProcessingOccupancyOracle` is per resource and cannot attribute a shared resource's work
-to a step.
+### 3. Pool occupancy measurement — not constraint semantics
+
+**Problem.** `ProcessingOccupancyOracle` is per resource and cannot truthfully attribute a shared
+resource's capacity to one operation step. The strategy-space investigation used eligibility-connected
+pool occupancy as one research-local way to interpret constraint behavior, but that interpretation is
+not an accepted reusable diagnostic or analytics semantic.
 
 **Do.** Add an oracle that groups steps into pools — connected components of the step–resource
-eligibility graph — and reports, per pool, occupied job-ticks (`JOB_DISPATCHED` to
-`JOB_STEP_COMPLETED`) and capacity job-ticks (boundary time × summed concurrency). Report the
-maximum-ratio pool(s) with exact rational comparison and ties as a set. It must never attribute shared
-capacity to an individual step. It refuses on an incomplete event window, zero elapsed time, or a
-completion without a dispatch.
+eligibility graph — and reports **measurements** per pool: occupied job-ticks
+(`JOB_DISPATCHED` to `JOB_STEP_COMPLETED`) and capacity job-ticks. It must never attribute shared
+capacity to an individual step. If a convenience result identifies the pool(s) with the maximum exact
+occupancy ratio, name it in measurement terms (for example maximum-occupancy pools), compare ratios
+exactly and return ties as a set; do not expose `activeConstraint`, `bottleneck`, or equivalent
+semantic labels.
 
-**Accept.** Contract tests in the style of `OracleContractTest`: declared inputs only, a refusal on
-partial windows, and expectations on a dedicated fixture (one pool per step) and a shared fixture (merged
-pool). Expectations are hand-derived.
+Capacity arithmetic must be truthful when resource availability changes. The smallest acceptable first
+implementation is to define occupancy over continuously-online resources and **refuse** when a relevant
+resource has an availability transition in the measured interval. A more complete implementation may
+derive effective available-capacity intervals from supported observations/events, but must not inspect
+handler/scheduler internals. Apply the same availability rule to the existing
+`ProcessingOccupancyOracle`; do not leave two reusable occupancy measures with inconsistent
+denominators.
 
-### 4. Waiting work is not constraint identification
+Also refuse on an incomplete event window, zero elapsed time, or a completion without a dispatch.
 
-**Problem.** A faster upstream step can build the largest queue ahead of a step that is not the
-limiting one. Observed case: routing CUT 3 / ASSEMBLE 4 / INSPECT 5 ticks, one single-concurrency
-resource per step, quantity 12. At tick 33, three jobs wait at ASSEMBLE and one at INSPECT, while
-INSPECT has the higher occupancy over the run (60/67 vs 48/67 job-ticks).
+**Accept.** Contract tests in the style of `OracleContractTest` cover:
+- declared inputs only;
+- refusal on partial event windows;
+- refusal (or, if fully implemented, correct interval accounting) for a relevant availability change;
+- hand-derived measurements on a dedicated fixture (one pool per step); and
+- hand-derived measurements on a shared fixture (merged pool).
 
-**Do.** Add this as a pinned corpus fixture (re-derive the numbers by hand from the specification;
-do not copy them as unexplained constants). Add Javadoc to `WaitingWorkByStepOracle` stating that
-waiting work is not a bottleneck identification.
+No reusable API or test claims that maximum occupancy is the Factory/Engine "constraint" or
+"bottleneck"; an individual investigation may make that operational interpretation in its own
+research artifact.
 
-**Accept.** The fixture's claims for waiting work and for occupancy (item 3, or the existing oracle)
-both hold and disagree on the step, as described.
+### 4. Waiting work and occupancy are different diagnostics
+
+**Problem.** A faster upstream step can build the largest queue ahead of a different step/resource
+that has the higher measured occupancy. Observed case: routing CUT 3 / ASSEMBLE 4 / INSPECT 5 ticks,
+one continuously-online single-concurrency resource per step, quantity 12. At tick 33, three jobs wait
+at ASSEMBLE and one at INSPECT, while INSPECT has the higher occupancy over the run (60/67 vs 48/67
+job-ticks).
+
+**Do.** Add this as a pinned corpus fixture (re-derive the numbers by hand from the specification; do
+not copy them as unexplained constants). Add Javadoc to `WaitingWorkByStepOracle` stating that waiting
+work and interval occupancy answer different questions and are not interchangeable. Do **not** replace
+the old overclaim with a new one: neither measurement alone is a repository-wide bottleneck or
+constraint definition.
+
+**Accept.** The fixture's claims for waiting work and occupancy (item 3, or the existing oracle) both
+hold and rank the steps differently, exactly as described. The test demonstrates diagnostic
+non-equivalence, not which measure is universally "right."
 
 ### 5. Avoid double publication
 
 **Problem.** `ExperimentFixture` publishes in its constructor for validation, and `ExperimentRunner`
 publishes again.
 
-**Do.** Publish once per fixture and reuse the `FactoryModelVersion`, for example by caching it in the
-fixture. Keep fail-at-construction validation and the fixture's value semantics; the version must not
-leak into equality in a way that breaks existing tests.
+**Do.** Remove the redundant publication only if it can be done without distorting the fixture's value
+semantics. The invariant is that one validated/published `FactoryModelVersion` is established for a
+fixture execution lifecycle and reused to instantiate its runtime; caching is one possible mechanism,
+not a requirement. Keep fail-at-construction validation. If satisfying both properties would require
+materially redesigning `ExperimentFixture` solely to avoid a second pure validation/publication call,
+leave the current behavior in place and record the cleanup as deliberately skipped rather than forcing
+an abstraction.
 
-**Accept.** Existing tests pass. A test or assertion shows the runner instantiates the runtime from the
-fixture's single published version.
+**Accept.** Existing tests pass. If implemented, a test or assertion shows the runner instantiates the
+runtime from the already established published version without changing fixture equality semantics. If
+skipped under the bounded rule above, state that explicitly in the implementation handoff.
 
 ### 6. Replay helper
 
@@ -223,8 +295,10 @@ ASSEMBLE 4 / INSPECT 5, quantity 12, comparing
 - (b) one cutter, one assembler, one inspector, and one resource eligible for both ASSEMBLE and INSPECT
   placed last in resource order — completes at 47, with the shared resource serving both steps.
 
-Keep costs and any game framing out of the fixture: it states production facts only. Skip this item and
-say so in the handoff if hand-deriving (b) proves impractical. Do not paste runtime output as truth.
+Keep costs and any game framing out of the fixture: it states current Factory/Engine production facts
+only. Its presence does not accept, reconcile, conclude, or create a product requirement from the still-
+active strategy-space investigation. Skip this item and say so in the handoff if hand-deriving (b) proves
+impractical. Do not paste runtime output as truth.
 
 ## Validation and handoff
 

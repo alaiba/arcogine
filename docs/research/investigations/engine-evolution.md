@@ -179,6 +179,24 @@ Also retain `canAcceptJob` primacy, all-offline fallback/recovery, final `Machin
 
 The retained ranking has a bounded interpretation and objective boundary, overlap/tie/reselection cases have been reproduced independently, omitted-candidate challenges did not produce a better-supported replacement, and the high-risk conclusion received adversarial review with **ACCEPT WITH QUALIFICATIONS**. The durable consequence is no semantics change: preserve the exact current ranking and pin the reviewed boundary cases, subject to the qualifications above.
 
+## READY — shared-resource final tie-break semantics
+
+[Engine Shared-Resource Final Tie-Break Research](engine-shared-resource-final-tiebreak.md) asks
+whether final `MachineId` ordering remains an acceptable result-affecting tie-break when otherwise
+tied resources differ in how broadly their capacity can serve future operation steps.
+
+This is a narrower reopening than the concluded `combinedQueueDepth` question. The current ranking,
+unbound shared waiting/reselection and all earlier ranking keys remain fixed while the investigation
+tests only cases that reach the final tie-break. The prior dispatch work retained `MachineId`
+conservatively; it did not establish that resource identity is the correct strategic discriminator
+for shared capacity.
+
+A key discriminator is whether permuting IDs/order among otherwise unchanged resources may
+legitimately change supported outcomes. Candidate replacements must state a stronger invariant and
+an explicit information horizon rather than substitute another arbitrary stable order. Any
+recommendation that changes result-affecting Engine semantics is high-risk and requires independent
+adversarial review before reconciliation.
+
 ## CANDIDATE — queue sequencing and scheduling objective
 
 Current per-machine local queues are FIFO. The investigation proves that FIFO is not universally optimal and that current-step SPT is representable with facts Arcogine already has, but it also proves that no simple sequencing rule is universally better across multi-stage routes, order aggregation, makespan, mean order lead time, and dynamic arrivals.
@@ -200,6 +218,19 @@ This concern is ready for implementation planning only under an exact-semantics 
 ## Session/advancement evolution
 
 Current consumer-neutral bounded advancement is established. Revisit the command/advancement surface only when a concrete consumer proves that event-count/tick semantics, scheduling control, or ownership cannot be expressed through the existing boundary.
+
+## Stochastic-semantics boundary
+
+Do not reopen Arcogine's determinism contract merely because a future simulation needs uncertainty.
+The contract already permits result-affecting random context when it is part of the complete explicit
+input and its algorithm/consumption rules are fixed by the applicable interpretation.
+
+Do not admit one generic "stochastic simulation" research question in advance. Promote a bounded
+question only when a concrete consumer requires a specific variability phenomenon such as processing
+duration, failure/repair, arrival variability or quality/yield. Different phenomena may require
+different Factory facts and Engine lifecycle semantics and must not be collapsed into an RNG
+abstraction. Random resource selection is not a substitute for resolving deterministic dispatch
+policy.
 
 ## Distribution/recovery research boundary
 

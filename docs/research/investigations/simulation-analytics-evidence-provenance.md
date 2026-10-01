@@ -34,8 +34,9 @@ Engine Determinism Contract.
   replay history.
 - The runtime need not retain an entire event history merely because an analytical use needs an
   interval.
-- The test-only Factory research package can capture explicit evidence windows and research-local
-  oracles; it is proving infrastructure, not a production analytics API or retention contract.
+- The non-shipped `research-experiments` module can capture explicit evidence windows and
+  research-local oracles; it is proving infrastructure, not a production analytics API or retention
+  contract.
 - `ModelFingerprint` identifies Factory content under its owning rules, not an exact Engine
   definition.
 - Current Engine exposes no placeholder exact-definition identifier.

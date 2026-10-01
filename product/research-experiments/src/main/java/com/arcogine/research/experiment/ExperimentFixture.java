@@ -20,16 +20,21 @@ import java.util.Set;
  * docs/architecture/engine-semantics.md} section 1); a fixture always runs against the
  * interpretation of the revision it is executed on.
  *
+ * <p>The authored model is published once, where the fixture is built, so a malformed fixture fails
+ * there; every run of the fixture is instantiated from that one published version. Two fixtures are
+ * equal exactly when their inputs are: a published version is equal to another publication of an
+ * equal authored model.
+ *
  * @param id stable name, meaningful within the fixture corpus
- * @param authoredModel the authored Factory model; publishing it yields the exact version, and
- *     therefore the fingerprint, the run is instantiated from
+ * @param publishedModel the published version of the authored model; it fixes the fingerprint every
+ *     run is instantiated from
  * @param script the explicit, ordered workload/command and evidence-collection script
  * @param windowIntent whether the script is meant to retain every supported event of the run
  * @param expectedClaims oracle ground truth, stated before the run and never mixed into evidence
  */
 public record ExperimentFixture(
         String id,
-        FactoryModel authoredModel,
+        FactoryModelVersion publishedModel,
         List<ExperimentStep> script,
         WindowIntent windowIntent,
         List<ExpectedClaim<?>> expectedClaims) {
@@ -50,7 +55,7 @@ public record ExperimentFixture(
         if (Objects.requireNonNull(id, "id").isBlank()) {
             throw new IllegalArgumentException("id must not be blank");
         }
-        Objects.requireNonNull(authoredModel, "authoredModel");
+        Objects.requireNonNull(publishedModel, "publishedModel");
         Objects.requireNonNull(windowIntent, "windowIntent");
         script = List.copyOf(Objects.requireNonNull(script, "script"));
         expectedClaims = List.copyOf(Objects.requireNonNull(expectedClaims, "expectedClaims"));
@@ -58,13 +63,28 @@ public record ExperimentFixture(
             throw new IllegalArgumentException("a fixture needs at least one script step");
         }
         requireDistinctLabels(script);
-        // Publication validates the authored model, so a malformed fixture fails where it is built.
-        FactoryModelPublisher.publish(authoredModel);
     }
 
-    /** Publishes the authored model through the existing Factory publication boundary. */
-    public FactoryModelVersion publishedModel() {
-        return FactoryModelPublisher.publish(authoredModel);
+    /**
+     * Publishes {@code authoredModel} through the existing Factory publication boundary, which
+     * validates it, and keeps that published version for every run of the fixture.
+     */
+    public ExperimentFixture(
+            String id,
+            FactoryModel authoredModel,
+            List<ExperimentStep> script,
+            WindowIntent windowIntent,
+            List<ExpectedClaim<?>> expectedClaims) {
+        this(id,
+                FactoryModelPublisher.publish(Objects.requireNonNull(authoredModel, "authoredModel")),
+                script,
+                windowIntent,
+                expectedClaims);
+    }
+
+    /** The authored model facts every run of this fixture is instantiated from. */
+    public FactoryModel authoredModel() {
+        return publishedModel.model();
     }
 
     /** The distinct research-local definitions this fixture's expected claims depend on. */

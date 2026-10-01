@@ -20,11 +20,12 @@ import java.util.Optional;
  * evidence it produced.
  *
  * <p>The runner is an embedded consumer of the supported runtime contract and nothing more: it
- * publishes the authored model through the existing publication boundary, submits commands and
- * advances through the supported session-control surface, and collects the supported observation
- * and the draining supported-event stream exactly where the script says to. It never inspects the
- * scheduler, the handler, or any store, and it does not use the internal events that advancement
- * and command results expose, so nothing it returns depends on implementation internals.
+ * instantiates the runtime from the version the fixture published through the existing
+ * publication boundary, submits commands and advances through the supported session-control
+ * surface, and collects the supported observation and the draining supported-event stream exactly
+ * where the script says to. It never inspects the scheduler, the handler, or any store, and it does
+ * not use the internal events that advancement and command results expose, so nothing it returns
+ * depends on implementation internals.
  *
  * <p>It always ends with a {@value ExperimentEvidence#CLOSING_LABEL} observation, which fixes the
  * run's final event cursor and therefore what "the complete run" means for the window check.
@@ -42,7 +43,7 @@ public final class ExperimentRunner {
     public static ExperimentEvidence run(ExperimentFixture fixture) {
         Objects.requireNonNull(fixture, "fixture");
         FactoryModelVersion version = fixture.publishedModel();
-        FactoryRuntime runtime = FactoryRuntime.forModel(version);
+        FactoryRuntime runtime = instantiate(fixture);
 
         List<ExperimentEvidence.CommandRecord> commands = new ArrayList<>();
         Map<String, RuntimeObservation> observations = new LinkedHashMap<>();
@@ -123,6 +124,95 @@ public final class ExperimentRunner {
                 observations,
                 retained,
                 window);
+    }
+
+    /**
+     * Runs {@code fixture} twice, each time in a fresh runtime, and requires the two runs to produce
+     * equivalent evidence: equal in everything once only their run identities are normalized
+     * ({@link ExperimentEvidence#withNormalizedRunIdentity()}). Returns the first run's evidence,
+     * with its run identity exactly as the runtime issued it.
+     *
+     * @throws IllegalStateException when the replay differs, naming the first difference; or for
+     *     any reason {@link #run} would
+     */
+    public static ExperimentEvidence runAndReplay(ExperimentFixture fixture) {
+        ExperimentEvidence first = run(fixture);
+        return requireReplayEquivalent(first, run(fixture));
+    }
+
+    /**
+     * Requires {@code replay} to be equivalent to {@code first} once each has only its run identity
+     * normalized, and returns {@code first}.
+     *
+     * @throws IllegalStateException naming the first respect in which the two differ
+     */
+    public static ExperimentEvidence requireReplayEquivalent(ExperimentEvidence first, ExperimentEvidence replay) {
+        ExperimentEvidence expected = first.withNormalizedRunIdentity();
+        ExperimentEvidence actual = replay.withNormalizedRunIdentity();
+        if (!expected.equals(actual)) {
+            throw new IllegalStateException("fixture '" + first.fixtureId() + "' did not replay deterministically: "
+                    + firstDifference(expected, actual));
+        }
+        return first;
+    }
+
+    /** A fresh runtime instantiated from the version {@code fixture} has already published. */
+    static FactoryRuntime instantiate(ExperimentFixture fixture) {
+        return FactoryRuntime.forModel(fixture.publishedModel());
+    }
+
+    private static String firstDifference(ExperimentEvidence expected, ExperimentEvidence actual) {
+        if (!expected.fixtureId().equals(actual.fixtureId())) {
+            return "fixture id " + expected.fixtureId() + " vs " + actual.fixtureId();
+        }
+        if (!expected.publishedModel().equals(actual.publishedModel())) {
+            return "the published model differs";
+        }
+        if (!expected.modelFingerprint().equals(actual.modelFingerprint())) {
+            return "model fingerprint " + expected.modelFingerprint() + " vs " + actual.modelFingerprint();
+        }
+        if (!expected.script().equals(actual.script())) {
+            return "the script differs";
+        }
+        Optional<String> commands = firstDifference("command", expected.commands(), actual.commands());
+        if (commands.isPresent()) {
+            return commands.get();
+        }
+        if (!List.copyOf(expected.observations().keySet()).equals(List.copyOf(actual.observations().keySet()))) {
+            return "observation labels " + expected.observations().keySet() + " vs " + actual.observations().keySet();
+        }
+        for (String label : expected.observations().keySet()) {
+            Optional<String> observation = firstDifference(expected.observation(label), actual.observation(label));
+            if (observation.isPresent()) {
+                return "observation '" + label + "' " + observation.get();
+            }
+        }
+        Optional<String> events = firstDifference("retained event", expected.retainedEvents(), actual.retainedEvents());
+        return events.orElseGet(() -> "evidence window " + expected.window() + " vs " + actual.window());
+    }
+
+    private static Optional<String> firstDifference(RuntimeObservation expected, RuntimeObservation actual) {
+        if (!expected.metadata().equals(actual.metadata())) {
+            return Optional.of("metadata " + expected.metadata() + " vs " + actual.metadata());
+        }
+        return firstDifference("resource", expected.resources(), actual.resources())
+                .or(() -> firstDifference("order", expected.orders(), actual.orders()))
+                .or(() -> firstDifference("job", expected.jobs(), actual.jobs()))
+                .or(() -> firstDifference("pending work", expected.pendingWork(), actual.pendingWork()))
+                .or(() -> expected.performance().equals(actual.performance())
+                        ? Optional.empty()
+                        : Optional.of("performance " + expected.performance() + " vs " + actual.performance()));
+    }
+
+    private static <T> Optional<String> firstDifference(String kind, List<T> expected, List<T> actual) {
+        for (int i = 0; i < Math.min(expected.size(), actual.size()); i++) {
+            if (!expected.get(i).equals(actual.get(i))) {
+                return Optional.of(kind + " " + i + ": " + expected.get(i) + " vs " + actual.get(i));
+            }
+        }
+        return expected.size() == actual.size()
+                ? Optional.empty()
+                : Optional.of(kind + " count " + expected.size() + " vs " + actual.size());
     }
 
     /** The internal events this call processes are deliberately discarded: they are not evidence. */

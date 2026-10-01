@@ -3,11 +3,14 @@ package com.arcogine.research.experiment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.factory.model.FactoryModel;
+import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
@@ -15,6 +18,7 @@ import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.factory.process.RuntimeEventEnvelope;
 import com.arcogine.factory.process.RuntimeEventType;
 import com.arcogine.factory.process.RuntimeObservation;
+import com.arcogine.factory.process.RuntimePerformanceObservation;
 import com.arcogine.research.experiment.EvidenceWindow.CollectionPoint;
 import com.arcogine.research.experiment.EvidenceWindow.CollectionPoint.Kind;
 import com.arcogine.research.experiment.ExperimentEvidence.CommandRecord;
@@ -22,6 +26,8 @@ import com.arcogine.research.experiment.ExperimentEvidence.CommandRecord.Outcome
 import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -275,6 +281,94 @@ class ExperimentRunnerTest {
                 IllegalArgumentException.class,
                 () -> new ExperimentFixture(" ", model, List.of(submit(1)), WindowIntent.PARTIAL, List.of()));
         assertThrows(IllegalArgumentException.class, () -> ExperimentStep.observe(" "));
+    }
+
+    @Test
+    void aFixturePublishesItsModelOnceAndEveryRunIsInstantiatedFromThatVersion() {
+        ExperimentFixture fixture = StarterCorpus.capacityConstrainedBaseline();
+
+        // The model is published where the fixture is built; afterwards the fixture hands out that one
+        // version, and the runtime the runner instantiates for it retains exactly that version.
+        assertSame(fixture.publishedModel(), fixture.publishedModel());
+        assertSame(fixture.publishedModel(), ExperimentRunner.instantiate(fixture).modelVersion());
+        assertSame(fixture.authoredModel(), ExperimentRunner.run(fixture).publishedModel());
+
+        // Equality is still that of the fixture's inputs: rebuilding the fixture, which publishes again,
+        // or building it from another publication of an equal model gives an equal fixture.
+        ExperimentFixture rebuilt = new ExperimentFixture(
+                fixture.id(), FAMILY.model(), fixture.script(), fixture.windowIntent(), fixture.expectedClaims());
+        ExperimentFixture fromVersion = new ExperimentFixture(
+                fixture.id(),
+                FactoryModelPublisher.publish(FAMILY.model()),
+                fixture.script(),
+                fixture.windowIntent(),
+                fixture.expectedClaims());
+        assertNotSame(fixture.publishedModel(), rebuilt.publishedModel());
+        assertEquals(fixture, rebuilt);
+        assertEquals(fixture.hashCode(), rebuilt.hashCode());
+        assertEquals(fixture, fromVersion);
+        assertNotEquals(fixture, new ExperimentFixture(
+                fixture.id(),
+                StarterCorpus.ASSEMBLE_VARIANT_FAMILY.model(),
+                fixture.script(),
+                fixture.windowIntent(),
+                fixture.expectedClaims()));
+    }
+
+    @Test
+    void aReplayReturnsTheFirstRunsEvidenceWhenTheRunsDifferOnlyInRunIdentity() {
+        ExperimentFixture fixture = StarterCorpus.capacityConstrainedBaseline();
+        ExperimentEvidence first = ExperimentRunner.run(fixture);
+        ExperimentEvidence replay = ExperimentRunner.run(fixture);
+
+        assertNotEquals(first.window().runId(), replay.window().runId());
+        assertSame(first, ExperimentRunner.requireReplayEquivalent(first, replay));
+
+        ExperimentEvidence replayed = ExperimentRunner.runAndReplay(fixture);
+        assertNotEquals(ExperimentEvidence.NORMALIZED_RUN_ID, replayed.window().runId(), "the evidence keeps its run identity");
+        assertEquals(first.withNormalizedRunIdentity(), replayed.withNormalizedRunIdentity());
+    }
+
+    @Test
+    void aReplayThatDiffersInAnythingButRunIdentityFailsAndNamesTheFirstDifference() {
+        ExperimentFixture fixture = StarterCorpus.capacityConstrainedBaseline();
+        ExperimentEvidence first = ExperimentRunner.run(fixture);
+        ExperimentEvidence replay = ExperimentRunner.run(fixture);
+
+        List<RuntimeEventEnvelope> reordered = new ArrayList<>(replay.retainedEvents());
+        Collections.swap(reordered, 5, 6);
+        IllegalStateException reorderedEvents = assertThrows(
+                IllegalStateException.class,
+                () -> ExperimentRunner.requireReplayEquivalent(first, TamperedEvidence.withEvents(replay, reordered)));
+        assertTrue(reorderedEvents.getMessage().contains("did not replay deterministically"), reorderedEvents.getMessage());
+        assertTrue(reorderedEvents.getMessage().contains("retained event 5:"), reorderedEvents.getMessage());
+
+        List<RuntimeEventEnvelope> truncated = replay.retainedEvents().subList(0, replay.retainedEvents().size() - 1);
+        IllegalStateException missingEvent = assertThrows(
+                IllegalStateException.class,
+                () -> ExperimentRunner.requireReplayEquivalent(first, TamperedEvidence.withEvents(replay, truncated)));
+        assertTrue(missingEvent.getMessage().contains("retained event count " + replay.retainedEvents().size() + " vs "
+                + truncated.size()), missingEvent.getMessage());
+
+        RuntimeObservation closing = replay.observation(ExperimentEvidence.CLOSING_LABEL);
+        RuntimePerformanceObservation performance = closing.performance();
+        RuntimeObservation altered = new RuntimeObservation(
+                closing.metadata(),
+                closing.resources(),
+                closing.orders(),
+                closing.jobs(),
+                closing.pendingWork(),
+                new RuntimePerformanceObservation(
+                        performance.backlog(),
+                        performance.completedOrders() + 1,
+                        performance.completedSalesValue(),
+                        performance.averageLeadTime(),
+                        performance.throughputPerTick()));
+        IllegalStateException observation = assertThrows(
+                IllegalStateException.class,
+                () -> ExperimentRunner.requireReplayEquivalent(
+                        first, TamperedEvidence.withObservation(replay, ExperimentEvidence.CLOSING_LABEL, altered)));
+        assertTrue(observation.getMessage().contains("observation 'closing' performance"), observation.getMessage());
     }
 
     @Test

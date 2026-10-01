@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.process.ResourceObservation;
+import com.arcogine.factory.process.RuntimeEventEnvelope;
+import com.arcogine.factory.process.RuntimeEventPayload;
 import com.arcogine.factory.process.RuntimeObservation;
 import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
 import com.arcogine.research.experiment.ProcessingOccupancyOracle.ResourceOccupancy;
@@ -154,6 +156,72 @@ class ProcessingOccupancyOracleTest {
         // The same derivation over the complete evidence for the same boundary does derive a value: the
         // refusal is about the window, not about the derivation or the run.
         assertEquals(3, occupancyOf(occupancyAt("mid-run"), ASSEMBLER).occupiedJobTicks());
+    }
+
+    @Test
+    void occupancyIsRefusedWhenAResourceChangedAvailabilityDuringTheInterval() {
+        // Capacity over the interval is elapsed time times concurrency only for a resource that was
+        // online throughout. One that went offline and came back refuses the measurement instead of
+        // being credited with capacity it did not have.
+        MachineId inspector = FAMILY.inspectResources().getFirst();
+        ExperimentEvidence toggled = ExperimentRunner.run(new ExperimentFixture(
+                "availability/inspector-offline-then-online",
+                FAMILY.model(),
+                List.of(
+                        ExperimentStep.setAvailability(inspector, false),
+                        ExperimentStep.submit(
+                                ThreeStepRoutingFamily.PRODUCT,
+                                StarterCorpus.LONG_STEP_PARALLEL_QUANTITY,
+                                ThreeStepRoutingFamily.UNIT_PRICE),
+                        ExperimentStep.advanceUntil(10),
+                        ExperimentStep.setAvailability(inspector, true),
+                        ExperimentStep.advanceToQuiescence(1_000),
+                        ExperimentStep.captureEvents("everything")),
+                WindowIntent.COMPLETE_RUN,
+                List.of()));
+        assertTrue(toggled.allCommandsAccepted());
+
+        OracleOutcome.Underdetermined<List<ResourceOccupancy>> refused = assertUnderdetermined(
+                new ProcessingOccupancyOracle(ExperimentEvidence.CLOSING_LABEL).evaluateOn(toggled));
+
+        assertTrue(refused.reasons().getFirst().contains("resource " + inspector + " changed availability"), refused.toString());
+    }
+
+    @Test
+    void occupancyIsRefusedForAResourceThatIsOfflineAtTheBoundary() {
+        MachineId inspector = FAMILY.inspectResources().getFirst();
+        ExperimentEvidence offlineAtTheEnd = ExperimentRunner.run(new ExperimentFixture(
+                "availability/inspector-offline-at-close",
+                FAMILY.model(),
+                List.of(
+                        ExperimentStep.submit(
+                                ThreeStepRoutingFamily.PRODUCT,
+                                StarterCorpus.LONG_STEP_PARALLEL_QUANTITY,
+                                ThreeStepRoutingFamily.UNIT_PRICE),
+                        ExperimentStep.advanceToQuiescence(1_000),
+                        ExperimentStep.setAvailability(inspector, false),
+                        ExperimentStep.captureEvents("everything")),
+                WindowIntent.COMPLETE_RUN,
+                List.of()));
+
+        OracleOutcome.Underdetermined<List<ResourceOccupancy>> refused = assertUnderdetermined(
+                new ProcessingOccupancyOracle(ExperimentEvidence.CLOSING_LABEL).evaluateOn(offlineAtTheEnd));
+
+        assertTrue(refused.reasons().getFirst().contains("is offline at boundary 'closing'"), refused.toString());
+    }
+
+    @Test
+    void aCompletionWithoutItsDispatchIsRefused() {
+        List<RuntimeEventEnvelope> withoutFirstDispatch = evidence.retainedEvents().stream()
+                .filter(event -> !(event.payload() instanceof RuntimeEventPayload.JobDispatched dispatched
+                        && dispatched.jobId().value() == 1 && dispatched.stepIndex() == 0))
+                .toList();
+
+        OracleOutcome.Underdetermined<List<ResourceOccupancy>> refused = assertUnderdetermined(
+                new ProcessingOccupancyOracle(ExperimentEvidence.CLOSING_LABEL)
+                        .evaluateOn(TamperedEvidence.withEvents(evidence, withoutFirstDispatch)));
+
+        assertTrue(refused.reasons().getFirst().contains("has no matching dispatch"), refused.toString());
     }
 
     @Test

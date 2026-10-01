@@ -49,14 +49,6 @@ class StarterCorpusTest {
         return StarterCorpus.all().stream().map(fixture -> Arguments.of(fixture.id(), fixture));
     }
 
-    private static long completionTick(ExperimentEvidence evidence) {
-        List<RuntimeEventEnvelope> completions = evidence.retainedEvents().stream()
-                .filter(event -> event.eventType() == RuntimeEventType.ORDER_COMPLETED)
-                .toList();
-        assertEquals(1, completions.size(), "the fixture submits one order, so exactly one completion is expected");
-        return completions.getFirst().simulationTime().value();
-    }
-
     private static SemanticArtifact artifact(ExperimentFixture fixture) {
         return new SemanticArtifact(
                 fixture.publishedModel().fingerprint(), FactoryModelArtifact.encode(fixture.publishedModel()));
@@ -95,15 +87,15 @@ class StarterCorpusTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("corpus")
     void everyFixtureReplaysDeterministicallyAfterNormalizingOnlyRunIdentity(String id, ExperimentFixture fixture) {
-        ExperimentEvidence first = ExperimentRunner.run(fixture);
-        ExperimentEvidence second = ExperimentRunner.run(fixture);
+        // Two fresh runs whose supported evidence is equivalent once only run identity is normalized.
+        ExperimentEvidence replayed = ExperimentRunner.runAndReplay(fixture);
 
-        // The identity being normalized really is run-specific: without normalization the two
-        // independent runs of one fixture are not equal.
-        assertNotEquals(first.window().runId(), second.window().runId());
-        assertNotEquals(first, second);
-        // With only that identity normalized, the supported evidence is equivalent.
-        assertEquals(first.withNormalizedRunIdentity(), second.withNormalizedRunIdentity());
+        // The identity being normalized really is run-specific: without normalization, independent
+        // runs of one fixture are not equal.
+        ExperimentEvidence independent = ExperimentRunner.run(fixture);
+        assertNotEquals(replayed.window().runId(), independent.window().runId());
+        assertNotEquals(replayed, independent);
+        assertEquals(replayed.withNormalizedRunIdentity(), independent.withNormalizedRunIdentity());
     }
 
     @ParameterizedTest(name = "{0}")
@@ -278,7 +270,7 @@ class StarterCorpusTest {
         assertEquals(29, makespan);
 
         ExperimentEvidence evidence = ExperimentRunner.run(fixture);
-        assertEquals(makespan, completionTick(evidence));
+        assertEquals(makespan, CompletionTickOracle.completionTick(evidence));
         assertEquals(
                 makespan,
                 evidence.observation(ExperimentEvidence.CLOSING_LABEL).metadata().currentTime().value());
@@ -305,8 +297,8 @@ class StarterCorpusTest {
 
         // The authored change is visible in the model identity, and the outcome fact that changed is completion.
         assertNotEquals(baseline.publishedModel().fingerprint(), variant.publishedModel().fingerprint());
-        assertEquals(29, completionTick(ExperimentRunner.run(baseline)));
-        assertEquals(20, completionTick(ExperimentRunner.run(variant)));
+        assertEquals(29, CompletionTickOracle.completionTick(ExperimentRunner.run(baseline)));
+        assertEquals(20, CompletionTickOracle.completionTick(ExperimentRunner.run(variant)));
     }
 
     @Test

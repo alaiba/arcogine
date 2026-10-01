@@ -74,21 +74,21 @@ class ResearchPackageBoundaryTest {
             .or(type(FactoryHandler.class))
             .or(type(FactoryRuntimeAssembler.class))
             .or(type(PendingWorkView.class))
-            .as("scheduler, handler or mutable Factory implementation state");
+            .as("are scheduler, handler or mutable Factory implementation state");
 
     /** Published-model and supported observation/event types, plus shared typed values. */
     private static final DescribedPredicate<JavaClass> SUPPORTED_CONTRACT = resideInAnyPackage(
                     "java..", RESEARCH, "com.arcogine.types..", "com.arcogine.factory.model..", "com.arcogine.factory.process..")
             .and(DescribedPredicate.not(RUNTIME_INTERNALS))
-            .as("the supported runtime contract");
+            .as("belong to the supported runtime contract");
 
     private static final DescribedPredicate<JavaMethodCall> UNSUPPORTED_RUNTIME_CALL = DescribedPredicate.describe(
-            "a FactoryRuntime method outside its supported session-control and observation surface",
+            "the target is a FactoryRuntime method outside its supported session-control and observation surface",
             call -> call.getTargetOwner().isEquivalentTo(FactoryRuntime.class)
                     && !SUPPORTED_RUNTIME_METHODS.contains(call.getName()));
 
     private static final DescribedPredicate<JavaMethodCall> INTERNAL_COMMAND_EVENTS = DescribedPredicate.describe(
-            "the internal events a command result lists",
+            "the target lists the internal events a command result scheduled",
             call -> call.getTargetOwner().isAssignableTo(CommandResult.class) && call.getName().equals("scheduledEvents"));
 
     @Test

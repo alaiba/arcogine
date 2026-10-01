@@ -17,13 +17,21 @@ import java.util.stream.Collectors;
 
 /**
  * Research-local derivation: which work is waiting, and for which operation step, at one supported
- * observation.
+ * observation. Like every derivation here, it is not an Engine fact, game-owned analytics, or public
+ * API.
  *
  * <p>Waiting belongs to the operation step first. A step's waiting work is attributed to one
  * resource only when the step's authored eligible set has exactly one member; otherwise it is
  * attributed to the whole eligible set, because work waiting for any of several resources is
  * held in a shared backlog that no single resource's queue depth reflects
  * ({@code docs/architecture/engine-semantics.md} section 2).
+ *
+ * <p>Waiting work and interval occupancy answer different questions and are not interchangeable.
+ * This derivation counts the work waiting for each step at one instant; {@link
+ * ProcessingOccupancyOracle} and {@link EligibilityPoolOccupancyOracle} measure how much capacity
+ * was occupied over an interval. A fast step upstream can build the largest waiting backlog in front
+ * of one step while another step's resources are the most occupied, so the two measurements can rank
+ * the same steps differently. Neither of them, on its own, identifies which step limits a design.
  */
 public final class WaitingWorkByStepOracle implements Oracle<List<WaitingWorkByStepOracle.WaitingAtStep>> {
 

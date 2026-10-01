@@ -10,8 +10,8 @@
  * <p>The vocabulary keeps inputs, evidence and derivation apart:
  *
  * <pre>{@code
- * ExperimentFixture        inputs and ground truth: authored model, ordered script, window intent,
- *      |                   expected claims -- no evidence, no repository revision
+ * ExperimentFixture        inputs and ground truth: the published model, ordered script, window
+ *      |                   intent, expected claims -- no evidence, no repository revision
  *      v  ExperimentRunner  a fresh FactoryRuntime, driven only through supported control
  * ExperimentEvidence       raw supported evidence: published model facts, observations, retained
  *      |                   supported events, and the EvidenceWindow saying what was collected
@@ -43,9 +43,12 @@
  *       interpretation a fixture runs against is the one of the revision it is executed on.
  * </ul>
  *
- * <p>To add a fixture, build a model (the {@code ThreeStepRoutingFamily} projects onto the current
- * Factory model without inventing facts), write its script and expected claims, and add it to a
- * corpus. The module's own corpus tests hold every fixture of its starter corpus to deterministic
- * replay, its declared window, and its expected claims without any per-fixture harness.
+ * <p>To add a fixture, author a model ({@code LinearRoutingFamily} projects resources, their
+ * concurrency, the steps each may serve and their order onto the current Factory model without
+ * inventing facts, and {@code ThreeStepRoutingFamily} is its one-resource-per-stage case), write its
+ * script and expected claims, and add it to a corpus. The module's own corpus tests hold every
+ * fixture of its corpora to deterministic replay, its declared window, and its expected claims
+ * without any per-fixture harness; {@code ExperimentRunner.runAndReplay} gives any other experiment
+ * the same replay check.
  */
 package com.arcogine.research.experiment;

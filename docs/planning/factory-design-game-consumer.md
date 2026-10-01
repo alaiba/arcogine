@@ -37,6 +37,13 @@ game presentation and attempt evaluation
 
 Challenge admissibility and Arcogine executability remain separate decisions. Passing one never implies passing the other.
 
+No production game/Challenge-to-Factory projector exists today. The current
+`challenge-factory-integration-test` module is test-only and proves independent validation axes; it
+does not provide a production adapter. When playable integration is eventually admitted, the
+consumer-side integration responsibility must explicitly translate game-authored candidate/content
+facts into then-supported canonical Factory facts before validation/publication. Challenge remains
+independent of Factory and must not become a second production ontology.
+
 ## 2. Product-research dependency
 
 The playable requirement set is not yet an implementation input. The former umbrella vertical-slice question is superseded; current product state is coordinated by the [Factory-Design Game Product Research Programme](../research/investigations/factory-design-game-vertical-slice.md) and its focused register questions.

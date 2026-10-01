@@ -71,13 +71,51 @@ This is the place for actual population-level comprehension evidence. It is inte
 
 Promote it when either independent target users are available or product/release direction explicitly requires a claim about new-player comprehension, accessibility, onboarding, or diagnostic success. At promotion time, define the target population, tasks, falsification thresholds, and decision at stake. Reuse the deterministic fixture corpus from the diagnostic-evidence study where appropriate, but do not treat the product owner, an AI model, or repository reviewers as substitutes for the target population.
 
+### Equipment-value discovery and misleading cues — CANDIDATE
+
+Question:
+
+> Can a factory-design challenge deliberately include mechanically equivalent, dominated, or
+> presentation-attractive equipment offers so players must distinguish genuine production leverage
+> from price, branding, cosmetic or other non-mechanical cues without making the problem opaque or
+> unfair?
+
+This is distinct from mechanical strategy-space research. An optimizer may discard a dominated
+offer immediately, while a human player may infer nonexistent capability from price, appearance,
+naming or presentation. That discovery process can itself be a legitimate challenge and learning
+objective if the underlying mechanical truth remains inspectable through supported evidence.
+
+Keep these distinctions explicit:
+
+- **mechanical value** — consequences under the declared production/economic objective;
+- **choice-set structure** — which mechanically viable, dominated or equivalent offers are available;
+- **presentation/perceived value** — what the UI or content makes salient before the player has
+  tested the choice; and
+- **player preference** — aesthetic or other utility the player may genuinely value even when it is
+  outside the declared mechanical objective.
+
+Promote when a playable presentation and independent target users are available, or when product
+direction makes this learning claim material enough to test. Define fairness/disclosure boundaries,
+target population, tasks and falsification thresholds at promotion time. Do not treat a product
+owner, repository reviewer or AI model as evidence of population behavior.
+
 ### Scoring, challenge and level structure — CANDIDATE
 
 The maintained register separately tracks:
 
-> What scoring, challenge, and level structures create several understandable viable strategies without an opaque dominant meta?
+> What scoring, challenge, level, catalogue-choice and information structures create a legible
+> optimization experience without collapsing into an opaque dominant meta?
 
-Do not promote it until the strategy-space investigation provides actual viable solution families and the product has evidence about what should be rewarded.
+The mechanically viable solution set and the player's offered choice set need not be identical.
+Challenge design may intentionally include dominated, equivalent, bargain or presentation-only
+alternatives when discovering which distinctions matter is part of the intended reasoning loop.
+Accordingly, the mere presence of a dominated catalogue option is not by itself evidence of a bad
+challenge.
+
+Do not promote this question until mechanical strategy-space evidence supplies real solution
+families and the product has evidence about what should be rewarded, disclosed, hidden or learned.
+Coordinate empirical claims about misleading cues with the separate equipment-value-discovery
+question rather than inferring human behavior from headless enumeration.
 
 ## Boundary with reusable analytics
 

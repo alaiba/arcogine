@@ -60,6 +60,17 @@ Do not introduce first-class capability merely to rename explicit eligibility. P
 
 Qualification precedes runtime availability and deterministic selection. A bare capability tag is insufficient evidence of feasibility.
 
+The open research is deliberately split by semantic responsibility: [resource characteristics and
+operation requirements](../research/investigations/factory-resource-characteristics-requirements.md)
+asks which represented facts could support or verify applicability;
+[Factory Design Evolution Research](../research/investigations/factory-design-evolution.md)
+keeps derived qualification and selected-resource-dependent performance as separate questions; and
+[setup/changeover research](../research/investigations/factory-setup-changeover-semantics.md) owns
+transition/setup meaning. Introducing typed characteristics, qualification, setup, or
+operation-resource performance does not by itself satisfy the reusable-specification promotion rule:
+equal values or a shared catalogue origin still do not create an independently meaningful technical
+specification identity.
+
 ## Grouping and heterogeneous participants
 
 A work center, resource pool, or hierarchy deserves canonical identity only when the grouping owns behavior or interpretation such as scheduling scope, aggregate capacity, responsibility, reporting, or capability aggregation. UI folders and physical proximity are insufficient.

@@ -24,6 +24,10 @@ README.md" "backend=false,docs_only=true,"
 check "backend-only" "product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=true,docs_only=false,"
 check "governance backend" "product/governance/src/main/java/com/arcogine/governance/Foo.java" "backend=true,docs_only=false,"
 check "storage backend" "product/storage/src/main/java/com/arcogine/storage/Foo.java" "backend=true,docs_only=false,"
+check "research-experiments backend" "product/research-experiments/src/main/java/com/arcogine/research/experiment/Foo.java" "backend=true,docs_only=false,"
+check "research-experiments build file backend" "product/research-experiments/build.gradle.kts" "backend=true,docs_only=false,"
+check "research-experiments docs mixed with backend" "docs/development/testing.md
+product/research-experiments/src/test/java/com/arcogine/research/experiment/FooTest.java" "backend=true,docs_only=false,"
 check "docs mixed with backend" "docs/foo.md
 product/domains/factory/src/main/java/com/arcogine/factory/Foo.java" "backend=true,docs_only=false,"
 check "CI workflow change forces executable surfaces" ".github/workflows/ci.yml" "backend=true,docs_only=false,"

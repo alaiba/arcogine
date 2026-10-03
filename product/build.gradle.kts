@@ -57,4 +57,22 @@ subprojects {
         testImplementation("org.junit.jupiter:junit-jupiter")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
+
+    // The research experiment substrate is non-shipped research infrastructure, never a production
+    // dependency: no main source set may put it on its classpath. Test source sets may use it.
+    // (architecture-conformance-test separately rejects any production reference to its package.)
+    afterEvaluate {
+        listOf("api", "implementation", "compileOnly", "compileOnlyApi", "runtimeOnly")
+            .mapNotNull { configurations.findByName(it) }
+            .forEach { configuration ->
+                configuration.dependencies.withType<ProjectDependency>()
+                    .filter { it.path == ":research-experiments" }
+                    .forEach {
+                        throw GradleException(
+                            "${project.path} declares '${configuration.name}' on ${it.path}: research " +
+                                "infrastructure must never be a production dependency",
+                        )
+                    }
+            }
+    }
 }

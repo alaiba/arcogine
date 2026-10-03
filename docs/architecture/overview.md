@@ -500,6 +500,7 @@ product/
 │   ├── challenge/        Game-owned challenge definitions, validation, evaluation,
 │   │                     catalogue/economics, and attempt comparison
 │   └── challenge-factory-integration-test/  Test-only proof of independent validation axes
+├── research-experiments/ Non-shipped deterministic research-experiment substrate
 └── architecture-conformance-test/          Test-only cross-domain ownership rules
 ```
 ### Dependency graph
@@ -514,10 +515,12 @@ types, governance ← storage
 challenge (independent game-owned boundary)
 
 challenge-factory-integration-test ← types, factory, challenge (test-only)
-architecture-conformance-test ← types, factory, finance, storage (test-only)
+research-experiments ← types, factory (non-shipped research infrastructure)
+architecture-conformance-test ← types, factory, finance, storage, challenge,
+                                research-experiments (test-only)
 ```
 
-Governance depends on `types`; Factory depends on the narrow Governance ports it implements. Storage depends on `governance` and `types` to realize the revision authority without either semantic owner depending on its implementation. Challenge remains independent of the production simulation and domain modules; the test-only Challenge–Factory integration module demonstrates that Factory publication validity and Challenge admissibility are independent validation axes without either module depending on the other. It does not establish Engine executability. The architecture-conformance module scans current production sources to protect retained ownership rules.
+Governance depends on `types`; Factory depends on the narrow Governance ports it implements. Storage depends on `governance` and `types` to realize the revision authority without either semantic owner depending on its implementation. Challenge remains independent of the production simulation and domain modules; the test-only Challenge–Factory integration module demonstrates that Factory publication validity and Challenge admissibility are independent validation axes without either module depending on the other. It does not establish Engine executability. The research-experiments module is an embedded consumer of the supported runtime contract for deterministic research experiments; it adds no product capability, its derivations are research-local rather than Engine facts or analytics, and no production or consumer source set depends on it ([researching.md](../development/researching.md#executable-research-substrate)). The architecture-conformance module scans current production and consumer sources to protect retained ownership rules and that research boundary.
 
 ## Event Dispatch Architecture
 

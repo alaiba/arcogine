@@ -19,13 +19,13 @@ import com.tngtech.archunit.lang.ArchRule;
  * Enforces, as CI-checked rules, the module-boundary and capability guardrails documented in
  * CONTRIBUTING.md and docs/architecture/overview.md -- so a future change that reintroduces a
  * forbidden Finance-to-Factory dependency, code outside Finance posting to the ledger directly,
- * or code outside Factory driving a Job/Machine's lifecycle directly fails the build instead of
- * only failing review.
+ * code outside Factory driving a Job/Machine's lifecycle directly, or production code depending on
+ * the research experiment substrate fails the build instead of only failing review.
  *
  * <p>Deliberately a small, fixed rule set -- this is not a general architecture-policy framework,
  * just executable versions of specific invariants this codebase actually relies on. Scans only
  * main sources ({@link ImportOption.DoNotIncludeTests}) from this module's test classpath, which
- * is where every domain module is visible.
+ * is where every production and consumer module is visible.
  */
 @AnalyzeClasses(packages = "com.arcogine", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
@@ -57,6 +57,16 @@ class ArchitectureTest {
             .resideInAPackage("com.arcogine.factory..")
             .because("Finance interprets OrderCompleted events, not Factory's internal state -- it "
                     + "must never reach into Factory directly to infer what happened");
+
+    @ArchTest
+    static final ArchRule production_does_not_depend_on_research_infrastructure = noClasses()
+            .that()
+            .resideOutsideOfPackage("com.arcogine.research..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.arcogine.research..")
+            .because("the research experiment substrate is non-shipped research infrastructure: "
+                    + "production and consumer code never depends on it");
 
     @ArchTest
     static final ArchRule only_finance_may_post_to_the_ledger = noClasses()

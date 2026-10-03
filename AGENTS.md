@@ -206,7 +206,7 @@ Base freshness is a merge-readiness condition, not a review finding, and pending
 
 ## Implementation continuation
 
-After creating an implementation PR or updating its head, implementation work owns exact-head CI convergence before handoff. Resolve the `CI` workflow for that exact head and read its `CI / gate` result once; do not wait on it (see [PR follow-up](#pr-follow-up-is-developer-initiated)). If it has already failed for an implementation-owned reason, remediate the failure, update the head, and read exact-head CI once for the resulting head. If it has not finished, report it as pending without claiming it green. If `main` advances or GitHub reports a conflict before handoff, normalize or resolve the implementation-owned branch state and read CI once for the resulting head. Do not wait for or manufacture independent reviewer disposition. For an ordinary implementation handoff, the expected state is: exact-head `CI / gate` green, the head contains live `main`, GitHub reports it mergeable, and the only unresolved merge gate is `disposition` because independent review has not yet authorized that exact head. If CI cannot start, has not finished, or a non-implementation-owned blocker prevents that state, report the actual state instead of claiming completion.
+After creating an implementation PR or updating its head, implementation work owns exact-head CI convergence, which the developer drives to a terminal result with `..` (see [PR follow-up](#pr-follow-up-is-developer-initiated)). Before handoff, resolve the `CI` workflow for that exact head and read its `CI / gate` result once; do not wait on it. If it has already failed for an implementation-owned reason, remediate the failure, update the head, and read exact-head CI once for the resulting head. If it has not finished, report it as pending without claiming it green. If `main` advances or GitHub reports a conflict before handoff, normalize or resolve the implementation-owned branch state and read CI once for the resulting head. Do not wait for or manufacture independent reviewer disposition. The expected end state of that convergence is: exact-head `CI / gate` green, the head contains live `main`, GitHub reports it mergeable, and the only unresolved merge gate is `disposition` because independent review has not yet authorized that exact head. If CI cannot start, has not finished, or a non-implementation-owned blocker prevents that state, report the actual state instead of claiming completion.
 
 When the user sends `..`, identify the current implementation PR and read its live GitHub state for the current head once: submitted reviews and the trusted `disposition` check, required checks, base freshness, mergeability/conflicts, and unresolved findings. If a coherent implementation-owned transition is available — such as remediating a valid current-head `CHANGES REQUIRED` finding, fixing failed required CI, resolving a conflict, or base normalization — perform that transition and carry its exact-head CI validation through to a terminal `CI / gate` result before reporting. A direct CI failure caused by that transition is part of the same implementation validation closure and should be repaired and revalidated; do not re-read reviewer disposition for a newly changed head in the same turn. Otherwise report the blocking or waiting fact (for example pending review or an owner-only action) and stop.
 
@@ -214,7 +214,7 @@ When the user sends `..`, identify the current implementation PR and read its li
 
 Never watch a pull request automatically. Do not subscribe a session to a PR's activity, schedule or loop check-ins on it, poll or sleep to wait for CI or review, or offer or ask to do any of these. Whether a PR needs a follow-up, and when, is the developer's call, made by sending `..` or by an explicit request. The reason is cost: watching spends tokens and cloud-session credits for as long as it runs, and only the developer knows when a follow-up is worth paying for.
 
-Read live PR state once when the developer asks, or once after creating or updating a head as above, report what was read, and stop. State plainly that nothing is watching the PR. An explicit request to watch a specific PR applies to that PR until the developer says stop; stopping means cancelling every subscription and scheduled check-in created for it.
+Read live PR state once when the developer asks, or once after creating or updating a head as above, report what was read, and stop. The one exception is the `..` continuation above: the developer's explicit request to carry the resulting exact-head CI to a terminal `CI / gate` result, a wait bounded to that one head that ends when it gets one. State plainly that nothing is watching the PR. An explicit request to watch a specific PR applies to that PR until the developer says stop; stopping means cancelling every subscription and scheduled check-in created for it.
 
 Agents never merge pull requests. When every merge gate holds, report that and stop; the repository owner merges manually.
 
@@ -250,8 +250,10 @@ changed — see [`docs/development/testing.md`](docs/development/testing.md) for
 native commands; a documentation-only change needs neither.
 
 When finishing an implementation task, report the validation commands and tools used, the outcome of
-each, any validation that was unavailable or skipped, and the terminal exact-head `CI / gate` result
-in the implementation handoff to the developer. This is transient execution knowledge: do not copy it
+each, any validation that was unavailable or skipped, and the exact-head `CI / gate` result as last
+read in the implementation handoff to the developer, saying so when it is still pending; a terminal
+result is reported only after a `..` continuation has carried CI to one. This is transient execution
+knowledge: do not copy it
 into the pull-request description, and do not summarize partial validation as a full pass.
 
 **PR-body preflight:** use the repository pull-request template and keep only stable change intent:

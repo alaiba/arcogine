@@ -8,6 +8,10 @@ dependencies {
 
 val governanceTest = tasks.named<Test>("test")
 
+governanceTest.configure {
+    testClassesDirs = files()
+}
+
 val verifyGovernanceCoverageEvidence = tasks.register("verifyGovernanceCoverageEvidence") {
     dependsOn(governanceTest)
 

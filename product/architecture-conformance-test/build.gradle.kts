@@ -13,7 +13,7 @@ dependencies {
     testImplementation(project(":challenge"))
     testImplementation(project(":research-experiments"))
 
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.5.0")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.5.1")
 }
 
 // Proof-only module: no production code exists to cover, so unlike other

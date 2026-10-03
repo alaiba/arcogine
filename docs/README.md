@@ -93,7 +93,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
 | [Factory-design game product programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella framing for focused game research; no programme-level lifecycle |
 | [Game diagnostic evidence contract](research/investigations/factory-design-game-diagnostic-evidence.md) | READY deterministic study of truthful, inspectable non-spatial diagnostic claims; no participant pool required |
-| [Game strategy space](research/investigations/factory-design-game-strategy-space.md) | READY headless study of non-spatial capacity/capital design trade-offs |
+| [Game strategy space](research/investigations/factory-design-game-strategy-space.md) | CONCLUDED bounded positive for a constructive non-spatial capacity/capital reference challenge; shared eligibility is constructive, not proven necessary |
 | [Transfer semantics](research/investigations/transfer-semantics.md) | CONCLUDED current transfer-applicability boundary plus CANDIDATE non-spatial hand-off/timing follow-up |
 | [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, and unselected recovery/session extensions |
 | [Operational/Digital Twin boundaries](research/investigations/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |

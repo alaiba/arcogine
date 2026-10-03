@@ -8,6 +8,12 @@
 *.bat   text eol=crlf
 *.cmd   text eol=crlf
 
+# The Gradle wrapper regenerates gradlew.bat with CRLF and wrapper updates commit it as
+# generated. Store exactly those bytes, with no normalization in either direction:
+# normalizing it to LF in the repository would show it as modified in every checkout
+# once an update commits it as generated. Later rules win, so this stays after *.bat.
+product/gradlew.bat -text
+
 # Scripts and wrappers that must be LF to execute on Linux/CI
 *.sh    text eol=lf
 gradlew text eol=lf

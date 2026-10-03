@@ -13,7 +13,7 @@ dependencies {
     // The corpus tests compare authored designs through Factory's semantic comparator, whose
     // result types belong to Governance; the reusable substrate itself never needs them.
     testImplementation(project(":governance"))
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.5.0")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.5.1")
 }
 
 // Coverage gate: fails the build if line coverage of the reusable substrate drops below the

@@ -8,12 +8,12 @@
 
 The former READY “vertical-slice research question” has been superseded by the focused portfolio in [Factory-Design Game Product Research Programme](../research/investigations/factory-design-game-vertical-slice.md).
 
-For the smallest **non-spatial** playable slice, the currently required product evidence is:
+For the smallest **non-spatial** playable slice, the product evidence is:
 
-- [Factory-design game strategy-space research](../research/investigations/factory-design-game-strategy-space.md) — whether current capacity semantics plus game-owned capital constraints produce a useful design problem; and
-- [Factory-design game diagnostic-evidence research](../research/investigations/factory-design-game-diagnostic-evidence.md) — whether the product can expose a mechanically truthful, inspectable diagnostic evidence contract without unsupported inference.
+- [Factory-design game strategy-space research](../research/investigations/factory-design-game-strategy-space.md) — **CONCLUDED; this gate is satisfied.** Current capacity semantics plus game-owned capital constraints support a bounded, mechanically non-trivial reference challenge. It promoted bounded reference-challenge requirements (including that a future projector must make result-affecting resource identity/order explicit and deterministic), not an implementation slice. Its qualifications bound how it may be used: shared eligibility is a strong constructive mechanism and not a proven necessity, and mechanical ground truth is not player comprehension; and
+- [Factory-design game diagnostic-evidence research](../research/investigations/factory-design-game-diagnostic-evidence.md) — **READY, and the remaining product blocker.** It asks whether the product can expose a mechanically truthful, inspectable diagnostic evidence contract without unsupported inference.
 
-Neither question authorizes implementation merely by being `READY`; each must first reach a decision-quality conclusion and promote a bounded requirement set.
+The concluded result supplies challenge content, not a diagnostic contract, an integration boundary or acceptance tests, so it does not admit implementation. The diagnostic-evidence question must first reach a decision-quality conclusion and promote a bounded requirement set. No playable implementation is admitted, and this file does not create a concrete slice.
 
 Controlled retry explanation, scoring/level structure, external-player validation, and other candidate product questions are additional gates only if the selected first slice actually depends on them. External-player validation is not required for an internal playable slice unless product/release direction explicitly requires a population-level comprehension claim.
 
@@ -37,7 +37,7 @@ Replace this gate with a concrete implementation slice only when all of the foll
 2. the promoted requirements form a coherent first slice without depending on another unresolved product question;
 3. upstream Engine/Factory prerequisites required by those exact requirements are landed;
 4. any reusable analytics requirement has a settled ownership/input contract;
-5. the exact consumer integration boundary is known;
+5. the exact consumer integration boundary is known, including how a projector fixes result-affecting configured-resource identity and order;
 6. implementation ownership is clear; and
 7. executable acceptance tests can be written before coding starts.
 

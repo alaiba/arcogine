@@ -44,11 +44,23 @@ consumer-side integration responsibility must explicitly translate game-authored
 facts into then-supported canonical Factory facts before validation/publication. Challenge remains
 independent of Factory and must not become a second production ontology.
 
+Under current Engine semantics a remaining selection tie is broken by `MachineId`, so for a
+resource eligible for more than one operation step the order in which resources are authored can
+change completion. The concluded [strategy-space reference](../research/investigations/factory-design-game-strategy-space.md)
+shows it: its shared-capacity design completes in 46 or 47 ticks depending on resource-identity
+order, so a deadline between them would make eligibility identity-dependent. The projector must
+therefore make result-affecting configured-resource identity and order explicit and deterministic;
+incidental draft, edit or build order must not decide a result silently. This is a requirement on
+the integration boundary, not an assignment of ownership. Where identity is allocated, how edits
+preserve it, and whether `MachineId` tie-breaking is an acceptable player-visible policy remain
+unresolved, and the separate [final tie-break question](../research/investigations/engine-shared-resource-final-tiebreak.md)
+stays a candidate that this result does not promote.
+
 ## 2. Product-research dependency
 
 The playable requirement set is not yet an implementation input. The former umbrella vertical-slice question is superseded; current product state is coordinated by the [Factory-Design Game Product Research Programme](../research/investigations/factory-design-game-vertical-slice.md) and its focused register questions.
 
-The two questions currently `READY` for a minimal non-spatial slice are [strategy space](../research/investigations/factory-design-game-strategy-space.md) and the [diagnostic evidence contract](../research/investigations/factory-design-game-diagnostic-evidence.md). Controlled retry explanation, spatial trade-off, scoring/level structure, external-player validation, and other product questions remain separate candidates and become implementation prerequisites only if the selected slice actually depends on them. A first internal playable slice does not require a participant pool; any later release claim about broad player comprehension must promote and satisfy the separate external-player validation question.
+For a minimal non-spatial slice, [strategy space](../research/investigations/factory-design-game-strategy-space.md) is concluded: it promoted bounded reference-challenge requirements and no implementation. The [diagnostic evidence contract](../research/investigations/factory-design-game-diagnostic-evidence.md) remains `READY` and is the product-evidence blocker. Controlled retry explanation, spatial trade-off, scoring/level structure, external-player validation, and other product questions remain separate candidates and become implementation prerequisites only if the selected slice actually depends on them. A first internal playable slice does not require a participant pool; any later release claim about broad player comprehension must promote and satisfy the separate external-player validation question.
 
 Rendering/input technology, save-wrapper shape, packaging, interpolation policy, and similar implementation choices are deferred here until promoted requirements make them concrete; undecided does not by itself make them standing research questions.
 
@@ -111,7 +123,7 @@ Do not reproduce Arcogine validation, workload decomposition, scheduling, queuei
 
 ### Draft projection
 
-The game draft may be incomplete or invalid. Projection into Arcogine must be explicit and testable and must not invent unsupported production semantics.
+The game draft may be incomplete or invalid. Projection into Arcogine must be explicit and testable and must not invent unsupported production semantics. It must also be deterministic with respect to every result-affecting input it chooses, including configured-resource identity and order (see §1).
 
 ### Simulation control
 

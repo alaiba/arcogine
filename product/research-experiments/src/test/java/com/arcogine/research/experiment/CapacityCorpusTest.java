@@ -16,7 +16,11 @@ import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
 import com.arcogine.research.experiment.WaitingWorkByStepOracle.WaitingAtStep;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.LongSummaryStatistics;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,6 +54,56 @@ class CapacityCorpusTest {
                 .filter(candidate -> candidate.pool().equals(pool))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    /** Resources are the same type when they serve the same steps with the same concurrency. */
+    private record ResourceType(int concurrency, Set<String> eligibleSteps) {}
+
+    private record CompletionRange(int orders, long fastest, long slowest) {}
+
+    private static CompletionRange completionRange(LinearRoutingFamily family) {
+        List<LinearRoutingFamily> orders = typeInterleavings(family);
+        LongSummaryStatistics completions = orders.stream()
+                .mapToLong(order -> CapacityCorpus.completionTick(order, CapacityCorpus.LINE_QUANTITY))
+                .summaryStatistics();
+        return new CompletionRange(orders.size(), completions.getMin(), completions.getMax());
+    }
+
+    /**
+     * Every distinct way of ordering the family's resource types. Resources of one type keep their
+     * authored relative order, since reordering interchangeable resources among themselves is not a
+     * different design.
+     */
+    private static List<LinearRoutingFamily> typeInterleavings(LinearRoutingFamily family) {
+        Map<ResourceType, List<LinearRoutingFamily.Resource>> byType = new LinkedHashMap<>();
+        for (LinearRoutingFamily.Resource resource : family.resources()) {
+            byType.computeIfAbsent(
+                            new ResourceType(resource.concurrency(), resource.eligibleSteps()), type -> new ArrayList<>())
+                    .add(resource);
+        }
+        List<LinearRoutingFamily> orders = new ArrayList<>();
+        interleave(family, List.copyOf(byType.values()), new int[byType.size()], new ArrayList<>(), orders);
+        return orders;
+    }
+
+    private static void interleave(
+            LinearRoutingFamily family,
+            List<List<LinearRoutingFamily.Resource>> groups,
+            int[] taken,
+            List<LinearRoutingFamily.Resource> prefix,
+            List<LinearRoutingFamily> orders) {
+        if (prefix.size() == family.resources().size()) {
+            orders.add(new LinearRoutingFamily(family.steps(), prefix));
+            return;
+        }
+        for (int group = 0; group < groups.size(); group++) {
+            if (taken[group] < groups.get(group).size()) {
+                prefix.add(groups.get(group).get(taken[group]++));
+                interleave(family, groups, taken, prefix, orders);
+                taken[group]--;
+                prefix.removeLast();
+            }
+        }
     }
 
     /** The resource that received the first {@code ASSEMBLE} dispatch of the run. */
@@ -200,5 +254,53 @@ class CapacityCorpusTest {
         assertEquals(0, occupancyOf(occupancy, cut).compareOccupancy(occupancyOf(occupancy, merged)));
         assertEquals(Set.of(cut, merged), occupancy.maximumOccupancyPools());
         assertNotEquals(occupancyOf(occupancy, cut), occupancyOf(occupancy, merged));
+    }
+
+    @Test
+    void theMostOccupiedPoolIsNotTheOneWhoseAddedCapacityShortensTheRun() {
+        LinearRoutingFamily family = CapacityCorpus.SHARED_ONLY_INSPECTION;
+        ExperimentEvidence baseRun = ExperimentRunner.run(CapacityCorpus.sharedOnlyInspection());
+        long base = CompletionTickOracle.completionTick(baseRun);
+
+        // Cutting is measured as the most occupied pool, by a wide margin ...
+        EligibilityPool cut = CapacityCorpus.pool(family, List.of(CUT), List.of("Cutter"));
+        EligibilityPool merged = CapacityCorpus.pool(
+                family,
+                List.of(ASSEMBLE, INSPECT),
+                List.of("Assembler 1", "Assembler 2", "Assembler 3", "Assembler 4", "Assembler 5", "Assembler 6", "Shared"));
+        PoolOccupancies occupancy = poolOccupancy(baseRun);
+        assertEquals(Set.of(cut), occupancy.maximumOccupancyPools());
+        assertTrue(occupancyOf(occupancy, cut).compareOccupancy(occupancyOf(occupancy, merged)) > 0);
+
+        // ... yet another cutter leaves the completion tick unchanged, and another inspector shortens the run.
+        assertEquals(base, CompletionTickOracle.completionTick(
+                ExperimentRunner.run(CapacityCorpus.sharedOnlyInspectionPlusCutter())));
+        assertTrue(CompletionTickOracle.completionTick(
+                        ExperimentRunner.run(CapacityCorpus.sharedOnlyInspectionPlusInspector()))
+                < base);
+    }
+
+    @Test
+    void resourceOrderCanDelayTheInspectionLimitedDesignButAnotherInspectorStillBeatsEveryOrder() {
+        CompletionRange base = completionRange(CapacityCorpus.SHARED_ONLY_INSPECTION);
+        CompletionRange plusCutter = completionRange(CapacityCorpus.SHARED_ONLY_INSPECTION_PLUS_CUTTER);
+        CompletionRange plusInspector = completionRange(CapacityCorpus.SHARED_ONLY_INSPECTION_PLUS_INSPECTOR);
+
+        // Every distinct interleaving of resource types was run: 8!/6!, 9!/(2! 6!) and 9!/6!.
+        assertEquals(56, base.orders());
+        assertEquals(252, plusCutter.orders());
+        assertEquals(504, plusInspector.orders());
+
+        // With a single inspector no unit reaches inspection before 7 and the twelve inspections take 60
+        // ticks, so no order beats 67, and the authored order, Shared last, attains it ...
+        assertEquals(67, base.fastest());
+        assertEquals(67, plusCutter.fastest());
+        // ... while numbering exactly one assembler before Shared sends it to assemble unit 2, which
+        // delays the first inspection to 10.
+        assertEquals(70, base.slowest());
+
+        // So under every order another cutter cannot beat the base design's best, whereas another
+        // inspector beats it under every order.
+        assertTrue(plusInspector.slowest() < base.fastest());
     }
 }

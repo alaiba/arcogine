@@ -12,6 +12,7 @@ import com.arcogine.research.experiment.LinearRoutingFamily.Step;
 import com.arcogine.research.experiment.ThreeStepRoutingFamily.Stage;
 import com.arcogine.research.experiment.WaitingWorkByStepOracle.Attribution;
 import com.arcogine.research.experiment.WaitingWorkByStepOracle.WaitingAtStep;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,11 @@ public final class CapacityCorpus {
     public static final String WAITING_VERSUS_OCCUPANCY_ID = "diagnostics/waiting-versus-occupancy";
     public static final String TWO_INSPECTORS_ID = "pooling/two-dedicated-inspectors";
     public static final String SHARED_ASSEMBLE_INSPECT_ID = "pooling/shared-assemble-inspect-resource";
+    public static final String SHARED_ONLY_INSPECTION_ID = "diagnostics/shared-resource-is-the-only-inspector";
+    public static final String SHARED_ONLY_INSPECTION_PLUS_CUTTER_ID =
+            "diagnostics/shared-resource-is-the-only-inspector-plus-cutter";
+    public static final String SHARED_ONLY_INSPECTION_PLUS_INSPECTOR_ID =
+            "diagnostics/shared-resource-is-the-only-inspector-plus-inspector";
 
     private static final String CUT = ThreeStepRoutingFamily.CUT;
     private static final String ASSEMBLE = ThreeStepRoutingFamily.ASSEMBLE;
@@ -85,6 +91,31 @@ public final class CapacityCorpus {
                     Resource.of("Inspector", 1, INSPECT),
                     Resource.of("Shared", 1, ASSEMBLE, INSPECT)));
 
+    /**
+     * The dedicated line's routing with one cutter, six single-capacity assemblers and one
+     * single-capacity {@code Shared} resource eligible for both {@code ASSEMBLE} and {@code INSPECT},
+     * authored last. {@code Shared} is the only resource that can inspect.
+     */
+    public static final LinearRoutingFamily SHARED_ONLY_INSPECTION = new LinearRoutingFamily(
+            DEDICATED_LINE.steps(),
+            List.of(
+                    Resource.of("Cutter", 1, CUT),
+                    Resource.of("Assembler 1", 1, ASSEMBLE),
+                    Resource.of("Assembler 2", 1, ASSEMBLE),
+                    Resource.of("Assembler 3", 1, ASSEMBLE),
+                    Resource.of("Assembler 4", 1, ASSEMBLE),
+                    Resource.of("Assembler 5", 1, ASSEMBLE),
+                    Resource.of("Assembler 6", 1, ASSEMBLE),
+                    Resource.of("Shared", 1, ASSEMBLE, INSPECT)));
+
+    /** {@link #SHARED_ONLY_INSPECTION} with a second cutter authored after every other resource. */
+    public static final LinearRoutingFamily SHARED_ONLY_INSPECTION_PLUS_CUTTER =
+            appended(SHARED_ONLY_INSPECTION, Resource.of("Cutter 2", 1, CUT));
+
+    /** {@link #SHARED_ONLY_INSPECTION} with a dedicated inspector authored after every other resource. */
+    public static final LinearRoutingFamily SHARED_ONLY_INSPECTION_PLUS_INSPECTOR =
+            appended(SHARED_ONLY_INSPECTION, Resource.of("Inspector", 1, INSPECT));
+
     public static final long PAIR_QUANTITY = 2;
     public static final long LINE_QUANTITY = 12;
 
@@ -101,7 +132,10 @@ public final class CapacityCorpus {
                 sharedResourceReversed(),
                 waitingVersusOccupancy(),
                 twoDedicatedInspectors(),
-                sharedAssembleInspectResource());
+                sharedAssembleInspectResource(),
+                sharedOnlyInspection(),
+                sharedOnlyInspectionPlusCutter(),
+                sharedOnlyInspectionPlusInspector());
     }
 
     /**
@@ -359,6 +393,170 @@ public final class CapacityCorpus {
                                         waits(family, CUT, 12, 198),
                                         waits(family, ASSEMBLE, 12, 3),
                                         waits(family, INSPECT, 12, 11)))));
+    }
+
+    /**
+     * One shared resource is the only inspector: the most occupied pool is not the one that limits the
+     * run.
+     *
+     * <p>The cutter cuts unit {@code k} over {@code 3(k-1)}-{@code 3k}. Assembly takes 4 and a unit
+     * arrives every 3, so at most one assembler is busy when a unit arrives. An idle assembler and an
+     * idle {@code Shared} tie on immediate acceptance and on {@code combinedQueueDepth} (the backlog is
+     * empty), and the lower {@code MachineId} wins, which is always an assembler: odd units go to {@code
+     * Assembler 1} and even units to {@code Assembler 2}, each assembled over {@code 3k}-{@code 3k+4},
+     * and {@code Shared} never assembles (at 3 and 6 it is idle but numbered last, and from 7 it is
+     * busy). Unit {@code k} is ready for {@code INSPECT} at {@code 3k+4}, and {@code Shared} is the only
+     * resource eligible for it, so an inspection that finds {@code Shared} busy waits in its own queue.
+     * Inspection runs back to back from 7: unit {@code k} is inspected over {@code 5k+2}-{@code 5k+7},
+     * which is never earlier than its readiness ({@code 3k+4 <= 5k+2}). The order completes at {@code
+     * 5*12+7 = 67}.
+     *
+     * <p>Pools: {@code CUT} 36 of 67; {@code ASSEMBLE} and {@code INSPECT} merged by {@code Shared}, with
+     * six assemblers and {@code Shared}, 12 x 4 + 12 x 5 = 108 of 67 x 7 = 469. The cutter's pool is
+     * therefore the most occupied by a wide margin, yet the merged pool holds the only inspection slot,
+     * busy from 7 to 67, which is what sets the completion time: see {@link
+     * #sharedOnlyInspectionPlusCutter()} and {@link #sharedOnlyInspectionPlusInspector()}. Waits:
+     * {@code CUT} {@code 3(k-1)} per unit, 198 in total; {@code ASSEMBLE} none; {@code INSPECT} {@code
+     * (5k+2)-(3k+4) = 2k-2} per unit, 132 in total.
+     *
+     * <p>All of this is for the authored order, {@code Shared} last, which is the best case: inspection
+     * starts at 7, the earliest a unit can be cut and assembled, and its 60 ticks cannot be shortened
+     * with a single inspector. Resource order can only delay it. If exactly one assembler is numbered
+     * before {@code Shared}, then at 6 the first assembler is busy and the idle {@code Shared} outranks
+     * the other assemblers, so it assembles unit 2 over 6-10; unit 1 then waits for it until 10 and the
+     * order completes at 70.
+     */
+    public static ExperimentFixture sharedOnlyInspection() {
+        LinearRoutingFamily family = SHARED_ONLY_INSPECTION;
+        return new ExperimentFixture(
+                SHARED_ONLY_INSPECTION_ID,
+                family.model(),
+                wholeRun(LINE_QUANTITY),
+                WindowIntent.COMPLETE_RUN,
+                List.of(
+                        completesAt(67),
+                        poolOccupancy(
+                                occupancy(pool(family, List.of(CUT), List.of("Cutter")), 36, 67),
+                                occupancy(
+                                        pool(
+                                                family,
+                                                List.of(ASSEMBLE, INSPECT),
+                                                List.of(
+                                                        "Assembler 1",
+                                                        "Assembler 2",
+                                                        "Assembler 3",
+                                                        "Assembler 4",
+                                                        "Assembler 5",
+                                                        "Assembler 6",
+                                                        "Shared")),
+                                        108,
+                                        469)),
+                        dispatchProfile(
+                                List.of(
+                                        dispatches(family, "Cutter", CUT, 12),
+                                        dispatches(family, "Assembler 1", ASSEMBLE, 6),
+                                        dispatches(family, "Assembler 2", ASSEMBLE, 6),
+                                        dispatches(family, "Shared", INSPECT, 12)),
+                                List.of(
+                                        waits(family, CUT, 12, 198),
+                                        waits(family, ASSEMBLE, 12, 0),
+                                        waits(family, INSPECT, 12, 132)))));
+    }
+
+    /**
+     * A second cutter, authored after every other resource, changes nothing.
+     *
+     * <p>Units are now cut in pairs, so units {@code 2m-1} and {@code 2m} are ready at {@code 3m}. Each
+     * assembly still finds a free assembler (at most the previous pair, two assemblers, is busy when a
+     * pair arrives, and {@code Shared}, numbered last among the assemblers, is idle only before 7). The
+     * first unit is ready for {@code INSPECT} at 7 exactly as before, and every later inspection is ready
+     * no later than {@code Shared} is free, so {@code Shared} inspects the twelve units back to back over
+     * 7-67 and the order still completes at 67.
+     *
+     * <p>Each cutter cuts six units. Pairs 1-6 are ready at 3, 6, ..., 18 and take the two lowest-numbered
+     * idle assemblers: {@code Assembler 1} and {@code Assembler 2} at 3, 9 and 15, {@code Assembler 3} and
+     * {@code Assembler 4} at 6, 12 and 18, so each of the four assembles three units and nothing waits
+     * for {@code ASSEMBLE}. Waits: {@code CUT} pair {@code m} waits {@code 3(m-1)} per unit, 2 x 3 x
+     * (0+1+2+3+4+5) = 90 in total; {@code INSPECT} unit {@code k} starts at {@code 5k+2} and is ready at
+     * {@code 3*ceil(k/2)+4}, which sums to 240.
+     */
+    public static ExperimentFixture sharedOnlyInspectionPlusCutter() {
+        LinearRoutingFamily family = SHARED_ONLY_INSPECTION_PLUS_CUTTER;
+        return new ExperimentFixture(
+                SHARED_ONLY_INSPECTION_PLUS_CUTTER_ID,
+                family.model(),
+                wholeRun(LINE_QUANTITY),
+                WindowIntent.COMPLETE_RUN,
+                List.of(
+                        completesAt(67),
+                        dispatchProfile(
+                                List.of(
+                                        dispatches(family, "Cutter", CUT, 6),
+                                        dispatches(family, "Cutter 2", CUT, 6),
+                                        dispatches(family, "Assembler 1", ASSEMBLE, 3),
+                                        dispatches(family, "Assembler 2", ASSEMBLE, 3),
+                                        dispatches(family, "Assembler 3", ASSEMBLE, 3),
+                                        dispatches(family, "Assembler 4", ASSEMBLE, 3),
+                                        dispatches(family, "Shared", INSPECT, 12)),
+                                List.of(
+                                        waits(family, CUT, 12, 90),
+                                        waits(family, ASSEMBLE, 12, 0),
+                                        waits(family, INSPECT, 12, 240)))));
+    }
+
+    /**
+     * A dedicated inspector, authored after every other resource, shortens the run.
+     *
+     * <p>Assembly is as in {@link #sharedOnlyInspection()}: {@code Shared} still never assembles, since
+     * it ranks behind an idle assembler. {@code INSPECT} is now multi-eligible, so a unit that found
+     * neither inspector free would wait in the shared backlog; none does. Unit 1 is ready at 7 with both
+     * inspectors free and the lower {@code MachineId}, {@code Shared}, takes it (7-12). From then on each
+     * inspector takes every second unit: unit {@code k} is ready at {@code 3k+4}; the inspector that
+     * handled unit {@code k-2} finished at {@code 3k+3}, and the other is still busy with unit {@code
+     * k-1} until {@code 3k+6}, so exactly one is free and no tie arises. Odd units go to {@code Shared},
+     * even units to {@code Inspector}, none waits, and unit 12, cut over 33-36 and assembled over 36-40,
+     * is inspected over 40-45. The order completes at 45.
+     *
+     * <p>{@code Assembler 1} and {@code Assembler 2} assemble six units each, {@code Shared} and {@code
+     * Inspector} inspect six each, and no unit waits for {@code ASSEMBLE} or {@code INSPECT}. {@code CUT}
+     * waits as before, 198 in total.
+     */
+    public static ExperimentFixture sharedOnlyInspectionPlusInspector() {
+        LinearRoutingFamily family = SHARED_ONLY_INSPECTION_PLUS_INSPECTOR;
+        return new ExperimentFixture(
+                SHARED_ONLY_INSPECTION_PLUS_INSPECTOR_ID,
+                family.model(),
+                wholeRun(LINE_QUANTITY),
+                WindowIntent.COMPLETE_RUN,
+                List.of(
+                        completesAt(45),
+                        dispatchProfile(
+                                List.of(
+                                        dispatches(family, "Cutter", CUT, 12),
+                                        dispatches(family, "Assembler 1", ASSEMBLE, 6),
+                                        dispatches(family, "Assembler 2", ASSEMBLE, 6),
+                                        dispatches(family, "Shared", INSPECT, 6),
+                                        dispatches(family, "Inspector", INSPECT, 6)),
+                                List.of(
+                                        waits(family, CUT, 12, 198),
+                                        waits(family, ASSEMBLE, 12, 0),
+                                        waits(family, INSPECT, 12, 0)))));
+    }
+
+    /**
+     * The tick at which one order of {@code quantity} units completes on {@code family}, run to
+     * quiescence. It states no expected claim; it serves comparisons across authored designs.
+     */
+    static long completionTick(LinearRoutingFamily family, long quantity) {
+        ExperimentFixture fixture = new ExperimentFixture(
+                "unclaimed/completion-tick", family.model(), wholeRun(quantity), WindowIntent.COMPLETE_RUN, List.of());
+        return CompletionTickOracle.completionTick(ExperimentRunner.run(fixture));
+    }
+
+    private static LinearRoutingFamily appended(LinearRoutingFamily family, Resource resource) {
+        List<Resource> resources = new ArrayList<>(family.resources());
+        resources.add(resource);
+        return new LinearRoutingFamily(family.steps(), resources);
     }
 
     private static List<ExperimentStep> wholeRun(long quantity) {

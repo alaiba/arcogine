@@ -39,11 +39,13 @@ That thesis is deliberately **not one research question**. Capacity, challenge s
 
 This question is deterministic/fixture-driven. It does not claim to establish population-level player comprehension. A product-owner walkthrough is a qualitative smoke test only: failure can reject a candidate, while success cannot establish what independent players will understand.
 
-### Non-spatial challenge strategy space — READY
+### Non-spatial challenge strategy space — CONCLUDED
 
-[Factory-design game strategy space](factory-design-game-strategy-space.md) asks whether a deliberately small fixed production challenge, using current production/capacity semantics plus game-owned capital costs, can produce several materially different and explainable viable interventions without relying on spatial layout.
+[Factory-design game strategy space](factory-design-game-strategy-space.md) asked whether a deliberately small fixed production challenge, using current production/capacity semantics plus game-owned capital costs, can produce several materially different and explainable viable interventions without relying on spatial layout.
 
-This question is headless and product-system focused. It is intentionally separated from presentation and from spatial transfer so that Arcogine can first determine whether capacity plus capital already creates a useful design problem.
+It concluded as a bounded positive for a constructive reference, not a general design-space claim. Current deterministic non-spatial semantics support a mechanically non-trivial capacity/capital reference challenge: a bounded serial fixed-workload family with shared multi-step-eligible capacity has two materially separated, nondominated structures that survive the tested resource-identity orderings and bounded repricing. Shared eligibility is a strong constructive mechanism but is not established as necessary, and excluding it is not an automatic negative result. Occupancy is a descriptive measurement, not a constraint definition, and a future projector must make result-affecting resource identity/order explicit and deterministic.
+
+This is **mechanical ground truth** only, and it was deliberately separated from presentation and from spatial transfer. It establishes no player comprehension, discoverability, engagement or fairness of presentation; those stay with the diagnostic-evidence, equipment-value-discovery, scoring/level and external-player questions. It promoted bounded reference-challenge requirements, not an implementation slice, a scoring formula, a spatial mechanic or an Engine/Factory change.
 
 ### Controlled retry explanation — CANDIDATE
 
@@ -51,7 +53,7 @@ Question:
 
 > Can a controlled one-variable retry be presented as a mechanically traceable before/change/after evidence chain without asserting an unobserved causal mechanism?
 
-Promote this only after the diagnostic-evidence and strategy-space investigations establish an evidence contract and a challenge family worth comparing. This remains a product-explanation question; reusable run-comparison derivations still belong to the analytics-boundary investigation.
+Promote this only after the diagnostic-evidence investigation establishes an evidence contract. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; reusable run-comparison derivations still belong to the analytics-boundary investigation.
 
 ### Spatial design trade-off — CANDIDATE
 
@@ -112,10 +114,12 @@ alternatives when discovering which distinctions matter is part of the intended 
 Accordingly, the mere presence of a dominated catalogue option is not by itself evidence of a bad
 challenge.
 
-Do not promote this question until mechanical strategy-space evidence supplies real solution
-families and the product has evidence about what should be rewarded, disclosed, hidden or learned.
-Coordinate empirical claims about misleading cues with the separate equipment-value-discovery
-question rather than inferring human behavior from headless enumeration.
+The concluded strategy-space reference now supplies one bounded mechanical solution family. Its
+frontier is ground truth, not a prescription: it does not require every offered item to be
+nondominated, and any fixed scalar scoring rule selects a single frontier design. Do not promote
+this question until the product has evidence about what should be rewarded, disclosed, hidden or
+learned. Coordinate empirical claims about misleading cues with the separate
+equipment-value-discovery question rather than inferring human behavior from headless enumeration.
 
 ## Boundary with reusable analytics
 
@@ -177,4 +181,4 @@ Consequently:
 
 This programme does not have one `CONCLUDED` state. Playable implementation may be admitted only when the implementation gate can name the exact focused research conclusions required by the chosen first slice, the required Arcogine semantics are landed, and executable acceptance tests can be written.
 
-A minimal non-spatial **internal playable** slice would currently require, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. It does not require independent human participants merely to exist as an internal playable slice. A later release goal that claims broad player comprehension must separately promote and satisfy external-player validation. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.
+A minimal non-spatial **internal playable** slice would currently require, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. The challenge-strategy question is now concluded; diagnostic evidence remains `READY` and is the product-evidence blocker. A slice does not require independent human participants merely to exist as an internal playable slice. A later release goal that claims broad player comprehension must separately promote and satisfy external-player validation. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.

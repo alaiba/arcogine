@@ -101,7 +101,9 @@ The current Challenge delivery sequence is closed. New Challenge work requires a
 
 Examples such as campaign progression, leaderboard persistence, richer scoring, or shared Governance/Challenge evaluation abstractions are not roadmap placeholders. Track them in research/product work until a real requirement crosses the planning admission boundary.
 
-The current product work is coordinated by the [Factory-Design Game Product Research Programme](../research/investigations/factory-design-game-vertical-slice.md). The two presently READY questions for a minimal non-spatial playable slice are [strategy space](../research/investigations/factory-design-game-strategy-space.md) and the [diagnostic evidence contract](../research/investigations/factory-design-game-diagnostic-evidence.md).
+The current product work is coordinated by the [Factory-Design Game Product Research Programme](../research/investigations/factory-design-game-vertical-slice.md). For a minimal non-spatial playable slice, [strategy space](../research/investigations/factory-design-game-strategy-space.md) is concluded and the [diagnostic evidence contract](../research/investigations/factory-design-game-diagnostic-evidence.md) remains READY.
+
+The concluded reference challenge does not by itself require new headless Challenge capability. Its economics — purchase costs, quantity limits, a budget, a deadline and one fixed quantity — are expressible with the facts the landed capability already carries. The steps and concurrency an offer projects to are deliberately not Challenge facts; they belong to the consumer-side projection described in the [consumer plan](factory-design-game-consumer.md). A later Challenge change requires a concrete promoted requirement that the landed capability cannot express.
 
 ## 5. Integration milestone
 

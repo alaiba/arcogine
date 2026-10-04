@@ -166,6 +166,16 @@ cd product && ./gradlew :research-experiments:test -PresearchExperimentSources=<
 
 A relative directory resolves against the directory Gradle is invoked from. The experiment compiles against the module's test classpath — the substrate and its corpus — under the same compiler settings, and no tracked source names the directory.
 
+### 11. Mutation testing (on-demand diagnostic)
+
+Mutation testing is an occasional test-strength diagnostic, not a contribution or CI gate. A mutation tool such as PIT deliberately alters compiled production behavior with small plausible faults and reruns the relevant tests. A killed mutant shows that the tests detect that altered behavior; a surviving mutant is a prompt to inspect whether the tests leave a meaningful semantic case unconstrained, whether the mutation is equivalent, or whether the mutated detail is intentionally outside the contract.
+
+Use mutation testing selectively where a small behavioral change could materially alter semantics despite high LINE coverage: parsers and strict decoders, validation and conformance predicates, canonicalization/identity rules, scheduler or dispatch ordering, boundary arithmetic, and replay/determinism-sensitive runtime behavior are typical candidates. Scope a run to the smallest useful module/package/class boundary and inspect survivors diagnostically rather than optimizing for a repository-wide score.
+
+A mutation run is worth considering after a material semantic change to such a boundary, when a new feature makes that boundary more consequential, or when review/defect evidence raises doubt that existing tests discriminate plausible incorrect behavior. The Continuous Improvement assessment may recommend such a focused run from cheap repository evidence, but it does not execute mutation testing itself.
+
+Do not add mutation score to `./arcogine check`, establish a standing cadence, or treat a surviving mutant as an automatic defect. If a run exposes a real missing proving case, strengthen the ordinary retained test suite; retain recurring mutation-tool configuration only if repeated use demonstrates enough value to justify its maintenance cost.
+
 ## CI pipeline
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each invoking its native tool directly:

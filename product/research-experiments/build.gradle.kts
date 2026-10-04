@@ -1,5 +1,3 @@
-import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
-
 // Non-shipped research infrastructure: the reusable substrate for deterministic research
 // experiments over the supported Factory runtime contract (docs/development/researching.md).
 // Its main sources depend only on :factory and :types, so the compiler confines them to what
@@ -14,24 +12,6 @@ dependencies {
     // result types belong to Governance; the reusable substrate itself never needs them.
     testImplementation(project(":governance"))
     testImplementation("com.tngtech.archunit:archunit-junit5:1.5.1")
-}
-
-// Coverage gate: fails the build if line coverage of the reusable substrate drops below the
-// floor (e.g. if its corpus and contract tests are deleted).
-tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
-    dependsOn(tasks.named("test"))
-    violationRules {
-        rule {
-            limit {
-                counter = "LINE"
-                minimum = "0.94".toBigDecimal()
-            }
-        }
-    }
-}
-
-tasks.named("check") {
-    dependsOn(tasks.named("jacocoTestCoverageVerification"))
 }
 
 // Opt-in: compile and run experiment sources kept outside the tracked tree as additional tests of

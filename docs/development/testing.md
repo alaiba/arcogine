@@ -128,7 +128,9 @@ The Factory Engine tests verify that equivalent fresh runtimes given the same mo
 
 ### 6. Java coverage (Jacoco) + per-module gates
 
-`cd product && ./gradlew test jacocoTestReport jacocoTestCoverageVerification` (part of `./arcogine check`). Each module with main sources — the production modules and the non-shipped `research-experiments` substrate — declares a `jacocoTestCoverageVerification` gate (a `LINE` minimum, set a few points below measured actual) wired into `check`, so removing a module's tests fails the build instead of passing vacuously. Test-only proof modules (`challenge-factory-integration-test`, `architecture-conformance-test`) have no production sources to cover and do not wire this gate. CI uploads the per-module `jacocoTestReport.xml` to Codecov.
+`cd product && ./gradlew test jacocoTestReport jacocoTestCoverageVerification` (part of `./arcogine check`). Every module with Java main sources — including the non-shipped `research-experiments` substrate — has the same **90% LINE minimum**, wired into `check`. Each module's report and gate measure that module's own classes against JaCoCo execution data from all Java test suites. This credits behavior proved by downstream tests without moving or duplicating those tests. Running one module's coverage report or verification therefore runs all Java test suites; use `:module:test` for focused feedback.
+
+The shared evidence guard requires each covered module's own test task to have test sources and produce nonempty JaCoCo execution data, so a module cannot pass vacuously after its tests disappear. The test-only proof modules (`challenge-factory-integration-test`, `architecture-conformance-test`) have no Java main sources to cover and do not receive the gate. CI uploads the per-module `jacocoTestReport.xml` files to Codecov. The percentage is a regression backstop; tests should still prove invariants, failures, and observable behavior rather than merely execute lines.
 
 ### 7. Benchmarks (JMH)
 

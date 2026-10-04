@@ -1,5 +1,3 @@
-import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
-
 plugins {
     id("me.champeau.jmh") version "0.7.3"
 }
@@ -23,21 +21,4 @@ jmh {
 
 configurations.named("jmh") {
     resolutionStrategy.force("org.ow2.asm:asm:9.10.1")
-}
-
-// Retained simulation runtime tests cover the simulation module's executable lines.
-tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
-    dependsOn(tasks.named("test"))
-    violationRules {
-        rule {
-            limit {
-                counter = "LINE"
-                minimum = "0.86".toBigDecimal()
-            }
-        }
-    }
-}
-
-tasks.named("check") {
-    dependsOn(tasks.named("jacocoTestCoverageVerification"))
 }

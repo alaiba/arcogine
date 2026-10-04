@@ -1,5 +1,6 @@
 package com.arcogine.governance;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -79,6 +80,21 @@ class ControlledRevisionTest {
         assertEquals(revisionA.modelFingerprint(), revisionC.modelFingerprint());
         assertNotEquals(revisionA.id(), revisionC.id());
         assertEquals(List.of(revisionB.id()), revisionC.parentRevisionIds());
+    }
+
+    @Test
+    void historicalArtifactBytesCannotBeMutatedThroughInputOrReadback() {
+        byte[] input = {1, 2, 3};
+        SemanticArtifact retained = new SemanticArtifact(FINGERPRINT_ONE, input);
+        SemanticArtifact equivalent = new SemanticArtifact(FINGERPRINT_ONE, new byte[] {1, 2, 3});
+
+        input[0] = 9;
+        byte[] readback = retained.canonicalBytes();
+        readback[1] = 9;
+
+        assertArrayEquals(new byte[] {1, 2, 3}, retained.canonicalBytes());
+        assertEquals(equivalent, retained);
+        assertEquals(equivalent.hashCode(), retained.hashCode());
     }
 
     @Test

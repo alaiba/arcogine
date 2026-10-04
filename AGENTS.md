@@ -26,12 +26,9 @@ Common shorthand should be interpreted in repository context:
 - “check repo state” means inspect the state of this repository;
 - references such as “the issue”, “the PR”, “main”, or a bare issue/PR number refer to this repository unless context explicitly establishes otherwise.
 
-Repository workflow shorthand has distinct meanings. Match these as exact tokens,
-using the longest matching token when symbols overlap; do not decompose a token
-into a shorter shorthand:
+Repository workflow shorthand must match the entire token:
 
 - `.?` = perform the Session-close Kaizen review before ending or deleting the current session;
-- `.!` = run the on-demand Continuous Improvement assessment;
 - `./` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
 - `..` = read the current implementation pull request's live GitHub state and perform the next implementation-owned transition, if one is available;
 
@@ -65,7 +62,7 @@ Some repository tasks have additional repository-owned operating contracts.
 
 - **Work planning:** when asked to re-ground initiative progress, decide what to work on next, prioritize open work, identify blocked versus ready slices, identify safe parallel lanes, or generate a handoff prompt for a recommended next slice, read and follow [`.github/agents/work-planner.agent.md`](.github/agents/work-planner.agent.md) in addition to this file.
 - **Dependency maintenance:** when asked to process, apply, remediate, or sweep dependency updates or Dependabot pull requests, read and follow [`.github/agents/dependency-maintainer.agent.md`](.github/agents/dependency-maintainer.agent.md) in addition to this file.
-- **Continuous improvement:** when asked to assess the health of Arcogine's engineering practices, decide which improvement practice is worth running next, or identify opportunities to simplify or strengthen repository-owned standard work, read and follow [`.github/agents/continuous-improvement.agent.md`](.github/agents/continuous-improvement.agent.md) in addition to this file.
+- **Continuous improvement:** when the user says `Assess continuous improvement.`, read and follow [`.github/agents/continuous-improvement.agent.md`](.github/agents/continuous-improvement.agent.md) in addition to this file.
 - **Consistency review:** when asked to perform a repository consistency
   review, documentation/architecture reconciliation, periodic consistency
   sweep, or to operate as the consistency agent, read and follow

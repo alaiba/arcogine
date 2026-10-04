@@ -166,6 +166,28 @@ cd product && ./gradlew :research-experiments:test -PresearchExperimentSources=<
 
 A relative directory resolves against the directory Gradle is invoked from. The experiment compiles against the module's test classpath — the substrate and its corpus — under the same compiler settings, and no tracked source names the directory.
 
+### 11. On-demand test-evidence diagnostics
+
+These techniques are occasional, focused ways to challenge executable evidence around a critical boundary. They are not contribution gates, standing CI jobs, or recurring score programs. Start from a concrete uncertainty and choose the technique that most directly tests it.
+
+| Diagnostic | Evidence question | Typical Arcogine targets |
+| --- | --- | --- |
+| Mutation testing | Would retained tests detect small plausible implementation faults? | validation predicates, canonicalization/identity rules, ordering/dispatch logic, boundary arithmetic, replay/determinism-sensitive behavior |
+| Targeted property-based testing | Do stated invariants hold over a much broader input/state space than current examples exercise? | scheduler/time invariants, queue/order constraints, canonical round trips, bounded concurrency, model/runtime invariants |
+| Differential testing | Do independent implementations or contractually equivalent paths produce the same supported outcome? | alternate execution paths, old/new implementations during replacement work, equivalent runtime entry paths |
+| Metamorphic testing | Do predictable relationships hold when inputs are transformed even when exact outputs are difficult to enumerate? | scaling/proportionality, order-preserving transformations, semantics-preserving model transformations |
+| Targeted fuzzing | Does a boundary remain safe and contract-correct under malformed, unexpected, or adversarial inputs? | parsers, strict decoders, content loaders, validators, canonical/wire representations |
+
+Property tests are already part of Arcogine's retained test taxonomy. A diagnostic recommendation for property-based testing therefore usually means a focused expansion of invariant exploration around a recently changed boundary, not automatically introducing a new framework.
+
+Mutation testing deliberately alters compiled production behavior with small plausible faults and reruns the relevant tests. A killed mutant shows that the retained tests detect that altered behavior; a surviving mutant is a prompt to inspect whether a meaningful semantic case is unconstrained, the mutation is equivalent, or the mutated detail is intentionally outside the contract. A tool such as PIT may be used for a focused Java run when separately configured for that diagnostic.
+
+Differential testing requires a legitimate comparison oracle: two implementations or execution paths must actually be expected to agree on the compared contract. Metamorphic testing instead derives an oracle from relations between transformed inputs and outputs. Targeted fuzzing should likewise be bounded by explicit safety/contract properties rather than treating "did not crash" as sufficient evidence.
+
+The Continuous Improvement assessment may recommend one of these diagnostics when its bounded merged-activity scan identifies a recently changed or newly consequential high-risk boundary and a concrete gap in confidence. The recommendation names the target, evidence question, technique rationale, and exact fresh-session invocation; the assessment does not execute the diagnostic.
+
+Do not establish repository-wide mutation scores, fuzzing quotas, generated-case counts, standing diagnostic cadence, or new merge gates from these techniques. If a focused run exposes a real missing proving case, strengthen the ordinary retained test suite. Retain recurring diagnostic tooling/configuration only when repeated use demonstrates enough value to justify its maintenance cost.
+
 ## CI pipeline
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each invoking its native tool directly:

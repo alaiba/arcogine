@@ -39,7 +39,7 @@ jobs:
 
           `Assess continuous improvement.`
 
-          The assessment should cover the current state of Arcogine's improvement practices, which practice—if any—is worth running now, and opportunities to simplify or strengthen repository-owned standard work.
+          The assessment scans pull requests merged into `main` and non-PR issues closed since the preceding checkpoint opened, then recommends the smallest worthwhile next practice, focused test-evidence diagnostic, or narrow process-tightening action. Deeper trend, recurrence, effectiveness, and cost analysis belongs to the owning specialized practice.
 
           Agent contract: `.github/agents/continuous-improvement.agent.md`
 

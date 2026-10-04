@@ -166,15 +166,27 @@ cd product && ./gradlew :research-experiments:test -PresearchExperimentSources=<
 
 A relative directory resolves against the directory Gradle is invoked from. The experiment compiles against the module's test classpath — the substrate and its corpus — under the same compiler settings, and no tracked source names the directory.
 
-### 11. Mutation testing (on-demand diagnostic)
+### 11. On-demand test-evidence diagnostics
 
-Mutation testing is an occasional test-strength diagnostic, not a contribution or CI gate. A mutation tool such as PIT deliberately alters compiled production behavior with small plausible faults and reruns the relevant tests. A killed mutant shows that the tests detect that altered behavior; a surviving mutant is a prompt to inspect whether the tests leave a meaningful semantic case unconstrained, whether the mutation is equivalent, or whether the mutated detail is intentionally outside the contract.
+These techniques are occasional, focused ways to challenge the strength of executable evidence around a critical boundary. They are not contribution gates, standing CI jobs, or recurring score programs. Start from a concrete uncertainty and select the technique whose failure model best answers it.
 
-Use mutation testing selectively where a small behavioral change could materially alter semantics despite high LINE coverage: parsers and strict decoders, validation and conformance predicates, canonicalization/identity rules, scheduler or dispatch ordering, boundary arithmetic, and replay/determinism-sensitive runtime behavior are typical candidates. Scope a run to the smallest useful module/package/class boundary and inspect survivors diagnostically rather than optimizing for a repository-wide score.
+| Diagnostic | Evidence question | Typical Arcogine targets |
+| --- | --- | --- |
+| Mutation testing | Would retained tests detect small plausible implementation faults? | validation predicates, canonicalization/identity rules, ordering/dispatch logic, boundary arithmetic, replay/determinism-sensitive behavior |
+| Targeted property-based testing | Do stated invariants hold over a much broader input/state space than current examples exercise? | scheduler/time invariants, queue/order constraints, canonical round trips, bounded concurrency, model/runtime invariants |
+| Differential testing | Do independent implementations or contractually equivalent paths produce the same supported outcome? | alternate execution paths, old/new implementations during replacement work, equivalent runtime entry paths |
+| Metamorphic testing | Do predictable relationships hold when inputs are transformed even when exact outputs are difficult to enumerate? | scaling/proportionality, order-preserving transformations, semantics-preserving model transformations |
+| Targeted fuzzing | Does a boundary remain safe and contract-correct under malformed, unexpected, or adversarial inputs? | parsers, strict decoders, content loaders, validators, canonical/wire representations |
 
-A mutation run is worth considering after a material semantic change to such a boundary, when a new feature makes that boundary more consequential, or when review/defect evidence raises doubt that existing tests discriminate plausible incorrect behavior. The Continuous Improvement assessment may recommend such a focused run from cheap repository evidence, but it does not execute mutation testing itself.
+Property tests are already part of Arcogine's retained test taxonomy. A diagnostic recommendation for property-based testing therefore usually means a focused expansion of invariant exploration around a recently changed boundary, not automatically introducing a new framework.
 
-Do not add mutation score to `./arcogine check`, establish a standing cadence, or treat a surviving mutant as an automatic defect. If a run exposes a real missing proving case, strengthen the ordinary retained test suite; retain recurring mutation-tool configuration only if repeated use demonstrates enough value to justify its maintenance cost.
+Mutation testing deliberately alters compiled production behavior with small plausible faults and reruns the relevant tests. A killed mutant shows that the retained tests detect that altered behavior; a surviving mutant is a prompt to inspect whether a meaningful semantic case is unconstrained, the mutation is equivalent, or the mutated detail is intentionally outside the contract. A tool such as PIT may be used for a focused Java run when separately configured for that diagnostic.
+
+Differential testing requires a legitimate comparison oracle: two implementations or execution paths must actually be expected to agree on the compared contract. Metamorphic testing instead derives an oracle from relations between transformed inputs and outputs. Targeted fuzzing should likewise be bounded by explicit safety/contract properties rather than treating "did not crash" as sufficient evidence.
+
+The Continuous Improvement assessment may recommend one of these diagnostics after its bounded merged-activity scan identifies a recently changed or newly consequential high-risk boundary and a concrete uncertainty in the ordinary retained evidence. The assessment names the target, the evidence question, why the chosen technique fits, and an exact fresh-session invocation; it does not execute the diagnostic.
+
+Do not establish repository-wide mutation scores, fuzzing quotas, generated-case counts, standing diagnostic cadence, or new merge gates from these techniques. If a focused run exposes a real missing proving case, strengthen the ordinary retained test suite. Retain recurring diagnostic tooling/configuration only when repeated use demonstrates enough value to justify its maintenance cost.
 
 ## CI pipeline
 

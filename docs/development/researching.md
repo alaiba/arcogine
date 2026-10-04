@@ -20,14 +20,13 @@ The research-question lifecycle is:
 | Status | Meaning |
 |---|---|
 | **CANDIDATE** | Material uncertainty exists, but the investigation is not yet sufficiently bounded or timely to start |
-| **READY** | Question, scope, evidence expectations, and exit criteria are sufficiently clear to start |
-| **ACTIVE** | Evidence gathering or synthesis is in progress |
+| **READY** | Question, scope, evidence expectations, and exit criteria are sufficiently clear to investigate, and the question remains unresolved. This includes admitted research before investigation, while evidence/review/reconciliation is in progress, and after a report exists but before the normative `CONCLUDED` conditions are satisfied |
 | **CONCLUDED** | A decision-quality result exists and durable consequences have been reconciled, or the result was explicitly no action |
 | **SUPERSEDED** | Later evidence, question, or decision replaced the investigation before normal conclusion |
 
 These lifecycle values apply only to research questions in the maintained research register. Synthesis seeds have no research lifecycle, priority, owner, delivery commitment, or percentage completion. Do not use percentage completion for research questions; track evidence, falsified hypotheses, and exit criteria instead.
 
-Research priority is **portfolio guidance, not delivery commitment**. A `READY` research question means an investigation can start; it does not mean implementation is ready or admitted.
+Research priority is **portfolio guidance, not delivery commitment**. A `READY` research question is admitted and sufficiently bounded to investigate, but remains unresolved; it may be idle, actively investigated, awaiting required review, or awaiting durable reconciliation. `READY` does not mean implementation is ready or admitted.
 
 The promotion path is:
 
@@ -60,6 +59,7 @@ Maintain [`docs/research/research-register.md`](../research/research-register.md
 
 - add a material unknown instead of hiding it in an implementation plan;
 - mark research `READY` only when an independent researcher can execute it from the stated evidence and exit criteria;
+- do not update the maintained register merely because evidence gathering starts, pauses, resumes, or a report/review is in flight; temporary execution state belongs to the research workspace and exact evidence handoffs, while the register changes only when the question's admitted/unresolved/terminal state or another decision-relevant portfolio fact changes;
 - when research concludes, record the verdict and durable destination in the register without duplicating the authoritative conclusion;
 - during planning or consistency review, move unresolved exploratory content back to research rather than allowing planning to settle it implicitly;
 - terminal questions (`CONCLUDED` or `SUPERSEDED`) normally remain for lifecycle and provenance history; compact or remove a terminal row only when its continued presence no longer helps explain a material conclusion, supersession chain, reopening trigger, or active decision context, all durable consequences have already been reconciled, and removal is not being used as a substitute for the knowledge-transfer audit in §10;

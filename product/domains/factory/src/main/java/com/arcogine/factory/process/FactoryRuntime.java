@@ -535,10 +535,9 @@ public class FactoryRuntime {
      * <p>Deliberately draining rather than retained/replayable-by-cursor: {@link #eventSequence}
      * still advances monotonically and independently of draining (so {@link
      * RuntimeObservationMetadata#latestEventSequence()} is unaffected by when a caller drains), but
-     * this type does not itself keep an unbounded, cursor-addressable event history -- that is a
-     * separately-named responsibility for later distribution hardening
-     * (docs/architecture/runtime-contract.md §8), not
-     * part of this supported-boundary contract. A caller that needs durable replay must retain the
+     * this type does not itself keep an unbounded, cursor-addressable event history; that
+     * responsibility is outside this supported-boundary contract
+     * (docs/architecture/runtime-contract.md §8). A caller that needs durable replay must retain the
      * drained events itself.
      */
     public List<RuntimeEventEnvelope> drainSupportedEvents() {

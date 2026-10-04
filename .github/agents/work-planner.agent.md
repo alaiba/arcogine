@@ -121,7 +121,7 @@ Classify material work before recommending it:
 - `DEFERRED` — intentionally postponed by maintained planning.
 - `OPTIONAL_DEBT` — useful cleanup/refinement that is not currently on the critical path.
 
-Research uses its own lifecycle, defined by `docs/development/researching.md`: `CANDIDATE`, `READY`, `ACTIVE`, `CONCLUDED`, or `SUPERSEDED`. Current question state lives in `docs/research/research-register.md`. Research priority is portfolio guidance, not delivery commitment. A `READY` research item means its question is ready for investigation; it does not mean implementation is ready. Do not translate research status into planning status, and classify an implementation slice as dependency-blocked when its contract still depends on an unresolved research question.
+Research uses its own lifecycle, defined by `docs/development/researching.md`: `CANDIDATE`, `READY`, `CONCLUDED`, or `SUPERSEDED`. Current question state lives in `docs/research/research-register.md`. Research priority is portfolio guidance, not delivery commitment. A `READY` research item is admitted and unresolved; it may not have started yet, may be under investigation, or may be awaiting required review/reconciliation. It does not mean implementation is ready. Do not translate research status into planning status, and classify an implementation slice as dependency-blocked when its contract still depends on an unresolved research question.
 
 If an open PR changes a planning status, state both realities explicitly:
 

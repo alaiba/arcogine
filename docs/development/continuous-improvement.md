@@ -6,7 +6,7 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 
 ## Continuous Improvement assessment
 
-The repository's user-invocable [Continuous Improvement agent](../../.github/agents/continuous-improvement.agent.md) is an advisory health check over these practices and the delivery controls around them. It is not a fourth improvement loop.
+The repository's user-invocable [Continuous Improvement agent](../../.github/agents/continuous-improvement.agent.md) is a light advisory checkpoint over recent delivery activity. It is not a fourth improvement loop.
 
 Invoke it with exactly:
 

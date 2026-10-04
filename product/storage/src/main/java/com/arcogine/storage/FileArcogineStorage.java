@@ -99,12 +99,19 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
     private final Path lockFile;
     private final SemanticArtifactVerifier verifier;
     private final Clock clock;
+    private final AtomicMover atomicMover;
     private final byte[] storeMarker;
 
-    private FileArcogineStorage(Path root, SemanticArtifactVerifier verifier, Clock clock) {
+    @FunctionalInterface
+    interface AtomicMover {
+        void move(Path source, Path target) throws IOException;
+    }
+
+    private FileArcogineStorage(Path root, SemanticArtifactVerifier verifier, Clock clock, AtomicMover atomicMover) {
         authorityRoot = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
         this.verifier = Objects.requireNonNull(verifier, "verifier");
         this.clock = Objects.requireNonNull(clock, "clock");
+        this.atomicMover = Objects.requireNonNull(atomicMover, "atomicMover");
         revisionsDirectory = authorityRoot.resolve("revisions");
         artifactsDirectory = authorityRoot.resolve("artifacts");
         lockFile = authorityRoot.resolve(LOCK_FILE);
@@ -127,7 +134,14 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
      */
     static FileArcogineStorage open(
             Path root, SemanticArtifactVerifier verifier, Clock clock) {
-        FileArcogineStorage authority = new FileArcogineStorage(root, verifier, clock);
+        return open(root, verifier, clock,
+                (source, target) -> Files.move(source, target, StandardCopyOption.ATOMIC_MOVE));
+    }
+
+    /** Package-local fault seam for proving failed atomic persistence without filesystem assumptions. */
+    static FileArcogineStorage open(
+            Path root, SemanticArtifactVerifier verifier, Clock clock, AtomicMover atomicMover) {
+        FileArcogineStorage authority = new FileArcogineStorage(root, verifier, clock, atomicMover);
         // Ownership is never inferred from what an existing directory contains: the store owns a
         // location only because this opener created it atomically, or because it already carries
         // this definition's marker. An existing location is locked only through the lock file its
@@ -556,7 +570,7 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
                 channel.force(true);
             }
             try {
-                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE);
+                atomicMover.move(temporary, target);
                 temporary = null;
             } catch (AtomicMoveNotSupportedException e) {
                 throw storageFailure("filesystem does not support atomic authority writes", e);

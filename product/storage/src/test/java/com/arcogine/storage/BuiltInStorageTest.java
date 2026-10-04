@@ -38,8 +38,10 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -137,6 +139,39 @@ class BuiltInStorageTest {
         assertEquals(STORAGE_INTEGRITY, failure.code());
         assertTrue(authority.revisions().isEmpty());
         assertTrue(regularFiles(store().resolve("artifacts")).isEmpty());
+    }
+
+    @Test
+    void failedAtomicRevisionWriteLeavesNoRevisionOrOrphanArtifact() throws IOException {
+        FactoryModelVersion version = version("Widget", 5);
+        for (boolean unsupportedAtomicMove : List.of(false, true)) {
+            Path root = tempDirectory.resolve("atomic-revision-failure-" + unsupportedAtomicMove);
+            ControlledRevisionAuthority failing = FileArcogineStorage.open(
+                    root, FACTORY_VERIFIER, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC),
+                    (source, target) -> {
+                        if (target.getFileName().toString().endsWith(".revision")) {
+                            if (unsupportedAtomicMove) {
+                                throw new AtomicMoveNotSupportedException(
+                                        source.toString(), target.toString(), "test filesystem");
+                            }
+                            throw new IOException("test write failure");
+                        }
+                        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+                    });
+            ControlledRevision candidate = revision(id(74), version.fingerprint(), List.of(), ACCEPTED_AT);
+
+            GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                    () -> failing.accept(candidate, artifact(version)));
+            assertEquals(STORAGE_INTEGRITY, failure.code());
+            assertTrue(failing.revisions().isEmpty());
+            assertTrue(regularFiles(root.resolve("artifacts")).isEmpty());
+            assertTrue(regularFiles(root.resolve("revisions")).isEmpty());
+            assertTrue(contents(root).keySet().stream().noneMatch(path -> path.contains(".pending-")));
+
+            ControlledRevisionAuthority reopened = BuiltInStorage.open(root, FACTORY_VERIFIER).controlledRevisions();
+            assertEquals(candidate.id(), reopened.accept(candidate, artifact(version)).id());
+            assertEquals(candidate.id(), reopened.resolve(candidate.id()).revision().id());
+        }
     }
 
     @Test

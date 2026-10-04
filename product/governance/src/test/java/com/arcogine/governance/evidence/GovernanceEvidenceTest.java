@@ -278,6 +278,12 @@ class GovernanceEvidenceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> draft(requirement, assertion, occurrence, List.of(reliedOn), List.of(excluded)));
+        EvidenceUse secondReliedOn = use(
+                occurrence, 0, new EvidenceReference("source", "record-3", PROVENANCE),
+                MODEL, requirement, assertion, EvidenceUseRole.RELIED_ON,
+                new EvidenceApplicability(EvidenceApplicabilityStatus.APPLICABLE, "also relied on", "fixture"));
+        assertThrows(IllegalArgumentException.class,
+                () -> draft(requirement, assertion, occurrence, List.of(reliedOn, secondReliedOn), List.of()));
     }
 
     @Test
@@ -576,6 +582,43 @@ class GovernanceEvidenceTest {
         assertThrows(IllegalArgumentException.class, () -> EvidenceConformanceEvaluator.evaluate(
                 requirement, assertion, Optional.empty(), MODEL, Optional.empty(), revisionAuthority,
                 List.of(wrongTarget), new EvidenceJudgment(ConformanceResult.UNKNOWN, "pending")));
+    }
+
+    @Test
+    void evidenceEvaluationRejectsUsesForOtherDefinitionsAndNonComparatorModels() {
+        Requirement requirement = requirement("exact evidence basis");
+        Assertion<?> assertion = externalAssertion(requirement);
+        ControlledRevisionAuthority revisionAuthority = authority(revision(MODEL));
+        EvaluationOccurrenceId occurrence = EvaluationOccurrenceId.generate();
+        EvidenceReference reference = new EvidenceReference("source", "record", PROVENANCE);
+        EvidenceApplicability applicable = new EvidenceApplicability(
+                EvidenceApplicabilityStatus.APPLICABLE, "usable", "rule");
+        EvidenceJudgment pass = new EvidenceJudgment(ConformanceResult.PASS, "supported");
+        EvidenceUse otherDefinition = use(occurrence, 0, reference, MODEL,
+                requirement("another definition"), assertion, EvidenceUseRole.RELIED_ON, applicable);
+        EvidenceUse otherModel = use(occurrence, 0, reference, OTHER_MODEL,
+                requirement, assertion, EvidenceUseRole.RELIED_ON, applicable);
+
+        IllegalArgumentException definitionFailure = assertThrows(IllegalArgumentException.class,
+                () -> EvidenceConformanceEvaluator.evaluate(requirement, assertion, Optional.empty(),
+                        MODEL, Optional.empty(), revisionAuthority, List.of(otherDefinition), pass));
+        assertEquals("evidence use does not retain the exact definitions", definitionFailure.getMessage());
+        IllegalArgumentException modelFailure = assertThrows(IllegalArgumentException.class,
+                () -> EvidenceConformanceEvaluator.evaluate(requirement, assertion, Optional.empty(),
+                        MODEL, Optional.empty(), revisionAuthority, List.of(otherModel), pass));
+        assertEquals("evidence use targets a different model without comparator role", modelFailure.getMessage());
+    }
+
+    @Test
+    void temporalFrameRejectsReversedEffectiveInterval() {
+        Instant start = Instant.parse("2026-01-02T00:00:00Z");
+        Instant end = Instant.parse("2026-01-01T00:00:00Z");
+
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> new TemporalFrame(Optional.of(start), Optional.of(end), Optional.empty()));
+        assertEquals("effectiveUntil must not precede effectiveFrom", failure.getMessage());
+        assertEquals(Optional.of(start),
+                new TemporalFrame(Optional.of(start), Optional.of(start), Optional.empty()).effectiveUntil());
     }
 
     @Test

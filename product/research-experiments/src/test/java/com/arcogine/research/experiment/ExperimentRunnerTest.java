@@ -18,6 +18,7 @@ import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.factory.process.RuntimeEventEnvelope;
 import com.arcogine.factory.process.RuntimeEventType;
 import com.arcogine.factory.process.RuntimeObservation;
+import com.arcogine.factory.process.RuntimeObservationMetadata;
 import com.arcogine.factory.process.RuntimePerformanceObservation;
 import com.arcogine.research.experiment.EvidenceWindow.CollectionPoint;
 import com.arcogine.research.experiment.EvidenceWindow.CollectionPoint.Kind;
@@ -369,6 +370,37 @@ class ExperimentRunnerTest {
                 () -> ExperimentRunner.requireReplayEquivalent(
                         first, TamperedEvidence.withObservation(replay, ExperimentEvidence.CLOSING_LABEL, altered)));
         assertTrue(observation.getMessage().contains("observation 'closing' performance"), observation.getMessage());
+    }
+
+    @Test
+    void replayDiagnosticsIdentifyChangedCommandOutcomeAndObservationMetadata() {
+        ExperimentFixture fixture = StarterCorpus.capacityConstrainedBaseline();
+        ExperimentEvidence first = ExperimentRunner.run(fixture);
+        ExperimentEvidence replay = ExperimentRunner.run(fixture);
+        CommandRecord original = replay.commands().getFirst();
+        CommandRecord changed = new CommandRecord(
+                original.stepIndex(), original.step(), Outcome.REJECTED, "tampered",
+                "rejected on replay", Optional.empty());
+        List<CommandRecord> changedCommands = new ArrayList<>(replay.commands());
+        changedCommands.set(0, changed);
+
+        IllegalStateException commandFailure = assertThrows(IllegalStateException.class,
+                () -> ExperimentRunner.requireReplayEquivalent(
+                        first, TamperedEvidence.withCommands(replay, changedCommands)));
+        assertTrue(commandFailure.getMessage().contains("command 0:"), commandFailure.getMessage());
+
+        RuntimeObservation closing = replay.observation(ExperimentEvidence.CLOSING_LABEL);
+        RuntimeObservationMetadata metadata = closing.metadata();
+        RuntimeObservation changedObservation = new RuntimeObservation(
+                new RuntimeObservationMetadata(
+                        metadata.runId(), metadata.modelFingerprint(), metadata.currentTime(),
+                        metadata.runState(), metadata.latestEventSequence() + 1),
+                closing.resources(), closing.orders(), closing.jobs(), closing.pendingWork(), closing.performance());
+        IllegalStateException metadataFailure = assertThrows(IllegalStateException.class,
+                () -> ExperimentRunner.requireReplayEquivalent(first,
+                        TamperedEvidence.withObservation(replay, ExperimentEvidence.CLOSING_LABEL, changedObservation)));
+        assertTrue(metadataFailure.getMessage().contains("observation 'closing' metadata"),
+                metadataFailure.getMessage());
     }
 
     @Test

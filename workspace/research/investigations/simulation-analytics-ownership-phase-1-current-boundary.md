@@ -13,8 +13,11 @@
 > landed repository truth. The workspace handoff commit `5bbff8dfd81125aae1fb608087894341f1aa8369`
 > added only the handoff prompt. It is material under investigation, not repository truth.
 >
-> **Final repository recheck:** `main` was still `0b82db0a49be483af3fed2415a0ad52e39a45f27` when this
-> report was completed. No drift.
+> **Final repository recheck:** research continuation on 2026-10-05 resolved live `main` to
+> `8c2ed14dccde0ca1dbb51e58c94ff19d822856a1`. The intervening coverage/build, test, and Storage changes
+> leave the cited Factory runtime implementation, Engine/runtime contracts, planning, and proving
+> cases unchanged. The classifications therefore still hold. This is a new report revision;
+> the earlier completed revision remains preserved in Git history.
 >
 > **Risk:** High, as the brief classifies it: major ownership, supported observable semantics, and
 > deterministic Engine behavior.
@@ -73,11 +76,14 @@ Out of scope, per the brief and handoff:
 
 ## Executive conclusion
 
-**1. Every in-scope item is currently owned by the Engine / Factory runtime.** No current supported
-result is owned by a consumer or by an analytics capability. Confidence: high. The basis is direct
+**1. The in-scope execution facts and supported performance results are currently owned by the
+Engine / Factory runtime.** Authored model facts and model fingerprints retain Factory ownership
+when projected; the runtime owns their faithful projection and observation coherence. The removed
+KPI package is historical only. No current in-scope supported performance result is owned by a
+consumer or by an analytics capability. Confidence: high. The basis is direct
 normative text (`engine-semantics.md` §1.1, §2 rule 3, §10, §10.1, §10.2; `runtime-contract.md`
-observation minimum; `overview.md` ownership tables), matching implementation, and 77 passing
-pinning tests run at the baseline.
+observation minimum; `overview.md` ownership tables), matching implementation, and 113 relevant
+passing test results, with execution and Gradle reuse distinguished below.
 
 **2. The ownership reasons differ, and only one in-scope derived quantity is decision-affecting.**
 
@@ -86,34 +92,37 @@ pinning tests run at the baseline.
 | **S** — projection of authoritative state/change | resource state, `activeJobIds`, `queueDepth`; order and job projections; pending work; observation metadata | They project authoritative runtime state, and the runtime contract requires them |
 | **D** — decision-affecting interpretation | `combinedQueueDepth` | Its exact arithmetic decides assignment. It is not exposed in any observation. Its ownership is not contestable under any candidate the brief names |
 | **R-obs** — report-only supported result, recomputable from the same fresh observation | `backlog`, `completedOrders`, `averageLeadTime`, `throughputPerTick` | Only because accepted contracts declare them supported Engine results whose arithmetic is part of the interpretation. None of them participates in any Engine decision |
-| **R-hist** — report-only supported accumulator carrying history a fresh observation cannot otherwise express | `busyTicks`, `completedSalesValue` | Same reason as R-obs. In addition, removing them would leave a late-joining consumer unable to know them without retained events |
+| **R-hist** — report-only supported accumulator carrying history a fresh observation cannot otherwise express | `busyTicks`, `completedSalesValue` | Same reason as R-obs. Removing them while retaining other projection shapes would lose general fresh-observation reconstruction unless additional evidence were supplied |
 | **M** — authored model facts echoed into the resource projection | `name`, `concurrency`, `capacityLiters`, `setupTime` | Owned by the Factory model, not the runtime. `setupTime` is not used by the runtime at all |
 
 For R-obs and R-hist, ownership follows from **support status, not decision participation**. That
 conditionality is the hinge Phase 2 must decide. The repository flags the same hinge itself
 (`docs/planning/spatial-runtime-consequences.md:147-173`).
 
-**3. Current contract text is internally inconsistent about "utilization."** "`busyTicks` /
+**3. Current contract text is ambiguous about "utilization."** "`busyTicks` /
 utilization" appears as a supported derived result in `engine-semantics.md:474`, `:505` and `:534`.
 "Utilization facts" appear in the runtime contract's Performance minimum
 (`runtime-contract.md:173`). Overview says `busyTicks` "reports cumulative utilization"
-(`overview.md:304`). **No Engine-produced utilization value exists.**
+(`overview.md:304`). **No normalized utilization ratio is produced by the current runtime.**
 
-- The only utilization computation in the repository is consumer-side, inside a test:
+- The normalized ratio used by the headless bottleneck acceptance case is consumer-side, inside a test:
   `busyTicks / elapsed` in `HeadlessClosureAcceptanceTest.java:461-469`.
 - That formula is falsified for `concurrency > 1` by the pinned research oracle: it gives
   36 / 26 ≈ 1.38 (`ProcessingOccupancyOracleTest.java:69-85`).
 - It also reads zero while a resource is fully occupied (`ProcessingOccupancyOracleTest.java:52-67`).
 
-This is the one current classification that is **genuinely contested by the repository's own
-text**, not merely held open for the future.
+This leaves a **genuinely contestable interpretation of the supported phrase "utilization facts"**:
+it may refer to processing-time inputs such as `busyTicks`, or suggest a further normalized result
+whose definition is absent. The accumulator's current owner and formula are clear. Phase 1 does
+not resolve the phrase by withdrawing its declared support or inventing a ratio.
 
 **4. Several further tensions do not change today's owner but do affect Phase 2:**
 
 - The `throughputPerTick` window is the runtime contract's observation clock, not the time a
   consumer advanced to. Its definition therefore spans two authorities.
-- The public `FactoryRuntime` KPI accessors sit outside `observe()`, and no contract names them.
-  Their support status is unstated.
+- The public `FactoryRuntime` KPI accessors sit outside `observe()`. Their individual method-level
+  support is not separately specified, although runtime documentation broadly promises read-only
+  projections. The underlying result semantics are clear; omission does not license removal.
 - No executable fixture was found for `combinedQueueDepth` exactness above the 32-bit range
   (`engine-semantics.md` §14 item 17). Exactness currently rests on the `long`-typed implementation.
 
@@ -214,8 +223,8 @@ All paths and line numbers are at the research baseline unless marked historical
   - The machine is `Busy` once any job starts and returns to `Idle` when none is active
     (`Machine.java:50`, `:67`). `Busy` therefore does not mean saturated.
   - Taking a machine offline while it has active jobs is rejected (`FactoryRuntime.java:211-214`).
-    So a started step is never interrupted, and the credited duration equals the step's actual
-    occupancy once it completes.
+    So a started step is never interrupted in the current supported execution. Before saturation,
+    its completion credit equals its processing duration; a saturated accumulator loses exact totals.
 - **Shared time arithmetic.** `SimTime.minus` floors at zero and `SimTime.plus` is unchecked
   (`product/types/.../SimTime.java:14-21`). Both implement Engine §10.1 rules 2 and 5 from the
   shared `types` module.
@@ -228,8 +237,17 @@ All paths and line numbers are at the research baseline unless marked historical
 
 ### Executable evidence exercised at the baseline
 
-Run in the `gradle:9-jdk21` Docker image against `product/` at the baseline: 77 tests, 0 failed,
-0 skipped.
+Verification used the documented `gradle:9-jdk21` Docker workflow and the repository's Gradle
+9.8.0 wrapper. The executed `C:/work/arcogine/product` tree at
+`e4f98a642ebf29cedf99307574a9ddfd920f6567` is byte-identical in Git to the report baseline's product
+tree (`git diff e4f98a6 0b82db0 -- product` is empty).
+
+Across two targeted invocations, **96 Factory tests executed and passed**. Gradle reported
+`:research-experiments:test` **UP-TO-DATE**; its existing XML results confirm **17 passing oracle
+tests**, zero failures/errors/skips. Thus 113 relevant results were validated, not 113 freshly
+executed tests. Both commands ended `BUILD SUCCESSFUL`; the only build notice was Gradle deprecation
+guidance. No full Java quality/coverage gate, new experimental harness, CI workflow, or independent
+adversarial review is claimed for this research-document change.
 
 | Test class | Tests | What it pins for this report |
 |---|---|---|
@@ -241,6 +259,32 @@ Run in the `gradle:9-jdk21` Docker image against `product/` at the baseline: 77 
 | `ProportionalQuantityWorkTest` | 13 | Order-level completion count, value, and lead time under quantity decomposition |
 | `ProcessingOccupancyOracleTest` | 10 | Proving cases 2 and 3 (below) |
 | `WaitingWorkByStepOracleTest` | 7 | Proving case 1 (below) |
+| `MachineStateTest` | 10 | Concurrency, state transitions, availability rejection and machine queue behavior |
+| `RuntimeEventDeliveryAcceptanceTest` | 13 | Observation/event cursor agreement, deterministic semantic events, rejection and applied-change boundaries |
+| `SessionControlAcceptanceTest` | 13 | Supported session controls and independently observable multi-eligible waiting |
+
+The exact Gradle task selections were:
+
+```text
+./gradlew :factory:test
+  --tests com.arcogine.factory.process.EngineDerivedResultConformanceTest
+  --tests com.arcogine.factory.process.EngineDispatchConformanceTest
+  --tests com.arcogine.factory.process.RuntimeObservationAcceptanceTest
+  --tests com.arcogine.factory.process.HeadlessClosureAcceptanceTest
+  --tests com.arcogine.factory.process.RuntimeEventDeliveryAcceptanceTest
+  --tests com.arcogine.factory.process.FactoryHandlerTest
+  --tests com.arcogine.factory.machines.MachineStateTest --no-daemon
+
+./gradlew :factory:test
+  --tests com.arcogine.factory.process.ProportionalQuantityWorkTest
+  --tests com.arcogine.factory.process.SessionControlAcceptanceTest
+  :research-experiments:test
+  --tests com.arcogine.research.experiment.ProcessingOccupancyOracleTest
+  --tests com.arcogine.research.experiment.WaitingWorkByStepOracleTest --no-daemon
+```
+
+Each selection was passed as one command via `docker run --rm`, mounting `product` at `/app`,
+using `/app` as working directory and `arcogine_gradle_cache:/root/.gradle` as documented.
 
 The research-experiments oracles are research-local derivations (`researching.md` §4,
 `overview.md:523`). Here they serve only as **counterexample evidence about the meaning of Engine
@@ -248,8 +292,9 @@ facts**. They are not candidate analytics definitions.
 
 ### Historical evidence
 
-The removed `com.arcogine.core.kpi` package was read at the parent of `cf67df8f` (#388, "prune
-legacy simulation substrate," 2026-09-24).
+The removed `com.arcogine.core.kpi` package was read at exact historical commit
+`2e13eb5fcf71823740453b1c80d0e792fa38a746`, parent of removal commit
+`cf67df8f28c5bf466960215e3f4552d509db58a4` (#388, "prune legacy simulation substrate," 2026-09-24).
 
 - **Shape.** `Kpi.compute(EventLog, SimTime)` returned `KpiValue(name, value, unit)` over the
   internal scheduler-event log.
@@ -258,13 +303,17 @@ legacy simulation substrate," 2026-09-24).
 - **`ThroughputRate`** counted internal `TaskEnd` events — **step completions** — over
   `max(1, currentTime)` ticks, with unit `task_completions/tick`. At the same revision,
   `FactoryHandler.throughput(elapsedTicks)` already computed **order** completions per tick, with a
-  zero window giving 0. Two incompatible "throughput" definitions coexisted under one name, in
-  different modules.
+  zero window giving 0. Distinct step- and order-throughput formulas coexisted in different modules;
+  the legacy KPI explicitly named itself `throughput_rate` with unit `task_completions/tick`.
+  This is evidence against assuming equivalent meaning from similar terminology, not proof of
+  ownerlessness or a conflicting shared contract.
 - **Removal.** #388 removed the package together with `EventLog` and `SimRunner`.
 
-`busyTicks` crediting arrived later as headless-acceptance work (#241); its comment records that
-`busyTicks` had previously been a constant zero. The §10.2 accumulator register was added with the
-provisional Engine-semantics reset (#405).
+`busyTicks` crediting landed on 2026-09-02 as headless-acceptance work (#241,
+`e468e826087b699c5bdca835db362bac706f079e`), before the KPI removal; its comment records that
+`busyTicks` had previously been a constant zero. The §10.2 accumulator register was added on
+2026-09-26 with the provisional Engine-semantics reset (#405,
+`0f89224b612ae564b411204957376303b16472f5`).
 
 ## Candidate classifications
 
@@ -273,7 +322,7 @@ boundary*:
 
 | Reading | Statement | Result |
 |---|---|---|
-| **K1 Placement** | Engine owns what Engine code computes | **Fails.** `SimTime` in `types` implements Engine rules. A consumer-side test computes the only "utilization" while the contract names utilization as Engine-supported. The historical generic `simulation`-module package computed a *different* throughput from the Factory one. Placement and ownership diverge in both directions |
+| **K1 Placement** | Engine owns what Engine code computes | **Fails.** `SimTime` in `types` implements Engine rules. A consumer-side test computes a normalized ratio while the contract's "utilization facts" wording does not define that ratio. The historical generic `simulation`-module package computed a *different* throughput from the Factory one. Placement alone supplies no ownership rule |
 | **K2 Derivability** | A derived value is analytics, not Engine | **Fails.** `combinedQueueDepth` is derived and decision-affecting. The five performance fields are derived and Engine-owned by normative text |
 | **K3 Supported-boundary** | A derived value's current owner follows from whether accepted contracts declare it a supported Engine result (§1.1 + §10.x + runtime contract), independent of decision participation | **Survives** as the description of the current boundary |
 | **K4 Decision-participation** | Engine owns only what affects acceptance, assignment, ordering, or timing | **Fails as a description of today**, because §10.1–§10.2 explicitly own report-only arithmetic. It is not falsified as a *prospective* rule. That is Phase 2 territory, and Phase 1 takes no position on it |
@@ -327,9 +376,12 @@ concurrency-2 resource (`StarterCorpus.java:49-50`).
 **Classification consequence.** The Engine-owned accumulator is *cumulative processing job-ticks
 credited at step completion*. It says nothing about current occupancy. The current-occupancy facts
 are the S-projections `state` and `activeJobIds`. Because offline-with-active-work is rejected, the
-credited total equals derived occupancy exactly once no step on that resource is unfinished. That
-is pinned for every resource at closing, and for the cutter mid-run
-(`ProcessingOccupancyOracleTest.java:87-105`).
+credited total equals processing job-ticks once no step on that resource is unfinished **and the
+accumulator has not saturated**. That bounded equality is pinned for every resource at this fixture's
+closing boundary, and for its cutter mid-run (`ProcessingOccupancyOracleTest.java:87-105`).
+`EngineDerivedResultConformanceTest.meanLeadTimeAndBusyTicksSaturateAtTheLongBoundary` supplies
+the contrasting case: two completed `Long.MAX_VALUE`-duration steps credit only `Long.MAX_VALUE`,
+not their mathematical sum. Neither case establishes a general utilization definition.
 
 ### PC3 — `concurrency > 1`, where cumulative processing ticks exceed elapsed time
 
@@ -345,13 +397,14 @@ Same fixture.
 
 - What the Engine owns is the accumulation rule only: saturating, completion-credited, summed
   across concurrent slots.
-- It does *not* own any normalization. A ratio needs a capacity denominator (concurrency ×
-  available time). The Engine defines no such denominator and produces no such ratio.
-- The overview and handler wording "utilization" therefore describes a value that does not exist
-  as an Engine result.
-- The one place that computes it (`HeadlessClosureAcceptanceTest.java:467-469`) uses the formula
-  this case falsifies. It does not falsify that test's bottleneck assertion, which compares
-  resources ordinally in a fixture where the comparison happens to hold.
+- No Engine-produced normalized ratio or denominator is defined here. The cited research oracle
+  uses concurrency times elapsed time for its continuously-online fixture; that research-local
+  denominator is not adopted as a general utilization formula.
+- The overview and handler wording can be misread as promising a normalized result. The concrete
+  accumulator rule, rather than that shorthand, determines what the runtime actually supplies.
+- The consumer ratio in `HeadlessClosureAcceptanceTest.java:467-469` fails as a bounded capacity
+  fraction in this concurrent case. It does not falsify that test's bottleneck assertion, which
+  compares resources ordinally in its particular fixture.
 - The name `busyTicks` is also imprecise for `concurrency > 1`. It counts job-ticks, not ticks
   during which the resource was `Busy`.
 
@@ -384,26 +437,30 @@ dedicated experiment.
 | `averageLeadTime` | Σ(`completedAt` − `createdAt`) ÷ count, with floor-at-zero subtraction and a saturating sum. The saturating sum of non-negative terms is order-independent |
 | `throughputPerTick` | `completedOrders ÷ metadata.currentTime`, with a zero window giving 0 |
 
-**Not recomputable from one fresh observation:**
+**Not generally recomputable from one fresh observation with the current record shapes:**
 
 - `completedSalesValue`. `OrderObservation` carries no unit price. Floating-point accumulation also
   depends on completion order, which `completedAt` cannot break when two completions share a time.
   It is reconstructible from `ORDER_COMPLETED` events in sequence order, but only if every one of
   them was retained.
-- `busyTicks`. It needs the `JOB_STEP_COMPLETED` history plus published step durations. The
-  occupancy oracle refuses when that history is incomplete
-  (`ProcessingOccupancyOracleTest.java:129-159`).
+- `busyTicks`. A fresh job projection does not generally retain each completed step's machine
+  assignment. Complete `JOB_STEP_COMPLETED` events plus published step durations can reconstruct
+  the completion credits under the same saturating rule. The occupancy oracle's missing-history
+  refusal (`ProcessingOccupancyOracleTest.java:129-159`) corroborates the separate history limitation,
+  but is not a dedicated test of recomputing this accumulator.
 
 **Consequence.** Removing an R-obs field loses no information a consumer could not recompute.
-Removing an R-hist field would leave late-joining consumers without it unless supported events are
-retained. That would trigger the separate evidence/provenance question, which is out of scope here.
+Removing an R-hist field while leaving the other projections unchanged would prevent general
+reconstruction by a late-joining consumer from that observation alone. Continuing to supply the
+result elsewhere would need additional evidence, such as retained supported events; its input and
+retention contract belongs to the separate evidence/provenance question, not to Phase 1.
 
 ### PC6 (added) — The "Engine computes it" argument fails in both directions
 
 This is the K1 evidence from the candidate table, stated as a case:
 
 - An Engine rule implemented outside the Engine module: `SimTime.minus` and `SimTime.plus`.
-- A contract-named Engine result computed only by a consumer: utilization.
+- A consumer-computed ratio not defined by the contract's generic "utilization facts" wording.
 - A generic-module "throughput" that measured something else: historical `ThroughputRate`.
 
 None of these placements tells you the owner.
@@ -415,7 +472,7 @@ Status labels:
 - **Clear** — the current owner is unambiguous and not under question.
 - **Clear, held open** — the current owner is unambiguous, but the repository explicitly holds
   future ownership open.
-- **Contested** — current text is internally inconsistent.
+- **Contested** — current support wording or scope admits materially different readings.
 
 Change category means what reclassifying the item would require: moving its defining arithmetic out
 of the Engine and/or removing it from the supported observation. Keeping formula, arithmetic,
@@ -426,7 +483,7 @@ accumulation, and conformance unchanged while moving code is always implementati
 | 1 | Resource `machineId`, `state`, `activeJobIds`, `queueDepth` | Factory runtime | S | Clear | Not a plausible candidate. A change to `queueDepth` meaning would be **both** (§10 bullet, runtime-contract Resources) |
 | 2 | Order and job projections | Factory runtime | S | Clear | Not a plausible candidate; runtime-contract |
 | 3 | `pendingWork` | Factory runtime | S | Clear | Not a plausible candidate; **both** (§1.2 + runtime contract) |
-| 4 | Metadata: `runId`, `modelFingerprint`, `currentTime`, `runState`, `latestEventSequence` | Runtime contract | S / provenance | Clear | Not a plausible candidate; runtime-contract |
+| 4 | Metadata: `runId`, `modelFingerprint`, `currentTime`, `runState`, `latestEventSequence` | Runtime owns correlation, time/state/cursor and projection coherence; Factory retains model-fingerprint meaning | S / provenance | Clear | A projection/support-only change is runtime-contract; changing time, run-state or result semantics also requires Engine-semantics change |
 | 5 | Resource `name`, `concurrency`, `capacityLiters`, `setupTime` | Factory model (echoed) | M | Clear | Removal would be a runtime-contract projection-shape change only. `setupTime` is not a runtime performance fact |
 | 6 | `backlog` | Engine | R-obs | Clear, held open | **Both**: §10 bullet and §10.2 row; runtime-contract Performance minimum |
 | 7 | `completedOrders` | Engine | R-obs | Clear, held open | **Both**: §10.2 rule 2; the implemented observation record and the overview description. It is not named in the contract's prose minimum |
@@ -434,9 +491,9 @@ accumulation, and conformance unchanged while moving code is always implementati
 | 9 | `averageLeadTime` | Engine | R-obs | Clear, held open | **Both**: §10.1 rules 2 and 4, §10.2 rule 1; runtime-contract lead-time |
 | 10 | `throughputPerTick` | Engine arithmetic over the runtime contract's observation clock | R-obs | Clear, held open; window spans two authorities | **Both**: §10.1 rule 3, §10.2 rule 2; runtime-contract throughput and observation-boundary coherence |
 | 11 | `busyTicks` | Engine | R-hist | Clear as an accumulator; **Contested** as described ("utilization") | **Both**: §10 bullet, §10.1 rule 1, §10.2 row; implemented resource projection and overview `:304`. A wording-only correction is a separate matter (Q1/Q2) |
-| 12 | "Utilization" as named by the contracts | **No current producer** | — | **Contested** | Phase 2 must decide whether it is an Engine result at all (Q1) |
-| 13 | `FactoryHandler.backlog()`, `avgLeadTime()`, `throughput(long)`, `completedSalesValue()`, `completedSales()` | Implementation of Engine-owned R rules | — | Clear; placement matches | Implementation-only to move or factor |
-| 14 | `FactoryRuntime` public pass-throughs of row 13 | Implementation surface; support status unstated | — | **Contested** (support status) | Runtime-contract if they are deemed supported; implementation-only if they are not (Q5) |
+| 12 | "Utilization facts" as named by the contracts | Engine supplies processing-time facts; no normalized ratio producer is defined | — | **Contested** interpretation of support wording | Phase 2 must distinguish clarification of existing facts from adding/removing a supported normalized result (Q1) |
+| 13 | `FactoryHandler.backlog()`, `avgLeadTime()`, `throughput(long)`, `completedSalesValue()`, `completedSales()` | Implementation of Engine-owned R rules | — | Clear; placement matches | Implementation-only to factor while preserving ownership; reclassifying the supported results or their arithmetic follows rows 6–10 (**both**) |
+| 14 | `FactoryRuntime` public pass-throughs of row 13 | Runtime operations over Engine-owned results | — | Method-level support not separately specified; underlying ownership clear | Code motion preserving behavior is implementation-only; removal/alteration needs API-support determination, and changed result meaning still requires semantic reconciliation (Q5) |
 | 15 | `combinedQueueDepth` | Engine | D | Clear | **Engine-semantics definition change only.** It is in no supported observation. Not an analytics candidate |
 | 16 | Former `com.arcogine.core.kpi.*` | None (removed) | Historical | n/a | Restoring it is a non-goal |
 
@@ -447,8 +504,11 @@ it matches; (5) executable evidence; (6) clear or contestable; (7) change catego
 
 ### `RuntimeObservation` state projections (rows 1–5)
 
-1. **Owner.** Rows 1–3 are owned by the Factory runtime under the Engine interpretation. Row 4 is
-   owned by the runtime contract. Row 5 is authored Factory-model content.
+1. **Owner.** Rows 1–3 project Factory runtime execution under the Engine interpretation, including
+   references to Factory-owned product/resource identities. The runtime owns row 4's correlation,
+   time/state/cursor and coherent projection; the copied fingerprint retains Factory provenance
+   meaning. Row 5 is authored Factory-model content. A contract document defines these obligations;
+   it is not itself a semantic owner.
 2. **Reason.** Required current-state projection of authoritative runtime state (S).
    - `queueDepth` is the machine's own strict-FIFO queue only (§2 rules 7–8).
    - `pendingWork` exists because §1.2 forbids a view in which every queue is empty while work is
@@ -466,7 +526,11 @@ it matches; (5) executable evidence; (6) clear or contestable; (7) change catego
 5. **Evidence.** `RuntimeObservationAcceptanceTest`, `HeadlessClosureAcceptanceTest`,
    `WaitingWorkByStepOracleTest` (PC1).
 6. **Status.** Clear.
-7. **Change category.** No plausible reclassification candidate. These are state, not analytics.
+7. **Change category.** For these state projections, removing or altering the supported projection
+   requires a runtime-contract change; changing authoritative transition, dispatch, time, or
+   aggregate meaning also changes Engine semantics. Factoring projection code while preserving
+   those responsibilities is implementation-only. Echoed authored facts do not transfer Factory
+   authority. These are not prospective analytics candidates in this phase.
 
 ### `backlog` (row 6)
 
@@ -552,19 +616,19 @@ it matches; (5) executable evidence; (6) clear or contestable; (7) change catego
    `overview.md:304`. The runtime contract does not name `busyTicks`. It names only "utilization
    facts."
 4. **Implementation.** `FactoryHandler.java:353-365`; `Machine.java:144-149`; `ResourceObservation`.
-   The accumulator matches the spec. The **descriptions do not**: "real utilization" in the handler
-   comment and "reports cumulative utilization" in `overview.md:304` are both falsified by PC2 and
-   PC3.
+   The accumulator matches the spec. The descriptions "real utilization" in the handler comment
+   and "reports cumulative utilization" in `overview.md:304` need qualification: PC2 and PC3
+   disprove interpreting this counter as instantaneous occupancy or a normalized capacity fraction.
 5. **Evidence.** `EngineDerivedResultConformanceTest:31-50`, `:72-82`;
    `ProcessingOccupancyOracleTest` (PC2, PC3).
-6. **Status.** Clear as an accumulator. **Contested** where the contracts treat it as, or as the
-   basis of, a supported "utilization" result: there is no producer, and the only consumer-side
-   formula fails PC3.
+6. **Status.** Clear as an accumulator and processing-time fact. **Contested** only where the
+   generic "utilization facts" language is read to require a normalized result; no such producer
+   is defined, and the headless test's ratio is not general for concurrent resources.
 7. **Change category.** Removing `busyTicks` or moving its accumulation out of the Engine is both.
    Correcting *descriptions* without touching the value is a text correction (§1.1 consequence 3),
-   with one exception. Removing "utilization" from the runtime contract's Performance minimum
-   narrows a supported contract, even though no implemented value changes. Phase 2 and the
-   reconciliation must classify that explicitly (Q1).
+   if it clarifies the existing processing-time facts. Removing an actual supported obligation
+   would instead narrow the runtime contract even without an implemented value change. Phase 2
+   must distinguish those actions explicitly rather than assume either reading (Q1).
 
 ### `FactoryHandler` aggregates and `FactoryRuntime` accessors (rows 13–14)
 
@@ -574,16 +638,21 @@ it matches; (5) executable evidence; (6) clear or contestable; (7) change catego
 2. **Reason.** Implementation of supported derived results. One accessor differs:
    `throughput(long)` takes a **caller-chosen** window, so it is a formula exposed as an operation
    rather than a projection.
-3. **Authority.** No architecture or contract text names these accessors. The runtime contract names
-   `observe()` as the current-state boundary (`runtime-contract.md:20-22`). The overview lists other
-   `FactoryRuntime` operations but not these (`overview.md:296-298`).
-4. **Implementation.** Matches for the handler. The runtime accessors' support status is undefined.
+3. **Authority.** The runtime contract names `observe()` as the current-state boundary
+   (`runtime-contract.md:20-22`). The overview (`:296`, `:308`) and `FactoryRuntime` class Javadoc
+   broadly describe supported runtime access and read-only projections without separately naming
+   these aggregate accessors. That omission does not establish they are unsupported.
+4. **Implementation.** Matches the Engine-owned arithmetic. Individual method-level support is not
+   separately specified, including the caller-selected denominator's relationship to observation time.
 5. **Evidence.** Conformance tests pin the arithmetic *through these accessors*, not through
    `observe()` (`EngineDerivedResultConformanceTest`, `FactoryHandlerTest`,
    `SessionControlAcceptanceTest:391-394`).
-6. **Status.** Clear for the handler. **Contested** support status for the runtime accessors.
-7. **Change category.** Moving the handler code is implementation-only. For the runtime accessors
-   it is runtime-contract if they are supported and implementation-only if they are not.
+6. **Status.** Underlying ownership is clear for both. Method-level support needs clarification only
+   if a prospective change would remove or alter the public accessors.
+7. **Change category.** Code motion preserving ownership and behavior is implementation-only.
+   Transferring ownership of the supported aggregate semantics follows rows 6–10. Removing/altering
+   a public accessor requires a separate API-support determination; documentation silence alone
+   is not permission to treat it as a private implementation detail.
 
 ### `combinedQueueDepth` (row 15)
 
@@ -607,40 +676,44 @@ Historical evidence only (see Repository evidence). It shows three things:
 1. a consumer-neutral-shaped derivation was attempted;
 2. it was derived from internal scheduler events, which the current runtime contract excludes as a
    supported source;
-3. with no single owner, one name ("throughput") carried two incompatible definitions.
+3. related throughput terminology denoted different declared units and formulas. That does not
+   establish a single ambiguous contract or missing ownership.
 
 It establishes nothing about the current boundary and is not a component to restore.
 
 ## Adversarial analysis
 
-**Self-administered only.** The same run that wrote these classifications also challenged them. This
-is not an independent adversarial review.
+**Self-administered only.** Author-side checks, including evidence verification by assisting agents,
+challenged these classifications. This is not an independent adversarial review.
 
 | Challenge | Result |
 |---|---|
 | R-obs/R-hist ownership is circular: Engine-owned because §10 says so | Partly upheld as a *qualification*, not a falsification. Phase 1 asks for the current owner under accepted contracts, and normative text is the authority. The ownership is real but conditional on support status. That is now stated explicitly, and it is the main Phase 2 input |
 | Some performance value secretly feeds a decision | Not found. Repository search shows `busyTicks` and the aggregates used only at crediting, the accessors, `observe()`, and tests. `selectMachine` reads none of them. Finance consumes `OrderCompleted`, not `completedSalesValue` |
 | The PC5 recomputability claims are wrong | Checked against record shapes and the pinned arithmetic. The `averageLeadTime` and `completedSalesValue` claims rest on field presence (`OrderObservation` has no price) and IEEE non-associativity. They are inference, not executed experiments; confidence is lowered accordingly |
-| "Contested" overstates a wording issue | Kept. The runtime contract's *minimum* names utilization facts, and engine-semantics §10.2 registers utilization as a supported result. A contract that names a value with no producer is a contract inconsistency, not a style issue |
+| "Contested" overstates a wording issue | Qualified. The minimum names utilization **facts**, which can mean processing-time inputs rather than a ratio. The accumulator is clear; the normalized-result interpretation remains unresolved. Absence of a ratio producer does not withdraw declared support |
 | A supported derived result was missed | Re-swept the observation records. `completedQuantity` and `complete` are aggregate state (S). `runState` is a run-state projection (S). `observedTime` is covered under row 4 and row 10. Nothing else |
-| Baseline staleness | `main` moved from `e4f98a6` (an earlier, interrupted session) to `0b82db0` before this run. The only diff was the research brief and register (the landed definition). A final recheck found no further movement |
+| Baseline staleness | The baseline `0b82db0` differs from initial `e4f98a6` only in the landed brief/register. Continuation rechecked `8c2ed14`: relevant implementation, contracts and proving cases are unchanged; the new job-lead-time test corroborates existing behavior |
+| Completed `busyTicks` always equals processing job-ticks | Qualified. Equality in the ordinary occupancy fixture requires no unfinished step and no saturation; the long-boundary conformance fixture disproves the unconditional claim |
 | Phase 1 smuggles a Phase 2 answer through K4 or the R-obs/R-hist split | K4 is rejected only *descriptively*. The split is offered as a change-consequence axis, and no item's future owner is chosen |
 
 ## Surviving invariants
 
-1. Every in-scope supported runtime fact and derived result is currently Engine / Factory-runtime
-   owned. No supported analytics-owned result exists today.
+1. In-scope execution facts and supported derived performance results are currently Engine /
+   Factory-runtime owned. Authored facts and fingerprint meaning remain Factory-owned when copied
+   into observations. No in-scope supported analytics-owned result exists today.
 2. Current contracts use "result-affecting" in two senses. In scope, only `combinedQueueDepth` is
    decision-affecting. The performance arithmetic is report-only.
 3. Report-only supported results are Engine-owned *because they are declared supported*. Their
    ownership is conditional on that support status.
 4. Implementation placement does not establish semantic ownership, in either direction.
 5. `busyTicks` is a saturating, completion-credited cumulative of authored step durations across
-   concurrent slots (job-ticks). It equals occupied job-ticks only when no step on that resource is
-   unfinished. It is neither instantaneous occupancy nor a utilization, and it can exceed elapsed
-   time.
-6. `queueDepth` covers a resource's own queue only. Multi-eligible waiting is visible only through
-   `pendingWork`. `combinedQueueDepth` counts each shared entry against every compatible candidate
+   concurrent slots (job-ticks). Exact equality to processing job-ticks also requires no unfinished
+   step and no saturation. It is neither instantaneous occupancy nor a normalized utilization ratio,
+   and it can exceed elapsed time.
+6. `queueDepth` covers a resource's own queue only. Multi-eligible waiting is projected separately
+   through `pendingWork`, with job status and events providing corroborating facts.
+   `combinedQueueDepth` counts each shared entry against every compatible candidate
    and is not a physical-queue measure.
 
 ## What did not survive
@@ -648,10 +721,11 @@ is not an independent adversarial review.
 - **K1 "Engine owns what Engine computes"** and **K2 "derived means analytics"** (PC4, PC6).
 - **K4 as a description of the current boundary.** It remains open as a prospective rule for
   Phase 2.
-- **"`busyTicks` reports utilization."** The wording in `overview.md:304` and in the handler comment
-  is falsified by PC2 and PC3.
-- **"Utilization is a supported Engine result."** No producer exists. The only formula in use fails
-  for `concurrency > 1`.
+- **"`busyTicks` itself is instantaneous occupancy or a normalized utilization ratio."** PC2 and
+  PC3 falsify those readings of the overview and handler shorthand.
+- **"A normalized utilization ratio is already defined and produced by Engine."** No such producer
+  was found in the runtime surface; the headless test ratio is not general for `concurrency > 1`.
+  This does not falsify the contract's declared support for utilization facts.
 - **"The removed generic KPI package was the same measurement in another place."** Its throughput
   counted step completions with a `max(1, t)` floor.
 
@@ -662,19 +736,22 @@ counter divided by elapsed time is not a utilization.* It is already durable as
 ## Confidence and limitations
 
 - **High:** current owner for every row; `busyTicks`, `combinedQueueDepth`, and `queueDepth`
-  semantics; the utilization inconsistency. These rest on normative text, code, and 77 passing
-  tests at the baseline.
+  semantics; the absence of a normalized runtime ratio. These rest on normative text, code, and the
+  113 passing results above, including the explicitly identified 17 reused results.
 - **Medium-high:** the R-obs/R-hist split and the change categories. PC5 is inference from record
   shapes and arithmetic, partly corroborated by the research oracles. No dedicated experiment
   recomputed each performance field from one observation.
-- **Not inspected or not available:**
+- **Required-surface coverage:** all required current in-scope repository surfaces were inspected;
+  no missing access blocked Phase 1. The following limits concern absent capability or bounded
+  executable evidence, not silently omitted required files:
   - No outward adapter exists, so there is no outward DTO to classify.
   - Spatial execution is not implemented, so the transfer-dependent clauses of §10 (admission load,
     in-flight jobs) are specified but unexecuted. They are a recheck trigger.
   - The §14 item 17 fixture (`combinedQueueDepth` above 32 bits) was not found by bounded search
     over `product/` for `combinedQueueDepth`, `Integer.MAX_VALUE`, "32-bit", and the dispatch
-    conformance test. The spec requires it, but it may be impractical to build as worded, since it
-    needs more than 2³¹ queued entries. This does not change any ownership classification.
+    conformance test. The spec requires the fixture. This bounded search establishes an evidence gap,
+    not that the fixture is infeasible or necessarily requires direct materialization of billions
+    of entries. It does not change any ownership classification.
   - No external evidence was used. No external source can change which Arcogine contract currently
     owns a value (stopping rule, `researching.md` §8). External bottleneck and utilization
     literature belongs to Phase 2.
@@ -683,23 +760,25 @@ counter divided by elapsed time is not a utilization.* It is already durable as
 
 Phase 2 must decide at least the following. Phase 1 does not resolve any of them.
 
-- **Q1 — Utilization.** Is "utilization" an Engine-supported derived result at all?
-  - If yes, which Engine-owned definition (capacity denominator, availability, and window)? That
-    would be a runtime-contract and Engine-semantics *addition*.
-  - If no, contract text must stop naming it. Phase 2 must state whether narrowing the runtime
-    contract's Performance minimum counts as a definition change when no implemented value changes.
+- **Q1 — Utilization wording and responsibility.** Does the current phrase mean the supplied
+  processing-time facts, or is a separately normalized result intended? Clarification that preserves
+  existing facts differs from adding or removing a supported result. Phase 2 must classify that
+  consequence and any future owner; Phase 1 selects no formula or normalization.
 - **Q2 — R-obs fields** (`backlog`, `completedOrders`, `averageLeadTime`, `throughputPerTick`).
   Do they remain Engine-owned supported results? Reclassification is both kinds of change, with no
   information loss to consumers.
 - **Q3 — R-hist accumulators** (`busyTicks`, `completedSalesValue`). Do they remain Engine-owned
   supported results?
-  - Reclassification is both kinds of change, and it removes fresh-observation sufficiency.
+  - Reclassification is both kinds of change. Removing the fields without replacement evidence
+    loses their current fresh-observation sufficiency.
   - `completedSalesValue` also touches the overview's ownership tables.
   - If either moved, the evidence/provenance question's trigger would fire.
-- **Q4 — The `throughputPerTick` window.** If throughput stays or moves, which document owns its
-  window: Engine semantics, or the runtime contract's observation-clock rule?
-- **Q5 — `FactoryRuntime` KPI accessors.** Are the public accessors outside `observe()` part of the
-  supported boundary? This includes the caller-windowed `throughput(long)`.
+- **Q4 — The `throughputPerTick` window.** How would any future ownership change preserve or
+  deliberately change its connection to the supported observation clock? Its current window and
+  owner are clear; formula and boundary-coherence responsibilities must not be split accidentally.
+- **Q5 — `FactoryRuntime` KPI accessors.** If a prospective reclassification would alter public
+  accessors outside `observe()`, what method-level support applies, including to caller-windowed
+  `throughput(long)`? Their underlying Engine-owned arithmetic is already established.
 - **Q6 — Ownership rule test.** Whatever ownership rule Phase 2 adopts must classify
   `combinedQueueDepth` as Engine-owned (D), and must classify PC1's step-first waiting attribution
   and PC3's occupancy derivation without requiring reconstruction of Engine choices. These are
@@ -751,7 +830,10 @@ Repository only, at the baseline unless stated:
   `.../factory/machines/{Machine,MachineView}.java`; `product/types/.../SimTime.java`
 - The tests listed under Executable evidence, plus `StarterCorpus.java` and
   `ThreeStepRoutingFamily.java`
-- Historical: `product/simulation/src/main/java/com/arcogine/core/kpi/*.java` at the parent of
-  `cf67df8f` (#388); `busyTicks` crediting provenance #241; accumulator register provenance #405
+- Historical: `product/simulation/src/main/java/com/arcogine/core/kpi/*.java` at
+  `2e13eb5fcf71823740453b1c80d0e792fa38a746`, before removal in
+  `cf67df8f28c5bf466960215e3f4552d509db58a4` (#388); `busyTicks` crediting in
+  `e468e826087b699c5bdca835db362bac706f079e` (#241); accumulator register in
+  `0f89224b612ae564b411204957376303b16472f5` (#405)
 
 No external sources.

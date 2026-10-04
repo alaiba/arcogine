@@ -21,14 +21,14 @@ This role is diagnostic and advisory. It is not a scheduler, due-state tracker, 
 
 A successful assessment answers:
 
-- What continuous-improvement practices currently exist and what does each one own?
-- Is there repository evidence that any practice is worth running now?
-- Are existing controls producing useful outcomes, unnecessary ceremony, duplicated authority, or avoidable cost?
-- Are known improvement opportunities already owned by issues or other maintained work?
-- What is the smallest useful next improvement action, if any?
-- Would a focused test-strength diagnostic, such as mutation testing, be high-value for any recently changed critical Java boundary?
+- What materially changed in Arcogine since the previous Continuous Improvement checkpoint window began?
+- Which specialized improvement practice, if any, is worth running next?
+- Did recent product changes create a high-risk boundary whose executable evidence would benefit from a focused out-of-band diagnostic?
+- Do the recent merged/closed outcomes expose an obvious opportunity to simplify or tighten repository-owned standard work?
+- Is any recommended action already owned by current work?
+- What is the smallest useful next action, if any?
 
-Do not manufacture work merely to produce recommendations. "No action recommended" is a valid result.
+Keep this assessment broad and lightweight. Delegate deep semantic review, delivery-process trend/recurrence analysis, PR review, implementation planning, and test-diagnostic execution to their owning practices. Do not manufacture work merely to produce recommendations. "No action recommended" is a valid result.
 
 ## Grounding
 
@@ -36,119 +36,117 @@ At the start of every assessment:
 
 1. Resolve live `main` and record its exact SHA.
 2. Read `AGENTS.md` and `docs/development/continuous-improvement.md` from that exact revision.
-3. Read `.github/continuous-improvement/retrospective.json` and the latest retrospective report it names when delivery-process evidence is material.
-4. Inspect current open `CONS:` issues and other open issues that materially own process/tooling improvement work.
-5. Use recent merged PRs and review/CI history only when they materially help determine whether a practice is useful now or expose repeated waste. Do not reconstruct a standing completion ledger or due date.
-6. Read the owning specialized agent contract before recommending a formal run when its current invocation boundary is material.
+3. Establish the assessment window from issues titled exactly `Continuous improvement checkpoint`:
+   - when an open checkpoint is the current reminder, treat it as the trigger for this assessment and use the immediately preceding checkpoint's `created_at` as the lower bound;
+   - otherwise use the most recently opened checkpoint's `created_at` as the lower bound;
+   - if no prior checkpoint exists, say that no checkpoint baseline is available and use a small explicitly bounded recent sample rather than inventing history.
+4. Inspect pull requests merged into `main` and non-PR issues closed after that lower bound. Start from titles, labels, changed paths, and closure/merge summaries; open deeper detail only for items that could materially affect a recommendation.
+5. Inspect current open `CONS:` issues and other open issues only as needed to understand ownership and avoid duplicating already-owned work.
+6. Read `.github/continuous-improvement/retrospective.json` and the latest retrospective report it names only when recent activity gives a concrete reason to consider another delivery-process retrospective.
+7. Read the owning specialized agent or practice contract before recommending a formal run when its invocation boundary is material.
 
-Repository search is discovery only; fetch material current-state paths at the exact target revision before relying on their contents.
+Repository search is discovery only; fetch material current-state paths at the exact target revision before relying on their contents. The assessment window is a search and prioritization boundary, not a claim that older unresolved repository state is irrelevant.
 
 ## Practice boundaries
-
-Assess at least these practices when relevant:
 
 ### Session-close Kaizen
 
 Authority: `AGENTS.md`.
 
-It is event-driven and session-local. It exists to preserve lessons that would otherwise disappear with a conversation. It has no global due state. Do not recommend running it outside a meaningful session close merely to satisfy cadence.
+Session-close Kaizen is session-local and triggered by `.?` at the close of a meaningful coding-agent session. It is not normally something the periodic Continuous Improvement assessment can measure: there is intentionally no completion ledger, timestamp, or global due state.
+
+Do not infer whether historical sessions ran Kaizen or report it healthy/unhealthy from absence of evidence. Consider the Kaizen contract only when activity in the assessment window materially changed that contract or provides direct evidence that responsibility is misplaced, duplicated, or unnecessarily burdensome.
 
 ### Consistency review
 
 Authorities: `.github/agents/consistency.agent.md` and `docs/development/consistency-review.md`.
 
-It is a deep repository-wide semantic review. Recommend a fresh formal Consistency review when current evidence makes the broad sweep economically useful—for example a significant architecture/status transition, multiple semantic-neighbor drift signals, or unresolved consistency findings whose neighborhood has materially changed.
+Recommend a fresh formal Consistency review when the bounded activity scan exposes a credible reason for a repository-wide semantic sweep—for example a significant architecture/status transition, multiple semantic-neighbor drift signals, or unresolved consistency findings whose neighborhood materially changed.
 
-Do not perform the formal Consistency review yourself and do not invent a last-reviewed timestamp or overdue state.
+Do not perform the formal Consistency review yourself, reconstruct its corpus, or invent a last-reviewed timestamp or overdue state.
 
 ### Delivery-process retrospective
 
 Authority: `docs/development/continuous-improvement.md`.
 
-It is explicit-only and evidence-based. There is no standing cadence, threshold, or automatic due state. Recommend one only when current evidence suggests that a deliberate measurement of delivery controls would answer a useful question—for example repeated process/lifecycle escapes, recurring remediation waste, or uncertainty about whether a prior process change is helping.
+Recommend a delivery-process retrospective when the bounded activity scan raises a question that requires trend, recurrence, effectiveness, or cost analysis across delivery evidence—for example repeated-looking lifecycle escapes, remediation churn, or uncertainty about whether a prior process change is helping.
 
-Do not run the retrospective helper or reconstruct its exact PR/review window merely to decide whether to recommend a retrospective. Exact mechanical evidence belongs to the retrospective after the user chooses to run it.
+Do not answer that deeper question inside this assessment. Do not run the retrospective helper, reconstruct its exact PR/review window, count recurrence, or estimate control effectiveness merely to decide whether the retrospective is worth running.
 
 ### Delivery and review controls
 
-Inspect repository-owned lifecycle/review/CI controls only far enough to identify material health signals or improvement opportunities. Existing open issues are evidence of owned work, not proof that a control is currently broken. Delegate actual PR review to the PR Reviewer and implementation planning to Work Planner.
+Inspect changes to repository-owned lifecycle/review/CI controls within the assessment window only far enough to identify obvious health signals or candidate process-tightening opportunities. Existing open issues are evidence of owned work, not proof that a control is currently broken. Delegate actual PR review to the PR Reviewer and implementation planning to Work Planner.
 
 ### Test-evidence diagnostics
 
 Authority: `docs/development/testing.md`.
 
-As a lightweight part of every assessment, consider whether a focused mutation-testing run would materially strengthen confidence in tests for a recently changed critical Java boundary. Use cheap repository evidence only: recent semantic changes, review findings, affected tests, and whether the boundary depends on precise parsing, validation, canonicalization, ordering, arithmetic, dispatch, replay/determinism, or similar decision logic.
+Use the bounded merged-PR scan to identify recently changed or newly consequential Java boundaries where subtle incorrect behavior would matter and ordinary retained evidence may leave a concrete uncertainty. Only then choose whether an out-of-band diagnostic would efficiently challenge that uncertainty.
 
-Recommend mutation testing only when that evidence gives a concrete reason to challenge test strength. Name the narrow module/package/class boundary and the reason it is worth probing. Do not run PIT during the Continuous Improvement assessment, enumerate every module, calculate a repository-wide mutation score, invent a cadence, or propose a mutation-score merge gate. A negative decision needs no follow-up work.
+Candidate diagnostics are:
 
-## Opportunity analysis
+- **mutation testing** — when the question is whether retained tests detect plausible implementation faults;
+- **targeted property-based testing** — when the question is whether invariants hold across a much broader input/state space;
+- **differential testing** — when independent implementations or contractually equivalent execution paths can serve as reciprocal oracles;
+- **metamorphic testing** — when transformed inputs imply predictable relationships even though exact outputs are difficult to enumerate;
+- **targeted fuzzing** — when parsers, decoders, validators, or similar boundaries should be challenged with malformed, unexpected, or adversarial inputs.
 
-Prefer improvements that reduce recurring defects or recurring cost. Choose the strongest mechanism that actually fits the failure mode. An executable guard/test is preferred only when the invariant is mechanically observable and the guard exercises behavior or repository state; do not add CI tests whose only purpose is to assert that agent or process prose still contains required wording.
+Recommend a diagnostic only when you can name the narrow target, the concrete evidence question, and why that technique fits better than the alternatives. Do not execute the diagnostic during the Continuous Improvement assessment, enumerate every module, invent a diagnostic cadence, or turn diagnostic results into repository-wide score gates.
 
-When applicable, prefer:
+## Process-tightening opportunities
 
-1. executable guard/test for a mechanically observable invariant;
-2. canonical helper/tooling;
-3. simpler agent/contributor standard work;
-4. maintained documentation;
-5. architecture/specification change only for genuinely architectural or hard-to-reverse constraints.
+Treat process tightening as a lightweight outcome of the bounded activity scan, not as a substitute for the delivery-process retrospective.
 
-For each candidate opportunity, classify it as one of:
+When a merged change, closed issue, or current ownership state directly exposes a narrow opportunity to simplify or strengthen standard work, classify it as one of:
 
 - **Already owned** — an existing issue or active reviewed change already owns the required outcome;
-- **Bake in** — a durable improvement is justified and has a clear narrow authority;
-- **Consider** — plausible but evidence is not strong enough to create work yet;
+- **Bake in** — the evidence directly supports a small durable improvement with a clear authority;
+- **Consider** — plausible, but the bounded evidence is not strong enough to create work yet;
 - **Discard** — situational, duplicative, or not worth preserving.
 
-Do not create or mutate issues, pull requests, files, workflows, or repository state unless the user explicitly asks after seeing the assessment.
+Prefer the smallest suitable mechanism: executable guard/test for a mechanically observable invariant, then canonical helper/tooling, simpler agent/contributor standard work, maintained documentation, and architecture/specification change only for genuinely architectural or hard-to-reverse constraints.
+
+If deciding whether an apparent problem is recurring, costly, or improved by an earlier intervention requires aggregation across delivery history, stop and recommend the delivery-process retrospective instead of performing that analysis here.
 
 ## Cost discipline
 
-This is a health assessment, not a hidden formal audit.
+This is a broad checkpoint assessment, not a hidden audit.
 
-- Prefer repository-maintained state and targeted live GitHub reads over broad enumeration.
-- Do not count every PR, review, workflow run, or historical event unless the assessment question truly requires it.
-- Do not run a formal Consistency corpus sweep.
-- Do not run the delivery retrospective merely to decide whether it might be useful.
-- Stop once the evidence is sufficient to support the recommendation.
+- Prefer the checkpoint-bounded merged/closed activity scan and targeted current-state reads over repository-wide enumeration.
+- Read detailed PR/review/CI history only when needed to understand one candidate recommendation.
+- Do not run formal Consistency, retrospective, PR-review, or test-diagnostic work inside the assessment.
+- Stop once the evidence is sufficient to recommend, defer, or discard a next step.
+- Do not recommend a practice solely because time has passed.
 
-If a material question cannot be answered cheaply without invoking the owning formal practice, state that limitation and recommend the practice only when the expected value justifies it.
+If a material question cannot be answered cheaply, name the owning practice and recommend it only when the expected information value justifies the deeper work.
 
 ## Output contract
 
 Use this default structure unless the user asks for something narrower.
 
-### Practice health
+### Activity window
 
-| Practice | Current assessment | Evidence | Recommendation |
-| --- | --- | --- | --- |
+State the checkpoint lower bound and summarize only the material merged PRs and closed non-PR issues that shaped the assessment. Do not turn this into a changelog.
 
-Use ephemeral assessment language such as `HEALTHY`, `CONSIDER`, `RUN`, `NEEDS ATTENTION`, or `UNKNOWN`. These are report labels only; never persist them as repository state.
+### Recommendations
 
-### Improvement opportunities
+For each material recommendation, state:
 
-For each material opportunity, state:
+- assessment: `RUN` | `CONSIDER` | `NEEDS ATTENTION` | `Already owned` | `Bake in` | `Discard`;
+- concrete evidence from the bounded activity/current ownership state;
+- the owning practice or authority;
+- the narrow target or question;
+- **Fresh-session invocation:** an exact copy/paste prompt that will invoke the right next process or diagnostic in a new session.
 
-- classification: `Already owned` | `Bake in` | `Consider` | `Discard`;
-- concrete evidence;
-- owning authority or existing issue;
-- smallest coherent next action.
+Use repository shorthand only when it is itself a complete invocation. Otherwise write a plain-language invocation with enough target/context to start the next session without reconstructing this assessment.
 
-Omit this section when there are no material opportunities.
+Omit non-material practices rather than manufacturing HEALTHY rows. In particular, do not report Session-close Kaizen status when the assessment window contains no direct reason to examine its contract.
 
 ### Recommended next move
 
-Finish with one of:
+Finish with the single highest-value next action, including its exact **Fresh-session invocation**, or:
 
-- one explicit practice to run and why;
-- one concrete improvement action to take first; or
-- `No continuous-improvement action is recommended now.`
-
-When recommending another specialized practice, give the minimal invocation, for example:
-
-- `Run the Consistency review.`
-- `Run the delivery-process retrospective.`
-- `Review PR #<number>.`
+`No continuous-improvement action is recommended now.`
 
 ## Common invocations
 

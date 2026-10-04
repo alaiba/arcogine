@@ -76,7 +76,7 @@ Repository evidence is authoritative over prior chat/session context and agent m
 | What do research lifecycle/status labels and priorities mean? | `docs/development/researching.md` |
 | What implementation work is admitted, sequenced, partial, deferred, blocked, or explicitly non-goal? | applicable `docs/planning/` documents |
 | What has landed/currently exists? | live `main` plus merged PR/commit history |
-| What is in progress? | live open PR state, including submitted reviews, review threads, CI, and mergeability |
+| What is in progress? | implementation/delivery: live open PR state, including submitted reviews, review threads, CI, and mergeability; research execution: known exact research handoffs plus semantically matching temporary research-evidence workspace branches, which are custody evidence rather than landed state |
 | What is this open PR intended to accomplish? | PR description reconciled with current planning and prerequisites |
 | What commands, modules, builds, or CI behavior exist? | executable scripts/configuration and `AGENTS.md` |
 | How should coding agents operate? | `AGENTS.md` |
@@ -96,11 +96,12 @@ At the start of every planning run:
 5. Read `docs/architecture/overview.md` when the decision crosses modules, domains, or architecture boundaries.
 6. Extract the main initiative, gate, capability, or domain keywords from the user's request and perform a quick repository search under `docs/` for them.
 7. Read `docs/development/researching.md` for research lifecycle/priority semantics and `docs/research/research-register.md` for current portfolio state; read any linked research artifact when the question concerns unresolved meaning or a planning dependency on research, and keep research state separate from implementation readiness.
-8. Read the maintained planning document(s), directly relevant architecture and specification documents, and applicable unresolved design proposals.
-9. Inspect all open PRs relevant to the decision.
-10. Inspect recent merged PRs far enough back to understand what just landed and whether maintained planning or research status may have changed.
-11. For each relevant open PR, inspect the current head/base, description, mergeability/conflicts, CI/check status, submitted reviews, and unresolved review threads/findings where available.
-12. Record any required repository, PR, review, or CI surface that could not be inspected.
+8. Before recommending that a `READY` research question be started, check whether execution is already in custody: use any exact research handoff coordinates available in context, search repository branches semantically for a matching temporary research-evidence workspace, and inspect a plausible match for `workspace/research/` reports/handoffs before treating the question as idle. A workspace is in-progress evidence, not landed truth. If execution state cannot be determined reliably, say so rather than inferring from `READY`; when a continuation handoff is available, route the next action through that existing custody instead of starting a parallel investigation.
+9. Read the maintained planning document(s), directly relevant architecture and specification documents, and applicable unresolved design proposals.
+10. Inspect all open PRs relevant to the decision.
+11. Inspect recent merged PRs far enough back to understand what just landed and whether maintained planning or research status may have changed.
+12. For each relevant open PR, inspect the current head/base, description, mergeability/conflicts, CI/check status, submitted reviews, and unresolved review threads/findings where available.
+13. Record any required repository, PR, review, CI, or research-custody surface that could not be inspected.
 
 Never assume a PR number, gate status, or dependency from previous conversation context. Re-check it.
 
@@ -121,7 +122,7 @@ Classify material work before recommending it:
 - `DEFERRED` — intentionally postponed by maintained planning.
 - `OPTIONAL_DEBT` — useful cleanup/refinement that is not currently on the critical path.
 
-Research uses its own lifecycle, defined by `docs/development/researching.md`: `CANDIDATE`, `READY`, `ACTIVE`, `CONCLUDED`, or `SUPERSEDED`. Current question state lives in `docs/research/research-register.md`. Research priority is portfolio guidance, not delivery commitment. A `READY` research item means its question is ready for investigation; it does not mean implementation is ready. Do not translate research status into planning status, and classify an implementation slice as dependency-blocked when its contract still depends on an unresolved research question.
+Research uses its own lifecycle, defined by `docs/development/researching.md`: `CANDIDATE`, `READY`, `CONCLUDED`, or `SUPERSEDED`. Current question state lives in `docs/research/research-register.md`. Research priority is portfolio guidance, not delivery commitment. A `READY` research item is admitted and unresolved; it may not have started yet, may be under investigation, or may be awaiting required review/reconciliation. It does not mean implementation is ready. Do not translate research status into planning status, and classify an implementation slice as dependency-blocked when its contract still depends on an unresolved research question.
 
 If an open PR changes a planning status, state both realities explicitly:
 

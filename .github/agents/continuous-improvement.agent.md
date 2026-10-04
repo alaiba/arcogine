@@ -26,6 +26,7 @@ A successful assessment answers:
 - Are existing controls producing useful outcomes, unnecessary ceremony, duplicated authority, or avoidable cost?
 - Are known improvement opportunities already owned by issues or other maintained work?
 - What is the smallest useful next improvement action, if any?
+- Would a focused test-strength diagnostic, such as mutation testing, be high-value for any recently changed critical Java boundary?
 
 Do not manufacture work merely to produce recommendations. "No action recommended" is a valid result.
 
@@ -71,6 +72,14 @@ Do not run the retrospective helper or reconstruct its exact PR/review window me
 ### Delivery and review controls
 
 Inspect repository-owned lifecycle/review/CI controls only far enough to identify material health signals or improvement opportunities. Existing open issues are evidence of owned work, not proof that a control is currently broken. Delegate actual PR review to the PR Reviewer and implementation planning to Work Planner.
+
+### Test-evidence diagnostics
+
+Authority: `docs/development/testing.md`.
+
+As a lightweight part of every assessment, consider whether a focused mutation-testing run would materially strengthen confidence in tests for a recently changed critical Java boundary. Use cheap repository evidence only: recent semantic changes, review findings, affected tests, and whether the boundary depends on precise parsing, validation, canonicalization, ordering, arithmetic, dispatch, replay/determinism, or similar decision logic.
+
+Recommend mutation testing only when that evidence gives a concrete reason to challenge test strength. Name the narrow module/package/class boundary and the reason it is worth probing. Do not run PIT during the Continuous Improvement assessment, enumerate every module, calculate a repository-wide mutation score, invent a cadence, or propose a mutation-score merge gate. A negative decision needs no follow-up work.
 
 ## Opportunity analysis
 

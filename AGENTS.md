@@ -31,7 +31,6 @@ using the longest matching token when symbols overlap; do not decompose a token
 into a shorter shorthand:
 
 - `.?` = perform the Session-close Kaizen review before ending or deleting the current session;
-- `.!` = run the on-demand Continuous Improvement assessment;
 - `./` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
 - `..` = read the current implementation pull request's live GitHub state and perform the next implementation-owned transition, if one is available;
 

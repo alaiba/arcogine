@@ -175,6 +175,55 @@ class BuiltInStorageTest {
     }
 
     @Test
+    void failedRevisionWritePreservesArtifactSharedWithAcceptedHistory() throws IOException {
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision first = authorityAt(ACCEPTED_AT).accept(
+                revision(id(75), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+        Map<String, String> before = contents(store());
+        ControlledRevision candidate = revision(id(76), version.fingerprint(), List.of(first.id()), ACCEPTED_AT);
+        ControlledRevisionAuthority failing = FileArcogineStorage.open(
+                store(), FACTORY_VERIFIER, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC),
+                (source, target) -> {
+                    if (target.getFileName().toString().endsWith(".revision")) {
+                        throw new IOException("test revision write failure");
+                    }
+                    Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+                });
+
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> failing.accept(candidate, artifact(version)));
+        assertEquals(STORAGE_INTEGRITY, failure.code());
+        assertEquals(before, contents(store()));
+        assertEquals(first, authority().resolve(first.id()).revision());
+        assertTrue(authority().findById(candidate.id()).isEmpty());
+
+        ControlledRevision retried = authorityAt(ACCEPTED_AT).accept(candidate, artifact(version));
+        assertEquals(List.of(first.id()), retried.parentRevisionIds());
+        assertEquals(1, regularFiles(store().resolve("artifacts")).size());
+    }
+
+    @Test
+    void failedMarkerWriteLeavesAnUnownedRootThatCannotBeAdopted() throws IOException {
+        Path root = tempDirectory.resolve("failed-marker-write");
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> FileArcogineStorage.open(
+                        root, FACTORY_VERIFIER, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC),
+                        (source, target) -> {
+                            throw new IOException("test marker write failure");
+                        }));
+        assertEquals(STORAGE_INTEGRITY, failure.code());
+        assertTrue(Files.isDirectory(root));
+        assertFalse(Files.exists(root.resolve("proving-store")));
+        assertTrue(contents(root).keySet().stream().noneMatch(path -> path.contains(".pending-")));
+        Map<String, String> before = contents(root);
+
+        GovernanceHistoryException reopen = assertThrows(GovernanceHistoryException.class,
+                () -> BuiltInStorage.open(root, FACTORY_VERIFIER));
+        assertEquals(UNSUPPORTED_STORE, reopen.code());
+        assertEquals(before, contents(root));
+    }
+
+    @Test
     void absentRevisionAndMissingSharedArtifactAreDistinctFailures() throws IOException {
         ControlledRevisionAuthority authority = authority();
         GovernanceHistoryException absent = assertThrows(GovernanceHistoryException.class,
@@ -266,6 +315,13 @@ class BuiltInStorageTest {
         assertEquals(FINGERPRINT_MISMATCH, failure.code());
         assertArrayEquals(changed, Files.readAllBytes(artifactFile));
         assertEquals(accepted, authority.findById(accepted.id()).orElseThrow());
+
+        ControlledRevision later = revision(id(79), version.fingerprint(), List.of(), ACCEPTED_AT);
+        GovernanceHistoryException noOverwrite = assertThrows(GovernanceHistoryException.class,
+                () -> authority.accept(later, artifact(version)));
+        assertEquals(STORAGE_INTEGRITY, noOverwrite.code());
+        assertArrayEquals(changed, Files.readAllBytes(artifactFile));
+        assertEquals(List.of(accepted), authority.revisions());
     }
 
     @Test
@@ -429,6 +485,38 @@ class BuiltInStorageTest {
                 () -> authority.accept(rebound, artifact(secondVersion)));
         assertEquals(DUPLICATE_REVISION_ID, reboundFailure.code());
         assertEquals(acceptedFirst, authority.resolve(first.id()).revision());
+    }
+
+    @Test
+    void revisionIdAlsoBindsParentsAndRecorderButNotCandidateTimestamp() {
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevisionAuthority authority = authorityAt(ACCEPTED_AT);
+        ControlledRevision parent = authority.accept(
+                revision(id(77), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+        ControlledRevision original = revision(
+                id(78), version.fingerprint(), List.of(), ACCEPTED_AT, RECORDER);
+        ControlledRevision accepted = authority.accept(original, artifact(version));
+        ControlledRevision differentParent = revision(
+                original.id(), version.fingerprint(), List.of(parent.id()), ACCEPTED_AT, RECORDER);
+        ControlledRevision differentRecorder = revision(
+                original.id(), version.fingerprint(), List.of(), ACCEPTED_AT,
+                new RevisionRecorder("import-service", "operator-17"));
+
+        for (ControlledRevision rebound : List.of(differentParent, differentRecorder)) {
+            GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                    () -> authority.accept(rebound, artifact(version)));
+            assertEquals(DUPLICATE_REVISION_ID, failure.code());
+            assertTrue(failure.getMessage().contains("bound to different immutable content"));
+        }
+        ControlledRevision timestampOnly = revision(
+                original.id(), version.fingerprint(), List.of(),
+                Instant.parse("1999-01-01T00:00:00Z"), RECORDER);
+        GovernanceHistoryException duplicate = assertThrows(GovernanceHistoryException.class,
+                () -> authority.accept(timestampOnly, artifact(version)));
+        assertEquals(DUPLICATE_REVISION_ID, duplicate.code());
+        assertTrue(duplicate.getMessage().contains("already accepted"));
+        assertEquals(accepted, authority().resolve(original.id()).revision());
+        assertEquals(List.of(parent, accepted), authority().revisions());
     }
 
     @Test

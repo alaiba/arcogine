@@ -42,6 +42,7 @@ class JournalEntryTest {
     @Test
     void entryWithNoPostingsIsRejected() {
         assertThrows(SimError.OutOfRange.class, () -> new JournalEntry(SimTime.ZERO, "empty", List.of()));
+        assertThrows(SimError.OutOfRange.class, () -> new JournalEntry(SimTime.ZERO, "missing", null));
     }
 
     @Test

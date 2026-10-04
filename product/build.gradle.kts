@@ -1,3 +1,9 @@
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.testing.Test
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     java
     jacoco
@@ -74,5 +80,56 @@ subprojects {
                         )
                     }
             }
+    }
+}
+
+// Every executable module has the same 90% LINE floor. Include execution data
+// from all Java test suites in each module's report and gate, because downstream
+// tests can prove upstream behavior. JaCoCo matches that data to this module's
+// classes, so unrelated tests do not alter its coverage ratio.
+gradle.projectsEvaluated {
+    val allTests = subprojects.map { it.tasks.named<Test>("test") }
+    val executionFiles = allTests.map { test ->
+        test.map { it.extensions.getByType<JacocoTaskExtension>().destinationFile }
+    }
+    subprojects.forEach { module ->
+        val main = module.extensions.getByType<SourceSetContainer>().getByName("main")
+        if (!main.allJava.isEmpty) {
+            val moduleTest = module.tasks.named<Test>("test")
+            val verifyCoverageEvidence = module.tasks.register("verifyCoverageEvidence") {
+                dependsOn(moduleTest)
+                doLast {
+                    check(!moduleTest.get().state.noSource) {
+                        "${module.path} coverage gate requires test sources."
+                    }
+                    val executionData = moduleTest.get()
+                        .extensions.getByType<JacocoTaskExtension>().destinationFile
+                    check(executionData != null && executionData.isFile && executionData.length() > 0L) {
+                        "${module.path} coverage gate requires JaCoCo execution data from its test task."
+                    }
+                }
+            }
+            module.tasks.named<JacocoReport>("jacocoTestReport") {
+                dependsOn(allTests)
+                executionData.setFrom(executionFiles)
+                classDirectories.setFrom(main.output.classesDirs)
+            }
+            module.tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+                dependsOn(allTests, verifyCoverageEvidence)
+                executionData.setFrom(executionFiles)
+                classDirectories.setFrom(main.output.classesDirs)
+                violationRules {
+                    rule {
+                        limit {
+                            counter = "LINE"
+                            minimum = "0.90".toBigDecimal()
+                        }
+                    }
+                }
+            }
+            module.tasks.named("check") {
+                dependsOn(module.tasks.named("jacocoTestCoverageVerification"))
+            }
+        }
     }
 }

@@ -12,6 +12,7 @@ import com.arcogine.factory.process.RuntimeEventType;
 import com.arcogine.factory.process.RuntimeObservation;
 import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
 import com.arcogine.types.SimTime;
+import com.arcogine.types.OrderId;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -74,6 +75,25 @@ class CompletionTickOracleTest {
         IllegalStateException failure =
                 assertThrows(IllegalStateException.class, () -> CompletionTickOracle.completionTick(disagreeing));
         assertTrue(failure.getMessage().contains("has no single-order completion tick"), failure.getMessage());
+    }
+
+    @Test
+    void aClosingObservationForAnotherOrderIsRefused() {
+        RuntimeObservation closing = evidence.observation(ExperimentEvidence.CLOSING_LABEL);
+        OrderObservation order = closing.orders().getFirst();
+        OrderObservation other = new OrderObservation(
+                new OrderId(order.orderId().value() + 1), order.productId(), order.requestedQuantity(),
+                order.releasedQuantity(), order.completedQuantity(), order.createdAt(),
+                order.completedAt(), order.complete());
+        ExperimentEvidence mismatched = TamperedEvidence.withObservation(
+                evidence, ExperimentEvidence.CLOSING_LABEL,
+                new RuntimeObservation(closing.metadata(), closing.resources(), List.of(other),
+                        closing.jobs(), closing.pendingWork(), closing.performance()));
+
+        OracleOutcome.Underdetermined<Long> refused =
+                assertUnderdetermined(new CompletionTickOracle().evaluateOn(mismatched));
+        assertTrue(refused.reasons().getFirst().contains("does not report exactly the accepted order"),
+                refused.toString());
     }
 
     @Test

@@ -28,6 +28,13 @@ final class TamperedEvidence {
                 evidence.window());
     }
 
+    static ExperimentEvidence withCommands(
+            ExperimentEvidence evidence, List<ExperimentEvidence.CommandRecord> commands) {
+        return new ExperimentEvidence(
+                evidence.fixtureId(), evidence.publishedModel(), evidence.modelFingerprint(),
+                evidence.script(), commands, evidence.observations(), evidence.retainedEvents(), evidence.window());
+    }
+
     static ExperimentEvidence withObservation(
             ExperimentEvidence evidence, String label, RuntimeObservation replacement) {
         Map<String, RuntimeObservation> observations = new LinkedHashMap<>(evidence.observations());

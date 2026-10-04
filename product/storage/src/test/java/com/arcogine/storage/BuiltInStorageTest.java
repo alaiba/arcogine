@@ -38,8 +38,10 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -55,6 +57,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -139,6 +142,39 @@ class BuiltInStorageTest {
     }
 
     @Test
+    void failedAtomicRevisionWriteLeavesNoRevisionOrOrphanArtifact() throws IOException {
+        FactoryModelVersion version = version("Widget", 5);
+        for (boolean unsupportedAtomicMove : List.of(false, true)) {
+            Path root = tempDirectory.resolve("atomic-revision-failure-" + unsupportedAtomicMove);
+            ControlledRevisionAuthority failing = FileArcogineStorage.open(
+                    root, FACTORY_VERIFIER, Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC),
+                    (source, target) -> {
+                        if (target.getFileName().toString().endsWith(".revision")) {
+                            if (unsupportedAtomicMove) {
+                                throw new AtomicMoveNotSupportedException(
+                                        source.toString(), target.toString(), "test filesystem");
+                            }
+                            throw new IOException("test write failure");
+                        }
+                        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+                    });
+            ControlledRevision candidate = revision(id(74), version.fingerprint(), List.of(), ACCEPTED_AT);
+
+            GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                    () -> failing.accept(candidate, artifact(version)));
+            assertEquals(STORAGE_INTEGRITY, failure.code());
+            assertTrue(failing.revisions().isEmpty());
+            assertTrue(regularFiles(root.resolve("artifacts")).isEmpty());
+            assertTrue(regularFiles(root.resolve("revisions")).isEmpty());
+            assertTrue(contents(root).keySet().stream().noneMatch(path -> path.contains(".pending-")));
+
+            ControlledRevisionAuthority reopened = BuiltInStorage.open(root, FACTORY_VERIFIER).controlledRevisions();
+            assertEquals(candidate.id(), reopened.accept(candidate, artifact(version)).id());
+            assertEquals(candidate.id(), reopened.resolve(candidate.id()).revision().id());
+        }
+    }
+
+    @Test
     void absentRevisionAndMissingSharedArtifactAreDistinctFailures() throws IOException {
         ControlledRevisionAuthority authority = authority();
         GovernanceHistoryException absent = assertThrows(GovernanceHistoryException.class,
@@ -212,6 +248,64 @@ class BuiltInStorageTest {
     }
 
     @Test
+    void changedStoredArtifactBytesAreRefusedWithoutRewritingHistory() throws IOException {
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevisionAuthority authority = authority();
+        ControlledRevision accepted = authority.accept(
+                revision(id(50), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+        Path artifactFile = onlyRegularFile(store().resolve("artifacts"));
+        byte[] changed = Files.readAllBytes(artifactFile);
+        byte[] replacement = FactoryModelArtifact.encode(version("Widget", 6));
+        assertEquals(FactoryModelArtifact.encode(version).length, replacement.length);
+        System.arraycopy(replacement, 0, changed, changed.length - replacement.length, replacement.length);
+        Files.write(artifactFile, changed);
+
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> authority.resolve(accepted.id()));
+
+        assertEquals(FINGERPRINT_MISMATCH, failure.code());
+        assertArrayEquals(changed, Files.readAllBytes(artifactFile));
+        assertEquals(accepted, authority.findById(accepted.id()).orElseThrow());
+    }
+
+    @Test
+    void verifierFailureDuringResolutionFailsClosedWithoutChangingStoredBytes() throws IOException {
+        AtomicBoolean failVerification = new AtomicBoolean();
+        SemanticArtifactVerifier verifier = new SemanticArtifactVerifier() {
+            @Override
+            public boolean supports(ModelFingerprint fingerprint) {
+                return FACTORY_VERIFIER.supports(fingerprint);
+            }
+
+            @Override
+            public ModelFingerprint fingerprint(byte[] canonicalBytes) {
+                if (failVerification.get()) {
+                    throw new IllegalStateException("definition unavailable");
+                }
+                return FACTORY_VERIFIER.fingerprint(canonicalBytes);
+            }
+
+            @Override
+            public String definitionBinding() {
+                return FACTORY_VERIFIER.definitionBinding();
+            }
+        };
+        Path root = tempDirectory.resolve("verifier-failure");
+        ControlledRevisionAuthority authority = BuiltInStorage.open(root, verifier).controlledRevisions();
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision accepted = authority.accept(
+                revision(id(51), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+        Map<String, String> before = contents(root);
+        failVerification.set(true);
+
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> authority.resolve(accepted.id()));
+
+        assertEquals(STORAGE_INTEGRITY, failure.code());
+        assertEquals(before, contents(root));
+    }
+
+    @Test
     void malformedRevisionFilenameAndParentCountFailExplicitly() throws IOException {
         ControlledRevisionAuthority authority = authority();
         Path revisions = store().resolve("revisions");
@@ -237,6 +331,44 @@ class BuiltInStorageTest {
         GovernanceHistoryException badParentCount = assertThrows(GovernanceHistoryException.class,
                 () -> authority.resolve(accepted.id()));
         assertEquals(STORAGE_INTEGRITY, badParentCount.code());
+    }
+
+    @Test
+    void revisionRecordWithAnotherIdentityIsNotResolvedUnderItsFilename() throws IOException {
+        ControlledRevisionAuthority authority = authority();
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision accepted = authority.accept(
+                revision(id(52), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+        Path record = onlyRegularFile(store().resolve("revisions"));
+        byte[] changed = Files.readAllBytes(record);
+        int idStart = "arcogine-proving-revision\0".getBytes(StandardCharsets.US_ASCII).length
+                + Integer.BYTES;
+        byte[] anotherId = id(53).toString().getBytes(StandardCharsets.US_ASCII);
+        System.arraycopy(anotherId, 0, changed, idStart, anotherId.length);
+        Files.write(record, changed);
+
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> authority.resolve(accepted.id()));
+
+        assertEquals(STORAGE_INTEGRITY, failure.code());
+        assertArrayEquals(changed, Files.readAllBytes(record));
+    }
+
+    @Test
+    void truncatedRecorderTextIsNotAcceptedAsRecoveredHistory() throws IOException {
+        ControlledRevisionAuthority authority = authority();
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision accepted = authority.accept(
+                revision(id(54), version.fingerprint(), List.of(), ACCEPTED_AT), artifact(version));
+        Path record = onlyRegularFile(store().resolve("revisions"));
+        byte[] truncated = Arrays.copyOf(Files.readAllBytes(record), (int) Files.size(record) - 1);
+        Files.write(record, truncated);
+
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> authority.resolve(accepted.id()));
+
+        assertEquals(STORAGE_INTEGRITY, failure.code());
+        assertArrayEquals(truncated, Files.readAllBytes(record));
     }
 
     @Test

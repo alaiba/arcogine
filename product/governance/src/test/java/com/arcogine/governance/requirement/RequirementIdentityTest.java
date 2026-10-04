@@ -82,6 +82,9 @@ class RequirementIdentityTest {
         assertEquals(requirement, sameIdAndVersionDifferentWording);
         assertEquals(requirement.hashCode(), sameIdAndVersionDifferentWording.hashCode());
         assertNotEquals(requirement, differentVersion);
+        assertNotEquals(requirement, new Requirement(new RequirementId("arc.test.other"),
+                requirement.version(), "title", "", ArcogineNativeRequirementSource.unspecified(),
+                RequirementScope.empty()));
         assertNotEquals(requirement, "not a requirement");
         assertEquals("", requirement.description());
         assertTrue(requirement.isArcogineNative());
@@ -100,6 +103,15 @@ class RequirementIdentityTest {
                                 "",
                                 ArcogineNativeRequirementSource.unspecified(),
                                 RequirementScope.empty()));
+    }
+
+    @Test
+    void requirementIdentityAndVersionRejectInvalidValuesAndSortNumerically() {
+        assertThrows(IllegalArgumentException.class, () -> new RequirementId(" "));
+        assertThrows(IllegalArgumentException.class, () -> new RequirementVersion(0));
+        assertTrue(new RequirementVersion(2).compareTo(new RequirementVersion(10)) < 0);
+        assertEquals("v2", new RequirementVersion(2).toString());
+        assertEquals("arc.test.example", new RequirementId("arc.test.example").toString());
     }
 
     private static ModelFingerprint fingerprint(String suffix) {

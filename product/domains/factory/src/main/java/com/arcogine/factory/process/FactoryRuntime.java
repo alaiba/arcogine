@@ -666,8 +666,7 @@ public class FactoryRuntime {
                 .toList();
         List<JobObservation> jobs = jobsView()
                 .sorted(Comparator.comparing((JobView view) -> view.orderId().value())
-                        .thenComparingLong(JobView::ordinalWithinOrder)
-                        .thenComparing(view -> view.id().value()))
+                        .thenComparingLong(JobView::ordinalWithinOrder))
                 .map(view -> new JobObservation(
                         view.id(),
                         view.orderId(),

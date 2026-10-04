@@ -2,6 +2,7 @@ package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
@@ -92,6 +93,28 @@ class FactoryHandlerTest {
         assertEquals(1, h.productIds.size());
         assertEquals(0.0, h.completedSalesValue());
         assertEquals(0, h.completedSales());
+    }
+
+    @Test
+    void emptyRoutingIsRefusedBeforeCreatingOrderOrJob() {
+        RoutingStore routings = new RoutingStore();
+        routings.addRouting(new Routing(1, "Empty", List.of()));
+        routings.addProductRouting(new ProductId(1), 1);
+        FactoryHandler handler = new FactoryHandler(new MachineStore(), routings, List.of(new ProductId(1)));
+        Scheduler scheduler = new Scheduler();
+
+        assertThrows(com.arcogine.types.SimError.InvalidStateTransition.class,
+                () -> handler.handleEvent(orderEvent(0, 1), scheduler));
+        assertEquals(0, handler.ordersView().count());
+        assertEquals(0, handler.jobsView().count());
+        assertTrue(scheduler.isEmpty());
+    }
+
+    @Test
+    void machineLookupRejectsAnUnknownIdentity() {
+        FactoryHandler handler = oneMachineOneProduct();
+        assertThrows(com.arcogine.types.SimError.UnknownId.class,
+                () -> handler.machines.get(new MachineId(99)));
     }
 
     @Test

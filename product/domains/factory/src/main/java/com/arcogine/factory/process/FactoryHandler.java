@@ -28,7 +28,6 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -196,9 +195,7 @@ public class FactoryHandler implements EventHandler {
             ProductId productId = job.productId();
             Routing routing = routings.getRoutingForProduct(productId);
             int routingIndex = stepIndex % routing.stepCount();
-            RoutingStep step = routing.getStep(routingIndex)
-                    .orElseThrow(() -> new SimError.Other(
-                            "step index " + routingIndex + " out of range for job " + jobId));
+            RoutingStep step = routing.steps().get(routingIndex);
 
             Machine m = machines.getMut(machineId);
             m.startJob(jobId);
@@ -281,10 +278,13 @@ public class FactoryHandler implements EventHandler {
         }
         Routing routing = routings.getRoutingForProduct(productId);
         int stepsPerUnit = routing.stepCount();
-        // Guard by division, not multiplication: multiplying stepsPerUnit * quantity first (even
-        // widened to long) can itself overflow for a large long quantity (e.g. Long.MAX_VALUE),
-        // silently wrapping past this check. Dividing Integer.MAX_VALUE by stepsPerUnit instead
-        // never overflows, so the comparison is exact for the full long range of quantity.
+        if (stepsPerUnit == 0) {
+            throw new SimError.InvalidStateTransition("routing " + routing.id() + " has no steps");
+        }
+        // Bound child materialization before mutating stores or scheduling events. Compare the
+        // requested quantity directly with the supported limit: multiplying by step count
+        // could overflow before a limit check and accidentally admit excessive work. This
+        // direct comparison is exact across the full long range of requested quantity.
         final long materializationLimit = 100_000L;
         if (quantity > materializationLimit) {
             throw new SimError.OutOfRange(
@@ -292,27 +292,20 @@ public class FactoryHandler implements EventHandler {
                     "quantity " + quantity + " exceeds supported child materialization limit " + materializationLimit);
         }
 
-        // Determine the immediate-dispatch outcome for step 0, if any, before mutating any store.
+        // Determine the immediate-dispatch outcome for step 0 before mutating any store.
         // In particular, this validates that scheduling the resulting TaskEnd would actually
         // succeed (SimTime.plus can silently overflow for a pathologically large but validly
         // published step duration, which Scheduler.schedule would otherwise reject with
         // EventOrderingViolation) -- so that failure is caught here, before any Order/Job/Machine
         // exists, rather than after they do. A rejected submitOrder call must never leave partial
         // mutation; see FactoryRuntime#submitWorkload.
-        Optional<RoutingStep> firstStepOpt = routing.getStep(0);
-        MachineId selectedMachineId = null;
-        Set<MachineId> eligible = null;
-        SimTime immediateEndTime = null;
-        if (firstStepOpt.isPresent()) {
-            RoutingStep firstStep = firstStepOpt.get();
-            eligible = firstStep.eligibleMachines();
-            selectedMachineId = selectMachine(eligible);
-            if (machines.getMut(selectedMachineId).canAcceptJob()) {
-                SimTime endTime = currentTime.plus(firstStep.duration());
-                if (endTime.compareTo(currentTime) < 0) {
-                    throw new SimError.EventOrderingViolation(currentTime, endTime);
-                }
-                immediateEndTime = endTime;
+        RoutingStep firstStep = routing.steps().getFirst();
+        Set<MachineId> eligible = firstStep.eligibleMachines();
+        MachineId selectedMachineId = selectMachine(eligible);
+        if (machines.getMut(selectedMachineId).canAcceptJob()) {
+            SimTime endTime = currentTime.plus(firstStep.duration());
+            if (endTime.compareTo(currentTime) < 0) {
+                throw new SimError.EventOrderingViolation(currentTime, endTime);
             }
         }
 
@@ -320,19 +313,17 @@ public class FactoryHandler implements EventHandler {
         Order order = orders.get(orderId);
         for (long ordinal = 0; ordinal < quantity; ordinal++) {
             JobId jobId = jobs.createJob(order, ordinal, stepsPerUnit, currentTime);
-            if (firstStepOpt.isPresent()) {
-                // Re-select for every child: each preceding placement changes queue/active state.
-                MachineId machineId = selectMachine(eligible);
-                Machine machine = machines.getMut(machineId);
-                if (machine.canAcceptJob()) {
-                    machine.startJob(jobId);
-                    jobs.get(jobId).start(machineId);
-                    scheduler.schedule(Event.of(currentTime.plus(firstStepOpt.get().duration()), new EventPayload.TaskEnd(jobId, machineId, 0)));
-                } else if (eligible.size() > 1) {
-                    pendingMultiEligible.addLast(new PendingDispatch(jobId, eligible, 0, firstStepOpt.get().duration()));
-                } else {
-                    machine.enqueueJob(jobId);
-                }
+            // Re-select for every child: each preceding placement changes queue/active state.
+            MachineId machineId = selectMachine(eligible);
+            Machine machine = machines.getMut(machineId);
+            if (machine.canAcceptJob()) {
+                machine.startJob(jobId);
+                jobs.get(jobId).start(machineId);
+                scheduler.schedule(Event.of(currentTime.plus(firstStep.duration()), new EventPayload.TaskEnd(jobId, machineId, 0)));
+            } else if (eligible.size() > 1) {
+                pendingMultiEligible.addLast(new PendingDispatch(jobId, eligible, 0, firstStep.duration()));
+            } else {
+                machine.enqueueJob(jobId);
             }
         }
 

@@ -11,7 +11,7 @@ dependencies {
     // The corpus tests compare authored designs through Factory's semantic comparator, whose
     // result types belong to Governance; the reusable substrate itself never needs them.
     testImplementation(project(":governance"))
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.5.1")
+    testImplementation("com.tngtech.archunit:archunit:1.5.1")
 }
 
 // Opt-in: compile and run experiment sources kept outside the tracked tree as additional tests of

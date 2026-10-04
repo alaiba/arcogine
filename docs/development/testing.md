@@ -132,6 +132,8 @@ The Factory Engine tests verify that equivalent fresh runtimes given the same mo
 
 The shared evidence guard requires each covered module's own test task to have test sources and produce nonempty JaCoCo execution data, so a module cannot pass vacuously after its tests disappear. The test-only proof modules (`challenge-factory-integration-test`, `architecture-conformance-test`) have no Java main sources to cover and do not receive the gate. CI uploads the per-module `jacocoTestReport.xml` files to Codecov. The percentage is a regression backstop; tests should still prove invariants, failures, and observable behavior rather than merely execute lines.
 
+CI also prints each module's combined LINE and BRANCH percentages in the Java job summary. Run `node .github/scripts/report-java-coverage.mjs` after generating the reports to see the same table locally. BRANCH has no threshold: use it to find untested decisions in code under review, then inspect the behavior and assertions before adding tests. JaCoCo does not count exception handling as branches, so recovery and failure behavior still needs explicit review. The Continuous Improvement assessment may use this summary when test effectiveness is a material question; it does not create a separate coverage review cadence.
+
 ### 7. Benchmarks (JMH)
 
 `cd product && ./gradlew :simulation:jmh` — runs the retained scheduler throughput microbenchmarks (schedule / dequeue / interleaved over 1000 events) in `simulation`. Benchmarks are **on-demand** (not a CI gate). ASM is pinned explicitly for JMH bytecode generation; benchmark sources use the same Java 21 release compatibility as the rest of the build, regardless of whether the build JDK is 21 or a supported newer JDK.

@@ -100,6 +100,9 @@ jobs:
         run: ./gradlew --no-daemon compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification
         working-directory: product
 
+      - name: Summarize Java line and branch coverage
+        run: node .github/scripts/report-java-coverage.mjs
+
       - name: Upload Java coverage to Codecov
         if: always()
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1

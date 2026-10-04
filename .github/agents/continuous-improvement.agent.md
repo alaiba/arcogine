@@ -72,6 +72,8 @@ Do not run the retrospective helper or reconstruct its exact PR/review window me
 
 Inspect repository-owned lifecycle/review/CI controls only far enough to identify material health signals or improvement opportunities. Existing open issues are evidence of owned work, not proof that a control is currently broken. Delegate actual PR review to the PR Reviewer and implementation planning to Work Planner.
 
+When test effectiveness is material, use the Java CI job's per-module BRANCH summary as a locator for unexercised decisions. Check the relevant behavior and assertions before recommending tests; a low percentage alone is not an intervention or a reason to add a new gate. The summary is a review signal, with its mechanics owned by `docs/development/testing.md`.
+
 ## Opportunity analysis
 
 Prefer improvements that reduce recurring defects or recurring cost. Choose the strongest mechanism that actually fits the failure mode. An executable guard/test is preferred only when the invariant is mechanically observable and the guard exercises behavior or repository state; do not add CI tests whose only purpose is to assert that agent or process prose still contains required wording.

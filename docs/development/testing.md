@@ -168,7 +168,7 @@ A relative directory resolves against the directory Gradle is invoked from. The 
 
 ### 11. On-demand test-evidence diagnostics
 
-These techniques are occasional, focused ways to challenge the strength of executable evidence around a critical boundary. They are not contribution gates, standing CI jobs, or recurring score programs. Start from a concrete uncertainty and select the technique whose failure model best answers it.
+These techniques are occasional, focused ways to challenge executable evidence around a critical boundary. They are not contribution gates, standing CI jobs, or recurring score programs. Start from a concrete uncertainty and choose the technique that most directly tests it.
 
 | Diagnostic | Evidence question | Typical Arcogine targets |
 | --- | --- | --- |
@@ -184,7 +184,7 @@ Mutation testing deliberately alters compiled production behavior with small pla
 
 Differential testing requires a legitimate comparison oracle: two implementations or execution paths must actually be expected to agree on the compared contract. Metamorphic testing instead derives an oracle from relations between transformed inputs and outputs. Targeted fuzzing should likewise be bounded by explicit safety/contract properties rather than treating "did not crash" as sufficient evidence.
 
-The Continuous Improvement assessment may recommend one of these diagnostics after its bounded merged-activity scan identifies a recently changed or newly consequential high-risk boundary and a concrete uncertainty in the ordinary retained evidence. The assessment names the target, the evidence question, why the chosen technique fits, and an exact fresh-session invocation; it does not execute the diagnostic.
+The Continuous Improvement assessment may recommend one of these diagnostics when its bounded merged-activity scan identifies a recently changed or newly consequential high-risk boundary and a concrete gap in confidence. The recommendation names the target, evidence question, technique rationale, and exact fresh-session invocation; the assessment does not execute the diagnostic.
 
 Do not establish repository-wide mutation scores, fuzzing quotas, generated-case counts, standing diagnostic cadence, or new merge gates from these techniques. If a focused run exposes a real missing proving case, strengthen the ordinary retained test suite. Retain recurring diagnostic tooling/configuration only when repeated use demonstrates enough value to justify its maintenance cost.
 

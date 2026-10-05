@@ -103,6 +103,14 @@ class JobRoutingTest {
     }
 
     @Test
+    void repeatedStartOnTheSameMachineKeepsTheRunningAssignment() {
+        Job job = new Job(new JobId(1), order(1, 1, 0, 12.0), 0, 1, new SimTime(0));
+        job.start(new MachineId(1));
+        job.start(new MachineId(1));
+        assertEquals(new MachineId(1), job.currentMachine());
+    }
+
+    @Test
     void cannotCompleteStepWhenQueued() {
         Job job = new Job(new JobId(1), order(1, 10, 0, 12.0), 0, 2, new SimTime(0));
         assertEquals(JobStatus.Queued, job.status());
@@ -117,6 +125,23 @@ class JobRoutingTest {
         JobId id1 = store.createJob(order(1, 10, 0, 12.0), 0, 2, new SimTime(0));
         JobId id2 = store.createJob(order(2, 5, 1, 20.0), 0, 2, new SimTime(1));
         assertNotEquals(id1, id2);
+    }
+
+    @Test
+    void activeJobsIncludeQueuedAndRunningButExcludeCompleted() {
+        JobStore store = new JobStore();
+        Order order = order(1, 3, 0, 12.0);
+        JobId queued = store.createJob(order, 0, 1, new SimTime(0));
+        JobId running = store.createJob(order, 1, 1, new SimTime(0));
+        JobId completed = store.createJob(order, 2, 1, new SimTime(0));
+        store.get(running).start(new MachineId(1));
+        store.get(completed).start(new MachineId(1));
+        store.get(completed).completeStep(new SimTime(5));
+
+        assertEquals(List.of(queued, running), store.activeJobs().map(Job::id).toList());
+        assertEquals(List.of(completed), store.completedJobs().map(Job::id).toList());
+        assertEquals(3, store.allJobs().count());
+        assertThrows(SimError.UnknownId.class, () -> store.get(new JobId(99)));
     }
 
     @Test

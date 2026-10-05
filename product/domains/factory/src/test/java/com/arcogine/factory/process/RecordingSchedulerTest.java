@@ -93,4 +93,21 @@ class RecordingSchedulerTest {
                 "a fresh capture window must not inherit anything from a prior command's window");
         assertFalse(secondCapture.contains(first));
     }
+
+    @Test
+    void internalMarkersDoNotCountAsPendingAuthoritativeWork() {
+        RecordingScheduler scheduler = new RecordingScheduler();
+        assertEquals(true, RecordingScheduler.changesAuthoritativeState(Event.of(
+                SimTime.of(0), new EventPayload.OrderCreation(new com.arcogine.types.ProductId(1), 1, 1.0))));
+        Event marker = Event.of(SimTime.of(1),
+                new EventPayload.TaskStart(new com.arcogine.types.JobId(1), new MachineId(1), 0));
+        scheduler.schedule(marker);
+        assertFalse(scheduler.hasPendingAuthoritativeWork());
+        scheduler.schedule(eventAt(2));
+        assertEquals(true, scheduler.hasPendingAuthoritativeWork());
+        assertEquals(marker, scheduler.nextEvent().orElseThrow());
+        assertEquals(true, scheduler.hasPendingAuthoritativeWork());
+        scheduler.nextEvent();
+        assertFalse(scheduler.hasPendingAuthoritativeWork());
+    }
 }

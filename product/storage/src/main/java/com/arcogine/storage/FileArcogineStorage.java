@@ -50,6 +50,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Private filesystem realization of Arcogine's built-in controlled-revision storage.
@@ -100,6 +101,7 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
     private final SemanticArtifactVerifier verifier;
     private final Clock clock;
     private final AtomicMover atomicMover;
+    private final FileOperations files;
     private final byte[] storeMarker;
 
     @FunctionalInterface
@@ -107,11 +109,40 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         void move(Path source, Path target) throws IOException;
     }
 
-    private FileArcogineStorage(Path root, SemanticArtifactVerifier verifier, Clock clock, AtomicMover atomicMover) {
+    /** Package-local filesystem seam for deterministic failure-isolation tests. */
+    static class FileOperations {
+        void createDirectories(Path path) throws IOException {
+            Files.createDirectories(path);
+        }
+
+        void createDirectory(Path path) throws IOException {
+            Files.createDirectory(path);
+        }
+
+        byte[] readAllBytes(Path path) throws IOException {
+            return Files.readAllBytes(path);
+        }
+
+        Stream<Path> list(Path path) throws IOException {
+            return Files.list(path);
+        }
+
+        boolean deleteIfExists(Path path) throws IOException {
+            return Files.deleteIfExists(path);
+        }
+
+        MessageDigest digest(String algorithm) throws NoSuchAlgorithmException {
+            return MessageDigest.getInstance(algorithm);
+        }
+    }
+
+    private FileArcogineStorage(Path root, SemanticArtifactVerifier verifier, Clock clock,
+            AtomicMover atomicMover, FileOperations files) {
         authorityRoot = Objects.requireNonNull(root, "root").toAbsolutePath().normalize();
         this.verifier = Objects.requireNonNull(verifier, "verifier");
         this.clock = Objects.requireNonNull(clock, "clock");
         this.atomicMover = Objects.requireNonNull(atomicMover, "atomicMover");
+        this.files = Objects.requireNonNull(files, "files");
         revisionsDirectory = authorityRoot.resolve("revisions");
         artifactsDirectory = authorityRoot.resolve("artifacts");
         lockFile = authorityRoot.resolve(LOCK_FILE);
@@ -141,7 +172,12 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
     /** Package-local fault seam for proving failed atomic persistence without filesystem assumptions. */
     static FileArcogineStorage open(
             Path root, SemanticArtifactVerifier verifier, Clock clock, AtomicMover atomicMover) {
-        FileArcogineStorage authority = new FileArcogineStorage(root, verifier, clock, atomicMover);
+        return open(root, verifier, clock, atomicMover, new FileOperations());
+    }
+
+    static FileArcogineStorage open(Path root, SemanticArtifactVerifier verifier, Clock clock,
+            AtomicMover atomicMover, FileOperations files) {
+        FileArcogineStorage authority = new FileArcogineStorage(root, verifier, clock, atomicMover, files);
         // Ownership is never inferred from what an existing directory contains: the store owns a
         // location only because this opener created it atomically, or because it already carries
         // this definition's marker. An existing location is locked only through the lock file its
@@ -179,13 +215,13 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         try {
             Path parent = authorityRoot.getParent();
             if (parent != null) {
-                Files.createDirectories(parent);
+                files.createDirectories(parent);
             }
         } catch (IOException e) {
             throw storageFailure("cannot create the parent of controlled revision storage", e);
         }
         try {
-            Files.createDirectory(authorityRoot);
+            files.createDirectory(authorityRoot);
             return true;
         } catch (FileAlreadyExistsException e) {
             return false;
@@ -203,7 +239,7 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         if (!Files.isRegularFile(marker)) {
             throw unsupportedStore();
         }
-        byte[] actual = Files.readAllBytes(marker);
+        byte[] actual = files.readAllBytes(marker);
         if (!Arrays.equals(storeMarker, actual)) {
             if (startsWith(actual, LEGACY_STORE_MARKER)) {
                 throw earlierTextEncoding();
@@ -307,7 +343,7 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
 
     private List<ControlledRevision> revisionsLocked() {
         List<ControlledRevision> revisions = new ArrayList<>();
-        try (var paths = Files.list(revisionsDirectory)) {
+        try (var paths = files.list(revisionsDirectory)) {
             for (Path path : paths.filter(Files::isRegularFile).sorted().toList()) {
                 if (!path.getFileName().toString().endsWith(".revision")) {
                     continue;
@@ -378,7 +414,7 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         } catch (RuntimeException e) {
             if (artifactCreated && !Files.exists(revisionPath)) {
                 try {
-                    Files.deleteIfExists(artifactPath);
+                    files.deleteIfExists(artifactPath);
                 } catch (IOException cleanupFailure) {
                     e.addSuppressed(cleanupFailure);
                 }
@@ -397,8 +433,8 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
 
     private static boolean sameCandidateBinding(
             ControlledRevision existing, ControlledRevision candidate) {
-        return existing.id().equals(candidate.id())
-                && existing.modelFingerprint().equals(candidate.modelFingerprint())
+        // readRevision already verified the record ID against candidate.id() in its path.
+        return existing.modelFingerprint().equals(candidate.modelFingerprint())
                 && existing.parentRevisionIds().equals(candidate.parentRevisionIds())
                 && existing.provenance().recorder().equals(candidate.provenance().recorder());
     }
@@ -459,7 +495,7 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
 
     private ControlledRevision readRevision(Path path, ControlledRevisionId expectedId) {
         try {
-            byte[] encoded = Files.readAllBytes(path);
+            byte[] encoded = files.readAllBytes(path);
             try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(encoded))) {
                 requireMagic(input, REVISION_MAGIC);
                 ControlledRevisionId id = ControlledRevisionId.parse(readString(input));
@@ -483,16 +519,13 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
                         id, fingerprint, parents, new RevisionProvenance(recordedAt, recorder));
             }
         } catch (IOException | RuntimeException e) {
-            if (e instanceof GovernanceHistoryException governanceFailure) {
-                throw governanceFailure;
-            }
             throw storageFailure("cannot decode revision record " + expectedId, e);
         }
     }
 
     private SemanticArtifact readArtifact(Path path, ModelFingerprint expectedFingerprint) {
         try {
-            byte[] encoded = Files.readAllBytes(path);
+            byte[] encoded = files.readAllBytes(path);
             try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(encoded))) {
                 requireMagic(input, ARTIFACT_MAGIC);
                 ModelFingerprint fingerprint = readFingerprint(input);
@@ -512,9 +545,6 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
                 return new SemanticArtifact(fingerprint, canonicalBytes);
             }
         } catch (IOException | RuntimeException e) {
-            if (e instanceof GovernanceHistoryException governanceFailure) {
-                throw governanceFailure;
-            }
             throw storageFailure("cannot decode semantic artifact " + expectedFingerprint, e);
         }
     }
@@ -580,7 +610,7 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         } finally {
             if (temporary != null) {
                 try {
-                    Files.deleteIfExists(temporary);
+                    files.deleteIfExists(temporary);
                 } catch (IOException ignored) {
                     // A failed temporary-file cleanup never changes authoritative history.
                 }
@@ -600,7 +630,7 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         byte[] identity = encode(output -> writeFingerprint(output, fingerprint));
         try {
             return HexFormat.of()
-                    .formatHex(MessageDigest.getInstance("SHA-256").digest(identity));
+                    .formatHex(files.digest("SHA-256").digest(identity));
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
@@ -613,13 +643,11 @@ final class FileArcogineStorage implements ArcogineStorage, ControlledRevisionAu
         });
     }
 
+    @SuppressWarnings("try") // The lock's lifetime is the scope; close releases it.
     private <T> T withExclusiveLock(boolean createLockFile, CheckedSupplier<T> action) {
         synchronized (PROCESS_LOCK) {
             try (FileChannel channel = openLockFile(createLockFile);
                     FileLock lock = channel.lock()) {
-                if (!lock.isValid()) {
-                    throw new IllegalStateException("controlled revision authority lock is invalid");
-                }
                 return action.get();
             } catch (GovernanceHistoryException e) {
                 throw e;

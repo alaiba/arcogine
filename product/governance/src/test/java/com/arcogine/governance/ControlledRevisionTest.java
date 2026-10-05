@@ -95,6 +95,16 @@ class ControlledRevisionTest {
         assertArrayEquals(new byte[] {1, 2, 3}, retained.canonicalBytes());
         assertEquals(equivalent, retained);
         assertEquals(equivalent.hashCode(), retained.hashCode());
+        assertNotEquals(retained, new SemanticArtifact(FINGERPRINT_TWO, new byte[] {1, 2, 3}));
+        assertNotEquals(retained, new SemanticArtifact(FINGERPRINT_ONE, new byte[] {1, 2, 4}));
+        assertNotEquals(retained, "artifact");
+    }
+
+    @Test
+    void historicalRevisionRejectsAnArtifactBoundToAnotherFingerprint() {
+        ControlledRevision revision = revision(FINGERPRINT_ONE, List.of());
+        assertThrows(IllegalArgumentException.class, () -> new HistoricalRevision(revision,
+                new SemanticArtifact(FINGERPRINT_TWO, new byte[] {1})));
     }
 
     @Test

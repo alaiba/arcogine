@@ -2,6 +2,7 @@ package com.arcogine.governance.change;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.change.FactoryModelSemanticComparator;
@@ -265,6 +266,29 @@ class ChangeSetFactoryTest {
         assertTrue(changeSet.impactScope().intersects(requirementScope));
         Set<ChangedEntityRef> unrelatedScope = Set.of(new ChangedEntityRef("factory.resource", "99", ""));
         assertTrue(!changeSet.impactScope().intersects(unrelatedScope));
+    }
+
+    @Test
+    void refusesToCompareWhenExtractorCannotInterpretEitherHistoricalArtifact() {
+        ControlledRevisionAuthority authority = authority();
+        ControlledRevision base = accept(authority, model(List.of(1)), List.of());
+        ControlledRevision candidate = accept(authority, model(List.of(1, 2)), List.of(base.id()));
+        for (ModelFingerprint unsupported : List.of(base.modelFingerprint(), candidate.modelFingerprint())) {
+            SemanticChangeExtractor extractor = new SemanticChangeExtractor() {
+                @Override
+                public boolean supports(ModelFingerprint fingerprint) {
+                    return !fingerprint.equals(unsupported);
+                }
+
+                @Override
+                public List<SemanticChange> compare(SemanticArtifact before, SemanticArtifact after) {
+                    throw new AssertionError("unsupported extractor must not compare artifacts");
+                }
+            };
+            assertThrows(IllegalArgumentException.class,
+                    () -> ChangeSetFactory.fromAuthoritativeRevisions(authority, base.id(),
+                            candidate.id(), extractor, ChangeProvenance.of("test", "unsupported model")));
+        }
     }
 
     private ControlledRevisionAuthority authority() {

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.spatial.FactoryFloor;
 import com.arcogine.factory.model.spatial.ResourceFootprint;
@@ -14,6 +15,8 @@ import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
@@ -106,6 +109,34 @@ class FactoryModelCanonicalFormTest {
 
         assertArrayEquals(expectedPrefix, Arrays.copyOf(bytes, expectedPrefix.length));
         assertArrayEquals("arcogine.factory-model\0".getBytes(StandardCharsets.US_ASCII), expectedPrefix);
+    }
+
+    @Test
+    void missingDigestProviderFailsClearlyAndRestoresProviders() {
+        // Keep the definition class initialized before changing the process provider registry.
+        FactoryModelCanonicalForm.definitionBinding();
+        synchronized (Security.class) {
+            Provider[] original = Security.getProviders();
+            Provider[] shaProviders = Security.getProviders("MessageDigest.SHA-256");
+            assertTrue(shaProviders.length > 0);
+            for (Provider provider : shaProviders) {
+                Security.removeProvider(provider.getName());
+            }
+            try {
+                assertThrows(IllegalStateException.class,
+                        () -> FactoryModelCanonicalForm.fingerprint(representativeModel()));
+                assertThrows(IllegalStateException.class,
+                        () -> FactoryModelCanonicalForm.definitionBindingOver(List.of(String.class)));
+            } finally {
+                for (int index = 0; index < original.length; index++) {
+                    Provider provider = original[index];
+                    if (Arrays.asList(shaProviders).contains(provider)) {
+                        Security.insertProviderAt(provider, index + 1);
+                    }
+                }
+            }
+            assertArrayEquals(original, Security.getProviders());
+        }
     }
 
     @Test
@@ -274,6 +305,12 @@ class FactoryModelCanonicalFormTest {
                 FactoryModelValidationException.class, () -> FactoryModelPublisher.publish(malformed));
 
         assertEquals("resources[Machine(1)].name", exception.result().errors().get(0).field());
+
+        // The low-level encoder must refuse malformed text even when publication is bypassed.
+        assertThrows(IllegalArgumentException.class,
+                () -> FactoryModelCanonicalForm.canonicalBytes(malformed));
+        assertThrows(FactoryModelValidationException.class,
+                () -> FactoryModelPublisher.publish(modelWithResourceName("bad\uD800x")));
     }
 
     // ---- Spatial-record coverage ----------------------------------------------------------------

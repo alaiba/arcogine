@@ -121,10 +121,6 @@ public class Machine implements MachineView {
         return List.copyOf(activeJobs);
     }
 
-    public ArrayDeque<JobId> queue() {
-        return queue;
-    }
-
     @Override
     public List<JobId> queuedJobs() {
         return List.copyOf(queue);

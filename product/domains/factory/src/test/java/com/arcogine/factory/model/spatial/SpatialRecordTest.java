@@ -75,6 +75,7 @@ class SpatialRecordTest {
         assertThrows(
                 NullPointerException.class,
                 () -> new SpatialRecord(new FactoryFloor(1, 1), 0, 0, Arrays.asList(layout(1, 0, 0), null)));
+        assertTrue(new SpatialRecord(new FactoryFloor(1, 1), 0, 0, null).resourceLayouts().isEmpty());
     }
 
     @Test

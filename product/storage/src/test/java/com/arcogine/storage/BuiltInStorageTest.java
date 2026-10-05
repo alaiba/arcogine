@@ -42,6 +42,8 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -58,6 +60,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -175,6 +178,92 @@ class BuiltInStorageTest {
     }
 
     @Test
+    void cleanupFailureIsReportedWithoutInventingAnAcceptedRevision() throws IOException {
+        Path root = tempDirectory.resolve("cleanup-failure");
+        FileArcogineStorage.FileOperations cannotRemoveArtifact =
+                new FileArcogineStorage.FileOperations() {
+                    @Override
+                    boolean deleteIfExists(Path path) throws IOException {
+                        if (path.getFileName().toString().endsWith(".artifact")) {
+                            throw new IOException("artifact cleanup unavailable");
+                        }
+                        return super.deleteIfExists(path);
+                    }
+                };
+        ControlledRevisionAuthority authority = FileArcogineStorage.open(root, FACTORY_VERIFIER,
+                Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC), (source, target) -> {
+                    if (target.getFileName().toString().endsWith(".revision")) {
+                        throw new IOException("revision write unavailable");
+                    }
+                    Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+                }, cannotRemoveArtifact);
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision candidate = revision(id(82), version.fingerprint(), List.of(), ACCEPTED_AT);
+
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> authority.accept(candidate, artifact(version)));
+        assertEquals(STORAGE_INTEGRITY, failure.code());
+        assertEquals(1, failure.getSuppressed().length);
+        assertTrue(authority.revisions().isEmpty());
+        assertEquals(1, regularFiles(root.resolve("artifacts")).size());
+        assertTrue(regularFiles(root.resolve("revisions")).isEmpty());
+    }
+
+    @Test
+    void failedTemporaryCleanupDoesNotCreateHistory() throws IOException {
+        Path root = tempDirectory.resolve("temporary-cleanup-failure");
+        FileArcogineStorage.FileOperations cannotRemovePending =
+                new FileArcogineStorage.FileOperations() {
+                    @Override
+                    boolean deleteIfExists(Path path) throws IOException {
+                        if (path.getFileName().toString().endsWith(".tmp")) {
+                            throw new IOException("temporary cleanup unavailable");
+                        }
+                        return super.deleteIfExists(path);
+                    }
+                };
+        ControlledRevisionAuthority authority = FileArcogineStorage.open(root, FACTORY_VERIFIER,
+                Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC), (source, target) -> {
+                    if (target.getFileName().toString().endsWith(".revision")) {
+                        throw new IOException("revision write unavailable");
+                    }
+                    Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+                }, cannotRemovePending);
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision candidate = revision(id(83), version.fingerprint(), List.of(), ACCEPTED_AT);
+
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> authority.accept(candidate, artifact(version)));
+        assertEquals(STORAGE_INTEGRITY, failure.code());
+        assertTrue(authority.revisions().isEmpty());
+        assertTrue(regularFiles(root.resolve("artifacts")).isEmpty());
+        assertTrue(regularFiles(root.resolve("revisions")).stream()
+                .anyMatch(path -> path.getFileName().toString().endsWith(".tmp")));
+    }
+
+    @Test
+    void reportedFailureAfterRevisionInstallationKeepsItsArtifactBinding() throws IOException {
+        Path root = tempDirectory.resolve("post-install-failure");
+        ControlledRevisionAuthority authority = FileArcogineStorage.open(root, FACTORY_VERIFIER,
+                Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC), (source, target) -> {
+                    Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+                    if (target.getFileName().toString().endsWith(".revision")) {
+                        throw new IOException("acknowledgment unavailable after move");
+                    }
+                });
+        FactoryModelVersion version = version("Widget", 5);
+        ControlledRevision candidate = revision(id(84), version.fingerprint(), List.of(), ACCEPTED_AT);
+
+        GovernanceHistoryException failure = assertThrows(GovernanceHistoryException.class,
+                () -> authority.accept(candidate, artifact(version)));
+        assertEquals(STORAGE_INTEGRITY, failure.code());
+        HistoricalRevision resolved = BuiltInStorage.open(root, FACTORY_VERIFIER)
+                .controlledRevisions().resolve(candidate.id());
+        assertEquals(candidate.modelFingerprint(), resolved.artifact().fingerprint());
+        assertEquals(1, regularFiles(root.resolve("artifacts")).size());
+    }
+
+    @Test
     void failedRevisionWritePreservesArtifactSharedWithAcceptedHistory() throws IOException {
         FactoryModelVersion version = version("Widget", 5);
         ControlledRevision first = authorityAt(ACCEPTED_AT).accept(
@@ -224,6 +313,91 @@ class BuiltInStorageTest {
     }
 
     @Test
+    void parentAndRootCreationFailuresLeaveNoOwnedStore() {
+        Path parentFailure = tempDirectory.resolve("parent-failure").resolve("store");
+        FileArcogineStorage.FileOperations cannotCreateParent = new FileArcogineStorage.FileOperations() {
+            @Override
+            void createDirectories(Path path) throws IOException {
+                throw new IOException("parent unavailable");
+            }
+        };
+        GovernanceHistoryException parent = assertThrows(GovernanceHistoryException.class,
+                () -> withFileOperations(parentFailure, cannotCreateParent));
+        assertEquals(STORAGE_INTEGRITY, parent.code());
+        assertFalse(Files.exists(parentFailure.getParent()));
+
+        Path rootFailure = tempDirectory.resolve("root-failure");
+        FileArcogineStorage.FileOperations cannotCreateRoot = new FileArcogineStorage.FileOperations() {
+            @Override
+            void createDirectory(Path path) throws IOException {
+                throw new IOException("root unavailable");
+            }
+        };
+        GovernanceHistoryException root = assertThrows(GovernanceHistoryException.class,
+                () -> withFileOperations(rootFailure, cannotCreateRoot));
+        assertEquals(STORAGE_INTEGRITY, root.code());
+        assertFalse(Files.exists(rootFailure));
+    }
+
+    @Test
+    void filesystemRootIsNeverAdoptedAsAStore() {
+        Path root = tempDirectory.getRoot();
+        GovernanceHistoryException refused = assertThrows(GovernanceHistoryException.class,
+                () -> BuiltInStorage.open(root, FACTORY_VERIFIER));
+        assertEquals(UNSUPPORTED_STORE, refused.code());
+    }
+
+    @Test
+    void unreadableOwnershipMarkerAndRevisionListingFailClosed() throws IOException {
+        authority();
+        Map<String, String> before = contents(store());
+        FileArcogineStorage.FileOperations unreadableMarker = new FileArcogineStorage.FileOperations() {
+            @Override
+            byte[] readAllBytes(Path path) throws IOException {
+                if (path.getFileName().toString().equals("proving-store")) {
+                    throw new IOException("marker unreadable");
+                }
+                return super.readAllBytes(path);
+            }
+        };
+        GovernanceHistoryException open = assertThrows(GovernanceHistoryException.class,
+                () -> withFileOperations(store(), unreadableMarker));
+        assertEquals(STORAGE_INTEGRITY, open.code());
+        assertEquals(before, contents(store()));
+
+        FileArcogineStorage.FileOperations unreadableListing = new FileArcogineStorage.FileOperations() {
+            @Override
+            Stream<Path> list(Path path) throws IOException {
+                throw new IOException("revision listing unavailable");
+            }
+        };
+        ControlledRevisionAuthority opened = withFileOperations(store(), unreadableListing);
+        GovernanceHistoryException list = assertThrows(GovernanceHistoryException.class,
+                opened::revisions);
+        assertEquals(STORAGE_INTEGRITY, list.code());
+        assertEquals(before, contents(store()));
+    }
+
+    @Test
+    void missingDigestImplementationLeavesHistoryUnchanged() throws IOException {
+        Path root = tempDirectory.resolve("digest-unavailable");
+        FileArcogineStorage.FileOperations noDigest = new FileArcogineStorage.FileOperations() {
+            @Override
+            MessageDigest digest(String algorithm) throws NoSuchAlgorithmException {
+                throw new NoSuchAlgorithmException(algorithm);
+            }
+        };
+        ControlledRevisionAuthority authority = withFileOperations(root, noDigest);
+        Map<String, String> before = contents(root);
+        FactoryModelVersion version = version("Widget", 5);
+        GovernanceHistoryException rejected = assertThrows(GovernanceHistoryException.class,
+                () -> authority.accept(revision(id(81), version.fingerprint(), List.of(), ACCEPTED_AT),
+                        artifact(version)));
+        assertEquals(STORAGE_INTEGRITY, rejected.code());
+        assertEquals(before, contents(root));
+    }
+
+    @Test
     void absentRevisionAndMissingSharedArtifactAreDistinctFailures() throws IOException {
         ControlledRevisionAuthority authority = authority();
         GovernanceHistoryException absent = assertThrows(GovernanceHistoryException.class,
@@ -258,9 +432,32 @@ class BuiltInStorageTest {
     }
 
     @Test
+    void missingRevisionDirectoryIsAlsoRefusedWithoutRepair() throws IOException {
+        ControlledRevisionAuthority opened = authority();
+        Files.delete(store().resolve("revisions"));
+        Map<String, String> before = contents(store());
+
+        GovernanceHistoryException reopen = assertThrows(GovernanceHistoryException.class,
+                () -> BuiltInStorage.open(store(), FACTORY_VERIFIER));
+        assertEquals(UNSUPPORTED_STORE, reopen.code());
+        GovernanceHistoryException reuse = assertThrows(GovernanceHistoryException.class,
+                opened::revisions);
+        assertEquals(UNSUPPORTED_STORE, reuse.code());
+        assertEquals(before, contents(store()));
+    }
+
+    @Test
+    void unrelatedFilesInRevisionDirectoryDoNotBecomeHistoricalRevisions() throws IOException {
+        ControlledRevisionAuthority authority = authority();
+        Files.write(store().resolve("revisions").resolve("operator-note.txt"),
+                "not history".getBytes(StandardCharsets.UTF_8));
+        assertTrue(authority.revisions().isEmpty());
+    }
+
+    @Test
     void malformedArtifactRecordsFailWithoutRepairOrReplacement() throws IOException {
         byte[] prefix = "arcogine-proving-artifact\0".getBytes(StandardCharsets.US_ASCII);
-        for (int variant = 0; variant < 6; variant++) {
+        for (int variant = 0; variant < 7; variant++) {
             Path root = tempDirectory.resolve("artifact-malformed-" + variant);
             ControlledRevisionAuthority authority = BuiltInStorage
                     .open(root, FACTORY_VERIFIER)
@@ -284,6 +481,7 @@ class BuiltInStorageTest {
                 case 3 -> encoded = Arrays.copyOf(encoded, encoded.length + 1); // trailing bytes
                 case 4 -> encoded[prefix.length + Integer.BYTES] = (byte) 0xff; // invalid UTF-8
                 case 5 -> ByteBuffer.wrap(encoded).putInt(prefix.length, -1); // negative string length
+                case 6 -> ByteBuffer.wrap(encoded).putLong(cursor, (long) Integer.MAX_VALUE + 1);
                 default -> throw new AssertionError(variant);
             }
             Files.write(artifactFile, encoded);
@@ -387,6 +585,12 @@ class BuiltInStorageTest {
         GovernanceHistoryException badParentCount = assertThrows(GovernanceHistoryException.class,
                 () -> authority.resolve(accepted.id()));
         assertEquals(STORAGE_INTEGRITY, badParentCount.code());
+
+        ByteBuffer.wrap(encoded).putInt(cursor, -1);
+        Files.write(record, encoded);
+        GovernanceHistoryException negativeParentCount = assertThrows(GovernanceHistoryException.class,
+                () -> authority.resolve(accepted.id()));
+        assertEquals(STORAGE_INTEGRITY, negativeParentCount.code());
     }
 
     @Test
@@ -953,6 +1157,39 @@ class BuiltInStorageTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> BuiltInStorage.open(tempDirectory.resolve("unbound"), boundTo(" ")).controlledRevisions());
+        assertThrows(IllegalArgumentException.class,
+                () -> BuiltInStorage.open(tempDirectory.resolve("null-binding"), boundTo(null)));
+    }
+
+    @Test
+    void malformedFingerprintTextCannotBeEncodedIntoHistory() throws IOException {
+        FactoryModelVersion version = version("Widget", 5);
+        ModelFingerprint malformed = new ModelFingerprint("factory-\uD800", "sha256",
+                version.fingerprint().digest());
+        SemanticArtifactVerifier verifier = new SemanticArtifactVerifier() {
+            @Override
+            public boolean supports(ModelFingerprint fingerprint) {
+                return malformed.equals(fingerprint);
+            }
+
+            @Override
+            public ModelFingerprint fingerprint(byte[] canonicalBytes) {
+                return malformed;
+            }
+
+            @Override
+            public String definitionBinding() {
+                return "malformed-fingerprint-fixture";
+            }
+        };
+        Path root = tempDirectory.resolve("malformed-fingerprint");
+        ControlledRevisionAuthority authority = BuiltInStorage.open(root, verifier).controlledRevisions();
+        Map<String, String> before = contents(root);
+        GovernanceHistoryException rejected = assertThrows(GovernanceHistoryException.class,
+                () -> authority.accept(revision(id(80), malformed, List.of(), ACCEPTED_AT),
+                        new SemanticArtifact(malformed, FactoryModelArtifact.encode(version))));
+        assertEquals(STORAGE_INTEGRITY, rejected.code());
+        assertEquals(before, contents(root));
     }
 
     @Test
@@ -1150,6 +1387,13 @@ class BuiltInStorageTest {
     private ControlledRevisionAuthority authorityAt(Instant instant) {
         return BuiltInStorage.open(
                 store(), FACTORY_VERIFIER, Clock.fixed(instant, ZoneOffset.UTC)).controlledRevisions();
+    }
+
+    private static FileArcogineStorage withFileOperations(
+            Path root, FileArcogineStorage.FileOperations files) {
+        return FileArcogineStorage.open(root, FACTORY_VERIFIER,
+                Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC),
+                (source, target) -> Files.move(source, target, StandardCopyOption.ATOMIC_MOVE), files);
     }
 
     private void assertRecorderResolvesUnchangedAfterReopen(int suffix, RevisionRecorder recorder) {

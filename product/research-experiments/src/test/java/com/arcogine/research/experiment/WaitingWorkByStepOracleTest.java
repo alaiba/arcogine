@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.FactoryModel;
+import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.process.JobObservation;
 import com.arcogine.factory.process.PendingWorkObservation;
 import com.arcogine.factory.process.ResourceObservation;
@@ -182,5 +183,18 @@ class WaitingWorkByStepOracleTest {
                         .evaluateOn(TamperedEvidence.withPublishedModel(evidence, withoutProducts)));
 
         assertTrue(refused.reasons().getFirst().contains("cannot be resolved"), refused.toString());
+    }
+
+    @Test
+    void anOperationWithoutAProductContributesNoWaitingJobs() {
+        FactoryModel model = evidence.publishedModel();
+        OperationDefinition original = model.operations().getFirst();
+        FactoryModel withUnusedOperation = new FactoryModel(model.resources(),
+                List.of(original, new OperationDefinition(2, "unused", original.steps())), model.products());
+
+        assertEquals(
+                assertDerived(new WaitingWorkByStepOracle("mid-run").evaluateOn(evidence)).value(),
+                assertDerived(new WaitingWorkByStepOracle("mid-run")
+                        .evaluateOn(TamperedEvidence.withPublishedModel(evidence, withUnusedOperation))).value());
     }
 }

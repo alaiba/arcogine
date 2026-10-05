@@ -140,6 +140,8 @@ class LinearRoutingFamilyTest {
 
     @Test
     void malformedFamiliesAreRejected() {
+        assertThrows(IllegalArgumentException.class, () -> ThreeStepRoutingFamily.Stage.of(0, 1));
+        assertThrows(IllegalArgumentException.class, () -> ThreeStepRoutingFamily.Stage.of(1));
         assertThrows(IllegalArgumentException.class, () -> new Step(" ", 1));
         assertThrows(IllegalArgumentException.class, () -> new Step("CUT", 0));
         assertThrows(IllegalArgumentException.class, () -> Resource.of("Cutter", 0, "CUT"));
@@ -164,7 +166,10 @@ class LinearRoutingFamilyTest {
         assertThrows(IllegalArgumentException.class, () -> SHARED.withResourceOrder(List.of("Shared", "Cutter")));
         assertThrows(IllegalArgumentException.class, () -> SHARED.withResourceOrder(List.of("Shared", "Shared", "Cutter")));
         assertThrows(IllegalArgumentException.class, () -> SHARED.resourceId("Painter"));
+        assertThrows(IllegalArgumentException.class, () -> SHARED.stepId("PAINT"));
         assertThrows(IllegalArgumentException.class, () -> SHARED.eligibleResources("PAINT"));
+        assertThrows(IllegalArgumentException.class, () -> new LinearRoutingFamily(
+                List.of(new Step("X", 1)), List.of()));
     }
 
     private static FactoryModel widget(List<ConfiguredResource> resources, List<OperationStepDefinition> steps) {

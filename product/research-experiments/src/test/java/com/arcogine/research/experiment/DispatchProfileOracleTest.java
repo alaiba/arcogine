@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.FactoryModel;
+import com.arcogine.factory.model.OperationDefinition;
+import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.process.RuntimeEventEnvelope;
 import com.arcogine.factory.process.RuntimeEventPayload;
 import com.arcogine.factory.process.RuntimeEventType;
@@ -13,6 +15,7 @@ import com.arcogine.research.experiment.DispatchProfileOracle.DispatchProfile;
 import com.arcogine.research.experiment.DispatchProfileOracle.ResourceStepDispatches;
 import com.arcogine.research.experiment.DispatchProfileOracle.StepWait;
 import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
+import com.arcogine.types.ProductId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -114,5 +117,48 @@ class DispatchProfileOracleTest {
                 assertUnderdetermined(atClosing(TamperedEvidence.withPublishedModel(evidence, withoutProducts)));
 
         assertTrue(refused.reasons().getFirst().contains("cannot be resolved"), refused.toString());
+    }
+
+    @Test
+    void invalidRoutingPositionsAndAnUnmatchedOperationAreRefused() {
+        FactoryModel model = evidence.publishedModel();
+        FactoryModel wrongOperation = new FactoryModel(model.resources(), List.of(), model.products());
+        assertTrue(assertUnderdetermined(atClosing(TamperedEvidence.withPublishedModel(evidence, wrongOperation)))
+                .reasons().getFirst().contains("cannot be resolved"));
+
+        int dispatchIndex = -1;
+        for (int i = 0; i < evidence.retainedEvents().size(); i++) {
+            if (evidence.retainedEvents().get(i).payload() instanceof RuntimeEventPayload.JobDispatched) {
+                dispatchIndex = i;
+                break;
+            }
+        }
+        RuntimeEventPayload.JobDispatched dispatch =
+                (RuntimeEventPayload.JobDispatched) evidence.retainedEvents().get(dispatchIndex).payload();
+        for (int invalidStep : List.of(-1, model.operations().getFirst().steps().size())) {
+            ExperimentEvidence invalid = TamperedEvidence.withPayload(evidence, dispatchIndex,
+                    new RuntimeEventPayload.JobDispatched(
+                            dispatch.jobId(), dispatch.orderId(), dispatch.machineId(), invalidStep));
+            assertTrue(assertUnderdetermined(atClosing(invalid)).reasons().getFirst().contains("cannot be resolved"));
+        }
+    }
+
+    @Test
+    void dispatchesAcrossOperationsFollowPublishedOperationOrder() {
+        FactoryModel base = FAMILY.model();
+        OperationDefinition first = base.operations().getFirst();
+        FactoryModel twoOperations = new FactoryModel(base.resources(),
+                List.of(first, new OperationDefinition(2, "second route", first.steps())),
+                List.of(base.products().getFirst(), new ProductDefinition(new ProductId(2), "Second widget", 2)));
+        ExperimentFixture fixture = new ExperimentFixture("two-operations", twoOperations,
+                List.of(
+                        ExperimentStep.submit(new ProductId(2), 1, LinearRoutingFamily.UNIT_PRICE),
+                        ExperimentStep.submit(LinearRoutingFamily.PRODUCT, 1, LinearRoutingFamily.UNIT_PRICE),
+                        ExperimentStep.advanceToQuiescence(1_000),
+                        ExperimentStep.captureEvents("everything")), WindowIntent.COMPLETE_RUN, List.of());
+
+        DispatchProfile profile = assertDerived(atClosing(ExperimentRunner.run(fixture))).value();
+        assertEquals(List.of(1L, 2L), profile.waits().stream()
+                .map(wait -> wait.step().operationId()).distinct().toList());
     }
 }

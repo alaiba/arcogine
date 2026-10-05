@@ -142,6 +142,20 @@ class OracleContractTest {
     }
 
     @Test
+    void multipleEventReadsRecordTheirUnionAndAnEmptyReadAddsNoSupport() {
+        ExperimentEvidence evidence = ExperimentRunner.run(StarterCorpus.capacityConstrainedBaseline());
+        ResearchDefinition events = definition("event-ranges", EvidenceInput.SUPPORTED_EVENTS);
+        OracleOutcome<String> outcome = oracle(events, declared -> {
+            assertEquals(List.of(), declared.completeEvents(2, 2).orElseThrow());
+            assertEquals(2, declared.completeEvents(4, 6).orElseThrow().size());
+            assertEquals(2, declared.completeEvents(1, 3).orElseThrow().size());
+            return declared.derived("ranges read");
+        }).evaluateOn(evidence);
+
+        assertEquals(Optional.of(new SequenceRange(2, 6)), assertDerived(outcome).support().events());
+    }
+
+    @Test
     void anUnknownObservationLabelIsAnErrorNotAnEmptyResult() {
         ExperimentEvidence evidence = ExperimentRunner.run(StarterCorpus.capacityConstrainedBaseline());
 

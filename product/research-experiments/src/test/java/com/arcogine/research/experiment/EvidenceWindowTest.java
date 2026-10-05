@@ -70,6 +70,7 @@ class EvidenceWindowTest {
 
         assertThrows(IllegalArgumentException.class, () -> new SequenceRange(0, 3));
         assertThrows(IllegalArgumentException.class, () -> new SequenceRange(5, 4));
+        assertEquals(3, new SequenceRange(5, 7).size());
         assertThrows(IllegalArgumentException.class, () -> window.missingWithin(-1, 3));
         assertThrows(IllegalArgumentException.class, () -> window.missingWithin(6, 5));
         assertThrows(
@@ -82,5 +83,9 @@ class EvidenceWindowTest {
                 () -> new EvidenceWindow(
                         RunId.create(), WindowIntent.PARTIAL, 1, 12, 10, List.of(), List.of()),
                 "a retained sequence cannot lie beyond the run's final cursor");
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new EvidenceWindow(
+                        RunId.create(), WindowIntent.PARTIAL, -1, 0, 0, List.of(), List.of()));
     }
 }

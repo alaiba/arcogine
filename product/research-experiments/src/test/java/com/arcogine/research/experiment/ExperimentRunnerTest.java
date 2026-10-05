@@ -20,6 +20,7 @@ import com.arcogine.factory.process.RuntimeEventType;
 import com.arcogine.factory.process.RuntimeObservation;
 import com.arcogine.factory.process.RuntimeObservationMetadata;
 import com.arcogine.factory.process.RuntimePerformanceObservation;
+import com.arcogine.factory.process.CommandResult;
 import com.arcogine.research.experiment.EvidenceWindow.CollectionPoint;
 import com.arcogine.research.experiment.EvidenceWindow.CollectionPoint.Kind;
 import com.arcogine.research.experiment.ExperimentEvidence.CommandRecord;
@@ -27,9 +28,13 @@ import com.arcogine.research.experiment.ExperimentEvidence.CommandRecord.Outcome
 import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
+import com.arcogine.types.ModelFingerprint;
+import com.arcogine.types.SimError;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.LongStream;
@@ -401,6 +406,95 @@ class ExperimentRunnerTest {
                         TamperedEvidence.withObservation(replay, ExperimentEvidence.CLOSING_LABEL, changedObservation)));
         assertTrue(metadataFailure.getMessage().contains("observation 'closing' metadata"),
                 metadataFailure.getMessage());
+    }
+
+    @Test
+    void replayDiagnosticsIdentifyEachEvidenceBoundary() {
+        ExperimentEvidence first = ExperimentRunner.run(StarterCorpus.capacityConstrainedBaseline());
+        ExperimentEvidence replay = ExperimentRunner.run(StarterCorpus.capacityConstrainedBaseline());
+        assertReplayDifference(first, copy(replay, "other", replay.publishedModel(), replay.modelFingerprint(),
+                replay.script(), replay.commands(), replay.observations(), replay.window()), "fixture id");
+        assertReplayDifference(first, copy(replay, replay.fixtureId(), StarterCorpus.ASSEMBLE_VARIANT_FAMILY.model(),
+                replay.modelFingerprint(), replay.script(), replay.commands(), replay.observations(), replay.window()),
+                "published model differs");
+        assertReplayDifference(first, copy(replay, replay.fixtureId(), replay.publishedModel(),
+                new ModelFingerprint("factory-model", "sha256", "0".repeat(64)), replay.script(), replay.commands(),
+                replay.observations(), replay.window()), "model fingerprint");
+        assertReplayDifference(first, copy(replay, replay.fixtureId(), replay.publishedModel(), replay.modelFingerprint(),
+                replay.script().subList(0, replay.script().size() - 1), replay.commands(), replay.observations(),
+                replay.window()), "script differs");
+        assertReplayDifference(first, copy(replay, replay.fixtureId(), replay.publishedModel(), replay.modelFingerprint(),
+                replay.script(), List.of(), replay.observations(), replay.window()), "command count");
+
+        Map<String, RuntimeObservation> fewerLabels = new LinkedHashMap<>(replay.observations());
+        fewerLabels.remove("mid-run");
+        assertReplayDifference(first, copy(replay, replay.fixtureId(), replay.publishedModel(), replay.modelFingerprint(),
+                replay.script(), replay.commands(), fewerLabels, replay.window()), "observation labels");
+
+        RuntimeObservation closing = replay.observation(ExperimentEvidence.CLOSING_LABEL);
+        assertObservationDifference(first, replay, "resource", new RuntimeObservation(
+                closing.metadata(), List.of(), closing.orders(), closing.jobs(), closing.pendingWork(), closing.performance()));
+        assertObservationDifference(first, replay, "order", new RuntimeObservation(
+                closing.metadata(), closing.resources(), List.of(), closing.jobs(), closing.pendingWork(), closing.performance()));
+        assertObservationDifference(first, replay, "job", new RuntimeObservation(
+                closing.metadata(), closing.resources(), closing.orders(), List.of(), closing.pendingWork(), closing.performance()));
+        assertObservationDifference(first, replay, "pending work", new RuntimeObservation(
+                closing.metadata(), closing.resources(), closing.orders(), closing.jobs(),
+                List.of(new com.arcogine.factory.process.PendingWorkObservation(
+                        new com.arcogine.types.JobId(99), List.of(new MachineId(1)))), closing.performance()));
+
+        EvidenceWindow window = replay.window();
+        EvidenceWindow changedWindow = new EvidenceWindow(window.runId(), window.declaredIntent(),
+                window.startSequence(), window.endSequence(), window.runFinalSequence(), window.missingSequences(),
+                List.of());
+        assertReplayDifference(first, copy(replay, replay.fixtureId(), replay.publishedModel(), replay.modelFingerprint(),
+                replay.script(), replay.commands(), replay.observations(), changedWindow), "evidence window");
+    }
+
+    private static ExperimentEvidence copy(ExperimentEvidence source, String id, FactoryModel model,
+            ModelFingerprint fingerprint, List<ExperimentStep> script, List<CommandRecord> commands,
+            Map<String, RuntimeObservation> observations, EvidenceWindow window) {
+        return new ExperimentEvidence(id, model, fingerprint, script, commands, observations,
+                source.retainedEvents(), window);
+    }
+
+    private static void assertReplayDifference(ExperimentEvidence first, ExperimentEvidence altered, String detail) {
+        IllegalStateException failure = assertThrows(IllegalStateException.class,
+                () -> ExperimentRunner.requireReplayEquivalent(first, altered));
+        assertTrue(failure.getMessage().contains(detail), failure.getMessage());
+    }
+
+    private static void assertObservationDifference(ExperimentEvidence first, ExperimentEvidence replay,
+            String detail, RuntimeObservation changed) {
+        assertReplayDifference(first, TamperedEvidence.withObservation(
+                replay, ExperimentEvidence.CLOSING_LABEL, changed), "observation 'closing' " + detail);
+    }
+
+    @Test
+    void malformedEvidenceFixtureIdIsRejected() {
+        ExperimentEvidence evidence = ExperimentRunner.run(StarterCorpus.capacityConstrainedBaseline());
+        assertThrows(IllegalArgumentException.class, () -> copy(evidence, " ", evidence.publishedModel(),
+                evidence.modelFingerprint(), evidence.script(), evidence.commands(), evidence.observations(), evidence.window()));
+    }
+
+    @Test
+    void aFaultedCommandKeepsTheAppliedOrderAndItsFailureDiagnostic() throws ReflectiveOperationException {
+        ExperimentFixture fixture = StarterCorpus.capacityConstrainedBaseline();
+        // Construct the supported result without compiling against its internal scheduled-event type.
+        CommandResult<?> faulted = CommandResult.Faulted.class
+                .getConstructor(Object.class, SimError.class,
+                        com.arcogine.factory.model.FactoryModelVersion.class, List.class)
+                .newInstance(new OrderId(42), new SimError.Other("dispatch failed"),
+                        fixture.publishedModel(), List.of());
+        CommandRecord record = ExperimentRunner.recordOf(4, submit(1),
+                faulted);
+
+        assertEquals(4, record.stepIndex());
+        assertEquals(Outcome.FAULTED, record.outcome());
+        assertEquals("Other", record.code());
+        assertEquals("dispatch failed", record.diagnostic());
+        assertEquals(Optional.of(new OrderId(42)), record.acceptedOrder());
+        assertFalse(record.accepted());
     }
 
     @Test

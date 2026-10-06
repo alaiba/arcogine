@@ -185,6 +185,30 @@
 - **Truth:** the pair alone cannot apportion the 7 ticks. The singles happen to show that the painter
   accounts for all of them, which the pair does not license.
 
+## Amendment (after generation, before any owner exposure)
+
+When the first generated pack was reviewed, scenario C's "Remove Welder 2" try produced **two
+changes**:
+
+- the removal itself;
+- an order change, because positional identity renumbered the Painter that followed Welder 2.
+
+The change set correctly refused attribution for that pair. As a result, the keyed C-try answer
+("not needed") was not licensed by the pair the owner would see.
+
+**Fix:** author C as **Press, Welder 1, Painter, Welder 2**. Re-derivation:
+
+- Welder 1 is still id-lower than Welder 2. Whenever both welders are free, Welder 1 is chosen, as
+  before. The Painter remains the only PAINT machine.
+- An added Painter 2 or Welder 3 keeps the same id order relative to its peers.
+- Every C value above is therefore unchanged: completion 37; the snapshot at 7; the last unit's waits;
+  − Welder 2 = 37; + Press 2 = 37; + Welder 3 = 37; + Painter 2 = 23.
+- "Remove Welder 2" is now a single change.
+
+**Finding carried to the report:** with positional identity, removing a machine before others renumbers
+them, and an honest change set then reports an extra change. A game projection should keep the
+identities of unchanged machines stable, or the comparison should be presented as such.
+
 ## Scored answers
 
 All scored questions are multiple choice. The keyed option for each is below.

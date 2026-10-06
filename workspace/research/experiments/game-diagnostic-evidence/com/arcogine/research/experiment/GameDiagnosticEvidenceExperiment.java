@@ -174,6 +174,12 @@ class GameDiagnosticEvidenceExperiment {
     }
 
     @Test
+    void theRevisedPlainBundlePassesEveryAudit() {
+        results().get("C3c-plain-bundle").values().forEach(result ->
+                assertTrue(result.passed(), result.audit() + ": " + result.findings()));
+    }
+
+    @Test
     void everyAuditCatchesTheNaiveControlExceptReconstruction() {
         Map<String, AuditResult> naive = results().get("N-naive-dashboard");
         for (String audit : AUDITS) {
@@ -189,7 +195,8 @@ class GameDiagnosticEvidenceExperiment {
         com.tngtech.archunit.core.domain.JavaClasses research =
                 new com.tngtech.archunit.core.importer.ClassFileImporter().importPackages("com.arcogine.research");
         for (Class<?> type : List.of(GameEvidence.class, GameEvidenceOracles.CompletionChainTrace.class,
-                GameEvidenceOracles.IdleResources.class, GameStatements.class, GameContracts.class, GameDiagnosticCorpus.class)) {
+                GameEvidenceOracles.IdleResources.class, GameStatements.class, GameContracts.class, GameDiagnosticCorpus.class,
+                GamePlainContract.class, GameWalkthroughPack.class)) {
             assertTrue(research.contain(type), type.getName());
         }
     }

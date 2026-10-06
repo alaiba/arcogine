@@ -1972,6 +1972,392 @@ Facts and the last unit's times as claims with evidence; the single-run limiting
 | Q6_CONFOUNDED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | 2 changes: added Assembler 2 (ASSEMBLE); added Inspector 2 (INSPECT). Completion: tick 68 -> tick 46 (22 ticks earlier). |
 | Q6_CONFOUNDED_COMPARISON | REFUSAL |  |  | How much of the difference (22 ticks earlier) each of the 2 changes accounts for is not attributable from this pair; compare one change at a time. |
 
+## C3c-plain-bundle
+
+C3b's evidence with revised wording: 'needed' instead of 'surplus', the only machine for a step stated as a design fact, a caveat on the longest wait, plain refusals grouped as 'what this run cannot tell you', and work timelines on request.
+
+### G1
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of ASSEMBLE / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 33, 3 units (units 9-11) are waiting to start ASSEMBLE on Assembler. |
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of INSPECT / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 33, 1 unit (unit 7) is waiting to start INSPECT on Inspector. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 33, Cutter (CUT) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 33, Assembler (ASSEMBLE) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 33, Inspector (INSPECT) is busy. |
+| PROGRESS | DIRECT_FACT |  | obs mid-run / fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity | At tick 33, 5 of 12 units are finished. |
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 67. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,76,81,96,98,105-106 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 12) took 67 ticks from the order's acceptance at tick 0: waited 33 to start CUT, then CUT took 3 on Cutter; waited 11 to start ASSEMBLE, then ASSEMBLE took 4 on Assembler; waited 11 to start INSPECT, then INSPECT took 5 on Inspector. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,14,16-18,23-24,31-32,37-38,42-43,48-49,56-57,64-65,67-68,75-76,81 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 12 CUT steps during ticks 0-36. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 15,20,22,26-27,34-35,45-46,53-54,61-62,70-71,78-79,85-86,90-91,95-96,98 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 12 ASSEMBLE steps during ticks 3-51. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 21,29-30,40-41,51-52,59-60,73-74,83-84,88-89,93-94,100-106 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector worked on 12 INSPECT steps during ticks 7-67. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G2
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of CUT / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 16, 6 units (units 7-12) are waiting to start CUT on Cutter. |
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of ASSEMBLE / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 16, 1 unit (unit 5) is waiting to start ASSEMBLE on Assembler. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 16, Cutter (CUT) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 16, Assembler (ASSEMBLE) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 16, Inspector 1 (INSPECT) is busy. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Inspector 2 is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 16, Inspector 2 is idle and no unit is waiting for INSPECT. |
+| PROGRESS | DIRECT_FACT |  | obs mid-run / fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity | At tick 16, 2 of 12 units are finished. |
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 56. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,72,78,90,92-93,95 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 12) took 56 ticks from the order's acceptance at tick 0: waited 33 to start CUT, then CUT took 3 on Cutter; waited 11 to start ASSEMBLE, then ASSEMBLE took 4 on Assembler; waited 0 to start INSPECT, then INSPECT took 5 on Inspector 2. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,14,16-18,23-24,30-31,36-37,40-41,47-48,54-55,60-61,64-65,71-72,78 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 12 CUT steps during ticks 0-36. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 15,20,22,26,28,33,35,43,45,50,52,57,59,67,69,74,76,80,82,84,86,88,90,92 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 12 ASSEMBLE steps during ticks 3-51. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 21,29,34,46,51,63,68,77,81,87,89,94 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector 1 worked on 6 INSPECT steps during ticks 7-12, 15-20, 23-28, 31-36, 39-44, 47-52. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 27,39,44,53,58,70,75,83,85,91,93,95 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector 2 worked on 6 INSPECT steps during ticks 11-16, 19-24, 27-32, 35-40, 43-48, 51-56. |
+| Q3_IDLE_RESOURCE | REFUSAL |  | obs mid-run / design steps Inspector 2 is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | Whether Inspector 2 is needed (whether the order would finish later without it): this run does not tell you. Try removing it to find out. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G3
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 45. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,72,76-77,81-82,84 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 12) took 45 ticks from the order's acceptance at tick 0: waited 33 to start CUT, then CUT took 3 on Cutter; waited 0 to start ASSEMBLE, then ASSEMBLE took 4 on Assembler 2; waited 0 to start INSPECT, then INSPECT took 5 on Inspector 2. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,14,16-17,19,22,24,28,30,34,36,40,42,46,48,52,54,58,60,64,66,70,72,76 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 12 CUT steps during ticks 0-36. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 15,20,23,31,35,43,47,55,59,67,71,78 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 6 ASSEMBLE steps during ticks 3-7, 9-13, 15-19, 21-25, 27-31, 33-37. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 21,27,32,39,44,51,56,63,68,75,79,83 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector 1 worked on 6 INSPECT steps during ticks 7-12, 13-18, 19-24, 25-30, 31-36, 37-42. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 26,33,38,45,50,57,62,69,74,80,82,84 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector 2 worked on 6 INSPECT steps during ticks 10-15, 16-21, 22-27, 28-33, 34-39, 40-45. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 18,25,29,37,41,49,53,61,65,73,77,81 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler 2 worked on 6 ASSEMBLE steps during ticks 6-10, 12-16, 18-22, 24-28, 30-34, 36-40. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G4
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of CUT / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 9, 8 units (units 5-12) are waiting to start CUT on Cutter. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 9, Cutter (CUT) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 9, Twin Assembler (ASSEMBLE) has 2 of 2 slots busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 9, Inspector 1 (INSPECT) is busy. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Inspector 2 is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 9, Inspector 2 is idle and no unit is waiting for INSPECT. |
+| PROGRESS | DIRECT_FACT |  | obs mid-run / fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity | At tick 9, 0 of 12 units are finished. |
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 45. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,72,76-77,81-82,84 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 12) took 45 ticks from the order's acceptance at tick 0: waited 33 to start CUT, then CUT took 3 on Cutter; waited 0 to start ASSEMBLE, then ASSEMBLE took 4 on Twin Assembler; waited 0 to start INSPECT, then INSPECT took 5 on Inspector 2. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,14,16-17,19,22,24,28,30,34,36,40,42,46,48,52,54,58,60,64,66,70,72,76 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 12 CUT steps during ticks 0-36. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 15,18,20,23,25,29,31,35,37,41,43,47,49,53,55,59,61,65,67,71,73,77-78,81 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Twin Assembler worked on 12 ASSEMBLE steps during ticks 3-40; at most 2 of 2 slots at once. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 21,27,32,39,44,51,56,63,68,75,79,83 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector 1 worked on 6 INSPECT steps during ticks 7-12, 13-18, 19-24, 25-30, 31-36, 37-42. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 26,33,38,45,50,57,62,69,74,80,82,84 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector 2 worked on 6 INSPECT steps during ticks 10-15, 16-21, 22-27, 28-33, 34-39, 40-45. |
+| Q3_IDLE_RESOURCE | REFUSAL |  | obs mid-run / design steps Inspector 2 is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | Whether Inspector 2 is needed (whether the order would finish later without it): this run does not tell you. Try removing it to find out. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G5
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 67. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,74,77-78,83,94-95 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 12) took 67 ticks from the order's acceptance at tick 0: waited 33 to start CUT, then CUT took 3 on Cutter; waited 0 to start ASSEMBLE, then ASSEMBLE took 4 on Assembler 2; waited 22 to start INSPECT, then INSPECT took 5 on Shared. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,14,16-17,19,22,24,29,31,34,36,41,43,46,48,53,55,60,62,65,67,72,74,77 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 12 CUT steps during ticks 0-36. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 15,20,23,32,35,44,47,56,61,68,73,81 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler 1 worked on 6 ASSEMBLE steps during ticks 3-7, 9-13, 15-19, 21-25, 27-31, 33-37. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 18,25,30,37,42,51,54,63,66,75,78,83 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler 2 worked on 6 ASSEMBLE steps during ticks 6-10, 12-16, 18-22, 24-28, 30-34, 36-40. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 1,96 / fields JOB_DISPATCHED | Assembler 3 did no work in this run. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 1,96 / fields JOB_DISPATCHED | Assembler 4 did no work in this run. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 1,96 / fields JOB_DISPATCHED | Assembler 5 did no work in this run. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 1,96 / fields JOB_DISPATCHED | Assembler 6 did no work in this run. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 21,27-28,39-40,49-50,58-59,70-71,79-80,85-95 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Shared worked on 12 INSPECT steps during ticks 7-67. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G6
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of CUT / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 17, 6 units (units 7-12) are waiting to start CUT on Cutter. |
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of INSPECT / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 17, 1 unit (unit 4) is waiting to start INSPECT. They are not assigned to a machine yet; either Inspector or Shared may take them when it becomes free. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 17, Cutter (CUT) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 17, Inspector (INSPECT) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 17, Shared (ASSEMBLE+INSPECT) is busy. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Assembler is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 17, Assembler is idle and no unit is waiting for ASSEMBLE. |
+| PROGRESS | DIRECT_FACT |  | obs mid-run / fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity | At tick 17, 2 of 12 units are finished. |
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 47. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,79,82-83,88,91,93 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 12) took 47 ticks from the order's acceptance at tick 0: waited 33 to start CUT, then CUT took 3 on Cutter; waited 0 to start ASSEMBLE, then ASSEMBLE took 4 on Assembler; waited 2 to start INSPECT, then INSPECT took 5 on Shared. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,14,16-17,19,22,24,28-29,35,37,42,44,47-48,56,58,61,63,68-69,77,79,82 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 12 CUT steps during ticks 0-36. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 15,20,23,31,33,38,43,50-51,59,62,71-72,80,83,88 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 8 ASSEMBLE steps during ticks 3-7, 9-17, 18-26, 27-35, 36-40. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 21,27,32,40-41,53-54,64-65,74-75,86-87,92 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector worked on 7 INSPECT steps during ticks 7-12, 13-43. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 18,25-26,34,36,45-46,55,57,66-67,76,78,84-85,90-91,93 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Shared worked on 4 ASSEMBLE and 5 INSPECT steps during ticks 6-47. |
+| Q3_IDLE_RESOURCE | REFUSAL |  | obs mid-run / design steps Assembler is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | Whether Assembler is needed (whether the order would finish later without it): this run does not tell you. Try removing it to find out. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G7
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 68. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,68,70,91,93-95 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 12) took 68 ticks from the order's acceptance at tick 0: waited 33 to start CUT, then CUT took 3 on Cutter; waited 22 to start ASSEMBLE, then ASSEMBLE took 5 on Assembler; waited 0 to start INSPECT, then INSPECT took 5 on Inspector. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,14,16-18,23-24,26-27,33-34,40-41,43-44,50-51,53-54,60-61,67-68,70 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 12 CUT steps during ticks 0-36. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 15,20,22,30,32,37,39,47,49,57,59,64,66,73,75,77,79,81,83,85,87,89,91,93 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 12 ASSEMBLE steps during ticks 3-63. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 21,29,31,36,38,46,48,56,58,63,65,72,74,76,78,80,82,84,86,88,90,92,94-95 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector worked on 12 INSPECT steps during ticks 8-68. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G8
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of CUT / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 10, 8 units (units 5-12) are waiting to start CUT on Cutter. |
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of INSPECT / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 10, 1 unit (unit 2) is waiting to start INSPECT on Inspector. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 10, Cutter (CUT) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 10, Assembler (ASSEMBLE) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 10, Inspector (INSPECT) is busy. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Assembler 2 is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 10, Assembler 2 is idle and no unit is waiting for ASSEMBLE. |
+| PROGRESS | DIRECT_FACT |  | obs mid-run / fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity | At tick 10, 0 of 12 units are finished. |
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 67. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,74,77-78,83,94-95 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 12) took 67 ticks from the order's acceptance at tick 0: waited 33 to start CUT, then CUT took 3 on Cutter; waited 0 to start ASSEMBLE, then ASSEMBLE took 4 on Assembler 2; waited 22 to start INSPECT, then INSPECT took 5 on Inspector. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,14,16-17,19,22,24,29,31,34,36,41,43,46,48,53,55,60,62,65,67,72,74,77 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 12 CUT steps during ticks 0-36. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 15,20,23,32,35,44,47,56,61,68,73,81 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 6 ASSEMBLE steps during ticks 3-7, 9-13, 15-19, 21-25, 27-31, 33-37. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 21,27-28,39-40,49-50,58-59,70-71,79-80,85-95 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector worked on 12 INSPECT steps during ticks 7-67. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 18,25,30,37,42,51,54,63,66,75,78,83 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler 2 worked on 6 ASSEMBLE steps during ticks 6-10, 12-16, 18-22, 24-28, 30-34, 36-40. |
+| Q3_IDLE_RESOURCE | REFUSAL |  | obs mid-run / design steps Assembler 2 is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | Whether Assembler 2 is needed (whether the order would finish later without it): this run does not tell you. Try removing it to find out. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G9a
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 11. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1-2,4-5,9,14-15 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 1) took 11 ticks from the order's acceptance at tick 0: waited 0 to start CUT, then CUT took 2 on Cutter; waited 0 to start ASSEMBLE, then ASSEMBLE took 3 on Assembler; waited 4 to start INSPECT, then INSPECT took 2 on Shared. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,4,6-7 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 2 CUT steps during ticks 0-4. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 5,9 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 1 ASSEMBLE step during ticks 2-5. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 8,11-15 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Shared worked on 1 ASSEMBLE and 2 INSPECT steps during ticks 4-11. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G9b
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 9. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,6-8,11,14-15 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 2) took 9 ticks from the order's acceptance at tick 0: waited 2 to start CUT, then CUT took 2 on Cutter; waited 0 to start ASSEMBLE, then ASSEMBLE took 3 on Assembler; waited 0 to start INSPECT, then INSPECT took 2 on Shared. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 5,9-10,13-15 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Shared worked on 1 ASSEMBLE and 2 INSPECT steps during ticks 2-9. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 8,11 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 1 ASSEMBLE step during ticks 4-7. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,4,6-7 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 2 CUT steps during ticks 0-4. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G10
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of CUT / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 16, 6 units (units 7-12) are waiting to start CUT on Cutter. |
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of ASSEMBLE / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 16, 1 unit (unit 5) is waiting to start ASSEMBLE on Assembler. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 16, Cutter (CUT) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 16, Assembler (ASSEMBLE) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 16, Inspector 1 (INSPECT) is busy. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Inspector 2 is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 16, Inspector 2 is idle and no unit is waiting for INSPECT. |
+| PROGRESS | DIRECT_FACT |  | obs mid-run / fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity | At tick 16, 2 of 12 units are finished. |
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 56. |
+| Q4_DELAY | REFUSAL |  | obs closing | Waiting and work times are not shown: this view started watching after the order began and missed the earlier events. |
+| ACTIVITY | REFUSAL |  | obs closing | Each machine's work times are not shown: this view started watching after the order began and missed the earlier events. |
+| Q3_IDLE_RESOURCE | REFUSAL |  | obs mid-run / design steps Inspector 2 is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | Whether Inspector 2 is needed (whether the order would finish later without it): this run does not tell you. Try removing it to find out. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G11a
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of ASSEMBLE / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 5, 3 units (units 3-5) are waiting to start ASSEMBLE. They are not assigned to a machine yet; either Assembler 1 or Assembler 2 may take them when it becomes free. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 5, Assembler 1 (ASSEMBLE) is busy. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 5, Assembler 2 (ASSEMBLE) is busy. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Cutter is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 5, Cutter is idle and no unit is waiting for CUT. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Inspector is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 5, Inspector is idle and no unit is waiting for INSPECT. |
+| PROGRESS | DIRECT_FACT |  | obs mid-run / fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity | At tick 5, 0 of 5 units are finished. |
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 26. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,17,19,32,38-40 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 5) took 26 ticks from the order's acceptance at tick 0: waited 4 to start CUT, then CUT took 1 on Cutter; waited 12 to start ASSEMBLE, then ASSEMBLE took 8 on Assembler 1; waited 0 to start INSPECT, then INSPECT took 1 on Inspector. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,7,9-10,12-14,16-17,19 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 5 CUT steps during ticks 0-5. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 8,21,23,30,32,38 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler 1 worked on 3 ASSEMBLE steps during ticks 1-25. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 11,24-25,33 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler 2 worked on 2 ASSEMBLE steps during ticks 2-18. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 22,27-29,31,35-37,39-40 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector worked on 5 INSPECT steps during ticks 9-11, 17-19, 25-26. |
+| Q3_IDLE_RESOURCE | DIRECT_FACT |  | design eligible resources of CUT | Cutter is the only machine that can do CUT; the order cannot finish without it. |
+| Q3_IDLE_RESOURCE | DIRECT_FACT |  | design eligible resources of INSPECT | Inspector is the only machine that can do INSPECT; the order cannot finish without it. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G11b
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q1_WAITING | BOUNDARY_COUNT | waiting-work-by-operation-step | obs mid-run / design eligible resources of ASSEMBLE / fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth | At tick 3, 1 unit (unit 3) is waiting to start ASSEMBLE on Assembler. |
+| ACTIVITY | DIRECT_FACT |  | obs mid-run / fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency | At tick 3, Assembler (ASSEMBLE) has 2 of 2 slots busy. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Cutter is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 3, Cutter is idle and no unit is waiting for CUT. |
+| Q3_IDLE_RESOURCE | BOUNDARY_COUNT | idle-resources-and-eligible-waiting | obs mid-run / design steps Inspector is eligible for / fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep | At tick 3, Inspector is idle and no unit is waiting for INSPECT. |
+| PROGRESS | DIRECT_FACT |  | obs mid-run / fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity | At tick 3, 0 of 3 units are finished. |
+| PROGRESS | DIRECT_FACT |  | obs closing / fields OrderObservation.completedAt | The order finished at tick 26. |
+| Q4_DELAY | EVENT_INTERVAL | completing-unit-lead-time-decomposition | events 1,10-11,15,21-23 / fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId | The last unit to finish (unit 3) took 26 ticks from the order's acceptance at tick 0: waited 2 to start CUT, then CUT took 1 on Cutter; waited 10 to start ASSEMBLE, then ASSEMBLE took 12 on Assembler; waited 0 to start INSPECT, then INSPECT took 1 on Inspector. Its longest wait shows where it spent time; on its own it does not show which machine to add. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 2,5,7-8,10-11 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Cutter worked on 3 CUT steps during ticks 0-3. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 6,9,13,15-16,21 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Assembler worked on 3 ASSEMBLE steps during ticks 1-25; at most 2 of 2 slots at once. |
+| ACTIVITY | EVENT_INTERVAL | job-step-occurrences-from-supported-events | events 14,18-20,22-23 / fields JOB_DISPATCHED,JOB_STEP_COMPLETED | Inspector worked on 3 INSPECT steps during ticks 13-15, 25-26. |
+| Q3_IDLE_RESOURCE | DIRECT_FACT |  | design eligible resources of CUT | Cutter is the only machine that can do CUT; the order cannot finish without it. |
+| Q3_IDLE_RESOURCE | DIRECT_FACT |  | design eligible resources of INSPECT | Inspector is the only machine that can do INSPECT; the order cannot finish without it. |
+| Q2_LIMITING_STEP | REFUSAL |  |  | Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner. |
+
+### G1+cut
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Cutter 2 (CUT). The order finished at tick 67, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G1+assemble
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Assembler 2 (ASSEMBLE). The order finished at tick 67, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G1+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Inspector 2 (INSPECT). The order finished at tick 56 instead of 67 (11 ticks sooner). |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G2+cut
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Cutter 2 (CUT). The order finished at tick 56, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G2+assemble
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Assembler 2 (ASSEMBLE). The order finished at tick 45 instead of 56 (11 ticks sooner). |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G2+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Inspector 3 (INSPECT). The order finished at tick 56, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G3+cut
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Cutter 2 (CUT). The order finished at tick 37 instead of 45 (8 ticks sooner). |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G3+assemble
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Assembler 3 (ASSEMBLE). The order finished at tick 45, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G3+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Inspector 3 (INSPECT). The order finished at tick 45, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G4+cut
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Cutter 2 (CUT). The order finished at tick 37 instead of 45 (8 ticks sooner). |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G4+assemble
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Assembler 2 (ASSEMBLE). The order finished at tick 45, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G4+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Inspector 3 (INSPECT). The order finished at tick 45, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G5+cut
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Cutter 2 (CUT). The order finished at tick 67, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G5+assemble
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Assembler 7 (ASSEMBLE). The order finished at tick 67, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G5+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Inspector 2 (INSPECT). The order finished at tick 45 instead of 67 (22 ticks sooner). |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G7+cut
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Cutter 2 (CUT). The order finished at tick 68, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G7+assemble
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Assembler 2 (ASSEMBLE). The order finished at tick 68, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G7+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: added Inspector 2 (INSPECT). The order finished at tick 68, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G2-remove-Inspector-2
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: removed Inspector 2 (INSPECT). The order finished at tick 67 instead of 56 (11 ticks later). |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G8-remove-Assembler-2
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: removed Assembler 2 (ASSEMBLE). The order finished at tick 67, the same as before. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G9-reorder
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q5_CONTROLLED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | One change: the machine order changed from [Cutter, Assembler, Shared] to [Shared, Assembler, Cutter]. The order finished at tick 9 instead of 11 (2 ticks sooner). |
+| Q5_CONTROLLED_COMPARISON | DIRECT_FACT |  | design Engine semantics section 2 rule 4: remaining ties broken by MachineId | When several machines could take the same work and are otherwise equal, the lower-numbered one (listed earlier) takes it, so the order of machines alone can change the result. |
+| Q5_CONTROLLED_COMPARISON | REFUSAL |  |  | This shows what happened with this change, not why. |
+
+### G1+assemble+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q6_CONFOUNDED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | 2 changes: added Assembler 2 (ASSEMBLE); added Inspector 2 (INSPECT). The order finished at tick 45 instead of 67 (22 ticks sooner). |
+| Q6_CONFOUNDED_COMPARISON | REFUSAL |  |  | This pair cannot tell how much each change contributed. Try them one at a time. |
+
+### G1+cut+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q6_CONFOUNDED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | 2 changes: added Cutter 2 (CUT); added Inspector 2 (INSPECT). The order finished at tick 56 instead of 67 (11 ticks sooner). |
+| Q6_CONFOUNDED_COMPARISON | REFUSAL |  |  | This pair cannot tell how much each change contributed. Try them one at a time. |
+
+### G7+assemble+inspect
+
+| Question | Kind | Method | Evidence | Statement |
+|---|---|---|---|---|
+| Q6_CONFOUNDED_COMPARISON | COMPARISON |  | obs closing / design authored design of both attempts, including resource order / fields OrderObservation.completedAt | 2 changes: added Assembler 2 (ASSEMBLE); added Inspector 2 (INSPECT). The order finished at tick 46 instead of 68 (22 ticks sooner). |
+| Q6_CONFOUNDED_COMPARISON | REFUSAL |  |  | This pair cannot tell how much each change contributed. Try them one at a time. |
+
 ## N-naive-dashboard
 
 Control: busyTicks utilization, combined per-machine queues, highest-utilization bottleneck, idle = surplus, first-change attribution.

@@ -1,0 +1,100 @@
+{
+  "A1": {
+    "answer": "1",
+    "explanation": "Snapshot: 3 units (6-8) wait for PRESS; nothing waits for WELD or PAINT."
+  },
+  "A2": {
+    "answer": "5",
+    "explanation": "One run does not tell. The runs show: a painter 46 -> 39; a press or a welder: no change."
+  },
+  "A3": {
+    "answer": "3",
+    "explanation": "Can't tell from this run. In fact adding a press changes nothing (46 -> 46): the longest wait is not where a machine helps here."
+  },
+  "A4": {
+    "byTry": {
+      "painter": "3",
+      "press": "3",
+      "welder": "3"
+    },
+    "explanation": "Two runs show one change; they do not show what an untried machine would do."
+  },
+  "D1": {
+    "answer": "3",
+    "explanation": "4 units (3-6) wait for WELD in the shared backlog; neither welder's own queue holds them."
+  },
+  "D2": {
+    "answer": "2",
+    "explanation": "The Painter is the only machine that can do PAINT."
+  },
+  "D3": {
+    "answer": "5",
+    "explanation": "One run does not tell. The runs show: a welder 29 -> 23, a painter 29 -> 28, a press: no change."
+  },
+  "D4": {
+    "byTry": {
+      "painter": "3",
+      "press": "3",
+      "welder": "3"
+    },
+    "explanation": "Two runs show one change; they do not show what an untried machine would do."
+  },
+  "B1": {
+    "answer": "3",
+    "explanation": "One run does not tell. Removing Painter 2 makes the order finish at 44 instead of 30: it is needed."
+  },
+  "B2": {
+    "byTry": {
+      "painter": "3",
+      "press": "3",
+      "remove": "1",
+      "welder": "3"
+    },
+    "explanation": "Only the removal run shows it: 30 -> 44, so Painter 2 is needed. Other tries do not tell."
+  },
+  "C1": {
+    "answer": "3",
+    "explanation": "One run does not tell. Removing Welder 2 leaves the finish at 37: it is not needed for this order. Its snapshot looks just like Factory 3's Painter 2."
+  },
+  "C2": {
+    "byTry": {
+      "painter": "3",
+      "press": "3",
+      "remove": "2",
+      "welder": "3"
+    },
+    "explanation": "Only the removal run shows it: 37 -> 37, so Welder 2 is not needed. Other tries do not tell."
+  },
+  "E1": {
+    "answer": "5",
+    "explanation": "One run does not tell. In fact no single machine helps (all 38); only a welder and a painter together do (38 -> 24)."
+  },
+  "E2": {
+    "byTry": {
+      "painter": "3",
+      "press": "3",
+      "welder": "3"
+    },
+    "explanation": "One try that changed nothing does not show what the other machines would do."
+  },
+  "F1": {
+    "answer": "1",
+    "explanation": "Snapshot: 3 units (6-8) wait for PRESS; 2 units (3-4) wait for WELD."
+  },
+  "F2": {
+    "answer": "3",
+    "explanation": "This view joined late and refuses waiting times; tick 12 is only the snapshot time."
+  },
+  "K1": {
+    "answer": "1",
+    "explanation": "One change, 29 -> 23."
+  },
+  "K2a": {
+    "answer": "1",
+    "explanation": "Two changes at once."
+  },
+  "K2b": {
+    "answer": "4",
+    "explanation": "The pair cannot apportion it. Separate runs happen to show the painter alone gives all 7 (37 -> 30) and the press alone none; the pair does not license that."
+  }
+}

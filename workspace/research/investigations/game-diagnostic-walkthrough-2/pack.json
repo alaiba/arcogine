@@ -1,0 +1,1656 @@
+{
+  "pack": "game-diagnostic-walkthrough-2",
+  "contract": "C3c-plain-bundle",
+  "glossary": [
+    "Tick: one unit of simulated time.",
+    "Waiting to start STEP: the unit is ready for that step, but no machine has started it.",
+    "Idle: the machine has nothing in progress.",
+    "Needed: the order would finish later without this machine.",
+    "Try: change one thing, run the same order again, and compare finish times.",
+    "Can't tell from this run: what is shown does not settle the question; a try might."
+  ],
+  "scenarios": [
+    {
+      "id": "T",
+      "kind": "tutorial",
+      "title": "Tutorial (not scored)",
+      "design": [
+        "Steps (ticks each): PRESS 1 -> WELD 3 -> PAINT 1.",
+        "Order: 3 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT)."
+      ],
+      "statements": [
+        {
+          "section": "snapshot",
+          "text": "At tick 3, 2 units (units 2-3) are waiting to start WELD on Welder.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of WELD | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 3, Welder (WELD) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 3, Press is idle and no unit is waiting for PRESS.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "idle-resources-and-eligible-waiting",
+          "evidence": "obs mid-run | design steps Press is eligible for | fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 3, Painter is idle and no unit is waiting for PAINT.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "idle-resources-and-eligible-waiting",
+          "evidence": "obs mid-run | design steps Painter is eligible for | fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 3, 0 of 3 units are finished.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity"
+        },
+        {
+          "section": "result",
+          "text": "The order finished at tick 11.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs closing | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "result",
+          "text": "The last unit to finish (unit 3) took 11 ticks from the order's acceptance at tick 0: waited 2 to start PRESS, then PRESS took 1 on Press; waited 4 to start WELD, then WELD took 3 on Welder; waited 0 to start PAINT, then PAINT took 1 on Painter. Its longest wait shows where it spent time; on its own it does not show which machine to add.",
+          "kind": "EVENT_INTERVAL",
+          "method": "completing-unit-lead-time-decomposition",
+          "evidence": "events 1,9,11,19,21-23 | fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId"
+        },
+        {
+          "section": "more",
+          "text": "Press worked on 3 PRESS steps during ticks 0-3.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 2,5,7-9,11 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Welder worked on 3 WELD steps during ticks 1-10.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 6,13,15,17,19,21 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Painter worked on 3 PAINT steps during ticks 4-5, 7-8, 10-11.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 14,16,18,20,22-23 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "snapshot",
+          "text": "Press is the only machine that can do PRESS; the order cannot finish without it.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "design eligible resources of PRESS"
+        },
+        {
+          "section": "snapshot",
+          "text": "Painter is the only machine that can do PAINT; the order cannot finish without it.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "design eligible resources of PAINT"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "T1",
+          "text": "Practice: at tick 3, how many units are waiting to start WELD?",
+          "options": [
+            {
+              "id": "1",
+              "text": "0"
+            },
+            {
+              "id": "2",
+              "text": "1"
+            },
+            {
+              "id": "3",
+              "text": "2"
+            },
+            {
+              "id": "4",
+              "text": "3"
+            }
+          ]
+        }
+      ],
+      "tries": [
+        {
+          "id": "press",
+          "label": "Add a press",
+          "design": [
+            "Steps (ticks each): PRESS 1 -> WELD 3 -> PAINT 1.",
+            "Order: 3 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT), Press 2 (PRESS)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Press 2 (PRESS). The order finished at tick 11, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        }
+      ],
+      "intro": [
+        "Each factory makes one order of identical units. Every unit goes through the steps in order.",
+        "You see the design, a snapshot of one moment (sometimes), the result, and a list of what the run cannot tell you. Type 'more' for each machine's work times, 'evidence' for where each line comes from, '?' for the glossary.",
+        "Then you answer a few questions by number, and you get one try: change one machine and run the same order again."
+      ],
+      "practiceAnswer": "3",
+      "practiceExplanation": "The snapshot line says 2 units (units 2-3) are waiting to start WELD on Welder.",
+      "tryExplanation": "A try changes one thing and runs the same order again. Here adding a press did not change the finish time. In each factory you choose your own try."
+    },
+    {
+      "id": "A",
+      "kind": "attempt",
+      "title": "Factory 1",
+      "design": [
+        "Steps (ticks each): PRESS 4 -> WELD 2 -> PAINT 5.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT)."
+      ],
+      "statements": [
+        {
+          "section": "snapshot",
+          "text": "At tick 16, 3 units (units 6-8) are waiting to start PRESS on Press.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of PRESS | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 16, Press (PRESS) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 16, Welder (WELD) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 16, Painter (PAINT) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 16, 2 of 8 units are finished.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity"
+        },
+        {
+          "section": "result",
+          "text": "The order finished at tick 46.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs closing | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "result",
+          "text": "The last unit to finish (unit 8) took 46 ticks from the order's acceptance at tick 0: waited 28 to start PRESS, then PRESS took 4 on Press; waited 0 to start WELD, then WELD took 2 on Welder; waited 7 to start PAINT, then PAINT took 5 on Painter. Its longest wait shows where it spent time; on its own it does not show which machine to add.",
+          "kind": "EVENT_INTERVAL",
+          "method": "completing-unit-lead-time-decomposition",
+          "evidence": "events 1,50,55-57,62-63 | fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId"
+        },
+        {
+          "section": "more",
+          "text": "Press worked on 8 PRESS steps during ticks 0-32.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 2,10,12,15,17,22,24,29,31,34,36,41,43,48,50,55 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Welder worked on 8 WELD steps during ticks 4-6, 8-10, 12-14, 16-18, 20-22, 24-26, 28-30, 32-34.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 11,13,16,18,23,25,30,32,35,39,42,46,49,51,56-57 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Painter worked on 8 PAINT steps during ticks 6-46.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 14,20-21,27-28,37-38,44-45,53-54,59-63 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "A1",
+          "text": "At tick 16, which units are waiting, and for which step?",
+          "options": [
+            {
+              "id": "1",
+              "text": "3 units waiting to start PRESS; nothing else is waiting"
+            },
+            {
+              "id": "2",
+              "text": "3 units waiting to start PRESS and 1 waiting to start PAINT"
+            },
+            {
+              "id": "3",
+              "text": "Nothing is waiting"
+            },
+            {
+              "id": "4",
+              "text": "Can't tell from this run"
+            }
+          ]
+        },
+        {
+          "id": "A2",
+          "text": "Would adding one machine make this order finish sooner?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Yes, a press"
+            },
+            {
+              "id": "2",
+              "text": "Yes, a welder"
+            },
+            {
+              "id": "3",
+              "text": "Yes, a painter"
+            },
+            {
+              "id": "4",
+              "text": "No single machine would"
+            },
+            {
+              "id": "5",
+              "text": "Can't tell from this run"
+            }
+          ]
+        },
+        {
+          "id": "A3",
+          "text": "The last unit waited longest to start PRESS (28 ticks). Does that mean adding a press would make the order finish sooner?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Yes"
+            },
+            {
+              "id": "2",
+              "text": "No"
+            },
+            {
+              "id": "3",
+              "text": "Can't tell from this run"
+            }
+          ]
+        }
+      ],
+      "tries": [
+        {
+          "id": "press",
+          "label": "Add a press",
+          "design": [
+            "Steps (ticks each): PRESS 4 -> WELD 2 -> PAINT 5.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT), Press 2 (PRESS)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Press 2 (PRESS). The order finished at tick 46, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "welder",
+          "label": "Add a welder",
+          "design": [
+            "Steps (ticks each): PRESS 4 -> WELD 2 -> PAINT 5.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT), Welder 2 (WELD)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Welder 2 (WELD). The order finished at tick 46, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "painter",
+          "label": "Add a painter",
+          "design": [
+            "Steps (ticks each): PRESS 4 -> WELD 2 -> PAINT 5.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT), Painter 2 (PAINT)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Painter 2 (PAINT). The order finished at tick 39 instead of 46 (7 ticks sooner).",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        }
+      ],
+      "followUp": {
+        "id": "A4",
+        "text": "From the two runs you have now seen, would adding one of the machines you did NOT try make the order finish sooner?",
+        "options": [
+          {
+            "id": "1",
+            "text": "Yes"
+          },
+          {
+            "id": "2",
+            "text": "No"
+          },
+          {
+            "id": "3",
+            "text": "Can't tell from these runs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "D",
+      "kind": "attempt",
+      "title": "Factory 2",
+      "design": [
+        "Steps (ticks each): PRESS 1 -> WELD 6 -> PAINT 2.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder 1 (WELD), Welder 2 (WELD), Painter (PAINT)."
+      ],
+      "statements": [
+        {
+          "section": "snapshot",
+          "text": "At tick 6, 1 unit (unit 8) is waiting to start PRESS on Press.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of PRESS | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 6, 4 units (units 3-6) are waiting to start WELD. They are not assigned to a machine yet; either Welder 1 or Welder 2 may take them when it becomes free.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of WELD | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 6, Press (PRESS) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 6, Welder 1 (WELD) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 6, Welder 2 (WELD) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 6, Painter is idle and no unit is waiting for PAINT.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "idle-resources-and-eligible-waiting",
+          "evidence": "obs mid-run | design steps Painter is eligible for | fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 6, 0 of 8 units are finished.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity"
+        },
+        {
+          "section": "result",
+          "text": "The order finished at tick 29.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs closing | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "result",
+          "text": "The last unit to finish (unit 8) took 29 ticks from the order's acceptance at tick 0: waited 7 to start PRESS, then PRESS took 1 on Press; waited 12 to start WELD, then WELD took 6 on Welder 2; waited 1 to start PAINT, then PAINT took 2 on Painter. Its longest wait shows where it spent time; on its own it does not show which machine to add.",
+          "kind": "EVENT_INTERVAL",
+          "method": "completing-unit-lead-time-decomposition",
+          "evidence": "events 1,32,37,55,62,65-66 | fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId"
+        },
+        {
+          "section": "more",
+          "text": "Press worked on 8 PRESS steps during ticks 0-8.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 2,10,12-13,15-17,19-20,22-23,25-26,31-32,37 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Welder 1 worked on 4 WELD steps during ticks 1-25.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 11,28,30,42,44,51,53,60 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Welder 2 worked on 4 WELD steps during ticks 2-26.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 14,34-35,45-46,54-55,62 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Painter worked on 8 PAINT steps during ticks 7-11, 13-17, 19-23, 25-29.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 29,39-41,43,48-50,52,57-59,61,64-66 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "snapshot",
+          "text": "Painter is the only machine that can do PAINT; the order cannot finish without it.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "design eligible resources of PAINT"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "D1",
+          "text": "At tick 6, how many units are waiting to start WELD, and which welder will do them?",
+          "options": [
+            {
+              "id": "1",
+              "text": "4 units, 2 assigned to each welder"
+            },
+            {
+              "id": "2",
+              "text": "4 units on each welder (8 in total)"
+            },
+            {
+              "id": "3",
+              "text": "4 units, not assigned to either welder yet"
+            },
+            {
+              "id": "4",
+              "text": "Can't tell from this run"
+            }
+          ]
+        },
+        {
+          "id": "D2",
+          "text": "Could this order finish without the Painter?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Yes"
+            },
+            {
+              "id": "2",
+              "text": "No"
+            },
+            {
+              "id": "3",
+              "text": "Can't tell from this run"
+            }
+          ]
+        },
+        {
+          "id": "D3",
+          "text": "Would adding one machine make this order finish sooner?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Yes, a press"
+            },
+            {
+              "id": "2",
+              "text": "Yes, a welder"
+            },
+            {
+              "id": "3",
+              "text": "Yes, a painter"
+            },
+            {
+              "id": "4",
+              "text": "No single machine would"
+            },
+            {
+              "id": "5",
+              "text": "Can't tell from this run"
+            }
+          ]
+        }
+      ],
+      "tries": [
+        {
+          "id": "press",
+          "label": "Add a press",
+          "design": [
+            "Steps (ticks each): PRESS 1 -> WELD 6 -> PAINT 2.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder 1 (WELD), Welder 2 (WELD), Painter (PAINT), Press 2 (PRESS)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Press 2 (PRESS). The order finished at tick 29, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "welder",
+          "label": "Add a welder",
+          "design": [
+            "Steps (ticks each): PRESS 1 -> WELD 6 -> PAINT 2.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder 1 (WELD), Welder 2 (WELD), Painter (PAINT), Welder 3 (WELD)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Welder 3 (WELD). The order finished at tick 23 instead of 29 (6 ticks sooner).",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "painter",
+          "label": "Add a painter",
+          "design": [
+            "Steps (ticks each): PRESS 1 -> WELD 6 -> PAINT 2.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder 1 (WELD), Welder 2 (WELD), Painter (PAINT), Painter 2 (PAINT)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Painter 2 (PAINT). The order finished at tick 28 instead of 29 (1 tick sooner).",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        }
+      ],
+      "followUp": {
+        "id": "D4",
+        "text": "From the two runs you have now seen, would adding one of the machines you did NOT try make the order finish sooner?",
+        "options": [
+          {
+            "id": "1",
+            "text": "Yes"
+          },
+          {
+            "id": "2",
+            "text": "No"
+          },
+          {
+            "id": "3",
+            "text": "Can't tell from these runs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "B",
+      "kind": "attempt",
+      "title": "Factory 3",
+      "design": [
+        "Steps (ticks each): PRESS 3 -> WELD 1 -> PAINT 5.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder (WELD), Painter 1 (PAINT), Painter 2 (PAINT)."
+      ],
+      "statements": [
+        {
+          "section": "snapshot",
+          "text": "At tick 12, 3 units (units 6-8) are waiting to start PRESS on Press.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of PRESS | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, Press (PRESS) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, Welder (WELD) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, Painter 1 (PAINT) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, Painter 2 is idle and no unit is waiting for PAINT.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "idle-resources-and-eligible-waiting",
+          "evidence": "obs mid-run | design steps Painter 2 is eligible for | fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, 2 of 8 units are finished.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity"
+        },
+        {
+          "section": "result",
+          "text": "The order finished at tick 30.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs closing | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "result",
+          "text": "The last unit to finish (unit 8) took 30 ticks from the order's acceptance at tick 0: waited 21 to start PRESS, then PRESS took 3 on Press; waited 0 to start WELD, then WELD took 1 on Welder; waited 0 to start PAINT, then PAINT took 5 on Painter 2. Its longest wait shows where it spent time; on its own it does not show which machine to add.",
+          "kind": "EVENT_INTERVAL",
+          "method": "completing-unit-lead-time-decomposition",
+          "evidence": "events 1,47,51-54,56 | fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId"
+        },
+        {
+          "section": "more",
+          "text": "Press worked on 8 PRESS steps during ticks 0-24.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 2,10,12,15,17,21,23,27,29,33,35,39,41,45,47,51 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Welder worked on 8 WELD steps during ticks 3-4, 6-7, 9-10, 12-13, 15-16, 18-19, 21-22, 24-25.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 11,13,16,18,22,24,28,30,34,36,40,42,46,48,52-53 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Painter 1 worked on 4 PAINT steps during ticks 4-9, 10-15, 16-21, 22-27.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 14,20,25,32,37,44,49,55 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Painter 2 worked on 4 PAINT steps during ticks 7-12, 13-18, 19-24, 25-30.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 19,26,31,38,43,50,54,56 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Whether Painter 2 is needed (whether the order would finish later without it): this run does not tell you. Try removing it to find out.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": "obs mid-run | design steps Painter 2 is eligible for | fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "B1",
+          "text": "At tick 12, Painter 2 is idle. Is Painter 2 needed (would the order finish later without it)?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Yes"
+            },
+            {
+              "id": "2",
+              "text": "No"
+            },
+            {
+              "id": "3",
+              "text": "Can't tell from this run"
+            }
+          ]
+        }
+      ],
+      "tries": [
+        {
+          "id": "remove",
+          "label": "Remove Painter 2",
+          "design": [
+            "Steps (ticks each): PRESS 3 -> WELD 1 -> PAINT 5.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter 1 (PAINT)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: removed Painter 2 (PAINT). The order finished at tick 44 instead of 30 (14 ticks later).",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "press",
+          "label": "Add a press",
+          "design": [
+            "Steps (ticks each): PRESS 3 -> WELD 1 -> PAINT 5.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter 1 (PAINT), Painter 2 (PAINT), Press 2 (PRESS)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Press 2 (PRESS). The order finished at tick 25 instead of 30 (5 ticks sooner).",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "welder",
+          "label": "Add a welder",
+          "design": [
+            "Steps (ticks each): PRESS 3 -> WELD 1 -> PAINT 5.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter 1 (PAINT), Painter 2 (PAINT), Welder 2 (WELD)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Welder 2 (WELD). The order finished at tick 30, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "painter",
+          "label": "Add a painter",
+          "design": [
+            "Steps (ticks each): PRESS 3 -> WELD 1 -> PAINT 5.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter 1 (PAINT), Painter 2 (PAINT), Painter 3 (PAINT)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Painter 3 (PAINT). The order finished at tick 30, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        }
+      ],
+      "followUp": {
+        "id": "B2",
+        "text": "From what you have now seen, is Painter 2 needed?",
+        "options": [
+          {
+            "id": "1",
+            "text": "Yes"
+          },
+          {
+            "id": "2",
+            "text": "No"
+          },
+          {
+            "id": "3",
+            "text": "Can't tell from these runs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C",
+      "kind": "attempt",
+      "title": "Factory 4",
+      "design": [
+        "Steps (ticks each): PRESS 2 -> WELD 3 -> PAINT 4.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder 1 (WELD), Painter (PAINT), Welder 2 (WELD)."
+      ],
+      "statements": [
+        {
+          "section": "snapshot",
+          "text": "At tick 7, 4 units (units 5-8) are waiting to start PRESS on Press.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of PRESS | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 7, 1 unit (unit 2) is waiting to start PAINT on Painter.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of PAINT | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 7, Press (PRESS) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 7, Welder 1 (WELD) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 7, Painter (PAINT) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 7, Welder 2 is idle and no unit is waiting for WELD.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "idle-resources-and-eligible-waiting",
+          "evidence": "obs mid-run | design steps Welder 2 is eligible for | fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 7, 0 of 8 units are finished.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity"
+        },
+        {
+          "section": "result",
+          "text": "The order finished at tick 37.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs closing | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "result",
+          "text": "The last unit to finish (unit 8) took 37 ticks from the order's acceptance at tick 0: waited 14 to start PRESS, then PRESS took 2 on Press; waited 0 to start WELD, then WELD took 3 on Welder 2; waited 14 to start PAINT, then PAINT took 4 on Painter. Its longest wait shows where it spent time; on its own it does not show which machine to add.",
+          "kind": "EVENT_INTERVAL",
+          "method": "completing-unit-lead-time-decomposition",
+          "evidence": "events 1,44,47-48,53,62-63 | fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId"
+        },
+        {
+          "section": "more",
+          "text": "Press worked on 8 PRESS steps during ticks 0-16.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 2,10,12-13,15,18,20,23,25,30,32,35,37,42,44,47 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Welder 1 worked on 4 WELD steps during ticks 2-5, 6-9, 10-13, 14-17.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 11,16,19,28,31,40,43,51 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Painter worked on 8 PAINT steps during ticks 5-37.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 17,26-27,38-39,49-50,55-63 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Welder 2 worked on 4 WELD steps during ticks 4-7, 8-11, 12-15, 16-19.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 14,21,24,33,36,45,48,53 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Whether Welder 2 is needed (whether the order would finish later without it): this run does not tell you. Try removing it to find out.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": "obs mid-run | design steps Welder 2 is eligible for | fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "C1",
+          "text": "At tick 7, Welder 2 is idle. Is Welder 2 needed (would the order finish later without it)?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Yes"
+            },
+            {
+              "id": "2",
+              "text": "No"
+            },
+            {
+              "id": "3",
+              "text": "Can't tell from this run"
+            }
+          ]
+        }
+      ],
+      "tries": [
+        {
+          "id": "remove",
+          "label": "Remove Welder 2",
+          "design": [
+            "Steps (ticks each): PRESS 2 -> WELD 3 -> PAINT 4.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder 1 (WELD), Painter (PAINT)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: removed Welder 2 (WELD). The order finished at tick 37, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "press",
+          "label": "Add a press",
+          "design": [
+            "Steps (ticks each): PRESS 2 -> WELD 3 -> PAINT 4.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder 1 (WELD), Painter (PAINT), Welder 2 (WELD), Press 2 (PRESS)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Press 2 (PRESS). The order finished at tick 37, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "welder",
+          "label": "Add a welder",
+          "design": [
+            "Steps (ticks each): PRESS 2 -> WELD 3 -> PAINT 4.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder 1 (WELD), Painter (PAINT), Welder 2 (WELD), Welder 3 (WELD)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Welder 3 (WELD). The order finished at tick 37, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "painter",
+          "label": "Add a painter",
+          "design": [
+            "Steps (ticks each): PRESS 2 -> WELD 3 -> PAINT 4.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder 1 (WELD), Painter (PAINT), Welder 2 (WELD), Painter 2 (PAINT)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Painter 2 (PAINT). The order finished at tick 23 instead of 37 (14 ticks sooner).",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        }
+      ],
+      "followUp": {
+        "id": "C2",
+        "text": "From what you have now seen, is Welder 2 needed?",
+        "options": [
+          {
+            "id": "1",
+            "text": "Yes"
+          },
+          {
+            "id": "2",
+            "text": "No"
+          },
+          {
+            "id": "3",
+            "text": "Can't tell from these runs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "E",
+      "kind": "attempt",
+      "title": "Factory 5",
+      "design": [
+        "Steps (ticks each): PRESS 2 -> WELD 4 -> PAINT 4.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT)."
+      ],
+      "statements": [
+        {
+          "section": "result",
+          "text": "The order finished at tick 38.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs closing | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "result",
+          "text": "The last unit to finish (unit 8) took 38 ticks from the order's acceptance at tick 0: waited 14 to start PRESS, then PRESS took 2 on Press; waited 14 to start WELD, then WELD took 4 on Welder; waited 0 to start PAINT, then PAINT took 4 on Painter. Its longest wait shows where it spent time; on its own it does not show which machine to add.",
+          "kind": "EVENT_INTERVAL",
+          "method": "completing-unit-lead-time-decomposition",
+          "evidence": "events 1,40,42,59,61-63 | fields ORDER_ACCEPTED,JOB_DISPATCHED,JOB_STEP_COMPLETED,ORDER_COMPLETED.jobId"
+        },
+        {
+          "section": "more",
+          "text": "Press worked on 8 PRESS steps during ticks 0-16.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 2,10,12-14,19-20,22-23,29-30,32-33,39-40,42 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Welder worked on 8 WELD steps during ticks 2-34.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 11,16,18,26,28,36,38,45,47,49,51,53,55,57,59,61 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "more",
+          "text": "Painter worked on 8 PAINT steps during ticks 6-38.",
+          "kind": "EVENT_INTERVAL",
+          "method": "job-step-occurrences-from-supported-events",
+          "evidence": "events 17,25,27,35,37,44,46,48,50,52,54,56,58,60,62-63 | fields JOB_DISPATCHED,JOB_STEP_COMPLETED"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "E1",
+          "text": "Would adding one machine make this order finish sooner?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Yes, a press"
+            },
+            {
+              "id": "2",
+              "text": "Yes, a welder"
+            },
+            {
+              "id": "3",
+              "text": "Yes, a painter"
+            },
+            {
+              "id": "4",
+              "text": "No single machine would"
+            },
+            {
+              "id": "5",
+              "text": "Can't tell from this run"
+            }
+          ]
+        }
+      ],
+      "tries": [
+        {
+          "id": "press",
+          "label": "Add a press",
+          "design": [
+            "Steps (ticks each): PRESS 2 -> WELD 4 -> PAINT 4.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT), Press 2 (PRESS)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Press 2 (PRESS). The order finished at tick 38, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "welder",
+          "label": "Add a welder",
+          "design": [
+            "Steps (ticks each): PRESS 2 -> WELD 4 -> PAINT 4.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT), Welder 2 (WELD)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Welder 2 (WELD). The order finished at tick 38, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        },
+        {
+          "id": "painter",
+          "label": "Add a painter",
+          "design": [
+            "Steps (ticks each): PRESS 2 -> WELD 4 -> PAINT 4.",
+            "Order: 8 units, all released at tick 0.",
+            "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT), Painter 2 (PAINT)."
+          ],
+          "statements": [
+            {
+              "section": "comparison",
+              "text": "One change: added Painter 2 (PAINT). The order finished at tick 38, the same as before.",
+              "kind": "COMPARISON",
+              "method": "",
+              "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+            },
+            {
+              "section": "comparison",
+              "text": "This shows what happened with this change, not why.",
+              "kind": "REFUSAL",
+              "method": "",
+              "evidence": ""
+            }
+          ]
+        }
+      ],
+      "followUp": {
+        "id": "E2",
+        "text": "From the two runs you have now seen, would adding one of the machines you did NOT try make the order finish sooner?",
+        "options": [
+          {
+            "id": "1",
+            "text": "Yes"
+          },
+          {
+            "id": "2",
+            "text": "No"
+          },
+          {
+            "id": "3",
+            "text": "Can't tell from these runs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F",
+      "kind": "attempt",
+      "title": "Factory 6",
+      "design": [
+        "Steps (ticks each): PRESS 3 -> WELD 5 -> PAINT 2.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT)."
+      ],
+      "statements": [
+        {
+          "section": "snapshot",
+          "text": "At tick 12, 3 units (units 6-8) are waiting to start PRESS on Press.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of PRESS | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, 2 units (units 3-4) are waiting to start WELD on Welder.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "waiting-work-by-operation-step",
+          "evidence": "obs mid-run | design eligible resources of WELD | fields JobObservation.status,JobObservation.currentStep,PendingWorkObservation,ResourceObservation.queueDepth"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, Press (PRESS) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, Welder (WELD) is busy.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields ResourceObservation.state,ResourceObservation.activeJobIds,ResourceObservation.concurrency"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, Painter is idle and no unit is waiting for PAINT.",
+          "kind": "BOUNDARY_COUNT",
+          "method": "idle-resources-and-eligible-waiting",
+          "evidence": "obs mid-run | design steps Painter is eligible for | fields ResourceObservation.state,ResourceObservation.activeJobIds,JobObservation.status,JobObservation.currentStep"
+        },
+        {
+          "section": "snapshot",
+          "text": "At tick 12, 1 of 8 units is finished.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs mid-run | fields OrderObservation.completedQuantity,OrderObservation.requestedQuantity"
+        },
+        {
+          "section": "result",
+          "text": "The order finished at tick 45.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "obs closing | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Waiting and work times are not shown: this view started watching after the order began and missed the earlier events.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": "obs closing"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Each machine's work times are not shown: this view started watching after the order began and missed the earlier events.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": "obs closing"
+        },
+        {
+          "section": "snapshot",
+          "text": "Painter is the only machine that can do PAINT; the order cannot finish without it.",
+          "kind": "DIRECT_FACT",
+          "method": "",
+          "evidence": "design eligible resources of PAINT"
+        },
+        {
+          "section": "cannot-tell",
+          "text": "Which machine to add: this run does not tell you. Waits and work times describe what happened; only a try that adds one machine shows whether the order then finishes sooner.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "F1",
+          "text": "At tick 12, which units are waiting, and for which step?",
+          "options": [
+            {
+              "id": "1",
+              "text": "3 waiting to start PRESS and 2 waiting to start WELD"
+            },
+            {
+              "id": "2",
+              "text": "3 waiting to start PRESS only"
+            },
+            {
+              "id": "3",
+              "text": "2 waiting to start WELD only"
+            },
+            {
+              "id": "4",
+              "text": "Can't tell from this run"
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "text": "How long did the last unit to finish wait, in total, before its steps started?",
+          "options": [
+            {
+              "id": "1",
+              "text": "12 ticks"
+            },
+            {
+              "id": "2",
+              "text": "45 ticks"
+            },
+            {
+              "id": "3",
+              "text": "This view does not show it"
+            },
+            {
+              "id": "4",
+              "text": "0 ticks"
+            }
+          ]
+        }
+      ],
+      "tries": []
+    },
+    {
+      "id": "K1",
+      "kind": "comparison",
+      "title": "Comparison 1",
+      "design": [
+        "Steps (ticks each): PRESS 1 -> WELD 6 -> PAINT 2.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder 1 (WELD), Welder 2 (WELD), Painter (PAINT)."
+      ],
+      "secondDesign": [
+        "Steps (ticks each): PRESS 1 -> WELD 6 -> PAINT 2.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder 1 (WELD), Welder 2 (WELD), Painter (PAINT), Welder 3 (WELD)."
+      ],
+      "statements": [
+        {
+          "section": "comparison",
+          "text": "One change: added Welder 3 (WELD). The order finished at tick 23 instead of 29 (6 ticks sooner).",
+          "kind": "COMPARISON",
+          "method": "",
+          "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "comparison",
+          "text": "This shows what happened with this change, not why.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "K1",
+          "text": "What changed, and what happened?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Added Welder 3; the order finished 6 ticks sooner"
+            },
+            {
+              "id": "2",
+              "text": "Added Welder 3; no change"
+            },
+            {
+              "id": "3",
+              "text": "Added a press; the order finished 6 ticks sooner"
+            },
+            {
+              "id": "4",
+              "text": "Can't tell"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K2",
+      "kind": "comparison",
+      "title": "Comparison 2",
+      "design": [
+        "Steps (ticks each): PRESS 2 -> WELD 3 -> PAINT 4.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT)."
+      ],
+      "secondDesign": [
+        "Steps (ticks each): PRESS 2 -> WELD 3 -> PAINT 4.",
+        "Order: 8 units, all released at tick 0.",
+        "Machines, in order: Press (PRESS), Welder (WELD), Painter (PAINT), Press 2 (PRESS), Painter 2 (PAINT)."
+      ],
+      "statements": [
+        {
+          "section": "comparison",
+          "text": "2 changes: added Press 2 (PRESS); added Painter 2 (PAINT). The order finished at tick 30 instead of 37 (7 ticks sooner).",
+          "kind": "COMPARISON",
+          "method": "",
+          "evidence": "obs closing | design authored design of both attempts, including resource order | fields OrderObservation.completedAt"
+        },
+        {
+          "section": "comparison",
+          "text": "This pair cannot tell how much each change contributed. Try them one at a time.",
+          "kind": "REFUSAL",
+          "method": "",
+          "evidence": ""
+        }
+      ],
+      "questions": [
+        {
+          "id": "K2a",
+          "text": "What changed?",
+          "options": [
+            {
+              "id": "1",
+              "text": "Added Press 2 and Painter 2"
+            },
+            {
+              "id": "2",
+              "text": "Added Painter 2 only"
+            },
+            {
+              "id": "3",
+              "text": "Added Press 2 only"
+            }
+          ]
+        },
+        {
+          "id": "K2b",
+          "text": "The order finished 7 ticks sooner. How many of those 7 ticks came from adding Painter 2?",
+          "options": [
+            {
+              "id": "1",
+              "text": "All 7"
+            },
+            {
+              "id": "2",
+              "text": "About half"
+            },
+            {
+              "id": "3",
+              "text": "None"
+            },
+            {
+              "id": "4",
+              "text": "Can't tell from this pair"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

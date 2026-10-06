@@ -7,6 +7,7 @@
 | C2b-named-completion-chain | PASS | PASS | PASS | FAIL (5) | PASS | PASS |
 | C3a-bundle-with-completion-chain | PASS | PASS | PASS | PASS | PASS | PASS |
 | C3b-bundle-minimal | PASS | PASS | PASS | PASS | PASS | PASS |
+| C3c-plain-bundle | PASS | PASS | PASS | PASS | PASS | PASS |
 | N-naive-dashboard | FAIL (104) | PASS | FAIL (22) | FAIL (13) | FAIL (15) | FAIL (305) |
 
 ## Findings

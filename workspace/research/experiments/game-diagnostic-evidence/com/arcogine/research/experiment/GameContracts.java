@@ -32,7 +32,8 @@ final class GameContracts {
                 new FactsPlusNamedInterpretation(NamedMethod.POOL_OCCUPANCY),
                 new FactsPlusNamedInterpretation(NamedMethod.COMPLETION_CHAIN),
                 new ClaimEvidenceBundle(true),
-                new ClaimEvidenceBundle(false));
+                new ClaimEvidenceBundle(false),
+                new GamePlainContract.PlainBundle());
     }
 
     static List<Contract> all() {

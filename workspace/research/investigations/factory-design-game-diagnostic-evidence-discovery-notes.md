@@ -107,6 +107,32 @@
   the name "utilization", and justified by a bottleneck heuristic that the corpus falsifies. It is a
   candidate architecture/consistency reconciliation item, not decided here.
 
+### Owner decisions (2026-10-07, third exchange)
+
+- **The busy counter is to be deleted.** It is out of the plan and the prototypes entirely.
+- **Removal scope** (for reconciliation, independently reviewed):
+  - `ResourceObservation.busyTicks` and its accumulation in `FactoryHandler`/`Machine`/`MachineView`;
+  - Engine semantics §10.1 rule 1 and the §10.2 register row (the lead-time saturation rule stays);
+  - the bottleneck-by-utilization assertion in `HeadlessClosureAcceptanceTest`, and the `busyTicks`
+    part of `EngineDerivedResultConformanceTest`;
+  - the runtime contract's "utilization facts", the ISA-95 mapping row and the Governance evidence
+    mention.
+- **Timing.** The owner allowed removing it on this branch now if that helps focus the research. The
+  research agent recommended deferring it to the first reconciliation commit:
+  - The new prototype does not use the counter at all, so removing it earlier does not sharpen this
+    iteration.
+  - Removing it now would force rewriting the committed first-pass experiment (its naive control and
+    the divergence test use it as a counterexample).
+  - Later experiments would no longer run against `main`'s supported runtime.
+
+  The deferral is awaiting owner confirmation.
+- **Machine state is not flow characterization.** Machine slot state is a direct fact (working, idle,
+  offline). Flow characterization is computed from the whole system: starved, no work left, and
+  blocked in future. Adopted in revision 2 of the iteration plan.
+- **Offline time is out of this iteration.** Availability is an engine runtime command issued at a
+  moment, not a design property, and no scenario exercises it. It belongs with "machine downtime" in
+  the engine-supported-needs-scenarios bucket.
+
 ## Items to track (not yet in any maintained surface)
 
 1. **"Blocked" / finite buffers.** The owner wants this planned, probably as a research question first.

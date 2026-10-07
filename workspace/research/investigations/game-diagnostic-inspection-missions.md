@@ -41,7 +41,7 @@ factories.
 |---|---|---|
 | **S1 First bake** | One machine per step; a tiny order. Working and idle; starved versus no work left; utilization | MIX 2, BAKE 4, PACK 1 ticks; Mixer, Oven, Packer; 4 loaves |
 | **S2 The big oven** | One machine with **two slots**: per-slot state and utilization; the period matters | MIX 2, BAKE 4, PACK 1; Mixer, Oven (2 slots), Packer; 6 loaves |
-| **S3 Two upgrade options** | **Variants:** two versions of one line, each with one extra machine. Idle and starved does not mean "not needed" | MIX 2, BAKE 3, PACK 4; 8 loaves. **Version A:** Mixer, Oven, Packer 1, Packer 2. **Version B:** Mixer, Oven 1, Oven 2, Packer |
+| **S3 Two upgrade options** | **Variants:** two versions of one line, each with one extra machine. Idle and starved does not mean "not needed" | MIX 2, BAKE 3, PACK 4; 8 loaves. **Version A:** Mixer, Oven, Packer 1, Packer 2. **Version B:** Mixer, Oven 1, Packer, Oven 2 (Oven 2 is listed last, so that removing it renumbers no other machine) |
 | **S4 Two busy machines** | A system-level effect: the most utilized machines and where adding capacity helps | MIX 2, BAKE 4, PACK 4; Mixer, Oven, Packer; 8 loaves |
 
 **Variants available:**
@@ -95,10 +95,13 @@ The viewer shows each in context and on `explain`:
 - variant;
 - needed.
 
-## Open points for the owner
+## Owner decisions (2026-10-07)
 
-1. Are the number and pacing right (13 missions, four scenarios)? Any to drop, merge or add?
-2. Answer formats: they are deliberately simple (a name, a choice, a number), so answers can be
-   compared exactly, with an optional free-text "why". Is that too rigid?
-3. After the official answer, should the viewer also show *how* to find it ("type `machine Packer`")?
-4. The bakery theme: keep it, or return to a neutral factory?
+- **Pacing:** approved as listed.
+- **Theme:** keep the bakery.
+- **How to find it:** after the official answer, the viewer also shows how to find it, naming the
+  command.
+- **Answer format:** every mission states its answer format in the mission text itself, so the player
+  never has to guess what to type. Multi-part missions ask each part separately, each with its own
+  format.
+- **Implementation:** approved.

@@ -1,911 +1,592 @@
-# Factory-design game diagnostic evidence contract — investigation report
+# Factory-design game diagnostic evidence: investigation report (revision 3, consolidated)
 
-> **Research status:** `READY` (the question stays admitted and unresolved until its consequence is
-> reconciled; this report does not change the register).
+> **Research status:** `READY`. The question stays admitted and unresolved until its consequence is
+> reconciled; this report does not change the register.
 >
-> **Research baseline:** live `main` `9e9e4678b18286cea83387b5ffc38741640f0db5` at the start of the
-> investigation.
+> **Research baseline:** live `main` `9e9e4678b18286cea83387b5ffc38741640f0db5`.
 >
-> **Final repository recheck:** live `main` `306205c33ef93f0433a26c92f85cbd82eadd27f8`. The only change
-> since the baseline is test coverage in `research-experiments` plus a private → package-private
-> visibility change to `ExperimentRunner.recordOf`; no Engine, Factory or substrate behavior changed.
-> `main` was merged into the workspace, and the experiment was rerun twice against that content: once in
-> the earlier session, and again for this report on the JDK 21 compatibility floor (`gradle:9-jdk21`
-> image, `./gradlew :research-experiments:test` with the workspace experiment sources): 147 tests,
-> 0 failures, 0 skipped, and all five generated result files byte-identical to the committed results.
-> The conclusion is unchanged.
+> **Final repository recheck:** live `main` `306205c33ef93f0433a26c92f85cbd82eadd27f8`, unchanged since
+> the first revision. That change was test coverage only, with no Engine, Factory or substrate behavior
+> change. Every experiment was rerun on the JDK 21 compatibility floor at each step, with 0 failures
+> each time:
 >
-> **Authority:** research evidence only. This report is not accepted architecture, product direction, a
-> game requirement, or implementation commitment. It decides no analytics ownership.
+> - 147 tests (first revision);
+> - 152 tests (second-pass walkthrough);
+> - 156 tests (bakery missions).
 >
-> **Adversarial-review status:** required, not yet performed (High risk in the register). The
-> self-challenge below is self-administered and has no independent weight.
+> **This revision:**
+> - It supersedes revision 1 (`bb37e2598d2684f7dc47b6db75884b798a0ae040`) and revision 2
+>   (`e5debf2584b2a3096115c2ed8b117e2ac653cb31`), which stay in the workspace history as evidence.
+> - It consolidates two further owner-directed iterations and the owner's scope decisions. Several of
+>   revision 1's conclusions are reversed here, and the reversals are stated explicitly.
+> - Any adversarial review must bind to this revision.
 >
-> **Owner walkthrough:** **performed after the first revision of this report and partly failed.** See
-> [Product-owner walkthrough](#product-owner-walkthrough) and the walkthrough record. This revision
-> supersedes the first revision's statement that the walkthrough was outstanding.
+> **Authority:** research evidence only. This report is not accepted architecture, product direction,
+> a game requirement, or implementation commitment. It decides no analytics ownership.
+>
+> **Adversarial-review status:** required (High risk), **not yet performed**. The self-challenge below
+> is self-administered.
+>
+> **Owner walkthroughs:** three sessions. The first failed in part, the second was paused for scope
+> discussion, and the third succeeded with defects. The owner co-designed the third pass's scenarios
+> and missions, which limits blindness to the answer key only (section 14).
 
-## Question
+## 1. Question, and how the owner sharpened it
 
-What minimum player-facing diagnostic evidence contract can the game build from supported non-spatial
-simulation facts, so that every displayed diagnosis is mechanically traceable, states its method, and
-can refuse unsupported causal attribution?
+The brief asks: what minimum player-facing diagnostic evidence contract can the game build from
+supported non-spatial simulation facts, so that every displayed diagnosis is mechanically traceable,
+explicit about its method, able to refuse unsupported causal attribution, and inspectable without
+exposing internals?
 
-The question is unchanged from the brief. One refinement emerged from the evidence and is used
-throughout: the brief's three candidates were run as five variants (two named methods for candidate 2;
-candidate 3 with and without a single-run pacing verdict), plus a deliberately naive control.
+During the investigation the owner established that the brief defines *truthful* but not *diagnostic*.
+It names no player goals, and its six fixed diagnostic questions were traps for truthfulness, not
+goals. The owner set the goals and the method (recorded in the discovery notes):
 
-## Decision at stake
+- **Goals.** A player should be able to:
+  1. understand what happened in one recorded run;
+  2. learn the industry concepts that run exhibits, with the jargon introduced in context and
+     explained on demand (learning by experiment, not school);
+  3. form and check hypotheses about design changes, by exploring alternatives.
+- **Method.** "No UI" was too abstract for a human. A **text UI** that tests concepts is the right
+  medium. Medium choices (animation, Gantt charts, dashboards) stay out.
+- **Static only.** Use pre-computed recorded runs and variants. A live simulation loop is a separate,
+  future research question.
 
-1. Whether the smallest non-spatial playable path can show a mechanically truthful, inspectable
-   diagnostic surface built from current supported evidence.
-2. Which bounded player-facing evidence requirements should later be promoted into the game consumer
-   plan.
-3. Separately, for the reopened simulation-analytics ownership research: whether that surface needs a
-   concrete named measurement whose owner cannot be left local or undefined.
+**Proposed refined question** (for the owner to adopt in the brief at reconciliation):
 
-## Scope and non-goals
+> Given recorded runs of non-spatial factory designs, what must a player be able to inspect, and what
+> may the game claim, so that the player can understand a run, learn the production concepts it
+> exhibits, and check hypotheses against alternatives, with every claim traceable to supported facts
+> or a stated definition, and no claim stronger than its evidence?
 
-In scope: one product with a linear three-step routing, one fixed order released at once, all
-resources online, no setup and no transfer. The evidence is supported observations, supported events
-and the published model. The scope also covers candidate information contracts (not visual designs),
-the six audits from the brief, and a blinded owner packet.
+## 2. Decision at stake
 
-Not in scope, and not done: game, analytics or Engine implementation; analytics ownership; changes to
-`combinedQueueDepth`, dispatch or ranking; a universal utilization formula or bottleneck algorithm;
-transfer or spatial diagnostics; scoring, levels or tutorials; player-comprehension claims; updates to
-the register, planning or architecture; durable reconciliation.
+1. Whether a first playable slice can expose a truthful, usable diagnostic surface over the current
+   non-spatial engine.
+2. Which requirements to promote into the game consumer plan.
+3. Which concrete measurement requirements to hand to the reopened simulation-analytics ownership
+   research, without choosing their owner.
+4. Which platform gaps and follow-up questions must be tracked.
 
-## Executive conclusion
+## 3. Scope and non-goals
 
-**Mechanical result: positive and bounded.** One candidate contract passes all six audits on every
-corpus fixture and needs no reusable measurement. That candidate is **C3b, the minimal claim–evidence
-bundle**. It shows only:
+**In scope:**
 
-- direct facts;
-- boundary counts;
-- the event intervals of the completing unit and of each resource;
-- one-change comparisons stated as change plus outcome;
-- explicit refusals.
+- truth constraints, mechanically audited;
+- inspection and teaching presentation in a text prototype;
+- starvation and utilization as worked concepts;
+- concrete measurement requirements;
+- platform requirements;
+- the owner's decision to remove the engine's busy counter, and its reconciliation scope.
 
-Every derived statement names its derivation and cites its evidence. C3b gives no single-run
-limiting-step, bottleneck, surplus or mechanism verdict. It refuses those, and it refuses per-change
-attribution for multi-change comparisons. It is best described as **the factual basis plus explicit,
-evidence-cited refusal**, not as a diagnosis engine. The decisive difference from facts-only (C1) is
-that C3b refuses **explicitly** where C1 stays silent.
+**Not done:**
 
-**Exit-criterion status: not met.** The deterministic audits pass, but the owner smoke test partly
-failed:
+- game, analytics or Engine implementation;
+- analytics ownership;
+- any live simulation loop;
+- medium or visual decisions;
+- population-level comprehension;
+- register, planning or architecture edits (all deferred to reconciliation).
 
-- comparisons were read correctly;
-- the single-run limiting-step refusal was overridden by inference from the largest wait;
-- the idle-resource terms were not understood;
-- the walkthrough protocol itself was hard to follow.
+## 4. Executive conclusion
 
-Under the brief, C3b is **not promotable unchanged**. The next step is a revised player-facing form and
-a clearer second blinded pass, not promotion. The mechanical findings and the no-demand result below
-are unaffected.
+**Provisional resolution: positive, bounded. The answer is satisfactory for the decision at stake.**
+A truthful, usable diagnostic surface over the current non-spatial engine is achievable as:
 
-**No concrete reusable-measurement demand was established.**
+1. **Guardrails** (section 7), mechanically audited.
+   - **Allowed:** direct facts, counts at a moment, event intervals, comparisons and stated
+     definitions.
+   - **Never** as fact, unless licensed by a stated method or experiment:
+     - "busiest = bottleneck";
+     - busy counter as utilization;
+     - "longest wait = problem";
+     - per-machine queues for shared work;
+     - single-run surplus;
+     - per-change attribution;
+     - mechanism claims;
+     - "order is irrelevant".
+2. **Pull-based inspection** of direct facts, by command:
+   - the design;
+   - finish time;
+   - what every machine slot is doing at any tick;
+   - which units wait for which step;
+   - each unit's journey;
+   - each machine's timeline.
+3. **Named characterizations with stated definitions:**
+   - **machine slot state:** working or idle, a direct fact;
+   - **flow characterization** of an idle slot: starved or no work left, derived from the whole
+     system ("blocked" is reserved for when finite buffers exist);
+   - **utilization over a stated period.**
+4. **Experiments for counterfactual questions** ("is this machine needed?", "where does capacity
+   help?"), answered by comparing pre-computed variants. This is never inferred from one run.
+5. **A mission pattern for learning:** a goal with an explicit answer format → exploration → recorded
+   answer → official answer, explanation, how to find it, and what the mission teaches.
 
-> The first non-spatial playable diagnostic contract does not currently establish a concrete reusable
-> analytics requirement.
+Evidence:
 
-C3b needs no normalized utilization, occupancy, run-total aggregate or constraint verdict. Its derived
-statements are counts or groupings of direct facts at one observation, or exact intervals between
-supported events of one job-step occurrence. These definitions are fully determined by current
-supported semantics and have no interval, population or normalization choices.
+- The guardrails passed six mechanical audits on a 13-design, 24-pair falsification corpus. A naive
+  control fails five of them.
+- The third owner session completed 13 missions over four scenarios, with 17 of 19 checked answer
+  parts correct. The owner judged the presentation good and the design explorable. Learning in the
+  moment was observed: after one official answer the owner adopted the experiment path unprompted.
+
+**Reversals of revision 1:**
+
+| Revision 1 said | Revision 3 says | Why |
+|---|---|---|
+| No concrete reusable-measurement demand | **A demand exists:** utilization over a period and the flow characterization (starvation), with exact basis choices (section 9); bottleneck by a named method is pending | Revision 1's "no demand" came from a contract designed to refuse. The owner's educational goal needs these measurements, and a truthful definition exists |
+| "The game must keep" event history, identity and change sets | These are **platform requirements**: runtime, Factory Design, model comparison (section 10) | The game is a presentation client. These are not game concepts (owner) |
+| Explicit refusals shown to the player | Refusals are **guardrails**, not UI. The player is offered the action that answers the question (a variant), or the claim is simply not made | A "what this run cannot tell you" section confused the owner twice |
+| The minimum contract is a statement list | A statement list is not a usable presentation. Pull-based inspection plus missions is | First-pass partial failure; third-pass success |
+
+**Challenge: is another concept iteration (bottleneck) needed before concluding? No** (section 13).
+The presentation pattern, including experiment-based questions, is already exercised. Bottleneck's
+truth constraints are already established. What remains for bottleneck is a **named-method
+definition**, which belongs to the analytics research, and a **teaching design**, which belongs to a
+follow-up curriculum or controlled-retry question.
 
 **Confidence:**
 
-- **High** for the falsifications and for the mechanical pass within the stated corpus scope.
-- **Medium** that the requirement set is sufficient for a first internal playable slice. That depends
-  on the owner walkthrough and on a refusal-heavy surface being usable at all.
-- **Low to medium** for anything beyond one product, one order, a linear routing and release at once.
+- **High** for the guardrails and the falsifications.
+- **Medium** for the presentation pattern: one owner, a text prototype, two concepts.
+- **Medium** for the measurement definitions as *requirements*. Their final form is the analytics
+  research's call.
+- **Low** for anything beyond one product, linear routing, release at once, all machines online, and no
+  setup or transfer.
 
-Answers to the handoff's questions:
+**Now unblocked** (section 15):
 
-| # | Question | Answer |
+1. the independent adversarial review of this revision;
+2. the reopened analytics-ownership research, which now has a concrete bounded use;
+3. reconciliation items: brief and register updates, busy-counter removal, and the consumer-plan
+   requirement set.
+
+## 5. How the investigation evolved
+
+| Iteration | What was tested | Result |
 |---|---|---|
-| 1 | What must the player be shown? | Waiting by step at a boundary, step first. Slots in use per resource. Idle resources and whether any waiting work could use them. Progress and completion. The completing unit's per-step wait and processing intervals. One-change comparisons. Explicit refusals where single-run or confounded evidence licenses no answer. See [Requirement set](#result-the-playable-diagnostic-requirement-set). |
-| 2 | Which items are direct facts, research-local derivations or named interpretations? | See [Concrete reusable-measurement demand](#concrete-reusable-measurement-demand). Direct facts and boundary counts dominate. Event intervals are exact readings of supported events. **No named interpretation is required.** |
-| 3 | What evidence licenses each derived claim? | The [claim-to-evidence matrix](#claim-to-evidence-matrix) cites the observation boundary, event sequences, design facts and fields for every statement. |
-| 4 | Which diagnoses must refuse? | The single-run limiting step or constraint; surplus or "starved"; per-change attribution for more than one change; the mechanism of a one-change outcome; and any interval statement when the event window is incomplete. |
-| 5 | Is a concrete named measurement required? | **No.** |
-| 6 | If yes, specify it. | Not applicable. Conditional, *not established* candidates that a later slice could raise are listed for the analytics research, with their known material basis choices. |
-| 7 | If no, what weaker contract suffices? | C3b's invariant: every statement is a direct fact, a boundary count, an event interval, a comparison or a refusal; each derived statement names its derivation and cites its evidence. |
+| **1. Statement contract** (revision 1) | Five information contracts plus a naive control, with six mechanical audits; blinded owner reading of a statement list (16 items) | C3b (facts plus explicit refusals) passed all audits. Owner: comparisons 8 of 8; inferred the limiting step from the longest wait; "starved/surplus" not understood; a refused interval misread; the protocol was "very hard" |
+| **2. Revised wording, scripted MC walkthrough** | C3c ("plain bundle", which also passes all six audits); fresh pre-registered scenarios; terminal session | Paused by the owner after the tutorial. It surfaced the scope problems: verbosity, push versus pull, refusals as UI, trap questions instead of goals, the need for UI, the vocabulary goal. One defect found in generation: removing a machine renumbered later machines and produced a false second change |
+| **3. Bakery inspection missions** | Two-layer state model; utilization; pull-based viewer; 13 missions with learning objectives; pre-registered answers | 17 of 19 parts correct; presentation judged good; learning in the moment observed; defects queued (section 8) |
 
-## Repository evidence
+## 6. Repository evidence (condensed; full detail in revision 1)
 
-Each item below is a repository fact at the final recheck, unless labeled otherwise.
+**Supported surface:**
 
-**Supported runtime surface** (`docs/architecture/runtime-contract.md`; `product/domains/factory/.../process/`):
+- `RuntimeObservation`: resources (state, concurrency, active jobs, own queue depth, `busyTicks`),
+  orders, jobs (status, current step, ordinal, created/completed times), pending multi-eligible work,
+  performance.
+- Metadata: `currentTime`, `latestEventSequence`.
+- Supported events: `ORDER_ACCEPTED`, `JOB_DISPATCHED`, `JOB_STEP_COMPLETED`, `ORDER_COMPLETED`.
+- Events are delivered once and not retained. The runtime contract leaves retention ownership to be
+  defined when a consumer needs it.
 
-- `RuntimeObservation` carries `metadata`, `resources`, `orders`, `jobs`, `pendingWork` and
-  `performance`.
-- `ResourceObservation` exposes `state`, `concurrency`, `activeJobIds`, its own `queueDepth`,
-  `capacityLiters`, `setupTime` and `busyTicks`.
-- `PendingWorkObservation` exposes the pending job and its eligible machine ids.
-- `RuntimeObservationMetadata` exposes `currentTime` and `latestEventSequence`.
-- The supported events used here are `ORDER_ACCEPTED` (with `jobIds`), `JOB_DISPATCHED` (job, order,
-  machine, step index), `JOB_STEP_COMPLETED` and `ORDER_COMPLETED` (naming the completing `jobId`).
-- Runtime event delivery drains rather than retains. The runtime contract defines no retained history
-  and requires recovery to detect dropped events, not treat an incomplete sequence as complete.
+**Selection and waiting:**
 
-**Selection and waiting semantics** (`docs/architecture/engine-semantics.md`):
+- Engine semantics §2: acceptance, then `combinedQueueDepth` (internal, not observable), then a
+  `MachineId` tie-break.
+- Pre-binding multi-eligible work is never a per-machine queue (§2 rule 7).
+- Machine availability is a runtime command at a moment, not part of the design.
+- An order's units are all released when it is accepted (§3).
 
-- §2 rules 2–4 rank candidates by immediate acceptance, then `combinedQueueDepth`, then `MachineId`.
-- §2 rule 7: before binding, a multi-eligible step never occupies a per-machine queue, and a
-  single-eligible step never occupies the shared backlog.
-- `combinedQueueDepth` is an internal ranking key in `FactoryHandler`. **No supported observation
-  exposes it.**
+**The busy counter (`busyTicks`):**
 
-**`busyTicks` is completion-credited** (§10.1 rule 1; `FactoryHandler.handleTaskEnd`). A finished
-step's duration is added at completion, so a running step contributes nothing until it ends.
+- It is credited only when a step finishes.
+- It was introduced in a 2026-09-02 headless-acceptance change to make "the active production
+  bottleneck identifiable … by utilization".
+- That change's acceptance test encodes the "most utilized = bottleneck" heuristic this corpus
+  falsifies.
+- It is specified as "`busyTicks` / utilization" in Engine semantics §10–§10.2, and listed as
+  "utilization facts" in the runtime contract.
+- No product consumer uses it.
 
-**Repository tension (not changed by this investigation).** Several durable surfaces describe that
-counter as utilization or as a bottleneck basis:
+**Product boundary:** presentation is game-owned. Reusable derived measurement (utilization or
+occupancy intervals, diagnosis, run comparison) is **unresolved, and not game-owned by default**
+(consumer plan §4–§5).
 
-- A `FactoryHandler` comment says crediting at completion makes `busyTicks` express "real utilization"
-  and ties it to identifying the active bottleneck from supported observations.
-- Engine semantics §10 and the §10.2 register name the result "`busyTicks` / utilization" and refer to
-  an "existing bottleneck/capacity interpretation".
-- The runtime contract lists "utilization facts" among performance facts.
-- Factory Design §10.2 names a "Maximum utilization" verification objective. That is a separate
-  potential Governance/verification demand, not the game's.
+**Concluded strategy-space reference:** its qualifications are preserved here:
 
-The corpus shows the counter is not an elapsed-normalized or instantaneous utilization (G4, G11b
-below). This is a reconciliation candidate, not a research result to enforce here.
-
-**Product and planning context:**
-
-- `docs/planning/factory-design-game-consumer.md` §4–§5 makes player-facing presentation and
-  explanation of supported facts game-owned.
-- It also leaves "reusable derived measurement (longitudinal aggregation, utilization/occupancy
-  intervals, diagnosis, run comparison)" **unresolved and not game-owned by default**, and forbids the
-  game from implementing generic analytics locally as though it owned the semantics.
-- Attempt history and comparison belong to the Challenge layer.
-- `docs/planning/factory-design-game-vertical-slice.md` names this question as the remaining product
-  blocker and admits no implementation.
-
-**Concluded strategy-space reference** (`docs/research/investigations/factory-design-game-strategy-space.md`).
-It supplies the S1/S2/S3 designs, the intervention sequence and the occupancy counterexample. Its
-accepted qualifications are preserved here:
-
-- shared eligibility is constructive, not necessary;
-- occupancy is descriptive, not a constraint definition;
+- occupancy is not a constraint definition;
 - the most-occupied pool can be the wrong constraint;
-- result-affecting resource identity and order must be explicit;
-- mechanical truth is not comprehension;
-- the reference is a bounded case.
+- identity and order matter;
+- mechanical truth is not comprehension.
 
-**Research substrate** (`product/research-experiments`). These tracked research-local derivations are
-used or audited here:
+## 7. Guardrails: the mechanically established truth constraints
 
-- `WaitingWorkByStepOracle`
-- `DispatchProfileOracle`
-- `EligibilityPoolOccupancyOracle`
-- `ProcessingOccupancyOracle`
-- `CompletionTickOracle`
+**Corpus.** 13 designs and 24 pairs, all hand-derived before evaluation, from the strategy-space
+reference plus tracked fixtures. They cover:
 
-The tracked fixtures used are `CapacityCorpus` and `StarterCorpus`. A substrate derivation proves
-feasibility and ground truth only; it is not an Engine fact or game-owned analytics (researching.md
-§4).
+- a true constraint;
+- capacity added at and away from the constraint;
+- migration of the constraint;
+- starvation versus surplus;
+- multi-eligible waiting;
+- a long unfinished step;
+- concurrency greater than 1;
+- confounded pairs, including a pure interaction.
 
-**Surfaces not inspected:** no Challenge production code path was exercised. Comparisons here are
-built from game-owned design facts plus completion facts, which matches the Challenge layer's
-ownership; the Challenge substrate's own comparison output was not audited.
-
-## Fixture, model and input provenance
-
-The repository revision is the final recheck commit above; the runtime exposes no Engine-definition
-identifier (runtime contract).
-
-- **Fixture corpus:** the experiment class `GameDiagnosticCorpus`.
-- **Hand-derived oracle:** committed in the oracle note before any candidate was implemented or
-  evaluated.
-
-| Id | Design (authored resource order) | Source |
-|---|---|---|
-| G1 | Cutter, Assembler, Inspector | tracked `CapacityCorpus.DEDICATED_LINE` |
-| G2 | Cutter, Assembler, Inspector 1, Inspector 2 (S1) | tracked `TWO_INSPECTORS` |
-| G3 | G2 + Assembler 2 | appended |
-| G4 | Cutter, Twin Assembler (`ASSEMBLE`, concurrency 2), Inspector 1, Inspector 2 (S3) | workspace |
-| G5 | Cutter, Assembler 1–6, Shared (`ASSEMBLE`+`INSPECT`) | tracked `SHARED_ONLY_INSPECTION` (occupancy counterexample) |
-| G6 | Cutter, Assembler, Inspector, Shared (S2, authored order) | tracked `SHARED_ASSEMBLE_INSPECT` |
-| G7 | routing `CUT` 3, `ASSEMBLE` 5, `INSPECT` 5; one resource each | workspace (co-binding) |
-| G8 | G1 + Assembler 2 | appended |
-| G9a / G9b | tracked shared-resource pair, authored and reversed order (routing 2/3/2, quantity 2) | tracked `SHARED_RESOURCE` |
-| G10 | G2 observed by a late joiner (events through the mid-run boundary drained and discarded) | workspace |
-| G11a / G11b | tracked `three-step/multi-eligible-waiting` and `three-step/long-step-and-parallel-capacity` | tracked `StarterCorpus` |
-
-- **Routing:** `CUT` 3 → `ASSEMBLE` 4 → `INSPECT` 5, unless the row says otherwise.
-- **Workload:** one order of 12 submitted at tick 0, run to quiescence. Every supported event is
-  retained from sequence 1, except in G10.
-- **Resource identity:** the 1-based authored position. Added resources are appended, so existing
-  identities never change.
-- **Script:** each fixture has an explicit ordered script (submit; optional advance to a mid-run tick,
-  observe, capture or discard events; advance to quiescence; capture events). The runner checks that
-  the declared event window matches the actual capture.
-
-**Comparison pairs (24).** Every corpus pair is listed below; the counts are grouped by the oracle's
-fixed questions.
-
-- **18 single additions:** one cutter, assembler or inspector appended to each of G1, G2, G3, G4, G5
-  and G7.
-- **Q5 table (controlled pairs).** These 8 named pairs (three single additions, two removals, two
-  migration pairs and one reorder) are the ones the oracle table lists:
-  - G1 + Inspector 2: 67 → 56.
-  - G1 + Cutter 2: 67 → 67.
-  - G1 + Assembler 2: 67 → 67.
-  - G2 → G3 (one assembler added; constraint migration from `INSPECT` to `ASSEMBLE`): 56 → 45.
-  - G3 + Cutter 2 (migration to `CUT`): 45 → 37.
-  - G2 − Inspector 2: 56 → 67.
-  - G8 − Assembler 2: 67 → 67.
-  - G9a → G9b (order only): 11 → 9.
-- **Q6 (confounded pairs), 3 pairs:**
-  - G1 + Assembler + Inspector: 67 → 45.
-  - G1 + Cutter + Inspector: 67 → 56.
-  - G7 + Assembler + Inspector: 68 → 46.
-
-Some named Q5 pairs are also single additions. The corpus therefore holds 24 pairs in total: 18 single
-additions, 2 removals, 1 reorder and 3 confounded pairs.
-
-**Interventions.** All hand-derived completions and interventions were confirmed by runs. G6's
-single-addition interventions were read from runs and used only as intervention ground truth: + cutter
-44, + assembler 45, + inspector 45. So were G6's completions across all 24 resource orders: 46 for 8
-orders and 47 for 16.
-
-## Brief-required case coverage
-
-| Required case | Fixture(s) |
-|---|---|
-| True capacity constraint | G1 (`INSPECT`), G2 (`ASSEMBLE`), G3/G4 (`CUT`), by single-addition intervention |
-| Capacity added at the constraint | G1 + Inspector 2 (67 → 56); G2 + Assembler 2 (56 → 45); G3 + Cutter 2 (45 → 37) |
-| Capacity added away from it | G1 + Cutter 2 and G1 + Assembler 2 (67 → 67); G2 + Cutter 2 and G2 + Inspector 3 (56 → 56) |
-| Constraint migration after relief | G1 → G2 → G3 → G3 + Cutter 2 (`INSPECT` → `ASSEMBLE` → `CUT`) |
-| Starvation versus surplus | G2 Inspector 2 at the mid-run boundary (removing it costs 11 ticks) versus G8 Assembler 2 (removing it costs 0): the same single-run evidence, opposite truths |
-| Multi-eligible waiting where per-machine depth misleads | G6 (one `INSPECT` unit pending for {Inspector, Shared}, every own `queueDepth` except the cutter's is 0); G11a (3 shared units, all own queues 0) |
-| Long unfinished step where `busyTicks` misleads | G4 at tick 9 (twin assembler 2 of 2 slots active, `busyTicks` 4); G11b (2 of 2 slots active at tick 3, `busyTicks` 0) |
-| `concurrency > 1` defeats naïve utilization | G4 at completion (`busyTicks` 48 against 45 elapsed); G11b (36 against 26) |
-| Deliberately confounded pair | the three Q6 pairs, including a pure interaction (G7: each single change 0, together −22) |
-
-## Candidate evidence contracts
-
-All candidates share one factual basis. At the mid-run boundary it holds: waiting by step, slots in use
-per resource, idle resources against eligible waiting, and progress. At closing it holds: outcome,
-idleness, the completing unit's decomposition and each resource's activity intervals.
-
-| Id | Contract |
-|---|---|
-| **C1** facts only | The shared basis; plain comparisons (change set + completion delta); no verdict, aggregate or refusal |
-| **C2a** facts + named pool occupancy | C1 + run-total waits by step + "Bottleneck (method: most occupied eligibility pool)" with job-tick numbers |
-| **C2b** facts + named completion chain | C1 + run-total waits by step + "Pacing step (method: completion chain)": trace the completing job back through readiness and resource releases; refuse at a tie or when capacity waits fall at more than one step |
-| **C3a** bundle with completion chain | C2b + explicit refusals: surplus, the counterfactual "would adding capacity help", per-change attribution, mechanism; tie-break rule stated on an order change |
-| **C3b** minimal bundle | C1 + explicit refusals: single-run limiting step, surplus, per-change attribution, mechanism, interval claims without a complete event window; tie-break rule stated on an order change |
-| **N** naive control | `busyTicks` ÷ elapsed as "utilization %"; own queue + pending entries naming a resource as that resource's "queue"; highest utilization = "bottleneck"; idle = "surplus"; comparison attributed to the first change (or to "variation" for order-only changes) |
-
-N is not a candidate. It exists to prove that every audit can fail.
-
-The named derivations behind derived statements are:
-
-- `waiting-work-by-operation-step` (tracked substrate);
-- `idle-resources-and-eligible-waiting`;
-- `job-step-occurrences-from-supported-events`;
-- `completing-unit-lead-time-decomposition`;
-- `completion-chain-from-supported-events`;
-- `dispatch-profile` and `eligibility-pool-occupancy` (tracked substrate, C2/C3a only).
-
-Each workspace definition declares its inputs (published model, observations, supported events) and
-its refusal conditions. None re-decides a dispatch: which resource took which step is read from
-`JOB_DISPATCHED`.
-
-## Oracle derivations
-
-The complete oracle note was fixed before evaluation. It derives every value by hand from Engine
-semantics §2–§4, except values marked *pinned* (existing tracked expectations) or *run-derived*
-(G6 interventions only). Summary:
-
-- **Q1 — waiting work by step, step first.** Resources are named only for a single-member eligible
-  set.
-
-  | Fixture | `CUT` | `ASSEMBLE` | `INSPECT` |
-  |---|---|---|---|
-  | G1 @ 33 | 0 | 3 (Assembler) | 1 (Inspector) |
-  | G2 @ 17 | 6 (Cutter) | 1 (Assembler) | 0 |
-  | G6 @ 17 | 6 (Cutter) | 0 | 1, shared by {Inspector, Shared} and in neither resource's queue |
-  | G8 @ 11 | 8 (Cutter) | 0 | 1 (Inspector) |
-  | G11a | 0 | 3, shared (every own `queueDepth` is 0) | 0 |
-
-- **Q2 — the constraint.** Ground truth for this bounded reference is controlled marginal
-  intervention: the steps where appending one comparable resource reduces completion.
-  - G1: `INSPECT`.
-  - G2: `ASSEMBLE`.
-  - G3 and G4: `CUT`.
-  - G5: `INSPECT`.
-  - G7: **none**. Only the joint addition helps (68 → 46).
-
-  Method-relative expectations fixed in advance:
-  - Pool occupancy names `CUT` in G5 (36 of 67 job-ticks, against 108 of 469). Falsified.
-  - Resource occupancy ties G7's assembler and inspector at 60 of 68 while neither single addition
-    helps. Falsified.
-  - `busyTicks` ÷ elapsed ranks G4's twin assembler first at 48/45. Falsified.
-  - The largest total wait is always `CUT` (198, the release-at-once backlog). Falsified in G1, G2, G5
-    and G7.
-  - The completion chain gives G1 `INSPECT`, G2 `ASSEMBLE`, G3 and G4 `CUT`, G5 `INSPECT`, and ties
-    in G6 and G7.
-- **Q3 — idle resources.** G2's Inspector 2 and G8's Assembler 2 are each idle, with nothing waiting
-  for a step they serve. Removing them costs 11 ticks and 0 ticks respectively. A single-run "surplus"
-  claim is therefore a guess. "Starved" is defensible only as "idle with no eligible work waiting", and
-  is false at quiescence.
-- **Q4 — largest measured delay.** The completing unit's lead time splits into per-step wait and
-  processing from supported events:
-  - G1: 67 = 33+3 · 11+4 · 11+5.
-  - G7: 68 = 33+3 · 22+5 · 0+5.
-
-  The largest measured wait is waiting for `CUT` in every fixture, yet `CUT` is the
-  intervention-truth constraint only in G3 and G4. A measured delay is never licensed as a constraint
-  label.
-- **Q5 — controlled pairs.** The truthful statement is the authored change beside the outcome change;
-  no mechanism is licensed.
-- **Q6 — confounded pairs.**
-  - G1 + A + I: the singles give 0 and −11, together −22. Sequential attribution depends on the order
-    of attribution.
-  - G1 + C + I: the pair alone cannot separate the two changes.
-  - G7 + A + I: a pure interaction (each single change gives 0).
-
-## Audit results
-
-These are generated by the experiment (`audit-matrix.md`) and were reproduced byte for byte at the
-final recheck:
+**Audit results** (each candidate on all 37 items; reproduced at every rerun):
 
 | Contract | Traceability | Reconstruction | Counterexample | Refusal | Controlled mutation | Terminology |
 |---|---|---|---|---|---|---|
-| C1 facts only | PASS | PASS | PASS | **FAIL (5)** | PASS | PASS |
-| C2a named pool occupancy | PASS | PASS | **FAIL (2)** | **FAIL (7)** | PASS | **FAIL (12)** |
-| C2b named completion chain | PASS | PASS | PASS | **FAIL (5)** | PASS | PASS |
+| C1 facts only | PASS | PASS | PASS | FAIL (5) | PASS | PASS |
+| C2a named pool occupancy | PASS | PASS | FAIL (2) | FAIL (7) | PASS | FAIL (12) |
+| C2b named completion chain | PASS | PASS | PASS | FAIL (5) | PASS | PASS |
 | C3a bundle + completion chain | PASS | PASS | PASS | PASS | PASS | PASS |
-| **C3b minimal bundle** | **PASS** | **PASS** | **PASS** | **PASS** | **PASS** | **PASS** |
+| C3b minimal bundle | PASS | PASS | PASS | PASS | PASS | PASS |
+| C3c plain bundle (revised wording) | PASS | PASS | PASS | PASS | PASS | PASS |
 | N naive control | FAIL (104) | PASS | FAIL (22) | FAIL (13) | FAIL (15) | FAIL (305) |
 
-The audits run over 37 rendered items per contract: 13 attempts and 24 pairs.
+**Never present as fact without a licensing method or experiment.** Each row was falsified on a
+concrete case:
 
-### Claim-to-evidence matrix
-
-The matrix is generated as `claim-evidence-matrix.md` and lists every statement of every contract on
-every item. Each row gives the question, evidence kind, named method and cited evidence (observation
-label, event sequences, design facts, fields). Statement counts:
-
-| Contract | Direct fact | Boundary count | Event interval | Aggregate | Named interpretation | Comparison | Refusal | Total |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| C1 | 51 | 35 | 60 | 0 | 0 | 24 | 2 | 172 |
-| C2a | 51 | 35 | 60 | 12 | 12 | 24 | 4 | 198 |
-| C2b | 51 | 35 | 60 | 12 | 8 | 24 | 8 | 198 |
-| C3a | 52 | 35 | 60 | 12 | 8 | 24 | 49 | 240 |
-| **C3b** | 52 | 35 | 60 | 0 | **0** | 24 | 48 | 219 |
-| N | 95 | 82 | 0 | 0 | 22 | 24 | 0 | 223 |
-
-C3b emits no aggregate and no named interpretation. Its only non-substrate derivations are boundary
-counts and event intervals. C1's two refusals are G10's interval refusals, which the shared derivations
-emit by themselves.
-
-### Traceability
-
-The audit checks that every non-refusal statement cites existing evidence, that every derived statement
-names one of the declared definitions, and that every cited event was actually retained. All five
-candidates pass. N fails on 104 unnamed derivations, for example "Queue at Assembler", "Bottleneck:
-Inspector (highest utilization)" and "Inspector 2 is surplus".
-
-**Disclosed refinement:** the first audit run caught an unnamed derivation in **every** candidate. The
-idle-resource statement combined resource state, waiting by step and eligibility without a named
-definition. The fix was to name it (`idle-resources-and-eligible-waiting`); no candidate's logic
-changed.
-
-### Reconstruction
-
-Every attempt was rebuilt from a fresh run of the same explicit fixture (model, script, window), and
-each contract had to render identical statements. All contracts pass, including N; reconstruction alone
-does not separate truthful from misleading.
-
-The late-joiner check (G10 against the complete-window G2) requires that:
-
-- current-state statements match the complete-window run;
-- no event-based statement is emitted without the events before the join.
-
-Every candidate passes. In G10 the completing-unit and activity statements become explicit refusals
-("supported events 1..96 are not all retained; missing [1-39]"), and the current-state statements are
-unchanged.
-
-No derivation reads scheduler, handler or store internals, or re-runs ranking. The package boundary
-test (`ResearchPackageBoundaryTest`) holds every class to the supported runtime contract, and the
-experiment asserts that the workspace classes fall inside its scope.
-
-### Counterexample
-
-| Probe | C1 | C2a | C2b | C3a | C3b | N |
-|---|---|---|---|---|---|---|
-| Multi-eligible waiting not assigned to one machine; per-machine sums never exceed waiting units (G6, G11a) | ok | ok | ok | ok | ok | G6: 8 counted for 7 units; G11a: 6 for 3 (own queues 0) |
-| `busyTicks` never shown as utilization (G4, G11b) | ok | ok | ok | ok | ok | 16 findings, e.g. "Twin Assembler 107%" at completion, "Assembler 138%" (G11b) |
-| A single-run verdict never names a step whose single addition does not help (six intervention rows) | — | **G5 names `CUT`; G7 names `ASSEMBLE` and `INSPECT`** | ok | ok | — (no verdict) | G4, G5, G7 wrong |
-| A resource-order change is reported as a change (G9) | ok | ok | ok | ok | ok | "Same equipment … (run-to-run variation)" |
-
-### Refusal
-
-The audit requires explicit refusal in four places:
-
-- per-change attribution for each Q6 pair;
-- surplus for G2 Inspector 2 and G8 Assembler 2;
-- no Q2 verdict where the evidence ties (G6, G7);
-- "measurement unavailable" for the incomplete window (G10).
-
-Results:
-
-- **C1 and C2b** fail by **silence**, not by a wrong claim: there is no attribution refusal on the
-  three Q6 pairs and no surplus refusal for the two idle resources.
-- **C2a** additionally emits verdicts on G6's and G7's ties.
-- **C3a and C3b** pass.
-- **N** guesses: "Completion improved by 22 ticks due to added 1 x ASSEMBLE" for G7 + A + I.
-
-### Controlled mutation
-
-The audit covers the 21 one-change pairs and requires that:
-
-- the comparison reports exactly one change and the authoritative delta;
-- a zero delta carries no effect words ("improv", "worsen", "due to", "because");
-- the outcome statement changes when completion changes;
-- a single-run verdict that moves while completion stays put is corroborated by intervention on the
-  variant.
-
-All candidates pass. N claims "improved by 0 ticks due to added 1 x CUT" and reports an order-only
-change as zero changes.
-
-**Disclosed correction** (made after the first run; both versions were defined before results were
-seen):
-
-- **Original sub-check:** "a verdict must not move when completion does not change".
-- **Why it was wrong:** in G7 + assembler the completion chain moves from a tie to `INSPECT` while
-  completion stays at 68. The chain evidence did change, and adding an inspector to that variant helps
-  (68 → 46).
-- **Corrected sub-check:** "a moved verdict must be corroborated by intervention on the variant".
-- **Effect:** C3b emits no verdict, so **its pass does not depend on this correction**. C2a, C2b and
-  C3a do depend on it.
-
-### Terminology
-
-Non-refusal statements are checked against a fixed lexicon of words whose ordinary meaning overstates
-what they can license:
-
-- utiliz-, %, efficien-: imply a normalized rate or a target the evidence does not define;
-- bottleneck, constraint: imply that relieving it improves the outcome;
-- blocked: the non-spatial runtime has no such state;
-- starv-, surplus: imply an upstream cause or decide a counterfactual;
-- because, due to, caused: assert a mechanism;
-- variation: a deterministic run has no run-to-run variation;
-- "queue at": multi-eligible waiting is not one machine's queue.
-
-C2a fails on "Bottleneck" (12). N fails 305 times. The lexicon is a floor, not a semantic proof; see
-the self-challenge.
-
-## Product-owner walkthrough
-
-**Performed on 2026-10-06, after the first revision of this report.** The owner confirmed that they
-had read none of the key, the oracle, the checkpoint or the report beforehand. The answers are
-recorded verbatim, with facilitation disclosures, in
-`factory-design-game-diagnostic-evidence-walkthrough-record.md`. Summary (single-person qualitative
-evidence):
-
-- **Comparisons:** 8 of 8 correct on change and outcome, and two-change attribution refusals were
-  respected. One mechanism overreach (W2).
-- **Limiting step:** the owner inferred one despite the refusal, usually the step with the largest
-  wait (W1, W3, W9 wrong; W11 overclaimed). The completion-chain line helped only when it named one
-  step (W6, W8). Ties and long traces confused (W1, W3, W13).
-- **Idle-resource question:** not understood. "Starved" was applied at quiescence (W1) and to a
-  resource the order did not need (W10). The owner asked for the terms to be defined in the game.
-- **Refused interval:** in W9 the snapshot tick was read as a delay.
-- **Protocol:** the owner found the walkthrough very hard to do and unclear about what to apply. Some
-  failures may come from the protocol rather than the contract.
-- **Facilitation deviations:** bullets were condensed from W8 onward, and one question was mislabeled.
-  Both are disclosed in the record.
-
-**Consequence:** under the brief's falsification condition, C3b is not promotable unchanged. The
-requirement set below remains the mechanically valid basis. It needs the player-facing revisions and
-the clearer second-pass protocol listed in the walkthrough record before any promotion.
-
-The original packet description follows.
-
-- **Packet:** `game-diagnostic-evidence-results/walkthrough-packet.md`, generated by the experiment.
-  It has 16 items shuffled with a fixed seed: 8 attempts and 8 comparisons.
-- **Content:** each item shows only C3b's statements and the named derivations. Attempt items add an
-  optional completion-chain line (C3a's verdict), to test whether a pacing verdict clarifies or
-  misleads.
-- **Questions:** the fixed diagnostic questions, plus a request to note any ambiguous or overstating
-  wording.
-- **Key:** `walkthrough-key.md`, kept separate and not to be read first.
-
-The brief's exit criterion therefore remains open. A failure of interpretation by the owner would
-falsify C3b unchanged, per the brief. A success would be only a single-person smoke test. Items whose
-wording is most at risk, flagged here so a later revision can compare (the key is not needed for this
-list):
-
-- W6: the completing unit's "waited 33 for CUT" sits beside a refusal of the limiting step.
-- W5: the tie-break rule sits next to a one-change order comparison.
-- W13: "whichever of Inspector or Shared can take it first" describes multi-eligible waiting.
-- W9: interval refusals appear for the late joiner.
-
-## Concrete reusable-measurement demand
-
-Each player-facing requirement is classified below (Direct fact, Game-local presentation/
-interpretation, Reusable measurement candidate, Unsupported/must refuse):
-
-| Requirement | Classification | Why |
-|---|---|---|
-| Order completion tick; completed / requested quantity | **Direct supported fact** | `OrderObservation` fields |
-| Boundary label | **Direct supported fact** | `RuntimeObservationMetadata.currentTime`: the tick of the last emitted supported event, which is not the advance target. G2's advance to 17 is observed at 16, G8's 11 at 10, G11b's 10 at 3; the state is identical in between |
-| Slots in use of concurrency; offline state | **Direct supported fact** | `ResourceObservation.activeJobIds`, `concurrency`, `state` |
-| Waiting work by step, step first; resource named only for a single-member eligible set; multi-eligible work shown unassigned to its eligible set | **Game-local presentation** (a count/grouping of direct facts) | `JobObservation` status and current step, `PendingWorkObservation`, own `queueDepth`, grouped by the published routing. The material rule (pre-binding multi-eligible work is never one machine's queue) is already Engine semantics §2 rule 7, so no new definition is needed |
-| Idle resource, and whether waiting work exists for a step it can serve | **Game-local presentation** (boundary count) | Resource state and active jobs, against waiting by step and published eligibility |
-| Completing unit: per-step wait (dispatch − readiness) and processing (completion − dispatch) | **Game-local presentation of supported event intervals** | Exact pairing of `ORDER_ACCEPTED` / `JOB_STEP_COMPLETED` → `JOB_DISPATCHED` → `JOB_STEP_COMPLETED` for the job `ORDER_COMPLETED` names. No interval, population or normalization choice. Needs a complete event window from sequence 1; otherwise refuse |
-| Per-resource activity intervals and max slots in use at once | **Game-local presentation of event intervals**, *optional* | The union of a resource's [dispatch, completion] intervals with no normalization. It answers no fixed question (see the self-challenge on "occupancy intervals") |
-| One-change comparison: change set + completion before/after | **Game/Challenge-owned attempt comparison of direct facts** | Change set from game-owned draft facts, *including* result-affecting projection identity and order (G9: order alone 11 → 9). Outcome from two direct completion facts. Not a derived-measurement comparison |
-| Tie-break rule on an order change | **Direct Engine-semantics fact** presented by the game | Engine semantics §2 rule 4 (`MachineId`). Correct only while the projection maps authored position to identity |
-| Refusals (limiting step, surplus, attribution, mechanism, incomplete window) | **Game-local presentation** | Fixed refusal statements, each conditioned on one of the above |
-| Single-run limiting step / constraint / bottleneck | **Unsupported — must refuse** in the minimal contract | Pool occupancy (G5), resource occupancy (G7), `busyTicks` (G4) and largest wait (G1, G2, G5, G7) are falsified. The completion chain survives the corpus but is a bottleneck inference (see below) |
-| "Surplus" / "starved" | **Unsupported — must refuse** | G2 against G8: the same evidence, opposite truths. "Starved" is false at quiescence |
-| Utilization, occupancy or any `busyTicks`-based figure | **Unsupported as utilization; not required** | Completion-credited (G4 at tick 9: 4 credited with 2 slots active; 48 against 45 elapsed) |
-| Per-machine queue for multi-eligible work; `combinedQueueDepth` | **Unsupported — must not present or synthesize** | Not exposed; would double-count (G6, G11a) |
-| Per-change attribution (more than one change); mechanism (one change) | **Unsupported — must refuse** | G1 + A + I is order-dependent; G7 + A + I is a pure interaction |
-
-**No row meets the "concrete reusable measurement candidate" bar.** No requirement needs a measurement
-whose definition involves a material interval, population, grouping, normalization or concurrency
-choice that someone must own.
-
-**Conditional items, *not* established demands.** The analytics research must not read these as game
-requirements. They become concrete only if a later slice explicitly wants them:
-
-1. **A single-run pacing or limiting-step explanation**, such as the completion chain:
-   - It is a bottleneck inference, which the consumer plan places in the unresolved reusable scope.
-   - Material choices: how to link a step to the release that started it; how to treat a tie between
-     job readiness and resource release; what to do when capacity waits fall at several steps; the
-     completeness of the event window.
-   - Refusal conditions: a tie (G6, G7); capacity waits at more than one step; an incomplete window.
-   - Evidence: it matched intervention truth on every unique case in this corpus. That is no general
-     guarantee, because an equal-length path off the chain is not detected.
-2. **Run-total waits by step, or occupancy/utilization over an interval.** Material choices exposed
-   here:
-   - completion-credited numerator versus occupancy-interval numerator;
-   - capacity basis (concurrency) for the denominator;
-   - running work at the boundary;
-   - grouping by resource versus by eligibility pool (G5);
-   - elapsed interval;
-   - an incomplete window;
-   - under release-at-once, run totals always rank `CUT` first (198) regardless of the constraint.
-
-   The required refusal is: never present the value as a constraint.
-
-## Result: the playable diagnostic requirement set
-
-This is the bounded requirement set recommended for later promotion into the game consumer plan. It
-must not be promoted until independent adversarial review and the owner walkthrough are done.
-
-1. **Statement invariant.** Every player-visible diagnostic statement is one of five kinds:
-   - a direct supported fact;
-   - a boundary count;
-   - an event interval;
-   - a comparison;
-   - an explicit refusal.
-
-   Every derived statement names its derivation and can cite its evidence: the observation boundary,
-   the supported-event sequences and the authored design facts. A minimal set of statement kinds can
-   differ by question; the invariant cannot.
-2. **Time labeling.** State is labeled with the observation's `currentTime`, not with the requested
-   advance target.
-3. **Waiting is step-first.** A resource is named only when the step has exactly one eligible resource.
-   Multi-eligible waiting is shown as unassigned work for the eligible set. It is never shown as
-   per-machine queues and is never derived from `combinedQueueDepth`.
-4. **Resource activity at a boundary** is shown as slots in use of concurrency, or offline. It never
-   uses `busyTicks`, utilization or percentages.
-5. **Idle facts, never verdicts.**
-   - Wording is "idle, and no unit is waiting for a step it can serve", or "idle while units wait for
-     STEP".
-   - The words "starved" and "surplus" are not used.
-   - An explicit surplus refusal points to the one-change retry that can decide it.
-6. **Event intervals need a complete window.** The completing unit's per-step wait and processing, and
-   any optional per-resource activity intervals, are shown only when the attempt's supported events
-   from sequence 1 through the boundary are retained, for one accepted order. Otherwise they are
-   explicitly refused, while current-state facts stay available. This makes **event retention for an
-   attempt a game-side requirement**. The runtime contract does not retain events.
-7. **Limiting step: refuse in a single run.** No bottleneck or constraint label is shown. The evidence
-   path is a one-change comparison.
-8. **Measured delay is not a cause.** The largest measured wait is shown as a measurement of one unit.
-   Under release-at-once it is the `CUT` backlog in every tested design.
-9. **Comparisons.**
-   - The change set comes from game-owned design facts, including result-affecting projection identity
-     and order. The outcome is the two completion ticks and their difference.
-   - One change: state change and outcome only, and say it "does not show why". Zero difference: "no
-     change".
-   - An order change carries the tie-break rule as a stated fact.
-   - More than one change: explicitly refuse per-change attribution.
-10. **Terminology.** Outside refusals, do not use:
-    - utilization, %, efficien-;
-    - bottleneck, constraint;
-    - starved, surplus, blocked;
-    - because, due to, caused;
-    - variation;
-    - "queue at".
-11. **Scope.** All of the above is established for one product, a linear three-step routing, one order
-    released at once, all resources online, no setup and no transfer. Any other workload or Engine
-    feature needs revalidation before reuse.
-
-### Separation
-
-| Layer | Content |
+| Claim | Counterexample |
 |---|---|
-| Engine/runtime facts | Observation fields and supported events listed under Repository evidence; Engine semantics §2 rules 4 and 7 |
-| Game-owned presentation | Requirements 1–10: counts, groupings and event intervals over those facts; refusals; wording; attempt event retention |
-| Game-owned named interpretation | **None required.** The completion chain is the surviving optional candidate, but it is a bottleneck inference whose ownership the consumer plan leaves unresolved |
-| Challenge-owned | Attempt comparison of outcome facts beside game design facts |
-| Reusable measurement candidates (ownership unresolved) | **None established**; the two conditional items above are handed over as context only |
+| Busiest step or machine = bottleneck | G5: the CUT pool is the most occupied, yet adding a cutter does nothing; G7: tied occupancy, and no single addition helps |
+| Busy counter ÷ elapsed = utilization | G4: 4 credited ticks while 2 of 2 slots are busy; 48 against 45 elapsed at completion. G11b: 36 against 26 |
+| Longest wait = the problem | Under release at once, the first step's backlog is the largest wait in every corpus design (it is the constraint only in G3/G4) |
+| Shared waiting = one machine's queue | G6, G11a: per-machine counts double-count |
+| An idle machine is surplus | G2 against G8: the same single-run evidence, but removal costs 11 ticks in one and 0 in the other |
+| Two simultaneous changes: "this one did it" | G1 + A + I: attribution depends on order; G7 + A + I: pure interaction |
+| "Because…" after one change | Determinism reproduces an association, not a mechanism |
+| Machine order is irrelevant | G9: order alone 11 → 9 |
 
-## Downstream consequence for the analytics ownership research
+**Allowed:**
 
-The game question was derived first, from its own brief and evidence. Only then was the analytics
-adversarial review read. That review's disposition is REOPEN, and it asks for a bounded shared
-measurement use, or deferral of a common owner.
+- direct facts;
+- counts at one observation;
+- intervals between supported events;
+- one-change comparisons (change and outcome);
+- multi-change comparisons with attribution withheld;
+- stated definitions (section 9).
 
-This investigation **supplies no such use for the first playable slice**. The analytics research should
-therefore:
+**Disclosed method refinements:**
 
-- not count the first non-spatial playable slice as a forcing consumer of utilization, occupancy,
-  bottleneck inference, longitudinal aggregation or run comparison;
-- keep evidence and provenance work conditional, as the review already concluded;
-- treat the two conditional items above as the shapes a future game demand would take, with their
-  material basis choices;
-- reuse the corpus's misleading-measure proving cases if it defines any such measurement:
-  - G4 and G11b: completion-credited counter against slots in use and elapsed time;
-  - G5: most-occupied pool is not the constraint;
-  - G7: occupancy tie with no helpful single addition;
-  - G1 to G8: release-at-once wait totals.
+- *Revision 1:* the idle derivation was given a name; the controlled-mutation sub-check was corrected,
+  and C3b and C3c do not depend on it; wording fixes.
+- *Second pass:* one scenario reauthored so a removal does not renumber another machine. No values
+  changed; recorded as an amendment.
 
-The game-side consequence holds whatever ownership the analytics research chooses: the minimal contract
-avoids every category the consumer plan leaves unresolved.
+## 8. Presentation findings (owner sessions)
 
-## External evidence
+**What works** (third session):
 
-**Roser, C., Nakano, M., Tanaka, M., *Throughput Sensitivity Analysis Using a Single Simulation*.**
-Proceedings of the 2002 Winter Simulation Conference, pp. 1087–1094 (DOI 10.1109/WSC.2002.1166361).
+- **Pull, not push.** A minimal design, plus commands for facts (`design`, `result`, `at <tick>`,
+  `machine`, `util`, `loaf`, `variants`, `switch`, `compare`, `explain`). Nothing is pre-answered.
+- **Missions with learning objectives.** Each mission has one goal with an explicit answer format, and
+  missions grow in complexity on one scenario before the next. After answering, the player sees the
+  official answer, why, how to find it, and what the mission teaches.
+- **Experiments by variant.** In-the-moment learning was observed. In mission 10 the owner answered
+  correctly through an untested utilization heuristic; the official answer pointed to `compare`, and
+  the owner used it unprompted in missions 11 and 13.
+- **Plain text, in context.** The owner judged it "fairly easy" and "good" for showing that a design
+  can be explored. For a game it would need less given away.
 
-- **Verification status:**
-  - In this session, the bibliographic record was confirmed (search index and the first author's
-    publication page), and so was the abstract's validity condition: a single-simulation throughput
-    prediction holds only "provided that the system change does not significantly change the
-    bottleneck".
-  - The §2.2 point that overlapping active periods make bottleneck attribution ambiguous was read in
-    the earlier session of this investigation. It was **not re-read here** (the PDF could not be
-    text-extracted in this session), so treat it as background, verify before citing.
-- **What it establishes:** a recognized single-run method infers bottlenecks from machine activity
-  durations, and its own authors bound the counterfactual prediction by bottleneck stability. This
-  supports refusing a single-run "adding capacity here helps" claim (requirement 7). It also supports
-  treating the corpus's tie and migration cases as exactly the conditions under which single-run
-  inference is not licensed.
-- **Where the analogy breaks:**
-  - That method targets steady-state throughput of systems with finite buffers and blocking. This
-    corpus is one finite order with unbounded queues, no blocking and release at once.
-  - Here a continuously active resource is often not limiting: the cutter is active 0–36 in G1 without
-    pacing completion.
-  - Nothing in the source is used to define Arcogine semantics.
+**What fails** (all three sessions):
 
-No other external evidence materially discriminated between the candidates. Specifically,
-presentation research would not change the mechanical audits, and population comprehension is out of
-scope.
+- **Statement lists** (a wall of facts plus refusals) need pen and paper.
+- **Refusal sections as UI** ("what this run cannot tell you") confused the owner twice.
+- **"This shows what happened … not why"** confused the owner twice.
+- **Trap questions** test caution, not reasoning, and penalize forming a hypothesis.
+- **Undefined terms** ("starved", "surplus"): the owner wants industry jargon, with each term taught.
+- **"idle (no work left)"** was read as "idle = no work left". Lead with the characterization, and
+  accept equivalent answers.
+- **Combined changes** were missed: the owner compared every single variant but not the joint one.
+- **Correct answers can hide invalid heuristics.** Record "how did you decide?" on reasoning missions.
+- **Tick ranges** are half-open, like clock hours. The owner prefers teaching that gently in the first
+  missions over annotating every range.
+- **Interaction defects:** inline `answer <text>`, natural range syntax, typo suggestions, and prompt
+  editing.
 
-## Adversarial analysis (self-administered)
+## 9. Concrete reusable-measurement demand (revised)
 
-This is the author's own challenge. It is not independent review and carries no independent weight.
+**Classification:**
 
-1. **Audit design bias.**
-   - The oracle (expected values and the method falsifications) was committed before the candidates
-     existed. The audit *code* was committed together with the candidates and refined twice after a
-     first run (both refinements are disclosed above).
-   - Mitigations:
-     - N fails five of six audits.
-     - C3b's pass does not depend on the controlled-mutation correction.
-     - The first refinement changed no candidate's logic.
-   - Residual risk: the audits share authorship with C3b. An independent reviewer should try to write
-     a misleading C3b-shaped statement that the audits pass.
-2. **The terminology audit is a word list.**
-   - It cannot catch overstatement in other words: "pacing" (C2b/C3a), "held it up" (the tie text),
-     "limits" (inside C3b's refusal, which the audit skips).
-   - So C3b's non-refusal templates were reviewed by hand: "waiting to start STEP on R", "each goes to
-     whichever of A or B can take it first and is not assigned to either yet", "has k of n slots in
-     use", "is idle, and no unit is waiting for a step it can serve", "took L ticks from order
-     acceptance: waited w for STEP, STEP p on R", "processed n STEP steps; in use during ticks …", the
-     comparison texts, and the tie-break rule.
-   - None asserts a mechanism, rate or counterfactual. Two carry reading risk: "waited 33 for CUT" may
-     be read as blame, and the tie-break rule beside an order comparison may be read as the
-     explanation for that pair. Both are walkthrough questions, not audit failures.
-3. **The refusal wording overstates slightly.**
-   - "Which step limits this design is not decidable from one run" and "whether R is surplus … is not
-     decidable from this run" are *negative* claims about all single-run analysis.
-   - The evidence establishes less:
-     - for surplus, the selected single-run evidence cannot decide it (G2 against G8);
-     - for the limiting step, the tested single-run measures are falsified, and the one surviving
-       method (the completion chain) carries no general guarantee.
-   - Qualification for any promotion: word these refusals relative to the evidence shown ("not decided
-     by this evidence"), as the brief's own examples do. This is a wording qualification only. It
-     changes no audit result, because refusals are excluded from the terminology and traceability
-     checks.
-4. **C3a also passes every audit.**
-   - C3b is preferred by minimality and ownership, not by falsification of C3a:
-     - C3b earns no additional definition;
-     - C3a's pacing verdict is a bottleneck inference the consumer plan leaves unresolved.
-   - C3a's corpus pass should not be generalized; see conditional item 1.
-5. **Is C3b a "bundle" or facts-only plus refusal?** It is the latter in substance, and the report says
-   so. The candidate the brief calls "claim–evidence bundle" survives only in the form "claims =
-   evidence-cited facts". No synthesized concise diagnosis is necessary.
-6. **Activity intervals against the planning wording.**
-   - The consumer plan lists "utilization or occupancy intervals" as unresolved reusable computation.
-     C3b's per-resource activity statements are unions of event intervals with no normalization, which
-     is arguably below that bar.
-   - If reconciliation disagrees, the statements can be dropped. They answer none of the six fixed
-     questions.
-   - Every audit is monotone under removing them: each audit either checks for the absence of a bad
-     statement or for a refusal or comparison that does not come from the activity statements. This
-     is an inference, **not a separate run**.
-7. **The corpus is narrow.**
-   - Scope: one product, one order released at once, a linear routing, no availability changes, no
-     setup and no transfer.
-   - The event-interval derivations refuse when more than one order is accepted, so multi-order
-     workloads would *refuse* rather than mislead. That is safe, but the useful surface shrinks.
-   - Readiness defined as "previous step completion or order acceptance" holds only without transfer.
-     When transfer lands, wait intervals need new semantics.
-8. **Unit numbering.**
-   - Observations number units by `ordinalWithinOrder + 1`; the event derivation numbers them by
-     position in `ORDER_ACCEPTED.jobIds`.
-   - They agree in every run, consistent with Engine semantics §3 (ordinal orders creation and
-     `JobId` allocation).
-   - The agreement is not separately pinned as a supported-event ordering guarantee. A game should
-     correlate units by `JobId` and show the ordinal.
-9. **Possibility versus necessity.**
-   - The negative demand result is that the slice does not *need* a reusable measurement. It is not a
-     claim that no slice ever will.
-   - Requirement 7 makes controlled retries the only route to "what limits this design". That is a
-     product consequence (see follow-up triggers), not a defect in the evidence.
+| Requirement | Classification |
+|---|---|
+| Finish time; units finished; machine slot state (working or idle); units waiting by step (resource only for a single-eligible step); design change set | **Direct supported fact**, or game-owned design fact |
+| Each unit's journey (wait and work per step); each machine's timeline | Exact readings of supported events or per-tick observations: **game-local presentation**, given a platform source of per-step timing (section 10) |
+| **Utilization over a period** | **Concrete reusable measurement candidate** |
+| **Flow characterization of idle slots** (starved / no work left; blocked later) and starved time over a period | **Concrete reusable measurement candidate** |
+| Bottleneck / constraint | **Candidate pending a named method.** Single-run heuristics are falsified. Intervention by variant is valid. The completion chain held on every unique corpus case, but has no general guarantee |
+| "Needed" / excess capacity | Answered by experiment: a comparison of direct finish facts, which needs no measurement |
+| Busy counter, or any `busyTicks`-based figure | **Unsupported**; to be removed (section 11) |
+| Per-machine queue for shared work; per-change attribution; mechanism | **Unsupported, must not be claimed** |
 
-## Surviving invariants
+### Utilization over a period
 
-- A player-visible diagnostic statement is a direct fact, a boundary count, an event interval, a
-  comparison or a refusal. Each derived statement names its derivation and cites its evidence.
-- Multi-eligible waiting before binding is step work for an eligible set, not any machine's queue.
-- Completion-credited `busyTicks` is neither instantaneous nor elapsed-normalized utilization.
-- In this reference, no single-run descriptive load measure (pool occupancy, resource occupancy,
-  credited busy time, wait totals) identifies the constraint.
-- Under release-at-once, the largest measured wait is the first step's backlog, independent of the
-  constraint.
-- One authored change licenses "change and outcome", not "why". Several changes license no per-change
-  attribution.
-- Projection identity and order are authored changes whenever they differ.
+| Item | Content |
+|---|---|
+| Player/product purpose | Let a player see and learn how much of its available time each machine spent working over a chosen period; compare machines; see start-up and wind-down effects |
+| Measurement question | Working slot-ticks ÷ (slots × period length) for a machine over a half-open period [a, b) |
+| Inputs | Published model (concurrency); machine slot occupancy at every tick of the period, from per-tick observations or from complete dispatch/completion intervals |
+| Basis choices | Half-open period; per slot (concurrency in the denominator); work in progress counted up to the boundary; per machine by default, with a per-eligible-step pool as a separate figure (they can rank differently); offline time excluded from available time (specified, not exercised) |
+| Completeness | Occupancy known for every tick of the period |
+| Refusal | Period not fully covered; offline handling not specified for the consumer; never presented as a bottleneck verdict |
+| Reuse need | The same meaning is needed for game teaching, any future dashboard or analysis, and Factory Design's "Maximum utilization" verification objective. Removing the busy counter leaves no supported utilization |
+| Ownership | **Unresolved:** hand to the simulation-analytics ownership research |
 
-## Transferability and reuse
+### Flow characterization of idle slots (starvation)
 
-- **Arcogine-specific dependency:** the current non-spatial Engine semantics, release-at-once order
-  submission and the strategy-space reference.
-- **Potentially transferable result (hypothesis level):** a truthful player-facing diagnostic surface
-  over a deterministic simulation can be built from facts plus explicit refusal, and can push causal
-  questions to one-change comparisons, without any named single-run diagnostic method.
-- **Boundary conditions:** stochastic simulation; steady-state systems where single-run sensitivity
-  methods are designed to work (Roser et al.); multi-order or continuous-arrival workloads.
-- **Reusable research assets:** the G-corpus with hand-derived interventions; the misleading-measure
-  cases (G4, G5, G7, G11b, release-at-once totals); the starvation-versus-surplus pair (G2 against G8);
-  the confounded pairs, including pure interaction (G7 + A + I); the six audit implementations; and the
-  N control as an audit-sensitivity check.
-- **Synthesis-seed candidate:** none nominated. The signal is not yet independent of this one consumer
-  and corpus.
+| Item | Content |
+|---|---|
+| Player/product purpose | Explain *why* a machine is idle; teach starved versus no work left (blocked later); starved time over a period |
+| Measurement question | For an idle slot at a tick: does some unfinished unit still need a step this machine can do (starved) or not (no work left)? |
+| Inputs | Published model (routing, eligibility); one observation (job status and current step, machine active jobs) |
+| Basis choices | System-wide at the tick. A queued unit counts from its current step; an in-progress unit counts from its next step. An idle slot with a queued unit waiting for it is a contradiction under the current Engine, and is rejected. Aggregation is starved slot-ticks over a period |
+| Completeness | One observation per tick (or per state change) |
+| Refusal | Offline machines (not specified); "blocked" until finite buffers exist; workloads with orders arriving later need an explicit rule (known work only) before "no work left" is claimed |
+| Reuse need | Equipment idle-reason coding is general across consumers. (Background, not verified against a specific standard: industry equipment-state models attach reasons such as "no material" to idle time) |
+| Ownership | **Unresolved:** hand to the analytics research |
 
-## What did not survive
+The research-local definitions (`machine-slot-state`, `flow-characterization-of-idle-slots`,
+`utilization-over-a-period`) are executable in the workspace experiment and prove feasibility only.
 
-- **Pool occupancy as a constraint label:** falsified by G5. Resource occupancy: falsified by the G7
-  tie. `busyTicks` ÷ elapsed: falsified by G4 and G11b.
-- **Largest total or per-unit wait as a constraint label:** falsified in G1, G2, G5 and G7 (it is
-  always `CUT`).
-- **Facts-only with silent non-answers (C1, C2b):** silence is not refusal. A player cannot tell "not
-  shown" from "not decidable".
-- **Per-machine queue counts for shared work:** double-counting (G6, G11a).
-- **Any single-run surplus or "starved" label:** G2 and G8 show the same evidence with opposite truths.
-- **"Variation" as an explanation:** order-only changes are deterministic (G9).
-- **The original controlled-mutation sub-check:** mis-specified and corrected, as disclosed above.
+## 10. Platform requirements (corrected ownership)
 
-## Confidence and limitations
+| Need | Owner | State |
+|---|---|---|
+| Per-step timing for unit journeys, machine timelines and utilization | **Runtime / analytics** | Two routes exist. (a) The runtime retains supported events or adds timing to observations. (b) A consumer records an observation after every advance; the bakery generator did exactly this through bounded advancement. Which route, and who owns recorded history, is a runtime and analytics decision |
+| Time labels from the simulation clock | Engine (an existing fact) | A usage rule only |
+| Machine identity stable when machines are added or removed | **Factory Design** (model identity) and draft projection | Positional identity renumbers later machines, and an honest change set then reports an extra change (found in the second pass) |
+| What changed between two designs, including order | **Factory Design / model comparison** | A related register question is a CANDIDATE |
 
-**High:**
+## 11. The busy counter: owner decision
 
-- the falsifications above (hand-derived, then confirmed by runs and reproduced at the final recheck);
-- C3b's mechanical pass in this corpus.
+**Remove it** as part of this research's reconciliation. The code removal is deferred to the first
+reconciliation commit, because removing it earlier would rewrite this research's own counterexample
+evidence and detach experiments from `main`.
 
-**Medium:**
+**Scope:**
 
-- that requirements 1–11 suffice for a first internal playable slice;
-- that a refusal-heavy surface is usable. **Untested:** the owner walkthrough was not performed.
+- the `ResourceObservation.busyTicks` field and its accumulation;
+- the Engine semantics §10.1 rule 1 and the §10.2 register row (the lead-time saturation rule stays);
+- the bottleneck-by-utilization assertion in `HeadlessClosureAcceptanceTest`;
+- the busy-counter part of `EngineDerivedResultConformanceTest`;
+- the runtime contract's "utilization facts", the ISA-95 mapping row and the Governance evidence
+  mention.
 
-**Low to medium:** any scope beyond requirement 11.
+**Risk: high.** It changes a supported observation contract and an Engine rule, so it needs
+independent review. Its replacement is section 9's utilization candidate, owned wherever the analytics
+research decides.
 
-**Not inspected:**
+## 12. Requirement set recommended for the game consumer plan
 
-- the Challenge substrate's own attempt-comparison output;
-- multi-order, availability-change and setup workloads.
+To be promoted only after independent review and reconciliation:
 
-## Unresolved unknowns
+1. **Guardrails:** section 7, in full, as constraints on every claim the game makes.
+2. **Inspection capabilities:** design; finish; slot state at any tick; waiting by step (step first;
+   resource named only for a single-eligible step; never derived from `combinedQueueDepth`); unit
+   journeys; machine timelines; comparisons of variants.
+3. **Characterizations:** flow characterization and utilization *as defined by their eventual owner*,
+   shown with their names, definitions and periods, never as verdicts.
+4. **Experiments:**
+   - counterfactual questions are answered by comparing variants;
+   - combined changes are presented as a distinct kind of experiment, with attribution withheld;
+   - change sets include machine order, and machine identity stays stable.
+5. **Teaching pattern:**
+   - missions with learning objectives, explicit answer formats and increasing complexity;
+   - the official answer, why, how to find it and what it teaches, right after each answer;
+   - jargon introduced in context, plus an on-demand reference;
+   - conventions (tick ranges) taught gently in the first missions.
+6. **Labels:** time labels from the simulation's own clock.
+7. **Scope:** non-spatial, one product, linear routing, release at once, all machines online. Anything
+   else needs revalidation.
 
-- Whether the owner can interpret C3b's surface, and whether the optional completion-chain line helps
-  or misleads (walkthrough outstanding).
-- Whether a refusal-first single-run view is acceptable product-wise when limiting steps can be learned
-  only through retries. This depends on the controlled-retry question.
-- How event intervals and waiting change once transfer semantics land (readiness ≠ previous
-  completion).
-- Whether the durable-surface wording that treats `busyTicks` as utilization should be reconciled.
+## 13. Challenge: do we need to exercise the next concept (bottleneck) here?
 
-## Durable consequences
+**Arguments for:** bottleneck is the central diagnostic concept for this game. The brief's main
+falsification target was constraint claims. A full presentation iteration has covered only starvation
+and utilization.
 
-None are performed here.
+**Arguments against, which prevail:**
 
-- **Game consumer planning:** after independent review and the owner walkthrough, promote requirements
-  1–11 with qualifications 3, 6 and 8 from the self-challenge, and the event-retention requirement.
-- **Research register:** after reconciliation, record this question's verdict. Note that it supplies
-  the evidence-contract precondition of the controlled one-variable retry question.
-- **Analytics ownership research:** consume "no demand from the first playable slice", plus the
-  conditional items and proving cases.
-- **Consistency / reconciliation candidate:** the `busyTicks` "utilization" and bottleneck wording in
-  the `FactoryHandler` comment, Engine semantics §10 / §10.2 and the runtime contract.
-- **Reusable assets to preserve in a durable test surface,** if a later slice implements diagnostics:
-  the G-corpus misleading-measure cases and the starvation-versus-surplus and confounded pairs.
-  Otherwise discard them explicitly at the knowledge-transfer audit.
-- **Report itself:** it does not need to remain readable after reconciliation.
+- **The truth side is done.** Iteration 1 established bottleneck's guardrails mechanically, including
+  intervention ground truth, migration, co-binding, and the falsified single-run heuristics.
+- **The pattern is already exercised.** Experiment-based questions ran in the third session (S3, and
+  S4's co-binding mission). Its failure mode, missing the joint variant, is already recorded.
+- **What remains is not this question's.** It is (a) choosing a **named method** for a single-run
+  bottleneck explanation, which is a measurement definition and belongs to the analytics research,
+  with corpus evidence ready for it; and (b) a **teaching design** for bottleneck (curriculum,
+  difficulty), which is game product design. A follow-up curriculum question or the existing
+  controlled-retry candidate fits it.
+- **Scope has already grown well past the brief.** Further iterations would turn this question into
+  the game's curriculum programme.
 
-## Implementation implication
+**Verdict:** conclude here, provisionally. Hand bottleneck's named method to the analytics research,
+and its teaching to a follow-up question.
 
-No implementation. No game, analytics or Engine change is admitted by this report.
+**Reconsider** if the analytics research chooses a single-run method whose presentation raises new
+truthfulness risks. That would be a short, targeted extension of the guardrails, not a new iteration.
 
-## Follow-up triggers
+## 14. Adversarial analysis (self-administered; not independent)
 
-- **Owner walkthrough completed:** record the answers (as a new report revision or a linked walkthrough
-  record). A failure falsifies C3b unchanged.
-- **The controlled-retry question:** this contract makes retries the evidence path for limiting steps,
-  which raises that question's materiality.
-- **Transfer or spatial semantics land:** revalidate requirements 3, 6 and 8 before any spatial slice
-  uses them.
-- **Multi-order or continuous-arrival workloads in a slice:** revalidate requirement 11 and the
-  event-interval refusals.
-- **A slice explicitly wants a single-run pacing explanation, or run-total or occupancy figures:** that
-  becomes a concrete measurement requirement for the analytics research, using the conditional items
-  above.
+1. **Shared authorship.** One author built the candidates, audits, scenarios, generators, viewer and
+   this report.
+   - Mitigations: answers were pre-registered and committed before any code, in every iteration; the
+     audits caught the naive control; the runs matched every pre-registered value.
+   - Residual: an independent reviewer should try to craft a misleading statement that passes the
+     audits, and a mission whose official answer is wrong.
+2. **Owner as co-designer and sole subject.** In the third pass the owner co-designed the scenarios and
+   missions (but not the key), and had seen the first pass's key. The second pass was paused before
+   its reveal. Their success is weaker evidence than a
+   blinded naive player's; their failures are still falsifications. The asymmetry stated in the brief
+   holds.
+3. **The viewer gives too much away.** Labeled states and breakdown tables make several missions
+   lookups. The owner judged that acceptable for proving explorability, not for gameplay difficulty.
+   So "usable" here means *explorable and understandable*, not *challenging*.
+4. **Measurement definitions are research-local and convention-laden.** Examples: half-open periods,
+   per slot, and "known work only" for no-work-left. Another owner may choose differently. These are
+   requirements with stated choices, not settled formulas.
+5. **Narrow scope.** One product, linear routing, release at once, no offline machines, no setup or
+   transfer. Flow characterization in particular needs a rule for future arrivals.
+6. **The reversal of revision 1's analytics conclusion follows the owner's goal, not new mechanical
+   evidence.** The demand exists *given* the educational goal. If that goal changes, the demand should
+   be re-examined.
+7. **The decision not to iterate on bottleneck is a judgement** (section 13), open to challenge.
 
-## Sources
+## 15. What this unblocks, and what stays blocked
 
-- Roser, C., Nakano, M., Tanaka, M. *Throughput Sensitivity Analysis Using a Single Simulation.* In:
-  Proceedings of the 2002 Winter Simulation Conference, pp. 1087–1094. DOI 10.1109/WSC.2002.1166361.
-  - Author preprint page, with the abstract checked in this session:
-    https://www.allaboutlean.com/publications/2002_wsc-throughput-sensitivityanalysis-preprint/
-  - A proceedings PDF was located by search at https://informs-sim.org/wsc02papers/146.pdf. Its
-    content could not be text-extracted in this session, so that copy is unconfirmed.
-  - The page range comes from the earlier session's reading of the paper.
+**Unblocked now:**
 
-## Evidence coordinates (active custody)
+1. **Independent adversarial review** of this revision. It is required (High risk) before any
+   promotion.
+2. **The simulation-analytics ownership research (REOPEN).** It asked for a concrete, bounded use;
+   section 9 supplies two, with basis choices, plus bottleneck's pending named method and a corpus to
+   test it.
+3. **Reconciliation preparation:**
+   - **Brief** (proposed, for the owner to decide): adopt the refined question and goals; redefine the
+     owner gate as a smoke test of a presentation prototype rather than of a statement list.
+   - **Register:** record the verdict when concluded, and the new candidate questions below.
+   - **Busy-counter removal:** architecture and code, reviewed.
+   - **Consumer plan:** the requirement set (section 12).
+4. **The controlled-retry candidate question:** its precondition (an evidence contract) is now supplied,
+   along with concrete comparison-presentation findings.
 
-- **Workspace branch:** `workspace/factory-design-game-diagnostic-evidence`
-- **Handoff prompt:** commit `a6081fbac9d901a1d2eb2911ef78eb49ed5cff79`,
-  `workspace/research/handoffs/factory-design-game-diagnostic-evidence.md`
-- **Pre-evaluation oracle:** commit `010b84a4e38113766af2cd594135825296a0ef3a`,
-  `workspace/research/investigations/factory-design-game-diagnostic-evidence-oracle.md`
-- **Experiment sources and generated results:** commit `f8a2be5bd2d5dfe0e2e9ffb0bfd7e9d8dc950374`, under:
-  - `workspace/research/experiments/game-diagnostic-evidence/`
-  - `workspace/research/investigations/game-diagnostic-evidence-results/`
+**Still blocked:** a playable implementation. It needs:
 
-  Both are unchanged since that commit and were reproduced byte for byte at the final recheck.
-- **Rerun:**
+- the live interactive loop decision;
+- the analytics ownership decision;
+- the per-step timing route (section 10);
+- the Engine prerequisites already listed in planning.
 
-  ```text
-  cd product && ./gradlew :research-experiments:test \
-    -PresearchExperimentSources=<repo>/workspace/research/experiments/game-diagnostic-evidence
-  ```
+## 16. Concept coverage and tracking destinations
 
-  It writes `product/research-experiments/build/game-diagnostic-evidence/*.md`.
-- **Report:** this file. Its exact commit is the one that adds it.
+| Item | Destination at reconciliation |
+|---|---|
+| Starvation, utilization | Concluded here (requirement set and measurement candidates) |
+| Bottleneck (named method), shifting bottleneck, excess capacity, co-binding | Named method: analytics research. Teaching: follow-up curriculum or controlled-retry question |
+| Explorable now but not exercised: queue/WIP, lead time, makespan, step time, parallel/multi-slot capacity, pooling, tie-break effects, release-at-once backlog | New **concept-curriculum** research question (game product programme) |
+| Engine-supported, needing new scenarios: throughput, Little's Law, arrival/release patterns, demand versus capacity, machine downtime, backlog, multiple products | Same new question, or a sibling |
+| **Order release policy as a design concept** (a schedule, every N ticks, a work-in-process cap) | New register CANDIDATE: today, orders over time come only from commands |
+| Blocking / finite buffers | New register CANDIDATE (buffers are deferred in Factory resource semantics) |
+| Variability (processing time, failures, arrivals, yield) | Engine evolution's stochastic boundary; the game's educational need is a candidate trigger |
+| Setup/changeover; transfer/layout; lots/batches | Already tracked (register / spatial planning) |
+| Scrap/rework, priorities and other dispatch rules | Programme roadmap |
+| **Live simulation loop / interactive harness** | New research or planning item. The owner has stated it is necessary soon |
+
+The game product research programme
+(`docs/research/investigations/factory-design-game-vertical-slice.md`) is the natural single home for
+the full concept map.
+
+## 17. Surviving invariants
+
+- Every player-visible claim is a direct fact, a count at a moment, an event interval, a comparison, or
+  a value of a stated definition. No claim is stronger than its evidence.
+- Machine state is not flow characterization. State is read; characterization is derived from the
+  whole system.
+- Counterfactual questions are answered by experiment, never by a single-run label.
+- Pre-binding shared waiting belongs to the step, not to a machine.
+- A completion-credited counter is not utilization.
+- Identity and order are part of a design change.
+
+## 18. What did not survive
+
+- The first report's "no reusable measurement demand".
+- The first report's game-owned "must keep" list.
+- Refusals as UI.
+- The statement list as a presentation.
+- Trap questions as walkthrough tasks.
+- Avoiding industry vocabulary.
+- The completion-chain line for players (confusing).
+- "Surplus" from one run.
+- Annotating every range with its length (owner correction).
+- The busy counter.
+
+Each is reusable negative knowledge for the game and analytics work.
+
+## 19. Unresolved unknowns
+
+- Bottleneck's named method, and how to teach it.
+- How per-step timing reaches a consumer.
+- Where the measurement definitions live.
+- Behavior with orders arriving over time, offline machines and multiple products.
+- Comprehension by real players (the deferred external-player question).
+- Difficulty design for actual play.
+
+## 20. Durable consequences (none performed here)
+
+- **Brief and register:**
+  - the proposed refined question and goals, and the proposed owner-gate redefinition, if the owner
+    adopts them;
+  - verdict on conclusion;
+  - new candidates: concept curriculum, release policy, blocking/finite buffers, live interactive
+    loop.
+- **Architecture and code:** busy-counter removal (section 11), independently reviewed.
+- **Planning:** the consumer-plan requirement set (section 12) and the platform requirements
+  (section 10).
+- **Analytics research:** the section 9 tables, the bottleneck corpus and the falsified heuristics.
+- **Reusable assets worth preserving if a later slice implements diagnostics:**
+  - the G-corpus counterexamples;
+  - the bakery scenarios and missions;
+  - the audit implementations;
+  - the viewer pattern.
+
+  Otherwise they are discarded explicitly at the knowledge-transfer audit.
+- **This report:** it need not remain readable after reconciliation.
+
+## 21. Implementation implication
+
+No product implementation is admitted by this report. The only product change it recommends is the
+owner-decided busy-counter removal, through reconciliation.
+
+## 22. Sources
+
+- Roser, C., Nakano, M., Tanaka, M. *Throughput Sensitivity Analysis Using a Single Simulation*.
+  Proceedings of the 2002 Winter Simulation Conference, pp. 1087–1094, DOI 10.1109/WSC.2002.1166361.
+  - The abstract's validity condition, prediction valid only "provided that the system change does not
+    significantly change the bottleneck", was checked against the author's preprint page.
+  - Its §2.2 active-period ambiguity is background; verify before citing.
+  - **Analogy limit:** that method targets steady-state lines with finite buffers. This corpus is one
+    finite order with unbounded queues.
+- Industry equipment-state models (idle reasons such as "no material"): **background, not verified**
+  in this investigation.
+
+## 23. Evidence coordinates (active custody)
+
+Workspace branch: `workspace/factory-design-game-diagnostic-evidence`.
+
+| Artifact | Commit | Path |
+|---|---|---|
+| Handoff | `a6081fbac9d901a1d2eb2911ef78eb49ed5cff79` | `workspace/research/handoffs/factory-design-game-diagnostic-evidence.md` |
+| First-pass oracle (pre-registered) | `010b84a4e38113766af2cd594135825296a0ef3a` | `workspace/research/investigations/factory-design-game-diagnostic-evidence-oracle.md` |
+| First-pass experiment and results | `f8a2be5bd2d5dfe0e2e9ffb0bfd7e9d8dc950374` | `workspace/research/experiments/game-diagnostic-evidence/`, `workspace/research/investigations/game-diagnostic-evidence-results/` |
+| Report revisions 1 and 2 | `bb37e2598d2684f7dc47b6db75884b798a0ae040`, `e5debf2584b2a3096115c2ed8b117e2ac653cb31` | this path |
+| First walkthrough record | `e5debf2584b2a3096115c2ed8b117e2ac653cb31` | `workspace/research/investigations/factory-design-game-diagnostic-evidence-walkthrough-record.md` |
+| Second-pass oracle and protocol (pre-registered) | `de2c28a86cd0c03f1f6ffe022bc5dde1d271b7f8` | `workspace/research/investigations/game-diagnostic-walkthrough-2-*.md` |
+| C3c contract, second-pass pack and script; oracle amendment | `c4c944da99933ab86cab9482441b43514e145057` | `workspace/research/experiments/…/GamePlainContract.java`, `GameWalkthroughPack.java`, `workspace/research/experiments/game-diagnostic-walkthrough/` |
+| Discovery notes | `c7106ab6f2370962a3d4ed30f706b0b229dc1ca2` and later commits | `workspace/research/investigations/factory-design-game-diagnostic-evidence-discovery-notes.md` |
+| Missions and missions oracle (pre-registered) | `051110921b051e907781c76046d05df15274b070` | `workspace/research/investigations/game-diagnostic-inspection-missions*.md` |
+| Bakery generator, data pack and viewer | `82786d94b3ae68426b07551589be455a7ed6b5e9` | `…/BakeryInspectionPack.java`, `workspace/research/investigations/game-inspection/`, `workspace/research/experiments/game-diagnostic-inspection/inspect.mjs` |
+| Third-session record | `9922ead0c051fc26b126cc464211775d75d04a4a` (and the commit adding this revision) | `workspace/research/investigations/game-inspection-walkthrough-record.md` |
+| This report (revision 3) | the commit that adds it | this path |
+
+**Rerun:** from `product/` on JDK 21:
+
+```text
+./gradlew :research-experiments:test \
+  -PresearchExperimentSources=<repo>/workspace/research/experiments/game-diagnostic-evidence
+```
+
+Copy `build/game-diagnostic-evidence/`, `build/game-diagnostic-walkthrough/` and `build/game-inspection/`
+over their workspace counterparts.

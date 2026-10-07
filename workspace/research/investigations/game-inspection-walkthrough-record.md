@@ -85,8 +85,8 @@ and mission 13c (answered "none of these").
 - **The mechanism line confuses again.** "This shows what happened with this change, not why" confused
   the owner a second time (it was already raised in the second pass). Drop it.
 - **Redundant parts.** Mission 13's yes/no parts duplicate the multiple-choice part. Ask one question.
-- **The interval convention is ambiguous** (see the answer to feedback 4). Every range should show its
-  length explicitly.
+- **The interval convention is ambiguous** (see the answer to feedback 4). Owner correction: teach it
+  gently in the first missions rather than annotating every range with its length.
 
 **Too easy:** for a game, the viewer gives too much away. States are labeled outright, and `util` shows
 the breakdown directly. The owner noted this, and that it was acceptable for this iteration's purpose.
@@ -103,8 +103,8 @@ the breakdown directly. The owner noted this, and that it was acceptable for thi
     ticks 0, 1, 2, 3, 4 and 5: 6 ticks, ending as tick 6 begins. "From 11 to 14" is 3 ticks.
   - The whole run "from 0 to 19" is 19 ticks. "Finished at tick 19" names the moment the last packing
     ended (it occupied tick 18).
-  - The viewer used this convention consistently but never showed it. Showing durations, for example
-    "ticks 0–5 (6 ticks)", removes the ambiguity.
+  - The viewer used this convention consistently but never taught it. The owner prefers teaching it in
+    the first missions over annotating every range.
 - **Order release (feedback 6).**
   - The engine releases every unit of an order as soon as the order is accepted: the unit-work
     decomposition, Engine semantics §3.
@@ -124,7 +124,7 @@ the breakdown directly. The owner noted this, and that it was acceptable for thi
 | Accept `answer <text>` inline (fills the first part; asks the rest) | interaction |
 | Accept natural range syntax (`util 4 to 14`); suggest the nearest command on typos (`hariants`, `versions`) | interaction |
 | Use the readline prompt, so editing keeps `[mission n] >` (fixes feedback 3) | defect |
-| Show every range with its length, and state the convention in `explain tick` / `explain period` | presentation |
+| Teach the tick-range convention gently during the first missions (for example in an early official explanation) and in `explain tick` / `explain period`. Do **not** annotate every range with its length: the owner judged that more confusing (owner correction, 2026-10-07) | presentation / teaching |
 | Lead with the flow characterization ("no work left", "starved") rather than "idle (…)"; accept answers that name the same state | presentation / checking |
 | Drop the "This shows what happened with this change, not why" line | presentation |
 | Mission 13: one multiple-choice question instead of yes/no plus a choice | mission design |

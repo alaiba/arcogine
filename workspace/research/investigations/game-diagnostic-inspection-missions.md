@@ -95,6 +95,19 @@ The viewer shows each in context and on `explain`:
 - variant;
 - needed.
 
+## How to run
+
+From any directory, on the workspace branch's checkout:
+
+```text
+node <repo>/workspace/research/experiments/game-diagnostic-inspection/inspect.mjs
+```
+
+- **Progress** is saved after every step, to `<repo>/logs/game-inspection-answers.json` (local only).
+- `q` quits. Running the same command again continues where you stopped.
+- `--restart` starts over (the old answers file is kept as a backup).
+- **Do not open** `game-inspection/missions-key.json` or the missions oracle note.
+
 ## Owner decisions (2026-10-07)
 
 - **Pacing:** approved as listed.

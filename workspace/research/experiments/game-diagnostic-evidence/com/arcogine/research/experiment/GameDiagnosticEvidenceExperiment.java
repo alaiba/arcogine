@@ -196,7 +196,7 @@ class GameDiagnosticEvidenceExperiment {
                 new com.tngtech.archunit.core.importer.ClassFileImporter().importPackages("com.arcogine.research");
         for (Class<?> type : List.of(GameEvidence.class, GameEvidenceOracles.CompletionChainTrace.class,
                 GameEvidenceOracles.IdleResources.class, GameStatements.class, GameContracts.class, GameDiagnosticCorpus.class,
-                GamePlainContract.class, GameWalkthroughPack.class)) {
+                GamePlainContract.class, GameWalkthroughPack.class, BakeryInspectionPack.class)) {
             assertTrue(research.contain(type), type.getName());
         }
     }

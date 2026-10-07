@@ -1,0 +1,174 @@
+{
+  "1": {
+    "parts": {
+      "a": {
+        "kind": "machine",
+        "value": "Packer"
+      }
+    },
+    "official": "The Packer.",
+    "explanation": "At tick 5 the Mixer is working on loaf 3 and the Oven on loaf 1; the Packer holds no loaf, so it is idle.",
+    "howToFind": "Type 'at 5'."
+  },
+  "2": {
+    "parts": {
+      "a": {
+        "kind": "choice",
+        "value": "starved"
+      }
+    },
+    "official": "Starved.",
+    "explanation": "Loaf 1 is already packed, but loaves 2-4 still need packing: loaf 2 is in the Oven and loaves 3-4 are waiting for it. Work the Packer will need exists upstream but has not reached it yet.",
+    "howToFind": "Type 'at 8' (the Packer's line says why it is idle); 'explain starved' for the definition."
+  },
+  "3": {
+    "parts": {
+      "a": {
+        "kind": "choice",
+        "value": "no work left"
+      }
+    },
+    "official": "No work left.",
+    "explanation": "All 4 loaves were mixed by tick 8, so no loaf will ever need the Mixer again. That is not starvation.",
+    "howToFind": "Type 'at 12' or 'machine Mixer'."
+  },
+  "4": {
+    "parts": {
+      "a": {
+        "kind": "machine",
+        "value": "Oven"
+      },
+      "b": {
+        "kind": "percent",
+        "working": 16,
+        "available": 19,
+        "tolerancePoints": 1.5
+      }
+    },
+    "official": "The Oven, 84% (16 of 19 ticks).",
+    "explanation": "Over ticks 0-19 the Oven worked 16 of 19 ticks, the Mixer 8 and the Packer 4.",
+    "howToFind": "Type 'util' (the whole run is the default period); 'explain utilization'."
+  },
+  "5": {
+    "parts": {
+      "a": {
+        "kind": "integer",
+        "value": 15
+      },
+      "b": {
+        "kind": "integer",
+        "value": 15
+      }
+    },
+    "official": "Idle 15 ticks, starved for all 15 of them.",
+    "explanation": "The Packer needs 1 tick per loaf, but loaves only leave the Oven every 4 ticks. Between loaves it is starved: the Oven sets its pace. Its low utilization says it waits for upstream work, not that it is unnecessary.",
+    "howToFind": "Type 'machine Packer' (timeline and breakdown) or 'util'."
+  },
+  "6": {
+    "parts": {
+      "a": {
+        "kind": "integer",
+        "value": 2
+      }
+    },
+    "official": "2: loaves 3 and 4.",
+    "explanation": "The Oven bakes loaf 3 (ticks 6-10) and loaf 4 (ticks 8-12) at the same time.",
+    "howToFind": "Type 'at 9' or 'machine Oven'."
+  },
+  "7": {
+    "parts": {
+      "a": {
+        "kind": "percent",
+        "working": 24,
+        "available": 34,
+        "tolerancePoints": 1.5
+      },
+      "b": {
+        "kind": "text",
+        "value": ""
+      }
+    },
+    "official": "71% (24 of 34 slot-ticks).",
+    "explanation": "Its slots are starved at the start (6 slot-ticks while the first loaves are mixed) and have no work left at the end (4 slot-ticks after the last loaf went in).",
+    "howToFind": "Type 'util', then 'machine Oven' for where the idle slot-ticks are."
+  },
+  "8": {
+    "parts": {
+      "a": {
+        "kind": "percent",
+        "working": 20,
+        "available": 20,
+        "tolerancePoints": 1.5
+      }
+    },
+    "official": "100% (20 of 20 slot-ticks).",
+    "explanation": "In the middle of the run both slots are always baking. The whole-run figure is lower only because of the start and the end.",
+    "howToFind": "Type 'util 4 14'; 'explain period'."
+  },
+  "9": {
+    "parts": {
+      "a": {
+        "kind": "choice",
+        "value": "starved"
+      }
+    },
+    "official": "Starved.",
+    "explanation": "Packer 2 finished loaf 2 at tick 12; its next loaf (4) is still in the Oven until tick 14.",
+    "howToFind": "Type 'at 13' (version A is shown); 'machine Packer 2'."
+  },
+  "10": {
+    "parts": {
+      "a": {
+        "kind": "choice",
+        "value": "yes"
+      }
+    },
+    "official": "Yes.",
+    "explanation": "Without Packer 2 the order finishes at tick 37 instead of 30.",
+    "howToFind": "Type 'variants', then 'compare A-packer2'."
+  },
+  "11": {
+    "parts": {
+      "a": {
+        "kind": "choice",
+        "value": "no"
+      }
+    },
+    "official": "No.",
+    "explanation": "Without Oven 2 the order still finishes at tick 37. Packing sets the pace in version B, so the second oven only shortens the wait in front of the Packer.",
+    "howToFind": "Type 'variants', then 'compare B-oven2'."
+  },
+  "12": {
+    "parts": {
+      "a": {
+        "kind": "machines",
+        "value": [
+          "Oven",
+          "Packer"
+        ]
+      }
+    },
+    "official": "The Oven and the Packer, tied at 84% (32 of 38 ticks) each.",
+    "explanation": "The Mixer worked 16 of 38 ticks.",
+    "howToFind": "Type 'util'."
+  },
+  "13": {
+    "parts": {
+      "a": {
+        "kind": "choice",
+        "value": "no"
+      },
+      "b": {
+        "kind": "choice",
+        "value": "no"
+      },
+      "c": {
+        "kind": "choice",
+        "value": "d"
+      }
+    },
+    "official": "No; no; only adding an oven and a packer together (38 -> 24).",
+    "explanation": "The Oven and the Packer limit the order together: with only one of them doubled, the other still sets the same pace. This is where the bottleneck concept begins.",
+    "howToFind": "Type 'variants', then 'compare S4+oven', 'compare S4+packer', 'compare S4+oven+packer'."
+  }
+}

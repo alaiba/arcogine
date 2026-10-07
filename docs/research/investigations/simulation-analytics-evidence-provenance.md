@@ -2,19 +2,26 @@
 
 > **Status:** CANDIDATE
 > **Risk:** **High** — affects the truthfulness, reconstruction, and possible reproducibility of shared analytical results
-> **Scope:** Supported inputs, evidence completeness, retention/accumulation responsibility, and analytical provenance for any consumer-neutral analytics established by the ownership investigation
+> **Scope:** Analytical inputs, accumulation, and analytical-definition/result provenance that remain after the execution-account boundary is settled
 > **Authority:** Research framing only; no analytics capability, retention promise, identity scheme, or Engine change is selected here.
 
 ## Promotion trigger
 
-Promote this question only when the
-[analytics ownership investigation](simulation-analytics-consumer-boundary.md) establishes a concrete
-consumer-neutral analytics responsibility and identifies at least one analytical result/use whose
-truthfulness depends on a reusable evidence contract.
+Keep this question downstream of both:
+
+1. the [simulation execution account](simulation-execution-account.md) investigation, which decides
+   whether run/reset identity, ordered execution evidence, interval completeness, late join, and
+   retained execution-window semantics are already sufficient or belong to a separate
+   consumer-neutral execution responsibility; and
+2. the [analytics ownership investigation](simulation-analytics-consumer-boundary.md), which must
+   identify a concrete analytical responsibility/use.
+
+Promote only for the analytical evidence/provenance obligations that remain after those boundaries
+are known. Do not duplicate execution-account semantics here merely because analytics consumes them.
 
 ## Research question
 
-> What supported inputs, evidence-window/completeness rules, accumulation responsibility, and analytical-definition provenance must consumer-neutral analytics preserve so its results are truthfully reconstructable and, where a use requires it, reproducible without becoming authoritative runtime history?
+> Given the accepted execution-account boundary, what additional supported inputs, analytical accumulation responsibility, and analytical-definition/result provenance must an admitted analytical responsibility preserve so its results are truthfully reconstructable and, where a use requires it, reproducible without becoming authoritative runtime history?
 
 ## Decision at stake
 

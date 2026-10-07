@@ -11,6 +11,26 @@ This is the first question in a split simulation-analytics research series. Late
 [cross-revision analytical comparability](simulation-analytics-cross-revision-comparability.md).
 Their presence does not predetermine that a reusable analytics capability survives this question.
 
+## Upstream execution-account dependency
+
+Phase 1's classification of the current Engine/runtime boundary remains independently useful.
+
+Before the prospective Phase 2 ownership conclusion is finalized, independently reviewed, or
+reconciled, Arcogine must resolve the [simulation execution account](simulation-execution-account.md)
+question: whether one simulated execution already has a sufficient consumer-neutral semantic boundary
+through the current observation/event contract plus caller capture, or whether identity, ordered
+execution evidence, completeness, live/completed status, and related execution-window semantics need
+a separate cross-consumer owner.
+
+This dependency does **not** predetermine that an execution-account capability exists, that history
+must be retained centrally, or that analytics becomes shared. It prevents Phase 2 from treating
+consumer-local evidence custody as settled before the more fundamental execution substrate has been
+tested.
+
+Existing Phase 2 workspace reports remain research evidence and candidate analysis. They do not
+receive final adversarial review or durable promotion until this dependency is resolved and Phase 2
+has consumed the result.
+
 This remains one registered research question, executed as an explicitly coupled two-phase packet.
 Phase 1 is an independently stoppable evidence checkpoint over the current supported boundary. Phase 2
 consumes that classification and makes the prospective ownership decision. A Phase 1 report does not

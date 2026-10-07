@@ -165,6 +165,22 @@ See `game-inspection-walkthrough-record.md`.
   - Carry this into the adversarial-review handoff as a known scope boundary, and into reconciliation
     as an added guardrail ("finishes sooner" is not "worth it").
 
+### Owner decisions at closure (2026-10-07)
+
+- **Verdict accepted.** The owner accepts the provisional verdict of report revision 3
+  (`4ad00136441fa29e6b462ac5431b60cf2de1e148`) and stops iterating. No bottleneck iteration in this
+  research.
+- **Refined question adopted** for the brief, to be reconciled into
+  `docs/research/investigations/factory-design-game-diagnostic-evidence.md`:
+  > Given recorded runs of non-spatial factory designs, what must a player be able to inspect, and what
+  > may the game claim, so that the player can understand a run, learn the production concepts it
+  > exhibits, and check hypotheses against alternatives, with every claim traceable to supported facts
+  > or a stated definition, and no claim stronger than its evidence?
+- **Owner gate redefinition adopted.** The owner smoke test is run on a presentation prototype
+  (inspection plus missions), not on a statement list.
+- **Next step.** An independent adversarial review, with its handoff in
+  `workspace/research/handoffs/factory-design-game-diagnostic-evidence-adversarial-review.md`.
+
 ## Items to track (not yet in any maintained surface)
 
 1. **"Blocked" / finite buffers.** The owner wants this planned, probably as a research question first.

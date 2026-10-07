@@ -55,6 +55,58 @@
 - **Core activity:** not yet established. The walkthroughs were about understanding one engine
   execution, not designing a factory.
 
+## Owner decisions and direction (2026-10-07, second exchange)
+
+- **Next prototype iteration.**
+  - Present a design in its most minimal form.
+  - Let the player *inspect*, by command, the facts the game can always state truthfully: finish time
+    and progress; what each machine is doing at a moment; who waits for which step; exact waiting and
+    working times; what changed between two designs and the outcome.
+  - Purpose: discover what needs to be shown in each context. The model is pull, not push.
+- **Misleading claims as teaching material.** The falsified claims (busiest = bottleneck, busy-counter
+  utilization, longest wait = problem, per-machine queues for shared work, single-run "surplus",
+  per-change attribution, "because", order irrelevance) are lessons in themselves. They should be
+  preserved and used to generate interesting, challenging, educational scenarios: teachable moments.
+- **Teaching model.** Learning by experiment, not school. Introduce industry jargon in context, and
+  explain every concept, both indirectly and through an in-game reference the player can open on
+  demand.
+- **Static only.** Conclude as much as possible in this research with static, pre-computed scenarios
+  in the `.mjs` prototype (or a new version on the same principles). Hypothesis testing is in scope
+  only as exploring pre-computed alternatives. A live simulation loop or harness is **out of scope**:
+  it is a separate future research question that must be planned.
+- **Concepts.** Build a list of all concepts the existing engine can support, pick one or two first,
+  and see how they land in the static prototype.
+- **Owner challenges to the first report's conclusions:**
+  - **Ownership of the "game must keep" items.** Full event history, simulation-clock labels, stable
+    machine identity and change sets are simulation/runtime or model concerns, not game concepts. The
+    game is a presentation client of the engine.
+  - **Analytics demand.** "No reusable measurement needed" may be avoidance. Utilization, bottleneck and
+    other measurements seem necessary for any meaningful experience, in a game or otherwise.
+- **The busy counter (`busyTicks`) looks like a design smell.** The owner asked for it to be
+  investigated.
+
+### Busy-counter investigation (research agent, from repository history)
+
+- **Origin.**
+  - `Machine.busyTicks` predates the runtime observation contract. `ResourceObservation.busyTicks`
+    was exposed by the runtime-observation PR, but nothing accumulated it, so it always read 0.
+  - The Gate 4 headless-acceptance PR (2026-09-02) added crediting of a finished step's duration at
+    task end. Its stated purpose was to make "the active production bottleneck identifiable from
+    ResourceObservation facts alone, by carried load and by utilization".
+- **Encoded heuristic.** That PR's acceptance test,
+  `HeadlessClosureAcceptanceTest.supportedObservationIdentifiesTheActiveBottleneckWithoutInternalAccess`,
+  encodes the heuristic this investigation falsified: most load, or highest `busyTicks` ÷ elapsed,
+  equals the bottleneck. It holds on that test's two-stage fixture but not in general (G4, G5, G7).
+- **Codified as "utilization".** Engine semantics §10, §10.1 and §10.2 codify "`busyTicks` /
+  utilization" with saturation rules, pinned by `EngineDerivedResultConformanceTest`. The runtime
+  contract lists "utilization facts".
+- **No product consumer.** There is no application. Its only users are those tests. The research
+  substrate deliberately does not use it: `ProcessingOccupancyOracle` documents why it measures
+  occupancy from events instead.
+- **Assessment:** a semantic smell. A completion-credited cumulative sum is exposed and specified under
+  the name "utilization", and justified by a bottleneck heuristic that the corpus falsifies. It is a
+  candidate architecture/consistency reconciliation item, not decided here.
+
 ## Items to track (not yet in any maintained surface)
 
 1. **"Blocked" / finite buffers.** The owner wants this planned, probably as a research question first.

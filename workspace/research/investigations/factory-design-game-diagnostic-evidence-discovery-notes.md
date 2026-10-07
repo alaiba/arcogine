@@ -133,6 +133,18 @@
   moment, not a design property, and no scenario exercises it. It belongs with "machine downtime" in
   the engine-supported-needs-scenarios bucket.
 
+### Bakery missions played (2026-10-07)
+
+See `game-inspection-walkthrough-record.md`.
+
+- The interaction loop works, and in-the-moment learning was observed.
+- 17 of 19 checked parts matched.
+- The misses came from the label format ("idle (no work left)") and from not trying the joint variant.
+- Correct answers can hide invalid heuristics.
+- The interval convention needs explicit durations.
+- New coverage item: **order release patterns and policies**. Multiple orders over time are supported
+  by commands; a release schedule or policy as a design concept is not.
+
 ## Items to track (not yet in any maintained surface)
 
 1. **"Blocked" / finite buffers.** The owner wants this planned, probably as a research question first.

@@ -145,6 +145,26 @@ See `game-inspection-walkthrough-record.md`.
 - New coverage item: **order release patterns and policies**. Multiple orders over time are supported
   by commands; a release schedule or policy as a design concept is not.
 
+### Costs: a scope boundary noted at closure (2026-10-07)
+
+- **Owner question.** The missions optimized time only. Adding machines can buy a few ticks at a capital
+  cost that is not worth paying.
+- **Existing evidence.** The concluded strategy-space reference already prices designs within a budget
+  of 1,062 credits:
+  - S1 → S2 buys 9–10 ticks for 63 credits; S2 → S3 buys 1–2 ticks for 97;
+  - all three designs are on the cost/time frontier, so any fixed scalar score selects one of them.
+- **Ownership.** Prices, budget and evaluation belong to the Challenge layer.
+- **Tracking.** The "scoring, challenge and level structure" and "equipment-value discovery" CANDIDATE
+  questions in the game product programme.
+- **Consequence for this research** (no verdict change):
+  - "Needed" here is time-only: the order would finish later without the machine.
+  - In a cost-aware game, "needed" is not "worth it". The diagnostic surface supplies time effects (and
+    may show cost differences beside them as design facts).
+  - "Worth it" may only be presented as a verdict under a named Challenge evaluation method: the same
+    guardrail pattern as bottleneck.
+  - Carry this into the adversarial-review handoff as a known scope boundary, and into reconciliation
+    as an added guardrail ("finishes sooner" is not "worth it").
+
 ## Items to track (not yet in any maintained surface)
 
 1. **"Blocked" / finite buffers.** The owner wants this planned, probably as a research question first.

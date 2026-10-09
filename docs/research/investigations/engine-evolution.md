@@ -226,6 +226,23 @@ This concern is ready for implementation planning only under an exact-semantics 
 
 Current consumer-neutral bounded advancement is established. Revisit the command/advancement surface only when a concrete consumer proves that event-count/tick semantics, scheduling control, or ownership cannot be expressed through the existing boundary.
 
+**Candidate — separate guarded execution from driver orchestration (not selected).** Today,
+`FactoryRuntime.advanceUntil(targetTime, maxEvents)` loops over `advance()`: the event-count
+bound is ordinary batching, but the inclusive simulated-time bound requires checking the next
+scheduled event *before* executing it. The runtime uses its private `scheduler.peekTime()`; a
+driver calling only public `advance()` cannot enforce the same bound after the event has mutated
+authoritative state. Current concrete calls are in research experiments and conformance tests,
+while interactive pacing is an anticipated consumer use.
+
+If a concrete driver needs different pacing, event/command interleaving, or ownership of the
+batching policy — or a separately admitted session-control API change makes the split material —
+compare retaining `advanceUntil()` with an Engine-owned, time-guarded single-event operation and
+driver-owned looping. Test inclusive time bounds, count limits, same-time ordering, deterministic
+results, and compatibility with existing consumers. Neither alternative implies moving simulated
+time to the requested bound or closing that interval against later commands. Do not remove the
+supported method, expose scheduler internals, or adopt a new execution primitive on this evidence
+alone.
+
 ## Stochastic-semantics boundary
 
 Do not reopen Arcogine's determinism contract merely because a future simulation needs uncertainty.

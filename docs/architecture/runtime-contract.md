@@ -88,9 +88,17 @@ A future outward adapter must not log, notify, or forward an internal event as a
 
 ## Every runtime has explicit run identity and a per-run sequence epoch
 
-A consumer-neutral runtime instance has an opaque `runId` (or equivalently named session-run identity) used for correlation.
+A simulation execution is one runtime epoch identified by the existing opaque `RunId`, from
+runtime establishment onward. An evidence account is evidence about that run, not a separate
+runtime entity, identity, persisted record or authoritative state. Several holders may capture
+evidence about the same run without creating another execution.
 
 A reset that creates a fresh `FactoryRuntime` creates a new run identity and a new sequence epoch, even when it uses the same published model and the same deterministic workload/commands.
+
+Reset leaves the original runtime usable; it does not terminate that run. `QUIESCENT` means no
+currently pending authoritative work, not a terminal state or a prohibition on later commands.
+Runtime establishment and observations of bounded progress are distinct from a controller's
+decision to stop driving or capturing a run.
 
 Run identity is metadata. It must never participate in simulation decisions, scheduler ordering, random behavior, dispatch policy, or any other deterministic outcome. Tests comparing deterministic semantic event streams normalize or inject run identity rather than requiring independently created runs to have equal IDs.
 
@@ -98,11 +106,15 @@ Within one run:
 
 - supported runtime-event `sequence` is strictly monotonic;
 - `sequence` is independent of simulated timestamp;
+- simulated time is non-decreasing along supported sequence;
 - several events may share the same `SimTime` and remain ordered by sequence;
 - the no-event initial observation reports `latestEventSequence = 0`;
 - the first supported event uses sequence `1` and subsequent supported events increment by one.
 
 A sequence is a supported-event position, not an internal scheduler-event count. Internal events that produce no supported runtime event do not consume public sequence values.
+
+The pair `(RunId, sequence)` identifies one supported state-change fact. Neither timestamps nor
+equal model fingerprints permit merging facts across runs or collapsing equal-time ordering.
 
 ## The minimum supported runtime-event envelope is transport neutral
 
@@ -211,9 +223,128 @@ Internal scheduler events remain execution machinery; their availability during 
 create a retained history or replay contract. Supported observations and ordered runtime events
 remain the outward semantic boundary.
 
-If a future consumer requires retained supported events, its ownership, retention, and recovery
-semantics must be defined explicitly. A bounded history is not a durable audit ledger, and recovery
+Current delivery through `drainSupportedEvents()` returns and clears the changes accumulated since
+the last drain. Two independent destructive drainers receive partial deliveries and cannot each
+claim full history. One capture holder may fan out evidence to several consumers. Retention belongs
+to that holder or its delegate for the horizon its use needs; this implies no central service,
+physical persistence obligation or unbounded history owner.
+
+Retained, shared or cursor-addressable delivery requires an explicit contract when a concrete
+independent live consumer, late join needing earlier history, or long-horizon third-party
+verification makes it necessary. A bounded history is not a durable audit ledger, and recovery
 must detect dropped events rather than silently treating an incomplete sequence as complete.
+
+## Captured execution evidence and interval determinacy
+
+These rules define shared evidence meaning, not a production account type, verifier, interval-seal
+operation or history service. They apply to claims based on captured supported state and changes;
+they do not require every analytical definition to consume a full event history. A definition may
+instead justify a sufficient observation or aggregate for its particular claim.
+
+### Basis, coverage and frontier
+
+A holder's coverage statement identifies:
+
+- the run and its published `ModelFingerprint`, plus `ControlledRevisionId` only when
+  authoritatively supplied;
+- a **basis observation** at supported sequence/time `(S0,T0)`, the state from which the claim starts;
+- the supported changes held after that basis;
+- an independently known authoritative **frontier** `(Sf,Tf)`, from a supported observation or
+  genuinely captured supported change;
+- the claimed time/sequence range, its relevant proof boundary, and any known missing ranges.
+
+A basis at sequence zero supports capture from execution establishment. A later basis supports
+bounded reasoning from that state; it cannot silently supply pre-join history or an unknown
+original start time. A fresh observation remains authoritative for current state even when earlier
+history is missing. Folding retained changes produces a derived view, not mutable runtime truth,
+model replay or an Engine ledger.
+
+Supported-change completeness requires sequence continuity from the basis through the **relevant
+proof sequence**. A locally contiguous list alone cannot rule out a lost tail: it needs a separately
+known authoritative cursor at the claimed boundary. State missing middle and tail ranges against
+that cursor; without an adequate basis/frontier, report completeness as unknown. Completeness is
+per claim or prefix. A gap beyond an already established proof boundary does not revoke that
+earlier interval, although it may prevent a broader claim.
+
+Complete supported state-change coverage does not imply complete command/outcome history,
+fault-free success, analytical sufficiency or deterministic re-execution. Rejected requests,
+accepted no-ops and faults need controller-held provenance where the claim requires it; absence
+from the change stream does not prove their absence. Reproduction requires the ordered command
+script **including advancement interleavings and budgets**, the model and the actual producing
+definition, not just supported changes. Run identity and model fingerprint do not identify that
+definition; exact producing-definition provenance remains a separate custody/support obligation
+when required by a concrete use.
+
+### Finality of a half-open interval
+
+For a claim about one run over `[a,b)`, require a valid state basis at or before `a`, gap-free held
+changes through the exact proof sequence, and a truthful basis that no later supported change with
+time `< b` can alter that history. An open interval is provisional; unknown or insufficient evidence
+requires qualification or refusal. There are two classes of finality proof:
+
+1. **Producer-supported temporal evidence.** The first genuinely captured supported change at
+   time `>= b` witnesses finality by monotone supported time/order. The required history prefix ends
+   immediately before that change: if its sequence is `K`, coverage is through `K-1`, with the
+   witness itself retained. Alternatively, a supported observation at time `>= b` supplies a proof
+   cursor through which the required prefix is captured without gaps. Changes exactly at `b` are
+   excluded from `[a,b)`; other changes at `b` may remain pending, and sequence still orders state
+   at `b`. Requested deadlines and unobserved internal scheduler time are not supported witnesses.
+2. **Attributable controller closure.** An idle tail may leave supported time below `b`. The
+   exclusive driver can then provide a scoped commitment against later effective input inside
+   the interval, together with demonstrated successful exhaustion of relevant pending work,
+   a post-advancement observation bound to `(RunId,S*,T*)`, and complete held changes through
+   `S*`. The driver must know command and advancement outcomes since the basis; a successor's clean
+   call does not erase an earlier fault. Confining the runtime to a closed script can support the
+   commitment. The attestor, excluded input/effect scope, outcome qualifications and trust assumption
+   must accompany the evidence and survive handover.
+
+`advanceUntil(b,maxEvents)` limits which events may be processed; it does not move supported time
+to the requested deadline or seal the interval. Consuming a count budget does not prove successful
+exhaustion. Under exclusive control, repeated calls with a positive budget until a successful call
+returns fewer events than that budget can demonstrate exhaustion through the inclusive target;
+an exactly consumed budget requires another call, and a faulting call is not clean completion.
+Only supported changes advance supported observation time. `QUIESCENT` alone does not exclude
+future input, and an internal marker/no-op is not a closure witness. Command-time and stepping
+rules remain owned by [Engine session semantics](engine-semantics.md#12-session-and-control-semantics).
+
+A controller commitment is an attributable assertion, not a producer-verifiable fact. A frozen
+claim relying on it remains final under recorded trust. Delivered contradictory changes can expose
+a broken commitment. A violated no-further-requests promise can leave no supported evidence at all:
+rejected requests and accepted no-ops are absent from that stream, and a frozen capture receives
+no later effects. An inclusive promise through `b` is stronger than needed
+for `[a,b)`; effective changes exactly at `b` need not invalidate that earlier interval.
+
+Handover preserves run/model binding, the basis, required changes, proof frontier and any controller
+attestation with its provenance and trust scope. A later observation alone cannot recover earlier
+history; a raw event list stripped of its basis or closure cannot inherit the original guarantee.
+
+For example, after a five-tick job completes, an honest driver may exhaust work through 100 and
+stop issuing input while a holder still has only the time-zero dispatch and its stale cursor.
+That holder cannot claim 100 active-job-ticks: it must capture the completion through the driver's
+post-advancement cursor, yielding five ticks. Conversely, a proved `[0,5)` remains valid after a
+later capture gap at time 10. Advancing an idle run toward 100 with its last supported change at
+13 supplies no producer witness for `[0,100)` by itself.
+
+### Responsibilities and limits
+
+The runtime contract owns shared run, sequence, basis, coverage and interval-finality meaning.
+The controller owns external input admission/issuance and advancement protocol under Engine command
+semantics, plus its attributable promises and outcome provenance. The evidence holder owns capture,
+retention and coverage qualification. An analytical-definition owner specifies method-specific
+sufficiency and computation; definition ownership does not imply physical custody. These roles may
+share a component and do not require one class or module each.
+
+Supported waiting-state residence, processing residence and future transfer residence remain
+distinct. Residence between waiting entry and dispatch is not automatically availability-conditioned
+readiness, starvation or causal attribution. Utilization, occupancy populations/denominators and
+other interpretations require an explicit named analytical method. Governance owns evidence use,
+historical attribution and conformance, not scheduling or capture. [Operational
+continuation](operational-continuity.md) has its own identity, loss and closure boundaries.
+
+No new closure API is justified for present confined/static consumers. Reconsider stronger producer
+evidence, command-time support, shared delivery or handover guarantees when concrete requirements
+need them; the [execution-evidence research state](../research/investigations/simulation-execution-account.md#reopening-triggers)
+records those triggers. This is a bounded present choice, not a universal exclusion of such APIs.
 
 ## Transport mechanisms are adapters, not the event contract
 

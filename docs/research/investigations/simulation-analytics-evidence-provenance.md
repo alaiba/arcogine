@@ -7,17 +7,17 @@
 
 ## Promotion trigger
 
-Keep this question downstream of both:
+The concluded [simulation execution account](simulation-execution-account.md) question supplies
+run/reset, ordered evidence, basis/frontier, claim-scoped coverage and qualified interval-finality
+meaning through the [runtime contract](../../architecture/runtime-contract.md#captured-execution-evidence-and-interval-determinacy).
+These are upstream inputs, not analytical choices. Their reconciliation does not make this question
+READY.
 
-1. the [simulation execution account](simulation-execution-account.md) investigation, which decides
-   whether run/reset identity, ordered execution evidence, interval completeness, late join, and
-   retained execution-window semantics are already sufficient or belong to a separate
-   consumer-neutral execution responsibility; and
-2. the [analytics ownership investigation](simulation-analytics-consumer-boundary.md), which must
-   identify a concrete analytical responsibility/use.
-
-Promote only for the analytical evidence/provenance obligations that remain after those boundaries
-are known. Do not duplicate execution-account semantics here merely because analytics consumes them.
+Promote only after the [analytics ownership investigation](simulation-analytics-consumer-boundary.md)
+identifies a concrete analytical responsibility/use that needs additional supported inputs,
+method-specific sufficiency, accumulation, definition identity, result provenance or retention.
+Physical capture need not belong to the definition owner. Reuse the shared coverage and controller
+trust vocabulary rather than defining a second execution history contract.
 
 ## Research question
 
@@ -114,7 +114,7 @@ At minimum:
 Conclude only with:
 
 - a supported analytics input set for the admitted analytical uses;
-- explicit complete/partial evidence-window semantics;
+- method-specific sufficiency/refusal using the runtime contract's coverage and finality semantics;
 - retention versus accumulator ownership and failure behavior;
 - reconstruction and, where actually required, reproduction obligations;
 - analytical-definition and producing-basis provenance requirements;

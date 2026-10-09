@@ -82,12 +82,14 @@ public class FactoryRuntime {
      * whatever the internal scheduler's cursor currently says
      * (docs/architecture/runtime-contract.md).
      *
-     * <p>{@link Scheduler#nextEvent()} advances its cursor for every event it hands out, including
-     * internal markers {@link FactoryHandler#handleEvent} ignores. Reading it directly would let a
-     * no-op marker move observed {@code currentTime} -- and the time-derived throughput -- while
-     * {@link RuntimeObservationMetadata#latestEventSequence()} stood still, so two observations at
-     * the same sequence {@code S} could disagree and break "fresh observation at {@code S} +
-     * supported events after {@code S} = current consumer view".
+     * <p>Deriving it from emission keeps every observation fact coherent with {@link
+     * RuntimeObservationMetadata#latestEventSequence()}: two observations at the same sequence
+     * {@code S} cannot disagree, so "fresh observation at {@code S} + supported events after {@code
+     * S} = current consumer view" has one answer. Because this session schedules only step
+     * completions, each published at its own time, the scheduler's cursor -- the time a command
+     * applies -- equals this value after every call, including one that faults
+     * (docs/architecture/engine-semantics.md §1.2); the internal cursor itself is still not a
+     * supported fact.
      */
     private SimTime observedTime = SimTime.ZERO;
 
@@ -182,8 +184,8 @@ public class FactoryRuntime {
      * explicit {@link EventPayload.MachineAvailabilityChange} event, and returns a
      * definite {@link CommandResult}. Taking a machine offline never affects work already active on
      * it; bringing an eligible machine back online can immediately pick up work that was waiting
-     * because no other eligible machine was available -- any such immediately-dispatched {@code
-     * TaskStart}/{@code TaskEnd} events are included in {@link CommandResult#scheduledEvents()}.
+     * because no other eligible machine was available -- the {@code TaskEnd} step completion each
+     * such immediate dispatch schedules is included in {@link CommandResult#scheduledEvents()}.
      *
      * <p>Both rejection paths this method can produce ({@link SimError.UnknownId} for an unknown
      * {@code machineId}; {@link SimError.InvalidStateTransition} for taking a machine with active
@@ -433,79 +435,81 @@ public class FactoryRuntime {
         return factory.pendingWorkView();
     }
 
-    /** Processes exactly one pending event, if any, and returns it. */
+    /**
+     * Processes exactly one pending event, if any, and returns it.
+     *
+     * <p>Every event this session's scheduler holds is a step completion -- {@link
+     * RecordingScheduler} admits nothing else (docs/architecture/engine-semantics.md §4) -- so a
+     * processed event is always an authoritative transition published at its own time, and the time
+     * the next command applies never runs ahead of {@link #observe()}'s current time.
+     */
     public Optional<Event> advance() throws SimError {
         Optional<Event> next = scheduler.nextEvent();
         if (next.isPresent()) {
             Event event = next.get();
-            List<Event> triggered = new ArrayList<>();
-            // Placement is snapshotted before the mutation, so the dispatch cascade a TaskEnd can
-            // trigger (next-step placement plus whatever the freed machine picks up from its queue
-            // or the multi-eligible backlog) is derivable by diffing authoritative state
-            // afterwards.
-            Map<JobId, JobPlacement> activeBefore =
-                    event.payload() instanceof EventPayload.TaskEnd ? activePlacements() : Map.of();
-            scheduler.startCapturing(triggered);
+            EventPayload.TaskEnd taskEnd = (EventPayload.TaskEnd) event.payload();
+            // Placement and order completion are snapshotted before the mutation, so the dispatch
+            // cascade a TaskEnd can trigger (next-step placement plus whatever the freed machine
+            // picks up from its queue or the multi-eligible backlog) and whether it completed the
+            // order are derivable by comparing authoritative state afterwards.
+            Map<JobId, JobPlacement> activeBefore = activePlacements();
+            OrderId orderId = factory.job(taskEnd.jobId()).orderId();
+            boolean orderCompleteBefore = factory.orderExecution(orderId).complete();
             try {
                 factory.handleEvent(event, scheduler);
             } finally {
-                scheduler.stopCapturing();
                 // Post-authoritative derivation happens even on the exception path: whatever
                 // authoritative state change already occurred before a fault (e.g. a job
-                // completing its step before a later dispatch cascade fails) must still be
-                // reported -- see requirement 1 (post-authoritative publication) and the
-                // faultReportsOnlyAuthoritativeChangesThatActuallyOccurred acceptance evidence.
-                recordSupportedEventsFor(event, triggered, activeBefore);
+                // completing its step, and possibly its order, before a later dispatch cascade
+                // fails) must still be reported -- see requirement 1 (post-authoritative
+                // publication) and the faultReportsOnlyAuthoritativeChangesThatActuallyOccurred
+                // acceptance evidence.
+                recordSupportedEventsFor(event.time(), taskEnd, orderId, orderCompleteBefore, activeBefore);
             }
         }
         return next;
     }
 
     /**
-     * Derives and appends the supported runtime event(s) implied by having just processed {@code
-     * trigger}, if any -- never before {@link FactoryHandler#handleEvent} has returned
-     * (successfully
-     * or not) for it, since a supported event must never claim a transition occurred before the
-     * authoritative state actually reflects it. {@code triggeredInternalEvents} is whatever the
-     * internal scheduler additionally scheduled while processing {@code trigger}, inspected only
-     * for
-     * evidence of a further authoritative fact (order completion) that already happened -- never
-     * itself re-exposed as the supported payload. {@code activeBefore} is the pre-mutation
-     * machine-assignment snapshot {@link #advance()} took, diffed here so every placement change
-     * the
-     * transition authoritatively caused is reported too (docs/architecture/runtime-contract.md).
+     * Derives and appends the supported runtime events implied by having just processed the step
+     * completion {@code taskEnd} at {@code time} -- never before {@link FactoryHandler#handleEvent}
+     * has returned (successfully or not) for it, since a supported event must never claim a
+     * transition occurred before the authoritative state actually reflects it.
+     *
+     * <p>{@code ORDER_COMPLETED} is emitted exactly when {@code orderId}'s execution aggregate went
+     * from incomplete ({@code orderCompleteBefore} is false) to complete during that processing --
+     * the authoritative order-completion transition itself, so it appears once per genuine final
+     * child completion, including when a later dispatch cascade in the same step faulted, and never
+     * for a partial child completion or a transition that did not happen. {@code activeBefore} is
+     * the pre-mutation machine-assignment snapshot {@link #advance()} took, diffed here so every
+     * placement change the transition authoritatively caused is reported too
+     * (docs/architecture/runtime-contract.md).
      */
     private void recordSupportedEventsFor(
-            Event trigger, List<Event> triggeredInternalEvents, Map<JobId, JobPlacement> activeBefore) {
-        if (!(trigger.payload() instanceof EventPayload.TaskEnd taskEnd)) {
-            // Internal scheduler machinery this runtime never itself schedules through its own
-            // supported API surface (OrderCreation/MachineAvailabilityChange arrive only via
-            // submitWorkload/setMachineAvailability directly, never via the queue) and the
-            // TaskStart timing marker, which never itself changes authoritative state.
-            return;
-        }
+            SimTime time,
+            EventPayload.TaskEnd taskEnd,
+            OrderId orderId,
+            boolean orderCompleteBefore,
+            Map<JobId, JobPlacement> activeBefore) {
         JobView job = factory.job(taskEnd.jobId());
         emit(
                 RuntimeEventType.JOB_STEP_COMPLETED,
-                trigger.time(),
+                time,
                 new RuntimeEventPayload.JobStepCompleted(
-                        taskEnd.jobId(), job.orderId(), taskEnd.machineId(), taskEnd.stepIndex(), job.isComplete()),
-                List.of(new AffectedEntityRef.JobRef(taskEnd.jobId()), new AffectedEntityRef.OrderRef(job.orderId())));
+                        taskEnd.jobId(), orderId, taskEnd.machineId(), taskEnd.stepIndex(), job.isComplete()),
+                List.of(new AffectedEntityRef.JobRef(taskEnd.jobId()), new AffectedEntityRef.OrderRef(orderId)));
 
-        for (Event internal : triggeredInternalEvents) {
-            if (internal.payload() instanceof EventPayload.OrderCompleted oc) {
-                emit(
-                        RuntimeEventType.ORDER_COMPLETED,
-                        trigger.time(),
-                        new RuntimeEventPayload.OrderCompleted(
-                                oc.orderId(), oc.jobId(), oc.productId(), oc.quantity(), oc.unitPrice()),
-                        List.of(
-                                new AffectedEntityRef.OrderRef(oc.orderId()),
-                                new AffectedEntityRef.JobRef(oc.jobId())));
-            }
+        if (!orderCompleteBefore && factory.orderExecution(orderId).complete()) {
+            Order order = factory.order(orderId);
+            emit(
+                    RuntimeEventType.ORDER_COMPLETED,
+                    time,
+                    new RuntimeEventPayload.OrderCompleted(
+                            orderId, taskEnd.jobId(), order.productId(), order.quantity(), order.unitPrice()),
+                    List.of(new AffectedEntityRef.OrderRef(orderId), new AffectedEntityRef.JobRef(taskEnd.jobId())));
         }
 
-        emitPlacementChanges(activeBefore, taskEnd.jobId(), trigger.time());
+        emitPlacementChanges(activeBefore, taskEnd.jobId(), time);
     }
 
     /**
@@ -560,7 +564,9 @@ public class FactoryRuntime {
      * reorder, skip, merge, or otherwise reinterpret events -- so a caller can freely mix the two
      * without affecting determinism; {@link SessionControlAcceptanceTest} proves the two
      * approaches converge to identical ordered event streams and identical terminal state for the
-     * same model/workload.
+     * same model/workload. {@code maxEvents} counts processed scheduler events, exactly as {@link
+     * #advance()} processes them; since every event this session schedules is an authoritative step
+     * completion, a budget is never spent on an event that changes nothing.
      *
      * @param targetTime the simulated time not to advance past; an event scheduled after this time
      *     is left pending rather than processed
@@ -631,9 +637,8 @@ public class FactoryRuntime {
      * <p>Every fact reported here is coherent with one supported boundary
      * (docs/architecture/runtime-contract.md):
      * metadata time and the time-derived throughput come from {@link #observedTime}, and {@link
-     * RuntimeRunState} from pending <em>authoritative</em> work, so processing an internal no-op
-     * marker cannot produce a second, different observation at the same {@code
-     * latestEventSequence}.
+     * RuntimeRunState} from pending <em>authoritative</em> work -- every queued event being a step
+     * completion -- so no two observations at the same {@code latestEventSequence} disagree.
      */
     public RuntimeObservation observe() {
         List<ResourceObservation> resources = machinesView().stream()

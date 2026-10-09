@@ -5,8 +5,9 @@ package com.arcogine.factory.process;
  * (the supported runtime-event contract). This is deliberately narrower than the internal
  * scheduler's {@code EventPayload} variants: it
  * represents meaningful authoritative state change a consumer-neutral caller can act on, not
- * scheduler implementation detail (e.g. the internal {@code TaskStart} marker event, which never
- * itself changes authoritative state, has no supported counterpart).
+ * scheduler implementation detail (e.g. one internal {@code TaskEnd} is reported as {@link
+ * #JOB_STEP_COMPLETED} plus whatever order completion and placement changes it authoritatively
+ * caused, never as the scheduler event itself).
  */
 public enum RuntimeEventType {
     /** A submitted order was accepted and its execution job(s) created. */

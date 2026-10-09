@@ -2,6 +2,7 @@ package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -21,6 +22,7 @@ import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -380,71 +382,52 @@ class HeadlessClosureAcceptanceTest {
     }
 
     /**
-     * The internal scheduler also carries markers {@code
-     * FactoryHandler} ignores -- the {@code TaskStart} paired with every dispatched {@code TaskEnd},
-     * and the {@code OrderCompleted} a terminal {@code TaskEnd} schedules purely so other internal
-     * handlers can observe completion. Processing one is authoritatively a no-op and emits no
-     * supported event, so it must not produce a second, different observation at the same {@code
-     * latestEventSequence}: otherwise "fresh observation at {@code S} + supported events after
-     * {@code S} = current consumer view" would have two contradictory answers at the same {@code
-     * S}.
+     * A Factory session schedules only step completions (docs/architecture/engine-semantics.md
+     * section 4), so no processed internal event can leave the supported view unchanged: every
+     * {@code advance()} that processes anything advances the supported stream at that event's own
+     * time, and the observation it leaves behind is a new supported boundary. The order's completion
+     * is published by the final step completion itself rather than by a further queued event, so the
+     * drained runtime is quiescent at exactly the sequence of its last supported event -- never
+     * {@code ACTIVE} and then {@code QUIESCENT} at the same {@code latestEventSequence}.
      */
     @Test
-    void processingANoOpInternalMarkerLeavesTheSupportedObservationUnchanged() throws SimError {
+    void everyProcessedInternalEventIsAPublishedStepCompletion() throws SimError {
         FactoryRuntime runtime = FactoryRuntime.forModel(twoInterchangeableMachinesModel());
-        runtime.submitWorkload(new ProductId(1), 3, UNIT_PRICE).orElseThrow();
+        OrderId orderId = runtime.submitWorkload(new ProductId(1), 3, UNIT_PRICE).orElseThrow();
         runtime.drainSupportedEvents();
 
-        int taskStartMarkers = 0;
-        int orderCompletedMarkers = 0;
+        // Hand-derived: units 1 and 2 start on Cell A and Cell B and finish at 5; unit 1's
+        // completion frees Cell A for the waiting unit 3, which finishes at 10 and completes the order.
+        List<Long> processedTimes = new ArrayList<>();
+        List<RuntimeEventEnvelope> delta = List.of();
+        long cursor = runtime.observe().metadata().latestEventSequence();
         Optional<Event> processed;
-        while ((processed = advanceObservingMarkers(runtime)).isPresent()) {
-            EventPayload payload = processed.get().payload();
-            if (payload instanceof EventPayload.TaskStart) {
-                taskStartMarkers++;
-            } else if (payload instanceof EventPayload.OrderCompleted) {
-                orderCompletedMarkers++;
-            }
+        while ((processed = runtime.advance()).isPresent()) {
+            Event event = processed.get();
+            assertInstanceOf(EventPayload.TaskEnd.class, event.payload(), "only step completions are scheduled");
+            delta = runtime.drainSupportedEvents();
+            assertEquals(RuntimeEventType.JOB_STEP_COMPLETED, delta.getFirst().eventType());
+            assertEquals(cursor + 1, delta.getFirst().sequence(), "the processed event published the next change");
+            assertTrue(delta.stream().allMatch(e -> e.simulationTime().equals(event.time())));
+            RuntimeObservation after = runtime.observe();
+            assertEquals(event.time(), after.metadata().currentTime(), "observed time moves to the processed event");
+            cursor = delta.getLast().sequence();
+            assertEquals(cursor, after.metadata().latestEventSequence());
+            processedTimes.add(event.time().value());
         }
+        assertEquals(List.of(5L, 5L, 10L), processedTimes, "one processed event per unit's single step, nothing else");
+        assertEquals(
+                List.of(RuntimeEventType.JOB_STEP_COMPLETED, RuntimeEventType.ORDER_COMPLETED),
+                delta.stream().map(RuntimeEventEnvelope::eventType).toList(),
+                "the final step completion itself publishes the order's completion");
+        assertEquals(orderId, ((RuntimeEventPayload.OrderCompleted) delta.getLast().payload()).orderId());
 
-        assertTrue(taskStartMarkers > 0, "the dispatch path must have produced TaskStart markers");
-        assertTrue(
-                orderCompletedMarkers > 0,
-                "the terminal TaskEnd must have scheduled an internal OrderCompleted marker");
-
-        // The run genuinely drained, and the drained runtime reports quiescence -- not ACTIVE
-        // merely because internal bookkeeping was still queued behind the last supported event.
         RuntimeObservation drained = runtime.observe();
         assertEquals(RuntimeRunState.QUIESCENT, drained.metadata().runState());
+        assertEquals(cursor, drained.metadata().latestEventSequence());
         assertTrue(drained.orders().stream().allMatch(OrderObservation::complete));
-    }
-
-    /**
-     * Advances one event, asserting that if it was a no-op internal marker the supported view did
-     * not move at all: no supported event, and an observation identical in every fact -- {@code
-     * latestEventSequence}, {@code currentTime}, {@code runState}, resources, orders, jobs, pending
-     * work and performance alike.
-     */
-    private static Optional<Event> advanceObservingMarkers(FactoryRuntime runtime) throws SimError {
-        RuntimeObservation before = runtime.observe();
-        Optional<Event> processed = runtime.advance();
-        List<RuntimeEventEnvelope> delta = runtime.drainSupportedEvents();
-        if (processed.isEmpty()) {
-            return processed;
-        }
-        boolean marker = !(processed.get().payload() instanceof EventPayload.TaskEnd)
-                && !(processed.get().payload() instanceof EventPayload.OrderCreation)
-                && !(processed.get().payload() instanceof EventPayload.MachineAvailabilityChange);
-        if (marker) {
-            assertTrue(delta.isEmpty(), "a no-op marker must not emit supported events: " + delta);
-            assertEquals(
-                    before,
-                    runtime.observe(),
-                    "processing " + processed.get().payload() + " changed the supported observation");
-        } else {
-            assertFalse(delta.isEmpty(), "an authoritative transition must advance the supported stream");
-        }
-        return processed;
+        assertTrue(runtime.advance().isEmpty());
+        assertEquals(drained, runtime.observe(), "a call that processes nothing changes nothing");
     }
 
     @Test

@@ -3,8 +3,6 @@ package com.arcogine.factory.process;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.arcogine.core.event.Event;
-import com.arcogine.core.event.EventPayload;
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.model.FactoryModelPublisher;
 import com.arcogine.factory.model.FactoryModelVersion;
@@ -53,15 +51,15 @@ class IntraOrderExecutionAcceptanceTest {
         assertEquals(Set.of(new MachineId(1), new MachineId(2)), runtime.jobsView().filter(job -> job.currentMachine() != null).map(job -> job.currentMachine()).collect(java.util.stream.Collectors.toSet()));
 
         List<Long> progress = new ArrayList<>();
-        List<EventPayload.OrderCompleted> completions = new ArrayList<>();
+        List<RuntimeEventPayload.OrderCompleted> completions = new ArrayList<>();
         while (runtime.advance().isPresent()) {
             progress.add(runtime.orderExecution(orderId).completedQuantity());
+            for (RuntimeEventEnvelope published : runtime.drainSupportedEvents()) {
+                if (published.payload() instanceof RuntimeEventPayload.OrderCompleted completion) completions.add(completion);
+            }
         }
-        // Drain produces no duplicate business completion; capture it from deterministic replay.
-        FactoryRuntime replay = runtime.reset();
-        replay.submitWorkload(new ProductId(1), 20, 12.5).orElseThrow();
-        Event event;
-        while ((event = replay.advance().orElse(null)) != null) if (event.payload() instanceof EventPayload.OrderCompleted completion) completions.add(completion);
+        // One step completion per child per step, and nothing else: 20 children x 3 steps.
+        assertEquals(60, progress.size());
 
         assertTrue(progress.contains(20L));
         assertEquals(20, runtime.orderExecution(orderId).completedQuantity());

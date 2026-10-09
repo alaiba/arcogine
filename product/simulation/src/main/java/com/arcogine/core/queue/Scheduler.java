@@ -11,9 +11,8 @@ public class Scheduler {
 
     /**
      * Events at the same SimTime are ordered by insertion sequence (FIFO) so that same-tick
-     * ordering is deterministic rather than left to PriorityQueue's unspecified tie-breaking.
-     * This preserves the existing implicit expectation that, e.g., a TaskStart scheduled before
-     * a TaskEnd at the same tick is processed first.
+     * ordering is deterministic rather than left to PriorityQueue's unspecified tie-breaking:
+     * e.g. of two TaskEnd events due at the same tick, the one scheduled first is processed first.
      */
     private record Entry(Event event, long sequence) {}
 

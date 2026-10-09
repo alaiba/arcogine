@@ -203,9 +203,8 @@ public class FactoryHandler implements EventHandler {
             Job j = jobs.get(jobId);
             j.start(machineId);
 
-            SimTime endTime = currentTime.plus(step.duration());
-            scheduler.schedule(Event.of(endTime, new EventPayload.TaskStart(jobId, machineId, routingIndex)));
-            scheduler.schedule(Event.of(endTime, new EventPayload.TaskEnd(jobId, machineId, routingIndex)));
+            scheduler.schedule(Event.of(
+                    currentTime.plus(step.duration()), new EventPayload.TaskEnd(jobId, machineId, routingIndex)));
         });
     }
 
@@ -240,11 +239,9 @@ public class FactoryHandler implements EventHandler {
                 Job job = jobs.get(candidate.jobId());
                 job.start(machineId);
 
-                SimTime endTime = currentTime.plus(candidate.duration());
                 scheduler.schedule(Event.of(
-                        endTime, new EventPayload.TaskStart(candidate.jobId(), machineId, candidate.routingIndex())));
-                scheduler.schedule(Event.of(
-                        endTime, new EventPayload.TaskEnd(candidate.jobId(), machineId, candidate.routingIndex())));
+                        currentTime.plus(candidate.duration()),
+                        new EventPayload.TaskEnd(candidate.jobId(), machineId, candidate.routingIndex())));
 
                 dispatchedOne = true;
                 break;
@@ -359,6 +356,10 @@ public class FactoryHandler implements EventHandler {
 
         if (job.isComplete()) {
             Order order = orders.get(job.orderId());
+            // The final child completion is itself the order-completion transition. It schedules no
+            // follow-up event: a queued marker would change nothing yet still consume bounded
+            // advancement (docs/architecture/engine-semantics.md section 4), so supported order
+            // completion is derived from this transition by FactoryRuntime instead.
             if (orders.completeChild(order.id(), currentTime)) {
                 completedSalesValue += order.orderValue();
                 completedSales += 1;
@@ -368,7 +369,6 @@ public class FactoryHandler implements EventHandler {
                 } else {
                     completedLeadTimeTicks += leadTime;
                 }
-                scheduler.schedule(Event.of(currentTime, new EventPayload.OrderCompleted(order.id(), job.id(), order.productId(), order.quantity(), order.unitPrice())));
             }
         } else {
             int nextStepIndex = job.currentStep();

@@ -35,24 +35,30 @@ class ExecutionAccountAdversarialTest {
         account.observeFrontier(runtime.observe());
     }
 
+    private static CommandResult<?> availability(FactoryRuntime runtime, MachineId machine, boolean online) {
+        CommandResult<?> result = runtime.setMachineAvailability(machine, online);
+        return result;
+    }
+
     @Test
     void budgetExhaustionAndNoFutureCommandsDoNotEstablishClosure() {
         FactoryRuntime runtime = runtime();
         CapturedAccount account = CapturedAccount.from(runtime.observe());
-        submit(runtime, 1);
+        submit(runtime, 2);
+        runtime.advanceUntil(SimTime.of(9), Long.MAX_VALUE);
         assertEquals(1, runtime.advanceUntil(SimTime.of(100), 1).size());
         collect(runtime, account);
         assertEquals(RuntimeRunState.ACTIVE, runtime.observe().metadata().runState());
-        assertEquals(0, account.frontierTime());
+        assertEquals(5, account.frontierTime());
         assertFalse(account.intervalDeterminacy(0, 100).determined());
         account.declareClosedThrough(100); // Deliberately false: scheduled completion is still pending.
         assertTrue(account.intervalDeterminacy(0, 100).determined());
         assertEquals(100, IntervalReadings.activeJobTicks(account, MACHINE, 0, 100));
         runtime.advanceUntil(SimTime.of(100), Long.MAX_VALUE); // No new command was needed.
         List<RuntimeEventEnvelope> completion = runtime.drainSupportedEvents();
-        assertEquals(5, completion.getFirst().simulationTime().value());
+        assertEquals(10, completion.getFirst().simulationTime().value());
         assertThrows(IllegalStateException.class, () -> account.retain(completion));
-        assertEquals(5, runtime.observe().resources().getFirst().busyTicks());
+        assertEquals(10, runtime.observe().resources().getFirst().busyTicks());
     }
 
     @Test
@@ -80,7 +86,7 @@ class ExecutionAccountAdversarialTest {
         FactoryRuntime runtime = runtime();
         CapturedAccount account = CapturedAccount.from(runtime.observe());
         account.declareClosedThrough(100);
-        assertInstanceOf(CommandResult.Accepted.class, runtime.setMachineAvailability(MACHINE, true));
+        assertInstanceOf(CommandResult.Accepted.class, availability(runtime, MACHINE, true));
         assertTrue(runtime.drainSupportedEvents().isEmpty());
         assertEquals(account.basis(), runtime.observe());
         collect(runtime, account);
@@ -137,7 +143,7 @@ class ExecutionAccountAdversarialTest {
         FactoryRuntime runtime = runtime();
         CapturedAccount account = CapturedAccount.from(runtime.observe());
         submit(runtime, 1);
-        runtime.advanceUntil(SimTime.of(5), 2); // Start marker and authoritative completion.
+        runtime.advanceUntil(SimTime.of(5), 1); // Authoritative completion, then a marker remains.
         collect(runtime, account);
         assertEquals(RuntimeRunState.QUIESCENT, runtime.observe().metadata().runState());
         assertTrue(account.intervalDeterminacy(0, 5).determined());
@@ -156,12 +162,37 @@ class ExecutionAccountAdversarialTest {
         collect(runtime, account);
         assertTrue(account.intervalDeterminacy(0, 5).determined());
         assertEquals(5, IntervalReadings.activeJobTicks(account, MACHINE, 0, 5));
+        CapturedAccount frozen = CapturedAccount.from(account.basis());
+        frozen.retain(account.retainedEvents());
+        frozen.observeFrontier(account.frontier());
         runtime.advanceUntil(SimTime.of(100), Long.MAX_VALUE);
         runtime.drainSupportedEvents(); // Deliberately lose only changes at time 10.
         account.observeFrontier(runtime.observe());
         assertFalse(account.intervalDeterminacy(0, 5).determined());
         assertTrue(account.retainedEvents().stream().allMatch(event -> event.simulationTime().value() <= 5));
+        assertEquals(5, IntervalReadings.activeJobTicks(frozen, MACHINE, 0, 5));
+        assertFalse(CapturedAccount.from(runtime.observe()).intervalDeterminacy(0, 5).determined());
         // Earlier evidence is unchanged: blanket gap refusal is safe but not minimum/monotone.
+    }
+
+    @Test
+    void serializedControllerCanCloseWithExhaustionEvidenceAndFinalCaptureWithoutNewApi() {
+        FactoryRuntime runtime = runtime();
+        CapturedAccount account = CapturedAccount.from(runtime.observe());
+        submit(runtime, 2);
+        // The exclusive driver stops issuing commands, then proves the time bound was reached
+        // by the loop's stopping condition, not by assuming a budget-exhausted call drained work.
+        int processed;
+        do {
+            processed = runtime.advanceUntil(SimTime.of(100), 1).size();
+        } while (processed == 1);
+        collect(runtime, account); // Drain, then observe while no caller can mutate the runtime.
+        assertEquals(RuntimeRunState.QUIESCENT, runtime.observe().metadata().runState());
+        assertEquals(10, account.frontierTime());
+        assertTrue(account.missing().isEmpty());
+        assertFalse(account.intervalDeterminacy(0, 100).determined());
+        account.declareClosedThrough(100);
+        assertEquals(10, IntervalReadings.activeJobTicks(account, MACHINE, 0, 100));
     }
 
     @Test
@@ -172,16 +203,16 @@ class ExecutionAccountAdversarialTest {
                         LinearRoutingFamily.Resource.of("Oven", 2, "BAKE")));
         FactoryRuntime runtime = FactoryRuntime.forModel(FactoryModelPublisher.publish(family.model()));
         MachineId oven = new MachineId(2);
-        runtime.setMachineAvailability(oven, false).orElseThrow();
+        availability(runtime, oven, false).orElseThrow();
         submit(runtime, 2);
         runtime.advanceUntil(SimTime.of(6), Long.MAX_VALUE);
         var firstJob = runtime.observe().jobs().getFirst().jobId();
         assertTrue(runtime.observe().resources().get(1).activeJobIds().isEmpty());
-        runtime.setMachineAvailability(oven, true).orElseThrow();
+        availability(runtime, oven, true).orElseThrow();
         List<RuntimeEventEnvelope> events = runtime.drainSupportedEvents();
         long waitingAt = events.stream().filter(event -> event.eventType() == RuntimeEventType.JOB_WAITING)
                 .filter(event -> event.payload() instanceof RuntimeEventPayload.JobWaiting w
-                        && w.jobId().equals(firstJob) && w.stepIndex() == 1)
+                        && w.jobId().equals(firstJob) && w.eligibleMachines().contains(oven))
                 .findFirst().orElseThrow().simulationTime().value();
         long dispatchedAt = events.stream()
                 .filter(event -> event.payload() instanceof RuntimeEventPayload.JobDispatched d

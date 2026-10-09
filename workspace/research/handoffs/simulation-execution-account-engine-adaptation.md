@@ -3,7 +3,7 @@
 ## Assignment: a bounded, decision-quality Engine-alternative comparison
 
 Operate as an Arcogine **Researcher in standard-investigation mode**, in a fresh session, under
-\`AGENTS.md\`, \`.github/agents/researcher.agent.md\`, and \`docs/development/researching.md\`.
+`AGENTS.md`, `.github/agents/researcher.agent.md`, and `docs/development/researching.md`.
 This is a **high-risk, explicitly coupled follow-up** to the existing simulation execution-account
 investigation. It is *not* an implementation request, a PR review, or a new generic Engine-roadmap
 exercise. Use the existing execution-account evidence workspace; do not create a separate
@@ -44,27 +44,27 @@ assumed.
 
 ## Exact repository and evidence coordinates
 
-- Repository: \`alaiba/arcogine\`.
-- Existing workspace: \`workspace/simulation-execution-account\`.
-- Live \`main\` at **handoff preparation**, not a substitute for fresh grounding:
-  \`912b2ac85cefab3907fc562a3aaa6507e51975a7\`.
+- Repository: `alaiba/arcogine`.
+- Existing workspace: `workspace/simulation-execution-account`.
+- Live `main` at **handoff preparation**, not a substitute for fresh grounding:
+  `912b2ac85cefab3907fc562a3aaa6507e51975a7`.
 - Original execution-account report, immutable commit:
-  \`a53778145f3ee9941a4b46c7f04f1ec17e6bff86\`,
-  \`workspace/research/investigations/simulation-execution-account-report.md\`.
-  Original report baseline: \`79b3399149499f2f337206c909a277f66a5befd5\`.
+  `a53778145f3ee9941a4b46c7f04f1ec17e6bff86`,
+  `workspace/research/investigations/simulation-execution-account-report.md`.
+  Original report baseline: `79b3399149499f2f337206c909a277f66a5befd5`.
 - Independent adversarial review, immutable commit:
-  \`57d87fc4c8ba19927bf50efa4097321208811d5a\`,
-  \`workspace/research/investigations/simulation-execution-account-adversarial-review.md\`.
+  `57d87fc4c8ba19927bf50efa4097321208811d5a`,
+  `workspace/research/investigations/simulation-execution-account-adversarial-review.md`.
   Disposition: **ACCEPT WITH QUALIFICATIONS**. Review live-main baseline:
-  \`912b2ac85cefab3907fc562a3aaa6507e51975a7\`.
+  `912b2ac85cefab3907fc562a3aaa6507e51975a7`.
 - Independent review's pre-review reconstruction:
-  \`ba6db2e35f25150624a53ae900c48d15757b78fb\`,
-  \`workspace/research/investigations/simulation-execution-account-review-reconstruction.md\`.
+  `ba6db2e35f25150624a53ae900c48d15757b78fb`,
+  `workspace/research/investigations/simulation-execution-account-review-reconstruction.md`.
 - Independent new probes:
-  \`928fb86665016bc94d5979e18f1ce5b2ebef3b57\`,
-  \`workspace/research/experiments/simulation-execution-account-review/com/arcogine/research/executionaccount/ExecutionAccountAdversarialTest.java\`.
+  `928fb86665016bc94d5979e18f1ce5b2ebef3b57`,
+  `workspace/research/experiments/simulation-execution-account-review/com/arcogine/research/executionaccount/ExecutionAccountAdversarialTest.java`.
 - The earlier Engine session/advancement ownership note is **already landed** in
-  \`docs/research/investigations/engine-evolution.md#sessionadvancement-evolution\` by PR #462.
+  `docs/research/investigations/engine-evolution.md#sessionadvancement-evolution` by PR #462.
   It distinguishes driver batching from Engine's pre-execution time guard but **does not**
   resolve historical interval closure or admit an API redesign.
 
@@ -85,19 +85,19 @@ It establishes useful facts that this comparison must preserve or directly falsi
 - The existing controller can, with exclusive admission control, process relevant internal
   events through an upper time bound, capture/drain supported changes, obtain an authoritative
   final observation, verify the frontier, and make an attributable closure declaration.
-- \`advanceUntil(b, maxEvents)\` is inclusive in event time; a count-budget stop does **not**
-  establish successful exhaustion. It does not move the simulation clock to \`b\`.
+- `advanceUntil(b, maxEvents)` is inclusive in event time; a count-budget stop does **not**
+  establish successful exhaustion. It does not move the simulation clock to `b`.
 - The supported observed time may lag internal scheduler time after internal markers that do
   not generate supported state changes.
-- The original research-local \`CapturedAccount\` helper is **insufficient as a guarantee**:
+- The original research-local `CapturedAccount` helper is **insufficient as a guarantee**:
   a truthful completed-advancement declaration with a **stale captured frontier** licensed
   an incorrect 100-tick reading for a job that ran for 5 ticks.
 - Rejected/accepted-no-op command outcomes may be invisible in supported events; detecting
   contradictory *delivered effects* is not verifying every controller promise.
 - A later capture gap must not retroactively erase a previously established correct
   historical subinterval, even though blanket helper-level refusal is conservative.
-- Half-open \`[a,b)\` interval claims and inclusive \`closedThrough(b)\` promises differ.
-  Changes at exactly \`b\` may be permissible for the former.
+- Half-open `[a,b)` interval claims and inclusive `closedThrough(b)` promises differ.
+  Changes at exactly `b` may be permissible for the former.
 - Supported state-change evidence completeness is distinct from command/outcome history,
   analytical sufficiency, successful/fault-free processing, and deterministic reproduction.
 - The review found no existing consumer requiring central retained history or a new
@@ -106,7 +106,7 @@ It establishes useful facts that this comparison must preserve or directly falsi
 
 The reviewer demonstrated a sufficient existing-API controller procedure. **That is proof of
 feasibility, not a comparative design decision.** The independent review's
-\`ACCEPT WITH QUALIFICATIONS\` applies to the old report revision; it is not independent
+`ACCEPT WITH QUALIFICATIONS` applies to the old report revision; it is not independent
 acceptance of any new Engine operation, lifecycle guarantee or changed command semantics.
 
 This follow-up deliberately tests the *additional* claim of architectural suitability before
@@ -115,29 +115,29 @@ comparison or as already approving an Engine change.
 
 ## Start-of-run grounding and source map
 
-Read at live \`main\`:
+Read at live `main`:
 
-1. \`AGENTS.md\`, \`.github/agents/researcher.agent.md\`,
-   \`docs/development/researching.md\`, \`docs/development/testing.md\` §10.
-2. \`docs/research/research-register.md\`,
-   \`docs/research/investigations/simulation-execution-account.md\`.
-3. \`docs/product/charter.md\`,
-   \`docs/architecture/overview.md\`,
-   \`docs/architecture/engine-semantics.md\` (especially §1.2),
-   \`docs/architecture/runtime-contract.md\`,
-   \`docs/research/investigations/engine-evolution.md\` (session/advancement).
+1. `AGENTS.md`, `.github/agents/researcher.agent.md`,
+   `docs/development/researching.md`, `docs/development/testing.md` §10.
+2. `docs/research/research-register.md`,
+   `docs/research/investigations/simulation-execution-account.md`.
+3. `docs/product/charter.md`,
+   `docs/architecture/overview.md`,
+   `docs/architecture/engine-semantics.md` (especially §1.2),
+   `docs/architecture/runtime-contract.md`,
+   `docs/research/investigations/engine-evolution.md` (session/advancement).
 4. Relevant Governance evidence and Operational continuity contracts, only insofar as
    an Engine alternative could wrongly acquire evidence/operational authority.
-5. \`docs/planning/factory-simulation-engine-readiness.md\` and the current
+5. `docs/planning/factory-simulation-engine-readiness.md` and the current
    analytics-ownership/evidence research briefs, to distinguish admitted current needs,
    planned work, and future hypotheses.
-6. Actual \`FactoryRuntime\`, \`Scheduler\`, \`RecordingScheduler\`, supported event/observation
-   types, command-outcome types and tests. Trace \`advance()\`, \`advanceUntil()\`,
-   \`observe()\`, \`drainSupportedEvents()\`, \`submitWorkload()\`,
-   \`setMachineAvailability()\`, and \`reset()\`.
+6. Actual `FactoryRuntime`, `Scheduler`, `RecordingScheduler`, supported event/observation
+   types, command-outcome types and tests. Trace `advance()`, `advanceUntil()`,
+   `observe()`, `drainSupportedEvents()`, `submitWorkload()`,
+   `setMachineAvailability()`, and `reset()`.
 
-Quick-search \`docs/\`, then code and tests, for \`advanceUntil\`, event-count budget, next event,
-internal simulated time, supported observed time, \`QUIESCENT\`, frontier, closure, \`RunId\`,
+Quick-search `docs/`, then code and tests, for `advanceUntil`, event-count budget, next event,
+internal simulated time, supported observed time, `QUIESCENT`, frontier, closure, `RunId`,
 rejected/no-op/faulted command, single drainer, history retention, reset and replay.
 Inspect concrete call sites rather than infer broad application demand from JavaDoc. PR #462's
 session-advancement note is a distinct boundary observation, not the decision under test.
@@ -150,7 +150,7 @@ materials are inputs to test critically, not architecture already adopted on mai
 
 Write a short research-local decision framing **before evaluating the preferred candidate**:
 
-- What exact correctness guarantee must \`[a,b)\` evidence satisfy? Distinguish producer
+- What exact correctness guarantee must `[a,b)` evidence satisfy? Distinguish producer
   events/observations, controller admission and advancement, physical capture, and analytical
   definition sufficiency.
 - Which facts can the Engine *know* at a given instant? Which remain promises about future
@@ -161,8 +161,8 @@ Write a short research-local decision framing **before evaluating the preferred 
   and future passive-view use cases individually and label them implemented, admitted,
   hypothetical or separately triggered.
 - What errors are caused by missing semantics versus a merely cumbersome API?
-- Does "final" mean **no pending effect currently at or before \`b\`**, **no future accepted
-  change with time \`< b\`**, **no future accepted command at all**, **complete captured supported
+- Does "final" mean **no pending effect currently at or before `b`**, **no future accepted
+  change with time `< b`**, **no future accepted command at all**, **complete captured supported
   changes**, or **a globally terminated runtime**? Do not collapse these into one bool.
 - What burden will be imposed on two or three different consumers if closure remains
   caller-managed? Count semantic invariants, order-sensitive calls, trust assumptions,
@@ -189,35 +189,35 @@ RunId/cursor/time observation boundary. Compare possible atomicity guarantees an
 Could it remove the caller's ambiguity around exhaustion and stale frontier without promising
 that no later command will arrive? Would it be enough to make the capture holder's evidence
 claim sound? Specify which facts are source-authored versus caller attestations. Explore
-whether simply enriching \`advanceUntil()\` is enough versus introducing a new operation.
+whether simply enriching `advanceUntil()` is enough versus introducing a new operation.
 
 **C. Engine-owned protected batch/observation/delivery boundary.**
 Consider a bounded method or operation that performs advancement and exposes an associated
 supported frontier and relevant changes in one coherent operation, without event sourcing or
 unbounded retention. Evaluate whether this solves the stale-frontier counterexample by
 construction, or merely moves the single-drainer/fan-out and capture problems elsewhere.
-Discuss the effect on current \`drainSupportedEvents()\` semantics, consumer coexistence,
+Discuss the effect on current `drainSupportedEvents()` semantics, consumer coexistence,
 faults, ownership and retention. Do not require an atomic bundle or shared store just
 because it sounds safe.
 
 **D. Engine-enforced temporal closure / input watermark / sealing.**
 Examine a carefully scoped Engine operation that makes later effective changes inside
-\`[a,b)\` impossible, rather than trusting a driver's future-command promise. This alternative
+`[a,b)` impossible, rather than trusting a driver's future-command promise. This alternative
 must explicitly decide:
 - whether the Engine rejects further commands that would be accepted at its internal current
-  time \`< b\`, delays/re-times them to \`b\`, advances an input-time floor, or truly ends a run;
+  time `< b`, delays/re-times them to `b`, advances an input-time floor, or truly ends a run;
 - whether any option changes the deterministic Engine interpretation, command acceptance,
   scheduling behavior or model outcome;
-- whether \`[a,b)\` allows commands/events at exactly \`b\` and how equal-time ordering works;
+- whether `[a,b)` allows commands/events at exactly `b` and how equal-time ordering works;
 - whether an Engine-authored closure token or observation is sufficient evidence without full
   event capture, and how capture completeness remains separately checked;
-- whether closure is irrevocable, per interval or per run, and what \`reset()\` means for it;
+- whether closure is irrevocable, per interval or per run, and what `reset()` means for it;
 - how to handle concurrent calls, old references and command outcomes, including no-ops/faults;
 - what capability would be gained by passive verifiers (if any) and whether a current consumer
   needs it.
 
 Compare a bounded interval seal with a global terminal state and with deliberately advancing
-the logical command clock to \`b\`; they are not automatically equivalent. Do not select
+the logical command clock to `b`; they are not automatically equivalent. Do not select
 clock advancement or terminal state without proving its semantic consequences.
 
 **E. Minimal Engine guard with driver-owned batching.**
@@ -243,7 +243,7 @@ simulating candidate behavior. Reuse previous probes as baseline facts, but add 
 
 At minimum cover:
 
-1. **Idle tail / later input:** work finishes at tick 13; \`advanceUntil(100)\` returns
+1. **Idle tail / later input:** work finishes at tick 13; `advanceUntil(100)` returns
    quiescent at 13; another unit is submitted afterward. What does each alternative
    guarantee, refuse, re-time or label provisional?
 2. **Count exhaustion:** stop after one internal event while a due authoritative completion
@@ -253,23 +253,23 @@ At minimum cover:
    retains only the dispatch and stale cursor; its time integral falsely reads 100 without a
    bound final frontier. Which alternative prevents *issuing a false claim*, not merely
    detecting it later?
-4. **Historical subinterval preservation:** \`[0,5)\` was complete; subsequent capture loses
+4. **Historical subinterval preservation:** `[0,5)` was complete; subsequent capture loses
    changes at 10. Can a claim over the earlier interval retain its proven coverage?
-5. **Half-open edge and equal-time order:** accepted/effective events at exactly \`b\`;
+5. **Half-open edge and equal-time order:** accepted/effective events at exactly `b`;
    several ordered changes at the same tick; no accidental inclusive promise where
-   \`[a,b)\` does not require it.
+   `[a,b)` does not require it.
 6. **Observed-time/internal-time split:** internal no-op marker advances scheduler time
    without a supported event; an external command is then accepted at internal time.
    Is an advertised supported frontier or Engine time floor truthful?
 7. **Controller promise versus Engine guarantee:** a no-op or rejected request after a
    "no more commands" declaration, an accepted command that changes state, and a
-   \`Faulted\` post-mutation outcome. What contradictions are observable versus
+   `Faulted` post-mutation outcome. What contradictions are observable versus
    only attributable to the controller?
 8. **Delivery and shared consumers:** a single destructive drainer, two competing drainers,
    a capture/fan-out holder, and a late observer that requires history from before joining.
    Do not infer a central store is needed unless a present proof requires it.
-9. **Reset and identity:** new \`RunId\`, original runtime still usable, provenance/closure
-   applying to the correct run. Never turn \`RunId\` into an execution-account ID.
+9. **Reset and identity:** new `RunId`, original runtime still usable, provenance/closure
+   applying to the correct run. Never turn `RunId` into an execution-account ID.
 10. **Fault during bounded advancement:** partial authoritative mutation, surviving supported
     events, failure/stop reason, command admission, and no accidental declaration of completion.
 11. **Temporal provenance / replay:** compare two command/advancement interleavings whose
@@ -300,8 +300,8 @@ For each alternative state:
 - **Engine burden:** public API and state surface, immutable result types, scheduler exposure,
   admission authority, lifecycle/clock changes, memory/retention costs, determinism and
   conformance obligations.
-- **Compatibility:** current \`advance()\`/\`advanceUntil()\`, \`observe()\`,
-  \`drainSupportedEvents()\`, \`CommandResult\`, reset and existing research callers;
+- **Compatibility:** current `advance()`/`advanceUntil()`, `observe()`,
+  `drainSupportedEvents()`, `CommandResult`, reset and existing research callers;
   whether changes are additive meaning-preserving or materially result-affecting.
 - **Cross-consumer utility:** supported and likely near-term uses versus speculative
   distributed/passive-verification/future remote use.
@@ -330,7 +330,7 @@ not conclusive comparisons of the new candidate designs.
 - Verify exact source/test claims and existing results when environment permits. JDK21 and the
   documented Gradle/Docker research-experiment workflow are preferred.
 - Define new proving cases with independently hand-derived expectations; implement
-  research-local \`workspace/research/experiments/\` probes if they materially discriminate.
+  research-local `workspace/research/experiments/` probes if they materially discriminate.
 - Do not alter production code, tracked runtime tests, or canonical architecture/specification
   within this Researcher run. A research-local surrogate/prototype may illustrate alternative
   semantics, but label it **proposed behavior**, not executed evidence of a changed Engine.
@@ -350,7 +350,7 @@ signing scheme or new execution entity. Such work requires its own concrete trig
 
 Persist the completed follow-up report, ideally at:
 
-\`workspace/research/investigations/simulation-execution-account-engine-adaptation-report.md\`
+`workspace/research/investigations/simulation-execution-account-engine-adaptation-report.md`
 
 Its structure must contain:
 
@@ -361,8 +361,8 @@ Its structure must contain:
 5. At least one concrete contract sketch for each surviving Engine alternative.
 6. Hand-derived proving cases, evidence/test commands and actual results or explicit limitations.
 7. A candidate × case matrix identifying falsifiers, not just successful illustrations.
-8. Explicit separation of \`advancedThrough\`, \`capturedThrough\`, \`noFutureInputBefore\`,
-   \`finalityOf[a,b)\`, and command/reproduction completeness; use other names if clearer.
+8. Explicit separation of `advancedThrough`, `capturedThrough`, `noFutureInputBefore`,
+   `finalityOf[a,b)`, and command/reproduction completeness; use other names if clearer.
 9. Comparative caller complexity and Engine semantic/API complexity; state assumptions.
 10. A **recommendation on whether to change the Engine now**, leave it unchanged with a
     defined controller protocol, or commit a bounded future revisit trigger — with
@@ -388,14 +388,14 @@ reconciliation**. The prior review does not confer approval on new semantics. If
 is demonstrably the qualified existing controller protocol, still explain whether it
 introduces any new load-bearing inference that requires independent checking.
 
-The execution-account research stays \`READY\` until its eventual durable, independently
-reviewed reconciliation. Do **not** mark it \`CONCLUDED\` because this follow-up report exists.
+The execution-account research stays `READY` until its eventual durable, independently
+reviewed reconciliation. Do **not** mark it `CONCLUDED` because this follow-up report exists.
 Do **not** resume or reconcile paused analytics Phase 2 as part of this run.
 
 ## Persistence, stop boundary and handoff
 
 Write and commit the finished report and any needed research-only probes to
-**\`workspace/simulation-execution-account\`**, preserving handed-off original report/review
+**`workspace/simulation-execution-account`**, preserving handed-off original report/review
 revisions and history. Keep the original accepted-with-qualifications review immutable;
 do not overwrite it or retroactively change its disposition.
 

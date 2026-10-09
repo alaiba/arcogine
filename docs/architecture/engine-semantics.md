@@ -71,7 +71,7 @@ claim is operational, not aspirational. The membership test is:
 > rejection, assignment, ordering, timing, or derived result — for an identical `ModelFingerprint`,
 > explicit workload, seed/random inputs, and ordered external commands.
 
-Four consequences follow.
+These consequences follow.
 
 1. **No result-affecting limit may remain ambient implementation policy.** A hard-coded threshold,
    envelope, ceiling, or bound that deterministically decides acceptance, rejection, assignment,
@@ -104,6 +104,11 @@ Four consequences follow.
    rules two conforming implementations could agree on, so they may not decide a result. Where
    ordering can change an outcome, an explicit rule recorded in this specification decides it —
    sections 2, 3 and 4 own the current ones.
+6. **Which internal events a session schedules is in scope.** Bounded advancement counts processed
+   scheduled events, and a command applies at the time of the last one processed (section 1.2), so
+   an internal event can change timing and derived results for identical explicit inputs even when
+   processing it publishes nothing. An event is not exempt from the membership test because it is
+   internal; section 4 rule 3 records the current scheduling rule.
 
 ### 1.2 Session and control semantics
 
@@ -112,14 +117,25 @@ how far a session advances and whether an externally initiated change is applied
 ordered command sequence. It is therefore part of the interpretation, and two implementations may not
 claim the same interpretation while differing on it.
 
-This section owns those rules; `SessionControlAcceptanceTest` and `RecordingSchedulerTest` prove
-them. In scope:
+This section owns those rules; `SessionControlAcceptanceTest`, `BoundedAdvancementConformanceTest`
+and `RecordingSchedulerTest` prove them. In scope:
 
 - `advance()` as the unchanged one-event primitive, and `advanceUntil(targetTime, maxEvents)`
   defined in terms of it — processing events one at a time in `advance()` order and stopping as soon
-  as either bound is reached, returning every event actually processed, in order. Because
-  `advanceUntil` is defined as a loop over `advance()`, the two cannot diverge in event ordering or
-  dispatch behavior.
+  as either bound is reached (the next event's time exceeds `targetTime`, or the call has processed
+  `maxEvents` events), returning every event actually processed, in order. Because `advanceUntil` is
+  defined as a loop over `advance()`, the two cannot diverge in event ordering or dispatch behavior.
+  The unit both count is one processed scheduled event. Under section 4 rule 3 every such event is
+  an authoritative step completion published at its own time, so a budget is never spent on an
+  event that changes nothing.
+- A command applies at the session's current simulated time: the time of the most recently
+  processed scheduled event, or zero before any. A time guard or an event budget does not move it,
+  so a call that stops before a later event leaves commands applying at the last processed event's
+  time, never at the requested target. Because every processed event publishes at its own time,
+  after every session call — including one that faults — this is also the supported observation's
+  current time: advancement budget alone cannot make the next command apply later than the state a
+  caller observed. That equality follows from the current scheduling rule of section 4 rule 3; it is
+  not a separate guarantee for event kinds a session does not schedule.
 - `reset()` as a fresh session over the same retained model version: replaying an identical command
   sequence reproduces an identical ordered event stream and identical terminal state, and the
   original session is left untouched.
@@ -224,8 +240,8 @@ question from resource dispatch (which eligible resource executes one such unit)
 `Order` is immutable production intent identified by `OrderId`; the same `OrderId` identifies the
 order-level execution aggregate (requested, released and completed quantity, completion time).
 `JobId` identifies one independently dispatchable work item within an order and is the identity
-machine queues, active-machine state, pending multi-eligible work and `TaskStart`/`TaskEnd` use;
-no separate `ExecutionUnitId`, `LotId` or `BatchId` exists. A consumer must never have to infer
+machine queues, active-machine state, pending multi-eligible work and step completions (`TaskEnd`)
+use; no separate `ExecutionUnitId`, `LotId` or `BatchId` exists. A consumer must never have to infer
 aggregate completion by counting child states itself, and the game/challenge layer never splits
 one production requirement into several orders merely to obtain parallelism — Arcogine owns that
 decomposition.
@@ -242,8 +258,10 @@ The unit-work decomposition rules are part of the interpretation:
    step `k` completes; sibling jobs have no additional precedence. All children are released
    atomically with order acceptance, so `releasedQuantity == requestedQuantity` immediately after
    acceptance. `completedQuantity` increments exactly once per child final completion, and only
-   the transition to `requestedQuantity` emits the single `OrderCompleted` event, which carries
-   the `OrderId` and the completing child `JobId`. Backlog, completed sales and value, lead time
+   the transition to `requestedQuantity` completes the order. That transition is part of the
+   completing child's final step completion; it is published once, as the supported
+   `ORDER_COMPLETED` event carrying the `OrderId` and the completing child `JobId`, and schedules no
+   further event (section 4 rule 3). Backlog, completed sales and value, lead time
    and order-throughput remain order-level facts; child count never multiplies a sale. Material
    lots, arbitrary batch sizes and split/merge semantics are separate future contracts.
 5. **The supported child-materialization envelope is part of the interpretation.** Workload
@@ -270,8 +288,25 @@ change to the interpretation (§1).
 
 1. Authoritative scheduled work is ordered first by `SimTime`.
 2. Equal-time scheduled work uses the existing deterministic insertion-order tie-break.
-3. Internal scheduler markers that do not represent authoritative Factory state changes do not gain
-   semantic significance merely because they are present in the implementation.
+3. **A Factory session schedules only authoritative work.** Every event it schedules is a step
+   completion: processing it authoritatively completes that step and publishes `JOB_STEP_COMPLETED`
+   at the event's own time, together with the order completion and placement changes it causes.
+   The session schedules no marker that processing would ignore — no start marker beside a
+   dispatched step completion, and no order-completion event behind a final child completion. An
+   order's completion is part of the step-completion transition that causes it (section 3 rule 4)
+   and is published from that transition. Because section 1.2 bounded advancement counts processed
+   scheduled events and commands apply at the time of the last one processed, a queued marker would
+   be result-affecting: it would consume advancement budget and move the time at which the next
+   command applies without any supported change. Scheduling a new event kind is therefore a
+   definition change that must state the authoritative transition the event performs and the
+   supported events it publishes at its own time.
+
+   This corrects an earlier development interpretation that scheduled both markers. A script that
+   stopped a bounded call on a positive event budget can now reach authoritative work sooner, so a
+   later command can apply at a different time and derived results can differ. Runs whose inputs are
+   all given before advancement, and calls bounded only by time, keep the same supported events and
+   outcomes; the internal `Event` lists that `advance()`, `advanceUntil` and
+   `CommandResult.scheduledEvents()` return no longer contain markers.
 4. Supported runtime-event ordering at the same `SimTime` is represented only by the monotonic
    supported-event sequence established by the [runtime contract](runtime-contract.md); spatial transfer semantics introduce no second
    event-ordering mechanism.
@@ -655,8 +690,8 @@ when their actual ownership and result-affecting meaning become concrete.
 Pinned behavioral fixtures prove the normative semantics above using representative explicit inputs.
 They change together with any definition change (§1). The executed production-only scope is pinned by
 `EngineDispatchConformanceTest`, `EngineDerivedResultConformanceTest`,
-`FactoryRuntimeExecutabilityAcceptanceTest`, `SessionControlAcceptanceTest`, the runtime
-event/observation acceptance suites and the
+`FactoryRuntimeExecutabilityAcceptanceTest`, `SessionControlAcceptanceTest`,
+`BoundedAdvancementConformanceTest`, the runtime event/observation acceptance suites and the
 child-materialization acceptance and benchmark tests; the transfer items (7–11 and 13) accompany
 spatial execution when it is implemented. Complete fixtures for the executed scope are a precondition
 of promoting the interpretation, never a promotion by themselves. The fixtures must cover at least:
@@ -711,7 +746,15 @@ of promoting the interpretation, never a promotion by themselves. The fixtures m
     range selects the same machine an exact sum would, proving neither the narrowing conversion nor
     a same-width addition survives — and proving it without appealing to section 3's per-submission
     envelope, which does not bound the cumulative waiting set;
-18. terminal state / derived result agreement for repeated identical explicit inputs.
+18. terminal state / derived result agreement for repeated identical explicit inputs;
+19. the section 4 rule 3 scheduling rule and its section 1.2 consequences: every processed
+    scheduled event a step completion that publishes at its own time, and nothing queued behind an
+    order's completion; a one-event budget spent on the next step completion however the same
+    supported state was reached; the next command applying at the observed time after bounded calls
+    across queue dispatch, the shared backlog, equal-time completions, availability recovery,
+    interleaved commands, time guards before an event, exhausted and zero event budgets, reset, and a
+    step completion whose cascade faults; and a command's outcome following the supported state it is
+    issued at, whatever presentation frame budget reached that state.
 
 Fixtures pin semantic outcomes, not DTO/JSON bytes, transport representation, or unrelated
 non-behavioral observation fields.

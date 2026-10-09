@@ -18,18 +18,22 @@ import java.util.List;
 
 /**
  * Finance's event-driven state owner. Reacts only to {@link EventPayload.OrderCompleted} -- the
- * operational fact Factory emits -- and interprets it financially; it never inspects Factory's
+ * operational order-completion fact -- and interprets it financially; it never inspects Factory's
  * mutable state to infer what happened. Under the initial, deliberately simple immediate-
  * settlement policy, a completed order posts exactly DR Cash / CR Sales for its order value.
+ *
+ * <p>This is an isolated event consumer: no retained production code delivers Factory's order
+ * completions to it (docs/architecture/overview.md, Event Dispatch Architecture). The Factory
+ * session publishes order completion as its supported {@code ORDER_COMPLETED} runtime event,
+ * derived from the authoritative completion transition, and schedules no internal {@code
+ * OrderCompleted}; a composition that introduces delivery to this handler owns producing exactly
+ * one {@code OrderCompleted} per genuine order completion.
  *
  * <p><b>Event-uniqueness assumption</b>: this class trusts that each {@code OrderCompleted} it
  * receives represents a distinct completion -- it does not de-duplicate. Delivering the same
  * event twice posts twice. This matches every other handler in the codebase (none of them guard
- * against a duplicate delivery either). The supported event path does not redeliver an
- * {@code OrderCompleted} into the same live handler ({@link
- * com.arcogine.core.queue.Scheduler#nextEvent()} is a plain dequeue, and {@code FactoryHandler}
- * cannot complete the same job's routing twice). If the supported event-delivery contract permits
- * redelivery into a live handler, this class requires an idempotency guard at that boundary.
+ * against a duplicate delivery either). If a delivery path permits redelivery into a live
+ * handler, this class requires an idempotency guard at that boundary.
  */
 public class FinanceHandler implements EventHandler {
 

@@ -2,6 +2,7 @@ package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -68,20 +69,16 @@ class FactoryHandlerTest {
 
     /**
      * Child jobs each traverse once, so completing an order requires driving one TaskEnd per unit
-     * (for a single-step routing). Drains exactly {@code quantity} TaskEnd
-     * events, returning the final one -- the one that completes the order and schedules (but does
-     * not drain) OrderCompleted. Callers driving a second order afterward must drain that trailing
-     * OrderCompleted first, or it can race the next order's own scheduled events at the same tick.
+     * (for a single-step routing). Drains exactly {@code quantity} events -- each one a TaskEnd,
+     * the only event kind the handler schedules -- returning the final one, which completes the
+     * order and schedules nothing further.
      */
     private static Event driveToCompletion(FactoryHandler h, Scheduler sched, long quantity) {
         Event taskEnd = null;
-        for (long i = 0; i < quantity;) {
-            Event next = sched.nextEvent().orElseThrow();
-            h.handleEvent(next, sched);
-            if (next.payload() instanceof EventPayload.TaskEnd) {
-                taskEnd = next;
-                i++;
-            }
+        for (long i = 0; i < quantity; i++) {
+            taskEnd = sched.nextEvent().orElseThrow();
+            assertInstanceOf(EventPayload.TaskEnd.class, taskEnd.payload());
+            h.handleEvent(taskEnd, sched);
         }
         return taskEnd;
     }
@@ -162,8 +159,8 @@ class FactoryHandlerTest {
             sched.schedule(order);
             sched.nextEvent();
             h.handleEvent(order, sched);
-            h.handleEvent(sched.nextEvent().orElseThrow(), sched); // TaskEnd
-            sched.nextEvent(); // drain OrderCompleted
+            h.handleEvent(sched.nextEvent().orElseThrow(), sched); // TaskEnd completes the order
+            assertTrue(sched.isEmpty(), "order completion must leave nothing queued");
         }
 
         assertEquals(10, h.completedSales());
@@ -265,15 +262,13 @@ class FactoryHandlerTest {
         Event te2 = sched.nextEvent().orElseThrow();
         h.handleEvent(te2, sched);
         assertEquals(1, h.completedSales(), "should be complete after step 2");
-
-        Event next = sched.nextEvent().orElseThrow();
         assertTrue(
-                next.payload() instanceof EventPayload.OrderCompleted,
-                "order completion should schedule OrderCompleted only after the final step");
+                sched.isEmpty(),
+                "completing the final step completes the order without scheduling any follow-up event");
     }
 
     @Test
-    void intermediateStepDoesNotScheduleOrderCompleted() {
+    void intermediateStepSchedulesOnlyTheNextStepCompletion() {
         FactoryHandler h = twoStepHandler();
         Scheduler sched = new Scheduler();
 
@@ -286,14 +281,16 @@ class FactoryHandlerTest {
         h.handleEvent(te1, sched);
 
         Event next = sched.nextEvent().orElseThrow();
-        assertTrue(
-                next.payload() instanceof EventPayload.TaskEnd,
-                "completing step 1 of 2 should schedule the next TaskEnd, not OrderCompleted");
-        assertTrue(sched.isEmpty(), "no OrderCompleted should be queued before the order is fully complete");
+        assertEquals(
+                new EventPayload.TaskEnd(h.jobsView().findFirst().orElseThrow().id(), new MachineId(2), 1),
+                next.payload(),
+                "completing step 1 of 2 should schedule exactly the next step's completion");
+        assertTrue(sched.isEmpty(), "nothing else may be queued before the order is fully complete");
+        assertFalse(h.orderExecution(h.jobsView().findFirst().orElseThrow().orderId()).complete());
     }
 
     @Test
-    void orderCompletedEventCarriesTheOrdersCommercialFacts() {
+    void finalChildCompletionCompletesTheOrderWithoutSchedulingAMarker() {
         FactoryHandler h = oneMachineOneProduct();
         Scheduler sched = new Scheduler();
 
@@ -302,18 +299,22 @@ class FactoryHandlerTest {
         sched.nextEvent();
         h.handleEvent(order, sched);
 
-        var job = h.jobs.allJobs().findFirst().orElseThrow();
+        var orderId = h.jobs.allJobs().findFirst().orElseThrow().orderId();
 
-        driveToCompletion(h, sched, 3);
+        // Three unit children on one concurrency-1 machine: completions at 6, 11 and 16.
+        Event last = driveToCompletion(h, sched, 2);
+        assertFalse(h.orderExecution(orderId).complete(), "two of three children is a partial completion");
+        assertEquals(1, sched.size(), "only the third child's step completion is queued");
 
-        Event completed;
-        do { completed = sched.nextEvent().orElseThrow(); } while (!(completed.payload() instanceof EventPayload.OrderCompleted));
-        var payload = (EventPayload.OrderCompleted) completed.payload();
-        assertEquals(job.orderId(), payload.orderId());
-        assertTrue(h.job(payload.jobId()).isComplete());
-        assertEquals(new ProductId(1), payload.productId());
-        assertEquals(3L, payload.quantity());
-        assertEquals(12.0, payload.unitPrice());
+        last = driveToCompletion(h, sched, 1);
+        assertEquals(SimTime.of(16), last.time());
+        var execution = h.orderExecution(orderId);
+        assertTrue(execution.complete());
+        assertEquals(3L, execution.completedQuantity());
+        assertEquals(SimTime.of(16), execution.completedAt());
+        assertEquals(1, h.completedSales(), "the final child completion completes the order exactly once");
+        assertEquals(36.0, h.completedSalesValue());
+        assertTrue(sched.isEmpty(), "order completion is a transition, not a further scheduled event");
     }
 
     @Test
@@ -326,10 +327,7 @@ class FactoryHandlerTest {
         sched.nextEvent();
         h.handleEvent(order1, sched);
         driveToCompletion(h, sched, 2);
-        // Drain order1's OrderCompleted before scheduling order2, so it isn't left in the queue
-        // racing order2's OrderCreation at the same tick.
-        Event completed1 = sched.nextEvent().orElseThrow();
-        assertTrue(completed1.payload() instanceof EventPayload.OrderCompleted);
+        assertTrue(sched.isEmpty(), "order1's completion leaves nothing queued ahead of order2");
 
         Event order2 = orderEvent(sched.currentTime().ticks(), 3, 20.0);
         sched.schedule(order2);
@@ -400,10 +398,7 @@ class FactoryHandlerTest {
         h.handleEvent(orderA, sched);
         driveToCompletion(h, sched, 2);
         assertEquals(20.0, h.completedSalesValue());
-        Event completedA = sched.nextEvent().orElseThrow();
-        assertTrue(
-                completedA.payload() instanceof EventPayload.OrderCompleted,
-                "order A's completion schedules OrderCompleted, which must be drained before continuing");
+        assertTrue(sched.isEmpty(), "order A's completion leaves nothing queued");
 
         // Order B is accepted later at its own, different agreed unit price.
         Event orderB = orderEvent(sched.currentTime().ticks(), 2, 50.0);

@@ -2,6 +2,7 @@ package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
@@ -90,16 +91,15 @@ class FactoryRuntimeBoundaryAcceptanceTest {
         runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
         // Each of QUANTITY unit jobs traverses both routing steps once, so QUANTITY * 2 TaskEnd
-        // events are required before the order can be complete. Other event types may legitimately
-        // appear in the stream alongside them (e.g. TaskStart), so this counts TaskEnd events
-        // specifically rather than asserting every advanced event is one.
+        // events are required before the order can be complete. A Factory session schedules
+        // nothing but step completions, so every advanced event is one of them and the run ends
+        // with the last.
         long requiredTaskEnds = QUANTITY * 2;
         long taskEndsSeen = 0;
         Event event;
-        while (taskEndsSeen < requiredTaskEnds && (event = runtime.advance().orElse(null)) != null) {
-            if (event.payload() instanceof EventPayload.TaskEnd) {
-                taskEndsSeen++;
-            }
+        while ((event = runtime.advance().orElse(null)) != null) {
+            assertInstanceOf(EventPayload.TaskEnd.class, event.payload());
+            taskEndsSeen++;
             boolean isFinalTaskEnd = taskEndsSeen == requiredTaskEnds;
             assertEquals(isFinalTaskEnd, runtime.orderExecution(runtime.ordersView().findFirst().orElseThrow().id()).complete());
         }
@@ -108,19 +108,21 @@ class FactoryRuntimeBoundaryAcceptanceTest {
     }
 
     @Test
-    void completionIsObservableThroughFactoryRuntimeAdvance() {
+    void completionIsObservableThroughTheSupportedEventStream() {
         FactoryRuntime runtime = freshRuntime();
         OrderId orderId = runtime.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
 
-        List<EventPayload.OrderCompleted> completions = new ArrayList<>();
-        Event event;
-        while ((event = runtime.advance().orElse(null)) != null) {
-            if (event.payload() instanceof EventPayload.OrderCompleted orderCompleted) {
+        while (runtime.advance().isPresent()) {
+            // drain every step completion
+        }
+        List<RuntimeEventPayload.OrderCompleted> completions = new ArrayList<>();
+        for (RuntimeEventEnvelope published : runtime.drainSupportedEvents()) {
+            if (published.payload() instanceof RuntimeEventPayload.OrderCompleted orderCompleted) {
                 completions.add(orderCompleted);
             }
         }
 
-        assertEquals(1, completions.size(), "exactly one OrderCompleted event must be observed");
+        assertEquals(1, completions.size(), "exactly one ORDER_COMPLETED event must be observed");
         var completed = completions.get(0);
 
         assertEquals(orderId, completed.orderId());
@@ -128,7 +130,7 @@ class FactoryRuntimeBoundaryAcceptanceTest {
         // The event's jobId resolves to its completed child job; JobView.orderId links that job
         // back to the submitted order, which may own multiple unit jobs.
         JobView resolvedJob = runtime.job(completed.jobId());
-        assertEquals(orderId, resolvedJob.orderId(), "OrderCompleted.jobId must resolve to the submitted order");
+        assertEquals(orderId, resolvedJob.orderId(), "ORDER_COMPLETED's jobId must resolve to the submitted order");
         assertTrue(resolvedJob.isComplete(), "the resolved job must be complete at the completion observation");
 
         assertEquals(0L, runtime.backlog(), "backlog must reach zero once the order completes");

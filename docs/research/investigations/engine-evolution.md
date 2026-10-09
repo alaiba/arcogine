@@ -226,6 +226,20 @@ This concern is ready for implementation planning only under an exact-semantics 
 
 Current consumer-neutral bounded advancement is established. Revisit the command/advancement surface only when a concrete consumer proves that event-count/tick semantics, scheduling control, or ownership cannot be expressed through the existing boundary.
 
+**Boundary observation for a future revisit (not a separate research candidate).**
+`FactoryRuntime.advanceUntil(targetTime, maxEvents)` currently batches calls to `advance()`.
+Counting events is ordinary driver loop control; enforcing the inclusive time limit needs an
+Engine-side pre-execution check of `scheduler.peekTime()`. A caller using only public `advance()`
+cannot stop before a later event executes by inspecting that event afterward. Current concrete
+callers are research experiments and conformance tests; interactive pacing is an anticipated use,
+not an independently established need for a different API.
+
+This observation adds no question to the research portfolio and does not propose replacing the
+supported boundary. If the existing reopening condition above is met, preserve the distinction
+between driver-owned pacing/batching and Engine-owned guarded event execution when considering
+session-control shape. Neither the current method nor a driver loop moves simulated time to the
+requested bound or establishes interval closure against later commands.
+
 ## Stochastic-semantics boundary
 
 Do not reopen Arcogine's determinism contract merely because a future simulation needs uncertainty.

@@ -226,22 +226,19 @@ This concern is ready for implementation planning only under an exact-semantics 
 
 Current consumer-neutral bounded advancement is established. Revisit the command/advancement surface only when a concrete consumer proves that event-count/tick semantics, scheduling control, or ownership cannot be expressed through the existing boundary.
 
-**Candidate — separate guarded execution from driver orchestration (not selected).** Today,
-`FactoryRuntime.advanceUntil(targetTime, maxEvents)` loops over `advance()`: the event-count
-bound is ordinary batching, but the inclusive simulated-time bound requires checking the next
-scheduled event *before* executing it. The runtime uses its private `scheduler.peekTime()`; a
-driver calling only public `advance()` cannot enforce the same bound after the event has mutated
-authoritative state. Current concrete calls are in research experiments and conformance tests,
-while interactive pacing is an anticipated consumer use.
+**Boundary observation for a future revisit (not a separate research candidate).**
+`FactoryRuntime.advanceUntil(targetTime, maxEvents)` currently batches calls to `advance()`.
+Counting events is ordinary driver loop control; enforcing the inclusive time limit needs an
+Engine-side pre-execution check of `scheduler.peekTime()`. A caller using only public `advance()`
+cannot stop before a later event executes by inspecting that event afterward. Current concrete
+callers are research experiments and conformance tests; interactive pacing is an anticipated use,
+not an independently established need for a different API.
 
-If a concrete driver needs different pacing, event/command interleaving, or ownership of the
-batching policy — or a separately admitted session-control API change makes the split material —
-compare retaining `advanceUntil()` with an Engine-owned, time-guarded single-event operation and
-driver-owned looping. Test inclusive time bounds, count limits, same-time ordering, deterministic
-results, and compatibility with existing consumers. Neither alternative implies moving simulated
-time to the requested bound or closing that interval against later commands. Do not remove the
-supported method, expose scheduler internals, or adopt a new execution primitive on this evidence
-alone.
+This observation adds no question to the research portfolio and does not propose replacing the
+supported boundary. If the existing reopening condition above is met, preserve the distinction
+between driver-owned pacing/batching and Engine-owned guarded event execution when considering
+session-control shape. Neither the current method nor a driver loop moves simulated time to the
+requested bound or establishes interval closure against later commands.
 
 ## Stochastic-semantics boundary
 

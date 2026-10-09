@@ -41,6 +41,8 @@ What the current repository actually establishes, labeled `Repository fact` wher
 
 The alternative answers under test, including a current/simple/no-new-abstraction candidate where one plausibly applies. State each candidate's shape before evaluating it against proving cases — do not present only the winning candidate.
 
+For a material shared-semantic or ownership question solved through today's APIs or a consumer-side protocol, apply the [implementability versus architectural suitability](../development/researching.md#implementability-versus-architectural-suitability) test. Compare a credible bounded producer/contract adaptation, or explain why it could not affect the decision. State who can guarantee each invariant and compare coordination, failure modes, consumer duplication and producer/compatibility costs; passing consumer-side tests is feasibility evidence, not by itself an ownership verdict.
+
 ## External evidence
 
 Only evidence that materially changes or tests an Arcogine-specific hypothesis, proving case, boundary, inference, confidence, or decision — see `docs/development/researching.md` §5. For each source, capture:

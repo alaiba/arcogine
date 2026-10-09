@@ -11,25 +11,29 @@ This is the first question in a split simulation-analytics research series. Late
 [cross-revision analytical comparability](simulation-analytics-cross-revision-comparability.md).
 Their presence does not predetermine that a reusable analytics capability survives this question.
 
-## Upstream execution-account dependency
+## Reconciled execution-evidence input
 
 Phase 1's classification of the current Engine/runtime boundary remains independently useful.
 
-Before the prospective Phase 2 ownership conclusion is finalized, independently reviewed, or
-reconciled, Arcogine must resolve the [simulation execution account](simulation-execution-account.md)
-question: whether one simulated execution already has a sufficient consumer-neutral semantic boundary
-through the current observation/event contract plus caller capture, or whether identity, ordered
-execution evidence, completeness, live/completed status, and related execution-window semantics need
-a separate cross-consumer owner.
+The [simulation execution account](simulation-execution-account.md) result places shared run,
+sequence, observation-basis, coverage and interval-finality semantics in the existing
+[runtime contract](../../architecture/runtime-contract.md#captured-execution-evidence-and-interval-determinacy),
+with caller-held capture. After that reconciliation lands, the prospective Phase 2 ownership
+decision can resume using this qualified input before its own independent review and reconciliation.
 
-This dependency does **not** predetermine that an execution-account capability exists, that history
-must be retained centrally, or that analytics becomes shared. It prevents Phase 2 from treating
-consumer-local evidence custody as settled before the more fundamental execution substrate has been
-tested.
+Phase 2 must distinguish shared coverage/finality meaning, controller outcome provenance and
+closure trust, holder capture/retention, and analytical-definition sufficiency. Definition ownership
+does not imply physical custody: a shared stateless definition can consume supplied evidence, while
+one component may perform both roles when justified. Preserve claim-scoped proof frontiers and
+earlier complete prefixes; complete supported changes do not guarantee complete commands, fault-free
+success or method applicability. Waiting-state residence does not choose availability-conditioned
+readiness or a causal method. No shared analytics owner or central history service follows from
+the execution-evidence result.
 
-Existing Phase 2 workspace reports remain research evidence and candidate analysis. They do not
-receive final adversarial review or durable promotion until this dependency is resolved and Phase 2
-has consumed the result.
+Existing Phase 2 reports remain candidate evidence. Revise assumptions that evidence custody follows
+the definition owner and express definition-specific evidence requirements in the canonical coverage
+vocabulary before final adversarial review. This question remains **READY**, with prospective
+ownership, admission rules and any supported-result reclassification unresolved.
 
 This remains one registered research question, executed as an explicitly coupled two-phase packet.
 Phase 1 is an independently stoppable evidence checkpoint over the current supported boundary. Phase 2

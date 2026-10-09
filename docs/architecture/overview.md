@@ -550,10 +550,11 @@ scope; the following rules specialize it for simulation. Five rules hold that li
 
 1. **A simulation outcome is a function of explicit inputs and one Engine interpretation.** The
    reproducibility inputs are the authored model content, the Engine interpretation, the explicit
-   workload, the seed and other random inputs, the ordered external commands, and any other
-   explicitly identified result-affecting input. Nothing else may influence acceptance, rejection,
-   assignment, ordering, simulated time, terminal state or derived results; run identity is
-   correlation metadata and never affects an outcome.
+   workload, the seed and other random inputs, the ordered external commands including advancement
+   interleavings and budgets, and any other explicitly identified result-affecting input. Nothing
+   else may influence acceptance, rejection, assignment, ordering, simulated time, state at the
+   declared boundary or derived results; run identity is correlation metadata and never affects
+   an outcome.
 2. **No result-affecting rule may remain ambient.** Any limit, ordering rule, tie-break, rounding or
    accumulation rule that two implementations could choose differently is part of the
    interpretation or is an explicitly identified input. One interpretation covers a run's complete
@@ -598,10 +599,12 @@ The current implementation realizes this contract with:
 - Java strict floating-point semantics; compilation targets the Java 21 compatibility baseline
 - No concurrent mutation of simulation state
 
-Given the same published factory model, current Engine definition, and explicit workload/commands,
+Given the same published factory model, current Engine definition, and explicit workload/control script,
 fresh `FactoryRuntime` sessions produce identical ordered supported `RuntimeEvent` streams and
-terminal `RuntimeObservation` state. Tests comparing semantic outcomes account for the per-run
-`RunId`; a test that depends on that correlation identity is wrong.
+`RuntimeObservation` state at the same declared boundary. Tests comparing semantic outcomes account
+for the per-run `RunId`; a test that depends on that correlation identity is wrong. Supported change
+history alone is not that control script; the [runtime evidence contract](runtime-contract.md#captured-execution-evidence-and-interval-determinacy)
+defines its coverage and finality limits without introducing a terminal runtime state.
 
 This determinism contract is scoped to simulation, replay, and verification contexts, where it is a critical property. It is not a claim that real-world execution itself must be, or will be made, deterministic — production operates in a non-deterministic world of real machines, people, and failures. See the Product Charter's [continuity with current architecture](/docs/product/charter.md#8-continuity-with-current-architecture) section for this distinction.
 

@@ -18,12 +18,12 @@ import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
+import com.arcogine.types.MachineState;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -47,7 +47,9 @@ import org.junit.jupiter.api.Test;
  *   <li>supported observations and supported runtime events close over the same authoritative
  *       transitions: an observation at sequence {@code S}, plus the supported events emitted after
  *       it, accounts for the state a later observation reports;
- *   <li>the supported observation is sufficient to identify the active production bottleneck.
+ *   <li>the supported observation exposes each resource's raw operational facts -- status, active
+ *       work and queue depth -- deterministically, without internal access and without the Engine
+ *       asserting a utilization measure or a bottleneck verdict.
  * </ul>
  *
  * <p>The complementary structural fact -- outward-projection DTOs never re-enter domain decision
@@ -65,8 +67,8 @@ class HeadlessClosureAcceptanceTest {
 
     /**
      * A deliberately unbalanced two-step routing: every unit is prepared quickly on {@code M1} and
-     * then finished slowly on {@code M2}, so {@code M2} becomes the unambiguous active production
-     * bottleneck while {@code M1} runs dry.
+     * then finished slowly on {@code M2}, so {@code M1} runs dry while {@code M2} still holds active
+     * and queued work.
      */
     private static FactoryModelVersion unbalancedTwoStageModel() {
         return FactoryModelPublisher.publish(new FactoryModel(
@@ -431,51 +433,53 @@ class HeadlessClosureAcceptanceTest {
     }
 
     @Test
-    void supportedObservationIdentifiesTheActiveBottleneckWithoutInternalAccess() throws SimError {
+    void supportedObservationExposesRawResourceFactsWithoutInternalAccess() throws SimError {
         FactoryRuntime runtime = FactoryRuntime.forModel(unbalancedTwoStageModel());
-        runtime.submitWorkload(new ProductId(1), 4, UNIT_PRICE).orElseThrow();
+        OrderId orderId = runtime.submitWorkload(new ProductId(1), 4, UNIT_PRICE).orElseThrow();
         runtime.advanceUntil(new SimTime(25), 200);
         runtime.drainSupportedEvents();
 
+        // Hand-derived, by zero-based ordinal: the four units are prepared at 1, 2, 3 and 4 and queue
+        // for Finish behind unit 0, which finishes at 11; unit 1 finishes at 21, the last supported
+        // change before 25, when unit 2 starts finishing and unit 3 is still waiting for Finish.
         RuntimeObservation observation = runtime.observe();
-        long elapsed = observation.metadata().currentTime().value();
-        assertTrue(elapsed > 0);
+        assertEquals(new SimTime(21), observation.metadata().currentTime());
+        Map<Long, JobObservation> jobByOrdinal = observation.jobs().stream()
+                .filter(job -> job.orderId().equals(orderId))
+                .collect(Collectors.toMap(JobObservation::ordinalWithinOrder, Function.identity()));
+        assertEquals(JobStatus.Completed, jobByOrdinal.get(0L).status());
+        assertEquals(JobStatus.Completed, jobByOrdinal.get(1L).status());
+        assertEquals(JobStatus.InProgress, jobByOrdinal.get(2L).status());
+        assertEquals(JobStatus.Queued, jobByOrdinal.get(3L).status());
 
-        // Consumer-side bottleneck identification, using only supported observation facts: the
-        // resource carrying the most work (active plus queued) and, independently, the highest
-        // busy-tick utilization. Ordering is broken deterministically by machine id.
-        Comparator<ResourceObservation> byLoad = Comparator
-                .comparingInt((ResourceObservation r) -> r.activeJobIds().size() + r.queueDepth())
-                .thenComparing(r -> r.machineId().value());
-        Comparator<ResourceObservation> byUtilization = Comparator
-                .comparingDouble((ResourceObservation r) -> (double) r.busyTicks() / elapsed)
-                .thenComparing(r -> r.machineId().value());
+        // Each resource's current operational facts, read from the supported observation alone. They
+        // describe this fixture at this boundary; they are not a utilization measure or a causal
+        // verdict about which resource constrains the design.
+        ResourceObservation prep = resource(observation, new MachineId(1));
+        assertEquals("Prep", prep.name());
+        assertEquals(MachineState.Idle, prep.state());
+        assertEquals(List.of(), prep.activeJobIds());
+        assertEquals(0, prep.queueDepth());
 
-        ResourceObservation busiest = observation.resources().stream().max(byLoad).orElseThrow();
-        ResourceObservation mostUtilized = observation.resources().stream().max(byUtilization).orElseThrow();
+        ResourceObservation finish = resource(observation, new MachineId(2));
+        assertEquals("Finish", finish.name());
+        assertEquals(MachineState.Busy, finish.state());
+        assertEquals(List.of(jobByOrdinal.get(2L).jobId()), finish.activeJobIds());
+        assertEquals(1, finish.queueDepth(), "unit 3 waits in Finish's own queue");
 
-        assertEquals(new MachineId(2), busiest.machineId(), "the slow finishing stage is the bottleneck");
-        assertEquals(new MachineId(2), mostUtilized.machineId());
-        assertEquals("Finish", busiest.name());
-
-        ResourceObservation prep = observation.resources().stream()
-                .filter(r -> r.machineId().equals(new MachineId(1)))
-                .findFirst()
-                .orElseThrow();
-        assertTrue(
-                busiest.queueDepth() > prep.queueDepth(),
-                "work accumulates in front of the bottleneck, not in front of the fast stage");
-        assertTrue(
-                busiest.busyTicks() > prep.busyTicks(),
-                "the bottleneck is also the most utilized resource");
-        assertTrue(prep.activeJobIds().isEmpty(), "the non-bottleneck stage has already run dry");
-
-        // The same identification is reproducible from an equivalent fresh run, so a consumer's
-        // bottleneck diagnosis is deterministic rather than an artifact of one run's identity.
+        // The same facts are reproducible from an equivalent fresh run, so they are a deterministic
+        // function of the explicit inputs rather than an artifact of one run's identity.
         FactoryRuntime replay = runtime.reset();
         assertNotEquals(runtime.runId(), replay.runId());
         replay.submitWorkload(new ProductId(1), 4, UNIT_PRICE).orElseThrow();
         replay.advanceUntil(new SimTime(25), 200);
         assertEquals(observation.resources(), replay.observe().resources());
+    }
+
+    private static ResourceObservation resource(RuntimeObservation observation, MachineId machineId) {
+        return observation.resources().stream()
+                .filter(resource -> resource.machineId().equals(machineId))
+                .findFirst()
+                .orElseThrow();
     }
 }

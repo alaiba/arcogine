@@ -14,8 +14,7 @@ public record ResourceObservation(
         List<JobId> activeJobIds,
         int queueDepth,
         Double capacityLiters,
-        long setupTime,
-        long busyTicks) {
+        long setupTime) {
 
     public ResourceObservation {
         activeJobIds = List.copyOf(activeJobIds);

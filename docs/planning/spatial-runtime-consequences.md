@@ -138,16 +138,19 @@ inherits from the pre-spatial Engine:
 - the PLAN-ENG-W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
 - exact `combinedQueueDepth` ranking arithmetic (ranking semantics, not a reported result — see the
   ownership note below);
-- the derived-result arithmetic: `busyTicks` overflow saturation, elapsed-time subtraction flooring
-  at zero, and the zero-denominator throughput / empty-set mean-lead-time results;
+- the derived-result arithmetic: elapsed-time subtraction flooring at zero, and the zero-denominator
+  throughput / empty-set mean-lead-time results;
 - the derived-result accumulators: exact completed-order counting and completion-ordered value
   accumulation;
 - scheduler equal-time insertion ordering where it is semantically observable.
 
 **Ownership note — reported derived results.** The last two bullets pin *reported* derived results
-(`busyTicks`, throughput, mean lead time, completed-order counting and value accumulation) whose
-placement on the Engine/analytics boundary is an open question under
+(throughput, mean lead time, completed-order counting and value accumulation) whose placement on the
+Engine/analytics boundary is an open question under
 [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md).
+This slice also pinned the overflow saturation of a per-resource cumulative busy-time counter; that
+counter was later removed from the supported runtime by an explicit repository-owner decision, as a
+supported-contract change reconciled through architecture, without the analytics research concluding.
 
 Adopted architecture makes those values part of the Engine interpretation: the §1.1 membership test
 covers derived-result arithmetic, §10.1–§10.2 fix their edge cases *and* their accumulation, and §1.1
@@ -395,7 +398,7 @@ Add the minimum internal state needed to reserve inbound admission capacity befo
 
 - one inbound reservation consumes capacity used by future acceptance decisions;
 - reserved inbound work is not `activeJobs`, is not queue depth, does not make a machine `Busy` by
-  itself, and accrues no `busyTicks`;
+  itself, and is not reported as processing;
 - a destination holding only inbound reservations may still be taken offline;
 - reservation can be released/converted deterministically for arrival and waiting paths.
 
@@ -501,9 +504,9 @@ Complete the supported read model around already-authoritative transfers:
 
 - fresh observation reconstructs in-flight state without replay;
 - job and destination resource projections agree at one sequence boundary;
-- admission load/capacity is visible enough for supported bottleneck diagnosis;
-- inbound reservation is not `activeJobIds`, queue depth, processing `Busy`, or processing
-  `busyTicks`;
+- admission load/capacity is visible enough for a consumer to account for capacity held by inbound
+  reservations;
+- inbound reservation is not `activeJobIds`, queue depth, or processing `Busy`;
 - backlog remains incomplete accepted orders;
 - lead time naturally includes transfer delay;
 - throughput remains completed orders per observed time;
@@ -581,16 +584,18 @@ Practical parallelism:
 
 PLAN-ENG-5 preserves existing metric definitions:
 
-- machine `busyTicks` / utilization measure processing time, not inbound reservation time;
+- the Engine introduces no utilization or busy-time measure, and inbound reservation time is not
+  reported as processing;
 - queue depth does not count an in-flight reservation as a queued arrival;
 - `activeJobIds` contains processing jobs, not inbound reserved jobs;
 - backlog remains incomplete accepted orders;
 - lead time naturally increases with transfer delay;
 - throughput remains completed orders per observed time.
 
-Bottleneck/capacity interpretation must account for admission capacity held by transfer-bound work
-even when processing busy ticks have not yet accrued. This is an interpretation/projection extension,
-not a redefinition of processing utilization or queue depth.
+Supported resource observation must let a consumer account for admission capacity held by
+transfer-bound work even while none of that work is processing. This is a projection extension, not a
+redefinition of processing state or queue depth, and it makes neither admission load nor any occupancy
+derivation a bottleneck verdict.
 
 ## 8. Cross-track consequences
 

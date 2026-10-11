@@ -19,7 +19,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
- * The temporal/performance counterexample: cumulative, completion-credited {@code busyTicks} is
+ * The temporal/performance counterexample: processing time credited only when a step completes is
  * neither an instantaneous occupancy nor, divided by elapsed time, an interval utilization, and the
  * derivation that measures occupancy from supported events refuses where the evidence does not
  * license a claim.
@@ -28,6 +28,8 @@ class ProcessingOccupancyOracleTest {
 
     private static final ThreeStepRoutingFamily FAMILY = StarterCorpus.LONG_STEP_PARALLEL_FAMILY;
     private static final MachineId ASSEMBLER = FAMILY.assembleResources().getFirst();
+    private static final List<ThreeStepRoutingFamily.Stage> STAGES =
+            List.of(FAMILY.cut(), FAMILY.assemble(), FAMILY.inspect());
 
     private final ExperimentEvidence evidence = ExperimentRunner.run(StarterCorpus.longStepAndParallelCapacity());
 
@@ -49,59 +51,78 @@ class ProcessingOccupancyOracleTest {
         return assertDerived(new ProcessingOccupancyOracle(boundaryLabel).evaluateOn(evidence)).value();
     }
 
-    @Test
-    void completionCreditedBusyTicksReadZeroWhileTheAssemblerIsFullyOccupied() {
-        ResourceObservation assembler = resource(evidence.observation("mid-run"), ASSEMBLER);
-
-        // The supported observation: both concurrency slots hold a running step, and nothing has been credited.
-        assertEquals(MachineState.Busy, assembler.state());
-        assertEquals(assembler.concurrency(), assembler.activeJobIds().size());
-        assertEquals(0, assembler.busyTicks(), "busyTicks is credited only when a step completes");
-
-        // Read as a utilization, busyTicks would say a fully occupied resource is idle. The derivation over
-        // dispatch and completion events sees the two unfinished steps: (3-1) + (3-2) job-ticks so far.
-        ResourceOccupancy occupancy = occupancyOf(occupancyAt("mid-run"), ASSEMBLER);
-        assertEquals(3, occupancy.occupiedJobTicks());
-        assertEquals(6, occupancy.capacityJobTicks());
-        assertTrue(occupancy.occupiedJobTicks() > assembler.busyTicks());
+    /**
+     * The comparison the derivation must be distinguishable from: processing time credited only when
+     * a step completes, each {@code JOB_STEP_COMPLETED} through the boundary contributing its
+     * published step duration.
+     */
+    private long completedStepJobTicks(String boundaryLabel, MachineId machineId) {
+        long cursor = evidence.observation(boundaryLabel).metadata().latestEventSequence();
+        long total = 0;
+        for (RuntimeEventEnvelope event : evidence.retainedEvents()) {
+            if (event.sequence() <= cursor
+                    && event.payload() instanceof RuntimeEventPayload.JobStepCompleted completed
+                    && completed.machineId().equals(machineId)) {
+                total += STAGES.get(completed.stepIndex()).duration();
+            }
+        }
+        return total;
     }
 
     @Test
-    void cumulativeBusyTicksCanExceedElapsedTimeSoDividingThemByItIsNotAUtilization() {
+    void stepsStillRunningAtTheBoundaryCountWhileTheAssemblerIsFullyOccupied() {
+        ResourceObservation assembler = resource(evidence.observation("mid-run"), ASSEMBLER);
+
+        // The supported observation: both concurrency slots hold a running step, and none has completed.
+        assertEquals(MachineState.Busy, assembler.state());
+        assertEquals(assembler.concurrency(), assembler.activeJobIds().size());
+        assertEquals(0, completedStepJobTicks("mid-run", ASSEMBLER), "no assembler step has completed yet");
+
+        // Credited only at completion, processing time would say a fully occupied resource is idle. The
+        // derivation over dispatch and completion events sees the two unfinished steps: (3-1) + (3-2)
+        // job-ticks so far.
+        ResourceOccupancy occupancy = occupancyOf(occupancyAt("mid-run"), ASSEMBLER);
+        assertEquals(3, occupancy.occupiedJobTicks());
+        assertEquals(6, occupancy.capacityJobTicks());
+    }
+
+    @Test
+    void occupiedJobTicksCanExceedElapsedTimeSoDividingThemByItIsNotAUtilization() {
         RuntimeObservation closing = evidence.observation(ExperimentEvidence.CLOSING_LABEL);
         ResourceObservation assembler = resource(closing, ASSEMBLER);
         long elapsed = closing.metadata().currentTime().value();
+        ResourceOccupancy occupancy = occupancyOf(occupancyAt(ExperimentEvidence.CLOSING_LABEL), ASSEMBLER);
 
-        // Two jobs overlap on one resource, so cumulative processing ticks pass the elapsed ticks:
-        // busyTicks / elapsed would be about 1.38, more than the resource can possibly be occupied.
+        // Two jobs overlap on one resource, so occupied job-ticks pass the elapsed ticks: divided by
+        // elapsed time alone they would be about 1.38, more than the resource can possibly be occupied.
         assertEquals(2, assembler.concurrency());
-        assertTrue(assembler.busyTicks() > elapsed, assembler.busyTicks() + " vs elapsed " + elapsed);
+        assertEquals(36, occupancy.occupiedJobTicks());
+        assertTrue(occupancy.occupiedJobTicks() > elapsed, occupancy.occupiedJobTicks() + " vs elapsed " + elapsed);
 
         // Occupancy measured against capacity (elapsed time x concurrency) stays within what is possible.
-        ResourceOccupancy occupancy = occupancyOf(occupancyAt(ExperimentEvidence.CLOSING_LABEL), ASSEMBLER);
         assertEquals(52, occupancy.capacityJobTicks());
-        assertEquals(36, occupancy.occupiedJobTicks());
         assertTrue(occupancy.occupiedJobTicks() <= occupancy.capacityJobTicks());
     }
 
     @Test
-    void busyTicksEqualsDerivedOccupancyOnlyWhenNoStepIsUnfinished() {
-        // At completion every started step has finished, so the credited total is exactly the occupied total.
-        RuntimeObservation closing = evidence.observation(ExperimentEvidence.CLOSING_LABEL);
+    void completedStepTimeEqualsDerivedOccupancyOnlyWhenNoStepIsUnfinished() {
+        // At completion every started step has finished, so the completion-credited total is exactly
+        // the occupied total.
         for (ResourceOccupancy occupancy : occupancyAt(ExperimentEvidence.CLOSING_LABEL)) {
             assertEquals(
-                    resource(closing, occupancy.machineId()).busyTicks(),
+                    completedStepJobTicks(ExperimentEvidence.CLOSING_LABEL, occupancy.machineId()),
                     occupancy.occupiedJobTicks(),
                     "resource " + occupancy.machineId());
         }
 
         // Mid-run the assembler has two unfinished steps: the difference between the two is exactly them.
-        RuntimeObservation midRun = evidence.observation("mid-run");
         ResourceOccupancy assembler = occupancyOf(occupancyAt("mid-run"), ASSEMBLER);
-        assertNotEquals(resource(midRun, ASSEMBLER).busyTicks(), assembler.occupiedJobTicks());
+        assertNotEquals(completedStepJobTicks("mid-run", ASSEMBLER), assembler.occupiedJobTicks());
         // The cutter has no unfinished step at that boundary, so for it the two agree.
         MachineId cutter = FAMILY.cutResources().getFirst();
-        assertEquals(resource(midRun, cutter).busyTicks(), occupancyOf(occupancyAt("mid-run"), cutter).occupiedJobTicks());
+        assertEquals(
+                completedStepJobTicks("mid-run", cutter),
+                occupancyOf(occupancyAt("mid-run"), cutter).occupiedJobTicks());
     }
 
     @Test

@@ -19,7 +19,6 @@ public class Machine implements MachineView {
     private final ArrayDeque<JobId> queue;
     private final Double capacityLiters;
     private final long setupTime;
-    private long busyTicks;
 
     public Machine(MachineId id, String name, int concurrency, Double capacityLiters, long setupTime) {
         this.id = id;
@@ -30,7 +29,6 @@ public class Machine implements MachineView {
         this.queue = new ArrayDeque<>();
         this.capacityLiters = capacityLiters;
         this.setupTime = setupTime;
-        this.busyTicks = 0;
     }
 
     public boolean canAcceptJob() {
@@ -134,14 +132,5 @@ public class Machine implements MachineView {
     @Override
     public long setupTime() {
         return setupTime;
-    }
-
-    @Override
-    public long busyTicks() {
-        return busyTicks;
-    }
-
-    public void setBusyTicks(long busyTicks) {
-        this.busyTicks = busyTicks;
     }
 }

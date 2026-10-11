@@ -35,6 +35,17 @@ the definition owner and express definition-specific evidence requirements in th
 vocabulary before final adversarial review. This question remains **READY**, with prospective
 ownership, admission rules and any supported-result reclassification unresolved.
 
+## Owner-decided busy-counter removal
+
+The per-resource cumulative busy-time counter (`busyTicks`) that Phase 1 classified has since been
+removed from the supported runtime by an explicit repository-owner decision, reconciled into
+[Engine semantics](../../architecture/engine-semantics.md#10-kpi-and-resource-observation-interpretation)
+and the [runtime contract](../../architecture/runtime-contract.md#supported-observations-expose-authoritative-current-state-and-the-event-cursor-they-include).
+That removal followed its own owner-decision route. It does not accept Phase 2, select an analytics
+owner or module, or settle any utilization, occupancy, starvation or bottleneck definition. Phase 1
+statements about the counter below classify the earlier supported surface and are historical, not
+claims about the current one.
+
 This remains one registered research question, executed as an explicitly coupled two-phase packet.
 Phase 1 is an independently stoppable evidence checkpoint over the current supported boundary. Phase 2
 consumes that classification and makes the prospective ownership decision. A Phase 1 report does not
@@ -64,9 +75,9 @@ particular run still produces the same number.
 Phase 1 is deliberately descriptive before it is prescriptive. It reconstructs the current supported
 boundary from architecture/specification, runtime contracts, implementation, and conformance evidence.
 It must distinguish semantic ownership from source-code placement and classify the current
-`RuntimeObservation` surface, `RuntimePerformanceObservation` fields, `busyTicks`, relevant
-`FactoryHandler` aggregates, and result-affecting derived quantities such as
-`combinedQueueDepth`.
+`RuntimeObservation` surface, `RuntimePerformanceObservation` fields, relevant `FactoryHandler`
+aggregates, and result-affecting derived quantities such as `combinedQueueDepth`; at the time of
+Phase 1 this also covered the since-removed `busyTicks` counter.
 
 Phase 1 may identify tensions, misleading names, or plausible reclassification candidates, but it
 must not choose the future Engine-rich/facts-only/mixed model, invent the target analytics contract,
@@ -87,8 +98,8 @@ Across the two phases, the investigation must decide or explicitly classify:
 - which facts/projections must remain Engine/runtime-owned;
 - which longitudinal, statistical, diagnostic, or comparative computations, if any, should be
   consumer-neutral analytics;
-- the ownership of each current `RuntimePerformanceObservation` field, `busyTicks`, and the
-  relevant `FactoryHandler` aggregates;
+- the ownership of each current `RuntimePerformanceObservation` field and the relevant
+  `FactoryHandler` aggregates;
 - which proposed changes would require an Engine-semantics change, a runtime-contract change, both,
   or only implementation reorganization; and
 - whether any consumer-neutral analytics responsibility remains after that classification.
@@ -181,7 +192,9 @@ history.
 effective eligible set is singular or bound. Multi-eligible waiting must not be reclassified as
 though one physical queue owns it.
 
-**Truthful naming is contractual.** `busyTicks` is not instantaneous utilization.
+**Truthful naming is contractual.** A cumulative, completion-credited processing-time sum is not
+instantaneous utilization; reading the former `busyTicks` counter that way is the misuse its removal
+retired.
 `combinedQueueDepth` is a ranking quantity, not physical units waiting at one machine. Authored
 `setupTime` is not a runtime performance fact while the runtime does not use it.
 
@@ -215,7 +228,8 @@ At minimum classify:
 
 - `RuntimeObservation` state projections;
 - every `RuntimePerformanceObservation` field individually;
-- `busyTicks` and its accumulator semantics;
+- `busyTicks` and its accumulator semantics (historical: part of the surface Phase 1 classified,
+  since removed);
 - `FactoryHandler.avgLeadTime()`, `throughput(...)`, and completed-value/count aggregates;
 - `combinedQueueDepth` as Engine ranking semantics versus presentable measurement; and
 - the former `com.arcogine.core.kpi.*` implementation as historical evidence, not a component to
@@ -246,10 +260,12 @@ At minimum:
 
 1. Multi-eligible waiting while every per-machine `queueDepth` is zero, to distinguish current
    projection meaning from physical-queue inference.
-2. A long unfinished step while completion-credited `busyTicks` is still zero, to pin the current
-   accumulator semantics without renaming it as utilization.
-3. `concurrency > 1`, where raw cumulative processing ticks divided by elapsed time can exceed 1,
-   to expose what current Engine-owned accumulation does and does not mean.
+2. A long unfinished step at an observation boundary, where processing time credited only at step
+   completion is still zero while occupancy derived from dispatch and completion events is not, to
+   keep a completion-credited total distinct from utilization. (This case was first stated against
+   the since-removed `busyTicks` counter.)
+3. `concurrency > 1`, where cumulative processing job-ticks divided by elapsed time alone can exceed
+   1, to expose why occupancy needs an explicit capacity denominator rather than a raw accumulation.
 4. `combinedQueueDepth`: exact as Engine ranking semantics, unsafe as physical queue visualization.
 
 ### Phase 2

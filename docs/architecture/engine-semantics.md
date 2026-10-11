@@ -504,10 +504,17 @@ else:
 
 ## 10. KPI and resource-observation interpretation
 
+The Engine produces no resource utilization, cumulative busy-time, occupancy or bottleneck measure.
+Resource observation reports current operational facts — status, concurrency, active jobs and queue
+depth — and the supported dispatch and step-completion events record when processing began and
+ended. A consumer may derive processing occupancy for a completely recorded period from those events
+only under an explicitly named analytical method that owns its own population, denominator and
+evidence-completeness rules ([runtime contract](runtime-contract.md#responsibilities-and-limits));
+such a derivation is not an Engine result. Neither current resource load (active plus queued work)
+nor any occupancy derivation identifies a design's bottleneck or constraint by itself.
+
 Spatial transfer semantics do not redefine existing metric formulas:
 
-- `busyTicks` / utilization remain processing-time measures; transfer time does not accrue resource
-  busy ticks merely because destination admission capacity is reserved;
 - queue depth remains the existing count of queued/waiting work and does not count an in-flight job
   as a destination queue entry;
 - backlog continues to count incomplete accepted orders;
@@ -518,15 +525,14 @@ A reserved inbound job also does **not** appear in the destination resource proj
 `activeJobIds`, because active jobs are jobs that have actually begun processing. A destination
 holding only inbound reservations therefore keeps the processing-oriented machine state it would
 otherwise have (`Idle` when it has no active processing, or `Busy` only because of other active
-jobs). Supported resource observation must nevertheless expose enough capacity information for its
-existing bottleneck/capacity interpretation to account for admission capacity consumed by inbound
-reservations; it must not silently count the in-flight job as processing or queue depth. The exact
-projection field used for this admission-load fact is an implementation/API-shape choice, not a
-change to the semantic distinction.
+jobs). Supported resource observation must nevertheless expose enough capacity information for a
+consumer to account for admission capacity consumed by inbound reservations; it must not silently
+count the in-flight job as processing or queue depth. The exact projection field used for this
+admission-load fact is an implementation/API-shape choice, not a change to the semantic distinction.
 
-Bottleneck interpretation must therefore widen: a destination can have constrained admission
-capacity because of transfer-bound work while not yet accruing processing busy ticks. Consumers must
-not misdiagnose that state as ordinary processing utilization.
+A destination can therefore have constrained admission capacity because of transfer-bound work while
+none of that work is processing. Any consumer interpretation of resource load must keep reserved
+admission capacity distinct from processing occupancy rather than count it as processing.
 
 ### 10.1 Derived-result arithmetic
 
@@ -534,26 +540,21 @@ The arithmetic that produces supported derived results is itself result-affectin
 two implementations computing these differently would report different supported observations for an
 identical model, workload, seed and ordered command sequence. These rules are part of the interpretation.
 
-1. **Cumulative `busyTicks` saturates.** A resource's cumulative busy time is credited at step
-   completion by adding the finished step's duration. Because durations are non-negative, a negative
-   sum can only be signed 64-bit overflow, so the accumulator saturates at the maximum representable
-   tick value rather than wrapping. Utilization derived from a saturated `busyTicks` is pinned at
-   its maximum rather than becoming negative or nonsensical.
-2. **Elapsed-time subtraction saturates at zero.** Subtracting one simulated time from another
+1. **Elapsed-time subtraction saturates at zero.** Subtracting one simulated time from another
    yields zero when the subtrahend is the greater, never a negative interval. Lead time and every
    other interval-derived measure therefore has a floor of zero by construction.
-3. **Throughput over a zero-tick window is zero.** Throughput is completed orders per observed tick;
+2. **Throughput over a zero-tick window is zero.** Throughput is completed orders per observed tick;
    an observation window of zero ticks yields `0`, not a division by zero, an infinity, or a NaN.
-4. **Mean lead time over an empty completed set is zero.** With no completed orders the mean is `0`,
+3. **Mean lead time over an empty completed set is zero.** With no completed orders the mean is `0`,
    not a NaN from a zero denominator.
-5. Simulated-time **addition is not saturating.** It is unchecked, and the pre-existing runtime
+4. Simulated-time **addition is not saturating.** It is unchecked, and the pre-existing runtime
    time-addition guard rejects an overflowing schedule at the command boundary instead of silently
    producing a wrapped time — see section 7 rule 6 and the zero-mutation rejection contract of
    section 1.2.
 
-Rules 1 to 4 are deliberate total-function choices at domain edges, not incidental defensive coding:
+Rules 1 to 3 are deliberate total-function choices at domain edges, not incidental defensive coding:
 each replaces an undefined, wrapped, or non-finite value with a defined one a consumer can interpret.
-Rule 5 is the deliberate exception, and it is a rejection rule rather than a value rule. Changing any
+Rule 4 is the deliberate exception, and it is a rejection rule rather than a value rule. Changing any
 of them changes supported derived results for identical explicit inputs and is therefore a change to
 the interpretation.
 
@@ -566,15 +567,14 @@ halves of one contract; specifying only the first leaves the second ambient.
 
 | Supported derived result | Accumulator | Accumulation rule |
 |---|---|---|
-| resource `busyTicks` / utilization | per-resource cumulative tick sum | saturating (rule 1 below) |
 | mean lead time | sum of completed-order lead times ÷ completed count | saturating (rule 1 below) |
 | throughput | completed-order counter ÷ elapsed ticks | exact counting (rule 2 below) |
 | backlog | count of incomplete accepted orders | current-state count, not a running accumulator |
 | completed sales value | running total of completed order value | deterministic by completion order (rule 3 below) |
 
-1. **Every tick-valued accumulator saturates; none wraps.** This extends section 10.1 rule 1 beyond
-   `busyTicks` to mean-lead-time accumulation: summing completed-order lead times saturates at the
-   maximum representable tick value and never wraps to a negative or small positive total. A wrapping
+1. **Every tick-valued accumulator saturates; none wraps.** Mean-lead-time accumulation is the
+   tick-valued accumulator: summing completed-order lead times saturates at the maximum
+   representable tick value and never wraps to a negative or small positive total. A wrapping
    accumulator would not merely lose precision — it would report a qualitatively wrong mean, and two
    implementations differing only in accumulator width would disagree on a supported observation.
 2. **Counting accumulators are exact.** The completed-order counter increments once per completing
@@ -593,7 +593,7 @@ halves of one contract; specifying only the first leaves the second ambient.
    round-to-nearest above it — deterministic across conforming implementations either way, so no
    further rounding rule is required.
 
-Both tick-valued accumulators saturate in the current implementation, pinned by
+The mean-lead-time accumulator saturates in the current implementation, pinned by
 `EngineDerivedResultConformanceTest`. Specifying wrap-around instead would turn an arithmetic defect
 into a reproducibility rule, which is why a wrapping accumulator is a conformance failure rather than
 an alternative behavior.
@@ -733,8 +733,7 @@ of promoting the interpretation, never a promotion by themselves. The fixtures m
     `SessionControlAcceptanceTest` rather than duplicated here;
 13. agreement between job transfer observation and destination resource admission-load observation;
 14. deterministic event-type/entity-reference ordering and simulated times;
-15. the section 10.1 derived-result arithmetic: `busyTicks` saturating at the maximum representable
-    tick value instead of wrapping negative, elapsed-time subtraction flooring at zero, zero-tick
+15. the section 10.1 derived-result arithmetic: elapsed-time subtraction flooring at zero, zero-tick
     throughput and empty-set mean lead time each yielding `0` rather than a non-finite value, and
     simulated-time addition overflow being rejected at the command boundary with no partial
     mutation rather than saturating;

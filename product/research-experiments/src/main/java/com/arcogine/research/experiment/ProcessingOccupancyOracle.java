@@ -14,12 +14,12 @@ import java.util.stream.Collectors;
  * is not an Engine fact, game-owned analytics, or public API.
  *
  * <p>It measures outcomes from supported dispatch and completion events; it never reconstructs or
- * re-decides which resource a job was given. It is deliberately not derived from the cumulative
- * {@code busyTicks} a resource observation reports: that field is credited only when a step
- * completes, so it does not count a step that is still running, and it sums processing ticks across
- * concurrent jobs, so it cannot be read as an instantaneous occupancy and, divided by elapsed time,
- * exceeds 1 when concurrency does. Capacity over the interval is truthful only for a resource that
- * was online throughout, so a resource that changed availability refuses the whole measurement.
+ * re-decides which resource a job was given. A step that is still running at the boundary counts up
+ * to the boundary, so a total credited only when steps complete would understate it, and occupied
+ * job-ticks are summed across concurrent jobs, so they are measured against capacity (elapsed time
+ * multiplied by concurrency) rather than divided by elapsed time alone. Capacity over the interval
+ * is truthful only for a resource that was online throughout, so a resource that changed
+ * availability refuses the whole measurement.
  *
  * <p>A resource's occupancy is a measurement, not an interpretation. A resource that is highly
  * occupied is not thereby the design's constraint or bottleneck, and a resource that several steps

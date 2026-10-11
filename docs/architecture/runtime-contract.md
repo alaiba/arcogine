@@ -182,8 +182,17 @@ Work items
     timing
 
 Performance
-    supported throughput/lead-time/backlog/utilization facts
+    backlog
+    completed-order count
+    completed sales value
+    mean lead time
+    throughput
 ```
+
+Resource and performance observations carry no utilization, cumulative busy-time, occupancy or
+bottleneck fact: the Engine produces none ([Engine semantics](engine-semantics.md#10-kpi-and-resource-observation-interpretation)).
+Such interpretations belong to an explicitly named analytical method over supported evidence
+([responsibilities and limits](#responsibilities-and-limits)).
 
 Purpose-specific observation types are preferred over one unrestricted universal state dump where they preserve a cleaner capability boundary. Regardless of decomposition, all facts are derived from authoritative runtime state and must agree on one `latestEventSequence` boundary.
 

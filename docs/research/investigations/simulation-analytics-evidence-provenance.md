@@ -100,9 +100,11 @@ At minimum:
 1. Late collection after earlier supported events have already drained.
 2. A deliberately incomplete interval where a duration/occupancy claim must refuse or qualify.
 3. Multi-eligible waiting, proving that resource-local queue depth is not sufficient evidence.
-4. A long unfinished step where completion-credited `busyTicks` is insufficient for instantaneous
-   occupancy.
-5. `concurrency > 1`, defeating naive busy-tick utilization.
+4. A long unfinished step at the boundary, where occupancy derived from supported dispatch events
+   must count the running step up to the boundary — evidence a completion-credited total would miss —
+   and must refuse or qualify when the dispatch that opened it was not captured.
+5. `concurrency > 1`, where occupied job-ticks summed across overlapping steps can exceed elapsed
+   time, so occupancy needs an explicit capacity denominator rather than elapsed time alone.
 6. Equal-time events where supported sequence, not wall-clock equality alone, determines order.
 7. Run reset and fresh-run identity.
 8. Incremental accumulator state reconstructed from the same declared evidence as batch calculation.

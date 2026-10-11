@@ -651,8 +651,7 @@ public class FactoryRuntime {
                         view.activeJobs().stream().sorted().toList(),
                         view.queueDepth(),
                         view.capacityLiters(),
-                        view.setupTime(),
-                        view.busyTicks()))
+                        view.setupTime()))
                 .toList();
         List<OrderObservation> orders = ordersView()
                 .sorted(Comparator.comparing(order -> order.id().value()))

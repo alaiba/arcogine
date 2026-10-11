@@ -74,7 +74,7 @@ public class FactoryHandler implements EventHandler {
             case EventPayload.OrderCreation oc ->
                     submitOrder(oc.productId(), oc.quantity(), oc.unitPrice(), event.time(), scheduler);
             case EventPayload.TaskEnd te ->
-                    handleTaskEnd(te.jobId(), te.machineId(), te.stepIndex(), scheduler, event.time());
+                    handleTaskEnd(te.jobId(), te.machineId(), scheduler, event.time());
             case EventPayload.MachineAvailabilityChange mac ->
                     handleMachineAvailability(mac.machineId(), mac.online(), scheduler, event.time());
             default -> {}
@@ -330,28 +330,12 @@ public class FactoryHandler implements EventHandler {
     private void handleTaskEnd(
             JobId jobId,
             MachineId machineId,
-            int stepIndex,
             Scheduler scheduler,
             SimTime currentTime) {
         Machine machine = machines.getMut(machineId);
         machine.completeJob(jobId);
 
         Job job = jobs.get(jobId);
-
-        // Identifying the active bottleneck from supported observations alone requires a
-        // resource's cumulative busy time to be an authoritative fact -- which it is only if it is
-        // actually accumulated. Credit the just-finished step's duration here -- the one point
-        // where a machine is known to have occupied itself for exactly that long -- so
-        // ResourceObservation.busyTicks() expresses real utilization rather than a constant zero.
-        routings.getRoutingForProduct(job.productId())
-                .getStep(stepIndex)
-                .ifPresent(finished -> {
-                    long updated = machine.busyTicks() + finished.duration();
-                    // Durations are non-negative, so a negative sum can only be overflow; saturate
-                    // rather than report a nonsensical utilization.
-                    machine.setBusyTicks(updated < 0 ? Long.MAX_VALUE : updated);
-                });
-
         job.completeStep(currentTime);
 
         if (job.isComplete()) {

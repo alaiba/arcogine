@@ -199,7 +199,9 @@ class EligibilityPoolOccupancyOracleTest {
 
         assertEquals(Set.of(), new PoolOccupancies(List.of()).maximumOccupancyPools());
         assertThrows(IllegalArgumentException.class, () -> new PoolOccupancy(a, 1, 0));
+        assertThrows(IllegalArgumentException.class, () -> new PoolOccupancy(a, -1, 1));
         assertThrows(IllegalArgumentException.class, () -> new EligibilityPool(List.of(), Set.of(new MachineId(1))));
+        assertThrows(IllegalArgumentException.class, () -> new EligibilityPool(List.of(new OperationStep(1, 1, "A")), Set.of()));
     }
 
     private static ExperimentEvidence runWithAvailabilityToggled(FactoryModel model, MachineId machineId) {

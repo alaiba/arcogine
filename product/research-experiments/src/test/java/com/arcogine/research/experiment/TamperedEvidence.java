@@ -2,10 +2,12 @@ package com.arcogine.research.experiment;
 
 import com.arcogine.factory.model.FactoryModel;
 import com.arcogine.factory.process.RuntimeEventEnvelope;
+import com.arcogine.factory.process.RuntimeEventPayload;
 import com.arcogine.factory.process.RuntimeObservation;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * Builds deliberately altered copies of an evidence bundle, for tests that need to show a check
@@ -26,6 +28,21 @@ final class TamperedEvidence {
                 evidence.observations(),
                 events,
                 evidence.window());
+    }
+
+    static ExperimentEvidence withPayload(ExperimentEvidence evidence, int index, RuntimeEventPayload payload) {
+        List<RuntimeEventEnvelope> events = new ArrayList<>(evidence.retainedEvents());
+        RuntimeEventEnvelope old = events.get(index);
+        events.set(index, new RuntimeEventEnvelope(old.runId(), old.sequence(), old.simulationTime(),
+                old.eventType(), old.modelFingerprint(), old.controlledRevisionId(), old.affectedEntityRefs(), payload));
+        return withEvents(evidence, events);
+    }
+
+    static ExperimentEvidence withCommands(
+            ExperimentEvidence evidence, List<ExperimentEvidence.CommandRecord> commands) {
+        return new ExperimentEvidence(
+                evidence.fixtureId(), evidence.publishedModel(), evidence.modelFingerprint(),
+                evidence.script(), commands, evidence.observations(), evidence.retainedEvents(), evidence.window());
     }
 
     static ExperimentEvidence withObservation(

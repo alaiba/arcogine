@@ -11,7 +11,7 @@
 State at minimum:
 
 - **Title** — name the question, not the delivery coordinate that tracked it.
-- **Research status** — one of `docs/development/researching.md`'s lifecycle values. `READY` means the question is bounded and ready to start, not that work is in progress: once evidence gathering or synthesis has begun (including drafting this report), the investigation is `ACTIVE`, and stays `ACTIVE` until the normative `CONCLUDED` conditions in `docs/development/researching.md` are actually satisfied.
+- **Research status** — the maintained register lifecycle state from `docs/development/researching.md`. An admitted unresolved question remains `READY` before investigation, while evidence/review/reconciliation is in progress, and after a report exists until the normative `CONCLUDED` or `SUPERSEDED` conditions are satisfied. Do not create a register transition merely because investigation work has started; workspace evidence coordinates carry execution progress.
 - **Research baseline** — the exact live `main` SHA the investigation was grounded against.
 - **Final repository recheck**, when live `main` moved materially during the investigation — record the newer SHA and whether it changes the conclusion. Do not add later review or reconciliation baselines to the report; those actors own their own baselines.
 - **Authority statement** — this document is research evidence only; it is not accepted architecture, product direction, or implementation commitment until a separate reconciliation change promotes it.
@@ -40,6 +40,8 @@ What the current repository actually establishes, labeled `Repository fact` wher
 ## Candidate models / hypotheses
 
 The alternative answers under test, including a current/simple/no-new-abstraction candidate where one plausibly applies. State each candidate's shape before evaluating it against proving cases — do not present only the winning candidate.
+
+For a material shared-semantic or ownership question solved through today's APIs or a consumer-side protocol, apply the [implementability versus architectural suitability](../development/researching.md#implementability-versus-architectural-suitability) test. Compare a credible bounded producer/contract adaptation, or explain why it could not affect the decision. State who can guarantee each invariant and compare coordination, failure modes, consumer duplication and producer/compatibility costs; passing consumer-side tests is feasibility evidence, not by itself an ownership verdict.
 
 ## External evidence
 

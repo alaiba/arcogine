@@ -295,6 +295,41 @@ class ChallengeContentLoaderTest {
     }
 
     @Test
+    void catalogueInputFailuresAreStructuredContentIssues() {
+        List<EquipmentCatalogueContentLoadResult> results = List.of(
+                ChallengeContentLoader.loadCatalogue(null),
+                ChallengeContentLoader.loadCatalogue("{ broken"),
+                ChallengeContentLoader.loadCatalogue("[]"));
+        List<String> expectedCodes = List.of(
+                "content.source.null", "content.malformed-json", "content.root.not-object");
+        for (int i = 0; i < results.size(); i++) {
+            EquipmentCatalogueContentLoadResult result = results.get(i);
+            assertFalse(result.isSuccess());
+            assertEquals(1, result.issues().size());
+            assertEquals(expectedCodes.get(i), result.issues().getFirst().code());
+            assertEquals("$", result.issues().getFirst().path());
+        }
+    }
+
+    @Test
+    void catalogueOfferQuantityLimitRejectsNonIntegerContent() {
+        String source = """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": [
+                    {"itemId": "assembler.basic", "purchaseCostCredits": 500, "quantityLimit": "two"}
+                  ]
+                }
+                """;
+        EquipmentCatalogueContentLoadResult result = ChallengeContentLoader.loadCatalogue(source);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream().anyMatch(issue -> issue.code().equals("content.field.type")
+                && issue.path().equals("offers[0].quantityLimit")));
+    }
+
+    @Test
     void rejectsCatalogueWithDuplicateItemIds() {
         String source = """
                 {

@@ -9,9 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.arcogine.factory.process.OrderObservation;
 import com.arcogine.factory.process.RuntimeEventEnvelope;
 import com.arcogine.factory.process.RuntimeEventType;
+import com.arcogine.factory.process.RuntimeEventPayload;
 import com.arcogine.factory.process.RuntimeObservation;
 import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
 import com.arcogine.types.SimTime;
+import com.arcogine.types.OrderId;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -77,6 +79,25 @@ class CompletionTickOracleTest {
     }
 
     @Test
+    void aClosingObservationForAnotherOrderIsRefused() {
+        RuntimeObservation closing = evidence.observation(ExperimentEvidence.CLOSING_LABEL);
+        OrderObservation order = closing.orders().getFirst();
+        OrderObservation other = new OrderObservation(
+                new OrderId(order.orderId().value() + 1), order.productId(), order.requestedQuantity(),
+                order.releasedQuantity(), order.completedQuantity(), order.createdAt(),
+                order.completedAt(), order.complete());
+        ExperimentEvidence mismatched = TamperedEvidence.withObservation(
+                evidence, ExperimentEvidence.CLOSING_LABEL,
+                new RuntimeObservation(closing.metadata(), closing.resources(), List.of(other),
+                        closing.jobs(), closing.pendingWork(), closing.performance()));
+
+        OracleOutcome.Underdetermined<Long> refused =
+                assertUnderdetermined(new CompletionTickOracle().evaluateOn(mismatched));
+        assertTrue(refused.reasons().getFirst().contains("does not report exactly the accepted order"),
+                refused.toString());
+    }
+
+    @Test
     void aMissingCompletionEventIsRefused() {
         List<RuntimeEventEnvelope> withoutCompletion = evidence.retainedEvents().stream()
                 .filter(event -> event.eventType() != RuntimeEventType.ORDER_COMPLETED)
@@ -136,5 +157,40 @@ class CompletionTickOracleTest {
                 .contains("2 orders were accepted"));
         assertTrue(assertUnderdetermined(new CompletionTickOracle().evaluateOn(noOrder)).reasons().getFirst()
                 .contains("0 orders were accepted"));
+    }
+
+    @Test
+    void inconsistentClosingOrderAndUnrelatedCompletionAreRefused() {
+        RuntimeObservation closing = evidence.observation(ExperimentEvidence.CLOSING_LABEL);
+        OrderObservation order = closing.orders().getFirst();
+        ExperimentEvidence noOrder = TamperedEvidence.withObservation(evidence, ExperimentEvidence.CLOSING_LABEL,
+                new RuntimeObservation(closing.metadata(), closing.resources(), List.of(), closing.jobs(),
+                        closing.pendingWork(), closing.performance()));
+        assertTrue(assertUnderdetermined(new CompletionTickOracle().evaluateOn(noOrder)).reasons().getFirst()
+                .contains("does not report exactly"));
+
+        OrderObservation noCompletedAt = new OrderObservation(order.orderId(), order.productId(),
+                order.requestedQuantity(), order.releasedQuantity(), order.completedQuantity(), order.createdAt(),
+                null, true);
+        ExperimentEvidence noTime = TamperedEvidence.withObservation(evidence, ExperimentEvidence.CLOSING_LABEL,
+                new RuntimeObservation(closing.metadata(), closing.resources(), List.of(noCompletedAt), closing.jobs(),
+                        closing.pendingWork(), closing.performance()));
+        assertTrue(assertUnderdetermined(new CompletionTickOracle().evaluateOn(noTime)).reasons().getFirst()
+                .contains("is not complete"));
+
+        int completionIndex = -1;
+        for (int i = 0; i < evidence.retainedEvents().size(); i++) {
+            if (evidence.retainedEvents().get(i).payload() instanceof RuntimeEventPayload.OrderCompleted) {
+                completionIndex = i;
+                break;
+            }
+        }
+        RuntimeEventPayload.OrderCompleted completed =
+                (RuntimeEventPayload.OrderCompleted) evidence.retainedEvents().get(completionIndex).payload();
+        ExperimentEvidence otherCompletion = TamperedEvidence.withPayload(evidence, completionIndex,
+                new RuntimeEventPayload.OrderCompleted(new OrderId(99), completed.jobId(), completed.productId(),
+                        completed.quantity(), completed.unitPrice()));
+        assertTrue(assertUnderdetermined(new CompletionTickOracle().evaluateOn(otherCompletion)).reasons().getFirst()
+                .contains("0 ORDER_COMPLETED events"));
     }
 }

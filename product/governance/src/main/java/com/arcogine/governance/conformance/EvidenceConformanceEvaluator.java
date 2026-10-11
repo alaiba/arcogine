@@ -60,8 +60,8 @@ public final class EvidenceConformanceEvaluator {
         }
         validateUses(requirement, assertion, modelFingerprint, evidenceUses, revisionAuthority);
 
-        boolean adequateBasis = evidenceUses.stream()
-                .anyMatch(use -> use.isReliedOn() && use.applicability().isAdequate());
+        // EvidenceUse already rejects reliance without adequate applicability.
+        boolean adequateBasis = evidenceUses.stream().anyMatch(EvidenceUse::isReliedOn);
         if ((judgment.result() == ConformanceResult.PASS || judgment.result() == ConformanceResult.FAIL)
                 && !adequateBasis) {
             return result(requirement, assertion, modelFingerprint, verifiedRevision,

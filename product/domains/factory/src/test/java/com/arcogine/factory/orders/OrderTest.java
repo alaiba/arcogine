@@ -44,4 +44,19 @@ class OrderTest {
         assertEquals("order", error.kind());
         assertEquals(999L, error.id());
     }
+
+    @Test
+    void childCompletionIsFinalOnlyOnceAndUnknownOrdersCannotAdvance() {
+        OrderStore store = new OrderStore();
+        OrderId id = store.createOrder(new ProductId(1), 2, new SimTime(0), 10.0);
+        assertEquals(false, store.completeChild(id, new SimTime(3)));
+        assertEquals(false, store.execution(id).complete());
+        assertEquals(true, store.completeChild(id, new SimTime(5)));
+        assertEquals(new SimTime(5), store.execution(id).completedAt());
+        assertThrows(SimError.InvalidStateTransition.class,
+                () -> store.completeChild(id, new SimTime(6)));
+        assertThrows(SimError.UnknownId.class, () -> store.execution(new OrderId(999)));
+        assertThrows(SimError.UnknownId.class,
+                () -> store.completeChild(new OrderId(999), new SimTime(6)));
+    }
 }

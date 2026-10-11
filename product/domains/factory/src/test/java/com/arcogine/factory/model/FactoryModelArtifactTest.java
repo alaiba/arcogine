@@ -171,9 +171,22 @@ class FactoryModelArtifactTest {
         ByteBuffer.wrap(invalidConcurrency, concurrencyOffset, Long.BYTES).putLong(Long.MAX_VALUE);
         assertThrows(IllegalArgumentException.class, () -> FactoryModelArtifact.decode(invalidConcurrency));
 
+        byte[] tooSmallConcurrency = canonicalBytes.clone();
+        ByteBuffer.wrap(tooSmallConcurrency, concurrencyOffset, Long.BYTES).putLong(Long.MIN_VALUE);
+        assertThrows(IllegalArgumentException.class, () -> FactoryModelArtifact.decode(tooSmallConcurrency));
+
         byte[] negativeResourceCount = canonicalBytes.clone();
         ByteBuffer.wrap(negativeResourceCount, PRESENCE_OFFSET + 1, Long.BYTES).putLong(-1L);
         assertThrows(IllegalArgumentException.class, () -> FactoryModelArtifact.decode(negativeResourceCount));
+
+        byte[] oversizedResourceCount = canonicalBytes.clone();
+        ByteBuffer.wrap(oversizedResourceCount, PRESENCE_OFFSET + 1, Long.BYTES)
+                .putLong((long) Integer.MAX_VALUE + 1);
+        assertThrows(IllegalArgumentException.class, () -> FactoryModelArtifact.decode(oversizedResourceCount));
+
+        byte[] truncatedName = canonicalBytes.clone();
+        ByteBuffer.wrap(truncatedName, nameOffset - Long.BYTES, Long.BYTES).putLong(canonicalBytes.length);
+        assertThrows(IllegalArgumentException.class, () -> FactoryModelArtifact.decode(truncatedName));
     }
 
     private static SpatialRecord spatial(long ticksPerCell) {

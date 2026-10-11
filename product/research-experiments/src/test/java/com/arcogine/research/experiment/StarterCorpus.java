@@ -152,17 +152,17 @@ public final class StarterCorpus {
     }
 
     /**
-     * Long unfinished steps, and concurrency above 1, where completion-credited {@code busyTicks}
-     * misleads.
+     * Long unfinished steps, and concurrency above 1, where processing time credited only at step
+     * completion, or divided by elapsed time alone, misleads.
      *
      * <p>Three units, {@code CUT} 1 tick, {@code ASSEMBLE} 12 ticks on one resource with concurrency
      * 2. Units 1 and 2 start assembling at ticks 1 and 2 and are still running at the last supported
-     * event before tick 10 (tick 3, when unit 3 begins waiting), so at that boundary the assembler's
-     * {@code busyTicks} is 0 although both of its slots are occupied. Occupancy over the interval is
-     * (3-1) + (3-2) = 3 job-ticks of 3 x 2 = 6. The run finishes at tick 26, when the assembler's
-     * {@code busyTicks} is 3 x 12 = 36: more than the 26 elapsed ticks, because two jobs overlap, while
-     * its occupancy is 36 job-ticks of 26 x 2 = 52. At submission no supported time has elapsed, so
-     * occupancy over an interval is undefined and must be refused.
+     * event before tick 10 (tick 3, when unit 3 begins waiting), so at that boundary no assembler step
+     * has completed although both of its slots are occupied. Occupancy over the interval is (3-1) +
+     * (3-2) = 3 job-ticks of 3 x 2 = 6. The run finishes at tick 26, when the assembler's completed
+     * steps total 3 x 12 = 36 job-ticks: more than the 26 elapsed ticks, because two jobs overlap,
+     * while its occupancy is 36 job-ticks of 26 x 2 = 52. At submission no supported time has
+     * elapsed, so occupancy over an interval is undefined and must be refused.
      */
     public static ExperimentFixture longStepAndParallelCapacity() {
         ThreeStepRoutingFamily family = LONG_STEP_PARALLEL_FAMILY;

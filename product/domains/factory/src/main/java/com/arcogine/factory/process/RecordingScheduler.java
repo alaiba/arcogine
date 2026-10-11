@@ -4,23 +4,31 @@ import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
 import com.arcogine.core.queue.Scheduler;
 import java.util.List;
-import java.util.Optional;
 
 /**
- * A {@link Scheduler} that can, for the duration of one command call, additionally capture every
- * {@link Event} it schedules into a caller-supplied sink, so {@link FactoryRuntime} can report
- * exactly which events a specific command scheduled
- * (the command-scoped event list required by {@link CommandResult} and
- * {@code docs/architecture/engine-semantics.md} §1.2) without changing
+ * {@link FactoryRuntime}'s own {@link Scheduler}: it admits only the event kind a Factory session
+ * schedules, and can, for the duration of one command call, additionally capture every {@link
+ * Event} it schedules into a caller-supplied sink, so {@link FactoryRuntime} can report exactly
+ * which events a specific command scheduled (the command-scoped event list required by {@link
+ * CommandResult} and {@code docs/architecture/engine-semantics.md} §1.2) without changing
  * {@link Scheduler}'s own public contract or touching any other consumer of it.
+ *
+ * <p>Admission is the session's scheduling rule ({@code docs/architecture/engine-semantics.md}
+ * §4): a Factory session schedules only step completions ({@link EventPayload.TaskEnd}), each of
+ * which authoritatively completes a step and is published at its own time. Bounded advancement
+ * counts processed scheduler events and a command applies at the scheduler's time, so a queued
+ * event that changed nothing -- a marker -- would still consume an advancement budget and move the
+ * time the next command applies, invisibly to every supported observation. Any other payload is
+ * therefore refused rather than silently queued; scheduling a new event kind is a deliberate
+ * Engine-definition change, not something this class may absorb.
  *
  * <p>Capture is a scoped window, not a permanent history: {@link #startCapturing(List)} begins
  * appending every subsequently scheduled event to the given list, and {@link #stopCapturing()}
  * turns that off again. Nothing is retained by this class itself once a window closes -- unlike an
  * always-append history, this cannot grow unboundedly over a long-lived {@link FactoryRuntime}
  * session merely because ordinary {@link FactoryRuntime#advance()}/{@link
- * FactoryRuntime#advanceUntil} processing (dispatch, queue drains, order completion, ...) keeps
- * scheduling further events outside any capture window.
+ * FactoryRuntime#advanceUntil} processing (dispatch, queue drains, ...) keeps scheduling further
+ * events outside any capture window.
  *
  * <p>Package-private: this is {@link FactoryRuntime}'s own internal instrumentation, not a shape
  * any external caller should construct or depend on.
@@ -28,56 +36,33 @@ import java.util.Optional;
 final class RecordingScheduler extends Scheduler {
 
     private List<Event> capture;
-    private int pendingAuthoritativeEvents;
 
+    /**
+     * Schedules a step completion.
+     *
+     * @throws IllegalArgumentException if {@code event} is not a step completion; nothing is
+     *     scheduled or captured
+     */
     @Override
     public void schedule(Event event) {
-        super.schedule(event);
-        if (changesAuthoritativeState(event)) {
-            pendingAuthoritativeEvents++;
+        if (!(event.payload() instanceof EventPayload.TaskEnd)) {
+            throw new IllegalArgumentException(
+                    "a Factory session schedules only step completions, not " + event.payload());
         }
+        super.schedule(event);
         if (capture != null) {
             capture.add(event);
         }
     }
 
-    @Override
-    public Optional<Event> nextEvent() {
-        Optional<Event> next = super.nextEvent();
-        if (next.isPresent() && changesAuthoritativeState(next.get())) {
-            pendingAuthoritativeEvents--;
-        }
-        return next;
-    }
-
     /**
      * Whether any queued event can still authoritatively change factory state -- the sense in which
      * {@link RuntimeRunState#ACTIVE} means "pending authoritative work"
-     * (docs/architecture/runtime-contract.md).
-     *
-     * <p>Deliberately not {@link #isEmpty()}: the queue can still hold internal markers ({@code
-     * TaskStart}, the {@code OrderCompleted} a terminal {@code TaskEnd} schedules purely so other
-     * internal handlers can observe completion) that {@link FactoryHandler#handleEvent} ignores.
-     * Processing one of those changes nothing a consumer can observe and emits no supported event,
-     * so reporting {@code ACTIVE} merely because one is still queued would let two observations at
-     * the same {@code latestEventSequence} disagree.
+     * (docs/architecture/runtime-contract.md). Every queued event is an admitted step completion, so
+     * this is exactly a non-empty queue.
      */
     boolean hasPendingAuthoritativeWork() {
-        return pendingAuthoritativeEvents > 0;
-    }
-
-    /**
-     * Whether processing {@code event} can authoritatively change factory state -- exactly the
-     * payloads {@link FactoryHandler#handleEvent} acts on; every other payload falls through its
-     * {@code default} branch as a no-op marker.
-     */
-    static boolean changesAuthoritativeState(Event event) {
-        return switch (event.payload()) {
-            case EventPayload.OrderCreation ignored -> true;
-            case EventPayload.TaskEnd ignored -> true;
-            case EventPayload.MachineAvailabilityChange ignored -> true;
-            default -> false;
-        };
+        return !isEmpty();
     }
 
     /** Begins appending every subsequently scheduled event to {@code sink}, until {@link #stopCapturing()}. */

@@ -53,7 +53,7 @@ Question:
 
 > Can a controlled one-variable retry be presented as a mechanically traceable before/change/after evidence chain without asserting an unobserved causal mechanism?
 
-Promote this only after the diagnostic-evidence investigation establishes an evidence contract. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; reusable run-comparison derivations still belong to the analytics-boundary investigation.
+Promote this only after the diagnostic-evidence investigation establishes an evidence contract. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; common named run-comparison meanings follow the [concluded analytical-definition admission rule](../../architecture/overview.md#domain-authority), not an assumed shared module.
 
 ### Spatial design trade-off — CANDIDATE
 
@@ -123,14 +123,19 @@ equipment-value-discovery question rather than inferring human behavior from hea
 
 ## Boundary with reusable analytics
 
-Which *facts and reusable derivations* exist, and who owns them, is [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md), an independent High-risk investigation.
+The [concluded ownership boundary](simulation-analytics-consumer-boundary.md) separates
+Engine-owned execution/results from named methods whose selected meaning belongs to their
+consumer by default. This does not select a Game method; the still-READY
+[diagnostic evidence question](factory-design-game-diagnostic-evidence.md) owns product
+requirements, sufficient evidence and refusal before any playable admission.
 
 Accordingly:
 
-- overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain game presentation choices;
-- the game must not invent shared KPI or diagnostic formulas while analytics ownership is unresolved;
-- a research-local derivation may be used to establish ground truth for a study, but selecting it for product use does not make it game-owned or part of Engine semantics;
-- transfer-dependent diagnostics remain outside the READY diagnostic-evidence-contract study until spatial runtime consequences are executable and evidenced; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
+- overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain Game presentation choices;
+- the Game may define its **own** named diagnostic only after that product research concludes and the requirement is admitted; a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
+- a research-local derivation may establish study ground truth but does not become a supported Game/Engine definition automatically;
+- snapshot, period-aggregate and future-horizon claims require distinct proof; a Game driver does not thereby own every holder's evidence;
+- transfer-dependent diagnostics remain outside the READY study until spatial runtime consequences are executable and evidenced; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
 
 ## Boundary with transfer and spatial semantics
 
@@ -155,7 +160,7 @@ Research must not use game pressure to invent shared semantics. In particular:
 - game catalogue prices, availability, score, progression, tutorial state, and presentation remain game-owned;
 - canonical executability remains Arcogine-owned;
 - production workload, dispatch, queues, processing, transfers, time, and authoritative performance facts remain Arcogine-owned;
-- reusable analytics ownership remains with the analytics-boundary investigation;
+- named Game analytical definitions are consumer-local by default, while shared meanings follow [Domain authority](../../architecture/overview.md#domain-authority); implementation awaits admitted evidence requirements;
 - game attempt snapshots may explain player-authored differences without requiring a new canonical model-diff abstraction;
 - unresolved equipment ontology, transfer semantics, spatial evolution, and richer design comparison remain separate research questions.
 
@@ -173,7 +178,7 @@ The first half is **not game-local**. At that investigation's baseline, Arcogine
 Consequently:
 
 - reusable technical evidence, proving cases, and truthfulness constraints transferred to [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md);
-- the provisional conclusion that reusable diagnostic derivations are **game-owned** is explicitly superseded;
+- the predecessor's unqualified assertion that **all** reusable diagnostic derivations are Game-owned was superseded; the later admitted rule permits bounded Game-specific named methods without transferring genuinely shared meanings;
 - the immediately actionable product question is now the focused [diagnostic-evidence contract](factory-design-game-diagnostic-evidence.md), which can establish truthfulness/traceability without a participant pool; population-level comprehension remains the separate external-player-validation candidate above; and
 - the broad vertical-slice question itself is superseded by the focused portfolio recorded here and in the research register.
 

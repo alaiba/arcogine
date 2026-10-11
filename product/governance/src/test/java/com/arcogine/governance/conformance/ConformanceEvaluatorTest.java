@@ -554,6 +554,18 @@ class ConformanceEvaluatorTest {
                                 new InMemoryControlledRevisionAuthority()));
     }
 
+    @Test
+    void evaluateRejectsAnAssertionForAnotherVersionOfTheSameRequirement() {
+        Requirement requirement = structuralRequirement(RequirementScope.empty());
+        Assertion<DeclaredResource> wrongVersion = new Assertion<>(ASSERTION_ID,
+                ASSERTION_VERSION, requirement.id(), new RequirementVersion(2),
+                "same requirement, later version", EvidenceRequirement.MODEL_STATE_SUFFICIENT,
+                r -> StructuralAssertionOutcome.satisfied("ok"));
+        assertThrows(IllegalArgumentException.class, () -> ConformanceEvaluator.evaluate(
+                requirement, wrongVersion, Optional.empty(), Optional.empty(), FINGERPRINT,
+                RESOURCE_FINGERPRINT, Optional.empty(), new InMemoryControlledRevisionAuthority()));
+    }
+
     private static Requirement structuralRequirement(RequirementScope scope) {
         return new Requirement(
                 REQUIREMENT_ID,

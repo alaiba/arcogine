@@ -314,6 +314,40 @@ class FactoryModelSemanticComparatorTest {
 
         assertEquals(1, changes.size());
         assertTrue(changes.get(0).detail().contains("step routing/duration changed"));
+
+        OperationDefinition renamedAndChanged = new OperationDefinition(100, "Renamed", List.of(afterStep));
+        FactoryModelVersion compound = FactoryModelPublisher.publish(
+                new FactoryModel(List.of(machine), List.of(renamedAndChanged), List.of(product)));
+        List<SemanticChange> compoundChanges = comparator.compare(artifact(base), artifact(compound));
+        assertEquals(1, compoundChanges.size());
+        assertTrue(compoundChanges.getFirst().detail().contains("name"));
+        assertTrue(compoundChanges.getFirst().detail().contains("; step routing/duration changed"));
+    }
+
+    @Test
+    void operationNameAndStepIdentityChangesAreDistinguishedIndependently() {
+        OperationStepDefinition originalStep =
+                new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
+        OperationDefinition original = new OperationDefinition(100, "Routing", List.of(originalStep));
+        OperationDefinition nameOnly = new OperationDefinition(100, "Renamed", List.of(originalStep));
+        OperationDefinition stepIdOnly = new OperationDefinition(100, "Routing", List.of(
+                new OperationStepDefinition(2, "Step", Set.of(new MachineId(1)), 1)));
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
+        ProductDefinition product = new ProductDefinition(new ProductId(10), "Widget", 100);
+        FactoryModelVersion base = FactoryModelPublisher.publish(
+                new FactoryModel(List.of(machine), List.of(original), List.of(product)));
+
+        List<SemanticChange> renamed = comparator.compare(artifact(base), artifact(FactoryModelPublisher.publish(
+                new FactoryModel(List.of(machine), List.of(nameOnly), List.of(product)))));
+        List<SemanticChange> changedStepId = comparator.compare(artifact(base), artifact(FactoryModelPublisher.publish(
+                new FactoryModel(List.of(machine), List.of(stepIdOnly), List.of(product)))));
+
+        assertEquals(1, renamed.size());
+        assertTrue(renamed.getFirst().detail().contains("name"));
+        assertFalse(renamed.getFirst().detail().contains("step"));
+        assertEquals(1, changedStepId.size());
+        assertTrue(changedStepId.getFirst().detail().contains("stepIds"));
+        assertFalse(changedStepId.getFirst().detail().contains("name"));
     }
 
     @Test
@@ -389,6 +423,31 @@ class FactoryModelSemanticComparatorTest {
         assertEquals(SemanticChangeKind.ENTITY_MODIFIED, change.kind());
         assertTrue(change.detail().contains("name"));
         assertTrue(change.detail().contains("operationId"));
+    }
+
+    @Test
+    void productNameAndOperationBindingChangesAreDistinguishedIndependently() {
+        OperationStepDefinition step = new OperationStepDefinition(1, "Step", Set.of(new MachineId(1)), 1);
+        OperationDefinition first = new OperationDefinition(100, "Routing", List.of(step));
+        OperationDefinition second = new OperationDefinition(200, "Packing", List.of(step));
+        ConfiguredResource machine = new ConfiguredResource(new MachineId(1), "Mill", 1, 10.0, 1);
+        ProductDefinition original = new ProductDefinition(new ProductId(10), "Widget", first.id());
+        FactoryModelVersion base = FactoryModelPublisher.publish(new FactoryModel(
+                List.of(machine), List.of(first, second), List.of(original)));
+        ProductDefinition nameOnly = new ProductDefinition(original.id(), "Renamed", first.id());
+        ProductDefinition operationOnly = new ProductDefinition(original.id(), original.name(), second.id());
+
+        List<SemanticChange> renamed = comparator.compare(artifact(base), artifact(FactoryModelPublisher.publish(
+                new FactoryModel(List.of(machine), List.of(first, second), List.of(nameOnly)))));
+        List<SemanticChange> rebound = comparator.compare(artifact(base), artifact(FactoryModelPublisher.publish(
+                new FactoryModel(List.of(machine), List.of(first, second), List.of(operationOnly)))));
+
+        assertEquals(1, renamed.size());
+        assertTrue(renamed.getFirst().detail().contains("name"));
+        assertFalse(renamed.getFirst().detail().contains("operationId"));
+        assertEquals(1, rebound.size());
+        assertTrue(rebound.getFirst().detail().contains("operationId"));
+        assertFalse(rebound.getFirst().detail().contains("name"));
     }
 
     @Test

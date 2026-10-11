@@ -2,12 +2,14 @@ package com.arcogine.governance.change;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.ModelFingerprint;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /** Pure value-contract tests for {@link ChangeSet}, independent of any domain or persistence. */
@@ -186,6 +188,45 @@ class ChangeSetTest {
                         new ChangeSet(
                                 revisionId(1), null, CANDIDATE_FP, null, List.of(), null,
                                 ChangeProvenance.of("t", "r")));
+    }
+
+    @Test
+    void changedEntityIdentityIgnoresLabelButKeepsBothIdentityComponents() {
+        ChangedEntityRef original = new ChangedEntityRef("factory.resource", "1", null);
+        ChangedEntityRef relabeled = new ChangedEntityRef("factory.resource", "1", "Cutter");
+        assertEquals("", original.label());
+        assertEquals("factory.resource#1", original.identityKey());
+        assertEquals(original, relabeled);
+        assertEquals(original.hashCode(), relabeled.hashCode());
+        assertNotEquals(original, new ChangedEntityRef("factory.resource", "2", "Cutter"));
+        assertNotEquals(original, new ChangedEntityRef("factory.product", "1", "Cutter"));
+        assertNotEquals(original, "factory.resource#1");
+
+        ImpactScope one = ImpactScope.of(List.of(new SemanticChange(
+                SemanticChangeKind.ENTITY_MODIFIED, original, null)));
+        ImpactScope same = ImpactScope.of(List.of(new SemanticChange(
+                SemanticChangeKind.ENTITY_MODIFIED, relabeled, "renamed")));
+        ImpactScope other = ImpactScope.of(List.of(new SemanticChange(
+                SemanticChangeKind.ENTITY_MODIFIED,
+                new ChangedEntityRef("factory.resource", "2", ""), "changed")));
+        assertEquals("", new SemanticChange(SemanticChangeKind.ENTITY_MODIFIED, original, null).detail());
+        assertEquals(one, same);
+        assertEquals(one.hashCode(), same.hashCode());
+        assertEquals("ImpactScope[" + original + "]", one.toString());
+        assertNotEquals(one, other);
+        assertNotEquals(one, "factory.resource#1");
+        assertTrue(one.intersects(Set.of(relabeled)));
+    }
+
+    @Test
+    void changeMetadataRejectsBlankIdentitiesAndReasons() {
+        assertThrows(IllegalArgumentException.class, () -> new ChangedEntityRef(" ", "1", ""));
+        assertThrows(IllegalArgumentException.class, () -> new ChangedEntityRef("resource", " ", ""));
+        assertThrows(IllegalArgumentException.class, () -> new ExternalChangeReference(" ", "ARC-1"));
+        assertThrows(IllegalArgumentException.class, () -> new ExternalChangeReference("jira", " "));
+        assertThrows(IllegalArgumentException.class, () -> ChangeProvenance.of(" ", "reason"));
+        assertThrows(IllegalArgumentException.class, () -> ChangeProvenance.of("operator", " "));
+        assertTrue(ChangeProvenance.of("operator", "reason").externalReferenceOptional().isEmpty());
     }
 
     private static ModelFingerprint fingerprint(String suffix) {

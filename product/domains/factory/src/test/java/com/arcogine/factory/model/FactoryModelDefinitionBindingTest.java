@@ -3,6 +3,7 @@ package com.arcogine.factory.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.spatial.FactoryFloor;
@@ -20,6 +21,8 @@ import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
@@ -41,6 +44,8 @@ import org.junit.jupiter.api.Test;
  * supported, decodes, is valid or verifies, without pinning an incidental build digest.
  */
 class FactoryModelDefinitionBindingTest {
+
+    private static final class ResourceProbe {}
 
     private static final int PRESENCE_OFFSET = "arcogine.factory-model\0".length();
 
@@ -72,6 +77,43 @@ class FactoryModelDefinitionBindingTest {
                 binding,
                 FactoryModelCanonicalForm.definitionBindingOver(
                         FactoryModelCanonicalForm.definitionBindingClasses()));
+        assertThrows(IllegalStateException.class,
+                () -> FactoryModelCanonicalForm.definitionBindingOver(List.of(int.class)));
+    }
+
+    @Test
+    void unreadableDefinitionClassBytesFailClosed() throws IOException, ClassNotFoundException {
+        byte[] bytes;
+        try (InputStream input = ResourceProbe.class.getResourceAsStream("FactoryModelDefinitionBindingTest$ResourceProbe.class")) {
+            bytes = input.readAllBytes();
+        }
+        ClassLoader loader = new ClassLoader(ResourceProbe.class.getClassLoader()) {
+            @Override
+            public Class<?> loadClass(String name) throws ClassNotFoundException {
+                if (name.equals(ResourceProbe.class.getName())) {
+                    return defineClass(name, bytes, 0, bytes.length);
+                }
+                return super.loadClass(name);
+            }
+
+            @Override
+            public InputStream getResourceAsStream(String name) {
+                if (name.endsWith("FactoryModelDefinitionBindingTest$ResourceProbe.class")) {
+                    return new InputStream() {
+                        @Override
+                        public int read() throws IOException {
+                            throw new IOException("test resource read failure");
+                        }
+                    };
+                }
+                return super.getResourceAsStream(name);
+            }
+        };
+        Class<?> unreadable = loader.loadClass(ResourceProbe.class.getName());
+
+        IllegalStateException failure = assertThrows(IllegalStateException.class,
+                () -> FactoryModelCanonicalForm.definitionBindingOver(List.of(unreadable)));
+        assertEquals(IOException.class, failure.getCause().getClass());
     }
 
     @Test

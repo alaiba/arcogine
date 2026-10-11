@@ -83,6 +83,8 @@ Authority: `docs/development/testing.md`.
 
 From the bounded merged-PR scan, identify only recently changed or newly consequential Java boundaries where subtle incorrect behavior would matter and the retained tests leave a concrete uncertainty. Then choose the diagnostic that most directly challenges that uncertainty.
 
+When test effectiveness is material, use the Java CI job's per-module BRANCH summary to locate unexercised decisions, then inspect the behavior and assertions. A low percentage alone does not justify a diagnostic or a new gate.
+
 Candidate diagnostics are:
 
 - **mutation testing** — when the question is whether retained tests detect plausible implementation faults;

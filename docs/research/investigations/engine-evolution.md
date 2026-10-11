@@ -139,7 +139,7 @@ This conclusion is not a claim that `combinedQueueDepth` is a principled physica
 - **Conservative retention, not optimality.** Generated searches can falsify claims that local-depth-only generally dominates, but their win ratios are properties of those search spaces and must not be treated as Arcogine workload probabilities.
 - **The candidate space is not universally two-valued.** Positive reweightings collapse to the current ranking only on the sub-domain where competing accepting candidates do not themselves carry residual local queues. A recovered concurrency>1 machine can violate that condition under the retained local admission, and positive weights can then produce distinct assignments.
 - **The handover interpretation is conditional on retained local admission.** If local admission later fills recovery capacity, the magnitude-sensitive recovery corner changes or disappears; ranking and admission must be reconsidered compositionally rather than as unrelated rules.
-- **Information horizon must be stated precisely.** The mirror evidence proves that no function of the facts the **current comparator consults** can separate both outcomes. It does not prove that every fact available at that instant is unavailable to a future different rule. Shared-entry duration/routing position, the ranked job's current-step duration/remaining authored route, free capacity, eligible-set structure, backlog order, `busyTicks`, and current time already exist but are unused. Remaining processing time of an active job is genuinely unavailable today because the runtime exposes neither per-step start time nor scheduler enumeration.
+- **Information horizon must be stated precisely.** The mirror evidence proves that no function of the facts the **current comparator consults** can separate both outcomes. It does not prove that every fact available at that instant is unavailable to a future different rule. Shared-entry duration/routing position, the ranked job's current-step duration/remaining authored route, free capacity, eligible-set structure, backlog order, and current time already exist but are unused. Remaining processing time of an active job is genuinely unavailable today because the runtime exposes neither per-step start time nor scheduler enumeration.
 - **No richer candidate was justified by the current objective boundary.** Demand-conserving fair share, placeable-now exclusion, duration weighting, positive reweighting, and effective-backlog variants either collapse to an already-tested behavior, lack a supported decision objective, or regress reviewed workloads. This does not close the design space forever; it closes this first-release decision at the present authority boundary.
 - **Reopen on a selecting objective or changed runtime facts.** A supported consumer objective/fairness contract, representative real workload evidence, a change to local admission, implemented spatial transfer/admission semantics, heterogeneous resource speeds/capabilities, or another change to what compatible shared demand means can justify a new bounded ranking investigation.
 
@@ -225,6 +225,20 @@ This concern is ready for implementation planning only under an exact-semantics 
 ## Session/advancement evolution
 
 Current consumer-neutral bounded advancement is established. Revisit the command/advancement surface only when a concrete consumer proves that event-count/tick semantics, scheduling control, or ownership cannot be expressed through the existing boundary.
+
+**Boundary observation for a future revisit (not a separate research candidate).**
+`FactoryRuntime.advanceUntil(targetTime, maxEvents)` currently batches calls to `advance()`.
+Counting events is ordinary driver loop control; enforcing the inclusive time limit needs an
+Engine-side pre-execution check of `scheduler.peekTime()`. A caller using only public `advance()`
+cannot stop before a later event executes by inspecting that event afterward. Current concrete
+callers are research experiments and conformance tests; interactive pacing is an anticipated use,
+not an independently established need for a different API.
+
+This observation adds no question to the research portfolio and does not propose replacing the
+supported boundary. If the existing reopening condition above is met, preserve the distinction
+between driver-owned pacing/batching and Engine-owned guarded event execution when considering
+session-control shape. Neither the current method nor a driver loop moves simulated time to the
+requested bound or establishes interval closure against later commands.
 
 ## Stochastic-semantics boundary
 

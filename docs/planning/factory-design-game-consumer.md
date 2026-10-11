@@ -111,7 +111,8 @@ That substrate may be consumed by the eventual game, but its completion is not e
 | Workload, work items, queues, dispatch, processing, transfers | Arcogine Engine/runtime |
 | Simulation clock and deterministic event ordering | Arcogine Engine/runtime |
 | Supported runtime observations/events and performance facts | Arcogine Engine/runtime |
-| Reusable derived measurement (longitudinal aggregation, utilization/occupancy intervals, diagnosis, run comparison) | **Unresolved — not game-owned by default.** The READY [analytics ownership boundary](../research/investigations/simulation-analytics-consumer-boundary.md) decides whether shared analytics survives; evidence/provenance and adapter questions remain conditional on that path, while [cross-revision comparability](../research/investigations/simulation-analytics-cross-revision-comparability.md) is an independent sibling that promotes for a concrete comparison use |
+| Named Game-specific analytical diagnostics, if requirements are separately admitted | Game defines its own chosen method and evidence/refusal rules; never an Engine fact or a generic shared result |
+| Named analytical definitions common to multiple users or a verification/outward contract | Shared definition owner only after a concrete [architecture admission trigger](../architecture/overview.md#domain-authority); evidence custody stays with the actual holder |
 | Player-facing presentation, explanation, wording, and visualization of supported facts | Game |
 | Game save wrapper around any supported Arcogine checkpoint | Game |
 
@@ -133,9 +134,48 @@ The game consumes bounded advancement/reset semantics. Presentation speed change
 
 Render supported observations/events rather than internal Engine classes. Consumer summaries may make evidence easier to understand but must not become a competing authoritative computation.
 
-Reusable *diagnostic* computation — utilization or occupancy intervals, longitudinal aggregation, bottleneck inference, run-to-run comparison — is **not settled as game-owned**. Arcogine currently has no outward application surface at all (see [Architecture Overview — Outward Adapters](../architecture/overview.md#outward-adapters)), but historically had several consumers of reusable derived measurement (generic KPI computation, an outward KPI endpoint, and a web consumer retaining KPI history and computing baseline deltas) that established this as a multi-consumer concern before their retirement, so that ownership remains an open cross-consumer question under [Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md).
+A **named Game-specific method** may be Game-owned when it fixes the diagnostic question and its
+population, observation basis, interval, denominator/capacity, availability, attribution and
+interpretation; this reverses the former default against Game ownership, **not** the separate
+[diagnostic-evidence research](../research/investigations/factory-design-game-diagnostic-evidence.md)
+gate. Actual Game utilization/flow methods and playable implementation remain unadmitted until
+that research concludes and its product requirements are reconciled. Research-local formulas do
+not become production definitions. A Game method describes supported outcomes, never reconstructs
+Engine scheduling or unseen processing starts, declares a causal bottleneck from occupancy alone,
+or treats Engine's observed-time `throughputPerTick` as a rate over a user-selected period.
 
-Until that question resolves, the game must not implement generic analytics locally as though it owned the semantics. Game-owned presentation of supported facts, and game/Challenge-owned scoring and evaluation, remain unaffected — scoring and challenge evaluation are deliberately separate from generic simulation analytics. Once the boundary is settled, the game may consume analytics through either an embedded or a remote adapter; that is a packaging choice, not a semantics choice.
+For a retained or promoted **interval** result, a Game method must declare definition identity,
+`RunId`, `ModelFingerprint` (and `ControlledRevisionId` only when authoritatively bound),
+the half-open interval and convention, observation basis `(S0,T0)`, proof sequence/frontier and
+proof class. Claim-specific controller attestor, excluded-input scope, trust and command/fault
+qualifications, exact producing Engine-definition reference or complete ordered command script
+(including advancement interleavings/budgets) are required **only when that claim needs them**.
+Bind basis, changes, observations and closure to the same run and refuse a closure contradicted
+by captured changes after its binding but before the upper bound. A held sequence without an
+independent authoritative frontier is insufficient. Producer witnesses, producer observations
+and attributable controller closure are different proof classes; complete changes alone prove
+neither fault-free execution nor replayability (see [runtime evidence
+rules](../architecture/runtime-contract.md#captured-execution-evidence-and-interval-determinacy)).
+Evidence custody can stay with an exclusive Game driver or another holder; neither capture nor
+promotion by itself grants ownership or upgrades trust, and portability without rework requires
+preserved proof provenance.
+
+A fresh observation can show **no currently known work** or classify currently known
+idle/starved work using published routing; it is not a period aggregate. Aggregating such labels
+over an interval requires claim-scoped coverage and finality, including qualified controller
+closure for an idle tail when needed. **No work left for the rest of a period** is a future-horizon
+claim requiring an explicit no-future-effective-input scope. Game diagnostic experiments with a
+job-free initial basis, always-online resources, one product and closed constructive scripts
+establish only their bounded case, not a universal method.
+
+A genuinely shared named definition is reconsidered under the four [Domain authority
+triggers](../architecture/overview.md#domain-authority), not by Game preference, shared file
+placement or common capture. [Analytics evidence/provenance](../research/investigations/simulation-analytics-evidence-provenance.md)
+remains conditional on a concrete input, method-proof, accumulation, identity, provenance or
+retention use; [adapter compatibility](../research/investigations/simulation-analytics-adapter-compatibility.md)
+and [cross-revision comparison](../research/investigations/simulation-analytics-cross-revision-comparability.md)
+retain their separate triggers. No analytics module, universal evidence container or embedded/remote
+adapter is chosen.
 
 ### Challenge evaluation
 

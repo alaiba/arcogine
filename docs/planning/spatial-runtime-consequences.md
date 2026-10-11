@@ -138,39 +138,33 @@ inherits from the pre-spatial Engine:
 - the PLAN-ENG-W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
 - exact `combinedQueueDepth` ranking arithmetic (ranking semantics, not a reported result — see the
   ownership note below);
-- the derived-result arithmetic: `busyTicks` overflow saturation, elapsed-time subtraction flooring
-  at zero, and the zero-denominator throughput / empty-set mean-lead-time results;
+- the derived-result arithmetic: elapsed-time subtraction flooring at zero, and the zero-denominator
+  throughput / empty-set mean-lead-time results;
 - the derived-result accumulators: exact completed-order counting and completion-ordered value
   accumulation;
 - scheduler equal-time insertion ordering where it is semantically observable.
 
-**Ownership note — reported derived results.** The last two bullets pin *reported* derived results
-(`busyTicks`, throughput, mean lead time, completed-order counting and value accumulation) whose
-placement on the Engine/analytics boundary is an open question under
-[Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md).
+**Ownership note — reported derived results.** The last two bullets pin *reported* derived
+results (throughput, mean lead time, completed-order counting and value accumulation) that the
+[concluded analytics ownership boundary](../research/investigations/simulation-analytics-consumer-boundary.md)
+leaves Engine-owned. The §1.1 membership test includes their exact derived-result arithmetic;
+§10.1–§10.2 fix the edge cases and accumulators. The supported interpretation does **not** change
+when a consumer gives those results a different analytical presentation.
 
-Adopted architecture makes those values part of the Engine interpretation: the §1.1 membership test
-covers derived-result arithmetic, §10.1–§10.2 fix their edge cases *and* their accumulation, and §1.1
-consequence 4 states that a rule satisfying the membership test but absent from the specification is a
-defect in the specification. Pinning them is therefore the honest action.
+This slice also pinned saturation of an earlier per-resource completion-credit busy-time counter;
+that counter was separately removed from the supported Engine by #469. The surviving fixture suite
+proves only the current supported contract, not a new resource utilization definition or a
+historical busy-time replay guarantee.
 
-What pinning does **not** do is settle ownership. These fixtures characterize current behavior under
-the accepted contract; they are not evidence that these values permanently belong in the supported
-runtime observation. If the analytics research concludes they should move, that is an explicit change
-to a supported contract reconciled through architecture, not something this slice pre-decides.
+The fixtures alone do not justify a new outward contract or future Engine-wide analytical result:
+a new definition needs a separate [producer responsibility and shared-ownership
+admission](../architecture/overview.md#domain-authority). Changing any existing Engine-declared
+result's ownership or arithmetic later is a deliberate specification/support transition with
+reconciled conformance and consumers, not an incidental refactor.
 
-Two constraints follow for implementers:
-
-1. do not cite these fixtures as evidence that the ownership question is closed;
-2. do not harden these specific values into *new* outward contracts or DTOs while the research is
-   open — see the KPI ownership note in
-   [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md#3-current-implementation-queue).
-
-`combinedQueueDepth` is deliberately listed separately and is **not** in this category: it is derived
-but result-affecting, because its exact arithmetic decides assignment. It remains Engine semantics
-regardless of the analytics outcome. Every other bullet in this slice — dispatch, acceptance,
-scheduler, ranking, materialization, and spatial behavior — is authoritative and unaffected by that
-research.
+`combinedQueueDepth` remains Engine result-affecting resource ranking rather than reportable
+physical queue depth. The dispatch, acceptance, scheduling, ranking, materialization and spatial
+rules in this slice remain authoritative independently of a future analytical method.
 
 **Evidence**
 
@@ -257,7 +251,7 @@ already correct.
 The executable evidence is maintained in `EngineDispatchConformanceTest`,
 `EngineDerivedResultConformanceTest`, the session-control acceptance suite, and the
 child-materialization acceptance/benchmark tests. These tests pin current behavior; they do not claim
-that the dispatch policy is optimal or settle the Engine-versus-analytics ownership question.
+that the dispatch policy is optimal or themselves justify a new analytical definition or owner.
 
 **Non-goals**
 
@@ -395,7 +389,7 @@ Add the minimum internal state needed to reserve inbound admission capacity befo
 
 - one inbound reservation consumes capacity used by future acceptance decisions;
 - reserved inbound work is not `activeJobs`, is not queue depth, does not make a machine `Busy` by
-  itself, and accrues no `busyTicks`;
+  itself, and is not reported as processing;
 - a destination holding only inbound reservations may still be taken offline;
 - reservation can be released/converted deterministically for arrival and waiting paths.
 
@@ -501,9 +495,9 @@ Complete the supported read model around already-authoritative transfers:
 
 - fresh observation reconstructs in-flight state without replay;
 - job and destination resource projections agree at one sequence boundary;
-- admission load/capacity is visible enough for supported bottleneck diagnosis;
-- inbound reservation is not `activeJobIds`, queue depth, processing `Busy`, or processing
-  `busyTicks`;
+- admission load/capacity is visible enough for a consumer to account for capacity held by inbound
+  reservations;
+- inbound reservation is not `activeJobIds`, queue depth, or processing `Busy`;
 - backlog remains incomplete accepted orders;
 - lead time naturally includes transfer delay;
 - throughput remains completed orders per observed time;
@@ -581,16 +575,18 @@ Practical parallelism:
 
 PLAN-ENG-5 preserves existing metric definitions:
 
-- machine `busyTicks` / utilization measure processing time, not inbound reservation time;
+- the Engine introduces no utilization or busy-time measure, and inbound reservation time is not
+  reported as processing;
 - queue depth does not count an in-flight reservation as a queued arrival;
 - `activeJobIds` contains processing jobs, not inbound reserved jobs;
 - backlog remains incomplete accepted orders;
 - lead time naturally increases with transfer delay;
 - throughput remains completed orders per observed time.
 
-Bottleneck/capacity interpretation must account for admission capacity held by transfer-bound work
-even when processing busy ticks have not yet accrued. This is an interpretation/projection extension,
-not a redefinition of processing utilization or queue depth.
+Supported resource observation must let a consumer account for admission capacity held by
+transfer-bound work even while none of that work is processing. This is a projection extension, not a
+redefinition of processing state or queue depth, and it makes neither admission load nor any occupancy
+derivation a bottleneck verdict.
 
 ## 8. Cross-track consequences
 

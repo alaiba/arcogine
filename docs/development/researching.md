@@ -20,14 +20,13 @@ The research-question lifecycle is:
 | Status | Meaning |
 |---|---|
 | **CANDIDATE** | Material uncertainty exists, but the investigation is not yet sufficiently bounded or timely to start |
-| **READY** | Question, scope, evidence expectations, and exit criteria are sufficiently clear to start |
-| **ACTIVE** | Evidence gathering or synthesis is in progress |
+| **READY** | Question, scope, evidence expectations, and exit criteria are sufficiently clear to investigate, and the question remains unresolved. This includes admitted research before investigation, while evidence/review/reconciliation is in progress, and after a report exists but before the normative `CONCLUDED` conditions are satisfied |
 | **CONCLUDED** | A decision-quality result exists and durable consequences have been reconciled, or the result was explicitly no action |
 | **SUPERSEDED** | Later evidence, question, or decision replaced the investigation before normal conclusion |
 
 These lifecycle values apply only to research questions in the maintained research register. Synthesis seeds have no research lifecycle, priority, owner, delivery commitment, or percentage completion. Do not use percentage completion for research questions; track evidence, falsified hypotheses, and exit criteria instead.
 
-Research priority is **portfolio guidance, not delivery commitment**. A `READY` research question means an investigation can start; it does not mean implementation is ready or admitted.
+Research priority is **portfolio guidance, not delivery commitment**. A `READY` research question is admitted and sufficiently bounded to investigate, but remains unresolved; it may be idle, actively investigated, awaiting required review, or awaiting durable reconciliation. `READY` does not mean implementation is ready or admitted.
 
 The promotion path is:
 
@@ -60,6 +59,7 @@ Maintain [`docs/research/research-register.md`](../research/research-register.md
 
 - add a material unknown instead of hiding it in an implementation plan;
 - mark research `READY` only when an independent researcher can execute it from the stated evidence and exit criteria;
+- do not update the maintained register merely because evidence gathering starts, pauses, resumes, or a report/review is in flight; temporary execution state belongs to the research workspace and exact evidence handoffs, while the register changes only when the question's admitted/unresolved/terminal state or another decision-relevant portfolio fact changes;
 - when research concludes, record the verdict and durable destination in the register without duplicating the authoritative conclusion;
 - during planning or consistency review, move unresolved exploratory content back to research rather than allowing planning to settle it implicitly;
 - terminal questions (`CONCLUDED` or `SUPERSEDED`) normally remain for lifecycle and provenance history; compact or remove a terminal row only when its continued presence no longer helps explain a material conclusion, supersession chain, reopening trigger, or active decision context, all durable consequences have already been reconciled, and removal is not being used as a substitute for the knowledge-transfer audit in §10;
@@ -91,6 +91,26 @@ A `READY` brief should normally state:
 A brief missing one of these because it genuinely does not apply to that question is fine. A brief missing several of these is not yet `READY`: an independent researcher should be able to execute it from the brief's stated evidence and exit criteria without first re-deriving the question.
 
 External-domain material belongs in a report only when it changes or tests an Arcogine-specific hypothesis, proving case, boundary, inference, confidence assessment, or decision. A summary of an outside field that does not do one of those things does not belong in the report, however interesting.
+
+### Implementability versus architectural suitability
+
+Demonstrating that desired behavior can be assembled from existing APIs establishes
+**implementability**, not that the current responsibility boundary is **architecturally suitable**.
+This matters when consumers must coordinate multiple calls to reproduce producer-owned invariants,
+make completeness or safety assertions, or independently implement the same protocol.
+
+For a material ownership or cross-boundary decision, compare a feasible current-API/consumer
+solution with a proportionate change to the producer or owning contract **when that alternative
+could change the answer**. Test what each can actually guarantee, what failures become impossible
+rather than merely detectable, consumer coordination and duplication, producer complexity,
+compatibility, and future reuse. Neither a working wrapper nor an attractive new API settles
+responsibility placement on its own.
+
+Retaining the existing boundary is a valid conclusion, but give an affirmative comparative
+reason and any material reopening trigger rather than citing feasibility alone. When the question
+has no meaningful shared-semantic or ownership consequence, briefly explain why a producer-side
+alternative is unnecessary; do not launch speculative redesign for every local convenience.
+Apply the comparison proportionately to the risk (§7).
 
 ## 2. Repository grounding and baseline discipline
 

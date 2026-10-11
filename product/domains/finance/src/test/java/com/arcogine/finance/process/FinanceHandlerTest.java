@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Finance is event-driven, not state-inspecting: it reacts only to OrderCompleted, the
- * operational fact Factory emits, and never reaches into Factory's state to infer transactions.
+ * operational order-completion fact, and never reaches into Factory's state to infer transactions.
  */
 class FinanceHandlerTest {
 
@@ -123,9 +123,8 @@ class FinanceHandlerTest {
     void deliveringTheSameOrderCompletedEventTwicePostsTwice() {
         // Documents the event-uniqueness assumption in FinanceHandler's class Javadoc:
         // FinanceHandler trusts each OrderCompleted it receives is a distinct completion and does
-        // not de-duplicate, matching the supported event-delivery contract documented by the
-        // handler. If that contract permits redelivery into a live handler, this expectation and
-        // FinanceHandler's idempotency behavior must change together.
+        // not de-duplicate. If a delivery path permits redelivery into a live handler, this
+        // expectation and FinanceHandler's idempotency behavior must change together.
         FinanceHandler handler = new FinanceHandler();
         Scheduler sched = new Scheduler();
         Event orderCompleted = Event.of(

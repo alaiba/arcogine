@@ -94,8 +94,7 @@ class ArchitectureTest {
                     .or(callMethod(Machine.class, "completeJob", JobId.class))
                     .or(callMethod(Machine.class, "enqueueJob", JobId.class))
                     .or(callMethod(Machine.class, "dequeueJob"))
-                    .or(callMethod(Machine.class, "setAvailability", boolean.class))
-                    .or(callMethod(Machine.class, "setBusyTicks", long.class)))
+                    .or(callMethod(Machine.class, "setAvailability", boolean.class)))
             .because("Machine's mutators must only be called from within Factory -- external "
                     + "callers get MachineView (FactoryHandler.machinesView()), which excludes them");
 }

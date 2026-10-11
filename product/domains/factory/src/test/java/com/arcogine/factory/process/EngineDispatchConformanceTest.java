@@ -365,6 +365,39 @@ class EngineDispatchConformanceTest {
     }
 
     @Test
+    void combinedQueueDepthRanksExactlyBeyondThe32BitRange() {
+        // Each term is an int-sized collection count, so their exact sum can exceed the 32-bit
+        // range. Reporting the local term at that bound exercises the production sum and ranking
+        // without materializing billions of queue entries. Only an exact key selects M2: a wrapped
+        // or narrowed key makes M1 negative, and a saturated key ties both and falls back to M1's id.
+        Machine m1 = machineWithQueueDepth(1, Integer.MAX_VALUE);
+        Machine m2 = machineWithQueueDepth(2, Integer.MAX_VALUE - 1);
+        MachineStore machines = new MachineStore();
+        machines.add(m1);
+        machines.add(m2);
+        RoutingStore routings = new RoutingStore();
+        routings.addRouting(new Routing(
+                1,
+                "shared-route",
+                List.of(new RoutingStep(1, "shared", Set.of(new MachineId(1), new MachineId(2)), 1))));
+        routings.addProductRouting(new ProductId(1), 1);
+        FactoryHandler handler = new FactoryHandler(machines, routings, List.of(new ProductId(1)));
+
+        // Park one shared entry while both candidates are full, then free both so they tie on
+        // immediate acceptance and the entry counts toward each candidate's key.
+        m1.startJob(new JobId(900));
+        m2.startJob(new JobId(910));
+        handler.submitOrder(new ProductId(1), 1, 1.0, SimTime.ZERO, new Scheduler());
+        m1.completeJob(new JobId(900));
+        m2.completeJob(new JobId(910));
+
+        handler.handleMachineAvailability(new MachineId(2), true, new Scheduler(), SimTime.ZERO);
+
+        assertEquals(new MachineId(2), handler.job(new JobId(1)).currentMachine(),
+                "only an exact combinedQueueDepth ranks M2 (2^31 - 1) ahead of M1 (2^31)");
+    }
+
+    @Test
     void equalTimeTaskEndsAreProcessedInInsertionOrder() {
         FactoryRuntime runtime = runtime(
                 List.of(4),
@@ -437,6 +470,15 @@ class EngineDispatchConformanceTest {
                 .map(view -> view.completedAt().value())
                 .toList();
         return new Result(completionTimes, runtime.avgLeadTime(), completionTimes.stream().mapToLong(Long::longValue).max().orElse(0));
+    }
+
+    private static Machine machineWithQueueDepth(int id, int queueDepth) {
+        return new Machine(new MachineId(id), "M" + id, 1, null, 0) {
+            @Override
+            public int queueDepth() {
+                return queueDepth;
+            }
+        };
     }
 
     private static JobView jobForOrder(FactoryRuntime runtime, OrderId orderId) {

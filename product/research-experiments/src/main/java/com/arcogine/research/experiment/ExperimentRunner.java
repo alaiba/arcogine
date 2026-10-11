@@ -224,7 +224,7 @@ public final class ExperimentRunner {
         return runtime.observe().metadata().latestEventSequence();
     }
 
-    private static ExperimentEvidence.CommandRecord recordOf(
+    static ExperimentEvidence.CommandRecord recordOf(
             int index, ExperimentStep step, CommandResult<?> result) {
         return switch (result) {
             case CommandResult.Accepted<?> accepted -> new ExperimentEvidence.CommandRecord(

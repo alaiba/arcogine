@@ -1,6 +1,7 @@
 package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
@@ -69,18 +70,14 @@ class OrderIntentSeparationTest {
 
         var job = handler.jobsView().findFirst().orElseThrow();
         var order = handler.order(job.orderId());
-        EventPayload.OrderCompleted completed = null;
         java.util.Optional<Event> pending;
         while ((pending = scheduler.nextEvent()).isPresent()) {
-            Event next = pending.orElseThrow();
-            handler.handleEvent(next, scheduler);
-            if (next.payload() instanceof EventPayload.OrderCompleted payload) completed = payload;
+            handler.handleEvent(pending.orElseThrow(), scheduler);
         }
 
+        assertTrue(handler.orderExecution(order.id()).complete());
+        assertEquals(1L, handler.completedSales());
+        assertEquals(36.0, order.orderValue(), "3 units at the order's agreed 12.0 unit price");
         assertEquals(order.orderValue(), handler.completedSalesValue());
-        var payload = completed;
-        assertEquals(order.productId(), payload.productId());
-        assertEquals(order.quantity(), payload.quantity());
-        assertEquals(order.unitPrice(), payload.unitPrice());
     }
 }

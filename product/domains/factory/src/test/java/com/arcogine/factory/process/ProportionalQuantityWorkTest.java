@@ -1,6 +1,7 @@
 package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -147,16 +148,18 @@ class ProportionalQuantityWorkTest {
         sched.nextEvent();
         h.handleEvent(order, sched);
 
+        OrderId orderId = h.ordersView().findFirst().orElseThrow().id();
         java.util.List<Integer> stepIndices = new java.util.ArrayList<>();
         java.util.List<MachineId> machineIds = new java.util.ArrayList<>();
         long orderCompletedCount = 0;
         Optional<Event> next;
         while ((next = sched.nextEvent()).isPresent()) {
+            boolean completeBefore = h.orderExecution(orderId).complete();
             h.handleEvent(next.get(), sched);
-            if (next.get().payload() instanceof EventPayload.TaskEnd te) {
-                stepIndices.add(te.stepIndex());
-                machineIds.add(te.machineId());
-            } else if (next.get().payload() instanceof EventPayload.OrderCompleted) {
+            EventPayload.TaskEnd te = assertInstanceOf(EventPayload.TaskEnd.class, next.get().payload());
+            stepIndices.add(te.stepIndex());
+            machineIds.add(te.machineId());
+            if (!completeBefore && h.orderExecution(orderId).complete()) {
                 orderCompletedCount++;
             }
         }
@@ -168,7 +171,7 @@ class ProportionalQuantityWorkTest {
                         + " job-global counter (0..5)");
         assertEquals(List.of(new MachineId(1), new MachineId(2), new MachineId(1), new MachineId(2),
                 new MachineId(1), new MachineId(2)), machineIds);
-        assertEquals(1, orderCompletedCount, "OrderCompleted must fire exactly once for the whole order");
+        assertEquals(1, orderCompletedCount, "the order must complete exactly once for the whole order");
         assertEquals(1, h.completedSales());
     }
 
@@ -210,20 +213,21 @@ class ProportionalQuantityWorkTest {
         sched.nextEvent();
         h.handleEvent(order, sched);
 
+        OrderId orderId = h.ordersView().findFirst().orElseThrow().id();
         long orderCompletedCount = 0;
         Optional<Event> next;
         while ((next = sched.nextEvent()).isPresent()) {
+            boolean completeBefore = h.orderExecution(orderId).complete();
             h.handleEvent(next.get(), sched);
-            if (next.get().payload() instanceof EventPayload.OrderCompleted) {
+            if (!completeBefore && h.orderExecution(orderId).complete()) {
                 orderCompletedCount++;
-                assertEquals(
-                        JobStatus.Completed,
-                        h.jobsView().findFirst().orElseThrow().status(),
-                        "OrderCompleted must only fire once every required unit of work has finished");
+                assertTrue(
+                        h.jobsView().allMatch(job -> job.status() == JobStatus.Completed),
+                        "the order may only complete once every required unit of work has finished");
             }
         }
 
-        assertEquals(1, orderCompletedCount, "OrderCompleted must fire exactly once for the order");
+        assertEquals(1, orderCompletedCount, "the order must complete exactly once");
         assertEquals(1, h.completedSales());
     }
 

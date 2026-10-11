@@ -312,10 +312,7 @@ final class FactoryModelCanonicalForm {
                 throw new IOException("factory model artifact is decodable but not canonical");
             }
             return model;
-        } catch (IOException | RuntimeException e) {
-            if (e instanceof IllegalArgumentException illegalArgumentException) {
-                throw illegalArgumentException;
-            }
+        } catch (IOException e) {
             throw new IllegalArgumentException(
                     "invalid " + NAMESPACE + " canonical artifact", e);
         }

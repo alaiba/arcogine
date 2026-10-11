@@ -32,6 +32,8 @@ class RoutingStoreTest {
     void getStepOutOfBoundsIsNone() {
         Routing r = sampleRouting();
         assertFalse(r.getStep(5).isPresent());
+        assertFalse(r.getStep(-1).isPresent());
+        assertEquals(r.steps(), List.of(r.getStep(0).orElseThrow(), r.getStep(1).orElseThrow()));
     }
 
     @Test
@@ -61,6 +63,8 @@ class RoutingStoreTest {
     void getRoutingById() {
         RoutingStore store = new RoutingStore();
         store.addRouting(sampleRouting());
+        store.addRouting(new Routing(2, "Second route", List.of()));
+        assertEquals("Second route", store.getRouting(2).name());
         Routing r = store.getRouting(1);
         assertEquals("Widget Route", r.name());
     }

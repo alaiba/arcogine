@@ -126,6 +126,28 @@ class AssertionIdentityTest {
         assertFalse(assertion.equals(null));
     }
 
+    @Test
+    void assertionIdentityAndVersionRejectInvalidValuesAndSortNumerically() {
+        assertThrows(IllegalArgumentException.class, () -> new AssertionId(" "));
+        assertThrows(IllegalArgumentException.class, () -> new AssertionVersion(0));
+        assertTrue(new AssertionVersion(2).compareTo(new AssertionVersion(10)) < 0);
+        assertEquals("v2", new AssertionVersion(2).toString());
+        assertEquals("arc.test.rule", new AssertionId("arc.test.rule").toString());
+    }
+
+    @Test
+    void assertionEqualityDistinguishesBothIdentityAndVersion() {
+        Assertion<Integer> original = structuralAssertion(new RequirementVersion(1));
+        Assertion<Integer> otherId = new Assertion<>(new AssertionId("arc.test.other-rule"),
+                original.version(), original.requirementId(), original.requirementVersion(),
+                original.description(), original.evidenceRequirement(), original.rule());
+        Assertion<Integer> otherVersion = new Assertion<>(original.id(), new AssertionVersion(2),
+                original.requirementId(), original.requirementVersion(), original.description(),
+                original.evidenceRequirement(), original.rule());
+        assertNotEquals(original, otherId);
+        assertNotEquals(original, otherVersion);
+    }
+
     private static Assertion<Integer> structuralAssertion(RequirementVersion requirementVersion) {
         return new Assertion<>(
                 new AssertionId("arc.test.positive-capacity.rule"),

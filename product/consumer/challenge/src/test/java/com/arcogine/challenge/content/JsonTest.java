@@ -32,6 +32,20 @@ class JsonTest {
     }
 
     @Test
+    void rejectsIncompleteAndInvalidStringEscapesWithSpecificDiagnostics() {
+        assertTrue(assertThrows(JsonSyntaxException.class, () -> Json.parse("\"unfinished"))
+                .getMessage().contains("unterminated string"));
+        assertTrue(assertThrows(JsonSyntaxException.class, () -> Json.parse("\"unfinished\\"))
+                .getMessage().contains("unterminated escape"));
+        assertTrue(assertThrows(JsonSyntaxException.class, () -> Json.parse("\"\\q\""))
+                .getMessage().contains("invalid escape"));
+        assertTrue(assertThrows(JsonSyntaxException.class, () -> Json.parse("\"\\u12"))
+                .getMessage().contains("truncated unicode escape"));
+        assertTrue(assertThrows(JsonSyntaxException.class, () -> Json.parse("\"\\u12xz\""))
+                .getMessage().contains("invalid unicode escape"));
+    }
+
+    @Test
     void rejectsTrailingContent() {
         JsonSyntaxException e = assertThrows(JsonSyntaxException.class, () -> Json.parse("{} garbage"));
         assertTrue(e.getMessage().contains("trailing"));

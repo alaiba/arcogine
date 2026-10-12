@@ -19,7 +19,18 @@ Controlled retry explanation, scoring/level structure, external-player validatio
 
 A slice that makes **layout** behaviorally consequential has an additional upstream dependency on the executable spatial-runtime prerequisite selected in [Spatial Runtime Consequences](spatial-runtime-consequences.md): the current Engine refuses present spatial content until that plan makes it executable. It consumes the already-reconciled [transfer-applicability contract](../architecture/transfer-applicability.md), the current [Factory model](../architecture/factory-model.md) and [Engine semantics](../architecture/engine-semantics.md); no separate Engine-identity or applicability research gate remains. New research is added only if a concrete new semantic uncertainty is admitted.
 
-If promoted playable requirements need generic diagnostics — reusable utilization/occupancy measurement, longitudinal aggregation, bottleneck inference, or run-to-run comparison — they must first consume the resolved [analytics ownership boundary](../research/investigations/simulation-analytics-consumer-boundary.md) rather than implement those semantics locally in the game. If that research establishes consumer-neutral analytics, such requirements must also consume any promoted [evidence/provenance contract](../research/investigations/simulation-analytics-evidence-provenance.md); adapter compatibility and cross-revision comparison remain conditional on their own concrete triggers. This constrains only requirements that actually depend on reusable derived measurement; unrelated headless Challenge capability remains independently usable.
+A named **Game-local** diagnostic method is permitted by the concluded
+[analytics-definition ownership boundary](../architecture/overview.md#domain-authority), but can
+enter a playable requirement set only after the separately **READY** Game diagnostic-evidence
+question concludes and its actual methods, proof/refusal and product requirements are admitted.
+For a shared named definition, apply the concrete architecture admission triggers instead of
+reimplementing it locally; any additional input, method-proof, provenance, accumulation or
+retention need evaluates the still-[CANDIDATE evidence/provenance
+question](../research/investigations/simulation-analytics-evidence-provenance.md). Adapter and
+cross-revision questions have their own independent triggers. A fresh snapshot's `no currently
+known work` is not an interval aggregate or `no work left for the rest of the period`; the latter
+claims require distinct finality and future-input evidence. The separate product gate, Engine
+session/control requirements, and unrelated headless Challenge use are unaffected.
 
 ## Upstream prerequisites
 
@@ -36,7 +47,7 @@ Replace this gate with a concrete implementation slice only when all of the foll
 1. every focused research question required by the selected slice is **CONCLUDED** and has promoted an explicit bounded requirement or an explicit no-action/falsification result;
 2. the promoted requirements form a coherent first slice without depending on another unresolved product question;
 3. upstream Engine/Factory prerequisites required by those exact requirements are landed;
-4. any reusable analytics requirement has a settled ownership/input contract;
+4. any selected named Game diagnostic has admitted requirements and sufficient claim-specific input/proof/refusal rules, and any truly shared method meets the architecture's concrete definition-owner trigger;
 5. the exact consumer integration boundary is known, including how a projector fixes result-affecting configured-resource identity and order;
 6. implementation ownership is clear; and
 7. executable acceptance tests can be written before coding starts.

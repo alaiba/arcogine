@@ -144,36 +144,27 @@ inherits from the pre-spatial Engine:
   accumulation;
 - scheduler equal-time insertion ordering where it is semantically observable.
 
-**Ownership note — reported derived results.** The last two bullets pin *reported* derived results
-(throughput, mean lead time, completed-order counting and value accumulation) whose placement on the
-Engine/analytics boundary is an open question under
-[Simulation analytics consumer boundary](../research/investigations/simulation-analytics-consumer-boundary.md).
-This slice also pinned the overflow saturation of a per-resource cumulative busy-time counter; that
-counter was later removed from the supported runtime by an explicit repository-owner decision, as a
-supported-contract change reconciled through architecture, without the analytics research concluding.
+**Ownership note — reported derived results.** The last two bullets pin *reported* derived
+results (throughput, mean lead time, completed-order counting and value accumulation) that the
+[concluded analytics ownership boundary](../research/investigations/simulation-analytics-consumer-boundary.md)
+leaves Engine-owned. The §1.1 membership test includes their exact derived-result arithmetic;
+§10.1–§10.2 fix the edge cases and accumulators. The supported interpretation does **not** change
+when a consumer gives those results a different analytical presentation.
 
-Adopted architecture makes those values part of the Engine interpretation: the §1.1 membership test
-covers derived-result arithmetic, §10.1–§10.2 fix their edge cases *and* their accumulation, and §1.1
-consequence 4 states that a rule satisfying the membership test but absent from the specification is a
-defect in the specification. Pinning them is therefore the honest action.
+This slice also pinned saturation of an earlier per-resource completion-credit busy-time counter;
+that counter was separately removed from the supported Engine by #469. The surviving fixture suite
+proves only the current supported contract, not a new resource utilization definition or a
+historical busy-time replay guarantee.
 
-What pinning does **not** do is settle ownership. These fixtures characterize current behavior under
-the accepted contract; they are not evidence that these values permanently belong in the supported
-runtime observation. If the analytics research concludes they should move, that is an explicit change
-to a supported contract reconciled through architecture, not something this slice pre-decides.
+The fixtures alone do not justify a new outward contract or future Engine-wide analytical result:
+a new definition needs a separate [producer responsibility and shared-ownership
+admission](../architecture/overview.md#domain-authority). Changing any existing Engine-declared
+result's ownership or arithmetic later is a deliberate specification/support transition with
+reconciled conformance and consumers, not an incidental refactor.
 
-Two constraints follow for implementers:
-
-1. do not cite these fixtures as evidence that the ownership question is closed;
-2. do not harden these specific values into *new* outward contracts or DTOs while the research is
-   open — see the KPI ownership note in
-   [Factory Simulation Engine Readiness](factory-simulation-engine-readiness.md#3-current-implementation-queue).
-
-`combinedQueueDepth` is deliberately listed separately and is **not** in this category: it is derived
-but result-affecting, because its exact arithmetic decides assignment. It remains Engine semantics
-regardless of the analytics outcome. Every other bullet in this slice — dispatch, acceptance,
-scheduler, ranking, materialization, and spatial behavior — is authoritative and unaffected by that
-research.
+`combinedQueueDepth` remains Engine result-affecting resource ranking rather than reportable
+physical queue depth. The dispatch, acceptance, scheduling, ranking, materialization and spatial
+rules in this slice remain authoritative independently of a future analytical method.
 
 **Evidence**
 
@@ -260,7 +251,7 @@ already correct.
 The executable evidence is maintained in `EngineDispatchConformanceTest`,
 `EngineDerivedResultConformanceTest`, the session-control acceptance suite, and the
 child-materialization acceptance/benchmark tests. These tests pin current behavior; they do not claim
-that the dispatch policy is optimal or settle the Engine-versus-analytics ownership question.
+that the dispatch policy is optimal or themselves justify a new analytical definition or owner.
 
 **Non-goals**
 

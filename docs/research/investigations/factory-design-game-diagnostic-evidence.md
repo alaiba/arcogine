@@ -33,7 +33,7 @@ In scope:
 Out of scope:
 
 - population-level player comprehension, accessibility, onboarding success, or preference;
-- reusable analytics ownership — [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md) owns that question;
+- selection of a shared analytics owner or implementation — the [concluded ownership rule](../../architecture/overview.md#domain-authority) permits Game-specific named methods but reserves truly shared meaning for its concrete admission triggers; this research still owns the Game method/evidence acceptance question;
 - transfer/processing decomposition until transfer semantics and executable transfer evidence land;
 - challenge economics, scoring, strategy diversity, tutorial sequencing, renderer choice, packaging, or persistence;
 - inventing new Engine facts to make a presentation convenient;

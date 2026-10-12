@@ -270,10 +270,20 @@ decision; it must not reinterpret the point-identity rule as though a continuati
   provenance, subject correspondence, and reconciliation. Governance may consume a fixture-backed or
   Operational-supplied explicit correspondence assertion for a bounded case; doing so neither
   implements ingestion nor establishes that the correspondence authority is trusted.
-- **Engine and analytics producers** own calculation semantics, result identity, any exact
-  producer-definition reference their contract actually requires, and analytical definitions. Verification-objective semantics (throughput, lead time, utilization,
-  safety separation, operational reconciliation, and the like) remain domain-owned; Governance
-  consumes attributable results and does not become a generic simulation/verification engine.
+- **Engine and named analytical-method owners** each own the definitions they actually fix:
+  Engine owns its declared result arithmetic, and a named method's population, interval,
+  availability, denominator and attribution choices belong to the capability fixing those
+  choices ([Domain authority](overview.md#domain-authority)). Verification-objective semantics
+  (throughput, lead time, utilization, safety separation, operational reconciliation and the like)
+  remain domain-owned. A concrete Governance verification requirement with acceptance evidence may
+  justify sharing one named definition, but Governance consumes attributable results; it does not
+  thereby calculate analytics or become an Engine.
+- For an analytical result, its **definition owner** supplies the method meaning and appropriate
+  definition identity; the controller/attestor supplies attributable command, fault and closure
+  provenance; and the evidence holder supplies the captured run/basis, supported changes, proof
+  frontier and actual retention. Sharing a definition never silently transfers physical custody
+  or upgrades the source's trust/proof guarantees ([runtime evidence
+  contract](runtime-contract.md#captured-execution-evidence-and-interval-determinacy)).
 - A reference-shaped value or provenance-shaped object alone establishes no authoritative acceptance,
   authenticity, or entitlement. The owner of a source, result, or interpretation establishes the
   guarantees it claims; where the retained basis cannot support a claimed integrity or attribution,
@@ -289,7 +299,8 @@ definition-bound scope; stronger retained historical support has not been declar
 runtime intentionally exposes no placeholder exact-definition identifier.
 If a future evidence use requires exact Engine-definition provenance, that remains an explicit gap
 until the producer owns and exposes such a basis. Operational observation identity, correspondence,
-and trust are not implemented; analytical-definition provenance ownership is unresolved; durable
+and trust are not implemented; the definition-ownership rule is established, but no universal
+analytical-definition identity/representation or retention mechanism is implemented; durable
 requirement-definition and evaluation-history storage do not exist.
 
 An implementation must therefore state which provenance class it proves and must not claim
@@ -307,8 +318,9 @@ The following remain open and must not be read as settled by this contract:
   compatibility policies (§6–§7);
 - the Operational correspondence/trust capability and Operational observation identity required by a
   real external-observation integration;
-- Engine result identity, runtime provenance propagation, and analytical-definition provenance
-  ownership, the last of which is the separate simulation-analytics boundary research question;
+- Engine result identity and runtime provenance propagation, including any separately justified
+  exact producing Engine-definition reference; analytical-definition identity, representation,
+  historical resolution and retained result provenance/storage for a concrete admitted use;
 - the evaluation-occurrence identifier representation, the acceptance authority, and any
   requirement-definition registry or persistence mechanism that satisfies §8–§9;
 - retention/compaction limits and how missing history is disclosed for a particular claim;

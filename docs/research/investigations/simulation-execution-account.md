@@ -41,12 +41,13 @@ counterexamples and remains sufficient without the original research helpers or 
 
 ## Downstream continuation
 
-The [analytics ownership question](simulation-analytics-consumer-boundary.md) remains **READY**.
-After this reconciliation lands, its prospective Phase 2 can resume using the qualified runtime
-contract. Phase 1's current-boundary classification remains evidence. Phase 2 must separate shared
-coverage semantics, controller/holder warranties and physical custody from analytical sufficiency,
-accumulation and definition ownership, then obtain its own independent adversarial review and
-reconciliation. Prior candidate admission rules are not adopted here.
+The [analytics ownership question](simulation-analytics-consumer-boundary.md) has since
+been reconciled separately; its named-method ownership rule is in [Domain
+authority](../../architecture/overview.md#domain-authority). Its Phase 1 Engine classification
+used this runtime evidence contract, and its Phase 2 result preserves the distinction between
+common proof/finality, controller commitments, holder custody and method-specific sufficiency.
+That later result neither rewrites this execution-evidence conclusion nor creates an analytics
+owner, producer history service or new closure API.
 
 The [analytics evidence/provenance question](simulation-analytics-evidence-provenance.md) remains
 **CANDIDATE** until a concrete analytical responsibility/use is established. Its remaining concerns

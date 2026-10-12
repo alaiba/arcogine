@@ -1,185 +1,169 @@
 # Factory-Design Game Diagnostic Evidence Contract Research
 
-> **Status:** READY — see the maintained [research register](../research-register.md)  
+> **Status:** CONCLUDED — see the maintained [research register](../research-register.md)  
 > **Scope:** Truthful, inspectable player-facing diagnostic evidence over supported non-spatial production/runtime facts  
-> **Authority:** Product research only; this brief does not define Engine facts, reusable analytics, or population-level usability claims
+> **Authority:** Product research record only. The promoted requirements live in the [consumer plan](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence). This record defines no Engine fact, admitted analytical method or population-level usability claim
 
-## Question
+## Conclusion
 
-What minimum player-facing diagnostic evidence contract can the game build from supported Arcogine simulation facts so that every diagnostic claim is:
+> Within the studied non-spatial scope, a mechanically truthful, inspectable diagnostic surface is achievable from supported simulation facts. It allows direct facts, counts from one labeled observation, supported event intervals, controlled comparisons, and values of named methods with declared evidence and refusal. It never presents a falsified single-run heuristic as fact. One co-designing owner found a pull-based text prototype explorable in a single-person smoke test.
 
-1. mechanically traceable to authoritative or explicitly derived ground truth;
-2. explicit about the method/derivation behind any interpretation;
-3. able to refuse unsupported causal attribution; and
-4. inspectable without exposing raw scheduler/runtime internals?
+This is a **bounded positive**. It establishes guardrails that held on every falsification case checked. It also establishes concrete Game measurement demands with the choices a method must fix, and presentation requirements that survived the owner sessions. It does **not** establish that the surface is usable, understandable, satisfying or engaging for target players, that learning occurs, that bottleneck can be taught, or that any analytical definition is admitted. The requirement set is in the consumer plan's [Diagnostic claims and evidence](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence); the playable implementation gate stays [blocked](../../planning/factory-design-game-vertical-slice.md).
 
-## Decision at stake
+## Bounded question
 
-Whether the first internal/playable slice can expose a **truthful diagnostic surface** for the non-spatial production problem, and which evidence/explanation requirements should be promoted into the game consumer plan.
+What minimum player-facing diagnostic evidence contract can the game build from supported Arcogine simulation facts so that every diagnostic claim is mechanically traceable to authoritative or explicitly derived ground truth, explicit about its method, able to refuse unsupported causal attribution, and inspectable without exposing scheduler or runtime internals?
 
-A positive result does **not** establish that a target player population finds the presentation intuitive, accessible, or engaging. That is a separate empirical question to admit when independent target users exist or when a release objective makes such a claim material.
+**Decision at stake.** Whether a first internal or playable slice can expose a truthful diagnostic surface for the non-spatial production problem, and which evidence and explanation requirements to promote into the game consumer plan.
 
-## Scope and non-goals
+**Framing set by the owner during investigation.** The brief defined *truthful* but not *diagnostic*, so the owner set the player goals:
 
-In scope:
+- understand one recorded run;
+- learn the production concepts it exhibits, with vocabulary introduced in context; and
+- check hypotheses by exploring design alternatives.
 
-- supported current-state and ordered runtime evidence;
-- resource/operation waiting, activity, completion progress, and attempt outcome facts that exist in the landed non-spatial runtime;
-- named interpretations whose method and supporting numbers are exposed;
-- controlled versus confounded attempt comparison;
-- deterministic ground-truth fixtures and adversarial counterexamples;
-- a product-owner walkthrough as a qualitative smoke test.
+The owner also chose a text interface as the study medium and limited the study to static recorded runs with pre-computed variants. The owner walkthrough became a smoke test of a presentation prototype rather than of a statement list. That third pass had **reduced blinding**. The owner co-designed its scenarios and missions, had seen the first pass's key, and its labeled displays answered most missions directly. The brief's shuffled-identity protocol was not used.
 
-Out of scope:
+**Studied scope:** non-spatial, one product, linear routing, the whole order released at once, every machine always online, no setup or transfer.
 
-- population-level player comprehension, accessibility, onboarding success, or preference;
-- selection of a shared analytics owner or implementation — the [concluded ownership rule](../../architecture/overview.md#domain-authority) permits Game-specific named methods but reserves truly shared meaning for its concrete admission triggers; this research still owns the Game method/evidence acceptance question;
-- transfer/processing decomposition until transfer semantics and executable transfer evidence land;
-- challenge economics, scoring, strategy diversity, tutorial sequencing, renderer choice, packaging, or persistence;
-- inventing new Engine facts to make a presentation convenient;
-- treating an AI/model review as a substitute for human-player evidence.
+## Evidence basis
 
-A research-local derivation may establish fixture ground truth. Reusing that derivation in product code is a separate ownership decision and must not be smuggled through this investigation.
+- **Deterministic falsification corpus.**
+  - **Corpus:** 13 designs and 24 pairs, with ground truth hand-derived and committed before evaluation.
+  - **Coverage:** a true constraint; capacity added at and away from it; constraint migration; starvation versus surplus; multi-eligible waiting; a long unfinished step; concurrency above one; confounded pairs, including a pure interaction.
+  - **Contracts compared:** six candidate information contracts and one deliberately naive control, under six mechanical audits.
+  - **Results:** facts-only and named-interpretation contracts each failed at least one audit. Claim–evidence bundles (facts, named derivations and refusals) passed all six. The naive control failed five.
+- **Three owner walkthroughs.**
+  1. A blinded statement list partly failed: the owner inferred the constraint from the longest wait and did not understand "starved/surplus".
+  2. A scripted walkthrough was paused to resolve scope.
+  3. A pull-based text inspection prototype ran over four bakery scenarios and 13 missions. The owner got 17 of 19 checked answer parts right; one mission was answered correctly through an invalid heuristic.
+- **Independent adversarial review: `ACCEPT WITH QUALIFICATIONS`.**
+  - It reran the experiment on the JDK 21 floor and reproduced every output byte for byte.
+  - It hand-derived all 13 missions and the corpus spot checks, and found no wrong official answer.
+  - Two new probes found the offline-and-queued state and single-removal non-composition.
+  - Every qualification below comes from that review.
+- **Reconciliation recheck against the current Engine.** Four relevant changes followed the review:
+  - the Engine stopped scheduling inert start and order-completion markers;
+  - the captured-execution-evidence and interval-finality rules were reconciled;
+  - the completion-credited `busyTicks` counter was removed;
+  - analytical-definition ownership was decided.
 
-## Candidate evidence contracts
+  Every corpus and mission script is start-fixed (one submission, then time-bounded advancement), so the marker change preserves its supported events. A port of the experiment to the current tree confirmed this. The port changed only the two places that read the removed counter: the naive control now misreads a snapshot instead, and one assertion keeps only its surviving facts. It also added the two review probes, with hand-derived expectations. Every test passes. The regenerated mission data, walkthrough pack, intervention outcomes and candidate-contract statements are byte-identical to the reviewed outputs; only the altered naive control's rows differ. The historical counter values cannot be read on the current tree, so they remain baseline-specific negative evidence and were not rerun.
 
-Compare a small number of materially different **information contracts**, not polished visual designs.
+## Qualifications that constrain the result
 
-1. **Facts only** — expose queue/waiting state, resource activity, completion progress, and attempt outcomes without a synthesized diagnostic verdict.
-2. **Facts plus named interpretation** — expose the same facts plus a named diagnostic method and the exact numbers/facts on which its interpretation rests.
-3. **Claim–evidence bundle** — present a concise diagnosis together with its evidence chain and an explicit refusal state when the available facts do not license the requested conclusion.
+These are part of the accepted result, not commentary on it.
 
-A candidate fails if it depends on hidden scheduler state, an unnamed heuristic, or a result that cannot be reconstructed from the supported input evidence selected for the study.
+1. **Verdict and human evidence.** Promote only the bounded positive above. "Usable", "understandable", "satisfactory" and "learning observed" are not conclusions. The third walkthrough's reduced blinding travels with its result. Independently exercised concepts are: slot state, starvation, utilization, experiment-based "needed", and one co-binding experiment. Bottleneck teaching and external-player comprehension were not established. Owner failures remain valid falsifications; owner success is only a smoke test.
+2. **What was mechanically audited.** The six audits ran on the statement contracts. They are keyword and self-declared-facet regression checks, not a truthfulness verifier for new statements. For example, a misleading direct-fact sentence ("assembly held the whole run back") passes them. The later starvation and utilization characterizations were checked only on four bakery scenarios: pre-registered values, plus an internal check that every slot-tick has exactly one state. They were not audited across the 13-design corpus. Any implementation derives its own acceptance tests from the guardrails.
+3. **The two-layer model is valid for always-online machines only.** Slot state is observed. Why a slot is idle is a named interpretation. "An idle slot with work queued for it is a contradiction" holds only while machines stay online. After an availability change, Engine semantics §4 rule 7 makes that state reachable, so any method needs a third classification or an explicit refusal. A snapshot's "no currently known eligible work" never promises that no work will arrive.
+4. **Measurement basis completeness.** The choices are material because each changes a value: half-open versus inclusive periods, the per-slot denominator, counting running work up to the bound, machine versus step-pool views, and known work only. Two more choices are open:
+   - whether starved slots are capped by the remaining eligible work;
+   - the pool basis for a machine eligible for several steps.
 
-## Deterministic fixture corpus
+   The flow characterization was never exercised on such machines or across the 13-design corpus.
+5. **Measurement demand framing.** Utilization and starvation are this Game's concrete measurement needs. The [ownership decision](../../architecture/overview.md#domain-authority) lets the Game own a named method for them. Reuse beyond the Game is not demonstrated: utilization has only an illustrative Factory Design verification objective, and idle-reason coding rests on unverified industry background. The counter's removal is not reuse evidence. A single-run bottleneck method is optional, with no demonstrated Game need.
+6. **Guardrail additions.**
+   - Single-change "needed / not needed" results do not compose into a verdict on a joint change.
+   - For concurrency above one, machine-level `Busy` is not "fully working".
+   - "Needed" is time-only. "Worth it" belongs to a named Challenge evaluation rule.
+7. **No platform gaps.**
+   - Per-step timing is available from captured supported events or adequate observations.
+   - Machine identity needs no Factory change: stability under edits is the projector's rule.
+   - Design comparison has already landed in the Factory semantic comparator and Governance `ChangeSet`.
+8. **The counter removal is complete and separate.** The owner's removal decision was carried out by its own reviewed change. That change also repaired the maintained utilization and carried-load bottleneck claims, and kept the Governance verification-objective statement. The counter's history survives only as negative knowledge: it was misnamed and misused as utilization, exact only as total processing time at quiescence, and wrong as a mid-run or elapsed-time reading.
 
-Use a bounded corpus of deterministic non-spatial traces generated from the [concluded strategy-space reference challenge](factory-design-game-strategy-space.md#selected-reference-challenge) or an explicitly revalidated successor. That record supplies mechanical ground truth only (designs, marginal-intervention effects, supported dispatch evidence); it supplies no diagnostic method, treats pool occupancy as a descriptive measurement and not a constraint definition, and preserves, as executable capacity-corpus fixtures, a known case where the most-occupied pool is not the effective constraint, which can serve the falsification condition below that requires a known misleading-constraint counterexample. Every fixture must retain exact model, Engine semantics, workload/command, run/event-range, and any research-local analytical-definition provenance needed to reproduce its ground truth.
+### Claims that did not survive
 
-The corpus must include at least:
+These must not be reintroduced:
 
-- one true capacity-constraint case;
-- one capacity-added-at-constraint pair;
-- one capacity-added-away pair with a null or materially smaller outcome effect;
-- one constraint-migration pair;
-- one starvation-versus-surplus case;
-- one multi-eligible waiting case where per-machine queue depth alone is misleading;
-- one long unfinished-step case where processing time credited only at step completion is misleading;
-- one `concurrency > 1` case that defeats naïve utilization arithmetic; and
-- one deliberately confounded attempt pair where several authored variables change.
+- that the brief's first contract shows no measurement demand (reversed by the owner's educational goal, not by new mechanical evidence);
+- that those demands are established as reusable beyond the Game;
+- that the game must itself keep event history, machine identity and change sets as game concepts;
+- refusal sections as player-facing UI;
+- a statement list as the presentation;
+- trap questions as walkthrough tasks;
+- avoiding industry vocabulary;
+- a completion-chain explanation line for players;
+- "surplus" from one run;
+- annotating every tick range with its length;
+- "usable" or "learning observed" as conclusions;
+- the idle-with-queued-work contradiction stated as an Engine property;
+- "mechanically audited" as general truthfulness;
+- per-step timing, machine identity or design comparison as platform blockers;
+- the busy counter as utilization.
 
-Transfer-dependent fixtures belong to a later extension after the transfer/spatial contracts land.
+## Promoted requirements
 
-## Ground-truth questions
+The [consumer plan](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence) owns the requirement set:
 
-For every fixture, precompute or independently derive the answer to a fixed diagnostic question set:
+- claim classes and the rule that no claim exceeds its proof;
+- pull-based inspection;
+- forbidden shortcuts;
+- comparison truth;
+- the two-layer idle classification;
+- the method acceptance gate for utilization and starvation;
+- no new platform facts;
+- presentation requirements;
+- acceptance tests derived from the guardrails.
 
-1. What work is waiting, and for which operation step?
-2. Which resource/operation is the constraint under the **named** diagnostic method used by the candidate, if any?
-3. Is a named idle resource starved, surplus, or not decidable from the selected evidence?
-4. Which supported interval/category accounts for the largest measured delay that the evidence can actually distinguish?
-5. For a controlled one-variable attempt pair, what authored fact changed and what outcome fact changed?
-6. For a confounded pair, which causal attribution must be refused?
+The [implementation gate](../../planning/factory-design-game-vertical-slice.md) records that this research gate is satisfied while playable admission stays blocked.
 
-The oracle must be derived before evaluating the presentation candidate. Do not tune the oracle to make the presentation look correct.
+## Reusable proving cases
 
-## Evidence method
+Each case falsifies a shortcut the guardrails forbid. Where a maintained research-substrate fixture already pins the phenomenon, it is named. The other parameters are enough to rebuild the case with the substrate's linear routing family.
 
-For each candidate evidence contract:
+| Case | What it shows | Parameters and durable home |
+|---|---|---|
+| Shared multi-eligible waiting | Per-machine counts double-count shared pending work; waiting belongs to the step | The multi-eligible starter fixture and [`WaitingWorkByStepOracleTest`](../../../product/research-experiments/src/test/java/com/arcogine/research/experiment/WaitingWorkByStepOracleTest.java) |
+| Work running at a half-open bound; concurrency denominator | Running work counts up to the bound; occupied job-ticks can exceed elapsed time on a multi-slot machine | [`ProcessingOccupancyOracleTest`](../../../product/research-experiments/src/test/java/com/arcogine/research/experiment/ProcessingOccupancyOracleTest.java). Also: cutter, two-slot assembler and two inspectors, on `CUT` 3 → `ASSEMBLE` 4 → `INSPECT` 5 with 12 units. Both assembler slots are working at tick 9, and the run completes at 45 |
+| Historical completion-credited counter | A counter credited at step completion is not utilization | Same design: the removed counter read 4 at tick 9 with both slots working, and 48 against 45 elapsed at completion. Historical only |
+| Same idle snapshot, different removal outcome | One run cannot show surplus | Cutter, assembler and two inspectors complete at 56; Inspector 2 is idle with no eligible work at tick 17, yet removing it gives 67. Cutter, two assemblers and an inspector complete at 67; Assembler 2 is idle with no eligible work at tick 11, and removing it still gives 67 |
+| Capacity at the most-occupied pool to no effect | Busiest is not the bottleneck | The strategy-space occupancy counterexample, pinned by [`CapacityCorpusTest`](../../../product/research-experiments/src/test/java/com/arcogine/research/experiment/CapacityCorpusTest.java) |
+| Order-only change | Identity and order are part of a design change | The shared-resource pair completes at 11 authored and 9 reversed, pinned by `CapacityCorpusTest` |
+| Confounded co-binding and order-dependent attribution | No unique responsible change; joint effects do not split | One resource per step on `CUT` 3 → `ASSEMBLE` 5 → `INSPECT` 5 with 12 units completes at 68, and at 68 with either an added assembler or an added inspector; adding both gives 46. On the `ASSEMBLE` 4 routing (67), an assembler then an inspector attributes 0 then −22; the reverse order attributes −11 then −11 |
+| Single-change non-composition | "Not needed" results do not license a joint removal | `MIX` 2 → `BAKE` 3 → `PACK` 4 with mixer, oven and three packers, one slot each, and 8 units: 30 with all three packers, 30 without Packer 2 alone or Packer 3 alone, and 37 without both |
+| Offline-and-queued state | Idle-with-queued-work is reachable; it needs a third classification or refusal | One step `BAKE` 4 and a two-slot oven. Four units are submitted while the oven is offline, then it comes online at time 0. The oven is `Busy` with one slot working and three units in its own queue, and the run completes at 16 instead of 8. Retained Engine behavior, also recorded as local recovery underfill in [Engine evolution](engine-evolution.md) |
 
-1. **Traceability audit** — map every displayed claim to exact supporting facts, event intervals, or a named research-local derivation.
-2. **Reconstruction test** — prove that the claim can be recomputed from the stated supported input set without scheduler internals or hidden mutable state.
-3. **Counterexample test** — run the candidate against the misleading cases above and verify it does not emit a stronger claim than the evidence licenses.
-4. **Refusal test** — verify that the confounded attempt pair and every other underdetermined case produce an explicit “not attributable / not decidable from this evidence” outcome rather than a guessed explanation.
-5. **Controlled-mutation test** — vary one authored input at a time and verify that the claim/evidence bundle changes only where the authoritative outcome/evidence changes.
-6. **Terminology audit** — reject labels whose ordinary meaning contradicts the actual semantics, even if the underlying number is correct.
+## What this does not establish
 
-Where practical, encode the oracle and these invariants as executable fixtures. The research result should not depend on a person repeatedly eyeballing the same traces.
+- Population-level comprehension, accessibility, usability, engagement, learning efficacy or difficulty, or how to teach bottleneck.
+- Any result for orders arriving over time, availability changes, several products, branching routing, setup, transfer or spatial layout, or finite buffers and blocking.
+- An admitted Game method, a shared analytical definition, a new Engine or Factory fact, a live interaction loop, or a UI or client technology.
+- Mechanical enforcement of the guardrails for statements not yet written.
 
-## Product-owner walkthrough
+## Reopening triggers
 
-After the mechanical evidence audit, the repository owner may perform a blinded qualitative walkthrough:
+| Concrete condition | Owning next decision |
+|---|---|
+| An allowed in-scope claim is shown false, or an official mission answer is shown wrong | Reopen this research |
+| A selected slice needs a utilization or starvation figure | The consumer plan's method acceptance gate, inside that slice's admission; not a reopening |
+| A selected slice needs scope beyond the studied one (arrivals over time, availability changes, several products, pooled multi-step starvation, transfer) | Revalidate the guardrails and idle classification for that scope inside the slice's admission; admit focused research only for a material new uncertainty |
+| Another consumer, a core verification or Governance need, an outward contract, or divergent duplicates need the same named meaning | [Domain authority](../../architecture/overview.md#domain-authority) shared-definition triggers |
+| An admitted method needs new inputs, sufficiency/refusal, accumulation, provenance or retention | The [evidence/provenance question](simulation-analytics-evidence-provenance.md), still CANDIDATE |
+| Live interaction with mid-run commands is selected | The [execution-evidence reopening trigger](simulation-execution-account.md#reopening-triggers) |
+| Independent target users exist, or a release requires a comprehension claim | [External-player validation](factory-design-game-vertical-slice.md#external-player-validation--candidate) |
 
-- shuffle fixture identities/order;
-- hide the oracle/result notes;
-- show only the candidate player-facing evidence;
-- answer the fixed diagnostic questions;
-- reveal the oracle afterward and record ambiguities or misleading wording.
+Some proposed follow-ups get no register question now: a concept curriculum (including bottleneck teaching), an order-release policy, finite buffers and blocking, and a live loop. Each becomes a focused question under its real owner only when a selected slice needs it. Controlled retry and scoring keep their existing candidate questions.
 
-This walkthrough has deliberately asymmetric evidentiary value:
+## Durable proving assets and knowledge-transfer outcome
 
-- **failure is useful falsification** — if the product owner cannot interpret a candidate despite knowing the domain and project, do not promote it unchanged;
-- **success is only a smoke test** — it shows the candidate is not obviously unusable to the owner, not that independent players will understand it.
+The reports, the independent review, the experiment sources and outputs, the owner-session records and the reconciliation's compatibility port were held in one temporary research-evidence workspace. Each material result has a destination below or an explicit discard. No exact artifact must stay readable, and this record does not depend on the workspace remaining fetchable. The workspace is retirement-eligible once this reconciliation lands and its independent review validates the transfer.
 
-Do not compute percentages, confidence intervals, or “player comprehension” claims from one person.
+No separate historical decision-rationale record is kept. The decisive trade-offs are current constraints on reading the result, so they live in the qualifications and the claims that did not survive. The choice is narrow and easy to revisit. One synthesis-seed occurrence is recorded: the audits' green result was a claim about a control, not evidence of its effect on new statements.
 
-## Truthful explanation constraints
-
-Whatever evidence contract survives must respect what the selected evidence licenses.
-
-The game may state measured facts such as:
-
-- how many units waited for a given operation step and for how long in total;
-- how long a resource was occupied when that duration is supported by the selected evidence/analytics boundary;
-- that one resource was idle while work waited elsewhere;
-- each attempt's completion tick; and
-- what authored variable changed between two controlled attempts.
-
-A named bottleneck/constraint interpretation must name its method and expose supporting evidence. A bare authoritative-looking badge is insufficient.
-
-A controlled comparison may place one authored change beside one outcome change. It must not assert an unobserved mechanism merely because deterministic re-execution makes the association reproducible. When several relevant variables changed, present the change set and outcome delta and refuse unique attribution.
-
-Do not present:
-
-- instantaneous utilization from a cumulative completion-credited processing total (the reading the
-  Engine's former `busyTicks` counter invited before its removal);
-- `combinedQueueDepth` as a physical queue count;
-- a “blocked” state that the current runtime cannot reach;
-- transfer delay or placement causality before the applicable transfer/spatial semantics are landed; or
-- “players understand X” as a conclusion of this investigation.
-
-General rule: **prefer the weaker true statement.**
-
-## Falsification conditions
-
-A candidate evidence contract fails when any required fixture shows that it:
-
-- emits a diagnosis that cannot be reconstructed from its declared supported inputs;
-- hides a load-bearing analytical rule or presents it as an Engine fact;
-- assigns multi-eligible waiting to one physical machine before binding;
-- reports a misleading utilization/constraint interpretation in a known counterexample;
-- gives a unique causal explanation for a confounded change;
-- requires raw scheduler/internal implementation state;
-- depends on transfer/spatial facts not yet supported; or
-- is not interpretable by the product owner during the blinded smoke test.
-
-## Evidence expectations
-
-A decision-quality report must include:
-
-- exact fixture/model/input provenance;
-- the oracle derivation for every diagnostic question;
-- candidate evidence-contract definitions;
-- a claim-to-evidence matrix;
-- reconstruction, counterexample, refusal, and controlled-mutation results;
-- any product-owner walkthrough findings clearly labeled as single-person qualitative evidence;
-- explicit separation between product presentation findings and reusable-analytics ownership.
-
-## Exit criteria
-
-Conclude when one of these is true:
-
-- at least one bounded evidence contract passes the deterministic traceability/reconstruction/counterexample/refusal criteria and survives the product-owner smoke test, allowing its product-facing evidence requirements to be promoted; or
-- no candidate can do so from the supported boundary, in which case record the exact missing fact/interpretation or product constraint rather than manufacturing a UI requirement.
-
-The durable destination is a bounded diagnostic-evidence requirement set in the game consumer planning surface, plus a separate research/architecture question for any newly proven shared semantic gap.
+| Result | Fate |
+|---|---|
+| Bounded verdict, scope and human-evidence limits | Here, the register, the consumer plan and the implementation gate |
+| Qualifications 1–8 and the claims that did not survive | Here; their requirement consequences in the consumer plan |
+| Guardrails, comparison truth, idle classification, method choices, presentation requirements | The consumer plan |
+| Negative cases | Here, with parameters or maintained fixtures; named in the consumer plan's acceptance requirement |
+| Corpus, audits, bakery scenarios and missions, viewer, walkthrough packs, generators | Discarded. The proving cases and requirements carry what a future slice needs, and copying scripts or answer keys would wrongly suggest a chosen curriculum |
+| Owner-session records and discovery notes | Discarded after transfer into the framing, qualification 1 and the presentation requirements |
+| Counter-removal scope and history | Already carried out by its own reviewed change; history kept here as qualification 8 and one proving case |
+| Concept map and proposed follow-up questions | Not admitted; recorded under the reopening triggers |
+| Reconciliation compatibility port | Discarded after recording its outcome under Evidence basis |
 
 ## Deferred external-player validation
 
-Independent player validation is deliberately **not** an exit criterion for this question because no independent participant pool is currently available.
-
-Admit a separate empirical question when either:
-
-- independent target users become available; or
-- product/release direction makes a claim such as “new players can diagnose the factory without expert guidance” material enough to require evidence.
-
-That later study may reuse the fixture corpus and diagnostic questions from this investigation, but it must define its own target population, tasks, falsification thresholds, and decision at stake. Until then Arcogine may claim only that the promoted diagnostic surface is mechanically truthful and product-owner inspected, not population-validated.
+Independent player validation was deliberately not an exit criterion, because no independent participant pool exists. The separate [external-player validation candidate](factory-design-game-vertical-slice.md#external-player-validation--candidate) is promoted when independent target users become available or a release objective makes a comprehension claim material. It defines its own population, tasks, thresholds and decision at stake, and may reuse the proving cases above. Until then Arcogine may claim only that the promoted diagnostic requirements are mechanically grounded and were smoke-tested by the owner, not population-validated.

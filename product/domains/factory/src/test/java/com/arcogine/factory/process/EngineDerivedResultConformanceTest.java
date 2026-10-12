@@ -29,15 +29,11 @@ import org.junit.jupiter.api.Test;
 class EngineDerivedResultConformanceTest {
 
     @Test
-    void meanLeadTimeAndBusyTicksSaturateAtTheLongBoundary() {
+    void meanLeadTimeSaturatesAtTheLongBoundary() {
         FactoryRuntime runtime = runtime(2, Long.MAX_VALUE);
         runtime.submitWorkload(new ProductId(1), 1, 2.0).orElseThrow();
         runtime.submitWorkload(new ProductId(1), 1, 3.0).orElseThrow();
-
-        while (runtime.advance().isPresent()) {
-            // Drain internal and supported events alike; only terminal state is relevant here.
-            runtime.drainSupportedEvents();
-        }
+        drainToQuiescence(runtime);
 
         assertEquals(2L, runtime.completedSales(), "each completed order must count exactly once");
         assertEquals(5.0, runtime.completedSalesValue(), "completion-order accumulation must retain both values");
@@ -45,8 +41,19 @@ class EngineDerivedResultConformanceTest {
                 (double) Long.MAX_VALUE / 2.0,
                 runtime.avgLeadTime(),
                 "the accumulated lead-time register must saturate instead of wrapping");
-        assertEquals(Long.MAX_VALUE, runtime.machinesView().getFirst().busyTicks());
+    }
+
+    @Test
+    void throughputOverAZeroTickWindowIsZero() {
+        FactoryRuntime runtime = runtime(1, 7);
+        runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();
+        drainToQuiescence(runtime);
+
+        // A completed order makes the numerator non-zero, so only the zero-window rule keeps the
+        // result finite.
+        assertEquals(1L, runtime.completedSales());
         assertEquals(0.0, runtime.throughput(0), "zero elapsed ticks must produce zero throughput");
+        assertEquals(1.0 / 7.0, runtime.throughput(7));
     }
 
     @Test
@@ -70,15 +77,23 @@ class EngineDerivedResultConformanceTest {
     }
 
     @Test
-    void ordinaryBusyTicksAccumulatePerCompletedStep() {
+    void ordinaryLeadTimesAccumulatePerCompletedOrder() {
         FactoryRuntime runtime = runtime(1, 7);
         runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();
+        runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();
+        drainToQuiescence(runtime);
+
+        // One machine serialises the two orders: they complete at 7 and 14, both created at 0.
+        assertEquals(2L, runtime.completedSales());
+        assertEquals(2L, runtime.ordersView().count());
+        assertEquals((7.0 + 14.0) / 2.0, runtime.avgLeadTime());
+    }
+
+    private static void drainToQuiescence(FactoryRuntime runtime) {
         while (runtime.advance().isPresent()) {
+            // Drain internal and supported events alike; only terminal state is relevant here.
             runtime.drainSupportedEvents();
         }
-        assertEquals(7L, runtime.machinesView().getFirst().busyTicks());
-        assertEquals(1L, runtime.completedSales());
-        assertEquals(1L, runtime.ordersView().count());
     }
 
     private static FactoryRuntime runtime(int concurrency, long duration) {

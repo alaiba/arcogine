@@ -1,6 +1,7 @@
 package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
@@ -90,6 +91,8 @@ class LargeOrderDecompositionBenchmarkTest {
         assertEquals(QUANTITY - 1, queued);
         assertEquals(0, runtime.pendingWorkView().size());
 
+        runtime.drainSupportedEvents(); // admission's acceptance and placement events
+
         long executionStarted = System.nanoTime();
         long eventCount = 0;
         long completionCount = 0;
@@ -97,11 +100,14 @@ class LargeOrderDecompositionBenchmarkTest {
         Event event;
         while ((event = runtime.advance().orElse(null)) != null) {
             eventCount++;
-            if (event.payload() instanceof EventPayload.OrderCompleted completion) {
-                completionCount++;
-                completingJobId = completion.jobId();
-                assertEquals(orderId, completion.orderId());
-                assertEquals(QUANTITY, completion.quantity());
+            assertInstanceOf(EventPayload.TaskEnd.class, event.payload());
+            for (RuntimeEventEnvelope published : runtime.drainSupportedEvents()) {
+                if (published.payload() instanceof RuntimeEventPayload.OrderCompleted completion) {
+                    completionCount++;
+                    completingJobId = completion.jobId();
+                    assertEquals(orderId, completion.orderId());
+                    assertEquals(QUANTITY, completion.quantity());
+                }
             }
         }
         long executionNanos = System.nanoTime() - executionStarted;
@@ -118,9 +124,9 @@ class LargeOrderDecompositionBenchmarkTest {
         assertEquals(QUANTITY * UNIT_PRICE, runtime.completedSalesValue());
         assertEquals(0, runtime.backlog());
 
-        // One initial TaskEnd, then each of the remaining N-1 children schedules a TaskStart and
-        // TaskEnd, plus exactly one aggregate OrderCompleted event: 2N total events.
-        assertEquals(2 * QUANTITY, eventCount);
+        // Exactly one step completion per child and nothing else -- the aggregate completion is
+        // published from the final child's step completion, not scheduled -- so N total events.
+        assertEquals(QUANTITY, eventCount);
 
         System.out.printf(
                 Locale.ROOT,

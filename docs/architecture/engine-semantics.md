@@ -71,7 +71,7 @@ claim is operational, not aspirational. The membership test is:
 > rejection, assignment, ordering, timing, or derived result — for an identical `ModelFingerprint`,
 > explicit workload, seed/random inputs, and ordered external commands.
 
-Four consequences follow.
+These consequences follow.
 
 1. **No result-affecting limit may remain ambient implementation policy.** A hard-coded threshold,
    envelope, ceiling, or bound that deterministically decides acceptance, rejection, assignment,
@@ -104,6 +104,11 @@ Four consequences follow.
    rules two conforming implementations could agree on, so they may not decide a result. Where
    ordering can change an outcome, an explicit rule recorded in this specification decides it —
    sections 2, 3 and 4 own the current ones.
+6. **Which internal events a session schedules is in scope.** Bounded advancement counts processed
+   scheduled events, and a command applies at the time of the last one processed (section 1.2), so
+   an internal event can change timing and derived results for identical explicit inputs even when
+   processing it publishes nothing. An event is not exempt from the membership test because it is
+   internal; section 4 rule 3 records the current scheduling rule.
 
 ### 1.2 Session and control semantics
 
@@ -112,14 +117,25 @@ how far a session advances and whether an externally initiated change is applied
 ordered command sequence. It is therefore part of the interpretation, and two implementations may not
 claim the same interpretation while differing on it.
 
-This section owns those rules; `SessionControlAcceptanceTest` and `RecordingSchedulerTest` prove
-them. In scope:
+This section owns those rules; `SessionControlAcceptanceTest`, `BoundedAdvancementConformanceTest`
+and `RecordingSchedulerTest` prove them. In scope:
 
 - `advance()` as the unchanged one-event primitive, and `advanceUntil(targetTime, maxEvents)`
   defined in terms of it — processing events one at a time in `advance()` order and stopping as soon
-  as either bound is reached, returning every event actually processed, in order. Because
-  `advanceUntil` is defined as a loop over `advance()`, the two cannot diverge in event ordering or
-  dispatch behavior.
+  as either bound is reached (the next event's time exceeds `targetTime`, or the call has processed
+  `maxEvents` events), returning every event actually processed, in order. Because `advanceUntil` is
+  defined as a loop over `advance()`, the two cannot diverge in event ordering or dispatch behavior.
+  The unit both count is one processed scheduled event. Under section 4 rule 3 every such event is
+  an authoritative step completion published at its own time, so a budget is never spent on an
+  event that changes nothing.
+- A command applies at the session's current simulated time: the time of the most recently
+  processed scheduled event, or zero before any. A time guard or an event budget does not move it,
+  so a call that stops before a later event leaves commands applying at the last processed event's
+  time, never at the requested target. Because every processed event publishes at its own time,
+  after every session call — including one that faults — this is also the supported observation's
+  current time: advancement budget alone cannot make the next command apply later than the state a
+  caller observed. That equality follows from the current scheduling rule of section 4 rule 3; it is
+  not a separate guarantee for event kinds a session does not schedule.
 - `reset()` as a fresh session over the same retained model version: replaying an identical command
   sequence reproduces an identical ordered event stream and identical terminal state, and the
   original session is left untouched.
@@ -224,8 +240,8 @@ question from resource dispatch (which eligible resource executes one such unit)
 `Order` is immutable production intent identified by `OrderId`; the same `OrderId` identifies the
 order-level execution aggregate (requested, released and completed quantity, completion time).
 `JobId` identifies one independently dispatchable work item within an order and is the identity
-machine queues, active-machine state, pending multi-eligible work and `TaskStart`/`TaskEnd` use;
-no separate `ExecutionUnitId`, `LotId` or `BatchId` exists. A consumer must never have to infer
+machine queues, active-machine state, pending multi-eligible work and step completions (`TaskEnd`)
+use; no separate `ExecutionUnitId`, `LotId` or `BatchId` exists. A consumer must never have to infer
 aggregate completion by counting child states itself, and the game/challenge layer never splits
 one production requirement into several orders merely to obtain parallelism — Arcogine owns that
 decomposition.
@@ -242,8 +258,10 @@ The unit-work decomposition rules are part of the interpretation:
    step `k` completes; sibling jobs have no additional precedence. All children are released
    atomically with order acceptance, so `releasedQuantity == requestedQuantity` immediately after
    acceptance. `completedQuantity` increments exactly once per child final completion, and only
-   the transition to `requestedQuantity` emits the single `OrderCompleted` event, which carries
-   the `OrderId` and the completing child `JobId`. Backlog, completed sales and value, lead time
+   the transition to `requestedQuantity` completes the order. That transition is part of the
+   completing child's final step completion; it is published once, as the supported
+   `ORDER_COMPLETED` event carrying the `OrderId` and the completing child `JobId`, and schedules no
+   further event (section 4 rule 3). Backlog, completed sales and value, lead time
    and order-throughput remain order-level facts; child count never multiplies a sale. Material
    lots, arbitrary batch sizes and split/merge semantics are separate future contracts.
 5. **The supported child-materialization envelope is part of the interpretation.** Workload
@@ -270,8 +288,25 @@ change to the interpretation (§1).
 
 1. Authoritative scheduled work is ordered first by `SimTime`.
 2. Equal-time scheduled work uses the existing deterministic insertion-order tie-break.
-3. Internal scheduler markers that do not represent authoritative Factory state changes do not gain
-   semantic significance merely because they are present in the implementation.
+3. **A Factory session schedules only authoritative work.** Every event it schedules is a step
+   completion: processing it authoritatively completes that step and publishes `JOB_STEP_COMPLETED`
+   at the event's own time, together with the order completion and placement changes it causes.
+   The session schedules no marker that processing would ignore — no start marker beside a
+   dispatched step completion, and no order-completion event behind a final child completion. An
+   order's completion is part of the step-completion transition that causes it (section 3 rule 4)
+   and is published from that transition. Because section 1.2 bounded advancement counts processed
+   scheduled events and commands apply at the time of the last one processed, a queued marker would
+   be result-affecting: it would consume advancement budget and move the time at which the next
+   command applies without any supported change. Scheduling a new event kind is therefore a
+   definition change that must state the authoritative transition the event performs and the
+   supported events it publishes at its own time.
+
+   This corrects an earlier development interpretation that scheduled both markers. A script that
+   stopped a bounded call on a positive event budget can now reach authoritative work sooner, so a
+   later command can apply at a different time and derived results can differ. Runs whose inputs are
+   all given before advancement, and calls bounded only by time, keep the same supported events and
+   outcomes; the internal `Event` lists that `advance()`, `advanceUntil` and
+   `CommandResult.scheduledEvents()` return no longer contain markers.
 4. Supported runtime-event ordering at the same `SimTime` is represented only by the monotonic
    supported-event sequence established by the [runtime contract](runtime-contract.md); spatial transfer semantics introduce no second
    event-ordering mechanism.
@@ -469,10 +504,17 @@ else:
 
 ## 10. KPI and resource-observation interpretation
 
+The Engine produces no resource utilization, cumulative busy-time, occupancy or bottleneck measure.
+Resource observation reports current operational facts — status, concurrency, active jobs and queue
+depth — and the supported dispatch and step-completion events record when processing began and
+ended. A consumer may derive processing occupancy for a completely recorded period from those events
+only under an explicitly named analytical method that owns its own population, denominator and
+evidence-completeness rules ([runtime contract](runtime-contract.md#responsibilities-and-limits));
+such a derivation is not an Engine result. Neither current resource load (active plus queued work)
+nor any occupancy derivation identifies a design's bottleneck or constraint by itself.
+
 Spatial transfer semantics do not redefine existing metric formulas:
 
-- `busyTicks` / utilization remain processing-time measures; transfer time does not accrue resource
-  busy ticks merely because destination admission capacity is reserved;
 - queue depth remains the existing count of queued/waiting work and does not count an in-flight job
   as a destination queue entry;
 - backlog continues to count incomplete accepted orders;
@@ -483,15 +525,14 @@ A reserved inbound job also does **not** appear in the destination resource proj
 `activeJobIds`, because active jobs are jobs that have actually begun processing. A destination
 holding only inbound reservations therefore keeps the processing-oriented machine state it would
 otherwise have (`Idle` when it has no active processing, or `Busy` only because of other active
-jobs). Supported resource observation must nevertheless expose enough capacity information for its
-existing bottleneck/capacity interpretation to account for admission capacity consumed by inbound
-reservations; it must not silently count the in-flight job as processing or queue depth. The exact
-projection field used for this admission-load fact is an implementation/API-shape choice, not a
-change to the semantic distinction.
+jobs). Supported resource observation must nevertheless expose enough capacity information for a
+consumer to account for admission capacity consumed by inbound reservations; it must not silently
+count the in-flight job as processing or queue depth. The exact projection field used for this
+admission-load fact is an implementation/API-shape choice, not a change to the semantic distinction.
 
-Bottleneck interpretation must therefore widen: a destination can have constrained admission
-capacity because of transfer-bound work while not yet accruing processing busy ticks. Consumers must
-not misdiagnose that state as ordinary processing utilization.
+A destination can therefore have constrained admission capacity because of transfer-bound work while
+none of that work is processing. Any consumer interpretation of resource load must keep reserved
+admission capacity distinct from processing occupancy rather than count it as processing.
 
 ### 10.1 Derived-result arithmetic
 
@@ -499,26 +540,21 @@ The arithmetic that produces supported derived results is itself result-affectin
 two implementations computing these differently would report different supported observations for an
 identical model, workload, seed and ordered command sequence. These rules are part of the interpretation.
 
-1. **Cumulative `busyTicks` saturates.** A resource's cumulative busy time is credited at step
-   completion by adding the finished step's duration. Because durations are non-negative, a negative
-   sum can only be signed 64-bit overflow, so the accumulator saturates at the maximum representable
-   tick value rather than wrapping. Utilization derived from a saturated `busyTicks` is pinned at
-   its maximum rather than becoming negative or nonsensical.
-2. **Elapsed-time subtraction saturates at zero.** Subtracting one simulated time from another
+1. **Elapsed-time subtraction saturates at zero.** Subtracting one simulated time from another
    yields zero when the subtrahend is the greater, never a negative interval. Lead time and every
    other interval-derived measure therefore has a floor of zero by construction.
-3. **Throughput over a zero-tick window is zero.** Throughput is completed orders per observed tick;
+2. **Throughput over a zero-tick window is zero.** Throughput is completed orders per observed tick;
    an observation window of zero ticks yields `0`, not a division by zero, an infinity, or a NaN.
-4. **Mean lead time over an empty completed set is zero.** With no completed orders the mean is `0`,
+3. **Mean lead time over an empty completed set is zero.** With no completed orders the mean is `0`,
    not a NaN from a zero denominator.
-5. Simulated-time **addition is not saturating.** It is unchecked, and the pre-existing runtime
+4. Simulated-time **addition is not saturating.** It is unchecked, and the pre-existing runtime
    time-addition guard rejects an overflowing schedule at the command boundary instead of silently
    producing a wrapped time — see section 7 rule 6 and the zero-mutation rejection contract of
    section 1.2.
 
-Rules 1 to 4 are deliberate total-function choices at domain edges, not incidental defensive coding:
+Rules 1 to 3 are deliberate total-function choices at domain edges, not incidental defensive coding:
 each replaces an undefined, wrapped, or non-finite value with a defined one a consumer can interpret.
-Rule 5 is the deliberate exception, and it is a rejection rule rather than a value rule. Changing any
+Rule 4 is the deliberate exception, and it is a rejection rule rather than a value rule. Changing any
 of them changes supported derived results for identical explicit inputs and is therefore a change to
 the interpretation.
 
@@ -531,15 +567,14 @@ halves of one contract; specifying only the first leaves the second ambient.
 
 | Supported derived result | Accumulator | Accumulation rule |
 |---|---|---|
-| resource `busyTicks` / utilization | per-resource cumulative tick sum | saturating (rule 1 below) |
 | mean lead time | sum of completed-order lead times ÷ completed count | saturating (rule 1 below) |
 | throughput | completed-order counter ÷ elapsed ticks | exact counting (rule 2 below) |
 | backlog | count of incomplete accepted orders | current-state count, not a running accumulator |
 | completed sales value | running total of completed order value | deterministic by completion order (rule 3 below) |
 
-1. **Every tick-valued accumulator saturates; none wraps.** This extends section 10.1 rule 1 beyond
-   `busyTicks` to mean-lead-time accumulation: summing completed-order lead times saturates at the
-   maximum representable tick value and never wraps to a negative or small positive total. A wrapping
+1. **Every tick-valued accumulator saturates; none wraps.** Mean-lead-time accumulation is the
+   tick-valued accumulator: summing completed-order lead times saturates at the maximum
+   representable tick value and never wraps to a negative or small positive total. A wrapping
    accumulator would not merely lose precision — it would report a qualitatively wrong mean, and two
    implementations differing only in accumulator width would disagree on a supported observation.
 2. **Counting accumulators are exact.** The completed-order counter increments once per completing
@@ -558,7 +593,7 @@ halves of one contract; specifying only the first leaves the second ambient.
    round-to-nearest above it — deterministic across conforming implementations either way, so no
    further rounding rule is required.
 
-Both tick-valued accumulators saturate in the current implementation, pinned by
+The mean-lead-time accumulator saturates in the current implementation, pinned by
 `EngineDerivedResultConformanceTest`. Specifying wrap-around instead would turn an arithmetic defect
 into a reproducibility rule, which is why a wrapping accumulator is a conformance failure rather than
 an alternative behavior.
@@ -655,8 +690,8 @@ when their actual ownership and result-affecting meaning become concrete.
 Pinned behavioral fixtures prove the normative semantics above using representative explicit inputs.
 They change together with any definition change (§1). The executed production-only scope is pinned by
 `EngineDispatchConformanceTest`, `EngineDerivedResultConformanceTest`,
-`FactoryRuntimeExecutabilityAcceptanceTest`, `SessionControlAcceptanceTest`, the runtime
-event/observation acceptance suites and the
+`FactoryRuntimeExecutabilityAcceptanceTest`, `SessionControlAcceptanceTest`,
+`BoundedAdvancementConformanceTest`, the runtime event/observation acceptance suites and the
 child-materialization acceptance and benchmark tests; the transfer items (7–11 and 13) accompany
 spatial execution when it is implemented. Complete fixtures for the executed scope are a precondition
 of promoting the interpretation, never a promotion by themselves. The fixtures must cover at least:
@@ -698,8 +733,7 @@ of promoting the interpretation, never a promotion by themselves. The fixtures m
     `SessionControlAcceptanceTest` rather than duplicated here;
 13. agreement between job transfer observation and destination resource admission-load observation;
 14. deterministic event-type/entity-reference ordering and simulated times;
-15. the section 10.1 derived-result arithmetic: `busyTicks` saturating at the maximum representable
-    tick value instead of wrapping negative, elapsed-time subtraction flooring at zero, zero-tick
+15. the section 10.1 derived-result arithmetic: elapsed-time subtraction flooring at zero, zero-tick
     throughput and empty-set mean lead time each yielding `0` rather than a non-finite value, and
     simulated-time addition overflow being rejected at the command boundary with no partial
     mutation rather than saturating;
@@ -711,7 +745,15 @@ of promoting the interpretation, never a promotion by themselves. The fixtures m
     range selects the same machine an exact sum would, proving neither the narrowing conversion nor
     a same-width addition survives — and proving it without appealing to section 3's per-submission
     envelope, which does not bound the cumulative waiting set;
-18. terminal state / derived result agreement for repeated identical explicit inputs.
+18. terminal state / derived result agreement for repeated identical explicit inputs;
+19. the section 4 rule 3 scheduling rule and its section 1.2 consequences: every processed
+    scheduled event a step completion that publishes at its own time, and nothing queued behind an
+    order's completion; a one-event budget spent on the next step completion however the same
+    supported state was reached; the next command applying at the observed time after bounded calls
+    across queue dispatch, the shared backlog, equal-time completions, availability recovery,
+    interleaved commands, time guards before an event, exhausted and zero event budgets, reset, and a
+    step completion whose cascade faults; and a command's outcome following the supported state it is
+    issued at, whatever presentation frame budget reached that state.
 
 Fixtures pin semantic outcomes, not DTO/JSON bytes, transport representation, or unrelated
 non-behavioral observation fields.

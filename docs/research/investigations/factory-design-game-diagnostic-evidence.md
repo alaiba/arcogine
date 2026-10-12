@@ -33,7 +33,7 @@ In scope:
 Out of scope:
 
 - population-level player comprehension, accessibility, onboarding success, or preference;
-- reusable analytics ownership — [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md) owns that question;
+- selection of a shared analytics owner or implementation — the [concluded ownership rule](../../architecture/overview.md#domain-authority) permits Game-specific named methods but reserves truly shared meaning for its concrete admission triggers; this research still owns the Game method/evidence acceptance question;
 - transfer/processing decomposition until transfer semantics and executable transfer evidence land;
 - challenge economics, scoring, strategy diversity, tutorial sequencing, renderer choice, packaging, or persistence;
 - inventing new Engine facts to make a presentation convenient;
@@ -63,7 +63,7 @@ The corpus must include at least:
 - one constraint-migration pair;
 - one starvation-versus-surplus case;
 - one multi-eligible waiting case where per-machine queue depth alone is misleading;
-- one long unfinished-step case where completion-credited `busyTicks` alone is misleading;
+- one long unfinished-step case where processing time credited only at step completion is misleading;
 - one `concurrency > 1` case that defeats naïve utilization arithmetic; and
 - one deliberately confounded attempt pair where several authored variables change.
 
@@ -130,7 +130,8 @@ A controlled comparison may place one authored change beside one outcome change.
 
 Do not present:
 
-- instantaneous utilization from a cumulative completion-credited counter;
+- instantaneous utilization from a cumulative completion-credited processing total (the reading the
+  Engine's former `busyTicks` counter invited before its removal);
 - `combinedQueueDepth` as a physical queue count;
 - a “blocked” state that the current runtime cannot reach;
 - transfer delay or placement causality before the applicable transfer/spatial semantics are landed; or

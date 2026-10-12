@@ -155,8 +155,7 @@ class WaitingWorkByStepOracleTest {
                         resource.activeJobIds(),
                         0,
                         resource.capacityLiters(),
-                        resource.setupTime(),
-                        resource.busyTicks()))
+                        resource.setupTime()))
                 .toList();
         RuntimeObservation inconsistent = new RuntimeObservation(
                 midRun.metadata(),

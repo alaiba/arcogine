@@ -15,6 +15,7 @@ import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -57,16 +58,17 @@ class ExplicitWorkloadSubmissionTest {
         assertTrue(jobs.stream().allMatch(job -> job.orderId().equals(orderId)));
 
         // A quantity-3 order creates three unit jobs, so all three must complete before the
-        // aggregate OrderCompleted event is emitted.
-        Event completed = null;
+        // aggregate ORDER_COMPLETED event is emitted.
+        RuntimeEventPayload.OrderCompleted completed = null;
         while (completed == null) {
-            Event next = runtime.advance().orElseThrow();
-            if (next.payload() instanceof EventPayload.OrderCompleted) completed = next;
+            runtime.advance().orElseThrow();
+            for (RuntimeEventEnvelope event : runtime.drainSupportedEvents()) {
+                if (event.payload() instanceof RuntimeEventPayload.OrderCompleted payload) completed = payload;
+            }
         }
         assertTrue(runtime.jobsView().allMatch(job -> job.isComplete()));
         assertEquals(1L, runtime.completedSales());
-        var payload = (EventPayload.OrderCompleted) completed.payload();
-        assertEquals(orderId, payload.orderId());
+        assertEquals(orderId, completed.orderId());
     }
 
     @Test
@@ -79,7 +81,7 @@ class ExplicitWorkloadSubmissionTest {
         assertEquals(1, runtime.machinesView().size());
         assertEquals(1L, runtime.backlog());
 
-        while (runtime.advance().isPresent()) { /* drain child and aggregate events */ }
+        while (runtime.advance().isPresent()) { /* drain every child step completion */ }
 
         assertEquals(0L, runtime.backlog());
         assertTrue(runtime.avgLeadTime() > 0.0);
@@ -89,18 +91,23 @@ class ExplicitWorkloadSubmissionTest {
 
     @Test
     void repeatedIdenticalSubmissionsAreDeterministic() {
-        Event firstCompleted = runToCompletion();
-        Event secondCompleted = runToCompletion();
+        List<Event> first = runToCompletion();
+        List<Event> second = runToCompletion();
 
-        assertEquals(firstCompleted, secondCompleted);
+        // Three units on one concurrency-1 machine complete their single step at 5, 10 and 15.
+        assertEquals(List.of(5L, 10L, 15L), first.stream().map(event -> event.time().value()).toList());
+        assertTrue(first.stream().allMatch(event -> event.payload() instanceof EventPayload.TaskEnd));
+        assertEquals(first, second);
     }
 
-    private static Event runToCompletion() {
+    private static List<Event> runToCompletion() {
         FactoryRuntime runtime = runtime();
         runtime.submitWorkload(new ProductId(1), 3, 12.0).orElseThrow();
-        runtime.advance();
-        runtime.advance();
-        runtime.advance();
-        return runtime.advance().orElseThrow();
+        List<Event> processed = new ArrayList<>();
+        Event event;
+        while ((event = runtime.advance().orElse(null)) != null) {
+            processed.add(event);
+        }
+        return processed;
     }
 }

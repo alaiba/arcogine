@@ -81,7 +81,7 @@ Answer a bounded research question using the method in `docs/development/researc
 
 1. Confirm or sharpen the bounded question, decision at stake, scope, and non-goals from the brief.
 2. Ground in current repository evidence (§ Start-of-run grounding).
-3. Identify candidate models/hypotheses, including a current/simple/no-new-abstraction candidate where one plausibly applies.
+3. Identify candidate models/hypotheses, including a current/simple/no-new-abstraction candidate where one plausibly applies. When a material result can be implemented by a consumer-side protocol over existing APIs, apply the [implementability versus architectural suitability](../../docs/development/researching.md#implementability-versus-architectural-suitability) distinction before concluding that the existing owner or contract is appropriate.
 4. Derive proving cases from the candidates and the question — do not reuse another investigation's proving-case list as a fixed checklist.
 5. Gather external evidence only where it can materially discriminate, falsify, or establish consequences (`docs/development/researching.md` §5); verify source provenance and label anything not actually checked as unverified background.
 6. Evaluate every candidate against every proving case; state which candidates fail, and why.

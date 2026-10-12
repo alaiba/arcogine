@@ -3,6 +3,7 @@ package com.arcogine.factory.process;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.core.event.Event;
@@ -15,6 +16,7 @@ import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ConfiguredResource;
+import com.arcogine.types.JobId;
 import com.arcogine.types.JobStatus;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.MachineState;
@@ -249,6 +251,56 @@ class RuntimeEventDeliveryAcceptanceTest {
         assertEquals(MachineState.Busy, machineOne.state());
     }
 
+    /** One machine serving a five-tick product and a {@code Long.MAX_VALUE}-tick product. */
+    private static FactoryModelVersion sharedMachineWithOverflowingSecondProductModel() {
+        return FactoryModelPublisher.publish(new FactoryModel(
+                List.of(new ConfiguredResource(new MachineId(1), "M1", 1, null, 0)),
+                List.of(
+                        new OperationDefinition(
+                                1, "Short", List.of(new OperationStepDefinition(1, "S", Set.of(new MachineId(1)), 5))),
+                        new OperationDefinition(
+                                2,
+                                "Endless",
+                                List.of(new OperationStepDefinition(2, "E", Set.of(new MachineId(1)), Long.MAX_VALUE)))),
+                List.of(
+                        new ProductDefinition(new ProductId(1), "Short", 1),
+                        new ProductDefinition(new ProductId(2), "Endless", 2))));
+    }
+
+    /**
+     * Order completion is derived from the authoritative completion transition, not from anything
+     * scheduled afterwards: here the step completion at 5 completes order 1 and then, in the same
+     * transition, faults while dispatching the queued second order (its end time overflows). The
+     * completion genuinely occurred, so it is published exactly once alongside the dispatch that
+     * did happen; nothing left queued can publish it again.
+     */
+    @Test
+    void orderCompletionBeforeAFaultingCascadeIsPublishedExactlyOnce() throws SimError {
+        FactoryRuntime runtime = FactoryRuntime.forModel(sharedMachineWithOverflowingSecondProductModel());
+        OrderId first = runtime.submitWorkload(new ProductId(1), 1, UNIT_PRICE).orElseThrow();
+        OrderId second = runtime.submitWorkload(new ProductId(2), 1, UNIT_PRICE).orElseThrow(); // queued on M1
+        JobId firstJob = runtime.jobsView().filter(j -> j.orderId().equals(first)).findFirst().orElseThrow().id();
+        JobId secondJob = runtime.jobsView().filter(j -> j.orderId().equals(second)).findFirst().orElseThrow().id();
+        runtime.drainSupportedEvents();
+
+        assertThrows(SimError.EventOrderingViolation.class, runtime::advance);
+
+        List<RuntimeEventEnvelope> events = runtime.drainSupportedEvents();
+        assertEquals(
+                List.of(
+                        new RuntimeEventPayload.JobStepCompleted(firstJob, first, new MachineId(1), 0, true),
+                        new RuntimeEventPayload.OrderCompleted(first, firstJob, new ProductId(1), 1, UNIT_PRICE),
+                        new RuntimeEventPayload.JobDispatched(secondJob, second, new MachineId(1), 0)),
+                events.stream().map(RuntimeEventEnvelope::payload).toList());
+        assertTrue(events.stream().allMatch(event -> event.simulationTime().value() == STEP_DURATION));
+        assertEquals(List.of(5L, 6L, 7L), events.stream().map(RuntimeEventEnvelope::sequence).toList());
+        assertTrue(runtime.orderExecution(first).complete());
+
+        assertTrue(runtime.advance().isEmpty(), "no order-completion event is left queued behind the transition");
+        assertTrue(runtime.drainSupportedEvents().isEmpty());
+        assertEquals(1, runtime.completedSales());
+    }
+
     @Test
     void acceptedNoOpAvailabilityRequestEmitsNothing() {
         FactoryRuntime runtime = FactoryRuntime.forModel(twoMachineModel());
@@ -337,6 +389,8 @@ class RuntimeEventDeliveryAcceptanceTest {
         while (runtime.advance().isPresent()) {}
 
         List<RuntimeEventEnvelope> allEvents = runtime.drainSupportedEvents();
+        List<JobId> jobIds =
+                ((RuntimeEventPayload.OrderAccepted) allEvents.getFirst().payload()).jobIds();
         List<RuntimeEventEnvelope> stepEvents = allEvents.stream()
                 .filter(e -> e.eventType() == RuntimeEventType.JOB_STEP_COMPLETED)
                 .toList();
@@ -359,6 +413,20 @@ class RuntimeEventDeliveryAcceptanceTest {
         assertTrue(stepEvents.stream()
                 .map(e -> ((RuntimeEventPayload.JobStepCompleted) e.payload()).jobId())
                 .anyMatch(jobId -> jobId.equals(completedPayload.jobId())));
+
+        // Hand-derived: units 1 and 2 start on Cutter A and Cutter B and finish at 5; unit 1's
+        // completion frees Cutter A for the waiting unit 3, whose completion at 10 is the final
+        // child completion. The order-completion event is derived from that transition and carries
+        // the order's own commercial facts.
+        assertEquals(10, orderCompleted.simulationTime().value());
+        assertEquals(
+                new RuntimeEventPayload.OrderCompleted(orderId, jobIds.get(2), new ProductId(1), QUANTITY, UNIT_PRICE),
+                completedPayload);
+        assertEquals(
+                List.of(new AffectedEntityRef.OrderRef(orderId), new AffectedEntityRef.JobRef(jobIds.get(2))),
+                orderCompleted.affectedEntityRefs());
+        assertEquals(
+                1, allEvents.stream().filter(e -> e.eventType() == RuntimeEventType.ORDER_COMPLETED).count());
     }
 
     @Test

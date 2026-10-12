@@ -74,7 +74,7 @@ public class FactoryHandler implements EventHandler {
             case EventPayload.OrderCreation oc ->
                     submitOrder(oc.productId(), oc.quantity(), oc.unitPrice(), event.time(), scheduler);
             case EventPayload.TaskEnd te ->
-                    handleTaskEnd(te.jobId(), te.machineId(), te.stepIndex(), scheduler, event.time());
+                    handleTaskEnd(te.jobId(), te.machineId(), scheduler, event.time());
             case EventPayload.MachineAvailabilityChange mac ->
                     handleMachineAvailability(mac.machineId(), mac.online(), scheduler, event.time());
             default -> {}
@@ -203,9 +203,8 @@ public class FactoryHandler implements EventHandler {
             Job j = jobs.get(jobId);
             j.start(machineId);
 
-            SimTime endTime = currentTime.plus(step.duration());
-            scheduler.schedule(Event.of(endTime, new EventPayload.TaskStart(jobId, machineId, routingIndex)));
-            scheduler.schedule(Event.of(endTime, new EventPayload.TaskEnd(jobId, machineId, routingIndex)));
+            scheduler.schedule(Event.of(
+                    currentTime.plus(step.duration()), new EventPayload.TaskEnd(jobId, machineId, routingIndex)));
         });
     }
 
@@ -240,11 +239,9 @@ public class FactoryHandler implements EventHandler {
                 Job job = jobs.get(candidate.jobId());
                 job.start(machineId);
 
-                SimTime endTime = currentTime.plus(candidate.duration());
                 scheduler.schedule(Event.of(
-                        endTime, new EventPayload.TaskStart(candidate.jobId(), machineId, candidate.routingIndex())));
-                scheduler.schedule(Event.of(
-                        endTime, new EventPayload.TaskEnd(candidate.jobId(), machineId, candidate.routingIndex())));
+                        currentTime.plus(candidate.duration()),
+                        new EventPayload.TaskEnd(candidate.jobId(), machineId, candidate.routingIndex())));
 
                 dispatchedOne = true;
                 break;
@@ -333,32 +330,20 @@ public class FactoryHandler implements EventHandler {
     private void handleTaskEnd(
             JobId jobId,
             MachineId machineId,
-            int stepIndex,
             Scheduler scheduler,
             SimTime currentTime) {
         Machine machine = machines.getMut(machineId);
         machine.completeJob(jobId);
 
         Job job = jobs.get(jobId);
-
-        // Identifying the active bottleneck from supported observations alone requires a
-        // resource's cumulative busy time to be an authoritative fact -- which it is only if it is
-        // actually accumulated. Credit the just-finished step's duration here -- the one point
-        // where a machine is known to have occupied itself for exactly that long -- so
-        // ResourceObservation.busyTicks() expresses real utilization rather than a constant zero.
-        routings.getRoutingForProduct(job.productId())
-                .getStep(stepIndex)
-                .ifPresent(finished -> {
-                    long updated = machine.busyTicks() + finished.duration();
-                    // Durations are non-negative, so a negative sum can only be overflow; saturate
-                    // rather than report a nonsensical utilization.
-                    machine.setBusyTicks(updated < 0 ? Long.MAX_VALUE : updated);
-                });
-
         job.completeStep(currentTime);
 
         if (job.isComplete()) {
             Order order = orders.get(job.orderId());
+            // The final child completion is itself the order-completion transition. It schedules no
+            // follow-up event: a queued marker would change nothing yet still consume bounded
+            // advancement (docs/architecture/engine-semantics.md section 4), so supported order
+            // completion is derived from this transition by FactoryRuntime instead.
             if (orders.completeChild(order.id(), currentTime)) {
                 completedSalesValue += order.orderValue();
                 completedSales += 1;
@@ -368,7 +353,6 @@ public class FactoryHandler implements EventHandler {
                 } else {
                     completedLeadTimeTicks += leadTime;
                 }
-                scheduler.schedule(Event.of(currentTime, new EventPayload.OrderCompleted(order.id(), job.id(), order.productId(), order.quantity(), order.unitPrice())));
             }
         } else {
             int nextStepIndex = job.currentStep();

@@ -299,7 +299,7 @@ class SessionControlAcceptanceTest {
     /**
      * Reproduces the third-round review's repro exactly: a machine coming online can dequeue and
      * start a previously waiting job (mutating machine/job state) before the resulting
-     * {@code TaskStart}/{@code TaskEnd} scheduling call discovers, deep in that same dispatch
+     * {@code TaskEnd} scheduling call discovers, deep in that same dispatch
      * attempt, that simulated time has grown large enough (via an unrelated {@code Long.MAX_VALUE}
      * duration job on a different machine) to overflow {@code SimTime}. Full preflight safety for
      * this cascade is deliberately not required (docs/architecture/engine-semantics.md section
@@ -364,7 +364,15 @@ class SessionControlAcceptanceTest {
         FactoryRuntime stepped = FactoryRuntime.forModel(publishedModel());
         stepped.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();
         List<Event> steppedEvents = drainAll(stepped);
-        assertFalse(steppedEvents.isEmpty());
+        // Hand-derived: three units each complete Milling on the Mill (5, 10, 15) and Drilling on
+        // the Drill (8, 13, 18). Those six step completions are the only events the session
+        // schedules -- no start or order-completion marker is processed or returned.
+        assertEquals(
+                List.of(5L, 8L, 10L, 13L, 15L, 18L),
+                steppedEvents.stream().map(event -> event.time().value()).toList());
+        for (Event event : steppedEvents) {
+            assertInstanceOf(EventPayload.TaskEnd.class, event.payload());
+        }
 
         FactoryRuntime bounded = FactoryRuntime.forModel(publishedModel());
         bounded.submitWorkload(new ProductId(1), QUANTITY, UNIT_PRICE).orElseThrow();

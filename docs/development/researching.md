@@ -92,6 +92,26 @@ A brief missing one of these because it genuinely does not apply to that questio
 
 External-domain material belongs in a report only when it changes or tests an Arcogine-specific hypothesis, proving case, boundary, inference, confidence assessment, or decision. A summary of an outside field that does not do one of those things does not belong in the report, however interesting.
 
+### Implementability versus architectural suitability
+
+Demonstrating that desired behavior can be assembled from existing APIs establishes
+**implementability**, not that the current responsibility boundary is **architecturally suitable**.
+This matters when consumers must coordinate multiple calls to reproduce producer-owned invariants,
+make completeness or safety assertions, or independently implement the same protocol.
+
+For a material ownership or cross-boundary decision, compare a feasible current-API/consumer
+solution with a proportionate change to the producer or owning contract **when that alternative
+could change the answer**. Test what each can actually guarantee, what failures become impossible
+rather than merely detectable, consumer coordination and duplication, producer complexity,
+compatibility, and future reuse. Neither a working wrapper nor an attractive new API settles
+responsibility placement on its own.
+
+Retaining the existing boundary is a valid conclusion, but give an affirmative comparative
+reason and any material reopening trigger rather than citing feasibility alone. When the question
+has no meaningful shared-semantic or ownership consequence, briefly explain why a producer-side
+alternative is unnecessary; do not launch speculative redesign for every local convenience.
+Apply the comparison proportionately to the risk (§7).
+
 ## 2. Repository grounding and baseline discipline
 
 Every substantial research run begins by grounding itself in current repository authority, not in prior chat context, remembered conclusions, or a report someone described in conversation.

@@ -27,7 +27,7 @@ What to expect — this is a small project, and these are the responsibilities t
 4. **Verification** — the fix lands with a regression check where the defect is testable, so the same failure cannot return unnoticed.
 5. **Closure** — the reporter is told the outcome, and a GitHub security advisory is published when the issue affected anyone using the software.
 
-Dependency vulnerabilities follow a separate, already-owned path: see [Security scan ownership](#security-scan-ownership) and `.github/agents/dependency-maintainer.agent.md`.
+Dependency vulnerabilities follow a separate, already-owned path: see [Security scan ownership](#security-scan-ownership) and `docs/development/agent-roles/dependency-maintainer.md`.
 
 ## Supported Versions
 
@@ -75,7 +75,7 @@ Security execution follows the quality-gate contract:
 
 **Responding to findings.** A finding inside an open pull request is owned by that PR's author: it blocks the PR and is fixed, or explicitly accepted, before merge. A finding from the **daily scheduled scan** has no PR and therefore no author, so it is the maintainer's to triage on the next working day — decide whether it is real, then fix it, add a reasoned `.trivyignore` entry, or record why no action is needed. A scheduled-scan failure is not resolved by a later green run: an unrelated merge can change the scanned artifact and clear the red without anyone having looked at the finding, which is exactly what happened to the 2026-09-09 failure. Close the finding deliberately, not by waiting for the signal to disappear.
 
-**Dependabot posture.** Dependabot **alerts** are enabled, and are the surface that reports known vulnerabilities in resolved dependencies. They are deliberately kept alongside the CI scanners rather than replaced by them: the Trivy SBOM scan runs with `--ignore-unfixed`, so a CRITICAL vulnerability with no available fix is invisible to the CI gate by design, and alerts are what still surface it. Dependabot **version updates** (weekly Gradle/Actions, grouped) are configured separately in `.github/dependabot.yml`. Remediation for anything these surface is owned by the dependency maintainer (`.github/agents/dependency-maintainer.agent.md`) either way.
+**Dependabot posture.** Dependabot **alerts** are enabled, and are the surface that reports known vulnerabilities in resolved dependencies. They are deliberately kept alongside the CI scanners rather than replaced by them: the Trivy SBOM scan runs with `--ignore-unfixed`, so a CRITICAL vulnerability with no available fix is invisible to the CI gate by design, and alerts are what still surface it. Dependabot **version updates** (weekly Gradle/Actions, grouped) are configured separately in `.github/dependabot.yml`. Remediation for anything these surface is owned by the dependency maintainer (`docs/development/agent-roles/dependency-maintainer.md`) either way.
 
 For the full security verification test list, see `docs/development/testing.md`.
 

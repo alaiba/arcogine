@@ -1,8 +1,8 @@
 # Consistency review operations
 
-> **Status:** maintainer guidance around [`.github/agents/consistency.agent.md`](../../.github/agents/consistency.agent.md).
+> **Status:** maintainer guidance around [`docs/development/agent-roles/consistency.md`](agent-roles/consistency.md).
 
-Arcogine's formal Consistency review runs in a ChatGPT chat session. Repository content starts from a mandatory canonical-`main` Repomix baseline and is reconciled to one exact current `main` target through the repository snapshot protocol; the GitHub connector also provides mutable state, history when needed, and finding accounting.
+A formal Consistency review uses a mandatory canonical-`main` Repomix snapshot, reconciled to one exact current `main` target through the repository snapshot protocol, and live GitHub access for mutable state, history when needed, and finding accounting. A ChatGPT session with an attached snapshot and GitHub connector is one possible runtime, not a requirement or a separate review authority.
 
 ## Operating loop
 

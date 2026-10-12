@@ -1,6 +1,6 @@
 # Arcogine consistency review
 
-This contract defines Arcogine's repository-wide semantic consistency review. It runs in a ChatGPT chat session with an Arcogine Repomix attachment as the repository-content baseline and the GitHub connector for revision reconciliation plus live/mutable repository state.
+This contract defines Arcogine's repository-wide semantic consistency review. A formal run uses an Arcogine Repomix snapshot as the repository-content baseline and live GitHub access for revision reconciliation and mutable repository state. The execution environment must provide those evidence capabilities; no particular model provider, chat client, or connector is required.
 
 A formal review is diagnostic plus the narrow finding-ledger accounting described below. It does not authorize source/doc remediation, planning changes, architecture changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
 
@@ -12,7 +12,7 @@ A previous clean review is not evidence that older content is correct. New mater
 
 ## Required review corpus
 
-A formal review requires an Arcogine Repomix attachment with valid canonical-`main` provenance.
+A formal review requires an accessible Arcogine Repomix snapshot with valid canonical-`main` provenance.
 
 At review start:
 

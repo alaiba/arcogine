@@ -58,19 +58,23 @@ or a delivery-process retrospective — that the session gives no concrete reaso
 
 ## Specialized agent roles
 
-Some repository tasks have additional repository-owned operating contracts.
+Some repository tasks have additional repository-owned operating contracts. Their canonical
+procedures live in [`docs/development/agent-roles/`](docs/development/agent-roles/README.md)
+and apply regardless of the model or execution provider. Runtime-specific profiles,
+including `.github/agents/` GitHub Copilot adapters, only load those procedures; they
+do not replace or override them.
 
-- **Work planning:** when asked to re-ground initiative progress, decide what to work on next, prioritize open work, identify blocked versus ready slices, identify safe parallel lanes, or generate a handoff prompt for a recommended next slice, read and follow [`.github/agents/work-planner.agent.md`](.github/agents/work-planner.agent.md) in addition to this file.
-- **Dependency maintenance:** when asked to process, apply, remediate, or sweep dependency updates or Dependabot pull requests, read and follow [`.github/agents/dependency-maintainer.agent.md`](.github/agents/dependency-maintainer.agent.md) in addition to this file.
-- **Continuous improvement:** when the user says `Assess continuous improvement.`, read and follow [`.github/agents/continuous-improvement.agent.md`](.github/agents/continuous-improvement.agent.md) in addition to this file.
+- **Work planning:** when asked to re-ground initiative progress, decide what to work on next, prioritize open work, identify blocked versus ready slices, identify safe parallel lanes, or generate a handoff prompt for a recommended next slice, read and follow [`docs/development/agent-roles/work-planner.md`](docs/development/agent-roles/work-planner.md) in addition to this file.
+- **Dependency maintenance:** when asked to process, apply, remediate, or sweep dependency updates or Dependabot pull requests, read and follow [`docs/development/agent-roles/dependency-maintainer.md`](docs/development/agent-roles/dependency-maintainer.md) in addition to this file.
+- **Continuous improvement:** when the user says `Assess continuous improvement.`, read and follow [`docs/development/agent-roles/continuous-improvement.md`](docs/development/agent-roles/continuous-improvement.md) in addition to this file.
 - **Consistency review:** when asked to perform a repository consistency
   review, documentation/architecture reconciliation, periodic consistency
   sweep, or to operate as the consistency agent, read and follow
-  [`.github/agents/consistency.agent.md`](.github/agents/consistency.agent.md)
+  [`docs/development/agent-roles/consistency.md`](docs/development/agent-roles/consistency.md)
   in addition to this file.
 - **PR review:** when asked to independently review, re-review, or assess merge
   readiness of a pull request, read and follow
-  [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md)
+  [`docs/development/agent-roles/pr-reviewer.md`](docs/development/agent-roles/pr-reviewer.md)
   in addition to this file. This is the repository's dedicated **PR Reviewer**
   role; do not substitute a generic coding-agent review when the contract is
   available.
@@ -78,7 +82,7 @@ Some repository tasks have additional repository-owned operating contracts.
   execute a research brief from `docs/research/`, produce a decision-quality
   research report, or perform an independent adversarial review of an existing
   research report, read and follow
-  [`.github/agents/researcher.agent.md`](.github/agents/researcher.agent.md)
+  [`docs/development/agent-roles/researcher.md`](docs/development/agent-roles/researcher.md)
   in addition to this file. That contract defers to
   [`docs/development/researching.md`](docs/development/researching.md) for the
   normative research method. Research investigation and adversarial research
@@ -199,7 +203,7 @@ When creating or editing GitHub pull requests, issues, comments, reviews, or rel
 
 A PR is merge-ready only when all of these hold for its current head, each owned by its own authority: the trusted `disposition` check is green, required CI (`CI / gate`) is green, the head contains its live base, and GitHub reports it mergeable. Read these facts live from GitHub; do not infer authorization from comments or CI alone, and do not collapse them into a derived lifecycle state.
 
-Base freshness is a merge-readiness condition, not a review finding, and pending CI never delays review or disposition: a current-head disposition stays bound to that head when `main` advances. A reviewer who finds a stale branch at review start may perform only the mechanical **base-normalization protocol** defined in [`docs/development/reviewing.md`](docs/development/reviewing.md#1-resolve-and-normalize-the-live-revision) before substantive review; if it needs a semantic choice, the reviewer returns the PR to the implementation owner without mutating the branch. See that document and [`.github/agents/pr-reviewer.agent.md`](.github/agents/pr-reviewer.agent.md) for the exact mechanical algorithm, and for the `disposition` gate's authorization rules (trusted Dependabot provenance, ordinary reviewer authorization, and the `CHANGES REQUIRED` override). Reviewer disposition itself is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED`; Arcogine reviewers publish it as a `COMMENT` review and never use native GitHub `REQUEST_CHANGES` or `APPROVE` as a substitute.
+Base freshness is a merge-readiness condition, not a review finding, and pending CI never delays review or disposition: a current-head disposition stays bound to that head when `main` advances. A reviewer who finds a stale branch at review start may perform only the mechanical **base-normalization protocol** defined in [`docs/development/reviewing.md`](docs/development/reviewing.md#1-resolve-and-normalize-the-live-revision) before substantive review; if it needs a semantic choice, the reviewer returns the PR to the implementation owner without mutating the branch. See that document and [`docs/development/agent-roles/pr-reviewer.md`](docs/development/agent-roles/pr-reviewer.md) for the exact mechanical algorithm, and for the `disposition` gate's authorization rules (trusted Dependabot provenance, ordinary reviewer authorization, and the `CHANGES REQUIRED` override). Reviewer disposition itself is a review-only vocabulary with exactly two values, `READY TO MERGE` and `CHANGES REQUIRED`; Arcogine reviewers publish it as a `COMMENT` review and never use native GitHub `REQUEST_CHANGES` or `APPROVE` as a substitute.
 
 ## Implementation continuation
 

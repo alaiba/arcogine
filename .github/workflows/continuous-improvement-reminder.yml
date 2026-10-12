@@ -41,7 +41,7 @@ jobs:
 
           The assessment scans pull requests merged into `main` and non-PR issues closed since the preceding checkpoint opened, then recommends the smallest worthwhile next practice, focused test-evidence diagnostic, or narrow process-tightening action. Deeper trend, recurrence, effectiveness, and cost analysis belongs to the owning specialized practice.
 
-          Agent contract: `.github/agents/continuous-improvement.agent.md`
+          Agent contract: `docs/development/agent-roles/continuous-improvement.md`
 
           This issue is only a reminder. The workflow does not calculate due state, inspect repository health, or run Consistency, a retrospective, or any other improvement practice. Close the issue after the assessment; while it remains open, scheduled runs will not create another reminder.
           EOF

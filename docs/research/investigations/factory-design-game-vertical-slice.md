@@ -33,11 +33,11 @@ That thesis is deliberately **not one research question**. Capacity, challenge s
 
 ## Focused questions
 
-### Diagnostic evidence contract — READY
+### Diagnostic evidence contract — CONCLUDED
 
-[Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md) asks what minimum player-facing evidence contract can be built from supported simulation facts so that every diagnosis is mechanically traceable, its method is explicit, and unsupported causal attribution is refused.
+[Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md) asked what minimum player-facing evidence contract can be built from supported simulation facts so that every diagnosis is mechanically traceable, its method is explicit, and unsupported causal attribution is refused.
 
-This question is deterministic/fixture-driven. It does not claim to establish population-level player comprehension. A product-owner walkthrough is a qualitative smoke test only: failure can reject a candidate, while success cannot establish what independent players will understand.
+It concluded as a bounded positive within the studied non-spatial scope: a mechanically truthful, inspectable diagnostic surface is achievable. Its requirements are in the consumer plan's [Diagnostic claims and evidence](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence). The human evidence is a single-person smoke test by a co-designing owner with reduced blinding. That can falsify a presentation but cannot establish what independent players will understand, so usability, comprehension, learning and bottleneck teaching remain unestablished. Utilization and starvation are concrete Game measurement demands; an accepted named method must fix their choices before any slice shows them. No method or implementation is admitted.
 
 ### Non-spatial challenge strategy space — CONCLUDED
 
@@ -53,7 +53,7 @@ Question:
 
 > Can a controlled one-variable retry be presented as a mechanically traceable before/change/after evidence chain without asserting an unobserved causal mechanism?
 
-Promote this only after the diagnostic-evidence investigation establishes an evidence contract. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; common named run-comparison meanings follow the [concluded analytical-definition admission rule](../../architecture/overview.md#domain-authority), not an assumed shared module.
+Its evidence-contract precondition is now met. The concluded diagnostic-evidence requirements already fix what a controlled comparison may claim: a single change with its outcome delta, a whole change set with attribution withheld, single-change results that do not compose, and "needed" as time-only. Promote this question only when a selected slice or product decision needs retry-explanation evidence beyond those requirements. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; common named run-comparison meanings follow the [concluded analytical-definition admission rule](../../architecture/overview.md#domain-authority), not an assumed shared module.
 
 ### Spatial design trade-off — CANDIDATE
 
@@ -71,7 +71,7 @@ Question:
 
 This is the place for actual population-level comprehension evidence. It is intentionally not `READY` because no independent participant pool is currently available and the first internal playable slice does not need to make a population-level usability claim.
 
-Promote it when either independent target users are available or product/release direction explicitly requires a claim about new-player comprehension, accessibility, onboarding, or diagnostic success. At promotion time, define the target population, tasks, falsification thresholds, and decision at stake. Reuse the deterministic fixture corpus from the diagnostic-evidence study where appropriate, but do not treat the product owner, an AI model, or repository reviewers as substitutes for the target population.
+Promote it when either independent target users are available or product/release direction explicitly requires a claim about new-player comprehension, accessibility, onboarding, or diagnostic success. At promotion time, define the target population, tasks, falsification thresholds, and decision at stake. Reuse the diagnostic-evidence study's [preserved proving cases](factory-design-game-diagnostic-evidence.md#reusable-proving-cases) where appropriate, but do not treat the product owner, an AI model, or repository reviewers as substitutes for the target population.
 
 ### Equipment-value discovery and misleading cues — CANDIDATE
 
@@ -125,17 +125,18 @@ equipment-value-discovery question rather than inferring human behavior from hea
 
 The [concluded ownership boundary](simulation-analytics-consumer-boundary.md) separates
 Engine-owned execution/results from named methods whose selected meaning belongs to their
-consumer by default. This does not select a Game method; the still-READY
-[diagnostic evidence question](factory-design-game-diagnostic-evidence.md) owns product
-requirements, sufficient evidence and refusal before any playable admission.
+consumer by default. This does not select a Game method. The concluded
+[diagnostic evidence question](factory-design-game-diagnostic-evidence.md) promoted the product
+requirements, sufficient-evidence rules and refusal guardrails into the consumer plan, but admitted no
+method.
 
 Accordingly:
 
 - overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain Game presentation choices;
-- the Game may define its **own** named diagnostic only after that product research concludes and the requirement is admitted; a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
+- the Game may define its **own** named diagnostic only through the consumer plan's method acceptance gate; a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
 - a research-local derivation may establish study ground truth but does not become a supported Game/Engine definition automatically;
 - snapshot, period-aggregate and future-horizon claims require distinct proof; a Game driver does not thereby own every holder's evidence;
-- transfer-dependent diagnostics remain outside the READY study until spatial runtime consequences are executable and evidenced; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
+- transfer-dependent diagnostics were outside the concluded study and stay unvalidated until spatial runtime consequences are executable and evidenced; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
 
 ## Boundary with transfer and spatial semantics
 
@@ -179,11 +180,13 @@ Consequently:
 
 - reusable technical evidence, proving cases, and truthfulness constraints transferred to [Simulation analytics consumer boundary](simulation-analytics-consumer-boundary.md);
 - the predecessor's unqualified assertion that **all** reusable diagnostic derivations are Game-owned was superseded; the later admitted rule permits bounded Game-specific named methods without transferring genuinely shared meanings;
-- the immediately actionable product question is now the focused [diagnostic-evidence contract](factory-design-game-diagnostic-evidence.md), which can establish truthfulness/traceability without a participant pool; population-level comprehension remains the separate external-player-validation candidate above; and
+- the immediately actionable product question became the focused [diagnostic-evidence contract](factory-design-game-diagnostic-evidence.md), which established truthfulness/traceability requirements without a participant pool; population-level comprehension remains the separate external-player-validation candidate above; and
 - the broad vertical-slice question itself is superseded by the focused portfolio recorded here and in the research register.
 
 ## Promotion to playable implementation
 
 This programme does not have one `CONCLUDED` state. Playable implementation may be admitted only when the implementation gate can name the exact focused research conclusions required by the chosen first slice, the required Arcogine semantics are landed, and executable acceptance tests can be written.
 
-A minimal non-spatial **internal playable** slice would currently require, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. The challenge-strategy question is now concluded; diagnostic evidence remains `READY` and is the product-evidence blocker. A slice does not require independent human participants merely to exist as an internal playable slice. A later release goal that claims broad player comprehension must separately promote and satisfy external-player validation. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.
+A minimal non-spatial **internal playable** slice requires, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. Both are now concluded. Neither admits implementation: the [implementation gate](../../planning/factory-design-game-vertical-slice.md) still needs a selected slice, accepted methods for any utilization or starvation measure, the integration boundary, the selected prerequisites and executable acceptance tests. A slice does not require independent human participants merely to exist as an internal playable slice.
+
+Controlled retry, a richer concept curriculum (including bottleneck teaching), scoring and level structure, live interaction, and external-player evidence each have their own admission criteria. They are not an automatic required research programme. Admit or promote one only when a selected slice or product decision actually depends on it. A later release goal that claims broad player comprehension must separately promote and satisfy external-player validation. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.

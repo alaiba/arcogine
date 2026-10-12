@@ -55,10 +55,11 @@ are additional inputs, method-specific sufficiency, accumulation, definition ide
 provenance and evidenced retention needs. Execution identity, ordering and coverage are upstream
 contract inputs, not questions to decide again.
 
-Game diagnostic reconciliation remains separately owned. It must evaluate control requirements
-before playable admission under the [consumer plan](../../planning/factory-design-game-consumer.md#6-playable-implementation-admission)
-and [vertical-slice gate](../../planning/factory-design-game-vertical-slice.md). This conclusion does
-not complete that research or select a live interactive loop.
+The Game diagnostic-evidence research has since concluded separately for static recorded runs. Control
+requirements for any selected live interaction are still evaluated before playable admission under the
+[consumer plan](../../planning/factory-design-game-consumer.md#6-playable-implementation-admission)
+and [vertical-slice gate](../../planning/factory-design-game-vertical-slice.md). Neither conclusion
+selects a live interactive loop.
 
 ## Reopening triggers
 

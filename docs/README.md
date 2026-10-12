@@ -54,6 +54,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [testing.md](development/testing.md) | Test categories, CI, quality gates, native commands |
 | [repository-snapshot.md](development/repository-snapshot.md) | Canonical whole-repository retrieval snapshot |
 | [codex-cloud.md](development/codex-cloud.md) | Codex Cloud environment/workflow notes |
+| [Agent role contracts](development/agent-roles/README.md) | Canonical provider-neutral specialized procedures and optional runtime adapters |
 | [coding-agent-evaluation.md](development/coding-agent-evaluation.md) | Non-normative coding-agent/model evaluation |
 | [SECURITY.md](../.github/SECURITY.md) | Security policy and mature operational security boundary |
 

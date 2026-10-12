@@ -7,7 +7,7 @@ Current maintained state is separate from these rules:
 - [`docs/research/research-register.md`](../research/research-register.md) records current admitted research questions and their portfolio state;
 - [`docs/research/synthesis-seeds.md`](../research/synthesis-seeds.md) records current non-authoritative synthesis-seed state.
 
-For AI execution of this policy, the repository-owned **Researcher** procedure lives in [`.github/agents/researcher.agent.md`](../../.github/agents/researcher.agent.md). This document remains the normative research policy; the agent file defines how the specialized researcher executes it — the same split `docs/development/reviewing.md` and `.github/agents/pr-reviewer.agent.md` already use.
+For AI execution of this policy, the repository-owned **Researcher** procedure lives in [`docs/development/agent-roles/researcher.md`](agent-roles/researcher.md). This document remains the normative research policy; the agent file defines how the specialized researcher executes it — the same split `docs/development/reviewing.md` and `docs/development/agent-roles/pr-reviewer.md` already use.
 
 This document must not become a second research backlog, state ledger, architecture authority, or implementation plan. It defines the operating model, not current portfolio content: it does not list Arcogine's open questions (the research register does), does not decide any Arcogine semantic question (the architecture, specification, or product document that owns it does), and does not sequence implementation (`docs/planning/` does).
 
@@ -160,7 +160,7 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 - open PRs, where they materially affect the question;
 - review findings, where they exposed a relevant semantic failure mode.
 
-Do not assume code always overrides architecture, or the reverse — use the repository's existing authority-by-subject model (the same table structure `docs/development/reviewing.md`, `.github/agents/work-planner.agent.md`, and `.github/agents/consistency.agent.md` each use: Charter for product direction, `docs/architecture/overview.md` for current behavior, the owning architecture or specification for why a constraint exists, `docs/planning/` for what is admitted, live `main` for what exists).
+Do not assume code always overrides architecture, or the reverse — use the repository's existing authority-by-subject model (the same table structure `docs/development/reviewing.md`, `docs/development/agent-roles/work-planner.md`, and `docs/development/agent-roles/consistency.md` each use: Charter for product direction, `docs/architecture/overview.md` for current behavior, the owning architecture or specification for why a constraint exists, `docs/planning/` for what is admitted, live `main` for what exists).
 
 In particular:
 

@@ -6,7 +6,7 @@ Arcogine has three distinct improvement loops. None substitutes for another.
 
 ## Continuous Improvement assessment
 
-The repository's user-invocable [Continuous Improvement agent](../../.github/agents/continuous-improvement.agent.md) is a light advisory checkpoint over recent delivery activity. It is not a fourth improvement loop.
+The repository's user-invocable [Continuous Improvement agent](agent-roles/continuous-improvement.md) is a light advisory checkpoint over recent delivery activity. It is not a fourth improvement loop.
 
 Invoke it with exactly:
 
@@ -197,9 +197,9 @@ The versioned state file records only the retrospective baseline and latest repo
 | Concern | Owning authority |
 | --- | --- |
 | Session-close Kaizen | `AGENTS.md` |
-| Continuous Improvement assessment | `.github/agents/continuous-improvement.agent.md` |
+| Continuous Improvement assessment | `docs/development/agent-roles/continuous-improvement.md` |
 | Assessment reminder delivery | `.github/workflows/continuous-improvement-reminder.yml` |
-| Consistency review algorithm | `.github/agents/consistency.agent.md` |
+| Consistency review algorithm | `docs/development/agent-roles/consistency.md` |
 | Consistency corpus generation | `infra/dev/repo-snapshot.mjs` + `infra/dev/repomix.config.json` |
 | Consistency operating guidance | `docs/development/consistency-review.md` |
 | Consistency finding identity/state | GitHub `CONS:` issues |

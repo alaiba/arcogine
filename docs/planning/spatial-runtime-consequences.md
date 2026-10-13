@@ -1,6 +1,6 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Active delivery plan. PLAN-ENG-5-0 (pinned pre-spatial Engine behavior), the Factory spatial record with its validation and canonical form (PLAN-ENG-5-A1/A2), and a runtime that fixes one Engine interpretation (PLAN-ENG-5-B1) are implemented. Spatial execution is not: a published model with a present spatial record is refused before any runtime state exists. The destination admission-reservation substrate (PLAN-ENG-5-C2) is implemented and unreachable from runtime execution; the other transfer slices below are unimplemented and ordered by ordinary dependencies.
+Status: Active delivery plan. PLAN-ENG-5-0 (pinned pre-spatial Engine behavior), the Factory spatial record with its validation and canonical form (PLAN-ENG-5-A1/A2), and a runtime that fixes one Engine interpretation (PLAN-ENG-5-B1) are implemented. Spatial execution is not: a published model with a present spatial record is refused before any runtime state exists. The pure transfer-duration arithmetic (PLAN-ENG-5-C1) and the destination admission-reservation substrate (PLAN-ENG-5-C2) are implemented and unreachable from runtime execution; the other transfer slices below are unimplemented and ordered by ordinary dependencies.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -351,27 +351,27 @@ immediately needs revising.
 
 ### PLAN-ENG-5-C1 — Pure transfer arithmetic
 
-**Status:** Not started.
-
-**Prerequisite:** PLAN-ENG-5-A1.
-
-**Responsibility**
-
-Implement a small, deterministic calculation seam for:
+**Status:** Implemented. The package-private `TransferTiming` in `com.arcogine.factory.process`
+computes, from a published `SpatialRecord`, the reference-cell Manhattan distance and the transfer
+duration between two distinct resources:
 
 ```text
 manhattanDistance = abs(xDestination - xSource) + abs(yDestination - ySource)
 transferDuration = handlingTicks + ticksPerCell * manhattanDistance
 ```
 
-using exact integer arithmetic and the already-validated spatial bounds. Footprint does not participate
-in distance.
+Footprint does not participate in distance, and `handlingTicks` is applied once per transfer. Every
+step uses exact `long` arithmetic that throws instead of wrapping. A same-resource request and a
+resource without a layout are refused rather than answered with a value. Publication predicates are
+not re-checked. Nothing in the runtime calls it, and a present spatial record is still refused.
 
 **Evidence**
 
-Boundary/property cases cover reference-cell Manhattan distance, handling applied exactly once,
-zero authored magnitudes, and overflow-safe behavior consistent with the Factory model's
-maximum-transfer predicate.
+`TransferTimingTest` covers reference-cell distance that differs from nearest-cell and centre
+readings, footprint independence, handling applied exactly once, zero authored magnitudes, adjacent
+resources, same-resource and unknown-resource refusal, the exact largest duration the Factory model's
+maximum-transfer predicate admits and the overflow just past it, distance overflow on an unvalidated
+record, and an enumerated oracle over every ordered pair of distinct cells on a small floor.
 
 **Non-goals**
 
@@ -558,7 +558,7 @@ CONCLUDED dispatch research --retain current rules--> PLAN-ENG-5-0 fixtures (imp
 
 PLAN-ENG-5-A1 spatial record/validation (implemented) ---> PLAN-ENG-5-A2 canonical form (implemented)
        |
-       +--> PLAN-ENG-5-C1 transfer arithmetic ---------------------------------+
+       +--> PLAN-ENG-5-C1 transfer arithmetic (implemented) -------------------+
                                                                                |
 PLAN-ENG-5-B1 current interpretation fixed per runtime (implemented)                    +--> PLAN-ENG-5-C3 activation
 PLAN-ENG-5-B2 revision-provenance symmetry ---------------------------------------------+

@@ -108,7 +108,7 @@ The admitted sequence includes:
 1. pin pre-existing result-affecting Engine semantics and required arithmetic corrections — complete;
 2. implement Factory spatial facts, validation and canonical form — complete;
 3. establish the Engine interpretation per runtime — complete; provenance propagation remains;
-4. implement deterministic transfer arithmetic and inbound admission reservation — arithmetic complete; admission reservation remains;
+4. implement deterministic transfer arithmetic and inbound admission reservation — complete;
 5. activate coherent transfer state/events/observations;
 6. close availability/no-rerouting edge semantics and late-join diagnostics.
 

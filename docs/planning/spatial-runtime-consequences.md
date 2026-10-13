@@ -1,6 +1,6 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Active delivery plan. PLAN-ENG-5-0 (pinned pre-spatial Engine behavior), the Factory spatial record with its validation and canonical form (PLAN-ENG-5-A1/A2), a runtime that fixes one Engine interpretation (PLAN-ENG-5-B1), and the pure transfer-duration arithmetic (PLAN-ENG-5-C1) are implemented. Spatial execution is not: a published model with a present spatial record is refused before any runtime state exists, and nothing in the runtime calls the transfer arithmetic. The remaining transfer slices below are unimplemented and ordered by ordinary dependencies.
+Status: Active delivery plan. PLAN-ENG-5-0 (pinned pre-spatial Engine behavior), the Factory spatial record with its validation and canonical form (PLAN-ENG-5-A1/A2), and a runtime that fixes one Engine interpretation (PLAN-ENG-5-B1) are implemented. Spatial execution is not: a published model with a present spatial record is refused before any runtime state exists. The pure transfer-duration arithmetic (PLAN-ENG-5-C1) and the destination admission-reservation substrate (PLAN-ENG-5-C2) are implemented and unreachable from runtime execution; the other transfer slices below are unimplemented and ordered by ordinary dependencies.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -379,7 +379,14 @@ Destination selection, reservations, scheduler integration, runtime transfer sta
 
 ### PLAN-ENG-5-C2 — Destination admission-reservation substrate
 
-**Status:** Not started.
+**Status:** Implemented. `Machine` keeps inbound admission reservations as runtime bookkeeping in
+reservation order. A reservation counts toward `canAcceptJob()` and the `startJob` capacity check,
+so admission load (active jobs plus reservations) never exceeds concurrency, but it is not an active
+job, not queue depth and not `Busy`; `MachineView` and resource observation are unchanged. A
+reservation is made only where the machine can accept, and it ends in exactly one of the two
+specified ways: conversion into active processing at an online destination, or onto the tail of the
+destination's own FIFO queue at an offline one. Nothing in the runtime calls the substrate; it stays
+unreachable from ordinary execution until PLAN-ENG-5-C3 activates transfers.
 
 **Prerequisite:** PLAN-ENG-5-B1.
 
@@ -391,14 +398,16 @@ Add the minimum internal state needed to reserve inbound admission capacity befo
 - reserved inbound work is not `activeJobs`, is not queue depth, does not make a machine `Busy` by
   itself, and is not reported as processing;
 - a destination holding only inbound reservations may still be taken offline;
-- reservation can be released/converted deterministically for arrival and waiting paths.
+- reservation is converted deterministically for the arrival and waiting paths.
 
 Keep this substrate unreachable from ordinary runtime execution until PLAN-ENG-5-C3 activates transfers.
 
 **Evidence**
 
-Direct tests prove capacity admission, active/queue separation, offline behavior, deterministic
-release/conversion and no regression of ordinary pre-spatial processing semantics.
+`MachineInboundReservationTest` proves capacity admission, active/queue separation, offline
+behavior, both conversions, atomic refusal of misuse and deterministic reservation order;
+`MachineStateTest` and the Engine conformance and acceptance suites pass unmodified. The
+`only_factory_may_mutate_machine_state` rule in `ArchitectureTest` covers the reservation mutators.
 
 **Non-goals**
 
@@ -554,7 +563,7 @@ PLAN-ENG-5-A1 spatial record/validation (implemented) ---> PLAN-ENG-5-A2 canonic
 PLAN-ENG-5-B1 current interpretation fixed per runtime (implemented)                    +--> PLAN-ENG-5-C3 activation
 PLAN-ENG-5-B2 revision-provenance symmetry ---------------------------------------------+
        |                                                                                |          |
-       +--> PLAN-ENG-5-C2 admission reservation ---------------------------------------+          v
+       +--> PLAN-ENG-5-C2 admission reservation (implemented) -------------------------+          v
                                                                                         PLAN-ENG-5-C4 edges
                                                                                                    |
                                                                                                    v

@@ -57,8 +57,7 @@ contract inputs, not questions to decide again.
 
 The Game diagnostic-evidence research has since concluded separately for static recorded runs. Control
 requirements for any selected live interaction are still evaluated before playable admission under the
-[consumer plan](../../planning/factory-design-game-consumer.md#6-playable-implementation-admission)
-and [vertical-slice gate](../../planning/factory-design-game-vertical-slice.md). Neither conclusion
+[vertical-slice gate](../../planning/factory-design-game-vertical-slice.md#admission-criteria). Neither conclusion
 selects a live interactive loop.
 
 ## Reopening triggers

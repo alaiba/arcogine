@@ -137,7 +137,7 @@ The capacity corpus of the research-experiments substrate already preserves, as 
 
 | Result | Fate |
 |---|---|
-| Accepted conclusion, reference, S1/S2/S3 frontier, mechanism | Promoted here and into the register, programme and planning gate; S1 and S2 (authored order) also preserved as corpus fixtures |
+| Accepted conclusion, reference, S1/S2/S3 frontier, mechanism | Promoted here and into the register, programme and [Game product requirements](../../product/factory-design-game.md) (first reconciled into the planning gate); S1 and S2 (authored order) also preserved as corpus fixtures |
 | Qualifications 1–8 and the claims that did not survive | Promoted here; qualification 3 also into the consumer plan |
 | Occupancy counterexample (parameters in qualification 2) | Promoted here with its parameters and preserved as executable corpus fixtures with hand-derived expectations, plus an all-interleavings order test. It is available to the diagnostic-evidence study as its required known misleading-constraint case, which that study may reuse without owning the proof |
 | Intervention sequence (inspection, then assembly, then cutting) | Promoted here as a bounded result; starter (67) and S1 (56) pinned by corpus fixtures; the remaining rows are re-derivable and belong to the diagnostic-evidence corpus's required constraint-migration pair |

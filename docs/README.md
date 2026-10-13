@@ -16,6 +16,7 @@ Arcogine separates durable direction, current truth, research, and executable pl
 - **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus enduring architectural principles, and the cross-cutting constraints the focused specifications apply.
 - **[`architecture/`](architecture/overview.md)** — focused architecture and specification documents owning exact domain contracts, identities, semantics and supported boundaries.
 - **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md) and consumer/component references describe what exists now.
+- **Consumer product requirements** — [`product/factory-design-game.md`](product/factory-design-game.md) records the owner's product direction and promoted player-facing requirements for the factory-design game consumer; it defines no Arcogine semantics.
 - **[`research/`](research/README.md)** — research-area index linking the normative operating model, current research portfolio state, synthesis signals, investigation artifacts, and reusable brief/report structures. Research is not accepted architecture or implementation commitment.
 - **[`planning/`](planning/README.md)** — implementation-ready delivery planning only: admitted slices, dependencies, blockers on concrete prerequisites, acceptance evidence, and implementation status.
 - **[`history/`](history/README.md)** — dated, non-normative evidence retained for later comparison, including selected decision rationale; never current authority.
@@ -38,6 +39,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Built-in persistent realization of controlled revisions | [Storage architecture](architecture/storage.md) / [Storage plan](planning/storage-capability.md) | Governance owns history meaning; Storage owns current local persistence and its support scope |
 | Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
 | Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
+| Playable factory-design game direction and player-facing requirements | [Game product requirements](product/factory-design-game.md) / [Game implementation gate](planning/factory-design-game-vertical-slice.md) | Game-owned product direction; defines no Factory, Engine or analytics semantics |
 | Playable factory-design product research | [Game product-research programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella only; lifecycle lives on focused questions such as strategy space and diagnostic evidence |
 | Inter-resource transfer boundary | [Current transfer applicability](architecture/transfer-applicability.md) / [transfer research](research/investigations/transfer-semantics.md) | Spatial-record absence, authored zero and refusal meanings; spatial execution specified but not implemented |
 
@@ -93,7 +95,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Agency and decision boundary](research/investigations/agency-decision-boundary.md) | Actor/controller/subject/capability/operation/replay investigation — **concluded**; durable rules live in [Attribution and decision boundaries](architecture/overview.md#attribution-and-decision-boundaries) |
 | [Factory Design evolution](research/investigations/factory-design-evolution.md) | Equipment ontology, diagnostics, comparison, shared drafts, resource groups, later Factory evolution |
 | [Factory-design game product programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella framing for focused game research; no programme-level lifecycle |
-| [Game diagnostic evidence contract](research/investigations/factory-design-game-diagnostic-evidence.md) | CONCLUDED bounded positive: truthful, inspectable non-spatial diagnostic claims are achievable; requirements promoted to the consumer plan, owner smoke test only, no method admitted |
+| [Game diagnostic evidence contract](research/investigations/factory-design-game-diagnostic-evidence.md) | CONCLUDED bounded positive: truthful, inspectable non-spatial diagnostic claims are achievable; requirements promoted to the Game product requirements, owner smoke test only, no method admitted |
 | [Game strategy space](research/investigations/factory-design-game-strategy-space.md) | CONCLUDED bounded positive for a constructive non-spatial capacity/capital reference challenge; shared eligibility is constructive, not proven necessary |
 | [Transfer semantics](research/investigations/transfer-semantics.md) | CONCLUDED current transfer-applicability boundary plus CANDIDATE non-spatial hand-off/timing follow-up |
 | [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, and unselected recovery/session extensions |
@@ -108,10 +110,10 @@ See [planning/README.md](planning/README.md) for the admission rule.
 | [Factory Design capability](planning/factory-design-capability.md) | Current canonical-model baseline, including the optional spatial record |
 | [Factory Simulation Engine readiness](planning/factory-simulation-engine-readiness.md) | Completed runtime core (outward consumer convergence retired as an objective) plus current spatial implementation queue |
 | [Spatial runtime consequences](planning/spatial-runtime-consequences.md) | Detailed accepted spatial/Engine-semantics implementation sequence |
-| [Governance/conformance capability](planning/governance-conformance-capability.md) | Landed Governance substrate and headless evidence-use capability; durable producer integrations and later authorization remain future work |
+| [Governance/conformance capability](planning/governance-conformance-capability.md) | Landed Governance substrate, including headless evidence use; further Governance capability is not admitted |
 | [Storage capability](planning/storage-capability.md) | Built-in controlled-revision storage slice and explicit stronger-support gaps |
 | [Governance identity/history compatibility guard](planning/governance-continuity.md) | Downstream implementation invariants over completed revision identity/history |
 | [Challenge delivery](planning/factory-design-game-challenge-readiness.md) | Closed headless challenge sequence and downstream invariants |
-| [Game consumer](planning/factory-design-game-consumer.md) | Settled ownership/integration boundary and playable implementation admission criteria |
-| [Game vertical-slice implementation gate](planning/factory-design-game-vertical-slice.md) | Explicit gate from product research into playable implementation |
+| [Game consumer](planning/factory-design-game-consumer.md) | Settled ownership/integration boundary, integration rules and integration acceptance |
+| [Game vertical-slice implementation gate](planning/factory-design-game-vertical-slice.md) | The single admission gate for the first playable slice |
 | [Operational implementation admission](planning/operational-execution-digital-twin-readiness.md) | Concrete conditions that must be met before an Operational delivery slice is created |

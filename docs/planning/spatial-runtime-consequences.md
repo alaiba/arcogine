@@ -1,6 +1,6 @@
 # PLAN-ENG-5 — Spatial Runtime Consequences Delivery Plan
 
-Status: Active delivery plan. PLAN-ENG-5-0 (pinned pre-spatial Engine behavior), the Factory spatial record with its validation and canonical form (PLAN-ENG-5-A1/A2), and a runtime that fixes one Engine interpretation (PLAN-ENG-5-B1) are implemented. Spatial execution is not: a published model with a present spatial record is refused before any runtime state exists. The pure transfer-duration arithmetic (PLAN-ENG-5-C1) and the destination admission-reservation substrate (PLAN-ENG-5-C2) are implemented and unreachable from runtime execution; the other transfer slices below are unimplemented and ordered by ordinary dependencies.
+Status: Active delivery plan. Implemented: PLAN-ENG-5-0, PLAN-ENG-5-A1, PLAN-ENG-5-A2, PLAN-ENG-5-B1, PLAN-ENG-5-C1 and PLAN-ENG-5-C2. Not started: PLAN-ENG-5-B2, PLAN-ENG-5-C3, PLAN-ENG-5-C4, PLAN-ENG-5-D and PLAN-ENG-5-E. Spatial execution is not implemented: a published model with a present spatial record is refused before any runtime state exists, and the transfer arithmetic and admission-reservation substrate stay unreachable from runtime execution until PLAN-ENG-5-C3.
 Owner: Factory Simulation Engine Readiness
 Parent plan: [Factory simulation engine readiness](factory-simulation-engine-readiness.md)
 
@@ -36,10 +36,9 @@ status is not encoded as a Factory policy or Engine identity. Activating spatial
 implements already-specified rules of the current interpretation; any correction those rules need
 while implementing is made in the Engine specification and its fixtures in the same change.
 
-The first-release local-admission and shared-backlog-ranking questions in
-[Engine Evolution Research](../research/investigations/engine-evolution.md) are concluded after
-independent adversarial review and retain the current rules. PLAN-ENG-5-0 pins them. Their
-reservation-aware recheck applies at PLAN-ENG-5-C3.
+The concluded local-admission and shared-backlog-ranking research in
+[Engine Evolution Research](../research/investigations/engine-evolution.md) retains the current
+dispatch rules; PLAN-ENG-5-0 pins them, and their reservation-aware recheck applies at PLAN-ENG-5-C3.
 
 ## 2. PLAN-ENG-5 semantic boundary
 
@@ -81,8 +80,8 @@ Today that branch already:
 5. otherwise routes the job into the existing single-machine queue or `pendingMultiEligible` path.
 
 PLAN-ENG-5 preserves the current selection/ranking and recovery semantics at that insertion point.
-The concluded first-release research deliberately retains those rules with qualifications; it does
-not claim they are globally optimal. Any outcome-changing alternative is an explicit change to the
+The concluded dispatch research deliberately retains those rules with qualifications; it does not
+claim they are globally optimal. Any outcome-changing alternative is an explicit change to the
 Engine specification and its fixtures, reconciled with this plan, never a silent implementation
 drift.
 
@@ -110,217 +109,54 @@ coherent in the same landed change under the runtime observation/event contract.
 
 ## 5. Delivery slices
 
-### PLAN-ENG-5-0 — Pin existing Engine semantics
+### Implemented slices
 
-**Status:** Implemented. The first-release dispatch research gate is cleared: both reviewed questions
-retain the current rules, with the qualifications recorded in
-[Engine Evolution Research](../research/investigations/engine-evolution.md).
+Their durable meaning lives in the owning specifications and their executable evidence in the named
+tests; this plan keeps only what later slices need.
 
-**Prerequisites:** the Determinism Contract is adopted architecture, plus conclusion of the two
-first-release dispatch questions with the current rules retained. Those prerequisites are satisfied. A
-future reopening that recommends an outcome-changing alternative does not rewrite this slice silently;
-it is an explicit Engine specification and fixture change with a new plan decision.
-
-**Responsibility**
-
-Add characterization/conformance evidence for the result-affecting behavior the Engine interpretation
-inherits from the pre-spatial Engine:
-
-- PLAN-ENG-2 offline filtering with all-offline fallback;
-- `canAcceptJob` as the primary ranking key rather than an eligibility filter;
-- `combinedQueueDepth`, including compatible `pendingMultiEligible` work;
-- deterministic `MachineId` tie-breaking;
-- queue-before-`pendingMultiEligible` recovery cascade ordering, including one dispatch per trigger
-  from a machine's own queue and the fixpoint rescan of the multi-eligible backlog;
-- per-machine queue FIFO arrival order, and waiting-path selection by eligible-set size;
-- multi-eligible backlog arrival order, captured eligible sets, and non-head-of-line-blocking;
-- PLAN-ENG-W1 child creation/release/dispatch ordering;
-- the PLAN-ENG-W1 child-materialization envelope (`1 <= N <= 100000`) and its no-partial-mutation rejection;
-- exact `combinedQueueDepth` ranking arithmetic (ranking semantics, not a reported result — see the
-  ownership note below);
-- the derived-result arithmetic: elapsed-time subtraction flooring at zero, and the zero-denominator
-  throughput / empty-set mean-lead-time results;
-- the derived-result accumulators: exact completed-order counting and completion-ordered value
-  accumulation;
-- scheduler equal-time insertion ordering where it is semantically observable.
-
-**Ownership note — reported derived results.** The last two bullets pin *reported* derived
-results (throughput, mean lead time, completed-order counting and value accumulation) that the
-[concluded analytics ownership boundary](../research/investigations/simulation-analytics-consumer-boundary.md)
-leaves Engine-owned. The §1.1 membership test includes their exact derived-result arithmetic;
-§10.1–§10.2 fix the edge cases and accumulators. The supported interpretation does **not** change
-when a consumer gives those results a different analytical presentation.
-
-This slice also pinned saturation of an earlier per-resource completion-credit busy-time counter;
-that counter was separately removed from the supported Engine by #469. The surviving fixture suite
-proves only the current supported contract, not a new resource utilization definition or a
-historical busy-time replay guarantee.
-
-The fixtures alone do not justify a new outward contract or future Engine-wide analytical result:
-a new definition needs a separate [producer responsibility and shared-ownership
-admission](../architecture/overview.md#domain-authority). Changing any existing Engine-declared
-result's ownership or arithmetic later is a deliberate specification/support transition with
-reconciled conformance and consumers, not an incidental refactor.
-
-`combinedQueueDepth` remains Engine result-affecting resource ranking rather than reportable
-physical queue depth. The dispatch, acceptance, scheduling, ranking, materialization and spatial
-rules in this slice remain authoritative independently of a future analytical method.
-
-**Evidence**
-
-Pinned behavioral fixtures fail if any of those results change for identical explicit inputs. The
-slice does not freeze incidental DTO or implementation shape.
-
-The reconciled research adds these mandatory dispatch fixtures to the conformance set. Use semantic
-names rather than research candidate/sample labels.
-
-**Local admission / recovery:**
-
-- one offline concurrency-4 machine with eight queued 10-tick single-eligible jobs completes after
-  80 ticks from recovery; this pins the retained one-local-job recovery stage rather than a
-  fill-to-capacity interpretation;
-- a mixed recovery with M1 concurrency 4, M2 offline, two local M1-only 10-tick jobs and four shared
-  `{M1,M2}` 3-tick jobs proves the sequence is local stage first and then shared fixpoint, while also
-  proving that one local admission does not reserve all remaining recovery opportunity for local work;
-- the routed regression pins a valid case with order completions `[14,29,29]` / makespan 29,
-  against the rejected fill behavior's `[14,40,21]` / makespan 40;
-- the objective-conflict case pins makespan/mean-order completion `93 / 69.75`, against the
-  rejected fill behavior's `91 / 71.25`;
-- eight jobs routed through `M1 concurrency 4, duration 10 -> M2 unary, duration 100` complete at 810
-  under both interpretations, proving upstream capacity fill does not imply terminal improvement;
-- preserve same-machine continuation precedence, local-before-shared ordering, FIFO local start
-  order, queue-smaller-than-capacity recovery, repeated recovery, and equal-time completion ordering.
-
-**Shared flexible-backlog ranking:**
-
-- canonical overlap: `route-order: M1:5 -> {M1,M2}:1 -> M1:1`, `clock-order: M3:6`,
-  `shared-order: {M1,M3}:100`, all machines unary. The current rule produces `[106,6,105]`, mean
-  72.33, makespan 106; the rejected local-depth-only interpretation produces `[7,6,106]`, mean 39.67,
-  makespan 106. The shared job must remain unbound and later reselect a different machine when the
-  runtime state changes;
-- one-variable mirror: use the same case but change only `shared-order` duration from 100 to 1. The
-  current mean is 6.33 versus 6.67 under local-depth-only even though the comparator's decisive input
-  projection is unchanged. This prevents the canonical case from being encoded as evidence that local
-  depth is a generally superior ranking;
-- long-step mirror: `route-order: M1:5 -> {M1,M2}:100`, `clock-order: M3:1000`,
-  `shared-order: {M1,M3}:10`, all machines unary. The current rule produces `[105,1000,15]`, mean
-  373.33, makespan 1000; local-depth-only produces `[105,1000,115]`, mean 406.67, makespan 1000.
-  Preserve this independently shaped reversal alongside the tighter one-variable mirror rather than
-  treating either case as a substitute for the other;
-- scarce-machine protection: `route-order: M1:5 -> {M1,M2}:60`, `clock-order: M3:500`, and two
-  `shared-order` instances each eligible on `{M1,M3}` for 20 ticks. The current rule completes
-  `[65,500,25,45]`, mean 158.75; local-depth-only completes `[65,500,85,105]`, mean 188.75;
-- makespan non-neutrality: use the canonical routes with concurrency 2 on M1/M2 and quantities
-  `2 / 1 / 3`. The current rule yields `[106,6,106]`, mean 72.67, makespan 106; local-depth-only
-  yields `[7,6,107]`, mean 40.00, makespan 107;
-- overlap multiplicity: one 100-tick shared job eligible on `{M1,M3,M4,M5}` while M3/M4/M5 are held
-  for 500 ticks; preserve unbound waiting and reselection while the shared entry contributes to every
-  compatible candidate's exact key;
-- recovery magnitude-sensitive corner: construct a ranking call with a recovered concurrency-4
-  machine still accepting with local depth 3 under the retained one-local-job recovery stage,
-  competing with a just-freed unary machine carrying two compatible pending shared entries. Exact keys
-  are 3 versus 2 and choose the unary machine; a positive weight of 2 would produce 3 versus 4 and
-  choose the recovered machine. This pins that exact shared-entry magnitude matters in the retained
-  recovery corner and prevents over-generalizing the usual binary-handover interpretation.
-
-**Interpretation boundary from reconciliation:**
-
-- conformance pins **behavior**, not a claim that the retained local-admission or ranking rules are
-  optimal;
-- one-local-job admission is an inherited asymmetry of the local queue stage, not a general
-  trigger-budget invariant: initial admission and the shared fixpoint already fill capacity;
-- `combinedQueueDepth` acts like a binary handover signal only on the sub-domain where competing
-  accepting candidates do not carry residual local queues; the recovery fixture above pins the
-  reachable magnitude-sensitive exception;
-- generated research win ratios are not workload probabilities and must not appear as conformance
-  requirements;
-- the partial-fault history where recovery-only fill and fill-on-every-local-stage diverge belongs to
-  the fault/recovery contract, not to healthy scheduling-policy selection. Preserve it only where the
-  existing partial-mutation fault contract is being pinned;
-- if implementation or later spatial admission mechanics create a new healthy state that violates the
-  reviewed enqueue/free-capacity/ranking assumptions, stop and reopen the bounded research question
-  instead of silently extending the rationale.
-
-PLAN-ENG-5-0 included **two deliberate production changes**, both required to make the normative
-arithmetic implementable: mean-lead-time accumulation saturates rather than wrapping, as Engine
-semantics §10.2 rule 1 requires, and `combinedQueueDepth` is summed and compared at 64-bit width
-rather than narrowing a 64-bit backlog count, as §2 rule 3 requires. Neither changed results in any
-regime that was reachable before; each preserves current results wherever the earlier arithmetic was
-already correct.
-
-The executable evidence is maintained in `EngineDispatchConformanceTest`,
+**PLAN-ENG-5-0 — Pin existing Engine semantics.** Implemented. The result-affecting behavior the
+Engine interpretation inherits from the pre-spatial Engine — resource selection, local/shared
+waiting and recovery ordering, shared-backlog ranking and reselection, child materialization,
+scheduler ordering, and the derived-result arithmetic — is pinned by `EngineDispatchConformanceTest`,
 `EngineDerivedResultConformanceTest`, the session-control acceptance suite, and the
-child-materialization acceptance/benchmark tests. These tests pin current behavior; they do not claim
-that the dispatch policy is optimal or themselves justify a new analytical definition or owner.
+child-materialization acceptance and benchmark tests, covering the fixture set in [Engine semantics
+§14](../architecture/engine-semantics.md#14-conformance-fixtures). The reviewed dispatch proving
+cases, their qualifications and reopening triggers live in [Engine Evolution
+Research](../research/investigations/engine-evolution.md). The fixtures pin behavior, not a claim
+that the retained rules are optimal; an outcome-changing alternative is an explicit specification
+and fixture change, never an implementation edit.
 
-**Non-goals**
+**PLAN-ENG-5-A1 — Factory spatial record and validation.** Implemented. `FactoryModel` carries an
+explicitly optional `SpatialRecord` with the publication predicates of the [Factory
+model](../architecture/factory-model.md). Evidence: `SpatialRecordValidationTest` and
+`SpatialRecordTest`.
 
-Engine interpretation naming, Factory spatial content, transfer behavior, new scheduling policy.
+**PLAN-ENG-5-A2 — Spatial content in the canonical form.** Implemented. The canonical form and its
+one `factory-model:sha256:<digest>` fingerprint cover the spatial record, present or absent. Evidence:
+`FactoryModelCanonicalFormTest` and `FactoryModelArtifactTest`.
 
-### PLAN-ENG-5-A1 — Factory spatial record and validation
+**PLAN-ENG-5-B1 — Engine interpretation fixed per runtime.** Implemented. A `FactoryRuntime`
+executes the current Engine definition for its lifetime without an Engine-definition identifier, and
+refuses a published model with a present spatial record with `UnsupportedModelContentException`
+before any runtime state exists. Evidence: `FactoryRuntimeExecutabilityAcceptanceTest`.
 
-**Status:** Implemented. `FactoryModel` carries the required production records and an explicitly
-optional `SpatialRecord` (`com.arcogine.factory.model.spatial`) whose per-resource `ResourceLayout`
-entries reference resources by `MachineId`; `FactoryModelValidator` implements every predicate below.
+**PLAN-ENG-5-C1 — Pure transfer arithmetic.** Implemented. The package-private `TransferTiming`
+computes the reference-cell Manhattan distance and transfer duration of [Engine semantics
+§7](../architecture/engine-semantics.md#7-transfer-timing) with exact arithmetic that throws instead
+of wrapping, and refuses a same-resource request. Nothing in the runtime calls it. Evidence:
+`TransferTimingTest`.
 
-**Responsibility**
-
-- an explicitly absent record that validates production semantics only and synthesizes nothing;
-- a present record that is complete: one layout per configured resource, in resource-list order,
-  with no unknown or repeated entry;
-- floor width/height;
-- minimum-coordinate resource reference cell;
-- anchored footprint width/height and exact occupied-cell semantics;
-- `ticksPerCell`;
-- `handlingTicks`;
-- floor containment/non-overlap;
-- the exact maximum-transfer-duration representability predicate from the Factory model.
-
-Do not claim that the publication predicate eliminates the pre-existing extreme-`SimTime.plus(...)`
-overflow condition.
-
-**Evidence**
-
-`SpatialRecordValidationTest` and `SpatialRecordTest` prove absence, present-with-zero distinctness,
-coverage, anchor, containment, overlap and arithmetic semantics independently of runtime transfer
-behavior.
-
-### PLAN-ENG-5-A2 — Spatial content in the canonical form
-
-**Status:** Implemented. The current Factory canonical form and its one
-`factory-model:sha256:<digest>` aggregate fingerprint cover the production records and the spatial
-record, with or without the record present, as specified by the [Factory
-model](../architecture/factory-model.md).
-
-**Evidence**
-
-`FactoryModelCanonicalFormTest` and `FactoryModelArtifactTest` pin golden bytes and fingerprints for
-spatial-absent and spatial-present models, the absent-versus-legal-zero distinction, presence-marker
-framing, coverage refusal, field and order sensitivity, strict decoding and publication-predicate
-rejection on decode, and refusal of discarded definitions.
-
-**Non-goals**
-
-A separate policy release, migration from earlier development definitions, Engine behavior.
-
-### PLAN-ENG-5-B1 — Engine interpretation fixed per runtime
-
-**Status:** Implemented. A `FactoryRuntime` executes the repository's current Engine definition for
-its lifetime; callers cannot select or mutate an alternative interpretation. Fresh/reset runtimes
-receive new `RunId` values without introducing an Engine-definition identifier. A published model
-with a present spatial record is refused with `UnsupportedModelContentException` before any runtime
-state exists.
-
-**Evidence**
-
-`FactoryRuntimeExecutabilityAcceptanceTest` and the Engine conformance suites.
-
-**Non-goals**
-
-An Engine-definition identity/version API, transfer behavior, caller-selectable or multiple
-interpretations.
+**PLAN-ENG-5-C2 — Destination admission-reservation substrate.** Implemented. `Machine` keeps
+inbound admission reservations in reservation order. A reservation counts toward `canAcceptJob()`
+and the `startJob` capacity check, but is not an active job, not queue depth and not `Busy`, and it
+converts either into active processing at an online destination or onto the tail of the
+destination's own queue at an offline one. Nothing in the runtime calls it. Evidence:
+`MachineInboundReservationTest`; the `only_factory_may_mutate_machine_state` rule in
+`ArchitectureTest` covers the reservation mutators.
 
 ### PLAN-ENG-5-B2 — Runtime revision-provenance symmetry
+
+**Status:** Not started.
 
 **Prerequisite:** none beyond the existing supported runtime metadata contract.
 
@@ -349,81 +185,19 @@ development provenance is automatically durable across definition revisions.
 outward adapter should consume this settled runtime provenance shape rather than introduce an envelope that
 immediately needs revising.
 
-### PLAN-ENG-5-C1 — Pure transfer arithmetic
-
-**Status:** Implemented. The package-private `TransferTiming` in `com.arcogine.factory.process`
-computes, from a published `SpatialRecord`, the reference-cell Manhattan distance and the transfer
-duration between two distinct resources:
-
-```text
-manhattanDistance = abs(xDestination - xSource) + abs(yDestination - ySource)
-transferDuration = handlingTicks + ticksPerCell * manhattanDistance
-```
-
-Footprint does not participate in distance, and `handlingTicks` is applied once per transfer. Every
-step uses exact `long` arithmetic that throws instead of wrapping. A same-resource request and a
-resource without a layout are refused rather than answered with a value. Publication predicates are
-not re-checked. Nothing in the runtime calls it, and a present spatial record is still refused.
-
-**Evidence**
-
-`TransferTimingTest` covers reference-cell distance that differs from nearest-cell and centre
-readings, footprint independence, handling applied exactly once, zero authored magnitudes, adjacent
-resources, same-resource and unknown-resource refusal, the exact largest duration the Factory model's
-maximum-transfer predicate admits and the overflow just past it, distance overflow on an unvalidated
-record, and an enumerated oracle over every ordered pair of distinct cells on a small floor.
-
-**Non-goals**
-
-Destination selection, reservations, scheduler integration, runtime transfer state.
-
-### PLAN-ENG-5-C2 — Destination admission-reservation substrate
-
-**Status:** Implemented. `Machine` keeps inbound admission reservations as runtime bookkeeping in
-reservation order. A reservation counts toward `canAcceptJob()` and the `startJob` capacity check,
-so admission load (active jobs plus reservations) never exceeds concurrency, but it is not an active
-job, not queue depth and not `Busy`; `MachineView` and resource observation are unchanged. A
-reservation is made only where the machine can accept, and it ends in exactly one of the two
-specified ways: conversion into active processing at an online destination, or onto the tail of the
-destination's own FIFO queue at an offline one. Nothing in the runtime calls the substrate; it stays
-unreachable from ordinary execution until PLAN-ENG-5-C3 activates transfers.
-
-**Prerequisite:** PLAN-ENG-5-B1.
-
-**Responsibility**
-
-Add the minimum internal state needed to reserve inbound admission capacity before processing starts:
-
-- one inbound reservation consumes capacity used by future acceptance decisions;
-- reserved inbound work is not `activeJobs`, is not queue depth, does not make a machine `Busy` by
-  itself, and is not reported as processing;
-- a destination holding only inbound reservations may still be taken offline;
-- reservation is converted deterministically for the arrival and waiting paths.
-
-Keep this substrate unreachable from ordinary runtime execution until PLAN-ENG-5-C3 activates transfers.
-
-**Evidence**
-
-`MachineInboundReservationTest` proves capacity admission, active/queue separation, offline
-behavior, both conversions, atomic refusal of misuse and deterministic reservation order;
-`MachineStateTest` and the Engine conformance and acceptance suites pass unmodified. The
-`only_factory_may_mutate_machine_state` rule in `ArchitectureTest` covers the reservation mutators.
-
-**Non-goals**
-
-Public reservation aggregate, transfer timing/state/events, transport capacity.
-
 ### PLAN-ENG-5-C3 — Vertical transfer activation
+
+**Status:** Not started.
 
 **Prerequisites:** PLAN-ENG-5-B2, PLAN-ENG-5-C1 and PLAN-ENG-5-C2.
 
 **Research recheck before activation:** inbound reservation changes what "can accept" means and was a
-named reopening seam in both reviewed first-release dispatch questions. Before making the reservation
+named reopening seam in both reviewed dispatch questions. Before making the reservation
 substrate reachable, prove that reservation-aware admission does not create a new healthy state where
 an online machine has free processing capacity plus residual local work, or where more than one
 accepting candidate can carry shared-demand pressure in a way the retained conformance model did not
 cover. If it does, stop and reopen the bounded local-admission/ranking research instead of silently
-extending the first-release rationale. This check is triggered when reservation-aware runtime
+extending the existing rationale. This check is triggered when reservation-aware runtime
 execution becomes reachable, not merely because spatial model facts exist.
 
 **Responsibility**
@@ -464,6 +238,8 @@ projection coherence.
 
 ### PLAN-ENG-5-C4 — Transfer edge semantics
 
+**Status:** Not started.
+
 **Prerequisite:** PLAN-ENG-5-C3.
 
 **Responsibility**
@@ -496,6 +272,8 @@ Transport resources, routing graphs, buffers, congestion, intermediate coordinat
 
 ### PLAN-ENG-5-D — Observation, KPI and late-join closure
 
+**Status:** Not started.
+
 **Prerequisites:** PLAN-ENG-5-B2 and PLAN-ENG-5-C4.
 
 **Responsibility**
@@ -522,6 +300,8 @@ required, and existing KPI meanings remain stable.
 REST/SSE/UI projection, KPI redesign, retained supported-event history.
 
 ### PLAN-ENG-5-E — Headless PLAN-ENG-5 closure
+
+**Status:** Not started.
 
 **Prerequisites:** PLAN-ENG-5-B2, PLAN-ENG-5-C4 and PLAN-ENG-5-D.
 
@@ -554,30 +334,26 @@ The scenario demonstrates:
 ## 6. Dependency and parallelism map
 
 ```text
-CONCLUDED dispatch research --retain current rules--> PLAN-ENG-5-0 fixtures (implemented)
+Implemented: PLAN-ENG-5-0, PLAN-ENG-5-A1, PLAN-ENG-5-A2, PLAN-ENG-5-B1, PLAN-ENG-5-C1, PLAN-ENG-5-C2
 
-PLAN-ENG-5-A1 spatial record/validation (implemented) ---> PLAN-ENG-5-A2 canonical form (implemented)
-       |
-       +--> PLAN-ENG-5-C1 transfer arithmetic (implemented) -------------------+
-                                                                               |
-PLAN-ENG-5-B1 current interpretation fixed per runtime (implemented)                    +--> PLAN-ENG-5-C3 activation
-PLAN-ENG-5-B2 revision-provenance symmetry ---------------------------------------------+
-       |                                                                                |          |
-       +--> PLAN-ENG-5-C2 admission reservation (implemented) -------------------------+          v
-                                                                                        PLAN-ENG-5-C4 edges
-                                                                                                   |
-                                                                                                   v
-                                                                                        PLAN-ENG-5-D closure
-                                                                                                   |
-                                                                                                   v
-                                                                                        PLAN-ENG-5-E
+PLAN-ENG-5-B2 revision-provenance symmetry ---------+
+PLAN-ENG-5-C1 + PLAN-ENG-5-C2 (implemented) --------+--> PLAN-ENG-5-C3 activation
+                                                                  |
+                                                                  v
+                                                          PLAN-ENG-5-C4 edges
+                                                                  |
+                                                                  v
+                                                          PLAN-ENG-5-D closure   (also requires PLAN-ENG-5-B2)
+                                                                  |
+                                                                  v
+                                                          PLAN-ENG-5-E
 ```
 
-Practical parallelism:
+Practical sequencing:
 
-- `PLAN-ENG-5-B2`, `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` are independent of each other;
-- `PLAN-ENG-5-C2` stays unreachable from ordinary execution until `PLAN-ENG-5-C3`;
+- `PLAN-ENG-5-B2` is now the only unlanded slice prerequisite of `PLAN-ENG-5-C3`;
 - `PLAN-ENG-5-C3` performs the reservation-aware dispatch recheck before activation;
+- `PLAN-ENG-5-C1` and `PLAN-ENG-5-C2` stay unreachable from ordinary execution until `PLAN-ENG-5-C3`;
 - work outside this chain may proceed under its own plan.
 
 ## 7. KPI acceptance
@@ -634,10 +410,10 @@ objective (see [Factory Simulation Engine Readiness](factory-simulation-engine-r
 
 ## 9. Acceptance / readiness
 
-The landed PLAN-ENG-5 conformance, Factory spatial record/validation/canonical-form and Engine
-interpretation work are valid evidence under the current architecture. The remaining transfer path is
-ready to proceed in dependency order; no separate identity or applicability research gate remains.
-Until PLAN-ENG-5-C3 lands, present spatial content stays refused rather than executed without its
-transfer semantics. Any slice that encounters evidence contradicting the Factory model, the Engine
-specification or the transfer boundary must stop and reconcile the owning specification rather than
-silently changing behavior in product code.
+The landed PLAN-ENG-5 conformance, Factory spatial record/validation/canonical-form, Engine
+interpretation, transfer-arithmetic and reservation-substrate work are valid evidence under the
+current architecture. The remaining transfer path is ready to proceed in dependency order; no
+separate identity or applicability research gate remains. Until PLAN-ENG-5-C3 lands, present spatial
+content stays refused rather than executed without its transfer semantics. Any slice that encounters
+evidence contradicting the Factory model, the Engine specification or the transfer boundary must stop
+and reconcile the owning specification rather than silently changing behavior in product code.

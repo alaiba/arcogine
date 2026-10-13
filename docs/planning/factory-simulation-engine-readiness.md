@@ -1,6 +1,6 @@
 # Factory Simulation Engine Readiness Implementation Plan
 
-> **Status:** Active; workload/dispatch/session/work-decomposition, core observation/event semantics, PLAN-ENG-5-0 Engine conformance, and a runtime that fixes the current Engine interpretation are complete. Outward consumer convergence is retired as an objective — a future consumer is demand-triggered, not standing backlog. The Factory spatial record and its canonical form are implemented; spatial execution is not, and a model with a present spatial record is refused before any runtime state exists. The remaining transfer slices proceed in dependency order.
+> **Status:** Active. The runtime core (PLAN-ENG-1 through PLAN-ENG-4) is landed. Admitted: the remaining PLAN-ENG-5 spatial-runtime slices, tracked in [Spatial Runtime Consequences](spatial-runtime-consequences.md), and PLAN-ENG-6, not started. Outward consumer convergence is retired as an objective — a future outward consumer is demand-triggered, not standing backlog.  
 > **Scope:** Implementation-ready work required to make Arcogine's deterministic factory runtime usable through stable consumer contracts  
 > **Authority:** Planning only; result-affecting future policy questions live in research  
 > **Related:** [Factory Design Capability](factory-design-capability.md), [session-control semantics](../architecture/engine-semantics.md#12-session-and-control-semantics), [unit-work decomposition semantics](../architecture/engine-semantics.md#3-unit-work-decomposition-semantics), [runtime observation/event contract](../architecture/runtime-contract.md), [Determinism Contract](../architecture/overview.md#determinism-contract), [Spatial Runtime Consequences](spatial-runtime-consequences.md), [Transfer Semantics Boundary Research](../research/investigations/transfer-semantics.md), [Engine Evolution Research](../research/investigations/engine-evolution.md), [Semantic Contract Maturity and Durability Research](../research/investigations/semantic-contract-maturity-durability.md), [Factory Model Semantic Composition Research](../research/investigations/factory-model-semantic-composition.md)
@@ -27,96 +27,46 @@ The runtime does not author Factory semantics, Governance history, game scoring,
 
 ## 2. Current landed baseline
 
-The following Engine capability is complete and must not be reopened by adjacent work:
+The following Engine capability is landed and must not be reopened by adjacent work. Its durable meaning lives in the owning contracts, and its executable evidence in the Engine conformance and acceptance suites.
 
-### PLAN-ENG-1 — Explicit workload and execution
+| Slice | Landed capability | Owning contract |
+| --- | --- | --- |
+| PLAN-ENG-1 | immutable `Order` intent separate from mutable execution; explicit workload submission through one authoritative acceptance path | [Engine semantics §3](../architecture/engine-semantics.md#3-unit-work-decomposition-semantics) |
+| PLAN-ENG-2 | deterministic selection, waiting and queue behavior over explicit eligible resource instances | [Engine semantics §2 and §4](../architecture/engine-semantics.md#2-resource-selection-and-dispatch-semantics) |
+| PLAN-ENG-3 | consumer-neutral session: runtime-owned scheduler and bounded advancement/reset | [Engine semantics §1.2](../architecture/engine-semantics.md#12-session-and-control-semantics) |
+| PLAN-ENG-W1 | unit-work decomposition into sibling `Job`s with one aggregate completion and a 100,000-child envelope | [Engine semantics §3](../architecture/engine-semantics.md#3-unit-work-decomposition-semantics) |
+| PLAN-ENG-4-A/B/C | `RunId` correlation, `ModelFingerprint` provenance, supported observation and ordered supported runtime events | [Runtime contract](../architecture/runtime-contract.md) |
 
-- immutable `Order` intent is separate from mutable execution;
-- workload is submitted explicitly, independent of any demand or pricing model;
-- quantity consumes proportional production work;
-- internal `OrderCreation` events and explicit workload submission share the same authoritative acceptance path.
-
-### PLAN-ENG-2 — Deterministic resource dispatch
-
-- explicit eligible resource instances define current eligibility;
-- operational availability/queue state remain distinct from eligibility;
-- deterministic selection, waiting, and queue behavior has a current implementation baseline and a normative [Engine semantics](../architecture/engine-semantics.md) contract;
-- equivalent compatible resources can execute independent work.
-
-PLAN-ENG-2's **capability boundary** remains complete: independently dispatchable work is selected and queued deterministically. The two first-release research questions have now concluded after independent adversarial review, and both retain the existing local-admission and shared-backlog-ranking rules with qualifications. PLAN-ENG-5-0 has pinned those rules deliberately; adjacent implementation still must not reinterpret them as optimality claims or change results silently.
-
-### PLAN-ENG-3 — Consumer-neutral simulation session
-
-- runtime owns its scheduler/session state;
-- bounded advancement/reset semantics are consumer-neutral;
-- callers do not inject authoritative simulated time or scheduler ownership.
-
-### PLAN-ENG-W1 — Intra-order work decomposition
-
-The unit-work decomposition semantics is implemented:
-
-- one quantity-bearing accepted `Order` remains aggregate intent/correlation;
-- quantity creates deterministic unit-quantity sibling `Job`s;
-- `JobId` is independently dispatchable work-item identity;
-- aggregate progress/completion remains order-level;
-- exactly one aggregate completion fact is emitted;
-- the supported 100,000-child ceiling has executable benchmark evidence.
-
-### PLAN-ENG-4-A/B/C — Supported observation/event core
-
-The consumer-neutral runtime now provides:
-
-- opaque per-run `RunId` correlation;
-- source `ModelFingerprint` provenance;
-- supported current-state observation;
-- ordered supported runtime events distinct from internal scheduler `Event`s;
-- post-authoritative event publication;
-- stable order/work correlation;
-- a fresh observation sufficient to reconstruct supported consumer state without replay.
-
-### PLAN-ENG-5-0 — Engine conformance
-
-The retained pre-spatial Engine interpretation is now explicitly pinned by deterministic factory
-conformance evidence. This includes resource selection, local/shared waiting and recovery ordering,
-shared-backlog ranking and reselection, child materialization boundaries, scheduler ordering, and
-the accepted derived-result arithmetic. The implementation also uses a wide exact
-`combinedQueueDepth` ranking quantity and saturating mean-lead-time accumulation as the
-[Engine semantics](../architecture/engine-semantics.md) require.
-
-### Engine interpretation fixed per runtime
-
-Every fresh and reset session executes the repository's current Engine definition for its lifetime.
-Callers cannot select or mutate an alternative interpretation. The runtime exposes no placeholder
-Engine-definition identifier: `ModelFingerprint` remains source-model content provenance, `RunId`
-remains correlation, and any future exact Engine-definition reference is introduced only for a
-concrete supported boundary that requires it.
+The concluded dispatch research retains the local-admission and shared-backlog-ranking rules; PLAN-ENG-5-0 pins them as behavior, not as an optimality claim. The landed PLAN-ENG-5 slices are listed in [Spatial Runtime Consequences](spatial-runtime-consequences.md#implemented-slices).
 
 ## 3. Current implementation queue
 
 Only the following Engine work is currently admitted.
 
-Outward consumer convergence is no longer an outstanding Engine objective. PLAN-ENG-4-A/B/C (runtime identity/supported observation, the supported `RuntimeEvent` contract, and headless acceptance closure) are the completed supported runtime observation/event capability — see [runtime observation/event contract](../architecture/runtime-contract.md) and [Architecture Overview](../architecture/overview.md#event-dispatch-architecture). The product decision is no longer to migrate the retired legacy API/SSE/CLI toward this contract; those adapters were retired outright rather than migrated. A future outward consumer will be introduced from this supported contract when a concrete product need exists, scoped at that time rather than carried here as standing backlog.
+Outward consumer convergence is no longer an outstanding Engine objective. The legacy API/SSE/CLI adapters were retired rather than migrated to the supported runtime contract; a future outward consumer will be introduced from that contract when a concrete product need exists, scoped at that time rather than carried here as standing backlog.
 
-The former generic KPI implementation derived values from internal scheduler events and simulation time, outside the supported runtime contract; that implementation has been removed. The [concluded ownership boundary](../research/investigations/simulation-analytics-consumer-boundary.md) admits no shared analytics capability now: existing Engine-declared results remain Engine-owned, named methods belong to their choosing consumer by default, and shared definitions require the concrete [Domain authority](../architecture/overview.md#domain-authority) triggers. [Evidence/provenance](../research/investigations/simulation-analytics-evidence-provenance.md) and [adapter compatibility](../research/investigations/simulation-analytics-adapter-compatibility.md) remain conditional; [cross-revision comparability](../research/investigations/simulation-analytics-cross-revision-comparability.md) can promote for a concrete comparison even when its result is Engine-owned. No analytics path may derive supported semantics from scheduler internals, and this ownership result admits no new Engine metric or runtime work.
+The [concluded analytics ownership boundary](../research/investigations/simulation-analytics-consumer-boundary.md) admits no shared analytics capability, new Engine metric or runtime work: existing Engine-declared results remain Engine-owned, named methods belong to their choosing consumer by default, and no analytics path may derive supported semantics from scheduler internals.
 
 ### PLAN-ENG-5 — Spatial runtime consequences
 
-Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, the [Factory model](../architecture/factory-model.md), [Engine semantics](../architecture/engine-semantics.md), and the [current transfer-applicability boundary](../architecture/transfer-applicability.md) remain governing contracts. The current Factory model carries an optional spatial record under one canonical form; the transfer boundary selects no transfer for a model without that record while preserving authored zero and refusal as distinct. The current Engine refuses present spatial content until spatial execution is implemented; the remaining slices make it executable without any successor Factory policy or Engine identity.
+**Status:** Admitted; partially landed.
 
-The admitted sequence includes:
+Use [Spatial Runtime Consequences](spatial-runtime-consequences.md) as the detailed implementation plan. The Factory semantic-evolution contract, the Determinism Contract, the [Factory model](../architecture/factory-model.md), [Engine semantics](../architecture/engine-semantics.md), and the [current transfer-applicability boundary](../architecture/transfer-applicability.md) remain governing contracts. The current Engine refuses present spatial content until spatial execution is implemented; the remaining slices make it executable without any successor Factory policy or Engine identity.
+
+The admitted sequence is:
 
 1. pin pre-existing result-affecting Engine semantics and required arithmetic corrections — complete;
 2. implement Factory spatial facts, validation and canonical form — complete;
-3. establish the Engine interpretation per runtime — complete; provenance propagation remains;
+3. establish the Engine interpretation per runtime — complete; revision-provenance symmetry remains;
 4. implement deterministic transfer arithmetic and inbound admission reservation — complete;
 5. activate coherent transfer state/events/observations;
 6. close availability/no-rerouting edge semantics and late-join diagnostics.
 
-**First-release dispatch gate:** cleared. The two critical-path research questions in [Engine Evolution Research](../research/investigations/engine-evolution.md) are now concluded with the current rules retained unchanged after adversarial review. PLAN-ENG-5-0 has pinned the existing local-admission, shared-backlog-ranking, reselection, ordering, and exact-arithmetic rules together with the reviewed discriminating cases. The research conclusions do not authorize a policy change and do not claim the retained rules are globally optimal.
-
 No pathfinding, conveyor graph, transport-resource scheduling, congestion, rerouting, or orientation is part of this admitted work.
 
 ### PLAN-ENG-6 — Same-semantics shared-backlog performance
+
+**Status:** Admitted; not started. Its prerequisites are landed.
 
 The dispatch-policy investigation established an implementation-efficiency problem independently of any scheduling-policy choice: per-submission resource ranking repeatedly scans `pendingMultiEligible`, producing quadratic admission work for a fixed eligible-set size and strongly superlinear diagnostic runtime as the shared backlog grows.
 
@@ -140,25 +90,15 @@ PLAN-ENG-6 is admitted performance hardening, not a prerequisite for spatial sem
 ## 4. Dependency order
 
 ```text
-completed model seam
+PLAN-ENG-1 .. PLAN-ENG-4 (landed)
     |
     v
-PLAN-ENG-1 complete
-    |
-PLAN-ENG-2 capability complete
-    |
-PLAN-ENG-3 complete
-    |
-PLAN-ENG-W1 complete
-    |
-PLAN-ENG-4 A/B/C complete (outward consumer convergence retired as an objective)
-    |
-PLAN-ENG-5 spatial consequences
+PLAN-ENG-5 spatial consequences (partially landed; see the detailed plan)
+
+PLAN-ENG-6 shared-backlog performance (independent; prerequisites landed)
 ```
 
-Within PLAN-ENG-5, the earlier first-release dispatch research gate is cleared and PLAN-ENG-5-0 is implemented: the existing rules and their coupled recovery/ranking corner are pinned executably, and the Engine interpretation is fixed per runtime. The Factory spatial record, its validation and its canonical form are implemented. The remaining transfer slices proceed in the dependency order of the detailed plan, with the reservation-aware dispatch recheck before activation. PLAN-ENG-6 may proceed independently.
-
-PLAN-ENG-4 core closure is no longer a prerequisite blocker in its own right.
+Within PLAN-ENG-5, the remaining transfer slices proceed in the dependency order of the detailed plan, with the reservation-aware dispatch recheck before activation.
 
 ## 5. Determinism and provenance invariants
 
@@ -198,7 +138,7 @@ The following are not implementation items in this plan:
 - new advancement/session semantics without a concrete consumer failure case; and
 - unselected transport/recovery technology or protocol choices.
 
-Current architecture assigns the retained dispatch rules to the [Engine semantics](../architecture/engine-semantics.md). The concluded first-release research authorizes deliberate conformance to those rules, and no implementation task may silently change them; an intended change is an explicit specification and fixture change. The Engine interpretation remains a current development definition under the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support); planning itself must not create an implicit identity, support commitment, or exception to those rules.
+Current architecture assigns the retained dispatch rules to the [Engine semantics](../architecture/engine-semantics.md). The concluded dispatch research authorizes deliberate conformance to those rules, and no implementation task may silently change them; an intended change is an explicit specification and fixture change. The Engine interpretation remains a current development definition under the [semantic evolution and support rules](../architecture/overview.md#semantic-evolution-and-support); planning itself must not create an implicit identity, support commitment, or exception to those rules.
 
 PLAN-ENG-6 is admitted separately because its implementation contract is exact result equivalence for the current, already-pinned semantics.
 

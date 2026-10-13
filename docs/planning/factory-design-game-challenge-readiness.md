@@ -101,9 +101,9 @@ The current Challenge delivery sequence is closed. New Challenge work requires a
 
 Examples such as campaign progression, leaderboard persistence, richer scoring, or shared Governance/Challenge evaluation abstractions are not roadmap placeholders. Track them in research/product work until a real requirement crosses the planning admission boundary.
 
-The current product work is coordinated by the [Factory-Design Game Product Research Programme](../research/investigations/factory-design-game-vertical-slice.md). For a minimal non-spatial playable slice, [strategy space](../research/investigations/factory-design-game-strategy-space.md) and the [diagnostic evidence contract](../research/investigations/factory-design-game-diagnostic-evidence.md) are both concluded; neither admits playable implementation. The diagnostic requirements leave "worth it" judgments to a named Challenge evaluation rule and require no new Challenge capability.
+The playable product direction and player-facing requirements live in [Game product requirements](../product/factory-design-game.md); playable admission belongs to the [implementation gate](factory-design-game-vertical-slice.md). The diagnostic requirements leave "worth it" judgments to a named Challenge evaluation rule and require no new Challenge capability.
 
-The concluded reference challenge does not by itself require new headless Challenge capability. Its economics — purchase costs, quantity limits, a budget, a deadline and one fixed quantity — are expressible with the facts the landed capability already carries. The steps and concurrency an offer projects to are deliberately not Challenge facts; they belong to the consumer-side projection described in the [consumer plan](factory-design-game-consumer.md). A later Challenge change requires a concrete promoted requirement that the landed capability cannot express.
+The concluded [strategy-space reference challenge](../research/investigations/factory-design-game-strategy-space.md) does not by itself require new headless Challenge capability. Its economics — purchase costs, quantity limits, a budget, a deadline and one fixed quantity — are expressible with the facts the landed capability already carries. The steps and concurrency an offer projects to are deliberately not Challenge facts; they belong to the consumer-side projection described in the [consumer plan](factory-design-game-consumer.md). A later Challenge change requires a concrete promoted requirement that the landed capability cannot express.
 
 ## 5. Integration milestone
 
@@ -115,4 +115,4 @@ The implemented headless capability can already prove, using game-owned candidat
 4. retain attributable immutable attempts; and
 5. compare attempts without runtime internals.
 
-A playable/runtime-integrated milestone belongs to [Factory-Design Game Consumer Implementation Plan](factory-design-game-consumer.md) only after the product research and required Engine/Factory gates are satisfied.
+A playable/runtime-integrated milestone belongs to [Factory-Design Game Consumer Implementation Plan](factory-design-game-consumer.md) only after the [implementation gate](factory-design-game-vertical-slice.md) admits a slice.

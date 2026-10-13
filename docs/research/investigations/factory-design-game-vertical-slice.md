@@ -37,7 +37,7 @@ That thesis is deliberately **not one research question**. Capacity, challenge s
 
 [Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md) asked what minimum player-facing evidence contract can be built from supported simulation facts so that every diagnosis is mechanically traceable, its method is explicit, and unsupported causal attribution is refused.
 
-It concluded as a bounded positive within the studied non-spatial scope: a mechanically truthful, inspectable diagnostic surface is achievable. Its requirements are in the consumer plan's [Diagnostic claims and evidence](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence). The human evidence is a single-person smoke test by a co-designing owner with reduced blinding. That can falsify a presentation but cannot establish what independent players will understand, so usability, comprehension, learning and bottleneck teaching remain unestablished. Utilization and starvation are concrete Game measurement demands; an accepted named method must fix their choices before any slice shows them. No method or implementation is admitted.
+It concluded as a bounded positive within the studied non-spatial scope: a mechanically truthful, inspectable diagnostic surface is achievable. Its requirements are in the Game product requirements' [Diagnostic claims and evidence](../../product/factory-design-game.md#2-diagnostic-claims-and-evidence). The human evidence is a single-person smoke test by a co-designing owner with reduced blinding. That can falsify a presentation but cannot establish what independent players will understand, so usability, comprehension, learning and bottleneck teaching remain unestablished. Utilization and starvation are concrete Game measurement demands; an accepted named method must fix their choices before any slice shows them. No method or implementation is admitted.
 
 ### Non-spatial challenge strategy space — CONCLUDED
 
@@ -127,13 +127,13 @@ The [concluded ownership boundary](simulation-analytics-consumer-boundary.md) se
 Engine-owned execution/results from named methods whose selected meaning belongs to their
 consumer by default. This does not select a Game method. The concluded
 [diagnostic evidence question](factory-design-game-diagnostic-evidence.md) promoted the product
-requirements, sufficient-evidence rules and refusal guardrails into the consumer plan, but admitted no
-method.
+requirements, sufficient-evidence rules and refusal guardrails, now held in the
+[Game product requirements](../../product/factory-design-game.md), but admitted no method.
 
 Accordingly:
 
 - overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain Game presentation choices;
-- the Game may define its **own** named diagnostic only through the consumer plan's method acceptance gate; a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
+- the Game may define its **own** named diagnostic only through the product requirements' method acceptance gate; a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
 - a research-local derivation may establish study ground truth but does not become a supported Game/Engine definition automatically;
 - snapshot, period-aggregate and future-horizon claims require distinct proof; a Game driver does not thereby own every holder's evidence;
 - transfer-dependent diagnostics were outside the concluded study and stay unvalidated until spatial runtime consequences are executable and evidenced; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
@@ -187,6 +187,6 @@ Consequently:
 
 This programme does not have one `CONCLUDED` state. Playable implementation may be admitted only when the implementation gate can name the exact focused research conclusions required by the chosen first slice, the required Arcogine semantics are landed, and executable acceptance tests can be written.
 
-A minimal non-spatial **internal playable** slice requires, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. Both are now concluded. Neither admits implementation: the [implementation gate](../../planning/factory-design-game-vertical-slice.md) still needs a selected slice, accepted methods for any utilization or starvation measure, the integration boundary, the selected prerequisites and executable acceptance tests. A slice does not require independent human participants merely to exist as an internal playable slice.
+A minimal non-spatial **internal playable** slice requires, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. Both are now concluded, and the owner has selected the first slice's product direction in the [Game product requirements](../../product/factory-design-game.md). Neither admits implementation: the [implementation gate](../../planning/factory-design-game-vertical-slice.md) still needs that slice's requirement set, accepted methods for any utilization or starvation measure, the integration boundary, the selected prerequisites and executable acceptance tests. A slice does not require independent human participants merely to exist as an internal playable slice.
 
 Controlled retry, a richer concept curriculum (including bottleneck teaching), scoring and level structure, live interaction, and external-player evidence each have their own admission criteria. They are not an automatic required research programme. Admit or promote one only when a selected slice or product decision actually depends on it. A later release goal that claims broad player comprehension must separately promote and satisfy external-player validation. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.

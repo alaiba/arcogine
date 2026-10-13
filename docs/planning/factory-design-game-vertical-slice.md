@@ -1,42 +1,37 @@
 # Factory-Design Game Vertical-Slice Implementation Gate
 
-> **Status:** BLOCKED — the non-spatial product research gates are satisfied, but playable implementation is not admitted until a coherent first slice is selected and its methods, integration, prerequisites and acceptance tests are settled  
-> **Scope:** Preserve the implementation-admission boundary for the first playable game slice without turning the product-research programme into one pseudo-question  
+> **Status:** BLOCKED — the product direction for the first non-spatial playable slice is selected, but no slice is admitted until its requirement set, integration and projector boundary, any named diagnostic method, prerequisites and executable acceptance tests are settled  
+> **Scope:** The single implementation-admission boundary for the first playable game slice  
 > **Authority:** Planning only
 
 ## Current blocker
 
-The former READY “vertical-slice research question” has been superseded by the focused portfolio in [Factory-Design Game Product Research Programme](../research/investigations/factory-design-game-vertical-slice.md).
+The owner has selected the direction of the first slice: a small, **non-spatial** factory-optimization game in which the player designs a production system, tests it, learns why it behaves as it does, and improves it. [Game product requirements](../product/factory-design-game.md) record that direction and the player-facing diagnostic requirements every slice must meet.
 
-For the smallest **non-spatial** playable slice, both product-research gates are satisfied:
+The non-spatial product-research gates are satisfied: [strategy space](../research/investigations/factory-design-game-strategy-space.md) and [diagnostic evidence](../research/investigations/factory-design-game-diagnostic-evidence.md) are both **CONCLUDED**, with bounded results and qualifications recorded in the [research register](../research/research-register.md). Neither result admits implementation.
 
-- [Factory-design game strategy-space research](../research/investigations/factory-design-game-strategy-space.md) — **CONCLUDED.** Current capacity semantics plus game-owned capital constraints support a bounded, mechanically non-trivial reference challenge. It promoted bounded reference-challenge requirements (including that a future projector must make result-affecting resource identity/order explicit and deterministic), not an implementation slice. Its qualifications bound how it may be used: shared eligibility is a strong constructive mechanism and not a proven necessity, and mechanical ground truth is not player comprehension; and
-- [Factory-design game diagnostic-evidence research](../research/investigations/factory-design-game-diagnostic-evidence.md) — **CONCLUDED.** A mechanically truthful, inspectable diagnostic surface is achievable within the studied non-spatial scope. Its bounded requirement set is in the consumer plan's [Diagnostic claims and evidence](factory-design-game-consumer.md#diagnostic-claims-and-evidence). Its human evidence is one co-designing owner's single-person smoke test of a text prototype, not player usability or comprehension.
+What remains before a concrete slice can be admitted:
 
-Neither result admits implementation. The playable gate stays **BLOCKED** until all of these exist:
-
-- a selected, coherent first slice;
-- an accepted named method for any utilization or starvation measure that slice shows;
+- the slice's **requirement set**: which challenge it offers, which diagnostics it shows, and how it compares one attempt with an improved one, drawn from the selected direction and the promoted requirements;
+- an accepted named Game method for any utilization or starvation measure the slice shows;
 - the consumer integration and projector boundary;
-- the Engine/Factory prerequisites that slice actually selects;
+- the Engine/Factory prerequisites the requirement set actually selects;
 - executable acceptance tests; and
-- any other product decision the slice genuinely depends on.
+- any other product decision the requirement set genuinely depends on.
 
 This file creates no concrete slice.
 
-Controlled retry explanation, scoring/level structure, external-player validation, and other candidate product questions are additional gates only if the selected first slice actually depends on them. External-player validation is not required for an internal playable slice unless product/release direction explicitly requires a population-level comprehension claim.
+Controlled retry explanation, scoring/level structure, external-player validation, and other candidate product questions are additional gates only if the requirement set actually depends on them. External-player validation is not required for an internal playable slice unless product/release direction explicitly requires a population-level comprehension claim.
 
 The diagnostic research studied static recorded runs with pre-computed variants. A slice whose live interaction issues mid-run commands must first meet the [execution-evidence reopening trigger](../research/investigations/simulation-execution-account.md#reopening-triggers) for live-loop control. Static or start-fixed playback at any speed does not trigger it. This gate selects no live loop, Engine change or UI technology.
 
-A slice that makes **layout** behaviorally consequential has an additional upstream dependency on the executable spatial-runtime prerequisite selected in [Spatial Runtime Consequences](spatial-runtime-consequences.md): the current Engine refuses present spatial content until that plan makes it executable. It consumes the already-reconciled [transfer-applicability contract](../architecture/transfer-applicability.md), the current [Factory model](../architecture/factory-model.md) and [Engine semantics](../architecture/engine-semantics.md); no separate Engine-identity or applicability research gate remains. New research is added only if a concrete new semantic uncertainty is admitted.
+Because the selected slice is non-spatial, spatial runtime consequences are **not** among its prerequisites. A later slice that makes **layout** behaviorally consequential depends on the executable spatial-runtime work in [Spatial Runtime Consequences](spatial-runtime-consequences.md), which consumes the already-reconciled [transfer-applicability contract](../architecture/transfer-applicability.md); no separate Engine-identity or applicability research gate remains.
 
-The concluded [analytics-definition ownership boundary](../architecture/overview.md#domain-authority) permits a named **Game-local** diagnostic method. Such a method can enter a playable requirement set only through the consumer plan's method acceptance gate, with its actual method, proof and refusal admitted. A shared named definition follows the concrete architecture admission triggers instead of being reimplemented locally. Any additional input, method-proof, provenance, accumulation or retention need evaluates the still-[CANDIDATE evidence/provenance question](../research/investigations/simulation-analytics-evidence-provenance.md). Adapter and cross-revision questions have their own independent triggers. A fresh snapshot's `no currently known work` is not an interval aggregate, nor `no work left for the rest of the period`; those claims require distinct finality and future-input evidence. Engine session/control requirements and unrelated headless Challenge use are unaffected.
+A named **Game-local** diagnostic method enters a requirement set only through the [method acceptance gate](../product/factory-design-game.md#2-diagnostic-claims-and-evidence), under the [Game-owned analytical method](../product/factory-design-game.md#3-game-owned-analytical-methods) rules; a genuinely shared definition follows the [Domain authority](../architecture/overview.md#domain-authority) triggers instead.
 
 ## Upstream prerequisites
 
-Playable/runtime-integrated implementation additionally requires the game-consumer entry gates in [Factory-Design Game Consumer Initiative](factory-design-game-consumer.md): the settled canonical model seam, deterministic workload/dispatch/session/event contracts, and every Factory/Engine capability selected by the promoted requirements.
-
-Spatial runtime consequences are **not** a universal first-slice prerequisite anymore. They are required only if the promoted product slice includes spatial layout as a behaviorally consequential mechanic.
+Playable/runtime-integrated implementation requires the upstream prerequisites in the [Game consumer plan](factory-design-game-consumer.md#3-upstream-implementation-prerequisites): the settled canonical model seam, deterministic workload/dispatch/session/event contracts, and every Factory/Engine capability selected by the requirement set.
 
 Headless Challenge capability remains independently usable and does not by itself satisfy playable entry criteria.
 
@@ -44,12 +39,13 @@ Headless Challenge capability remains independently usable and does not by itsel
 
 Replace this gate with a concrete implementation slice only when all of the following are true:
 
-1. every focused research question required by the selected slice is **CONCLUDED** and has promoted an explicit bounded requirement or an explicit no-action/falsification result;
-2. the promoted requirements form a coherent first slice without depending on another unresolved product question;
-3. upstream Engine/Factory prerequisites required by those exact requirements are landed;
-4. any selected named Game diagnostic has admitted requirements and sufficient claim-specific input/proof/refusal rules, and any truly shared method meets the architecture's concrete definition-owner trigger;
-5. the exact consumer integration boundary is known, including how a projector fixes result-affecting configured-resource identity and order;
-6. implementation ownership is clear; and
-7. executable acceptance tests can be written before coding starts.
+1. the slice's requirement set is written down, follows the selected product direction, and does not depend on another unresolved product question;
+2. every focused research question that requirement set depends on is **CONCLUDED** and has promoted an explicit bounded requirement or an explicit no-action/falsification result;
+3. the Factory/Engine prerequisites required by those exact requirements are landed;
+4. the consumer integration boundary is explicit, including how the projector fixes result-affecting configured-resource identity and order;
+5. every player-facing diagnostic the slice shows meets [Diagnostic claims and evidence](../product/factory-design-game.md#2-diagnostic-claims-and-evidence), including an accepted named Game method for any utilization or starvation measure, and any truly shared method meets the architecture's concrete definition-owner trigger;
+6. any selected save/recovery requirement has a supported Arcogine contract or is explicitly excluded from the slice;
+7. game-only semantics stay outside Arcogine, and implementation ownership is clear; and
+8. executable acceptance tests can be written against supported Arcogine contracts, rather than internal implementation state, before coding starts.
 
 Until then this file intentionally contains no reference-level parameters, scoring formula, UI technology choice, tutorial sequence, or other product hypothesis.

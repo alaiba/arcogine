@@ -2,13 +2,13 @@
 
 > **Status:** CONCLUDED — see the maintained [research register](../research-register.md)  
 > **Scope:** Truthful, inspectable player-facing diagnostic evidence over supported non-spatial production/runtime facts  
-> **Authority:** Product research record only. The promoted requirements live in the [consumer plan](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence). This record defines no Engine fact, admitted analytical method or population-level usability claim
+> **Authority:** Product research record only. The promoted requirements live in the [Game product requirements](../../product/factory-design-game.md#2-diagnostic-claims-and-evidence). This record defines no Engine fact, admitted analytical method or population-level usability claim
 
 ## Conclusion
 
 > Within the studied non-spatial scope, a mechanically truthful, inspectable diagnostic surface is achievable from supported simulation facts. It allows direct facts, counts from one labeled observation, supported event intervals, controlled comparisons, and values of named methods with declared evidence and refusal. It never presents a falsified single-run heuristic as fact. One co-designing owner found a pull-based text prototype explorable in a single-person smoke test.
 
-This is a **bounded positive**. It establishes guardrails that held on every falsification case checked. It also establishes concrete Game measurement demands with the choices a method must fix, and presentation requirements that survived the owner sessions. It does **not** establish that the surface is usable, understandable, satisfying or engaging for target players, that learning occurs, that bottleneck can be taught, or that any analytical definition is admitted. The requirement set is in the consumer plan's [Diagnostic claims and evidence](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence); the playable implementation gate stays [blocked](../../planning/factory-design-game-vertical-slice.md).
+This is a **bounded positive**. It establishes guardrails that held on every falsification case checked. It also establishes concrete Game measurement demands with the choices a method must fix, and presentation requirements that survived the owner sessions. It does **not** establish that the surface is usable, understandable, satisfying or engaging for target players, that learning occurs, that bottleneck can be taught, or that any analytical definition is admitted. The requirement set is in the Game product requirements' [Diagnostic claims and evidence](../../product/factory-design-game.md#2-diagnostic-claims-and-evidence); the playable implementation gate stays [blocked](../../planning/factory-design-game-vertical-slice.md).
 
 ## Bounded question
 
@@ -95,7 +95,7 @@ These must not be reintroduced:
 
 ## Promoted requirements
 
-The [consumer plan](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence) owns the requirement set:
+The [Game product requirements](../../product/factory-design-game.md#2-diagnostic-claims-and-evidence) own the requirement set:
 
 - claim classes and the rule that no claim exceeds its proof;
 - pull-based inspection;
@@ -137,7 +137,7 @@ Each case falsifies a shortcut the guardrails forbid. Where a maintained researc
 | Concrete condition | Owning next decision |
 |---|---|
 | An allowed in-scope claim is shown false, or an official mission answer is shown wrong | Reopen this research |
-| A selected slice needs a utilization or starvation figure | The consumer plan's method acceptance gate, inside that slice's admission; not a reopening |
+| A selected slice needs a utilization or starvation figure | The product requirements' method acceptance gate, inside that slice's admission; not a reopening |
 | A selected slice needs scope beyond the studied one (arrivals over time, availability changes, several products, pooled multi-step starvation, transfer) | Revalidate the guardrails and idle classification for that scope inside the slice's admission; admit focused research only for a material new uncertainty |
 | Another consumer, a core verification or Governance need, an outward contract, or divergent duplicates need the same named meaning | [Domain authority](../../architecture/overview.md#domain-authority) shared-definition triggers |
 | An admitted method needs new inputs, sufficiency/refusal, accumulation, provenance or retention | The [evidence/provenance question](simulation-analytics-evidence-provenance.md), still CANDIDATE |
@@ -154,10 +154,10 @@ No separate historical decision-rationale record is kept. The decisive trade-off
 
 | Result | Fate |
 |---|---|
-| Bounded verdict, scope and human-evidence limits | Here, the register, the consumer plan and the implementation gate |
-| Qualifications 1–8 and the claims that did not survive | Here; their requirement consequences in the consumer plan |
-| Guardrails, comparison truth, idle classification, method choices, presentation requirements | The consumer plan |
-| Negative cases | Here, with parameters or maintained fixtures; named in the consumer plan's acceptance requirement |
+| Bounded verdict, scope and human-evidence limits | Here, the register and the Game product requirements |
+| Qualifications 1–8 and the claims that did not survive | Here; their requirement consequences in the Game product requirements |
+| Guardrails, comparison truth, idle classification, method choices, presentation requirements | The Game product requirements (first reconciled into the consumer plan) |
+| Negative cases | Here, with parameters or maintained fixtures; named in the Game product requirements' acceptance requirement |
 | Corpus, audits, bakery scenarios and missions, viewer, walkthrough packs, generators | Discarded. The proving cases and requirements carry what a future slice needs, and copying scripts or answer keys would wrongly suggest a chosen curriculum |
 | Owner-session records and discovery notes | Discarded after transfer into the framing, qualification 1 and the presentation requirements |
 | Counter-removal scope and history | Already carried out by its own reviewed change; history kept here as qualification 8 and one proving case |

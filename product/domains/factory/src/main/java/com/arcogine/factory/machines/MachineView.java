@@ -7,10 +7,15 @@ import java.util.List;
 
 /**
  * Read-only view of a {@link Machine} -- deliberately excludes {@code startJob}, {@code
- * completeJob}, {@code enqueueJob}/{@code dequeueJob}, and {@code setAvailability}. Only {@code
- * FactoryHandler} (via its own package-private {@code MachineStore}) drives machine state;
- * everything else, including anything obtaining a reference via {@code
- * FactoryHandler.machinesView()}, is structurally limited to reading.
+ * completeJob}, {@code enqueueJob}/{@code dequeueJob}, {@code setAvailability}, and the inbound
+ * admission-reservation mutators {@code reserveInboundAdmission}, {@code startReservedJob} and
+ * {@code enqueueReservedJob}. Only {@code FactoryHandler} (via its own package-private {@code
+ * MachineStore}) drives machine state; everything else, including anything obtaining a reference
+ * via {@code FactoryHandler.machinesView()}, is structurally limited to reading.
+ *
+ * <p>Inbound admission reservations are not part of this view: a reserved job is not in {@link
+ * #activeJobs()} or {@link #queuedJobs()}, is not counted by {@link #queueDepth()}, and does not
+ * change {@link #state()}.
  */
 public interface MachineView {
 

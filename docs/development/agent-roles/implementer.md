@@ -9,7 +9,7 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../.
 Implementation starts from exactly one of:
 
 1. **A research implementation handoff** — a committed handoff in a research-evidence workspace, identified by workspace branch, exact commit SHA and path (see [Implementation handoff](../researching.md#implementation-handoff));
-2. **A ready-work issue** — a GitHub issue that states the responsibility, owning contracts, acceptance evidence and non-goals;
+2. **An issue** — a GitHub issue that states the responsibility, owning contracts, acceptance evidence and non-goals;
 3. **A bounded owner request** — a fix, refactor, tooling, dependency or Consistency-finding change the repository owner asks for directly.
 
 Before writing code, confirm the input states the responsibility, the contracts it changes or must preserve, the acceptance evidence, and the non-goals. If the meaning of the change is still open, or the input contradicts a current specification, stop and return it — a research handoff to the Researcher, anything else to the owner. Do not settle meaning while coding.
@@ -26,8 +26,7 @@ For a research handoff, resolve the exact commit and path first. If they cannot 
 
 ## Branch
 
-- **Research handoff:** continue on the handoff's research-evidence workspace branch. The implementation pull request is that question's durable reconciliation. Preserve every handed-off commit: synchronize with `main` only through history-preserving updates, and verify that the handed-off SHAs stay reachable.
-- **Issue or owner request:** branch from live `main` with a descriptive name.
+Branch from live `main` with a descriptive name, one branch per pull request. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Leave the research workspace untouched; it stays the handoff's custody until the research question concludes.
 
 ## Implementation
 
@@ -37,11 +36,11 @@ For a research handoff, resolve the exact commit and path first. If they cannot 
 - If implementation evidence contradicts the input or an owning specification, stop and surface the contradiction instead of inventing semantics.
 - Close semantic consequences as CONTRIBUTING requires: search current-state documentation, research state, tests and interfaces for claims the change makes stale, and reconcile them in the same change.
 - Use durable semantic names in code, tests and documentation. Product source and tests never reference research or transient workspace artifacts.
-- For a research handoff, also apply the research-state updates it specifies: the register row, any qualification, synthesis seed, decision-rationale record or explicit discard from its knowledge-transfer audit. Then remove every `workspace/` file from the branch before review.
+- For a research handoff, also apply the research-state updates the handoff assigns to this slice: the register row, a qualification, synthesis seed, decision-rationale record or explicit discard from its knowledge-transfer audit. The pull request of the last slice marks the question `CONCLUDED`.
 
 ## Pull request and CI
 
-Use the repository pull-request template for stable change intent. Name the input: the research question and handoff for a research handoff, or `Closes #<n>` for an issue. An exact handoff commit may appear as the identity of that immutable artifact.
+Use the repository pull-request template for stable change intent. Name the input: for a research handoff, the research question, the slice, and the handoff's path, exact commit and commit date; for an issue, `Closes #<n>`. The exact handoff commit may appear as the identity of that immutable artifact.
 
 Converge exact-head `CI / gate` as `AGENTS.md` [Implementation continuation](../../../AGENTS.md#implementation-continuation) requires, and continue the pull request with `..` after review. Never merge.
 
@@ -49,7 +48,7 @@ Finish with the implementation handoff report in chat: validation commands and o
 
 ## Implementation handoff contents
 
-A handoff — written by the Researcher in its workspace, or carried in a ready-work issue — gives the implementer:
+A handoff — written by the Researcher in its workspace, or carried in an issue — gives the implementer:
 
 1. the bounded responsibility and its owning module or contract;
 2. the decided meaning, as the owning specification states it or as the handoff states the specification change to make;
@@ -58,7 +57,7 @@ A handoff — written by the Researcher in its workspace, or carried in a ready-
 5. semantic invariants and compatibility constraints;
 6. the acceptance evidence that proves completion;
 7. explicit non-goals and adjacent work to leave alone;
-8. the durable reconciliation the pull request must carry: specification changes, research-state updates and knowledge-transfer outcomes;
+8. the durable reconciliation to carry — specification changes, research-state updates and knowledge-transfer outcomes — and, when the work is split into several slices, their order and which slice's pull request carries each update;
 9. the narrowest applicable validation commands.
 
 ## What this role must not do

@@ -18,6 +18,16 @@ A repository workflow, [`continuous-improvement-reminder.yml`](../../.github/wor
 
 The assessment may recommend Consistency, a delivery-process retrospective, a focused test-evidence diagnostic, or a narrow process-tightening action. It does not substitute for those deeper practices, and every actionable recommendation includes an exact copy/paste fresh-session invocation. It persists no due state, completion timestamps, thresholds, intervention register, or diagnostic score.
 
+### Checkpoint outcome publication
+
+The existing GitHub issue titled exactly `Continuous improvement checkpoint` is the **informational index** for completed Continuous Improvement assessments, formal Consistency reviews, and delivery-process retrospectives. Each practice publishes its own result, not another practice's result. These comments are not a due-state ledger, a substitute for `CONS:` findings or retrospective Git history, or evidence that another practice must run.
+
+Resolve the reporting destination before publication: prefer an explicitly associated checkpoint issue number carried in the invocation/handoff, validate its exact title, and allow it to be closed. Without an explicit number, use exactly one open issue with that title. If no unambiguous checkpoint exists, report that publication had no destination and **do not create or reopen an issue**. An assessment handing off a specialist invocation must include its checkpoint number so that the specialist cannot accidentally post on a later cycle.
+
+Use `infra/dev/checkpoint-comment.mjs` from a repository checkout with authenticated `gh` when available, or an equivalent GitHub issue-comment API operation preserving its marker and deduplication semantics. The helper accepts `--checkpoint <number>`, `--practice assessment|consistency|retrospective`, `--run-id <stable-key>`, and `--body-file <path>` (plus optional `--repo`). Complete, nonempty results are posted once per checkpoint/practice/run; a repeat is unchanged or updates the same author's comment. A publication failure must be disclosed, never reported as success. Use the reviewed `main` SHA for assessment and Consistency keys, and the report PR number plus distinct proposed/merged phase for retrospectives. Follow the GitHub attribution rules in `AGENTS.md`.
+
+Session-close Kaizen remains session-local. PR review and research investigations do not create checkpoint comments merely by completing their normal work. Only an explicitly invoked formal practice above reports here; the reminder workflow still only creates checkpoint issues.
+
 ## Session-close Kaizen
 
 - **Trigger:** `.?` at the close of a meaningful coding-agent session; see `AGENTS.md`.
@@ -57,11 +67,11 @@ unique remains, or name exactly what still needs to be captured first.
 - **Recommended cadence:** roughly weekly, and after significant architecture/status transitions when useful.
 - **Purpose:** deep repository semantic review across implementation, architecture/specifications, planning, docs, examples, config, tests, CI, and prior findings.
 - **Owner/runtime:** the Consistency reviewer using the canonical repository-snapshot protocol plus live GitHub state.
-- **Durable output:** only evidence-backed `CONS:` finding issues that require resolution.
+- **Actionable durable output:** only evidence-backed `CONS:` finding issues that require resolution; the optional checkpoint result comment is informational.
 
 The cadence is guidance, not persisted scheduler state. Arcogine does not maintain a last-reviewed timestamp, previous-reviewed-head ledger, or `CURRENT`/`DUE`/`OVERDUE` state for Consistency.
 
-A clean review persists nothing after returning its review result in chat. A review with findings creates, updates, reopens, or closes the applicable `CONS:` issues. Those issues are the durable outcome because they affect future work.
+A clean review creates no finding issue, but a completed formal review posts its `CLEAN` or `FINDINGS` summary to the associated checkpoint as described above. A review with findings creates, updates, reopens, or closes the applicable `CONS:` issues. Only the findings affect future work; the comment records the review outcome without creating completion state.
 
 Recent Git history may be used as a search-order heuristic, but no previous-review coordinate bounds review scope or is required for correctness.
 
@@ -191,6 +201,16 @@ A retrospective is complete only when one reviewed PR:
 4. carries no unowned intervention/trial state.
 
 The versioned state file records only the retrospective baseline and latest report path. It is not a trigger, due-state, reminder, or intervention register.
+
+### Retrospective checkpoint publication
+
+Carry the explicit checkpoint issue number from the Continuous Improvement handoff when one exists; otherwise resolve the single open checkpoint before opening the retrospective PR. Do not create a checkpoint for a standalone retrospective that has no destination. The retrospective PR body must contain a standalone stable `Retrospective checkpoint: #<number>` line **when an associated checkpoint exists**. This is a durable reference, not a claim about mutable PR or CI state.
+
+After creating the report PR, publish a short **proposed** result comment to that issue: the exact baseline and through-PR window, principal provisional decisions, follow-up issues, and report PR link. Use practice `retrospective`, run ID `pr-<report-PR-number>-proposed`. The PR and report are not yet authoritative; do not call the retrospective complete.
+
+After the reviewed report PR merges, `.github/workflows/retrospective-checkpoint.yml` checks that the merged PR changed the baseline and the report, reads the **exact merged commit**, and publishes a separate **complete** comment with the report's Result and Actions sections and an immutable report link. Its run ID is `pr-<report-PR-number>-merged`. The separate comments are intentional: GitHub Actions cannot ordinarily edit a human-authored provisional comment. Both phases are idempotent; a missing checkpoint reference means no destination and does not create one. Workflow failures must be investigated or rerun, not silently treated as publication.
+
+Git remains the authoritative retrospective record. A checkpoint comment never advances `retrospective.json` or replaces the reviewed report.
 
 ## Authority boundaries
 

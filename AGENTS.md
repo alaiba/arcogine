@@ -89,7 +89,7 @@ do not replace or override them.
   review belong to this role, not to Consistency. Research never
   changes production code.
 - **Implementation:** when asked to implement a research implementation handoff,
-  a ready-work issue, or a bounded owner request, or to continue an
+  an issue, or a bounded owner request, or to continue an
   implementation pull request with `..`, read and follow
   [`docs/development/agent-roles/implementer.md`](docs/development/agent-roles/implementer.md)
   in addition to this file.

@@ -10,7 +10,7 @@ The repository is the source of truth. Prior chat/session context, branch descri
 
 For multi-slice initiatives, use three distinct responsibilities:
 
-1. **Research** — decides what the change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). A ready-work issue or a bounded owner request is the other way into implementation.
+1. **Research** — decides what the change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). An issue or a bounded owner request is the other way into implementation.
 2. **Implementation** — the [Implementer](agent-roles/implementer.md) implements one narrowly scoped responsibility, opens the PR, and responds to review findings.
 3. **Independent review** — inspects the live PR against current repository state, posts actionable findings, re-reviews new heads, and states merge readiness clearly.
 

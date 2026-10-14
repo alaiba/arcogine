@@ -98,7 +98,7 @@ When a concluded question's durable consequence includes production code or test
 
 1. Check the implementation-ready test. If the conclusion fails it — including a high-risk conclusion whose required independent adversarial review has not yet accepted it — say what blocks it and stop.
 2. Re-ground against live `main`; the handoff must describe current repository state, not the report's baseline.
-3. Apply the `AGENTS.md` prompt-handoff preflight, then write the handoff directly into the question's workspace with the [contents the Implementer needs](implementer.md#implementation-handoff-contents), including the knowledge-transfer audit outcomes the implementation pull request must carry.
+3. Apply the `AGENTS.md` prompt-handoff preflight, then write the handoff directly into the question's workspace with the [contents the Implementer needs](implementer.md#implementation-handoff-contents). Split the work into slices when one pull request would be too large, and assign each knowledge-transfer outcome to the slice whose pull request makes it true.
 4. Commit it and return the workspace branch, exact handoff commit SHA, and path. Do not paste the handoff into chat, and do not start implementing.
 
 Do not add further modes beyond these three unless they answer a real repository workflow gap; in particular, do not turn architecture reconciliation into a Researcher mode — that work belongs to a separate reconciliation slice (§ What this role must not do). "Separate slice" here does not imply a separate branch; it means the research role stops owning the authority transition.

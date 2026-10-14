@@ -138,10 +138,10 @@ Do not optimize for finding count. Healthy adversarial review findings are not w
 
 Every retrospective also reports how long decided work waits before it lands:
 
-- for each implementation pull request merged in the window that executes a research [implementation handoff](researching.md#implementation-handoff), the time from the handoff commit to the merge;
-- for each ready-work issue closed in the window by a merged pull request, the time from the issue's opening to that merge, and for each ready-work issue still open at the end of the window, its age.
+- for each implementation pull request merged in the window that implements a research [implementation handoff](researching.md#implementation-handoff), the time from the handoff's commit date to the merge;
+- for each issue closed in the window by a merged pull request, the time from the issue's opening to that merge, and for each issue still open at the end of the window, its age.
 
-The handoff commit is among the implementation pull request's commits, because the Implementer continues on the research workspace, and the pull request names the handoff or issue it implements. Until the analyzer computes these values, report them as noncanonical and list the pull requests and issues used. They are measures to compare between retrospectives, not targets or thresholds.
+Each implementation pull request names the handoff it implements, with its commit and commit date, or the issue it closes. Until the analyzer computes these values, report them as noncanonical and list the pull requests and issues used. They are measures to compare between retrospectives, not targets or thresholds.
 
 ### Action ownership
 

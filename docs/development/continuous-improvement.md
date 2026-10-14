@@ -134,6 +134,15 @@ Manual analysis begins only after the mechanical window is established. It shoul
 
 Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous. Hand-classified finding totals or category percentages remain noncanonical. The analyzer may report mechanically parsed PR Reviewer fields — including category, confidence, distinct findings, and per-PR incidence — when its structured-finding coverage is complete. Historical review bodies may still contain a legacy `Severity:` field; the analyzer preserves that value on the parsed historical finding when present, but severity is not part of current finding identity or aggregate analytics. When structured-finding coverage is incomplete, use the diagnostics and do not present the observed values as complete distributions. Interpretation and improvement decisions remain retrospective reasoning, not analyzer output.
 
+### Research-to-delivery lead time
+
+Every retrospective also reports how long decided work waits before it lands:
+
+- for each implementation pull request merged in the window that executes a research [implementation handoff](researching.md#implementation-handoff), the time from the handoff commit to the merge;
+- for each ready-work issue closed in the window by a merged pull request, the time from the issue's opening to that merge, and for each ready-work issue still open at the end of the window, its age.
+
+The handoff commit is among the implementation pull request's commits, because the Implementer continues on the research workspace, and the pull request names the handoff or issue it implements. Until the analyzer computes these values, report them as noncanonical and list the pull requests and issues used. They are measures to compare between retrospectives, not targets or thresholds.
+
 ### Action ownership
 
 There is no continuous-improvement intervention register.
@@ -164,7 +173,7 @@ Scope: <baseline PR exclusive> -> <through PR inclusive>
 <3-5 decision-oriented bullets>
 
 ## Mechanical metrics
-<small comparison table using helper output>
+<small comparison table using helper output, plus research-to-delivery lead time>
 
 ## Prior changes
 | Change | Verdict | Evidence | Action |

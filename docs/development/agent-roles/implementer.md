@@ -32,7 +32,7 @@ Branch from live `main` with a descriptive name, one branch per pull request. A 
 
 - Implement exactly the stated responsibility. Keep the slice small and its non-goals out, following CONTRIBUTING's change-slicing rules.
 - Prove every result-affecting invariant with deterministic executable tests derived from the input's acceptance evidence, and keep the coverage and architecture-conformance gates green.
-- When the change alters behavior, ownership or a contract, update the owning architecture or specification in the same pull request. Change meaning only as far as the input decides it.
+- When the change alters behavior, ownership or a contract, update the owning architecture or specification in the same pull request, and never ahead of the code: architecture describes only what is implemented. Change meaning only as far as the input decides it.
 - If implementation evidence contradicts the input or an owning specification, stop and surface the contradiction instead of inventing semantics.
 - Close semantic consequences as CONTRIBUTING requires: search current-state documentation, research state, tests and interfaces for claims the change makes stale, and reconcile them in the same change.
 - Use durable semantic names in code, tests and documentation. Product source and tests never reference research or transient workspace artifacts.

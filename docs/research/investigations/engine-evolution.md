@@ -214,13 +214,13 @@ Do not research a replacement sequencing rule merely because one benchmark impro
 
 The [Engine specification](../../architecture/engine-semantics.md) includes spatial rules first specified when spatial facts were mandatory. The [Factory composition result](factory-model-semantic-composition.md) made the spatial record optional, while keeping Factory validity distinct from Engine applicability. The former investigation of both forms is retained as [SUPERSEDED research evidence](engine-applicability-optional-record-factory-policies.md): it assumed the absent case had no transfer lifecycle. The [current transfer boundary](../../architecture/transfer-applicability.md) has since selected that meaning with explicit qualifications. The [successor brief](engine-applicability-after-transfer-boundary.md) about exact Engine identities was superseded by the provisional semantic-contract reset, which made the Engine interpretation work in progress. The [research register](../research-register.md) owns both lifecycle states.
 
-The current Engine executes production records only and refuses present spatial content; making spatial content executable is ordinary, currently deferred delivery ([spatial transfer execution](https://github.com/alaiba/arcogine/issues/488)).
+The current Engine executes production records only and refuses present spatial content; making spatial content executable is ordinary delivery, not yet implemented ([spatial transfer execution](https://github.com/alaiba/arcogine/issues/488)).
 
 ## Same-semantics shared-backlog performance
 
 The dispatch investigation established a concrete implementation-efficiency problem independent of policy choice: repeated scans of `pendingMultiEligible` make admission scale quadratically for a fixed eligible-set size, with additional scan-heavy dispatch costs.
 
-This concern is ready for implementation only under an exact-semantics constraint; it is deferred as [same-semantics shared-backlog performance](https://github.com/alaiba/arcogine/issues/489). Optimize the ranking semantics of the current Engine interpretation without changing selected resource assignments, local/shared waiting order, shared-backlog reselection behavior, supported events/observations, deterministic replay, or exact ranking arithmetic. If an optimization requires different results, stop and return to research rather than hiding policy evolution inside a performance change.
+This concern is ready for implementation only under an exact-semantics constraint; it is tracked as [same-semantics shared-backlog performance](https://github.com/alaiba/arcogine/issues/489). Optimize the ranking semantics of the current Engine interpretation without changing selected resource assignments, local/shared waiting order, shared-backlog reselection behavior, supported events/observations, deterministic replay, or exact ranking arithmetic. If an optimization requires different results, stop and return to research rather than hiding policy evolution inside a performance change.
 
 ## Session/advancement evolution
 

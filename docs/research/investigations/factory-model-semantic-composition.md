@@ -57,8 +57,8 @@ Durable destinations:
 ## What remains open
 
 - **Spatial execution.** The current Engine executes production records only and refuses a present
-  spatial record; making it executable is deferred delivery
-  ([spatial transfer execution](https://github.com/alaiba/arcogine/issues/488)), not research.
+  spatial record; making it executable is delivery not yet
+  implemented ([spatial transfer execution](https://github.com/alaiba/arcogine/issues/488)), not research.
 - **Transport-participant ownership and resource-dependent performance** remain with their own
   register questions; this result neither resolves them nor prebuilds representation for them.
 

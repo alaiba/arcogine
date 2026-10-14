@@ -31,7 +31,7 @@ The repository is authoritative over prior chat/session context and implementati
 | What is Arcogine ultimately trying to become? | `docs/product/charter.md` |
 | How does the implemented system work today? | `docs/architecture/overview.md` corroborated by source and executable evidence |
 | Why does a significant architectural constraint exist? | the architecture or specification in `docs/architecture/` that owns the affected semantics; Git/PR history only when the change's historical rationale is genuinely needed |
-| What known work is ready or deferred? | GitHub issues (`ready`, `deferred`) and research implementation handoffs |
+| What known work is not yet landed? | open GitHub issues and research implementation handoffs |
 | What is this PR intended to accomplish? | PR description and applicable slice/acceptance criteria, reconciled with the handoff or issue it implements and its prerequisites |
 | What public API/interface exists today? | implementation and tests, reconciled with `docs/reference/` and consumers |
 | What commands, versions, modules, builds, or CI behavior exist? | executable scripts and configuration |
@@ -258,7 +258,7 @@ Prefer exact paths, symbols, test names, plan criteria, specification sections, 
 
 Use confidence `HIGH`, `MEDIUM`, or `LOW`. Do not inflate confidence because CI is green.
 
-Every actionable finding must use one precise category: `CORRECTNESS`, `ARCHITECTURE`, `DETERMINISM`, `OWNERSHIP_BOUNDARY`, `COMPATIBILITY`, `IDENTITY_PROVENANCE`, `PLANNING_STATUS`, `DOCUMENTATION_ACCURACY`, `TEST_EVIDENCE`, `SCOPE`, `TOOLCHAIN_CI`, `SECURITY_AUTHORITY`, or `PR_RECONCILIATION`.
+Every actionable finding must use one precise category: `CORRECTNESS`, `ARCHITECTURE`, `DETERMINISM`, `OWNERSHIP_BOUNDARY`, `COMPATIBILITY`, `IDENTITY_PROVENANCE`, `DOCUMENTATION_ACCURACY`, `TEST_EVIDENCE`, `SCOPE`, `TOOLCHAIN_CI`, `SECURITY_AUTHORITY`, or `PR_RECONCILIATION`.
 
 `PR_RECONCILIATION` is for an actual reconciliation defect, such as an incorrect synchronization result or broken history invariant. A merely behind-base branch is normalized before review and is not itself a finding.
 

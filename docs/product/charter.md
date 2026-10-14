@@ -174,7 +174,7 @@ Repository documentation uses these status categories, applied where they materi
 - **Normative** — enduring direction and principles. This charter, and the enduring-principle portions of `docs/architecture/overview.md`.
 - **Current state** — what Arcogine implements now. `docs/product/concepts.md` and the current-implementation portions of `docs/architecture/overview.md`.
 - **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
-- **Planned** — known work that is decided but not yet landed, with its responsibility and acceptance evidence. GitHub issues, outside the repository's documentation.
+- **Planned** — known work defined well enough to implement but not yet landed. GitHub issues, outside the repository's documentation.
 - **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research authority, such as a design proposal under review in a branch or pull request.
 - **Historical** — retained for context, not current authority. Replaced or removed decisions and plans, preserved in Git history, plus dated evidence such as selected decision rationale under `docs/history/`.
 

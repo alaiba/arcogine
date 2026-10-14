@@ -77,7 +77,7 @@ Question:
 
 > Once transfer semantics and spatial runtime consequences are settled, does changing spatial arrangement create a legible performance trade-off against capacity and game-owned capital cost?
 
-This is not ready until spatial runtime consequences are executable, which they are not: spatial execution is specified in [Engine semantics](../../architecture/engine-semantics.md) but deferred. It must consume the [current transfer-applicability boundary](../../architecture/transfer-applicability.md) and the Engine semantics rather than using the game to decide them.
+This is not ready until spatial runtime consequences are executable, which they are not: spatial execution is specified in [Engine semantics](../../architecture/engine-semantics.md) but not implemented. It must consume the [current transfer-applicability boundary](../../architecture/transfer-applicability.md) and the Engine semantics rather than using the game to decide them.
 
 ### External player validation — CANDIDATE
 

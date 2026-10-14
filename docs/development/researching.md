@@ -152,7 +152,7 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 - current-state architecture (`docs/architecture/overview.md` and the relevant domain architecture doc);
 - current architecture and specifications (`docs/architecture/`), kept explicitly distinct from unresolved proposals in research, issues, or branch discussion;
 - the [research register](../research/research-register.md) and the relevant brief(s);
-- ready and deferred work in GitHub issues;
+- known work in open GitHub issues;
 - implementation and tests;
 - reference contracts (`docs/reference/`) and examples;
 - recent merged PRs;
@@ -439,7 +439,7 @@ Exact workspace `commit SHA + path` coordinates are **active-custody artifact id
 
 A copied coordinate is not preservation of its target. Recording a workspace SHA in a pull request, issue, commit message, or maintained document preserves the coordinate text, but it does not create a repository guarantee that the underlying Git object will remain fetchable after squash merge, branch deletion, mirroring/export, or Git-host retention changes. Do not copy temporary artifact coordinates into maintained state merely to make them appear durable. The repository's transient-coordinate checker rejects the concrete full-SHA plus `workspace/...` path form in durable tracked files; semantic dependence without that syntax remains a review responsibility.
 
-After retirement, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product, architecture/specification, or reference authority, ready-work issues, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, any retained historical decision-rationale records, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
+After retirement, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product, architecture/specification, or reference authority, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, any retained historical decision-rationale records, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
 
 If the exact report, adversarial review, source map, or other research artifact must itself remain readable after workspace retirement, deliberately promote that artifact to a durable repository location or another retention surface with an explicit persistence contract before retiring the workspace. Otherwise the knowledge-transfer audit is the preservation mechanism and the temporary evidence is intentionally expendable.
 

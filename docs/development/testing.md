@@ -257,7 +257,7 @@ node .github/scripts/check-source-authority-links.mjs
 
 The source-authority-link checker enforces the product-source lifetime boundary: tracked files under
 `product/` may refer to durable architecture/specification/reference/development authorities, but
-must not refer to `docs/planning/`, `docs/research/`, or `workspace/research/`. Research may
+must not refer to `docs/research/` or `workspace/research/`. Research may
 cite implementation as evidence; the dependency does not point back from durable
 product source into those transient surfaces.
 

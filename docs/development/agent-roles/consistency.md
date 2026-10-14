@@ -36,7 +36,7 @@ Use the authority that owns the question:
 | Implemented architecture today | `docs/architecture/overview.md`, corroborated by source/tests/config |
 | Architectural rationale | the architecture or specification in `docs/architecture/` that owns the affected semantics |
 | Research state | `docs/development/researching.md` and `docs/research/research-register.md` |
-| Known work that is ready or deferred | GitHub issues (`ready`, `deferred`) |
+| Known work not yet started | open GitHub issues |
 | Public interface | implementation/tests reconciled with `docs/reference/` and consumers |
 | Commands, versions, modules, CI behavior | executable configuration and workflow definitions |
 | Development/review process | `.github/CONTRIBUTING.md` and `docs/development/` |
@@ -101,7 +101,7 @@ A material finding requires the artifact making the claim plus either contradict
 
 Use exact paths, symbols, criteria, specification sections, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green. Consistency findings do not carry severity metadata: the durable issue identity, category, evidence, authority analysis, confidence, and lifecycle state are the information this workflow actually uses.
 
-Useful categories are `PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `PLANNING_STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `SPECIFICATION_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
+Useful categories are `PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `SPECIFICATION_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
 
 Do not report inconsistency solely because wording differs, a proposal differs from implementation, an intentional compatibility alias exists, an internal symbol is undocumented, or an open PR contains behavior not yet on `main`.
 

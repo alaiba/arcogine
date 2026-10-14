@@ -96,7 +96,7 @@ do not replace or override them.
 
 There is no separate planning role. Known work waits in GitHub issues and open questions in the
 research register; the repository owner chooses what to start. A request to recommend next work is
-answered from `ready` issues, `READY` research questions, open pull requests and their live
+answered from open issues, `READY` research questions, open pull requests and their live
 review/CI state.
 
 Specialized agent contracts supplement `AGENTS.md`; they do not override
@@ -105,7 +105,7 @@ authorities.
 
 ## Temporary delivery coordinates and durable documentation
 
-Arcogine tracks open questions in the [research register](docs/research/research-register.md) and known work in GitHub issues: `ready` marks decided work that may start, `deferred` marks known work deliberately not scheduled. Issue and pull-request numbers are the delivery coordinates. PR-local review/finding identifiers use the reserved `REV-<N>` namespace: ordinary variable-width decimal numbering, with no fixed-width zero-padding required or preferred. The former `PLAN-<TRACK>-<LOCAL-ID>` planning namespace is retired together with the planning area, and no tracked file may contain one.
+Arcogine tracks open questions in the [research register](docs/research/research-register.md) and known work in GitHub issues. An issue exists only for work defined well enough to implement; it waits until someone starts it, and in the rare case something blocks it, its body says what. Issues carry no workflow-state labels. Issue and pull-request numbers are the delivery coordinates. PR-local review/finding identifiers use the reserved `REV-<N>` namespace: ordinary variable-width decimal numbering, with no fixed-width zero-padding required or preferred. The former `PLAN-<TRACK>-<LOCAL-ID>` planning namespace is retired together with the planning area, and no tracked file may contain one.
 
 These are temporary delivery coordinates. They may be used in issues, pull requests, PR descriptions/comments, reviews, branch names, commit messages, handoff prompts, and other active/delivery-history context where the coordinate helps track work — see [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s commit message guidance, which this section does not change.
 

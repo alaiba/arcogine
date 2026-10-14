@@ -36,12 +36,12 @@ The repository is authoritative over prior chat/session context and remembered c
 | What is still open, proposed, or under discussion architecturally? | the research register, open issues, and open branch/PR discussion — never treat as established |
 | What research questions exist, at what lifecycle stage and priority? | `docs/research/research-register.md` and its linked briefs |
 | How does Arcogine research operate, including lifecycle, investigation, reconciliation, and custody? | `docs/development/researching.md` |
-| What known work is ready or deferred? | GitHub issues (`ready`, `deferred`) |
+| What known work is not yet started? | open GitHub issues |
 | What has landed / currently exists? | live `main` plus merged PR/commit history |
 | How should coding agents operate generally? | `AGENTS.md` |
 | How are implementation PRs independently reviewed? | `docs/development/reviewing.md` and `docs/development/agent-roles/pr-reviewer.md` |
 | How is repository-wide consistency verified? | `docs/development/agent-roles/consistency.md` |
-| How is next work chosen? | the repository owner, from `ready` issues and `READY` research questions (`AGENTS.md`) |
+| How is next work chosen? | the repository owner, from open issues and `READY` research questions (`AGENTS.md`) |
 
 Research documents (including your own report) define unresolved questions, candidate evidence, and recommendations; they never become accepted architecture, product direction, or implementation commitment merely by being written. Only a separate reconciliation change — an architecture or specification PR, or the implementation PR the Implementer produces from a handoff — carries that authority, and that change goes through normal independent PR review.
 
@@ -126,7 +126,7 @@ Apply `docs/development/researching.md` §7. Classify the question's risk explic
 
 - Mutate production code or tests, during investigation or afterwards, however small the change looks. A ready conclusion leaves research as an implementation handoff.
 - Settle architecture by editing current architecture or specification documentation as though the conclusion were already accepted.
-- Turn an unresolved research question into an implementation handoff or a ready-work issue.
+- Turn an unresolved research question into an implementation handoff or an issue.
 - Substitute for the PR Reviewer (`docs/development/agent-roles/pr-reviewer.md`) — a reconciliation PR that turns a research conclusion into an architecture or specification change still needs normal independent PR review, which this role does not perform on its own output.
 - Substitute for the Consistency agent (`docs/development/agent-roles/consistency.md`) — a repository-wide consistency sweep is a different, dedicated procedure.
 - Substitute for the [Implementer](implementer.md) — the researcher writes the handoff; the Implementer makes and validates the production change.

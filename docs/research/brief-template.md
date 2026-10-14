@@ -140,7 +140,7 @@ product clarification
 architecture / specification
 process policy
 reference contract
-implementation responsibility -> implementation handoff (Implementer) or ready-work issue
+implementation responsibility -> implementation handoff (Implementer)
 ```
 
 Research does not perform that reconciliation itself.

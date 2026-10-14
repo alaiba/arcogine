@@ -200,7 +200,7 @@ Check for silent pull-forward of:
 - broad public API/event redesign;
 - model changes not required by the slice.
 
-Prefer reducing scope when the current requirement does not yet give an abstraction a concrete responsibility.
+Prefer reducing scope when the current requirement does not yet give an abstraction a concrete responsibility. Production code that no supported entry point reaches is a finding, even when a later change is expected to wire it in ([CONTRIBUTING](../../.github/CONTRIBUTING.md#change-slicing-and-branch-hygiene)).
 
 #### Documentation accuracy
 

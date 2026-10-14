@@ -26,7 +26,7 @@ For a research handoff, resolve the exact commit and path first. If they cannot 
 
 ## Branch
 
-Branch from live `main` with a descriptive name, one branch per pull request. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Leave the research workspace untouched; it stays the handoff's custody until the research question concludes.
+Branch from live `main` with a descriptive name, one branch per pull request. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Each slice must leave its code reachable from a supported entry point when it lands. Leave the research workspace untouched; it stays the handoff's custody until the research question concludes.
 
 ## Implementation
 

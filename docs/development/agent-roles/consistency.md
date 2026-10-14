@@ -143,9 +143,10 @@ Do not mutate findings while analyzing.
 1. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal reviewed target `T`; otherwise stop `INCOMPLETE` with no review-accounting mutations and restart against the new exact target.
 2. Reconcile finding issues idempotently.
 3. Resolve live `main` again. It must still equal reviewed target `T`.
-4. Return the review result in chat.
+4. After the final head check, publish the completed formal result to the associated checkpoint using `docs/development/continuous-improvement.md` § Checkpoint outcome publication: practice `consistency`, run ID `T` (the reviewed exact SHA). Include `T`, the standard coverage/overall block, each finding issue with category and confidence, and deliberately unfiled candidates. Both `CLEAN` and `FINDINGS` post; `INCOMPLETE` and ad-hoc questions do not. Report missing checkpoint access or publication failure explicitly. Do not create a checkpoint.
+5. Return the review result in chat.
 
-A clean review persists nothing. Do not create a completion issue/comment, timestamp, previous-reviewed-head record, or any other bookkeeping artifact. Only finding state survives the session because only findings require future repository work.
+A clean review creates no finding state; the optional informational checkpoint comment is not a completion ledger, last-reviewed timestamp, due-state marker, or scope boundary. Finding identity and resolution remain in `CONS:` issues. It does not authorize remediation.
 
 ## Report
 

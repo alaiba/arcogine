@@ -228,6 +228,8 @@ Arcogine keeps no separate decision-record authority. A significant architectura
 
 Do not demand an architecture change for ordinary local refactors.
 
+Architecture and specifications describe what the code implements. Treat architecture or specification text that describes behavior neither the PR nor current `main` implements and tests as a finding: a decided but unbuilt rule belongs in its research record until the pull request that implements it lands it ([research operating model](researching.md#10-research-and-reconciliation-stay-separate)).
+
 When a PR edits current architecture or a specification, compare the before and after text, establish the actual semantic consequences of the change, and require that the executable invariants, plans, and consumers that depended on the previous constraint are reconciled in the same PR. Where rationale is needed to understand or not accidentally undo a constraint, expect it concisely next to the rule; do not expect the document to narrate what it replaced, and do not require status fields, amendment metadata, or supersession chains. Git and pull-request history preserve the previous state and why it changed.
 
 When a change compresses a document or removes historical narration, check that every rule it carries forward still states its real condition and basis. Replacing a removed rationale with a generic rule whose factual premise is false — for example, asserting that a definition is fixed because records were attributed to it when none were — does not preserve the rule; it creates standing ambiguity about whether and why the rule binds. Either state the real basis or change the rule deliberately.

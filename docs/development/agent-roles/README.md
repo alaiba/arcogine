@@ -7,6 +7,7 @@ The Markdown procedures in this directory are the **canonical, provider-neutral*
 | Consistency | [consistency.md](consistency.md) |
 | Continuous Improvement | [continuous-improvement.md](continuous-improvement.md) |
 | Dependency Maintainer | [dependency-maintainer.md](dependency-maintainer.md) |
+| Implementer | [implementer.md](implementer.md) |
 | PR Reviewer | [pr-reviewer.md](pr-reviewer.md) |
 | Researcher | [researcher.md](researcher.md) |
 | Work Planner | [work-planner.md](work-planner.md) |

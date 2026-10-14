@@ -10,8 +10,8 @@ The repository is the source of truth. Prior chat/session context, branch descri
 
 For multi-slice initiatives, use three distinct responsibilities:
 
-1. **Planning** — defines initiative sequencing, chooses the next coherent slice, and writes the handoff/acceptance criteria.
-2. **Implementation** — designs and implements one narrowly scoped slice, opens the PR, and responds to review findings.
+1. **Research** — decides what the change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). A ready-work issue or a bounded owner request is the other way into implementation.
+2. **Implementation** — the [Implementer](agent-roles/implementer.md) implements one narrowly scoped responsibility, opens the PR, and responds to review findings.
 3. **Independent review** — inspects the live PR against current repository state, posts actionable findings, re-reviews new heads, and states merge readiness clearly.
 
 For AI-assisted work, a useful session boundary is:
@@ -19,7 +19,7 @@ For AI-assisted work, a useful session boundary is:
 - continue the same implementation session while fixing or completing the **same PR/slice**;
 - start a **fresh implementation session for the next slice/branch**, forcing the new agent to re-ground itself from the repository rather than inheriting stale assumptions;
 - keep a **persistent reviewer session across PRs** when useful for architectural continuity, but require it to re-read the live repository for every review;
-- keep initiative-level planning separate from implementation and review when practical.
+- keep research, implementation and review in separate sessions when practical; research never implements its own conclusion.
 
 These are workflow boundaries, not product architecture. They exist to reduce confirmation bias, stale-context errors, and scope bleed between slices.
 

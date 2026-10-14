@@ -2,7 +2,7 @@
 
 > **Status:** COMPLETE through the currently admitted headless challenge capability; no additional Challenge implementation is admitted  
 > **Scope:** Record the implemented game-owned challenge substrate and its downstream integration boundary  
-> **Authority:** Planning only; product/gameplay hypotheses live in research and current capability remains defined by landed code/tests
+> **Authority:** Planning only; the capability's contract lives in [Challenge](../architecture/challenge.md), product/gameplay hypotheses live in research, and current capability remains defined by landed code/tests
 
 ## 1. Ownership boundary
 

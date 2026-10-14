@@ -37,7 +37,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | Semantic fingerprint/revision history, semantic change, requirements, conformance, evidence/governed change | [Governance architecture](architecture/governance-conformance.md) / [Governance plan](planning/governance-conformance-capability.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
 | Built-in persistent realization of controlled revisions | [Storage architecture](architecture/storage.md) / [Storage plan](planning/storage-capability.md) | Governance owns history meaning; Storage owns current local persistence and its support scope |
 | Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation is currently admitted until the required semantic boundaries are resolved |
-| Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
+| Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge](architecture/challenge.md) / [Challenge plan](planning/factory-design-game-challenge-readiness.md) | Headless game-owned rules; not production simulation |
 | Playable factory-design product research | [Game product-research programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella only; lifecycle lives on focused questions such as strategy space and diagnostic evidence |
 | Inter-resource transfer boundary | [Current transfer applicability](architecture/transfer-applicability.md) / [transfer research](research/investigations/transfer-semantics.md) | Spatial-record absence, authored zero and refusal meanings; spatial execution specified but not implemented |
 
@@ -75,6 +75,7 @@ Temporary delivery coordinates belong to executable planning/delivery context, n
 | [Runtime contract](architecture/runtime-contract.md) | Supported observations, ordered authoritative runtime events, provenance and transport boundary |
 | [Controlled revisions](architecture/controlled-revisions.md) | Historical occurrence identity, lineage, provenance and authority acceptance |
 | [Governance evidence](architecture/governance-evidence.md) | Evidence reference/use, applicability and immutable evaluation-basis contract |
+| [Challenge](architecture/challenge.md) | Game-owned challenge identity, admissibility, evaluation, attempt and comparison contract, independent of production semantics |
 | [Operational continuity](architecture/operational-continuity.md) | Accountable operational continuation identity and continuity rules |
 | [External representations](architecture/external-representations.md) | Serialization, transport and industrial-interchange boundaries |
 

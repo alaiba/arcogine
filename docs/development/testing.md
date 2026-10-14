@@ -239,7 +239,7 @@ node .github/scripts/check-transient-workspace.mjs
 ```
 
 The transient-coordinate checker rejects an exact 40-character commit SHA paired with a concrete `workspace/...` artifact path in durable
-tracked text, while allowing ordinary historical SHAs, generic policy prose, active planning and
+tracked text, while allowing ordinary historical SHAs, generic policy prose and
 transient workspace files. It does not query GitHub, check commit ancestry, validate arbitrary
 historical paths, or infer transientness outside the reserved `workspace/` root. Semantic
 dependencies without this recognizable syntax remain a human-review responsibility.
@@ -257,8 +257,8 @@ node .github/scripts/check-source-authority-links.mjs
 
 The source-authority-link checker enforces the product-source lifetime boundary: tracked files under
 `product/` may refer to durable architecture/specification/reference/development authorities, but
-must not refer to `docs/planning/`, `docs/research/`, or `workspace/research/`. Planning and
-research may cite implementation as evidence; the dependency does not point back from durable
+must not refer to `docs/planning/`, `docs/research/`, or `workspace/research/`. Research may
+cite implementation as evidence; the dependency does not point back from durable
 product source into those transient surfaces.
 
 `infra/dev/delivery-retrospective.test.mjs` covers the source-neutral evidence contract and pure analyzer. It pins the exact merge-time boundary, candidate and nested-review completeness, proven review-author association, trusted-review-author filtering, closing-disposition parsing, structured finding lifecycle/aggregates, diagnostic coverage, and offline analyzer invocation. `infra/dev/delivery-retrospective-github.test.mjs` covers the GitHub acquisition adapter with injected GraphQL fixtures, including stable pagination, the 1000-result search cap, review-connection truncation, transport-field serialization, and preservation of missing author association as unproven input. Both suites are included in the repository-tooling runner and require no live GitHub access. The ChatGPT connector acquisition path is repository standard work in `docs/development/continuous-improvement.md`, not a second analyzer; it must produce the same validated Evidence v1 bundle before invoking the pure analyzer.

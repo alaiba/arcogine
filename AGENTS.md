@@ -39,7 +39,7 @@ agent, reviewer, researcher, or execution context, persist it before composing t
 see [Artifact lifetime and transient workspace](#artifact-lifetime-and-transient-workspace) for where
 and how. Do not draft the complete prompt in chat and persist a copy afterward: compose it directly
 into the persisted `workspace/` artifact, commit it, and hand it off only as `branch + exact commit
-SHA + path` (plus an issue/PR/planning identifier only when useful). After persistence succeeds, do
+SHA + path` (plus an issue/PR identifier only when useful). After persistence succeeds, do
 not duplicate the prompt body in chat. If repository persistence is required but unavailable, report
 the handoff as blocked rather than falling back to chat-only prompt custody.
 
@@ -64,7 +64,6 @@ and apply regardless of the model or execution provider. Runtime-specific profil
 including `.github/agents/` GitHub Copilot adapters, only load those procedures; they
 do not replace or override them.
 
-- **Work planning:** when asked to re-ground initiative progress, decide what to work on next, prioritize open work, identify blocked versus ready slices, identify safe parallel lanes, or generate a handoff prompt for a recommended next slice, read and follow [`docs/development/agent-roles/work-planner.md`](docs/development/agent-roles/work-planner.md) in addition to this file.
 - **Dependency maintenance:** when asked to process, apply, remediate, or sweep dependency updates or Dependabot pull requests, read and follow [`docs/development/agent-roles/dependency-maintainer.md`](docs/development/agent-roles/dependency-maintainer.md) in addition to this file.
 - **Continuous improvement:** when the user says `Assess continuous improvement.`, read and follow [`docs/development/agent-roles/continuous-improvement.md`](docs/development/agent-roles/continuous-improvement.md) in addition to this file.
 - **Consistency review:** when asked to perform a repository consistency
@@ -87,7 +86,7 @@ do not replace or override them.
   in addition to this file. That contract defers to
   [`docs/development/researching.md`](docs/development/researching.md) for the
   normative research method. Research investigation and adversarial research
-  review belong to this role, not to Work Planner or Consistency. Research never
+  review belong to this role, not to Consistency. Research never
   changes production code.
 - **Implementation:** when asked to implement a research implementation handoff,
   a ready-work issue, or a bounded owner request, or to continue an
@@ -95,34 +94,25 @@ do not replace or override them.
   [`docs/development/agent-roles/implementer.md`](docs/development/agent-roles/implementer.md)
   in addition to this file.
 
+There is no separate planning role. Known work waits in GitHub issues and open questions in the
+research register; the repository owner chooses what to start. A request to recommend next work is
+answered from `ready` issues, `READY` research questions, open pull requests and their live
+review/CI state.
+
 Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, contribution, documentation, or executable
 authorities.
 
 ## Temporary delivery coordinates and durable documentation
 
-Arcogine planning coordinates use the reserved `PLAN-<TRACK>-<LOCAL-ID>` namespace (for example, a
-hierarchical item might read `PLAN-<TRACK>-4-B`). `<TRACK>` is a stable, repository-wide track code
-(currently `FD` Factory Design, `ENG` Factory Simulation Engine, `GOV` Governance/Conformance,
-`STO` Storage,
-`CHAL` Factory-Design Challenge, `OPS` Operational Execution/Digital Twin); `<LOCAL-ID>` is one or
-more hyphen-separated segments, extended for hierarchical items rather than inventing another
-namespace. Compact, ad-hoc, or track-local coordinate syntax (a bare letter+number, a dotted or
-space-separated variant, etc.) must not be introduced — the whole point of one reserved namespace
-is that a temporary coordinate is always unmistakable on sight. PR-local review/finding
-identifiers use the separate `REV-<N>` namespace: ordinary variable-width decimal numbering, with
-no fixed-width zero-padding required or preferred.
+Arcogine tracks open questions in the [research register](docs/research/research-register.md) and known work in GitHub issues: `ready` marks decided work that may start, `deferred` marks known work deliberately not scheduled. Issue and pull-request numbers are the delivery coordinates. PR-local review/finding identifiers use the reserved `REV-<N>` namespace: ordinary variable-width decimal numbering, with no fixed-width zero-padding required or preferred. The former `PLAN-<TRACK>-<LOCAL-ID>` planning namespace is retired together with the planning area, and no tracked file may contain one.
 
-Both namespaces are temporary delivery coordinates. They may be used in `docs/planning/`, issues,
-pull requests, PR descriptions/comments, reviews, branch names, commit messages, handoff prompts,
-and other active/delivery-history context where the coordinate helps sequence or track work — see
-[`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s commit message guidance, which this section
-does not change.
+These are temporary delivery coordinates. They may be used in issues, pull requests, PR descriptions/comments, reviews, branch names, commit messages, handoff prompts, and other active/delivery-history context where the coordinate helps track work — see [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md)'s commit message guidance, which this section does not change.
 
 Durable repository assets must not depend on transient coordinates. Durable assets include
 architecture, product, reference, and development documents; code comments; workflow definitions;
 and test/class/file names introduced alongside a change. A transient coordinate may remain in
-active planning/delivery context or durable delivery-history provenance (such as a commit message
+active delivery context or durable delivery-history provenance (such as a commit message
 or merged PR reference), but maintained semantic state must survive independently through the
 durable capability, contract, identity, invariant, behavior, deliberately promoted artifact, or
 provenance it represents. Exact `commit SHA + workspace/... path` pairs identify artifacts only
@@ -132,32 +122,22 @@ itself is the subject. When delivery outcomes move into durable semantic naming,
 into what they represent rather than naming them after the coordinate that tracked them.
 
 Product source and tests have a stricter lifetime boundary: maintained files under `product/`
-must not reference `docs/planning/`, `docs/research/`, or transient research-workspace artifacts.
-Planning and research may cite implementation as evidence, but product source must describe current
-behavior, invariants, and limitations in durable semantic terms and, when a textual authority is
-useful, point to the current architecture, specification, reference, or development contract that
-owns them. The dependency direction is one-way: transient planning/research material may point to
-durable implementation; durable product source must not point back to transient planning/research.
-
-Planning filenames are semantic, not coordinate-derived: the delivery label belongs in a planning
-document's content, not its path, so the filename keeps describing the subject if sequencing
-changes later.
+must not reference `docs/research/` or transient research-workspace artifacts. Research may cite
+implementation as evidence, but product source must describe current behavior, invariants, and
+limitations in durable semantic terms and, when a textual authority is useful, point to the current
+architecture, specification, reference, or development contract that owns them. The dependency
+direction is one-way: transient research material may point to durable implementation; durable
+product source must not point back to it.
 
 The mechanical checkers enforce recognizable cases deterministically by scanning tracked
 repository text (`git ls-files`, so generated/untracked/build output is never in scope):
-`.github/scripts/check-delivery-labels.mjs` rejects a `PLAN-*` or `REV-<N>` token outside
-`docs/planning/`; `.github/scripts/check-transient-coordinates.mjs` rejects an exact full commit
+`.github/scripts/check-delivery-labels.mjs` rejects any `PLAN-*` or `REV-<N>` token in a tracked
+file or file path; `.github/scripts/check-transient-coordinates.mjs` rejects an exact full commit
 SHA paired with a concrete `workspace/...` artifact path in durable files; and
 `.github/scripts/check-source-authority-links.mjs` rejects product-source references to
-`docs/planning/`, `docs/research/`, or `workspace/research/`. These checkers do not attempt to
-infer semantic dependence from prose without a safe syntax signal. A `PLAN-*` or
-`REV-<N>` token outside `docs/planning/` is a durable-naming leak; inside `docs/planning/`, the
-old ambiguous label forms it replaced (a bare `Gate` plus number, a bare letter-plus-number
-optionally dotted/hyphenated, `W1`, `DH-` plus a letter) may not be reintroduced. Those old forms
-are not banned outside `docs/planning/` — they can be ordinary, unrelated identifiers elsewhere
-in the codebase — which is exactly why the reserved `PLAN-`/`REV-` namespaces exist. Catching
-semantic dependencies without a safe literal signal (for example, prose like "the next stage")
-remains a human-review responsibility.
+`docs/research/` or `workspace/research/`. These checkers do not attempt to infer semantic
+dependence from prose without a safe syntax signal. Catching semantic dependencies without a safe
+literal signal (for example, prose like "the next stage") remains a human-review responsibility.
 
 `docs/architecture/` holds Arcogine's current architecture — see
 [`docs/architecture/overview.md`](docs/architecture/overview.md) for cross-cutting principles and
@@ -224,7 +204,7 @@ Agents never merge pull requests. When every merge gate holds, report that and s
 
 - `product/` — all executable product source.
   - Gradle multi-module Java backend (Java 21 compatibility baseline; preferred devcontainer JDK 25) rooted here: `types`, `governance`, `storage`, `simulation`, `domains/{factory,finance}`, `consumer/challenge`, `consumer/challenge-factory-integration-test`, `research-experiments`, `architecture-conformance-test`. `research-experiments` is non-shipped research infrastructure: the substrate for deterministic research experiments over the supported runtime contract, which no production or consumer source set depends on (see `docs/development/researching.md`). There is currently no application server, HTTP API, or CLI product surface — retained executable evidence is tests, conformance checks, and benchmarks; a future outward consumer is introduced from the supported runtime contract (`docs/architecture/runtime-contract.md`) when a concrete product need exists.
-- `docs/` — architecture, product, development, reference, and planning docs. Read `docs/architecture/overview.md` before touching cross-module boundaries.
+- `docs/` — architecture, product, development, research, and history docs. Read `docs/architecture/overview.md` before touching cross-module boundaries.
 - `infra/` — dev-environment infrastructure: `infra/dev/claude-cloud.sh` (Claude Cloud environment provisioning) and related repository tooling.
 
 ## Canonical commands

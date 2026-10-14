@@ -40,7 +40,7 @@ test('rejects missing roles, provider metadata, and missing AGENTS routing', () 
   const errors = checkRoleContracts(root).join('\n');
   assert.match(errors, /missing canonical role:.*consistency.md/);
   assert.match(errors, /provider\/runtime frontmatter.*researcher.md/);
-  assert.match(errors, /does not route to.*work-planner.md/);
+  assert.match(errors, /does not route to.*implementer.md/);
 }));
 
 test('rejects adapter that cannot load the canonical role or duplicates procedure', () => fixture(({ root, make }) => {

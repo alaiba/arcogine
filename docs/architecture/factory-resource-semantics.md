@@ -3,7 +3,7 @@
 > **Status:** Maintained architectural reference  
 > **Scope:** Current canonical meaning of Factory productive-resource identity and the admission rules for reusable specifications, qualification, grouping, and external-asset correspondence  
 > **Authority:** Architectural interpretation of current Factory resource semantics. It does not change the Factory model's canonical form, runtime behavior, or adopted architecture.  
-> **Related:** [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [canonical model boundary](factory-design.md#4-canonical-model-boundary), [runtime observation/event contract](runtime-contract.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Resource Semantics Research Conclusion](../research/investigations/factory-resource-semantics.md)
+> **Related:** [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [canonical model boundary](factory-design.md#4-canonical-model-boundary), [runtime observation/event contract](runtime-contract.md), [Factory Resource Semantics Research Conclusion](../research/investigations/factory-resource-semantics.md)
 
 ## Current resource referent
 

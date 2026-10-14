@@ -82,7 +82,7 @@ Read the relevant current material rather than relying only on the PR descriptio
 
 - `docs/product/charter.md` for significant product/architecture changes;
 - `docs/architecture/overview.md`;
-- the relevant planning document, such as `docs/planning/factory-simulation-engine-readiness.md`;
+- the implementation handoff or issue the PR implements;
 - the architecture or specification that owns the affected semantics;
 - affected domain code and tests;
 - `.github/CONTRIBUTING.md`;
@@ -204,27 +204,27 @@ Prefer reducing scope when the current requirement does not yet give an abstract
 
 #### Documentation accuracy
 
-Current-state docs must describe what actually exists. Planning docs must distinguish implemented, partial, deferred, and explicitly out-of-scope capability.
+Current-state docs must describe what actually exists, and no maintained document may claim that deferred capability exists.
 
 After iterative fixes, re-check the PR title/body as well: a description of an API that no longer exists is a review defect even when the code is correct.
 
-**Durable semantic vocabulary is a mandatory review check.** Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (see `AGENTS.md`), are valid in `docs/planning/`, issues, PR descriptions/comments, reviews, commit messages, and implementation handoffs where they help sequence or track delivery. Durable semantic naming must instead name the capability, contract, identity, invariant, or behavior directly rather than depend on one of these coordinates — this covers Markdown documentation under `docs/` outside `docs/planning/`, and non-Markdown durable artifacts a PR introduces, such as code comments, workflow definitions, and test names. Durable documentation may link to planning or research when that history/evidence is useful and the document remains independently meaningful.
+**Durable semantic vocabulary is a mandatory review check.** Delivery coordinates — issue and pull-request numbers, and PR-local review/finding identifiers (see `AGENTS.md`) — are valid in issues, PR descriptions/comments, reviews, commit messages, and implementation handoffs where they help sequence or track delivery. Durable semantic naming must instead name the capability, contract, identity, invariant, or behavior directly rather than depend on one of these coordinates — this covers Markdown documentation under `docs/`, and non-Markdown durable artifacts a PR introduces, such as code comments, workflow definitions, and test names. Durable documentation may link to research or an issue when that history/evidence is useful and the document remains independently meaningful.
 
-Product source and tests are stricter: they must not reference `docs/planning/`, `docs/research/`, or transient research-workspace artifacts. Planning and research may cite implementation as evidence; implementation must state its current behavior/invariant directly or reference the durable architecture, specification, reference, or development contract that owns it. Treat a source-to-planning/research reference as an authority-placement defect even when the referenced artifact still exists and happens to agree today.
+Product source and tests are stricter: they must not reference `docs/research/` or transient research-workspace artifacts. Research may cite implementation as evidence; implementation must state its current behavior/invariant directly or reference the durable architecture, specification, reference, or development contract that owns it. Treat a source-to-research reference as an authority-placement defect even when the referenced artifact still exists and happens to agree today.
 
-The required CI checks catch recognizable coordinate and source-path leaks mechanically; review must catch semantic leakage that a regex cannot recognize, including prose that names a planning/research concept without a literal path. Do not waive a durable-document hit merely because the identifier is historically familiar.
+The required CI checks catch recognizable coordinate and source-path leaks mechanically; review must catch semantic leakage that a regex cannot recognize, including prose that names a research concept without a literal path. Do not waive a durable-document hit merely because the identifier is historically familiar.
 
 #### Semantic propagation
 
 For medium- and high-semantic-risk changes, review by concept as well as by changed file. Identify the small set of concepts whose meaning changed, then search maintained docs, tests, examples, interfaces, and configuration for both the new vocabulary and plausible old assumptions. This is especially important when a semantic change can leave syntactically unrelated prose or tests behind.
 
-When an architectural constraint, readiness criterion, capability status, or other authority-bearing artifact changes state — for example a constraint moving from proposal into current architecture, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
+When an architectural constraint, readiness criterion, capability status, or other authority-bearing artifact changes state — for example a constraint moving from proposal into current architecture, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related status tables, research-register rows, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
 
 This is bounded change-impact review. It does not require a repository-wide consistency sweep for every PR.
 
 #### Architectural reconciliation discipline
 
-Arcogine keeps no separate decision-record authority. A significant architectural change — durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind — must be reconciled into the architecture or specification that owns the affected semantics, with code, tests, and dependent planning updated in the same PR.
+Arcogine keeps no separate decision-record authority. A significant architectural change — durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind — must be reconciled into the architecture or specification that owns the affected semantics, with code and tests updated in the same PR.
 
 Do not demand an architecture change for ordinary local refactors.
 
@@ -349,7 +349,7 @@ Do not leave merge readiness implicit when a review is actually performed.
 
 Before `READY TO MERGE`, explicitly verify two documentation-lifetime conditions when applicable:
 
-1. durable documentation touched or semantically affected by the PR does not depend on temporary planning coordinates; and
+1. durable documentation touched or semantically affected by the PR does not depend on temporary delivery coordinates; and
 2. every architecture or specification edit has its semantic consequences independently reviewed and reconciled across the documents, invariants, plans, and consumers that depended on the previous statement.
 
 ### Canonical disposition format
@@ -431,11 +431,11 @@ Do not demand redundant tests when existing integration/baseline coverage alread
 
 A chat/session may discover a decision; it must not be the only place that decision exists.
 
-Before considering an initiative slice complete, ask whether deleting the implementation/planning/review conversations would erase anything needed to understand:
+Before considering an initiative slice complete, ask whether deleting the research/implementation/review conversations would erase anything needed to understand:
 
 - what the system does now;
 - why a hard-to-reverse decision was made;
 - what remains intentionally deferred;
 - how the change is validated.
 
-If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation or the owning specification, planning, or the PR record. When promoting knowledge out of planning into a durable document, translate temporary delivery coordinates into semantic terminology.
+If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation or the owning specification, the research register or an issue, or the PR record. When promoting knowledge out of delivery context into a durable document, translate temporary delivery coordinates into semantic terminology.

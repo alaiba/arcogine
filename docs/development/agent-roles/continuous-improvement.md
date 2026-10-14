@@ -15,7 +15,7 @@ A successful assessment answers:
 - Is any recommended action already owned by current work?
 - What is the smallest useful next action, if any?
 
-Keep this assessment broad and lightweight. Delegate deep semantic review, delivery-process trend/recurrence analysis, PR review, implementation planning, and test-diagnostic execution to their owning practices. Do not manufacture work merely to produce recommendations. "No action recommended" is a valid result.
+Keep this assessment broad and lightweight. Delegate deep semantic review, delivery-process trend/recurrence analysis, PR review, implementation, and test-diagnostic execution to their owning practices. Do not manufacture work merely to produce recommendations. "No action recommended" is a valid result.
 
 ## Grounding
 
@@ -62,7 +62,7 @@ Do not answer that deeper question inside this assessment. Do not run the retros
 
 ### Delivery and review controls
 
-Inspect changes to repository-owned lifecycle/review/CI controls within the assessment window only far enough to identify obvious health signals or candidate process-tightening opportunities. Existing open issues are evidence of owned work, not proof that a control is currently broken. Delegate actual PR review to the PR Reviewer and implementation planning to Work Planner.
+Inspect changes to repository-owned lifecycle/review/CI controls within the assessment window only far enough to identify obvious health signals or candidate process-tightening opportunities. Existing open issues are evidence of owned work, not proof that a control is currently broken. Delegate actual PR review to the PR Reviewer and implementation to the Implementer.
 
 ### Test-evidence diagnostics
 

@@ -186,4 +186,4 @@ The material/genealogy question may promote only after its identity, lineage, ow
 
 For either question, a surviving high-risk conclusion must complete the normative genuinely independent adversarial research review before it can become decision-quality evidence for reconciliation into durable architecture or a specification. This brief leaves open which architecture or specification, if any, would have to change; it does not leave the high-risk review gate open.
 
-Any later implementation responsibility belongs in `docs/planning/` only after the relevant conclusion has been reconciled into its durable architecture/product authority and has explicit prerequisites plus executable acceptance evidence.
+Any later implementation responsibility leaves research as an [implementation handoff](../../development/researching.md#implementation-handoff) only after the relevant conclusion has been reconciled into its durable architecture/product authority and has explicit prerequisites plus executable acceptance evidence.

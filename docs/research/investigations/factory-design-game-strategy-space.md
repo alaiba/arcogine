@@ -121,12 +121,12 @@ Revalidate the reference when any of these occurs; none is admitted work by itse
 
 ## Downstream consequence
 
-- **Product programme and implementation gate.** Strategy space is satisfied for a minimal non-spatial slice. [Diagnostic evidence](factory-design-game-diagnostic-evidence.md) has since concluded as well; no playable slice is admitted ([programme](factory-design-game-vertical-slice.md), [implementation gate](../../planning/factory-design-game-vertical-slice.md)).
+- **Product programme and implementation gate.** Strategy space is satisfied for a minimal non-spatial slice. [Diagnostic evidence](factory-design-game-diagnostic-evidence.md) has since concluded as well; no playable slice is admitted ([programme](factory-design-game-vertical-slice.md#promotion-to-playable-implementation)).
 - **Diagnostic evidence** (CONCLUDED) consumed this reference as mechanical ground truth and as a known misleading-constraint counterexample (qualification 2). This record supplies no diagnostic method; analytical-definition ownership is decided separately in [Domain authority](../../architecture/overview.md#domain-authority).
 - **Controlled retry** (CANDIDATE) now has a challenge family to compare, with the base-choice caveat above.
 - **Scoring/level structure** and **equipment-value discovery** (CANDIDATE) now have a bounded mechanical solution family. Any fixed scalarization selects one frontier design: the landed reference evaluation policy's additive score would favor S1 (214, against 160–161 for S2 and 65 for S3), a research-local side check and not a proposal.
-- **Challenge.** The reference's economics (purchase cost, quantity limits, budget, deadline, one fixed quantity) are expressible with the facts the landed headless Challenge capability already carries; the steps and concurrency an offer projects to are deliberately not Challenge facts. No new Challenge implementation follows ([Challenge delivery plan](../../planning/factory-design-game-challenge-readiness.md)).
-- **Consumer integration.** The projection identity/order requirement is recorded in the [consumer plan](../../planning/factory-design-game-consumer.md). The consumer is not admitted.
+- **Challenge.** The reference's economics (purchase cost, quantity limits, budget, deadline, one fixed quantity) are expressible with the facts the landed headless Challenge capability already carries; the steps and concurrency an offer projects to are deliberately not Challenge facts. No new Challenge implementation follows ([Challenge](../../architecture/challenge.md)).
+- **Consumer integration.** The projection identity/order requirement is recorded in the programme's [consumer integration boundary](factory-design-game-vertical-slice.md#consumer-integration-boundary). The consumer is not admitted.
 - **Factory and Engine.** No change. `MachineId` tie-breaking is already normative in [Engine semantics](../../architecture/engine-semantics.md). That step-level duration and inert setup/volume fields cannot express cheaper-but-slower versus costlier-but-faster equipment neither recommends nor rejects resource-dependent performance, qualification, setup, availability or stochastic semantics; each stays with its own register question.
 
 ## Durable proving assets and knowledge-transfer outcome
@@ -137,7 +137,7 @@ The capacity corpus of the research-experiments substrate already preserves, as 
 
 | Result | Fate |
 |---|---|
-| Accepted conclusion, reference, S1/S2/S3 frontier, mechanism | Promoted here and into the register, programme and planning gate; S1 and S2 (authored order) also preserved as corpus fixtures |
+| Accepted conclusion, reference, S1/S2/S3 frontier, mechanism | Promoted here and into the register and programme; S1 and S2 (authored order) also preserved as corpus fixtures |
 | Qualifications 1–8 and the claims that did not survive | Promoted here; qualification 3 also into the consumer plan |
 | Occupancy counterexample (parameters in qualification 2) | Promoted here with its parameters and preserved as executable corpus fixtures with hand-derived expectations, plus an all-interleavings order test. It is available to the diagnostic-evidence study as its required known misleading-constraint case, which that study may reuse without owning the proof |
 | Intervention sequence (inspection, then assembly, then cutting) | Promoted here as a bounded result; starter (67) and S1 (56) pinned by corpus fixtures; the remaining rows are re-derivable and belong to the diagnostic-evidence corpus's required constraint-migration pair |

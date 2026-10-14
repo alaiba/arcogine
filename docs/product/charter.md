@@ -162,8 +162,8 @@ Current architecture and enduring architectural principles
         ├── docs/research/
         │   Non-authoritative investigations, hypotheses, evidence, and open questions
         │
-        ├── docs/planning/
-        │   Admitted implementation work, sequencing, blockers, and acceptance evidence
+        ├── GitHub issues
+        │   Known work decided but not yet landed; delivery context, not documentation authority
         │
         └── Git and pull-request history; docs/history/
             Historical rationale, superseded states, and dated evidence; not current authority
@@ -174,11 +174,11 @@ Repository documentation uses these status categories, applied where they materi
 - **Normative** — enduring direction and principles. This charter, and the enduring-principle portions of `docs/architecture/overview.md`.
 - **Current state** — what Arcogine implements now. `docs/product/concepts.md` and the current-implementation portions of `docs/architecture/overview.md`.
 - **Research** — unresolved investigations, hypotheses, and evidence gathering that are not accepted architecture or implementation commitment. `docs/research/` and its linked detailed artifacts.
-- **Planned** — admitted implementation work with bounded ownership, prerequisites, sequencing, and acceptance evidence. `docs/planning/`.
-- **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research and planning authorities, such as a design proposal under review in a branch or pull request.
+- **Planned** — known work that is decided but not yet landed, with its responsibility and acceptance evidence. GitHub issues, outside the repository's documentation.
+- **Proposed** — under consideration but not yet established as durable direction. Explicitly proposed material outside the research authority, such as a design proposal under review in a branch or pull request.
 - **Historical** — retained for context, not current authority. Replaced or removed decisions and plans, preserved in Git history, plus dated evidence such as selected decision rationale under `docs/history/`.
 
-A reader should never be left guessing whether a statement is mature product ambition, current implementation, an open research question, admitted implementation work, an open proposal, or a historical artifact.
+A reader should never be left guessing whether a statement is mature product ambition, current implementation, an open research question, planned work, an open proposal, or a historical artifact.
 
 ## 11. Decision test
 

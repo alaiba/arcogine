@@ -3,7 +3,7 @@
 > **Status:** Proposed architectural reference  
 > **Scope:** Execution/reality relationships, external observations, digital-twin reconciliation, and design-to-reality continuity  
 > **Authority:** The [Operational continuity contract](operational-continuity.md) is adopted; the remaining boundaries are proposed architecture. This document does not describe current production capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [Factory publication identity contract](factory-design.md#11-publication-identity-and-provenance), [runtime observation/event contract](runtime-contract.md), [external representation policy](external-representations.md), [Operational continuity contract](operational-continuity.md), [Determinism Contract](overview.md#determinism-contract), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [Factory publication identity contract](factory-design.md#11-publication-identity-and-provenance), [runtime observation/event contract](runtime-contract.md), [external representation policy](external-representations.md), [Operational continuity contract](operational-continuity.md), [Determinism Contract](overview.md#determinism-contract)
 
 ## 1. Architectural position
 

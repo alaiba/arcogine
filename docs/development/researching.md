@@ -39,15 +39,14 @@ Decision-quality evidence
    +--> no action
    +--> product clarification
    +--> architecture / specification
-   +--> concrete implementation responsibility
+   +--> implementation responsibility
                        |
-                       v
-                  docs/planning/
+                       +--> implementation handoff --> Implementer --> one implementation PR per slice
 ```
 
-A topic is ready for implementation planning only when semantic/product meaning, ownership, prerequisites, and acceptance evidence are sufficiently settled. A blocked implementation contract may live in planning; an unresolved question that still determines the contract stays in research. Research may recommend a durable consequence, but the conclusion becomes authoritative only through reconciliation into the appropriate product, architecture, specification, reference, research, or admitted planning surface.
+A conclusion is ready for implementation only when it passes the implementation-ready test in [Implementation handoff](#implementation-handoff). An unresolved question that still determines the change stays in research. Research may recommend a durable consequence, but the conclusion becomes authoritative only through reconciliation into the appropriate product, architecture, specification, reference or research surface, or through the implementation pull request its handoff produces.
 
-`docs/research/` therefore tracks what Arcogine still needs to understand or decide; `docs/planning/` tracks executable work given what is already known or decided. Research documents never receive temporary delivery coordinates.
+`docs/research/` therefore tracks what Arcogine still needs to understand or decide. Research documents never receive temporary delivery coordinates.
 
 An explicit owner decision is a separate route, not a research conclusion. When the owner decides a question directly — for example by choosing to replace an architecture rather than settle an open argument about what the existing one permits — that decision is reconciled as an ordinary architecture and implementation change under independent PR review. It needs no research acceptance, is not tested for compatibility with the rules it deliberately replaces, and must not be presented as the adoption of an unaccepted report. Research made moot by the decision is marked `SUPERSEDED`, and the knowledge-transfer audit below still applies to its evidence.
 
@@ -376,10 +375,7 @@ separate durable reconciliation on the same workspace by default
         +--> no action
         +--> product
         +--> architecture / specification
-        +--> concrete implementation responsibility
-                            |
-                            v
-                       docs/planning/
+        +--> implementation handoff --> Implementer --> one implementation PR per slice
         |
         v
 knowledge-transfer audit
@@ -401,11 +397,30 @@ branch history remains reachable while the ref is retained
 
 A researcher may recommend durable consequences. A researcher does not make architecture authoritative merely by publishing a report; the promotion rule above requires deliberate reconciliation into the appropriate durable authority.
 
-The report's author must not silently rewrite current architecture, specifications, product semantics, production code, or implementation planning while "doing research." A separate reconciliation pass deliberately translates surviving research conclusions into the appropriate authoritative surface — an architecture or specification PR, a planning admission — and that reconciliation change goes through normal independent PR review exactly as any other change would.
+The report's author must not silently rewrite current architecture, specifications, product semantics, production code, or implementation planning while "doing research." A separate reconciliation pass deliberately translates surviving research conclusions into the appropriate authoritative surface — an architecture or specification PR, or an implementation PR that the [Implementer](agent-roles/implementer.md) produces from the research's handoff — and that change goes through normal independent PR review exactly as any other change would. Research itself never changes production code: anything durable leaves research only through reconciliation or through an implementation handoff.
+
+Architecture and specification text that a change adds or alters describes what the code implements. A reconciliation without code may add only what current code already does: an ownership boundary, a refusal, a constraint already enforced, or a scope exclusion. A decided rule that current code does not implement stays in its research record, and its question stays `READY`, until an implementation handoff lands the rule together with the code and tests that make it true. This governs new reconciliations; it does not by itself reopen a question whose conclusion an existing specification already records, and implementing such an existing specification adds no new unbuilt text.
 
 **Separate reconciliation means a separate phase and authority transition, not a separate Git branch.** By default, the same finite research-evidence workspace continues through durable reconciliation. Do not create a fresh reconciliation branch solely because evidence gathering has ended. Completed report/review artifacts remain immutable by exact commit SHA + path while later workspace commits carry reconciliation edits and the knowledge-transfer audit.
 
-Research is never `CONCLUDED` merely because a report was written. `CONCLUDED` requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result.
+Research is never `CONCLUDED` merely because a report was written. `CONCLUDED` requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result. For an implementation handoff, the merged implementation pull requests are that reconciliation.
+
+### Implementation handoff
+
+When a conclusion's durable consequence includes production code or tests, research delegates it; the researcher never implements it. A conclusion is **implementation-ready** only when:
+
+1. the question is answered, and any independent adversarial review that its risk requires (§7, §9) has accepted the conclusion;
+2. the owning module, contract or integration boundary is known;
+3. the change's prerequisites have landed, or are explicitly unnecessary;
+4. the implementation responsibility is bounded;
+5. acceptance evidence can be stated before coding begins; and
+6. non-goals are explicit enough to keep adjacent unsettled work out.
+
+A conclusion that fails any of these stays in research: narrow it, or record what blocks it in the register.
+
+For an implementation-ready conclusion, the researcher writes an **implementation handoff** in the question's workspace, under the [`AGENTS.md`](../../AGENTS.md) prompt-handoff preflight, with the [contents the Implementer needs](agent-roles/implementer.md#implementation-handoff-contents). The handoff includes the knowledge-transfer audit below, so the implementation pull request can carry its outcomes. The researcher returns the workspace branch, the exact handoff commit SHA and its path.
+
+A handoff may split the work into several slices. The Implementer lands each slice in its own pull request from a branch of `main`, and the handoff assigns each durable update — specification change, register row, knowledge-transfer outcome — to the slice whose pull request makes it true. Implementation starts as soon as the handoff exists. Until the last slice lands, the question stays `READY` and its workspace stays active as the handoff's custody; the question becomes `CONCLUDED` when the last slice's pull request merges.
 
 ### Evidence workspaces, artifact identity, and retirement
 
@@ -435,7 +450,7 @@ If an exact report, adversarial review, source map, or other research artifact m
 
 Before merging durable reconciliation, remove temporary `workspace/research/` files from the final tree **after** a knowledge-transfer audit accounts for every material result that should survive the investigation. That tree cleanup does not delete the branch or its earlier evidence commits. Research questions become `CONCLUDED` or `SUPERSEDED` only under the lifecycle rules above; removal of temporary files is not itself proof of conclusion. At minimum, classify and transfer:
 
-- accepted conclusions and invariants into the appropriate product, architecture, specification, reference, or admitted planning authority;
+- accepted conclusions and invariants into the appropriate product, architecture, specification, or reference authority, and a concrete implementation responsibility into an implementation handoff;
 - qualifications that constrain an accepted conclusion into the same durable destination as that conclusion;
 - unresolved unknowns, reopening triggers, and newly exposed questions into the [research register](../research/research-register.md) when they remain material;
 - reusable proving cases, counterexamples, failure modes, measurements, protocols, source maps, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;

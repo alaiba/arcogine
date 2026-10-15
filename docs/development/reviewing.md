@@ -10,8 +10,8 @@ The repository is the source of truth. Prior chat/session context, branch descri
 
 For multi-slice initiatives, use three distinct responsibilities:
 
-1. **Planning** — defines initiative sequencing, chooses the next coherent slice, and writes the handoff/acceptance criteria.
-2. **Implementation** — designs and implements one narrowly scoped slice, opens the PR, and responds to review findings.
+1. **Research and planning** — research decides what a change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)); planning sequences admitted planning slices and may write a committed implementation prompt for one ([Work Planner](agent-roles/work-planner.md)). An issue or a bounded owner request is the other way into implementation.
+2. **Implementation** — the [Implementer](agent-roles/implementer.md) implements one narrowly scoped responsibility, opens the PR, and responds to review findings.
 3. **Independent review** — inspects the live PR against current repository state, posts actionable findings, re-reviews new heads, and states merge readiness clearly.
 
 For AI-assisted work, a useful session boundary is:
@@ -19,7 +19,7 @@ For AI-assisted work, a useful session boundary is:
 - continue the same implementation session while fixing or completing the **same PR/slice**;
 - start a **fresh implementation session for the next slice/branch**, forcing the new agent to re-ground itself from the repository rather than inheriting stale assumptions;
 - keep a **persistent reviewer session across PRs** when useful for architectural continuity, but require it to re-read the live repository for every review;
-- keep initiative-level planning separate from implementation and review when practical.
+- keep research and initiative-level planning separate from implementation and review when practical; research never implements its own conclusion.
 
 These are workflow boundaries, not product architecture. They exist to reduce confirmation bias, stale-context errors, and scope bleed between slices.
 
@@ -200,7 +200,7 @@ Check for silent pull-forward of:
 - broad public API/event redesign;
 - model changes not required by the slice.
 
-Prefer reducing scope when the current requirement does not yet give an abstraction a concrete responsibility.
+Prefer reducing scope when the current requirement does not yet give an abstraction a concrete responsibility. Production code that no supported entry point reaches is a finding, even when a later change is expected to wire it in ([CONTRIBUTING](../../.github/CONTRIBUTING.md#change-slicing-and-branch-hygiene)).
 
 #### Documentation accuracy
 
@@ -227,6 +227,8 @@ This is bounded change-impact review. It does not require a repository-wide cons
 Arcogine keeps no separate decision-record authority. A significant architectural change — durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind — must be reconciled into the architecture or specification that owns the affected semantics, with code, tests, and dependent planning updated in the same PR.
 
 Do not demand an architecture change for ordinary local refactors.
+
+Architecture and specification text that a PR adds or alters describes what the code implements. Treat such text that describes behavior neither the PR nor current `main` implements and tests as a finding: a decided but unbuilt rule belongs in its research record until the pull request that implements it lands it ([research operating model](researching.md#10-research-and-reconciliation-stay-separate)). Existing specification text that the PR does not touch is not a finding under this rule, and a PR that implements an existing specification adds no unbuilt text.
 
 When a PR edits current architecture or a specification, compare the before and after text, establish the actual semantic consequences of the change, and require that the executable invariants, plans, and consumers that depended on the previous constraint are reconciled in the same PR. Where rationale is needed to understand or not accidentally undo a constraint, expect it concisely next to the rule; do not expect the document to narrate what it replaced, and do not require status fields, amendment metadata, or supersession chains. Git and pull-request history preserve the previous state and why it changed.
 

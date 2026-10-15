@@ -3,7 +3,7 @@
 > **Status:** Maintained architectural reference  
 > **Scope:** Mapping between Arcogine manufacturing-domain semantics and ISA-95 / IEC 62264 concepts  
 > **Authority:** Describes current mappings, deliberate divergences, and design constraints; it does not establish ISA-95 conformance  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Standards Alignment](standards-alignment.md), [Factory-Design Game Consumer Initiative](../planning/factory-design-game-consumer.md), [unit-work decomposition semantics](engine-semantics.md#3-unit-work-decomposition-semantics)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Standards Alignment](standards-alignment.md), [unit-work decomposition semantics](engine-semantics.md#3-unit-work-decomposition-semantics)
 
 ## 1. Purpose
 

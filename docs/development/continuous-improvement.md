@@ -65,7 +65,7 @@ unique remains, or name exactly what still needs to be captured first.
 ## Consistency review
 
 - **Recommended cadence:** roughly weekly, and after significant architecture/status transitions when useful.
-- **Purpose:** deep repository semantic review across implementation, architecture/specifications, planning, docs, examples, config, tests, CI, and prior findings.
+- **Purpose:** deep repository semantic review across implementation, architecture/specifications, research state, docs, examples, config, tests, CI, and prior findings.
 - **Owner/runtime:** the Consistency reviewer using the canonical repository-snapshot protocol plus live GitHub state.
 - **Actionable durable output:** only evidence-backed `CONS:` finding issues that require resolution; the optional checkpoint result comment is informational.
 

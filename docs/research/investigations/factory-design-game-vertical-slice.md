@@ -31,13 +31,29 @@ The intended player role is a production-system designer or industrial engineer,
 
 That thesis is deliberately **not one research question**. Capacity, challenge structure, player diagnosis, controlled comparison, spatial consequences, scoring, and implementation technology require different evidence and have different owners. Their lifecycle state is therefore tracked separately.
 
+## Owner direction for the first playable slice
+
+On 2026-10-13 the owner selected the direction of the first slice:
+
+> The first non-spatial playable slice should be a small factory-optimization game in which the player designs a production system, tests it, learns why it behaves as it does, and improves it.
+
+It bounds the [first-slice requirement set](#first-slice-requirement-set--candidate) question below.
+
 ## Focused questions
+
+### First-slice requirement set — CANDIDATE
+
+Question:
+
+> What minimum requirement set makes the owner-selected direction a coherent first non-spatial playable slice, and which open product questions, if any, does that requirement set depend on?
+
+Two concluded inputs feed it: the [strategy-space reference challenge](factory-design-game-strategy-space.md) and the diagnostic [promoted requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements), together with the [consumer integration boundary](#consumer-integration-boundary) below. It decides which of those requirements a first slice adopts, with their studied scope and qualifications; until then they bind nothing. It needs a bounded brief before it is `READY`. A conclusion that passes the research method's [implementation-ready test](../../development/researching.md#implementation-handoff) leaves research as an implementation handoff; anything it cannot settle becomes a narrower question.
 
 ### Diagnostic evidence contract — CONCLUDED
 
 [Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md) asked what minimum player-facing evidence contract can be built from supported simulation facts so that every diagnosis is mechanically traceable, its method is explicit, and unsupported causal attribution is refused.
 
-It concluded as a bounded positive within the studied non-spatial scope: a mechanically truthful, inspectable diagnostic surface is achievable. Its requirements are in the consumer plan's [Diagnostic claims and evidence](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence). The human evidence is a single-person smoke test by a co-designing owner with reduced blinding. That can falsify a presentation but cannot establish what independent players will understand, so usability, comprehension, learning and bottleneck teaching remain unestablished. Utilization and starvation are concrete Game measurement demands; an accepted named method must fix their choices before any slice shows them. No method or implementation is admitted.
+It concluded as a bounded positive within the studied non-spatial scope: a mechanically truthful, inspectable diagnostic surface is achievable. Its [promoted requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements) are input to the first-slice requirement set, not binding rules. The human evidence is a single-person smoke test by a co-designing owner with reduced blinding. That can falsify a presentation but cannot establish what independent players will understand, so usability, comprehension, learning and bottleneck teaching remain unestablished. Utilization and starvation are concrete Game measurement demands; an accepted named method must fix their choices before any slice shows them. No method or implementation is admitted.
 
 ### Non-spatial challenge strategy space — CONCLUDED
 
@@ -53,7 +69,7 @@ Question:
 
 > Can a controlled one-variable retry be presented as a mechanically traceable before/change/after evidence chain without asserting an unobserved causal mechanism?
 
-Its evidence-contract precondition is now met. The concluded diagnostic-evidence requirements already fix what a controlled comparison may claim: a single change with its outcome delta, a whole change set with attribution withheld, single-change results that do not compose, and "needed" as time-only. Promote this question only when a selected slice or product decision needs retry-explanation evidence beyond those requirements. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; common named run-comparison meanings follow the [concluded analytical-definition admission rule](../../architecture/overview.md#domain-authority), not an assumed shared module.
+Its evidence-contract precondition is now met. The concluded diagnostic-evidence requirements already state what a controlled comparison may claim: a single change with its outcome delta, a whole change set with attribution withheld, single-change results that do not compose, and "needed" as time-only. Promote this question only when a selected slice or product decision needs retry-explanation evidence beyond those requirements. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; common named run-comparison meanings follow the [concluded analytical-definition admission rule](../../architecture/overview.md#domain-authority), not an assumed shared module.
 
 ### Spatial design trade-off — CANDIDATE
 
@@ -61,7 +77,7 @@ Question:
 
 > Once transfer semantics and spatial runtime consequences are settled, does changing spatial arrangement create a legible performance trade-off against capacity and game-owned capital cost?
 
-This is not ready until spatial runtime consequences are executable. It must consume the [current transfer-applicability boundary](../../architecture/transfer-applicability.md), the current [Engine semantics](../../architecture/engine-semantics.md), and the executable spatial-runtime work in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md) rather than using the game to decide them.
+This is not ready until spatial runtime consequences are executable, which they are not: spatial execution is specified in [Engine semantics](../../architecture/engine-semantics.md) but not implemented. It must consume the [current transfer-applicability boundary](../../architecture/transfer-applicability.md) and the Engine semantics rather than using the game to decide them.
 
 ### External player validation — CANDIDATE
 
@@ -121,19 +137,82 @@ this question until the product has evidence about what should be rewarded, disc
 learned. Coordinate empirical claims about misleading cues with the separate
 equipment-value-discovery question rather than inferring human behavior from headless enumeration.
 
+## Consumer integration boundary
+
+These are the current boundary assumptions for any playable slice. They come from earlier delivery planning, carry no implementation admission, and are inputs to the first-slice requirement set.
+
+```text
+game-owned draft
+      |
+      v
+challenge admissibility            (Challenge)
+      |
+      v
+project supported canonical facts  (consumer projector)
+      |
+      v
+Arcogine validate + publish -> FactoryModelVersion -> Arcogine runtime
+      |
+      v
+supported observations / runtime events
+      |
+      v
+game presentation, evaluation and attempt comparison
+```
+
+Challenge admissibility, Factory publication validity and Engine executability stay separate decisions ([Challenge](../../architecture/challenge.md)). No production projector from a game candidate to a Factory model exists; a consumer-side projector must translate game-authored candidate facts into then-supported canonical Factory facts before validation and publication, and must not invent unsupported production semantics.
+
+**Projector identity and order.** Under current Engine semantics a remaining selection tie is broken by `MachineId`, so the order in which resources eligible for more than one step are authored can change completion: the [strategy-space reference](factory-design-game-strategy-space.md) completes in 46 or 47 ticks depending on it. The projector must therefore make result-affecting configured-resource identity and order explicit and deterministic; incidental draft, edit or build order must not decide a result. Where identity is allocated, how edits preserve it, and whether `MachineId` tie-breaking is an acceptable player-visible policy remain open, and the [final tie-break question](engine-shared-resource-final-tiebreak.md) stays a candidate.
+
+**Upstream capability.** Every playable slice consumes the landed canonical Factory model, publication validity, immutable publication and model provenance; explicit workload and immutable order intent; deterministic work decomposition and resource selection; consumer-neutral bounded advancement; and the supported observation and event contract. Engine admission remains the authority for executability. Spatial transfer consequences are needed only by a slice that makes layout behaviorally consequential.
+
+**Responsibilities.**
+
+| Concern | Owner |
+|---|---|
+| Rendering, animation, camera, input, audio, assets | Game |
+| Editable draft, local undo/history, editor persistence | Game |
+| Challenge identity/rules, catalogue availability/prices, construction budget, admissibility | Challenge |
+| Evaluation policy, score/rating, attempt history and comparison | Challenge |
+| Canonical production-system semantics and publication validity | Arcogine Factory |
+| Executability, workload, work items, queues, dispatch, processing, transfers, clock and event order | Arcogine Engine/runtime |
+| Supported observations, runtime events and performance facts | Arcogine Engine/runtime |
+| Named Game diagnostics, once a slice includes them | Game, under the [diagnostic requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements) the slice adopts; never an Engine fact |
+| Named analytical definitions common to several users | A shared owner only after a concrete [Domain authority](../../architecture/overview.md#domain-authority) trigger |
+| Player-facing presentation, explanation and wording | Game |
+| Game save wrapper around any supported Arcogine checkpoint | Game |
+
+`Level`, score, unlocks, player currency, tutorial state, decorative assets and campaign progression never enter canonical Arcogine semantics, and the game never reproduces Arcogine validation, decomposition, scheduling, dispatch, transfer or KPI semantics.
+
+**Integration rules.** Projection is explicit, testable and deterministic for every result-affecting input. Presentation speed changes how the client asks the runtime to advance, never production durations, and outcomes never depend on wall-clock time. The game renders supported observations and events, not internal Engine classes, and every player-facing diagnostic meets the diagnostic requirements the slice adopts. Challenge evaluation interprets authoritative outcome facts plus game-owned economics and never reconstructs production truth. A combined save wraps a supported Arcogine recovery contract plus game-owned state; it never invents an Engine persistence contract.
+
+**Acceptance evidence for a first slice.** A first playable slice is complete only when:
+
+1. a game-owned candidate is admitted by challenge rules, projected, validated and published through Arcogine;
+2. the runtime is created only from the published model;
+3. the fixed production requirement is submitted without the game manufacturing work decomposition;
+4. the client controls the run through supported session and advancement primitives;
+5. player-visible runtime state derives from supported observations and events, and every diagnostic claim passes the slice's acceptance tests for the diagnostic requirements it adopts;
+6. identical explicit inputs produce identical semantic outcomes;
+7. a design change produces a new candidate and publication rather than mutating an active run's source model;
+8. challenge scoring and evaluation stay game-owned and attributable to their policy version; and
+9. no game DTO, editor object or presentation state re-enters Arcogine domain decision paths.
+
+**Non-goals for a first slice.** Live structural reconfiguration, live-production connectivity, a generic plugin framework, campaign or multiplayer architecture, a shared Arcogine editor, and new Factory/Engine abstractions justified only by presentation convenience.
+
 ## Boundary with reusable analytics
 
 The [concluded ownership boundary](simulation-analytics-consumer-boundary.md) separates
 Engine-owned execution/results from named methods whose selected meaning belongs to their
 consumer by default. This does not select a Game method. The concluded
-[diagnostic evidence question](factory-design-game-diagnostic-evidence.md) promoted the product
-requirements, sufficient-evidence rules and refusal guardrails into the consumer plan, but admitted no
-method.
+[diagnostic evidence question](factory-design-game-diagnostic-evidence.md) promoted product
+requirements, sufficient-evidence rules and refusal guardrails as input to the first-slice
+requirement set, but admitted no method.
 
 Accordingly:
 
 - overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain Game presentation choices;
-- the Game may define its **own** named diagnostic only through the consumer plan's method acceptance gate; a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
+- the Game may define its **own** named diagnostic only through a method acceptance gate its slice adopts, starting from the diagnostic research's [method acceptance gate](factory-design-game-diagnostic-evidence.md#diagnostic-claims-and-evidence); a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
 - a research-local derivation may establish study ground truth but does not become a supported Game/Engine definition automatically;
 - snapshot, period-aggregate and future-horizon claims require distinct proof; a Game driver does not thereby own every holder's evidence;
 - transfer-dependent diagnostics were outside the concluded study and stay unvalidated until spatial runtime consequences are executable and evidenced; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
@@ -185,8 +264,18 @@ Consequently:
 
 ## Promotion to playable implementation
 
-This programme does not have one `CONCLUDED` state. Playable implementation may be admitted only when the implementation gate can name the exact focused research conclusions required by the chosen first slice, the required Arcogine semantics are landed, and executable acceptance tests can be written.
+This programme does not have one `CONCLUDED` state. Playable implementation starts only when the [first-slice requirement set](#first-slice-requirement-set--candidate) question reaches an [implementation-ready](../../development/researching.md#implementation-handoff) conclusion and hands it to the Implementer. That conclusion must settle, for its slice:
 
-A minimal non-spatial **internal playable** slice requires, at least, a concluded challenge-strategy question and a concluded diagnostic-evidence question. Both are now concluded. Neither admits implementation: the [implementation gate](../../planning/factory-design-game-vertical-slice.md) still needs a selected slice, accepted methods for any utilization or starvation measure, the integration boundary, the selected prerequisites and executable acceptance tests. A slice does not require independent human participants merely to exist as an internal playable slice.
+- the requirement set, following the owner direction, with no dependency on another unresolved product question;
+- which diagnostic requirements the slice adopts, with their studied scope and qualifications;
+- an accepted named Game method for any utilization or starvation measure the slice shows, under the [method acceptance gate](factory-design-game-diagnostic-evidence.md#diagnostic-claims-and-evidence);
+- the projector's identity and order rule and the rest of the integration boundary;
+- the Factory/Engine capability it needs, all landed;
+- any save/recovery requirement, backed by a supported Arcogine contract or explicitly excluded; and
+- executable acceptance tests against supported contracts.
+
+The strategy-space and diagnostic-evidence questions, both concluded, are its minimum inputs. A slice does not require independent human participants merely to exist as an internal playable slice.
+
+The diagnostic research studied static recorded runs with pre-computed variants. A slice whose live interaction issues mid-run commands must first meet the [execution-evidence reopening trigger](simulation-execution-account.md#reopening-triggers) for live-loop control; static or start-fixed playback at any speed does not trigger it.
 
 Controlled retry, a richer concept curriculum (including bottleneck teaching), scoring and level structure, live interaction, and external-player evidence each have their own admission criteria. They are not an automatic required research programme. Admit or promote one only when a selected slice or product decision actually depends on it. A later release goal that claims broad player comprehension must separately promote and satisfy external-player validation. A slice that makes layout consequential additionally requires the transfer/spatial questions that own that behavior. Other candidate questions are promoted only if the selected slice actually depends on them.

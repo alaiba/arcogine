@@ -13,6 +13,7 @@ export const FINDING_CATEGORIES = Object.freeze([
   'OWNERSHIP_BOUNDARY',
   'COMPATIBILITY',
   'IDENTITY_PROVENANCE',
+  // Historical: no longer assigned since the planning area was retired; kept so earlier findings parse.
   'PLANNING_STATUS',
   'DOCUMENTATION_ACCURACY',
   'TEST_EVIDENCE',

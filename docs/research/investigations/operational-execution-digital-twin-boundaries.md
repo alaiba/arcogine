@@ -156,7 +156,9 @@ Manufacturing traceability may become such a proving case only if a concrete int
 
 ## Exit and promotion
 
-Operational implementation is admitted to `docs/planning/` only when the relevant research has produced:
+No Operational implementation exists or is ready. The [Operational continuity contract](../../architecture/operational-continuity.md) settles the durable operational identity, but the boundaries above — actor/capability ownership, external operation realization, subject correspondence and temporal reconciliation — must each be settled at least as far as a concrete safe change requires.
+
+Operational implementation starts only when a conclusion passes the research method's [implementation-ready test](../../development/researching.md#implementation-handoff) and also has:
 
 1. decision-quality semantics and ownership;
 2. required architecture or specification updates, reconciled into the document that owns the affected semantics;
@@ -164,4 +166,14 @@ Operational implementation is admitted to `docs/planning/` only when the relevan
 4. explicit prerequisites; and
 5. executable safety/correctness acceptance evidence.
 
-The first promotion should be the narrowest implementation slice whose semantic referent is no longer under investigation.
+The first handoff should be the narrowest implementation whose semantic referent is no longer under investigation. Any Operational implementation must preserve:
+
+- one shared semantic production model rather than a simulation-only/production-only fork;
+- no global `PRODUCTION / STAGING / SIMULATION` or equivalent whole-execution taxonomy;
+- the operational continuity contract's referent, continuity, divergence, lineage, acceptance and record-attachment rules, including what it deliberately defers;
+- independently provenanced raw external observations;
+- explicit external-subject to Arcogine-subject correspondence rather than identity inference from names, endpoints or configuration;
+- requested operation, external command/result, actual transition, observation and reconciled interpretation as distinct facts;
+- verified identity, trust and authority, and fail-safe behavior, where external consequence requires them;
+- Governance-owned revision, change, conformance and evidence-use contracts where applicable; and
+- Engine-owned simulation semantics and provenance rather than a parallel Operational simulator.

@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 export const PRODUCT_PREFIX = 'product/';
-export const TRANSIENT_AUTHORITY = /(?:docs[\\/](?:planning|research)[\\/]|workspace[\\/]research[\\/])/g;
+export const TRANSIENT_AUTHORITY = /(?:docs[\\/]research[\\/]|workspace[\\/]research[\\/])/g;
 
 function readUtf8(file) {
   try {
@@ -29,7 +29,7 @@ export function validateFile(rel, text) {
   for (const [index, line] of text.split(/\r?\n/).entries()) {
     for (const match of line.matchAll(TRANSIENT_AUTHORITY)) {
       errors.push(
-        `${rel}:${index + 1}: product source/test references transient planning/research material (${match[0]}) -- state the durable capability/contract/invariant directly or reference its durable authority instead`,
+        `${rel}:${index + 1}: product source/test references transient research material (${match[0]}) -- state the durable capability/contract/invariant directly or reference its durable authority instead`,
       );
     }
   }
@@ -61,7 +61,7 @@ function main() {
     console.error('Source-authority-link check failed:');
     for (const error of errors) console.error(`- ${error}`);
     console.error(
-      'Product source and tests are durable: planning/research may cite implementation as evidence, but product code must not depend on docs/planning/, docs/research/, or workspace/research/ material.',
+      'Product source and tests are durable: research may cite implementation as evidence, but product code must not depend on docs/research/ or workspace/research/ material.',
     );
     return 1;
   }

@@ -8,7 +8,7 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../.
 
 Implementation starts from exactly one of:
 
-1. **A committed implementation handoff** — a handoff persisted under `workspace/`, identified by branch, exact commit SHA and path. The Researcher's [implementation handoff](../researching.md#implementation-handoff) is the usual one; a committed implementation prompt from another repository role is consumed the same way;
+1. **A committed implementation handoff** — a handoff persisted under `workspace/`, identified by branch, exact commit SHA and path. It is usually the Researcher's [implementation handoff](../researching.md#implementation-handoff); a handoff committed for an owner request is consumed the same way;
 2. **An issue** — a GitHub issue that states the responsibility, owning contracts, acceptance evidence and non-goals;
 3. **A bounded owner request** — a fix, refactor, tooling, dependency or Consistency-finding change the repository owner asks for directly.
 

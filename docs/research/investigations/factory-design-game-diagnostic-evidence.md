@@ -2,19 +2,19 @@
 
 > **Status:** CONCLUDED — see the maintained [research register](../research-register.md)  
 > **Scope:** Truthful, inspectable player-facing diagnostic evidence over supported non-spatial production/runtime facts  
-> **Authority:** Product research record only. The promoted requirements live in the [consumer plan](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence). This record defines no Engine fact, admitted analytical method or population-level usability claim
+> **Authority:** Research record only. Its [promoted requirements](#promoted-requirements) are input to the [first-slice requirement set](factory-design-game-vertical-slice.md#first-slice-requirement-set--candidate) and bind no slice until that question's implementation-ready conclusion adopts them. This record defines no Engine fact, admitted analytical method or population-level usability claim
 
 ## Conclusion
 
 > Within the studied non-spatial scope, a mechanically truthful, inspectable diagnostic surface is achievable from supported simulation facts. It allows direct facts, counts from one labeled observation, supported event intervals, controlled comparisons, and values of named methods with declared evidence and refusal. It never presents a falsified single-run heuristic as fact. One co-designing owner found a pull-based text prototype explorable in a single-person smoke test.
 
-This is a **bounded positive**. It establishes guardrails that held on every falsification case checked. It also establishes concrete Game measurement demands with the choices a method must fix, and presentation requirements that survived the owner sessions. It does **not** establish that the surface is usable, understandable, satisfying or engaging for target players, that learning occurs, that bottleneck can be taught, or that any analytical definition is admitted. The requirement set is in the consumer plan's [Diagnostic claims and evidence](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence); the playable implementation gate stays [blocked](../../planning/factory-design-game-vertical-slice.md).
+This is a **bounded positive**. It establishes guardrails that held on every falsification case checked. It also establishes concrete Game measurement demands with the choices a method must fix, and presentation requirements that survived the owner sessions. It does **not** establish that the surface is usable, understandable, satisfying or engaging for target players, that learning occurs, that bottleneck can be taught, or that any analytical definition is admitted. The requirements it promotes, as input to the first-slice requirement set, are under [Promoted requirements](#promoted-requirements); no playable slice is admitted ([programme](factory-design-game-vertical-slice.md#promotion-to-playable-implementation)).
 
 ## Bounded question
 
 What minimum player-facing diagnostic evidence contract can the game build from supported Arcogine simulation facts so that every diagnostic claim is mechanically traceable to authoritative or explicitly derived ground truth, explicit about its method, able to refuse unsupported causal attribution, and inspectable without exposing scheduler or runtime internals?
 
-**Decision at stake.** Whether a first internal or playable slice can expose a truthful diagnostic surface for the non-spatial production problem, and which evidence and explanation requirements to promote into the game consumer plan.
+**Decision at stake.** Whether a first internal or playable slice can expose a truthful diagnostic surface for the non-spatial production problem, and which evidence and explanation requirements to promote for a playable slice.
 
 **Framing set by the owner during investigation.** The brief defined *truthful* but not *diagnostic*, so the owner set the player goals:
 
@@ -95,19 +95,193 @@ These must not be reintroduced:
 
 ## Promoted requirements
 
-The [consumer plan](../../planning/factory-design-game-consumer.md#diagnostic-claims-and-evidence) owns the requirement set:
+These requirements are this research's result and an input to the [first-slice requirement
+set](factory-design-game-vertical-slice.md#first-slice-requirement-set--candidate). Being written here binds no slice: they become binding
+only when an implementation-ready conclusion of that question adopts them, with the scope and
+qualifications below, and the implementation that lands them reconciles them into the Game's owning
+architecture. No playable slice exists, and they select no UI, client technology, mission set,
+curriculum or analytical method.
 
-- claim classes and the rule that no claim exceeds its proof;
-- pull-based inspection;
-- forbidden shortcuts;
-- comparison truth;
-- the two-layer idle classification;
-- the method acceptance gate for utilization and starvation;
-- no new platform facts;
-- presentation requirements;
-- acceptance tests derived from the guardrails.
+### Diagnostic claims and evidence
 
-The [implementation gate](../../planning/factory-design-game-vertical-slice.md) records that this research gate is satisfied while playable admission stays blocked.
+They were established only for the studied scope:
+non-spatial, one product, linear routing, the whole order released at once, every machine always
+online, no setup or transfer, and static recorded runs with pre-computed variants. Outside that scope
+a claim needs its own validation or is refused.
+
+**Claim classes.** Every diagnostic claim shown to the player is exactly one of:
+
+1. a direct supported fact (observation or runtime event), or a Game-owned design fact;
+2. a count from one observation, labeled with that observation's own simulated time;
+3. an interval between supported events;
+4. a controlled comparison of outcomes between runs; or
+5. a value of a **named analytical method** that declares its method, population, period,
+   availability treatment, grouping, and sufficient evidence or refusal.
+
+A claim stronger than its available proof is omitted or weakened, never shown as fact. A requested
+advancement target is not an observed time. Commands apply at the last processed event's time, so
+present a snapshot as the state at a later requested tick only when the driver exhausted pending
+work through that tick and no later input takes effect at or before it
+([runtime evidence rules](../../architecture/runtime-contract.md#captured-execution-evidence-and-interval-determinacy)).
+Internal scheduler events are never diagnostic evidence.
+
+**Pull-based inspection.** The player can inspect on demand, rather than being handed answers:
+
+- the published design, and the run's progress and finish;
+- slot state at a labeled observed time: active jobs against concurrency, never the machine-level
+  `Busy` state alone;
+- waiting by **operation step**. A machine is named only where supported evidence binds the work to
+  it, as in its own queue. Pending multi-eligible work appears once, under its step and eligible set:
+  never as several machine queues, and never with a guessed receiving machine;
+- each unit's journey, separating waiting from processing at each step, and each machine's
+  timeline, from captured supported events or observations sufficient for the claim; and
+- comparison with pre-computed variants.
+
+**Forbidden shortcuts.** None of these may be presented as fact; the research falsified each on a
+concrete case:
+
+- the busiest or most-occupied machine or step is the bottleneck or constraint;
+- the step with the most or longest waiting is the constraint;
+- an idle resource seen in one run is expendable or surplus;
+- shared pending work is several machine queues, or `combinedQueueDepth` is a physical queue;
+- machine-level `Busy` means every slot is working;
+- Engine `throughputPerTick`, defined over observed supported time, is a rate over a period the
+  player chooses; and
+- a deterministic, reproducible association is an observed cause.
+
+**Comparisons.** A single-change variant may show the exact authored change and the outcome
+delta, but not an unseen mechanism. When several things change, show the whole change set and an
+explicit comparison basis, and withhold attribution. Under confounding or co-binding no single change
+is responsible, and how a joint effect splits between changes depends on the order in which they
+are considered. Single-change "needed / not needed" results do **not** compose into a verdict on a
+joint change; offer the joint change as its own experiment. "Needed" is a time-only conclusion within
+the offered variants. Finishing sooner is not "worth it": only an admitted, named
+[Challenge evaluation](../../architecture/challenge.md#evaluation) rule may
+decide that. Changes keep result-affecting resource identity and order visible, as the
+[consumer integration boundary](factory-design-game-vertical-slice.md#consumer-integration-boundary)
+requires of the projector.
+
+**Two-layer idle classification.** Slot state (working or idle) is observed. *Why* a slot is idle
+is a named, Game-owned interpretation. Within the studied scope, a snapshot may classify an idle slot
+from published eligibility and all **currently known** unfinished work. It is either starved (known
+work still needs a step this machine can serve), or it has no currently known eligible work. The
+second is not a promise that no further work will arrive. After an availability change, [Engine
+semantics §4](../../architecture/engine-semantics.md#4-scheduler-and-dispatch-cascade-ordering) rule 7
+can leave a slot idle while work waits in that machine's own queue. That state needs a third
+classification or an explicit refusal; it is not impossible. Broader scope also needs a third
+classification or refusal until a method is validated for it. Snapshot, period and future-horizon idle
+claims follow the evidence rules in [Game-owned analytical methods](#game-owned-analytical-methods).
+
+**Method acceptance gate.** Utilization over a period, and starvation as an idle-time
+characterization, are concrete **Game measurement demands**. They are neither admitted methods nor
+shared analytics. The research formulas are candidates only: working slot-ticks over available
+slot-ticks for a half-open period, starved slot-ticks, and "starved / no work left". Before a slice
+shows either measure, its admission must specify, independently validate and accept a named method.
+That method must fix and test:
+
+- the interval bounds, and whether work still running at the upper bound counts up to it;
+- slots and concurrency, and the denominator or available-time policy;
+- whether offline time is excluded, and what is refused when availability changes;
+- what counts as known unfinished and eligible work, and whether starved slots are capped by the
+  remaining eligible work;
+- pool or step attribution for a machine serving several steps, since step-pool and machine views
+  can rank differently;
+- its evidence source: a complete retained supported-event stream, or adequately sampled
+  observations, with a valid basis, frontier and finality; and
+- deterministic refusal for any input, population or interval outside its demonstrated domain.
+
+The research flow method was never validated on machines eligible for several steps, nor across the
+whole falsification corpus. No default for any of these choices is implied. A single-run bottleneck
+method is optional: no product evidence demands one, and variant experiments answer bottleneck
+questions.
+
+**No new platform facts.** These requirements need no new Engine fact, event, accumulator or
+closure service. Per-step timing comes from captured supported runtime events, or from observations
+sampled adequately for the claim. The controller or holder owns its recording horizon, and a fresh
+observation cannot recover history from before capture began. Stable machine identity under draft
+edits is the projector's identity/order rule, not a new Factory primitive. Design differences
+are not a platform gap either. Factory's semantic comparator, under Governance `ChangeSet`
+orchestration, already compares designs by stable `MachineId` and reports list-position changes.
+Presentation must not show a renumbering, or a position shift caused by another change, as a
+separate authored change.
+
+**Presentation requirements.** These are requirements, not a chosen design:
+
+- inspection is pulled by the player, and nothing is pre-answered;
+- counterfactual questions are answered by variant experiments, never by a single-run label;
+- a learning task states its goal and an explicit answer format, and after the answer shows the
+  official answer, why, how to find it and what it teaches;
+- industry vocabulary is introduced in context, with an on-demand reference; and
+- period conventions such as half-open tick ranges are taught gently before the first period
+  question, not annotated on every range.
+
+Refusal is an internal correctness guardrail, not a mandatory player-facing "cannot infer" panel:
+prefer offering the experiment that answers the question, or omit the unsupported statement. A mission
+count, scripts, answer keys and client technology are not requirements.
+
+**Acceptance tests.** A slice that adopts these requirements derives its own executable
+acceptance tests from these guardrails. It does not reuse the research's keyword and
+self-declared-facet audits, which are regression checks rather than truthfulness verifiers. The
+tests cover at least the [preserved negative
+cases](#reusable-proving-cases):
+
+- shared multi-eligible waiting;
+- work still running at a half-open bound;
+- the concurrency denominator;
+- one idle snapshot with different removal outcomes;
+- capacity added at the most-occupied pool to no effect;
+- an order-only change;
+- confounded co-binding;
+- single-change non-composition; and
+- the offline-and-queued state.
+
+Each admitted named method also needs its own validation and refusal tests on its admitted domain.
+
+### Game-owned analytical methods
+
+A **named Game-specific method** may be Game-owned when it fixes the diagnostic question and its
+population, observation basis, interval, denominator/capacity, availability, attribution and
+interpretation; this reverses the former default against Game ownership. This research admits no
+method: an actual Game utilization or starvation method stays unadmitted until it passes
+the method acceptance gate in [Diagnostic claims and evidence](#diagnostic-claims-and-evidence),
+and playable implementation until it is part of an implementation-ready first-slice conclusion
+([promotion to playable implementation](factory-design-game-vertical-slice.md#promotion-to-playable-implementation)). Research-local formulas do not become production definitions. A Game method describes
+supported outcomes, never reconstructs Engine scheduling or unseen processing starts, declares a
+causal bottleneck from occupancy alone, or treats Engine's observed-time `throughputPerTick` as a
+rate over a user-selected period.
+
+For a retained or promoted **interval** result, a Game method must declare definition identity,
+`RunId`, `ModelFingerprint` (and `ControlledRevisionId` only when authoritatively bound),
+the half-open interval and convention, observation basis `(S0,T0)`, proof sequence/frontier and
+proof class. Claim-specific controller attestor, excluded-input scope, trust and command/fault
+qualifications, exact producing Engine-definition reference or complete ordered command script
+(including advancement interleavings/budgets) are required **only when that claim needs them**.
+Bind basis, changes, observations and closure to the same run and refuse a closure contradicted
+by captured changes after its binding but before the upper bound. A held sequence without an
+independent authoritative frontier is insufficient. Producer witnesses, producer observations
+and attributable controller closure are different proof classes; complete changes alone prove
+neither fault-free execution nor replayability (see [runtime evidence
+rules](../../architecture/runtime-contract.md#captured-execution-evidence-and-interval-determinacy)).
+Evidence custody can stay with an exclusive Game driver or another holder; neither capture nor
+promotion by itself grants ownership or upgrades trust, and portability without rework requires
+preserved proof provenance.
+
+A fresh observation can show **no currently known work** or classify currently known
+idle/starved work using published routing; it is not a period aggregate. Aggregating such labels
+over an interval requires claim-scoped coverage and finality, including qualified controller
+closure for an idle tail when needed. **No work left for the rest of a period** is a future-horizon
+claim requiring an explicit no-future-effective-input scope. Game diagnostic experiments with a
+job-free initial basis, always-online resources, one product and closed constructive scripts
+establish only their bounded case, not a universal method.
+
+A genuinely shared named definition is reconsidered under the four [Domain authority
+triggers](../../architecture/overview.md#domain-authority), not by Game preference, shared file
+placement or common capture. [Analytics evidence/provenance](simulation-analytics-evidence-provenance.md)
+remains conditional on a concrete input, method-proof, accumulation, identity, provenance or
+retention use; [adapter compatibility](simulation-analytics-adapter-compatibility.md)
+and [cross-revision comparison](simulation-analytics-cross-revision-comparability.md)
+retain their separate triggers. No analytics module, universal evidence container or embedded/remote
+adapter is chosen.
 
 ## Reusable proving cases
 
@@ -137,7 +311,7 @@ Each case falsifies a shortcut the guardrails forbid. Where a maintained researc
 | Concrete condition | Owning next decision |
 |---|---|
 | An allowed in-scope claim is shown false, or an official mission answer is shown wrong | Reopen this research |
-| A selected slice needs a utilization or starvation figure | The consumer plan's method acceptance gate, inside that slice's admission; not a reopening |
+| A selected slice needs a utilization or starvation figure | The [method acceptance gate](#diagnostic-claims-and-evidence), inside that slice's implementation-ready conclusion; not a reopening |
 | A selected slice needs scope beyond the studied one (arrivals over time, availability changes, several products, pooled multi-step starvation, transfer) | Revalidate the guardrails and idle classification for that scope inside the slice's admission; admit focused research only for a material new uncertainty |
 | Another consumer, a core verification or Governance need, an outward contract, or divergent duplicates need the same named meaning | [Domain authority](../../architecture/overview.md#domain-authority) shared-definition triggers |
 | An admitted method needs new inputs, sufficiency/refusal, accumulation, provenance or retention | The [evidence/provenance question](simulation-analytics-evidence-provenance.md), still CANDIDATE |
@@ -154,10 +328,10 @@ No separate historical decision-rationale record is kept. The decisive trade-off
 
 | Result | Fate |
 |---|---|
-| Bounded verdict, scope and human-evidence limits | Here, the register, the consumer plan and the implementation gate |
-| Qualifications 1–8 and the claims that did not survive | Here; their requirement consequences in the consumer plan |
-| Guardrails, comparison truth, idle classification, method choices, presentation requirements | The consumer plan |
-| Negative cases | Here, with parameters or maintained fixtures; named in the consumer plan's acceptance requirement |
+| Bounded verdict, scope and human-evidence limits | Here and the register |
+| Qualifications 1–8 and the claims that did not survive | Here, with their requirement consequences under Promoted requirements |
+| Guardrails, comparison truth, idle classification, method choices, presentation requirements | Promoted requirements, here (first reconciled into a since-retired consumer plan) |
+| Negative cases | Here, with parameters or maintained fixtures; named in the acceptance requirement under Promoted requirements |
 | Corpus, audits, bakery scenarios and missions, viewer, walkthrough packs, generators | Discarded. The proving cases and requirements carry what a future slice needs, and copying scripts or answer keys would wrongly suggest a chosen curriculum |
 | Owner-session records and discovery notes | Discarded after transfer into the framing, qualification 1 and the presentation requirements |
 | Counter-removal scope and history | Already carried out by its own reviewed change; history kept here as qualification 8 and one proving case |

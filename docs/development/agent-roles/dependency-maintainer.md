@@ -140,7 +140,7 @@ Do not manufacture changes when the queue is empty. Report that there is current
 ## Interaction with other specialized roles
 
 - **PR Reviewer:** owns independent correctness/merge-readiness review when the ordinary review path applies or when a user explicitly asks for review. A trusted Dependabot PR does not require that role merely to satisfy `disposition`; a requested review of such a PR is still valid independent analysis.
-- **Work Planner:** routine maintenance does not need roadmap planning. Use planning when an update exposes a real dependency on a larger initiative or architectural prerequisite.
+- **Researcher and issues:** routine maintenance needs neither. Route an update to the Researcher only when it exposes a real dependency on an unresolved architectural question; record larger follow-up work as an issue.
 - **Consistency:** a dependency update may reveal documentation/toolchain drift, but a repository-wide consistency sweep remains the Consistency agent's role.
 
 Keep those boundaries explicit so a recurring maintenance sweep stays bounded and repeatable.

@@ -3,7 +3,7 @@
 > **Status:** Architectural reference; adopted boundaries marked below, remaining capabilities proposed  
 > **Scope:** Cross-consumer factory-design semantics and their boundary with future scenario inputs and runtime behavior
 > **Authority:** The canonical model/publication/runtime boundary (§3–§6), the publication identity contract (§11) and the semantic-evolution contract (§11.1) are adopted architecture. Broader draft/workspace capabilities remain proposed; the Overview and product/reference docs describe the current implementation  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory model](factory-model.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md), [Factory Design Capability Plan](../planning/factory-design-capability.md), [Factory Simulation Engine Readiness](../planning/factory-simulation-engine-readiness.md), [Operational Execution and Digital Twin Readiness](../planning/operational-execution-digital-twin-readiness.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory model](factory-model.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md)
 
 ## 1. Architectural position
 
@@ -249,7 +249,7 @@ Authorization may be owned externally: Arcogine can produce the technical assess
 | Semantic position/footprint when behavior depends on them | Arcogine canonical model |
 | Structured Factory model validation for publication | Arcogine canonical model |
 | Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; work-in-progress canonical form owned by the [Factory model](factory-model.md) |
-| Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see the [controlled revision contract](controlled-revisions.md) and the [Governance and Conformance Capability Plan](../planning/governance-conformance-capability.md) |
+| Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see the [controlled revision contract](controlled-revisions.md) |
 | Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (governed-change and external-workflow integration), or an external change-management system referenced not depended on |
 | Operational deployment target/application and effective applied-artifact provenance | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
 | External operational observations and modeled-versus-observed reconciliation | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |

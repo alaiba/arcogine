@@ -2,11 +2,11 @@
 
 This contract defines Arcogine's repository-wide semantic consistency review. A formal run uses an Arcogine Repomix snapshot as the repository-content baseline and live GitHub access for revision reconciliation and mutable repository state. The execution environment must provide those evidence capabilities; no particular model provider, chat client, or connector is required.
 
-A formal review is diagnostic plus the narrow finding-ledger accounting described below. It does not authorize source/doc remediation, planning changes, architecture changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
+A formal review is diagnostic plus the narrow finding-ledger accounting described below. It does not authorize source/doc remediation, research-state changes, architecture changes, pull-request creation, or merging. Ad-hoc consistency questions are read-only analyses and do not record completion.
 
 ## Goal
 
-Deeply inspect the repository for semantic inconsistency across implementation, architecture and specifications, planning, public/reference documentation, examples, configuration, tests, CI, and prior findings.
+Deeply inspect the repository for semantic inconsistency across implementation, architecture and specifications, research state, public/reference documentation, examples, configuration, tests, CI, and prior findings.
 
 A previous clean review is not evidence that older content is correct. New material may get first attention from recent Git history, but recency never bounds scope. Follow suspicious evidence wherever it leads.
 
@@ -36,14 +36,14 @@ Use the authority that owns the question:
 | Implemented architecture today | `docs/architecture/overview.md`, corroborated by source/tests/config |
 | Architectural rationale | the architecture or specification in `docs/architecture/` that owns the affected semantics |
 | Research state | `docs/development/researching.md` and `docs/research/research-register.md` |
-| Planned/gated/partial/deferred work | applicable `docs/planning/` documents |
+| Known work not yet started | open GitHub issues |
 | Public interface | implementation/tests reconciled with `docs/reference/` and consumers |
 | Commands, versions, modules, CI behavior | executable configuration and workflow definitions |
 | Development/review process | `.github/CONTRIBUTING.md` and `docs/development/` |
 | Consistency-review procedure | this file |
 | Persisted finding identity | GitHub issue number |
 
-Consistency issues preserve finding identity/lifecycle continuity; they are not product, architecture, planning, or implementation authority.
+Consistency issues preserve finding identity/lifecycle continuity; they are not product, architecture, research, or implementation authority.
 
 Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles remain their own vocabulary. If this taxonomy proves insufficient, change this contract explicitly rather than inventing another generic state during a run.
 
@@ -51,12 +51,12 @@ Proposed/planned behavior differing from current source is not drift by itself; 
 
 Authority placement is itself part of consistency. A maintained artifact should own only facts appropriate to its role:
 
-- source comments and Javadocs explain current code behavior, local invariants, and current limitations; future delivery state, sequencing, and roadmap claims belong in planning authorities rather than being maintained inside code comments;
-- product source and tests must not reference planning or research artifacts as authority, provenance, or explanatory dependencies; planning/research may cite implementation as evidence, while product source states the durable semantic contract directly or points to its durable owner;
+- source comments and Javadocs explain current code behavior, local invariants, and current limitations; future delivery state, sequencing, and roadmap claims belong in GitHub issues rather than being maintained inside code comments;
+- product source and tests must not reference research artifacts as authority, provenance, or explanatory dependencies; research may cite implementation as evidence, while product source states the durable semantic contract directly or points to its durable owner;
 - explanatory documentation should avoid copying volatile executable/configuration values when the exact value is not itself part of that document's contract. Prefer the purpose/invariant plus a pointer to the executable owner for the current value;
 - exact values remain appropriate where the artifact intentionally owns them, such as public compatibility/support contracts, normative semantic/version identifiers, historical evidence, or reproducibility records.
 
-A misplaced claim can therefore be inconsistent even before its copied value or planning statement becomes stale: unnecessary duplicated authority is itself a maintainability defect when the artifact has no independent reason to own that fact.
+A misplaced claim can therefore be inconsistent even before its copied value or status statement becomes stale: unnecessary duplicated authority is itself a maintainability defect when the artifact has no independent reason to own that fact.
 
 ## Live grounding
 
@@ -76,7 +76,7 @@ Search and slice the Repomix corpus aggressively. For each material concept inve
 
 1. Identify the claim and lifecycle state.
 2. Search for the concept, symbols, terminology, and nearby assumptions across the corpus.
-3. Read the authoritative current/planning/specification/test/interface surfaces that encode the same semantics.
+3. Read the authoritative current/specification/test/interface surfaces that encode the same semantics.
 4. Inspect source/config/tests as executable evidence; inspect live GitHub CI/check evidence only when it materially proves or contradicts a claim.
 5. Use PR/commit history only when needed to explain a transition, attribute evidence, or determine whether a finding is in flight.
 6. Compare semantic neighbors and decide which authority, if any, is wrong.
@@ -84,9 +84,9 @@ Search and slice the Repomix corpus aggressively. For each material concept inve
 
 After that concept-driven work, every formal repository-wide review must run these independent breadth passes over the complete target corpus. These passes are candidate-discovery mechanisms, not automatic findings:
 
-1. **Lifecycle/status prose sweep.** Search claim-bearing maintained prose — including architecture, planning, product/reference/development docs, README material, and durable source/test comments or Javadocs — for assertions about lifecycle or delivery state such as current/implemented/complete/partial, future/later/not-yet, ready-to, being-established, remaining, deferred, blocked, temporary, legacy, or equivalent wording. Reconcile suspicious matches with the authority that owns current status **and** ask whether the artifact should own that lifecycle claim at all. Source comments/Javadocs should describe current behavior, invariants, and current limitations; future sequencing or “later slice” claims are misplaced planning authority even if they happen to be accurate today. Prefer moving such future-state information to the owning planning document while leaving the code comment truthful about the present. Obvious lexical anomalies such as accidentally repeated adjacent words are candidate selectors too, but wording defects alone are not semantic findings.
+1. **Lifecycle/status prose sweep.** Search claim-bearing maintained prose — including architecture, research, product/reference/development docs, README material, and durable source/test comments or Javadocs — for assertions about lifecycle or delivery state such as current/implemented/complete/partial, future/later/not-yet, ready-to, being-established, remaining, deferred, blocked, temporary, legacy, or equivalent wording. Reconcile suspicious matches with the authority that owns current status **and** ask whether the artifact should own that lifecycle claim at all. Source comments/Javadocs should describe current behavior, invariants, and current limitations; future sequencing or “later slice” claims are misplaced delivery state even if they happen to be accurate today. Prefer moving such future-state information to its research record or issue while leaving the code comment truthful about the present. Obvious lexical anomalies such as accidentally repeated adjacent words are candidate selectors too, but wording defects alone are not semantic findings.
 2. **Volatile duplicated-fact sweep.** Search maintained prose for copied exact facts whose executable owner can move independently: dependency/tool/runtime versions, module/test/component counts, commands, configuration keys or assignments, workflow/job names, ports, limits, paths, and similarly change-prone literals. For each candidate, first decide whether the prose has an independent reason to own the exact value. If not, the duplication itself is the finding candidate even when the value still matches: replace brittle copied truth with the purpose/invariant and a pointer to the executable/configuration owner. If the document legitimately owns the exact value — for example a public support contract, normative semantic/version identifier, historical record, or reproducibility evidence — then verify it against the appropriate authority. Do not turn ordinary domain numbers into noise; focus on current operational/configuration facts whose owner can change independently.
-3. **Cross-authority current-state sweep.** For capabilities described as current, implemented, complete, partial, deferred, or blocked in architecture/planning authorities, search semantic neighbors across architecture, planning, product/reference/development docs, examples, and claim-bearing source comments for incompatible lifecycle state or ownership claims. This sweep must include older unchanged text; the changed-file range is not evidence that neighboring claims are current.
+3. **Cross-authority current-state sweep.** For capabilities described as current, implemented, complete, partial, deferred, or blocked in architecture or research authorities, search semantic neighbors across architecture, research, product/reference/development docs, examples, and claim-bearing source comments for incompatible lifecycle state or ownership claims. This sweep must include older unchanged text; the changed-file range is not evidence that neighboring claims are current.
 4. **Candidate closure check.** When a candidate exposes drift in a maintained current-state surface, inspect the smallest neighboring closure set governed by the same authority before finalizing it. Examples include sibling API examples/schema claims for the same surface, neighboring status claims for the same capability, or sibling comments carrying the same delivery assumption. Keep unrelated subjects separate, but do not stop at the first contradictory line when adjacent claims share the same authority.
 
 A formal review may not record completion unless all four breadth passes were performed. If a required pass cannot be completed, stop `INCOMPLETE` before finding mutations and state which pass was not completed.
@@ -101,7 +101,7 @@ A material finding requires the artifact making the claim plus either contradict
 
 Use exact paths, symbols, criteria, specification sections, tests, PRs, commits, and issue numbers where available. Use confidence `HIGH`, `MEDIUM`, or `LOW`; do not inflate confidence because CI is green. Consistency findings do not carry severity metadata: the durable issue identity, category, evidence, authority analysis, confidence, and lifecycle state are the information this workflow actually uses.
 
-Useful categories are `PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `PLANNING_STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `SPECIFICATION_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
+Useful categories are `PUBLIC_DOC_DRIFT`, `ARCHITECTURE_DRIFT`, `ARCHITECTURE_STALENESS`, `STATUS_DRIFT`, `ASPIRATIONAL_LEAKAGE`, `SPECIFICATION_CONFLICT`, `EXECUTABLE_EVIDENCE_DRIFT`, `INTERFACE_DRIFT`, `DEPENDENCY_BOUNDARY_DRIFT`, `TERMINOLOGY_IDENTITY_DRIFT`, `TOOLCHAIN_CI_DRIFT`, `LINK_PATH_DRIFT`, `STANDARD_PROVENANCE_DRIFT`, `DUPLICATED_AUTHORITY`, and `PR_INCOMPLETE_RECONCILIATION`.
 
 Do not report inconsistency solely because wording differs, a proposal differs from implementation, an intentional compatibility alias exists, an internal symbol is undocumented, or an open PR contains behavior not yet on `main`.
 

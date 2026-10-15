@@ -9,7 +9,7 @@ This document covers how to report a vulnerability, what the current software ac
 Two escalations are deliberately kept apart, because they are different boundaries with different owners:
 
 - **Hosted or multi-user exposure** — more than one principal reaching the same instance, with no actuation. Product/interface ownership; see [Before hosted or multi-user exposure](#before-hosted-or-multi-user-exposure).
-- **Production-consequential operation** — actions with effects outside Arcogine. Owned by the [Operational Execution and Digital Twin Architecture](../docs/architecture/operational-execution-digital-twin.md) and its [readiness plan](../docs/planning/operational-execution-digital-twin-readiness.md), which are proposals and requirements, not claims about current product security. See [Mature-product security principles](#mature-product-security-principles).
+- **Production-consequential operation** — actions with effects outside Arcogine. Owned by the [Operational Execution and Digital Twin Architecture](../docs/architecture/operational-execution-digital-twin.md) and its [boundary research](../docs/research/investigations/operational-execution-digital-twin-boundaries.md), which are proposals and requirements, not claims about current product security. See [Mature-product security principles](#mature-product-security-principles).
 
 Adding TLS, CORS restrictions, or network hardening to the current software does not, by itself, satisfy either.
 

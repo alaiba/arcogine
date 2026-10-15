@@ -101,7 +101,7 @@ Also identify any reusable research assets or negative knowledge from `Transfera
 
 ## Implementation implication
 
-What this means for implementation, including explicitly stating "no implementation" when that is the honest answer. Do not admit implementation planning from within a research write-up.
+What this means for implementation, including explicitly stating "no implementation" when that is the honest answer. Do not write an implementation handoff or start implementation from within a research write-up.
 
 ## Follow-up triggers
 

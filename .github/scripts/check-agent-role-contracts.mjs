@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 export const roles = [
   'consistency', 'continuous-improvement', 'dependency-maintainer',
-  'implementer', 'pr-reviewer', 'researcher', 'work-planner',
+  'implementer', 'pr-reviewer', 'researcher',
 ];
 
 export function checkRoleContracts(root) {

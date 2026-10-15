@@ -77,7 +77,6 @@ public class FactoryHandler implements EventHandler {
                     handleTaskEnd(te.jobId(), te.machineId(), scheduler, event.time());
             case EventPayload.MachineAvailabilityChange mac ->
                     handleMachineAvailability(mac.machineId(), mac.online(), scheduler, event.time());
-            default -> {}
         }
     }
 

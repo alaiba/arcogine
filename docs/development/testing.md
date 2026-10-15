@@ -114,7 +114,7 @@ Notes:
 
 ### 3. Java unit tests (JUnit 6)
 
-Tests across the Gradle modules cover typed IDs and `SimTime`, scheduler behavior, factory model and runtime semantics, Governance history/change/requirements/conformance/evidence, Finance's ledger and ownership, and the headless Challenge capability. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
+Tests across the Gradle modules cover typed IDs and `SimTime`, scheduler behavior, factory model and runtime semantics, Governance history/change/requirements/conformance/evidence, Storage, and the headless Challenge capability. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
 
 `cd product && ./gradlew test`.
 
@@ -325,7 +325,7 @@ The test layers preserve three properties:
 
 ### Handler delegation contract
 
-Factory event semantics have a single implementation authority: `FactoryHandler`, owned by its `FactoryRuntime`. Finance remains a separate event consumer for financial interpretation; no retained production code assembles an application-wide handler chain. A future outward consumer must use the supported runtime contract rather than reimplement Factory transitions.
+Factory event semantics have a single implementation authority: `FactoryHandler`, owned by its `FactoryRuntime`; no retained production code assembles an application-wide handler chain. A future outward consumer must use the supported runtime contract rather than reimplement Factory transitions.
 
 ### Security verification tests
 

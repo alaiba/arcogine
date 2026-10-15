@@ -254,7 +254,7 @@ rationale](/docs/history/decisions/2026-09-25-provisional-semantic-contract-rese
 These describe today's implementation choices. They are not claims about Arcogine's permanent identity — see the Product Charter's [product boundaries](/docs/product/charter.md#9-what-arcogine-is-not) for why Java, current interfaces, and the current deployment model are implementation choices rather than product identity, subject to change as the product grows toward the full lifecycle described there.
 
 1. Core simulation is written in Java with a **Java 21 language/API/bytecode compatibility baseline**. The preferred devcontainer currently uses JDK 25, and CI runs on JDK 21 to prove the supported floor; the compiler JDK and compatibility baseline are deliberately separate concerns.
-2. The current implementation is headless: Factory, Engine, Governance, Storage, Challenge and Finance have no UI, HTTP API, or CLI product surface consuming them. Retained executable evidence is tests, conformance checks, and benchmarks. This describes today's layering, not a permanent claim that Arcogine's mature product surface has no outward consumer — a future one is introduced from the then-current supported runtime contract when a concrete product need exists (see [runtime contract](runtime-contract.md)).
+2. The current implementation is headless: Factory, Engine, Governance, Storage and Challenge have no UI, HTTP API, or CLI product surface consuming them. Retained executable evidence is tests, conformance checks, and benchmarks. This describes today's layering, not a permanent claim that Arcogine's mature product surface has no outward consumer — a future one is introduced from the then-current supported runtime contract when a concrete product need exists (see [runtime contract](runtime-contract.md)).
 3. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls (see [SECURITY.md](/.github/SECURITY.md)).
 
 ## Architectural implications of the Product Charter
@@ -293,7 +293,7 @@ Internal events are immutable facts in simulated time that carry what determinis
 The separate supported runtime event contract exposes ordered authoritative changes only after the corresponding state transition succeeds. Internal scheduler events remain implementation contracts rather than public compatibility types.
 ### State
 
-Each subsystem exclusively owns its mutable domain state. Factory owns accepted orders, machines, jobs, queues, completion state, and production metrics. Finance owns financial state. A future inventory subsystem would own stock; workforce would own labor state.
+Each subsystem exclusively owns its mutable domain state. Factory owns accepted orders, machines, jobs, queues, completion state, and production metrics. A future financial, inventory or workforce subsystem would own its own ledger, stock or labor state.
 
 Commercial/order intent and mutable production execution are represented separately. `Order` is immutable accepted intent; its same `OrderId` identifies an authoritative order-execution aggregate. Acceptance deterministically materializes one unit-quantity `Job` per requested unit, in zero-based ordinal order. Each child has its own `JobId`, traverses the routing once, and can be dispatched independently under the existing selector. The aggregate records release and completion quantities and is the sole source for order completion, backlog, sales KPIs, and lead time; only its final child completion completes the order, published once as the supported `ORDER_COMPLETED` event with both identities and full order commercial facts.
 
@@ -315,7 +315,6 @@ Concrete, source-level version of the rule above — checkable in review, not ju
 | Jobs, job status (production lifecycle) | `JobStore` (owned by `FactoryHandler`) | `OrderCreation` (creates), `TaskEnd` (advances/completes) |
 | `OrderValue` | Derived by immutable `Order` from quantity × `OrderPrice` | Derived, not separately mutated |
 | `CompletedSalesValue`, `completedSales` | `FactoryHandler` | `TaskEnd` (once when the order-level execution aggregate completes) |
-| Ledger, `Cash`/`Sales` balances | `Ledger` (owned by `FinanceHandler`) | `OrderCompleted` |
 
 The [runtime contract](runtime-contract.md) requires supported `RuntimeEvent` state-change facts to be derived/published only after authoritative processing succeeds.
 
@@ -332,27 +331,26 @@ The supported runtime observation/event contract closes the headless contract wi
 
 ### Observations
 
-Observations are immutable, read-only projections of authoritative state. The retained FactoryRuntime exposes purpose-specific resource, order, job, pending-work, and performance facts without exposing FactoryHandler, mutable stores, or internal scheduler state. Finance exposes its read-only ledger through LedgerView.
+Observations are immutable, read-only projections of authoritative state. The retained FactoryRuntime exposes purpose-specific resource, order, job, pending-work, and performance facts without exposing FactoryHandler, mutable stores, or internal scheduler state.
 
 Observations should be derived from their owner's authoritative state, expose only what a consumer needs, and never become a second source of truth. Any future decision-maker or outward consumer must receive an explicit purpose-specific view rather than unrestricted mutable state.
 
 ### Domain observations vs. outward projections/DTOs
 
-A domain observation supports an internal decision; an outward projection supports an external consumer and may have a separately versioned wire or display shape. They may report related facts but should not share a type merely because their fields look alike. Arcogine currently has no outward adapter or internal Finance observation type.
+A domain observation supports an internal decision; an outward projection supports an external consumer and may have a separately versioned wire or display shape. They may report related facts but should not share a type merely because their fields look alike. Arcogine currently has no outward adapter.
 ### Decisions
 
 A decision is a choice made from an observation; a change to authoritative state must still pass through the owning capability's explicit command or event boundary. Humans, agents, and other future decision sources must not bypass that ownership boundary. This is a durable constraint, not a claim that a decision-making consumer exists today.
 
 ### Commercial, operational, and financial facts
 
-The accepted `Order` is the immutable commercial record: its product, quantity, creation time, and agreed unit price are fixed at acceptance. Factory owns production execution and derives completed sales value from completed orders. Finance separately interprets `OrderCompleted` under its current immediate-settlement policy and records balanced postings in its ledger.
+The accepted `Order` is the immutable commercial record: its product, quantity, creation time, and agreed unit price are fixed at acceptance. Factory owns production execution and derives completed sales value from completed orders. Arcogine has no financial interpretation of those facts — cash, receivables, profit or a ledger. When a consumer needs one, a dedicated owner interprets facts Factory emits; it never inspects or alters Factory state, and Factory decisions never depend on it.
 
 | Fact | Owner | Meaning |
 |---|---|---|
 | Accepted order intent and agreed unit price | Immutable `Order` in Factory | Historical commercial terms |
 | Jobs, resources, routing progress, and completion | Factory runtime | Operational state and performance |
 | Completed sales value | Factory runtime | Operational value of completed orders |
-| Cash and sales ledger balances | Finance ledger | Financial interpretation of completed orders |
 
 Changing a future pricing or demand policy, if one is later required, must not rewrite already accepted order terms. No current mutable offer-price state, pricing policy, or demand-generation model is selected by this architecture.
 ### What should trigger architectural review
@@ -366,9 +364,7 @@ Treat any of the following as a signal to stop and reconsider the design, not ju
 - agents or policies reaching directly into mutable subsystem internals instead of going through an observation;
 - adding a subsystem requiring pairwise wiring changes to every existing subsystem;
 - event ordering becoming implicit, or dependent on registration/construction order rather than an explicit, documented contract;
-- a monetary accumulator (cash, profit, receivables, or similar) appearing outside Finance;
-- Finance inspecting another domain's mutable state to infer what happened, instead of reacting to an event that domain emitted;
-- an unbalanced journal entry able to enter financial state;
+- financial interpretation (cash, profit, receivables, or similar) accumulating inside an operational domain, or inferring transactions from another domain's mutable state instead of the facts that domain emitted;
 - attribution or provenance metadata being read by domain, dispatch, pricing, or simulation logic instead of the requester appearing as a modelled payload field;
 - a shared actor, subject, decision-source, or capability type appearing before multiple consumers have demonstrated the same equality/namespace/lifecycle contract (see [Attribution and decision boundaries](#attribution-and-decision-boundaries)).
 
@@ -465,46 +461,18 @@ Each row is a refusal justified by *current* evidence and current consumers, not
 
 W3C PROV and comparable external models remain **vocabulary donors and outward projection targets**, consistent with the [external representation policy](external-representations.md) and [Standards Alignment](standards-alignment.md). They are not Arcogine's domain model, and adopting their vocabulary never imports their ontology.
 
-## Commercial, Operational, and Financial Truth: the Finance Domain
-
-Factory and Finance own different interpretations of completed work:
-
-- **Commercial truth** is the immutable accepted `Order`, including its product, quantity, creation time, and agreed unit price.
-- **Operational truth** is Factory's execution state and derived facts such as completed sales value, backlog, throughput, and lead time.
-- **Financial truth** is Finance's interpretation of completed-order facts, recorded in its balanced ledger.
-
-The core rule is: **operational domains emit facts; Finance owns the financial interpretation of those facts.** Finance reacts to `OrderCompleted` and does not inspect Factory's mutable state to infer transactions.
-
-### Why a Finance domain, deliberately minimal
-
-Finance remains because its ledger and `FinanceHandler` provide executable ownership evidence: balanced postings are enforced by `JournalEntry`, and only Finance may post to its ledger. The current immediate-settlement policy records each completed order as a debit to Cash and a credit to Sales. This establishes a domain boundary; it is not an accounting framework.
-
-### Event and money boundary
-
-`OrderCompleted` carries the order identity, completing job identity, product, quantity, and immutable unit price. `FinanceHandler` derives the order value and converts it at the ledger boundary to a quantized `BigDecimal`. `CurrencyPolicy` applies the current two-decimal `HALF_UP` rule, and `JournalEntry` rejects unbalanced postings. This ledger representation enforces Finance's exact debit-equals-credit invariant without changing the commercial price or Factory's operational value.
-
-### Ownership table
-
-| Concept | Meaning | Owner |
-|---|---|---|
-| Accepted order and agreed unit price | Immutable commercial terms | Factory `Order` |
-| Production state and order completion | Operational facts | Factory |
-| Completed sales value, backlog, throughput, lead time | Operational measures | Factory |
-| Financial postings, Cash, Sales balance | Financial interpretation | Finance ledger |
-
-Further accounting capability requires concrete product requirements and a reconciled architecture change. Pricing, demand generation, and commercial policy are not part of the retained Finance capability.
 ## Discrete-Event Simulation (DES)
 
 The simulation advances in deterministic event-time order. The scheduler processes only meaningful events, skips idle time, and preserves FIFO ordering among events at the same tick.
 ### Event taxonomy
 
-The current internal event vocabulary is limited to Factory execution facts and commands: `OrderCreation`, `TaskStart`, `TaskEnd`, `OrderCompleted`, and `MachineAvailabilityChange`. A `FactoryRuntime` session schedules only `TaskEnd` step completions ([Engine semantics §4](engine-semantics.md#4-scheduler-and-dispatch-cascade-ordering) rule 3): its commands apply order creation and availability changes directly, and it produces neither `TaskStart` nor `OrderCompleted`. Supported `RuntimeEvent` types form a separate consumer-facing taxonomy and report only authoritative changes.
+The current internal event vocabulary is limited to Factory execution facts and commands: `OrderCreation`, `TaskEnd`, and `MachineAvailabilityChange`. A `FactoryRuntime` session schedules only `TaskEnd` step completions ([Engine semantics §4](engine-semantics.md#4-scheduler-and-dispatch-cascade-ordering) rule 3): its commands apply order creation and availability changes directly. Supported `RuntimeEvent` types form a separate consumer-facing taxonomy and report only authoritative changes.
 ### When a new domain deserves its own module
 
-Not every new metric or piece of derived behavior warrants a new `XHandler`/module — Finance is justified by more than "it computes a number Factory doesn't." The admission rule: **a new domain deserves its own handler/module when it owns mutable state with its own invariants and lifecycle, not merely because it has a new metric or helper function.** Concretely, ask:
+Not every new metric or piece of derived behavior warrants a new `XHandler`/module — a domain is justified by more than "it computes a number Factory doesn't." The admission rule: **a new domain deserves its own handler/module when it owns mutable state with its own invariants and lifecycle, not merely because it has a new metric or helper function.** Concretely, ask:
 
-- Does it own state that nothing else should be able to mutate directly (the way `Ledger` owns postings, or `FactoryHandler` owns job/machine lifecycle)?
-- Does that state have its own invariants worth protecting at construction/mutation time (the way `JournalEntry` rejects unbalanced entries)?
+- Does it own state that nothing else should be able to mutate directly (the way `FactoryHandler` owns job/machine lifecycle)?
+- Does that state have its own invariants worth protecting at construction/mutation time (the way an accepted `Order` keeps its commercial terms immutable)?
 - Does it react to events from other domains and produce its own facts, rather than just recomputing a view over another domain's existing state?
 
 If the answer is genuinely yes to state-with-invariants, it's a domain with an explicit owner, its own invariants, and only the event/runtime integration needed by a real consumer. If the answer is no — it's a computed value over state another domain already owns — it belongs as a method/projection on the existing owner (like `FactoryHandler.completedSalesValue()`) or in a separately supported consumer projection, not a new module. This keeps the module count matched to genuine ownership boundaries instead of granularity of features.
@@ -521,8 +489,7 @@ product/
 ├── storage/              Built-in persistence of controlled-revision history
 ├── simulation/           Deterministic event scheduler and EventHandler contract
 ├── domains/
-│   ├── factory/          Canonical model, runtime, machines, orders, jobs, routing
-│   └── finance/          FinanceHandler and balanced double-entry ledger
+│   └── factory/          Canonical model, runtime, machines, orders, jobs, routing
 ├── consumer/
 │   ├── challenge/        Game-owned challenge definitions, validation, evaluation,
 │   │                     catalogue/economics, and attempt comparison
@@ -534,7 +501,6 @@ product/
 
 ```text
 types ← simulation ← factory
-                    ← finance
 
 types ← governance ← factory
 types, governance ← storage
@@ -543,7 +509,7 @@ challenge (independent game-owned boundary)
 
 challenge-factory-integration-test ← types, factory, challenge (test-only)
 research-experiments ← types, factory (non-shipped research infrastructure)
-architecture-conformance-test ← types, factory, finance, storage, challenge,
+architecture-conformance-test ← types, factory, storage, challenge,
                                 research-experiments (test-only)
 ```
 
@@ -551,7 +517,7 @@ Governance depends on `types`; Factory depends on the narrow Governance ports it
 
 ## Event Dispatch Architecture
 
-`EventHandler` is the current contract for Factory and Finance event consumers. No retained production code composes the domains into an application-wide handler chain. `FactoryRuntime` owns its FactoryHandler and Scheduler for explicit workload execution; Finance remains an isolated event consumer for the financial ownership capability. The Factory session publishes order completion as its supported `ORDER_COMPLETED` event and does not produce the internal `OrderCompleted` payload, so nothing currently delivers order completions to `FinanceHandler`; a composition that introduces that delivery owns producing exactly one `OrderCompleted` per genuine order completion. This architecture does not prescribe a replacement orchestrator or a future application topology.
+`EventHandler` is the current contract for the Factory event consumer. No retained production code composes domains into an application-wide handler chain. `FactoryRuntime` owns its FactoryHandler and Scheduler for explicit workload execution, and publishes order completion as its supported `ORDER_COMPLETED` event. This architecture does not prescribe a replacement orchestrator or a future application topology.
 ## Type System
 
 Java features available within the **Java 21 compatibility baseline** map cleanly to the domain:

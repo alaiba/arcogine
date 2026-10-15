@@ -29,7 +29,7 @@ The runtime accepts workload explicitly through its consumer-neutral command sur
 
 ## Commercial and financial facts
 
-An order's unit price is fixed when the order is accepted. Factory retains that commercial fact and derives its operational completed-sales value from completed orders. Finance separately interprets `OrderCompleted` as a financial fact and records balanced postings in its minimal ledger. Operational completion and financial interpretation have distinct owners even when the current immediate-settlement policy yields matching totals.
+An order's unit price is fixed when the order is accepted. Factory retains that commercial fact and derives its operational completed-sales value from completed orders.
 
 ## What is not currently provided
 

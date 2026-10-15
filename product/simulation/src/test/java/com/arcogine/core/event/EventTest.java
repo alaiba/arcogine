@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
-import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 import java.util.List;
@@ -31,9 +30,7 @@ class EventTest {
     void everyPayloadVariantIsCarriedUnchangedWithValueEquality() {
         List<EventPayload> payloads = List.of(
                 new EventPayload.OrderCreation(new ProductId(1), 1, 10.0),
-                new EventPayload.TaskStart(new JobId(1), new MachineId(1), 0),
                 new EventPayload.TaskEnd(new JobId(1), new MachineId(1), 0),
-                new EventPayload.OrderCompleted(new OrderId(1), new JobId(2), new ProductId(1), 5, 10.0),
                 new EventPayload.MachineAvailabilityChange(new MachineId(1), true));
 
         for (EventPayload payload : payloads) {

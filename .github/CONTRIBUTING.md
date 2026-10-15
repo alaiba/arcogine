@@ -15,7 +15,6 @@ Before proposing a significant product, domain, or architecture change, read [`d
 | `product/storage/` | Arcogine-owned built-in persistence behind public storage and Governance contracts |
 | `product/simulation/` | Event engine and scheduler |
 | `product/domains/factory/` | Canonical factory model and publication, `FactoryRuntime`, machines, jobs, routing, queues |
-| `product/domains/finance/` | Ledger, financial interpretation of operational events |
 | `product/consumer/challenge/` | Headless, game-owned challenge definitions, catalogue/economics, admissibility, evaluation, and attempt comparison — no dependency on any module above |
 | `product/consumer/challenge-factory-integration-test/` | Test-only proof module: Factory publication validity and challenge admissibility are independent axes |
 | `product/research-experiments/` | Non-shipped research infrastructure: the deterministic research-experiment substrate over the supported runtime contract; never a production dependency |
@@ -102,7 +101,7 @@ During implementation and review, preserve these non-negotiable constraints:
 3. Observation objects remain immutable and purpose-specific. Outward-projection DTOs are not automatically valid domain observations.
 4. Handler execution order stays explicit wherever order affects semantics. Do not introduce asynchronous/event-bus dispatch that weakens deterministic, explicitly ordered execution.
 5. Do not introduce synchronized copies of authoritative state or pairwise setter wiring between domains as a coupling mechanism.
-6. Keep domain concepts distinct and owned by the appropriate domain; in particular, operational facts and Finance's financial interpretation of those facts must remain separate.
+6. Keep domain concepts distinct and owned by the appropriate domain; in particular, operational facts and any financial interpretation of those facts must remain separate.
 7. The simulation must remain deterministic: identical inputs and seeds produce identical results.
 
 A subset of these constraints is CI-enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`; the remainder are review constraints. Detailed examples — including order terminology and Commercial, Operational, and Financial Truth — belong in the architecture documentation rather than this contributor guide.

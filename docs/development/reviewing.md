@@ -163,7 +163,7 @@ Each mutable fact has one authoritative owner. Prefer immutable/read-only projec
 
 #### Domain boundaries
 
-Check that factory, finance, simulation, governance, challenge, and any outward consumer retain their authority boundaries. In particular:
+Check that factory, simulation, governance, storage, challenge, and any outward consumer retain their authority boundaries. In particular:
 
 - factory execution must not require commercial-policy, financial, or consumer internals;
 - operational facts and financial interpretation remain distinct;

@@ -220,7 +220,7 @@ RAMI 4.0 is a useful classification and positioning framework, not a code struct
 | Communication | Supported runtime observation/event contract; no current transport adapter — possible HTTP/SSE, standardized async, and operational adapters later |
 | Information | Shared types, domain models, observations, and public schemas |
 | Functional | Simulation, domain handlers, policies, verification, KPIs |
-| Business | Product objectives, Finance, and future planning domains |
+| Business | Product objectives, Challenge economics, and future business domains |
 
 ### Asset Administration Shell / AASX
 

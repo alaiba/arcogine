@@ -5,8 +5,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.arcogine.factory.jobs.Job;
 import com.arcogine.factory.machines.Machine;
-import com.arcogine.finance.ledger.JournalEntry;
-import com.arcogine.finance.ledger.Ledger;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.SimTime;
@@ -17,8 +15,7 @@ import com.tngtech.archunit.lang.ArchRule;
 
 /**
  * Enforces, as CI-checked rules, the module-boundary and capability guardrails documented in
- * CONTRIBUTING.md and docs/architecture/overview.md -- so a future change that reintroduces a
- * forbidden Finance-to-Factory dependency, code outside Finance posting to the ledger directly,
+ * CONTRIBUTING.md and docs/architecture/overview.md -- so a future change that reintroduces
  * code outside Factory driving a Job/Machine's lifecycle directly, or production code depending on
  * the research experiment substrate fails the build instead of only failing review.
  *
@@ -49,16 +46,6 @@ class ArchitectureTest {
             .because("Factory supplies artifacts through the domain-neutral verifier");
 
     @ArchTest
-    static final ArchRule finance_must_not_depend_on_factory = noClasses()
-            .that()
-            .resideInAPackage("com.arcogine.finance..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAPackage("com.arcogine.factory..")
-            .because("Finance interprets OrderCompleted events, not Factory's internal state -- it "
-                    + "must never reach into Factory directly to infer what happened");
-
-    @ArchTest
     static final ArchRule production_does_not_depend_on_research_infrastructure = noClasses()
             .that()
             .resideOutsideOfPackage("com.arcogine.research..")
@@ -67,14 +54,6 @@ class ArchitectureTest {
             .resideInAPackage("com.arcogine.research..")
             .because("the research experiment substrate is non-shipped research infrastructure: "
                     + "production and consumer code never depends on it");
-
-    @ArchTest
-    static final ArchRule only_finance_may_post_to_the_ledger = noClasses()
-            .that()
-            .resideOutsideOfPackage("com.arcogine.finance..")
-            .should(callMethod(Ledger.class, "post", JournalEntry.class))
-            .because("Ledger.post must only be called from within Finance -- external callers "
-                    + "get LedgerView (FinanceHandler.ledger()), which excludes it");
 
     @ArchTest
     static final ArchRule only_factory_may_drive_a_jobs_lifecycle = noClasses()

@@ -157,7 +157,6 @@ public record ExperimentEvidence(
                 event.simulationTime(),
                 event.eventType(),
                 event.modelFingerprint(),
-                event.controlledRevisionId(),
                 event.affectedEntityRefs(),
                 event.payload());
     }

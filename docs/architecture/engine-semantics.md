@@ -652,7 +652,7 @@ Carries:
 - destination resource identity;
 - affected references for job, order, and destination.
 
-The envelope also carries the existing run/model/revision provenance. No placeholder Engine
+The envelope also carries the existing run/model provenance. No placeholder Engine
 definition identifier is emitted; a future exact Engine-definition reference is added only if a
 concrete supported boundary requires it.
 

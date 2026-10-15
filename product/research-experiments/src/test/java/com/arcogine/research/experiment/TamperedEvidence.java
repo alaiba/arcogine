@@ -34,7 +34,7 @@ final class TamperedEvidence {
         List<RuntimeEventEnvelope> events = new ArrayList<>(evidence.retainedEvents());
         RuntimeEventEnvelope old = events.get(index);
         events.set(index, new RuntimeEventEnvelope(old.runId(), old.sequence(), old.simulationTime(),
-                old.eventType(), old.modelFingerprint(), old.controlledRevisionId(), old.affectedEntityRefs(), payload));
+                old.eventType(), old.modelFingerprint(), old.affectedEntityRefs(), payload));
         return withEvents(evidence, events);
     }
 

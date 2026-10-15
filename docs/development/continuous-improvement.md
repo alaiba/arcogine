@@ -93,6 +93,8 @@ The retrospective is **not** a process-history dump, an issue ledger, or a secon
 
 ### Mechanical evidence first
 
+Run the formal retrospective in a coding-agent repository checkout using the repository-owned Node tooling and authenticated GitHub access. Keep the versioned retrospective baseline, acquisition adapter, evidence validator, and analyzer on the same exact current `main` revision. Authenticate through `GH_TOKEN`, `GITHUB_TOKEN`, or an authenticated `gh` CLI, as supported by the adapter. Do not substitute hand-reconstructed PR/review counts or a chat/connector-side acquisition run if this environment is unavailable.
+
 Before interpretation:
 
 1. choose one exact main-target `throughPr` that bounds the run;
@@ -114,24 +116,9 @@ Before interpretation:
 
 4. require acquisition, evidence-contract validation, and analysis to complete; then use the analyzer's exact PR window, merged-PR count, trusted-author CHANGES REQUIRED disposition count, review-checkpoint distribution, and structured-finding dataset without manually reconstructing or retyping alternative totals.
 
-The GitHub GraphQL adapter is the current local acquisition path. Another approved acquisition path must emit the same source-neutral contract and can then use the same analyzer unchanged. The executable contract and completeness rules live in `infra/dev/delivery-retrospective-evidence.mjs`; the local GraphQL retrieval rules live in `infra/dev/delivery-retrospective-github.mjs`; the ChatGPT connector procedure below owns connector-specific retrieval; all retrospective counting and finding analysis live in the pure `infra/dev/delivery-retrospective.mjs` analyzer.
+The **supported PR/review Evidence v1 acquisition path** is `infra/dev/delivery-retrospective-github.mjs`, which fetches evidence through authenticated GitHub GraphQL and validates the complete Retrospective Evidence v1 bundle before writing it. The adapter proves merged `main` baseline/through endpoints, complete candidate search pagination, exact merge-time window membership, and complete submitted-review payloads preserving GitHub-provided author association and reviewed-head fields. It fails closed on GitHub search limits, truncated review connections, or unverifiable evidence. Do not replace it with manual issue/PR enumeration, connector-only acquisition outside the repository scripts, inferred review associations, or hand-built Evidence v1 JSON.
 
-#### ChatGPT GitHub connector acquisition
-
-A formal retrospective running in ChatGPT may use the GitHub connector as an approved acquisition path only by producing the same Retrospective Evidence v1 contract and then invoking the exact-current pure analyzer. The connector path does not hand-count dispositions or findings.
-
-Use this fail-closed procedure:
-
-1. Read `.github/continuous-improvement/retrospective.json`, `infra/dev/delivery-retrospective-evidence.mjs`, and `infra/dev/delivery-retrospective.mjs` from one exact current `main` SHA. Resolve the requested `throughPr` from live GitHub.
-2. Fetch baseline and through PR metadata and require both to be merged into `main` with valid merge timestamps.
-3. Enumerate merged `main` PR candidates one UTC merge day at a time from the baseline merge day through the through-PR merge day, using a repository-scoped PR search capped at 100 results per day. If any daily query returns 100 results, the connector cannot prove that day complete and the retrospective is `INCOMPLETE`. De-duplicate PR numbers, fetch authoritative PR metadata for every candidate, then retain only the exact `(baseline mergedAt, through mergedAt]` interval.
-4. For every exact-window PR, retrieve submitted reviews from GitHub's raw REST review subresource through the connector's approved raw-fetch surface: `/repos/<owner>/<repo>/pulls/<number>/reviews?per_page=100&page=<n>`. Fetch pages in order until one returns fewer than 100 reviews. Reject a repeated page, duplicate review identity, fetch failure, malformed payload, or any other condition that prevents proving complete enumeration; do not substitute the connector's normalized review-list projection when the raw subresource is available.
-5. Populate Evidence v1 review fields from the authoritative raw review payload: use `node_id` as the review identity when present, `body` as the body, `author_association` as `authorAssociation`, `submitted_at` as `submittedAt`, and `commit_id` as `reviewedHead`. Preserve these values rather than replacing them with weaker normalized projections; in particular, the analyzer's finding-head consistency check depends on `reviewedHead`.
-6. Only when the active connector surface genuinely cannot expose authoritative review association or reviewed-commit provenance may acquisition fall back to weaker fields, and review enumeration must still be proven complete independently. In that fallback only, Arcogine may synthesize `OWNER` when the authenticated GitHub login equals the repository owner login and the review author login equals that same verified login, and may set `reviewedHead` to `null` when the reviewed commit is genuinely unavailable. Do not infer `MEMBER` or `COLLABORATOR` from repository permission levels. Any other review author without a direct GitHub association makes acquisition `INCOMPLETE`.
-7. Set source provenance to identify the connector acquisition path (for example, `adapter: "github-connector"`) and include enough non-semantic retrieval metadata to diagnose its completeness proof. Validate the completed bundle against the exact-current Evidence v1 validator.
-8. Materialize the exact-current `delivery-retrospective-evidence.mjs` and `delivery-retrospective.mjs` into the ChatGPT execution environment together with the validated evidence JSON, preserving their relative import relationship, and run the analyzer with Node. If the runtime cannot execute the analyzer, the retrospective is `INCOMPLETE`; do not reproduce its aggregation rules in model reasoning.
-
-The connector acquisition path may make different GitHub calls from the local GraphQL adapter, but after Evidence v1 validation the downstream analyzer and interpretation boundary are identical.
+The **evidence contract remains source-neutral** in `infra/dev/delivery-retrospective-evidence.mjs`, and the analyzer in `infra/dev/delivery-retrospective.mjs` remains pure and source-independent. This does not authorize an alternative acquisition path: any new adapter must be introduced by a separately reviewed repository change that preserves the same completeness, provenance, and validation guarantees. The existing local GraphQL adapter is the only supported PR/review Evidence v1 acquisition entrypoint; research branch inventory is a separate supporting evidence pass.
 
 The adapter fails closed when GitHub search/review retrieval cannot prove completeness. The analyzer fails closed on unsupported or internally incomplete evidence. If either fails, the retrospective is `INCOMPLETE`; fix the retrieval/tooling problem rather than estimating the sample. Structurally complete evidence can still contain malformed or noncanonical historical reviewer findings. In that case the analyzer preserves the core window/review metrics, marks finding analytics incomplete, and reports the specific coverage diagnostics; do not treat any incomplete distribution as a complete sample.
 
@@ -143,6 +130,32 @@ Manual analysis begins only after the mechanical window is established. It shoul
 - whether an existing experiment/change should be retained, retired, or superseded.
 
 Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous. Hand-classified finding totals or category percentages remain noncanonical. The analyzer may report mechanically parsed PR Reviewer fields — including category, confidence, distinct findings, and per-PR incidence — when its structured-finding coverage is complete. Historical review bodies may still contain a legacy `Severity:` field; the analyzer preserves that value on the parsed historical finding when present, but severity is not part of current finding identity or aggregate analytics. When structured-finding coverage is incomplete, use the diagnostics and do not present the observed values as complete distributions. Interpretation and improvement decisions remain retrospective reasoning, not analyzer output.
+
+### Research delivery and temporary-evidence value
+
+Every formal retrospective includes a **research-delivery analysis** within the same review, not a separate practice, delivery ledger, or second canonical metric dataset. The pure analyzer still covers merged `main` PR metadata and submitted reviews, **not source diffs or historical branch content**. Research evidence therefore needs a separate, explicit branch pass. The retrospective's mechanically exact `(baselinePr, throughPr]` PR sample remains authoritative for delivery metrics; the branch pass is qualitative evidence, not another denominator.
+
+**Inventory every relevant branch before selecting research cases.** Resolve the retrospective's associated `Continuous improvement checkpoint` issue, or the latest such issue created before this run if none was explicitly associated. Record its issue number and exact `created_at` as the **branch-inventory lower bound**; this is intentionally distinct from the retrospective PR baseline. Run the repository's authenticated helper:
+
+```bash
+node infra/dev/delivery-retrospective-branches.mjs \
+  --checkpoint <issue-number> \
+  --output logs/retrospective-branches.json
+```
+
+The helper enumerates **all live repository branches** (including those opened before the checkpoint that are still present) and all discoverable same-repository PR-head branch identities whose PR lifecycle overlaps the interval from checkpoint opening through inventory time. This includes open, closed, and merged PRs, plus branches whose remote ref has since disappeared; GitHub's current branch list alone is insufficient. Inspect the complete inventory, not only branches named `workspace/`, `research/`, or associated with merged PRs. Confirm that the API pagination completed. A branch deleted without any associated PR may leave no reliably enumerable GitHub history; an overlapping PR does not prove exactly when its source ref was alive. Record these limitations rather than claiming a perfect historical inventory. If no checkpoint can be resolved, say that the historical bound is unavailable, inspect all current refs and the exact PR window, and do not describe that fallback as complete.
+
+For **every** inventory entry, use the branch name, associated PR title/body/files, live `main` and research-register status, and—where a ref or historical commit can actually be fetched—the branch's relevant commit history to classify it as **research-related**, **non-research**, or **uncertain**. A research-related branch is one that carries research investigation, experiment, independent/adversarial review, research evidence custody, or durable reconciliation of a research conclusion; names alone do not establish this. **Use every identified research-related branch as an input** to the research-delivery examination, including research work with no merged PR. For missing/deleted or uncertain candidates, explicitly record whether evidence was obtainable; never silently drop the entry. Assess work not yet merged as *in flight or historical research evidence*, not as delivered capability. Non-research branches need only enough inspection to classify them and assess cleanup, not a full code review.
+
+Within that exhaustive **research-branch input set**, choose a bounded, diverse set of consequential questions or coupled packets for deeper qualitative reconstruction, including complicated, blocked, superseded, no-action, or reworked work where observable. Reconstruct the decision-to-delivery path: brief and alternatives, proving/falsification cases, risk-proportionate evidence, independent review and surviving qualifications, decision/reconciliation or no-action, knowledge-transfer audit, and any implementation handoff/delivery. Look for missing distinctions, rework, lost experiments, avoidable wait, and failed knowledge transfer, but distinguish such waste from valid falsification, sound caution, and deliberate non-implementation. Compare what the research branches reveal with the PR reviews and durable results; say what **incremental, trustworthy insight** was actually gained from retained branch history, or say no additional value was demonstrated. Older or newer branch evidence must be temporally labeled rather than silently included in the exact PR metric window.
+
+Research evidence requires **no special retention request, branch label, or hold status**: when the branch ref is still present, prior committed `workspace/research/` files remain accessible through its history even though its final merge tree is clean. To inspect a retained research workspace, verify the *current* ref and the handed-off report/review commit and path before trusting the content. Use `git log <verified-ref> -- workspace/research/` and read earlier report revisions, experiments, checkpoints, and adversarial challenges at their exact commits where they discriminate a process claim. A deleted branch or a copied SHA does not guarantee the artifact remains available; drafts/rejected alternatives are not accepted conclusions. Label each research branch **inspected**, **not resolvable**, or **insufficient evidence**, and explain the consequences for interpretation. Missing branch evidence limits that case, **not** the separately validated PR/review metrics. Retained branches are selected non-randomly; do not generalize from them to every investigation.
+
+**End-of-run branch disposition — chat only.** After the retrospective analysis, present **every branch entry from the inventory**, research and non-research alike, in a separate table in the final chat reply: branch identity, current/ref-absent status, related PR(s), research classification and whether its evidence was used, and **`DELETE CANDIDATE` | `KEEP` | `VERIFY FIRST` | `ALREADY ABSENT`**, with a concise reason. State the checkpoint issue/time, inventory time, and enumeration limitations. `DELETE CANDIDATE` requires evidence that the ref exists, is neither the default/protected nor an active PR head, has no unique unmerged work or outstanding custody obligation, and—if research-related—its questions are terminal, the knowledge-transfer audit and independent reconciliation review are complete, no needed artifact remains unpromoted, and the branch's research history has been inspected or its evidence limitations explicitly recorded. Squash merges do not make `git branch --merged` alone a reliable deletion test: reconcile the exact PR head, tip, and surviving work. Unknown state means `VERIFY FIRST`, not safe deletion. Do **not** delete branches, force-push, close PRs, or mutate research status as part of this analysis.
+
+This **full branch inventory and deletion-candidate table lives only in chat**, never in the dated Git retrospective report, checkpoint comment, or maintained research register. The Git report keeps concise research-delivery findings and action ownership without copying branch bookkeeping. The associated checkpoint receives the normal summary/link, not the branch table. Branch deletion requires a separate explicit user request under `AGENTS.md`; the retrospective only supplies advisory candidates. The research operating model continues to own knowledge-transfer requirements, not a branch-cleanup step.
+
+Research-to-delivery elapsed-time or issue-aging statistics become canonical only through the source-neutral evidence/analyzer contract once those measures are implemented and validated. Do **not** hand-calculate and label them canonical, equate longer investigation with waste, use finding counts as research-quality scores, or silently classify unobservable cases as successes. Report clearly which observations are direct artifacts, delivery history, interpretation, or unavailable evidence.
 
 ### Action ownership
 
@@ -179,6 +192,10 @@ Scope: <baseline PR exclusive> -> <through PR inclusive>
 ## Prior changes
 | Change | Verdict | Evidence | Action |
 
+## Research delivery
+<bounded cases; evidence of review/reconciliation or avoidable rework; incremental value or
+unavailability of retained branch artifacts; retain/retire/process action, if justified>
+
 ## Actions
 - #<issue> — <required outcome>
 or
@@ -189,7 +206,7 @@ or
 - specific measures to verify next time
 ```
 
-Detailed review bodies, PR histories, issue evidence, and calculations remain in their owning GitHub/repository sources; do not duplicate them into the report unless necessary to support a decision.
+Detailed review bodies, PR histories, issue evidence, and calculations remain in their owning GitHub/repository sources; do not duplicate them into the report unless necessary to support a decision. The branch-by-branch research/non-research inventory and deletion recommendations are **chat-only output**, not a section of this Git report or the checkpoint comment.
 
 ### Completion
 
@@ -227,7 +244,6 @@ Git remains the authoritative retrospective record. A checkpoint comment never a
 | Retrospective baseline state | `.github/continuous-improvement/retrospective.json` |
 | Retrospective evidence contract | `infra/dev/delivery-retrospective-evidence.mjs` |
 | Retrospective local GitHub acquisition | `infra/dev/delivery-retrospective-github.mjs` |
-| Retrospective ChatGPT connector acquisition | this document + `infra/dev/delivery-retrospective-evidence.mjs` |
 | Retrospective mechanical analysis | `infra/dev/delivery-retrospective.mjs` |
 | Dated retrospective evidence | `docs/history/continuous-improvement/` |
 | Retrospective actions | their owning GitHub issues |

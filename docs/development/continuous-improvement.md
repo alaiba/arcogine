@@ -144,6 +144,18 @@ Manual analysis begins only after the mechanical window is established. It shoul
 
 Do not optimize for finding count. Healthy adversarial review findings are not waste merely because they are numerous. Hand-classified finding totals or category percentages remain noncanonical. The analyzer may report mechanically parsed PR Reviewer fields — including category, confidence, distinct findings, and per-PR incidence — when its structured-finding coverage is complete. Historical review bodies may still contain a legacy `Severity:` field; the analyzer preserves that value on the parsed historical finding when present, but severity is not part of current finding identity or aggregate analytics. When structured-finding coverage is incomplete, use the diagnostics and do not present the observed values as complete distributions. Interpretation and improvement decisions remain retrospective reasoning, not analyzer output.
 
+### Research delivery and temporary-evidence value
+
+Every formal retrospective includes a **bounded research-delivery analysis** within the same review, not a separate practice or an additional register. The mechanical PR/review window remains the authoritative delivery sample; research cases are an explicitly identified qualitative subset, **not** another complete dataset or a denominator for new canonical rates. Use the research method in [`researching.md`](researching.md) to interpret the work, not to review the research conclusions as an alternative architecture authority.
+
+1. From research/reconciliation PRs in the exact merge window, the research register and investigation briefs, select a small, varied set of consequential questions or explicitly coupled packets. Include a complicated, blocked, superseded, no-action, or reworked case when the window contains one; do not select only successful or branch-retained cases. Identify each case by its research question and merged PR(s), distinguish questions still `READY` from `CONCLUDED`/`SUPERSEDED`, and say which cases could not be assessed. The through-PR revision defines what was known at the retrospective boundary; later events must be identified as later evidence, not silently counted in that window.
+2. Reconstruct the **decision-to-delivery path** from the bounded question, alternatives and proving/falsification cases, risk-proportionate evidence, independent adversarial review and surviving qualifications, through the accepted conclusion, durable reconciliation or no-action decision, knowledge-transfer audit, and any implementation handoff/delivery. Ask where scope changed, evidence was rediscovered, a review found a missing distinction, handoff or reconciliation had to be redone, or settled work waited unnecessarily. Distinguish avoidable friction from valuable falsification, sound caution, and deliberate non-implementation.
+3. For a selected case with a **retained research-evidence branch**, try to resolve the original same-repository PR head ref and verify its Git history before treating its `workspace/research/` content as evidence. Inspect relevant historical commits (`git log <verified-ref> -- workspace/research/`), then read completed report/review revisions at their *recorded exact commits*, along with earlier experiments, revisions, checkpoints, and adversarial challenges when they actually discriminate an improvement claim. The final PR diff and merged `main` tree normally omit those artifacts. Compare the temporary trail with the durable outcome and PR review history: what *additional, trustworthy* delivery-process insight, if any, came from retaining it? Drafts and abandoned hypotheses are not accepted conclusions; a retained branch is not current architecture or durable custody.
+4. Label case evidence **retained and inspected**, **branch unavailable/retired**, or **not needed**. The existence of an old branch name or an exact SHA printed in a PR does not prove the artifact remains retrievable; verify the object and path. Missing temporary evidence is a limitation for that case, **not** proof that review or knowledge transfer did not happen, and does not invalidate the mechanically complete PR metrics. Do not generalize findings from retained branches to every investigation: retention is selective and biased.
+5. Judge the evidence hold itself: identify at least one concrete insight that would have been lost without the branch, or state that the added value was not demonstrated. Identify any repeated process defect with its supporting evidence and propose the smallest owned improvement, or explicitly retain the current method. Note which held workspaces were evaluated and can now be released under [research retirement](researching.md#evidence-workspaces-artifact-identity-and-retirement); do not delete branches as part of the retrospective. If an artifact must remain readable afterward, require deliberate promotion to durable custody rather than another open-ended branch hold.
+
+Research-to-delivery elapsed-time or issue-aging statistics become canonical only through the source-neutral evidence/analyzer contract once such measures are implemented and validated. Do **not** hand-calculate and label them canonical, equate longer investigation with waste, use finding counts as research-quality scores, or silently classify unobservable cases as successes. Report clearly which observations are direct artifacts, delivery history, interpretation, or unavailable evidence.
+
 ### Action ownership
 
 There is no continuous-improvement intervention register.
@@ -178,6 +190,10 @@ Scope: <baseline PR exclusive> -> <through PR inclusive>
 
 ## Prior changes
 | Change | Verdict | Evidence | Action |
+
+## Research delivery
+<bounded cases; evidence of review/reconciliation or avoidable rework; incremental value or
+unavailability of retained branch artifacts; retain/retire/process action, if justified>
 
 ## Actions
 - #<issue> — <required outcome>

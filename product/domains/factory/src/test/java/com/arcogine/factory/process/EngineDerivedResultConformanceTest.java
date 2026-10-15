@@ -85,6 +85,17 @@ class EngineDerivedResultConformanceTest {
     }
 
     @Test
+    void meanLeadTimeConversionRoundsUpAtTheUpperEvenTie() {
+        // 2^53 + 3 rounds upward to the even significand; truncation would round downward.
+        FactoryRuntime runtime = runtime(1, (1L << 53) + 3);
+        runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();
+        drainToQuiescence(runtime);
+
+        assertEquals(1L, runtime.completedSales());
+        assertEquals(9_007_199_254_740_996.0, runtime.avgLeadTime());
+    }
+
+    @Test
     void throughputOverAZeroTickWindowIsZero() {
         FactoryRuntime runtime = runtime(1, 7);
         runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();

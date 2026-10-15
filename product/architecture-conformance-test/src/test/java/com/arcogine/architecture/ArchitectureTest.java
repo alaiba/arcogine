@@ -15,6 +15,11 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.stream.StreamSupport;
 
 /**
  * Enforces, as CI-checked rules, the module-boundary and capability guardrails documented in
@@ -91,6 +96,8 @@ class ArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAPackage("java.time..")
+            .orShould().dependOnClassesThat().areAssignableTo(Date.class)
+            .orShould().dependOnClassesThat().areAssignableTo(Calendar.class)
             .orShould(callMethod(System.class, "currentTimeMillis"))
             .orShould(callMethod(System.class, "nanoTime"))
             .because("simulated time is the only time a simulation outcome may depend on -- wall-clock "
@@ -98,6 +105,8 @@ class ArchitectureTest {
                     + "recording timestamps belong to Governance and Storage, outside these packages");
 
     @ArchTest
+    // StreamSupport's factories accept a parallel flag. Exclude the entry point conservatively;
+    // sequential simulation traversal uses collection.stream() instead.
     static final ArchRule simulation_never_runs_concurrently = noClasses()
             .that()
             .resideInAnyPackage(SIMULATION_PACKAGES)
@@ -106,7 +115,7 @@ class ArchitectureTest {
             .resideInAPackage("java.util.concurrent..")
             .orShould()
             .dependOnClassesThat()
-            .belongToAnyOf(Thread.class, ThreadGroup.class)
+            .belongToAnyOf(Thread.class, ThreadGroup.class, Timer.class, TimerTask.class, StreamSupport.class)
             .orShould(callMethodWhere(target(name("parallel")).or(target(name("parallelStream")))))
             .because("a runtime is a single-owner session driven by one caller at a time; simulation "
                     + "code creates no threads, executors or parallel streams that could mutate its "

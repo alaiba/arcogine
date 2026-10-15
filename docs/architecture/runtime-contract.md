@@ -346,6 +346,11 @@ wall clock: simulated time is the only time an outcome depends on. `Architecture
 for the simulation and Factory packages; Governance and Storage acceptance timestamps are recording
 metadata outside them.
 
+The guards reject legacy `Date`/`Calendar` dependencies as well as `java.time` and direct system
+clock calls, and reject `Timer` background execution and `StreamSupport` factories alongside
+threads, executors and parallel-stream methods. `StreamSupport` is excluded conservatively because
+its factories accept a parallel flag; sequential traversal can use collection streams.
+
 ## Transport mechanisms are adapters, not the event contract
 
 HTTP/SSE, WebSocket, Kafka, NATS, MQTT, an embedded Java API, or later operational adapters are projections of the same transport-neutral runtime contract. None is a dependency of the simulation core.

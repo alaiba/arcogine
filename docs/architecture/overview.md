@@ -270,7 +270,7 @@ Consequences of the Charter's thesis, stated at the conceptual level only — no
 
 Today's system is built around a **headless simulation core**, not a game engine. This describes the current implementation's architecture — simulation is a major Arcogine capability (per the Product Charter), not the entirety of its identity.
 
-- No rendering or wall-clock dependency in the core, enforced by `ArchitectureTest`
+- No rendering or wall-clock dependency in the core; `ArchitectureTest` guards wall-clock access
 - Deterministic execution — same inputs always produce the same outputs
 - Reproducible outcomes for testing, comparison, and analysis
 - Explicit workload execution independent of any UI or network layer

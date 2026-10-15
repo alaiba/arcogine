@@ -126,8 +126,6 @@ sequence
 simulationTime
 eventType
 modelFingerprint
-
-controlledRevisionId [optional; empty until a runtime can be revision-bound]
 affectedEntityRefs[]
 payload
 ```
@@ -196,7 +194,7 @@ Purpose-specific observation types are preferred over one unrestricted universal
 
 API/UI DTOs may project these supported observations, but DTO types never become domain decision inputs.
 
-## Model fingerprint is mandatory source-model provenance; controlled revision is conditional provenance
+## Model fingerprint is mandatory source-model provenance
 
 Every supported runtime observation and runtime event carries the `ModelFingerprint` of the published
 `FactoryModelVersion` that instantiated the runtime (see the [Determinism
@@ -207,22 +205,9 @@ definition reference. If a concrete supported consumer requires that reference, 
 must define and carry it explicitly ([semantic evolution
 rules](overview.md#semantic-evolution-and-support)).
 
-No supported construction binds a runtime to an authoritative controlled revision, so every supported event carries an empty `ControlledRevisionId` and observations carry none. A future binding must be supplied by the owning revision/repository boundary.
-
-The runtime must not generate, infer, or synthesize a controlled revision merely to fill the field, and the simulation Engine does not take ownership of authoritative revision persistence or resolution.
-
-Thus:
-
-```text
-ModelFingerprint
-    mandatory source-model content fingerprint
-
-ControlledRevisionId
-    optional historical occurrence identity
-    present only when authoritatively supplied
-```
-
-This permits Governance provenance integration without making the runtime contract duplicate authoritative revision persistence.
+Runtime events and observations carry no `ControlledRevisionId`: no supported construction binds a
+runtime to an authoritative controlled revision, and the runtime never generates, infers or
+synthesizes one. The simulation Engine does not own revision persistence or resolution.
 
 ## Internal scheduler machinery is not supported runtime history
 

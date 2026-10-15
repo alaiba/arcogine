@@ -127,7 +127,7 @@ simulationTime
 eventType
 modelFingerprint
 
-controlledRevisionId [optional when authoritatively bound]
+controlledRevisionId [optional; empty until a runtime can be revision-bound]
 affectedEntityRefs[]
 payload
 ```
@@ -150,8 +150,6 @@ A supported runtime observation carries at least:
 Run
     runId
     modelFingerprint
-    
-    controlledRevisionId [optional when authoritatively bound]
     current simulated time
     run state
     latestEventSequence
@@ -209,7 +207,7 @@ definition reference. If a concrete supported consumer requires that reference, 
 must define and carry it explicitly ([semantic evolution
 rules](overview.md#semantic-evolution-and-support)).
 
-A `ControlledRevisionId` is carried only when the runtime was actually instantiated with an authoritative controlled-revision binding supplied by the owning revision/repository boundary.
+No supported construction binds a runtime to an authoritative controlled revision, so every supported event carries an empty `ControlledRevisionId` and observations carry none. A future binding must be supplied by the owning revision/repository boundary.
 
 The runtime must not generate, infer, or synthesize a controlled revision merely to fill the field, and the simulation Engine does not take ownership of authoritative revision persistence or resolution.
 

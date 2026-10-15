@@ -6,11 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.arcogine.factory.model.spatial.FactoryFloor;
-import com.arcogine.factory.model.spatial.ResourceFootprint;
-import com.arcogine.factory.model.spatial.ResourceLayout;
-import com.arcogine.factory.model.spatial.ResourcePlacement;
-import com.arcogine.factory.model.spatial.SpatialRecord;
 import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
@@ -21,7 +16,6 @@ import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -34,9 +28,6 @@ import org.junit.jupiter.api.Test;
  * definition change updates them together with the specification.
  */
 class FactoryModelCanonicalFormTest {
-
-    private static final String PRESENT_REPRESENTATIVE_BYTES =
-            "6172636f67696e652e666163746f72792d6d6f64656c0001000000000000000a0000000000000006000000000000000200000000000000030000000000000002000000000000000100000000000000044d696c6c000000000000000201405f60000000000000000000000000030000000000000000000000000000000000000000000000020000000000000003000000000000000200000000000000065061636b657200000000000000010000000000000000000000000000000004000000000000000100000000000000030000000000000002000000000000000100000000000000640000000000000007526f7574696e670000000000000002000000000000000100000000000000074d616368696e650000000000000005000000000000000200000000000000010000000000000002000000000000000200000000000000045061636b0000000000000002000000000000000100000000000000020000000000000001000000000000000a00000000000000065769646765740000000000000064";
 
     private static FactoryModel representativeModel() {
         return new FactoryModel(
@@ -54,49 +45,12 @@ class FactoryModelCanonicalFormTest {
                 List.of(new ProductDefinition(new ProductId(8), "P\u0000|𐀀", 42)));
     }
 
-    private static FactoryModel spatialModel(SpatialRecord spatial) {
-        return new FactoryModel(
-                List.of(
-                        new ConfiguredResource(new MachineId(1), "Mill", 2, 125.5, 3),
-                        new ConfiguredResource(new MachineId(2), "Packer", 1, null, 0)),
-                List.of(new OperationDefinition(100, "Routing", List.of(
-                        new OperationStepDefinition(1, "Machine", Set.of(new MachineId(2), new MachineId(1)), 5),
-                        new OperationStepDefinition(2, "Pack", Set.of(new MachineId(2)), 2)))),
-                List.of(new ProductDefinition(new ProductId(10), "Widget", 100)),
-                Optional.of(spatial));
-    }
-
-    private static SpatialRecord spatial(
-            long floorWidth, long floorHeight, long ticksPerCell, long handlingTicks,
-            long x1, long y1, long w1, long h1, long x2, long y2, long w2, long h2) {
-        return new SpatialRecord(
-                new FactoryFloor(floorWidth, floorHeight),
-                ticksPerCell,
-                handlingTicks,
-                List.of(
-                        new ResourceLayout(new MachineId(1), new ResourcePlacement(x1, y1), new ResourceFootprint(w1, h1)),
-                        new ResourceLayout(new MachineId(2), new ResourcePlacement(x2, y2), new ResourceFootprint(w2, h2))));
-    }
-
-    private static SpatialRecord representativeSpatial() {
-        return spatial(10, 6, 2, 3, 0, 0, 2, 3, 4, 1, 3, 2);
-    }
-
-    private static FactoryModel minimalModel(Optional<SpatialRecord> spatial) {
+    private static FactoryModel minimalModel() {
         return new FactoryModel(
                 List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0)),
                 List.of(new OperationDefinition(
                         100, "Routing", List.of(new OperationStepDefinition(1, "Machine", Set.of(new MachineId(1)), 5)))),
-                List.of(new ProductDefinition(new ProductId(10), "Widget", 100)),
-                spatial);
-    }
-
-    private static SpatialRecord minimalZeroSpatial() {
-        return new SpatialRecord(
-                new FactoryFloor(1, 1),
-                0,
-                0,
-                List.of(new ResourceLayout(new MachineId(1), new ResourcePlacement(0, 0), new ResourceFootprint(1, 1))));
+                List.of(new ProductDefinition(new ProductId(10), "Widget", 100)));
     }
 
     // ---- Golden vectors ---------------------------------------------------------------------------
@@ -140,53 +94,23 @@ class FactoryModelCanonicalFormTest {
     }
 
     @Test
-    void spatialAbsentRepresentativeVectorPinsCanonicalBytesAndFingerprint() {
+    void representativeVectorPinsCanonicalBytesAndFingerprint() {
         FactoryModelVersion version = FactoryModelPublisher.publish(representativeModel());
 
         assertArrayEquals(
                 HexFormat.of().parseHex(
-                        "6172636f67696e652e666163746f72792d6d6f64656c00000000000000000002fffffffffffffffe00000000000000054d7c696c6c0000000000000003018000000000000000fffffffffffffff9000000000000000500000000000000065365636f6e6400000000000000010000000000000000000000000000000001000000000000002a00000000000000074f703af09f9a80000000000000000100000000000000090000000000000007537465703bc3a9000000000000000b0000000000000002fffffffffffffffe000000000000000500000000000000010000000000000008000000000000000750007cf0908080000000000000002a"),
+                        "6172636f67696e652e666163746f72792d6d6f64656c000000000000000002fffffffffffffffe00000000000000054d7c696c6c0000000000000003018000000000000000fffffffffffffff9000000000000000500000000000000065365636f6e6400000000000000010000000000000000000000000000000001000000000000002a00000000000000074f703af09f9a80000000000000000100000000000000090000000000000007537465703bc3a9000000000000000b0000000000000002fffffffffffffffe000000000000000500000000000000010000000000000008000000000000000750007cf0908080000000000000002a"),
                 FactoryModelCanonicalForm.canonicalBytes(representativeModel()));
         assertEquals(
-                "factory-model:sha256:a6f610454b0eded25a1d97367cd10ef29c0c78d971940db4bd1fcba026518ba2",
+                "factory-model:sha256:b6d39eb7880db14cec0982cfaec623e95018a7ca78fa5674deffe17f8328b9d0",
                 version.fingerprint().toString());
     }
 
     @Test
-    void spatialPresentRepresentativeVectorPinsCanonicalBytesAndFingerprint() {
-        FactoryModel model = spatialModel(representativeSpatial());
-
-        assertArrayEquals(
-                HexFormat.of().parseHex(PRESENT_REPRESENTATIVE_BYTES),
-                FactoryModelCanonicalForm.canonicalBytes(model));
+    void minimalVectorPinsFingerprint() {
         assertEquals(
-                "factory-model:sha256:f681bd185c1c00e5a70e82ee70c25d865f21fa3513805e36c769fced2b67329e",
-                FactoryModelPublisher.publish(model).fingerprint().toString());
-    }
-
-    @Test
-    void presentLegalZeroIsAuthoredContentDistinctFromAbsence() {
-        FactoryModelVersion absent = FactoryModelPublisher.publish(minimalModel(Optional.empty()));
-        FactoryModelVersion presentZero = FactoryModelPublisher.publish(minimalModel(Optional.of(minimalZeroSpatial())));
-
-        assertEquals(
-                "factory-model:sha256:be2b01c6aeb4be947640ce406646e607318eb5741de060209b6e0e2c361542d9",
-                absent.fingerprint().toString());
-        assertEquals(
-                "factory-model:sha256:6d0e92130514100ee2dde2f294adb2c73f063e35c4fb5c731cf080b49dd0ea2a",
-                presentZero.fingerprint().toString());
-        assertNotEquals(absent.fingerprint(), presentZero.fingerprint());
-    }
-
-    @Test
-    void oneAggregateFingerprintCoversTheSpatialRecord() {
-        FactoryModelVersion withSpatial = FactoryModelPublisher.publish(spatialModel(representativeSpatial()));
-        FactoryModel production = withSpatial.model();
-        FactoryModelVersion productionOnly = FactoryModelPublisher.publish(new FactoryModel(
-                production.resources(), production.operations(), production.products()));
-
-        assertNotEquals(productionOnly.fingerprint(), withSpatial.fingerprint());
-        assertEquals(withSpatial.fingerprint(), FactoryModelPublisher.publish(spatialModel(representativeSpatial())).fingerprint());
+                "factory-model:sha256:f36253ac70d8a454a8a4670e81d7815c8da92d97e526f40d351bbae5921f9486",
+                FactoryModelPublisher.publish(minimalModel()).fingerprint().toString());
     }
 
     // ---- Production-record coverage -------------------------------------------------------------
@@ -311,57 +235,6 @@ class FactoryModelCanonicalFormTest {
                 () -> FactoryModelCanonicalForm.canonicalBytes(malformed));
         assertThrows(FactoryModelValidationException.class,
                 () -> FactoryModelPublisher.publish(modelWithResourceName("bad\uD800x")));
-    }
-
-    // ---- Spatial-record coverage ----------------------------------------------------------------
-
-    @Test
-    void everySpatialFieldAndItsOrderParticipatesInTheFingerprint() {
-        FactoryModelVersion original = FactoryModelPublisher.publish(spatialModel(representativeSpatial()));
-
-        // Plant-scope header: each value, and swaps of distinct values, change identity.
-        assertDifferent(original, spatialModel(spatial(11, 6, 2, 3, 0, 0, 2, 3, 4, 1, 3, 2)));
-        assertDifferent(original, spatialModel(spatial(10, 7, 2, 3, 0, 0, 2, 3, 4, 1, 3, 2)));
-        assertDifferent(
-                FactoryModelPublisher.publish(spatialModel(spatial(8, 7, 2, 3, 0, 0, 2, 3, 4, 1, 3, 2))),
-                spatialModel(spatial(7, 8, 2, 3, 0, 0, 2, 3, 4, 1, 3, 2)));
-        assertDifferent(original, spatialModel(spatial(10, 6, 5, 3, 0, 0, 2, 3, 4, 1, 3, 2)));
-        assertDifferent(original, spatialModel(spatial(10, 6, 2, 7, 0, 0, 2, 3, 4, 1, 3, 2)));
-        assertDifferent(original, spatialModel(spatial(10, 6, 3, 2, 0, 0, 2, 3, 4, 1, 3, 2)));
-        // Per-resource placement: x, y and an x/y swap.
-        assertDifferent(original, spatialModel(spatial(10, 6, 2, 3, 0, 0, 2, 3, 5, 1, 3, 2)));
-        assertDifferent(original, spatialModel(spatial(10, 6, 2, 3, 0, 0, 2, 3, 4, 2, 3, 2)));
-        assertDifferent(original, spatialModel(spatial(10, 6, 2, 3, 0, 0, 2, 3, 1, 4, 3, 2)));
-        // Per-resource footprint: an extent change and a width/height swap, even though no current
-        // Engine rule reads footprint.
-        assertDifferent(original, spatialModel(spatial(10, 6, 2, 3, 0, 0, 2, 3, 4, 1, 2, 2)));
-        assertDifferent(original, spatialModel(spatial(10, 6, 2, 3, 0, 0, 2, 3, 4, 1, 2, 3)));
-    }
-
-    @Test
-    void positionsAreEncodedExactlyAsAuthoredWithoutTranslationNormalization() {
-        FactoryModelVersion original = FactoryModelPublisher.publish(spatialModel(representativeSpatial()));
-        FactoryModelVersion translated = FactoryModelPublisher.publish(
-                spatialModel(spatial(10, 6, 2, 3, 1, 1, 2, 3, 5, 2, 3, 2)));
-
-        assertNotEquals(original.fingerprint(), translated.fingerprint());
-    }
-
-    @Test
-    void canonicalEncodingRefusesSpatialContentThatCannotBePublished() {
-        FactoryModel production = spatialModel(representativeSpatial());
-        SpatialRecord missingLayout = new SpatialRecord(
-                new FactoryFloor(10, 6), 2, 3, List.of(representativeSpatial().resourceLayouts().get(0)));
-        SpatialRecord outOfOrder = new SpatialRecord(
-                new FactoryFloor(10, 6), 2, 3, List.of(
-                        representativeSpatial().resourceLayouts().get(1), representativeSpatial().resourceLayouts().get(0)));
-
-        for (SpatialRecord invalid : List.of(missingLayout, outOfOrder)) {
-            FactoryModel model = new FactoryModel(
-                    production.resources(), production.operations(), production.products(), Optional.of(invalid));
-            assertThrows(IllegalArgumentException.class, () -> FactoryModelCanonicalForm.canonicalBytes(model));
-            assertThrows(FactoryModelValidationException.class, () -> FactoryModelPublisher.publish(model));
-        }
     }
 
     // ---- Helpers ----------------------------------------------------------------------------------

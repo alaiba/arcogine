@@ -77,7 +77,7 @@ Question:
 
 > Once transfer semantics and spatial runtime consequences are settled, does changing spatial arrangement create a legible performance trade-off against capacity and game-owned capital cost?
 
-This is not ready until spatial runtime consequences are executable, which they are not: spatial execution is specified in [Engine semantics](../../architecture/engine-semantics.md) but not implemented. It must consume the [current transfer-applicability boundary](../../architecture/transfer-applicability.md) and the Engine semantics rather than using the game to decide them.
+This is not ready until spatial runtime consequences are executable, which they are not: the spatial record and transfer lifecycle are [decided but not implemented](transfer-semantics.md#decided-design--not-implemented). It must consume that design once it is implemented rather than using the game to decide it.
 
 ### External player validation — CANDIDATE
 
@@ -219,7 +219,7 @@ Accordingly:
 
 ## Boundary with transfer and spatial semantics
 
-Transfer is a production/runtime concern, not a game mechanic that the consumer may define. The [current transfer-applicability boundary](../../architecture/transfer-applicability.md) selects no transfer for spatial-absent content and preserves a full lifecycle for present content with zero or positive timing. The current Engine refuses present spatial content until spatial execution lands.
+Transfer is a production/runtime concern, not a game mechanic that the consumer may define. The decided [transfer-applicability boundary](transfer-semantics.md#applicability-boundary) selects no transfer for spatial-absent content and preserves a full lifecycle for present content with zero or positive timing. Neither the spatial record nor the lifecycle is implemented, so every current model is a no-transfer model.
 
 The game therefore must not assume that:
 

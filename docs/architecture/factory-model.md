@@ -5,8 +5,8 @@ Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-
 
 ## 1. Purpose and status
 
-This document is the normative source of the current Factory model: its required production
-records and optional spatial record, their publication predicates, and the canonical byte grammar
+This document is the normative source of the current Factory model: its production records, their
+publication predicates, and the canonical byte grammar
 the one aggregate `ModelFingerprint` is digested from. Where this document and an implementation
 disagree, this document is authoritative. The canonical model boundary it serves is defined by the
 [Factory Design architecture](factory-design.md).
@@ -33,11 +33,8 @@ recur in distinct [controlled revisions](controlled-revisions.md).
 
 ## 2. Authored facts and publication predicates
 
-A Factory model consists of required production records and one optional spatial record. Publication
-rejects content for which canonicalization is undefined, so fingerprinting is total over published
-models.
-
-### 2.1 Production records
+A Factory model consists of production records. Publication rejects content for which
+canonicalization is undefined, so fingerprinting is total over published models.
 
 ```text
 FactoryModel
@@ -83,70 +80,6 @@ Factory content identity and observed configuration without changing the current
 outcome for an otherwise identical model and workload. This describes current behavior only: it does
 not claim that either field is the final resource ontology or that executable setup, volumetric
 qualification, or resource-dependent performance semantics already exist.
-
-### 2.2 Optional spatial record
-
-The spatial record is either **absent** or **present and complete**. When present it carries exactly
-these five authored fact groups, each required within the record:
-
-| Fact | Meaning | Validation | Zero legal? |
-|---|---|---|---|
-| floor width / height | plant extent in integer cells | each `>= 1`; the maximum-transfer predicate below must hold | no |
-| resource position `x` / `y` | minimum-coordinate reference cell of the resource footprint | `x >= 0`, `y >= 0`; the footprint must fit inside the floor | yes (`0,0` is valid) |
-| footprint width / height | integer cells occupied by the resource from its reference cell | each `>= 1`; distinct resource footprints must not overlap | no |
-| `ticksPerCell` | authored material-handling rate magnitude | integer `>= 0`; the maximum-transfer predicate must hold | yes |
-| `handlingTicks` | authored fixed overhead applied once per inter-resource transfer | integer `>= 0`; the maximum-transfer predicate must hold | yes |
-
-Floor extent, `ticksPerCell` and `handlingTicks` are plant-scope: one value each per design.
-Position and footprint are per resource. A present record gives **every** configured resource exactly
-one position and one footprint, in resource-list order, and gives none to an identifier that is not
-a configured resource; a record that omits a resource, places one twice, places an unknown
-identifier or lists layouts out of resource order is invalid.
-
-When the record is **absent**, the design makes no spatial, layout or handling assertion: no floor,
-position, footprint, `ticksPerCell` or `handlingTicks` exists for it, and none is synthesized from a
-default. Absence is not a present record with zero or minimal values — a present record with position
-`(0,0)`, `ticksPerCell = 0` and `handlingTicks = 0` is a different authored design. Unknown or partly
-authored facts, such as geometry whose handling magnitudes are unknown, are draft or adapter state:
-they are not publishable and are never encoded as zero. The record is deliberately coarse; it has no
-geometry-only or handling-only form.
-
-For a resource at `(x,y)` with footprint width `w` and height `h`, the footprint occupies exactly the
-integer cells `x..x+w-1` by `y..y+h-1`. It fits inside a floor of width `W` and height `H` iff
-`x >= 0`, `y >= 0`, `w >= 1`, `h >= 1`, `x + w <= W` and `y + h <= H`, evaluated with overflow-safe
-arithmetic. Two resources overlap iff their occupied-cell sets intersect.
-
-Publication of a present record also proves that the spatial transfer-duration magnitude is
-representable for the farthest possible pair of reference cells:
-
-```text
-maxManhattanDistance = (W - 1) + (H - 1)
-maxTransferDuration  = handlingTicks + ticksPerCell * maxManhattanDistance
-```
-
-Every subtraction, addition and multiplication in that predicate, and the result, must be
-representable in the runtime tick-duration type. This bounds the derived duration itself; it does not
-claim that adding a valid duration to an arbitrarily extreme current `SimTime` can never overflow —
-the runtime time-addition guard remains responsible for that.
-
-The spatial record's presence and every present fact participate in the fingerprint. They are
-authored model facts, not Engine policy: floor extent, placement, footprint, handling rate and fixed
-overhead describe the production system the designer authored, while the distance metric, rounding,
-zero-distance behavior, destination binding, reservation and transfer lifecycle belong to
-[Engine semantics](engine-semantics.md). Footprint is canonical even though no current Engine rule
-reads it in transfer distance: it is required for layout validation and future spatial capability.
-
-Orientation, paths, graph edges, aisles, conveyors, transport resources, obstacles, congestion, floor
-identity, connection points, authoritative animation coordinates and route topology are not part of
-the record. Adding them is a definition change justified by a concrete capability that makes them
-authored, behaviorally relevant semantics.
-
-### 2.3 Publication validity is not Engine executability
-
-This document decides only whether content is a valid published Factory model. Whether the Engine
-executes it is decided by the Engine interpretation's own supported content; the current
-interpretation executes production records only and refuses a present spatial record before any
-runtime state exists ([transfer applicability](transfer-applicability.md)).
 
 ## 3. Fingerprint rendering
 
@@ -197,8 +130,7 @@ All multi-byte integers are big-endian.
 
 `I64(n)`
 : eight bytes containing the signed two's-complement 64-bit `n`. All model IDs and integral numeric
-fields are encoded as `I64`, including fields currently held in narrower types and every spatial
-field.
+fields are encoded as `I64`, including fields currently held in narrower types.
 
 `TEXT(s)`
 : `U64(byteLength)` followed by exactly `byteLength` UTF-8 bytes. No Unicode normalization, case
@@ -210,10 +142,6 @@ binary64 payload. Positive and negative zero stay distinct, finite values keep t
 infinities keep their encodings if admitted, and any admitted NaN is canonicalized to
 `0x7ff8000000000000`.
 
-`PRESENCE`
-: one byte selecting whether the spatial record is present: `00` absent, `01` present. No other
-value is valid.
-
 Every list or set is `U64(elementCount)` followed by its elements.
 
 ### 4.3 Stream
@@ -221,14 +149,6 @@ Every list or set is `U64(elementCount)` followed by its elements.
 After the prefix:
 
 ```text
-PRESENCE(spatial)
-
-if spatial is present:
-    I64(spatial.floor.width)
-    I64(spatial.floor.height)
-    I64(spatial.ticksPerCell)
-    I64(spatial.handlingTicks)
-
 U64(resources.size)
 for resource in resources, in list order:
     I64(resource.id)
@@ -236,11 +156,6 @@ for resource in resources, in list order:
     I64(resource.concurrency)
     OPTIONAL_F64(resource.capacityLiters)
     I64(resource.setupTime)
-    if spatial is present:
-        I64(spatial.position(resource).x)
-        I64(spatial.position(resource).y)
-        I64(spatial.footprint(resource).width)
-        I64(spatial.footprint(resource).height)
 
 U64(operations.size)
 for operation in operations, in list order:
@@ -262,32 +177,11 @@ for product in products, in list order:
     I64(product.operationId)
 ```
 
-### 4.4 Layout rationale
-
-- **Marker first.** A decoder knows the complete shape of every following record before decoding any
-  of it, so each artifact has exactly one parse, and an absent record occupies one byte.
-- **Header before resources.** The maximum-transfer predicate depends only on header fields, so a
-  decoder can reject unrepresentable magnitudes, and establish the floor every footprint is checked
-  against, before it allocates a single resource record. The header is fixed-arity and has no count.
-- **Per-resource suffix.** Encoding each resource's spatial fields inside that resource's record makes
-  a present record's coverage structural: the grammar cannot express a resource without spatial fields,
-  spatial fields without a resource, or two layouts for one resource.
-- **Anchor plus extent.** Placement is encoded as the authored reference cell and extent, never as a
-  derived occupied-cell set, bitmap, bounding box or region. For every publishable footprint this is
-  bijective with the occupied cells. Positions are encoded exactly as authored: there is no translation
-  invariance, origin normalization or coordinate compaction.
-- **Totality.** Every spatial field is an `I64` and the grammar is total over the signed 64-bit range.
-  The range, containment, overlap and maximum-transfer predicates are publication validation, not
-  encoding constraints, which lets a decoder reject a violating artifact explicitly (§5.3) instead of
-  failing to parse it ambiguously.
-
-### 4.5 Collection ordering
+### 4.4 Collection ordering
 
 `resources`, `operations`, `products` and operation `steps` are encoded in **list order**, so
 reordering them changes identity. `eligibleResources` is set-shaped and sorted by ascending signed
-`MachineId` value. Per-resource spatial fields follow resource list order; no spatial ordering of
-resources (row-major, distance-from-origin or similar) is applied, because it would discard authored
-list order and collapse two authored models into one identity.
+`MachineId` value.
 
 ## 5. Canonicality and decoding
 
@@ -297,9 +191,7 @@ A decoder rejects, explicitly and without partial acceptance:
 
 - an absent, truncated or non-matching definition prefix, including the prefixes of discarded
   definitions;
-- a missing presence marker or a marker other than `00` or `01`;
-- a stream truncated at any field boundary, including inside the spatial header or a resource's
-  spatial fields;
+- a stream truncated at any field boundary;
 - a collection count that is negative or exceeds the supported element range;
 - a `TEXT` length that overruns the stream, or `TEXT` bytes that are not well-formed UTF-8;
 - an `OPTIONAL_F64` presence byte other than `00` or `01`;
@@ -313,8 +205,7 @@ itself is rejected. This closes the gap where two byte strings could resolve to 
 
 ### 5.3 Publication-predicate rejection
 
-A decoder also applies the publication predicates of §2 — the production predicates always, and the
-spatial predicates whenever the record is present. A byte string that satisfies the grammar but
+A decoder also applies the publication predicates of §2. A byte string that satisfies the grammar but
 violates a predicate is not a valid artifact and is rejected: resolving stored content must never
 yield a model that could not have been published.
 
@@ -350,8 +241,7 @@ revisions is not a requirement. Tests must cover at least:
 
 **Grammar and identity**
 
-1. one representative model with the spatial record absent and one with it present, each with exact
-   expected bytes and fingerprint;
+1. one representative model with exact expected bytes and fingerprint;
 2. the 23-byte definition prefix;
 3. repeated or equivalent construction producing the same fingerprint;
 4. each representative artifact decoding to its model and re-encoding to identical bytes;
@@ -359,47 +249,23 @@ revisions is not a requirement. Tests must cover at least:
    out-of-range count or concurrency, and a decodable-but-non-canonical encoding;
 6. refusal of discarded-definition fingerprints and byte layouts.
 
-**Spatial-record presence**
-
-7. an absent record and a present record with legal zero or minimal values — position `(0,0)`, a
-   1×1 floor and footprint, `ticksPerCell = 0`, `handlingTicks = 0` — producing different pinned
-   fingerprints;
-8. presence-marker framing: an invalid marker, truncation inside the header or a resource's spatial
-   fields, and header bytes appended to a spatial-absent artifact, each rejected;
-9. coverage: publication, and canonical encoding, reject a present record that omits a resource,
-   repeats one, places an unknown identifier, places none while resources exist, or lists layouts out
-   of resource order.
-
-**Spatial field sensitivity**
-
-10. each position coordinate, each footprint extent, floor width and height, `ticksPerCell` and
-    `handlingTicks` independently changing the fingerprint;
-11. swaps of distinct `x`/`y`, width/height, floor width/height and `ticksPerCell`/`handlingTicks`
-    values changing it, proving field order;
-12. a whole-design translation producing a different fingerprint.
-
 **Production-record coverage**
 
-13. delimiter-bearing, non-ASCII BMP and astral text, proving UTF-8 byte-length framing;
-14. publication rejection of ill-formed Unicode in every name field;
-15. invariance to `eligibleResources` iteration order and sensitivity to `resources`, `operations`,
-    `products` and `steps` order;
-16. null versus present `capacityLiters`; positive, negative, zero and signed-zero binary64 values;
+7. delimiter-bearing, non-ASCII BMP and astral text, proving UTF-8 byte-length framing;
+8. publication rejection of ill-formed Unicode in every name field;
+9. invariance to `eligibleResources` iteration order and sensitivity to `resources`, `operations`,
+   `products` and `steps` order;
+10. null versus present `capacityLiters`; positive, negative, zero and signed-zero binary64 values;
     NaN canonicalization while NaN remains publishable.
 
 **Publication-predicate rejection**
 
-17. grammar-valid content violating a predicate — overlapping footprints, an out-of-floor footprint,
-    a zero floor or footprint extent, a negative position or handling magnitude, a violated
-    maximum-transfer predicate including an unrepresentable intermediate multiplied by zero, and a
-    production predicate — rejected on publication and on decode;
-18. accepted boundaries beside those rejections: edge- and corner-adjacent footprints, a footprint on
-    the maximum legal floor edge, a 1×1 floor, and a maximum transfer duration exactly equal to the
-    largest representable value.
+11. grammar-valid content violating a predicate — a zero concurrency and a product referencing a
+    missing operation — rejected on publication and on decode.
 
 ## 7. Non-goals
 
-This document does not define result-affecting interpretation of the spatial facts ([Engine
+This document does not define result-affecting interpretation of the model ([Engine
 semantics](engine-semantics.md)), controlled-revision identity or authority ([controlled
 revisions](controlled-revisions.md)), external interchange formats ([external
 representations](external-representations.md)), a universal canonicalization scheme for non-Factory

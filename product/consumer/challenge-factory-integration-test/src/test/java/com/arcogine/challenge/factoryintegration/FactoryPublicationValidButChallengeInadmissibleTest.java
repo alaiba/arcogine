@@ -41,8 +41,7 @@ import org.junit.jupiter.api.Test;
  * <p>The proof: ONE conceptual candidate -- nine cutter/mill occurrences -- is used both ways. The
  * Factory model built from it contains the same nine machines and passes {@link
  * FactoryModelValidator#validate}, establishing that its canonical content is valid for
- * publication. This test does not perform Engine admission and establishes no runtime
- * executability. The equal-shaped challenge candidate draft (nine placed occurrences of the same
+ * publication. This test does not run the model. The equal-shaped challenge candidate draft (nine placed occurrences of the same
  * catalogue item) is rejected by {@link CandidateAdmissibilityPolicy} for
  * a purely game-rule reason (exceeding the challenge's starting credit budget) that has nothing to
  * do with Factory publication validity. Nine cutters are accepted by the Factory model validator

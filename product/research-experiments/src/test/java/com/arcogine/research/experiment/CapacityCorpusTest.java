@@ -126,8 +126,6 @@ class CapacityCorpusTest {
                 .map(fixture -> fixture.publishedModel().fingerprint())
                 .collect(Collectors.toSet());
         assertEquals(fixtures.size(), fingerprints.size(), "each fixture authors a different design");
-        assertTrue(fixtures.stream().allMatch(fixture -> fixture.authoredModel().spatial().isEmpty()),
-                "the capacity corpus is non-spatial");
     }
 
     @ParameterizedTest(name = "{0}")

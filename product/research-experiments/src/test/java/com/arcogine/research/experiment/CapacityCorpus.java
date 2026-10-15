@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Deterministic, non-spatial fixtures about how capacity is authored, shared and measured: resource
+ * Deterministic fixtures about how capacity is authored, shared and measured: resource
  * order as an experiment input, resources that serve more than one step, and measurements that
  * answer different questions. Like {@link StarterCorpus}, it states ground truth, not what any
  * diagnostic method should conclude, and no fixture here selects a dispatch policy.

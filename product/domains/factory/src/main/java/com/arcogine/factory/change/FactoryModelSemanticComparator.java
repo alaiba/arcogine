@@ -7,7 +7,6 @@ import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ConfiguredResource;
-import com.arcogine.factory.model.spatial.SpatialRecord;
 import com.arcogine.governance.SemanticArtifact;
 import com.arcogine.governance.change.ChangedEntityRef;
 import com.arcogine.governance.change.SemanticChange;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -37,19 +35,12 @@ import java.util.TreeSet;
  * resources}, {@code operations}, and {@code products} order is itself part of the canonical
  * content. Reordering any of those top-level lists is therefore reported as an {@code
  * ENTITY_MODIFIED} change against the moved entity, in addition to any content-level change.
- *
- * <p>The optional spatial record is compared only coarsely: its addition, removal, or any change
- * to its content is one change against the model's single spatial-record entity. That keeps a
- * spatial difference from ever disappearing behind an empty change list without claiming a finer
- * spatial comparison than Factory currently defines.
  */
 public final class FactoryModelSemanticComparator implements SemanticChangeExtractor {
 
     private static final String RESOURCE_TYPE = "factory.resource";
     private static final String OPERATION_TYPE = "factory.operation";
     private static final String PRODUCT_TYPE = "factory.product";
-    private static final ChangedEntityRef SPATIAL_RECORD =
-            new ChangedEntityRef("factory.spatialRecord", "spatial", "spatial record");
 
     @Override
     public boolean supports(ModelFingerprint fingerprint) {
@@ -65,27 +56,12 @@ public final class FactoryModelSemanticComparator implements SemanticChangeExtra
         compareResources(baseModel, candidateModel, changes);
         compareOperations(baseModel, candidateModel, changes);
         compareProducts(baseModel, candidateModel, changes);
-        compareSpatialRecord(baseModel.spatial(), candidateModel.spatial(), changes);
         return changes;
     }
 
     private static FactoryModel decode(SemanticArtifact artifact) {
         FactoryModelVersion version = FactoryModelArtifact.decode(artifact.canonicalBytes());
         return version.model();
-    }
-
-    private static void compareSpatialRecord(
-            Optional<SpatialRecord> base, Optional<SpatialRecord> candidate, List<SemanticChange> changes) {
-        if (base.isEmpty() && candidate.isPresent()) {
-            changes.add(new SemanticChange(
-                    SemanticChangeKind.ENTITY_ADDED, SPATIAL_RECORD, "spatial record added"));
-        } else if (base.isPresent() && candidate.isEmpty()) {
-            changes.add(new SemanticChange(
-                    SemanticChangeKind.ENTITY_REMOVED, SPATIAL_RECORD, "spatial record removed"));
-        } else if (!base.equals(candidate)) {
-            changes.add(new SemanticChange(
-                    SemanticChangeKind.ENTITY_MODIFIED, SPATIAL_RECORD, "spatial record content changed"));
-        }
     }
 
     private static void compareResources(

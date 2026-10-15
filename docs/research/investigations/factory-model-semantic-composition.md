@@ -1,10 +1,10 @@
 # Factory Model Semantic Composition Research
 
-> **Status:** CONCLUDED — see the maintained [research register](../research-register.md)
+> **Status:** READY — decided, with its optional-record rules not implemented; see the maintained [research register](../research-register.md)
 >
 > **Scope:** How authored Factory semantics compose when not every design represents every behaviorally relevant concern: canonical structure, optional concerns, identity, validation and Engine applicability
 >
-> **Authority:** Research provenance only. The durable result lives in the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution), the [Factory model](../../architecture/factory-model.md) and the [Determinism Contract](../../architecture/overview.md#determinism-contract); this brief decides nothing.
+> **Authority:** Research only. The implemented part of the result lives in the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) and the [Factory model](../../architecture/factory-model.md); the rules no code implements are kept [below](#decided-rules-not-implemented). This brief decides nothing.
 
 ## Question
 
@@ -24,7 +24,7 @@ universal theorem:
 - one aggregate `ModelFingerprint` per published design remains the identity model; an exact
   immutable reference to an independently governed technical contract is available when a concrete
   semantic dependency requires one;
-- the spatial record keeps the five current spatial/handling facts together as a deliberately coarse
+- the spatial record keeps the five spatial/handling facts together as a deliberately coarse
   optional record;
 - mandatory whole-model bundles were not disproven, and more open structures — concern envelopes,
   per-concern identities, profiles as content identity, generic migration machinery — were not
@@ -40,25 +40,55 @@ pair with one work-in-progress Factory model carrying the same optional spatial 
 successor-policy, cross-policy comparison and continued-V1-publication consequences no longer apply.
 The composition rule itself is unchanged by the reset.
 
-Durable destinations:
+The spatial record was the only optional record, and no Engine executed it. It was deleted from the
+code, and its specification moved to the [transfer research](transfer-semantics.md#authored-spatial-record),
+when architecture became a description of implemented behavior. The question is `READY` again:
+the closed grammar and its one aggregate fingerprint are implemented, while the optional-record and
+executability rules below have no implementation. It concludes when an implementation handoff lands
+the first optional record together with these rules.
+
+Destinations:
 
 - [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution) —
-  composition, reference, comparison, applicability and support rules;
-- [Factory model](../../architecture/factory-model.md) — the spatial record's presence and coverage
-  semantics, predicates and canonical grammar;
-- [Determinism Contract](../../architecture/overview.md#determinism-contract) — publication validity
-  never establishes Engine executability;
-- the Factory module's spatial-record validation and canonical-form tests — absence, present legal
-  zero, complete coverage, and every spatial predicate;
+  the implemented composition, reference, comparison and support rules;
+- [Factory model](../../architecture/factory-model.md) — the closed production-record grammar and its
+  one aggregate fingerprint;
+- [Decided rules not implemented](#decided-rules-not-implemented) — the optional-record and
+  executability rules, until a first optional record lands them;
 - the non-normative
   [decision rationale](../../history/decisions/2026-09-23-factory-model-semantic-composition.md) —
   why this boundary was chosen over the serious alternatives at the time.
 
+## Decided rules not implemented
+
+These rules were part of the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution)
+while the spatial record existed in code. They return there with the first optional record.
+
+**Optional authored records.** The definition may admit explicitly present optional authored
+records beside its required ones, and the presence of each is canonical content. An absent record
+means the design makes no assertion in that semantic dimension; nothing is synthesized for it from
+a default. A present record carries authored values, and a legal zero or default-like value is an
+authored value distinct from absence in both meaning and canonical bytes. Unknown or partly
+authored facts are draft or adapter state, never published content; the definition states what makes
+a present record complete and rejects anything else. Which combinations of records are valid is
+decided by the definition's own closed predicate, not by a separate combination registry. A design
+without an optional record has no facts in that dimension and therefore no behavior from it — the
+truthful execution of a design that never authored those semantics, not a degraded mode.
+
+**Publication validity is not Engine executability.** A valid published model is executable only
+when the Engine interpretation's own definition supports the records, values, variants and
+interactions it represents; recognizing which records are present is not sufficient. An Engine
+refuses a model outside that domain before runtime mutation rather than ignoring represented content
+or supplying absent content. The decided [transfer applicability boundary](transfer-semantics.md#applicability-boundary)
+selects no transfer for a model without spatial content and distinguishes it from authored zero and
+from refusal. That selection is specific to the spatial grammar, not a general rule that every future
+transfer lifecycle must be conditioned on authored duration inputs.
+
 ## What remains open
 
-- **Spatial execution.** The current Engine executes production records only and refuses a present
-  spatial record; making it executable is delivery not yet
-  implemented ([spatial transfer execution](https://github.com/alaiba/arcogine/issues/488)), not research.
+- **The first optional record.** The decided spatial record and its transfer lifecycle are kept in
+  the [transfer research](transfer-semantics.md#decided-design--not-implemented); landing them, or
+  any other optional record, lands the rules above with it.
 - **Transport-participant ownership and resource-dependent performance** remain with their own
   register questions; this result neither resolves them nor prebuilds representation for them.
 

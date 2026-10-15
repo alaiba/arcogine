@@ -6,11 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.arcogine.factory.model.spatial.FactoryFloor;
-import com.arcogine.factory.model.spatial.ResourceFootprint;
-import com.arcogine.factory.model.spatial.ResourceLayout;
-import com.arcogine.factory.model.spatial.ResourcePlacement;
-import com.arcogine.factory.model.spatial.SpatialRecord;
 import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.factory.model.validation.FactoryModelValidator;
 import com.arcogine.factory.model.validation.ModelValidationError;
@@ -32,7 +27,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
@@ -46,8 +40,6 @@ import org.junit.jupiter.api.Test;
 class FactoryModelDefinitionBindingTest {
 
     private static final class ResourceProbe {}
-
-    private static final int PRESENCE_OFFSET = "arcogine.factory-model\0".length();
 
     /**
      * Direct executable dependencies of artifact acceptance. The result type decides whether decoded
@@ -234,36 +226,18 @@ class FactoryModelDefinitionBindingTest {
     }
 
     private static List<byte[]> verificationInputs() {
-        byte[] absent = FactoryModelArtifact.encode(version("Widget"));
-        byte[] present = FactoryModelArtifact.encode(publish(Optional.of(spatial())));
+        byte[] valid = FactoryModelArtifact.encode(version("Widget"));
 
-        // Grammar-valid bytes that violate a publication predicate: refused by the validator.
-        byte[] zeroFloor = present.clone();
-        ByteBuffer.wrap(zeroFloor, PRESENCE_OFFSET + 1, Long.BYTES).putLong(0);
+        // Grammar-valid bytes that violate a publication predicate: the product names an operation
+        // the model does not define, so the validator refuses them.
+        byte[] danglingOperation = valid.clone();
+        ByteBuffer.wrap(danglingOperation, danglingOperation.length - Long.BYTES, Long.BYTES).putLong(999);
 
-        byte[] truncated = Arrays.copyOf(absent, absent.length - 1);
-        return List.of(absent, present, zeroFloor, truncated);
-    }
-
-    private static SpatialRecord spatial() {
-        return new SpatialRecord(
-                new FactoryFloor(8, 4),
-                0,
-                1,
-                List.of(
-                        new ResourceLayout(new MachineId(1), new ResourcePlacement(0, 0), new ResourceFootprint(2, 2)),
-                        new ResourceLayout(new MachineId(2), new ResourcePlacement(5, 1), new ResourceFootprint(2, 2))));
+        byte[] truncated = Arrays.copyOf(valid, valid.length - 1);
+        return List.of(valid, danglingOperation, truncated);
     }
 
     private static FactoryModelVersion version(String productName) {
-        return publish(Optional.empty(), productName);
-    }
-
-    private static FactoryModelVersion publish(Optional<SpatialRecord> spatial) {
-        return publish(spatial, "Widget");
-    }
-
-    private static FactoryModelVersion publish(Optional<SpatialRecord> spatial, String productName) {
         ConfiguredResource mill = new ConfiguredResource(new MachineId(1), "Mill", 2, 125.5, 3);
         ConfiguredResource packer = new ConfiguredResource(new MachineId(2), "Packer", 1, null, 0);
         OperationStepDefinition machine = new OperationStepDefinition(
@@ -272,7 +246,7 @@ class FactoryModelDefinitionBindingTest {
         OperationDefinition operation = new OperationDefinition(100, "Routing", List.of(machine, pack));
         ProductDefinition product = new ProductDefinition(new ProductId(10), productName, operation.id());
         return FactoryModelPublisher.publish(
-                new FactoryModel(List.of(mill, packer), List.of(operation), List.of(product), spatial));
+                new FactoryModel(List.of(mill, packer), List.of(operation), List.of(product)));
     }
 
     private static String sha256(byte[] bytes) {

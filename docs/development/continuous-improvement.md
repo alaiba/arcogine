@@ -157,6 +157,15 @@ This **full branch inventory and deletion-candidate table lives only in chat**, 
 
 Research-to-delivery elapsed-time or issue-aging statistics become canonical only through the source-neutral evidence/analyzer contract once those measures are implemented and validated. Do **not** hand-calculate and label them canonical, equate longer investigation with waste, use finding counts as research-quality scores, or silently classify unobservable cases as successes. Report clearly which observations are direct artifacts, delivery history, interpretation, or unavailable evidence.
 
+### Research-to-delivery lead time
+
+Every retrospective also reports how long decided work waits before it lands:
+
+- for each implementation pull request merged in the window that implements a research [implementation handoff](researching.md#implementation-handoff), the time from the handoff's commit date to the merge;
+- for each issue closed in the window by a merged pull request, the time from the issue's opening to that merge, and for each issue still open at the end of the window, its age.
+
+Each implementation pull request names the handoff it implements, with its commit and commit date, or the issue it closes. Until the analyzer computes these values, report them as noncanonical, list the pull requests and issues used, and follow the research-delivery analysis above for how to present them. They are measures to compare between retrospectives, not targets or thresholds.
+
 ### Action ownership
 
 There is no continuous-improvement intervention register.
@@ -187,7 +196,7 @@ Scope: <baseline PR exclusive> -> <through PR inclusive>
 <3-5 decision-oriented bullets>
 
 ## Mechanical metrics
-<small comparison table using helper output>
+<small comparison table using helper output, plus research-to-delivery lead time>
 
 ## Prior changes
 | Change | Verdict | Evidence | Action |

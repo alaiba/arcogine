@@ -81,12 +81,19 @@ do not replace or override them.
 - **Research:** when asked to investigate a bounded Arcogine research question,
   execute a research brief from `docs/research/`, produce a decision-quality
   research report, or perform an independent adversarial review of an existing
-  research report, read and follow
+  research report, or write the implementation handoff for a concluded question,
+  read and follow
   [`docs/development/agent-roles/researcher.md`](docs/development/agent-roles/researcher.md)
   in addition to this file. That contract defers to
   [`docs/development/researching.md`](docs/development/researching.md) for the
   normative research method. Research investigation and adversarial research
-  review belong to this role, not to Work Planner or Consistency.
+  review belong to this role, not to Work Planner or Consistency. Research never
+  changes production code.
+- **Implementation:** when asked to implement a research implementation handoff,
+  an issue, or a bounded owner request, or to continue an
+  implementation pull request with `..`, read and follow
+  [`docs/development/agent-roles/implementer.md`](docs/development/agent-roles/implementer.md)
+  in addition to this file.
 
 Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, contribution, documentation, or executable

@@ -8,13 +8,13 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../.
 
 Implementation starts from exactly one of:
 
-1. **A research implementation handoff** — a committed handoff in a research-evidence workspace, identified by workspace branch, exact commit SHA and path (see [Implementation handoff](../researching.md#implementation-handoff));
+1. **A committed implementation handoff** — a handoff persisted under `workspace/`, identified by branch, exact commit SHA and path. The Researcher's [implementation handoff](../researching.md#implementation-handoff) is the usual one; a committed implementation prompt from another repository role is consumed the same way;
 2. **An issue** — a GitHub issue that states the responsibility, owning contracts, acceptance evidence and non-goals;
 3. **A bounded owner request** — a fix, refactor, tooling, dependency or Consistency-finding change the repository owner asks for directly.
 
-Before writing code, confirm the input states the responsibility, the contracts it changes or must preserve, the acceptance evidence, and the non-goals. If the meaning of the change is still open, or the input contradicts a current specification, stop and return it — a research handoff to the Researcher, anything else to the owner. Do not settle meaning while coding.
+Before writing code, confirm the input states the responsibility, the contracts it changes or must preserve, the acceptance evidence, and the non-goals. An input may deliberately replace a current specification rule: a handoff from an accepted research conclusion, or an explicit owner decision, that states the new rule. Implement that replacement as one coordinated change of code, tests and specification. Stop and return the input — a research handoff to the Researcher, anything else to the owner — when its meaning is still open, or when it contradicts a current specification without explicitly deciding to replace it. Do not settle meaning while coding.
 
-For a research handoff, resolve the exact commit and path first. If they cannot be resolved, stop with `INPUT BLOCKED — HANDOFF NOT AVAILABLE`; never reconstruct a handoff from a summary.
+For a committed handoff, resolve the exact commit and path first. If they cannot be resolved, stop with `INPUT BLOCKED — HANDOFF NOT AVAILABLE`; never reconstruct a handoff from a summary.
 
 ## Start-of-run grounding
 
@@ -26,7 +26,7 @@ For a research handoff, resolve the exact commit and path first. If they cannot 
 
 ## Branch
 
-Branch from live `main` with a descriptive name, one branch per pull request. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Each slice must leave its code reachable from a supported entry point when it lands. Leave the research workspace untouched; it stays the handoff's custody until the research question concludes.
+Branch from live `main` with a descriptive name, one branch per pull request. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Each slice must leave its code reachable from a supported entry point when it lands. Leave the handoff's workspace untouched; a research workspace stays the handoff's custody until its research question concludes.
 
 ## Implementation
 

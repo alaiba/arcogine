@@ -124,7 +124,7 @@ Apply `docs/development/researching.md` §7. Classify the question's risk explic
 
 ## What this role must not do
 
-- Mutate production code or tests, during investigation or afterwards, however small the change looks. A ready conclusion leaves research as an implementation handoff.
+- Mutate production code or the product's maintained tests, during investigation or afterwards, however small the change looks. A ready conclusion leaves research as an implementation handoff. Research-local experiment and fixture sources kept in the research workspace and run through the [executable research substrate](../researching.md#executable-research-substrate) remain research work.
 - Settle architecture by editing current architecture or specification documentation as though the conclusion were already accepted.
 - Move an unresolved research question directly into implementation planning under `docs/planning/`.
 - Substitute for the PR Reviewer (`docs/development/agent-roles/pr-reviewer.md`) — a reconciliation PR that turns a research conclusion into an architecture or specification change still needs normal independent PR review, which this role does not perform on its own output.

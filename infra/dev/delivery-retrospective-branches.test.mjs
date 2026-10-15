@@ -61,14 +61,14 @@ test('a retained live name with a different PR-recorded head keeps both identiti
   assert.deepEqual(data.branches[0].source, ['live-ref', 'historical-pr-head']);
 });
 
-test('malformed checkpoint, missing origin and duplicate evidence cannot silently pass', () => {
+test('malformed checkpoint and duplicate evidence fail closed, forks are excluded', () => {
   assert.throws(() => validateCheckpoint({ ...checkpoint, title: 'Not a checkpoint' }, 460), /not the exact/);
   const data = { repo, defaultBranch: 'main', checkpoint, checkpointNumber: 460, scannedAt: asOf, branches: [], pulls: [] };
   assert.throws(() => buildInventory({ ...data, branches: [branch('same'), branch('same')] }), /repeated live/);
   assert.throws(() => buildInventory({ ...data, pulls: [pr(500, 'foo'), pr(500, 'foo')] }), /repeated pull/);
   assert.throws(() => buildInventory({ ...data, scannedAt: '2026-10-01T00:00:00Z' }), /after inventory/);
   const missing = buildInventory({ ...data, pulls: [pr(501, 'case', { deletedRepo: true, fork: true })] });
-  assert.deepEqual(missing.unresolvedHeadPrs, [501]);
+  assert.deepEqual(missing.excludedForkPrs, [501]);
 });
 
 test('unknown origin is disclosed and not assumed to be same-repository research', () => {

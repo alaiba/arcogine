@@ -21,7 +21,7 @@ import java.util.Optional;
  * result. Once the catalogue is known valid, it resolves every occurrence through it before
  * aggregating cost, sums committed construction cost, and derives remaining budget from the
  * challenge's starting budget. It mutates none of its inputs, consults no wall-clock time,
- * environment, random value, or global registry, and never calls Finance or factory validation.
+ * environment, random value, or global registry, and never calls factory validation.
  * For identical inputs -- including a failure outcome -- it always produces an equal result,
  * regardless of occurrence order: unresolved item ids are reported via the lexicographically
  * smallest offending identity rather than the first one encountered, and cost overflow is checked

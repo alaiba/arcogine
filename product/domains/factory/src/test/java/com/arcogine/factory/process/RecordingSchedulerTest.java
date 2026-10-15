@@ -9,7 +9,6 @@ import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
-import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
@@ -101,9 +100,8 @@ class RecordingSchedulerTest {
 
     /**
      * A Factory session schedules step completions and nothing else
-     * (docs/architecture/engine-semantics.md section 4). Every other payload -- including the start
-     * and order-completion markers the internal vocabulary still defines, and commands the session
-     * applies immediately rather than queueing -- is refused before it can be queued or captured, so
+     * (docs/architecture/engine-semantics.md section 4). Every other payload -- the commands the session applies
+     * immediately rather than queueing -- is refused before it can be queued or captured, so
      * no event that would consume advancement budget without an authoritative transition can be
      * reintroduced unnoticed.
      */
@@ -114,8 +112,6 @@ class RecordingSchedulerTest {
         scheduler.startCapturing(captured);
 
         List<EventPayload> refused = List.of(
-                new EventPayload.TaskStart(new JobId(1), new MachineId(1), 0),
-                new EventPayload.OrderCompleted(new OrderId(1), new JobId(1), new ProductId(1), 1, 1.0),
                 new EventPayload.OrderCreation(new ProductId(1), 1, 1.0),
                 new EventPayload.MachineAvailabilityChange(new MachineId(1), true));
         for (EventPayload payload : refused) {

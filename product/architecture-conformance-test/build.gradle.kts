@@ -9,7 +9,6 @@ dependencies {
     testImplementation(project(":types"))
     testImplementation(project(":factory"))
     testImplementation(project(":storage"))
-    testImplementation(project(":finance"))
     testImplementation(project(":challenge"))
     testImplementation(project(":research-experiments"))
 

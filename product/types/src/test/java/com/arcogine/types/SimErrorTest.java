@@ -63,15 +63,4 @@ class SimErrorTest {
     void outOfRangeExposesField() {
         assertEquals("price", new SimError.OutOfRange("price", "must be positive").field());
     }
-
-    @Test
-    void unbalancedJournalEntryMessageAndAccessors() {
-        SimError.UnbalancedJournalEntry error =
-            new SimError.UnbalancedJournalEntry("10", "5", "misc entry");
-        assertEquals(
-            "unbalanced journal entry \"misc entry\": debits=10, credits=5",
-            error.getMessage());
-        assertEquals("10", error.debits());
-        assertEquals("5", error.credits());
-    }
 }

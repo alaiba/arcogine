@@ -1,9 +1,9 @@
-# Operational Execution and Digital Twin Architecture
+# Operational Execution and Digital Twin Design
 
-> **Status:** Proposed architectural reference  
+> **Status:** Research record — design kept from the architecture, not implemented  
 > **Scope:** Execution/reality relationships, external observations, digital-twin reconciliation, and design-to-reality continuity  
-> **Authority:** The [Operational continuity contract](operational-continuity.md) is adopted; the remaining boundaries are proposed architecture. This document does not describe current production capability  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Governance and Conformance Architecture](governance-conformance.md), [Standards Alignment](standards-alignment.md), [Factory publication identity contract](factory-design.md#11-publication-identity-and-provenance), [runtime observation/event contract](runtime-contract.md), [external representation policy](external-representations.md), [Operational continuity contract](operational-continuity.md), [Determinism Contract](overview.md#determinism-contract)
+> **Authority:** Research only. Nothing here is implemented; the current boundaries are in the [Architecture Overview](../../architecture/overview.md#operational-execution--not-implemented). It moved out of architecture when architecture became a description of implemented behavior. The [Operational continuity contract](operational-continuity-contract.md) is decided but not implemented; the remaining boundaries are proposed, and their open questions are in the [Operational boundary research](operational-execution-digital-twin-boundaries.md)  
+> **Related:** [Product Charter](../../product/charter.md), [Architecture Overview](../../architecture/overview.md), [Factory Design Architecture](../../architecture/factory-design.md), [Governance and Conformance Architecture](../../architecture/governance-conformance.md), [Standards Alignment](../../architecture/standards-alignment.md), [Factory publication identity contract](../../architecture/factory-design.md#11-publication-identity-and-provenance), [runtime observation/event contract](../../architecture/runtime-contract.md), [external representation policy](../../architecture/external-representations.md), [Operational continuity contract](operational-continuity-contract.md), [Determinism Contract](../../architecture/overview.md#determinism-contract)
 
 ## 1. Architectural position
 
@@ -46,7 +46,7 @@ Plant dynamics   simulated
 
 No single `SIMULATION`, `STAGING`, `PRODUCTION`, or `OPERATIONAL` label adequately describes that whole graph.
 
-The architecture therefore does **not** treat `PRODUCTION / STAGING / SIMULATION` as a durable global execution taxonomy. The [Operational continuity contract](operational-continuity.md) admits no `ExecutionContextKind`: no replacement enum, simulation/operational binary, or equivalent whole-execution consequence classification may be reintroduced under another name.
+The architecture therefore does **not** treat `PRODUCTION / STAGING / SIMULATION` as a durable global execution taxonomy. The [Operational continuity contract](operational-continuity-contract.md) admits no `ExecutionContextKind`: no replacement enum, simulation/operational binary, or equivalent whole-execution consequence classification may be reintroduced under another name.
 
 Several concerns that were previously candidates for one context kind are orthogonal:
 
@@ -70,7 +70,7 @@ A twin can also use simulation internally for prediction or hypothetical continu
 
 ### 2.2 Durable operational identity is an accountable operational continuation
 
-The [Operational continuity contract](operational-continuity.md) is the adopted authority for this boundary. It is summarized here, not restated in full, and this document does not extend it.
+The [Operational continuity contract](operational-continuity-contract.md) is the adopted authority for this boundary. It is summarized here, not restated in full, and this document does not extend it.
 
 The durable operational identity identifies **one accountable operational continuation**: one independently continuing body of Arcogine's own operational conduct and conclusions, maintained as one account for which Arcogine is answerable. It is a reference to the record that established that account, not a new category of thing.
 
@@ -188,7 +188,7 @@ This distinction is substrate-independent and is more fundamental than an `obser
 
 Actor/action/capability semantics are not intrinsically operational. Synthetic execution may need humans, agents, NPCs, adversaries, delegated authority, protected resources, approvals, or forbidden actions.
 
-The cross-cutting role, attribution, and provenance rules this section depends on are recorded in [Architecture Overview — Attribution and decision boundaries](overview.md#attribution-and-decision-boundaries), which is their durable authority. In particular: actor, decision source, and subject are distinct roles whose identities need not differ; no shared actor type, actor kind, or actor equality/lifecycle contract exists; and **actor identity is a different question from the accountable operational continuation identity** [Operational continuity contract](operational-continuity.md) accepts. Actor identity answers *who is the attributable party*; the Operational continuity contract answers *which independently continuing body of accountable conduct a fact belongs to*. They may correlate, and neither inherits the other's equality or lifecycle rules.
+The cross-cutting role, attribution, and provenance rules this section depends on are recorded in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries), which is their durable authority. In particular: actor, decision source, and subject are distinct roles whose identities need not differ; no shared actor type, actor kind, or actor equality/lifecycle contract exists; and **actor identity is a different question from the accountable operational continuation identity** [Operational continuity contract](operational-continuity-contract.md) accepts. Actor identity answers *who is the attributable party*; the Operational continuity contract answers *which independently continuing body of accountable conduct a fact belongs to*. They may correlate, and neither inherits the other's equality or lifecycle rules.
 
 The reusable semantic question is approximately:
 
@@ -387,7 +387,7 @@ The invariant is:
 
 > **An external observation is not created as evidence for one Arcogine model, revision, or operational history. It is an operational fact with independent provenance; later authoritative relationships may interpret it, and Governance may reference it through evidence use.**
 
-Operational Execution must consume Governance-owned fingerprint, revision, semantic change, requirement/assertion, conformance/finding, and evidence-use contracts when they exist rather than introducing duplicates. The evidence/evidence-use contract Governance applies is fixed by the [Governance evidence contract](governance-evidence.md): a raw observation keeps its source provenance and acquires an Arcogine subject only through a later use or reconciliation determination, and a use binds to point identities only — evidence about an accountable operational continuation over time remains the accumulating-identity limit the Operational continuity contract §11 records, owned here rather than by that contract.
+Operational Execution must consume Governance-owned fingerprint, revision, semantic change, requirement/assertion, conformance/finding, and evidence-use contracts when they exist rather than introducing duplicates. The evidence/evidence-use contract Governance applies is fixed by the [Governance evidence contract](../../architecture/governance-evidence.md): a raw observation keeps its source provenance and acquires an Arcogine subject only through a later use or reconciliation determination, and a use binds to point identities only — evidence about an accountable operational continuation over time remains the accumulating-identity limit the Operational continuity contract §11 records, owned here rather than by that contract.
 
 ## 13. Boundary with Factory Design and the Engine
 
@@ -470,6 +470,6 @@ The next architecture work is deliberately bounded to these unresolved questions
 
 Do not spend this architecture round selecting OPC UA/MQTT schemas, authentication providers, database technology, a central context registry, exact checkpoint/replay storage, distributed execution, autonomous physical control, or a generic cross-domain policy framework. Those are proving cases or future implementation choices, not current prerequisites.
 
-The [Operational continuity contract](operational-continuity.md) resolves the durable operational identity referent, continuity, divergence, and record-attachment rules summarized in §2.2. Its identity-separation, non-inference, and raw-observation constraints are adopted architecture. No kind-bound `ExecutionContextKind` model exists, and the representation, persistence, coordination, registry, closure, and ownership questions it defers must not be settled by this document.
+The [Operational continuity contract](operational-continuity-contract.md) resolves the durable operational identity referent, continuity, divergence, and record-attachment rules summarized in §2.2. Its identity-separation, non-inference, and raw-observation constraints are adopted architecture. No kind-bound `ExecutionContextKind` model exists, and the representation, persistence, coordination, registry, closure, and ownership questions it defers must not be settled by this document.
 
 Later architecture or specification work is appropriate when implementation commits Arcogine to hard-to-reverse choices such as shared operation/transition ownership, actor/capability/trust semantics, command correlation/idempotency, external observation/correspondence contracts, reconciliation authority/temporal semantics, or production persistence/retention; the durable result of such a choice is the changed contract, reconciled with its consumers.

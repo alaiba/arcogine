@@ -329,8 +329,8 @@ share a component and do not require one class or module each.
 Supported waiting-state residence and processing residence remain distinct. Residence between waiting entry and dispatch is not automatically availability-conditioned
 readiness, starvation or causal attribution. Utilization, occupancy populations/denominators and
 other interpretations require an explicit named analytical method. Governance owns evidence use,
-historical attribution and conformance, not scheduling or capture. [Operational
-continuation](operational-continuity.md) has its own identity, loss and closure boundaries.
+historical attribution and conformance, not scheduling or capture. An accountable operational continuation, which is not
+implemented, has its own [decided](../research/investigations/operational-continuity-contract.md) identity, loss and closure boundaries.
 
 No new closure API is justified for present confined/static consumers. Reconsider stronger producer
 evidence, command-time support, shared delivery or handover guarantees when concrete requirements

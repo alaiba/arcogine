@@ -30,7 +30,7 @@ content in its producing definition context and does not establish occurrence or
 provenance ([Factory model](factory-model.md)); external formats are projections and serialization
 never defines identity ([external representations](external-representations.md)); raw external
 observations never acquire Arcogine identity at ingestion and corrections are new accepted records
-about earlier ones ([Operational continuity](operational-continuity.md)); and Engine-produced results
+about earlier ones (the decided, not implemented [Operational continuity](../research/investigations/operational-continuity-contract.md) contract); and Engine-produced results
 retain their actual producer provenance and explicit result-affecting inputs without inventing an
 Engine-definition identifier, with cross-interpretation comparison explicit and consumer-owned
 ([Determinism Contract](overview.md#determinism-contract)).
@@ -263,7 +263,7 @@ occurrence**; this is an explicit rule, not a side effect of the evidence contra
 A use binds evidence to exact point-in-time semantic or evaluation subjects whose meaning can be made
 immutable and attributable: a model fingerprint, a verified controlled revision, a semantic scope,
 an evaluation occurrence. Evidence *about* an accountable operational continuation over time — the
-accumulating identity the [Operational continuity contract](operational-continuity.md) §11 records as a known limit — is **outside** this contract. An
+accumulating identity the decided, not implemented [Operational continuity contract](../research/investigations/operational-continuity-contract.md) §11 records as a known limit — is **outside** this contract. An
 integration that needs it must use the owning Operational contract or obtain a separate explicit
 decision; it must not reinterpret the point-identity rule as though a continuation were a point.
 

@@ -154,7 +154,7 @@ Queueing concepts provide the mathematical foundation for bottleneck analysis, w
 
 ISO 22400 is a useful semantic and formula reference for manufacturing KPIs.
 
-**Current status:** The supported runtime observation exposes operational measurements such as throughput, lead time, backlog, completed-order count and value, resource busy time and queue depth, and simulated time. No outward KPI surface exists, and ownership of reusable derived measures remains open research.
+**Current status:** The supported runtime observation exposes operational measurements such as throughput, lead time, backlog, completed-order count and value, queue depth, and simulated time. It exposes no resource busy-time or utilization measure, and no outward KPI surface exists. Ownership of analytical definitions follows [Domain authority](overview.md#domain-authority).
 
 **Current commitment:**
 

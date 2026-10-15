@@ -624,8 +624,9 @@ Runtime observation metadata carries once per observation:
 
 - `RunId`;
 - `ModelFingerprint`;
-- optional `ControlledRevisionId` only when authoritatively bound;
 - the existing supported-event sequence, time, and run-state metadata.
+
+No supported construction binds a runtime to an authoritative controlled revision, so observation metadata carries no revision identity.
 
 ## 12. Supported transfer events
 

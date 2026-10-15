@@ -35,7 +35,7 @@ It is semantically inseparable because:
 
 - design and runtime must share product, operation, configured-resource, policy, constraint, and behaviorally relevant layout semantics;
 - any future capability or qualification semantics must be independently justified rather than inferred from the current resource record;
-- validation must reflect what runtime can actually execute;
+- validation must use the same semantics the runtime executes, while Engine admission separately decides whether a published model is executable;
 - consumers must not manually translate an editor-specific ontology into unrelated runtime semantics;
 - every runtime or verification context must identify the exact model version it instantiated.
 
@@ -91,7 +91,7 @@ Importer / adapter ----|
 CLI / test builder ----+
 ```
 
-A scenario may contain or reference a published model together with runtime inputs such as workload and simulation settings.
+There is no scenario format: a runtime receives its workload and settings through explicit commands. A scenario input format is selected only when a concrete need exists.
 
 ### 3.1 Concern classification
 
@@ -461,7 +461,7 @@ Validation belongs at the shared model/design boundary, not independently in eac
 
 A consumer may perform optimistic local checks for responsiveness, but Factory model validation is authoritative for publication validity and Engine admission is authoritative for runtime executability.
 
-Validation should be deterministic, structured, attributable to fields/entities when possible, explicit about severity, and atomic with respect to publication/instantiation.
+Validation is deterministic, structured, attributable to fields/entities when possible, and atomic with respect to publication/instantiation. Every current violation is an error that refuses publication; validation has no severity dimension.
 
 The initial shared substrate should include:
 

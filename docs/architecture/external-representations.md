@@ -206,7 +206,7 @@ No storage format may silently redefine either identity.
 
 Future governance interoperability may justify formats such as ReqIF, SARIF, W3C PROV, OSCAL, BPMN, or other specialized representations.
 
-Those formats remain projections/adapters over Governance-owned requirements, assertions, evaluations, evidence/evidence-use, findings, governed change, or audit snapshots.
+Those formats remain projections/adapters over Governance-owned requirements, assertions, evaluations, evidence/evidence-use and findings, and over governed change or audit snapshots if those are built.
 
 They must not cause a premature generic cross-domain evidence/event/evaluation ontology.
 

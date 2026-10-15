@@ -288,7 +288,7 @@ Decisions produce Events.
 
 ### Events
 
-Internal events are immutable facts or scheduled facts in simulated time: order creation, task start/end, order completion, and machine availability changes. They carry the facts needed for deterministic Factory transitions and are processed by the scheduler.
+Internal events are immutable facts in simulated time that carry what deterministic Factory transitions need. The internal vocabulary names order creation, task start/end, order completion and machine availability changes, but a Factory session schedules only step completions: its commands apply order creation and availability changes directly ([Event taxonomy](#event-taxonomy)).
 
 The separate supported runtime event contract exposes ordered authoritative changes only after the corresponding state transition succeeds. Internal scheduler events remain implementation contracts rather than public compatibility types.
 ### State

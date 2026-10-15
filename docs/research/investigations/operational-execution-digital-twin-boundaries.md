@@ -51,7 +51,7 @@ Research must preserve these already-established boundaries:
 
 ## Durable operational identity — CONCLUDED
 
-This question is closed. The referent is **one accountable operational continuation**, and the continuity, divergence/lineage, acceptance, divergence-evidence, and record-attachment rules are adopted in the [Operational continuity contract](../../architecture/operational-continuity.md), with the dependent boundary summarized in [Operational Execution and Digital Twin Architecture](../../architecture/operational-execution-digital-twin.md) §2.2.
+This question is closed. The referent is **one accountable operational continuation**, and the continuity, divergence/lineage, acceptance, divergence-evidence, and record-attachment rules are decided in the [Operational continuity contract](operational-continuity-contract.md), with the dependent boundary summarized in the [Operational execution design](operational-execution-design.md) §2.2. Neither is implemented, so the question is `READY` in the register until an implementation handoff lands the contract.
 
 Those documents are the authority; this brief does not restate the decision. Remaining research must consume it rather than reopening it, and must not introduce an operational identifier ahead of the first durable operational record capability — the Operational continuity contract deliberately defers the type name, representation, persistence, coordination, registry, closure/retirement, and module ownership.
 
@@ -156,7 +156,7 @@ Manufacturing traceability may become such a proving case only if a concrete int
 
 ## Exit and promotion
 
-No Operational implementation exists or is ready. The [Operational continuity contract](../../architecture/operational-continuity.md) settles the durable operational identity, but the boundaries above — actor/capability ownership, external operation realization, subject correspondence and temporal reconciliation — must each be settled at least as far as a concrete safe change requires.
+No Operational implementation exists or is ready. The [Operational continuity contract](operational-continuity-contract.md) decides the durable operational identity, but the boundaries above — actor/capability ownership, external operation realization, subject correspondence and temporal reconciliation — must each be settled at least as far as a concrete safe change requires.
 
 Operational implementation starts only when a conclusion passes the research method's [implementation-ready test](../../development/researching.md#implementation-handoff) and also has:
 

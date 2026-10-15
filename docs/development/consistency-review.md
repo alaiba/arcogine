@@ -85,15 +85,16 @@ A formal review has narrow authority to reconcile its finding issues. Remediatio
 
 ## Completion
 
-A formal review persists only finding state.
+A formal review persists actionable finding state and an informational result comment on its associated Continuous Improvement checkpoint when available.
 
 1. Do not mutate findings while analyzing.
 2. Immediately before finding-accounting mutations, resolve live `main` again. It must still equal reviewed target `T`; otherwise stop `INCOMPLETE` with no review-accounting mutations and restart against the new exact target.
 3. Reconcile finding issues idempotently.
 4. Resolve live `main` again. It must still equal reviewed target `T`.
-5. Return the review result in chat.
+5. After the final reviewed-head recheck, publish the result to the associated checkpoint under `docs/development/continuous-improvement.md` § Checkpoint outcome publication, using practice `consistency` and run ID `T`. Include the standard coverage block, each issue-backed finding's number/category/confidence, and deliberately unfiled candidates. Publish both `CLEAN` and `FINDINGS`; never claim `INCOMPLETE` as completed. No checkpoint means no comment or new issue; disclose any publication failure.
+6. Return the review result in chat.
 
-A clean review creates no completion issue, comment, timestamp, previous-reviewed-head record, or other bookkeeping artifact. Its value is the analysis itself; only unresolved findings need durable repository work state.
+A clean review creates no actionable issue or previous-reviewed-head ledger. Checkpoint comments are informational, not evidence of Consistency due state or scope completion.
 
 ## Report
 
@@ -112,4 +113,4 @@ Limitations: none | <specific incomplete pass or other limitation>
 Overall: CLEAN | FINDINGS | INCOMPLETE
 ```
 
-A clean review result is returned in chat only; it is not persisted as bookkeeping.
+Return the complete result in chat and post the concise checkpoint summary when a destination exists. The comment is not the authoritative finding ledger.

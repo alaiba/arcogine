@@ -1,0 +1,33 @@
+name: Retrospective checkpoint publication
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  publish:
+    name: Publish merged retrospective result
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    concurrency:
+      group: retrospective-checkpoint-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.22.2'
+      - name: Publish authoritative Git report to associated checkpoint
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RETROSPECTIVE_PR_NUMBER: ${{ github.event.pull_request.number }}
+          RETROSPECTIVE_MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: node infra/dev/retrospective-checkpoint-merged.mjs

@@ -41,6 +41,11 @@ export function publish({api=gh,repo,number,practice,runId,body}) {
   if(typeof body!=='string'||!body.trim()||body.length>30000||body.includes('arcogine-checkpoint-result:v1:'))throw Error('Invalid result body');
   const text=`${key}\n${body.trim()}\n`, endpoint=`repos/${repo}/issues/${id}/comments`;
   const matching=pages(api,endpoint).filter(c=>typeof c.body==='string'&&c.body.startsWith(key+'\n'));
+  // GraphQL viewer resolves both human credentials and GitHub Actions tokens.
+  // A public marker identifies a run, never the authority to replace a comment.
+  const viewer=api('POST','graphql',{query:'query { viewer { login databaseId } }'})?.data?.viewer;
+  if(!viewer?.login||!Number.isSafeInteger(viewer.databaseId)||viewer.databaseId<1)throw Error('Cannot verify authenticated checkpoint publisher');
+  if(matching.some(c=>c.user?.id!==viewer.databaseId||c.user?.login!==viewer.login))throw Error('Checkpoint practice/run marker ownership collision');
   if(matching.length>1)throw Error('Duplicate practice/run results on checkpoint');
   if(matching.length===1) {
     if(matching[0].body===text)return {status:'unchanged',id};

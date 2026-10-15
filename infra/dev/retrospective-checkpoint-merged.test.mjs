@@ -16,6 +16,7 @@ function fake({body='Retrospective checkpoint: #460',files=['.github/continuous-
  const calls=[];
  const api=(method,url,data)=>{
   calls.push({method,url,data});
+  if(method==='POST'&&url==='graphql')return {data:{viewer:{login:'github-actions[bot]',databaseId:41898282}}};
   if(method==='GET'&&url.endsWith('/pulls/501'))return {merged,base:{ref:'main'},merge_commit_sha:sha,body};
   if(method==='GET'&&url.includes('/pulls/501/files?'))return files.map(filename=>({filename}));
   if(method==='GET'&&url.endsWith('/issues/460'))return {title:'Continuous improvement checkpoint',state:'closed'};
@@ -28,8 +29,8 @@ function fake({body='Retrospective checkpoint: #460',files=['.github/continuous-
 test('merged report publishes distinct final outcome',()=>{
  const x=fake(),read=p=>p===path?report:JSON.stringify(state);
  assert.equal(complete({api:x.api,repo,pr:501,sha,read}).status,'created');
- assert.equal(x.calls.filter(c=>c.method==='POST').length,1);
- assert.match(x.calls.find(c=>c.method==='POST').data.body,/pr-501-merged/);
+ assert.equal(x.calls.filter(c=>c.method==='POST'&&c.url!=='graphql').length,1);
+ assert.match(x.calls.find(c=>c.method==='POST'&&c.url!=='graphql').data.body,/pr-501-merged/);
 });
 test('unmerged, unrelated, or unassociated PR cannot publish',()=>{
  const read=p=>p===path?report:JSON.stringify(state);

@@ -29,9 +29,10 @@ import java.util.function.Function;
  * ConformanceResult#NOT_APPLICABLE} for one assertion at a time. It does not implement external
  * evidence, authorization, deployment, workflow, a severity taxonomy, persistence, or any
  * transport (REST/CLI/UI). It never calls {@code Instant.now()}, a random source, or any other
- * system clock -- every input (fingerprint, revision, scope, state) is supplied by the caller, so
- * evaluation stays deterministic and reproducible per the architecture's audit-snapshot invariant
- * (§12).
+ * system clock -- fingerprint, revision, scope, and state are supplied by the caller.
+ * Reproducible evaluation also requires the caller-supplied assertion rule and state-fingerprint
+ * function to behave deterministically for those inputs; this evaluator does not enforce their
+ * purity or implement historical audit-snapshot reconstruction.
  *
  * <p>{@code controlledRevisionId} is optional and never synthesized: an unpersisted candidate
  * fingerprint is evaluated exactly like an accepted one, only without a {@link

@@ -15,8 +15,12 @@ durable identity is instead one independently continuing operational history: wh
 records belong to the same one versus different ones, and what preserves or breaks that identity.
 
 This contract answers that question. The [Operational execution design](operational-execution-design.md)
-summarizes it and records the surrounding proposed architecture; the semantics below are adopted
-and constrain any future durable operational record capability as design inputs.
+summarizes it and records the surrounding proposed architecture. The semantics below are decided
+but unimplemented research-design inputs for a future durable operational record capability,
+not an adopted current architecture or Operational implementation contract. Current supported
+boundaries are owned by the [Architecture Overview](../../architecture/overview.md#operational-execution--not-implemented)
+and its linked implemented specifications. The question remains `READY` until an implementation
+handoff lands the decided rules with code, tests, and the owning specification.
 
 ## 1. The referent is an accountable operational continuation
 

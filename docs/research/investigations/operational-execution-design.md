@@ -70,7 +70,7 @@ A twin can also use simulation internally for prediction or hypothetical continu
 
 ### 2.2 Durable operational identity is an accountable operational continuation
 
-The [Operational continuity contract](operational-continuity-contract.md) is the adopted authority for this boundary. It is summarized here, not restated in full, and this document does not extend it.
+The [Operational continuity contract](operational-continuity-contract.md) records the decided but unimplemented research design for this boundary. It is summarized here, not restated in full, and this document does not extend it. Current supported boundaries are owned by the [Architecture Overview](../../architecture/overview.md#operational-execution--not-implemented) and its linked implemented specifications; the research design is not an adopted Operational implementation contract.
 
 The durable operational identity identifies **one accountable operational continuation**: one independently continuing body of Arcogine's own operational conduct and conclusions, maintained as one account for which Arcogine is answerable. It is a reference to the record that established that account, not a new category of thing.
 
@@ -457,7 +457,7 @@ Where an operation can have external consequence:
 9. Credential or trust loss has explicit operational consequences.
 10. Consequence must not be inferred or downgraded from a caller-supplied global environment label.
 
-These are architecture requirements, not claims that current Arcogine implements production-grade safety controls.
+These are future safety design inputs retained in research. They are not adopted current architecture requirements or claims that current Arcogine implements production-grade safety controls.
 
 ## 17. Current open questions, non-goals, and architecture triggers
 
@@ -470,6 +470,6 @@ The next architecture work is deliberately bounded to these unresolved questions
 
 Do not spend this architecture round selecting OPC UA/MQTT schemas, authentication providers, database technology, a central context registry, exact checkpoint/replay storage, distributed execution, autonomous physical control, or a generic cross-domain policy framework. Those are proving cases or future implementation choices, not current prerequisites.
 
-The [Operational continuity contract](operational-continuity-contract.md) resolves the durable operational identity referent, continuity, divergence, and record-attachment rules summarized in §2.2. Its identity-separation, non-inference, and raw-observation constraints are adopted architecture. No kind-bound `ExecutionContextKind` model exists, and the representation, persistence, coordination, registry, closure, and ownership questions it defers must not be settled by this document.
+The [Operational continuity contract](operational-continuity-contract.md) records the decided durable operational identity referent, continuity, divergence, and record-attachment rules summarized in §2.2. Its identity-separation, non-inference, and raw-observation constraints remain decided research-design inputs; the question stays `READY` until implementation reconciles them into code, tests, and the owning specification. No kind-bound `ExecutionContextKind` model exists, and the representation, persistence, coordination, registry, closure, and ownership questions it defers must not be settled by this document.
 
 Later architecture or specification work is appropriate when implementation commits Arcogine to hard-to-reverse choices such as shared operation/transition ownership, actor/capability/trust semantics, command correlation/idempotency, external observation/correspondence contracts, reconciliation authority/temporal semantics, or production persistence/retention; the durable result of such a choice is the changed contract, reconciled with its consumers.

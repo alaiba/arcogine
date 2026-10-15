@@ -337,6 +337,15 @@ evidence, command-time support, shared delivery or handover guarantees when conc
 need them; the [execution-evidence research state](../research/investigations/simulation-execution-account.md#reopening-triggers)
 records those triggers. This is a bounded present choice, not a universal exclusion of such APIs.
 
+## A runtime is a single-owner session
+
+A `FactoryRuntime` is driven by one caller at a time. It is not thread-safe: concurrent calls into
+one runtime are unsupported, and a consumer serving several callers serializes them. The simulation
+core and the Factory domain create no threads, executors or parallel streams, and never read the
+wall clock: simulated time is the only time an outcome depends on. `ArchitectureTest` enforces both
+for the simulation and Factory packages; Governance and Storage acceptance timestamps are recording
+metadata outside them.
+
 ## Transport mechanisms are adapters, not the event contract
 
 HTTP/SSE, WebSocket, Kafka, NATS, MQTT, an embedded Java API, or later operational adapters are projections of the same transport-neutral runtime contract. None is a dependency of the simulation core.

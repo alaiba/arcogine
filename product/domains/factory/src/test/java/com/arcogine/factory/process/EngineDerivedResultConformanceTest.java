@@ -1,6 +1,7 @@
 package com.arcogine.factory.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import com.arcogine.core.event.Event;
 import com.arcogine.core.event.EventPayload;
@@ -41,6 +42,46 @@ class EngineDerivedResultConformanceTest {
                 (double) Long.MAX_VALUE / 2.0,
                 runtime.avgLeadTime(),
                 "the accumulated lead-time register must saturate instead of wrapping");
+    }
+
+    @Test
+    void completedValueAccumulatesInCompletionOrder() {
+        // One machine serialises the orders, so they complete in submission order.
+        FactoryRuntime runtime = runtime(1, 7);
+        runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();
+        runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();
+        runtime.submitWorkload(new ProductId(1), 1, 1.0e16).orElseThrow();
+        drainToQuiescence(runtime);
+
+        double inCompletionOrder = (1.0 + 1.0) + 1.0e16;
+        double reassociated = (1.0e16 + 1.0) + 1.0;
+        assertNotEquals(inCompletionOrder, reassociated, "the values must make summation order observable");
+        assertEquals(
+                Double.doubleToRawLongBits(inCompletionOrder),
+                Double.doubleToRawLongBits(runtime.completedSalesValue()),
+                "completed value must be summed exactly in completion order");
+    }
+
+    @Test
+    void completedValueOverflowsToInfinityRatherThanWrapping() {
+        FactoryRuntime runtime = runtime(1, 7);
+        runtime.submitWorkload(new ProductId(1), 1, Double.MAX_VALUE).orElseThrow();
+        runtime.submitWorkload(new ProductId(1), 1, Double.MAX_VALUE).orElseThrow();
+        drainToQuiescence(runtime);
+
+        assertEquals(Double.POSITIVE_INFINITY, runtime.completedSalesValue());
+    }
+
+    @Test
+    void meanLeadTimeConversionRoundsToNearestAboveTheMantissaLimit() {
+        // 2^53 + 1 ticks has no exact binary64 value; round-to-nearest-even reports 2^53.
+        long leadTime = (1L << 53) + 1;
+        FactoryRuntime runtime = runtime(1, leadTime);
+        runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();
+        drainToQuiescence(runtime);
+
+        assertEquals(1L, runtime.completedSales());
+        assertEquals(9_007_199_254_740_992.0, runtime.avgLeadTime());
     }
 
     @Test

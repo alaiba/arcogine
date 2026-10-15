@@ -724,6 +724,36 @@ class BuiltInStorageTest {
     }
 
     @Test
+    void divergentChildrenOfOneParentAreBothAcceptedAndResolveUnchanged() {
+        FactoryModelVersion base = version("Widget", 5);
+        FactoryModelVersion left = version("Widget", 6);
+        FactoryModelVersion right = version("Widget", 7);
+        ControlledRevisionAuthority authority = authorityAt(ACCEPTED_AT);
+
+        ControlledRevision parent = authority.accept(
+                revision(id(20), base.fingerprint(), List.of(), Instant.parse("2026-09-01T19:00:00Z")),
+                artifact(base));
+        ControlledRevision leftChild = authority.accept(
+                revision(id(21), left.fingerprint(), List.of(parent.id()), Instant.parse("2026-09-01T20:00:00Z")),
+                artifact(left));
+        ControlledRevision rightChild = authority.accept(
+                revision(id(22), right.fingerprint(), List.of(parent.id()), Instant.parse("2026-09-01T20:00:00Z")),
+                artifact(right));
+
+        // Lineage is 0..1 parent per revision, not one child per parent: both siblings survive
+        // reopening with their own fingerprint, artifact and parent.
+        ControlledRevisionAuthority reopened = authority();
+        for (var expected : List.of(
+                Map.entry(leftChild, left), Map.entry(rightChild, right))) {
+            HistoricalRevision resolved = reopened.resolve(expected.getKey().id());
+            assertEquals(List.of(parent.id()), resolved.revision().parentRevisionIds());
+            assertEquals(expected.getValue().fingerprint(), resolved.revision().modelFingerprint());
+            assertEquals(expected.getValue().model(), reconstructed(resolved).model());
+        }
+        assertEquals(base.model(), reconstructed(reopened.resolve(parent.id())).model());
+    }
+
+    @Test
     void parentMustAlreadyBeAuthoritativeAndSelfParentingRemainsInvalid() {
         FactoryModelVersion version = version("Widget", 5);
         ControlledRevisionId missingParent = id(3);

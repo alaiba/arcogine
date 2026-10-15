@@ -98,8 +98,6 @@ class RuntimeEventDeliveryAcceptanceTest {
         assertEquals(1, accepted.sequence());
         assertEquals(0, accepted.simulationTime().value());
         assertEquals(version.fingerprint(), accepted.modelFingerprint());
-        assertTrue(accepted.controlledRevisionId().isEmpty(),
-                "the supported event stream must not synthesize a controlled revision without an established binding contract");
         assertEquals(
                 List.of(new AffectedEntityRef.OrderRef(orderId)), accepted.affectedEntityRefs());
         RuntimeEventPayload.OrderAccepted payload = (RuntimeEventPayload.OrderAccepted) accepted.payload();

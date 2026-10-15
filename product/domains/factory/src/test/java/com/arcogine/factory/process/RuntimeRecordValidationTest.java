@@ -9,7 +9,6 @@ import com.arcogine.types.RunId;
 import com.arcogine.types.SimTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +53,6 @@ class RuntimeRecordValidationTest {
             long sequence, List<AffectedEntityRef> refs, RuntimeEventPayload payload) {
         return new RuntimeEventEnvelope(
                 RUN, sequence, TIME, RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
-                MODEL, Optional.empty(), refs, payload);
+                MODEL, refs, payload);
     }
 }

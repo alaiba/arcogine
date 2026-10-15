@@ -201,7 +201,7 @@ AutomationML maps through Arcogine's canonical factory-design boundary. It does 
 
 CloudEvents is a plausible integration-envelope projection for supported `RuntimeEvent` instances once an external event integration needs a standardized envelope.
 
-It is not the Arcogine runtime-event domain type, does not define simulation ordering or provenance semantics, and is not required by the supported runtime observation/event contract. Arcogine-specific responsibilities such as run identity, supported sequence, simulated time, `ModelFingerprint`, optional authoritative `ControlledRevisionId`, affected entities, and semantic payload remain explicit.
+It is not the Arcogine runtime-event domain type, does not define simulation ordering or provenance semantics, and is not required by the supported runtime observation/event contract. Arcogine-specific responsibilities such as run identity, supported sequence, simulated time, `ModelFingerprint`, affected entities, and semantic payload remain explicit.
 
 ### Apache Parquet
 

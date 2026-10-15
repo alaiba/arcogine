@@ -523,7 +523,7 @@ public class FactoryRuntime {
         // consumer cursors from (docs/architecture/runtime-contract.md).
         observedTime = time;
         pendingSupportedEvents.add(new RuntimeEventEnvelope(
-                runId, eventSequence, time, eventType, modelVersion.fingerprint(), Optional.empty(), refs, payload));
+                runId, eventSequence, time, eventType, modelVersion.fingerprint(), refs, payload));
     }
 
     /**

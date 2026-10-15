@@ -1,12 +1,10 @@
 package com.arcogine.factory.process;
 
-import com.arcogine.types.ControlledRevisionId;
 import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.RunId;
 import com.arcogine.types.SimTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * The supported, consumer-neutral runtime event envelope (docs/architecture/runtime-contract.md).
@@ -28,8 +26,6 @@ import java.util.Optional;
  * @param modelFingerprint the source model's content fingerprint ({@code
  * FactoryModelVersion#fingerprint()})
  *     of the model this run was instantiated from
- * @param controlledRevisionId present only when the runtime is actually authoritatively bound to a
- *     controlled revision through an established contract; this envelope never synthesizes one
  * @param affectedEntityRefs typed, stable correlation to every entity this event concerns
  * @param payload the supported, consumer-neutral payload for {@link #eventType()}
  */
@@ -39,7 +35,6 @@ public record RuntimeEventEnvelope(
         SimTime simulationTime,
         RuntimeEventType eventType,
         ModelFingerprint modelFingerprint,
-        Optional<ControlledRevisionId> controlledRevisionId,
         List<AffectedEntityRef> affectedEntityRefs,
         RuntimeEventPayload payload) {
 
@@ -48,7 +43,6 @@ public record RuntimeEventEnvelope(
         Objects.requireNonNull(simulationTime, "simulationTime");
         Objects.requireNonNull(eventType, "eventType");
         Objects.requireNonNull(modelFingerprint, "modelFingerprint");
-        Objects.requireNonNull(controlledRevisionId, "controlledRevisionId");
         Objects.requireNonNull(affectedEntityRefs, "affectedEntityRefs");
         Objects.requireNonNull(payload, "payload");
         if (sequence <= 0) {

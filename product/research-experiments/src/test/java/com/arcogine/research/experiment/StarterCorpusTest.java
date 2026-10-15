@@ -141,7 +141,6 @@ class StarterCorpusTest {
             assertEquals(a.simulationTime(), b.simulationTime());
             assertEquals(a.eventType(), b.eventType());
             assertEquals(a.modelFingerprint(), b.modelFingerprint());
-            assertEquals(a.controlledRevisionId(), b.controlledRevisionId());
             assertEquals(a.affectedEntityRefs(), b.affectedEntityRefs());
             assertEquals(a.payload(), b.payload());
         }
@@ -231,7 +230,6 @@ class StarterCorpusTest {
                 time,
                 event.eventType(),
                 fingerprint,
-                event.controlledRevisionId(),
                 event.affectedEntityRefs(),
                 payload);
     }

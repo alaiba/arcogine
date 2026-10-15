@@ -1,13 +1,13 @@
 # Governance evidence identity and applicability
 
-> **Status:** CONCLUDED
+> **Status:** CONCLUDED; its exact executable-definition basis is split out as the [READY question below](#ready--exact-executable-definition-basis)
 > **Risk:** **High** — this question fixed hard-to-reverse identity, history, applicability, provenance, and cross-version semantics for a shared Governance contract, so its conclusion was independently adversarially reviewed before promotion.
 > **Scope:** The minimum semantic contract required for Governance `Evidence` and `EvidenceUse` before their first implementation can be admitted
-> **Authority:** Research provenance only. The durable conclusion lives in the [Governance evidence contract](../../architecture/governance-evidence.md) and [Governance architecture](../../architecture/governance-conformance.md) §7, §9, and §12; this brief decides nothing and is retained as the investigation's framing.
+> **Authority:** Research provenance only. The durable conclusion lives in the [Governance evidence contract](../../architecture/governance-evidence.md) and [Governance architecture](../../architecture/governance-conformance.md) §7 and §9; this brief decides nothing and is retained as the investigation's framing.
 
 ## Conclusion
 
-**A minimum shared contract survives: an immutable, source-qualified evidence reference plus contextual, attributable use.** The decision-quality report and its independent adversarial review (disposition `ACCEPT WITH QUALIFICATIONS`, fresh isolated-run independence tier) are reconciled into the [Governance evidence contract](../../architecture/governance-evidence.md) and summarized in [Governance architecture](../../architecture/governance-conformance.md) §7, §9, and §12. Those documents are the authority; this brief does not restate the decision. The exact report and review coordinates are recorded in the [research register](../research-register.md) row's durable evidence reference.
+**A minimum shared contract survives: an immutable, source-qualified evidence reference plus contextual, attributable use.** The decision-quality report and its independent adversarial review (disposition `ACCEPT WITH QUALIFICATIONS`, fresh isolated-run independence tier) are reconciled into the [Governance evidence contract](../../architecture/governance-evidence.md) and summarized in [Governance architecture](../../architecture/governance-conformance.md) §7 and §9. Those documents are the authority; this brief does not restate the decision. The exact report and review coordinates are recorded in the [research register](../research-register.md) row's durable evidence reference.
 
 ### Outcome against the candidate models
 
@@ -25,6 +25,37 @@ The report's three qualifications (producer-intrinsic versus use-target provenan
 ### What remains open
 
 Representation, alias/deduplication mechanics, consumer-specific freshness/admissibility/conflict/compatibility policies, Operational correspondence/trust identity, exact Engine result identity and provenance propagation, analytical-definition identity/representation and retained-result provenance, the occurrence/definition persistence mechanism, and retention limits remain deliberately open in the Governance evidence contract §13. **Named-method definition ownership** has since been reconciled separately in [Domain authority](../../architecture/overview.md#domain-authority): the capability choosing the analytical meaning owns it, and Governance can require an evidenced shared meaning without becoming the calculation or capture owner. The [analytics ownership research state](simulation-analytics-consumer-boundary.md) records its reopening conditions; the Operational halves belong to the [Operational boundary research](operational-execution-digital-twin-boundaries.md). Reopening triggers are recorded in the Governance evidence contract's consequences.
+
+## READY — exact executable-definition basis
+
+### Question
+
+> How does an accepted evaluation occurrence preserve the exact executable rule it was evaluated with, so that a later change in a rule's behaviour, or reuse of a definition identity and version for different logic, cannot silently alter what a historical occurrence means?
+
+### Why it is split out
+
+The conclusion above requires a completed occurrence to preserve the exact requirement and assertion definitions it used, including the executable rule, and forbids reusing a definition binding for a materially changed meaning. The implementation preserves wording and source, but holds the rule as an arbitrary `AssertionRule` function object that can close over mutable state, and nothing checks definition reuse across occurrences ([Governance evidence §9](../../architecture/governance-evidence.md#9-historical-explanation-requires-exact-definition-resolution)). That part of the decision is not implemented, so it stays here until an implementation handoff lands it.
+
+### Decision at stake
+
+Whether rule purity remains a documented caller obligation, or Arcogine needs an authoritative representation of the executable rule — an immutable, inspectable rule definition, or a durable binding from a definition identity and version to one exact rule — that it can enforce at acceptance.
+
+### Scope
+
+In scope: what "exact executable rule" means for structural assertions; whether acceptance verifies it; cross-occurrence reuse of a definition identity and version; the consequence for the in-memory occurrence authority and for any later durable evaluation history. Out of scope: durable evaluation-history storage itself ([historical storage support](storage-historical-support.md)), external-evidence evaluation, and audit projections ([Governance change control](governance-change-control.md)).
+
+### Proving cases
+
+- a rule closing over mutable state, mutated after an occurrence is accepted;
+- two occurrences accepted with the same assertion identity and version but different rules;
+- the same wording and source with a re-implemented but behaviourally equal rule, which must not be reported as a different definition;
+- a rule that cannot be represented by the chosen form, which must be refused rather than accepted with a weaker guarantee.
+
+### Exit
+
+Conclude with an implementation handoff that names the chosen guarantee, its acceptance check and its tests, or with an explicit decision to keep purity as a caller obligation and record it as such in the Governance evidence contract. Because this narrows an adopted high-risk contract, independent adversarial review precedes either outcome.
+
+## Original brief
 
 The original brief follows as the investigation's framing.
 

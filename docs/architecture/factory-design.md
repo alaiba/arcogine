@@ -212,27 +212,9 @@ FactoryModelPublished as version 4
 | branch/review context | run/session context |
 | published model version | instantiated source model version |
 
-A future real-operations workflow connects design to governance and deployment explicitly:
+Today a design change reaches Governance as a semantic `ChangeSet` between published versions and, once recorded, as a persisted controlled revision. Authorization and deployment of a revision are not implemented; the intended bridge from a candidate change through assessment, authorization and deployment to reconciliation is kept in [Governance change-control research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
-```text
-Candidate change
-        ↓
-Controlled revision (Governance; persisted, with lineage)
-        ↓
-Technical assessment (validation / simulation / verification)
-        ↓
-Authorization
-        ↓
-Operational deployment plan / target application
-        ↓
-Observed result / reconciliation
-```
-
-The revision is persisted before authorization, not after: an unauthorized revision, or one authorized but never deployed, must remain representable. Authorization and deployment are separate records that reference the revision, not steps a revision passes through to come into existence.
-
-Factory Design owns the semantic design and publication boundary. Governance owns controlled revision/change-control and authorization interpretation. [Operational Execution and Digital Twin](operational-execution-digital-twin.md) owns deployment targeting/application, effective transformed/applied-artifact provenance, resulting operational facts, and reconciliation. That bridge preserves provenance and authority; it does not turn editor operations into simulation or production-control events.
-
-Authorization may be owned externally: Arcogine can produce the technical assessment evidence a candidate needs (validation results, semantic diff, simulation/verification outcomes) without itself hosting the request/review/approval workflow. See section 11.2 below and the operational architecture.
+Factory Design owns the semantic design and publication boundary. Governance owns controlled revision and change interpretation, and would own authorization interpretation. [Operational Execution and Digital Twin](operational-execution-digital-twin.md) would own deployment targeting and application, applied-artifact provenance, resulting operational facts, and reconciliation. Editor operations never become simulation or production-control events.
 
 ## 7. Cross-consumer ownership
 
@@ -423,9 +405,9 @@ would need a concrete requirement that a closed definition with exact references
 
 Arcogine does not require organizational change-management workflow to live inside the factory domain.
 
-A controlled model revision may reference an external change record, such as an issue-tracker key. Arcogine remains authoritative for the model and its domain-specific semantic facts; Governance owns the durable revision/change interpretation, while the external system remains authoritative for request/review/authorization workflow unless that responsibility is explicitly brought into Arcogine. That reference is metadata attached to the revision: it is never consulted to determine model content, fingerprint, or semantic behavior, and Arcogine adopts no external system's schema, workflow states, or terminology into its own domain model to support it. What authorization a deployment requires is a matter of the applicable change-control policy, which Arcogine does not own; the invariant is narrower — a deployment must be attributable to the authorization that policy required for it.
+A semantic `ChangeSet` may reference an external change record, such as an issue-tracker key. Arcogine remains authoritative for the model and its domain-specific semantic facts; Governance owns the durable revision/change interpretation, while the external system remains authoritative for request/review/authorization workflow. That reference is metadata attached to the change: it is never consulted to determine model content, fingerprint, or semantic behavior, and Arcogine adopts no external system's schema, workflow states, or terminology into its own domain model to support it.
 
-Conformance/verification assessments, authorization decisions, simulation runs, and operational deployments remain separate artifacts from the model and from each other. They may reference a fingerprint and authoritative controlled revision when applicable, but none of them is the model. The operational deployment record additionally owns target, execution context, adapter/profile/transformation, effective applied-artifact/version, apply/verification result, and reconciliation provenance; Factory Design must not duplicate those mechanics.
+Conformance evaluations and simulation runs remain separate artifacts from the model and from each other. They may reference a fingerprint and authoritative controlled revision when applicable, but none of them is the model. Authorization decisions and deployment records, when they exist, follow the same rule.
 
 ## 12. Shared validation and publication boundary
 
@@ -472,7 +454,7 @@ runtime       contexts       revision/change
                            Reconciliation
 ```
 
-The canonical model must not depend on a specific UI, simulation transport, industrial protocol, or deployment target. Runtime must not mutate the published model. Operational deployment references an authorized governed revision rather than becoming part of model publication. Consumers must not depend on mutable runtime internals to author a design.
+The canonical model must not depend on a specific UI, simulation transport, industrial protocol, or deployment target. Runtime must not mutate the published model. Deployment never becomes part of model publication. Consumers must not depend on mutable runtime internals to author a design.
 
 This may initially be implemented inside existing modules/packages. A new Gradle module is warranted only when dependency direction or ownership invariants justify one.
 

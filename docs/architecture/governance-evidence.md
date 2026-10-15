@@ -228,15 +228,20 @@ occurrence**; this is an explicit rule, not a side effect of the evidence contra
 
 ## 9. Historical explanation requires exact definition resolution
 
-- A completed occurrence must preserve, or authoritatively resolve, the exact requirement and
-  assertion definitions it used — wording, governing external source identity/edition/locator where
-  meaning depends on it, and the executable rule — not merely labels that could later resolve to
-  something else.
+- A completed occurrence preserves the exact requirement and assertion definitions it used, not
+  merely labels that could later resolve to something else. An accepted occurrence retains the
+  `Requirement` and `Assertion` values it was evaluated with, so their wording and governing
+  external source identity/edition/locator stay with it.
+- The executable rule is preserved only as the `AssertionRule` object the assertion carried. It is
+  an arbitrary function object: Arcogine does not enforce that it is pure or immutable, so a rule
+  that closes over mutable state can behave differently after acceptance. Nor does anything stop an
+  identity and version from being reused across occurrences for materially different wording,
+  source or rule; `RequirementCatalogue` rejects duplicates only within one catalogue. Preserving
+  the exact executable rule is an [open question](../research/investigations/governance-evidence-identity-applicability.md#ready--exact-executable-definition-basis).
 - Current Java equality of `Requirement` and `Assertion` by identity plus version is a value
   contract, not proof that historical definitions are durably resolvable: equality deliberately
   excludes wording, source, and rule, and the in-memory catalogue is not a durable definition
-  authority. A material change to wording, source, or rule must not reuse an existing semantic
-  definition binding. This obligation is additive to the present identity/equality contracts.
+  authority.
 - Later requirement/assertion changes, evidence corrections, trust changes, or policy changes create
   new historical facts and new occurrences; they never reinterpret the recorded basis. A historical
   `PASS` is the recorded outcome of that occurrence, not a current assurance that the claim remains

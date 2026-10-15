@@ -34,7 +34,7 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 |---|---|---|
 | Canonical production-system semantics, validation, publication, deterministic instantiation | [Factory design architecture](architecture/factory-design.md) | One published semantic model is the downstream source of truth |
 | Deterministic workload, work items, dispatch, session, supported observations/events | [Engine semantics](architecture/engine-semantics.md) / [runtime contract](architecture/runtime-contract.md) | Simulation runtime truth; not production-control semantics |
-| Semantic fingerprint/revision history, semantic change, requirements, conformance, evidence/governed change | [Governance architecture](architecture/governance-conformance.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
+| Semantic fingerprint/revision history, semantic change, requirements, conformance, evidence | [Governance architecture](architecture/governance-conformance.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
 | Built-in persistent realization of controlled revisions | [Storage architecture](architecture/storage.md) | Governance owns history meaning; Storage owns current local persistence and its support scope |
 | Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation exists until the required semantic boundaries are resolved |
 | Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge](architecture/challenge.md) | Headless game-owned rules; not production simulation |
@@ -64,7 +64,7 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 |---|---|
 | [Architecture overview](architecture/overview.md) | Current design, modules, determinism and Events-State-Observations principles |
 | [Factory design](architecture/factory-design.md) | Cross-consumer factory-model/design lifecycle semantics |
-| [Governance and conformance](architecture/governance-conformance.md) | Revision/change/requirements/conformance/evidence/governed-change architecture |
+| [Governance and conformance](architecture/governance-conformance.md) | Revision/change/requirements/conformance/evidence architecture; governed change and audit are research |
 | [Storage](architecture/storage.md) | Public contract, built-in provider, local persistence guarantees and limits |
 | [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture |
 | [Engine semantics](architecture/engine-semantics.md) | Normative work-in-progress result-affecting Engine interpretation |
@@ -98,4 +98,4 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 | [Transfer semantics](research/investigations/transfer-semantics.md) | READY decided spatial record and transfer lifecycle, not implemented, plus CANDIDATE non-spatial hand-off/timing follow-up |
 | [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, and unselected recovery/session extensions |
 | [Operational/Digital Twin boundaries](research/investigations/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |
-| [Governance change control](research/investigations/governance-change-control.md) | CANDIDATE: what must be settled before governed change, exceptions, mappings or audit projections are implemented |
+| [Governance change control](research/investigations/governance-change-control.md) | CANDIDATE: what must be settled before governed change, exceptions, mappings or audit projections are implemented, with their design kept from the architecture |

@@ -284,7 +284,7 @@ Potential notation for business or approval workflows. It should not replace pro
 
 Potential Governance projections when concrete requirement interchange, findings integration, provenance interchange, or security/control-framework use cases appear.
 
-These remain downstream of Governance-owned requirements/assertions, conformance evaluation, evidence/evidence-use, findings, governed change, and audit projections. They must not create a generic cross-domain evidence/event/evaluation ontology prematurely.
+These remain downstream of Governance-owned requirements/assertions, conformance evaluation, evidence/evidence-use and findings, and of governed change and audit projections if those are built. They must not create a generic cross-domain evidence/event/evaluation ontology prematurely.
 
 ### SCOR
 

@@ -4,7 +4,7 @@
 >
 > **Authority:** Historical, non-normative evidence; current meaning lives only in the documents it was reconciled into
 >
-> **Reconciled into:** [Factory/Engine Transfer Applicability](../../architecture/transfer-applicability.md) and [Factory semantic evolution](../../architecture/factory-design.md#111-semantic-evolution)
+> **Reconciled into:** [Factory/Engine Transfer Applicability](../../research/investigations/transfer-semantics.md#applicability-boundary) and [Factory semantic evolution](../../architecture/factory-design.md#111-semantic-evolution)
 
 ## Decision
 

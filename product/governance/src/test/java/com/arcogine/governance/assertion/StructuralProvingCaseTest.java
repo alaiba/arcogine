@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Per the requirement-scope acceptance criteria, this uses a minimal test-domain fixture ({@link
  * DeclaredResource}) rather than manufacturing a permanent Factory invariant. {@code
- * FactoryModelValidator} owns Factory publication validity, while Engine admission decides whether
- * published content is executable; this structural fixture establishes neither. It proves the
+ * FactoryModelValidator} owns Factory publication validity; this structural fixture does not
+ * establish it. It proves the
  * contract is headlessly operable -- no application framework, no outward DTOs, no mutable runtime state,
  * no external evidence, no compliance framework. The factory-owned invariant used here is a
  * structural fixture; this test does not select a permanent production conformance rule.

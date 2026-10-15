@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A deliberately small corpus of deterministic, non-spatial fixtures with ground truth, not a
+ * A deliberately small corpus of deterministic fixtures with ground truth, not a
  * statement of what any diagnostic method should conclude.
  *
  * <p>Every fixture uses the same capture protocol (an observation right after submission, one

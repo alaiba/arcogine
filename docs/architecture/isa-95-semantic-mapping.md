@@ -126,7 +126,7 @@ This table is the maintained working register. Unit-work decomposition is implem
 | Internal scheduler events | Transient execution inputs ordered by `Scheduler` | No direct ISA-95 object equivalent | Arcogine-specific | Extend | They do not provide retained history or an outward performance model |
 | `FactoryHandler` | Owner of machines, jobs, queues, routings, and production aggregates | Narrow production-execution function in a Level-3-like scope | Approximate | Alias | A class is not an ISA-95 level; Arcogine covers only a subset of MOM activities |
 | Throughput, lead-time, backlog, completed-sales and related observations | Operational measures derived from authoritative runtime state, aggregates, and counters | Operations Performance / manufacturing KPI information | Partial | Adopt or alias per KPI | Backlog, completed-sales, and order lead-time meanings remain order-level under child-job decomposition. The Engine produces no utilization measure: equipment utilization remains externally definable by a named analytical method over supported runtime evidence, not an Engine-produced metric |
-| Factory-floor position and footprint (optional spatial record) | Authored physical placement in the published model; its transfer consequences are specified, but the current Engine refuses a model that carries it | No one-to-one equipment-hierarchy mapping | Orthogonal | Extend | Must remain distinct from organizational/resource containment |
+| Factory-floor position and footprint | Not in the published model; a decided spatial record with transfer consequences is kept in [transfer research](../research/investigations/transfer-semantics.md#decided-design--not-implemented) | No one-to-one equipment-hierarchy mapping | Orthogonal | Extend | Must remain distinct from organizational/resource containment |
 | Proposed resource pool / work center | Group of eligible resources and aggregate capacity | Work Center / resource scope | Potentially strong | Adopt or alias when implemented | Introduce only when it owns real dispatch, capacity, or reporting semantics |
 | Enterprise / Site hierarchy | Organizational and physical scope above a factory | Enterprise / Site | Relevant but absent | Defer | No current multi-site or enterprise-scoped behavior |
 
@@ -199,7 +199,6 @@ WorkItem
     queue position
     status
     processing timing
-    transfer state
 ```
 
 This is the mutable shop-floor concern held mostly by `Job`, `Machine`, machine queues, and cross-machine pending work. `JobId` identifies one independently dispatchable work item; quantity `N` becomes `N` unit-quantity sibling jobs under the accepted `Order`; each child progresses through one routing independently. `ordinalWithinOrder` is deterministic ordering metadata, not identity. No separate `ExecutionUnitId`, `LotId`, or `BatchId` is introduced by unit-work decomposition.
@@ -396,7 +395,7 @@ Arcogine currently models a narrow production-execution slice, not the complete 
 | Quality operations | Can be represented only as an ordinary routing step/machine | Not first-class |
 | Maintenance operations | None | Deferred |
 | Enterprise integration | None — no current outward adapter | No ISA-95 transaction/profile support |
-| Spatial layout | Optional spatial record in the published Factory model; not executed by the current Engine | Arcogine extension |
+| Spatial layout | Not implemented; decided design kept in [transfer research](../research/investigations/transfer-semantics.md#decided-design--not-implemented) | Arcogine extension |
 
 Use this matrix to prevent broad statements such as "the factory domain implements Level 3". It implements production-execution behavior within a Level-3-like scope; it does not cover the full set of MOM activities.
 

@@ -19,6 +19,7 @@ import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
 import com.arcogine.types.ProductId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -83,6 +84,14 @@ class FactoryRuntimeBoundaryAcceptanceTest {
         assertEquals(List.of(0L, 1L, 2L, 3L), jobs.stream().map(JobView::ordinalWithinOrder).toList());
         assertTrue(jobs.stream().allMatch(job -> job.orderId().equals(orderId)));
         assertTrue(jobs.stream().noneMatch(JobView::isComplete));
+    }
+
+    @Test
+    void runtimeDoesNotExposeAPlaceholderEngineSemanticsIdentifier() {
+        assertTrue(Arrays.stream(FactoryRuntime.class.getMethods())
+                .noneMatch(method -> method.getName().equals("engineSemantics")));
+        assertTrue(Arrays.stream(FactoryRuntime.class.getMethods())
+                .noneMatch(method -> method.getName().equals("setEngineSemantics")));
     }
 
     @Test

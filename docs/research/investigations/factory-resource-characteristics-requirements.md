@@ -106,4 +106,4 @@ Reject a generalized characteristic model when:
 
 Conclude when the investigation can state whether `capacityLiters` should be removed, retained narrowly, or replaced by typed characteristic/requirement semantics with explicit ownership and proving evidence, without deciding whether those semantics derive or verify operation-resource eligibility.
 
-The durable destination is [Factory model](../../architecture/factory-model.md) and [Factory Resource Semantics](../../architecture/factory-resource-semantics.md), with Engine consequences only if the surviving semantics affect execution. Implementation planning follows only after reconciliation.
+The durable destination is [Factory model](../../architecture/factory-model.md) and [Factory Resource Semantics](../../architecture/factory-resource-semantics.md), with Engine consequences only if the surviving semantics affect execution. Implementation follows only after reconciliation, through an implementation handoff.

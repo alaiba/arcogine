@@ -47,13 +47,13 @@ Question:
 
 > What minimum requirement set makes the owner-selected direction a coherent first non-spatial playable slice, and which open product questions, if any, does that requirement set depend on?
 
-Two concluded inputs bound it: the [strategy-space reference challenge](factory-design-game-strategy-space.md) and the diagnostic [promoted requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements), together with the [consumer integration boundary](#consumer-integration-boundary) below. It needs a bounded brief before it is `READY`. A conclusion that passes the research method's [implementation-ready test](../../development/researching.md#implementation-handoff) leaves research as an implementation handoff; anything it cannot settle becomes a narrower question.
+Two concluded inputs feed it: the [strategy-space reference challenge](factory-design-game-strategy-space.md) and the diagnostic [promoted requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements), together with the [consumer integration boundary](#consumer-integration-boundary) below. It decides which of those requirements a first slice adopts, with their studied scope and qualifications; until then they bind nothing. It needs a bounded brief before it is `READY`. A conclusion that passes the research method's [implementation-ready test](../../development/researching.md#implementation-handoff) leaves research as an implementation handoff; anything it cannot settle becomes a narrower question.
 
 ### Diagnostic evidence contract — CONCLUDED
 
 [Factory-design game diagnostic evidence contract](factory-design-game-diagnostic-evidence.md) asked what minimum player-facing evidence contract can be built from supported simulation facts so that every diagnosis is mechanically traceable, its method is explicit, and unsupported causal attribution is refused.
 
-It concluded as a bounded positive within the studied non-spatial scope: a mechanically truthful, inspectable diagnostic surface is achievable. Its requirements are its [promoted requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements). The human evidence is a single-person smoke test by a co-designing owner with reduced blinding. That can falsify a presentation but cannot establish what independent players will understand, so usability, comprehension, learning and bottleneck teaching remain unestablished. Utilization and starvation are concrete Game measurement demands; an accepted named method must fix their choices before any slice shows them. No method or implementation is admitted.
+It concluded as a bounded positive within the studied non-spatial scope: a mechanically truthful, inspectable diagnostic surface is achievable. Its [promoted requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements) are input to the first-slice requirement set, not binding rules. The human evidence is a single-person smoke test by a co-designing owner with reduced blinding. That can falsify a presentation but cannot establish what independent players will understand, so usability, comprehension, learning and bottleneck teaching remain unestablished. Utilization and starvation are concrete Game measurement demands; an accepted named method must fix their choices before any slice shows them. No method or implementation is admitted.
 
 ### Non-spatial challenge strategy space — CONCLUDED
 
@@ -69,7 +69,7 @@ Question:
 
 > Can a controlled one-variable retry be presented as a mechanically traceable before/change/after evidence chain without asserting an unobserved causal mechanism?
 
-Its evidence-contract precondition is now met. The concluded diagnostic-evidence requirements already fix what a controlled comparison may claim: a single change with its outcome delta, a whole change set with attribution withheld, single-change results that do not compose, and "needed" as time-only. Promote this question only when a selected slice or product decision needs retry-explanation evidence beyond those requirements. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; common named run-comparison meanings follow the [concluded analytical-definition admission rule](../../architecture/overview.md#domain-authority), not an assumed shared module.
+Its evidence-contract precondition is now met. The concluded diagnostic-evidence requirements already state what a controlled comparison may claim: a single change with its outcome delta, a whole change set with attribution withheld, single-change results that do not compose, and "needed" as time-only. Promote this question only when a selected slice or product decision needs retry-explanation evidence beyond those requirements. The concluded strategy-space reference already supplies a challenge family worth comparing, though most single additions from a given base change nothing, so the base of a controlled retry must be chosen deliberately. This remains a product-explanation question; common named run-comparison meanings follow the [concluded analytical-definition admission rule](../../architecture/overview.md#domain-authority), not an assumed shared module.
 
 ### Spatial design trade-off — CANDIDATE
 
@@ -177,14 +177,14 @@ Challenge admissibility, Factory publication validity and Engine executability s
 | Canonical production-system semantics and publication validity | Arcogine Factory |
 | Executability, workload, work items, queues, dispatch, processing, transfers, clock and event order | Arcogine Engine/runtime |
 | Supported observations, runtime events and performance facts | Arcogine Engine/runtime |
-| Named Game diagnostics, once a slice includes them | Game, under the [diagnostic requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements); never an Engine fact |
+| Named Game diagnostics, once a slice includes them | Game, under the [diagnostic requirements](factory-design-game-diagnostic-evidence.md#promoted-requirements) the slice adopts; never an Engine fact |
 | Named analytical definitions common to several users | A shared owner only after a concrete [Domain authority](../../architecture/overview.md#domain-authority) trigger |
 | Player-facing presentation, explanation and wording | Game |
 | Game save wrapper around any supported Arcogine checkpoint | Game |
 
 `Level`, score, unlocks, player currency, tutorial state, decorative assets and campaign progression never enter canonical Arcogine semantics, and the game never reproduces Arcogine validation, decomposition, scheduling, dispatch, transfer or KPI semantics.
 
-**Integration rules.** Projection is explicit, testable and deterministic for every result-affecting input. Presentation speed changes how the client asks the runtime to advance, never production durations, and outcomes never depend on wall-clock time. The game renders supported observations and events, not internal Engine classes, and every player-facing diagnostic meets the diagnostic requirements. Challenge evaluation interprets authoritative outcome facts plus game-owned economics and never reconstructs production truth. A combined save wraps a supported Arcogine recovery contract plus game-owned state; it never invents an Engine persistence contract.
+**Integration rules.** Projection is explicit, testable and deterministic for every result-affecting input. Presentation speed changes how the client asks the runtime to advance, never production durations, and outcomes never depend on wall-clock time. The game renders supported observations and events, not internal Engine classes, and every player-facing diagnostic meets the diagnostic requirements the slice adopts. Challenge evaluation interprets authoritative outcome facts plus game-owned economics and never reconstructs production truth. A combined save wraps a supported Arcogine recovery contract plus game-owned state; it never invents an Engine persistence contract.
 
 **Acceptance evidence for a first slice.** A first playable slice is complete only when:
 
@@ -192,7 +192,7 @@ Challenge admissibility, Factory publication validity and Engine executability s
 2. the runtime is created only from the published model;
 3. the fixed production requirement is submitted without the game manufacturing work decomposition;
 4. the client controls the run through supported session and advancement primitives;
-5. player-visible runtime state derives from supported observations and events, and every diagnostic claim passes the slice's acceptance tests for the diagnostic requirements;
+5. player-visible runtime state derives from supported observations and events, and every diagnostic claim passes the slice's acceptance tests for the diagnostic requirements it adopts;
 6. identical explicit inputs produce identical semantic outcomes;
 7. a design change produces a new candidate and publication rather than mutating an active run's source model;
 8. challenge scoring and evaluation stay game-owned and attributable to their policy version; and
@@ -205,13 +205,14 @@ Challenge admissibility, Factory publication validity and Engine executability s
 The [concluded ownership boundary](simulation-analytics-consumer-boundary.md) separates
 Engine-owned execution/results from named methods whose selected meaning belongs to their
 consumer by default. This does not select a Game method. The concluded
-[diagnostic evidence question](factory-design-game-diagnostic-evidence.md) promoted the product
-requirements, sufficient-evidence rules and refusal guardrails, but admitted no method.
+[diagnostic evidence question](factory-design-game-diagnostic-evidence.md) promoted product
+requirements, sufficient-evidence rules and refusal guardrails as input to the first-slice
+requirement set, but admitted no method.
 
 Accordingly:
 
 - overlays, timelines, callouts, wording, tutorial sequencing, and progressive disclosure remain Game presentation choices;
-- the Game may define its **own** named diagnostic only through the diagnostic requirements' [method acceptance gate](factory-design-game-diagnostic-evidence.md#diagnostic-claims-and-evidence); a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
+- the Game may define its **own** named diagnostic only through a method acceptance gate its slice adopts, starting from the diagnostic research's [method acceptance gate](factory-design-game-diagnostic-evidence.md#diagnostic-claims-and-evidence); a genuinely common method follows concrete [shared-owner triggers](../../architecture/overview.md#domain-authority), not a duplicated local KPI formula;
 - a research-local derivation may establish study ground truth but does not become a supported Game/Engine definition automatically;
 - snapshot, period-aggregate and future-horizon claims require distinct proof; a Game driver does not thereby own every holder's evidence;
 - transfer-dependent diagnostics were outside the concluded study and stay unvalidated until spatial runtime consequences are executable and evidenced; population-level comprehension remains solely with the separate CANDIDATE external-player-validation question.
@@ -266,6 +267,7 @@ Consequently:
 This programme does not have one `CONCLUDED` state. Playable implementation starts only when the [first-slice requirement set](#first-slice-requirement-set--candidate) question reaches an [implementation-ready](../../development/researching.md#implementation-handoff) conclusion and hands it to the Implementer. That conclusion must settle, for its slice:
 
 - the requirement set, following the owner direction, with no dependency on another unresolved product question;
+- which diagnostic requirements the slice adopts, with their studied scope and qualifications;
 - an accepted named Game method for any utilization or starvation measure the slice shows, under the [method acceptance gate](factory-design-game-diagnostic-evidence.md#diagnostic-claims-and-evidence);
 - the projector's identity and order rule and the rest of the integration boundary;
 - the Factory/Engine capability it needs, all landed;

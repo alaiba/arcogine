@@ -164,7 +164,7 @@ When a surface changes, inspect maintained or executable surfaces that encode or
 | `FactoryRuntime`, handlers, orders, jobs | architecture overview, Engine Readiness, the runtime and Engine Semantics contracts, acceptance/integration tests, consumer contracts |
 | events, scheduler, observations | event/state/observation architecture, supported runtime contract, determinism tests |
 | module dependencies | architecture module graph, executable architecture rules, domain/challenge boundaries |
-| challenge domain | Challenge Readiness, game consumer plans, Engine-vs-Challenge boundary |
+| challenge domain | Challenge contract, Game consumer research, Engine-vs-Challenge boundary |
 | governance/conformance | governance architecture and plan, the identity/revision/fingerprint specifications, evidence/findings semantics |
 | operational/digital-twin work | operational architecture/plan, security/authority concerns, governance boundary |
 | outward controllers and projections, if present | runtime contract, relevant adapter references, integration tests |

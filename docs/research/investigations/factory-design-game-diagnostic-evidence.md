@@ -2,19 +2,19 @@
 
 > **Status:** CONCLUDED — see the maintained [research register](../research-register.md)  
 > **Scope:** Truthful, inspectable player-facing diagnostic evidence over supported non-spatial production/runtime facts  
-> **Authority:** Product research record only. It holds the [promoted requirements](#promoted-requirements) for a future playable slice. This record defines no Engine fact, admitted analytical method or population-level usability claim
+> **Authority:** Research record only. Its [promoted requirements](#promoted-requirements) are input to the [first-slice requirement set](factory-design-game-vertical-slice.md#first-slice-requirement-set--candidate) and bind no slice until that question's implementation-ready conclusion adopts them. This record defines no Engine fact, admitted analytical method or population-level usability claim
 
 ## Conclusion
 
 > Within the studied non-spatial scope, a mechanically truthful, inspectable diagnostic surface is achievable from supported simulation facts. It allows direct facts, counts from one labeled observation, supported event intervals, controlled comparisons, and values of named methods with declared evidence and refusal. It never presents a falsified single-run heuristic as fact. One co-designing owner found a pull-based text prototype explorable in a single-person smoke test.
 
-This is a **bounded positive**. It establishes guardrails that held on every falsification case checked. It also establishes concrete Game measurement demands with the choices a method must fix, and presentation requirements that survived the owner sessions. It does **not** establish that the surface is usable, understandable, satisfying or engaging for target players, that learning occurs, that bottleneck can be taught, or that any analytical definition is admitted. The requirement set is under [Promoted requirements](#promoted-requirements); no playable slice is admitted ([programme](factory-design-game-vertical-slice.md#promotion-to-playable-implementation)).
+This is a **bounded positive**. It establishes guardrails that held on every falsification case checked. It also establishes concrete Game measurement demands with the choices a method must fix, and presentation requirements that survived the owner sessions. It does **not** establish that the surface is usable, understandable, satisfying or engaging for target players, that learning occurs, that bottleneck can be taught, or that any analytical definition is admitted. The requirements it promotes, as input to the first-slice requirement set, are under [Promoted requirements](#promoted-requirements); no playable slice is admitted ([programme](factory-design-game-vertical-slice.md#promotion-to-playable-implementation)).
 
 ## Bounded question
 
 What minimum player-facing diagnostic evidence contract can the game build from supported Arcogine simulation facts so that every diagnostic claim is mechanically traceable to authoritative or explicitly derived ground truth, explicit about its method, able to refuse unsupported causal attribution, and inspectable without exposing scheduler or runtime internals?
 
-**Decision at stake.** Whether a first internal or playable slice can expose a truthful diagnostic surface for the non-spatial production problem, and which evidence and explanation requirements to promote into the game consumer plan.
+**Decision at stake.** Whether a first internal or playable slice can expose a truthful diagnostic surface for the non-spatial production problem, and which evidence and explanation requirements to promote for a playable slice.
 
 **Framing set by the owner during investigation.** The brief defined *truthful* but not *diagnostic*, so the owner set the player goals:
 
@@ -95,14 +95,16 @@ These must not be reintroduced:
 
 ## Promoted requirements
 
-These requirements bind every player-facing diagnostic of a future playable slice. They are
-research-derived requirements, not an admitted implementation: no playable slice exists, and they
-select no UI, client technology, mission set, curriculum or analytical method.
+These requirements are this research's result and an input to the [first-slice requirement
+set](factory-design-game-vertical-slice.md#first-slice-requirement-set--candidate). Being written here binds no slice: they become binding
+only when an implementation-ready conclusion of that question adopts them, with the scope and
+qualifications below, and the implementation that lands them reconciles them into the Game's owning
+architecture. No playable slice exists, and they select no UI, client technology, mission set,
+curriculum or analytical method.
 
 ### Diagnostic claims and evidence
 
-These requirements are this research's promoted result. They bind every player-facing diagnostic of an admitted slice. They select no UI, client technology,
-mission set, curriculum or analytical method. They were established only for the studied scope:
+They were established only for the studied scope:
 non-spatial, one product, linear routing, the whole order released at once, every machine always
 online, no setup or transfer, and static recorded runs with pre-computed variants. Outside that scope
 a claim needs its own validation or is refused.
@@ -217,7 +219,7 @@ Refusal is an internal correctness guardrail, not a mandatory player-facing "can
 prefer offering the experiment that answers the question, or omit the unsupported statement. A mission
 count, scripts, answer keys and client technology are not requirements.
 
-**Acceptance tests.** Before admission, a slice that shows diagnostics derives its own executable
+**Acceptance tests.** A slice that adopts these requirements derives its own executable
 acceptance tests from these guardrails. It does not reuse the research's keyword and
 self-declared-facet audits, which are regression checks rather than truthfulness verifiers. The
 tests cover at least the [preserved negative

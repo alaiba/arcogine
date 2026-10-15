@@ -36,7 +36,7 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 | Deterministic workload, work items, dispatch, session, supported observations/events | [Engine semantics](architecture/engine-semantics.md) / [runtime contract](architecture/runtime-contract.md) | Simulation runtime truth; not production-control semantics |
 | Semantic fingerprint/revision history, semantic change, requirements, conformance, evidence | [Governance architecture](architecture/governance-conformance.md) | Governance does not ingest telemetry or perform external actuation/reconciliation |
 | Built-in persistent realization of controlled revisions | [Storage architecture](architecture/storage.md) | Governance owns history meaning; Storage owns current local persistence and its support scope |
-| Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Operational architecture](architecture/operational-execution-digital-twin.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | No implementation exists until the required semantic boundaries are resolved |
+| Operational identity/trust, external realization, subject correspondence, external observations, reconciliation, drift/resilience | [Overview boundary](architecture/overview.md#operational-execution--not-implemented) / [Operational design](research/investigations/operational-execution-design.md) / [Operational research](research/investigations/operational-execution-digital-twin-boundaries.md) | Not implemented; design and decided continuity contract are research |
 | Game challenge identity, catalogue/economics, admissibility, evaluation, attempt comparison | [Challenge](architecture/challenge.md) | Headless game-owned rules; not production simulation |
 | Playable factory-design product research | [Game product-research programme](research/investigations/factory-design-game-vertical-slice.md) | Umbrella only; lifecycle lives on focused questions such as strategy space and diagnostic evidence |
 | Inter-resource transfer and spatial layout | [Transfer research](research/investigations/transfer-semantics.md) | Decided spatial record and transfer lifecycle; not implemented, so no current model has transfer |
@@ -66,7 +66,6 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 | [Factory design](architecture/factory-design.md) | Cross-consumer factory-model/design lifecycle semantics |
 | [Governance and conformance](architecture/governance-conformance.md) | Revision/change/requirements/conformance/evidence architecture; governed change and audit are research |
 | [Storage](architecture/storage.md) | Public contract, built-in provider, local persistence guarantees and limits |
-| [Operational execution and digital twin](architecture/operational-execution-digital-twin.md) | Proposed relationship-based execution/reality architecture |
 | [Engine semantics](architecture/engine-semantics.md) | Normative work-in-progress result-affecting Engine interpretation |
 | [Factory model](architecture/factory-model.md) | Normative work-in-progress Factory records, predicates and canonical/fingerprint byte grammar |
 | [Standards alignment](architecture/standards-alignment.md) | Standards/interchange/conformance boundaries |
@@ -75,7 +74,6 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 | [Controlled revisions](architecture/controlled-revisions.md) | Historical occurrence identity, lineage, provenance and authority acceptance |
 | [Governance evidence](architecture/governance-evidence.md) | Evidence reference/use, applicability and immutable evaluation-basis contract |
 | [Challenge](architecture/challenge.md) | Game-owned challenge identity, admissibility, evaluation, attempt and comparison contract, independent of production semantics |
-| [Operational continuity](architecture/operational-continuity.md) | Accountable operational continuation identity and continuity rules |
 | [External representations](architecture/external-representations.md) | Serialization, transport and industrial-interchange boundaries |
 
 ## Internal research
@@ -98,4 +96,6 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 | [Transfer semantics](research/investigations/transfer-semantics.md) | READY decided spatial record and transfer lifecycle, not implemented, plus CANDIDATE non-spatial hand-off/timing follow-up |
 | [Engine evolution](research/investigations/engine-evolution.md) | Lot/batch, capability/pools, dispatch-policy, and unselected recovery/session extensions |
 | [Operational/Digital Twin boundaries](research/investigations/operational-execution-digital-twin-boundaries.md) | Durable operational identity, trust/authority, external realization, correspondence, reconciliation and proving-case research |
+| [Operational execution design](research/investigations/operational-execution-design.md) | Design kept from the architecture: hybrid realization, external operation lifecycle, trust, deployment, reconciliation and history; not implemented |
+| [Operational continuity contract](research/investigations/operational-continuity-contract.md) | READY decided accountable-continuation identity and continuity rules; not implemented |
 | [Governance change control](research/investigations/governance-change-control.md) | CANDIDATE: what must be settled before governed change, exceptions, mappings or audit projections are implemented, with their design kept from the architecture |

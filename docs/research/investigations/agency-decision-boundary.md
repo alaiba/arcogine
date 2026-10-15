@@ -3,7 +3,7 @@
 > **Status:** CONCLUDED  
 > **Scope:** Determine the smallest durable semantic boundary between observation, decision production, actor attribution, capability, semantic operation, and resulting state change  
 > **Authority:** Research provenance only. The durable conclusion lives in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries); this document does not establish architecture, a platform abstraction, module owner, delivery track, or product capability  
-> **Related:** [Product Charter](../../product/charter.md), [Architecture Overview](../../architecture/overview.md), [Operational Execution and Digital Twin Architecture](../../architecture/operational-execution-digital-twin.md), [Standards Alignment](../../architecture/standards-alignment.md), [Research register](../research-register.md)
+> **Related:** [Product Charter](../../product/charter.md), [Architecture Overview](../../architecture/overview.md), [Operational execution design](operational-execution-design.md), [Standards Alignment](../../architecture/standards-alignment.md), [Research register](../research-register.md)
 
 ## Conclusion
 
@@ -11,7 +11,7 @@
 
 The implementation examples in the original brief below describe repository state at the time of this investigation. The SalesAgent and observation implementation discussed there have since been retired; those references are retained as historical research evidence, not as current capability claims.
 
-The durable rules are recorded once, in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries), with [Operational architecture](../../architecture/operational-execution-digital-twin.md) §5 and [Governance architecture](../../architecture/governance-conformance.md) §4 reconciled to them. They are not restated here.
+The durable rules are recorded once, in [Architecture Overview — Attribution and decision boundaries](../../architecture/overview.md#attribution-and-decision-boundaries), with the since-relocated [Operational execution design](operational-execution-design.md) §5 and [Governance architecture](../../architecture/governance-conformance.md) §4 reconciled to them. They are not restated here.
 
 ### Outcome against the original hypotheses
 

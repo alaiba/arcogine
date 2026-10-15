@@ -6,7 +6,7 @@ Per the [Product Charter](../product/charter.md), Arcogine's mature product dire
 
 The [external representation policy](external-representations.md) establishes the repository-wide representation rule: Arcogine-owned semantic contracts are authoritative by default; file formats, wire formats, broker envelopes, and industrial schemas are projections or adapters unless a reviewed architectural decision explicitly assigns them authority.
 
-The proposed [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md) owns the future semantic integration boundary for real operational systems: execution context, verified identity/trust, authority, command/result lifecycle, deployment provenance, independent operational observations, reconciliation, and adapter transformation provenance. Protocol and interchange standards sit behind that boundary rather than defining Arcogine's canonical ontology.
+[Operational execution](overview.md#operational-execution--not-implemented), which is not implemented, would own the semantic integration boundary for real operational systems: execution context, verified identity/trust, authority, command/result lifecycle, deployment provenance, independent operational observations, reconciliation, and adapter transformation provenance. Protocol and interchange standards sit behind that boundary rather than defining Arcogine's canonical ontology.
 
 ## How to read alignment claims
 
@@ -268,7 +268,7 @@ Relevant for presentation meshes, materials, textures, and rendering assets in g
 
 ### OPC UA / IEC 62541
 
-Relevant when Arcogine ingests live equipment observations, issues controlled operations to an industrial endpoint, or exposes digital-twin information. The [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md) is the semantic owner for such an integration.
+Relevant when Arcogine ingests live equipment observations, issues controlled operations to an industrial endpoint, or exposes digital-twin information. [Operational execution](overview.md#operational-execution--not-implemented), which is not implemented, would own such an integration ([design](../research/investigations/operational-execution-design.md)).
 
 A future OPC UA profile must preserve Arcogine semantic identity separately from external node/asset identity; raw observation provenance separately from interpretation; verified peer/source/target trust; command/request/acknowledgement/result separation; adapter/profile/mapping versions; applied-artifact provenance; and modeled, observed, and reconciled twin state as distinct concepts.
 

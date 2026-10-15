@@ -1,8 +1,8 @@
 # Operational continuity
 
-Status: Adopted semantic contract; no implementation type, module, or persistence exists yet
-Owning architecture: [Operational Execution and Digital Twin](operational-execution-digital-twin.md)
-Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
+Status: Decided contract, not implemented — `READY` in the [research register](../research-register.md); no type, module, or persistence exists
+Design context: [Operational execution design](operational-execution-design.md); current boundaries in the [Architecture Overview](../../architecture/overview.md#operational-execution--not-implemented)
+Evolution rule: [Semantic evolution and support](../../architecture/overview.md#semantic-evolution-and-support)
 
 ## Purpose
 
@@ -14,7 +14,7 @@ that one global consequence/environment kind is not a durable property of an exe
 durable identity is instead one independently continuing operational history: what makes two
 records belong to the same one versus different ones, and what preserves or breaks that identity.
 
-This contract answers that question. The [Operational architecture](operational-execution-digital-twin.md)
+This contract answers that question. The [Operational execution design](operational-execution-design.md)
 summarizes it and records the surrounding proposed architecture; the semantics below are adopted
 and constrain any future durable operational record capability as design inputs.
 
@@ -61,7 +61,7 @@ Identity is established by one explicit authoritative act, of exactly one of two
 - **genesis** — an account begins with no predecessor;
 - **fork** — an account begins by naming a parent identity and a divergence boundary in it, adopting the parent's state as of that boundary and becoming separately answerable thereafter.
 
-The identity becomes authoritative when the establishing record is accepted into durable operational history, mirroring the [controlled revision contract](controlled-revisions.md)'s rule that authoritative historical identity begins at persistence acceptance.
+The identity becomes authoritative when the establishing record is accepted into durable operational history, mirroring the [controlled revision contract](../../architecture/controlled-revisions.md)'s rule that authoritative historical identity begins at persistence acceptance.
 
 It must never be inferred from:
 
@@ -88,10 +88,10 @@ Continuity is broken when the account can no longer answer for an already-accept
 Three consequences follow:
 
 - **silent loss is a fork**;
-- **declared loss is a fork carrying a recorded gap**, consistent with the [runtime observation/event contract](runtime-contract.md)'s rule that recovery must detect a gap rather than pretend completeness;
+- **declared loss is a fork carrying a recorded gap**, consistent with the [runtime observation/event contract](../../architecture/runtime-contract.md)'s rule that recovery must detect a gap rather than pretend completeness;
 - **a lossy summarisation is not a fork only when its lossiness is itself an accepted record.**
 
-This grounds continuity in attributability rather than in permanent byte retention, consistent with the [Determinism Contract](overview.md#determinism-contract)'s guarantee of attribution plus a verifiable definition rather than permanent exact re-execution.
+This grounds continuity in attributability rather than in permanent byte retention, consistent with the [Determinism Contract](../../architecture/overview.md#determinism-contract)'s guarantee of attribution plus a verifiable definition rather than permanent exact re-execution.
 
 The condition is **set-based, not sequence-based**: it asks whether anything accepted became unanswerable, not whether a log prefix was preserved. Operational records are heterogeneous and concurrently produced, so the rule must not presuppose a total order.
 
@@ -161,7 +161,7 @@ What is available instead is a correlation between them, or a new account whose 
 - The record-to-identity binding never changes.
 - A retired or superseded identity is never reissued.
 
-Records may already have been exported as external projections under the [external representation policy](external-representations.md); relabelling them would be identity mutation, which every other Arcogine identity forbids. History is added to, never rewritten.
+Records may already have been exported as external projections under the [external representation policy](../../architecture/external-representations.md); relabelling them would be identity mutation, which every other Arcogine identity forbids. History is added to, never rewritten.
 
 Non-reuse does **not** imply an endless lifecycle. Whether an accountable operational continuation may close, retire, or become non-extendable is deliberately **left open** — see §14.
 
@@ -204,7 +204,7 @@ Evidence that a continuation retains the required accepted history is **continui
 
 This contract defines only the **accountable-continuation identity**, because no current proving case or concrete consumer requires a second grouping or account identity above it.
 
-That is a scope-minimisation choice, not a durable claim that operational identity is permanently one-level. The [controlled revision contract](controlled-revisions.md) is cited here as a **useful lineage precedent** — it shows that divergent historical lineage can be represented without a separate branch object — and not as authority over operational identity cardinality, which it does not decide.
+That is a scope-minimisation choice, not a durable claim that operational identity is permanently one-level. The [controlled revision contract](../../architecture/controlled-revisions.md) is cited here as a **useful lineage precedent** — it shows that divergent historical lineage can be represented without a separate branch object — and not as authority over operational identity cardinality, which it does not decide.
 
 A future stable higher-level grouping or account identity remains permissible if a concrete consumer later proves a distinct equality, lifecycle, lookup, policy, or aggregation contract that accountable-continuation identity cannot satisfy. Two-level identity was **not falsified**; mature external systems commonly use it. It is simply not justified by current evidence.
 

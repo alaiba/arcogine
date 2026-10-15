@@ -3,7 +3,7 @@
 > **Status:** Architectural reference; adopted boundaries marked below, remaining capabilities proposed  
 > **Scope:** Cross-consumer factory-design semantics and their boundary with future scenario inputs and runtime behavior
 > **Authority:** The canonical model/publication/runtime boundary (§3–§6), the publication identity contract (§11) and the semantic-evolution contract (§11.1) are adopted architecture. Broader draft/workspace capabilities remain proposed; the Overview and product/reference docs describe the current implementation  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory model](factory-model.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md)
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory model](factory-model.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational execution](overview.md#operational-execution--not-implemented) (not implemented), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md)
 
 ## 1. Architectural position
 
@@ -214,7 +214,7 @@ FactoryModelPublished as version 4
 
 Today a design change reaches Governance as a semantic `ChangeSet` between published versions and, once recorded, as a persisted controlled revision. Authorization and deployment of a revision are not implemented; the intended bridge from a candidate change through assessment, authorization and deployment to reconciliation is kept in [Governance change-control research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
-Factory Design owns the semantic design and publication boundary. Governance owns controlled revision and change interpretation, and would own authorization interpretation. [Operational Execution and Digital Twin](operational-execution-digital-twin.md) would own deployment targeting and application, applied-artifact provenance, resulting operational facts, and reconciliation. Editor operations never become simulation or production-control events.
+Factory Design owns the semantic design and publication boundary. Governance owns controlled revision and change interpretation, and would own authorization interpretation. [Operational execution](overview.md#operational-execution--not-implemented), which is not implemented, would own deployment targeting and application, applied-artifact provenance, resulting operational facts, and reconciliation. Editor operations never become simulation or production-control events.
 
 ## 7. Cross-consumer ownership
 
@@ -231,8 +231,8 @@ Factory Design owns the semantic design and publication boundary. Governance own
 | Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; work-in-progress canonical form owned by the [Factory model](factory-model.md) |
 | Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see the [controlled revision contract](controlled-revisions.md) |
 | Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (governed-change and external-workflow integration), or an external change-management system referenced not depended on |
-| Operational deployment target/application and effective applied-artifact provenance | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
-| External operational observations and modeled-versus-observed reconciliation | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
+| Operational deployment target/application and effective applied-artifact provenance | [Operational execution](overview.md#operational-execution--not-implemented), not implemented |
+| External operational observations and modeled-versus-observed reconciliation | [Operational execution](overview.md#operational-execution--not-implemented), not implemented |
 | Model publication and runtime instantiation | Shared Arcogine boundary |
 | Runtime dispatch/queues/work | Arcogine runtime |
 | Semantic model comparison/diff | Cross-consumer candidate; share when justified |

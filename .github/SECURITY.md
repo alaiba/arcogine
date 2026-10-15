@@ -9,7 +9,7 @@ This document covers how to report a vulnerability, what the current software ac
 Two escalations are deliberately kept apart, because they are different boundaries with different owners:
 
 - **Hosted or multi-user exposure** — more than one principal reaching the same instance, with no actuation. Product/interface ownership; see [Before hosted or multi-user exposure](#before-hosted-or-multi-user-exposure).
-- **Production-consequential operation** — actions with effects outside Arcogine. Owned by the [Operational Execution and Digital Twin Architecture](../docs/architecture/operational-execution-digital-twin.md) and its [boundary research](../docs/research/investigations/operational-execution-digital-twin-boundaries.md), which are proposals and requirements, not claims about current product security. See [Mature-product security principles](#mature-product-security-principles).
+- **Production-consequential operation** — actions with effects outside Arcogine. Would be owned by Operational execution, which is not implemented; see its [design](../docs/research/investigations/operational-execution-design.md) and [boundary research](../docs/research/investigations/operational-execution-digital-twin-boundaries.md), which are proposals and requirements, not claims about current product security. See [Mature-product security principles](#mature-product-security-principles).
 
 Adding TLS, CORS restrictions, or network hardening to the current software does not, by itself, satisfy either.
 
@@ -83,7 +83,7 @@ For the full security verification test list, see `docs/development/testing.md`.
 
 The [Product Charter](../docs/product/charter.md) describes a mature Arcogine that can eventually operate real production systems, not just simulate them. Real execution — actions whose effects land outside Arcogine, where money moves, machines run, or orders ship — introduces a body of trust and safety semantics that this policy does not own and does not restate.
 
-Those semantics are owned by the [Operational Execution and Digital Twin Architecture](../docs/architecture/operational-execution-digital-twin.md): actor, authority, trust and capability in §5; external commands as claims rather than facts in §6; observation authenticity and provenance in §8; the integration adapter boundary in §14; and safety and failure principles, including fail-safe behavior and environment separation, in §16. Durable operational identity is settled by the Operational continuity contract, and the semantic authority of external formats by the external representation policy. Read those for the requirements; they are the authority, and duplicating them here would only let the two drift apart.
+Those semantics are designed, not implemented, in the [Operational execution design](../docs/research/investigations/operational-execution-design.md): actor, authority, trust and capability in §5; external commands as claims rather than facts in §6; observation authenticity and provenance in §8; the integration adapter boundary in §14; and safety and failure principles, including fail-safe behavior and environment separation, in §16. Durable operational identity is decided by the Operational continuity contract, also not implemented, and the semantic authority of external formats by the external representation policy. Read those for the requirements; duplicating them here would only let the two drift apart.
 
 Two boundaries matter for reading this policy:
 

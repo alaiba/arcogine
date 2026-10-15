@@ -73,7 +73,7 @@ selects a live interactive loop.
 | A passive consumer needs command/fault outcomes missing from supported changes | Revisit the producer/control provenance seam before making those claims |
 | Retained results must be reproduced or compared across producing revisions | Consume the [exact-reference questions](semantic-equivalence-and-reference-boundaries.md) and [cross-revision comparability question](simulation-analytics-cross-revision-comparability.md); run ID and model fingerprint are insufficient |
 | Executable spatial transfer behavior lands | Recheck time/order, late-basis and separate residence semantics against executable evidence; the current compatibility argument is specification-derived |
-| A use needs durable identity for the inspection/analysis session itself | Revisit that use with the owning Operational/Governance boundary; do not equate simulation run identity with [accountable operational continuation](../../architecture/operational-continuity.md) |
+| A use needs durable identity for the inspection/analysis session itself | Revisit that use with the owning Operational/Governance boundary; do not equate simulation run identity with [accountable operational continuation](operational-continuity-contract.md) |
 
 These triggers identify material changed conditions; they create no standing investigation,
 implementation admission or new closure API by themselves.

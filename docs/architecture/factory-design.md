@@ -1,9 +1,9 @@
 # Factory Design Architecture
 
-> **Status:** Architectural reference; adopted boundaries marked below, remaining capabilities proposed  
+> **Status:** Current Factory design architecture; capabilities not yet built are kept in [Factory design evolution research](../research/investigations/factory-design-evolution.md)  
 > **Scope:** Cross-consumer factory-design semantics and their boundary with future scenario inputs and runtime behavior
-> **Authority:** The canonical model/publication/runtime boundary (§3–§6), the publication identity contract (§11) and the semantic-evolution contract (§11.1) are adopted architecture. Broader draft/workspace capabilities remain proposed; the Overview and product/reference docs describe the current implementation  
-> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory model](factory-model.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md)
+> **Authority:** The canonical model/publication/runtime boundary (§3–§6), the publication identity contract (§11) and the semantic-evolution contract (§11.1) are adopted architecture. The ownership tables and the canonical-model admission rule (§3.1, §4.1, §7, §10) govern where future facts belong; they do not claim those facts exist  
+> **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory model](factory-model.md), [Controlled revisions](controlled-revisions.md), [Governance and Conformance Architecture](governance-conformance.md), [Operational execution](overview.md#operational-execution--not-implemented) (not implemented), [ISA-95 Semantic Mapping](isa-95-semantic-mapping.md)
 
 ## 1. Architectural position
 
@@ -35,7 +35,7 @@ It is semantically inseparable because:
 
 - design and runtime must share product, operation, configured-resource, policy, constraint, and behaviorally relevant layout semantics;
 - any future capability or qualification semantics must be independently justified rather than inferred from the current resource record;
-- validation must use the same semantics the runtime executes, while Engine admission separately decides whether a published model is executable;
+- validation uses the same semantics the runtime executes, so every published model can be instantiated;
 - consumers must not manually translate an editor-specific ontology into unrelated runtime semantics;
 - every runtime or verification context must identify the exact model version it instantiated.
 
@@ -43,7 +43,7 @@ It is semantically inseparable because:
 Consumer-specific design experience
                  |
                  v
-            Design draft
+     Consumer-owned draft
       mutable, possibly invalid
                  |
           validate / publish
@@ -71,11 +71,11 @@ FactoryModel
 FactoryModelVersion
     immutable published identity of that production system
 
-ExecutableFactoryModel
-    validated/resolved representation derived from one model version
+FactoryRuntimeAssembler
+    derives runtime machine and routing stores from one model version
 
 FactoryRuntime
-    mutable state instantiated from that executable model
+    mutable state instantiated from that model version
 ```
 
 No scenario/run input envelope is currently implemented. The distinction remains architectural: a future scenario may describe an experiment or reference runtime inputs, while the canonical `FactoryModel` describes the production system itself. No scenario schema or serialization format is selected here.
@@ -117,11 +117,11 @@ There is no scenario format: a runtime receives its workload and settings throug
 
 ## 4. Canonical model boundary
 
-The exact Java types are intentionally not fixed yet, but the lifecycle responsibilities are.
+The current lifecycle responsibilities are:
 
 ```text
-FactoryDraft
-    mutable consumer authoring state
+Consumer draft
+    mutable consumer authoring state, owned by the consumer
     may be incomplete or invalid
 
 FactoryModel
@@ -131,14 +131,14 @@ FactoryModelVersion
     immutable published semantic snapshot
     deterministic content-derived fingerprint
 
-ExecutableFactoryModel
-    validated/resolved runtime-ready derivative
+FactoryRuntimeAssembler output
+    runtime-ready stores derived from one model version
 
 FactoryRuntime
     mutable state instantiated from one model version
 ```
 
-These need not all become separate persistence entities or modules initially.
+Arcogine has no shared draft type or draft service: a consumer such as Challenge owns its own candidate. Shared draft persistence, branching, merging and collaboration are a [research question](../research/investigations/factory-design-evolution.md#shared-draft-lifecycle--candidate).
 
 Today's `FactoryModelVersion` is an immutable *validated semantic snapshot*: publishing it proves the design is valid and gives it the `factory-model:sha256:<digest>` `ModelFingerprint` defined by the [Factory model specification](factory-model.md). Publication creates an in-process snapshot, not a durable-use promise, and the snapshot is still not itself a **controlled revision** entity. Governance identity/history capability now separately provides durable `ControlledRevisionId`, immutable revision lineage/provenance, authoritative persistence, and exact historical semantic-state resolution. Approval state, external workflow references, and deployment remain separate later records. Section 11 draws the identity distinction; see section 11 below for what the fingerprint and controlled revision do and do not carry.
 
@@ -214,7 +214,7 @@ FactoryModelPublished as version 4
 
 Today a design change reaches Governance as a semantic `ChangeSet` between published versions and, once recorded, as a persisted controlled revision. Authorization and deployment of a revision are not implemented; the intended bridge from a candidate change through assessment, authorization and deployment to reconciliation is kept in [Governance change-control research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
-Factory Design owns the semantic design and publication boundary. Governance owns controlled revision and change interpretation, and would own authorization interpretation. [Operational Execution and Digital Twin](operational-execution-digital-twin.md) would own deployment targeting and application, applied-artifact provenance, resulting operational facts, and reconciliation. Editor operations never become simulation or production-control events.
+Factory Design owns the semantic design and publication boundary. Governance owns controlled revision and change interpretation, and would own authorization interpretation. [Operational execution](overview.md#operational-execution--not-implemented), which is not implemented, would own deployment targeting and application, applied-artifact provenance, resulting operational facts, and reconciliation. Editor operations never become simulation or production-control events.
 
 ## 7. Cross-consumer ownership
 
@@ -231,8 +231,8 @@ Factory Design owns the semantic design and publication boundary. Governance own
 | Semantic model identity (fingerprint) | Shared Arcogine model infrastructure; work-in-progress canonical form owned by the [Factory model](factory-model.md) |
 | Controlled revision lifecycle and lineage | Cross-domain Governance and Conformance capability (Governance identity/history capability) — see the [controlled revision contract](controlled-revisions.md) |
 | Change request/review/authorization workflow | Cross-domain Governance and Conformance capability (governed-change and external-workflow integration), or an external change-management system referenced not depended on |
-| Operational deployment target/application and effective applied-artifact provenance | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
-| External operational observations and modeled-versus-observed reconciliation | [Operational Execution and Digital Twin](operational-execution-digital-twin.md) |
+| Operational deployment target/application and effective applied-artifact provenance | [Operational execution](overview.md#operational-execution--not-implemented), not implemented |
+| External operational observations and modeled-versus-observed reconciliation | [Operational execution](overview.md#operational-execution--not-implemented), not implemented |
 | Model publication and runtime instantiation | Shared Arcogine boundary |
 | Runtime dispatch/queues/work | Arcogine runtime |
 | Semantic model comparison/diff | Cross-consumer candidate; share when justified |
@@ -245,37 +245,13 @@ Factory Design owns the semantic design and publication boundary. Governance own
 
 ## 8. Spatial layout and resource hierarchy are independent
 
-If a future grouping contract warrants it, resource/organizational scope may eventually resemble:
-
-```text
-Factory
-  Work Center
-    Resource Pool
-      Resource Instance
-```
-
-Spatial layout is a separate dimension:
-
-```text
-Factory Floor
-  Position
-  Orientation
-  Footprint
-  Connection points
-  Transfer relationships
-```
-
-Hierarchy supports containment, responsibility, capacity aggregation, scheduling scope, reporting, or authorization. Spatial layout supports physical placement and transport consequences. This possible future scope model does not require splitting the current `ConfiguredResource` into a reusable definition and an installed instance.
-
-A resource may move without changing identity or hierarchy membership. A resource may change resource-pool membership without moving physically.
-
-The [ISA-95 semantic mapping](isa-95-semantic-mapping.md) remains the reference for whether hierarchy concepts should be adopted, aliased, extended, or deferred.
+Arcogine has neither a resource hierarchy nor a spatial layout. Should either be introduced, they are independent dimensions: hierarchy carries containment, responsibility, capacity aggregation, scheduling scope, reporting or authorization; layout carries physical placement and transport consequences. A resource may move without changing identity or membership, and change membership without moving. Neither requires splitting the current `ConfiguredResource`. The candidate hierarchy and layout models are kept in [research](../research/investigations/factory-design-evolution.md#resource-pools-and-work-centers--candidate), and the [ISA-95 semantic mapping](isa-95-semantic-mapping.md) remains the reference for adopting, aliasing or deferring hierarchy concepts.
 
 ## 9. Semantic geometry versus presentation geometry
 
 Arcogine owns geometry only when it changes executable behavior or shared validation.
 
-Semantic geometry may include floor dimensions, resource position/orientation/footprint, connection points, zones/restrictions, adjacency/reachability constraints, and transfer-distance inputs.
+The Factory model has no geometry today. The kinds of semantic geometry a future capability might need are listed in [research](../research/investigations/factory-design-evolution.md#factory-semantic-composition-and-spatialmaterial-flow-evolution).
 
 Consumers own meshes/sprites, animation anchors, camera framing, selection outlines, label placement, decorative composition, and visual interpolation between authoritative engine states.
 
@@ -296,16 +272,7 @@ Each operation can resolve eligible capacity
 
 ### 10.2 Verification objectives — shared verification concern
 
-These test whether an executable design meets a target:
-
-```text
-Throughput >= target
-Lead time <= limit
-Maximum utilization <= threshold
-Safety separation >= required distance
-```
-
-An objective is not automatically an executability invariant.
+These would test whether an executable design meets a target, such as a throughput or lead-time bound. No objective definition or evaluator is implemented; the runtime's throughput and lead time are observations, not objectives. An objective is not automatically an executability invariant. Candidate objectives are kept in [research](../research/investigations/factory-design-evolution.md#validation-finding-taxonomy--candidate).
 
 ### 10.3 Consumer rules — consumer
 
@@ -474,7 +441,7 @@ When factory-design semantics change, ask:
 10. Is a new shared design abstraction justified by a concrete cross-consumer workflow?
 11. Are deployment targeting/application, external observation ingestion, or reconciliation semantics being placed in Factory Design even though they belong to Operational Execution?
 
-## 15. Triggers for revisiting this proposal
+## 15. Triggers for revisiting this architecture
 
 Revisit this document when Arcogine introduces or materially changes:
 
@@ -490,5 +457,3 @@ Revisit this document when Arcogine introduces or materially changes:
 - cross-consumer validation rules;
 - another independent design consumer;
 - ISA-95/AAS/other model import/export.
-
-As further capabilities are implemented and accepted, authoritative current-state portions should move into or be reconciled with [`overview.md`](overview.md) rather than leaving proposed behavior presented as current fact.

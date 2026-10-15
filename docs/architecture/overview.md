@@ -22,8 +22,9 @@ ownership:
   ([Engine semantics](engine-semantics.md), [Determinism Contract](#determinism-contract)).
 - **Governance** owns controlled history, requirements/assertions, evidence use, conformance
   findings and governed change ([Governance and Conformance](governance-conformance.md)).
-- **Operational** owns real-operation integration, accountable continuation and the relationship
-  to external authority ([Operational Execution](operational-execution-digital-twin.md)).
+- **Operational** would own real-operation integration, accountable continuation and the
+  relationship to external authority; none of it is implemented ([Operational
+  execution](#operational-execution--not-implemented)).
 - Observations, events, projections, DTOs, serializations and outward views expose these facts
   without becoming domain truth, and consumer domains (Challenge/Game, analytics, UI) never
   redefine authoritative production semantics.
@@ -243,8 +244,9 @@ evidence reference, an evaluation occurrence or an operational continuation neve
 authority that accepted it, under the equality rule its owning contract defines, whatever the
 maturity of the content it refers to. The owning contracts apply these rules to the [Factory
 model](factory-model.md), the [Engine interpretation](engine-semantics.md), [controlled
-revisions](controlled-revisions.md), [evidence](governance-evidence.md) and [operational
-continuity](operational-continuity.md); review guidance lives in [Semantic contract
+revisions](controlled-revisions.md) and [evidence](governance-evidence.md), and the decided but not
+implemented [operational continuity](../research/investigations/operational-continuity-contract.md) contract applies them to
+accountable continuations; review guidance lives in [Semantic contract
 support](../development/semantic-contract-support.md). Why this boundary replaced an earlier
 attribution-driven freeze is recorded, non-normatively, in the [provisional semantic-contract reset
 rationale](/docs/history/decisions/2026-09-25-provisional-semantic-contract-reset.md).
@@ -370,6 +372,30 @@ Treat any of the following as a signal to stop and reconsider the design, not ju
 
 These guardrails are part of the current architecture and are reinforced by executable architecture tests where the invariant can be checked mechanically. Known remaining runtime work is tracked as GitHub issues, which are delivery context, not architectural authority.
 
+## Operational execution — not implemented
+
+Arcogine has no Operational capability: no module, type, adapter, external command, observation
+ingestion, correspondence, reconciliation, deployment or operational history. These boundaries hold
+today because they describe what Arcogine does not do:
+
+- `FactoryRuntime` executes simulated workload only. It is not a production-control runtime, and
+  Arcogine issues no command to a real system.
+- An external observation keeps its own source and time provenance. It is never stamped with an
+  Arcogine model, revision or continuation identity at ingestion; Governance evidence can refer to
+  such a source without any Operational capability ([Governance evidence](governance-evidence.md)).
+- Governance evidence targets point identities; it does not provide an identity that accumulates
+  conduct over time.
+- If Operational execution is built, it owns acquisition, trust, correspondence, reconciliation and
+  applying a revision to an execution target. Factory, Engine and Governance keep their meanings,
+  and Operational never redefines production semantics, revision identity or conformance.
+
+The intended design — hybrid realization, the external operation lifecycle, adapter trust and
+safety, deployment, reconciliation, drift and operational history — is kept in the [Operational
+execution design](../research/investigations/operational-execution-design.md). The decided [Operational continuity
+contract](../research/investigations/operational-continuity-contract.md) and the open [Operational boundary
+research](../research/investigations/operational-execution-digital-twin-boundaries.md) hold the
+rest.
+
 ## Attribution and decision boundaries
 
 The [Events–State–Observations](#core-architecture-philosophy-events-state-observations) model says how a choice becomes a state change. It does not say **who is answerable** for that change, **what produced** the choice, or **what was acted on**. Those are separate questions, and they are easy to conflate because the implementation currently answers all of them with free-form strings.
@@ -445,7 +471,7 @@ Attribution and outcome have a two-part rule:
 1. **Incidental attribution metadata must never affect outcome.** Attribution attached to a request for provenance must not reach any domain, dispatch, pricing, or simulation computation. If a requester genuinely should influence dispatch, it must appear as a **modelled field in the operation payload**, never be smuggled in through attribution metadata.
 2. **Explicitly modelled authority is a legitimate exception.** Actor identity may affect behaviour only through an authority determination that is explicitly modelled, whose outcome is recorded, and which is itself a reproducible input on replay — never through an implicit read of attribution by unrelated domain logic.
 
-This preserves the boundary between provenance and explicit policy input; it does not settle an authorization model. The cross-cutting authority question — *may this actor perform this operation on this subject under the applicable policy?* — is a useful **question shape** for locating where policy belongs. It is not a persisted or public input schema, Arcogine asserts no rule that authorization consults only the current actor, and ownership of reusable actor/capability semantics remains open (see [Operational Execution and Digital Twin](operational-execution-digital-twin.md) §5, which must not become that owner by default).
+This preserves the boundary between provenance and explicit policy input; it does not settle an authorization model. The cross-cutting authority question — *may this actor perform this operation on this subject under the applicable policy?* — is a useful **question shape** for locating where policy belongs. It is not a persisted or public input schema, Arcogine asserts no rule that authorization consults only the current actor, and ownership of reusable actor/capability semantics remains open (see the [Operational execution design](../research/investigations/operational-execution-design.md) §5, which must not become that owner by default).
 
 ### What is deliberately not introduced, and what would reopen it
 

@@ -1,6 +1,6 @@
 # Operational Execution and Digital-Twin Boundary Research
 
-> **Status:** CANDIDATE for the remaining boundaries; the durable operational identity question is CONCLUDED and reconciled into the Operational continuity contract. The [research register](../research-register.md) owns lifecycle state  
+> **Status:** CANDIDATE for the remaining boundaries; the durable operational identity question is READY, with its decided but unimplemented design retained in the Operational continuity contract. The [research register](../research-register.md) owns lifecycle state<br>
 > **Scope:** Resolve the semantic and safety boundaries required before Arcogine admits implementation that connects shared production semantics to independently existing operational systems  
 > **Authority:** Research only; this document defines no implementation queue or Operational module contract
 
@@ -49,11 +49,11 @@ Research must preserve these already-established boundaries:
 8. **Generic actor/capability semantics are not inherently Operational.** Consequential use adds verified identity, trust, safety, and authority requirements.
 9. **Seek, replay, checkpoint/restore, and fork are distinct capabilities.** None is an execution kind.
 
-## Durable operational identity — CONCLUDED
+## Durable operational identity — READY
 
-This question is closed. The referent is **one accountable operational continuation**, and the continuity, divergence/lineage, acceptance, divergence-evidence, and record-attachment rules are adopted in the [Operational continuity contract](../../architecture/operational-continuity.md), with the dependent boundary summarized in [Operational Execution and Digital Twin Architecture](../../architecture/operational-execution-digital-twin.md) §2.2.
+The identity-design subdecision is settled: the referent is **one accountable operational continuation**, and the continuity, divergence/lineage, acceptance, divergence-evidence, and record-attachment rules are decided in the [Operational continuity contract](operational-continuity-contract.md), with the dependent boundary summarized in the [Operational execution design](operational-execution-design.md) §2.2. Neither is implemented, so the register question remains `READY` until an implementation handoff lands the rules with code, tests, and the owning specification; the settled subdecision does not make the register question `CONCLUDED`.
 
-Those documents are the authority; this brief does not restate the decision. Remaining research must consume it rather than reopening it, and must not introduce an operational identifier ahead of the first durable operational record capability — the Operational continuity contract deliberately defers the type name, representation, persistence, coordination, registry, closure/retirement, and module ownership.
+Those documents preserve the decided research-design inputs; this brief does not restate the decision. Current supported architecture authority is the [Architecture Overview](../../architecture/overview.md#operational-execution--not-implemented) and its linked implemented specifications. Remaining research must consume the settled design rather than reopening it, and must not introduce an operational identifier ahead of the first durable operational record capability — the Operational continuity contract deliberately defers the type name, representation, persistence, coordination, registry, closure/retirement, and module ownership.
 
 Two follow-on questions were separated out rather than settled here, and are tracked in the [research register](../research-register.md): entitlement/authority to extend a continuation belongs to the actor/trust/authority boundary below, and closure/retirement semantics remain open in both directions pending a concrete consumer.
 
@@ -156,7 +156,7 @@ Manufacturing traceability may become such a proving case only if a concrete int
 
 ## Exit and promotion
 
-No Operational implementation exists or is ready. The [Operational continuity contract](../../architecture/operational-continuity.md) settles the durable operational identity, but the boundaries above — actor/capability ownership, external operation realization, subject correspondence and temporal reconciliation — must each be settled at least as far as a concrete safe change requires.
+No Operational implementation exists or is ready. The [Operational continuity contract](operational-continuity-contract.md) decides the durable operational identity, but the boundaries above — actor/capability ownership, external operation realization, subject correspondence and temporal reconciliation — must each be settled at least as far as a concrete safe change requires.
 
 Operational implementation starts only when a conclusion passes the research method's [implementation-ready test](../../development/researching.md#implementation-handoff) and also has:
 

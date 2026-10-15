@@ -94,6 +94,18 @@ Current validation supplies deterministic executability rejection sufficient for
 
 Promote this only when at least one concrete consumer requires diagnostics that the current validator cannot expose reliably. The research must decide which diagnostics are cross-consumer semantics versus editor presentation.
 
+
+Shared verification objectives sit beside this taxonomy. They would test whether an executable design meets a target, without being executability invariants:
+
+```text
+Throughput >= target
+Lead time <= limit
+Maximum utilization <= threshold
+Safety separation >= required distance
+```
+
+None is implemented. Promote one only when more than one consumer needs the same named objective, under the analytical-method ownership rules of the [Architecture Overview](../../architecture/overview.md#domain-authority).
+
 ## Semantic comparison depth — CANDIDATE
 
 The implemented comparison slice identifies add/remove/modify changes to current factory entities through the Governance semantic-change seam. Finer comparison is not admitted merely because more detailed diffs are imaginable.
@@ -116,6 +128,8 @@ Research a shared draft lifecycle only when multiple concrete workflows need com
 
 The question is not whether editors need these features; it is whether Arcogine must own a **shared lifecycle invariant** that consumers cannot safely implement independently.
 
+The lifecycle the Factory design architecture once sketched has a shared `FactoryDraft` — mutable, possibly incomplete or invalid — validated and published into a `FactoryModelVersion`, with an `ExecutableFactoryModel` derived from it for the runtime. Only publication and the runtime derivation exist; drafts are consumer-owned.
+
 ## Factory participation in governed change — CANDIDATE
 
 Governance owns controlled revision identity/history, semantic change, conformance/evidence, and governed-change records. Operational work will own application to independently existing systems once those semantics are accepted.
@@ -128,11 +142,24 @@ A group deserves a canonical concept only if it owns real behavior or interpreta
 
 This research should remain coupled to qualified applicability/performance and Engine scheduling evidence rather than introducing an empty hierarchy abstraction.
 
+A candidate scope model, kept from the architecture, with spatial layout as a separate dimension:
+
+```text
+Factory                     Factory Floor
+  Work Center                 Position
+    Resource Pool             Orientation
+      Resource Instance       Footprint
+                              Connection points
+                              Transfer relationships
+```
+
 ## Factory semantic composition and spatial/material-flow evolution
 
 The more fundamental boundary question is decided: [Factory Model Semantic Composition](factory-model-semantic-composition.md) established that the Factory definition is one closed grammar that may admit explicitly present optional authored records under one aggregate fingerprint. The closed grammar and aggregate fingerprint are in the [Factory semantic-evolution contract](../../architecture/factory-design.md#111-semantic-evolution); the optional-record rules stay in the composition research until a first optional record lands them. Its reopening triggers name the future concerns below.
 
 The narrower [transfer-lifecycle question](transfer-semantics.md#ready--transfer-lifecycle-independence) is decided for the spatial record in its [applicability boundary](transfer-semantics.md#applicability-boundary). The Factory model and the Engine are mutable current development definitions until an explicit stability/support promotion under the [semantic evolution rules](../../architecture/overview.md#semantic-evolution-and-support); the Factory has one work-in-progress grammar of production records. The decided spatial record and transfer lifecycle are not implemented, so every current model is a no-transfer model until an implementation handoff lands that design. The successor Engine-identity applicability question was [superseded before investigation](engine-applicability-after-transfer-boundary.md) by the provisional semantic-contract reset and gates nothing. Explicit non-spatial hand-off or timing remains a separate CANDIDATE requiring a concrete consumer need; if one is admitted, correcting the grammar for it is owned by the Factory semantic-evolution contract. It is distinct from the richer spatial/material-flow capabilities below.
+
+Semantic geometry a future capability might need includes floor dimensions, resource position, orientation and footprint, connection points, zones and restrictions, adjacency and reachability constraints, and transfer-distance inputs. Arcogine owns geometry only when it changes executable behavior or shared validation.
 
 The composition investigation does **not** implement the future concerns listed here. Questions such as orientation, paths/aisles, conveyors, connection points, explicit transport resources, buffers, or congestion remain separate capability questions in the research register because the decided spatial record and transfer semantics deliberately stop before them. When those questions are later investigated, they must consume the then-current transfer/composition rules rather than implicitly selecting a new whole-model version or aspect framework themselves; admitting a new or split authored record is a grammar correction owned by the Factory semantic-evolution contract.
 

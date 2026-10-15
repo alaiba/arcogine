@@ -440,7 +440,7 @@ test('finding Head must agree with source review head when the latter is availab
 test('identical evidence with different producer metadata has identical analysis', () => {
   const first = baseEvidence([blockingReview(finding(revision(1)))]);
   const second = structuredClone(first);
-  second.source = { adapter: 'fixture-github-connector', acquiredAt: '2026-09-25T00:00:00Z', connectorRun: 'fixture' };
+  second.source = { adapter: 'fixture-other-producer', acquiredAt: '2026-09-25T00:00:00Z', acquisitionRun: 'fixture' };
   assert.deepEqual(analyzeEvidence(first), analyzeEvidence(second));
 });
 

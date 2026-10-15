@@ -11,6 +11,7 @@ export function validateReminderWorkflow(text) {
     ['issue permission stays narrow', '  issues: write'],
     ['checkpoint identity stays exact', 'TITLE: Continuous improvement checkpoint'],
     ['workflow still creates the reminder issue', 'gh issue create'],
+    ['reminder instructs publication', 'Post the assessment outcome as a checkpoint issue comment'],
   ];
   const results = required.map(([name, literal]) => [name, text.includes(literal)]);
   results.push(['branch-selectable workflow_dispatch is absent', !text.includes('workflow_dispatch')]);

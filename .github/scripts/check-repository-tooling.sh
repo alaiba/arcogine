@@ -28,6 +28,9 @@ run "Node repository-tooling tests" node --test \
   .github/scripts/check-dependabot-provenance.test.mjs \
   .github/scripts/check-continuous-improvement-reminder.test.mjs \
   .github/scripts/check-ci-gate.test.mjs \
+  infra/dev/checkpoint-comment.test.mjs \
+  infra/dev/retrospective-checkpoint-merged.test.mjs \
+  infra/dev/delivery-retrospective-branches.test.mjs \
   infra/dev/delivery-retrospective.test.mjs \
   infra/dev/delivery-retrospective-github.test.mjs \
   infra/dev/repo-snapshot.test.mjs \

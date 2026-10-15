@@ -140,6 +140,40 @@ class EngineDispatchConformanceTest {
     }
 
     @Test
+    void localQueueArrivalOrderingWinsOverChildOrdinalOrdering() {
+        // M1 and M2 feed M3. Order "single" has one child; order "pair" has two children that
+        // share M1, so its ordinal-1 child reaches M3 at 2, before the single child arrives at 3.
+        FactoryRuntime runtime = runtime(
+                List.of(1, 1, 1),
+                List.of(
+                        List.of(new Step(3, Set.of(2)), new Step(5, Set.of(3))),
+                        List.of(new Step(1, Set.of(1)), new Step(5, Set.of(3)))));
+        OrderId single = runtime.submitWorkload(new ProductId(1), 1, 1.0).orElseThrow();
+        OrderId pair = runtime.submitWorkload(new ProductId(2), 2, 1.0).orElseThrow();
+
+        runtime.advanceUntil(SimTime.of(5), 100);
+        List<JobId> queued = runtime.machinesView().stream()
+                .filter(view -> view.id().equals(new MachineId(3)))
+                .findFirst().orElseThrow()
+                .queuedJobs();
+        assertEquals(2, queued.size());
+        JobView firstArrival = job(runtime, queued.get(0));
+        JobView secondArrival = job(runtime, queued.get(1));
+        assertEquals(pair, firstArrival.orderId());
+        assertEquals(1L, firstArrival.ordinalWithinOrder());
+        assertEquals(single, secondArrival.orderId());
+        assertEquals(0L, secondArrival.ordinalWithinOrder());
+        assertTrue(secondArrival.id().compareTo(firstArrival.id()) < 0,
+                "the later arrival must have the lower JobId, so neither ordinal nor JobId order matches arrival");
+
+        // Arrival order starts the ordinal-1 child when M3 frees at 6; ordinal or JobId order
+        // would start the single order's child first and swap the two completion times.
+        finish(runtime);
+        assertEquals(11L, runtime.orderExecution(pair).completedAt().value());
+        assertEquals(16L, runtime.orderExecution(single).completedAt().value());
+    }
+
+    @Test
     void localQueueArrivalOrderingWinsOverJobIdAndDurationOrdering() {
         FactoryRuntime runtime = runtime(
                 List.of(1, 1),
@@ -483,5 +517,9 @@ class EngineDispatchConformanceTest {
 
     private static JobView jobForOrder(FactoryRuntime runtime, OrderId orderId) {
         return runtime.jobsView().filter(job -> job.orderId().equals(orderId)).findFirst().orElseThrow();
+    }
+
+    private static JobView job(FactoryRuntime runtime, JobId jobId) {
+        return runtime.jobsView().filter(job -> job.id().equals(jobId)).findFirst().orElseThrow();
     }
 }

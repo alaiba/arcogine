@@ -66,6 +66,10 @@ import java.util.stream.Stream;
  * clears only the events accumulated since it was last called, so a caller wanting durable replay
  * owns that retention itself. This supported boundary defines no persistence, recovery, checkpoint,
  * or replay contract for callers.
+ *
+ * <p>A runtime is a single-owner session: one caller drives it at a time, and it is not
+ * thread-safe. A consumer serving several callers serializes their calls
+ * (docs/architecture/runtime-contract.md).
  */
 public class FactoryRuntime {
 

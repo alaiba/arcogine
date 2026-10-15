@@ -270,7 +270,7 @@ Consequences of the Charter's thesis, stated at the conceptual level only — no
 
 Today's system is built around a **headless simulation core**, not a game engine. This describes the current implementation's architecture — simulation is a major Arcogine capability (per the Product Charter), not the entirety of its identity.
 
-- No rendering dependency in the core
+- No rendering or wall-clock dependency in the core; `ArchitectureTest` guards wall-clock access
 - Deterministic execution — same inputs always produce the same outputs
 - Reproducible outcomes for testing, comparison, and analysis
 - Explicit workload execution independent of any UI or network layer
@@ -587,7 +587,7 @@ The current implementation realizes this contract with:
 
 - Priority queue orders events by time, with FIFO tie-breaking
 - Java strict floating-point semantics; compilation targets the Java 21 compatibility baseline
-- No concurrent mutation of simulation state
+- No concurrent mutation of simulation state: a `FactoryRuntime` is a single-owner session ([runtime contract](runtime-contract.md#a-runtime-is-a-single-owner-session)), and simulation code creates no threads
 
 Given the same published factory model, current Engine definition, and explicit workload/control script,
 fresh `FactoryRuntime` sessions produce identical ordered supported `RuntimeEvent` streams and

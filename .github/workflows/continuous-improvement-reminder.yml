@@ -43,7 +43,7 @@ jobs:
 
           Agent contract: `docs/development/agent-roles/continuous-improvement.md`
 
-          This issue is only a reminder. The workflow does not calculate due state, inspect repository health, or run Consistency, a retrospective, or any other improvement practice. Close the issue after the assessment; while it remains open, scheduled runs will not create another reminder.
+          This issue is only a reminder. The workflow does not calculate due state, inspect repository health, or run Consistency, a retrospective, or any other improvement practice. Post the assessment outcome as a checkpoint issue comment before closing it. Include this issue number in specialist handoffs so those practices can report back even if this issue has closed. While it remains open, scheduled runs will not create another reminder.
           EOF
 
           gh issue create \

@@ -66,6 +66,6 @@ Stop with a named failure model, acceptance and acknowledgment rules, required p
 evidence by case, rejected alternatives, and explicit remaining gaps. The question is high risk
 because it changes authoritative history guarantees; independent adversarial review is required
 before a conclusion is promoted. Reconcile any accepted result into
-[Storage](../../architecture/storage.md), then admit an implementable slice in
-[Storage planning](../../planning/storage-capability.md) if needed. Reopen when a concrete use needs
+[Storage](../../architecture/storage.md), then hand any implementable change to the Implementer through an
+[implementation handoff](../../development/researching.md#implementation-handoff) if needed. Reopen when a concrete use needs
 stronger survival or supported filesystems change.

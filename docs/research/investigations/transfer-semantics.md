@@ -12,7 +12,7 @@ The work-in-progress Factory/Engine architecture couples three concepts:
 2. **transfer timing**; and
 3. the optional **spatial record** carrying floor, position, footprint, `ticksPerCell`, and `handlingTicks`.
 
-Absence of that spatial record means the design makes no handling assertion. The [superseded Engine-applicability investigation](engine-applicability-optional-record-factory-policies.md) inherited "spatial absent implies no transfer lifecycle" as a premise; that is why the lifecycle question below was admitted. Its reviewed evidence remains useful, but its recommendation did not constrain the lifecycle candidates. Spatial runtime activation is ordinary remaining delivery in [Spatial Runtime Consequences](../../planning/spatial-runtime-consequences.md); the [Engine-identity question](engine-applicability-after-transfer-boundary.md) that once blocked it was superseded by the provisional semantic-contract reset.
+Absence of that spatial record means the design makes no handling assertion. The [superseded Engine-applicability investigation](engine-applicability-optional-record-factory-policies.md) inherited "spatial absent implies no transfer lifecycle" as a premise; that is why the lifecycle question below was admitted. Its reviewed evidence remains useful, but its recommendation did not constrain the lifecycle candidates. Spatial runtime activation is ordinary delivery, not yet implemented ([spatial transfer execution](https://github.com/alaiba/arcogine/issues/488)); the [Engine-identity question](engine-applicability-after-transfer-boundary.md) that once blocked it was superseded by the provisional semantic-contract reset.
 
 The lifecycle investigation and independent adversarial review selected the [current transfer-applicability boundary](../../architecture/transfer-applicability.md). The selection is bounded to currently represented spatial-record content. This brief retains the original proving cases and the separately deferred timing question as research context; it is not the current Engine definition.
 
@@ -135,5 +135,5 @@ Promote only when a concrete simulation, game, industrial-design or operational 
 
 ## Consequences for current work
 
-- make spatial content executable only through the [spatial-runtime plan](../../planning/spatial-runtime-consequences.md), preserving the adopted boundary's absence, authored-zero and refusal meanings and refusal before runtime cases;
+- make spatial content executable only through the [spatial transfer execution](https://github.com/alaiba/arcogine/issues/488) work, preserving the adopted boundary's absence, authored-zero and refusal meanings and refusal before runtime cases;
 - while both definitions are work in progress, a later transfer contract independent of the optional spatial record is a coordinated correction of the Factory model and the Engine interpretation that revisits the concluded Factory composition result, not a successor policy; after either is promoted, the [semantic evolution rules](../../architecture/overview.md#semantic-evolution-and-support) control instead.

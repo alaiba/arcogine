@@ -19,14 +19,14 @@ function fixture(t, files) {
   return root;
 }
 
-test('rejects planning and research references from product source and tests', () => {
+test('rejects research references from product source and tests', () => {
   for (const [rel, text] of [
-    ['product/factory/src/main/java/Foo.java', '/** See docs/planning/factory.md. */\n'],
+    ['product/factory/src/main/java/Foo.java', '/** See docs/research/research-register.md. */\n'],
     ['product/factory/src/test/java/FooTest.java', '/** See ../../../../docs/research/investigations/foo.md. */\n'],
-    ['product/factory/build.gradle.kts', '// docs\\planning\\factory.md\n'],
+    ['product/factory/build.gradle.kts', '// docs\\research\\factory.md\n'],
     ['product/factory/src/test/java/FooTest.java', '// workspace/research/investigations/foo.md\n'],
   ]) {
-    assert.match(validateFile(rel, text)[0], /references transient planning\/research material/);
+    assert.match(validateFile(rel, text)[0], /references transient research material/);
   }
 });
 
@@ -41,7 +41,7 @@ test('allows durable semantic authorities from product source', () => {
 });
 
 test('does not apply the product-source rule to process documentation or repository tooling', () => {
-  assert.deepEqual(validateFile('docs/development/reviewing.md', 'docs/planning/example.md\n'), []);
+  assert.deepEqual(validateFile('docs/development/reviewing.md', 'docs/research/example.md\n'), []);
   assert.deepEqual(validateFile('.github/scripts/tool.mjs', 'docs/research/example.md\n'), []);
 });
 
@@ -49,7 +49,7 @@ test('reads only tracked product files', (t) => {
   const root = fixture(t, { 'product/factory/src/main/java/Foo.java': '/** durable */\n' });
   const generated = path.join(root, 'product', 'factory', 'build', 'generated.java');
   fs.mkdirSync(path.dirname(generated), { recursive: true });
-  fs.writeFileSync(generated, '/** docs/planning/example.md */\n');
+  fs.writeFileSync(generated, '/** docs/research/example.md */\n');
   assert.deepEqual(check(root), []);
 });
 

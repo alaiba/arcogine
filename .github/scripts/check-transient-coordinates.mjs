@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 export const SELF_FILES = new Set(['.github/scripts/check-transient-coordinates.mjs', '.github/scripts/check-transient-coordinates.test.mjs']);
-export const ALLOWED_PREFIXES = ['docs/planning/', 'workspace/'];
+export const ALLOWED_PREFIXES = ['workspace/'];
 export const COORDINATE = /(?<![0-9A-Fa-f])[0-9A-Fa-f]{40}(?![0-9A-Fa-f])[`'"|+,:;(){}\[\]<>\s–—-]*workspace\/(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+(?![A-Za-z0-9._/-])/g;
 export function trackedFiles(root) {
   return execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split(/\r?\n/).filter(Boolean).map((rel) => rel.replaceAll('\\', '/'));

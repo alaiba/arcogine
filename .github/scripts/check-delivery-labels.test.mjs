@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { check, validateFile } from './check-delivery-labels.mjs';
 
 function fixture(t, files) {
@@ -19,29 +19,19 @@ function fixture(t, files) {
   return root;
 }
 
-test('accepts canonical planning coordinates and ordinary durable identifiers', (t) => {
-  const root = fixture(t, { 'docs/planning/example.md': 'PLAN-ENG-4 and REV-123.\n', 'docs/architecture/overview.md': 'See D3 and O1.\n' });
+test('accepts ordinary durable identifiers', (t) => {
+  const root = fixture(t, { 'docs/architecture/overview.md': 'See D3 and O1.\n' });
   assert.deepEqual(check(root), []);
 });
 
-test('accepts simple and hierarchical canonical planning coordinates', () => {
-  for (const text of ['PLAN-ENG-4\n', 'PLAN-ENG-4-B and PLAN-GOV-1-3\n']) assert.deepEqual(validateFile('docs/planning/example.md', text), []);
-});
-
-test('rejects malformed labels and legacy planning labels', () => {
-  assert.match(validateFile('docs/planning/example.md', 'PLAN-eng-4\n')[0], /malformed delivery-coordinate/);
-  assert.match(validateFile('docs/planning/example.md', 'Gate 4\n')[0], /legacy delivery-coordinate form/);
-  assert.match(validateFile('docs/planning/example.md', 'REV-abc\n')[0], /malformed delivery-coordinate/);
-  assert.match(validateFile('docs/planning/example.md', 'PLAN-GOV-1.3\n')[0], /malformed delivery-coordinate/);
-  assert.match(validateFile('docs/planning/example.md', 'PLAN-ENG-4_B\n')[0], /malformed delivery-coordinate/);
-  assert.match(validateFile('docs/planning/example.md', 'G1.3\n')[0], /legacy delivery-coordinate form/);
-  for (const legacy of ['D1', 'C3', 'O2', 'W1', 'DH-E']) assert.match(validateFile('docs/planning/example.md', `${legacy}\n`)[0], /legacy delivery-coordinate form/);
+test('rejects the retired PLAN-* namespace in every tracked location', () => {
+  for (const rel of ['docs/planning/example.md', 'docs/research/investigations/x.md', 'workspace/research/handoff.md', 'docs/architecture/overview.md']) {
+    assert.match(validateFile(rel, 'PLAN-ENG-4\n')[0], /durable artifact contains a PLAN/);
+  }
 });
 
 test('rejects reserved labels in durable content and filenames', () => {
-  assert.match(validateFile('docs/architecture/overview.md', 'PLAN-ENG-4\n')[0], /durable artifact contains a PLAN/);
   assert.match(validateFile('docs/architecture/PLAN-ENG-4-overview.md', 'Semantic\n')[0], /file path embeds/);
-  assert.match(validateFile('docs/planning/gate-4-runtime.md', 'Semantic\n')[0], /planning filename/);
   assert.match(validateFile('docs/architecture/overview.md', 'PLAN-eng-4\n')[0], /durable artifact contains a PLAN/);
   assert.match(validateFile('docs/architecture/overview.md', 'REV-123\n')[0], /durable artifact contains a REV/);
   assert.match(validateFile('docs/architecture/overview.md', 'REV-12.foo\n')[0], /malformed delivery-coordinate/);
@@ -65,17 +55,10 @@ test('returns actionable diagnostics with file and line for tracked leaks', (t) 
 test('allows ordinary compact identifiers and policy metavariables', () => {
   assert.deepEqual(validateFile('AGENTS.md', 'PLAN-<TRACK>-<LOCAL-ID> and REV-<N>.\n'), []);
   assert.deepEqual(validateFile('docs/architecture/overview.md', 'D3, O1, and C1 are ordinary identifiers.\n'), []);
-  assert.deepEqual(validateFile('docs/planning/example.md', 'See PLAN-ENG-4.\n'), []);
-  assert.deepEqual(validateFile('docs/planning/runtime-observation.md', 'Semantic content.\n'), []);
+  assert.deepEqual(validateFile('docs/research/investigations/x.md', 'Gate 4, G1.3, W1 and DH-E are ordinary text.\n'), []);
 });
 
-test('accepts variable-width REV identifiers of any width in allowed delivery/planning context', () => {
-  for (const rev of ['REV-1', 'REV-9', 'REV-10', 'REV-2047']) {
-    assert.deepEqual(validateFile('docs/planning/example.md', `${rev}.\n`), []);
-  }
-});
-
-test('rejects well-formed REV-<digits> identifiers of any width when leaked into durable content', () => {
+test('rejects well-formed REV-<digits> identifiers of any width in tracked files', () => {
   for (const rev of ['REV-1', 'REV-9', 'REV-10', 'REV-2047']) {
     assert.match(validateFile('docs/architecture/overview.md', `${rev}\n`)[0], /durable artifact contains a REV/);
   }

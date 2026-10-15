@@ -4,7 +4,7 @@
 >
 > **Authority:** Historical, non-normative evidence; current ownership and proof meaning live only in the documents into which this decision was reconciled
 >
-> **Reconciled into:** [Domain authority](../../architecture/overview.md#domain-authority), [Game consumer planning](../../planning/factory-design-game-consumer.md), [Governance evidence](../../architecture/governance-evidence.md) and the [analytics ownership research state](../../research/investigations/simulation-analytics-consumer-boundary.md)
+> **Reconciled into:** [Domain authority](../../architecture/overview.md#domain-authority), Game consumer planning (since retired into the [Game product research programme](../../research/investigations/factory-design-game-vertical-slice.md)), [Governance evidence](../../architecture/governance-evidence.md) and the [analytics ownership research state](../../research/investigations/simulation-analytics-consumer-boundary.md)
 
 ## Decision and context
 

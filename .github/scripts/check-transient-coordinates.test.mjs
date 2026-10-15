@@ -30,8 +30,8 @@ test('rejects workspace coordinates in non-Markdown durable text', () => {
 test('allows historical SHAs, generic policy and workspace mentions without a pair', () => {
   assert.deepEqual(validateFile('docs/development/example.md', `SHA ${SHA}; evidence in workspace/research/.`), []);
 });
-test('allows active planning and transient workspace coordinates', () => {
-  assert.deepEqual(validateFile('docs/planning/example.md', `${SHA} workspace/research/report.md`), []);
+test('allows transient workspace coordinates and rejects them in the retired planning area', () => {
+  assert.match(validateFile('docs/planning/example.md', `${SHA} workspace/research/report.md`)[0], /durable artifact contains a transient workspace coordinate/);
   assert.deepEqual(validateFile('workspace/research/report.md', `${SHA} workspace/research/source.md`), []);
 });
 test('requires a complete hexadecimal SHA and a concrete workspace path', () => {

@@ -9,11 +9,11 @@ Current maintained state is separate from these rules:
 
 For AI execution of this policy, the repository-owned **Researcher** procedure lives in [`docs/development/agent-roles/researcher.md`](agent-roles/researcher.md). This document remains the normative research policy; the agent file defines how the specialized researcher executes it — the same split `docs/development/reviewing.md` and `docs/development/agent-roles/pr-reviewer.md` already use.
 
-This document must not become a second research backlog, state ledger, architecture authority, or implementation plan. It defines the operating model, not current portfolio content: it does not list Arcogine's open questions (the research register does), does not decide any Arcogine semantic question (the architecture, specification, or product document that owns it does), and does not sequence implementation (`docs/planning/` does).
+This document must not become a second research backlog, state ledger, architecture authority, or implementation plan. It defines the operating model, not current portfolio content: it does not list Arcogine's open questions (the research register does), does not decide any Arcogine semantic question (the architecture, specification, or product document that owns it does), and does not sequence implementation (implementation handoffs and GitHub issues do).
 
 ## Lifecycle, priority, promotion, and maintained state
 
-Arcogine research exists to resolve material uncertainty before product, architecture, or executable delivery planning silently commits to an answer.
+Arcogine research exists to resolve material uncertainty before product, architecture, or implementation silently commits to an answer.
 
 The research-question lifecycle is:
 
@@ -39,15 +39,14 @@ Decision-quality evidence
    +--> no action
    +--> product clarification
    +--> architecture / specification
-   +--> concrete implementation responsibility
+   +--> implementation responsibility
                        |
-                       v
-                  docs/planning/
+                       +--> implementation handoff --> Implementer --> one implementation PR per slice
 ```
 
-A topic is ready for implementation planning only when semantic/product meaning, ownership, prerequisites, and acceptance evidence are sufficiently settled. A blocked implementation contract may live in planning; an unresolved question that still determines the contract stays in research. Research may recommend a durable consequence, but the conclusion becomes authoritative only through reconciliation into the appropriate product, architecture, specification, reference, research, or admitted planning surface.
+A conclusion is ready for implementation only when it passes the implementation-ready test in [Implementation handoff](#implementation-handoff). An unresolved question that still determines the change stays in research. Research may recommend a durable consequence, but the conclusion becomes authoritative only through reconciliation into the appropriate product, architecture, specification, reference or research surface, or through the implementation pull request its handoff produces.
 
-`docs/research/` therefore tracks what Arcogine still needs to understand or decide; `docs/planning/` tracks executable work given what is already known or decided. Research documents never receive temporary delivery coordinates.
+`docs/research/` therefore tracks what Arcogine still needs to understand or decide. Research documents never receive temporary delivery coordinates.
 
 An explicit owner decision is a separate route, not a research conclusion. When the owner decides a question directly — for example by choosing to replace an architecture rather than settle an open argument about what the existing one permits — that decision is reconciled as an ordinary architecture and implementation change under independent PR review. It needs no research acceptance, is not tested for compatibility with the rules it deliberately replaces, and must not be presented as the adoption of an unaccepted report. Research made moot by the decision is marked `SUPERSEDED`, and the knowledge-transfer audit below still applies to its evidence.
 
@@ -61,7 +60,7 @@ Maintain [`docs/research/research-register.md`](../research/research-register.md
 - mark research `READY` only when an independent researcher can execute it from the stated evidence and exit criteria;
 - do not update the maintained register merely because evidence gathering starts, pauses, resumes, or a report/review is in flight; temporary execution state belongs to the research workspace and exact evidence handoffs, while the register changes only when the question's admitted/unresolved/terminal state or another decision-relevant portfolio fact changes;
 - when research concludes, record the verdict and durable destination in the register without duplicating the authoritative conclusion;
-- during planning or consistency review, move unresolved exploratory content back to research rather than allowing planning to settle it implicitly;
+- during consistency review or issue triage, move unresolved exploratory content back to research rather than allowing an issue or handoff to settle it implicitly;
 - terminal questions (`CONCLUDED` or `SUPERSEDED`) normally remain for lifecycle and provenance history; compact or remove a terminal row only when its continued presence no longer helps explain a material conclusion, supersession chain, reopening trigger, or active decision context, all durable consequences have already been reconciled, and removal is not being used as a substitute for the knowledge-transfer audit in §10;
 - prefer current architecture/reference for durable semantics; the register records portfolio state and provenance, not a duplicate semantic authority.
 
@@ -86,7 +85,7 @@ A `READY` brief should normally state:
 - evidence expectations (what would make the answer decision-quality);
 - falsification conditions, where the question is the kind that can be falsified;
 - exit criteria;
-- the expected durable destination if the question is settled (no action, product, architecture/specification, process policy, planning, or implementation responsibility).
+- the expected durable destination if the question is settled (no action, product, architecture/specification, process policy, or implementation responsibility).
 
 A brief missing one of these because it genuinely does not apply to that question is fine. A brief missing several of these is not yet `READY`: an independent researcher should be able to execute it from the brief's stated evidence and exit criteria without first re-deriving the question.
 
@@ -122,8 +121,8 @@ A researcher must:
 2. distinguish live `main` from any feature/research branch being inspected — a branch under investigation, or a branch carrying a prior draft report, is evidence to read, never landed repository truth;
 3. read `AGENTS.md`;
 4. read the relevant research brief and the surrounding entry in [`docs/research/research-register.md`](../research/research-register.md);
-5. inspect the current product, architecture, specification, planning, implementation, and test surfaces the question actually touches;
-6. search semantic neighbors rather than reading only the files named in the brief — a question about identity, ownership, or lifecycle usually has cousins elsewhere in `docs/architecture/`, `docs/planning/`, and the codebase that the brief's author did not anticipate;
+5. inspect the current product, architecture, specification, implementation, and test surfaces the question actually touches;
+6. search semantic neighbors rather than reading only the files named in the brief — a question about identity, ownership, or lifecycle usually has cousins elsewhere in `docs/architecture/`, the research register, and the codebase that the brief's author did not anticipate;
 7. state any important surface that could not be inspected, rather than silently omitting it.
 
 Do **not** include `docs/research/synthesis-seeds.md` in routine start-of-run grounding for an investigation that is meant to provide independent evidence. First derive the bounded question's candidates, evidence needs, proving/failure cases, and result from its own brief and repository/external evidence. Compare against synthesis seeds only after reaching that result. If a seed is deliberately used as input to the question or materially shapes candidates, proving cases, or reasoning, label any later similarity as **reuse**, not independent recurrence.
@@ -151,20 +150,20 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 
 - the Product Charter;
 - current-state architecture (`docs/architecture/overview.md` and the relevant domain architecture doc);
-- current architecture and specifications (`docs/architecture/`), kept explicitly distinct from unresolved proposals in research, planning, or branch discussion;
+- current architecture and specifications (`docs/architecture/`), kept explicitly distinct from unresolved proposals in research, issues, or branch discussion;
 - the [research register](../research/research-register.md) and the relevant brief(s);
-- admitted implementation planning under `docs/planning/`;
+- known work in open GitHub issues;
 - implementation and tests;
 - reference contracts (`docs/reference/`) and examples;
 - recent merged PRs;
 - open PRs, where they materially affect the question;
 - review findings, where they exposed a relevant semantic failure mode.
 
-Do not assume code always overrides architecture, or the reverse — use the repository's existing authority-by-subject model (the same table structure `docs/development/reviewing.md`, `docs/development/agent-roles/work-planner.md`, and `docs/development/agent-roles/consistency.md` each use: Charter for product direction, `docs/architecture/overview.md` for current behavior, the owning architecture or specification for why a constraint exists, `docs/planning/` for what is admitted, live `main` for what exists).
+Do not assume code always overrides architecture, or the reverse — use the repository's existing authority-by-subject model (the same table structure `docs/development/reviewing.md`, `docs/development/agent-roles/researcher.md`, and `docs/development/agent-roles/consistency.md` each use: Charter for product direction, `docs/architecture/overview.md` for current behavior, the owning architecture or specification for why a constraint exists, GitHub issues for known work, live `main` for what exists).
 
 In particular:
 
-- a proposal in research, planning, or branch discussion is not established architecture — treat it as a candidate, not as ground truth the report can lean on;
+- a proposal in research, an issue, or branch discussion is not established architecture — treat it as a candidate, not as ground truth the report can lean on;
 - **research priority is not implementation commitment** — a `High`-priority `CANDIDATE` question is not evidence that implementation is admitted;
 - an **open branch is not landed capability** — a branch under investigation (including a prior research branch) is evidence to read, not architecture to cite as current.
 
@@ -376,10 +375,7 @@ separate durable reconciliation on the same workspace by default
         +--> no action
         +--> product
         +--> architecture / specification
-        +--> concrete implementation responsibility
-                            |
-                            v
-                       docs/planning/
+        +--> implementation handoff --> Implementer --> one implementation PR per slice
         |
         v
 knowledge-transfer audit
@@ -401,11 +397,30 @@ branch history remains reachable while the ref is retained
 
 A researcher may recommend durable consequences. A researcher does not make architecture authoritative merely by publishing a report; the promotion rule above requires deliberate reconciliation into the appropriate durable authority.
 
-The report's author must not silently rewrite current architecture, specifications, product semantics, production code, or implementation planning while "doing research." A separate reconciliation pass deliberately translates surviving research conclusions into the appropriate authoritative surface — an architecture or specification PR, a planning admission — and that reconciliation change goes through normal independent PR review exactly as any other change would.
+The report's author must not silently rewrite current architecture, specifications, product semantics, or production code while "doing research." A separate reconciliation pass deliberately translates surviving research conclusions into the appropriate authoritative surface — an architecture or specification PR, or an implementation PR that the [Implementer](agent-roles/implementer.md) produces from the research's handoff — and that change goes through normal independent PR review exactly as any other change would. Research itself never changes production code: anything durable leaves research only through reconciliation or through an implementation handoff.
+
+Architecture and specification text that a change adds or alters describes what the code implements. A reconciliation without code may add only what current code already does: an ownership boundary, a refusal, a constraint already enforced, or a scope exclusion. A decided rule that current code does not implement stays in its research record, and its question stays `READY`, until an implementation handoff lands the rule together with the code and tests that make it true. This governs new reconciliations; it does not by itself reopen a question whose conclusion an existing specification already records, and implementing such an existing specification adds no new unbuilt text.
 
 **Separate reconciliation means a separate phase and authority transition, not a separate Git branch.** By default, the same finite research-evidence workspace continues through durable reconciliation. Do not create a fresh reconciliation branch solely because evidence gathering has ended. Completed report/review artifacts remain immutable by exact commit SHA + path while later workspace commits carry reconciliation edits and the knowledge-transfer audit.
 
-Research is never `CONCLUDED` merely because a report was written. `CONCLUDED` requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result.
+Research is never `CONCLUDED` merely because a report was written. `CONCLUDED` requires the durable consequence to actually be reconciled, or an explicit, recorded no-action result. For an implementation handoff, the merged implementation pull requests are that reconciliation.
+
+### Implementation handoff
+
+When a conclusion's durable consequence includes production code or tests, research delegates it; the researcher never implements it. A conclusion is **implementation-ready** only when:
+
+1. the question is answered, and any independent adversarial review that its risk requires (§7, §9) has accepted the conclusion;
+2. the owning module, contract or integration boundary is known;
+3. the change's prerequisites have landed, or are explicitly unnecessary;
+4. the implementation responsibility is bounded;
+5. acceptance evidence can be stated before coding begins; and
+6. non-goals are explicit enough to keep adjacent unsettled work out.
+
+A conclusion that fails any of these stays in research: narrow it, or record what blocks it in the register.
+
+For an implementation-ready conclusion, the researcher writes an **implementation handoff** in the question's workspace, under the [`AGENTS.md`](../../AGENTS.md) prompt-handoff preflight, with the [contents the Implementer needs](agent-roles/implementer.md#implementation-handoff-contents). The handoff includes the knowledge-transfer audit below, so the implementation pull request can carry its outcomes. The researcher returns the workspace branch, the exact handoff commit SHA and its path.
+
+A handoff may split the work into several slices. The Implementer lands each slice in its own pull request from a branch of `main`, and the handoff assigns each durable update — specification change, register row, knowledge-transfer outcome — to the slice whose pull request makes it true. Implementation starts as soon as the handoff exists. Until the last slice lands, the question stays `READY` and its workspace stays active as the handoff's custody; the question becomes `CONCLUDED` when the last slice's pull request merges.
 
 ### Evidence workspaces, artifact identity, and retirement
 
@@ -429,13 +444,13 @@ Exact workspace `commit SHA + path` coordinates are **active-custody artifact id
 
 A copied coordinate is not preservation of its target. Recording a workspace SHA in a pull request, issue, commit message, or maintained document preserves the coordinate text, but it does not create a repository guarantee that the underlying Git object will remain fetchable after squash merge, branch deletion, mirroring/export, or Git-host retention changes. Do not copy temporary artifact coordinates into maintained state merely to make them appear durable. The repository's transient-coordinate checker rejects the concrete full-SHA plus `workspace/...` path form in durable tracked files; semantic dependence without that syntax remains a review responsibility.
 
-Regardless of how long a research branch is retained, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product, architecture/specification, or reference authority, admitted planning authority, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, any retained historical decision-rationale records, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
+Regardless of how long a research branch is retained, maintained research state must depend on the **durable knowledge destinations** produced by reconciliation: accepted product, architecture/specification, or reference authority, remaining research-register questions and reopening triggers, durable proving cases/tests/source maps/know-how, any retained historical decision-rationale records, qualifying synthesis seeds, and explicit discard decisions. A merged reconciliation pull request or equivalent delivery-history record may be cited as a **delivery-history provenance reference** showing where the transfer and independent review occurred, but it is not an archive for the temporary report/review artifacts and current semantics must not require those artifacts to remain fetchable.
 
 If an exact report, adversarial review, source map, or other research artifact must remain readable independently of the continued existence of its branch, deliberately promote it to a durable repository location or another retention surface with an explicit persistence contract. A retained branch permits inspection of reachable historical commits, but it is not the maintained knowledge destination; a future explicit branch deletion or Git-host retention change must not erase a required authority. Otherwise the knowledge-transfer audit preserves the material conclusions, and the temporary files may be removed from the final merge tree.
 
 Before merging durable reconciliation, remove temporary `workspace/research/` files from the final tree **after** a knowledge-transfer audit accounts for every material result that should survive the investigation. That tree cleanup does not delete the branch or its earlier evidence commits. Research questions become `CONCLUDED` or `SUPERSEDED` only under the lifecycle rules above; removal of temporary files is not itself proof of conclusion. At minimum, classify and transfer:
 
-- accepted conclusions and invariants into the appropriate product, architecture, specification, reference, or admitted planning authority;
+- accepted conclusions and invariants into the appropriate product, architecture, specification, or reference authority, and a concrete implementation responsibility into an implementation handoff;
 - qualifications that constrain an accepted conclusion into the same durable destination as that conclusion;
 - unresolved unknowns, reopening triggers, and newly exposed questions into the [research register](../research/research-register.md) when they remain material;
 - reusable proving cases, counterexamples, failure modes, measurements, protocols, source maps, or implementation know-how into the durable surface that will need them, when retaining them changes future reasoning or validation;

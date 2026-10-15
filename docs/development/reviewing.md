@@ -10,8 +10,8 @@ The repository is the source of truth. Prior chat/session context, branch descri
 
 For multi-slice initiatives, use three distinct responsibilities:
 
-1. **Planning** — defines initiative sequencing, chooses the next coherent slice, and writes the handoff/acceptance criteria.
-2. **Implementation** — designs and implements one narrowly scoped slice, opens the PR, and responds to review findings.
+1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). An issue or a bounded owner request is the other way into implementation.
+2. **Implementation** — the [Implementer](agent-roles/implementer.md) implements one narrowly scoped responsibility, opens the PR, and responds to review findings.
 3. **Independent review** — inspects the live PR against current repository state, posts actionable findings, re-reviews new heads, and states merge readiness clearly.
 
 For AI-assisted work, a useful session boundary is:
@@ -19,7 +19,7 @@ For AI-assisted work, a useful session boundary is:
 - continue the same implementation session while fixing or completing the **same PR/slice**;
 - start a **fresh implementation session for the next slice/branch**, forcing the new agent to re-ground itself from the repository rather than inheriting stale assumptions;
 - keep a **persistent reviewer session across PRs** when useful for architectural continuity, but require it to re-read the live repository for every review;
-- keep initiative-level planning separate from implementation and review when practical.
+- keep research separate from implementation and review when practical; research never implements its own conclusion.
 
 These are workflow boundaries, not product architecture. They exist to reduce confirmation bias, stale-context errors, and scope bleed between slices.
 
@@ -82,7 +82,7 @@ Read the relevant current material rather than relying only on the PR descriptio
 
 - `docs/product/charter.md` for significant product/architecture changes;
 - `docs/architecture/overview.md`;
-- the relevant planning document, such as `docs/planning/factory-simulation-engine-readiness.md`;
+- the implementation handoff or issue the PR implements;
 - the architecture or specification that owns the affected semantics;
 - affected domain code and tests;
 - `.github/CONTRIBUTING.md`;
@@ -200,35 +200,37 @@ Check for silent pull-forward of:
 - broad public API/event redesign;
 - model changes not required by the slice.
 
-Prefer reducing scope when the current requirement does not yet give an abstraction a concrete responsibility.
+Prefer reducing scope when the current requirement does not yet give an abstraction a concrete responsibility. Production code that no supported entry point reaches is a finding, even when a later change is expected to wire it in ([CONTRIBUTING](../../.github/CONTRIBUTING.md#change-slicing-and-branch-hygiene)).
 
 #### Documentation accuracy
 
-Current-state docs must describe what actually exists. Planning docs must distinguish implemented, partial, deferred, and explicitly out-of-scope capability.
+Current-state docs must describe what actually exists, and no maintained document may claim that deferred capability exists.
 
 After iterative fixes, re-check the PR title/body as well: a description of an API that no longer exists is a review defect even when the code is correct.
 
-**Durable semantic vocabulary is a mandatory review check.** Initiative-local stage, gate, and slice identifiers, and PR-local review/finding identifiers (see `AGENTS.md`), are valid in `docs/planning/`, issues, PR descriptions/comments, reviews, commit messages, and implementation handoffs where they help sequence or track delivery. Durable semantic naming must instead name the capability, contract, identity, invariant, or behavior directly rather than depend on one of these coordinates — this covers Markdown documentation under `docs/` outside `docs/planning/`, and non-Markdown durable artifacts a PR introduces, such as code comments, workflow definitions, and test names. Durable documentation may link to planning or research when that history/evidence is useful and the document remains independently meaningful.
+**Durable semantic vocabulary is a mandatory review check.** Delivery coordinates — issue and pull-request numbers, and PR-local review/finding identifiers (see `AGENTS.md`) — are valid in issues, PR descriptions/comments, reviews, commit messages, and implementation handoffs where they help sequence or track delivery. Durable semantic naming must instead name the capability, contract, identity, invariant, or behavior directly rather than depend on one of these coordinates — this covers Markdown documentation under `docs/`, and non-Markdown durable artifacts a PR introduces, such as code comments, workflow definitions, and test names. Durable documentation may link to research or an issue when that history/evidence is useful and the document remains independently meaningful.
 
-Product source and tests are stricter: they must not reference `docs/planning/`, `docs/research/`, or transient research-workspace artifacts. Planning and research may cite implementation as evidence; implementation must state its current behavior/invariant directly or reference the durable architecture, specification, reference, or development contract that owns it. Treat a source-to-planning/research reference as an authority-placement defect even when the referenced artifact still exists and happens to agree today.
+Product source and tests are stricter: they must not reference `docs/research/` or transient research-workspace artifacts. Research may cite implementation as evidence; implementation must state its current behavior/invariant directly or reference the durable architecture, specification, reference, or development contract that owns it. Treat a source-to-research reference as an authority-placement defect even when the referenced artifact still exists and happens to agree today.
 
-The required CI checks catch recognizable coordinate and source-path leaks mechanically; review must catch semantic leakage that a regex cannot recognize, including prose that names a planning/research concept without a literal path. Do not waive a durable-document hit merely because the identifier is historically familiar.
+The required CI checks catch recognizable coordinate and source-path leaks mechanically; review must catch semantic leakage that a regex cannot recognize, including prose that names a research concept without a literal path. Do not waive a durable-document hit merely because the identifier is historically familiar.
 
 #### Semantic propagation
 
 For medium- and high-semantic-risk changes, review by concept as well as by changed file. Identify the small set of concepts whose meaning changed, then search maintained docs, tests, examples, interfaces, and configuration for both the new vocabulary and plausible old assumptions. This is especially important when a semantic change can leave syntactically unrelated prose or tests behind.
 
-When an architectural constraint, readiness criterion, capability status, or other authority-bearing artifact changes state — for example a constraint moving from proposal into current architecture, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related planning/status tables, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
+When an architectural constraint, readiness criterion, capability status, or other authority-bearing artifact changes state — for example a constraint moving from proposal into current architecture, `partial -> implemented`, or `blocked -> ready` — treat that as a propagation trigger. Inspect current architecture, directly related status tables, research-register rows, maintained product concepts, reference surfaces, and implementation/evidence claims that may still describe the prior state.
 
 This is bounded change-impact review. It does not require a repository-wide consistency sweep for every PR.
 
 #### Architectural reconciliation discipline
 
-Arcogine keeps no separate decision-record authority. A significant architectural change — durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind — must be reconciled into the architecture or specification that owns the affected semantics, with code, tests, and dependent planning updated in the same PR.
+Arcogine keeps no separate decision-record authority. A significant architectural change — durable identity/canonicalization contracts, persistent revision semantics, public compatibility/event contracts, scheduler/time authority, major domain ownership changes, or an execution decomposition whose semantics would be costly to unwind — must be reconciled into the architecture or specification that owns the affected semantics, with code and tests updated in the same PR.
 
 Do not demand an architecture change for ordinary local refactors.
 
-When a PR edits current architecture or a specification, compare the before and after text, establish the actual semantic consequences of the change, and require that the executable invariants, plans, and consumers that depended on the previous constraint are reconciled in the same PR. Where rationale is needed to understand or not accidentally undo a constraint, expect it concisely next to the rule; do not expect the document to narrate what it replaced, and do not require status fields, amendment metadata, or supersession chains. Git and pull-request history preserve the previous state and why it changed.
+Architecture and specification text that a PR adds or alters describes what the code implements. Treat such text that describes behavior neither the PR nor current `main` implements and tests as a finding: a decided but unbuilt rule belongs in its research record until the pull request that implements it lands it ([research operating model](researching.md#10-research-and-reconciliation-stay-separate)). Existing specification text that the PR does not touch is not a finding under this rule, and a PR that implements an existing specification adds no unbuilt text.
+
+When a PR edits current architecture or a specification, compare the before and after text, establish the actual semantic consequences of the change, and require that the executable invariants and consumers that depended on the previous constraint are reconciled in the same PR. Where rationale is needed to understand or not accidentally undo a constraint, expect it concisely next to the rule; do not expect the document to narrate what it replaced, and do not require status fields, amendment metadata, or supersession chains. Git and pull-request history preserve the previous state and why it changed.
 
 When a change compresses a document or removes historical narration, check that every rule it carries forward still states its real condition and basis. Replacing a removed rationale with a generic rule whose factual premise is false — for example, asserting that a definition is fixed because records were attributed to it when none were — does not preserve the rule; it creates standing ambiguity about whether and why the rule binds. Either state the real basis or change the rule deliberately.
 
@@ -349,8 +351,8 @@ Do not leave merge readiness implicit when a review is actually performed.
 
 Before `READY TO MERGE`, explicitly verify two documentation-lifetime conditions when applicable:
 
-1. durable documentation touched or semantically affected by the PR does not depend on temporary planning coordinates; and
-2. every architecture or specification edit has its semantic consequences independently reviewed and reconciled across the documents, invariants, plans, and consumers that depended on the previous statement.
+1. durable documentation touched or semantically affected by the PR does not depend on temporary delivery coordinates; and
+2. every architecture or specification edit has its semantic consequences independently reviewed and reconciled across the documents, invariants, and consumers that depended on the previous statement.
 
 ### Canonical disposition format
 
@@ -431,11 +433,11 @@ Do not demand redundant tests when existing integration/baseline coverage alread
 
 A chat/session may discover a decision; it must not be the only place that decision exists.
 
-Before considering an initiative slice complete, ask whether deleting the implementation/planning/review conversations would erase anything needed to understand:
+Before considering an initiative slice complete, ask whether deleting the research/implementation/review conversations would erase anything needed to understand:
 
 - what the system does now;
 - why a hard-to-reverse decision was made;
 - what remains intentionally deferred;
 - how the change is validated.
 
-If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation or the owning specification, planning, or the PR record. When promoting knowledge out of planning into a durable document, translate temporary delivery coordinates into semantic terminology.
+If yes, move that knowledge into the appropriate repository artifact: code/tests, current-state documentation or the owning specification, the research register or an issue, or the PR record. When promoting knowledge out of delivery context into a durable document, translate temporary delivery coordinates into semantic terminology.

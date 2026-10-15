@@ -68,7 +68,7 @@ test('malformed checkpoint, missing origin and duplicate evidence cannot silentl
   assert.throws(() => buildInventory({ ...data, pulls: [pr(500, 'foo'), pr(500, 'foo')] }), /repeated pull/);
   assert.throws(() => buildInventory({ ...data, scannedAt: '2026-10-01T00:00:00Z' }), /after inventory/);
   const missing = buildInventory({ ...data, pulls: [pr(501, 'case', { deletedRepo: true, fork: true })] });
-  assert.deepEqual(missing.unresolvedHeadPrs, []);
+  assert.deepEqual(missing.unresolvedHeadPrs, [501]);
 });
 
 test('unknown origin is disclosed and not assumed to be same-repository research', () => {

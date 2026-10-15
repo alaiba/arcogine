@@ -159,14 +159,14 @@ When a surface changes, inspect maintained or executable surfaces that encode or
 
 | Changed surface | Mandatory neighbors to consider |
 | --- | --- |
-| `FactoryModel` / model semantics | factory-design architecture, the Factory Model specifications, factory-design plan, engine assumptions, product concepts, provenance/identity contracts, tests |
-| routing/resource eligibility or execution decomposition | `docs/product/concepts.md`, factory-design architecture/plan, Engine Readiness, Engine Semantics, runtime/dispatch tests, consumer contracts |
-| `FactoryRuntime`, handlers, orders, jobs | architecture overview, Engine Readiness, the runtime and Engine Semantics contracts, acceptance/integration tests, consumer contracts |
+| `FactoryModel` / model semantics | factory-design architecture, the Factory Model specification, Engine Semantics assumptions, product concepts, provenance/identity contracts, related research-register questions, tests |
+| routing/resource eligibility or execution decomposition | `docs/product/concepts.md`, factory-design architecture, Engine Semantics and its conformance fixtures, runtime/dispatch tests, consumer contracts, the issue or handoff the change implements |
+| `FactoryRuntime`, handlers, orders, jobs | architecture overview, the runtime and Engine Semantics contracts, acceptance/integration tests, consumer contracts, the issue or handoff the change implements |
 | events, scheduler, observations | event/state/observation architecture, supported runtime contract, determinism tests |
 | module dependencies | architecture module graph, executable architecture rules, domain/challenge boundaries |
 | challenge domain | Challenge contract, Game consumer research, Engine-vs-Challenge boundary |
-| governance/conformance | governance architecture and plan, the identity/revision/fingerprint specifications, evidence/findings semantics |
-| operational/digital-twin work | operational architecture/plan, security/authority concerns, governance boundary |
+| governance/conformance | Governance architecture and evidence contract, the identity/revision/fingerprint specifications, evidence/findings semantics, related research-register questions |
+| operational/digital-twin work | Operational architecture and continuity contract, Operational boundary research, security/authority concerns, governance boundary |
 | outward controllers and projections, if present | runtime contract, relevant adapter references, integration tests |
 | scenario/input format (if implemented) | approved input contract, product concepts, format-specific tests |
 | `./arcogine` commands | README, CONTRIBUTING, testing guide, AGENTS.md |
@@ -254,7 +254,7 @@ Every actionable finding must establish:
 3. why that matters to correctness or merge readiness;
 4. the outcome/invariant remediation must restore.
 
-Prefer exact paths, symbols, test names, plan criteria, specification sections, PR numbers, and commit/head SHAs.
+Prefer exact paths, symbols, test names, acceptance criteria, specification sections, PR numbers, and commit/head SHAs.
 
 Use confidence `HIGH`, `MEDIUM`, or `LOW`. Do not inflate confidence because CI is green.
 

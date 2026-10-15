@@ -1,8 +1,8 @@
 # Governance and Conformance Architecture
 
-> **Status:** Proposed architectural reference  
+> **Status:** Current architecture of the implemented Governance substrate  
 > **Scope:** Cross-domain model history, semantic change, requirements, conformance, evidence, and governance over Arcogine's canonical business semantics  
-> **Authority:** The [controlled revision](controlled-revisions.md) and [Governance evidence](governance-evidence.md) contracts are adopted; the broader capability described here remains proposed. This document does not claim current compliance, audit, or certification capability  
+> **Authority:** The [controlled revision](controlled-revisions.md) and [Governance evidence](governance-evidence.md) contracts are adopted. Governed change and authorization, exceptions and risk acceptance, framework/control mappings and audit projections are not implemented; their design is kept in [Governance change-control research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented). This document does not claim current compliance, audit, or certification capability  
 > **Related:** [Product Charter](../product/charter.md), [Architecture Overview](overview.md), [Factory Design Architecture](factory-design.md), [Operational Execution and Digital Twin Architecture](operational-execution-digital-twin.md), [canonical model boundary](factory-design.md#4-canonical-model-boundary), [Factory publication identity contract](factory-design.md#11-publication-identity-and-provenance), [Factory model specification](factory-model.md), [controlled revision contract](controlled-revisions.md), [Operational continuity contract](operational-continuity.md), [Determinism Contract](overview.md#determinism-contract), [Governance evidence contract](governance-evidence.md), [Standards Alignment](standards-alignment.md)
 
 ## 1. Architectural position
@@ -69,22 +69,9 @@ Semantic fingerprint + controlled revision lineage
             |
             v
     Findings and evidence
-            |
-            v
- Governance / risk / controls
-            |
-            v
- Framework requirement mappings
-            |
-            +--> SOC 2
-            +--> ISO 27001
-            +--> ISO 9001
-            +--> internal policy
-            +--> customer commitments
-            +--> architecture standards
 ```
 
-One underlying business fact or control may satisfy multiple framework requirements.
+Governance, risk, controls and framework requirement mappings above this chain are not implemented; their intended direction is kept in [research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
 ## 4. Semantic identity and controlled lineage precede audit claims
 
@@ -135,35 +122,18 @@ R40 --------> R41 --------> R42 --------> R43
                               |
                               +--> ChangeSet / rationale
                               +--> conformance evaluation / finding
-                              +--> authorization decision
-                              +--> deployment record
                               +--> evidence use
-                              +--> external workflow reference
 ```
 
-The horizontal dimension is immutable revision lineage. The attached records are governance, evidence, and operational facts about that history.
+The horizontal dimension is immutable revision lineage. The attached records are governance and evidence facts about that history; an external workflow reference attaches to the `ChangeSet` (§6). Authorization and deployment records are not implemented.
 
 A controlled revision becomes an authoritative historical fact only when its immutable record is accepted by Arcogine's authoritative revision store. The controlled revision contract defines identity, immutability, lineage, and provenance semantics; Governance owns those semantics and the `ControlledRevisionAuthority` acceptance and historical-resolution port. The built-in [Storage](storage.md) module implements that port: it accepts candidate revision content, establishes the accepted record's `recordedAt` at its commit boundary, and durably binds the revision to its immutable semantic artifact. Historical resolution re-verifies the artifact against the recorded `ModelFingerprint`; missing or corrupt history fails explicitly rather than falling back to current state. The filesystem backend, including its record layout and locking mechanics, is a private Storage detail.
 
-The system should eventually answer:
-
-```text
-What semantic state was true at time T?
-What fingerprint identifies that state?
-Which controlled revision represented it?
-What changed from the prior revision?
-Why was that change proposed?
-Which external change record governed it?
-Who or what approved it, if approval was required?
-Was it deployed, and where/when?
-Which effective transformed/applied artifact governed each deployment target?
-Which requirements were affected?
-Which evidence supported the resulting conformance state?
-```
+The implemented substrate answers which fingerprint identifies a semantic state, which controlled revision represented it and what its lineage is, and what changed semantically between two revisions. Questions about why a change was approved, whether and where it was deployed, and which evidence supported a historical conformance state need capabilities that are kept in [research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
 ## 5. Semantic change is a first-class governance primitive
 
-Text, JSON, or serialized-object diffs are insufficient for business governance. When a concrete workflow requires shared change semantics, Arcogine should represent consequential changes in domain terms.
+Text, JSON, or serialized-object diffs are insufficient for business governance. Arcogine represents consequential changes in domain terms.
 
 ```text
 DataStoreMoved
@@ -172,20 +142,19 @@ DataStoreMoved
     toRegion: US
 ```
 
-is more useful than a raw field diff because a semantic `ChangeSet` can drive impact analysis:
+is more useful than a raw field diff because a semantic `ChangeSet` can drive impact analysis. The implemented `ChangeSet` carries:
 
 ```text
 ChangeSet
    |
    +--> base controlled revision / fingerprint
    +--> candidate fingerprint
-   +--> affected business objects
-   +--> affected requirements
-   +--> affected controls
-   +--> required reviewers
-   +--> required evidence
-   +--> invalidated prior evidence
+   +--> semantic changes
+   +--> affected entities (ImpactScope)
+   +--> provenance: source, reason, optional external change reference
 ```
+
+A requirement's scope intersects the affected entities to find the requirements a change reaches. Impact on controls, reviewers, required evidence and invalidated prior evidence is not implemented ([research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented)).
 
 Design/change history remains distinct from simulated or operational event history.
 
@@ -195,37 +164,13 @@ Operational drift or calibration may motivate a candidate semantic change, but t
 
 Arcogine does not need to replace Jira or another enterprise change-management system. Organizational workflow may remain external while Arcogine owns semantic meaning, impact, technical evidence, and controlled revision lineage.
 
-A target relationship is:
+A `ChangeSet` may carry a reference to an external change record.
 
-```text
-External change request (e.g. Jira)
-        |
-        v
-Arcogine ChangeSet
-        |
-        v
-Candidate controlled revision
-        |
-        +--> semantic diff
-        +--> affected requirements / controls
-        +--> validation / simulation / conformance evidence
-        |
-        v
-Authorization decision/evidence
-required by applicable change-control policy
-(e.g. ApprovalRecord, standing authorization,
-pre-approved standard change, emergency
-justification, automated policy)
-        |
-        v
-Operational deployment record, when deployed
-```
-
-External workflow references are associations to revisions/changes, not fields that define controlled revision identity. This allows a revision to be recorded before an external ticket is linked and prevents workflow metadata changes from mutating immutable configuration history.
+External workflow references are associations to changes, not fields that define controlled revision identity. This allows a revision to be recorded before an external ticket is linked and prevents workflow metadata changes from mutating immutable configuration history.
 
 The external reference tracks or governs the change. Arcogine should not duplicate ticket comments, project-management state, or vendor-specific workflow terminology unless those facts become necessary to a cross-system governance contract.
 
-Governance owns the revision/change/authorization interpretation. The Operational Execution capability owns applying an authorized revision to an execution target and recording the effective adapter/profile/transformation/applied-artifact provenance and operational result. A Governance deployment reference therefore points to an Operational Execution deployment record rather than redefining deployment mechanics inside Governance.
+Authorization of a change and deployment of a revision are not implemented. Their ownership is fixed: Governance owns the authorization interpretation, and Operational Execution owns applying a revision to an execution target. Their design is kept in [research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
 ## 7. Generic conformance model
 
@@ -262,10 +207,10 @@ Evaluation occurrence
     result and explanation
 
 Finding
+    requirement and assertion identity/version
+    evaluated fingerprint and controlled revision, when available
     affected entities
-    severity
     explanation
-    remediation state
 ```
 
 A requirement's provenance must identify the exact normative or governing source when its meaning depends on an external standard, regulation, contract, or policy. Family-level labels such as `ISA-95 / IEC 62264` are insufficient for an auditable requirement because closely aligned standards, editions, and national adoptions can differ. The requirement must retain enough source identity to determine what text and obligations governed a historical evaluation.
@@ -274,31 +219,11 @@ External source identity is separate from Arcogine's own requirement and asserti
 
 A structural requirement can be evaluated solely from authoritative model state; an operational requirement may need external observation. `UNKNOWN` is important: absence of evidence must not silently become success or failure when the underlying fact is genuinely unobserved.
 
-The [Governance evidence contract](governance-evidence.md) fixes what a completed evaluation is once evidence is involved: an identifiable, immutable **evaluation occurrence** whose basis — the exact requirement/assertion definitions used, the subject fingerprint and optional verified revision, the evidence uses relied on, material excluded or missing, the temporal frame, the applicability rules applied, and the outcome — is fixed when the occurrence is accepted. Two evaluations with equal inputs and equal outcomes remain distinct occurrences. Identity plus version labels are not by themselves proof that the historical definitions remain resolvable: the landed `Requirement`/`Assertion` equality deliberately excludes wording, source, and rule, so an evidence-capable evaluation must preserve or authoritatively resolve the exact definitions it used. The landed `ConformanceEvaluation` is a deterministic value without occurrence identity or an acceptance boundary; occurrence identity is an additive obligation on the first evidence-capable slice, not a change to the existing value contract.
+The [Governance evidence contract](governance-evidence.md) fixes what a completed evaluation is once evidence is involved: an identifiable, immutable **evaluation occurrence** whose basis — the exact requirement/assertion definitions used, the subject fingerprint and optional verified revision, the evidence uses relied on, material excluded or missing, the temporal frame, the applicability rules applied, and the outcome — is fixed when the occurrence is accepted. Two evaluations with equal inputs and equal outcomes remain distinct occurrences. Identity plus version labels are not by themselves proof that the historical definitions remain resolvable: the landed `Requirement`/`Assertion` equality deliberately excludes wording, source, and rule, so an evidence-capable evaluation must preserve or authoritatively resolve the exact definitions it used. An accepted `EvaluationOccurrence` carries that identity; `ConformanceEvaluation` remains a deterministic value without occurrence identity or an acceptance boundary. An occurrence retains the requirement and assertion values it was evaluated with, but the assertion's executable rule is an arbitrary function object whose purity Arcogine does not enforce ([Governance evidence](governance-evidence.md#9-historical-explanation-requires-exact-definition-resolution)).
 
-## 8. Controls and frameworks are mappings, not business truth
+## 8. Controls and frameworks are not implemented
 
-```text
-Framework
-    |
-    v
-Requirement
-    |
- satisfied by
-    v
-Control
-    |
- implemented by
-    +--> BusinessObject / Process / Policy
-    |
- verified by
-    +--> Assertion(s)
-    |
- evidenced by
-    +--> Evidence
-```
-
-One control may map to multiple requirements across multiple frameworks. Framework upgrades should change mappings and requirement versions without forcing unrelated business objects to acquire new schema fields.
+Arcogine has no control or framework-mapping model. The intended direction — frameworks map onto requirements and controls instead of adding framework fields to business objects — is kept in [research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
 ## 9. Evidence must be attributable and temporal
 
@@ -340,32 +265,13 @@ Operational observations retain the identity and provenance assigned by the Oper
 
 Evidence generated from Arcogine's authoritative state must remain distinguishable from evidence observed externally. Reuse is valid only when scope, applicable period, provenance, and semantic meaning remain compatible.
 
-## 10. Findings, exceptions, and risk acceptance are explicit governance state
+## 10. Findings record failures; exceptions are not implemented
 
-A failed assertion may be remediated, accepted temporarily, or explicitly excepted.
-
-```text
-Finding
-    assertion
-    affected objects
-    severity
-    detected at
-    remediation
-
-Exception / RiskAcceptance
-    finding or control
-    rationale
-    owner/approver
-    effective period
-    expiration
-    compensating controls where applicable
-```
-
-An exception does not rewrite the underlying assertion into success. It records an authorized governance decision about a known non-conformance.
+A `Finding` exists only for a `FAIL` evaluation and records the requirement and assertion identity, the evaluated identity, the affected entities and an explanation (§7). It has no severity or remediation state, and Arcogine has no exception or risk-acceptance record; `GovernanceModuleBoundaryTest` keeps those declarations out of production Governance. Their intended design is kept in [research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
 ## 11. Pre-change conformance is strategically important
 
-Arcogine's stronger opportunity is to evaluate a proposed semantic change before deployment or operational activation.
+Arcogine evaluates a proposed semantic change against explicit requirements before the candidate is recorded or applied.
 
 ```text
 Current controlled revision
@@ -380,41 +286,18 @@ Impact analysis
         |
         +--> affected entities
         +--> affected requirements
-        +--> evidence invalidation
-        +--> required authorization/review
         |
         v
 Pre-change conformance evaluation
-        |
-   authorize / reject / revise
 ```
 
-This connects design, verification, change management, and compliance through one semantic representation without requiring Arcogine to own the organizational workflow.
+Evidence invalidation, required review and an authorize / reject / revise decision on the result are not implemented ([research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented)).
 
-## 12. Audit snapshots are reproducible interpretations
+This connects design, verification and change through one semantic representation without requiring Arcogine to own the organizational workflow.
 
-An audit view should be reconstructible from versioned inputs rather than stored only as an opaque dashboard state.
+## 12. Audit snapshots are not implemented
 
-```text
-AuditSnapshot
-    model fingerprint
-    controlled revision ID
-    exact requirement definition used (identity / version resolved)
-    exact assertion definition used (identity / version resolved)
-    requirement source identity / version
-    framework / mapping version, when applicable
-    control mappings
-    evaluation occurrences and results
-    evidence basis: uses relied on, material excluded, known gaps
-    exceptions / risk acceptances
-    generated at
-```
-
-The desired invariant is:
-
-> Given the relevant semantic fingerprint, controlled revision, the exact Arcogine requirement and assertion definitions actually used, exact external requirement source identity/version when applicable, framework/mapping versions, the accepted evaluation occurrences with their fixed evidence basis, and governance decisions, Arcogine can explain how a historical conformance result was derived.
-
-An audit view is a projection over accepted occurrences and their fixed basis, not a fresh evaluation: it never substitutes current definitions, a current evidence query, a current source revision, or re-execution under current semantics for the historical basis. Where necessary historical material is missing or corrupt, the projection discloses the gap rather than reconstructing around it. A historical `PASS` is the recorded outcome of that occurrence, not a current assurance that the claim remains true.
+Arcogine has no audit projection. Accepted evaluation occurrences fix their own basis (§9), which a reproducible audit view would project over; the audit snapshot and its invariant are kept in [research](../research/investigations/governance-change-control.md#design-kept-from-the-architecture--not-implemented).
 
 ## 13. Relationship to current factory-model and operational work
 
@@ -433,7 +316,7 @@ runtime instantiation from a published model
 runtime/result exact-definition provenance intentionally not synthesized
 ```
 
-The Factory model specification and its implementation establish the current `factory-model:sha256:<digest>` content fingerprint; it is deterministic for one definition but does not identify the exact definition revision that produced it. The controlled revision contract establishes controlled revision identity/lineage, and the Governance identity/history mechanics are implemented: controlled-revision identity and lineage supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while controlled-revision persistence and historical resolution supplies the acceptance/repository boundary, repository-level parent integrity, restart-surviving storage, and exact revision-to-semantic-artifact resolution. The [built-in Storage](storage.md) module implements the Governance authority port using private filesystem persistence and current Factory canonical bytes. Its separate definition-build binding prevents cross-build reinterpretation; it does not itself declare retained cross-definition support. Governance keeps the acceptance and lineage meaning, while Storage owns the supported persistence behavior. Governance semantic ChangeSet/impact capability is implemented for its initial slice, as is the generic requirements/assertions capability and deterministic conformance evaluation/findings capability. The headless evidence capability is now implemented additively: source-qualified immutable `EvidenceReference` values with bounded in-memory non-rebinding resolution, contextual `EvidenceUse` values with explicit target/role/applicability, explicit evidence composition, and accepted immutable `EvaluationOccurrence` values with exact captured definitions and an in-memory acceptance boundary. This proves structural evidence plus explicitly attributed analytical and external fixtures; it does not claim Engine/Operational producer integration, durable evidence storage, durable definition storage, or durable evaluation-history persistence. Authorization, deployment, and framework-mapping capabilities remain later work. The evidence/evidence-use semantic contract remains the authority for reference equality/non-rebinding, producer-intrinsic versus use-target provenance, the three applicability/outcome determinations, exact definition resolution, and the point-identity limit.
+The Factory model specification and its implementation establish the current `factory-model:sha256:<digest>` content fingerprint; it is deterministic for one definition but does not identify the exact definition revision that produced it. The controlled revision contract establishes controlled revision identity/lineage, and the Governance identity/history mechanics are implemented: controlled-revision identity and lineage supplies the controlled-revision identity/value contracts in `:types` and `:governance`, while controlled-revision persistence and historical resolution supplies the acceptance/repository boundary, repository-level parent integrity, restart-surviving storage, and exact revision-to-semantic-artifact resolution. The [built-in Storage](storage.md) module implements the Governance authority port using private filesystem persistence and current Factory canonical bytes. Its separate definition-build binding prevents cross-build reinterpretation; it does not itself declare retained cross-definition support. Governance keeps the acceptance and lineage meaning, while Storage owns the supported persistence behavior. Governance semantic ChangeSet/impact capability is implemented for its initial slice, as is the generic requirements/assertions capability and deterministic conformance evaluation/findings capability. The headless evidence capability is now implemented additively: source-qualified immutable `EvidenceReference` values with bounded in-memory non-rebinding resolution, contextual `EvidenceUse` values with explicit target/role/applicability, explicit evidence composition, and accepted immutable `EvaluationOccurrence` values with exact captured definitions and an in-memory acceptance boundary. This proves structural evidence plus explicitly attributed analytical and external fixtures; it does not claim Engine/Operational producer integration, durable evidence storage, durable definition storage, or durable evaluation-history persistence. Authorization, deployment, exceptions, framework mappings and audit projections are not implemented. The evidence/evidence-use semantic contract remains the authority for reference equality/non-rebinding, producer-intrinsic versus use-target provenance, the three applicability/outcome determinations, exact definition resolution, and the point-identity limit.
 
 The Governance dependency is now:
 
@@ -454,11 +337,9 @@ conformance evaluation/findings capability conformance evaluation/findings
     ↓
 evidence/evidence-use capability evidence
      (headless slice)                  complete
-    ↓
-governed-change and external-workflow integration governed-change/authorization integration
 ```
 
-The Operational Execution and Digital Twin track is a sibling consumer/proving ground for Governance identity/history capability/semantic ChangeSet/impact capability/conformance evaluation/findings capability/evidence/evidence-use capability, not an alternate owner. It may use clearly scoped synthetic fixtures while the specific Governance capabilities it depends on are incomplete, but such fixtures do not satisfy Governance gates and must be replaced by Governance-owned contracts when those gates land. Governance identity/history capability consumers may now depend on the durable controlled-revision boundary itself; that does not imply a runtime or deployment has already been bound to a particular revision.
+The Operational Execution and Digital Twin track is a sibling consumer/proving ground for Governance identity/history capability/semantic ChangeSet/impact capability/conformance evaluation/findings capability/evidence/evidence-use capability, not an alternate owner. It may use clearly scoped synthetic fixtures while the specific Governance capabilities it depends on are incomplete, but such fixtures do not stand in for Governance-owned contracts. Governance identity/history capability consumers may now depend on the durable controlled-revision boundary itself; that does not imply a runtime or deployment has already been bound to a particular revision.
 
 Other authoritative domain models should participate without being forced into one monolithic `BusinessModel` aggregate. Each domain retains ownership of its facts while cross-domain identity references, lineage, semantic changes, requirements, and evidence form the governance graph over them.
 

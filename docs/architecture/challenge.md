@@ -28,13 +28,12 @@ authoritative outcome facts
 challenge evaluation  ->  attempt  ->  comparison   (Challenge)
 ```
 
-The `:challenge` module depends on no production simulation or domain module ([dependency graph](overview.md#dependency-graph)). It never reads a Factory model, runtime, scheduler or observation; production facts reach it only as explicitly supplied values. Three validations stay independent, and passing one never implies another:
+The `:challenge` module depends on no production simulation or domain module ([dependency graph](overview.md#dependency-graph)). It never reads a Factory model, runtime, scheduler or observation; production facts reach it only as explicitly supplied values. Two validations stay independent, and passing one never implies the other:
 
 - **Challenge admissibility** — whether a candidate obeys the challenge's game rules;
-- **Factory publication validity** — whether a model is a valid canonical [Factory model](factory-model.md);
-- **Engine executability** — whether the current Engine admits a published model ([transfer applicability](transfer-applicability.md)).
+- **Factory publication validity** — whether a model is a valid canonical [Factory model](factory-model.md).
 
-Challenge rules may reject a design that Factory would publish, for example on budget or catalogue grounds. The test-only `challenge-factory-integration-test` module demonstrates the first two axes are independent; no production projector from a challenge candidate to a Factory model exists.
+Challenge rules may reject a design that Factory would publish, for example on budget or catalogue grounds. The test-only `challenge-factory-integration-test` module demonstrates the two axes are independent; no production projector from a challenge candidate to a Factory model exists.
 
 ## Identities
 
@@ -96,7 +95,7 @@ Any consumer of the Challenge capability, including a future playable game, must
 
 - Challenge state and production runtime state remain separate;
 - catalogue, economics, score and attempt history never enter the canonical Factory model;
-- an admitted candidate implies neither Factory publication validity nor Engine executability;
+- an admitted candidate does not imply Factory publication validity;
 - production outcome facts come from Arcogine's supported contracts, never from Challenge reconstruction;
 - evaluation behavior is versioned by evaluation-policy identity, and attempts stay attributable to the exact challenge, policy, inputs and outcome facts;
 - Challenge attempt history is distinct from runtime-event history and from Governance controlled-revision history.

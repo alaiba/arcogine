@@ -190,7 +190,7 @@ Performance
 ```
 
 Resource and performance observations carry no utilization, cumulative busy-time, occupancy or
-bottleneck fact: the Engine produces none ([Engine semantics](engine-semantics.md#10-kpi-and-resource-observation-interpretation)).
+bottleneck fact: the Engine produces none ([Engine semantics](engine-semantics.md#5-kpi-and-resource-observation-interpretation)).
 Such interpretations belong to an explicitly named analytical method over supported evidence
 ([responsibilities and limits](#responsibilities-and-limits)).
 
@@ -343,8 +343,7 @@ retention and coverage qualification. An analytical-definition owner specifies m
 sufficiency and computation; definition ownership does not imply physical custody. These roles may
 share a component and do not require one class or module each.
 
-Supported waiting-state residence, processing residence and future transfer residence remain
-distinct. Residence between waiting entry and dispatch is not automatically availability-conditioned
+Supported waiting-state residence and processing residence remain distinct. Residence between waiting entry and dispatch is not automatically availability-conditioned
 readiness, starvation or causal attribution. Utilization, occupancy populations/denominators and
 other interpretations require an explicit named analytical method. Governance owns evidence use,
 historical attribution and conformance, not scheduling or capture. [Operational

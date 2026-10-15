@@ -3,7 +3,6 @@ package com.arcogine.research.experiment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arcogine.factory.model.ConfiguredResource;
 import com.arcogine.factory.model.FactoryModel;
@@ -62,9 +61,8 @@ class LinearRoutingFamilyTest {
     void theProjectionCarriesOnlyFactsTheCurrentModelHas() {
         FactoryModel model = SHARED.model();
 
-        // One configured resource per authored resource, numbered in order, with no spatial record, no
-        // per-resource speed, and setupTime / capacityLiters left at values the Engine does not read.
-        assertTrue(model.spatial().isEmpty());
+        // One configured resource per authored resource, numbered in order, with no per-resource
+        // speed, and setupTime / capacityLiters left at values the Engine does not read.
         assertEquals(
                 List.of(
                         new ConfiguredResource(new MachineId(1), "Cutter", 1, null, 0),

@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * A parameterized, non-spatial production family with one linear routing, authored from its
+ * A parameterized production family with one linear routing, authored from its
  * resources: an ordered list of routing steps, and an ordered list of resources that each have a
  * concurrency and the set of steps they may serve. A resource may serve several steps, which
  * current Factory semantics allow; its capacity is then shared between those steps.
@@ -23,7 +23,7 @@ import java.util.Set;
  * <p>The family projects onto the current Factory model exactly as authored: each step is one
  * routing step with one duration, and each resource is one {@link ConfiguredResource} eligible for
  * exactly the steps it lists. It invents nothing the model does not carry: there is no per-resource
- * speed, because duration belongs to the step, no spatial record, and {@code setupTime} and {@code
+ * speed, because duration belongs to the step, and {@code setupTime} and {@code
  * capacityLiters} keep values the current Engine does not read ({@code
  * docs/architecture/factory-model.md} section 2.1). Costs, budgets and any other game-side
  * parameters are not part of it.
@@ -169,7 +169,7 @@ public record LinearRoutingFamily(List<Step> steps, List<Resource> resources) {
         return new LinearRoutingFamily(steps, resources.reversed());
     }
 
-    /** Builds the authored, spatial-record-free Factory model for this parameterization. */
+    /** Builds the authored Factory model for this parameterization. */
     public FactoryModel model() {
         List<ConfiguredResource> configured = new ArrayList<>();
         for (int i = 0; i < resources.size(); i++) {

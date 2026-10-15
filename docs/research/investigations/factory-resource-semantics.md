@@ -23,7 +23,7 @@ Arcogine needs one independently identified **configured productive resource in 
 | First-class capability now? | **Defer.** Explicit eligible-resource IDs remain sufficient for current execution. |
 | One superclass for machines, workers, tools, transport, and storage? | **No.** Shared allocation/requirement relations may emerge without shared machine semantics. |
 | Work centers, pools, hierarchy now? | **Defer.** Introduce only when the grouping owns consequential scheduling, capacity, responsibility, or reporting semantics. |
-| Placement versus hierarchy? | Keep separate. The accepted spatial-record semantics do not create equipment hierarchy. |
+| Placement versus hierarchy? | Keep separate. The decided spatial-record semantics do not create equipment hierarchy. |
 | Designed resource versus physical asset? | Keep distinct. External physical-asset identity/correspondence is an Operational concern. |
 | Likely future resource-model pressure? | Qualified operation-resource applicability and resource-dependent performance when a concrete consumer must infer or verify feasibility. |
 

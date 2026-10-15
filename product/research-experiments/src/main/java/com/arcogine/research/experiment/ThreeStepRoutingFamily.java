@@ -11,13 +11,13 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * A parameterized, non-spatial {@code CUT -> ASSEMBLE -> INSPECT} production family, so controlled
+ * A parameterized {@code CUT -> ASSEMBLE -> INSPECT} production family, so controlled
  * variants of one design differ only in what a fixture deliberately changes.
  *
  * <p>This is the special case of a {@link LinearRoutingFamily} in which every resource serves exactly
  * one stage: each stage is one routing step with one duration, and each resource eligible for a stage
  * is one {@link ConfiguredResource} with its own concurrency. It invents nothing the model does not
- * carry, in particular no per-resource speed, and it authors no spatial record. Costs, budgets and any
+ * carry, in particular no per-resource speed. Costs, budgets and any
  * other game-side parameters are not part of it; a research fixture that needs them keeps them outside
  * the projected model. A design in which one resource serves several stages is authored as a {@link
  * LinearRoutingFamily}.
@@ -99,7 +99,7 @@ public record ThreeStepRoutingFamily(Stage cut, Stage assemble, Stage inspect) {
                 resources);
     }
 
-    /** Builds the authored, spatial-record-free Factory model for this parameterization. */
+    /** Builds the authored Factory model for this parameterization. */
     public FactoryModel model() {
         return asLinearFamily().model();
     }

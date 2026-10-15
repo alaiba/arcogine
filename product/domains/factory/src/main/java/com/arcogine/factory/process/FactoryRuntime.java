@@ -104,9 +104,6 @@ public class FactoryRuntime {
      * Assembles a fresh factory runtime from a published model and returns a {@link FactoryRuntime}
      * that exclusively owns it, so its explicit-workload scheduler is the only authority over the
      * factory's event ordering.
-     *
-     * @throws UnsupportedModelContentException when the model represents content the current Engine
-     *     interpretation does not execute; no runtime state is created
      */
     public static FactoryRuntime forModel(FactoryModelVersion version) {
         FactoryRuntimeAssembler.Assembled assembled = FactoryRuntimeAssembler.assemble(version);

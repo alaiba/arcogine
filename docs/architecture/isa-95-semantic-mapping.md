@@ -200,7 +200,6 @@ WorkItem
     queue position
     status
     processing timing
-    transfer state
 ```
 
 This is the mutable shop-floor concern held mostly by `Job`, `Machine`, machine queues, and cross-machine pending work. `JobId` identifies one independently dispatchable work item; quantity `N` becomes `N` unit-quantity sibling jobs under the accepted `Order`; each child progresses through one routing independently. `ordinalWithinOrder` is deterministic ordering metadata, not identity. No separate `ExecutionUnitId`, `LotId`, or `BatchId` is introduced by unit-work decomposition.

@@ -1,6 +1,6 @@
 # Engine semantics
 
-Status: Normative current development interpretation. Production-only execution is implemented; the spatial transfer rules (§5–§13) are specified but not executed, and a present spatial record is refused. No stability/support promotion has been declared.
+Status: Normative current development interpretation. No stability/support promotion has been declared.
 Rationale: [Determinism Contract](overview.md#determinism-contract)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)
 Model-side counterpart: [Factory model](factory-model.md)
@@ -36,8 +36,8 @@ current Engine definition
 ```
 
 A run fixes the current interpretation at establishment; it never changes mid-run, and a new runtime
-always gets a fresh `RunId`. One interpretation covers dispatch, decomposition, scheduling,
-transfer and derived-result rules together, because those rules interact to produce one outcome;
+always gets a fresh `RunId`. One interpretation covers dispatch, decomposition, scheduling and
+derived-result rules together, because those rules interact to produce one outcome;
 independently identified sub-definitions would need a concrete independent-evolution requirement.
 
 The interpretation is under active development. That status is human-facing repository state and is
@@ -47,7 +47,7 @@ not emitted through runtime APIs or provenance:
 - between development revisions the result-affecting rules may be corrected or extended. An
   intentional change that can alter outcome for identical explicit inputs — a bug fix that observably
   changes interpretation included — is a definition change: it updates this specification and the
-  conformance fixtures of §14 in the same change. Repairing an implementation to conform to this
+  conformance fixtures of §6 in the same change. Repairing an implementation to conform to this
   specification is not a definition change, and performance work, dependency upgrades, refactors,
   logging and projection-only changes must preserve the normative behavior;
 - a result produced under an earlier development revision is not attributable to today's definition
@@ -88,12 +88,12 @@ These consequences follow.
    observation's value and is therefore in scope, and so does the **accumulation** feeding that
    value, not only its edge cases. The currently known rules of this kind are recorded in the section
    that owns the behavior they bound — the child materialization envelope in section 3, the exact
-   ranking arithmetic in section 2 rule 3, the derived-result edge cases in section 10.1, and the
-   accumulator register in section 10.2.
+   ranking arithmetic in section 2 rule 3, the derived-result edge cases in section 5.1, and the
+   accumulator register in section 5.2.
 2. **A rule is in scope even when the capability that motivated it did not introduce it.**
-   Pre-existing behavior that satisfies the membership test is captured here rather than left
-   implicit because it predates spatial transfer work. Sections 1.2, 2, 3 and 4 exist for exactly
-   that reason.
+   Behavior that satisfies the membership test is captured here even when it predates the change
+   that wrote it down, rather than left implicit. Sections 1.2, 2, 3 and 4 exist for exactly that
+   reason.
 3. **Recording a previously unwritten rule is a correction, not a behavior change**, provided the
    rule's behavior is unchanged. Changing the behavior is a definition change (§1).
 4. **A rule that satisfies the membership test but is absent here is a defect in this document**,
@@ -167,7 +167,6 @@ A change to any rule in this section is a change to the interpretation (§1).
 
 ## 2. Resource-selection and dispatch semantics
 
-Spatial transfer semantics do not redefine the existing resource-selection and dispatch behavior.
 The following rules are part of the interpretation:
 
 1. Start from the routing step's authored eligible-machine set. Prefer online machines by filtering
@@ -179,7 +178,7 @@ The following rules are part of the interpretation:
 3. Among candidates tied on immediate acceptance, rank by `combinedQueueDepth` as currently defined
    by the Factory Engine, including pending multi-eligible work that could land on that resource.
    `combinedQueueDepth` is an **exact** sum of that machine's own queue depth and the count of
-   compatible multi-eligible entries. Unlike the derived-result accumulators of section 10.2 it may
+   compatible multi-eligible entries. Unlike the derived-result accumulators of section 5.2 it may
    not saturate, narrow, or approximate: it is a ranking key, so a wrapped or truncated value would
    change which machine is selected and therefore change assignment, not merely a reported number.
 
@@ -200,36 +199,19 @@ The following rules are part of the interpretation:
    starts at most one job (see section 4); it does not drain the queue to capacity. Within the
    multi-eligible backlog, the earliest queued entry that can actually be placed is dispatched
    first, with repeated re-selection after each placement.
-7. **Which waiting path a job enters is determined by its effective eligible set at the moment it
-   enters the waiting state.** Before any destination is bound, the effective eligible set is the
-   routing step's authored eligible-machine set: when the selected machine cannot currently accept
-   the job, a step with more than one eligible machine enters the shared multi-eligible backlog, and
-   a step with exactly one eligible machine enters that single machine's own queue.
-
-   Destination binding collapses the effective eligible set to the single bound destination (section
-   6 rule 9). A **bound** job that must wait therefore has an effective eligible set of size one and
-   waits in the bound destination's own queue, whatever the authored step's eligible-set size was.
-   That is what keeps this rule consistent with immutable binding: a bound job must never re-enter
-   the shared multi-eligible backlog, because reconsideration there re-runs selection over the
-   authored eligible set and could place the job on a different machine — a reroute the transfer
-   contract forbids.
-
-   So a multi-eligible step never occupies a per-machine queue **while waiting pre-binding**, and a
-   single-eligible step never occupies the shared backlog. Post-binding waiting is the deliberate
-   and only exception, and it is governed by section 6 rule 9 and section 9 rule 8.
+7. **Which waiting path a job enters is determined by its routing step's authored eligible-machine
+   set.** When the selected machine cannot currently accept the job, a step with more than one
+   eligible machine enters the shared multi-eligible backlog, and a step with exactly one eligible
+   machine enters that single machine's own queue. A multi-eligible step therefore never occupies a
+   per-machine queue, and a single-eligible step never occupies the shared backlog.
 8. **Each machine's own queue is strict FIFO in arrival order.** Entries are appended at the tail on
    enqueue and taken from the head on dispatch. Queue position is not re-derived from job identity,
    ordinal, order identity, step duration, remaining steps, waiting time, or priority; there is no
    priority, aging, or reordering rule for per-machine queues.
-9. **The shared multi-eligible backlog holds pre-binding work only**, and retains arrival order. An
-   entry's eligible set is the one captured when it was enqueued. Reconsideration re-runs selection
-   over that captured set against current machine state, so an entry may be placed on a machine
-   other than the one selected when it first waited; see section 4 for the scan order. Because that
-   reselection can change the destination, a job that has already bound a destination is never
-   placed in this backlog.
-10. Spatial transfer time is inserted only after a concrete destination is both selected and
-    currently admissible under the same acceptance rule that otherwise permits immediate processing;
-    transfer semantics do not move selection earlier or redefine ranking.
+9. **The shared multi-eligible backlog retains arrival order.** An entry's eligible set is the one
+   captured when it was enqueued. Reconsideration re-runs selection over that captured set against
+   current machine state, so an entry may be placed on a machine other than the one selected when it
+   first waited; see section 4 for the scan order.
 
 Changing any of those result-affecting rules is a change to the interpretation (§1).
 
@@ -308,8 +290,7 @@ change to the interpretation (§1).
    outcomes; the internal `Event` lists that `advance()`, `advanceUntil` and
    `CommandResult.scheduledEvents()` return no longer contain markers.
 4. Supported runtime-event ordering at the same `SimTime` is represented only by the monotonic
-   supported-event sequence established by the [runtime contract](runtime-contract.md); spatial transfer semantics introduce no second
-   event-ordering mechanism.
+   supported-event sequence established by the [runtime contract](runtime-contract.md).
 5. The intra-handler recovery cascade is also semantic ordering where it changes assignment:
    after a completed step releases a machine, the Engine first attempts to dispatch that machine's
    own queued work and only then reconsiders `pendingMultiEligible` work. A change to that ordering
@@ -331,178 +312,9 @@ change to the interpretation (§1).
    simultaneously placeable, which is exactly the case where it can change assignment.
 
 Rules 7, 8 and 9 satisfy the section 1.1 membership test — each of them can change which job lands on
-which machine at which time for identical explicit inputs — and are recorded here for that reason,
-not because spatial transfer introduced them.
+which machine at which time for identical explicit inputs — and are recorded here for that reason.
 
-## 5. Spatial model/Engine ownership boundary
-
-Spatial transfer semantics apply this boundary:
-
-- authored plant facts belong to the canonical Factory model and `ModelFingerprint`;
-- result-affecting rules for interpreting those facts belong to this interpretation;
-- authoritative facts that exist only during one run are runtime state;
-- replaceable mechanisms preserving the same semantic outcomes are implementation details.
-
-The spatial-record facts consumed by this specification are floor dimensions, resource position,
-resource footprint, `ticksPerCell`, and `handlingTicks`, as defined and canonicalized by the
-[Factory model](factory-model.md#22-optional-spatial-record). This specification consumes those
-facts; it never defines their canonical encoding or identity.
-
-**Execution status.** Sections 6–13 specify how the interpretation reads a present spatial record.
-The current implementation does not execute them: a published model whose spatial record is present
-is refused before any runtime state exists, and a model whose record is absent has no transfer
-lifecycle ([transfer applicability](transfer-applicability.md)). These sections are the current
-specified design for spatial execution, correctable while the interpretation is work in progress;
-they are not implemented behavior.
-
-## 6. Destination selection and binding
-
-The rule is **transfer begins when the selected destination becomes admissible for binding under
-the existing acceptance semantics**.
-
-1. On completion of operation `k`, the source resource releases processing capacity exactly as it
-   does without spatial transfer delay.
-2. Existing resource selection/ranking runs at the established semantic point, including
-   deterministic selection of a non-accepting machine when that is the current outcome.
-3. If the selected machine cannot currently accept the job, the job remains in the existing waiting
-   path (`machine queue` or `pendingMultiEligible`) and the existing recovery cascade controls when
-   selection/placement is retried.
-4. When the selected resource can accept the job, that concrete destination is bound.
-5. Binding consumes one unit of the destination's **admission capacity** for the inbound job. This
-   reservation contributes to whether subsequent `canAcceptJob` decisions have free capacity, but
-   the inbound job is not yet active processing and is not yet queued work.
-6. Transfer duration is computed and fixed at that binding instant.
-7. `TRANSFER_STARTED` is emitted for the authoritative transition into the in-flight state.
-8. Destination binding is immutable after transfer start. There is no rerouting.
-9. **Binding collapses the job's effective eligible set to the bound destination** for every
-   subsequent waiting decision. From binding until the job begins processing there, the bound
-   destination is the only machine the job can be placed on, regardless of how many machines the
-   authored routing step listed as eligible. If the job must wait after arrival, it waits in that
-   destination's own queue — appended at the tail in arrival order like any other queued entry —
-   and never in the shared multi-eligible backlog. Section 9 rule 8 fixes the arrival-offline case
-   this exists for.
-
-   This rule is what makes immutable binding implementable. Without it, a multi-eligible step
-   arriving at an offline destination would have no waiting path: the shared backlog would re-select
-   and could reroute, contradicting rule 8, while the destination's own queue would contradict the
-   pre-binding form of section 2 rule 7. Collapsing the effective eligible set resolves both by
-   making the bound job a single-eligible job for waiting purposes.
-
-This changes only the delay between destination binding and next-step processing; it does not change
-resource-selection/ranking semantics.
-
-## 7. Transfer timing
-
-For distinct source and destination resources:
-
-```text
-manhattanDistance = abs(xDestination - xSource) + abs(yDestination - ySource)
-transferDuration = handlingTicks + (ticksPerCell * manhattanDistance)
-```
-
-Semantic rules:
-
-1. Resource positions are integer reference cells defined by the Factory model as the
-   minimum-coordinate cells of their footprints.
-2. Distance is Manhattan distance between those reference cells.
-3. Resource footprint does **not** affect transfer distance. Footprint remains canonical Factory
-   content for publication/layout validation and future spatial semantics.
-4. `handlingTicks` is applied once per transfer, not once per endpoint.
-5. Arithmetic is integer throughout. There is no floating-point distance and no rounding rule because
-   none is required by the chosen metric.
-6. Factory publication validation proves the exact maximum-duration predicate defined by the
-   [Factory model](factory-model.md#22-optional-spatial-record): `(W - 1) + (H - 1)` and
-   `handlingTicks + ticksPerCell * maxManhattanDistance` must be representable with overflow-safe
-   arithmetic in the runtime duration type. This guarantees representability of the derived
-   transfer duration; it does not guarantee that `currentSimTime + transferDuration` is
-   representable at an arbitrarily extreme current time. The existing runtime time-addition guard
-   remains responsible for that condition.
-7. Distinct resource footprints may not overlap. Because each reference cell lies inside its own
-   footprint, distinct valid resources cannot share the same reference cell, so a zero-distance
-   inter-resource transfer is not a supported state.
-8. Consecutive operations on the **same resource** perform no transfer at all: no transfer state,
-   no duration, and no transfer events.
-9. A present spatial record with `ticksPerCell = 0` and `handlingTicks = 0` therefore preserves the completion
-   timing that would occur without spatial transfer delay while still exposing the authoritative
-   transfer start/completion transitions for distinct resources.
-
-Changing metric, endpoint interpretation, handling application, arithmetic/rounding, zero-distance
-semantics, or same-resource behavior is a change to the interpretation.
-
-## 8. Transfer runtime state machine
-
-Only two new authoritative semantic moments are introduced.
-
-```text
-PROCESSING step k
-  -> JOB_STEP_COMPLETED
-
-if order complete:
-  -> ORDER completion path
-else:
-  existing destination selection/ranking
-
-  if selected destination cannot currently accept:
-      -> existing WAITING state/path
-      -> retry under existing dispatch cascade when capacity/availability changes
-
-  if selected destination == source and can accept:
-      -> no transfer
-      -> next processing start under existing dispatch semantics
-
-  if selected destination != source and can accept:
-      -> reserve one unit of destination admission capacity
-      -> TRANSFER_STARTED at current SimTime
-      -> TRANSFERRING until fixed completion time
-      -> TRANSFER_COMPLETED at start + transferDuration
-
-      if destination online at arrival:
-          -> convert reservation into active processing
-          -> next processing start / JOB_DISPATCHED under existing semantics
-      else:
-          -> convert the inbound reservation into a queue entry on the BOUND destination
-             (tail, arrival order) -- never the shared multi-eligible backlog
-          -> JOB_WAITING, still bound, no rerouting
-          -> released by the existing recovery cascade when that destination is online
-```
-
-`TRANSFERRING` is a runtime state between two moments, not a third event/moment. There is no separate
-"destination selected", "transfer pending", "destination queued while in flight", or
-"next-operation-dispatched" transfer moment beyond the existing authoritative transitions.
-
-## 9. Capacity and availability semantics
-
-1. The source releases its processing capacity at step completion exactly as it does without
-   spatial transfer delay.
-2. A transferring job consumes **destination admission capacity only** from binding until arrival.
-   That reserved inbound capacity counts when deciding whether the destination can admit additional
-   work, but the job is not in the destination's active-processing set and does not make the machine
-   `Busy` merely because it is in flight.
-3. The interpretation invents no transport resource/capacity, conveyor scheduler, physical buffer, or congestion
-   model.
-4. Admission reservation must be distinguishable from both active processing and queued work. It
-   need not be a new public resource abstraction; it is runtime bookkeeping required to preserve
-   the semantic distinctions already fixed here.
-5. Source going offline after departure has no effect on the in-flight transfer.
-6. A destination holding only inbound reservations may still be taken offline under the existing
-   command contract because no reserved job has begun active processing. Going offline after
-   transfer start does not change the bound destination or fixed completion time.
-7. Another eligible destination becoming preferable after departure does not cause rerouting.
-8. If the destination is offline at exact arrival time, `TRANSFER_COMPLETED` still occurs at the
-   fixed time. The inbound admission reservation is then **converted into an entry in that
-   destination's own queue** — the bound-destination wait fixed by section 6 rule 9 — and the job
-   reports `JOB_WAITING`. It remains bound to that destination, never enters the shared
-   multi-eligible backlog, and is not rerouted. The existing recovery cascade releases it when the
-   destination comes back online.
-
-   From arrival onward the entry is ordinary queued work, which resolves its observation
-   consequences unambiguously: it **counts in the destination's queue depth**, it is **no longer
-   held as reserved admission capacity** (the reservation is converted, not additionally retained,
-   so one waiting job never consumes two units of the same destination's capacity), and it is not an
-   active job until processing starts. This is the one case where a job whose authored routing
-   step listed several eligible machines legitimately occupies a per-machine queue.
-
-## 10. KPI and resource-observation interpretation
+## 5. KPI and resource-observation interpretation
 
 The Engine produces no resource utilization, cumulative busy-time, occupancy or bottleneck measure.
 Resource observation reports current operational facts — status, concurrency, active jobs and queue
@@ -513,28 +325,7 @@ evidence-completeness rules ([runtime contract](runtime-contract.md#responsibili
 such a derivation is not an Engine result. Neither current resource load (active plus queued work)
 nor any occupancy derivation identifies a design's bottleneck or constraint by itself.
 
-Spatial transfer semantics do not redefine existing metric formulas:
-
-- queue depth remains the existing count of queued/waiting work and does not count an in-flight job
-  as a destination queue entry;
-- backlog continues to count incomplete accepted orders;
-- lead time naturally includes transfer delay because completion occurs later;
-- throughput remains completed orders per observed time.
-
-A reserved inbound job also does **not** appear in the destination resource projection's
-`activeJobIds`, because active jobs are jobs that have actually begun processing. A destination
-holding only inbound reservations therefore keeps the processing-oriented machine state it would
-otherwise have (`Idle` when it has no active processing, or `Busy` only because of other active
-jobs). Supported resource observation must nevertheless expose enough capacity information for a
-consumer to account for admission capacity consumed by inbound reservations; it must not silently
-count the in-flight job as processing or queue depth. The exact projection field used for this
-admission-load fact is an implementation/API-shape choice, not a change to the semantic distinction.
-
-A destination can therefore have constrained admission capacity because of transfer-bound work while
-none of that work is processing. Any consumer interpretation of resource load must keep reserved
-admission capacity distinct from processing occupancy rather than count it as processing.
-
-### 10.1 Derived-result arithmetic
+### 5.1 Derived-result arithmetic
 
 The arithmetic that produces supported derived results is itself result-affecting under section 1.1:
 two implementations computing these differently would report different supported observations for an
@@ -549,8 +340,7 @@ identical model, workload, seed and ordered command sequence. These rules are pa
    not a NaN from a zero denominator.
 4. Simulated-time **addition is not saturating.** It is unchecked, and the pre-existing runtime
    time-addition guard rejects an overflowing schedule at the command boundary instead of silently
-   producing a wrapped time — see section 7 rule 6 and the zero-mutation rejection contract of
-   section 1.2.
+   producing a wrapped time — see the zero-mutation rejection contract of section 1.2.
 
 Rules 1 to 3 are deliberate total-function choices at domain edges, not incidental defensive coding:
 each replaces an undefined, wrapped, or non-finite value with a defined one a consumer can interpret.
@@ -558,9 +348,9 @@ Rule 4 is the deliberate exception, and it is a rejection rule rather than a val
 of them changes supported derived results for identical explicit inputs and is therefore a change to
 the interpretation.
 
-### 10.2 Derived-result accumulator register
+### 5.2 Derived-result accumulator register
 
-Section 10.1 fixes edge-case *values*. This register fixes the **accumulation** behind each supported
+Section 5.1 fixes edge-case *values*. This register fixes the **accumulation** behind each supported
 derived result, because an accumulator's overflow policy changes the reported value for identical
 explicit inputs exactly as a zero-denominator rule does. Sentinel cases and accumulators are two
 halves of one contract; specifying only the first leaves the second ambient.
@@ -598,103 +388,15 @@ The mean-lead-time accumulator saturates in the current implementation, pinned b
 into a reproducibility rule, which is why a wrapping accumulator is a conformance failure rather than
 an alternative behavior.
 
-## 11. Supported job and runtime observation contract
-
-A fresh supported observation must reconstruct an in-progress transfer without replay.
-
-Spatial transfer support extends the existing per-job projection rather than creating a parallel
-transfer authority. For an in-flight job it exposes, at minimum:
-
-- job status `TRANSFERRING`;
-- `JobId` and existing order/step correlation;
-- source resource identity;
-- bound/current destination resource identity;
-- `transferStartedAt`;
-- `transferCompletesAt`.
-
-The job projection and resource projection must agree: the job is `TRANSFERRING`; the destination is
-bound and has one unit of admission capacity reserved; the job is not yet an active job and is not
-in destination queue depth until arrival changes it into processing or waiting state.
-
-Authoritative current coordinates, progress fraction, distance, and frame-by-frame movement are not
-part of the supported runtime state. A consumer may derive visual interpolation from authoritative
-start/completion times and canonical resource placement.
-
-Runtime observation metadata carries once per observation:
-
-- `RunId`;
-- `ModelFingerprint`;
-- optional `ControlledRevisionId` only when authoritatively bound;
-- the existing supported-event sequence, time, and run-state metadata.
-
-## 12. Supported transfer events
-
-Both events are required because they describe distinct authoritative state changes.
-
-### `TRANSFER_STARTED`
-
-Carries enough supported facts to identify the in-flight relation and its fixed completion:
-
-- `JobId`;
-- `OrderId`;
-- source resource identity;
-- destination resource identity;
-- `transferCompletesAt`;
-- affected references for job, order, source, and destination.
-
-### `TRANSFER_COMPLETED`
-
-Carries:
-
-- `JobId`;
-- `OrderId`;
-- destination resource identity;
-- affected references for job, order, and destination.
-
-The envelope also carries the existing run/model/revision provenance. No placeholder Engine
-definition identifier is emitted; a future exact Engine-definition reference is added only if a
-concrete supported boundary requires it.
-
-At a shared `SimTime`, ordering uses only the supported runtime-event sequence. A zero-duration
-transfer is still a scheduled completion turn, so the authoritative chain can be:
-
-```text
-JOB_STEP_COMPLETED
--> TRANSFER_STARTED
--> TRANSFER_COMPLETED
--> JOB_DISPATCHED
-```
-
-or end in `JOB_WAITING` when the destination is offline at arrival. `TRANSFER_STARTED` is published
-only after the transition into `TRANSFERRING` succeeds; completion occurs on the separately
-scheduled same-time turn, so supported events continue to describe authoritative changes that have
-already happened.
-
-## 13. Deliberately deferred spatial/runtime capabilities
-
-The interpretation does not define:
-
-- authoritative intermediate transfer coordinates/progress;
-- rerouting;
-- transport-resource capacity or transport scheduling;
-- paths, aisles, conveyors, obstacles, graphs, or pathfinding;
-- congestion;
-- resource orientation as a transfer input;
-- animation authority.
-
-Adding them is a deliberate change to the Engine interpretation, the Factory model, or both, made only
-when their actual ownership and result-affecting meaning become concrete.
-
-## 14. Conformance fixtures
+## 6. Conformance fixtures
 
 Pinned behavioral fixtures prove the normative semantics above using representative explicit inputs.
-They change together with any definition change (§1). The executed production-only scope is pinned by
+They change together with any definition change (§1). They are pinned by
 `EngineDispatchConformanceTest`, `EngineDerivedResultConformanceTest`,
-`FactoryRuntimeExecutabilityAcceptanceTest`, `SessionControlAcceptanceTest`,
-`BoundedAdvancementConformanceTest`, the runtime event/observation acceptance suites and the
-child-materialization acceptance and benchmark tests; the transfer items (7–11 and 13) accompany
-spatial execution when it is implemented. Complete fixtures for the executed scope are a precondition
-of promoting the interpretation, never a promotion by themselves. The fixtures must cover at least:
+`SessionControlAcceptanceTest`, `BoundedAdvancementConformanceTest`, the runtime event/observation
+acceptance suites and the child-materialization acceptance and benchmark tests. Complete fixtures are
+a precondition of promoting the interpretation, never a promotion by themselves. The fixtures must
+cover at least:
 
 1. current deterministic resource-selection behavior, including offline filtering/all-offline
    fallback, `canAcceptJob` ranking, `combinedQueueDepth`, `MachineId` tie-breaking, and the
@@ -707,7 +409,7 @@ of promoting the interpretation, never a promotion by themselves. The fixtures m
    plausible alternative ordering — arrival order must be distinguishable from `JobId` order,
    ordinal order, and step-duration order — plus the one-dispatch-per-trigger rule for a machine
    that has free capacity and more than one queued job;
-5. pre-binding waiting-path selection by eligible-set size: a multi-eligible step waiting in the
+5. waiting-path selection by eligible-set size: a multi-eligible step waiting in the
    shared backlog and never in a per-machine queue, and a single-eligible step waiting in that
    machine's queue and never in the backlog;
 6. multi-eligible backlog ordering: two simultaneously placeable entries competing for one machine
@@ -716,37 +418,25 @@ of promoting the interpretation, never a promotion by themselves. The fixtures m
    waited; the fixpoint rescan placing more than one entry per trigger; and the
    queue-before-backlog cascade order at both trigger points, step completion and machine coming
    back online;
-7. distinct-resource transfer with nonzero distance;
-8. same-resource consecutive steps with no transfer;
-9. zero authored transfer magnitudes and the same-time transfer event chain;
-10. destination becoming unavailable after binding, arrival while offline, immutable binding, and no
-    rerouting;
-11. the bound-destination wait for a **multi-eligible** step: a job whose authored step lists several
-    eligible machines, bound to one destination, arriving while that destination is offline — it
-    waits in the bound destination's own queue, is absent from the shared multi-eligible backlog,
-    is still bound to the same destination after another eligible machine becomes free and the
-    recovery cascade runs, counts in that destination's queue depth, and no longer counts as
-    reserved admission capacity;
-12. session/control rules of section 1.2: `advanceUntil` converging with looping `advance()`
-    under both bounds, reset-session reproduction, and the `Accepted`/`Rejected`/`Faulted` outcome
-    shapes with `Rejected`'s zero-mutation guarantee — satisfied by the existing
-    `SessionControlAcceptanceTest` rather than duplicated here;
-13. agreement between job transfer observation and destination resource admission-load observation;
-14. deterministic event-type/entity-reference ordering and simulated times;
-15. the section 10.1 derived-result arithmetic: elapsed-time subtraction flooring at zero, zero-tick
-    throughput and empty-set mean lead time each yielding `0` rather than a non-finite value, and
-    simulated-time addition overflow being rejected at the command boundary with no partial
-    mutation rather than saturating;
-16. the section 10.2 accumulator rules: **non-empty** mean-lead-time accumulation saturating rather
+7. session/control rules of section 1.2: `advanceUntil` converging with looping `advance()`
+   under both bounds, reset-session reproduction, and the `Accepted`/`Rejected`/`Faulted` outcome
+   shapes with `Rejected`'s zero-mutation guarantee — satisfied by the existing
+   `SessionControlAcceptanceTest` rather than duplicated here;
+8. deterministic event-type/entity-reference ordering and simulated times;
+9. the section 5.1 derived-result arithmetic: elapsed-time subtraction flooring at zero, zero-tick
+   throughput and empty-set mean lead time each yielding `0` rather than a non-finite value, and
+   simulated-time addition overflow being rejected at the command boundary with no partial
+   mutation rather than saturating;
+10. the section 5.2 accumulator rules: **non-empty** mean-lead-time accumulation saturating rather
     than wrapping when the summed lead times exceed the representable tick range, exact
     completed-order counting across many submissions rather than one large one, and completed-value
     accumulation reproducing bit-identically under the fixed completion order;
-17. section 2 rule 3 ranking exactness: a `combinedQueueDepth` whose two terms sum beyond the 32-bit
+11. section 2 rule 3 ranking exactness: a `combinedQueueDepth` whose two terms sum beyond the 32-bit
     range selects the same machine an exact sum would, proving neither the narrowing conversion nor
     a same-width addition survives — and proving it without appealing to section 3's per-submission
     envelope, which does not bound the cumulative waiting set;
-18. terminal state / derived result agreement for repeated identical explicit inputs;
-19. the section 4 rule 3 scheduling rule and its section 1.2 consequences: every processed
+12. terminal state / derived result agreement for repeated identical explicit inputs;
+13. the section 4 rule 3 scheduling rule and its section 1.2 consequences: every processed
     scheduled event a step completion that publishes at its own time, and nothing queued behind an
     order's completion; a one-event budget spent on the next step completion however the same
     supported state was reached; the next command applying at the observed time after bounded calls

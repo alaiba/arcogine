@@ -1,10 +1,5 @@
 package com.arcogine.factory.model;
 
-import com.arcogine.factory.model.spatial.FactoryFloor;
-import com.arcogine.factory.model.spatial.ResourceFootprint;
-import com.arcogine.factory.model.spatial.ResourceLayout;
-import com.arcogine.factory.model.spatial.ResourcePlacement;
-import com.arcogine.factory.model.spatial.SpatialRecord;
 import com.arcogine.factory.model.validation.FactoryModelValidationException;
 import com.arcogine.factory.model.validation.FactoryModelValidator;
 import com.arcogine.factory.model.validation.ModelValidationError;
@@ -29,7 +24,6 @@ import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -112,11 +106,6 @@ final class FactoryModelCanonicalForm {
                 OperationDefinition.class,
                 OperationStepDefinition.class,
                 ProductDefinition.class,
-                SpatialRecord.class,
-                FactoryFloor.class,
-                ResourceLayout.class,
-                ResourcePlacement.class,
-                ResourceFootprint.class,
                 MachineId.class,
                 ProductId.class,
                 ModelFingerprint.class,
@@ -161,45 +150,19 @@ final class FactoryModelCanonicalForm {
         }
     }
 
-    /**
-     * Encodes {@code model} canonically. Canonical encoding is only defined for publishable
-     * content; a present spatial record that does not give every configured resource exactly one
-     * layout in resource-list order is rejected rather than silently dropped or reordered.
-     */
+    /** Encodes {@code model} canonically. */
     static byte[] canonicalBytes(FactoryModel model) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         bytes.writeBytes(PREFIX);
 
         List<ConfiguredResource> resources = model.resources();
-        Optional<SpatialRecord> spatial = model.spatial();
-        List<ResourceLayout> layouts = spatial.map(SpatialRecord::resourceLayouts).orElse(List.of());
-        if (spatial.isPresent()) {
-            requireStructuralCoverage(resources, layouts);
-            SpatialRecord record = spatial.orElseThrow();
-            bytes.write(PRESENT);
-            writeI64(bytes, record.floor().width());
-            writeI64(bytes, record.floor().height());
-            writeI64(bytes, record.ticksPerCell());
-            writeI64(bytes, record.handlingTicks());
-        } else {
-            bytes.write(ABSENT);
-        }
-
         writeU64(bytes, resources.size());
-        for (int index = 0; index < resources.size(); index++) {
-            ConfiguredResource resource = resources.get(index);
+        for (ConfiguredResource resource : resources) {
             writeI64(bytes, resource.id().value());
             writeText(bytes, resource.name());
             writeI64(bytes, resource.concurrency());
             writeOptionalF64(bytes, resource.capacityLiters());
             writeI64(bytes, resource.setupTime());
-            if (spatial.isPresent()) {
-                ResourceLayout layout = layouts.get(index);
-                writeI64(bytes, layout.placement().x());
-                writeI64(bytes, layout.placement().y());
-                writeI64(bytes, layout.footprint().width());
-                writeI64(bytes, layout.footprint().height());
-            }
         }
 
         List<OperationDefinition> operations = model.operations();
@@ -243,18 +206,8 @@ final class FactoryModelCanonicalForm {
         }
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(canonicalBytes))) {
             requirePrefix(input);
-            boolean spatialPresent = readPresence(input);
-            FactoryFloor floor = null;
-            long ticksPerCell = 0;
-            long handlingTicks = 0;
-            if (spatialPresent) {
-                floor = new FactoryFloor(input.readLong(), input.readLong());
-                ticksPerCell = input.readLong();
-                handlingTicks = input.readLong();
-            }
 
             List<ConfiguredResource> resources = new ArrayList<>();
-            List<ResourceLayout> layouts = new ArrayList<>();
             for (int index = 0, count = readCount(input); index < count; index++) {
                 long id = input.readLong();
                 String name = readText(input);
@@ -266,11 +219,6 @@ final class FactoryModelCanonicalForm {
                 long setupTime = input.readLong();
                 resources.add(new ConfiguredResource(
                         new MachineId(id), name, (int) concurrency, capacityLiters, setupTime));
-                if (spatialPresent) {
-                    ResourcePlacement placement = new ResourcePlacement(input.readLong(), input.readLong());
-                    ResourceFootprint footprint = new ResourceFootprint(input.readLong(), input.readLong());
-                    layouts.add(new ResourceLayout(new MachineId(id), placement, footprint));
-                }
             }
 
             List<OperationDefinition> operations = new ArrayList<>();
@@ -304,10 +252,7 @@ final class FactoryModelCanonicalForm {
                 throw new IOException("trailing bytes in canonical factory model artifact");
             }
 
-            Optional<SpatialRecord> spatial = spatialPresent
-                    ? Optional.of(new SpatialRecord(floor, ticksPerCell, handlingTicks, layouts))
-                    : Optional.empty();
-            FactoryModel model = new FactoryModel(resources, operations, products, spatial);
+            FactoryModel model = new FactoryModel(resources, operations, products);
             if (!Arrays.equals(canonicalBytes, canonicalBytes(model))) {
                 throw new IOException("factory model artifact is decodable but not canonical");
             }
@@ -316,29 +261,6 @@ final class FactoryModelCanonicalForm {
             throw new IllegalArgumentException(
                     "invalid " + NAMESPACE + " canonical artifact", e);
         }
-    }
-
-    private static void requireStructuralCoverage(
-            List<ConfiguredResource> resources, List<ResourceLayout> layouts) {
-        boolean covered = layouts.size() == resources.size();
-        for (int index = 0; covered && index < resources.size(); index++) {
-            covered = layouts.get(index).resourceId().equals(resources.get(index).id());
-        }
-        if (!covered) {
-            throw new IllegalArgumentException(
-                    "canonical encoding requires exactly one layout per resource in resource-list order");
-        }
-    }
-
-    private static boolean readPresence(DataInputStream input) throws IOException {
-        int marker = input.read();
-        if (marker == ABSENT) {
-            return false;
-        }
-        if (marker == PRESENT) {
-            return true;
-        }
-        throw new IOException("invalid spatial-record presence marker: " + marker);
     }
 
     private static int readCount(DataInputStream input) throws IOException {

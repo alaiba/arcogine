@@ -12,11 +12,6 @@ import com.arcogine.factory.model.OperationDefinition;
 import com.arcogine.factory.model.OperationStepDefinition;
 import com.arcogine.factory.model.ProductDefinition;
 import com.arcogine.factory.model.ConfiguredResource;
-import com.arcogine.factory.model.spatial.FactoryFloor;
-import com.arcogine.factory.model.spatial.ResourceFootprint;
-import com.arcogine.factory.model.spatial.ResourceLayout;
-import com.arcogine.factory.model.spatial.ResourcePlacement;
-import com.arcogine.factory.model.spatial.SpatialRecord;
 import com.arcogine.governance.SemanticArtifact;
 import com.arcogine.governance.change.SemanticChange;
 import com.arcogine.governance.change.SemanticChangeKind;
@@ -24,7 +19,6 @@ import com.arcogine.types.MachineId;
 import com.arcogine.types.ModelFingerprint;
 import com.arcogine.types.ProductId;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -187,37 +181,6 @@ class FactoryModelSemanticComparatorTest {
                 "other-model", "sha256", version.fingerprint().digest())));
         assertFalse(comparator.supports(new ModelFingerprint(
                 "factory-model", "sha512", version.fingerprint().digest())));
-    }
-
-    @Test
-    void addingOrRemovingTheSpatialRecordIsAttributedToTheSpatialRecordEntity() {
-        FactoryModelVersion absent = spatialModel(Optional.empty());
-        FactoryModelVersion present = spatialModel(Optional.of(spatial(1, 0)));
-
-        List<SemanticChange> added = comparator.compare(artifact(absent), artifact(present));
-        List<SemanticChange> removed = comparator.compare(artifact(present), artifact(absent));
-
-        assertEquals(1, added.size());
-        assertEquals(SemanticChangeKind.ENTITY_ADDED, added.get(0).kind());
-        assertEquals("factory.spatialRecord", added.get(0).entity().entityType());
-        assertEquals(1, removed.size());
-        assertEquals(SemanticChangeKind.ENTITY_REMOVED, removed.get(0).kind());
-        assertEquals("factory.spatialRecord", removed.get(0).entity().entityType());
-    }
-
-    @Test
-    void aSpatialOnlyDifferenceIsNeverAnEmptyChangeList() {
-        FactoryModelVersion base = spatialModel(Optional.of(spatial(1, 0)));
-        FactoryModelVersion moved = spatialModel(Optional.of(spatial(2, 0)));
-        FactoryModelVersion changedHandling = spatialModel(Optional.of(spatial(1, 5)));
-
-        for (FactoryModelVersion candidate : List.of(moved, changedHandling)) {
-            List<SemanticChange> changes = comparator.compare(artifact(base), artifact(candidate));
-            assertEquals(1, changes.size());
-            assertEquals(SemanticChangeKind.ENTITY_MODIFIED, changes.get(0).kind());
-            assertEquals("factory.spatialRecord", changes.get(0).entity().entityType());
-        }
-        assertTrue(comparator.compare(artifact(base), artifact(spatialModel(Optional.of(spatial(1, 0))))).isEmpty());
     }
 
     @Test
@@ -483,23 +446,6 @@ class FactoryModelSemanticComparatorTest {
         ProductDefinition product = new ProductDefinition(new ProductId(10), "Widget", operation.id());
         return FactoryModelPublisher.publish(
                 new FactoryModel(resources, List.of(operation), List.of(product)));
-    }
-
-    private static SpatialRecord spatial(long secondResourceX, long handlingTicks) {
-        return new SpatialRecord(
-                new FactoryFloor(6, 2),
-                1,
-                handlingTicks,
-                List.of(
-                        new ResourceLayout(new MachineId(1), new ResourcePlacement(0, 0), new ResourceFootprint(1, 1)),
-                        new ResourceLayout(
-                                new MachineId(2), new ResourcePlacement(secondResourceX, 0), new ResourceFootprint(1, 1))));
-    }
-
-    private static FactoryModelVersion spatialModel(Optional<SpatialRecord> spatial) {
-        FactoryModel production = twoResourceModel(List.of(1, 2)).model();
-        return FactoryModelPublisher.publish(new FactoryModel(
-                production.resources(), production.operations(), production.products(), spatial));
     }
 
     private static SemanticArtifact artifact(FactoryModelVersion version) {

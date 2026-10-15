@@ -19,9 +19,9 @@ import java.util.Set;
  * resolvable references, coherent resource/operation relationships, well-formed Unicode) -- it
  * does not partially construct or mutate any runtime state.
  *
- * <p>Cross-resource predicates such as coverage and non-overlap are evaluated here, at the model
- * validation boundary -- never inside an individual value-object constructor, which could never
- * see the rest of the model. Every violation is collected into one deterministic, ordered result
+ * <p>Cross-record predicates such as identifier uniqueness and reference resolution are evaluated
+ * here, at the model validation boundary -- never inside an individual value-object constructor,
+ * which could never see the rest of the model. Every violation is collected into one deterministic, ordered result
  * rather than failing fast on the first problem found.
  */
 public final class FactoryModelValidator {

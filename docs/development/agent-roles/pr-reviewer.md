@@ -267,7 +267,7 @@ Every actionable finding must use one precise category: `CORRECTNESS`, `ARCHITEC
 Do not report a finding solely because:
 
 - a later roadmap gate or future capability is not implemented;
-- proposed/planned architecture differs from current implementation;
+- existing proposed/planned architecture differs from current implementation (architecture or specification text that the PR itself adds or alters is held to the rule in `docs/development/reviewing.md` instead);
 - an abstraction could theoretically be more generic;
 - Challenge and Governance contain similar concepts without sharing types/frameworks;
 - intentionally documented compatibility debt remains;

@@ -93,7 +93,6 @@ supported-event sequence
 simulation time
 semantic event type
 model fingerprint
-optional authoritative controlled revision
 entity references
 semantic payload
 ```

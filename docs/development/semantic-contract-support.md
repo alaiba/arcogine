@@ -15,7 +15,7 @@ human-facing repository state only; it is not encoded in canonical bytes, finger
 identifiers, or provenance. Review a development-definition change like any other definition change:
 
 - the owning specification, its golden vectors or conformance fixtures, and every dependent
-  consumer, plan and document change together;
+  consumer and document change together;
 - no successor identity, legacy decoder, alias, tombstone, dual publication or migration path is
   added for earlier development material — stale or foreign input fails explicitly instead;
 - vectors and fixtures are regenerated deliberately from the specification, preferably through an

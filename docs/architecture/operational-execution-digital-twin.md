@@ -13,9 +13,9 @@ The architectural rule is:
 
 > **Arcogine reuses the same semantic model across synthetic and externally grounded execution. What differs is expressed through relationships: how state transitions are realized, what provenance and authority they carry, what evidence is available, what trust applies, and what consequence can escape Arcogine. Raw external observations retain independent source and time provenance and must not be forced to invent Arcogine model, revision, or operational-history identity at ingestion.**
 
-This capability is a sibling of Factory Design / Engine Readiness and Governance / Conformance:
+This capability is a sibling of Factory Design / Engine and Governance / Conformance:
 
-- **Factory Design / Engine Readiness** owns canonical production semantics and deterministic simulation runtime truth.
+- **Factory Design / Engine** owns canonical production semantics and deterministic simulation runtime truth.
 - **Operational Execution / Digital Twin** owns the future semantic integration boundary where independently existing systems, external observations, trusted correspondences, command/result facts, deployment application, and modeled-versus-observed reconciliation enter the picture.
 - **Governance / Conformance** owns durable semantic identity, controlled revision history, requirements/assertions, evidence use, findings, exceptions, and governed-change interpretation.
 
@@ -389,9 +389,9 @@ The invariant is:
 
 Operational Execution must consume Governance-owned fingerprint, revision, semantic change, requirement/assertion, conformance/finding, and evidence-use contracts when they exist rather than introducing duplicates. The evidence/evidence-use contract Governance applies is fixed by the [Governance evidence contract](governance-evidence.md): a raw observation keeps its source provenance and acquires an Arcogine subject only through a later use or reconciliation determination, and a use binds to point identities only — evidence about an accountable operational continuation over time remains the accumulating-identity limit the Operational continuity contract §11 records, owned here rather than by that contract.
 
-## 13. Boundary with Factory Design and Engine Readiness
+## 13. Boundary with Factory Design and the Engine
 
-Factory Design / Engine Readiness remains authoritative for executable production semantics and deterministic simulated execution.
+Factory Design and the Engine remain authoritative for executable production semantics and deterministic simulated execution.
 
 Operational Execution does not turn `FactoryRuntime` into a production-control runtime by default.
 

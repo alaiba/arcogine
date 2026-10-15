@@ -65,7 +65,7 @@ Cross-revision claims are projection- and definition-specific: #465 removed iner
 | An admitted method needs new producer inputs, sufficiency/refusal, accumulation, definition identity, result provenance or retention/handover | Promote the still-[CANDIDATE evidence/provenance question](simulation-analytics-evidence-provenance.md) for that bounded use; definition sharing alone does not automatically promote it |
 | An admitted shared analytics contract also faces a second supported consumption boundary | Reassess [adapter compatibility](simulation-analytics-adapter-compatibility.md) without selecting an adapter in advance |
 | A concrete comparison spans Engine definitions or analytical revisions | Promote [cross-revision comparability](simulation-analytics-cross-revision-comparability.md) with claim-specific Engine equivalence and producing-basis evidence |
-| Game diagnostic definitions or T1/T2/T3 live-loop requirements become concrete | Apply the Game consumer plan's diagnostic method acceptance gate; inspect command timing, capture and interval finality before any playable admission |
+| Game diagnostic definitions or T1/T2/T3 live-loop requirements become concrete | Apply the [method acceptance gate](factory-design-game-diagnostic-evidence.md#diagnostic-claims-and-evidence) the first slice adopts; inspect command timing, capture and interval finality before a playable slice is handed off |
 | Spatial transfer execution or a relevant method-level public-accessor use becomes supported | Recheck transfer residence, source facts and any required accessor support classification without silently rewriting Engine results |
 
 ## Evidence and disposition

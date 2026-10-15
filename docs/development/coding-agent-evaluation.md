@@ -4,7 +4,7 @@
 
 This document records the current Arcogine-specific evaluation of coding-agent capacity, especially free and low-cost plans and model tiers that can be used for repository work. It is developer guidance, not repository policy and not an architectural constraint.
 
-The objective is not to identify one permanent "best" coding agent. Arcogine already carries substantial repository-owned guidance in `AGENTS.md`, architecture/planning documents, specialized agent contracts, tests, and CI. That allows routine implementation work to be routed to inexpensive agents while reserving stronger reasoning capacity for architecture, adjudication, and difficult remediation.
+The objective is not to identify one permanent "best" coding agent. Arcogine already carries substantial repository-owned guidance in `AGENTS.md`, architecture documents, specialized agent contracts, tests, and CI. That allows routine implementation work to be routed to inexpensive agents while reserving stronger reasoning capacity for architecture, adjudication, and difficult remediation.
 
 ## Evaluation principle
 
@@ -134,7 +134,7 @@ Arcogine deliberately keeps important correctness constraints in durable reposit
 - `AGENTS.md` defines repository identity, branch handling, validation, and PR merge-gate/continuation rules;
 - specialized Researcher, Implementer, PR Reviewer, and Consistency contracts define repository-specific operating procedures;
 - architecture and specifications define semantic boundaries;
-- maintained planning documents define acceptance criteria and sequencing;
+- GitHub issues and committed implementation handoffs define acceptance criteria for known work, and the owner selects what to work on next;
 - tests and quality gates provide executable evidence;
 - CI provides an independent repository-level validation surface.
 

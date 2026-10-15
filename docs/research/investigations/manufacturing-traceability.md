@@ -153,12 +153,12 @@ Conclude only when Arcogine can state, for the supported traceability use cases:
 - which concepts it deliberately leaves external;
 - what information loss or unsupported round-trip behavior is acceptable and explicit;
 - what mapping/profile provenance must be preserved;
-- which concrete integration, if any, is sufficiently bounded to become implementation planning; and
+- which concrete integration, if any, is sufficiently bounded for an implementation handoff; and
 - that any surviving high-risk interoperability conclusion proposed for durable promotion has completed the required genuinely independent adversarial research review.
 
 ### Expected durable destination
 
-`docs/architecture/isa-95-semantic-mapping.md`, `docs/architecture/standards-alignment.md`, and Operational integration architecture as warranted. Implementation planning is downstream of a concrete admitted integration, not of this research item by itself.
+`docs/architecture/isa-95-semantic-mapping.md`, `docs/architecture/standards-alignment.md`, and Operational integration architecture as warranted. An implementation handoff follows only from a concrete integration, not from this research item by itself.
 
 ## Relationship to Operational boundary research
 
@@ -178,7 +178,7 @@ This investigation does not by itself justify:
 - choosing an event store, historian, database, broker, or protocol;
 - ISA-95/B2MML/OPC UA conformance claims;
 - importing an external standard or vendor ontology wholesale; or
-- implementation planning before the relevant semantic questions are settled and reconciled.
+- an implementation handoff before the relevant semantic questions are settled and reconciled.
 
 ## Promotion boundary
 

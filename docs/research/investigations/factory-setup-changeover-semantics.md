@@ -106,6 +106,6 @@ The durable destination is:
 
 - [Factory model](../../architecture/factory-model.md) and [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) for authored setup facts;
 - [Engine semantics](../../architecture/engine-semantics.md) for result-affecting execution;
-- current planning only after those meanings are settled.
+- an implementation handoff only after those meanings are settled.
 
 A conclusion that changes result-affecting Engine behavior should receive independent adversarial review before architecture reconciliation.

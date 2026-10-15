@@ -36,7 +36,7 @@ The original brief follows as the investigation's framing.
 
 Whether the proposed Governance evidence capability has a sufficiently settled semantic contract to admit its first headless implementation, and which durable architecture surface must be accepted or revised before implementation begins.
 
-The answer must distinguish semantic obligations from deferred mechanism choices. It must not treat a research conclusion, a design proposal, or a planning acceptance list as an implementation contract until the required reconciliation has landed.
+The answer must distinguish semantic obligations from deferred mechanism choices. It must not treat a research conclusion, a design proposal, or an acceptance list as an implementation contract until the required reconciliation has landed.
 
 ## Scope and non-goals
 
@@ -107,7 +107,7 @@ For each case, state what evidence would make the result decision-quality and wh
 
 ## Evidence expectations
 
-Ground first in live `main`, the Governance architecture, the controlled revision contract, the Operational continuity contract, the Determinism Contract, the Governance evidence contract, the research operating model/register, the planning admission rule, and the current Governance implementation and boundary tests. Search semantic neighbors across Operational observations, runtime provenance, controlled revision history, conformance results, and existing research.
+Ground first in live `main`, the Governance architecture, the controlled revision contract, the Operational continuity contract, the Determinism Contract, the Governance evidence contract, the research operating model/register, and the current Governance implementation and boundary tests. Search semantic neighbors across Operational observations, runtime provenance, controlled revision history, conformance results, and existing research.
 
 External evidence is required only if it discriminates a candidate, exposes a failure mode, or establishes a material interoperability/consequence constraint. Any such source must be verified and cited with precise provenance; unverified background must be labeled as such. Absence claims must state the repository search scope.
 
@@ -128,7 +128,7 @@ Stop only when the report identifies the surviving semantic contract (or conclud
 
 ## Expected durable destination
 
-Focused architecture/specification reconciliation if a minimum contract survives; otherwise an explicit no-action or narrower research destination. Only after that reconciliation may the Governance plan be promoted to `READY_NEXT` and admit a concrete implementation responsibility. *(Outcome: the Governance evidence contract was adopted; the plan was promoted in the same reconciliation.)*
+Focused architecture/specification reconciliation if a minimum contract survives; otherwise an explicit no-action or narrower research destination. Only after that reconciliation may a concrete implementation responsibility be admitted. *(Outcome: the Governance evidence contract was adopted, and the since-retired Governance plan admitted its implementation in the same reconciliation.)*
 
 ## Follow-up / reopening triggers
 

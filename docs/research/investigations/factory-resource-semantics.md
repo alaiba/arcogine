@@ -3,7 +3,7 @@
 > **Status:** CONCLUDED  
 > **Research baseline:** `2acee74723aad7a9ca384459f5d44ef35b85b6fd`  
 > **Reconciled:** 2026-09-08 against live `main` at `8d208707b808a9dfc41bb9666ee7c1ff4a14b4cc`; intervening changes did not alter Factory resource production semantics  
-> **Authority:** Research evidence only. Durable consequences are reconciled into the [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) architectural reference and implementation planning.
+> **Authority:** Research evidence only. Durable consequences are reconciled into the [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) architectural reference.
 
 ## Question
 
@@ -160,7 +160,7 @@ Durable reconciliation should preserve these rules:
 
 - [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) starts from configured productive-resource identity, not an assumed reusable definition plus installed instance, and treats specification/classification, configured identity, capability, hierarchy, location, physical asset, and runtime state as orthogonal concepts;
 - `ConfiguredResource` documentation and current code state directly state that the canonical record is one configured resource; the production rename from the research-baseline `ResourceDefinition` was terminology-only;
-- implementation planning records the split as **not admitted** and requires a future checkable technical-specification/dependency invariant before reopening it;
+- the split is **not admitted**: [Factory Resource Semantics](../../architecture/factory-resource-semantics.md) keeps the collapsed configured resource, and only a future checkable technical-specification/dependency invariant reopens it, through the follow-up research below;
 - the runtime observation/event contract's resource `definition identity` wording does not imply two distinct identifiers under the current collapsed model: the same canonical `MachineId` identifies the configured model record and runtime correlation target.
 
 Keeping the existing model needs no architecture change. Reconciling the owning architecture or specification becomes appropriate only when Arcogine actually accepts an independently versioned specification identity, generalized qualification/allocation rules with hard compatibility impact, consequential pool/work-center aggregation, physical-asset correspondence semantics, or another hard-to-reverse resource contract.

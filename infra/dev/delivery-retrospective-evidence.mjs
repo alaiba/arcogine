@@ -109,27 +109,9 @@ function validateHandoff(handoff, candidate) {
   }
 }
 
-function validateClosingIssues(closingIssues, candidate) {
-  const label = `candidate PR #${candidate.number}`;
-  if (!isObject(closingIssues) || closingIssues.complete !== true) {
-    fail(`${label} closing-issue references are incomplete`);
-  }
-  if (!nonnegativeInteger(closingIssues.reportedCount) || !Array.isArray(closingIssues.items)) {
-    fail(`${label} closing-issue count metadata is malformed`);
-  }
-  if (closingIssues.reportedCount !== closingIssues.items.length) {
-    fail(
-      `${label} closing-issue count mismatch: reported ${closingIssues.reportedCount}, received ${closingIssues.items.length}`,
-    );
-  }
-  const numbers = new Set();
-  for (const number of closingIssues.items) {
-    if (!positiveInteger(number)) fail(`${label} closing-issue reference must be a positive issue number`);
-    if (numbers.has(number)) fail(`${label} references closing issue #${number} twice`);
-    numbers.add(number);
-  }
-}
-
+// `closedByPullRequest` is the pull request the source records as having caused the issue's current
+// closure, or null when the issue is open or no pull request is recorded as its closer. A link that
+// a pull request only may close an issue is not closure evidence.
 function validateIssues(issues) {
   if (!isObject(issues) || issues.complete !== true) fail('issue collection is incomplete');
   if (!nonnegativeInteger(issues.reportedCount) || !Array.isArray(issues.items)) {
@@ -148,6 +130,12 @@ function validateIssues(issues) {
     }
     if (issue.closedAt !== null && Date.parse(issue.closedAt) < Date.parse(issue.createdAt)) {
       fail(`issue #${issue.number} closed before it was opened`);
+    }
+    if (issue.closedByPullRequest !== null && !positiveInteger(issue.closedByPullRequest)) {
+      fail(`issue #${issue.number} closing pull request must be a positive PR number or null`);
+    }
+    if (issue.closedByPullRequest !== null && issue.closedAt === null) {
+      fail(`issue #${issue.number} names a closing pull request but is not closed`);
     }
     byNumber.set(issue.number, issue);
   });
@@ -183,7 +171,6 @@ function validateCandidate(candidate, index, prNumbers) {
     validateReview(review, candidate.number, reviewIndex, reviewIds);
   });
   validateHandoff(candidate.handoff, candidate);
-  validateClosingIssues(candidate.closingIssues, candidate);
 }
 
 /** Validate and return a Retrospective Evidence v2 value. */
@@ -232,13 +219,11 @@ export function validateEvidence(evidence) {
   }
 
   const issues = validateIssues(evidence.issues);
-  for (const candidate of candidates.items) {
-    for (const number of candidate.closingIssues.items) {
-      const issue = issues.get(number);
-      if (!issue) fail(`closing issue #${number} of candidate PR #${candidate.number} has no issue facts`);
-      if (Date.parse(issue.createdAt) > Date.parse(candidate.mergedAt)) {
-        fail(`closing issue #${number} was opened after candidate PR #${candidate.number} merged`);
-      }
+  const candidatesByNumber = new Map(candidates.items.map((candidate) => [candidate.number, candidate]));
+  for (const issue of issues.values()) {
+    const closingCandidate = candidatesByNumber.get(issue.closedByPullRequest);
+    if (closingCandidate && Date.parse(issue.createdAt) > Date.parse(closingCandidate.mergedAt)) {
+      fail(`issue #${issue.number} was opened after its closing PR #${closingCandidate.number} merged`);
     }
   }
   return evidence;

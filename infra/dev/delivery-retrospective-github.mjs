@@ -14,7 +14,6 @@ const STATE_PATH = fileURLToPath(
 );
 const SEARCH_LIMIT = 1000;
 const REVIEW_PAGE_SIZE = 100;
-const CLOSING_ISSUE_PAGE_SIZE = 100;
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 const HANDOFF_LABEL = /^\s*Implementation handoff:/;
 const HANDOFF_LINE =
@@ -37,9 +36,9 @@ AUTH
   Uses GH_TOKEN or GITHUB_TOKEN. Otherwise runs \`gh auth token\` once.
 
 The adapter fails closed above GitHub's ${SEARCH_LIMIT}-result search bound, when a
-candidate PR has more than ${REVIEW_PAGE_SIZE} submitted reviews or ${CLOSING_ISSUE_PAGE_SIZE} closing-issue
-references, and when a PR's "Implementation handoff:" line is malformed, repeated, or names a
-commit, path, or commit date that GitHub does not confirm.
+candidate PR has more than ${REVIEW_PAGE_SIZE} submitted reviews, and when a PR's
+"Implementation handoff:" line is malformed, repeated, or names a commit, path, or commit
+date that GitHub does not confirm.
 `;
 }
 
@@ -123,11 +122,6 @@ query($owner:String!, $name:String!, $number:Int!) {
         pageInfo { hasNextPage endCursor }
         nodes { id body authorAssociation submittedAt commit { oid } }
       }
-      closingIssuesReferences(first:100) {
-        totalCount
-        pageInfo { hasNextPage endCursor }
-        nodes { number createdAt closedAt repository { nameWithOwner } }
-      }
     }
   }
 }`;
@@ -146,7 +140,12 @@ query($query:String!, $cursor:String) {
     issueCount
     pageInfo { hasNextPage endCursor }
     nodes {
-      ... on Issue { number createdAt closedAt }
+      ... on Issue {
+        number createdAt closedAt
+        timelineItems(itemTypes:[CLOSED_EVENT], last:1) {
+          nodes { ... on ClosedEvent { closer { __typename ... on PullRequest { number repository { nameWithOwner } } } } }
+        }
+      }
     }
   }
 }`;
@@ -297,48 +296,34 @@ export async function resolveHandoff({ graphql, token, owner, name, prNumber, na
 }
 
 /**
- * Serialize a PR's closing-issue references within `repo`, with the issues' opening and closing
- * times. References to issues in other repositories are returned separately: the measure covers
- * this repository's issues only.
+ * Serialize an issue's opening and closing times and the pull request in `repo` that GitHub records
+ * as the closer of its current closure. A pull request that only links the issue as one it may close
+ * is not a closer; an open issue, or one closed some other way, has none.
  */
-export function serializeClosingIssues(pullRequest, repo) {
-  const connection = pullRequest.closingIssuesReferences;
-  if (!connection || !Number.isInteger(connection.totalCount) || !Array.isArray(connection.nodes) || !connection.pageInfo) {
-    throw new Error(`PR #${pullRequest.number} returned malformed closing-issue metadata`);
+export function serializeIssue(node, repo) {
+  const events = node?.timelineItems?.nodes;
+  if (!Number.isInteger(node?.number) || !Array.isArray(events)) {
+    throw new Error(`issue search returned malformed facts for issue #${node?.number ?? '?'}`);
   }
-  if (connection.totalCount > CLOSING_ISSUE_PAGE_SIZE || connection.pageInfo.hasNextPage) {
-    throw new Error(
-      `PR #${pullRequest.number} has more than ${CLOSING_ISSUE_PAGE_SIZE} closing-issue references; refusing truncated evidence`,
-    );
-  }
-  if (connection.totalCount !== connection.nodes.length) {
-    throw new Error(
-      `PR #${pullRequest.number} reported ${connection.totalCount} closing-issue references but fetched ${connection.nodes.length}; refusing partial data`,
-    );
-  }
-  const issues = [];
-  const otherRepositories = [];
-  for (const node of connection.nodes) {
-    const repository = node?.repository?.nameWithOwner;
-    if (!Number.isInteger(node?.number) || typeof repository !== 'string') {
-      throw new Error(`PR #${pullRequest.number} returned a malformed closing-issue reference`);
-    }
-    if (repository.toLowerCase() !== repo.toLowerCase()) {
-      otherRepositories.push({ prNumber: pullRequest.number, repository, number: node.number });
-      continue;
-    }
-    issues.push({ number: node.number, createdAt: node.createdAt, closedAt: node.closedAt ?? null });
-  }
-  return {
-    closingIssues: { complete: true, reportedCount: issues.length, items: issues.map((issue) => issue.number) },
-    issues,
-    otherRepositories,
-  };
+  const closedAt = node.closedAt ?? null;
+  const closer = closedAt === null ? null : events[0]?.closer;
+  const closedByPullRequest =
+    closer?.__typename === 'PullRequest' &&
+    Number.isInteger(closer.number) &&
+    String(closer.repository?.nameWithOwner).toLowerCase() === repo.toLowerCase()
+      ? closer.number
+      : null;
+  return { number: node.number, createdAt: node.createdAt, closedAt, closedByPullRequest };
 }
 
 function recordIssue(issues, issue) {
   const prior = issues.get(issue.number);
-  if (prior && (prior.createdAt !== issue.createdAt || prior.closedAt !== issue.closedAt)) {
+  if (
+    prior &&
+    (prior.createdAt !== issue.createdAt ||
+      prior.closedAt !== issue.closedAt ||
+      prior.closedByPullRequest !== issue.closedByPullRequest)
+  ) {
     throw new Error(`issue #${issue.number} facts changed during acquisition`);
   }
   issues.set(issue.number, issue);
@@ -404,8 +389,6 @@ export async function acquireEvidence({
   });
 
   const items = [];
-  const issues = new Map();
-  const otherRepositoryClosingReferences = [];
   const exactCandidates = candidates.filter((candidate) => inExactWindow(candidate, baseline, through));
   for (const candidate of exactCandidates) {
     const pullRequestData = await graphql(token, PULL_REQUEST_QUERY, { owner, name, number: candidate.number });
@@ -422,9 +405,6 @@ export async function acquireEvidence({
     const handoff = named
       ? await resolveHandoff({ graphql, token, owner, name, prNumber: candidate.number, named })
       : null;
-    const closing = serializeClosingIssues(pullRequest, repo);
-    for (const issue of closing.issues) recordIssue(issues, issue);
-    otherRepositoryClosingReferences.push(...closing.otherRepositories);
     items.push({
       number: candidate.number,
       merged: candidate.merged,
@@ -432,17 +412,19 @@ export async function acquireEvidence({
       baseRefName: candidate.baseRefName,
       reviews: serializeReviewConnection(pullRequest),
       handoff,
-      closingIssues: closing.closingIssues,
     });
   }
 
-  // Issues open at the window end: those open now, then those closed since. Day bounds are widened
-  // by one day around GitHub's date qualifiers and narrowed exactly afterwards.
+  // Issues open at some point in the window: those open now, then those closed since the window
+  // opened, each with its recorded closer. Day bounds are widened by one day around GitHub's date
+  // qualifiers and narrowed exactly afterwards.
+  const start = Date.parse(baseline.mergedAt);
   const end = Date.parse(through.mergedAt);
   const issueSearches = [
     `repo:${repo} is:issue is:open created:<=${utcDay(through.mergedAt, 1)}`,
-    `repo:${repo} is:issue is:closed closed:>=${utcDay(through.mergedAt, -1)} created:<=${utcDay(through.mergedAt, 1)}`,
+    `repo:${repo} is:issue is:closed closed:>=${utcDay(baseline.mergedAt, -1)} created:<=${utcDay(through.mergedAt, 1)}`,
   ];
+  const issues = new Map();
   const issueSearchCounts = [];
   for (const query of issueSearches) {
     const found = await collectSearchPages(async (cursor) => {
@@ -451,9 +433,9 @@ export async function acquireEvidence({
     }, 'issue');
     issueSearchCounts.push(found.length);
     for (const node of found) {
-      const issue = { number: node.number, createdAt: node.createdAt, closedAt: node.closedAt ?? null };
+      const issue = serializeIssue(node, repo);
       if (Date.parse(issue.createdAt) > end) continue;
-      if (issue.closedAt !== null && Date.parse(issue.closedAt) <= end) continue;
+      if (issue.closedAt !== null && Date.parse(issue.closedAt) <= start) continue;
       recordIssue(issues, issue);
     }
   }
@@ -471,9 +453,7 @@ export async function acquireEvidence({
       acquiredAt: now(),
       candidateSearch: { query: searchText, reportedCount: candidates.length },
       reviewConnectionPageSize: REVIEW_PAGE_SIZE,
-      closingIssueConnectionPageSize: CLOSING_ISSUE_PAGE_SIZE,
-      openIssueSearches: issueSearches.map((query, index) => ({ query, reportedCount: issueSearchCounts[index] })),
-      otherRepositoryClosingReferences,
+      issueSearches: issueSearches.map((query, index) => ({ query, reportedCount: issueSearchCounts[index] })),
     },
   };
   return validateEvidence(evidence);

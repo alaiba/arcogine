@@ -481,8 +481,8 @@ function withMedian(items, duration) {
 
 /**
  * Research-to-delivery lead time over the exact window: handoff commit to implementing merge, issue
- * opening to the first in-window merge that closes it, and the age at window end of issues then open.
- * Values are measures to compare between retrospectives, never thresholds.
+ * opening to the merge of the window PR recorded as closing it, and the age at window end of issues
+ * then open. Values are measures to compare between retrospectives, never thresholds.
  */
 export function researchToDeliveryLeadTime(window, issues, windowEnd) {
   const handoffItems = window
@@ -496,22 +496,18 @@ export function researchToDeliveryLeadTime(window, issues, windowEnd) {
       elapsedDays: roundDays(elapsedMilliseconds(pr.handoff.committedAt, pr.mergedAt)),
     }));
 
-  const issueByNumber = new Map(issues.map((issue) => [issue.number, issue]));
-  const closingPr = new Map();
-  for (const pr of window) {
-    for (const number of pr.closingIssues.items) {
-      if (!closingPr.has(number)) closingPr.set(number, pr);
-    }
-  }
-  const closedItems = [...closingPr.entries()]
-    .map(([number, pr]) => {
-      const openedAt = issueByNumber.get(number).createdAt;
+  // A window PR's closure counts even when the recorded close lands seconds after the window end.
+  const windowPrs = new Map(window.map((pr) => [pr.number, pr]));
+  const closedByWindowPr = issues.filter((issue) => windowPrs.has(issue.closedByPullRequest));
+  const closedItems = closedByWindowPr
+    .map((issue) => {
+      const pr = windowPrs.get(issue.closedByPullRequest);
       return {
-        issueNumber: number,
-        openedAt,
+        issueNumber: issue.number,
+        openedAt: issue.createdAt,
         closingPrNumber: pr.number,
         mergedAt: pr.mergedAt,
-        elapsedDays: roundDays(elapsedMilliseconds(openedAt, pr.mergedAt)),
+        elapsedDays: roundDays(elapsedMilliseconds(issue.createdAt, pr.mergedAt)),
       };
     })
     .sort((left, right) =>
@@ -519,9 +515,10 @@ export function researchToDeliveryLeadTime(window, issues, windowEnd) {
     );
 
   const end = Date.parse(windowEnd);
+  const closedNumbers = new Set(closedByWindowPr.map((issue) => issue.number));
   const openItems = issues
     .filter((issue) =>
-      !closingPr.has(issue.number) &&
+      !closedNumbers.has(issue.number) &&
       Date.parse(issue.createdAt) <= end &&
       (issue.closedAt === null || Date.parse(issue.closedAt) > end),
     )

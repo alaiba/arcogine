@@ -6,7 +6,7 @@ import {
   collectSearchPages,
   parseHandoffReference,
   resolveHandoff,
-  serializeClosingIssues,
+  serializeIssue,
   serializeReviewConnection,
 } from './delivery-retrospective-github.mjs';
 
@@ -17,17 +17,12 @@ const handoffCommit = 'c'.repeat(40);
 const handoffPath = ['workspace', 'research', 'example-question', 'implementation-handoff.md'].join('/');
 const handoffLine = `Implementation handoff: ${handoffPath} at ${handoffCommit}, committed 2026-09-04T12:00:00+03:00`;
 
-function closingConnection(nodes, overrides = {}) {
-  return {
-    totalCount: nodes.length,
-    pageInfo: { hasNextPage: false, endCursor: null },
-    nodes,
-    ...overrides,
-  };
+function issueNode(number, createdAt, closedAt = null, closer = null) {
+  return { number, createdAt, closedAt, timelineItems: { nodes: closer ? [{ closer }] : [] } };
 }
 
-function closingNode(number, repository = 'alaiba/arcogine') {
-  return { number, createdAt: '2026-09-03T00:00:00Z', closedAt: '2026-09-05T00:00:05Z', repository: { nameWithOwner: repository } };
+function closingPr(number, repository = 'alaiba/arcogine') {
+  return { __typename: 'PullRequest', number, repository: { nameWithOwner: repository } };
 }
 
 test('search pagination is complete and stable across pages', async () => {
@@ -205,33 +200,21 @@ test('a named handoff is confirmed against the commit and file GitHub records', 
   );
 });
 
-test('closing-issue references keep this repository and set aside other repositories', () => {
-  const result = serializeClosingIssues({
-    number: 11,
-    closingIssuesReferences: closingConnection([closingNode(34), closingNode(5, 'other/repository')]),
-  }, 'alaiba/arcogine');
-  assert.deepEqual(result, {
-    closingIssues: { complete: true, reportedCount: 1, items: [34] },
-    issues: [{ number: 34, createdAt: '2026-09-03T00:00:00Z', closedAt: '2026-09-05T00:00:05Z' }],
-    otherRepositories: [{ prNumber: 11, repository: 'other/repository', number: 5 }],
+test('an issue names a closing PR only when GitHub records one from this repository as its current closer', () => {
+  const repo = 'alaiba/arcogine';
+  const opened = '2026-09-03T00:00:00Z';
+  const closed = '2026-09-05T00:00:03Z';
+  assert.deepEqual(serializeIssue(issueNode(34, opened, closed, closingPr(11)), repo), {
+    number: 34, createdAt: opened, closedAt: closed, closedByPullRequest: 11,
   });
-});
-
-test('closing-issue references fail closed when truncated, miscounted, or malformed', () => {
-  assert.throws(() => serializeClosingIssues({
-    number: 11,
-    closingIssuesReferences: closingConnection(Array.from({ length: 100 }, (_, index) => closingNode(index + 1)), {
-      totalCount: 101, pageInfo: { hasNextPage: true, endCursor: 'more' },
-    }),
-  }, 'alaiba/arcogine'), /more than 100 closing-issue references/);
-  assert.throws(() => serializeClosingIssues({
-    number: 11,
-    closingIssuesReferences: closingConnection([closingNode(34)], { totalCount: 2 }),
-  }, 'alaiba/arcogine'), /reported 2 closing-issue references but fetched 1/);
-  assert.throws(() => serializeClosingIssues({
-    number: 11,
-    closingIssuesReferences: closingConnection([{ number: 34 }]),
-  }, 'alaiba/arcogine'), /malformed closing-issue reference/);
+  assert.equal(serializeIssue(issueNode(35, opened, closed), repo).closedByPullRequest, null);
+  assert.equal(serializeIssue(issueNode(36, opened, closed, { __typename: 'Commit' }), repo).closedByPullRequest, null);
+  assert.equal(
+    serializeIssue(issueNode(37, opened, closed, closingPr(11, 'other/repository')), repo).closedByPullRequest,
+    null,
+  );
+  assert.equal(serializeIssue(issueNode(38, opened, null, closingPr(11)), repo).closedByPullRequest, null);
+  assert.throws(() => serializeIssue({ number: 39, createdAt: opened, closedAt: null }, repo), /malformed facts for issue #39/);
 });
 
 test('acquisition emits a validated source-neutral evidence bundle with complete review data', async () => {
@@ -257,15 +240,17 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
     {
       match: /is:open created:<=2026-09-07$/,
       nodes: [
-        { number: 30, createdAt: '2026-09-01T00:00:00Z', closedAt: null },
-        { number: 31, createdAt: '2026-09-06T10:00:00Z', closedAt: null },
+        issueNode(30, '2026-09-01T00:00:00Z'),
+        issueNode(31, '2026-09-06T10:00:00Z'),
       ],
     },
     {
-      match: /is:closed closed:>=2026-09-05 created:<=2026-09-07$/,
+      match: /is:closed closed:>=2026-09-03 created:<=2026-09-07$/,
       nodes: [
-        { number: 32, createdAt: '2026-09-02T00:00:00Z', closedAt: '2026-09-06T10:00:00Z' },
-        { number: 33, createdAt: '2026-09-02T00:00:00Z', closedAt: '2026-09-06T09:00:00Z' },
+        issueNode(32, '2026-09-02T00:00:00Z', '2026-09-06T10:00:00Z'),
+        issueNode(33, '2026-09-02T00:00:00Z', '2026-09-06T09:00:00Z'),
+        issueNode(34, '2026-09-03T00:00:00Z', '2026-09-05T00:00:03Z', closingPr(11)),
+        issueNode(35, '2026-09-01T00:00:00Z', '2026-09-03T12:00:00Z', closingPr(9)),
       ],
     },
   ];
@@ -296,9 +281,6 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
           pullRequest: {
             ...sourcePr,
             body: sourcePr.number === 11 ? `Implements slice 1.\n\n${handoffLine}\n\nCloses #34.` : null,
-            closingIssuesReferences: closingConnection(
-              sourcePr.number === 11 ? [closingNode(34), closingNode(5, 'other/repository')] : [],
-            ),
             reviews: {
               totalCount: outOfWindow ? 101 : sourcePr.number === 11 ? 1 : 0,
               pageInfo: { hasNextPage: outOfWindow, endCursor: outOfWindow ? 'more' : null },
@@ -342,18 +324,17 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
     committedAt: '2026-09-04T09:00:00Z',
   });
   assert.equal(result.candidates.items[1].handoff, null);
-  assert.deepEqual(result.candidates.items[0].closingIssues, { complete: true, reportedCount: 1, items: [34] });
-  assert.deepEqual(result.candidates.items[1].closingIssues, { complete: true, reportedCount: 0, items: [] });
   assert.deepEqual(result.issues, {
     complete: true,
-    reportedCount: 3,
+    reportedCount: 4,
     items: [
-      { number: 30, createdAt: '2026-09-01T00:00:00Z', closedAt: null },
-      { number: 32, createdAt: '2026-09-02T00:00:00Z', closedAt: '2026-09-06T10:00:00Z' },
-      { number: 34, createdAt: '2026-09-03T00:00:00Z', closedAt: '2026-09-05T00:00:05Z' },
+      { number: 30, createdAt: '2026-09-01T00:00:00Z', closedAt: null, closedByPullRequest: null },
+      { number: 32, createdAt: '2026-09-02T00:00:00Z', closedAt: '2026-09-06T10:00:00Z', closedByPullRequest: null },
+      { number: 33, createdAt: '2026-09-02T00:00:00Z', closedAt: '2026-09-06T09:00:00Z', closedByPullRequest: null },
+      { number: 34, createdAt: '2026-09-03T00:00:00Z', closedAt: '2026-09-05T00:00:03Z', closedByPullRequest: 11 },
     ],
   });
-  assert.deepEqual(result.source.otherRepositoryClosingReferences, [{ prNumber: 11, repository: 'other/repository', number: 5 }]);
+  assert.deepEqual(result.source.issueSearches.map((search) => search.reportedCount), [2, 4]);
   assert.equal('findingAnalytics' in result, false);
   assert.equal('disposition' in result, false);
   assert.equal(calls.length, 7);
@@ -372,8 +353,8 @@ test('acquisition fails closed when an issue changes between its acquisition sou
     }
     if (query.includes('search(type:ISSUE')) {
       const nodes = variables.query.includes('is:open')
-        ? [{ number: 34, createdAt: '2026-09-03T00:00:00Z', closedAt: null }]
-        : [];
+        ? [issueNode(34, '2026-09-03T00:00:00Z')]
+        : [issueNode(34, '2026-09-03T00:00:00Z', '2026-09-06T09:29:58Z', closingPr(12))];
       return { search: { issueCount: nodes.length, nodes, pageInfo: { hasNextPage: false, endCursor: null } } };
     }
     return {
@@ -381,7 +362,6 @@ test('acquisition fails closed when an issue changes between its acquisition sou
         pullRequest: {
           ...through,
           body: null,
-          closingIssuesReferences: closingConnection([closingNode(34)]),
           reviews: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null }, nodes: [] },
         },
       },

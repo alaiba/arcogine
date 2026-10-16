@@ -4,7 +4,7 @@
  * the normalized evidence shape and its completeness invariants.
  */
 
-export const EVIDENCE_SCHEMA_VERSION = 1;
+export const EVIDENCE_SCHEMA_VERSION = 2;
 
 export const FINDING_CATEGORIES = Object.freeze([
   'CORRECTNESS',
@@ -94,6 +94,54 @@ function validateReview(review, prNumber, index, reviewIds) {
   }
 }
 
+function validateHandoff(handoff, candidate) {
+  const label = `candidate PR #${candidate.number}`;
+  if (handoff === undefined) fail(`${label} handoff reference is missing (null when the PR names none)`);
+  if (handoff === null) return;
+  if (!isObject(handoff)) fail(`${label} handoff reference must be an object or null`);
+  if (!nonemptyString(handoff.path)) fail(`${label} handoff path is missing`);
+  if (typeof handoff.commit !== 'string' || !/^[0-9a-f]{40}$/.test(handoff.commit)) {
+    fail(`${label} handoff commit must be a full lowercase commit SHA`);
+  }
+  if (!timestamp(handoff.committedAt)) fail(`${label} handoff commit date is missing or invalid`);
+  if (Date.parse(handoff.committedAt) > Date.parse(candidate.mergedAt)) {
+    fail(`${label} names a handoff committed after the PR merged`);
+  }
+}
+
+// `closedByPullRequest` is the pull request the source records as having caused the issue's current
+// closure, or null when the issue is open or no pull request is recorded as its closer. A link that
+// a pull request only may close an issue is not closure evidence.
+function validateIssues(issues) {
+  if (!isObject(issues) || issues.complete !== true) fail('issue collection is incomplete');
+  if (!nonnegativeInteger(issues.reportedCount) || !Array.isArray(issues.items)) {
+    fail('issue count metadata is malformed');
+  }
+  if (issues.reportedCount !== issues.items.length) {
+    fail(`issue count mismatch: reported ${issues.reportedCount}, received ${issues.items.length}`);
+  }
+  const byNumber = new Map();
+  issues.items.forEach((issue, index) => {
+    if (!isObject(issue) || !positiveInteger(issue.number)) fail(`issue ${index + 1} number must be a positive integer`);
+    if (byNumber.has(issue.number)) fail(`duplicate issue #${issue.number}`);
+    if (!timestamp(issue.createdAt)) fail(`issue #${issue.number} opening timestamp is missing or invalid`);
+    if (issue.closedAt !== null && !timestamp(issue.closedAt)) {
+      fail(`issue #${issue.number} closing timestamp must be valid or null`);
+    }
+    if (issue.closedAt !== null && Date.parse(issue.closedAt) < Date.parse(issue.createdAt)) {
+      fail(`issue #${issue.number} closed before it was opened`);
+    }
+    if (issue.closedByPullRequest !== null && !positiveInteger(issue.closedByPullRequest)) {
+      fail(`issue #${issue.number} closing pull request must be a positive PR number or null`);
+    }
+    if (issue.closedByPullRequest !== null && issue.closedAt === null) {
+      fail(`issue #${issue.number} names a closing pull request but is not closed`);
+    }
+    byNumber.set(issue.number, issue);
+  });
+  return byNumber;
+}
+
 function validateCandidate(candidate, index, prNumbers) {
   const label = `candidate PR ${index + 1}`;
   if (!isObject(candidate)) fail(`${label} is missing`);
@@ -122,9 +170,10 @@ function validateCandidate(candidate, index, prNumbers) {
   reviews.items.forEach((review, reviewIndex) => {
     validateReview(review, candidate.number, reviewIndex, reviewIds);
   });
+  validateHandoff(candidate.handoff, candidate);
 }
 
-/** Validate and return a Retrospective Evidence v1 value. */
+/** Validate and return a Retrospective Evidence v2 value. */
 export function validateEvidence(evidence) {
   if (!isObject(evidence)) fail('root must be an object');
   if (evidence.schemaVersion !== EVIDENCE_SCHEMA_VERSION) {
@@ -167,6 +216,15 @@ export function validateEvidence(evidence) {
   if (!through) fail(`through PR #${requested.throughPr} is missing from candidate evidence`);
   if (through.mergedAt !== endpoints.through.mergedAt || through.baseRefName !== endpoints.through.baseRefName) {
     fail(`through PR #${requested.throughPr} candidate facts disagree with its endpoint facts`);
+  }
+
+  const issues = validateIssues(evidence.issues);
+  const candidatesByNumber = new Map(candidates.items.map((candidate) => [candidate.number, candidate]));
+  for (const issue of issues.values()) {
+    const closingCandidate = candidatesByNumber.get(issue.closedByPullRequest);
+    if (closingCandidate && Date.parse(issue.createdAt) > Date.parse(closingCandidate.mergedAt)) {
+      fail(`issue #${issue.number} was opened after its closing PR #${closingCandidate.number} merged`);
+    }
   }
   return evidence;
 }

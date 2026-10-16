@@ -40,7 +40,13 @@ Branch from live `main` with a descriptive name, one branch per pull request. A 
 
 ## Pull request and CI
 
-Use the repository pull-request template for stable change intent. Name the input: for a research handoff, the research question, the slice, and the handoff's path, exact commit and commit date; for an issue, `Closes #<n>`. The exact handoff commit may appear as the identity of that immutable artifact.
+Use the repository pull-request template for stable change intent. Name the input: for an issue, `Closes #<n>`; for a research handoff, the research question and the slice, plus this standalone line giving the handoff's path, exact commit and that commit's ISO 8601 committer date (`git log -1 --format=%cI <commit>`):
+
+```text
+Implementation handoff: <path> at <full commit SHA>, committed <commit date>
+```
+
+The exact handoff commit may appear as the identity of that immutable artifact. The delivery-process retrospective reads this line to measure [research-to-delivery lead time](../continuous-improvement.md#research-to-delivery-lead-time), and its acquisition fails closed when the line is malformed, repeated or does not match what GitHub records.
 
 Converge exact-head `CI / gate` as `AGENTS.md` [Implementation continuation](../../../AGENTS.md#implementation-continuation) requires, and continue the pull request with `..` after review. Never merge.
 

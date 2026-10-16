@@ -98,7 +98,7 @@ Run the formal retrospective in a coding-agent repository checkout using the rep
 Before interpretation:
 
 1. choose one exact main-target `throughPr` that bounds the run;
-2. acquire and save a complete Retrospective Evidence v1 bundle:
+2. acquire and save a complete Retrospective Evidence bundle:
 
    ```bash
    node infra/dev/delivery-retrospective-github.mjs \
@@ -114,11 +114,11 @@ Before interpretation:
      --json
    ```
 
-4. require acquisition, evidence-contract validation, and analysis to complete; then use the analyzer's exact PR window, merged-PR count, trusted-author CHANGES REQUIRED disposition count, review-checkpoint distribution, and structured-finding dataset without manually reconstructing or retyping alternative totals.
+4. require acquisition, evidence-contract validation, and analysis to complete; then use the analyzer's exact PR window, merged-PR count, trusted-author CHANGES REQUIRED disposition count, review-checkpoint distribution, structured-finding dataset, and research-to-delivery lead time without manually reconstructing or retyping alternative totals.
 
-The **supported PR/review Evidence v1 acquisition path** is `infra/dev/delivery-retrospective-github.mjs`, which fetches evidence through authenticated GitHub GraphQL and validates the complete Retrospective Evidence v1 bundle before writing it. The adapter proves merged `main` baseline/through endpoints, complete candidate search pagination, exact merge-time window membership, and complete submitted-review payloads preserving GitHub-provided author association and reviewed-head fields. It fails closed on GitHub search limits, truncated review connections, or unverifiable evidence. Do not replace it with manual issue/PR enumeration, connector-only acquisition outside the repository scripts, inferred review associations, or hand-built Evidence v1 JSON.
+The **supported Retrospective Evidence acquisition path** is `infra/dev/delivery-retrospective-github.mjs`, which fetches evidence through authenticated GitHub GraphQL and validates the complete Retrospective Evidence bundle before writing it. The adapter proves merged `main` baseline/through endpoints, complete candidate search pagination, exact merge-time window membership, complete submitted-review payloads preserving GitHub-provided author association and reviewed-head fields, each named handoff's commit, file and commit date as GitHub records them, and the issues open during the window, each with the pull request GitHub records as its closer, taken from one complete listing of the repository's issues regardless of state, so an issue that closes or reopens during acquisition is not lost. It fails closed on GitHub search limits, truncated review connections, a malformed, repeated or unconfirmed handoff line, an issue listing whose size changes during pagination, or unverifiable evidence. Do not replace it with manual issue/PR enumeration, connector-only acquisition outside the repository scripts, inferred review associations, or hand-built evidence JSON.
 
-The **evidence contract remains source-neutral** in `infra/dev/delivery-retrospective-evidence.mjs`, and the analyzer in `infra/dev/delivery-retrospective.mjs` remains pure and source-independent. This does not authorize an alternative acquisition path: any new adapter must be introduced by a separately reviewed repository change that preserves the same completeness, provenance, and validation guarantees. The existing local GraphQL adapter is the only supported PR/review Evidence v1 acquisition entrypoint; research branch inventory is a separate supporting evidence pass.
+The **evidence contract remains source-neutral** in `infra/dev/delivery-retrospective-evidence.mjs`, and the analyzer in `infra/dev/delivery-retrospective.mjs` remains pure and source-independent. This does not authorize an alternative acquisition path: any new adapter must be introduced by a separately reviewed repository change that preserves the same completeness, provenance, and validation guarantees. The existing local GraphQL adapter is the only supported Retrospective Evidence acquisition entrypoint; research branch inventory is a separate supporting evidence pass.
 
 The adapter fails closed when GitHub search/review retrieval cannot prove completeness. The analyzer fails closed on unsupported or internally incomplete evidence. If either fails, the retrospective is `INCOMPLETE`; fix the retrieval/tooling problem rather than estimating the sample. Structurally complete evidence can still contain malformed or noncanonical historical reviewer findings. In that case the analyzer preserves the core window/review metrics, marks finding analytics incomplete, and reports the specific coverage diagnostics; do not treat any incomplete distribution as a complete sample.
 
@@ -133,7 +133,7 @@ Do not optimize for finding count. Healthy adversarial review findings are not w
 
 ### Research delivery and temporary-evidence value
 
-Every formal retrospective includes a **research-delivery analysis** within the same review, not a separate practice, delivery ledger, or second canonical metric dataset. The pure analyzer still covers merged `main` PR metadata and submitted reviews, **not source diffs or historical branch content**. Research evidence therefore needs a separate, explicit branch pass. The retrospective's mechanically exact `(baselinePr, throughPr]` PR sample remains authoritative for delivery metrics; the branch pass is qualitative evidence, not another denominator.
+Every formal retrospective includes a **research-delivery analysis** within the same review, not a separate practice, delivery ledger, or second canonical metric dataset. The pure analyzer still covers merged `main` PR metadata, submitted reviews, and issue opening and closing times, **not source diffs or historical branch content**. Research evidence therefore needs a separate, explicit branch pass. The retrospective's mechanically exact `(baselinePr, throughPr]` PR sample remains authoritative for delivery metrics; the branch pass is qualitative evidence, not another denominator.
 
 **Inventory every relevant branch before selecting research cases.** Resolve the retrospective's associated `Continuous improvement checkpoint` issue, or the latest such issue created before this run if none was explicitly associated. Record its issue number and exact `created_at` as the **branch-inventory lower bound**; this is intentionally distinct from the retrospective PR baseline. Run the repository's authenticated helper:
 
@@ -155,16 +155,17 @@ Research evidence requires **no special retention request, branch label, or hold
 
 This **full branch inventory and deletion-candidate table lives only in chat**, never in the dated Git retrospective report, checkpoint comment, or maintained research register. The Git report keeps concise research-delivery findings and action ownership without copying branch bookkeeping. The associated checkpoint receives the normal summary/link, not the branch table. Branch deletion requires a separate explicit user request under `AGENTS.md`; the retrospective only supplies advisory candidates. The research operating model continues to own knowledge-transfer requirements, not a branch-cleanup step.
 
-Research-to-delivery elapsed-time or issue-aging statistics become canonical only through the source-neutral evidence/analyzer contract once those measures are implemented and validated. Do **not** hand-calculate and label them canonical, equate longer investigation with waste, use finding counts as research-quality scores, or silently classify unobservable cases as successes. Report clearly which observations are direct artifacts, delivery history, interpretation, or unavailable evidence.
+Research-to-delivery elapsed-time and issue-aging statistics are canonical only as the analyzer computes them under [Research-to-delivery lead time](#research-to-delivery-lead-time). Do **not** hand-calculate and label them canonical, equate longer investigation with waste, use finding counts as research-quality scores, or silently classify unobservable cases as successes. Report clearly which observations are direct artifacts, delivery history, interpretation, or unavailable evidence.
 
 ### Research-to-delivery lead time
 
-Every retrospective also reports how long decided work waits before it lands:
+Every retrospective also reports how long decided work waits before it lands. The analyzer computes it over the exact PR window as `researchToDeliveryLeadTime`, listing each pull request or issue used with its elapsed days, plus the count and median of each measure:
 
-- for each implementation pull request merged in the window that implements a research [implementation handoff](researching.md#implementation-handoff), the time from the handoff's commit date to the merge;
-- for each issue closed in the window by a merged pull request, the time from the issue's opening to that merge, and for each issue still open at the end of the window, its age.
+- **handoff to merge** — for each implementation pull request merged in the window that implements a research [implementation handoff](researching.md#implementation-handoff), the time from the handoff's commit date to the merge;
+- **issue opening to merge** — for each issue closed in the window by a merged pull request, the time from the issue's opening to that pull request's merge;
+- **open issue age** — for each issue still open at the end of the window, its age at the through PR's merge. An issue a window pull request closes is measured as closed, not open, even when GitHub records the close seconds after the window ends.
 
-Each implementation pull request names the handoff it implements, with its commit and commit date, or the issue it closes. Until the analyzer computes these values, report them as noncanonical, list the pull requests and issues used, and follow the research-delivery analysis above for how to present them. They are measures to compare between retrospectives, not targets or thresholds.
+Each implementation pull request names its input: the issue it closes, or the handoff it implements on the standalone `Implementation handoff:` line the [Implementer](agent-roles/implementer.md#pull-request-and-ci) defines. Acquisition confirms each named handoff's commit, file and commit date against GitHub. An issue counts as closed by a pull request only when GitHub records that pull request as the closer of the issue's current closure; a link saying a pull request may close an issue is not closure. An issue closed in the window any other way appears in neither measure. Whether an issue was open at the end of the window comes from its current opening and closing times, not its close and reopen history. These are measures to compare between retrospectives, not targets or thresholds.
 
 ### Action ownership
 

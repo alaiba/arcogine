@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-/** GitHub GraphQL acquisition adapter for Retrospective Evidence v1. */
+/** GitHub GraphQL acquisition adapter for Retrospective Evidence v2. */
 
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { validateEvidence } from './delivery-retrospective-evidence.mjs';
+import { EVIDENCE_SCHEMA_VERSION, validateEvidence } from './delivery-retrospective-evidence.mjs';
 
 const DEFAULT_REPO = 'alaiba/arcogine';
 const STATE_PATH = fileURLToPath(
@@ -14,6 +14,9 @@ const STATE_PATH = fileURLToPath(
 );
 const SEARCH_LIMIT = 1000;
 const REVIEW_PAGE_SIZE = 100;
+const HANDOFF_LABEL = /^\s*Implementation handoff:/;
+const HANDOFF_LINE =
+  /^\s*Implementation handoff:\s+`?([^\s`]+)`?\s+at\s+`?([0-9a-fA-F]{40})`?,\s+committed\s+`?(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))`?\.?\s*$/;
 
 function usage() {
   return `delivery-retrospective-github -- acquire source-neutral retrospective evidence
@@ -31,8 +34,10 @@ OPTIONS
 AUTH
   Uses GH_TOKEN or GITHUB_TOKEN. Otherwise runs \`gh auth token\` once.
 
-The adapter fails closed above GitHub's ${SEARCH_LIMIT}-result search bound and when a
-candidate PR has more than ${REVIEW_PAGE_SIZE} submitted reviews.
+The adapter fails closed above GitHub's ${SEARCH_LIMIT}-result search bound, when a
+candidate PR has more than ${REVIEW_PAGE_SIZE} submitted reviews, when the issue listing
+changes size during pagination, and when a PR's "Implementation handoff:" line is malformed,
+repeated, or names a commit, path, or commit date that GitHub does not confirm.
 `;
 }
 
@@ -106,11 +111,11 @@ query($query:String!, $cursor:String) {
   }
 }`;
 
-const REVIEW_QUERY = `
+const PULL_REQUEST_QUERY = `
 query($owner:String!, $name:String!, $number:Int!) {
   repository(owner:$owner, name:$name) {
     pullRequest(number:$number) {
-      number merged mergedAt baseRefName
+      number merged mergedAt baseRefName body
       reviews(first:100) {
         totalCount
         pageInfo { hasNextPage endCursor }
@@ -120,54 +125,89 @@ query($owner:String!, $name:String!, $number:Int!) {
   }
 }`;
 
-export async function collectSearchPages(fetchPage) {
+const HANDOFF_QUERY = `
+query($owner:String!, $name:String!, $oid:GitObjectID!, $expression:String!) {
+  repository(owner:$owner, name:$name) {
+    commit: object(oid:$oid) { ... on Commit { oid committedDate } }
+    file: object(expression:$expression) { ... on Blob { oid } }
+  }
+}`;
+
+// The whole issue listing in creation order, without a state filter: an issue that closes or reopens
+// during acquisition still appears exactly once, which separate open and closed searches cannot prove.
+const ISSUE_LISTING_QUERY = `
+query($owner:String!, $name:String!, $cursor:String) {
+  repository(owner:$owner, name:$name) {
+    issues(first:100, after:$cursor, orderBy:{field:CREATED_AT, direction:ASC}) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        number createdAt closedAt
+        timelineItems(itemTypes:[CLOSED_EVENT], last:1) {
+          nodes { ... on ClosedEvent { closer { __typename ... on PullRequest { number repository { nameWithOwner } } } } }
+        }
+      }
+    }
+  }
+}`;
+
+async function collectPages(fetchPage, { source, subject, countField, limit = Number.POSITIVE_INFINITY }) {
   const nodes = [];
   const seenCursors = new Set();
   let cursor = null;
-  let issueCount = null;
+  let count = null;
   do {
-    const search = await fetchPage(cursor);
+    const page = await fetchPage(cursor);
     if (
-      !search ||
-      !Number.isInteger(search.issueCount) ||
-      !search.pageInfo ||
-      typeof search.pageInfo.hasNextPage !== 'boolean' ||
-      !Array.isArray(search.nodes)
+      !page ||
+      !Number.isInteger(page[countField]) ||
+      !page.pageInfo ||
+      typeof page.pageInfo.hasNextPage !== 'boolean' ||
+      !Array.isArray(page.nodes)
     ) {
-      throw new Error('retrospective search returned malformed pagination metadata');
+      throw new Error(`retrospective ${source} returned malformed pagination metadata`);
     }
-    if (issueCount === null) {
-      issueCount = search.issueCount;
-      if (issueCount > SEARCH_LIMIT) {
+    if (count === null) {
+      count = page[countField];
+      if (count > limit) {
         throw new Error(
-          `retrospective search matched ${issueCount} PRs; GitHub search cannot prove completeness above ${SEARCH_LIMIT}`,
+          `retrospective ${source} matched ${count} ${subject} results; GitHub search cannot prove completeness above ${limit}`,
         );
       }
-    } else if (search.issueCount !== issueCount) {
-      throw new Error(`retrospective search result count changed during pagination (${issueCount} -> ${search.issueCount})`);
+    } else if (page[countField] !== count) {
+      throw new Error(`retrospective ${source} result count changed during pagination (${count} -> ${page[countField]})`);
     }
-    if (search.nodes.some((node) => !node || !Number.isInteger(node.number))) {
-      throw new Error('retrospective search returned a missing or malformed pull request node');
+    if (page.nodes.some((node) => !node || !Number.isInteger(node.number))) {
+      throw new Error(`retrospective ${source} returned a missing or malformed ${subject} node`);
     }
-    nodes.push(...search.nodes);
-    if (search.pageInfo.hasNextPage && !search.pageInfo.endCursor) {
-      throw new Error('retrospective search says another page exists but returned no cursor');
+    nodes.push(...page.nodes);
+    if (page.pageInfo.hasNextPage && !page.pageInfo.endCursor) {
+      throw new Error(`retrospective ${source} says another page exists but returned no cursor`);
     }
-    const nextCursor = search.pageInfo.hasNextPage ? search.pageInfo.endCursor : null;
-    if (nextCursor && seenCursors.has(nextCursor)) throw new Error('retrospective search repeated a pagination cursor');
+    const nextCursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+    if (nextCursor && seenCursors.has(nextCursor)) throw new Error(`retrospective ${source} repeated a pagination cursor`);
     if (nextCursor) seenCursors.add(nextCursor);
     cursor = nextCursor;
   } while (cursor);
 
-  if (nodes.length !== issueCount) {
-    throw new Error(`retrospective search reported ${issueCount} results but fetched ${nodes.length}; refusing partial data`);
+  if (nodes.length !== count) {
+    throw new Error(`retrospective ${source} reported ${count} results but fetched ${nodes.length}; refusing partial data`);
   }
   const numbers = new Set();
   for (const node of nodes) {
-    if (numbers.has(node.number)) throw new Error(`duplicate PR #${node.number} in retrospective search pages`);
+    if (numbers.has(node.number)) throw new Error(`duplicate ${subject} #${node.number} in retrospective ${source} pages`);
     numbers.add(node.number);
   }
   return nodes;
+}
+
+export function collectSearchPages(fetchPage) {
+  return collectPages(fetchPage, { source: 'search', subject: 'PR', countField: 'issueCount', limit: SEARCH_LIMIT });
+}
+
+/** Page through the repository's complete issue listing; it has no search result cap. */
+export function collectIssuePages(fetchPage) {
+  return collectPages(fetchPage, { source: 'issue listing', subject: 'issue', countField: 'totalCount' });
 }
 
 export function serializeReviewConnection(pullRequest) {
@@ -197,6 +237,93 @@ export function serializeReviewConnection(pullRequest) {
       reviewedHead: review.commit?.oid ?? null,
     })),
   };
+}
+
+function unquotedLines(body) {
+  const lines = [];
+  let fence = null;
+  for (const line of String(body ?? '').split(/\r?\n/)) {
+    if (fence) {
+      const close = line.match(/^\s*(`{3,}|~{3,})\s*$/);
+      if (close && close[1][0] === fence[0] && close[1].length >= fence.length) fence = null;
+      continue;
+    }
+    const open = line.match(/^\s*(`{3,}|~{3,})/);
+    if (open) {
+      fence = open[1];
+      continue;
+    }
+    if (!/^\s*>/.test(line)) lines.push(line);
+  }
+  return lines;
+}
+
+/**
+ * Read the implementation handoff a PR body names on its standalone
+ * `Implementation handoff: <path> at <commit>, committed <commit date>` line, or null.
+ * Fenced and quoted text is ignored; a malformed or repeated line fails closed.
+ */
+export function parseHandoffReference(body, prNumber) {
+  const references = [];
+  for (const line of unquotedLines(body)) {
+    if (!HANDOFF_LABEL.test(line)) continue;
+    const match = line.match(HANDOFF_LINE);
+    if (!match) {
+      throw new Error(
+        `PR #${prNumber} has a malformed "Implementation handoff:" line; expected ` +
+          '"Implementation handoff: <path> at <full commit SHA>, committed <ISO 8601 commit date>"',
+      );
+    }
+    references.push({ path: match[1], commit: match[2].toLowerCase(), committedAt: match[3] });
+  }
+  if (references.length > 1) {
+    throw new Error(`PR #${prNumber} names ${references.length} implementation handoffs; a pull request implements one`);
+  }
+  return references[0] ?? null;
+}
+
+/** Confirm a named handoff against GitHub and return its evidence facts. */
+export async function resolveHandoff({ graphql, token, owner, name, prNumber, named }) {
+  const data = await graphql(token, HANDOFF_QUERY, {
+    owner,
+    name,
+    oid: named.commit,
+    expression: `${named.commit}:${named.path}`,
+  });
+  const committedDate = data?.repository?.commit?.committedDate;
+  if (typeof committedDate !== 'string' || !Number.isFinite(Date.parse(committedDate))) {
+    throw new Error(`PR #${prNumber} names handoff commit ${named.commit}, which GitHub cannot resolve`);
+  }
+  if (!data.repository.file?.oid) {
+    throw new Error(`PR #${prNumber} names handoff ${named.path}, which is not a file at commit ${named.commit}`);
+  }
+  if (Date.parse(committedDate) !== Date.parse(named.committedAt)) {
+    throw new Error(
+      `PR #${prNumber} names handoff commit date ${named.committedAt}, but GitHub records ${committedDate}`,
+    );
+  }
+  return { path: named.path, commit: named.commit, committedAt: committedDate };
+}
+
+/**
+ * Serialize an issue's opening and closing times and the pull request in `repo` that GitHub records
+ * as the closer of its current closure. A pull request that only links the issue as one it may close
+ * is not a closer; an open issue, or one closed some other way, has none.
+ */
+export function serializeIssue(node, repo) {
+  const events = node?.timelineItems?.nodes;
+  if (!Number.isInteger(node?.number) || !Array.isArray(events)) {
+    throw new Error(`issue listing returned malformed facts for issue #${node?.number ?? '?'}`);
+  }
+  const closedAt = node.closedAt ?? null;
+  const closer = closedAt === null ? null : events[0]?.closer;
+  const closedByPullRequest =
+    closer?.__typename === 'PullRequest' &&
+    Number.isInteger(closer.number) &&
+    String(closer.repository?.nameWithOwner).toLowerCase() === repo.toLowerCase()
+      ? closer.number
+      : null;
+  return { number: node.number, createdAt: node.createdAt, closedAt, closedByPullRequest };
 }
 
 function utcDay(value) {
@@ -261,8 +388,8 @@ export async function acquireEvidence({
   const items = [];
   const exactCandidates = candidates.filter((candidate) => inExactWindow(candidate, baseline, through));
   for (const candidate of exactCandidates) {
-    const reviewData = await graphql(token, REVIEW_QUERY, { owner, name, number: candidate.number });
-    const pullRequest = reviewData?.repository?.pullRequest;
+    const pullRequestData = await graphql(token, PULL_REQUEST_QUERY, { owner, name, number: candidate.number });
+    const pullRequest = pullRequestData?.repository?.pullRequest;
     if (!pullRequest || pullRequest.number !== candidate.number) {
       throw new Error(`PR #${candidate.number} disappeared or changed identity during review retrieval`);
     }
@@ -271,26 +398,48 @@ export async function acquireEvidence({
         throw new Error(`PR #${candidate.number} facts changed during acquisition (${field})`);
       }
     }
+    const named = parseHandoffReference(pullRequest.body, candidate.number);
+    const handoff = named
+      ? await resolveHandoff({ graphql, token, owner, name, prNumber: candidate.number, named })
+      : null;
     items.push({
       number: candidate.number,
       merged: candidate.merged,
       mergedAt: candidate.mergedAt,
       baseRefName: candidate.baseRefName,
       reviews: serializeReviewConnection(pullRequest),
+      handoff,
     });
   }
 
+  // Issues open at some point in the window, each with its recorded closer, from one listing of every
+  // issue regardless of state.
+  const start = Date.parse(baseline.mergedAt);
+  const end = Date.parse(through.mergedAt);
+  const listed = await collectIssuePages(async (cursor) => {
+    const data = await graphql(token, ISSUE_LISTING_QUERY, { owner, name, cursor });
+    return data?.repository?.issues;
+  });
+  const issueItems = listed
+    .map((node) => serializeIssue(node, repo))
+    .filter((issue) =>
+      Date.parse(issue.createdAt) <= end && (issue.closedAt === null || Date.parse(issue.closedAt) > start),
+    )
+    .sort((left, right) => left.number - right.number);
+
   const evidence = {
-    schemaVersion: 1,
+    schemaVersion: EVIDENCE_SCHEMA_VERSION,
     repository: repo,
     requested: { baselinePr, throughPr },
     endpoints: { baseline, through },
     candidates: { complete: true, reportedCount: items.length, items },
+    issues: { complete: true, reportedCount: issueItems.length, items: issueItems },
     source: {
       adapter: 'github-graphql',
       acquiredAt: now(),
       candidateSearch: { query: searchText, reportedCount: candidates.length },
       reviewConnectionPageSize: REVIEW_PAGE_SIZE,
+      issueListing: { reportedCount: listed.length },
     },
   };
   return validateEvidence(evidence);

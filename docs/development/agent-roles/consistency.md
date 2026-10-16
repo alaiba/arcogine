@@ -47,7 +47,7 @@ Consistency issues preserve finding identity/lifecycle continuity; they are not 
 
 Classify each material claim using this complete generic review taxonomy: `CURRENT`, `NORMATIVE_DECISION`, `PROPOSED`, `PLANNED`, `IMPLEMENTED_STATUS`, `PARTIAL`, `DEFERRED`, `BLOCKED`, `NON_GOAL`, `HISTORICAL`, or `COMPATIBILITY_DEBT`. Domain-owned lifecycles remain their own vocabulary. If this taxonomy proves insufficient, change this contract explicitly rather than inventing another generic state during a run.
 
-Proposed/planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is. Canonical architecture and specifications hold Arcogine's current durable constraints; a reviewed architectural change updates them together with the authorities that depend on them, and Git history preserves what was replaced.
+In research, product direction and other non-architecture artifacts, proposed or planned behavior differing from current source is not drift by itself; a current-state artifact presenting planned behavior as implemented is. Architecture and specifications are stricter: they describe only what the code implements, so any statement there of behavior the code does not implement is drift, however it is labeled ([research operating model](../researching.md#10-research-and-reconciliation-stay-separate)). Canonical architecture and specifications hold Arcogine's current durable constraints; a reviewed architectural change updates them together with the authorities that depend on them, and Git history preserves what was replaced.
 
 Authority placement is itself part of consistency. A maintained artifact should own only facts appropriate to its role:
 

@@ -345,7 +345,7 @@ Other authoritative domain models should participate without being forced into o
 
 ## 14. What this architecture does not claim
 
-This proposal does not mean that Arcogine currently:
+This architecture does not mean that Arcogine currently:
 
 - implements SOC 2, ISO 27001, ISO 9001, GDPR, or another compliance framework;
 - provides auditor workflows or certification services;

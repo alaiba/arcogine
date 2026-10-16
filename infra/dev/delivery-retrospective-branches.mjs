@@ -2,7 +2,7 @@
 /**
  * Retrospective branch inventory over the retrospective's own window: the
  * baseline PR merge (exclusive) through the through PR merge (inclusive), read
- * from a validated Retrospective Evidence v1 bundle. This is evidence
+ * from a validated Retrospective Evidence bundle. This is evidence
  * discovery, not a cleanup decision or an addition to the source-neutral
  * PR/review metrics dataset.
  */
@@ -47,7 +47,7 @@ export function readBaselinePr(path = STATE_PATH) {
 }
 
 /**
- * Resolve the single retrospective window from a validated Evidence v1 bundle.
+ * Resolve the single retrospective window from a validated Retrospective Evidence bundle.
  * The window never comes from a checkpoint issue or from inventory scan time.
  */
 export function resolveWindow(evidence, { repo, baselinePr }) {
@@ -275,7 +275,7 @@ function main() {
     console.log(USAGE);
     return;
   }
-  if (!values.evidence) throw new Error('Provide --evidence <Retrospective Evidence v1 bundle>');
+  if (!values.evidence) throw new Error('Provide --evidence <Retrospective Evidence bundle>');
   let baselinePr;
   if (values['baseline-pr'] === undefined) baselinePr = readBaselinePr();
   else if (/^[1-9][0-9]*$/.test(values['baseline-pr'])) baselinePr = Number(values['baseline-pr']);

@@ -9,6 +9,7 @@ import {
   buildInventory, collect, ghGet, readBaselinePr, resolveWindow, windowRelation,
 } from './delivery-retrospective-branches.mjs';
 import { analyzeEvidence } from './delivery-retrospective.mjs';
+import { EVIDENCE_SCHEMA_VERSION } from './delivery-retrospective-evidence.mjs';
 
 const repo = 'alaiba/arcogine';
 const SINCE = '2026-09-21T10:00:00Z';
@@ -20,9 +21,10 @@ const script = fileURLToPath(new URL('./delivery-retrospective-branches.mjs', im
 const candidate = (number, mergedAt) => ({
   number, merged: true, mergedAt, baseRefName: 'main',
   reviews: { complete: true, reportedCount: 0, items: [] },
+  handoff: null,
 });
 const evidence = (overrides = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: EVIDENCE_SCHEMA_VERSION,
   repository: repo,
   requested: { baselinePr: 368, throughPr: 500 },
   endpoints: {
@@ -30,6 +32,7 @@ const evidence = (overrides = {}) => ({
     through: { number: 500, merged: true, mergedAt: UNTIL, baseRefName: 'main' },
   },
   candidates: { complete: true, reportedCount: 2, items: [candidate(480, IN_WINDOW), candidate(500, UNTIL)] },
+  issues: { complete: true, reportedCount: 0, items: [] },
   source: { adapter: 'github-graphql', acquiredAt: '2026-10-16T08:59:00Z' },
   ...overrides,
 });
@@ -194,7 +197,8 @@ test('invalid, mismatched, or incomplete evidence and repository facts fail clos
   const through = evidence().endpoints.through;
   const failures = [
     [{ evidence: undefined }, /root must be an object/],
-    [{ evidence: evidence({ schemaVersion: 2 }) }, /unsupported schema version/],
+    [{ evidence: evidence({ schemaVersion: EVIDENCE_SCHEMA_VERSION + 1 }) }, /unsupported schema version/],
+    [{ evidence: evidence({ issues: { complete: false, reportedCount: 0, items: [] } }) }, /issue collection is incomplete/],
     [{ evidence: evidence({ repository: 'other/repo' }) }, /does not match alaiba\/arcogine/],
     [{ baselinePr: 367 }, /expected retrospective baseline PR #367/],
     [{ baselinePr: undefined }, /positive integer/],

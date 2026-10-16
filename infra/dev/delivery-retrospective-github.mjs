@@ -14,7 +14,6 @@ const STATE_PATH = fileURLToPath(
 );
 const SEARCH_LIMIT = 1000;
 const REVIEW_PAGE_SIZE = 100;
-const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 const HANDOFF_LABEL = /^\s*Implementation handoff:/;
 const HANDOFF_LINE =
   /^\s*Implementation handoff:\s+`?([^\s`]+)`?\s+at\s+`?([0-9a-fA-F]{40})`?,\s+committed\s+`?(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))`?\.?\s*$/;
@@ -36,9 +35,9 @@ AUTH
   Uses GH_TOKEN or GITHUB_TOKEN. Otherwise runs \`gh auth token\` once.
 
 The adapter fails closed above GitHub's ${SEARCH_LIMIT}-result search bound, when a
-candidate PR has more than ${REVIEW_PAGE_SIZE} submitted reviews, and when a PR's
-"Implementation handoff:" line is malformed, repeated, or names a commit, path, or commit
-date that GitHub does not confirm.
+candidate PR has more than ${REVIEW_PAGE_SIZE} submitted reviews, when the issue listing
+changes size during pagination, and when a PR's "Implementation handoff:" line is malformed,
+repeated, or names a commit, path, or commit date that GitHub does not confirm.
 `;
 }
 
@@ -134,13 +133,15 @@ query($owner:String!, $name:String!, $oid:GitObjectID!, $expression:String!) {
   }
 }`;
 
-const ISSUE_SEARCH_QUERY = `
-query($query:String!, $cursor:String) {
-  search(type:ISSUE, query:$query, first:100, after:$cursor) {
-    issueCount
-    pageInfo { hasNextPage endCursor }
-    nodes {
-      ... on Issue {
+// The whole issue listing in creation order, without a state filter: an issue that closes or reopens
+// during acquisition still appears exactly once, which separate open and closed searches cannot prove.
+const ISSUE_LISTING_QUERY = `
+query($owner:String!, $name:String!, $cursor:String) {
+  repository(owner:$owner, name:$name) {
+    issues(first:100, after:$cursor, orderBy:{field:CREATED_AT, direction:ASC}) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes {
         number createdAt closedAt
         timelineItems(itemTypes:[CLOSED_EVENT], last:1) {
           nodes { ... on ClosedEvent { closer { __typename ... on PullRequest { number repository { nameWithOwner } } } } }
@@ -150,54 +151,63 @@ query($query:String!, $cursor:String) {
   }
 }`;
 
-export async function collectSearchPages(fetchPage, subject = 'pull request') {
+async function collectPages(fetchPage, { source, subject, countField, limit = Number.POSITIVE_INFINITY }) {
   const nodes = [];
   const seenCursors = new Set();
   let cursor = null;
-  let issueCount = null;
+  let count = null;
   do {
-    const search = await fetchPage(cursor);
+    const page = await fetchPage(cursor);
     if (
-      !search ||
-      !Number.isInteger(search.issueCount) ||
-      !search.pageInfo ||
-      typeof search.pageInfo.hasNextPage !== 'boolean' ||
-      !Array.isArray(search.nodes)
+      !page ||
+      !Number.isInteger(page[countField]) ||
+      !page.pageInfo ||
+      typeof page.pageInfo.hasNextPage !== 'boolean' ||
+      !Array.isArray(page.nodes)
     ) {
-      throw new Error('retrospective search returned malformed pagination metadata');
+      throw new Error(`retrospective ${source} returned malformed pagination metadata`);
     }
-    if (issueCount === null) {
-      issueCount = search.issueCount;
-      if (issueCount > SEARCH_LIMIT) {
+    if (count === null) {
+      count = page[countField];
+      if (count > limit) {
         throw new Error(
-          `retrospective search matched ${issueCount} ${subject} results; GitHub search cannot prove completeness above ${SEARCH_LIMIT}`,
+          `retrospective ${source} matched ${count} ${subject} results; GitHub search cannot prove completeness above ${limit}`,
         );
       }
-    } else if (search.issueCount !== issueCount) {
-      throw new Error(`retrospective search result count changed during pagination (${issueCount} -> ${search.issueCount})`);
+    } else if (page[countField] !== count) {
+      throw new Error(`retrospective ${source} result count changed during pagination (${count} -> ${page[countField]})`);
     }
-    if (search.nodes.some((node) => !node || !Number.isInteger(node.number))) {
-      throw new Error(`retrospective search returned a missing or malformed ${subject} node`);
+    if (page.nodes.some((node) => !node || !Number.isInteger(node.number))) {
+      throw new Error(`retrospective ${source} returned a missing or malformed ${subject} node`);
     }
-    nodes.push(...search.nodes);
-    if (search.pageInfo.hasNextPage && !search.pageInfo.endCursor) {
-      throw new Error('retrospective search says another page exists but returned no cursor');
+    nodes.push(...page.nodes);
+    if (page.pageInfo.hasNextPage && !page.pageInfo.endCursor) {
+      throw new Error(`retrospective ${source} says another page exists but returned no cursor`);
     }
-    const nextCursor = search.pageInfo.hasNextPage ? search.pageInfo.endCursor : null;
-    if (nextCursor && seenCursors.has(nextCursor)) throw new Error('retrospective search repeated a pagination cursor');
+    const nextCursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+    if (nextCursor && seenCursors.has(nextCursor)) throw new Error(`retrospective ${source} repeated a pagination cursor`);
     if (nextCursor) seenCursors.add(nextCursor);
     cursor = nextCursor;
   } while (cursor);
 
-  if (nodes.length !== issueCount) {
-    throw new Error(`retrospective search reported ${issueCount} results but fetched ${nodes.length}; refusing partial data`);
+  if (nodes.length !== count) {
+    throw new Error(`retrospective ${source} reported ${count} results but fetched ${nodes.length}; refusing partial data`);
   }
   const numbers = new Set();
   for (const node of nodes) {
-    if (numbers.has(node.number)) throw new Error(`duplicate ${subject} #${node.number} in retrospective search pages`);
+    if (numbers.has(node.number)) throw new Error(`duplicate ${subject} #${node.number} in retrospective ${source} pages`);
     numbers.add(node.number);
   }
   return nodes;
+}
+
+export function collectSearchPages(fetchPage) {
+  return collectPages(fetchPage, { source: 'search', subject: 'PR', countField: 'issueCount', limit: SEARCH_LIMIT });
+}
+
+/** Page through the repository's complete issue listing; it has no search result cap. */
+export function collectIssuePages(fetchPage) {
+  return collectPages(fetchPage, { source: 'issue listing', subject: 'issue', countField: 'totalCount' });
 }
 
 export function serializeReviewConnection(pullRequest) {
@@ -303,7 +313,7 @@ export async function resolveHandoff({ graphql, token, owner, name, prNumber, na
 export function serializeIssue(node, repo) {
   const events = node?.timelineItems?.nodes;
   if (!Number.isInteger(node?.number) || !Array.isArray(events)) {
-    throw new Error(`issue search returned malformed facts for issue #${node?.number ?? '?'}`);
+    throw new Error(`issue listing returned malformed facts for issue #${node?.number ?? '?'}`);
   }
   const closedAt = node.closedAt ?? null;
   const closer = closedAt === null ? null : events[0]?.closer;
@@ -316,23 +326,10 @@ export function serializeIssue(node, repo) {
   return { number: node.number, createdAt: node.createdAt, closedAt, closedByPullRequest };
 }
 
-function recordIssue(issues, issue) {
-  const prior = issues.get(issue.number);
-  if (
-    prior &&
-    (prior.createdAt !== issue.createdAt ||
-      prior.closedAt !== issue.closedAt ||
-      prior.closedByPullRequest !== issue.closedByPullRequest)
-  ) {
-    throw new Error(`issue #${issue.number} facts changed during acquisition`);
-  }
-  issues.set(issue.number, issue);
-}
-
-function utcDay(value, offsetDays = 0) {
+function utcDay(value) {
   const time = Date.parse(value);
   if (!Number.isFinite(time)) throw new Error(`invalid merge timestamp: ${value}`);
-  return new Date(time + offsetDays * DAY_MILLISECONDS).toISOString().slice(0, 10);
+  return new Date(time).toISOString().slice(0, 10);
 }
 
 function inExactWindow(candidate, baseline, through) {
@@ -415,31 +412,20 @@ export async function acquireEvidence({
     });
   }
 
-  // Issues open at some point in the window: those open now, then those closed since the window
-  // opened, each with its recorded closer. Day bounds are widened by one day around GitHub's date
-  // qualifiers and narrowed exactly afterwards.
+  // Issues open at some point in the window, each with its recorded closer, from one listing of every
+  // issue regardless of state.
   const start = Date.parse(baseline.mergedAt);
   const end = Date.parse(through.mergedAt);
-  const issueSearches = [
-    `repo:${repo} is:issue is:open created:<=${utcDay(through.mergedAt, 1)}`,
-    `repo:${repo} is:issue is:closed closed:>=${utcDay(baseline.mergedAt, -1)} created:<=${utcDay(through.mergedAt, 1)}`,
-  ];
-  const issues = new Map();
-  const issueSearchCounts = [];
-  for (const query of issueSearches) {
-    const found = await collectSearchPages(async (cursor) => {
-      const data = await graphql(token, ISSUE_SEARCH_QUERY, { query, cursor });
-      return data?.search;
-    }, 'issue');
-    issueSearchCounts.push(found.length);
-    for (const node of found) {
-      const issue = serializeIssue(node, repo);
-      if (Date.parse(issue.createdAt) > end) continue;
-      if (issue.closedAt !== null && Date.parse(issue.closedAt) <= start) continue;
-      recordIssue(issues, issue);
-    }
-  }
-  const issueItems = [...issues.values()].sort((left, right) => left.number - right.number);
+  const listed = await collectIssuePages(async (cursor) => {
+    const data = await graphql(token, ISSUE_LISTING_QUERY, { owner, name, cursor });
+    return data?.repository?.issues;
+  });
+  const issueItems = listed
+    .map((node) => serializeIssue(node, repo))
+    .filter((issue) =>
+      Date.parse(issue.createdAt) <= end && (issue.closedAt === null || Date.parse(issue.closedAt) > start),
+    )
+    .sort((left, right) => left.number - right.number);
 
   const evidence = {
     schemaVersion: EVIDENCE_SCHEMA_VERSION,
@@ -453,7 +439,7 @@ export async function acquireEvidence({
       acquiredAt: now(),
       candidateSearch: { query: searchText, reportedCount: candidates.length },
       reviewConnectionPageSize: REVIEW_PAGE_SIZE,
-      issueSearches: issueSearches.map((query, index) => ({ query, reportedCount: issueSearchCounts[index] })),
+      issueListing: { reportedCount: listed.length },
     },
   };
   return validateEvidence(evidence);

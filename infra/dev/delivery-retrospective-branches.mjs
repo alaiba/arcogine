@@ -12,6 +12,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { validateEvidence } from './delivery-retrospective-evidence.mjs';
+import { buildExactWindow } from './delivery-retrospective.mjs';
 
 const DEFAULT_REPO = 'alaiba/arcogine';
 const REPO_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -94,7 +95,9 @@ function validatePull(pr) {
   if (closed !== null && closed < created) throw new Error(label + ' closes before it was created');
   const merged = pr.merged_at === null ? null : parseDate(pr.merged_at, label + ' merge');
   if (merged !== null && pr.state !== 'closed') throw new Error(label + ' is merged but not closed');
-  return merged;
+  const baseRef = pr.base?.ref;
+  if (typeof baseRef !== 'string' || baseRef.trim() === '') throw new Error(label + ' target branch is missing');
+  return { merged, baseRef };
 }
 
 export function buildInventory({ repo, defaultBranch, evidence, baselinePr, branches, pulls, scannedAt }) {
@@ -109,7 +112,7 @@ export function buildInventory({ repo, defaultBranch, evidence, baselinePr, bran
     throw new Error('Inventory snapshot precedes the through PR merge');
   }
 
-  const owner = repo.split('/')[0], byName = new Map(), mergedByPr = new Map();
+  const owner = repo.split('/')[0], byName = new Map(), factsByPr = new Map();
   for (const branch of branches) {
     if (!branch?.name || !branch?.commit?.sha || byName.has(branch.name)) {
       throw new Error('Malformed or repeated live branch evidence');
@@ -130,16 +133,27 @@ export function buildInventory({ repo, defaultBranch, evidence, baselinePr, bran
   }
 
   for (const pr of pulls) {
-    const merged = validatePull(pr);
-    if (mergedByPr.has(pr.number)) throw new Error('Repeated pull request evidence for PR #' + pr.number);
-    mergedByPr.set(pr.number, merged);
+    const facts = validatePull(pr);
+    if (factsByPr.has(pr.number)) throw new Error('Repeated pull request evidence for PR #' + pr.number);
+    factsByPr.set(pr.number, facts);
   }
   // Every merged PR the evidence proves must appear identically in the
   // all-state listing; anything else means that listing is incomplete.
   for (const expected of [evidence.endpoints.baseline, evidence.endpoints.through, ...evidence.candidates.items]) {
-    if (mergedByPr.get(expected.number) !== Date.parse(expected.mergedAt)) {
+    const facts = factsByPr.get(expected.number);
+    if (facts?.merged !== Date.parse(expected.mergedAt) || facts.baseRef !== expected.baseRefName) {
       throw new Error('All-state PR metadata is incomplete or disagrees with retrospective evidence for PR #'
         + expected.number);
+    }
+  }
+  // The window's merged-main PR sample is the only delivery into main inside
+  // the window; a listed main merge the evidence lacks contradicts it.
+  const mainSample = new Set(buildExactWindow(
+    evidence.candidates.items, window.afterMergedAtExclusive, window.throughMergedAtInclusive,
+  ).map((record) => record.number));
+  for (const [number, { merged, baseRef }] of factsByPr) {
+    if (baseRef === 'main' && merged !== null && merged > since && merged <= until && !mainSample.has(number)) {
+      throw new Error('Retrospective evidence omits PR #' + number + ', which merged into main inside the window');
     }
   }
 
@@ -176,16 +190,18 @@ export function buildInventory({ repo, defaultBranch, evidence, baselinePr, bran
     if (!entry) continue;
     if (!entry.source.includes('historical-pr-head')) entry.source.push('historical-pr-head');
     if (relation === 'overlaps') entry.prOverlapsWindow = true;
-    const merged = mergedByPr.get(pr.number);
+    const { merged, baseRef } = factsByPr.get(pr.number);
     entry.linkedPrs.push({
       number: pr.number,
       title: pr.title ?? '',
       state: pr.state,
+      baseRef,
       createdAt: pr.created_at,
       closedAt: pr.closed_at,
       mergedAt: pr.merged_at,
       windowRelation: relation,
       mergedInWindow: merged !== null && merged > since && merged <= until,
+      inMainPrSample: mainSample.has(pr.number),
       recordedHead: pr.head.sha ?? null,
       sourceRepoVerified,
       url: pr.html_url ?? 'https://github.com/' + repo + '/pull/' + pr.number,
@@ -213,6 +229,7 @@ export function buildInventory({ repo, defaultBranch, evidence, baselinePr, bran
       'A deleted branch with no PR cannot reliably be reconstructed from current refs and PR metadata.',
       'A PR lifecycle overlapping the window makes its head branch a candidate for inspection; it does not prove when the branch existed or that its commits and artifacts fall inside the window.',
       'A live branch with no window-overlapping PR may still carry in-window work; establish that from verifiable commit evidence, not from this inventory.',
+      'mergedInWindow records a merge into any target; only inMainPrSample establishes delivery into main inside the window.',
       'A branch name can have been reused; verify exact commits and independent custody before interpreting its history.',
       'Research classification, window relevance of individual artifacts, and branch retention are assessed by the retrospective agent, not this inventory.',
       'scannedAt records when refs were observed; it is not an analysis cutoff.',

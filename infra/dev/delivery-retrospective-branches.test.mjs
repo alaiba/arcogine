@@ -45,7 +45,8 @@ const pr = (number, ref, options = {}) => {
     state: open ? 'open' : 'closed',
     created_at: options.createdAt ?? '2026-09-30T09:00:00Z',
     closed_at: closedAt,
-    merged_at: open || options.merged === false ? null : closedAt,
+    merged_at: options.merged === true && !open ? closedAt : null,
+    base: { ref: options.base ?? 'main' },
     head: {
       ref,
       sha: options.headSha ?? 'f'.repeat(40),
@@ -56,10 +57,13 @@ const pr = (number, ref, options = {}) => {
 };
 // The merged PRs the evidence proves, as the all-state listing reports them.
 const windowPulls = () => [
-  pr(368, 'retro/baseline', { createdAt: '2026-09-20T09:00:00Z', closedAt: SINCE }),
-  pr(480, 'feature/in-window', { closedAt: IN_WINDOW }),
-  pr(500, 'docs/through', { createdAt: '2026-10-13T09:00:00Z', closedAt: UNTIL }),
+  pr(368, 'retro/baseline', { createdAt: '2026-09-20T09:00:00Z', closedAt: SINCE, merged: true }),
+  pr(480, 'feature/in-window', { closedAt: IN_WINDOW, merged: true }),
+  pr(500, 'docs/through', { createdAt: '2026-10-13T09:00:00Z', closedAt: UNTIL, merged: true }),
 ];
+const spanning = () => pr(401, 'research/spanning', {
+  createdAt: '2026-09-01T00:00:00Z', closedAt: '2026-10-20T00:00:00Z', merged: true,
+});
 const inventory = (overrides = {}) => buildInventory({
   repo, defaultBranch: 'main', evidence: evidence(), baselinePr: 368, scannedAt: SCANNED,
   branches: [branch('main', 'c'.repeat(40), true)], pulls: windowPulls(), ...overrides,
@@ -79,13 +83,33 @@ test('the evidence bundle merge timestamps are the branch window, shared with th
   const through = named(data, 'docs/through').linkedPrs[0];
   assert.equal(through.windowRelation, 'overlaps');
   assert.equal(through.mergedInWindow, true);
+  assert.equal(through.inMainPrSample, true);
+});
+
+test('only the merged-main PR sample counts as delivery; other in-window merges keep their target', () => {
+  const data = inventory({
+    pulls: [
+      ...windowPulls(),
+      pr(470, 'research/topic', {
+        createdAt: '2026-09-01T00:00:00Z', closedAt: IN_WINDOW, merged: true, base: 'workspace/integration',
+      }),
+    ],
+  });
+  const facts = (name) => {
+    const { baseRef, mergedInWindow, inMainPrSample } = named(data, name).linkedPrs[0];
+    return { baseRef, mergedInWindow, inMainPrSample };
+  };
+  assert.deepEqual(facts('research/topic'), {
+    baseRef: 'workspace/integration', mergedInWindow: true, inMainPrSample: false,
+  });
+  assert.deepEqual(facts('feature/in-window'), { baseRef: 'main', mergedInWindow: true, inMainPrSample: true });
 });
 
 test('PR lifecycle overlap respects the exclusive lower and inclusive upper bounds', () => {
   const data = inventory({
     pulls: [
       ...windowPulls(),
-      pr(401, 'research/spanning', { createdAt: '2026-09-01T00:00:00Z', closedAt: '2026-10-20T00:00:00Z' }),
+      spanning(),
       pr(402, 'research/open-since-before', { createdAt: '2026-09-10T00:00:00Z', open: true }),
       pr(403, 'old/ends-at-baseline', { createdAt: '2026-09-15T00:00:00Z', closedAt: SINCE, merged: false }),
       pr(404, 'edge/created-at-through', { createdAt: UNTIL, open: true }),
@@ -179,6 +203,9 @@ test('invalid, mismatched, or incomplete evidence and repository facts fail clos
     [{ evidence: evidence({ candidates: { ...evidence().candidates, complete: false } }) }, /incomplete/],
     [{ pulls: windowPulls().filter((entry) => entry.number !== 480) }, /incomplete or disagrees .* PR #480/],
     [{ pulls: windowPulls().map((entry) => entry.number === 500 ? { ...entry, merged_at: SCANNED, closed_at: SCANNED } : entry) }, /PR #500/],
+    [{ pulls: windowPulls().map((entry) => entry.number === 480 ? { ...entry, base: { ref: 'develop' } } : entry) }, /disagrees .* PR #480/],
+    [{ pulls: [...windowPulls(), pr(490, 'feature/unsampled', { merged: true })] }, /evidence omits PR #490/],
+    [{ pulls: [...windowPulls(), { ...pr(607, 'x'), base: null }] }, /PR #607 target branch is missing/],
     [{ pulls: [...windowPulls(), { ...pr(600, 'x'), state: 'open' }] }, /state and closure disagree/],
     [{ pulls: [...windowPulls(), { ...pr(601, 'x'), state: 'merged' }] }, /unknown state/],
     [{ pulls: [...windowPulls(), pr(602, 'x', { createdAt: '2026-10-02T00:00:00Z' })] }, /closes before it was created/],
@@ -206,13 +233,12 @@ test('lifecycles spanning the window keep earlier and later facts temporally lab
   assert.equal(relation('2026-10-14T12:00:01Z', null), 'after');
   assert.throws(() => relation(UNTIL, SINCE), /ends before it starts/);
 
-  const data = inventory({
-    pulls: [...windowPulls(), pr(401, 'research/spanning', { createdAt: '2026-09-01T00:00:00Z', closedAt: '2026-10-20T00:00:00Z' })],
-  });
-  const spanning = named(data, 'research/spanning').linkedPrs[0];
-  assert.equal(spanning.windowRelation, 'overlaps');
-  assert.equal(spanning.mergedInWindow, false);
-  assert.equal(spanning.mergedAt, '2026-10-20T00:00:00Z');
+  const data = inventory({ pulls: [...windowPulls(), spanning()] });
+  const linked = named(data, 'research/spanning').linkedPrs[0];
+  assert.equal(linked.windowRelation, 'overlaps');
+  assert.equal(linked.mergedInWindow, false);
+  assert.equal(linked.inMainPrSample, false);
+  assert.equal(linked.mergedAt, '2026-10-20T00:00:00Z');
 });
 
 test('collector only reads, validates evidence before any API call, and paginates branches and all-state PRs', () => {

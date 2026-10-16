@@ -10,12 +10,15 @@ import {
   buildExactWindow,
   changesRequiredCount,
   closingDisposition,
+  render,
   summarizeWindow,
 } from './delivery-retrospective.mjs';
 import { validateEvidence } from './delivery-retrospective-evidence.mjs';
 
 const headA = 'a'.repeat(40);
 const headB = 'b'.repeat(40);
+const handoffCommit = 'c'.repeat(40);
+const handoffPath = ['workspace', 'research', 'example-question', 'implementation-handoff.md'].join('/');
 const revision = (number) => ['REV', String(number).padStart(3, '0')].join('-');
 const bareRevision = (number) => ['REV', String(number)].join('-');
 
@@ -40,12 +43,25 @@ function candidate(number, mergedAt, reviews = [], options = {}) {
       reportedCount: options.reportedCount ?? reviews.length,
       items: reviews,
     },
+    handoff: options.handoff ?? null,
   };
+}
+
+function handoff(committedAt) {
+  return { path: handoffPath, commit: handoffCommit, committedAt };
+}
+
+function issue(number, createdAt, closedAt = null, closedByPullRequest = null) {
+  return { number, createdAt, closedAt, closedByPullRequest };
+}
+
+function issueCollection(items) {
+  return { complete: true, reportedCount: items.length, items };
 }
 
 function evidence(items, overrides = {}) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     repository: 'alaiba/arcogine',
     requested: { baselinePr: 1, throughPr: 4 },
     endpoints: {
@@ -53,6 +69,7 @@ function evidence(items, overrides = {}) {
       through: { number: 4, merged: true, mergedAt: '2026-09-08T00:00:00Z', baseRefName: 'main' },
     },
     candidates: { complete: true, reportedCount: items.length, items },
+    issues: issueCollection([]),
     source: { adapter: 'github-graphql', acquiredAt: '2026-09-24T15:00:00Z' },
     ...overrides,
   };
@@ -114,7 +131,151 @@ test('evidence v1 rejects unsupported review author associations', () => {
 });
 
 test('evidence validation rejects an unsupported schema version', () => {
-  assert.throws(() => validateEvidence(baseEvidence([], { schemaVersion: 2 })), /unsupported schema version/);
+  assert.throws(() => validateEvidence(baseEvidence([], { schemaVersion: 1 })), /unsupported schema version 1/);
+});
+
+test('every candidate states its named handoff explicitly, null when it names none', () => {
+  const value = baseEvidence();
+  delete value.candidates.items[1].handoff;
+  assert.throws(() => validateEvidence(value), /PR #2 handoff reference is missing/);
+});
+
+test('a named handoff carries a full commit and a commit date no later than its merge', () => {
+  const shortCommit = baseEvidence();
+  shortCommit.candidates.items[1].handoff = { ...handoff('2026-09-05T00:00:00Z'), commit: 'abc1234' };
+  assert.throws(() => validateEvidence(shortCommit), /full lowercase commit SHA/);
+
+  const afterMerge = baseEvidence();
+  afterMerge.candidates.items[1].handoff = handoff('2026-09-06T00:00:01Z');
+  assert.throws(() => validateEvidence(afterMerge), /handoff committed after the PR merged/);
+});
+
+test('issue facts fail closed when incomplete, duplicated, or inconsistent with their recorded closer', () => {
+  const incompleteIssues = baseEvidence([], { issues: { ...issueCollection([]), complete: false } });
+  assert.throws(() => validateEvidence(incompleteIssues), /issue collection is incomplete/);
+
+  const miscounted = baseEvidence([], { issues: { ...issueCollection([issue(9, '2026-09-01T00:00:00Z')]), reportedCount: 2 } });
+  assert.throws(() => validateEvidence(miscounted), /issue count mismatch/);
+
+  const duplicated = baseEvidence([], {
+    issues: issueCollection([issue(9, '2026-09-01T00:00:00Z'), issue(9, '2026-09-01T00:00:00Z')]),
+  });
+  assert.throws(() => validateEvidence(duplicated), /duplicate issue #9/);
+
+  const { closedByPullRequest: _closer, ...withoutCloser } = issue(9, '2026-09-01T00:00:00Z');
+  const missingCloser = baseEvidence([], { issues: issueCollection([withoutCloser]) });
+  assert.throws(() => validateEvidence(missingCloser), /issue #9 closing pull request must be a positive PR number or null/);
+
+  const openWithCloser = baseEvidence([], { issues: issueCollection([issue(9, '2026-09-01T00:00:00Z', null, 2)]) });
+  assert.throws(() => validateEvidence(openWithCloser), /issue #9 names a closing pull request but is not closed/);
+
+  const openedLater = baseEvidence([], {
+    issues: issueCollection([issue(9, '2026-09-06T00:00:01Z', '2026-09-06T00:00:05Z', 2)]),
+  });
+  assert.throws(() => validateEvidence(openedLater), /issue #9 was opened after its closing PR #2 merged/);
+});
+
+test('handoff lead time runs from the handoff commit date to the merge of window PRs only', () => {
+  const value = evidence([
+    candidate(1, '2026-09-04T02:09:23Z', [], { handoff: handoff('2026-09-01T00:00:00Z') }),
+    candidate(2, '2026-09-06T00:00:00Z', [], { handoff: handoff('2026-09-04T12:00:00Z') }),
+    candidate(3, '2026-09-07T00:00:00Z'),
+    candidate(4, '2026-09-08T00:00:00Z', [], { handoff: handoff('2026-09-05T00:00:00Z') }),
+  ]);
+  assert.deepEqual(analyzeEvidence(value).researchToDeliveryLeadTime.handoffToMerge, {
+    count: 2,
+    medianDays: 2.25,
+    items: [
+      {
+        prNumber: 2,
+        handoffPath,
+        handoffCommit,
+        handoffCommittedAt: '2026-09-04T12:00:00Z',
+        mergedAt: '2026-09-06T00:00:00Z',
+        elapsedDays: 1.5,
+      },
+      {
+        prNumber: 4,
+        handoffPath,
+        handoffCommit,
+        handoffCommittedAt: '2026-09-05T00:00:00Z',
+        mergedAt: '2026-09-08T00:00:00Z',
+        elapsedDays: 3,
+      },
+    ],
+  });
+});
+
+test('issue lead time counts only issues recorded as closed by a window PR, measured to its merge', () => {
+  const value = evidence([
+    candidate(1, '2026-09-04T02:09:23Z'),
+    candidate(2, '2026-09-06T00:00:00Z'),
+    candidate(3, '2026-09-07T00:00:00Z'),
+    candidate(4, '2026-09-08T00:00:00Z'),
+  ], {
+    issues: issueCollection([
+      issue(10, '2026-09-01T00:00:00Z', '2026-09-04T02:09:25Z', 1),
+      issue(11, '2026-09-05T00:00:00Z', '2026-09-06T00:00:03Z', 2),
+      issue(12, '2026-09-02T00:00:00Z', '2026-09-07T00:00:02Z', 3),
+      issue(13, '2026-09-03T00:00:00Z', '2026-09-06T12:00:00Z'),
+      issue(14, '2026-09-04T00:00:00Z', '2026-09-08T00:00:03Z', 4),
+    ]),
+  });
+  const leadTime = analyzeEvidence(value).researchToDeliveryLeadTime;
+  assert.deepEqual(leadTime.issueOpeningToMerge, {
+    count: 3,
+    medianDays: 4,
+    items: [
+      { issueNumber: 11, openedAt: '2026-09-05T00:00:00Z', closingPrNumber: 2, mergedAt: '2026-09-06T00:00:00Z', elapsedDays: 1 },
+      { issueNumber: 12, openedAt: '2026-09-02T00:00:00Z', closingPrNumber: 3, mergedAt: '2026-09-07T00:00:00Z', elapsedDays: 5 },
+      { issueNumber: 14, openedAt: '2026-09-04T00:00:00Z', closingPrNumber: 4, mergedAt: '2026-09-08T00:00:00Z', elapsedDays: 4 },
+    ],
+  });
+  assert.equal(leadTime.openIssueAge.count, 0);
+});
+
+test('open issue age is measured at the window end, and an issue a PR only links stays open', () => {
+  const value = evidence([
+    candidate(1, '2026-09-04T02:09:23Z'),
+    candidate(2, '2026-09-06T00:00:00Z'),
+    candidate(4, '2026-09-08T00:00:00Z'),
+  ], {
+    issues: issueCollection([
+      issue(20, '2026-09-01T00:00:00Z'),
+      issue(21, '2026-09-03T00:00:00Z', '2026-09-10T00:00:00Z'),
+      issue(22, '2026-09-02T00:00:00Z', '2026-09-07T00:00:00Z'),
+      issue(23, '2026-09-09T00:00:00Z'),
+      issue(24, '2026-09-05T00:00:00Z'),
+    ]),
+  });
+  const leadTime = analyzeEvidence(value).researchToDeliveryLeadTime;
+  assert.equal(leadTime.issueOpeningToMerge.count, 0);
+  assert.deepEqual(leadTime.openIssueAge, {
+    windowEnd: '2026-09-08T00:00:00Z',
+    count: 3,
+    medianDays: 5,
+    items: [
+      { issueNumber: 20, openedAt: '2026-09-01T00:00:00Z', ageDays: 7 },
+      { issueNumber: 21, openedAt: '2026-09-03T00:00:00Z', ageDays: 5 },
+      { issueNumber: 24, openedAt: '2026-09-05T00:00:00Z', ageDays: 3 },
+    ],
+  });
+});
+
+test('text rendering reports each lead-time measure with its count and any median', () => {
+  const value = baseEvidence();
+  value.candidates.items[1].handoff = handoff('2026-09-04T00:00:00Z');
+  const text = render(analyzeEvidence(value));
+  assert.match(text, /^Handoff commit to merge: 1 \(median 2 days\)$/m);
+  assert.match(text, /^Issue opening to closing merge: 0$/m);
+  assert.match(text, /^Issues open at window end: 0$/m);
+});
+
+test('a window without handoffs or issues reports empty lead-time measures without a median', () => {
+  const leadTime = analyzeEvidence(baseEvidence()).researchToDeliveryLeadTime;
+  assert.deepEqual(leadTime.handoffToMerge, { count: 0, medianDays: null, items: [] });
+  assert.deepEqual(leadTime.issueOpeningToMerge, { count: 0, medianDays: null, items: [] });
+  assert.deepEqual(leadTime.openIssueAge, { windowEnd: '2026-09-08T00:00:00Z', count: 0, medianDays: null, items: [] });
 });
 
 test('complete candidate collection with a count mismatch is rejected', () => {
@@ -459,7 +620,9 @@ test('analyzer CLI consumes a file without GitHub credentials or acquisition too
       timeout: 10_000,
     });
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(JSON.parse(result.stdout).findingAnalytics.totalDistinctFindings, 1);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.findingAnalytics.totalDistinctFindings, 1);
+    assert.equal(output.researchToDeliveryLeadTime.handoffToMerge.count, 0);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

@@ -4,12 +4,31 @@ import assert from 'node:assert/strict';
 import {
   acquireEvidence,
   collectSearchPages,
+  parseHandoffReference,
+  resolveHandoff,
+  serializeClosingIssues,
   serializeReviewConnection,
 } from './delivery-retrospective-github.mjs';
 
 const baseline = { number: 10, merged: true, mergedAt: '2026-09-04T02:09:23Z', baseRefName: 'main' };
 const through = { number: 12, merged: true, mergedAt: '2026-09-06T09:29:55Z', baseRefName: 'main' };
 const revision = (number) => ['REV', String(number).padStart(3, '0')].join('-');
+const handoffCommit = 'c'.repeat(40);
+const handoffPath = ['workspace', 'research', 'example-question', 'implementation-handoff.md'].join('/');
+const handoffLine = `Implementation handoff: ${handoffPath} at ${handoffCommit}, committed 2026-09-04T12:00:00+03:00`;
+
+function closingConnection(nodes, overrides = {}) {
+  return {
+    totalCount: nodes.length,
+    pageInfo: { hasNextPage: false, endCursor: null },
+    nodes,
+    ...overrides,
+  };
+}
+
+function closingNode(number, repository = 'alaiba/arcogine') {
+  return { number, createdAt: '2026-09-03T00:00:00Z', closedAt: '2026-09-05T00:00:05Z', repository: { nameWithOwner: repository } };
+}
 
 test('search pagination is complete and stable across pages', async () => {
   const pages = new Map([
@@ -132,6 +151,89 @@ test('review serializer retains identities and metadata without disposition or f
   });
 });
 
+test('a PR body names its implementation handoff on one standalone line', () => {
+  assert.deepEqual(parseHandoffReference(`## Summary\n\nSlice 1 of the question.\n\n${handoffLine}\n`, 11), {
+    path: handoffPath,
+    commit: handoffCommit,
+    committedAt: '2026-09-04T12:00:00+03:00',
+  });
+  const decorated = `Implementation handoff: \`${handoffPath}\` at \`${handoffCommit.toUpperCase()}\`, committed 2026-09-04T09:00:00Z.`;
+  assert.equal(parseHandoffReference(decorated, 11).commit, handoffCommit);
+  assert.equal(parseHandoffReference('Closes #5.', 11), null);
+  assert.equal(parseHandoffReference(null, 11), null);
+});
+
+test('handoff lines in fenced or quoted examples are not handoff references', () => {
+  const body = ['```text', 'Implementation handoff: <path> at <commit>, committed <date>', '```', '', '> Implementation handoff: quoted'].join('\n');
+  assert.equal(parseHandoffReference(body, 11), null);
+});
+
+test('a malformed or repeated handoff line fails closed', () => {
+  assert.throws(
+    () => parseHandoffReference(`Implementation handoff: ${handoffPath} at abc1234, committed 2026-09-04`, 11),
+    /PR #11 has a malformed "Implementation handoff:" line/,
+  );
+  assert.throws(() => parseHandoffReference(`${handoffLine}\n${handoffLine}`, 11), /PR #11 names 2 implementation handoffs/);
+});
+
+test('a named handoff is confirmed against the commit and file GitHub records', async () => {
+  const named = parseHandoffReference(handoffLine, 11);
+  const resolve = (repository) => resolveHandoff({
+    graphql: async (_token, _query, variables) => {
+      assert.deepEqual(variables, {
+        owner: 'alaiba', name: 'arcogine', oid: handoffCommit, expression: `${handoffCommit}:${handoffPath}`,
+      });
+      return { repository };
+    },
+    owner: 'alaiba',
+    name: 'arcogine',
+    prNumber: 11,
+    named,
+  });
+  assert.deepEqual(
+    await resolve({ commit: { oid: handoffCommit, committedDate: '2026-09-04T09:00:00Z' }, file: { oid: 'd'.repeat(40) } }),
+    { path: handoffPath, commit: handoffCommit, committedAt: '2026-09-04T09:00:00Z' },
+  );
+  await assert.rejects(() => resolve({ commit: null, file: null }), /GitHub cannot resolve/);
+  await assert.rejects(
+    () => resolve({ commit: { oid: handoffCommit, committedDate: '2026-09-04T09:00:00Z' }, file: null }),
+    /is not a file at commit/,
+  );
+  await assert.rejects(
+    () => resolve({ commit: { oid: handoffCommit, committedDate: '2026-09-04T10:00:00Z' }, file: { oid: 'd'.repeat(40) } }),
+    /GitHub records 2026-09-04T10:00:00Z/,
+  );
+});
+
+test('closing-issue references keep this repository and set aside other repositories', () => {
+  const result = serializeClosingIssues({
+    number: 11,
+    closingIssuesReferences: closingConnection([closingNode(34), closingNode(5, 'other/repository')]),
+  }, 'alaiba/arcogine');
+  assert.deepEqual(result, {
+    closingIssues: { complete: true, reportedCount: 1, items: [34] },
+    issues: [{ number: 34, createdAt: '2026-09-03T00:00:00Z', closedAt: '2026-09-05T00:00:05Z' }],
+    otherRepositories: [{ prNumber: 11, repository: 'other/repository', number: 5 }],
+  });
+});
+
+test('closing-issue references fail closed when truncated, miscounted, or malformed', () => {
+  assert.throws(() => serializeClosingIssues({
+    number: 11,
+    closingIssuesReferences: closingConnection(Array.from({ length: 100 }, (_, index) => closingNode(index + 1)), {
+      totalCount: 101, pageInfo: { hasNextPage: true, endCursor: 'more' },
+    }),
+  }, 'alaiba/arcogine'), /more than 100 closing-issue references/);
+  assert.throws(() => serializeClosingIssues({
+    number: 11,
+    closingIssuesReferences: closingConnection([closingNode(34)], { totalCount: 2 }),
+  }, 'alaiba/arcogine'), /reported 2 closing-issue references but fetched 1/);
+  assert.throws(() => serializeClosingIssues({
+    number: 11,
+    closingIssuesReferences: closingConnection([{ number: 34 }]),
+  }, 'alaiba/arcogine'), /malformed closing-issue reference/);
+});
+
 test('acquisition emits a validated source-neutral evidence bundle with complete review data', async () => {
   const reviewBody = [
     `${revision(1)} - A stale process statement`,
@@ -151,12 +253,40 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
     through,
     { number: 13, merged: true, mergedAt: '2026-09-06T10:00:00Z', baseRefName: 'main' },
   ];
+  const issueSearchResults = [
+    {
+      match: /is:open created:<=2026-09-07$/,
+      nodes: [
+        { number: 30, createdAt: '2026-09-01T00:00:00Z', closedAt: null },
+        { number: 31, createdAt: '2026-09-06T10:00:00Z', closedAt: null },
+      ],
+    },
+    {
+      match: /is:closed closed:>=2026-09-05 created:<=2026-09-07$/,
+      nodes: [
+        { number: 32, createdAt: '2026-09-02T00:00:00Z', closedAt: '2026-09-06T10:00:00Z' },
+        { number: 33, createdAt: '2026-09-02T00:00:00Z', closedAt: '2026-09-06T09:00:00Z' },
+      ],
+    },
+  ];
   const calls = [];
   const graphql = async (_token, query, variables) => {
     calls.push({ query, variables });
     if (query.includes('baseline: pullRequest')) return { repository: { baseline, through } };
-    if (query.includes('search(type:ISSUE')) {
+    if (query.includes('search(type:ISSUE') && variables.query.includes('is:pr')) {
       return { search: { issueCount: searchItems.length, nodes: searchItems, pageInfo: { hasNextPage: false, endCursor: null } } };
+    }
+    if (query.includes('search(type:ISSUE') && variables.query.includes('is:issue')) {
+      const { nodes } = issueSearchResults.find((search) => search.match.test(variables.query));
+      return { search: { issueCount: nodes.length, nodes, pageInfo: { hasNextPage: false, endCursor: null } } };
+    }
+    if (query.includes('commit: object(oid')) {
+      return {
+        repository: {
+          commit: { oid: variables.oid, committedDate: '2026-09-04T09:00:00Z' },
+          file: { oid: 'd'.repeat(40) },
+        },
+      };
     }
     if (query.includes('reviews(first:100)')) {
       const sourcePr = searchItems.find((item) => item.number === variables.number);
@@ -165,6 +295,10 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
         repository: {
           pullRequest: {
             ...sourcePr,
+            body: sourcePr.number === 11 ? `Implements slice 1.\n\n${handoffLine}\n\nCloses #34.` : null,
+            closingIssuesReferences: closingConnection(
+              sourcePr.number === 11 ? [closingNode(34), closingNode(5, 'other/repository')] : [],
+            ),
             reviews: {
               totalCount: outOfWindow ? 101 : sourcePr.number === 11 ? 1 : 0,
               pageInfo: { hasNextPage: outOfWindow, endCursor: outOfWindow ? 'more' : null },
@@ -191,7 +325,7 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
     graphql,
     now: () => '2026-09-24T15:00:00Z',
   });
-  assert.equal(result.schemaVersion, 1);
+  assert.equal(result.schemaVersion, 2);
   assert.equal(result.source.adapter, 'github-graphql');
   assert.equal(result.endpoints.baseline.mergedAt, baseline.mergedAt);
   assert.equal(result.endpoints.through.mergedAt, through.mergedAt);
@@ -202,12 +336,59 @@ test('acquisition emits a validated source-neutral evidence bundle with complete
   assert.equal(result.candidates.items[0].reviews.items[0].id, 'PRR_11');
   assert.equal(result.candidates.items[0].reviews.items[0].reviewedHead, 'abcdef0123456789');
   assert.equal(result.candidates.items[1].reviews.reportedCount, 0);
+  assert.deepEqual(result.candidates.items[0].handoff, {
+    path: handoffPath,
+    commit: handoffCommit,
+    committedAt: '2026-09-04T09:00:00Z',
+  });
+  assert.equal(result.candidates.items[1].handoff, null);
+  assert.deepEqual(result.candidates.items[0].closingIssues, { complete: true, reportedCount: 1, items: [34] });
+  assert.deepEqual(result.candidates.items[1].closingIssues, { complete: true, reportedCount: 0, items: [] });
+  assert.deepEqual(result.issues, {
+    complete: true,
+    reportedCount: 3,
+    items: [
+      { number: 30, createdAt: '2026-09-01T00:00:00Z', closedAt: null },
+      { number: 32, createdAt: '2026-09-02T00:00:00Z', closedAt: '2026-09-06T10:00:00Z' },
+      { number: 34, createdAt: '2026-09-03T00:00:00Z', closedAt: '2026-09-05T00:00:05Z' },
+    ],
+  });
+  assert.deepEqual(result.source.otherRepositoryClosingReferences, [{ prNumber: 11, repository: 'other/repository', number: 5 }]);
   assert.equal('findingAnalytics' in result, false);
   assert.equal('disposition' in result, false);
-  assert.equal(calls.length, 4);
+  assert.equal(calls.length, 7);
   assert.deepEqual(
     calls.filter((call) => call.query.includes('reviews(first:100)')).map((call) => call.variables.number),
     [11, 12],
   );
   assert.match(calls[1].variables.query, /merged:2026-09-04\.\.2026-09-06/);
+});
+
+test('acquisition fails closed when an issue changes between its acquisition sources', async () => {
+  const graphql = async (_token, query, variables) => {
+    if (query.includes('baseline: pullRequest')) return { repository: { baseline, through } };
+    if (query.includes('search(type:ISSUE') && variables.query.includes('is:pr')) {
+      return { search: { issueCount: 2, nodes: [baseline, through], pageInfo: { hasNextPage: false, endCursor: null } } };
+    }
+    if (query.includes('search(type:ISSUE')) {
+      const nodes = variables.query.includes('is:open')
+        ? [{ number: 34, createdAt: '2026-09-03T00:00:00Z', closedAt: null }]
+        : [];
+      return { search: { issueCount: nodes.length, nodes, pageInfo: { hasNextPage: false, endCursor: null } } };
+    }
+    return {
+      repository: {
+        pullRequest: {
+          ...through,
+          body: null,
+          closingIssuesReferences: closingConnection([closingNode(34)]),
+          reviews: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null }, nodes: [] },
+        },
+      },
+    };
+  };
+  await assert.rejects(
+    () => acquireEvidence({ repo: 'alaiba/arcogine', baselinePr: 10, throughPr: 12, token: 'fixture-token', graphql }),
+    /issue #34 facts changed during acquisition/,
+  );
 });

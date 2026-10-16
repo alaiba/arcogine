@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Pure retrospective analyzer for Retrospective Evidence v1.
+ * Pure retrospective analyzer for Retrospective Evidence v2.
  * This module reads a supplied evidence file but has no GitHub, Git, token, or
  * mutable repository-state dependency. Identical evidence produces identical
  * analytical output.
@@ -10,12 +10,14 @@ import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import {
+  EVIDENCE_SCHEMA_VERSION,
   FINDING_CATEGORIES,
   FINDING_CONFIDENCES,
   FINDING_STATUSES,
   validateEvidence,
 } from './delivery-retrospective-evidence.mjs';
 
+const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 const TRUSTED_REVIEW_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
 const DISPOSITION_ALTERNATION = ['READY TO MERGE', 'CHANGES REQUIRED']
   .map((disposition) => disposition.replace(/ /g, '\\s+'))
@@ -25,7 +27,7 @@ const FINDING_LIKE_LINE = /^\s*REV-/;
 const REQUIRED_FIELD_NAMES = ['Category', 'Confidence', 'Head', 'Subject', 'Status'];
 
 function usage() {
-  return `delivery-retrospective -- analyze a Retrospective Evidence v1 bundle
+  return `delivery-retrospective -- analyze a Retrospective Evidence v2 bundle
 
 USAGE
   node infra/dev/delivery-retrospective.mjs --input <evidence.json> [--json]
@@ -461,6 +463,85 @@ function analyzeFindings(window) {
   };
 }
 
+function elapsedMilliseconds(fromTimestamp, toTimestamp) {
+  return Date.parse(toTimestamp) - Date.parse(fromTimestamp);
+}
+
+function roundDays(milliseconds) {
+  return Math.round(milliseconds / DAY_MILLISECONDS * 100) / 100;
+}
+
+function withMedian(items, duration) {
+  const sorted = items.map(duration).sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  let medianDays = null;
+  if (sorted.length) medianDays = roundDays(sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2);
+  return { count: items.length, medianDays, items };
+}
+
+/**
+ * Research-to-delivery lead time over the exact window: handoff commit to implementing merge, issue
+ * opening to the first in-window merge that closes it, and the age at window end of issues then open.
+ * Values are measures to compare between retrospectives, never thresholds.
+ */
+export function researchToDeliveryLeadTime(window, issues, windowEnd) {
+  const handoffItems = window
+    .filter((pr) => pr.handoff)
+    .map((pr) => ({
+      prNumber: pr.number,
+      handoffPath: pr.handoff.path,
+      handoffCommit: pr.handoff.commit,
+      handoffCommittedAt: pr.handoff.committedAt,
+      mergedAt: pr.mergedAt,
+      elapsedDays: roundDays(elapsedMilliseconds(pr.handoff.committedAt, pr.mergedAt)),
+    }));
+
+  const issueByNumber = new Map(issues.map((issue) => [issue.number, issue]));
+  const closingPr = new Map();
+  for (const pr of window) {
+    for (const number of pr.closingIssues.items) {
+      if (!closingPr.has(number)) closingPr.set(number, pr);
+    }
+  }
+  const closedItems = [...closingPr.entries()]
+    .map(([number, pr]) => {
+      const openedAt = issueByNumber.get(number).createdAt;
+      return {
+        issueNumber: number,
+        openedAt,
+        closingPrNumber: pr.number,
+        mergedAt: pr.mergedAt,
+        elapsedDays: roundDays(elapsedMilliseconds(openedAt, pr.mergedAt)),
+      };
+    })
+    .sort((left, right) =>
+      Date.parse(left.mergedAt) - Date.parse(right.mergedAt) || left.issueNumber - right.issueNumber,
+    );
+
+  const end = Date.parse(windowEnd);
+  const openItems = issues
+    .filter((issue) =>
+      !closingPr.has(issue.number) &&
+      Date.parse(issue.createdAt) <= end &&
+      (issue.closedAt === null || Date.parse(issue.closedAt) > end),
+    )
+    .map((issue) => ({
+      issueNumber: issue.number,
+      openedAt: issue.createdAt,
+      ageDays: roundDays(elapsedMilliseconds(issue.createdAt, windowEnd)),
+    }))
+    .sort((left, right) => Date.parse(left.openedAt) - Date.parse(right.openedAt) || left.issueNumber - right.issueNumber);
+
+  return {
+    handoffToMerge: withMedian(handoffItems, (item) => elapsedMilliseconds(item.handoffCommittedAt, item.mergedAt)),
+    issueOpeningToMerge: withMedian(closedItems, (item) => elapsedMilliseconds(item.openedAt, item.mergedAt)),
+    openIssueAge: {
+      windowEnd,
+      ...withMedian(openItems, (item) => elapsedMilliseconds(item.openedAt, windowEnd)),
+    },
+  };
+}
+
 /** Analyze one complete source-neutral evidence bundle. */
 export function analyzeEvidence(evidence) {
   validateEvidence(evidence);
@@ -471,8 +552,9 @@ export function analyzeEvidence(evidence) {
   }
   const findingAnalytics = analyzeFindings(window);
   const summary = summarizeWindow(window);
+  const leadTime = researchToDeliveryLeadTime(window, evidence.issues.items, through.mergedAt);
   return {
-    schemaVersion: 1,
+    schemaVersion: EVIDENCE_SCHEMA_VERSION,
     repository: evidence.repository,
     baseline: { number: baseline.number, mergedAt: baseline.mergedAt, baseRefName: baseline.baseRefName },
     through: { number: through.number, mergedAt: through.mergedAt, baseRefName: through.baseRefName },
@@ -483,12 +565,18 @@ export function analyzeEvidence(evidence) {
     ...summary,
     pullRequests: window.map((pr) => ({ number: pr.number, mergedAt: pr.mergedAt })),
     findingAnalytics,
+    researchToDeliveryLeadTime: leadTime,
   };
+}
+
+function renderMeasure(label, measured) {
+  return `${label}: ${measured.count}${measured.medianDays === null ? '' : ` (median ${measured.medianDays} days)`}`;
 }
 
 export function render(summary) {
   const distribution = summary.reviewRoundDistribution;
   const findings = summary.findingAnalytics;
+  const leadTime = summary.researchToDeliveryLeadTime;
   return [
     `Retrospective window: PR #${summary.baseline.number} (exclusive) -> PR #${summary.through.number} (inclusive)`,
     `Merged PRs: ${summary.mergedPrCount}`,
@@ -497,6 +585,9 @@ export function render(summary) {
     `PRs: ${summary.pullRequests.map((pr) => `#${pr.number}`).join(', ')}`,
     `Distinct structured findings: ${findings.totalDistinctFindings} across ${findings.prsWithFindings} PRs`,
     `Finding analytics complete: ${findings.complete ? 'yes' : 'no'}${findings.diagnostics.incompleteReasons.length ? ` (${findings.diagnostics.incompleteReasons.join('; ')})` : ''}`,
+    renderMeasure('Handoff commit to merge', leadTime.handoffToMerge),
+    renderMeasure('Issue opening to closing merge', leadTime.issueOpeningToMerge),
+    renderMeasure('Issues open at window end', leadTime.openIssueAge),
   ].join('\n');
 }
 

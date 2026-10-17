@@ -7,7 +7,7 @@ import org.gradle.testing.jacoco.tasks.JacocoReport
 plugins {
     java
     jacoco
-    id("org.cyclonedx.bom") version "3.5.0"
+    id("org.cyclonedx.bom") version "3.5.1"
 }
 
 allprojects {

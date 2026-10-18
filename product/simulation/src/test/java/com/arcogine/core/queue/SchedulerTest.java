@@ -52,6 +52,8 @@ class SchedulerTest {
         // Advance time by dequeuing an event
         scheduler.schedule(orderAt(10, 1));
         scheduler.nextEvent().orElseThrow();
+        Event pending = orderAt(20, 2);
+        scheduler.schedule(pending);
 
         // Now try to schedule an event in the past
         SimError.EventOrderingViolation err = assertThrows(
@@ -59,6 +61,12 @@ class SchedulerTest {
                 () -> scheduler.schedule(orderAt(5, 1)));
         assertEquals(new SimTime(10), err.expectedMin());
         assertEquals(new SimTime(5), err.actual());
+        assertEquals(new SimTime(10), scheduler.currentTime());
+        assertEquals(1, scheduler.size());
+        assertEquals(new SimTime(20), scheduler.peekTime().orElseThrow());
+        assertEquals(pending, scheduler.nextEvent().orElseThrow());
+        assertEquals(new SimTime(20), scheduler.currentTime());
+        assertTrue(scheduler.nextEvent().isEmpty());
     }
 
     @Test

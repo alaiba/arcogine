@@ -8,6 +8,8 @@ Current product, architecture, planning, research, and development rules live in
 
 Delivery-process retrospective records live under `continuous-improvement/`. The normative retrospective method lives in `docs/development/continuous-improvement.md`; the dated records preserve what was measured and concluded at one point in time.
 
+That directory also holds the one-time test-evidence baseline: a dated inventory and bounded diagnostic results, not a correctness certification, current work ledger, or recurring quality gate. Current testing policy remains in `docs/development/testing.md`.
+
 ## Decision rationale
 
 Historical decision-rationale records live under `decisions/`, one dated file per retained decision named `YYYY-MM-DD-<semantic-slug>.md`; semantic filenames and the directory listing are the only index. The retention test and record shape live in [`docs/development/researching.md`](../development/researching.md#historical-decision-rationale). Each record preserves why a significant reconciled choice was made at one point in time — the serious alternatives, the decisive trade-offs, and the conditions that would justify revisiting it — and names the canonical documents it was reconciled into.

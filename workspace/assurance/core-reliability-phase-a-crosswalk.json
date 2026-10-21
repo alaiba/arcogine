@@ -1,0 +1,5824 @@
+{
+  "assessedCommit": "da70c929be95b98aba773a9225ec70ba13d50c31",
+  "scope": "Every tracked Java source file; all nested/member declarations inherit the file boundary even if lexical declaration extraction omits a local/anonymous type. File/blob/path-set equality is the completeness authority, not regex type counts.",
+  "verification": "Compare sorted files[].path against git ls-tree -r --name-only <assessedCommit> product filtered to .java; compare each blob using git rev-parse <assessedCommit>:<path>; require nonempty contracts and all IDs present in packet. No test or coverage pass is inferred from membership.",
+  "modules": [
+    {
+      "name": "types",
+      "directory": "product/types",
+      "mainFiles": 11,
+      "testFiles": 9,
+      "benchmarkFiles": 0
+    },
+    {
+      "name": "governance",
+      "directory": "product/governance",
+      "mainFiles": 53,
+      "testFiles": 12,
+      "benchmarkFiles": 0
+    },
+    {
+      "name": "storage",
+      "directory": "product/storage",
+      "mainFiles": 3,
+      "testFiles": 5,
+      "benchmarkFiles": 0
+    },
+    {
+      "name": "simulation",
+      "directory": "product/simulation",
+      "mainFiles": 4,
+      "testFiles": 3,
+      "benchmarkFiles": 1
+    },
+    {
+      "name": "factory",
+      "directory": "product/domains/factory",
+      "mainFiles": 45,
+      "testFiles": 37,
+      "benchmarkFiles": 0
+    },
+    {
+      "name": "challenge",
+      "directory": "product/consumer/challenge",
+      "mainFiles": 49,
+      "testFiles": 25,
+      "benchmarkFiles": 0
+    },
+    {
+      "name": "challenge-factory-integration-test",
+      "directory": "product/consumer/challenge-factory-integration-test",
+      "mainFiles": 0,
+      "testFiles": 1,
+      "benchmarkFiles": 0
+    },
+    {
+      "name": "research-experiments",
+      "directory": "product/research-experiments",
+      "mainFiles": 23,
+      "testFiles": 16,
+      "benchmarkFiles": 0
+    },
+    {
+      "name": "architecture-conformance-test",
+      "directory": "product/architecture-conformance-test",
+      "mainFiles": 0,
+      "testFiles": 3,
+      "benchmarkFiles": 0
+    }
+  ],
+  "files": [
+    {
+      "path": "product/architecture-conformance-test/src/test/java/com/arcogine/architecture/ArchitectureTest.java",
+      "blob": "e54b46c15f3bde93f138914ddcb7074e95d1dc2a",
+      "module": "architecture-conformance-test",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "X-BOUNDARY"
+      ],
+      "declarations": [
+        {
+          "name": "ArchitectureTest",
+          "kind": "class",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "path": "product/architecture-conformance-test/src/test/java/com/arcogine/architecture/DeterminismGuardTest.java",
+      "blob": "1ab07614cafc001ac5a771f7c1ad522e3c087328",
+      "module": "architecture-conformance-test",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "X-BOUNDARY"
+      ],
+      "declarations": [
+        {
+          "name": "DeterminismGuardTest",
+          "kind": "class",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/architecture-conformance-test/src/test/java/com/arcogine/core/architecture/DeterminismGuardFixtures.java",
+      "blob": "872b710f6d1a3df1cd262e576c77cffe48310a65",
+      "module": "architecture-conformance-test",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "X-BOUNDARY"
+      ],
+      "declarations": [
+        {
+          "name": "DeterminismGuardFixtures",
+          "kind": "class",
+          "line": 12
+        },
+        {
+          "name": "LegacyDate",
+          "kind": "class",
+          "line": 15
+        },
+        {
+          "name": "LegacyCalendar",
+          "kind": "class",
+          "line": 19
+        },
+        {
+          "name": "CalendarSubclass",
+          "kind": "class",
+          "line": 23
+        },
+        {
+          "name": "BackgroundTimer",
+          "kind": "class",
+          "line": 27
+        },
+        {
+          "name": "ParallelStreamFactory",
+          "kind": "class",
+          "line": 31
+        },
+        {
+          "name": "SequentialCollectionStream",
+          "kind": "class",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge-factory-integration-test/src/test/java/com/arcogine/challenge/factoryintegration/FactoryPublicationValidButChallengeInadmissibleTest.java",
+      "blob": "1d27177d07797e9848214ed226ae87edba066f9e",
+      "module": "challenge-factory-integration-test",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "X-BOUNDARY",
+        "C-ADMISSION",
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryPublicationValidButChallengeInadmissibleTest",
+          "kind": "class",
+          "line": 50
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/ChallengeDefinition.java",
+      "blob": "a019debc47872df49fbe20da79529b48e4be3be0",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeDefinition",
+          "kind": "record",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/ChallengeIdentity.java",
+      "blob": "523b51dcb5cf0cb497f6f82095e7048fbcb9b092",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeIdentity",
+          "kind": "record",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/ChallengeWorkload.java",
+      "blob": "83e13792cd505efbb9c0ef4ae98c018391acef06",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeWorkload",
+          "kind": "record",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/EquipmentCatalogueItemId.java",
+      "blob": "5f26f8b4222df14e422a11ad2b917e9ce1112df6",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueItemId",
+          "kind": "record",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/EvaluationPolicyIdentity.java",
+      "blob": "6d4c4e0543949fca8df80cb66c4b365787cd486d",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "EvaluationPolicyIdentity",
+          "kind": "record",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/FactoryFloorConstraint.java",
+      "blob": "5f569adb6bf695c339cdf1116c5fa1c530ed84d8",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryFloorConstraint",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityIssue.java",
+      "blob": "54932ea77f5726337e794753a9e5f73a9d0e1e37",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "declarations": [
+        {
+          "name": "CandidateAdmissibilityIssue",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityPolicy.java",
+      "blob": "8584749bdaf00b6c46ffd1de9e5d74477ea8ea96",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "declarations": [
+        {
+          "name": "CandidateAdmissibilityPolicy",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityResult.java",
+      "blob": "d533ab227cc033e756feeb9b7a5dff41b09eb92d",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "declarations": [
+        {
+          "name": "CandidateAdmissibilityResult",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateDraftSnapshot.java",
+      "blob": "91112c5b53c60b6dd9e60cfc26ab68edc34b52a5",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "declarations": [
+        {
+          "name": "CandidateDraftSnapshot",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/EquipmentOccurrenceId.java",
+      "blob": "28d397547f6d0ea1caf23e094a218676a3819a08",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentOccurrenceId",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/GridPlacement.java",
+      "blob": "50719d2077568b6fc758418dbd5ab1621a5acf0e",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "declarations": [
+        {
+          "name": "GridPlacement",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/PlacedEquipment.java",
+      "blob": "0858d2257ab18a1b85048bbb0110ac9c049a1ed0",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "declarations": [
+        {
+          "name": "PlacedEquipment",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/attempt/ChallengeAttempt.java",
+      "blob": "271a8088c962fe96d0fe5de73025d23f5290c43c",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeAttempt",
+          "kind": "record",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/attempt/ChallengeAttemptId.java",
+      "blob": "ba7e44fa9ed54dff8248272e5d73ee205bd13198",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeAttemptId",
+          "kind": "record",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogue.java",
+      "blob": "9a8de45068e63fc005db8a6f47022c29646789ad",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogue",
+          "kind": "class",
+          "line": 26
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueIdentity.java",
+      "blob": "dc68fb2c30d55229fcd1dbf782bf8fa8cbd765b6",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueIdentity",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueIssue.java",
+      "blob": "3f0806e5b06d4e4a7f9418cb0d3f7fc2684b0c78",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueIssue",
+          "kind": "record",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidationResult.java",
+      "blob": "993b9b6fd41991adf287f5b0a76177921839c9ab",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueValidationResult",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidator.java",
+      "blob": "b9d89983b2dd49e3f660696babf59cc13b4fa759",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueValidator",
+          "kind": "class",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentOffer.java",
+      "blob": "7ef8b8c5dc0d3c88435ec45a9af1af3922a7fdbc",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentOffer",
+          "kind": "record",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptComparison.java",
+      "blob": "a309fb13e15c0f75164fd2072ee20ea8ef1ba14d",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "AttemptComparison",
+          "kind": "record",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptComparisonResult.java",
+      "blob": "1abd2400607a1b40825232c2f79ab14e56e3a21b",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "AttemptComparisonResult",
+          "kind": "record",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptComparisonWinner.java",
+      "blob": "a2fc5d68755873fffadb6ca94321dcc00989f822",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "AttemptComparisonWinner",
+          "kind": "enum",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptCompatibility.java",
+      "blob": "e2caf836b2d997611a4be4c611e81d48324ef73f",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "AttemptCompatibility",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptIncompatibilityReason.java",
+      "blob": "64305c689481aa678afe5b9673222c49bdc4efbc",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "AttemptIncompatibilityReason",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/ChallengeAttemptComparator.java",
+      "blob": "636babd8ed9eb109171749c0d6d9ff24794e9dd9",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeAttemptComparator",
+          "kind": "class",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/ChallengeContentIssue.java",
+      "blob": "ae6bd532f3a3bcbd01e701f3b3dceddf3e33e93b",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeContentIssue",
+          "kind": "record",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/ChallengeContentLoadResult.java",
+      "blob": "d87d171c7af45c092cb9e20fa638f39a68845143",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeContentLoadResult",
+          "kind": "record",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/ChallengeContentLoader.java",
+      "blob": "cb3defb5828d2386e095654b636cf4812a4309dc",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeContentLoader",
+          "kind": "class",
+          "line": 49
+        },
+        {
+          "name": "ChallengeDecodeOutcome",
+          "kind": "record",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/ChallengeWithCatalogueLoadResult.java",
+      "blob": "b35bd0d51e0cc92ed0f4015891bf93f656d6628d",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeWithCatalogueLoadResult",
+          "kind": "record",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/EquipmentCatalogueContentLoadResult.java",
+      "blob": "b19708abf8ec747b6c8559eafbbb2402c194c006",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueContentLoadResult",
+          "kind": "record",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/EvaluationPolicyResolver.java",
+      "blob": "231876eb86194a4a02a0457dc43d45e3e7bcde9f",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "EvaluationPolicyResolver",
+          "kind": "class",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/Json.java",
+      "blob": "2cd23e0c5a68459db6b61255b56e193430d37b7d",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "Json",
+          "kind": "class",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/JsonSyntaxException.java",
+      "blob": "7ad283dd74a4769755d3a425e6117cf3bdd18af1",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "JsonSyntaxException",
+          "kind": "class",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEconomics.java",
+      "blob": "694c64193e3c5f4dfbe297a1518f8d679ff7a58b",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEconomics",
+          "kind": "record",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEconomicsCalculator.java",
+      "blob": "78aac9188eaae6ca1e79973d58671f1305acc1f4",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEconomicsCalculator",
+          "kind": "class",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEconomicsFailure.java",
+      "blob": "c75d537e9f813900187696dae7bf8cba45109d65",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEconomicsFailure",
+          "kind": "record",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEconomicsResult.java",
+      "blob": "4534ca69ec3ddf485f2ffdf210bb5de4911c0d86",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEconomicsResult",
+          "kind": "record",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEquipmentOccurrence.java",
+      "blob": "a15b64402a0a8da2f278afc0ec639d377b13909d",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEquipmentOccurrence",
+          "kind": "record",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/AuthoritativeOutcomeFacts.java",
+      "blob": "40b35141d86f562d0aa68fe38b74c6bba92f82c9",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "declarations": [
+        {
+          "name": "AuthoritativeOutcomeFacts",
+          "kind": "record",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/ChallengeEvaluationInput.java",
+      "blob": "e984a7295a420ff4b3206683b545297cbdbbe74a",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeEvaluationInput",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/ChallengeEvaluationIssue.java",
+      "blob": "220dd3effc80c9465c8b9bfc9684fe74c26dfed4",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeEvaluationIssue",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/ChallengeEvaluationResult.java",
+      "blob": "0ff15eb5b1bfcf786c6bcc41a468af2073fe9d41",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeEvaluationResult",
+          "kind": "record",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/EvaluationProvenance.java",
+      "blob": "3e9b1b6bf40a7f646b5719a8184023c8616328b8",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "declarations": [
+        {
+          "name": "EvaluationProvenance",
+          "kind": "record",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/ReferenceChallengeEvaluationPolicy.java",
+      "blob": "238709ea50794da8b7344bdd7ba155a5dd8ff07c",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "declarations": [
+        {
+          "name": "ReferenceChallengeEvaluationPolicy",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/validation/ChallengeDefinitionIssue.java",
+      "blob": "65f258b976ebc0c7d91dee564f0e7241900c3400",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeDefinitionIssue",
+          "kind": "record",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/validation/ChallengeDefinitionValidationResult.java",
+      "blob": "404c733afc44bcb07ecb0f0cde892a824eb385bd",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeDefinitionValidationResult",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/validation/ChallengeDefinitionValidator.java",
+      "blob": "51bd900cb7c914945c4480c4432dc008effdad0e",
+      "module": "challenge",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeDefinitionValidator",
+          "kind": "class",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/ChallengeDefinitionTest.java",
+      "blob": "21f0ec601eb0a65aad649f45470b0a1cf4583f3c",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeDefinitionTest",
+          "kind": "class",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/ChallengeFixtures.java",
+      "blob": "05154521feeb292a06f910494a2f6210ff3d9cbd",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeFixtures",
+          "kind": "class",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/RecordValidationTest.java",
+      "blob": "5ce0dd9f626b6f2d39ce1af6074380f1ddd94982",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "RecordValidationTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityPolicyTest.java",
+      "blob": "3502e5be6a58495ec2bd8fff8f6bb5997f8f3d23",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "declarations": [
+        {
+          "name": "CandidateAdmissibilityPolicyTest",
+          "kind": "class",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/attempt/ChallengeAttemptFixtures.java",
+      "blob": "a797778c69bc3135d33fd5c17df16e6407f3aac6",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeAttemptFixtures",
+          "kind": "class",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/attempt/ChallengeAttemptTest.java",
+      "blob": "4a6707b1db41c252d8c50f9bb142f2f770c417d2",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeAttemptTest",
+          "kind": "class",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueFixtures.java",
+      "blob": "45cc5ae45969beb6dafc4da46decc5a3b3cbf949",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueFixtures",
+          "kind": "class",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueIssueTest.java",
+      "blob": "e6ac7939fb6266b13101a21e2f4ce623223d2c93",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueIssueTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueTest.java",
+      "blob": "0b9ba8c110f026d1aec508579075721bd31bf578",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueTest",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidationResultTest.java",
+      "blob": "94342a4aff1870ee45b0851681ab4ee123f78cd5",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueValidationResultTest",
+          "kind": "class",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidatorDependencyBoundaryTest.java",
+      "blob": "7a0908cadf7a94bbb01a6e3cf440b596d783c75e",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueValidatorDependencyBoundaryTest",
+          "kind": "class",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidatorTest.java",
+      "blob": "773f84626deb7a65b6ff79972b88b157126d2446",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentCatalogueValidatorTest",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentOfferTest.java",
+      "blob": "b130342f5ed2fee38dfdda8f1eef10ca9d07c912",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "declarations": [
+        {
+          "name": "EquipmentOfferTest",
+          "kind": "class",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/comparison/ChallengeAttemptComparatorTest.java",
+      "blob": "a182202aef13d124bb565b9ede3386ba0dc4beb9",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeAttemptComparatorTest",
+          "kind": "class",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/ChallengeContentLoaderTest.java",
+      "blob": "7dfb43d00b0f6ad241fff0e3904d7cf3263340f4",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeContentLoaderTest",
+          "kind": "class",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/ContentDrivenAttemptComparisonTest.java",
+      "blob": "089d66c28d582d9bb58033a966708db666b30cad",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "ContentDrivenAttemptComparisonTest",
+          "kind": "class",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/EvaluationPolicyResolverTest.java",
+      "blob": "1f40a674f9cbaf03f04d1b3e6234e4660aba890e",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "EvaluationPolicyResolverTest",
+          "kind": "class",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/JsonTest.java",
+      "blob": "f10244fcba0dcff632d2d3072d844f15740d9a2f",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "declarations": [
+        {
+          "name": "JsonTest",
+          "kind": "class",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/economics/DraftEconomicsCalculatorTest.java",
+      "blob": "b9a8c658c6af5956f6e971a9d792f05f42b2d87d",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEconomicsCalculatorTest",
+          "kind": "class",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/economics/DraftEconomicsFailureTest.java",
+      "blob": "1c17494ae38a9c1aabde160fd096a807c28e9c7d",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEconomicsFailureTest",
+          "kind": "class",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/economics/DraftEconomicsResultTest.java",
+      "blob": "f77305e614a71382b59c428b1d6d4eff567cd0be",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEconomicsResultTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/economics/DraftEquipmentOccurrenceTest.java",
+      "blob": "644d81900316abef628556b73231c25f71b75567",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "declarations": [
+        {
+          "name": "DraftEquipmentOccurrenceTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/evaluation/ReferenceChallengeEvaluationPolicyTest.java",
+      "blob": "d00a4631dccfcfb30491ffd7b33fa034450183b2",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "declarations": [
+        {
+          "name": "ReferenceChallengeEvaluationPolicyTest",
+          "kind": "class",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/validation/ChallengeDefinitionValidationResultTest.java",
+      "blob": "7fc8e7b5891b3ce4fb642149b225fa1a8939223a",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeDefinitionValidationResultTest",
+          "kind": "class",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/validation/ChallengeDefinitionValidatorTest.java",
+      "blob": "ec3bfb0276f0d88d3ea53c54252a82af966a2024",
+      "module": "challenge",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "declarations": [
+        {
+          "name": "ChallengeDefinitionValidatorTest",
+          "kind": "class",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java",
+      "blob": "709a1315e6fa2011207a3b9a52013e9a747af4d9",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-CHANGE",
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelSemanticComparator",
+          "kind": "class",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/jobs/Job.java",
+      "blob": "ecf46eb13ccebf050b0c32d82489da134b3c9361",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "Job",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/jobs/JobStore.java",
+      "blob": "462d9acafa85c74cefb2d2965887393187224e89",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "JobStore",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/jobs/JobView.java",
+      "blob": "043f3eb1be7c5c037f780c4339aeeed99b7780b1",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "JobView",
+          "kind": "interface",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/machines/Machine.java",
+      "blob": "f588e1d46affcacf13716bac31ebe522b64b31b3",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "Machine",
+          "kind": "class",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/machines/MachineStore.java",
+      "blob": "f8fed830f7b08126c5f31933807f4d685482bf5d",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "MachineStore",
+          "kind": "class",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/machines/MachineView.java",
+      "blob": "5527221300a0885dfc3d541c9382eefd62e5ff1e",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "MachineView",
+          "kind": "interface",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/ConfiguredResource.java",
+      "blob": "f5d9b354fa2950c4bbd71e4f0199963804687dfd",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "ConfiguredResource",
+          "kind": "record",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModel.java",
+      "blob": "3e1d8e431d964d2539005bc69dceec9308824fc5",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModel",
+          "kind": "record",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelArtifact.java",
+      "blob": "d93ab412c438a22b95f4b93332861bca2d3f743d",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelArtifact",
+          "kind": "class",
+          "line": 22
+        },
+        {
+          "name": "Verifier",
+          "kind": "class",
+          "line": 55
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java",
+      "blob": "e0ec0e9d947ac70d4e45d030c10e873948d7f9cf",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelCanonicalForm",
+          "kind": "class",
+          "line": 38
+        },
+        {
+          "name": "DefinitionBinding",
+          "kind": "class",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelPublisher.java",
+      "blob": "c99a144a6086dc5448b216dfbbb0a8999bac3a8e",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelPublisher",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelVersion.java",
+      "blob": "eb7b39346f1b24f8f28cedca0ef31cb504a05ef7",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelVersion",
+          "kind": "record",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryRuntimeAssembler.java",
+      "blob": "4886d50d73cb00ce846406bc5b54c581de9ba26d",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryRuntimeAssembler",
+          "kind": "class",
+          "line": 24
+        },
+        {
+          "name": "Assembled",
+          "kind": "record",
+          "line": 62
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationDefinition.java",
+      "blob": "3c80fbdb0e8fa27c470d31ac8c97dca544f6bd43",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "OperationDefinition",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationStepDefinition.java",
+      "blob": "3f44f70c30edbf8aaafc40c393aeb8da2b74e086",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "OperationStepDefinition",
+          "kind": "record",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/ProductDefinition.java",
+      "blob": "78120192495b5b38f214912fea5744bf3d26849a",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "ProductDefinition",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidationException.java",
+      "blob": "5b3fe094d24bb36f46a50e97354c49827bfc9cf9",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelValidationException",
+          "kind": "class",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java",
+      "blob": "0172f887f986e24deeb55e7239c9fe32d3d5c710",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelValidator",
+          "kind": "class",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/ModelValidationError.java",
+      "blob": "5b68985e4f7e544da54a3deedeca8b411fd9ffd0",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "ModelValidationError",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/ModelValidationResult.java",
+      "blob": "766535815adf56cc428cd0b50855a3abd8ba6011",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "ModelValidationResult",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/orders/Order.java",
+      "blob": "30a4f392ded5f96bf2659c5b2409a79d8d6f7f96",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "Order",
+          "kind": "record",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/orders/OrderExecution.java",
+      "blob": "a485d8eba81164406b9cbb248c68c3174834a02f",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "OrderExecution",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/orders/OrderExecutionView.java",
+      "blob": "93ab326e62705132ca624eaf8b56a06589bbb8e3",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "OrderExecutionView",
+          "kind": "record",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/orders/OrderStore.java",
+      "blob": "4539006a6dea0e379005e91a8d046e756513a72f",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "OrderStore",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/AffectedEntityRef.java",
+      "blob": "f8f3ff3b7d1e0569d2f7697cfb2e4aa0a1362cb8",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "declarations": [
+        {
+          "name": "AffectedEntityRef",
+          "kind": "interface",
+          "line": 15
+        },
+        {
+          "name": "OrderRef",
+          "kind": "record",
+          "line": 17
+        },
+        {
+          "name": "JobRef",
+          "kind": "record",
+          "line": 23
+        },
+        {
+          "name": "MachineRef",
+          "kind": "record",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/CommandResult.java",
+      "blob": "60129d0670aa9933c4c22db0eee0e80115570391",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-CONTROL"
+      ],
+      "declarations": [
+        {
+          "name": "CommandResult",
+          "kind": "interface",
+          "line": 47
+        },
+        {
+          "name": "Accepted",
+          "kind": "record",
+          "line": 71
+        },
+        {
+          "name": "Rejected",
+          "kind": "record",
+          "line": 94
+        },
+        {
+          "name": "Faulted",
+          "kind": "record",
+          "line": 125
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/FactoryHandler.java",
+      "blob": "7f2c0e02319fa9db120e30d37e50340df7e8f114",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryHandler",
+          "kind": "class",
+          "line": 34
+        },
+        {
+          "name": "PendingDispatch",
+          "kind": "record",
+          "line": 57
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/FactoryRuntime.java",
+      "blob": "1a8be9850308c3270f6a55d16d8cad24dac282f9",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryRuntime",
+          "kind": "class",
+          "line": 74
+        },
+        {
+          "name": "JobPlacement",
+          "kind": "record",
+          "line": 356
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/JobObservation.java",
+      "blob": "f0a9b324e3d0c2f7eebc57e460df6d739de0f624",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "JobObservation",
+          "kind": "record",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/OrderObservation.java",
+      "blob": "f2724d9cce2008d5cb51c5db87a3be34951df473",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "OrderObservation",
+          "kind": "record",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/PendingWorkObservation.java",
+      "blob": "1bc14f5057a477da2ac06a7cdd3823290b7697d2",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "PendingWorkObservation",
+          "kind": "record",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/PendingWorkView.java",
+      "blob": "f869aea2620e10182210b664666d767a0e5277c8",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "PendingWorkView",
+          "kind": "record",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RecordingScheduler.java",
+      "blob": "c2ccc460370c04af04222bffed701cfc7c007eb6",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-SCHEDULE",
+        "E-CONTROL"
+      ],
+      "declarations": [
+        {
+          "name": "RecordingScheduler",
+          "kind": "class",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/ResourceObservation.java",
+      "blob": "f10d16030486230a9b82d529695c46840dea7d25",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "ResourceObservation",
+          "kind": "record",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeEventEnvelope.java",
+      "blob": "531c7b4d1e7c6a6436561f9156af9eb33c991240",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeEventEnvelope",
+          "kind": "record",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeEventPayload.java",
+      "blob": "b01e64cc4630c2b3e4bb118b4ffde44e9b7aa63f",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeEventPayload",
+          "kind": "interface",
+          "line": 16
+        },
+        {
+          "name": "OrderAccepted",
+          "kind": "record",
+          "line": 26
+        },
+        {
+          "name": "JobDispatched",
+          "kind": "record",
+          "line": 37
+        },
+        {
+          "name": "JobWaiting",
+          "kind": "record",
+          "line": 47
+        },
+        {
+          "name": "JobStepCompleted",
+          "kind": "record",
+          "line": 60
+        },
+        {
+          "name": "OrderCompleted",
+          "kind": "record",
+          "line": 71
+        },
+        {
+          "name": "MachineAvailabilityChanged",
+          "kind": "record",
+          "line": 75
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeEventType.java",
+      "blob": "341100497e75b18d1feef4e04d83394041c18e72",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeEventType",
+          "kind": "enum",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeObservation.java",
+      "blob": "5223a71e0dd3d4d617c65d1140950e53cd9912eb",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeObservation",
+          "kind": "record",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeObservationMetadata.java",
+      "blob": "8eb54704fd087226c39e2aeacdce66b45246f839",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeObservationMetadata",
+          "kind": "record",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimePerformanceObservation.java",
+      "blob": "c5477abc7e1a7f232391592124697b7a030fc035",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimePerformanceObservation",
+          "kind": "record",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeRunState.java",
+      "blob": "0a76102bde87bf41ef385a4fa12333910d2f26d8",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeRunState",
+          "kind": "enum",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/Routing.java",
+      "blob": "d1126c40509344f6d458f0a0901fb55a946c15e3",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "Routing",
+          "kind": "class",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/RoutingStep.java",
+      "blob": "0e9a9a2dc2583809928f8b5593e534fdfdf833bf",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "RoutingStep",
+          "kind": "record",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/RoutingStore.java",
+      "blob": "8483544d48b421b9c04ec54944fc6b955e1560b4",
+      "module": "factory",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "RoutingStore",
+          "kind": "class",
+          "line": 8
+        },
+        {
+          "name": "ProductRouting",
+          "kind": "record",
+          "line": 46
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/PropertiesTest.java",
+      "blob": "a6852da075f49472ff75fe1e0bc97492f10dedc3",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "declarations": [
+        {
+          "name": "PropertiesTest",
+          "kind": "class",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/change/FactoryModelSemanticComparatorTest.java",
+      "blob": "f851c51ea237b1a998e57510d3dd75d115f612a7",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-CHANGE",
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelSemanticComparatorTest",
+          "kind": "class",
+          "line": 26
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/jobs/JobLeadTimeTest.java",
+      "blob": "eab82d04ad4f3067d8a9471d5df5a946bbdb1967",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "JobLeadTimeTest",
+          "kind": "class",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/jobs/JobRoutingTest.java",
+      "blob": "83a205068cef9396c95c7c9b84f9b892653a8ce6",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "JobRoutingTest",
+          "kind": "class",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/machines/MachineStateTest.java",
+      "blob": "d2229b278a6d4cc4c261a628b3a56703c1963596",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "MachineStateTest",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelArtifactTest.java",
+      "blob": "caf32a9c64126a74d81ee7451263244747004625",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelArtifactTest",
+          "kind": "class",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelCanonicalFormTest.java",
+      "blob": "cbfd216d48659d3d2fd457b6daf56ab410faf948",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelCanonicalFormTest",
+          "kind": "class",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelDefinitionBindingTest.java",
+      "blob": "493915ca91eb31a166e86d291f798b26382b3428",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelDefinitionBindingTest",
+          "kind": "class",
+          "line": 40
+        },
+        {
+          "name": "ResourceProbe",
+          "kind": "class",
+          "line": 42
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelImmutabilityTest.java",
+      "blob": "9c31514cc0148acf4ce637f8c6413dc6861bed0a",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelImmutabilityTest",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelPublisherTest.java",
+      "blob": "dd0ef15e4ce79caeb00cb33ba364ce1c51aff960",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelPublisherTest",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelRecordsTest.java",
+      "blob": "e555ab209a2773ba0a4e8767f1823d47310728fa",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelRecordsTest",
+          "kind": "class",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryRuntimeAssemblerTest.java",
+      "blob": "e0d9401b981f3db764f805bfbd09a15a421acb53",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryRuntimeAssemblerTest",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/FactoryModelValidatorTest.java",
+      "blob": "162270c040fd2b4c59894a2fc024c102f2717869",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryModelValidatorTest",
+          "kind": "class",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/ModelValidationErrorTest.java",
+      "blob": "417733e69079622baa31da95998191d3f0bf5586",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "ModelValidationErrorTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/ModelValidationResultTest.java",
+      "blob": "d76d9e080889f8d7c96a55487166436419d20ca2",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "declarations": [
+        {
+          "name": "ModelValidationResultTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/orders/OrderTest.java",
+      "blob": "b02cbb72db1d08e3013550d02dbd5f4b412f9f85",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "OrderTest",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/BoundedAdvancementConformanceTest.java",
+      "blob": "99f0f69a4798e2c315712c8a868ee7d9b0488619",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-CONTROL"
+      ],
+      "declarations": [
+        {
+          "name": "BoundedAdvancementConformanceTest",
+          "kind": "class",
+          "line": 41
+        },
+        {
+          "name": "Op",
+          "kind": "interface",
+          "line": 88
+        },
+        {
+          "name": "Submit",
+          "kind": "record",
+          "line": 92
+        },
+        {
+          "name": "Availability",
+          "kind": "record",
+          "line": 99
+        },
+        {
+          "name": "Step",
+          "kind": "record",
+          "line": 111
+        },
+        {
+          "name": "Change",
+          "kind": "record",
+          "line": 188
+        },
+        {
+          "name": "Paused",
+          "kind": "record",
+          "line": 437
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/ConfiguredResourceMetadataTest.java",
+      "blob": "712ff4908f6a74436f983986217bf5e8f4f4bdab",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "declarations": [
+        {
+          "name": "ConfiguredResourceMetadataTest",
+          "kind": "class",
+          "line": 25
+        },
+        {
+          "name": "SemanticEvent",
+          "kind": "record",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/EngineDerivedResultConformanceTest.java",
+      "blob": "a3e9ed9518af2d05bb9cae75e27e465d11dde9fd",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-ARITH"
+      ],
+      "declarations": [
+        {
+          "name": "EngineDerivedResultConformanceTest",
+          "kind": "class",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/EngineDispatchConformanceTest.java",
+      "blob": "0ada862dc6a40c7c597aa7e5e510f2276490eec7",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "EngineDispatchConformanceTest",
+          "kind": "class",
+          "line": 34
+        },
+        {
+          "name": "Step",
+          "kind": "record",
+          "line": 36
+        },
+        {
+          "name": "Result",
+          "kind": "record",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/ExplicitWorkloadSubmissionTest.java",
+      "blob": "68ee8213f9d2ea1e31b5ee92eb0ab11050c784ca",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-WORK"
+      ],
+      "declarations": [
+        {
+          "name": "ExplicitWorkloadSubmissionTest",
+          "kind": "class",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/FactoryHandlerTest.java",
+      "blob": "e70bd3d9cb4ed8f37bdb50abf695ad405da00eb9",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryHandlerTest",
+          "kind": "class",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/FactoryRuntimeBoundaryAcceptanceTest.java",
+      "blob": "34499625a4950b22b7cbab7e6288a0836a7b1c25",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "declarations": [
+        {
+          "name": "FactoryRuntimeBoundaryAcceptanceTest",
+          "kind": "class",
+          "line": 47
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/HeadlessClosureAcceptanceTest.java",
+      "blob": "be01065a5178f79ce9be4d6c5bbd9a508a895f26",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "declarations": [
+        {
+          "name": "HeadlessClosureAcceptanceTest",
+          "kind": "class",
+          "line": 64
+        },
+        {
+          "name": "ConsumerView",
+          "kind": "record",
+          "line": 92
+        },
+        {
+          "name": "PlacementView",
+          "kind": "record",
+          "line": 159
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/IntraOrderExecutionAcceptanceTest.java",
+      "blob": "0c2e0edfdf326bc4a379f8523449b8dfc88f956e",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-WORK"
+      ],
+      "declarations": [
+        {
+          "name": "IntraOrderExecutionAcceptanceTest",
+          "kind": "class",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/LargeOrderDecompositionBenchmarkTest.java",
+      "blob": "89db06a4573b598a081c211a1865bf57e9628a57",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-WORK"
+      ],
+      "declarations": [
+        {
+          "name": "LargeOrderDecompositionBenchmarkTest",
+          "kind": "class",
+          "line": 35
+        },
+        {
+          "name": "BenchmarkResult",
+          "kind": "record",
+          "line": 151
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/MultiResourceDispatchAcceptanceTest.java",
+      "blob": "f9d69797ea21294f010e0233fe05b56c9e0fc4de",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "MultiResourceDispatchAcceptanceTest",
+          "kind": "class",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/MultiResourceDispatchTest.java",
+      "blob": "c43a0f62ec4cb929fbefdcbf61553f0a62d7ca97",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "MultiResourceDispatchTest",
+          "kind": "class",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/OrderIntentSeparationTest.java",
+      "blob": "1707a65fa4fff5cd17633ecd717d356ce6d5d229",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-WORK"
+      ],
+      "declarations": [
+        {
+          "name": "OrderIntentSeparationTest",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/ProportionalQuantityWorkTest.java",
+      "blob": "2c664ef4c74eb1a49f19aa9c8476fd1bae90d97c",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-WORK"
+      ],
+      "declarations": [
+        {
+          "name": "ProportionalQuantityWorkTest",
+          "kind": "class",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/RecordingSchedulerTest.java",
+      "blob": "8d0785a9203aafe1e2fef7a079db31d57f1b4a6a",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-SCHEDULE",
+        "E-CONTROL"
+      ],
+      "declarations": [
+        {
+          "name": "RecordingSchedulerTest",
+          "kind": "class",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/RuntimeEventDeliveryAcceptanceTest.java",
+      "blob": "22812ce5866afd3580b4e69ddc87e0ce3bb7842e",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeEventDeliveryAcceptanceTest",
+          "kind": "class",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/RuntimeObservationAcceptanceTest.java",
+      "blob": "11b3f4e137495315d747d683d1c057a54a7fdc14",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeObservationAcceptanceTest",
+          "kind": "class",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/RuntimeRecordValidationTest.java",
+      "blob": "b8287cf5cc6f0e791ab6f4b9884117e5e4fbcbad",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "declarations": [
+        {
+          "name": "RuntimeRecordValidationTest",
+          "kind": "class",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SessionControlAcceptanceTest.java",
+      "blob": "c59b5c26eec072f0ac0717723af717c87ba19039",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-CONTROL"
+      ],
+      "declarations": [
+        {
+          "name": "SessionControlAcceptanceTest",
+          "kind": "class",
+          "line": 46
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/routing/RoutingStepTest.java",
+      "blob": "7c3bed46ae7cd73fdfa5a29b8505c2f2fa530426",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "RoutingStepTest",
+          "kind": "class",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/routing/RoutingStoreTest.java",
+      "blob": "e5ebf233eb694c332626cd58dc4b300c7383811e",
+      "module": "factory",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "declarations": [
+        {
+          "name": "RoutingStoreTest",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/ControlledRevision.java",
+      "blob": "f4284c0a0d84fdbec3a6232286ecddebcf8c5532",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "ControlledRevision",
+          "kind": "record",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/ControlledRevisionAuthority.java",
+      "blob": "d937b334011b606e3eb8aab784208ee818cecb8f",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "ControlledRevisionAuthority",
+          "kind": "interface",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/GovernanceHistoryException.java",
+      "blob": "a182e3a229cd26ecb1c1bb5d55efe08f49f4c877",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "GovernanceHistoryException",
+          "kind": "class",
+          "line": 6
+        },
+        {
+          "name": "Code",
+          "kind": "enum",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/HistoricalRevision.java",
+      "blob": "fee8c67016c62d02aca0826e5c8b5000b2be823d",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "HistoricalRevision",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/RevisionProvenance.java",
+      "blob": "b93e784f90e7ef45b0793612035e0b7afef5e38e",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "RevisionProvenance",
+          "kind": "record",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/RevisionRecorder.java",
+      "blob": "be4552e84adaba955b2ec34e21f95920b3de377e",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "RevisionRecorder",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/SemanticArtifact.java",
+      "blob": "86c55283b1726f9b49b2f5fcb6b77cd8a80dba08",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "SemanticArtifact",
+          "kind": "record",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/SemanticArtifactVerifier.java",
+      "blob": "907423854c7c59f2edcac3fc82d00c8856aae99b",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "SemanticArtifactVerifier",
+          "kind": "interface",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/Assertion.java",
+      "blob": "e373216f7dd3013d6e72bbde4da5d6943dbb6b35",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "Assertion",
+          "kind": "record",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/AssertionId.java",
+      "blob": "4a822f10bb301f5263776c52dd986b1e27054efe",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "AssertionId",
+          "kind": "record",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/AssertionRule.java",
+      "blob": "be04e6a19b87b9ff3960739d3279e9e0552cfcae",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "AssertionRule",
+          "kind": "interface",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/AssertionVersion.java",
+      "blob": "3b50c06cc574e0bea8a3c8bb4d48a27c4cf8f27b",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "AssertionVersion",
+          "kind": "record",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/EvidenceRequirement.java",
+      "blob": "b78e8511806b3f29a60fbebd5ee4d0b6518c1676",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceRequirement",
+          "kind": "enum",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/StructuralAssertionOutcome.java",
+      "blob": "c35b5d41e5031f86199757b05e0535189c55ce5a",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "StructuralAssertionOutcome",
+          "kind": "record",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/catalogue/RequirementCatalogue.java",
+      "blob": "116d510a66fd44e3babd321fab201ff4fb565c5a",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementCatalogue",
+          "kind": "class",
+          "line": 27
+        },
+        {
+          "name": "RegistrationKey",
+          "kind": "record",
+          "line": 88
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ChangeProvenance.java",
+      "blob": "d7e23a6c1ed657c4ea9ab9b81f2e01ae57eb1eab",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "ChangeProvenance",
+          "kind": "record",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ChangeSet.java",
+      "blob": "0f1ba02f07a1bf629c0adc39dd9f7e5a4c8e3426",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "ChangeSet",
+          "kind": "record",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java",
+      "blob": "08918b6ced0d602cb71b93cec1508d0ffbf8428f",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "ChangeSetFactory",
+          "kind": "class",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ChangedEntityRef.java",
+      "blob": "18e60a3fbfc10968c244bcd6d913bb908a81dbb4",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "ChangedEntityRef",
+          "kind": "record",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ExternalChangeReference.java",
+      "blob": "c036d753b79f4069978ff4d55002e346e9f19d61",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "ExternalChangeReference",
+          "kind": "record",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ImpactScope.java",
+      "blob": "7511982340ed0dbbec7667e9f0cd5ba207058559",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "ImpactScope",
+          "kind": "class",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/SemanticChange.java",
+      "blob": "9ad8299566fccad25b890bab7b849a96eb059296",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "SemanticChange",
+          "kind": "record",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/SemanticChangeExtractor.java",
+      "blob": "66b3cde01a3aa7891c9e2027718e1fb8ccf5b590",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "SemanticChangeExtractor",
+          "kind": "interface",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/SemanticChangeKind.java",
+      "blob": "c2921ae949bae40ccd171f3f233204aa04663393",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "SemanticChangeKind",
+          "kind": "enum",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/ConformanceEvaluation.java",
+      "blob": "ea0a44ed7f42be63c98b2279c90a13ec9b6bc016",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "declarations": [
+        {
+          "name": "ConformanceEvaluation",
+          "kind": "record",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/ConformanceEvaluator.java",
+      "blob": "a360bbaca7f41b95536df02b5e7f5b00055d4cc8",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "declarations": [
+        {
+          "name": "ConformanceEvaluator",
+          "kind": "class",
+          "line": 70
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/ConformanceResult.java",
+      "blob": "f3375a0e710d4e4467d086899678a96f9bd20e78",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "declarations": [
+        {
+          "name": "ConformanceResult",
+          "kind": "enum",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrence.java",
+      "blob": "a185910c33bc2d95644107bfdd06d73a71d5e536",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvaluationOccurrence",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrenceAuthority.java",
+      "blob": "ca830789e5a82199371a831f696446556ff73c95",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvaluationOccurrenceAuthority",
+          "kind": "interface",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrenceDraft.java",
+      "blob": "779a603ce545f1aaab3836cc77ec50d1558f09fb",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvaluationOccurrenceDraft",
+          "kind": "record",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrenceId.java",
+      "blob": "f751fc2370d48962eea3e33baf63422f0260d74c",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvaluationOccurrenceId",
+          "kind": "record",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvidenceConformanceEvaluator.java",
+      "blob": "26bde4517038875be15a3d59a0f40b78c9950d08",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceConformanceEvaluator",
+          "kind": "class",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvidenceJudgment.java",
+      "blob": "293cb5bacd15f5d9b6ddb0e3b74694fe30b17698",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceJudgment",
+          "kind": "record",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/Finding.java",
+      "blob": "504da5a07879bb5b855a6e37bb0a902de78061ac",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "declarations": [
+        {
+          "name": "Finding",
+          "kind": "record",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/InMemoryEvaluationOccurrenceAuthority.java",
+      "blob": "2521818dc86d3c25fc8df723957e3c04c974cec4",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "InMemoryEvaluationOccurrenceAuthority",
+          "kind": "class",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceApplicability.java",
+      "blob": "2b80f6f7a7ab5421843db54b6a179fc39cbf72dd",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceApplicability",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceApplicabilityStatus.java",
+      "blob": "ab6f7ec582004d60886a72fe3f904b4c358e2192",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceApplicabilityStatus",
+          "kind": "enum",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceProvenance.java",
+      "blob": "c64b5140f663479112578c6486244d410d618f21",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceProvenance",
+          "kind": "record",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceReference.java",
+      "blob": "d8b8b51efd018e9c3f289b0f03a4f76bdf02fc0c",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceReference",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceReferenceAuthority.java",
+      "blob": "f0022c954013edc27c97b304b3897f56c52849e7",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceReferenceAuthority",
+          "kind": "interface",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceRelation.java",
+      "blob": "52d1610c01b55ac9299bf68483c02ba5071ec698",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceRelation",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceRelationKind.java",
+      "blob": "0481cd4fe95759ab8094b11c7a9260abd8142670",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceRelationKind",
+          "kind": "enum",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceUse.java",
+      "blob": "8ed309e7954d9dbca4f82b04d9d6c070b1bda2a5",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceUse",
+          "kind": "record",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceUseRole.java",
+      "blob": "e95c8bfcd75ea168011d05e7929d847b3c91c531",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceUseRole",
+          "kind": "enum",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/InMemoryEvidenceReferenceAuthority.java",
+      "blob": "f055eda14c619138758689b1a0775de566b6ea91",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "InMemoryEvidenceReferenceAuthority",
+          "kind": "class",
+          "line": 16
+        },
+        {
+          "name": "Key",
+          "kind": "record",
+          "line": 63
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/TemporalFrame.java",
+      "blob": "7f35caf84a8493e5ea71f773e331108807af3b2c",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "TemporalFrame",
+          "kind": "record",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/ArcogineNativeRequirementSource.java",
+      "blob": "8ea84c33409930397f516eb43fa6c1cd50f62b1e",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "ArcogineNativeRequirementSource",
+          "kind": "record",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/ExternalRequirementSource.java",
+      "blob": "4c3ee558ce67d33a9bec8367c22fbcc16ecead12",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "ExternalRequirementSource",
+          "kind": "record",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/Requirement.java",
+      "blob": "98bd4f00df940863efefba4cee63e8564f1014df",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "Requirement",
+          "kind": "record",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/RequirementId.java",
+      "blob": "91ba69ad10bbf4a2718a633791f87e7de89903e7",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementId",
+          "kind": "record",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/RequirementScope.java",
+      "blob": "baa1adef0d45f4ceda2067abd996fc638a3dceaa",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementScope",
+          "kind": "class",
+          "line": 26
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/RequirementSource.java",
+      "blob": "91defe764dbbb6cf6b037e48249789a6b95b8f99",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementSource",
+          "kind": "interface",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/RequirementVersion.java",
+      "blob": "8ed573a87bd67bde104741807f7621de3a4f4797",
+      "module": "governance",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementVersion",
+          "kind": "record",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/ControlledRevisionTest.java",
+      "blob": "15ac6a12af73ef6a6c03ace7687b07175d718de6",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "ControlledRevisionTest",
+          "kind": "class",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/GovernanceModuleBoundaryTest.java",
+      "blob": "eecea9b8293cc1b70a8bae28289323a7902a0be2",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "GovernanceModuleBoundaryTest",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/assertion/AssertionIdentityTest.java",
+      "blob": "b901ad14c5cdda6fd68be5aa4ad4caf1e3e75169",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "AssertionIdentityTest",
+          "kind": "class",
+          "line": 17
+        },
+        {
+          "name": "NamedPositiveRule",
+          "kind": "class",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/assertion/EvidenceRequirementDeclarationTest.java",
+      "blob": "811bc7f81bf55fa036d2a3a01c164c632f8d0356",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceRequirementDeclarationTest",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/assertion/StructuralProvingCaseTest.java",
+      "blob": "925712ea841dbf7958ea8832e2900ae2c40a1232",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "StructuralProvingCaseTest",
+          "kind": "class",
+          "line": 27
+        },
+        {
+          "name": "DeclaredResource",
+          "kind": "record",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/catalogue/RequirementCatalogueTest.java",
+      "blob": "084a0ab6f14d5d083b0d395d1e5eeb0d854c5ba1",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementCatalogueTest",
+          "kind": "class",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/change/ChangeSetTest.java",
+      "blob": "88131285a40fc410488b3613b9f939ef80a46f71",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "declarations": [
+        {
+          "name": "ChangeSetTest",
+          "kind": "class",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/conformance/ConformanceEvaluatorTest.java",
+      "blob": "3a421d36d52edc070621149bd6a6ee00afe1f591",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "declarations": [
+        {
+          "name": "ConformanceEvaluatorTest",
+          "kind": "class",
+          "line": 44
+        },
+        {
+          "name": "DeclaredResource",
+          "kind": "record",
+          "line": 46
+        },
+        {
+          "name": "InMemoryControlledRevisionAuthority",
+          "kind": "class",
+          "line": 101
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/evidence/GovernanceEvidenceTest.java",
+      "blob": "285ca86cef5d8dd5685810515fca840f7aa24a42",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "declarations": [
+        {
+          "name": "GovernanceEvidenceTest",
+          "kind": "class",
+          "line": 48
+        },
+        {
+          "name": "NoopRevisionAuthority",
+          "kind": "class",
+          "line": 1181
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/requirement/RequirementIdentityTest.java",
+      "blob": "0026e920d1f7ae3dd14b8c41a8e5d0a3d8fe4e9a",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementIdentityTest",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/requirement/RequirementScopeTest.java",
+      "blob": "3acdb255503507fbc5411376bf8ef6ea02fd631d",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementScopeTest",
+          "kind": "class",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/requirement/RequirementSourceProvenanceTest.java",
+      "blob": "f07304b47fad42359664c0fdd95f7906426f3f0f",
+      "module": "governance",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "declarations": [
+        {
+          "name": "RequirementSourceProvenanceTest",
+          "kind": "class",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/CompletionTickOracle.java",
+      "blob": "91e51571e541eb39174d4ce38646948fcc773dc5",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "CompletionTickOracle",
+          "kind": "class",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/DeclaredEvidence.java",
+      "blob": "dd41135e01712e3762c8cf4208d18253aa779f3c",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "DeclaredEvidence",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/DispatchProfileOracle.java",
+      "blob": "d5d3fc2e07b98a02716940beb62029ef23d199d7",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "DispatchProfileOracle",
+          "kind": "class",
+          "line": 33
+        },
+        {
+          "name": "ResourceStepDispatches",
+          "kind": "record",
+          "line": 47
+        },
+        {
+          "name": "StepWait",
+          "kind": "record",
+          "line": 56
+        },
+        {
+          "name": "DispatchProfile",
+          "kind": "record",
+          "line": 68
+        },
+        {
+          "name": "StepPosition",
+          "kind": "record",
+          "line": 77
+        },
+        {
+          "name": "JobStep",
+          "kind": "record",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EligibilityPoolOccupancyOracle.java",
+      "blob": "0cd25c72aab64086d984b2278f52294bba36f0c5",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "EligibilityPoolOccupancyOracle",
+          "kind": "class",
+          "line": 43
+        },
+        {
+          "name": "EligibilityPool",
+          "kind": "record",
+          "line": 67
+        },
+        {
+          "name": "PoolOccupancy",
+          "kind": "record",
+          "line": 82
+        },
+        {
+          "name": "PoolOccupancies",
+          "kind": "record",
+          "line": 101
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EvidenceInput.java",
+      "blob": "2db35f35ef44c679f1040ebbeee005706be769c5",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceInput",
+          "kind": "enum",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EvidenceSupport.java",
+      "blob": "e289b09303dad07301faca2e39d4740c95d64d49",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceSupport",
+          "kind": "record",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EvidenceWindow.java",
+      "blob": "fcafdc48ad14fc5625eefd6465adcc7623e57cb0",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceWindow",
+          "kind": "record",
+          "line": 27
+        },
+        {
+          "name": "CollectionPoint",
+          "kind": "record",
+          "line": 37
+        },
+        {
+          "name": "Kind",
+          "kind": "enum",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExpectedClaim.java",
+      "blob": "c6137abec035812a2d351750f7baaa69e127e361",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ExpectedClaim",
+          "kind": "record",
+          "line": 13
+        },
+        {
+          "name": "ClaimCheck",
+          "kind": "record",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentEvidence.java",
+      "blob": "76f8fd0b713d12595f018383c377990724852eb6",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ExperimentEvidence",
+          "kind": "record",
+          "line": 37
+        },
+        {
+          "name": "CommandRecord",
+          "kind": "record",
+          "line": 62
+        },
+        {
+          "name": "Outcome",
+          "kind": "enum",
+          "line": 70
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentFixture.java",
+      "blob": "95fecfbff6a9f74c35a5b87690f1e3b24d7e151d",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ExperimentFixture",
+          "kind": "record",
+          "line": 35
+        },
+        {
+          "name": "WindowIntent",
+          "kind": "enum",
+          "line": 47
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentRunner.java",
+      "blob": "3d3e5fb50577a76bf1ee606f8ea90f06051912d9",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ExperimentRunner",
+          "kind": "class",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentStep.java",
+      "blob": "25ad8b047c3d67a8da98cdaff2c8ffb34d1f803f",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ExperimentStep",
+          "kind": "interface",
+          "line": 21
+        },
+        {
+          "name": "SubmitWorkload",
+          "kind": "record",
+          "line": 24
+        },
+        {
+          "name": "SetMachineAvailability",
+          "kind": "record",
+          "line": 31
+        },
+        {
+          "name": "AdvanceUntil",
+          "kind": "record",
+          "line": 38
+        },
+        {
+          "name": "AdvanceToQuiescence",
+          "kind": "record",
+          "line": 49
+        },
+        {
+          "name": "Capture",
+          "kind": "interface",
+          "line": 56
+        },
+        {
+          "name": "CaptureObservation",
+          "kind": "record",
+          "line": 61
+        },
+        {
+          "name": "CaptureEvents",
+          "kind": "record",
+          "line": 68
+        },
+        {
+          "name": "DiscardEvents",
+          "kind": "record",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/LinearRoutingFamily.java",
+      "blob": "78c6f2a3e585b4b165f80d7e711afd5ed95c664d",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "LinearRoutingFamily",
+          "kind": "record",
+          "line": 46
+        },
+        {
+          "name": "Step",
+          "kind": "record",
+          "line": 55
+        },
+        {
+          "name": "Resource",
+          "kind": "record",
+          "line": 69
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/OperationStep.java",
+      "blob": "218b08dd03cda32882fee00ac18cffd8de2b8b86",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "OperationStep",
+          "kind": "record",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/Oracle.java",
+      "blob": "0e84bf16aed619927e9301cff93652b67f0b8aab",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "Oracle",
+          "kind": "interface",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/OracleOutcome.java",
+      "blob": "385737c20ef5a92b3643375a5d851a70445a1c9b",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "OracleOutcome",
+          "kind": "interface",
+          "line": 13
+        },
+        {
+          "name": "Derived",
+          "kind": "record",
+          "line": 19
+        },
+        {
+          "name": "Underdetermined",
+          "kind": "record",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ProcessingIntervals.java",
+      "blob": "a765e2802822f2b6616f21696f61345cb8987ba7",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ProcessingIntervals",
+          "kind": "class",
+          "line": 30
+        },
+        {
+          "name": "Measurement",
+          "kind": "interface",
+          "line": 33
+        },
+        {
+          "name": "Measured",
+          "kind": "record",
+          "line": 36
+        },
+        {
+          "name": "Refused",
+          "kind": "record",
+          "line": 38
+        },
+        {
+          "name": "StepKey",
+          "kind": "record",
+          "line": 41
+        },
+        {
+          "name": "Dispatch",
+          "kind": "record",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ProcessingOccupancyOracle.java",
+      "blob": "6e63d1adccba8b91a0272ec73a3847117a1f7279",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ProcessingOccupancyOracle",
+          "kind": "class",
+          "line": 29
+        },
+        {
+          "name": "ResourceOccupancy",
+          "kind": "record",
+          "line": 46
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ResearchDefinition.java",
+      "blob": "ee18350be9a6c9fb5dbbf8bb5c5f319494fc25e1",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ResearchDefinition",
+          "kind": "record",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/SequenceRange.java",
+      "blob": "a0eac5d8b343b739c14f3acd026fa06156b40329",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "SequenceRange",
+          "kind": "record",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ThreeStepRoutingFamily.java",
+      "blob": "cf9db3971fbb89b6222d0299d03e609b8678b286",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ThreeStepRoutingFamily",
+          "kind": "record",
+          "line": 28
+        },
+        {
+          "name": "Stage",
+          "kind": "record",
+          "line": 44
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/WaitingWorkByStepOracle.java",
+      "blob": "44a9aa5a5b178b913dcf58e1b147c7ec06f752c2",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "WaitingWorkByStepOracle",
+          "kind": "class",
+          "line": 36
+        },
+        {
+          "name": "Attribution",
+          "kind": "interface",
+          "line": 49
+        },
+        {
+          "name": "SingleResource",
+          "kind": "record",
+          "line": 52
+        },
+        {
+          "name": "SharedEligibleSet",
+          "kind": "record",
+          "line": 55
+        },
+        {
+          "name": "WaitingAtStep",
+          "kind": "record",
+          "line": 63
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/package-info.java",
+      "blob": "0d9f52cc9f4cd613facfd3ab2cdee966820a22aa",
+      "module": "research-experiments",
+      "sourceSet": "main",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": []
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/CapacityCorpus.java",
+      "blob": "0696117cea546b086f35dddddde325d3f5ee1884",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "CapacityCorpus",
+          "kind": "class",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/CapacityCorpusTest.java",
+      "blob": "7ab1d09b055a9950439f9cdeb20063b876581b7b",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "CapacityCorpusTest",
+          "kind": "class",
+          "line": 37
+        },
+        {
+          "name": "ResourceType",
+          "kind": "record",
+          "line": 60
+        },
+        {
+          "name": "CompletionRange",
+          "kind": "record",
+          "line": 62
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/CompletionTickOracleTest.java",
+      "blob": "40f475bb0d9b3a764ca7765b9b4fb8475b2bbe1e",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "CompletionTickOracleTest",
+          "kind": "class",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/DispatchProfileOracleTest.java",
+      "blob": "d4979fa67f7dc95e5de61adfd15941325af54556",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "DispatchProfileOracleTest",
+          "kind": "class",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/EligibilityPoolOccupancyOracleTest.java",
+      "blob": "d09c239a3593eeff13fc7ddfbd5bde1f08c8d40a",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "EligibilityPoolOccupancyOracleTest",
+          "kind": "class",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/EvidenceWindowTest.java",
+      "blob": "f860e5ca072cf3560b0c0eab31049204cfd80b7f",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "EvidenceWindowTest",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ExperimentRunnerTest.java",
+      "blob": "6315b5d3fdb265b1d548bf3a796bfb0d60a851b8",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ExperimentRunnerTest",
+          "kind": "class",
+          "line": 47
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/LinearRoutingFamilyTest.java",
+      "blob": "0f496ff2abac43cabb786df2488760352db4b6dd",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "LinearRoutingFamilyTest",
+          "kind": "class",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/OracleContractTest.java",
+      "blob": "e74bcb6b6fafa038c900f40a0d4f4d8b069d5131",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "OracleContractTest",
+          "kind": "class",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/OutcomeAssertions.java",
+      "blob": "0cf17775b20d793073e026e12b92492531ea12e1",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "OutcomeAssertions",
+          "kind": "class",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ProcessingOccupancyOracleTest.java",
+      "blob": "fde321446c68093746e25c7034177c50d1f38c5f",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ProcessingOccupancyOracleTest",
+          "kind": "class",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ResearchPackageBoundaryTest.java",
+      "blob": "427fa06eff6e369e1b32e193b2f933e6c098d15c",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "ResearchPackageBoundaryTest",
+          "kind": "class",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/StarterCorpus.java",
+      "blob": "3b1c673cea74c4a963e5220c7800c726678cb583",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "StarterCorpus",
+          "kind": "class",
+          "line": 26
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/StarterCorpusTest.java",
+      "blob": "3900a5cadc32c02b300dcb4b47efed14efbd0d46",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "StarterCorpusTest",
+          "kind": "class",
+          "line": 46
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/TamperedEvidence.java",
+      "blob": "1ce390c6d693b31fbe1a93965c1e630d556279d1",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "TamperedEvidence",
+          "kind": "class",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/WaitingWorkByStepOracleTest.java",
+      "blob": "ba5fbc91519f8034a4533c5c0a8ba55fa359ebf8",
+      "module": "research-experiments",
+      "sourceSet": "test",
+      "scope": "non-shipped substrate",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "declarations": [
+        {
+          "name": "WaitingWorkByStepOracleTest",
+          "kind": "class",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "path": "product/simulation/src/jmh/java/com/arcogine/core/bench/SchedulerBenchmark.java",
+      "blob": "dd4c58b9b67866aceada433bbae1c256fdf5cd34",
+      "module": "simulation",
+      "sourceSet": "jmh",
+      "scope": "non-functional benchmark",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "declarations": [
+        {
+          "name": "SchedulerBenchmark",
+          "kind": "class",
+          "line": 21
+        },
+        {
+          "name": "PopulatedScheduler",
+          "kind": "class",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/event/Event.java",
+      "blob": "6892ddacae7bbaae6808ba6c6a4e99d992db86c0",
+      "module": "simulation",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "declarations": [
+        {
+          "name": "Event",
+          "kind": "record",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/event/EventPayload.java",
+      "blob": "aa49deefdfffebb00029a461e9e22fb89552addf",
+      "module": "simulation",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "declarations": [
+        {
+          "name": "EventPayload",
+          "kind": "interface",
+          "line": 7
+        },
+        {
+          "name": "OrderCreation",
+          "kind": "record",
+          "line": 16
+        },
+        {
+          "name": "TaskEnd",
+          "kind": "record",
+          "line": 18
+        },
+        {
+          "name": "MachineAvailabilityChange",
+          "kind": "record",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/handler/EventHandler.java",
+      "blob": "77d91ceeb7176526b3bffb51d1bd9d3a59158b7e",
+      "module": "simulation",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "declarations": [
+        {
+          "name": "EventHandler",
+          "kind": "interface",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/queue/Scheduler.java",
+      "blob": "b7af278c0e2525904e499050ff5938f3d317e1d3",
+      "module": "simulation",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "declarations": [
+        {
+          "name": "Scheduler",
+          "kind": "class",
+          "line": 10
+        },
+        {
+          "name": "Entry",
+          "kind": "record",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/event/EventTest.java",
+      "blob": "f44f229e6d15a940cdc8e29738f83c443fee1653",
+      "module": "simulation",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "declarations": [
+        {
+          "name": "EventTest",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/queue/SchedulerPropertyTest.java",
+      "blob": "a5a16fae5ed039fec0640aec604ff51e0cebcd43",
+      "module": "simulation",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "declarations": [
+        {
+          "name": "SchedulerPropertyTest",
+          "kind": "class",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/queue/SchedulerTest.java",
+      "blob": "9875ed7e1b806a80671af839e00094023564b481",
+      "module": "simulation",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "declarations": [
+        {
+          "name": "SchedulerTest",
+          "kind": "class",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/storage/src/main/java/com/arcogine/storage/ArcogineStorage.java",
+      "blob": "6c4276d50ff45f6f515463b13310e813430d1175",
+      "module": "storage",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "ArcogineStorage",
+          "kind": "interface",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/storage/src/main/java/com/arcogine/storage/BuiltInStorage.java",
+      "blob": "2c0e4584127a5a62fc44d61a8cf062b59c6d916e",
+      "module": "storage",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "BuiltInStorage",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/storage/src/main/java/com/arcogine/storage/FileArcogineStorage.java",
+      "blob": "08d3ca609f312441d1461a36ed092d583a5b726c",
+      "module": "storage",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "FileArcogineStorage",
+          "kind": "class",
+          "line": 80
+        },
+        {
+          "name": "AtomicMover",
+          "kind": "interface",
+          "line": 108
+        },
+        {
+          "name": "FileOperations",
+          "kind": "class",
+          "line": 113
+        },
+        {
+          "name": "CheckedSupplier",
+          "kind": "interface",
+          "line": 744
+        },
+        {
+          "name": "Encoder",
+          "kind": "interface",
+          "line": 749
+        }
+      ]
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/consumer/StoragePublicContractTest.java",
+      "blob": "3cc8e8d4f86c8c9658a7952dde108dc2e3dcfad8",
+      "module": "storage",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "StoragePublicContractTest",
+          "kind": "class",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/governance/change/ChangeSetFactoryTest.java",
+      "blob": "7b471a9cdad5c302da01c2094cebee49a95a106b",
+      "module": "storage",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-CHANGE",
+        "S-RESOLVE"
+      ],
+      "declarations": [
+        {
+          "name": "ChangeSetFactoryTest",
+          "kind": "class",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/governance/conformance/PreChangeConformanceProvingCaseTest.java",
+      "blob": "d0c087ffa2e1628517bace424ea47ef12ccbdaa2",
+      "module": "storage",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "G-CONFORMANCE",
+        "S-RESOLVE"
+      ],
+      "declarations": [
+        {
+          "name": "PreChangeConformanceProvingCaseTest",
+          "kind": "class",
+          "line": 55
+        }
+      ]
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/storage/BuiltInStorageTest.java",
+      "blob": "2c9b6622d72b111bbc304f2efcbd592607c1abd8",
+      "module": "storage",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "BuiltInStorageTest",
+          "kind": "class",
+          "line": 67
+        }
+      ]
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/storage/StorageReopenProbe.java",
+      "blob": "009e7546538d786880f12a141b5c1466bb3e8963",
+      "module": "storage",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "declarations": [
+        {
+          "name": "StorageReopenProbe",
+          "kind": "class",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/ControlledRevisionId.java",
+      "blob": "d076577d833a93af68fba1e78836ca68d6201fbb",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "ControlledRevisionId",
+          "kind": "record",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/JobId.java",
+      "blob": "eeac74d46b8935e874af24751326d5a891f4d086",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "JobId",
+          "kind": "record",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/JobStatus.java",
+      "blob": "f6984d14539215aa043d130d82d097b40767b2a4",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "JobStatus",
+          "kind": "enum",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/MachineId.java",
+      "blob": "929868227bb422ed669149819c817759d02620d7",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "MachineId",
+          "kind": "record",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/MachineState.java",
+      "blob": "ba0c64c61a6f28e2f6453dbb7b58689317303ed0",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "MachineState",
+          "kind": "enum",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/ModelFingerprint.java",
+      "blob": "89b06b0a3b4768aec6baba5fdd50b1689bf4e7da",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "ModelFingerprint",
+          "kind": "record",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/OrderId.java",
+      "blob": "a2e852fb7be737a573b903753215aa777894d809",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "OrderId",
+          "kind": "record",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/ProductId.java",
+      "blob": "eb0370b139507e42bb18e4f5c32281c6847150ad",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "ProductId",
+          "kind": "record",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/RunId.java",
+      "blob": "fa9c3e79d2fd6ecaed53998bc19e7c372f114652",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "RunId",
+          "kind": "record",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/SimError.java",
+      "blob": "be0b0451d84d14d8bb29672497680bca89c81190",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "SimError",
+          "kind": "class",
+          "line": 4
+        },
+        {
+          "name": "InvalidStateTransition",
+          "kind": "class",
+          "line": 10
+        },
+        {
+          "name": "UnknownId",
+          "kind": "class",
+          "line": 21
+        },
+        {
+          "name": "EventOrderingViolation",
+          "kind": "class",
+          "line": 35
+        },
+        {
+          "name": "OutOfRange",
+          "kind": "class",
+          "line": 49
+        },
+        {
+          "name": "Other",
+          "kind": "class",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/SimTime.java",
+      "blob": "438037474b93c6df5cda4f68c63be4227483c618",
+      "module": "types",
+      "sourceSet": "main",
+      "scope": "retained core implementation",
+      "contracts": [
+        "T-TIME"
+      ],
+      "declarations": [
+        {
+          "name": "SimTime",
+          "kind": "record",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/ControlledRevisionIdTest.java",
+      "blob": "eee6024722d4f03b6ef11a96ed38f657624c8879",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "ControlledRevisionIdTest",
+          "kind": "class",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/JobIdTest.java",
+      "blob": "398710668632583306b6b32a4ea88ce748dee916",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "JobIdTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/MachineIdTest.java",
+      "blob": "d88d3c3fa88648969159c854fad00dea32b85118",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "MachineIdTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/ModelFingerprintTest.java",
+      "blob": "521a81ceee9746bd090b0c7b06cbc00ebf303233",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "ModelFingerprintTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/OrderIdTest.java",
+      "blob": "4a4ac5dafe6a082ad550e05b6192943472a562c5",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "OrderIdTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/ProductIdTest.java",
+      "blob": "42ac49517aee168ef09ef17e0a359d20eeebb2ad",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "ProductIdTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/RunIdTest.java",
+      "blob": "76d9d8cfd641ab3cb38c56d36b5792c64563a2de",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "RunIdTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/SimErrorTest.java",
+      "blob": "8644aa01ea0c467c1f63375f30f5bb9a162cd3cc",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "declarations": [
+        {
+          "name": "SimErrorTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/SimTimeTest.java",
+      "blob": "503e95c0bdb1c214974995c6eaa390fe5ecf1e49",
+      "module": "types",
+      "sourceSet": "test",
+      "scope": "proof or fixture",
+      "contracts": [
+        "T-TIME"
+      ],
+      "declarations": [
+        {
+          "name": "SimTimeTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    }
+  ]
+}

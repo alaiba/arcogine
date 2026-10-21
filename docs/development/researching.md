@@ -154,7 +154,7 @@ Internal repository evidence is mandatory for Arcogine architectural/domain rese
 - the [research register](../research/research-register.md) and the relevant brief(s);
 - known work in open GitHub issues;
 - implementation and tests;
-- reference contracts (`docs/reference/`) and examples;
+- relevant supported architecture contracts (including the [runtime contract](../architecture/runtime-contract.md)) and consumer examples;
 - recent merged PRs;
 - open PRs, where they materially affect the question;
 - review findings, where they exposed a relevant semantic failure mode.

@@ -165,11 +165,14 @@ final class Json {
         }
         String hex = source.substring(position, position + 4);
         position += 4;
-        try {
-            return (char) Integer.parseInt(hex, 16);
-        } catch (NumberFormatException e) {
-            throw error("invalid unicode escape '" + hex + "'");
+        for (int index = 0; index < hex.length(); index++) {
+            char digit = hex.charAt(index);
+            if (!(isAsciiDigit(digit) || (digit >= 'a' && digit <= 'f')
+                    || (digit >= 'A' && digit <= 'F'))) {
+                throw error("invalid unicode escape '" + hex + "'");
+            }
         }
+        return (char) Integer.parseInt(hex, 16);
     }
 
     private Boolean parseBoolean() throws JsonSyntaxException {

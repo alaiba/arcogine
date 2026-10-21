@@ -10,7 +10,7 @@ From a clean checkout of current `main`, run:
 ./arcogine snapshot
 ```
 
-The command writes `logs/arcogine-main-<short-sha>.xml`. The snapshot begins with a trusted `<project_instructions>` block generated from the same exact canonical `main` commit as the Repomix corpus. Make the generated snapshot available to the execution environment performing project-source retrieval or a formal Consistency review. When using the Arcogine ChatGPT Project, upload it as a Project source before the review.
+The command writes `logs/arcogine-main-<short-sha>.xml`. The snapshot begins with a trusted `<project_instructions>` block generated from the same exact canonical `main` commit as the Repomix corpus. **The documented persistent snapshot source is the Arcogine ChatGPT Project:** upload the generated XML as a Project source before using that setup for repository-source retrieval or a formal Consistency review. This attachment is an operational requirement of the ChatGPT Project setup, not a requirement that every Consistency reviewer use ChatGPT. Another execution environment would need independently provisioned access to the canonical snapshot and live GitHub evidence; this guide does not establish an alternative provisioning workflow.
 
 ## Project-source retrieval protocol
 
@@ -70,7 +70,7 @@ Generation is fail-closed. It requires:
 - `origin` pointing to `alaiba/arcogine` on GitHub;
 - local `HEAD` exactly equal to `git ls-remote origin refs/heads/main`.
 
-Being merely an ancestor of canonical `main` is not sufficient for **generating** a new snapshot. If local `main` is behind, ahead/unpushed, or otherwise different, update it and retry. The direct remote lookup avoids captioning a stale locally cached state as a newly generated current-main corpus. Once generated and made available to the execution environment, however, the recorded commit may later remain useful as baseline `S` under the ordinary retrieval protocol above.
+Being merely an ancestor of canonical `main` is not sufficient for **generating** a new snapshot. If local `main` is behind, ahead/unpushed, or otherwise different, update it and retry. The direct remote lookup avoids captioning a stale locally cached state as a newly generated current-main corpus. Once generated and attached to the ChatGPT Project (or separately provided to a qualifying execution environment), however, the recorded commit may later remain useful as baseline `S` under the ordinary retrieval protocol above.
 
 The generated header records repository, branch, full commit SHA, UTC generation time, pinned Repomix version, and the authority boundary. Consumers independently resolve their exact target revision and apply the retrieval protocol above. For a formal Consistency review, a behind snapshot is valid only when it can be reconciled to exact current `main` through a complete safe delta, including the fewer-than-300-files completeness guard; otherwise the review is `INCOMPLETE` and the snapshot must be refreshed.
 

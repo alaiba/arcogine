@@ -10,7 +10,7 @@ From a clean checkout of current `main`, run:
 ./arcogine snapshot
 ```
 
-The command writes `logs/arcogine-main-<short-sha>.xml`. The snapshot begins with a trusted `<project_instructions>` block generated from the same exact canonical `main` commit as the Repomix corpus. Upload that file to the Arcogine ChatGPT project before using it as project-source repository content or running a formal Consistency review.
+The command writes `logs/arcogine-main-<short-sha>.xml`. The snapshot begins with a trusted `<project_instructions>` block generated from the same exact canonical `main` commit as the Repomix corpus. Make the generated snapshot available to the execution environment performing project-source retrieval or a formal Consistency review. When using the Arcogine ChatGPT Project, upload it as a Project source before the review.
 
 ## Project-source retrieval protocol
 
@@ -70,7 +70,7 @@ Generation is fail-closed. It requires:
 - `origin` pointing to `alaiba/arcogine` on GitHub;
 - local `HEAD` exactly equal to `git ls-remote origin refs/heads/main`.
 
-Being merely an ancestor of canonical `main` is not sufficient for **generating** a new snapshot. If local `main` is behind, ahead/unpushed, or otherwise different, update it and retry. The direct remote lookup avoids captioning a stale locally cached state as a newly generated current-main corpus. Once generated and uploaded, however, the recorded commit may later remain useful as baseline `S` under the ordinary retrieval protocol above.
+Being merely an ancestor of canonical `main` is not sufficient for **generating** a new snapshot. If local `main` is behind, ahead/unpushed, or otherwise different, update it and retry. The direct remote lookup avoids captioning a stale locally cached state as a newly generated current-main corpus. Once generated and made available to the execution environment, however, the recorded commit may later remain useful as baseline `S` under the ordinary retrieval protocol above.
 
 The generated header records repository, branch, full commit SHA, UTC generation time, pinned Repomix version, and the authority boundary. Consumers independently resolve their exact target revision and apply the retrieval protocol above. For a formal Consistency review, a behind snapshot is valid only when it can be reconciled to exact current `main` through a complete safe delta, including the fewer-than-300-files completeness guard; otherwise the review is `INCOMPLETE` and the snapshot must be refreshed.
 
@@ -96,6 +96,6 @@ The snapshot intentionally does not include Git history/diffs. For a Consistency
 
 For the exact recorded commit `S`, the snapshot is authoritative for repository content. When one live compare from `S` to the target ref establishes a complete descendant delta and exact target commit `T`, unaffected paths remain exactly represented by the snapshot while affected paths must be read from immutable `T`. The snapshot alone is not authority for the later target revision, and affected-path reads through a mutable branch ref must not be mixed with a delta derived from an earlier target revision.
 
-The snapshot is not live authority for issues, pull requests, submitted reviews, unresolved review threads, CI/check status, mergeability, branch heads, or other mutable GitHub state; those remain GitHub-connector concerns.
+The snapshot is not live authority for issues, pull requests, submitted reviews, unresolved review threads, CI/check status, mergeability, branch heads, or other mutable GitHub state; those must be established through live GitHub evidence.
 
 The snapshot is generated output under `logs/` and is not committed.
